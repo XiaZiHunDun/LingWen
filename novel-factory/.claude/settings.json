@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/hooks/*)",
+      "Bash(python3 -m json.tool *)",
+      "Bash(find * -name \"*_temp*\")",
+      "Read(**/workflow_state.json)",
+      "Read(**/03_内容仓库/**/*.md)"
+    ],
+    "deny": [
+      "Bash(rm -rf 03_内容仓库)",
+      "Bash(*.tmp)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-stop.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

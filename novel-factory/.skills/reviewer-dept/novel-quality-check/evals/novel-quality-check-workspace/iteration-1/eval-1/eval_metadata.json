@@ -1,0 +1,18 @@
+{
+  "eval_id": 1,
+  "eval_name": "plot-device-tracking-only",
+  "prompt": "检查ch001-ch030的伏笔回收率，看看有哪些伏笔没回收",
+  "expected_output": "伏笔回收率报告，列出未回收的伏笔及其首次出现章节",
+  "assertions": [
+    {
+      "name": "has_recycling_rate",
+      "description": "包含回收率数据",
+      "check": "output contains '回收率'"
+    },
+    {
+      "name": "has_unrecycled_list",
+      "description": "包含未回收伏笔列表",
+      "check": "output contains '未回收'"
+    }
+  ]
+}

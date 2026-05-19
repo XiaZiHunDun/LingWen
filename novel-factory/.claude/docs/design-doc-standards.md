@@ -1,0 +1,119 @@
+# Design Document Standards — 8-Section Structure
+
+> Extends CCGS's Game Design Document standard for novel factory workflows.
+
+## The 8 Required Sections
+
+Every design document (inspiration baseline/deep, outline, stage plan) MUST contain these 8 sections. Missing any section is a BLOCKING finding during review.
+
+### Section 1: Overview (概述)
+**Required content:** One-paragraph summary of the document's purpose and scope.
+**Template:** "本文档定义____，适用于____阶段，核心目标是____。"
+
+### Section 2: Reader Fantasy (读者体验目标)
+**Required content:** The emotional experience intended for the reader at this stage.
+**Template:** "读者在此阶段应感受到____，核心情绪弧线为____。"
+**Questions to answer:**
+- What emotion should dominate this stage?
+- What surprises or revelations are planned?
+- What tension should build?
+
+### Section 3: Detailed Rules (详细规则)
+**Required content:** Concrete rules governing this stage's narrative logic.
+**Template:**
+```
+规则1: ____（描述）
+规则2: ____（描述）
+规则3: ____（描述）
+```
+**For outlines:** List structural rules (chapter count, arc segments, cliffhanger positions).
+**For chapters:** List consistency rules (character states, timeline markers, location flags).
+
+### Section 4: Formulas & Metrics (公式与指标)
+**Required content:** Quantifiable targets for this stage.
+**Template:**
+```
+| 指标 | 目标值 | 说明 |
+|------|--------|------|
+| 章节字数 | 1500-2500 | 含本章完标记 |
+| 情感张力 | ≥7/10 | 高潮章需达到 |
+| 伏笔埋入 | ≥2/章 | 新伏笔数量 |
+```
+
+### Section 5: Edge Cases (边界情况)
+**Required content:** How to handle unusual situations, exceptions, degenerate narrative paths.
+**Template:**
+```
+情况1: ____发生时 → 执行____
+情况2: ____发生时 → 执行____
+```
+
+### Section 6: Dependencies (依赖关系)
+**Required content:** What this document depends on from previous stages/documents.
+**Template:**
+```
+依赖:
+  - 前序章节: chXXX-chXXX（内容引用）
+  - 大纲锚点: 卷N阶段M（阶段引用）
+  - 伏笔引用: {伏笔ID}（伏笔追踪）
+```
+
+### Section 7: Tuning Knobs (可调参数)
+**Required content:** Configurable values that can be adjusted without structural changes.
+**Template:**
+```
+| 参数 | 默认值 | 可调范围 | 说明 |
+|------|--------|---------|------|
+| 虐点比例 | 30% | 20-40% | 虐心情节占比 |
+| 甜点间隔 | 5章 | 3-8章 | 甜蜜情节间隔 |
+| 反派强度 | 7/10 | 5-10 | 冲突强度系数 |
+```
+
+### Section 8: Acceptance Criteria (验收标准)
+**Required content:** Testable success conditions — how to verify this stage is complete.
+**Template:**
+```
+验收标准:
+- [ ] 标准1
+- [ ] 标准2
+- [ ] 标准3（自动检查）
+```
+**For chapters:** Include automated check criteria (e.g., "本章完标记存在", "字数≥500").
+
+## Document Type Mappings
+
+| Document | Sections 1-4 | Sections 5-8 |
+|----------|-------------|-------------|
+| 基础层.yaml | Overview, Reader Fantasy, Detailed Rules, Formulas | Edge Cases, Dependencies, Tuning Knobs, Acceptance Criteria |
+| 深度层.md | Overview, Foreshadow Map, Timeline Rules, Narrative Structure | Edge Cases, Foreshadow Dependencies, Knobs, Acceptance Criteria |
+| 卷大纲 | Overview, Volume Arc, Chapter Count Rules, Volume Metrics | Edge Cases, Inter-Stage Dependencies, Volume Knobs, Volume Acceptance |
+| 阶段大纲 | Overview, Stage Arc, Chapter Breakdown, Stage Metrics | Edge Cases, Outline Dependencies, Stage Knobs, Stage Acceptance |
+| 单章正文 | Overview, Chapter Purpose, Consistency Rules, Chapter Metrics | Edge Cases, Previous/Next Chapter Links, Chapter Knobs, Chapter Acceptance |
+
+## Review Checklist for Editors
+
+When reviewing any design document:
+```
+[ ] Section 1 (Overview): Exists and is one paragraph
+[ ] Section 2 (Reader Fantasy): Emotional target stated
+[ ] Section 3 (Detailed Rules): At least 3 concrete rules
+[ ] Section 4 (Formulas): Metrics are quantifiable
+[ ] Section 5 (Edge Cases): Covers at least 2 edge situations
+[ ] Section 6 (Dependencies): References at least 1 prior document
+[ ] Section 7 (Tuning Knobs): At least 2 tunable parameters
+[ ] Section 8 (Acceptance Criteria): At least 3 checkable criteria
+[ ] No placeholder text (TBD, TODO without tracking, "..." without meaning)
+```
+
+## Migration Guide
+
+Apply to existing documents incrementally:
+1. New documents — use 8-section standard immediately
+2. In-review documents — convert before approval
+3. Existing approved documents — no migration required unless modified
+
+---
+
+*Document version: v1.0*
+*Adapted from CCGS (Claude-Code-Game-Studios-English)*
+*Created: 2026-05-19*

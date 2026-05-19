@@ -1,0 +1,23 @@
+{
+  "eval_id": 0,
+  "eval_name": "full-quality-check-50ch",
+  "prompt": "对星陨纪元前50章跑一下完整质量检查",
+  "expected_output": "生成包含情节关联度、伏笔回收率、场景逻辑、情感节奏、对话风格的汇总报告",
+  "assertions": [
+    {
+      "name": "has_segment_relevance",
+      "description": "包含情节关联度结果",
+      "check": "output contains '情节关联度'"
+    },
+    {
+      "name": "has_plot_device_tracking",
+      "description": "包含伏笔回收率结果",
+      "check": "output contains '伏笔回收率'"
+    },
+    {
+      "name": "has_scene_logic",
+      "description": "包含场景逻辑结果",
+      "check": "output contains '场景逻辑'"
+    }
+  ]
+}

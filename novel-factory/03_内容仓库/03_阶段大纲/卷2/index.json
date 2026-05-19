@@ -1,0 +1,12 @@
+{
+    "layer": "阶段大纲",
+    "project": "测试项目3",
+    "volume": 2,
+    "created_at": "2026-05-19",
+    "methodology_markers": {
+        "stage": "阶段3: 大纲结构设计 - 章纲",
+        "chapter_format": "本章目标+出场人物+剧情走向+情绪落点+留钩子",
+        "doc": "10_方法论/05_大纲结构设计.md"
+    },
+    "entries": []
+}

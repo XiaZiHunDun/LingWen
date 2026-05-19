@@ -1,0 +1,7 @@
+{
+  "eval_id": 4,
+  "eval_name": "scene-logic-check",
+  "prompt": "检查场景逻辑连贯性，ch001-ch100有没有孤岛章节",
+  "expected_output": "场景逻辑报告，列出孤岛章节和高严重度问题",
+  "assertions": []
+}

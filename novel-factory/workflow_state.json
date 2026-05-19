@@ -1,0 +1,284 @@
+{
+    "version": "v1.4",
+    "project_info": {
+        "project_name": "测试项目2",
+        "total_chapters": 50,
+        "volume_count": 2,
+        "chapters_per_volume": 25,
+        "created_at": "2026-05-19",
+        "framework_version": "v1.4"
+    },
+    "current_phase": "PHASE_1_LAUNCH",
+    "current_step": "STEP_01",
+    "methodology_version": "1.0",
+    "phases": {
+        "PHASE_0_SETUP": {
+            "status": "completed",
+            "steps": {
+                "SETUP_00": {
+                    "status": "completed",
+                    "name": "初始化",
+                    "methodology_markers": {
+                        "stage": "阶段0: 灵感捕捉与筛选",
+                        "doc": "10_方法论/01_灵感捕捉与筛选.md"
+                    }
+                }
+            }
+        },
+        "PHASE_1_LAUNCH": {
+            "status": "pending",
+            "steps": {
+                "STEP_01": {
+                    "status": "pending",
+                    "name": "灵感生成",
+                    "methodology_markers": {
+                        "stage": "阶段0: 灵感捕捉与筛选",
+                        "doc": "10_方法论/01_灵感捕捉与筛选.md",
+                        "output_template": "01_灵感库/模板库/基础层.yaml",
+                        "screening_required": true
+                    }
+                },
+                "STEP_02": {
+                    "status": "pending",
+                    "name": "全文大纲初稿",
+                    "methodology_markers": {
+                        "stage": "阶段1-3: 核心三要素/世界观/大纲结构",
+                        "doc": "10_方法论/02_核心三要素.md, 03_世界观与设定.md, 05_大纲结构设计.md",
+                        "output_template": "01_灵感库/{项目}/立项/00_核心三要素.yaml"
+                    }
+                }
+            }
+        },
+        "PHASE_2_OUTLINE": {
+            "status": "pending",
+            "steps": {
+                "STEP_03": {
+                    "status": "pending",
+                    "name": "全文大纲审核",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计",
+                        "doc": "10_方法论/05_大纲结构设计.md",
+                        "review_checklist": "三幕式8节点结构检查"
+                    }
+                },
+                "STEP_04": {
+                    "status": "pending",
+                    "name": "全文大纲修改",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨 - 第一轮宏观",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_05": {
+                    "status": "pending",
+                    "name": "全文大纲终审",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计",
+                        "doc": "10_方法论/05_大纲结构设计.md"
+                    }
+                }
+            }
+        },
+        "PHASE_3_VOLUME": {
+            "status": "pending",
+            "steps": {
+                "STEP_06": {
+                    "status": "pending",
+                    "name": "卷大纲生成",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计 - 章纲",
+                        "doc": "10_方法论/05_大纲结构设计.md",
+                        "structure_template": "8节点大纲"
+                    }
+                },
+                "STEP_07": {
+                    "status": "pending",
+                    "name": "卷大纲审核",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计",
+                        "doc": "10_方法论/05_大纲结构设计.md"
+                    }
+                },
+                "STEP_08": {
+                    "status": "pending",
+                    "name": "卷大纲修改",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨 - 第一轮宏观",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_09": {
+                    "status": "pending",
+                    "name": "卷大纲终审",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计",
+                        "doc": "10_方法论/05_大纲结构设计.md"
+                    }
+                }
+            }
+        },
+        "PHASE_4_STAGE": {
+            "status": "pending",
+            "steps": {
+                "STEP_10": {
+                    "status": "pending",
+                    "name": "阶段大纲生成",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计 - 章纲写法",
+                        "doc": "10_方法论/05_大纲结构设计.md",
+                        "chapter_outline_format": "本章目标+出场人物+剧情走向+情绪落点+留钩子"
+                    }
+                },
+                "STEP_11": {
+                    "status": "pending",
+                    "name": "阶段大纲审核",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计",
+                        "doc": "10_方法论/05_大纲结构设计.md"
+                    }
+                },
+                "STEP_12": {
+                    "status": "pending",
+                    "name": "阶段大纲修改",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨 - 第一轮宏观",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_13": {
+                    "status": "pending",
+                    "name": "阶段大纲终审",
+                    "methodology_markers": {
+                        "stage": "阶段3: 大纲结构设计",
+                        "doc": "10_方法论/05_大纲结构设计.md"
+                    }
+                }
+            }
+        },
+        "PHASE_5_BODY": {
+            "status": "pending",
+            "steps": {
+                "STEP_14": {
+                    "status": "pending",
+                    "name": "正文创作",
+                    "methodology_markers": {
+                        "stage": "阶段4: 初稿写作",
+                        "doc": "10_方法论/06_初稿写作.md",
+                        "writing_rules": "先完成再完美/不回读修改/卡住跳过"
+                    }
+                },
+                "STEP_15": {
+                    "status": "pending",
+                    "name": "读者评论",
+                    "methodology_markers": {
+                        "stage": "阶段4: 初稿写作 - 读者视角",
+                        "doc": "10_方法论/06_初稿写作.md"
+                    }
+                },
+                "STEP_16": {
+                    "status": "pending",
+                    "name": "正文审核",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨 - 三轮修改",
+                        "doc": "10_方法论/07_修改打磨.md",
+                        "review_order": "宏观→中观→微观"
+                    }
+                },
+                "STEP_17": {
+                    "status": "pending",
+                    "name": "正文修改",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨 - 对应轮次",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_18": {
+                    "status": "pending",
+                    "name": "正文定稿",
+                    "methodology_markers": {
+                        "stage": "阶段5-6: 修改打磨+定稿发布",
+                        "doc": "10_方法论/07_修改打磨.md, 08_定稿发布.md"
+                    }
+                }
+            }
+        },
+        "PHASE_6_SUMMARY": {
+            "status": "pending",
+            "steps": {
+                "STEP_19": {
+                    "status": "pending",
+                    "name": "阶段汇总",
+                    "methodology_markers": {
+                        "stage": "阶段3-5: 伏笔回收+弧光完整性",
+                        "doc": "10_方法论/05_大纲结构设计.md, 04_人物塑造体系.md"
+                    }
+                },
+                "STEP_20": {
+                    "status": "pending",
+                    "name": "阶段汇总审核",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_21": {
+                    "status": "pending",
+                    "name": "阶段汇总微调",
+                    "methodology_markers": {
+                        "stage": "阶段5: 修改打磨",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_22": {
+                    "status": "pending",
+                    "name": "卷汇总",
+                    "methodology_markers": {
+                        "stage": "阶段5-6: 全局一致性",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_23": {
+                    "status": "pending",
+                    "name": "全文汇总",
+                    "methodology_markers": {
+                        "stage": "阶段5-6: 全局一致性",
+                        "doc": "10_方法论/07_修改打磨.md"
+                    }
+                },
+                "STEP_24": {
+                    "status": "pending",
+                    "name": "终审与发布",
+                    "methodology_markers": {
+                        "stage": "阶段6: 定稿发布",
+                        "doc": "10_方法论/08_定稿发布.md"
+                    }
+                }
+            }
+        },
+        "PHASE_7_CLOSE": {
+            "status": "pending",
+            "steps": {
+                "STEP_25": {
+                    "status": "pending",
+                    "name": "归档与发布",
+                    "methodology_markers": {
+                        "stage": "阶段6: 定稿发布 - 最终校对",
+                        "doc": "10_方法论/08_定稿发布.md",
+                        "final_checklist": "错别字/标点/格式/人名统一/章节完整"
+                    }
+                }
+            }
+        }
+    },
+    "chapters": ["ch001", "ch002", "ch003", "ch004", "ch005", "ch006", "ch007", "ch008", "ch009", "ch010", "ch011", "ch012", "ch013", "ch014", "ch015", "ch016", "ch017", "ch018", "ch019", "ch020", "ch021", "ch022", "ch023", "ch024", "ch025", "ch026", "ch027", "ch028", "ch029", "ch030", "ch031", "ch032", "ch033", "ch034", "ch035", "ch036", "ch037", "ch038", "ch039", "ch040", "ch041", "ch042", "ch043", "ch044", "ch045", "ch046", "ch047", "ch048", "ch049", "ch050"],
+    "agent_tasks": {},
+    "issues_found": {},
+    "issues_resolution_log": [],
+    "next_actions": "准备启动 PHASE_1_LAUNCH → STEP_01 灵感生成",
+    "methodology_notes": {
+        "description": "每个步骤的methodology_markers字段指向对应的方法论文档",
+        "screening_required_steps": ["STEP_01"],
+        "three_act_structure_steps": ["STEP_03", "STEP_05", "STEP_07", "STEP_09", "STEP_11", "STEP_13"],
+        "three_round_revision_steps": ["STEP_16", "STEP_17"]
+    }
+}

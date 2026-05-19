@@ -1,0 +1,13 @@
+{
+    "layer": "正文",
+    "project": "测试项目3",
+    "volume": 2,
+    "chapters_per_volume": 25,
+    "created_at": "2026-05-19",
+    "methodology_markers": {
+        "stage": "阶段4: 初稿写作",
+        "doc": "10_方法论/06_初稿写作.md",
+        "writing_rules": ["先完成再完美", "不回读修改", "卡住跳过用//TODO:"]
+    },
+    "entries": ["ch026", "ch027", "ch028", "ch029", "ch030", "ch031", "ch032", "ch033", "ch034", "ch035", "ch036", "ch037", "ch038", "ch039", "ch040", "ch041", "ch042", "ch043", "ch044", "ch045", "ch046", "ch047", "ch048", "ch049", "ch050"]
+}
