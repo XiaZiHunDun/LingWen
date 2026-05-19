@@ -15,7 +15,7 @@ scene_types:
       range: [0.5, 0.7]
     top_p: 0.9
     max_tokens: 2000
-   适用场景: "生成全局大纲、卷大纲、章节大纲"
+    description: "生成全局大纲、卷大纲、章节大纲"
 
   # 正文续写
   content_continuation:
@@ -25,7 +25,6 @@ scene_types:
       range: [0.6, 0.8]
     top_p: 0.9
     max_tokens: 4000
-    适用场景: "标准章节续写，保持连贯性"
 
   high_stakes_scene:
     description: "高潮场景"
@@ -34,7 +33,6 @@ scene_types:
       range: [0.65, 0.75]
     top_p: 0.9
     max_tokens: 4000
-    适用场景: "关键情节、转折点、高潮段落"
 
   dialogue_scene:
     description: "对话场景"
@@ -43,7 +41,6 @@ scene_types:
       range: [0.55, 0.75]
     top_p: 0.9
     max_tokens: 3000
-    适用场景: "以对话为主推进的章节"
 
   # 审核分析
   review_analysis:
@@ -53,7 +50,6 @@ scene_types:
       range: [0.3, 0.5]
     top_p: 0.85
     max_tokens: 2000
-    适用场景: "逻辑检查、一致性检查、角色分析"
 
   # 润色修改
   polish:
@@ -63,7 +59,6 @@ scene_types:
       range: [0.3, 0.5]
     top_p: 0.85
     max_tokens: 2000
-    适用场景: "语言润色、情感强化、句式优化"
 
   # 创意发散
   brainstorming:
@@ -73,7 +68,6 @@ scene_types:
       range: [0.8, 0.9]
     top_p: 0.95
     max_tokens: 2000
-    适用场景: "情节转折创意、角色灵感、场景设计"
 
   # 长文本生成
   long_content_generation:
