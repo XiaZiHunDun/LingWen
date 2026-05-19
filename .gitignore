@@ -15,6 +15,10 @@ __pycache__/
 .Python
 venv/
 .venv/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/*.pyo
 
 # Node
 node_modules/
