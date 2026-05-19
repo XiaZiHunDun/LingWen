@@ -66,7 +66,7 @@ class CharacterChecker(BaseChecker):
         self,
         chapter_content: str,
         chapter_num: int,
-        character_profiles: List[Dict[str, Any]]
+        context: Optional[Dict[str, Any]] = None
     ) -> List[Issue]:
         """
         检查角色一致性
@@ -74,11 +74,16 @@ class CharacterChecker(BaseChecker):
         Args:
             chapter_content: 章节内容
             chapter_num: 章节号
-            character_profiles: 角色设定列表
+            context: 上下文（包含 character_profiles）
 
         Returns:
             Issue列表
         """
+        # 兼容两种调用方式：直接传character_profiles或通过context
+        if context is not None and isinstance(context, dict):
+            character_profiles = context.get('character_profiles', [])
+        else:
+            character_profiles = context if isinstance(context, list) else []
         issues = []
 
         for profile_data in character_profiles:
