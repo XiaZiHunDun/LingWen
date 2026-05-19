@@ -3,6 +3,7 @@
 一致性引擎主类
 
 整合所有检查器，提供统一的一致性检查接口
+与记忆系统集成，通过 MemoryGateway 获取上下文
 """
 
 import time
@@ -32,20 +33,31 @@ class ConsistencyEngine:
     一致性引擎
 
     整合8个检查器，提供统一的一致性检查接口
+    支持与记忆系统集成，获取角色状态历史、相似情节等上下文
 
     Usage:
+        # Without memory integration
         engine = ConsistencyEngine()
         report = engine.check_chapter(
             chapter_num=25,
             chapter_content="章节内容...",
             context={"character_profiles": [...]}
         )
+
+        # With memory integration
+        engine = ConsistencyEngine(memory_gateway=gateway)
+        report = engine.check_chapter(
+            chapter_num=25,
+            chapter_content="章节内容..."
+        )
+        # Memory data (character states, similar plots) auto-injected into context
     """
 
     def __init__(
         self,
         config_dir: Optional[str] = None,
-        scope: CheckScope = CheckScope.ALL
+        scope: CheckScope = CheckScope.ALL,
+        memory_gateway: Optional[Any] = None
     ):
         """
         初始化一致性引擎
@@ -53,8 +65,10 @@ class ConsistencyEngine:
         Args:
             config_dir: 配置文件目录
             scope: 默认检查范围
+            memory_gateway: MemoryGateway 实例，用于获取记忆上下文
         """
         self.scope = scope
+        self.memory_gateway = memory_gateway
         self.checkers = self._init_checkers()
         self.report_generator = ReportGenerator()
 
@@ -70,6 +84,114 @@ class ConsistencyEngine:
             CheckerType.OUTLINE: OutlineChecker(),
             CheckerType.AI_GLOSS: AIGlossChecker(),
         }
+
+    def _enrich_context_from_memory(
+        self,
+        chapter_num: int,
+        chapter_content: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        从记忆系统获取上下文并 enriched context
+
+        获取以下信息：
+        1. 角色状态历史（从 CharacterTracker）
+        2. 相似情节段落（通过向量检索）
+
+        Args:
+            chapter_num: 章节号
+            chapter_content: 章节内容
+            context: 已有上下文
+
+        Returns:
+            丰富后的上下文字典
+        """
+        if self.memory_gateway is None:
+            return context
+
+        enriched = context.copy()
+
+        # 1. 获取角色状态历史
+        if "character_states" not in enriched:
+            enriched["character_states"] = {}
+
+        all_characters = self.memory_gateway.get_all_characters()
+        if all_characters:
+            enriched["character_states"] = all_characters
+
+        # 2. 获取待回收伏笔
+        if "pending_foreshadows" not in enriched:
+            pending_foreshadows = self.memory_gateway.get_pending_foreshadows()
+            enriched["pending_foreshadows"] = pending_foreshadows
+
+        # 3. 通过向量检索查找相似情节
+        if "similar_segments" not in enriched:
+            similar_segments = self._find_similar_plots(chapter_content)
+            enriched["similar_segments"] = similar_segments
+
+        # 4. 获取自动推送上下文（包含角色状态、伏笔、最近事件等）
+        auto_context = self.memory_gateway.auto_push_context(chapter_num)
+        if auto_context:
+            # 合并到 enriched 中，但不覆盖已有数据
+            for key, value in auto_context.items():
+                if key not in enriched or not enriched[key]:
+                    enriched[key] = value
+
+        return enriched
+
+    def _find_similar_plots(
+        self,
+        chapter_content: str,
+        top_k: int = 3
+    ) -> List[Dict[str, Any]]:
+        """
+        通过向量检索查找相似情节
+
+        Args:
+            chapter_content: 章节内容
+            top_k: 返回的最相似情节数量
+
+        Returns:
+            相似情节列表
+        """
+        if self.memory_gateway is None:
+            return []
+
+        try:
+            # 使用记忆系统的 query 功能进行向量检索
+            # 提取章节内容的摘要作为查询
+            query = self._extract_plot_query(chapter_content)
+            if not query:
+                return []
+
+            results = self.memory_gateway.query(
+                query=query,
+                scope="all",
+                top_k=top_k
+            )
+            return results
+        except Exception:
+            return []
+
+    def _extract_plot_query(self, content: str) -> str:
+        """
+        从章节内容中提取用于向量检索的查询字符串
+
+        提取策略：
+        1. 取前200字符作为主要情节描述
+        2. 去除语气词和描述性文字，保留核心事件
+
+        Args:
+            content: 章节内容
+
+        Returns:
+            查询字符串
+        """
+        # 简单策略：取前200字符，去除多余空白
+        query = content[:200].strip()
+        # 去除多余空白
+        query = " ".join(query.split())
+        return query
 
     def check_chapter(
         self,
@@ -98,12 +220,19 @@ class ConsistencyEngine:
         context = context or {}
         scope = scope or self.scope
 
+        # 如果有记忆网关，先从记忆系统获取上下文
+        if self.memory_gateway is not None:
+            context = self._enrich_context_from_memory(
+                chapter_num, chapter_content, context
+            )
+
         report = ConsistencyReport(
             chapter=chapter_num,
             check_scope=scope,
             metadata={
                 "content_length": len(chapter_content),
-                "checker_count": len(self.checkers)
+                "checker_count": len(self.checkers),
+                "memory_enriched": self.memory_gateway is not None
             }
         )
 
@@ -304,3 +433,41 @@ class ConsistencyEngine:
     def get_checker(self, checker_type: CheckerType) -> Any:
         """获取指定检查器"""
         return self.checkers.get(checker_type)
+
+    def get_character_state_from_memory(
+        self,
+        character: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        从记忆系统获取角色状态
+
+        Args:
+            character: 角色名称
+
+        Returns:
+            角色状态字典，如果角色不存在或无记忆系统则返回 None
+        """
+        if self.memory_gateway is None:
+            return None
+
+        return self.memory_gateway.get_character_state(character)
+
+    def query_similar_plots(
+        self,
+        query: str,
+        top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        查询相似情节
+
+        Args:
+            query: 查询字符串
+            top_k: 返回结果数量
+
+        Returns:
+            相似情节列表
+        """
+        if self.memory_gateway is None:
+            return []
+
+        return self.memory_gateway.query(query=query, scope="all", top_k=top_k)

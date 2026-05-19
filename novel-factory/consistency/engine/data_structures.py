@@ -136,10 +136,55 @@ class Issue:
 
 
 @dataclass
+class ForeshadowAlert:
+    """
+    伏笔预警提示
+
+    Attributes:
+        alert_type: 预警类型 (overdue, approaching, unresolved)
+        thread_id: 伏笔线索ID
+        content: 伏笔内容
+        introduced_chapter: 引入章节
+        expected_resolve_chapter: 预期解决章节
+        current_chapter: 当前章节
+        delay_chapters: 延迟章节数 (未到期则为0)
+        severity: 严重程度
+        message: 人类可读的预警消息
+        created_at: 创建时间
+    """
+    alert_type: str
+    thread_id: str
+    content: str
+    introduced_chapter: int
+    expected_resolve_chapter: int
+    current_chapter: int
+    delay_chapters: int = 0
+    severity: IssueSeverity = IssueSeverity.P2
+    message: str = ""
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "alert_type": self.alert_type,
+            "thread_id": self.thread_id,
+            "content": self.content,
+            "introduced_chapter": self.introduced_chapter,
+            "expected_resolve_chapter": self.expected_resolve_chapter,
+            "current_chapter": self.current_chapter,
+            "delay_chapters": self.delay_chapters,
+            "severity": self.severity.value,
+            "message": self.message,
+            "created_at": self.created_at.isoformat(),
+        }
+
+
+@dataclass
 class CheckerResult:
     """单个检查器的检查结果"""
     checker_type: CheckerType
     issues: List[Issue] = field(default_factory=list)
+    foreshadow_alerts: List[ForeshadowAlert] = field(default_factory=list)
     score: float = 100.0
     check_duration_ms: float = 0.0
 

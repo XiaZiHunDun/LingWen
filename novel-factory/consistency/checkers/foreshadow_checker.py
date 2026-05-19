@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from consistency.engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from consistency.engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation, ForeshadowAlert
 from consistency.checkers.base_checker import BaseChecker
 
 
@@ -190,6 +190,64 @@ class ForeshadowChecker(BaseChecker):
     def get_unresolved_count(self) -> int:
         """获取未回收伏笔数量"""
         return sum(1 for t in self._plot_threads.values() if t.status == "unresolved")
+
+    def _detect_overdue_foreshadow(self, current_chapter: int) -> List[ForeshadowAlert]:
+        """检测超期未回收的伏笔"""
+        alerts = []
+        for thread_id, thread in self._plot_threads.items():
+            if thread.status == "unresolved" and current_chapter > thread.expected_resolve_chapter:
+                delay = current_chapter - thread.expected_resolve_chapter
+                severity = IssueSeverity.P1 if delay >= 3 else IssueSeverity.P2
+                message = f"伏笔\"{thread.content}\"应在ch{thread.expected_resolve_chapter}回收，已延迟{delay}章仍未回收"
+                alerts.append(ForeshadowAlert(
+                    alert_type="overdue",
+                    thread_id=thread_id,
+                    content=thread.content,
+                    introduced_chapter=thread.introduced_chapter,
+                    expected_resolve_chapter=thread.expected_resolve_chapter,
+                    current_chapter=current_chapter,
+                    delay_chapters=delay,
+                    severity=severity,
+                    message=message
+                ))
+        return alerts
+
+    def _detect_approaching_deadline(self, current_chapter: int) -> List[ForeshadowAlert]:
+        """检测即将到期的伏笔（2章以内）"""
+        alerts = []
+        for thread_id, thread in self._plot_threads.items():
+            if thread.status == "unresolved":
+                distance = thread.expected_resolve_chapter - current_chapter
+                if 0 < distance <= 2:
+                    message = f"伏笔\"{thread.content}\"还剩{distance}章即将到期（ch{thread.expected_resolve_chapter}），请注意回收"
+                    alerts.append(ForeshadowAlert(
+                        alert_type="approaching",
+                        thread_id=thread_id,
+                        content=thread.content,
+                        introduced_chapter=thread.introduced_chapter,
+                        expected_resolve_chapter=thread.expected_resolve_chapter,
+                        current_chapter=current_chapter,
+                        delay_chapters=0,
+                        severity=IssueSeverity.P3,
+                        message=message
+                    ))
+        return alerts
+
+    def get_foreshadow_alerts(self, current_chapter: int) -> List[ForeshadowAlert]:
+        """获取当前章节的所有伏笔预警"""
+        alerts = []
+        alerts.extend(self._detect_overdue_foreshadow(current_chapter))
+        alerts.extend(self._detect_approaching_deadline(current_chapter))
+        return alerts
+
+    def get_overdue_count(self) -> int:
+        """获取超期伏笔数量"""
+        return sum(1 for t in self._plot_threads.values()
+                   if t.status == "unresolved" and False)  # Placeholder, will be updated per-chapter
+
+    def get_overdue_count_at(self, current_chapter: int) -> int:
+        """获取当前超期伏笔数量"""
+        return len(self._detect_overdue_foreshadow(current_chapter))
 
     def check_realtime(self, text: str, **kwargs) -> List[Issue]:
         """实时检查（简化版）"""
