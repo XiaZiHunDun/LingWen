@@ -350,6 +350,47 @@ class TemplateRecommender:
 
         return "\n".join(lines)
 
+    def get_popular_templates(self, limit: int = 10) -> List[TemplateMetadata]:
+        """
+        获取最受欢迎的模板（按综合评分排序）
+
+        综合评分公式: score = use_count * success_rate * (avg_score / 10)
+
+        Args:
+            limit: 返回前N个，默认为10
+
+        Returns:
+            按热度综合评分降序排列的模板列表（不含use_count=0的模板）
+        """
+        if not self.template_stats:
+            return []
+
+        scored_templates = []
+        for template_id, stats in self.template_stats.items():
+            use_count = stats.get('use_count', 0)
+            # 过滤掉未使用的模板
+            if use_count == 0:
+                continue
+
+            success_rate = stats.get('success_rate', 0.0)
+            avg_score = stats.get('avg_score', 0.0)
+
+            # 计算综合评分
+            score = use_count * success_rate * (avg_score / 10)
+            scored_templates.append((template_id, score))
+
+        # 按分数降序排列
+        scored_templates.sort(key=lambda x: x[1], reverse=True)
+
+        # 获取前limit个模板元数据
+        results = []
+        for template_id, score in scored_templates[:limit]:
+            template = self.assembler.get_template(template_id)
+            if template:
+                results.append(template)
+
+        return results
+
 
 def main():
     """命令行入口"""
