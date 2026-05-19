@@ -21,8 +21,8 @@ class QdrantClientWrapper:
     - relationships: 关系向量
     """
 
-    COLLECTIONS_CONFIG_PATH = "novel-factory/memory_system/config/collections_schema.yaml"
-    MEMORY_CONFIG_PATH = "novel-factory/memory_system/config/memory_config.yaml"
+    COLLECTIONS_CONFIG_PATH = "config/collections_schema.yaml"
+    MEMORY_CONFIG_PATH = "config/memory_config.yaml"
 
     # Distance 映射
     DISTANCE_MAP = {

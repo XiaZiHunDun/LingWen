@@ -17,7 +17,7 @@ class Embedder:
     配置从 memory_config.yaml 的 embedding 部分读取。
     """
 
-    MEMORY_CONFIG_PATH = "novel-factory/memory_system/config/memory_config.yaml"
+    MEMORY_CONFIG_PATH = "config/memory_config.yaml"
 
     def __init__(self):
         """初始化嵌入模型

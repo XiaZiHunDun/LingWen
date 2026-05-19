@@ -29,7 +29,7 @@ def load_config() -> dict:
         RuntimeError: 配置无效
     """
     try:
-        config = load_yaml("novel-factory/memory_system/config/memory_config.yaml")
+        config = load_yaml("config/memory_config.yaml")
     except FileNotFoundError as e:
         raise RuntimeError(f"Configuration file not found: {e}")
     except Exception as e:

@@ -24,7 +24,7 @@ class QueryEngine:
     使用 memory_config.yaml 中的 retrieval.default_top_k 和 retrieval.hybrid_alpha 配置。
     """
 
-    MEMORY_CONFIG_PATH = "novel-factory/memory_system/config/memory_config.yaml"
+    MEMORY_CONFIG_PATH = "config/memory_config.yaml"
 
     def __init__(
         self,

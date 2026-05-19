@@ -7,7 +7,7 @@ def load_yaml(file_path: str) -> dict:
     """加载 YAML 配置文件
 
     Args:
-        file_path: 配置文件路径（相对于项目根目录）
+        file_path: 配置文件路径（相对于 memory_system/ 目录）
 
     Returns:
         解析后的配置字典
@@ -17,9 +17,9 @@ def load_yaml(file_path: str) -> dict:
         RuntimeError: 配置加载失败
     """
     try:
-        # 获取项目根目录
-        project_root = Path(__file__).parent.parent.parent
-        full_path = project_root / file_path
+        # 获取 memory_system 目录作为基准
+        module_root = Path(__file__).parent.parent
+        full_path = module_root / file_path
 
         with open(full_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
