@@ -19,16 +19,21 @@ from version_manager import VersionManager, TemplateVersion, VersionDiff
 
 @pytest.fixture
 def temp_config_dir(tmp_path):
-    """创建临时配置目录"""
-    config_dir = tmp_path / "prompt_config"
-    config_dir.mkdir(parents=True)
+    """创建临时配置目录结构：
+    tmp_path/prompt_config/config/prompts/
+        01_大纲生成/
+            全文大纲_CARE.md
+        00_模板索引.yaml
+    """
+    prompts_dir = tmp_path / "prompt_config" / "config" / "prompts"
+    prompts_dir.mkdir(parents=True)
 
-    # 创建基础目录结构
-    (config_dir / "01_大纲生成").mkdir(parents=True)
-    (config_dir / "02_正文续写").mkdir(parents=True)
+    # 创建模板分类目录
+    (prompts_dir / "01_大纲生成").mkdir(parents=True)
+    (prompts_dir / "02_正文续写").mkdir(parents=True)
 
     # 创建测试模板文件
-    template_file = config_dir / "01_大纲生成" / "全文大纲_CARE.md"
+    template_file = prompts_dir / "01_大纲生成" / "全文大纲_CARE.md"
     template_file.write_text("# 全文大纲 v1.0\n模板内容", encoding='utf-8')
 
     # 创建模板索引
@@ -47,16 +52,15 @@ templates:
     care_elements:
       result_metrics: [S1, S2, S6, S7]
 """
-    (config_dir / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
+    (prompts_dir / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
 
-    return config_dir
+    return prompts_dir
 
 
 @pytest.fixture
 def version_manager(temp_config_dir):
-    """创建VersionManager实例 - 传入config_dir的parent，因为模板文件在那里"""
-    # VersionManager 期望 config_dir = "config/prompts" 的 parent
-    return VersionManager(str(temp_config_dir / "config" / "prompts"))
+    """创建VersionManager实例 - 传入prompts目录"""
+    return VersionManager(str(temp_config_dir))
 
 
 # ==================== 测试版本管理器初始化 ====================
@@ -67,8 +71,17 @@ class TestVersionManagerInit:
         assert version_manager.versions_dir.exists()
         assert version_manager.versions_dir.is_dir()
 
-    def test_history_file_created(self, version_manager):
-        """测试历史文件存在"""
+    def test_history_file_created_after_first_version(self, version_manager, temp_config_dir):
+        """测试历史文件在创建第一个版本后创建"""
+        template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
+
+        # Create first version - this triggers _save_history which creates the history file
+        version_manager.create_version(
+            template_id="outline_full_novel",
+            changelog="初始版本",
+            template_dir=template_file
+        )
+
         assert version_manager.history_file.exists()
 
 
@@ -157,9 +170,10 @@ class TestVersionHistory:
 
     def test_get_history_sorted_by_date(self, version_manager, temp_config_dir):
         """测试历史按日期排序"""
+        import time
         template_file = temp_config_dir / "01_大纲生成" / "全文大纲_CARE.md"
 
-        # 创建多个版本
+        # 创建多个版本，每个间隔确保不同的时间戳
         for i in range(3):
             template_file.write_text(f"# 版本 {i+1}\n内容", encoding='utf-8')
             version_manager.create_version(
@@ -167,10 +181,11 @@ class TestVersionHistory:
                 changelog=f"版本 {i+1}",
                 template_dir=template_file
             )
+            time.sleep(0.1)  # 确保不同的时间戳
 
         history = version_manager.get_history("outline_full_novel")
 
-        # 最新版本在前
+        # 最新版本在前（按 created_at 倒序）
         assert history[0].version == "v1.0.2"
         assert history[1].version == "v1.0.1"
         assert history[2].version == "v1.0.0"

@@ -1,17 +1,21 @@
 """批量嵌入章节脚本
 
 将 03_内容仓库/04_正文/ 目录下的章节文件向量化并存储到 Qdrant。
-支持指定章节范围（ch001-ch050），显示进度信息。
+支持指定章节范围（ch001-ch050），显示进度信息，支持断点续传。
 
 Usage:
     python -m memory_system.scripts.embed_chapters                    # 嵌入所有章节
     python -m memory_system.scripts.embed_chapters --start 1 --end 50  # 只嵌入前50章
     python -m memory_system.scripts.embed_chapters --dry-run          # 仅预览不执行
+    python -m memory_system.scripts.embed_chapters --resume          # 断点续传（跳过已处理的章节）
+    python -m memory_system.scripts.embed_chapters --max-retries 3    # 失败重试次数
 """
 import argparse
 import re
 import sys
+import time
 from pathlib import Path
+from datetime import datetime, timedelta
 
 from memory_system.vector.embedder import Embedder
 from memory_system.vector.qdrant_client import QdrantClientWrapper
@@ -128,11 +132,57 @@ def load_chapters(start: int | None = None, end: int | None = None) -> list[tupl
     return sorted(chapters, key=lambda x: x[0])
 
 
+def get_existing_point_ids(qdrant: QdrantClientWrapper, collection_name: str) -> set[str]:
+    """获取集合中已存在的所有 point_id
+
+    Args:
+        qdrant: Qdrant 客户端实例
+        collection_name: 集合名称
+
+    Returns:
+        已存在的 point_id 集合
+    """
+    existing_ids = set()
+
+    # 使用 scroll API 遍历所有点
+    try:
+        results, _ = qdrant.client.scroll(
+            collection_name=collection_name,
+            limit=1000,
+            with_payload=False,
+            with_vectors=False,
+        )
+
+        for point in results:
+            existing_ids.add(point.id)
+
+        # 如果超过1000条，继续获取下一页
+        while len(results) == 1000:
+            results, _ = qdrant.client.scroll(
+                collection_name=collection_name,
+                limit=1000,
+                offset=len(results),
+                with_payload=False,
+                with_vectors=False,
+            )
+            for point in results:
+                existing_ids.add(point.id)
+
+    except Exception:
+        # 集合不存在或为空时返回空集合
+        pass
+
+    return existing_ids
+
+
 def embed_chapters(
     chapters: list[tuple[int, str, str]],
     embedder: Embedder,
     qdrant: QdrantClientWrapper,
     dry_run: bool = False,
+    resume: bool = False,
+    batch_size: int = 20,
+    max_retries: int = 3,
 ) -> dict:
     """批量嵌入章节到 Qdrant
 
@@ -141,19 +191,52 @@ def embed_chapters(
         embedder: 嵌入模型实例
         qdrant: Qdrant 客户端实例
         dry_run: True 则只预览不执行
+        resume: True 则跳过已存在的向量（断点续传）
+        batch_size: 每批嵌入的片段数量
+        max_retries: 单章失败最大重试次数
 
     Returns:
-        {"total_chapters": int, "total_segments": int, "embeddings_generated": int}
+        {
+            "total_chapters": int,
+            "total_segments": int,
+            "embeddings_generated": int,
+            "success_count": int,
+            "fail_count": int,
+            "skipped_count": int,
+            "elapsed_time": float,
+        }
     """
     results = {
         "total_chapters": len(chapters),
         "total_segments": 0,
         "embeddings_generated": 0,
+        "success_count": 0,
+        "fail_count": 0,
+        "skipped_count": 0,
+        "elapsed_time": 0.0,
     }
 
-    all_points = []
+    start_time = time.time()
 
-    for chapter_num, filename, content in chapters:
+    # 断点续传：获取已存在的 point_id
+    existing_point_ids = set()
+    if resume and not dry_run:
+        print("[Resume] Checking existing points in Qdrant...")
+        existing_point_ids = get_existing_point_ids(qdrant, COLLECTION_NAME)
+        print(f"[Resume] Found {len(existing_point_ids)} existing points")
+
+    total_chapters = len(chapters)
+    for idx, (chapter_num, filename, content) in enumerate(chapters):
+        # 进度显示
+        elapsed = time.time() - start_time
+        avg_time = elapsed / max(idx, 1)
+        remaining = avg_time * (total_chapters - idx - 1)
+        remaining_str = str(timedelta(seconds=int(remaining))) if remaining > 0 else "--:--"
+
+        print(f"\n[{idx + 1}/{total_chapters}] Processing {filename} | "
+              f"Elapsed: {timedelta(seconds=int(elapsed))} | "
+              f"ETA: {remaining_str}")
+
         segments = split_into_segments(content)
         results["total_segments"] += len(segments)
 
@@ -161,30 +244,73 @@ def embed_chapters(
             print(f"  [DRY-RUN] {filename}: {len(segments)} segments")
             continue
 
-        # 批量嵌入（每批 20 条）
-        batch_size = 20
-        for i in range(0, len(segments), batch_size):
-            batch = segments[i:i + batch_size]
-            embeddings = embedder.embed_texts(batch)
-            results["embeddings_generated"] += len(embeddings)
+        # 断点续传：检查本章是否已处理（通过 segment 0 判断）
+        chapter_processed = True
+        for j in range(len(segments)):
+            point_id = f"ch{chapter_num:03d}_seg{j:03d}"
+            if point_id not in existing_point_ids:
+                chapter_processed = False
+                break
 
-            for j, (segment, embedding) in enumerate(zip(batch, embeddings)):
-                point_id = f"ch{chapter_num:03d}_seg{j:03d}"
-                payload = {
-                    "chapter": chapter_num,
-                    "filename": filename,
-                    "segment_index": j,
-                    "text": segment[:200],  # 只存储前200字符作为预览
-                }
-                all_points.append({
-                    "id": point_id,
-                    "vector": embedding,
-                    "payload": payload,
-                })
+        if resume and chapter_processed:
+            print(f"  [SKIP] Chapter {chapter_num} already processed, skipping")
+            results["skipped_count"] += 1
+            continue
 
-    if all_points and not dry_run:
-        qdrant.upsert(COLLECTION_NAME, all_points)
+        # 重试机制
+        retry_count = 0
+        chapter_success = False
+        points_to_insert = []
 
+        while retry_count < max_retries and not chapter_success:
+            try:
+                # 批量嵌入（每批 batch_size 条）
+                for i in range(0, len(segments), batch_size):
+                    batch = segments[i:i + batch_size]
+                    embeddings = embedder.embed_texts(batch)
+                    results["embeddings_generated"] += len(embeddings)
+
+                    for j, (segment, embedding) in enumerate(zip(batch, embeddings)):
+                        seg_index = i + j
+                        point_id = f"ch{chapter_num:03d}_seg{seg_index:03d}"
+
+                        # 断点续传：跳过已存在的点
+                        if resume and point_id in existing_point_ids:
+                            continue
+
+                        payload = {
+                            "chapter": chapter_num,
+                            "filename": filename,
+                            "segment_index": seg_index,
+                            "text": segment[:200],  # 只存储前200字符作为预览
+                        }
+                        points_to_insert.append({
+                            "id": point_id,
+                            "vector": embedding,
+                            "payload": payload,
+                        })
+
+                # 每批嵌入后立即插入（减少内存占用）
+                if points_to_insert:
+                    qdrant.upsert(COLLECTION_NAME, points_to_insert)
+                    print(f"  [INSERT] {len(points_to_insert)} points inserted to Qdrant")
+
+                chapter_success = True
+                results["success_count"] += 1
+                print(f"  [OK] Chapter {chapter_num} completed ({len(segments)} segments)")
+
+            except Exception as e:
+                retry_count += 1
+                print(f"  [ERROR] Chapter {chapter_num} failed (attempt {retry_count}/{max_retries}): {e}")
+
+                if retry_count >= max_retries:
+                    results["fail_count"] += 1
+                    print(f"  [FATAL] Chapter {chapter_num} failed after {max_retries} attempts, continuing to next chapter")
+                else:
+                    # 重试前等待一下
+                    time.sleep(2 ** retry_count)
+
+    results["elapsed_time"] = time.time() - start_time
     return results
 
 
@@ -206,8 +332,16 @@ def main():
         help="仅预览不执行（显示将处理多少章节和片段）"
     )
     parser.add_argument(
+        "--resume", action="store_true",
+        help="断点续传模式，跳过已处理的章节"
+    )
+    parser.add_argument(
         "--batch-size", type=int, default=20,
         help="每批嵌入的片段数量（默认 20）"
+    )
+    parser.add_argument(
+        "--max-retries", type=int, default=3,
+        help="单章失败最大重试次数（默认 3）"
     )
     parser.add_argument(
         "--create-collection", action="store_true",
@@ -216,9 +350,15 @@ def main():
 
     args = parser.parse_args()
 
+    print(f"=" * 60)
+    print(f"批量嵌入章节到 Qdrant")
+    print(f"=" * 60)
     print(f"Loading chapters from {CHAPTERS_DIR}")
     if args.start is not None or args.end is not None:
         print(f"  Range: ch{args.start or 1:03d} - ch{args.end or 'end':03d}")
+
+    if args.resume:
+        print(f"  Resume mode: ON (will skip existing points)")
 
     try:
         chapters = load_chapters(start=args.start, end=args.end)
@@ -251,22 +391,40 @@ def main():
                 print(f"Collection '{COLLECTION_NAME}' already exists.")
 
     # 执行嵌入
-    results = embed_chapters(chapters, embedder, qdrant, dry_run=args.dry_run)
+    results = embed_chapters(
+        chapters,
+        embedder,
+        qdrant,
+        dry_run=args.dry_run,
+        resume=args.resume,
+        batch_size=args.batch_size,
+        max_retries=args.max_retries,
+    )
 
-    # 显示结果
+    # 显示结果和性能统计
+    print(f"\n{'=' * 60}")
     if args.dry_run:
-        print(f"\n[Dry-run] Would process:")
+        print(f"[Dry-run] Would process:")
         print(f"  - {results['total_chapters']} chapters")
         print(f"  - {results['total_segments']} segments")
     else:
-        print(f"\nCompleted:")
-        print(f"  - {results['total_chapters']} chapters processed")
+        print(f"Completed:")
+        print(f"  - {results['total_chapters']} chapters found")
+        print(f"  - {results['success_count']} succeeded")
+        print(f"  - {results['fail_count']} failed")
+        print(f"  - {results['skipped_count']} skipped (resume mode)")
         print(f"  - {results['total_segments']} segments created")
-        print(f"  - {results['embeddings_generated']} embeddings stored to '{COLLECTION_NAME}'")
+        print(f"  - {results['embeddings_generated']} embeddings stored")
+        print(f"\nPerformance Statistics:")
+        print(f"  - Total time: {timedelta(seconds=int(results['elapsed_time']))}")
+        if results['success_count'] > 0:
+            avg_time = results['elapsed_time'] / results['success_count']
+            print(f"  - Avg time per chapter: {avg_time:.2f}s")
 
         # 关闭连接
         qdrant.close()
 
+    print(f"{'=' * 60}")
     return 0
 
 

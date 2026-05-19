@@ -47,17 +47,13 @@ class VersionManager:
     """模板版本管理器"""
 
     # 版本目录名称
-    VERSIONS_DIR = ".template_versions"
+    VERSIONS_DIR = ".versions"
     HISTORY_FILE = "version_history.yaml"
 
     def __init__(self, config_dir: str = "config/prompts"):
-        # 允许传入不同的路径格式，尝试找到正确的根目录
         config_path = Path(config_dir)
-        # 如果传入的是具体配置文件，跳到父目录
-        if config_path.suffix in ['.yaml', '.yml', '.py']:
-            config_path = config_path.parent
-        # 如果是 config/prompts 这样的结构，取 parent
-        self.config_dir = config_path.parent if config_path.name == 'prompts' else config_path
+        # If config/prompts, use it directly as config_dir, not parent
+        self.config_dir = config_path if config_path.name == 'prompts' else config_path.parent
         self.versions_dir = self.config_dir / self.VERSIONS_DIR
         self.history_file = self.versions_dir / self.HISTORY_FILE
         self._ensure_directories()
@@ -108,6 +104,10 @@ class VersionManager:
         # 小版本号递增
         return f"v{major}.{minor}.{patch + 1}"
 
+    def _generate_timestamp(self) -> str:
+        """生成带微秒的时间戳"""
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+
     def create_version(
         self,
         template_id: str,
@@ -137,7 +137,7 @@ class VersionManager:
 
         # 生成版本号
         version = self._get_next_version(template_id)
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = self._generate_timestamp()
 
         # 备份文件
         backup_dir = self.versions_dir / template_id
@@ -447,20 +447,101 @@ def main():
 
     parser = argparse.ArgumentParser(description="模板版本管理器")
     parser.add_argument("--config", "-c", default="config/prompts", help="配置目录")
-    parser.add_argument("--list", "-l", action="store_true", help="列出所有模板历史")
-    parser.add_argument("--history", "-H", metavar="TEMPLATE_ID", help="查看模板历史")
-    parser.add_argument("--compare", "-C", nargs=3, metavar=("TEMPLATE_ID", "V1", "V2"),
-                        help="比较两个版本")
-    parser.add_argument("--rollback", "-R", nargs=2, metavar=("TEMPLATE_ID", "VERSION"),
-                        help="回滚到指定版本")
-    parser.add_argument("--create", "-C", dest="create_version", nargs=2,
-                        metavar=("TEMPLATE_ID", "CHANGELOG"), help="创建新版本")
+
+    subparsers = parser.add_subparsers(dest="command", help="子命令")
+
+    # version create - 创建新版本
+    create_parser = subparsers.add_parser("create", help="创建新版本")
+    create_parser.add_argument("template_id", help="模板ID")
+    create_parser.add_argument("changelog", help="变更说明")
+
+    # version history - 查看历史
+    history_parser = subparsers.add_parser("history", help="查看模板历史")
+    history_parser.add_argument("template_id", nargs="?", help="模板ID（不提供则列出所有）")
+
+    # version compare - 比较版本
+    compare_parser = subparsers.add_parser("compare", help="比较两个版本")
+    compare_parser.add_argument("template_id", help="模板ID")
+    compare_parser.add_argument("version_from", help="起始版本")
+    compare_parser.add_argument("version_to", nargs="?", help="目标版本（默认为最新）")
+
+    # version rollback - 回滚版本
+    rollback_parser = subparsers.add_parser("rollback", help="回滚到指定版本")
+    rollback_parser.add_argument("template_id", help="模板ID")
+    rollback_parser.add_argument("target_version", help="目标版本")
+
+    # version export - 导出版本
+    export_parser = subparsers.add_parser("export", help="导出版本")
+    export_parser.add_argument("template_id", help="模板ID")
+    export_parser.add_argument("version", help="版本号")
+    export_parser.add_argument("output_dir", help="输出目录")
+
+    # version list - 列出所有模板历史
+    subparsers.add_parser("list", help="列出所有模板历史")
 
     args = parser.parse_args()
 
     vm = VersionManager(args.config)
 
-    if args.list:
+    if args.command == "create":
+        version = vm.create_version(args.template_id, args.changelog)
+        print(f"创建版本: {version.version}")
+        print(f"模板: {version.template_id}")
+        print(f"变更: {version.changelog}")
+        return
+
+    if args.command == "history":
+        if args.template_id:
+            history = vm.get_history(args.template_id)
+            print(f"\n模板 {args.template_id} 版本历史:\n")
+            for v in history:
+                print(f"  {v.version}")
+                print(f"    创建: {v.created_at}")
+                print(f"    变更: {v.changelog}")
+                print(f"    状态: {v.status}")
+                print()
+        else:
+            all_histories = vm.get_all_templates_with_history()
+            print("\n所有模板版本历史:\n")
+            for tid, versions in all_histories.items():
+                print(f"{tid}: {len(versions)} 个版本")
+                for v in versions[:3]:
+                    print(f"  - {v.version} ({v.created_at})")
+                    if v.changelog:
+                        print(f"    {v.changelog[:50]}...")
+        return
+
+    if args.command == "compare":
+        version_to = args.version_to
+        diff = vm.compare_versions(args.template_id, args.version_from, version_to)
+        print(f"\n版本对比: {args.version_from} -> {diff.version_to}\n")
+        print(f"变更字段: {', '.join(diff.changed_fields) if diff.changed_fields else '无'}")
+        if diff.diff_content:
+            print("\n差异内容:\n")
+            print(diff.diff_content)
+        return
+
+    if args.command == "rollback":
+        success = vm.rollback(args.template_id, args.target_version)
+        if success:
+            print(f"成功回滚到 {args.target_version}")
+        else:
+            print(f"回滚失败")
+        return
+
+    if args.command == "export":
+        output_path = vm.export_version(
+            args.template_id,
+            args.version,
+            Path(args.output_dir)
+        )
+        if output_path:
+            print(f"导出版本到: {output_path}")
+        else:
+            print("导出版本失败")
+        return
+
+    if args.command == "list":
         all_histories = vm.get_all_templates_with_history()
         print("\n所有模板版本历史:\n")
         for tid, versions in all_histories.items():
@@ -471,24 +552,8 @@ def main():
                     print(f"    {v.changelog[:50]}...")
         return
 
-    if args.history:
-        history = vm.get_history(args.history)
-        print(f"\n模板 {args.history} 版本历史:\n")
-        for v in history:
-            print(f"  {v.version}")
-            print(f"    创建: {v.created_at}")
-            print(f"    变更: {v.changelog}")
-            print(f"    状态: {v.status}")
-            print()
-
-    if args.compare:
-        template_id, v1, v2 = args.compare
-        diff = vm.compare_versions(template_id, v1, v2)
-        print(f"\n版本对比: {v1} -> {v2}\n")
-        print(f"变更字段: {', '.join(diff.changed_fields) if diff.changed_fields else '无'}")
-        if diff.diff_content:
-            print("\n差异内容:\n")
-            print(diff.diff_content)
+    # No command specified, show help
+    parser.print_help()
 
 
 if __name__ == "__main__":

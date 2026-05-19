@@ -18,6 +18,15 @@ templates:
       context_required: [world_setting, project_info, milestones]
       action_output: outline
       result_metrics: [S1, S2, S6, S7]
+    version_info:
+      current_version: v1.0.0
+      created_date: 2026-05-19
+      modified_date: 2026-05-19
+      history:
+        - version: v1.0.0
+          date: 2026-05-19
+          changes: [初始版本]
+    is_locked: false
     use_count: 0
     success_rate: 0.0
     avg_score: 0.0

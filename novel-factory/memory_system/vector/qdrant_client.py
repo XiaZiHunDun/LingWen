@@ -3,13 +3,75 @@
 封装 Qdrant 向量数据库连接和操作接口。
 支持 memory_system/config/memory_config.yaml 中的配置。
 支持 memory_system/config/collections_schema.yaml 中定义的集合。
+
+优化特性:
+- upsert_batch: 大批量插入分批提交
+- LRU 缓存: search 操作结果缓存
+- batch_search: 批量查询多个向量
 """
+from __future__ import annotations
+
+import hashlib
+import threading
+from collections import OrderedDict
 from typing import Any, Optional
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, Filter, PointStruct, FieldCondition, MatchValue, PointIdsList
 
 from memory_system.config import load_yaml
+
+
+class _LRUCache:
+    """简单的 LRU 缓存实现，线程安全"""
+
+    def __init__(self, max_size: int = 1000):
+        self._max_size = max_size
+        self._cache: OrderedDict[str, Any] = OrderedDict()
+        self._lock = threading.RLock()
+
+    def get(self, key: str) -> Optional[Any]:
+        """获取缓存值，如果存在则移动到末尾"""
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+                return self._cache[key]
+            return None
+
+    def put(self, key: str, value: Any) -> None:
+        """存入缓存，超限时移除最旧的项"""
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            else:
+                if len(self._cache) >= self._max_size:
+                    self._cache.popitem(last=False)
+            self._cache[key] = value
+
+    def clear(self) -> None:
+        """清空所有缓存"""
+        with self._lock:
+            self._cache.clear()
+
+    def clear_collection(self, collection_name: str) -> None:
+        """清除指定集合相关的所有缓存条目"""
+        with self._lock:
+            keys_to_remove = [k for k in self._cache.keys() if k.startswith(f"{collection_name}:")]
+            for key in keys_to_remove:
+                del self._cache[key]
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._cache)
+
+
+def _make_filter_hash(filter_obj: Optional[Filter]) -> str:
+    """生成过滤器的哈希值用于缓存键"""
+    if filter_obj is None:
+        return "no_filter"
+    # 将 filter 对象转换为字符串后哈希
+    filter_str = str(filter_obj)
+    return hashlib.md5(filter_str.encode()).hexdigest()[:12]
 
 
 class QdrantClientWrapper:
@@ -31,10 +93,12 @@ class QdrantClientWrapper:
         "Dot": Distance.DOT,
     }
 
-    def __init__(self):
+    def __init__(self, cache_size: int = 1000, default_batch_size: int = 100):
         """初始化 Qdrant 客户端
 
-        从配置文件加载 Qdrant 连接参数和集合定义。
+        Args:
+            cache_size: LRU 缓存大小，默认 1000
+            default_batch_size: 默认批量操作大小，默认 100
         """
         # 加载配置
         try:
@@ -67,6 +131,11 @@ class QdrantClientWrapper:
             port=self.port,
             grpc_port=self.grpc_port,
         )
+
+        # 缓存配置
+        self._cache_size = cache_size
+        self._default_batch_size = default_batch_size
+        self._search_cache = _LRUCache(max_size=cache_size)
 
     @property
     def client(self) -> QdrantClient:
@@ -135,6 +204,53 @@ class QdrantClientWrapper:
 
         self._client.upsert(collection_name=collection_name, points=qdrant_points)
 
+        # 清除该集合的缓存
+        self._search_cache.clear_collection(collection_name)
+
+    def upsert_batch(self, collection_name: str, points: list[dict], batch_size: Optional[int] = None) -> None:
+        """批量 upsert 向量点，分批提交
+
+        Args:
+            collection_name: 集合名称
+            points: 点列表，每个点包含 id, vector, payload
+            batch_size: 每批大小，默认使用 default_batch_size
+
+        Raises:
+            ValueError: 集合不存在或向量维度不匹配
+        """
+        self._validate_collection(collection_name)
+
+        if batch_size is None:
+            batch_size = self._default_batch_size
+
+        # 验证向量维度
+        for point in points:
+            if len(point["vector"]) != self.dimension:
+                raise ValueError(
+                    f"Vector dimension mismatch: expected {self.dimension}, got {len(point['vector'])}"
+                )
+
+        # 转换 points 格式
+        from qdrant_client.models import PointStruct
+
+        qdrant_points = [
+            PointStruct(
+                id=point["id"],
+                vector=point["vector"],
+                payload=point.get("payload", {}),
+            )
+            for point in points
+        ]
+
+        # 分批提交
+        total = len(qdrant_points)
+        for i in range(0, total, batch_size):
+            batch = qdrant_points[i:i + batch_size]
+            self._client.upsert(collection_name=collection_name, points=batch)
+
+        # 清除该集合的缓存
+        self._search_cache.clear_collection(collection_name)
+
     def search(
         self,
         collection_name: str,
@@ -166,6 +282,15 @@ class QdrantClientWrapper:
         if top_k is None:
             top_k = self.default_top_k
 
+        # 构建缓存键
+        filter_hash = _make_filter_hash(query_filter)
+        cache_key = f"{collection_name}:{tuple(query_vector)}:{top_k}:{filter_hash}"
+
+        # 检查缓存
+        cached_result = self._search_cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result
+
         search_params = {"limit": top_k}
         if query_filter is not None:
             search_params["query_filter"] = query_filter
@@ -177,7 +302,7 @@ class QdrantClientWrapper:
         )
 
         # 转换结果
-        return [
+        converted_results = [
             {
                 "id": hit.id if hasattr(hit, "id") else hit["id"],
                 "score": hit.score if hasattr(hit, "score") else hit["score"],
@@ -185,6 +310,79 @@ class QdrantClientWrapper:
             }
             for hit in results
         ]
+
+        # 存入缓存
+        self._search_cache.put(cache_key, converted_results)
+
+        return converted_results
+
+    def batch_search(
+        self,
+        collection_name: str,
+        queries: list[dict],
+        top_k: Optional[int] = None,
+    ) -> list[list[dict]]:
+        """批量搜索多个向量
+
+        Args:
+            collection_name: 集合名称
+            queries: 查询列表，每个查询包含 query_vector 和可选的 filter
+            top_k: 返回数量，默认使用 default_top_k
+
+        Returns:
+            每组查询的搜索结果列表
+        """
+        self._validate_collection(collection_name)
+
+        if top_k is None:
+            top_k = self.default_top_k
+
+        results: list[list[dict]] = []
+
+        for query in queries:
+            query_vector = query["query_vector"]
+            query_filter = query.get("filter")
+
+            if len(query_vector) != self.dimension:
+                raise ValueError(
+                    f"Query vector dimension mismatch: expected {self.dimension}, got {len(query_vector)}"
+                )
+
+            # 构建缓存键
+            filter_hash = _make_filter_hash(query_filter)
+            cache_key = f"{collection_name}:{tuple(query_vector)}:{top_k}:{filter_hash}"
+
+            # 检查缓存
+            cached_result = self._search_cache.get(cache_key)
+            if cached_result is not None:
+                results.append(cached_result)
+                continue
+
+            search_params = {"limit": top_k}
+            if query_filter is not None:
+                search_params["query_filter"] = query_filter
+
+            search_results = self._client.search(
+                collection_name=collection_name,
+                query_vector=query_vector,
+                **search_params,
+            )
+
+            # 转换结果
+            converted_results = [
+                {
+                    "id": hit.id if hasattr(hit, "id") else hit["id"],
+                    "score": hit.score if hasattr(hit, "score") else hit["score"],
+                    "payload": hit.payload if hasattr(hit, "payload") else hit.get("payload", {}),
+                }
+                for hit in search_results
+            ]
+
+            # 存入缓存
+            self._search_cache.put(cache_key, converted_results)
+            results.append(converted_results)
+
+        return results
 
     def search_with_filter(
         self,
@@ -242,6 +440,9 @@ class QdrantClientWrapper:
             points_selector=PointIdsList(points=[point_id]),
         )
 
+        # 清除该集合的缓存
+        self._search_cache.clear_collection(collection_name)
+
     def collection_exists(self, collection_name: str) -> bool:
         """检查集合是否存在
 
@@ -278,3 +479,25 @@ class QdrantClientWrapper:
     def close(self) -> None:
         """关闭客户端连接"""
         self._client.close()
+
+    def clear_cache(self, collection_name: Optional[str] = None) -> None:
+        """清除搜索缓存
+
+        Args:
+            collection_name: 如果指定，只清除该集合的缓存；否则清除所有缓存
+        """
+        if collection_name is not None:
+            self._search_cache.clear_collection(collection_name)
+        else:
+            self._search_cache.clear()
+
+    def get_cache_stats(self) -> dict:
+        """获取缓存统计信息
+
+        Returns:
+            缓存统计字典，包含 size 和 max_size
+        """
+        return {
+            "size": len(self._search_cache),
+            "max_size": self._cache_size,
+        }

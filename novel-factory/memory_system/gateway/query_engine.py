@@ -2,7 +2,9 @@
 
 提供混合检索、角色状态查询、关系网络查询和一致性检查功能。
 """
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
+import time
 
 from memory_system.config import load_yaml
 from memory_system.vector.embedder import Embedder
@@ -10,6 +12,122 @@ from memory_system.state.character_tracker import CharacterTracker
 from memory_system.state.plot_thread_tracker import PlotThreadTracker
 from memory_system.state.timeline_manager import TimelineManager
 from memory_system.state.fact_base import FactBase
+
+
+@dataclass
+class PerformanceMetrics:
+    """性能指标数据类"""
+    total_queries: int = 0
+    total_latency_ms: float = 0.0
+    min_latency_ms: float = float('inf')
+    max_latency_ms: float = 0.0
+    cache_hits: int = 0
+    cache_misses: int = 0
+    embedding_time_ms: float = 0.0
+    embedding_calls: int = 0
+
+
+class PerformanceMonitor:
+    """性能监控器
+
+    收集和统计查询性能指标，包括：
+    - 查询延迟统计（平均、最小、最大）
+    - 缓存命中率
+    - 嵌入生成时间
+    """
+
+    def __init__(self) -> None:
+        self._metrics = PerformanceMetrics()
+        self._enabled: bool = True
+
+    def enable(self) -> None:
+        """启用性能监控"""
+        self._enabled = True
+
+    def disable(self) -> None:
+        """禁用性能监控"""
+        self._enabled = False
+
+    def record_query(self, latency_ms: float) -> None:
+        """记录查询延迟
+
+        Args:
+            latency_ms: 查询延迟（毫秒）
+        """
+        if not self._enabled:
+            return
+        self._metrics.total_queries += 1
+        self._metrics.total_latency_ms += latency_ms
+        self._metrics.min_latency_ms = min(self._metrics.min_latency_ms, latency_ms)
+        self._metrics.max_latency_ms = max(self._metrics.max_latency_ms, latency_ms)
+
+    def record_cache_hit(self) -> None:
+        """记录缓存命中"""
+        if not self._enabled:
+            return
+        self._metrics.cache_hits += 1
+
+    def record_cache_miss(self) -> None:
+        """记录缓存未命中"""
+        if not self._enabled:
+            return
+        self._metrics.cache_misses += 1
+
+    def record_embedding(self, time_ms: float) -> None:
+        """记录嵌入生成时间
+
+        Args:
+            time_ms: 嵌入生成时间（毫秒）
+        """
+        if not self._enabled:
+            return
+        self._metrics.embedding_time_ms += time_ms
+        self._metrics.embedding_calls += 1
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """获取当前性能统计
+
+        Returns:
+            性能指标字典
+        """
+        avg_latency = (
+            self._metrics.total_latency_ms / self._metrics.total_queries
+            if self._metrics.total_queries > 0
+            else 0.0
+        )
+        cache_total = self._metrics.cache_hits + self._metrics.cache_misses
+        cache_hit_rate = (
+            self._metrics.cache_hits / cache_total if cache_total > 0 else 0.0
+        )
+        avg_embedding_time = (
+            self._metrics.embedding_time_ms / self._metrics.embedding_calls
+            if self._metrics.embedding_calls > 0
+            else 0.0
+        )
+
+        return {
+            "total_queries": self._metrics.total_queries,
+            "avg_latency_ms": round(avg_latency, 3),
+            "min_latency_ms": round(
+                self._metrics.min_latency_ms if self._metrics.min_latency_ms != float('inf') else 0.0, 3
+            ),
+            "max_latency_ms": round(self._metrics.max_latency_ms, 3),
+            "cache_hit_rate": round(cache_hit_rate, 3),
+            "cache_hits": self._metrics.cache_hits,
+            "cache_misses": self._metrics.cache_misses,
+            "embedding_calls": self._metrics.embedding_calls,
+            "avg_embedding_time_ms": round(avg_embedding_time, 3),
+            "total_embedding_time_ms": round(self._metrics.embedding_time_ms, 3),
+        }
+
+    def reset(self) -> None:
+        """重置所有性能统计"""
+        self._metrics = PerformanceMetrics()
+
+    @property
+    def is_enabled(self) -> bool:
+        """检查是否启用"""
+        return self._enabled
 
 
 class QueryEngine:
@@ -34,6 +152,7 @@ class QueryEngine:
         plot_thread_tracker: Optional[PlotThreadTracker] = None,
         timeline_manager: Optional[TimelineManager] = None,
         fact_base: Optional[FactBase] = None,
+        enable_profiling: bool = False,
     ):
         """初始化查询引擎
 
@@ -44,9 +163,15 @@ class QueryEngine:
             plot_thread_tracker: PlotThreadTracker 实例（可选）
             timeline_manager: TimelineManager 实例（可选）
             fact_base: FactBase 实例（可选）
+            enable_profiling: 是否启用性能监控（默认关闭）
         """
         self.qdrant_wrapper = qdrant_wrapper
         self.embedder = embedder
+
+        # 性能监控
+        self._profiler = PerformanceMonitor()
+        if not enable_profiling:
+            self._profiler.disable()
 
         # 从配置加载默认参数
         try:
@@ -85,6 +210,24 @@ class QueryEngine:
         """获取事实库（懒加载）"""
         return self._fact_base
 
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """获取性能指标
+
+        Returns:
+            性能指标字典，包含：
+            - total_queries: 总查询数
+            - avg_latency_ms: 平均延迟（毫秒）
+            - min_latency_ms: 最小延迟（毫秒）
+            - max_latency_ms: 最大延迟（毫秒）
+            - cache_hit_rate: 缓存命中率
+            - cache_hits: 缓存命中次数
+            - cache_misses: 缓存未命中次数
+            - embedding_calls: 嵌入调用次数
+            - avg_embedding_time_ms: 平均嵌入时间（毫秒）
+            - total_embedding_time_ms: 总嵌入时间（毫秒）
+        """
+        return self._profiler.get_metrics()
+
     def hybrid_search(
         self,
         query: str,
@@ -109,20 +252,27 @@ class QueryEngine:
         if top_k is None:
             top_k = self.default_top_k
 
-        # 生成查询向量
+        # 生成查询向量（带性能监控）
+        start_time = time.perf_counter()
         query_vectors = self.embedder.embed_texts([query])
+        embedding_time = (time.perf_counter() - start_time) * 1000
+        self._profiler.record_embedding(embedding_time)
+
         if not query_vectors:
             return []
 
         query_vector = query_vectors[0]
 
-        # 执行向量搜索
+        # 执行向量搜索（带性能监控）
+        start_time = time.perf_counter()
         search_results = self.qdrant_wrapper.search(
             collection_name="chapters_seg",
             query_vector=query_vector,
             top_k=top_k,
             query_filter=self._build_filter(filters) if filters else None,
         )
+        search_time = (time.perf_counter() - start_time) * 1000
+        self._profiler.record_query(search_time)
 
         return search_results
 
@@ -489,6 +639,8 @@ class QueryEngine:
         Returns:
             伏笔列表，包含状态、描述、提及章节等信息
         """
+        start_time = time.perf_counter()
+
         if not self._plot_thread_tracker:
             return []
 
@@ -517,11 +669,17 @@ class QueryEngine:
             results = list(all_foreshadows.values())
             # 按 planted_chapter 降序排列（越新的伏笔越靠前）
             results.sort(key=lambda x: x.get("planted_chapter", 0), reverse=True)
+            elapsed = (time.perf_counter() - start_time) * 1000
+            self._profiler.record_query(elapsed)
             return results[:top_k]
 
         # 语义搜索：使用嵌入向量匹配
         try:
+            query_start = time.perf_counter()
             query_vectors = self.embedder.embed_texts([query])
+            query_time = (time.perf_counter() - query_start) * 1000
+            self._profiler.record_embedding(query_time)
+
             if not query_vectors:
                 return list(all_foreshadows.values())[:top_k]
 
@@ -532,7 +690,11 @@ class QueryEngine:
             for fp_id, fp_data in all_foreshadows.items():
                 # 构建伏笔文本用于嵌入
                 fp_text = self._build_foreshadow_text(fp_data)
+                fp_start = time.perf_counter()
                 fp_vectors = self.embedder.embed_texts([fp_text])
+                fp_time = (time.perf_counter() - fp_start) * 1000
+                self._profiler.record_embedding(fp_time)
+
                 if fp_vectors:
                     # 计算余弦相似度
                     similarity = self._cosine_similarity(query_vector, fp_vectors[0])
@@ -544,10 +706,14 @@ class QueryEngine:
 
             # 按相似度降序排列
             scored_results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+            elapsed = (time.perf_counter() - start_time) * 1000
+            self._profiler.record_query(elapsed)
             return scored_results[:top_k]
 
         except Exception:
             # 嵌入失败时返回过滤后的结果
+            elapsed = (time.perf_counter() - start_time) * 1000
+            self._profiler.record_query(elapsed)
             return list(all_foreshadows.values())[:top_k]
 
     def _matches_chapter_range(
