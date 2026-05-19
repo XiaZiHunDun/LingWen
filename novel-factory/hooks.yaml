@@ -1,0 +1,135 @@
+# Hook 配置文件 - 灵文小说工厂
+# 用于配置事件驱动的自动化工作流
+
+hooks:
+  # ==================== 质量门禁Hook ====================
+  - name: "自动质量门禁"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+      conditions:
+        - "chapter_status == 'draft_completed'"
+    actions:
+      - type: "run_checker"
+        checker: "consistency_engine"
+        params:
+          chapter_range: "current"
+      - type: "run_checker"
+        checker: "quality_gate"
+        params:
+          threshold: "Bronze"
+          chapter_range: "current"
+    required: true
+    timeout: 60
+
+  # ==================== 审核通知Hook ====================
+  - name: "审核完成通知作家"
+    trigger:
+      event: "REVIEW_COMPLETED"
+      conditions:
+        - "review_result in ['PASS', 'NEED_REVISION']"
+    actions:
+      - type: "notify"
+        channel: "writer_channel"
+        template: "review_complete"
+        params: {}
+    required: false
+    timeout: 30
+
+  # ==================== 阶段进度更新Hook ====================
+  - name: "阶段大纲完成后更新进度"
+    trigger:
+      event: "STEP_COMPLETED"
+      conditions:
+        - "step in ['STEP_10', 'STEP_11', 'STEP_12', 'STEP_13']"
+    actions:
+      - type: "update_state"
+        target: "workflow_state.json"
+        field: "current_step"
+        value: "$step"
+        params: {}
+      - type: "notify"
+        channel: "controller_channel"
+        template: "stage_completed"
+        params: {}
+    required: false
+    timeout: 30
+
+  # ==================== 章节定稿更新索引Hook ====================
+  - name: "章节定稿自动更新索引"
+    trigger:
+      event: "CHAPTER_FINALIZED"
+    actions:
+      - type: "run_script"
+        script: "update_index.py"
+        params:
+          scope: "current_chapter"
+    required: false
+    timeout: 45
+
+  # ==================== 卡文超时突破Hook ====================
+  - name: "卡文超时自动触发突破"
+    trigger:
+      event: "WRITER_IDLE"
+      conditions:
+        - "idle_time > 300"
+        - "chapter_status == 'in_progress'"
+    actions:
+      - type: "trigger_module"
+        module: "writer_block_breakthrough"
+        params: {}
+    required: false
+    timeout: 60
+
+  # ==================== 审核失败通知Hook ====================
+  - name: "审核失败通知主编"
+    trigger:
+      event: "REVIEW_FAILED"
+    actions:
+      - type: "notify"
+        channel: "controller_channel"
+        template: "review_failed"
+        params: {}
+      - type: "update_state"
+        target: "workflow_state.json"
+        field: "review_queue.pending"
+        value: []
+        params: {}
+    required: false
+    timeout: 30
+
+  # ==================== 大纲通过Hook ====================
+  - name: "大纲通过后初始化工作流"
+    trigger:
+      event: "OUTLINE_APPROVED"
+    actions:
+      - type: "update_state"
+        target: "workflow_state.json"
+        field: "project_status.phase"
+        value: "PHASE_3"
+        params: {}
+      - type: "notify"
+        channel: "writer_channel"
+        template: "outline_approved"
+        params: {}
+    required: true
+    timeout: 30
+
+# ==================== 安全配置 ====================
+security:
+  max_execution_time: 120  # 最大执行时间（秒）
+  max_retries: 3           # 最大重试次数
+  required_hooks_must_pass: true   # required=true的Hook失败则阻止流程
+  optional_hooks_can_fail: true     # optional的Hook失败不阻止流程
+  sensitive_actions_require_approval:  # 需要审批的敏感操作
+    - "delete_chapter"
+    - "modify_workflow_state"
+    - "approve_publication"
+    - "trigger_publication"
+
+# ==================== 触发事件类型参考 ====================
+# 工作流事件: PHASE_CHANGED, STEP_COMPLETED, STEP_FAILED
+# 写作事件: CHAPTER_WRITTEN, CHAPTER_REVISED, CHAPTER_FINALIZED, WRITER_IDLE
+# 审核事件: REVIEW_STARTED, REVIEW_COMPLETED, REVIEW_FAILED
+# 灵感事件: INSPIRATION_GENERATED, OUTLINE_APPROVED
+# 汇总事件: STAGE_SUMMARIZED, VOLUME_SUMMARIZED, FINAL_SUMMARY_APPROVED
+# 外部事件: MANUAL_TRIGGER

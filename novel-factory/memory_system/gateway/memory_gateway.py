@@ -241,28 +241,38 @@ class MemoryGateway:
         self.plot_thread_tracker.plant_foreshadow(fp_id, metadata)
 
     def update_foreshadow(
-        self, fp_id: str, chapter: int, event_type: str
+        self,
+        fp_id: str,
+        event_type: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        chapter: Optional[int] = None
     ) -> None:
         """更新伏笔状态
 
         Args:
             fp_id: 伏笔唯一标识
-            chapter: 事件发生章节
-            event_type: 事件类型 (mention/activate/recycle/invalidate)
-                - mention: 添加到提及章节列表，不改变状态
-                - activate: 状态变为 in_progress
-                - recycle: 状态变为 recycled，记录实际回收章节
-                - invalidate: 状态变为 invalid
+            event_type: 事件类型 (plant/activate/recycle/invalidate)
+                - plant: 登记新伏笔，需要 metadata（title, description, planted_chapter, expected_recycle_chapter）
+                - activate: 伏笔开始被提及，设置状态为 in_progress
+                - recycle: 伏笔已回收，设置状态为 recycled
+                - invalidate: 伏笔失效，设置状态为 invalid
+            metadata: 伏笔元数据（用于 plant 事件）
+            chapter: 事件发生章节（用于其他事件类型）
         """
         if self.plot_thread_tracker is None:
             return
 
         # 验证事件类型
-        valid_event_types = {"mention", "activate", "recycle", "invalidate"}
+        valid_event_types = {"plant", "activate", "recycle", "invalidate"}
         if event_type not in valid_event_types:
             return
 
-        self.plot_thread_tracker.update_foreshadow(fp_id, chapter, event_type)
+        if event_type == "plant":
+            if metadata:
+                self.plot_thread_tracker.plant_foreshadow(fp_id, metadata)
+        else:
+            if chapter is not None:
+                self.plot_thread_tracker.update_foreshadow(fp_id, chapter, event_type)
 
     def get_pending_foreshadows(self) -> Dict[str, Dict[str, Any]]:
         """获取待回收伏笔

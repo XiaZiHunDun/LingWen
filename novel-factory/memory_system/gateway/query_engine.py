@@ -2,7 +2,7 @@
 
 提供混合检索、角色状态查询、关系网络查询和一致性检查功能。
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from memory_system.config import load_yaml
 from memory_system.vector.embedder import Embedder
@@ -470,3 +470,126 @@ class QueryEngine:
                     return True
 
         return False
+
+    def query_foreshadows(
+        self,
+        query: str,
+        status: Optional[str] = None,
+        chapter_range: Optional[tuple] = None,
+        top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """查询伏笔
+
+        Args:
+            query: 查询文本，用于语义搜索
+            status: 可选，按状态过滤（pending/in_progress/recycled/invalid）
+            chapter_range: 可选，按章节范围过滤 (min_chapter, max_chapter)
+            top_k: 返回结果数量，默认5
+
+        Returns:
+            伏笔列表，包含状态、描述、提及章节等信息
+        """
+        if not self._plot_thread_tracker:
+            return []
+
+        # 获取所有伏笔
+        all_foreshadows = self._plot_thread_tracker.get_all_foreshadows()
+
+        # 按状态过滤
+        if status:
+            all_foreshadows = {
+                fp_id: fp_data
+                for fp_id, fp_data in all_foreshadows.items()
+                if fp_data.get("status") == status
+            }
+
+        # 按章节范围过滤
+        if chapter_range:
+            min_ch, max_ch = chapter_range
+            all_foreshadows = {
+                fp_id: fp_data
+                for fp_id, fp_data in all_foreshadows.items()
+                if self._matches_chapter_range(fp_data, min_ch, max_ch)
+            }
+
+        # 如果没有查询文本，返回过滤后的结果（按提及章节排序）
+        if not query or not query.strip():
+            results = list(all_foreshadows.values())
+            # 按 planted_chapter 降序排列（越新的伏笔越靠前）
+            results.sort(key=lambda x: x.get("planted_chapter", 0), reverse=True)
+            return results[:top_k]
+
+        # 语义搜索：使用嵌入向量匹配
+        try:
+            query_vectors = self.embedder.embed_texts([query])
+            if not query_vectors:
+                return list(all_foreshadows.values())[:top_k]
+
+            query_vector = query_vectors[0]
+
+            # 对每个伏笔计算相似度
+            scored_results = []
+            for fp_id, fp_data in all_foreshadows.items():
+                # 构建伏笔文本用于嵌入
+                fp_text = self._build_foreshadow_text(fp_data)
+                fp_vectors = self.embedder.embed_texts([fp_text])
+                if fp_vectors:
+                    # 计算余弦相似度
+                    similarity = self._cosine_similarity(query_vector, fp_vectors[0])
+                    scored_results.append({
+                        "fp_id": fp_id,
+                        "similarity": similarity,
+                        **fp_data
+                    })
+
+            # 按相似度降序排列
+            scored_results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+            return scored_results[:top_k]
+
+        except Exception:
+            # 嵌入失败时返回过滤后的结果
+            return list(all_foreshadows.values())[:top_k]
+
+    def _matches_chapter_range(
+        self, fp_data: Dict[str, Any], min_ch: int, max_ch: int
+    ) -> bool:
+        """检查伏笔是否在章节范围内"""
+        planted_chapter = fp_data.get("planted_chapter", 0)
+        expected_recycle = fp_data.get("expected_recycle_chapter", 0)
+        mentions = fp_data.get("mentions", [])
+
+        # 检查引入章节
+        if min_ch <= planted_chapter <= max_ch:
+            return True
+        # 检查预期回收章节
+        if min_ch <= expected_recycle <= max_ch:
+            return True
+        # 检查提及章节
+        for m in mentions:
+            if min_ch <= m <= max_ch:
+                return True
+
+        return False
+
+    def _build_foreshadow_text(self, fp_data: Dict[str, Any]) -> str:
+        """构建伏笔文本用于嵌入"""
+        parts = []
+        if fp_data.get("title"):
+            parts.append(fp_data["title"])
+        if fp_data.get("description"):
+            parts.append(fp_data["description"])
+        return " ".join(parts)
+
+    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """计算余弦相似度"""
+        if len(vec1) != len(vec2) or len(vec1) == 0:
+            return 0.0
+
+        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        magnitude1 = sum(a * a for a in vec1) ** 0.5
+        magnitude2 = sum(b * b for b in vec2) ** 0.5
+
+        if magnitude1 == 0 or magnitude2 == 0:
+            return 0.0
+
+        return dot_product / (magnitude1 * magnitude2)

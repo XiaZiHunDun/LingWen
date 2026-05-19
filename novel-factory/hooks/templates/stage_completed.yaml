@@ -1,0 +1,10 @@
+# 通知模板：阶段完成
+content: |
+  阶段完成通知
+
+  当前步骤: {step}
+  事件: {event_name}
+
+  时间: {timestamp}
+channel: controller_channel
+event: STEP_COMPLETED

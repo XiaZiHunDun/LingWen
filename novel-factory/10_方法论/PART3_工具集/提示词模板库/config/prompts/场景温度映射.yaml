@@ -1,0 +1,219 @@
+# 场景温度映射配置
+# 为不同写作场景指定合适的温度参数
+# 版本: v1.0.0
+# 更新日期: 2026-05-19
+
+schema_version: "v1.0"
+
+# ==================== 基础场景类型 ====================
+scene_types:
+  # 大纲生成
+  outline_generation:
+    description: "大纲生成"
+    temperature:
+      recommended: 0.6
+      range: [0.5, 0.7]
+    top_p: 0.9
+    max_tokens: 2000
+   适用场景: "生成全局大纲、卷大纲、章节大纲"
+
+  # 正文续写
+  content_continuation:
+    description: "正文续写"
+    temperature:
+      recommended: 0.7
+      range: [0.6, 0.8]
+    top_p: 0.9
+    max_tokens: 4000
+    适用场景: "标准章节续写，保持连贯性"
+
+  high_stakes_scene:
+    description: "高潮场景"
+    temperature:
+      recommended: 0.7
+      range: [0.65, 0.75]
+    top_p: 0.9
+    max_tokens: 4000
+    适用场景: "关键情节、转折点、高潮段落"
+
+  dialogue_scene:
+    description: "对话场景"
+    temperature:
+      recommended: 0.65
+      range: [0.55, 0.75]
+    top_p: 0.9
+    max_tokens: 3000
+    适用场景: "以对话为主推进的章节"
+
+  # 审核分析
+  review_analysis:
+    description: "审核分析"
+    temperature:
+      recommended: 0.4
+      range: [0.3, 0.5]
+    top_p: 0.85
+    max_tokens: 2000
+    适用场景: "逻辑检查、一致性检查、角色分析"
+
+  # 润色修改
+  polish:
+    description: "润色修改"
+    temperature:
+      recommended: 0.35
+      range: [0.3, 0.5]
+    top_p: 0.85
+    max_tokens: 2000
+    适用场景: "语言润色、情感强化、句式优化"
+
+  # 创意发散
+  brainstorming:
+    description: "创意头脑风暴"
+    temperature:
+      recommended: 0.85
+      range: [0.8, 0.9]
+    top_p: 0.95
+    max_tokens: 2000
+    适用场景: "情节转折创意、角色灵感、场景设计"
+
+  # 长文本生成
+  long_content_generation:
+    description: "长文本生成"
+    temperature:
+      recommended: 0.65
+      range: [0.6, 0.7]
+    top_p: 0.9
+    max_tokens: 8000
+    适用场景: "超长章节、番外篇、世界观文档"
+
+# ==================== 类型-场景映射 ====================
+genre_scene_mapping:
+  玄幻:
+    base_temperature: 0.7
+    scene_adjustments:
+      战斗场景:
+        temperature: 0.75
+        description: "战斗场景需要高能量"
+      情感场景:
+        temperature: 0.65
+        description: "情感场景需要细腻"
+      对话场景:
+        temperature: 0.65
+        description: "对话场景需要自然"
+      大纲生成:
+        temperature: 0.6
+        description: "大纲生成保持结构感"
+
+  都市:
+    base_temperature: 0.65
+    scene_adjustments:
+      职场场景:
+        temperature: 0.6
+        description: "职场场景需要精确"
+      情感场景:
+        temperature: 0.7
+        description: "情感场景需要温度"
+      喜剧场景:
+        temperature: 0.75
+        description: "喜剧场景需要夸张"
+      日常场景:
+        temperature: 0.6
+        description: "日常场景需要自然"
+
+  古言:
+    base_temperature: 0.65
+    scene_adjustments:
+      权谋场景:
+        temperature: 0.6
+        description: "权谋场景需要冷静"
+      情感场景:
+        temperature: 0.7
+        description: "情感场景需要含蓄"
+      战争场景:
+        temperature: 0.75
+        description: "战争场景需要气势"
+      大纲生成:
+        temperature: 0.6
+        description: "大纲生成保持古典感"
+
+  科幻:
+    base_temperature: 0.65
+    scene_adjustments:
+      科技场景:
+        temperature: 0.6
+        description: "科技场景需要精确"
+      探索场景:
+        temperature: 0.75
+        description: "探索场景需要好奇"
+      情感场景:
+        temperature: 0.65
+        description: "情感场景平衡温度"
+
+  悬疑:
+    base_temperature: 0.6
+    scene_adjustments:
+      推理场景:
+        temperature: 0.55
+        description: "推理场景需要逻辑"
+      惊悚场景:
+        temperature: 0.75
+        description: "惊悚场景需要张力"
+      真相揭示:
+        temperature: 0.65
+        description: "真相揭示需要节奏"
+
+# ==================== 温度选择决策树 ====================
+temperature_decision_tree:
+  description: "温度选择指南"
+  steps:
+    - question: "是否需要创意/惊喜？"
+      yes:
+        temperature: [0.75, 0.9]
+        examples: ["头脑风暴、情节转折"]
+      no:
+        next_step: 2
+
+    - question: "是否需要精确/一致？"
+      yes:
+        temperature: [0.3, 0.5]
+        examples: ["审核、润色、逻辑检查"]
+      no:
+        next_step: 3
+
+    - question: "标准生成/续写？"
+      yes:
+        temperature: [0.6, 0.7]
+        examples: ["大纲生成、标准续写"]
+
+# ==================== 质量维度权重 ====================
+quality_weights_by_scene:
+  outline_generation:
+    S1_剧情完整性: 0.25
+    S2_逻辑自洽: 0.25
+    S6_可读性: 0.20
+    S7_主角魅力: 0.15
+    S8_人物弧光: 0.15
+
+  content_continuation:
+    S1_剧情完整性: 0.20
+    S2_逻辑自洽: 0.15
+    S3_文笔风格: 0.20
+    S5_节奏控制: 0.20
+    S6_可读性: 0.15
+    S7_主角魅力: 0.10
+
+  high_stakes_scene:
+    S1_剧情完整性: 0.20
+    S3_文笔风格: 0.20
+    S4_情感共鸣: 0.25
+    S5_节奏控制: 0.20
+    S7_主角魅力: 0.15
+
+  review_analysis:
+    S1_剧情完整性: 0.30
+    S2_逻辑自洽: 0.40
+    S6_可读性: 0.30
+
+  polish:
+    S3_文笔风格: 0.40
+    S6_可读性: 0.30
+    S4_情感共鸣: 0.30

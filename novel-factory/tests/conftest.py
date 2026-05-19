@@ -1,9 +1,15 @@
 """pytest 配置"""
-import pytest
+import sys
 from pathlib import Path
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
+
+# 确保项目根目录在 sys.path 中（支持 pythonpath = . 配置）
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import pytest
 
 
 @pytest.fixture
