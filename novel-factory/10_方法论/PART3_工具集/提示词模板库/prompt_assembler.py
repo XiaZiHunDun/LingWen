@@ -70,19 +70,37 @@ class PromptAssembler:
 
     def _load_configs(self):
         """加载所有配置文件"""
-        # 加载模板索引
-        index_file = self.config_dir.parent.parent / "00_模板索引.yaml"
-        if index_file.exists():
-            self._load_template_index(index_file)
+        # 加载模板索引 - 支持两种目录结构：
+        # 1. 模板库目录/config/prompts/ (生产环境)
+        # 2. 模板库目录/ (测试环境，temp_config_dir 直接指向)
+        possible_index_paths = [
+            self.config_dir / "00_模板索引.yaml",
+            self.config_dir.parent / "00_模板索引.yaml",
+            self.config_dir.parent.parent / "00_模板索引.yaml",
+        ]
+
+        for index_file in possible_index_paths:
+            if index_file.exists():
+                self._load_template_index(index_file)
+                break
 
         # 加载温度映射
-        temp_file = self.config_dir / "场景温度映射.yaml"
-        if temp_file.exists():
-            with open(temp_file, 'r', encoding='utf-8') as f:
-                self.temperature_mapping = yaml.safe_load(f)
+        possible_temp_paths = [
+            self.config_dir / "场景温度映射.yaml",
+            self.config_dir.parent / "场景温度映射.yaml",
+        ]
+
+        for temp_file in possible_temp_paths:
+            if temp_file.exists():
+                with open(temp_file, 'r', encoding='utf-8') as f:
+                    self.temperature_mapping = yaml.safe_load(f)
+                break
 
         # 加载风格指南
         style_dir = self.config_dir / "风格指南库"
+        if not style_dir.exists():
+            style_dir = self.config_dir.parent / "风格指南库"
+
         if style_dir.exists():
             for style_file in style_dir.glob("*.yaml"):
                 with open(style_file, 'r', encoding='utf-8') as f:
@@ -118,6 +136,7 @@ class PromptAssembler:
                 file_path=template_data['file'],
                 description=template_data['description'],
                 temperature=temp,
+                care_elements=template_data.get('care_elements', {}),
             )
             self.template_index[template_data['name']] = metadata
 
@@ -182,8 +201,8 @@ class PromptAssembler:
         if temperature is None:
             temperature = template.temperature.recommended
 
-        # 读取模板文件
-        template_file = self.config_dir.parent / template.file_path
+        # 读取模板文件 - 模板文件路径相对于模板库根目录
+        template_file = self.config_dir / template.file_path
         if not template_file.exists():
             raise FileNotFoundError(f"Template file not found: {template_file}")
 

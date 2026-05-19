@@ -27,8 +27,12 @@ from prompt_assembler import (
 @pytest.fixture
 def temp_config_dir(tmp_path):
     """创建临时配置目录"""
-    config_dir = tmp_path / "config" / "prompts"
-    config_dir.mkdir(parents=True)
+    # 目录结构：
+    # tmp_path/                    <- 返回这个，assembler用它作为config_dir
+    #   00_模板索引.yaml
+    #   场景温度映射.yaml
+    #   01_大纲生成/全文大纲_CARE.md
+    #   02_正文续写/标准续写_CARE.md
 
     # 创建模板索引
     index_content = """
@@ -61,7 +65,7 @@ templates:
       context:
         required_fields: [chapter_num, pov_character, scene_type]
 """
-    (config_dir.parent.parent / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
+    (tmp_path / "00_模板索引.yaml").write_text(index_content, encoding='utf-8')
 
     # 创建温度映射
     temp_content = """
@@ -89,10 +93,10 @@ genre_scene_mapping:
       战斗场景:
         temperature: 0.75
 """
-    (config_dir / "场景温度映射.yaml").write_text(temp_content, encoding='utf-8')
+    (tmp_path / "场景温度映射.yaml").write_text(temp_content, encoding='utf-8')
 
     # 创建模板目录和文件
-    outline_dir = config_dir.parent / "01_大纲生成"
+    outline_dir = tmp_path / "01_大纲生成"
     outline_dir.mkdir(parents=True)
     outline_content = """# CARE大纲生成提示词：全文大纲
 
@@ -119,7 +123,7 @@ genre_scene_mapping:
 """
     (outline_dir / "全文大纲_CARE.md").write_text(outline_content, encoding='utf-8')
 
-    continuation_dir = config_dir.parent / "02_正文续写"
+    continuation_dir = tmp_path / "02_正文续写"
     continuation_dir.mkdir(parents=True)
     continuation_content = """# CARE正文续写提示词：标准续写
 
@@ -144,13 +148,13 @@ genre_scene_mapping:
 """
     (continuation_dir / "标准续写_CARE.md").write_text(continuation_content, encoding='utf-8')
 
-    return config_dir.parent
+    return tmp_path
 
 
 @pytest.fixture
 def assembler(temp_config_dir):
     """创建PromptAssembler实例"""
-    return PromptAssembler(str(temp_config_dir / "config" / "prompts"))
+    return PromptAssembler(str(temp_config_dir))
 
 
 # ==================== 测试 PromptAssembler 初始化 ====================
