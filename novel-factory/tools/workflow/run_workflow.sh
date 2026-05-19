@@ -1,5 +1,6 @@
 #!/bin/bash
-# 小说工作室 · 工作流编排脚本 v1.3
+# 小说工作室 · 工作流编排脚本 v1.4
+# 支持22步工作流（PHASE_3验证期 v5.0）
 # 用法: ./run_workflow.sh [command] [params]
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -79,10 +80,11 @@ function cmd_init() {
     fi
     cat > "$WORKFLOW_FILE" << 'EOF'
 {
-  "version": "1.3",
+  "version": "1.4",
+  "workflow_version": "v5.0（22步工作流，含PHASE_3验证期）",
   "current_phase": "PHASE_0_SETUP",
   "current_step": "SETUP_00",
-  "initialized_at": "2026-05-14",
+  "initialized_at": "2026-05-19",
   "agent_tasks": {},
   "project_info": {},
   "review_queue": { "pending": [], "in_review": [], "completed": [] },
@@ -91,7 +93,7 @@ function cmd_init() {
   "next_actions": []
 }
 EOF
-    log_info "工作流初始化完成，状态: PHASE_0_SETUP"
+    log_info "工作流初始化完成，状态: PHASE_0_SETUP（22步工作流 v5.0）"
 }
 
 function cmd_status() {
@@ -299,7 +301,17 @@ function cmd_phases() {
         log_error "工作流文件不存在"
         exit 1
     fi
-    echo "=== 所有阶段 ==="
+    echo "=== 所有阶段（22步工作流 v5.0）==="
+    echo ""
+    echo "PHASE_0: 初始化        - 项目配置"
+    echo "PHASE_1: 构思期         - STEP_01-04（核心冲动→驱动链设计）"
+    echo "PHASE_2: 规划期         - STEP_05-08（锁定门检查）"
+    echo "PHASE_3: 验证期 [新增]  - STEP_09-11（灰盒→样章→读者测试）"
+    echo "PHASE_4: 写作期         - STEP_12-13"
+    echo "PHASE_5: 修改期         - STEP_14-15（Block→Polish）"
+    echo "PHASE_6: 审核期         - STEP_16-18（S1-S8审核）"
+    echo "PHASE_7: 完成期         - STEP_19-21"
+    echo ""
     if [ "$JQ_AVAILABLE" = true ]; then
         jq -r '.phases | to_entries[] | "\(.key): \(.value.name) - \(.value.status)"' "$WORKFLOW_FILE" 2>/dev/null
     else

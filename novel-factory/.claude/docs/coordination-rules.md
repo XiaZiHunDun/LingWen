@@ -56,6 +56,12 @@
 - 重大变更需主控调度确认
 - 所有变更需记录到意见仓库
 
+**验证期特殊规则**：
+- 验证期变更需在 `validation_checkpoints.yaml` 中记录
+- 验证期每个节点只验证一次，不得重复验证
+- 验证期通过后才能进入下一阶段
+- 验证期失败返回上一阶段重新设计
+
 ## 5. 禁止单方面跨域变更
 
 **原则**：Agent未经明确委派，不得修改其指定目录之外的文件。
@@ -67,8 +73,12 @@
 | 审核部门 | `04_审核员工作室/`, `06_意见仓库/04_正文_审核/` |
 | 读者部门 | `05_模拟读者池/`, `06_意见仓库/05_读者评论/` |
 | 汇总部门 | `07_汇总仓库/` |
+| 验证期部门 | `07_汇总仓库/验证期/` |
 
-**例外**：经主控调度明确授权的跨域修改。
+**验证期额外约束**：
+- 验证期投入资源受严格限制
+- 验证期只使用 bullet point，不投入文笔资源
+- 验证期结构修改后需重新验证（每个节点只验证一次）
 
 ## 6. 会话状态更新
 
@@ -127,6 +137,8 @@ Key ownership rules:
 - `phases.*.status` → respective department agents
 - `review_queue.*` → `reviewer_dept`
 - Chapter files → `writer_dept` (write), `reviewer_dept` (read)
+- `validation_checkpoints.*` → `validation_dept`
+- `validation_queue.*` → `validation_dept` (write), `reader_dept` (read for testing)
 
 For full registry details, see `docs/registry/state-ownership.yaml`.
 
@@ -195,6 +207,35 @@ Only after explicit approval does the agent write files.
 ✅ "May I write the Volume 1 outline to 03_内容仓库/02_卷大纲/卷1_大纲_v1.0.md?"
 ```
 
+## 10. 验证期协调规则
+
+### 10.1 验证期部门职责
+
+| 阶段 | 主导部门 | 配合部门 | 输出物 |
+|------|----------|----------|--------|
+| 情节骨架验证 | 灵感部门 | 作家部门（提供反馈） | 情节骨架_v1.0.md |
+| 核心样章验证 | 作家部门 | 审核部门（技术评估） | 核心样章.md |
+| 目标读者测试 | 读者部门 | 审核部门（收集反馈） | 读者测试报告 |
+
+### 10.2 验证期通过条件
+
+- 情节骨架验证：结构完整、冲突成立、动机成立、节奏合理、驱动链可识别
+- 核心样章验证：前300字悬念、完整冲突、统一叙事声音、情感锚点、满足感结尾
+- 目标读者测试：3-5名目标读者行为数据一致
+
+### 10.3 验证期失败处理
+
+验证期任一步骤未通过：
+1. 记录问题到issues_found
+2. 返回上一阶段重新设计
+3. 主控调度通知主公
+
+### 10.4 验证期禁止事项
+
+- ❌ 跳过验证直接进入写作期
+- ❌ 在验证期投入文笔资源（验证期只用bullet point）
+- ❌ 验证期修改结构后又重新验证（每个验证节点只验证一次）
+
 ## Decision Points Map
 
 | Decision Point | Who Decides | Options Format | Approval Required |
@@ -209,7 +250,7 @@ Only after explicit approval does the agent write files.
 
 ---
 
-*文档版本: v1.0*
+*文档版本: v1.1*
 *创建时间: 2026-05-18*
 *适用范围: 灵文 · 工业化小说生产系统*
 *Last updated: 2026-05-19*

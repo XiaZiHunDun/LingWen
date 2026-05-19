@@ -1,5 +1,5 @@
 {
-  "version": "v3.0",
+  "version": "v4.0",
   "current_phase": "PHASE_7_CLOSE",
   "current_step": "STEP_25",
   "initialized_at": "2026-05-14",
@@ -10,7 +10,9 @@
     "phase": "COMPLETE",
     "version": "v5.0",
     "released_at": "2026-05-18",
-    "file_size": "2.2M"
+    "file_size": "2.2M",
+    "core_driver_chain": null,
+    "validation_completed": null
   },
   "review_queue": {
     "pending": [],
@@ -137,6 +139,24 @@
           "name": "卷大纲终审",
           "completed_at": "2026-05-14",
           "verdict": "通过（三卷范围验证正确）"
+        }
+      }
+    },
+    "PHASE_3_VALIDATION": {
+      "name": "验证期",
+      "status": "pending",
+      "steps": {
+        "STEP_09": {
+          "status": "pending",
+          "name": "情节骨架验证"
+        },
+        "STEP_10": {
+          "status": "pending",
+          "name": "核心样章验证"
+        },
+        "STEP_11": {
+          "status": "pending",
+          "name": "目标读者测试"
         }
       }
     },
@@ -404,7 +424,7 @@
       "description": "Key dimensions only, faster turnaround, 5 reviewers",
       "quality_threshold": "A级 (≥70%)",
       "reviewer_count": 5,
-      "dimensions": ["naming_consistency", "content_integrity", "chapter_repeat", "character_state", "plot_relevance", "scene_logic"],
+      "dimensions": ["naming_consistency", "content_integrity", "chapter_repeat", "character_state", "plot_relevance", "scene_logic", "character_arc"],
       "iterations_max": 2,
       "approval_criteria": "≥70%审核员通过 且 无P0问题"
     },
@@ -412,7 +432,7 @@
       "description": "Self-review only, no external reviewers, fastest",
       "quality_threshold": "B级 (≥50%)",
       "reviewer_count": 1,
-      "dimensions": ["naming_consistency", "content_integrity"],
+      "dimensions": ["naming_consistency", "content_integrity", "character_arc"],
       "iterations_max": 1,
       "approval_criteria": "自评≥B级 无P0问题"
     }
