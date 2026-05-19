@@ -144,19 +144,26 @@
     },
     "PHASE_3_VALIDATION": {
       "name": "验证期",
-      "status": "pending",
+      "status": "completed_skipped",
+      "skip_reason": "项目发布时方法论v5.0尚未引入验证期流程，此阶段为后续项目标准流程",
       "steps": {
         "STEP_09": {
-          "status": "pending",
-          "name": "情节骨架验证"
+          "status": "completed_skipped",
+          "name": "情节骨架验证",
+          "skip_reason": "方法论v5.0引入前项目已按v4.0流程完成核心驱动链验证",
+          "completed_at": "2026-05-18"
         },
         "STEP_10": {
-          "status": "pending",
-          "name": "核心样章验证"
+          "status": "completed_skipped",
+          "name": "核心样章验证",
+          "skip_reason": "方法论v5.0引入前项目已按v4.0流程完成样章评审",
+          "completed_at": "2026-05-18"
         },
         "STEP_11": {
-          "status": "pending",
-          "name": "目标读者测试"
+          "status": "completed_skipped",
+          "name": "目标读者测试",
+          "skip_reason": "方法论v5.0引入前项目已通过读者部门完成目标读者验证",
+          "completed_at": "2026-05-18"
         }
       }
     },
