@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "consistency"))
 
 from check_naming import check_naming, extract_chapter_num, chinese_to_arabic
-from check_content_integrity import check_integrity
+from integrity_checker import check_integrity
 
 
 class TestChineseToArabic:

@@ -81,7 +81,9 @@ class RunCheckerAction(BaseAction):
     ) -> Dict[str, Any]:
         """运行一致性检查引擎"""
         # 动态导入避免循环依赖
-        from tools.consistency.quality_engine import QualityEngine
+        import re
+        from consistency.engine.consistency_engine import ConsistencyEngine
+        from consistency.engine.data_structures import CheckScope
 
         # 从context获取chapters_dir，如果没有则从项目根目录推导
         if "chapters_dir" in context:
@@ -92,15 +94,45 @@ class RunCheckerAction(BaseAction):
             project_root = Path(__file__).resolve().parents[2]
             chapters_dir = str(project_root / "03_内容仓库" / "04_正文")
 
-        engine = QualityEngine(chapters_dir)
-        engine.register_all_checkers()
-        results = engine.run_all()
+        engine = ConsistencyEngine()
+        # Register all checkers
+        engine.checkers = engine._init_checkers()
 
-        # 汇总结果
-        summary = engine.summary(results)
+        # Run checks for the chapter range
+        if chapter_range == "all":
+            range_start, range_end = 1, 360
+        elif chapter_range == "current":
+            chapter_id = context.get("chapter_id", "ch001")
+            match = re.search(r'ch(\d+)', chapter_id)
+            range_start = int(match.group(1)) if match else 1
+            range_end = range_start
+        elif "-" in str(chapter_range):
+            parts = str(chapter_range).split("-")
+            range_start, range_end = int(parts[0]), int(parts[1])
+        else:
+            range_start = range_end = int(chapter_range)
+
+        chapter_results = []
+        for ch_num in range(range_start, range_end + 1):
+            chapter_content = context.get("chapter_content", "")
+            if "chapters_dir" in context:
+                ch_path = Path(context["chapters_dir"]) / f"ch{ch_num:03d}.md"
+                if ch_path.exists():
+                    with open(ch_path, 'r', encoding='utf-8') as f:
+                        chapter_content = f.read()
+            report = engine.check_chapter(ch_num, chapter_content, scope=CheckScope.ALL)
+            chapter_results.append(report.to_dict())
+
+        # Summarize
+        total_issues = sum(len(r.get('issues', [])) for r in chapter_results)
+        summary = {
+            "checked_chapters": len(chapter_results),
+            "total_issues": total_issues,
+            "chapter_range": f"{range_start}-{range_end}"
+        }
         return {
             "checker": "consistency_engine",
-            "results": results,
+            "results": chapter_results,
             "summary": summary,
             "chapter_range": chapter_range
         }

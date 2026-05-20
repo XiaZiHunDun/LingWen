@@ -44,11 +44,18 @@
 | outline_checker | 大纲偏离 |
 | ai_gloss_checker | AI痕迹 |
 
-**测试**: 15+ passed
+**测试**: 83 passed (consistency/)
 
 **依赖**: 无
 
 **待办**: 无
+
+**P8 分析记录 (2026-05-20)**:
+- `run_verify_engine.py` (488L) 和 `tools/consistency/auto_consistency_checker.py` (296L) 功能有重叠但服务不同目的
+- `run_verify_engine.py`: 修复验证引擎，检查重复内容/章节号不匹配/叙事跳跃/小九代词问题
+- `auto_consistency_checker.py`: 一致性检查调度，涵盖命名/完整性/重复/人物状态/时间线
+- 建议：将 character_consistency 检查合并到 `consistency/checkers/character_checker.py` 作为通用实现
+- 当前状态：两者暂时独立运行，待后续优化
 
 ---
 

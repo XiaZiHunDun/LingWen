@@ -8,7 +8,7 @@
 import os
 import re
 
-CHAPTERS_DIR = "03_内容仓库/04_正文"
+CHAPTERS_DIR = os.environ.get("CHAPTERS_DIR", "03_内容仓库/04_正文")
 
 
 def read_chapter(ch_num):

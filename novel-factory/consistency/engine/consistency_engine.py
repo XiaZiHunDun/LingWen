@@ -9,10 +9,6 @@
 import time
 from typing import List, Dict, Any, Optional
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from consistency.engine.data_structures import (
     Issue, ConsistencyReport, CheckerResult, QualityDimension,
     CheckScope, IssueSeverity, CheckerType

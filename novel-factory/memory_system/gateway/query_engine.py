@@ -2,7 +2,7 @@
 
 提供混合检索、角色状态查询、关系网络查询和一致性检查功能。
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 import time
 
@@ -13,121 +13,7 @@ from memory_system.state.plot_thread_tracker import PlotThreadTracker
 from memory_system.state.timeline_manager import TimelineManager
 from memory_system.state.fact_base import FactBase
 
-
-@dataclass
-class PerformanceMetrics:
-    """性能指标数据类"""
-    total_queries: int = 0
-    total_latency_ms: float = 0.0
-    min_latency_ms: float = float('inf')
-    max_latency_ms: float = 0.0
-    cache_hits: int = 0
-    cache_misses: int = 0
-    embedding_time_ms: float = 0.0
-    embedding_calls: int = 0
-
-
-class PerformanceMonitor:
-    """性能监控器
-
-    收集和统计查询性能指标，包括：
-    - 查询延迟统计（平均、最小、最大）
-    - 缓存命中率
-    - 嵌入生成时间
-    """
-
-    def __init__(self) -> None:
-        self._metrics = PerformanceMetrics()
-        self._enabled: bool = True
-
-    def enable(self) -> None:
-        """启用性能监控"""
-        self._enabled = True
-
-    def disable(self) -> None:
-        """禁用性能监控"""
-        self._enabled = False
-
-    def record_query(self, latency_ms: float) -> None:
-        """记录查询延迟
-
-        Args:
-            latency_ms: 查询延迟（毫秒）
-        """
-        if not self._enabled:
-            return
-        self._metrics.total_queries += 1
-        self._metrics.total_latency_ms += latency_ms
-        self._metrics.min_latency_ms = min(self._metrics.min_latency_ms, latency_ms)
-        self._metrics.max_latency_ms = max(self._metrics.max_latency_ms, latency_ms)
-
-    def record_cache_hit(self) -> None:
-        """记录缓存命中"""
-        if not self._enabled:
-            return
-        self._metrics.cache_hits += 1
-
-    def record_cache_miss(self) -> None:
-        """记录缓存未命中"""
-        if not self._enabled:
-            return
-        self._metrics.cache_misses += 1
-
-    def record_embedding(self, time_ms: float) -> None:
-        """记录嵌入生成时间
-
-        Args:
-            time_ms: 嵌入生成时间（毫秒）
-        """
-        if not self._enabled:
-            return
-        self._metrics.embedding_time_ms += time_ms
-        self._metrics.embedding_calls += 1
-
-    def get_metrics(self) -> Dict[str, Any]:
-        """获取当前性能统计
-
-        Returns:
-            性能指标字典
-        """
-        avg_latency = (
-            self._metrics.total_latency_ms / self._metrics.total_queries
-            if self._metrics.total_queries > 0
-            else 0.0
-        )
-        cache_total = self._metrics.cache_hits + self._metrics.cache_misses
-        cache_hit_rate = (
-            self._metrics.cache_hits / cache_total if cache_total > 0 else 0.0
-        )
-        avg_embedding_time = (
-            self._metrics.embedding_time_ms / self._metrics.embedding_calls
-            if self._metrics.embedding_calls > 0
-            else 0.0
-        )
-
-        return {
-            "total_queries": self._metrics.total_queries,
-            "avg_latency_ms": round(avg_latency, 3),
-            "min_latency_ms": round(
-                self._metrics.min_latency_ms if self._metrics.min_latency_ms != float('inf') else 0.0, 3
-            ),
-            "max_latency_ms": round(self._metrics.max_latency_ms, 3),
-            "cache_hit_rate": round(cache_hit_rate, 3),
-            "cache_hits": self._metrics.cache_hits,
-            "cache_misses": self._metrics.cache_misses,
-            "embedding_calls": self._metrics.embedding_calls,
-            "avg_embedding_time_ms": round(avg_embedding_time, 3),
-            "total_embedding_time_ms": round(self._metrics.embedding_time_ms, 3),
-        }
-
-    def reset(self) -> None:
-        """重置所有性能统计"""
-        self._metrics = PerformanceMetrics()
-
-    @property
-    def is_enabled(self) -> bool:
-        """检查是否启用"""
-        return self._enabled
+from memory_system.gateway.query_helpers import PerformanceMonitor
 
 
 class QueryEngine:
