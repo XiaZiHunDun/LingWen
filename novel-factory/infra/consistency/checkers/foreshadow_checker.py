@@ -12,6 +12,7 @@
 
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation, ForeshadowAlert
 from .base_checker import BaseChecker
@@ -32,11 +33,15 @@ class PlotThread:
 class ForeshadowChecker(BaseChecker):
     """伏笔回收检查器"""
 
-    def __init__(self, rules: Optional[Dict[str, Any]] = None):
+    def __init__(self, rules: Optional[Dict[str, Any]] = None, chapters_dir: Optional[str] = None):
         super().__init__(CheckerType.FORESHADOW)
         self.rules = rules or {}
         self._plot_threads: Dict[str, PlotThread] = {}
         self._pending_foreshadow: List[str] = []  # 待回收的伏笔关键词
+        if chapters_dir is None:
+            project_root = Path(__file__).parent.parent.parent.parent
+            chapters_dir = project_root / '03_内容仓库' / '04_正文'
+        self.chapters_dir = Path(chapters_dir)
 
     def check(
         self,
@@ -237,11 +242,24 @@ class ForeshadowChecker(BaseChecker):
         return alerts
 
     def get_overdue_count(self) -> int:
-        """获取超期伏笔数量
+        """获取超期伏笔数量"""
+        current_chapter = self._get_current_chapter()
+        return self.get_overdue_count_at(current_chapter)
 
-        Note: 此方法返回0因为占位实现，实际超期检测使用 get_overdue_count_at()
-        """
-        return 0  # Placeholder - use get_overdue_count_at(chapter) for actual overdue detection
+    def _get_current_chapter(self) -> int:
+        """获取当前章节号（目录中最高章节号）"""
+        chapter_files = list(self.chapters_dir.glob('ch*.md'))
+        if not chapter_files:
+            return 0
+        max_chapter = 0
+        for ch_file in chapter_files:
+            import re
+            match = re.match(r'ch(\d+)\.md', ch_file.name)
+            if match:
+                ch_num = int(match.group(1))
+                if ch_num > max_chapter:
+                    max_chapter = ch_num
+        return max_chapter
 
     def get_overdue_count_at(self, current_chapter: int) -> int:
         """获取当前超期伏笔数量"""
