@@ -1,12 +1,19 @@
 #!/bin/bash
-# 小说工作室 · 审核执行脚本 v1.0
+# 小说工作室 · 审核执行脚本 v1.1
 # 用法: ./run_review.sh [command] [params]
+
+set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)/.."
 WORKFLOW_FILE="$PROJECT_ROOT/workflow_state.json"
 OPINION_DIR="$PROJECT_ROOT/06_意见仓库"
 REVIEW_DIR="$PROJECT_ROOT/04_审核员工作室"
 CONTENT_DIR="$PROJECT_ROOT/03_内容仓库"
+
+# flock锁保护workflow_state.json并发写
+LOCKFILE="/tmp/lingwen_workflow.lock"
+exec 200>"$LOCKFILE"
+flock -n 200 || { echo -e "${RED}[ERROR]${NC} Another instance is running"; exit 1; }
 
 # 审核员列表
 REVIEWERS=("审核员A" "审核员B" "审核员C" "审核员D" "审核员E"

@@ -1,16 +1,110 @@
 #!/bin/bash
-# 小说工作室 · 工作流编排脚本 v1.4
+# 小说工作室 · 工作流编排脚本 v1.5
 # 支持22步工作流（PHASE_3验证期 v5.0）
 # 用法: ./run_workflow.sh [command] [params]
 
+set -euo pipefail
+
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 WORKFLOW_FILE="$PROJECT_ROOT/workflow_state.json"
+
+# flock锁保护workflow_state.json并发写
+LOCKFILE="/tmp/lingwen_workflow.lock"
+exec 200>"$LOCKFILE"
+flock -n 200 || { echo "[ERROR] Another instance is running"; exit 1; }
 
 # 检查jq是否可用
 JQ_AVAILABLE=false
 if command -v jq > /dev/null 2>&1; then
     JQ_AVAILABLE=true
 fi
+
+# ============================================================
+# 依赖检查
+# ============================================================
+check_dependencies() {
+    local missing=0
+
+    # 检查 jq
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "Warning: jq not installed. Some features may be limited."
+        echo "  Install with: apt-get install jq  or  brew install jq"
+    fi
+
+    # 检查 API key
+    if [ -z "${OPENAI_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+        echo "Error: API key required."
+        echo "  Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable."
+        missing=1
+    fi
+
+    [ $missing -eq 1 ] && return 1
+    return 0
+}
+
+# ============================================================
+# Quickstart 引导
+# ============================================================
+cmd_quickstart() {
+    echo "=========================================="
+    echo "  灵文 · 工业化小说生产系统 · 快速上手"
+    echo "=========================================="
+    echo ""
+
+    # 检查 jq
+    echo "[1/4] 检查 jq..."
+    if command -v jq >/dev/null 2>&1; then
+        echo "  ✓ jq 已安装 ($(jq --version))"
+    else
+        echo "  ⚠ jq 未安装 (部分功能受限)"
+        echo "    apt-get install jq  或  brew install jq"
+    fi
+    echo ""
+
+    # 检查 API key
+    echo "[2/4] 检查 API Key..."
+    if [ -n "${OPENAI_API_KEY:-}" ]; then
+        echo "  ✓ OPENAI_API_KEY 已设置"
+    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+        echo "  ✓ ANTHROPIC_API_KEY 已设置"
+    else
+        echo "  ✗ 未设置 API Key"
+        echo "    请设置环境变量: export OPENAI_API_KEY=your_key"
+        echo "    或: export ANTHROPIC_API_KEY=your_key"
+    fi
+    echo ""
+
+    # 检查项目状态
+    echo "[3/4] 检查项目状态..."
+    if [ -f "$WORKFLOW_FILE" ]; then
+        echo "  ✓ workflow_state.json 存在"
+        python3 -c "
+import json
+with open('$WORKFLOW_FILE', 'r', encoding='utf-8') as f:
+    state = json.load(f)
+    phase = state.get('current_phase', 'N/A')
+    step = state.get('current_step', 'N/A')
+    print(f'    当前阶段: {phase}')
+    print(f'    当前步骤: {step}')
+" 2>/dev/null || echo "    (无法解析JSON)"
+    else
+        echo "  ⚠ workflow_state.json 不存在"
+        echo "    运行 ./run_workflow.sh init 初始化项目"
+    fi
+    echo ""
+
+    # 快速上手指南
+    echo "[4/4] 快速上手指南"
+    echo ""
+    echo "  1. 初始化新项目: ./run_workflow.sh init"
+    echo "  2. 查看状态:     ./run_workflow.sh status"
+    echo "  3. 启动Agent:    ./run_workflow.sh launch <task> <agent> <desc>"
+    echo "  4. 验证任务:     ./run_workflow.sh verify <task> <task_id>"
+    echo "  5. 查看任务:     ./run_workflow.sh tasks"
+    echo ""
+    echo "  完整文档: 参见 README.md 或 CLAUDE.md"
+    echo ""
+}
 
 # 颜色输出
 RED='\033[0;31m'
@@ -73,6 +167,9 @@ function jq_run() {
 # ==================== 命令实现 ====================
 
 function cmd_init() {
+    # 检查依赖
+    check_dependencies || exit 1
+
     log_info "初始化小说工作室工作流..."
     if [ -f "$WORKFLOW_FILE" ]; then
         log_error "工作流已存在，不重复初始化"
@@ -516,10 +613,113 @@ function cmd_issues() {
     fi
 }
 
+# ==================== STEP_17 入口校验 & 迭代控制 ====================
+
+function verify_step17_eligibility() {
+    local ch=$1
+    if [ -z "$ch" ]; then
+        log_error "用法: verify_step17_eligibility <chapter>"
+        return 1
+    fi
+
+    if [ "$JQ_AVAILABLE" != true ]; then
+        log_warn "jq不可用，跳过STEP_17 eligibility检查"
+        return 0
+    fi
+
+    local review_status=$(jq -r ".chapters.\"$ch\".review_queue.status // empty" "$WORKFLOW_FILE" 2>/dev/null)
+    if [ -z "$review_status" ] || [ "$review_status" = "empty" ]; then
+        log_error "Chapter $ch not found in workflow_state.json"
+        return 1
+    fi
+
+    if [ "$review_status" != "verified" ]; then
+        log_error "ERROR: Chapter $ch review status is '$review_status', expected 'verified' for STEP_17"
+        return 1
+    fi
+
+    # 检查 deadlock_alert
+    local deadlock=$(jq -r ".chapters.\"$ch\".deadlock_alert // false" "$WORKFLOW_FILE" 2>/dev/null)
+    if [ "$deadlock" = "true" ]; then
+        log_error "ERROR: Chapter $ch is in deadlock state (deadlock_alert=true)"
+        return 1
+    fi
+
+    log_info "Chapter $ch eligible for STEP_17 (verified, no deadlock)"
+    return 0
+}
+
+function cmd_verify_step17() {
+    local ch=${2:-""}
+    if [ -z "$ch" ]; then
+        log_error "用法: $0 verify_step17 <chapter>"
+        exit 1
+    fi
+    verify_step17_eligibility "$ch"
+}
+
+function cmd_check_iteration() {
+    local ch=${2:-""}
+    if [ -z "$ch" ]; then
+        log_error "用法: $0 check_iteration <chapter>"
+        exit 1
+    fi
+
+    if [ "$JQ_AVAILABLE" != true ]; then
+        log_error "jq不可用，无法检查iteration"
+        exit 1
+    fi
+
+    local iteration=$(jq -r ".chapters.\"$ch\".iteration_count // 0" "$WORKFLOW_FILE" 2>/dev/null)
+    local max=$(jq -r ".chapters.\"$ch\".max_iterations // 2" "$WORKFLOW_FILE" 2>/dev/null)
+    local deadlock=$(jq -r ".chapters.\"$ch\".deadlock_alert // false" "$WORKFLOW_FILE" 2>/dev/null)
+
+    echo "Chapter $ch: iteration=$iteration, max=$max, deadlock_alert=$deadlock"
+
+    if [ "$iteration" -ge "$max" ] && [ "$deadlock" != "true" ]; then
+        log_warn "Iteration count $iteration >= max $max - setting deadlock_alert=true"
+        jq ".chapters.\"$ch\".deadlock_alert = true" "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
+        log_error "Flow paused for chapter $ch - deadlock_alert=true"
+        return 1
+    fi
+
+    return 0
+}
+
+function cmd_persist_rollback() {
+    local ch=${2:-""}
+    local issues=${3:-"[]"}
+    local deadline=${4:-""}
+
+    if [ -z "$ch" ]; then
+        log_error "用法: $0 persist_rollback <chapter> <issues_json> <deadline_check>"
+        exit 1
+    fi
+
+    if [ "$JQ_AVAILABLE" != true ]; then
+        log_error "jq不可用，无法持久化rollback"
+        exit 1
+    fi
+
+    local ts=$(date +%Y-%m-%dT%H:%M:%S)
+
+    # 写入 issues_found
+    jq ".issues_found.\"$ch\" += [{\"timestamp\": \"$ts\", \"issues\": $issues, \"deadline_check\": \"$deadline\"}]" \
+        "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
+
+    # 增加 iteration_count
+    local current=$(jq -r ".chapters.\"$ch\".iteration_count // 0" "$WORKFLOW_FILE" 2>/dev/null)
+    jq ".chapters.\"$ch\".iteration_count = ($current + 1)" \
+        "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
+
+    log_info "Rollback persisted for chapter $ch (iteration incremented, issues written)"
+}
+
 # ==================== 主入口 ====================
 
 case "$1" in
     init)            cmd_init ;;
+    quickstart)      cmd_quickstart ;;
     status)          cmd_status ;;
     advance)         cmd_advance "$2" ;;
     launch)          cmd_launch "$2" "$3" "$4" ;;
@@ -537,11 +737,15 @@ case "$1" in
     review_status)   cmd_review_status ;;
     summary_status)  cmd_summary_status ;;
     issues)          cmd_issues ;;
+    verify_step17)   cmd_verify_step17 "$2" ;;
+    check_iteration) cmd_check_iteration "$2" ;;
+    persist_rollback) cmd_persist_rollback "$2" "$3" "$4" ;;
     *)
-        echo "用法: $0 {init|status|advance|launch|verify|assign|assign_batch|assign_reviewer|assign_汇总员|report|phases|tasks|next|block|agent_list|review_status|summary_status|issues}"
+        echo "用法: $0 {init|quickstart|status|advance|launch|verify|assign|assign_batch|assign_reviewer|assign_汇总员|report|phases|tasks|next|block|agent_list|review_status|summary_status|issues|verify_step17|check_iteration|persist_rollback}"
         echo ""
         echo "Commands:"
         echo "  init            - 初始化工作流（仅首次）"
+        echo "  quickstart     - 快速上手指南（检查依赖+引导配置）"
         echo "  status          - 查看当前状态"
         echo "  advance         - 推进到指定步骤"
         echo "  launch          - 启动Agent并记录task_id"

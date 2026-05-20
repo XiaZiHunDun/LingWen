@@ -13,10 +13,20 @@
 import os
 import json
 import argparse
+import tempfile
 from pathlib import Path
 from datetime import datetime
 
 CONTENT_ROOT = Path(__file__).parent.absolute()
+
+
+def atomic_write_json(filepath, data):
+    """原子写入JSON文件"""
+    filepath = Path(filepath)
+    dir_path = filepath.parent
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dir_path, encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.rename(f.name, str(filepath))
 
 def get_chapter_info(chapter_file):
     """从正文章节文件获取基本信息"""
@@ -50,8 +60,7 @@ def update_chapter_index():
         "chapters": chapters
     }
 
-    with open(index_file, 'w', encoding='utf-8') as f:
-        json.dump(index_data, f, ensure_ascii=False, indent=2)
+    atomic_write_json(index_file, index_data)
 
     print(f"Updated chapter index: {len(chapters)} chapters")
     return index_data
@@ -79,8 +88,7 @@ def update_stage_index(volume=None):
                 "files": stages
             }
 
-            with open(index_file, 'w', encoding='utf-8') as f:
-                json.dump(index_data, f, ensure_ascii=False, indent=2)
+            atomic_write_json(index_file, index_data)
 
     print(f"Updated stage indices")
 
@@ -107,8 +115,7 @@ def update_volume_index():
                 "files": volumes
             }
 
-            with open(index_file, 'w', encoding='utf-8') as f:
-                json.dump(index_data, f, ensure_ascii=False, indent=2)
+            atomic_write_json(index_file, index_data)
 
     print(f"Updated volume indices")
 
@@ -132,8 +139,7 @@ def update_full_index():
         "files": full_data
     }
 
-    with open(index_file, 'w', encoding='utf-8') as f:
-        json.dump(index_data, f, ensure_ascii=False, indent=2)
+    atomic_write_json(index_file, index_data)
 
     print(f"Updated full novel index")
 

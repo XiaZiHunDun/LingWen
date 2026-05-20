@@ -1,12 +1,19 @@
 #!/bin/bash
-# 小说工作室 · 作家执行脚本 v1.0
+# 小说工作室 · 作家执行脚本 v1.1
 # 用法: ./run_writer.sh [command] [params]
+
+set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)/.."
 WORKFLOW_FILE="$PROJECT_ROOT/workflow_state.json"
 OPINION_DIR="$PROJECT_ROOT/06_意见仓库"
 WRITER_DIR="$PROJECT_ROOT/02_作家工作室"
 CONTENT_DIR="$PROJECT_ROOT/03_内容仓库"
+
+# flock锁保护workflow_state.json并发写
+LOCKFILE="/tmp/lingwen_workflow.lock"
+exec 200>"$LOCKFILE"
+flock -n 200 || { echo -e "${RED}[ERROR]${NC} Another instance is running"; exit 1; }
 
 # 作家列表
 WRITERS=("作家A" "作家B" "作家C" "作家D" "作家E"

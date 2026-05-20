@@ -166,7 +166,7 @@ class VerificationEngine:
                 total += temp
 
             return total if total > 0 else None
-        except:
+        except (ValueError, KeyError, TypeError):
             return None
 
     def number_to_chinese(self, num):
