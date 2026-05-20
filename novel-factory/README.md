@@ -8,183 +8,65 @@
 |------|-----|
 | 项目名称 | 星陨纪元 |
 | 总章节数 | 360章（三卷） |
-| 当前阶段 | ✅ 已完成（S级情感质量） |
-| 版本 | v6.1 (优化完成版，2026-05-20) |
+| 当前阶段 | ✅ 已完成（PHASE_7_CLOSE归档闭环） |
+| 版本 | v8.2 (技术债修复版，2026-05-20) |
 | 情感质量 | S级（审核员K情感专项审核） |
 | 框架版本 | v1.3 |
 
 ## 架构
 
-- **部门**：灵感(3) + 作家(10) + 审核(10) + 读者(20) + 汇总(3) = **46 Agent**
-- **并行策略**：部门内Subagent并行 / 部门间多会话并行 / 串行流程角色切换
-- **驱动方式**：workflow_state.json 状态机 + 人工重大决策
+- **5核心Agent**：outline_master, character_designer, content_writer, auditor, polisher
+- **角色池机制**：同一Agent根据配置扮演不同角色（作家A-J/审核员A-J/读者A-T）
+- **驱动方式**：SQLite状态机 + 三条铁律强制 + 人工重大决策
 
 ## 目录结构
 
 ```
 novel-factory/
-├── 01_灵感库/           # 灵感输出（3个灵感Agent）
-│   ├── 模板库/          # 可复用模板（玄幻/废土/都市/悬疑）
-│   └── {项目名}/        # 项目文件夹
-│       ├── 立项/        # 立项文件历史版本
-│       ├── 基础层.yaml  # 作家用创作参照
-│       └── 深度层.md     # 审核/汇总用深度文档
-├── 02_作家工作室/        # 10位作家Agent画像
-│   ├── 作家主编/        # 统筹任务分配
-│   └── 作家A-J/         # 各作家画像
-├── 03_内容仓库/          # 四层结构（大纲+正文）
-│   ├── 01_全文总体大纲/ # index.json + 全局大纲
-│   ├── 02_卷大纲/       # index.json + 各卷大纲
-│   ├── 03_阶段大纲/     # index.json + 各阶段大纲
-│   ├── 04_正文/         # index.json + ch001-ch360
-│   └── update_index.py  # 索引生成脚本
-├── 04_审核员工作室/      # 10位审核员Agent画像
-├── 05_模拟读者池/        # 20位读者Agent画像
+├── .skills/              # 44个Agent角色池配置（YAML）
+├── infra/                # 核心基础设施
+│   ├── agent_system/     # 5核心Agent实现
+│   │   └── agents/       # outline_master, character_designer,
+│   │                    # content_writer, auditor, polisher
+│   ├── ai_service/       # AI Provider抽象层（OpenAI/Anthropic）
+│   ├── consistency/      # 一致性检查引擎（12检测器）
+│   ├── hooks/            # 事件钩子系统（YAML配置）
+│   ├── memory_system/    # 记忆系统（RAG/Qdrant）
+│   ├── quality_tools/     # 质量工具（QualityGate）
+│   └── state/            # 状态管理（SQLite + workflow_validator）
+├── tools/                # 工作流工具
+├── config/              # 配置文件
+├── 01_灵感库/            # 灵感输出
+├── 02_作家工作室/         # 作家角色池（物理目录，legacy）
+├── 03_内容仓库/           # 四层结构（大纲+正文）
+├── 04_审核员工作室/       # 审核角色池（物理目录，legacy）
+├── 05_模拟读者池/        # 读者角色池（物理目录，legacy）
 ├── 06_意见仓库/          # 六类审核/评论记录
-│   ├── 01_全文大纲_审核/
-│   ├── 02_卷大纲_审核/
-│   ├── 03_阶段大纲_审核/
-│   ├── 04_正文_审核/
-│   ├── 04_作家修改/
-│   ├── 05_读者评论/
-│   └── 06_汇总_审核/
 ├── 07_汇总仓库/          # 阶段/卷/全文汇总
-│   ├── 汇总主笔/
-│   ├── 汇总编辑/
-│   └── 汇总校验/
 └── 08_已发布/            # 最终成品
 ```
+
+> 注：02/04/05目录为历史遗留结构，角色池实际通过 `.skills/` 目录下的YAML配置定义。
 
 ## 核心文件
 
 | 文件 | 说明 |
 |------|------|
-| CLAUDE.md | 系统人设（主会话加载，包含所有部门细化方案） |
-| workflow_state.json | 状态机（驱动流程，记录项目状态和issues） |
-| run_workflow.sh | 工作流编排脚本（调度Agent、执行任务） |
-| run_review.sh | 审核执行脚本（批量审核、分配审核员） |
-| run_opinion.sh | 意见管理脚本（查看/分配/解决意见） |
-| run_reader.sh | 读者调度脚本（启动读者评论） |
-| run_summary.sh | 汇总调度脚本（启动汇总流程） |
+| CLAUDE.md | 系统人设（5核心Agent+角色池模式） |
+| infra/state/workflow_validator.py | 状态转换校验（三条铁律） |
+| infra/agent_system/agents/base.py | AgentBase基类 |
+| infra/agent_system/agents/mixins.py | LLM调用Mixin |
+| .skills/ | 44个Agent角色池配置 |
 
-## 工作流程（22步闭环 v5.0）
+## Agent体系
 
-| 阶段 | 步骤 | 状态 |
-|------|------|------|
-| PHASE_0_SETUP | SETUP_00 初始化 | ✅ 完成 |
-| PHASE_1_LAUNCH | STEP_01 灵感生成 / STEP_02 全文大纲初稿 | ✅ 完成 |
-| PHASE_2_OUTLINE | STEP_03-05 全文大纲审核/修改/终审 | ✅ 完成 |
-| PHASE_3_VOLUME | STEP_06-09 卷大纲生成/审核/修改/终审 | ✅ 完成 |
-| PHASE_4_STAGE | STEP_10-13 阶段大纲生成/审核/修改/终审 | ✅ 完成 |
-| PHASE_5_BODY | STEP_14-18 正文创作/读者评论/审核/修改/定稿 | ✅ 完成 |
-| PHASE_6_SUMMARY | STEP_19-24 阶段汇总/卷汇总/全文汇总/终审 | ✅ 完成 |
-| PHASE_7_CLOSE | STEP_25 归档与发布 | ✅ 完成 |
-
-## 状态管理命令
-
-```bash
-# 灵文 · 工业化小说生产系统
-./run_workflow.sh status
-
-# 灵文 · 工业化小说生产系统
-./run_workflow.sh report
-
-# 灵文 · 工业化小说生产系统
-./run_workflow.sh phases
-
-# 灵文 · 工业化小说生产系统
-./run_workflow.sh tasks
-```
-
-## 审核执行命令
-
-```bash
-# 灵文 · 工业化小说生产系统
-./run_review.sh batch ch001-ch010
-
-# 灵文 · 工业化小说生产系统
-./run_review.sh assign 审核员A ch001-ch005
-
-# 灵文 · 工业化小说生产系统
-./run_review.sh status
-
-# 灵文 · 工业化小说生产系统
-./run_review.sh report B01
-```
-
-### 情感审核专项命令
-
-```bash
-# 灵文 · 工业化小说生产系统
-./run_review.sh emotion_batch ch001-ch010
-
-# 灵文 · 工业化小说生产系统
-./run_review.sh emotion_assign 审核员K ch001-ch005
-
-# 灵文 · 工业化小说生产系统
-./run_review.sh emotion_report B01
-```
-
-## 索引管理命令
-
-```bash
-cd novel-factory/03_内容仓库/04_正文
-
-# 灵文 · 工业化小说生产系统
-python3 update_index.py --all
-
-# 灵文 · 工业化小说生产系统
-python3 update_index.py --query ch001
-
-# 灵文 · 工业化小说生产系统
-python3 update_index.py --missing
-
-# 灵文 · 工业化小说生产系统
-python3 update_index.py --verify
-```
-
-## 章节文件命名校验
-
-```bash
-# 灵文 · 工业化小说生产系统
-./run_check_naming.sh
-
-# 灵文 · 工业化小说生产系统
-./run_publish.sh check-naming
-
-# 灵文 · 工业化小说生产系统
-./run_fix_naming.sh --dry-run
-
-# 灵文 · 工业化小说生产系统
-./run_fix_naming.sh
-```
-
-## 意见管理命令
-
-```bash
-# 灵文 · 工业化小说生产系统
-./run_opinion.sh list <类型>
-
-# 灵文 · 工业化小说生产系统
-./run_opinion.sh pending
-
-# 灵文 · 工业化小说生产系统
-./run_opinion.sh assign <章节> <处理人>
-
-# 灵文 · 工业化小说生产系统
-./run_opinion.sh resolve <意见ID>
-```
-
-## Agent 统计
-
-| 部门 | 人数 | 职责 |
-|------|------|------|
-| 灵感部门 | 3 | 生成立项文件（基础层+深度层），主编轮值 |
-| 作家部门 | 10 | 正文创作，S/A/B自评，主编统筹 |
-| 审核部门 | 10 | 技术审核+市场审核，批量并行 |
-| 读者部门 | 20 | 模拟读者评论，反馈阅读体验 |
-| 汇总部门 | 3 | 主笔+编辑+校验，串行整合 |
-| **合计** | **46** | |
+| 核心Agent | 代码路径 | 角色池 |
+|-----------|----------|--------|
+| outline_master | infra/agent_system/agents/outline_master/ | — |
+| character_designer | infra/agent_system/agents/character_designer/ | — |
+| content_writer | infra/agent_system/agents/content_writer/ | 作家A-J |
+| auditor | infra/agent_system/agents/auditor/ | 审核员A-J |
+| polisher | infra/agent_system/agents/polisher/ | 读者A-T |
 
 ## 质量评估标准（S/A/B三级）
 
@@ -195,21 +77,11 @@ python3 update_index.py --verify
 | B级 | 50%-70% | 返回重做（不计入迭代） |
 | 不合格 | <50% | 打回重做（计1次迭代） |
 
-## 迭代终止条件
+## 三条铁律
 
-| 类型 | 终止条件 |
-|------|---------|
-| 大纲审核 | 全量审核员一致通过（3轮上限） |
-| 正文审核 | 未解决意见≤5条且无逻辑硬伤（2轮上限） |
-| 死锁 | 超迭代上限 → 人工仲裁 |
-
-## 关键规则
-
-1. **强制反馈循环**：审核完成 → 汇总意见 → 启动Agent修复 → TaskOutput验证 → 才能标记完成
-2. **禁止跳过**：绝不在审核后跳过修改主持步骤
-3. **高效并行**：每批次10章必须10个作家并行，禁止串行修改
-4. **验证闭环**：Agent返回后必须TaskOutput验证，才能改step_status
-5. **禁止自改**：主控不得"自己改文件"，必须通过Agent执行
+1. **禁止跳过**：审核完成后必须进入修改主持流程
+2. **验证闭环**：Agent返回后必须TaskOutput验证
+3. **禁止自改**：主控不得"自己改文件"，必须通过Agent执行
 
 ## 启动指南（新项目）
 
@@ -230,9 +102,8 @@ python3 update_index.py --verify
 
 ## 当前项目状态
 
-**《星陨纪元》** 已完成！🎉
+**《星陨纪元》** 已完成！
 
 - ✅ 已完成：360/360章节
-- ✅ 已完成：18个阶段汇总 + 3个卷汇总 + 1个全文汇总
-- ✅ 已归档：全文终稿_星陨纪元_v1.md（08_已发布/）
-- 所有阶段审核通过，25步工作流全部完成
+- ✅ 已归档：PHASE_7_CLOSE 完成
+- 测试覆盖：657 passed, 2 skipped
