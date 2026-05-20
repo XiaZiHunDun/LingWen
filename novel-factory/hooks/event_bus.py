@@ -115,7 +115,10 @@ class EventBus:
         Returns:
             asyncio.Task对象
         """
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
         return loop.run_in_executor(None, self._async_publish, event)
 
     def _async_publish(self, event: Event) -> List[Any]:

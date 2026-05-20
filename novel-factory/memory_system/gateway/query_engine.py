@@ -179,8 +179,10 @@ class QueryEngine:
             retrieval_config = config.get("retrieval", {})
             self.default_top_k = retrieval_config.get("default_top_k", 5)
             self.hybrid_alpha = retrieval_config.get("hybrid_alpha", 0.7)
-        except Exception:
-            # 配置加载失败时使用硬编码默认值
+        except Exception as e:
+            # 配置加载失败时使用硬编码默认值（记录错误以便排查）
+            import sys
+            print(f"Warning: Failed to load config, using defaults: {e}", file=sys.stderr)
             self.default_top_k = 5
             self.hybrid_alpha = 0.7
 
