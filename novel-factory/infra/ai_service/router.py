@@ -7,13 +7,14 @@ AI Provider路由选择器
 
 from typing import Dict, List, Optional, Any, Callable
 
-from ai_service.base import (
+from .base import (
     AIProvider,
     ProviderConfig,
     AIProviderError,
 )
-from ai_service.openai_provider import OpenAIProvider
-from ai_service.anthropic_provider import AnthropicProvider
+from .openai_provider import OpenAIProvider
+from .anthropic_provider import AnthropicProvider
+from .minimax_provider import MiniMaxProvider
 
 
 class AIRouter:
@@ -51,6 +52,7 @@ class AIRouter:
         self._cost_map: Dict[str, float] = {
             "openai": 15.0,  # GPT-4
             "anthropic": 15.0,  # Claude
+            "minimax": 1.0,   # MiniMax M2.7
         }
 
         # 类型到Provider的默认映射
@@ -65,6 +67,8 @@ class AIRouter:
                 self._providers[name] = OpenAIProvider(cfg)
             elif name == "anthropic":
                 self._providers[name] = AnthropicProvider(cfg)
+            elif name == "minimax":
+                self._providers[name] = MiniMaxProvider(cfg)
             else:
                 self._providers[name] = self._create_provider(name, cfg)
 

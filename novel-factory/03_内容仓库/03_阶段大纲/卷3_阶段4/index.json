@@ -1,10 +1,34 @@
 {
-  "updated_at": "2026-05-14 19:22:04",
-  "total_files": 1,
-  "files": [
+  "$schema": "https://lingwen.novel/index-schema/v1",
+  "meta": {
+    "layer": "03_阶段大纲",
+    "project": "星陨纪元",
+    "version": "1.0",
+    "updated_at": "2026-05-14 19:22:04"
+  },
+  "summary": {
+    "total_items": 1,
+    "status_counts": {
+      "draft": 0,
+      "reviewing": 0,
+      "finalized": 1
+    }
+  },
+  "items": [
     {
+      "id": "卷3_阶段4",
+      "title": "阶段4",
       "filename": "阶段大纲.md",
-      "last_updated": "2026-05-13"
+      "status": "finalized",
+      "version": "v1.0",
+      "chapter_range": "ch031-040",
+      "total_chapters": 10,
+      "author": "",
+      "last_updated": "2026-05-13",
+      "outline_ref": {
+        "volume": 3,
+        "stage": 4
+      }
     }
   ]
 }

@@ -1,0 +1,267 @@
+# Skill Registry - Global Agent Variant Mapping
+# 技能注册表 - 全局Agent变体映射表
+#
+# This registry defines all agent variants for the novel factory system.
+# Used by SkillRegistry class to load variant configurations dynamically.
+#
+# Version: v1.0
+# Date: 2026-05-20
+
+agents:
+  content_writer:
+    default_variant: writer-a
+    description: "正文写手 - 负责小说正文创作"
+    variants:
+      - writer-a
+      - writer-b
+      - writer-c
+      - writer-d
+      - writer-e
+      - writer-f
+      - writer-g
+      - writer-h
+      - writer-i
+      - writer-j
+    variant_details:
+      writer-a:
+        name: "作家A"
+        specialty: "玄幻/战斗"
+        style: "热血激昂"
+      writer-b:
+        name: "作家B"
+        specialty: "都市/情感"
+        style: "细腻描写"
+      writer-c:
+        name: "作家C"
+        specialty: "悬疑/推理"
+        style: "紧张烧脑"
+      writer-d:
+        name: "作家D"
+        specialty: "奇幻/冒险"
+        style: "宏大世界观"
+      writer-e:
+        name: "作家E"
+        specialty: "言情/甜宠"
+        style: "温馨甜蜜"
+      writer-f:
+        name: "作家F"
+        specialty: "武侠/古风"
+        style: "江湖气息"
+      writer-g:
+        name: "作家G"
+        specialty: "科幻/未来"
+        style: "科技感强"
+      writer-h:
+        name: "作家H"
+        specialty: "校园/青春"
+        style: "清新自然"
+      writer-i:
+        name: "作家I"
+        specialty: "恐怖/惊悚"
+        style: "悬疑诡异"
+      writer-j:
+        name: "作家J"
+        specialty: "穿越/系统"
+        style: "轻松幽默"
+
+  auditor:
+    default_variant: auditor-a
+    description: "审核员 - 负责质量审核"
+    variants:
+      - auditor-a
+      - auditor-b
+      - auditor-c
+      - auditor-d
+      - auditor-e
+      - auditor-f
+      - auditor-g
+      - auditor-h
+      - auditor-i
+      - auditor-j
+    variant_details:
+      auditor-a:
+        name: "审核员A"
+        specialty: "剧情结构"
+        style: "严格把关"
+      auditor-b:
+        name: "审核员B"
+        specialty: "人物塑造"
+        style: "细腻分析"
+      auditor-c:
+        name: "审核员C"
+        specialty: "逻辑漏洞"
+        style: "严谨挑剔"
+      auditor-d:
+        name: "审核员D"
+        specialty: "文笔风格"
+        style: "文学鉴赏"
+      auditor-e:
+        name: "审核员E"
+        specialty: "情感共鸣"
+        style: "情感导向"
+      auditor-f:
+        name: "审核员F"
+        specialty: "节奏控制"
+        style: "节奏敏感"
+      auditor-g:
+        name: "审核员G"
+        specialty: "伏笔回收"
+        style: "细节关注"
+      auditor-h:
+        name: "审核员H"
+        specialty: "世界观设定"
+        style: "设定严谨"
+      auditor-i:
+        name: "审核员I"
+        specialty: "对话自然"
+        style: "语言敏感"
+      auditor-j:
+        name: "审核员J"
+        specialty: "综合评估"
+        style: "全面客观"
+
+  polisher:
+    default_variant: reader-a
+    description: "润色师/读者 - 负责润色和读者反馈"
+    variants:
+      - reader-a
+      - reader-b
+      - reader-c
+      - reader-d
+      - reader-e
+      - reader-f
+      - reader-g
+      - reader-h
+      - reader-i
+      - reader-j
+      - reader-k
+      - reader-l
+      - reader-m
+      - reader-n
+      - reader-o
+      - reader-p
+      - reader-q
+      - reader-r
+      - reader-s
+      - reader-t
+    variant_details:
+      reader-a:
+        name: "读者A"
+        specialty: "悬念铺设"
+        style: "鼓励性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_a.yaml"
+      reader-b:
+        name: "读者B"
+        specialty: "节奏感知"
+        style: "批评性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_b.yaml"
+      reader-c:
+        name: "读者C"
+        specialty: "人物共鸣"
+        style: "共情式"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_c.yaml"
+      reader-d:
+        name: "读者D"
+        specialty: "世界观"
+        style: "挑剔式"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_d.yaml"
+      reader-e:
+        name: "读者E"
+        specialty: "爽点触发"
+        style: "热烈性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_e.yaml"
+      reader-f:
+        name: "读者F"
+        specialty: "情感调动"
+        style: "共鸣式"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_f.yaml"
+      reader-g:
+        name: "读者G"
+        specialty: "伏笔感知"
+        style: "建设性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_g.yaml"
+      reader-h:
+        name: "读者H"
+        specialty: "主线追踪"
+        style: "客观分析"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_h.yaml"
+      reader-i:
+        name: "读者I"
+        specialty: "文笔评价"
+        style: "专业批评"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_i.yaml"
+      reader-j:
+        name: "读者J"
+        specialty: "场景描写"
+        style: "感受性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_j.yaml"
+      reader-k:
+        name: "读者K"
+        specialty: "对话自然"
+        style: "直接批评"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_k.yaml"
+      reader-l:
+        name: "读者L"
+        specialty: "逻辑通顺"
+        style: "严谨分析"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_l.yaml"
+      reader-m:
+        name: "读者M"
+        specialty: "期待感"
+        style: "积极性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_m.yaml"
+      reader-n:
+        name: "读者N"
+        specialty: "深度思考"
+        style: "思考性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_n.yaml"
+      reader-o:
+        name: "读者O"
+        specialty: "趣味性"
+        style: "轻松活泼"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_o.yaml"
+      reader-p:
+        name: "读者P"
+        specialty: "专业度"
+        style: "专业批评"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_p.yaml"
+      reader-q:
+        name: "读者Q"
+        specialty: "角色丰满"
+        style: "共情式"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_q.yaml"
+      reader-r:
+        name: "读者R"
+        specialty: "关系网络"
+        style: "热情性"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_r.yaml"
+      reader-s:
+        name: "读者S"
+        specialty: "弧光设计"
+        style: "客观分析"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_s.yaml"
+      reader-t:
+        name: "读者T"
+        specialty: "综合评价"
+        style: "客观全面"
+        config_file: "infra/agent_system/agents/polisher/variants/variant_t.yaml"
+
+  outline_master:
+    default_variant: outline-master-default
+    description: "大纲师 - 负责故事大纲设计"
+    variants:
+      - outline-master-default
+
+  character_designer:
+    default_variant: character-designer-default
+    description: "人设师 - 负责角色设计"
+    variants:
+      - character-designer-default
+
+# Registry metadata
+metadata:
+  version: "v1.0"
+  created_at: "2026-05-20"
+  total_agents: 46
+  total_variants: 46
+  config_base_path: "novel-factory"

@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-from consistency.engine.data_structures import (
+from .data_structures import (
     ConsistencyReport, Issue, IssueSeverity, CheckerType, QualityDimension
 )
 

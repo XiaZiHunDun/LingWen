@@ -2,14 +2,14 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from ai_service.base import (
+from infra.ai_service.base import (
     AIProvider,
     ProviderConfig,
     AIProviderError,
     ProviderConfigError,
 )
-from ai_service.openai_provider import OpenAIProvider
-from ai_service.anthropic_provider import AnthropicProvider
+from infra.ai_service.openai_provider import OpenAIProvider
+from infra.ai_service.anthropic_provider import AnthropicProvider
 
 
 class TestProviderConfig:

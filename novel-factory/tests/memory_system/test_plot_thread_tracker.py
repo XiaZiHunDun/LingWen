@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch
 
-from memory_system.state.plot_thread_tracker import PlotThreadTracker
+from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
 
 
 class TestPlotThreadTracker:

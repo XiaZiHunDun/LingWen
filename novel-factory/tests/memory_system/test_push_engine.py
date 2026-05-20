@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from memory_system.gateway.push_engine import PushEngine
+from infra.memory_system.gateway.push_engine import PushEngine
 
 
 class TestPushEngine:

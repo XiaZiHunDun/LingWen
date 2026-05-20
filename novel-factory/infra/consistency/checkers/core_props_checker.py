@@ -40,7 +40,7 @@ class CorePropsChecker:
 
     def __init__(self, chapters_dir: Optional[str] = None):
         if chapters_dir is None:
-            project_root = Path(__file__).parent.parent.parent
+            project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
         self.chapters_dir = Path(chapters_dir)
 

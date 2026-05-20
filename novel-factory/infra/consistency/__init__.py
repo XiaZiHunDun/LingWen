@@ -13,7 +13,7 @@
 - AI痕迹检测
 """
 
-from consistency.engine.consistency_engine import ConsistencyEngine
-from consistency.engine.report_generator import ReportGenerator
+from .engine.consistency_engine import ConsistencyEngine
+from .engine.report_generator import ReportGenerator
 
 __all__ = ["ConsistencyEngine", "ReportGenerator"]

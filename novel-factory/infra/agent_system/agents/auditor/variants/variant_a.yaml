@@ -1,0 +1,44 @@
+# Auditor Variant A - 剧情完整性专家
+# 审核员A：S1剧情完整性专长
+
+variant_id: "A"
+name: "审核员A"
+specialty_dimensions: ["S1"]
+secondary_dimensions: ["S5", "S8"]
+
+# S1-S8权重分配（总和不等于100，用于相对比较）
+s1_weight: 0.45      # 剧情完整性 - 核心权重
+s2_weight: 0.10      # 逻辑自洽
+s3_weight: 0.05      # 文笔风格
+s4_weight: 0.05      # 情感共鸣
+s5_weight: 0.15      # 节奏控制
+s6_weight: 0.05      # 可读性
+s7_weight: 0.05      # 主角魅力
+s8_weight: 0.10      # 人物弧光
+
+# 擅长类型
+expertise_types:
+  - "目标-障碍-结果链分析"
+  - "伏笔埋设验证"
+  - "情节连贯性"
+  - "起承转合结构"
+
+# 审核风格
+audit_style:
+  strictness: "strict"      # 严格/适中/宽松
+  focus: "macro"            # 宏观/细节
+  verbosity: "detailed"     # 详细/简洁
+
+# 核心检查点
+key_checkpoints:
+  - "目标是否明确"
+  - "障碍是否有力"
+  - "结果是否合理"
+  - "伏笔是否回收"
+  - "高潮是否达标"
+
+# 提示词增强
+prompt_enhancements:
+  - "重点关注情节完整性"
+  - "检查目标-障碍-结果链条"
+  - "验证伏笔的完整闭环"

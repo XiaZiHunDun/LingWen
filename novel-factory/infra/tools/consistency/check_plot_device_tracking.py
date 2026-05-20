@@ -65,9 +65,18 @@ class PlotDeviceTracker:
 
     def _classify_element_tier(self, elem: str, elem_type: str) -> str:
         """根据元素名判断伏笔级别"""
-        # 核心伏笔判断
+        # 优先判断是否为组织/势力（避免"万剑宗"等被误判为core级道具）
+        if elem_type == 'locations':
+            org_suffixes = ['阁', '会', '门', '宗', '殿', '域', '谷', '盟']
+            if any(elem.endswith(s) for s in org_suffixes):
+                return 'normal'
+        # 核心伏笔判断（仅当明确是道具/能力时）
         if elem_type == 'objects':
             if any(kw in elem for kw in CORE_OBJECT_KEYWORDS):
+                # 排除组织名被误判（组织名长度通常>=3且含"宗/门/阁"等后缀）
+                org_suffixes = ['阁', '会', '门', '宗', '殿', '域', '谷', '盟']
+                if any(elem.endswith(s) for s in org_suffixes):
+                    return 'normal'  # 组织不是道具
                 return 'core'
         if elem_type == 'characters':
             if any(kw in elem for kw in CORE_CHARACTER_KEYWORDS):
@@ -75,11 +84,6 @@ class PlotDeviceTracker:
         if elem_type == 'concepts':
             if any(kw in elem for kw in CORE_CONCEPT_KEYWORDS):
                 return 'core'
-        # 普通伏笔：组织/势力
-        if elem_type == 'locations':
-            org_suffixes = ['阁', '会', '门', '宗', '殿', '域', '谷', '盟']
-            if any(elem.endswith(s) for s in org_suffixes):
-                return 'normal'
         # 边缘伏笔
         return 'edge'
 
@@ -131,10 +135,15 @@ class PlotDeviceTracker:
 
         # ========== 新增：从引号中提取道具名（对话中提到的） ==========
         # "《星陨令》" 在对话中可能出现
+        # 只提取真正的道具名，排除句子片段
+        known_factions_set = {'星辰会', '万剑宗', '玄机阁', '暗域', '星辰宗', '联盟', '灵兽谷', '本源之母'}
         for match in re.finditer(r'[\u201c\u201d"]([^"\u201c\u201d]{2,10})[\u201c\u201d"]', content):
             name = self._clean_entity_name(match.group(1).strip())
-            if name and len(name) >= 3 and ('令' in name or '剑' in name or '珠' in name or '功法' in name):
-                elements['objects'].add(name)
+            # 必须是真正的道具名（短于5字且含关键词），排除句子片段
+            if name and len(name) <= 5 and ('令' in name or '剑' in name or '珠' in name or '功法' in name or '传承' in name or '器' in name):
+                # 排除组织名
+                if name not in known_factions_set:
+                    elements['objects'].add(name)
 
         # ========== 地点/组织：扩展提取 ==========
         # 直接匹配已知势力名
@@ -199,6 +208,46 @@ class PlotDeviceTracker:
         elem_base = re.sub(r'[了的]', '', elem)
         if elem_base and elem_base in content:
             return True
+
+        # N-gram语义匹配：处理同义词、变形词
+        if self._fuzzy_match_ngram(elem, content):
+            return True
+
+        return False
+
+    def _fuzzy_match_ngram(self, elem: str, content: str, threshold: float = 0.75) -> bool:
+        """基于N-gram的语义匹配，容忍同义词和变形"""
+        if len(elem) < 2:
+            return False
+
+        # 生成字符级bi-gram集合
+        def get_bigrams(s: str) -> set:
+            s = re.sub(r'[^\u4e00-\u9fa5]', '', s)  # 只保留汉字
+            if len(s) < 2:
+                return {s} if s else set()
+            return {s[i:i+2] for i in range(len(s) - 1)}
+
+        elem_bigrams = get_bigrams(elem)
+        if not elem_bigrams:
+            return False
+
+        # 滑动窗口提取content中的片段进行比对
+        window_size = max(len(elem), 8)  # 窗口大小至少为elem长度或8
+        step = max(1, window_size // 2)   # 滑动步长
+
+        for i in range(0, len(content) - window_size + 1, step):
+            window = content[i:i + window_size]
+            content_bigrams = get_bigrams(window)
+            if not content_bigrams:
+                continue
+
+            # 计算Jaccard相似度
+            intersection = len(elem_bigrams & content_bigrams)
+            union = len(elem_bigrams | content_bigrams)
+            if union > 0:
+                similarity = intersection / union
+                if similarity >= threshold:
+                    return True
 
         return False
 

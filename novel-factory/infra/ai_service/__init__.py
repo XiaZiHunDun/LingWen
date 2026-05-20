@@ -3,7 +3,7 @@
 提供统一的AI Provider接口，支持多提供商（OpenAI、Anthropic等）
 """
 
-from ai_service.base import (
+from .base import (
     AIProvider,
     ProviderConfig,
     AIProviderError,
@@ -12,6 +12,9 @@ from ai_service.base import (
     NetworkError,
     TimeoutError,
 )
+from .openai_provider import OpenAIProvider
+from .anthropic_provider import AnthropicProvider
+from .minimax_provider import MiniMaxProvider
 
 __all__ = [
     "AIProvider",
@@ -21,4 +24,7 @@ __all__ = [
     "APIError",
     "NetworkError",
     "TimeoutError",
+    "OpenAIProvider",
+    "AnthropicProvider",
+    "MiniMaxProvider",
 ]

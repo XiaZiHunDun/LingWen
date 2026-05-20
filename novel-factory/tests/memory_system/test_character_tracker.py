@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch
 
-from memory_system.state.character_tracker import CharacterTracker
+from infra.memory_system.state.character_tracker import CharacterTracker
 
 
 class TestCharacterTracker:

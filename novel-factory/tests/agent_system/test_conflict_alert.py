@@ -6,8 +6,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from agent_system.social_engine.conflict_alert import ConflictAlert
-from agent_system.social_engine.writing_suggestion import WritingSuggestion
+from infra.agent_system.social_engine.conflict_alert import ConflictAlert
+from infra.agent_system.social_engine.writing_suggestion import WritingSuggestion
 
 def test_conflict_alert_init():
     """测试冲突预警初始化"""
@@ -25,7 +25,7 @@ def test_conflict_alert_default_config():
 
 def test_conflict_alert_check_outbreak():
     """测试冲突爆发检测"""
-    from agent_system.social_engine.relationship_tracker import RelationshipTracker
+    from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
 
     with tempfile.TemporaryDirectory() as tmpdir:
         state_file = os.path.join(tmpdir, "relationships.json")
@@ -47,7 +47,7 @@ def test_writing_suggestion_init():
 
 def test_writing_suggestion_generate():
     """测试生成写作建议"""
-    from agent_system.social_engine.relationship_tracker import RelationshipTracker
+    from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
 
     with tempfile.TemporaryDirectory() as tmpdir:
         state_file = os.path.join(tmpdir, "relationships.json")

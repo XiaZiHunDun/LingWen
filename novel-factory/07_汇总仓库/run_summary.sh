@@ -15,6 +15,27 @@ CONTENT_DIR="$PROJECT_ROOT/03_内容仓库"
 STAGE_SUMMARY_DIR="$SUMMARY_DIR/阶段正文"
 PUBLISHED_DIR="$PROJECT_ROOT/08_已发布"
 
+# ==================== 文件锁配置 ====================
+LOCK_DIR="/tmp/summary_locks"
+mkdir -p "$LOCK_DIR"
+
+# 获取文件锁（防止并发写入覆盖）
+acquire_lock() {
+    local file=$1
+    local lockfile="$LOCK_DIR/$(basename "$file" .md).lock"
+    exec 300>"$lockfile"
+    if ! flock -n 300; then
+        log_error "汇总文件被占用: $file"
+        log_info "请等待其他进程完成或检查是否有僵尸锁"
+        exit 1
+    fi
+}
+
+# 释放锁
+release_lock() {
+    flock -u 300 2>/dev/null || true
+}
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -424,9 +445,15 @@ function cmd_merge() {
         exit 1
     fi
 
-    # 执行合并
+    # 执行合并（带文件锁 + 原子写入）
     mkdir -p "$output_dir"
-    > "$output_file"
+
+    # 获取文件锁
+    acquire_lock "$output_file"
+
+    # 原子性写入：先写临时文件，再rename
+    local tmp_file="${output_file}.tmp"
+    > "$tmp_file"
 
     local chapter_dir="$PROJECT_ROOT/03_内容仓库/04_正文"
     local merged=0
@@ -436,8 +463,8 @@ function cmd_merge() {
         local fpath="$chapter_dir/$fname"
 
         if [[ -f "$fpath" ]]; then
-            echo -e "\n\n---\n\n# 第${i}章\n\n" >> "$output_file"
-            cat "$fpath" >> "$output_file"
+            echo -e "\n\n---\n\n# 第${i}章\n\n" >> "$tmp_file"
+            cat "$fpath" >> "$tmp_file"
             merged=$((merged + 1))
             if [[ $((merged % 20)) -eq 0 ]]; then
                 echo -e "  已合并: $merged / $((range_end - range_start + 1))"
@@ -446,6 +473,12 @@ function cmd_merge() {
             echo -e "${YELLOW}  ⚠ 缺失: $fname${NC}"
         fi
     done
+
+    # 原子性替换：rename到目标文件
+    mv "$tmp_file" "$output_file"
+
+    # 释放锁
+    release_lock
 
     local lines=$(wc -l < "$output_file")
     local size=$(du -h "$output_file" | cut -f1)

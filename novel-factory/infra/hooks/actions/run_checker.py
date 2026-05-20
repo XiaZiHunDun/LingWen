@@ -12,7 +12,8 @@ from typing import Any, Dict
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from hooks.actions.base import ActionResult, BaseAction
+from infra.logging_config import logger
+from .base import ActionResult, BaseAction
 
 
 class RunCheckerAction(BaseAction):
@@ -49,11 +50,14 @@ class RunCheckerAction(BaseAction):
         # 验证参数
         valid, error = self.validate_params(params, ["checker"])
         if not valid:
+            logger.warning(f"RunChecker: invalid params - {error}")
             return ActionResult(success=False, error=error)
 
         checker_name = params["checker"]
         chapter_range = params.get("chapter_range", "current")
         threshold = params.get("threshold")
+
+        logger.info(f"RunChecker: running {checker_name} for range={chapter_range}")
 
         try:
             # 根据checker名称加载对应的检查器
@@ -72,6 +76,7 @@ class RunCheckerAction(BaseAction):
             return ActionResult(success=True, output=result)
 
         except Exception as e:
+            logger.error(f"RunChecker: {checker_name} failed - {e}")
             return ActionResult(success=False, error=str(e))
 
     def _run_consistency_check(
@@ -82,8 +87,8 @@ class RunCheckerAction(BaseAction):
         """运行一致性检查引擎"""
         # 动态导入避免循环依赖
         import re
-        from consistency.engine.consistency_engine import ConsistencyEngine
-        from consistency.engine.data_structures import CheckScope
+        from ....consistency.engine.consistency_engine import ConsistencyEngine
+        from ....consistency.engine.data_structures import CheckScope
 
         # 从context获取chapters_dir，如果没有则从项目根目录推导
         if "chapters_dir" in context:

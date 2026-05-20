@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 
-from memory_system.vector.qdrant_client import QdrantClientWrapper
+from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
 
 class TestQdrantClientWrapper:
@@ -12,11 +12,11 @@ class TestQdrantClientWrapper:
     @pytest.fixture
     def wrapper(self):
         """创建 QdrantClientWrapper 实例"""
-        with patch("memory_system.vector.qdrant_client.QdrantClient") as mock_client_class:
+        with patch("infra.memory_system.vector.qdrant_client.QdrantClient") as mock_client_class:
             mock_client = Mock()
             mock_client_class.return_value = mock_client
 
-            with patch("memory_system.vector.qdrant_client.load_yaml") as mock_load_yaml:
+            with patch("infra.memory_system.vector.qdrant_client.load_yaml") as mock_load_yaml:
                 # Mock collections schema
                 mock_load_yaml.side_effect = [
                     {  # memory_config.yaml
@@ -210,11 +210,11 @@ class TestQdrantClientWrapperEdgeCases:
     @pytest.fixture
     def wrapper_with_mocked_config(self):
         """使用真实配置文件路径创建 wrapper (mock QdrantClient)"""
-        with patch("memory_system.vector.qdrant_client.QdrantClient") as mock_client_class:
+        with patch("infra.memory_system.vector.qdrant_client.QdrantClient") as mock_client_class:
             mock_client = Mock()
             mock_client_class.return_value = mock_client
 
-            with patch("memory_system.vector.qdrant_client.load_yaml") as mock_load_yaml:
+            with patch("infra.memory_system.vector.qdrant_client.load_yaml") as mock_load_yaml:
                 mock_load_yaml.side_effect = [
                     {
                         "qdrant": {"host": "test-host", "port": 6333, "grpc_port": 6334},
@@ -265,7 +265,7 @@ class TestQdrantClientWrapperEdgeCases:
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
-        with patch("memory_system.vector.qdrant_client.QdrantClient"):
-            with patch("memory_system.vector.qdrant_client.load_yaml", side_effect=FileNotFoundError("Config not found")):
+        with patch("infra.memory_system.vector.qdrant_client.QdrantClient"):
+            with patch("infra.memory_system.vector.qdrant_client.load_yaml", side_effect=FileNotFoundError("Config not found")):
                 with pytest.raises(RuntimeError, match="Failed to load configuration"):
                     QdrantClientWrapper()

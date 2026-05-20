@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from unittest import TestCase
 
-from hooks import Event, EventBus, EventTypes
+from infra.hooks import Event, EventBus, EventTypes
 
 
 class TestEvent(TestCase):
@@ -106,14 +106,17 @@ class TestEventBus(TestCase):
 
     def test_async_publish(self):
         """测试异步发布"""
+        import asyncio
+
         handler = self._create_handler("async_handler")
         self.event_bus.subscribe("ASYNC_EVENT", handler)
 
         event = Event(name="ASYNC_EVENT", source="test")
-        task = self.event_bus.publish_async(event)
 
-        # 等待异步执行完成
-        time.sleep(0.1)
+        async def run_async():
+            await self.event_bus.publish_async(event)
+
+        asyncio.run(run_async())
 
         self.assertEqual(len(self.received_events), 1)
         self.assertEqual(self.received_events[0][0], "async_handler")

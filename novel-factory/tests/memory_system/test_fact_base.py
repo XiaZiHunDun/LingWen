@@ -2,7 +2,7 @@
 import pytest
 from pathlib import Path
 
-from memory_system.state.fact_base import FactBase
+from infra.memory_system.state.fact_base import FactBase
 
 
 class TestFactBase:

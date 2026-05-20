@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from hooks.event_bus import Event, EventBus
-from hooks.config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
-from hooks.actions.base import ActionResult
+from .event_bus import Event, EventBus
+from .config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
+from .actions.base import ActionResult
 
 
 class HookStatus(Enum):

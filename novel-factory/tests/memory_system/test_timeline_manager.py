@@ -3,7 +3,7 @@ import pytest
 from datetime import datetime
 from pathlib import Path
 
-from memory_system.state.timeline_manager import TimelineManager
+from infra.memory_system.state.timeline_manager import TimelineManager
 
 
 class TestTimelineManager:

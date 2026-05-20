@@ -8,9 +8,9 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from hooks.actions.base import ActionResult, BaseAction
-from hooks.actions.notify import NotifyAction
-from hooks.actions.update_state import UpdateStateAction
+from infra.hooks.actions.base import ActionResult, BaseAction
+from infra.hooks.actions.notify import NotifyAction
+from infra.hooks.actions.update_state import UpdateStateAction
 
 
 class TestBaseAction(TestCase):
@@ -196,13 +196,13 @@ class TestRunCheckerAction(TestCase):
 
     def test_action_type(self):
         """测试动作类型"""
-        from hooks.actions.run_checker import RunCheckerAction
+        from infra.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
         self.assertEqual(action.action_type, "run_checker")
 
     def test_missing_checker_param(self):
         """测试缺少checker参数"""
-        from hooks.actions.run_checker import RunCheckerAction
+        from infra.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
 
         result = action.execute(params={}, context={})
@@ -211,7 +211,7 @@ class TestRunCheckerAction(TestCase):
 
     def test_unknown_checker(self):
         """测试未知检查器"""
-        from hooks.actions.run_checker import RunCheckerAction
+        from infra.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
 
         result = action.execute(

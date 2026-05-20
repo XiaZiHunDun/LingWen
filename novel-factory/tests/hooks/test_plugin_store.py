@@ -3,7 +3,7 @@
 Plugin Store Tests
 """
 import pytest
-from hooks.plugin_store import PluginMetadata, PluginStore
+from infra.hooks.plugin_store import PluginMetadata, PluginStore
 
 
 @pytest.fixture

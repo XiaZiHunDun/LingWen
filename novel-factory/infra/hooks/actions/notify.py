@@ -4,13 +4,11 @@
 """
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from hooks.actions.base import ActionResult, BaseAction
-
-logger = logging.getLogger(__name__)
+from infra.logging_config import logger
+from .base import ActionResult, BaseAction
 
 
 class NotifyAction(BaseAction):
@@ -58,14 +56,18 @@ class NotifyAction(BaseAction):
         # 验证参数
         valid, error = self.validate_params(params, ["channel"])
         if not valid:
+            logger.warning(f"Notify action: invalid params - {error}")
             return ActionResult(success=False, error=error)
 
         channel = params["channel"]
         template = params.get("template")
         message = params.get("message")
 
+        logger.info(f"Notify action: channel={channel}, template={template}")
+
         # 验证渠道
         if channel not in self.VALID_CHANNELS:
+            logger.warning(f"Notify action: invalid channel={channel}")
             return ActionResult(
                 success=False,
                 error=f"Invalid channel: {channel}"
@@ -83,6 +85,7 @@ class NotifyAction(BaseAction):
             # 发送通知（这里mock实现，实际可对接各种通知系统）
             result = self._send_notification(channel, content, context)
 
+            logger.info(f"Notify action: sent to {channel}, status={result.get('status', 'sent')}")
             return ActionResult(
                 success=True,
                 output={
@@ -94,6 +97,7 @@ class NotifyAction(BaseAction):
             )
 
         except Exception as e:
+            logger.error(f"Notify action: failed - {e}")
             return ActionResult(success=False, error=str(e))
 
     def _render_template(

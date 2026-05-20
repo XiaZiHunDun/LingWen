@@ -5,7 +5,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-from memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import StateManager
 
 
 class TestStateManager:

@@ -1,17 +1,108 @@
 # novel-factory/agent_system/agents/content_writer/tools.py
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, Union
+
+from ..base import AgentBase
+from .variant_loader import (
+    load_writer_variant,
+    get_writer_style,
+    get_writer_system_prompt_additions,
+    get_writer_name,
+    get_variant_for_scene,
+)
 
 
-class ContentWriterTools:
-    """正文写手工具集"""
+class ContentWriterTools(AgentBase):
+    """正文写手工具集
 
-    def build_writing_prompt(self, context: Dict) -> str:
+    继承AgentBase以获得LLM集成能力
+    支持通过writer_id参数切换不同作家角色(A-J)
+    """
+
+    def __init__(self, router=None):
+        """初始化写手工具
+
+        Args:
+            router: AIRouter实例
+        """
+        super().__init__(router)
+        self._current_writer_id: Optional[str] = None
+
+    def switch_writer(self, writer_id: Union[str, int]) -> str:
+        """切换当前作家角色
+
+        Args:
+            writer_id: 作家标识(a-j, writer_a-j, 1-10)
+
+        Returns:
+            新作家的名称
+        """
+        config = load_writer_variant(writer_id)
+        self._current_writer_id = config.get("writer_id")
+        return config.get("name", f"作家{self._current_writer_id.upper()}")
+
+    def generate_chapter(
+        self,
+        chapter_num: int,
+        context: Dict,
+        writer_id: Optional[Union[str, int]] = None,
+    ) -> Dict[str, Any]:
+        """生成章节
+
+        Args:
+            chapter_num: 章节编号
+            context: 写作上下文
+            writer_id: 可选的作家标识，不提供则使用当前配置
+
+        Returns:
+            包含content和metadata的字典
+        """
+        # 解析writer_id
+        effective_writer_id = writer_id or self._current_writer_id or "a"
+
+        # 加载变体配置
+        variant_config = load_writer_variant(effective_writer_id)
+        writer_style = get_writer_style(effective_writer_id)
+        prompt_additions = get_writer_system_prompt_additions(effective_writer_id)
+        writer_name = get_writer_name(effective_writer_id)
+
+        # 构建Prompt（融入作家特定风格）
+        prompt = self.build_writing_prompt(context, writer_style)
+
+        # 获取系统提示（融入作家特定补充）
+        system = self._get_writing_system_prompt(
+            context, prompt_additions, writer_name, variant_config
+        )
+
+        # 调用LLM
+        response = self.chat(
+            prompt=prompt,
+            system=system,
+            temperature=0.8,
+            max_tokens=4000
+        )
+
+        # 解析响应
+        result = self.parse_response(response, format_type="chapter")
+
+        # 添加元数据
+        result["metadata"] = result.get("metadata", {})
+        result["metadata"]["writer_id"] = effective_writer_id
+        result["metadata"]["writer_name"] = writer_name
+        result["metadata"]["specialization"] = variant_config.get("specialization", {}).get("primary", [])
+
+        return result
+
+    def build_writing_prompt(self, context: Dict, writer_style: Optional[Dict] = None) -> str:
         """
         构建写作Prompt
+
+        Args:
+            context: 写作上下文
+            writer_style: 可选的作家风格配置，用于融入个性化要求
         """
         outline = context.get("chapter_outline", {})
         characters = context.get("characters", [])
-        style = context.get("style_guide", {})
+        style = context.get("style_guide", {}) or writer_style or {}
 
         prompt_parts = [
             f"请撰写{outline.get('title', '第X章')}，字数目标：{outline.get('word_count_target', 2500)}字",
@@ -25,11 +116,17 @@ class ContentWriterTools:
         for char in characters:
             prompt_parts.append(f"- {char.get('name')}: {', '.join(char.get('personality', []))}")
 
+        # 融入作家风格要求
+        tone = style.get("tone", "简洁有力")
+        dialogue_ratio = style.get("dialogue_ratio", "30%")
+        action_intensity = style.get("action_intensity", "medium")
+
         prompt_parts.extend([
             "",
             "## 文风要求",
-            f"基调：{style.get('tone', '简洁有力')}",
-            f"对话比例：{style.get('dialogue_ratio', '30%')}",
+            f"基调：{tone}",
+            f"对话比例：{dialogue_ratio}",
+            f"动作强度：{action_intensity}",
             "",
             "请开始创作："
         ])
@@ -52,3 +149,71 @@ class ContentWriterTools:
         if abs(current - target) < 200:
             return content
         return content
+
+    def _get_writing_system_prompt(
+        self,
+        context: Dict,
+        prompt_additions: Optional[List[str]] = None,
+        writer_name: Optional[str] = None,
+        variant_config: Optional[Dict] = None,
+    ) -> str:
+        """获取写作系统提示
+
+        Args:
+            context: 写作上下文
+            prompt_additions: 作家特定系统提示补充列表
+            writer_name: 作家名称
+            variant_config: 完整的作家变体配置
+
+        Returns:
+            系统提示字符串
+        """
+        base_prompt = """你是一位专业的小说作家，擅长创作引人入胜的故事情节。
+你的写作特点：
+- 注重角色塑造，每个角色有独特的性格和声音
+- 情节紧凑，避免冗余的描写
+- 对话自然，符合角色性格
+- 伏笔和线索要自然埋入
+- 情感真实，不矫揉造作
+
+请创作高质量的章节内容。"""
+
+        # 融入作家特定补充
+        additions = prompt_additions or []
+        if additions:
+            additions_text = "\n".join(f"- {a}" for a in additions)
+            base_prompt += f"\n\n## 作家特定要求\n{additions_text}"
+
+        # 融入作家信息
+        if writer_name:
+            base_prompt += f"\n\n你是{writer_name}，请发挥你的专长进行创作。"
+
+        return base_prompt
+
+    def rewrite_section(self, content: str, instruction: str) -> str:
+        """重写指定段落
+
+        Args:
+            content: 原始内容
+            instruction: 重写指令
+
+        Returns:
+            重写后的内容
+        """
+        prompt = f"原文：\n{content}\n\n指令：{instruction}"
+        system = "你是一位专业的小说润色编辑，请按照指令修改文本，保持文风一致。"
+
+        return self.chat(prompt=prompt, system=system, temperature=0.7)
+
+    def expand_scene(self, scene: str, target_word_count: int) -> str:
+        """扩展场景
+
+        Args:
+            scene: 原始场景
+            target_word_count: 目标字数
+
+        Returns:
+            扩展后的场景
+        """
+        prompt = f"场景：\n{scene}\n\n请扩展此场景，目标字数约{target_word_count}字，添加更多细节和情感描写。"
+        return self.chat(prompt=prompt, temperature=0.8)

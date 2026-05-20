@@ -620,6 +620,160 @@ EOF
     log_info "报告已生成: $report_file"
 }
 
+# ==================== 角色状态自动更新 ====================
+
+# 从章节内容中提取角色状态
+# 调用时机：章节定稿后（PASS verdict）
+function update_character_states() {
+    local batch_dir=$1
+    local verdict_level=$2  # S级/A级
+
+    if [ -z "$batch_dir" ] || [ -z "$verdict_level" ]; then
+        log_warn "update_character_states: 缺少必要参数"
+        return 1
+    fi
+
+    # 只有S级和A级才更新角色状态（需修改的批次不更新）
+    if [ "$verdict_level" != "S级" ] && [ "$verdict_level" != "A级" ]; then
+        return 0
+    fi
+
+    log_info "更新角色状态: $batch_dir (verdict=$verdict_level)"
+
+    python3 << PYEOF
+import sys
+import re
+import os
+sys.path.insert(0, '$PROJECT_ROOT')
+
+try:
+    from infra.memory_system.state.character_tracker import CharacterTracker
+
+    # 初始化tracker
+    config = {'storage': {'type': 'file', 'path': '$PROJECT_ROOT/infra/memory_system/state/character_states.json'}}
+    tracker = CharacterTracker(config)
+
+    # 读取tasks.txt获取章节列表
+    tasks_file = os.path.join('$batch_dir', 'tasks.txt')
+    if not os.path.exists(tasks_file):
+        print('tasks.txt不存在，跳过角色状态更新')
+        sys.exit(0)
+
+    with open(tasks_file, 'r', encoding='utf-8') as f:
+        task_lines = [l.strip() for l in f if '|completed|' in l or '|passed|' in l]
+
+    if not task_lines:
+        print('无已完成章节，跳过角色状态更新')
+        sys.exit(0)
+
+    # 章节内容目录
+    content_dir = os.path.join('$PROJECT_ROOT', '03_内容仓库', '04_正文')
+
+    # 角色状态提取模式
+    location_patterns = [
+        r'(?:在|来到|去了|前往|到达|回到|抵达)\s*([^。，,，、\s]{2,10})',
+        r'([^。，,，、\s]{2,6})\s*中\s*[，,。]',
+        r'向\s*([^。，,，、\s]{2,8})\s*去',
+    ]
+
+    emotion_patterns = {
+        '高兴': ['高兴', '开心', '快乐', '喜悦', '欢欣', '愉快', '兴奋'],
+        '悲伤': ['悲伤', '难过', '伤心', '痛苦', '悲痛', '哀伤', '沮丧'],
+        '愤怒': ['愤怒', '生气', '恼火', '大怒', '暴怒', '气愤'],
+        '恐惧': ['恐惧', '害怕', '惊恐', '畏惧', '胆怯'],
+        '平静': ['平静', '淡定', '冷静', '安宁', '平和'],
+        '紧张': ['紧张', '焦虑', '不安', '忐忑', '惶恐'],
+    }
+
+    alive_patterns = {
+        'alive': [r'活着', r'存活', r'安全', r'还活着', r'未死'],
+        'dead': [r'死了', r'死亡', r'牺牲', r'去世', r'灭亡', r'陨落'],
+    }
+
+    def extract_chapter_num(task_line):
+        """从task行提取章节号"""
+        parts = task_line.split('|')
+        for p in parts:
+            if 'ch' in p.lower():
+                m = re.search(r'ch(\d+)', p.lower())
+                if m:
+                    return int(m.group(1))
+        return None
+
+    def extract_character_states(content):
+        """从章节内容提取角色状态"""
+        states = {}
+
+        # 提取位置信息
+        for pattern in location_patterns:
+            matches = re.findall(pattern, content)
+            if matches:
+                states['current_location'] = matches[0].strip()
+                break
+
+        # 提取情绪状态
+        for emotion, keywords in emotion_patterns.items():
+            for kw in keywords:
+                if kw in content:
+                    states['emotion_state'] = emotion
+                    break
+            if 'emotion_state' in states:
+                break
+
+        # 提取生死状态
+        for state, patterns in alive_patterns.items():
+            for p in patterns:
+                if re.search(p, content):
+                    states['alive'] = (state == 'alive')
+                    break
+            if 'alive' in states:
+                break
+
+        return states
+
+    # 处理每个已完成章节
+    updated_chars = set()
+    for line in task_lines:
+        chapter_num = extract_chapter_num(line)
+        if chapter_num is None:
+            continue
+
+        chapter_file = os.path.join(content_dir, f'ch{chapter_num:03d}.md')
+        if not os.path.exists(chapter_file):
+            continue
+
+        with open(chapter_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # 简单角色检测（中文名检测）
+        char_names = re.findall(r'[\u4e00-\u9fa5]{2,4}(?:说|道|问|答|想|看|笑|哭|怒|惊)', content)
+        char_names = list(set([n[:-1] for n in char_names if len(n) > 2]))
+
+        # 提取本章角色状态
+        char_states = extract_character_states(content)
+
+        # 更新每个检测到的角色
+        for char_name in char_names[:5]:  # 最多更新5个角色
+            if char_name and len(char_name) >= 2:
+                state = dict(char_states)
+                state['last_updated_chapter'] = chapter_num
+                tracker.update_character_state(char_name, state)
+                updated_chars.add(char_name)
+
+    print(f'角色状态更新完成: {len(updated_chars)}个角色')
+    for c in sorted(updated_chars):
+        print(f'  - {c}')
+
+except Exception as e:
+    print(f'角色状态更新跳过: {e}')
+    import traceback
+    traceback.print_exc()
+    sys.exit(0)
+PYEOF
+
+    return $?
+}
+
 # 执行定稿判定
 function cmd_verdict() {
     local batch_filter=$1
@@ -671,19 +825,26 @@ function cmd_verdict() {
     echo ""
 
     # 判定
+    local verdict_level=""
     if [ "$opinion_count" -eq 0 ]; then
+        verdict_level="S级"
         echo "判定结果: 通过（S级）"
         echo "理由: 无审核意见，内容完整度>90%"
     elif [ "$opinion_count" -le 5 ]; then
+        verdict_level="A级"
         echo "判定结果: 通过（需小幅调整，A级）"
         echo "理由: 意见数量≤5条，无P0硬伤"
     else
+        verdict_level="需修改"
         echo "判定结果: 需修改"
         echo "理由: 意见数量>5条，需返回作家修改"
     fi
 
     echo ""
     echo "=========================================="
+
+    # 角色状态自动更新（定稿后）
+    update_character_states "$batch_dir" "$verdict_level"
 
     # 更新批次状态
     python3 << PYEOF

@@ -1,0 +1,38 @@
+# Auditor Variant C - 文笔风格专家
+# 审核员C：S3文笔风格专长
+
+variant_id: "C"
+name: "审核员C"
+specialty_dimensions: ["S3"]
+secondary_dimensions: ["S6", "S4"]
+
+s1_weight: 0.05
+s2_weight: 0.05
+s3_weight: 0.45      # 文笔风格 - 核心权重
+s4_weight: 0.15
+s5_weight: 0.05
+s6_weight: 0.15
+s7_weight: 0.05
+s8_weight: 0.05
+
+expertise_types:
+  - "Shannon指数分析"
+  - "句式多样性"
+  - "用词精准度"
+  - "风格一致性"
+
+audit_style:
+  strictness: "moderate"
+  focus: "detail"
+  verbosity: "detailed"
+
+key_checkpoints:
+  - "句式是否单调"
+  - "用词是否重复"
+  - "风格是否断裂"
+  - "修辞是否恰当"
+
+prompt_enhancements:
+  - "重点分析句式多样性"
+  - "检查用词重复率"
+  - "验证风格一致性"

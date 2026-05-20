@@ -2,10 +2,10 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from ai_service.base import ProviderConfig, AIProviderError
-from ai_service.router import AIRouter
-from ai_service.openai_provider import OpenAIProvider
-from ai_service.anthropic_provider import AnthropicProvider
+from infra.ai_service.base import ProviderConfig, AIProviderError
+from infra.ai_service.router import AIRouter
+from infra.ai_service.openai_provider import OpenAIProvider
+from infra.ai_service.anthropic_provider import AnthropicProvider
 
 
 class TestAIRouter:

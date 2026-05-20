@@ -2,17 +2,17 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-from memory_system.vector.embedder import Embedder
+from infra.memory_system.vector.embedder import Embedder
 
 
 @pytest.fixture
 def embedder():
     """创建 Embedder 实例 (mock OpenAI)"""
-    with patch("memory_system.vector.embedder.OpenAI") as mock_openai_class:
+    with patch("infra.memory_system.vector.embedder.OpenAI") as mock_openai_class:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        with patch("memory_system.vector.embedder.load_yaml") as mock_load_yaml:
+        with patch("infra.memory_system.vector.embedder.load_yaml") as mock_load_yaml:
             # Mock memory_config.yaml
             mock_load_yaml.return_value = {
                 "embedding": {
@@ -125,19 +125,19 @@ class TestEmbedderEdgeCases:
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
-        with patch("memory_system.vector.embedder.OpenAI"):
-            with patch("memory_system.vector.embedder.load_yaml", side_effect=RuntimeError("Config not found")):
+        with patch("infra.memory_system.vector.embedder.OpenAI"):
+            with patch("infra.memory_system.vector.embedder.load_yaml", side_effect=RuntimeError("Config not found")):
                 with pytest.raises(RuntimeError, match="Failed to initialize Embedder"):
                     Embedder()
 
     def test_openai_api_error(self):
         """测试 OpenAI API 错误处理"""
-        with patch("memory_system.vector.embedder.OpenAI") as mock_openai_class:
+        with patch("infra.memory_system.vector.embedder.OpenAI") as mock_openai_class:
             mock_client = Mock()
             mock_openai_class.return_value = mock_client
             mock_client.embeddings.create.side_effect = Exception("API Error")
 
-            with patch("memory_system.vector.embedder.load_yaml") as mock_load_yaml:
+            with patch("infra.memory_system.vector.embedder.load_yaml") as mock_load_yaml:
                 mock_load_yaml.return_value = {
                     "embedding": {"model": "text-embedding-3-small", "dimension": 1536}
                 }

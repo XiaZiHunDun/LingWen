@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from consistency.engine.data_structures import (
+from infra.consistency.engine.data_structures import (
     Issue, IssueSeverity, CheckerType, IssueLocation,
     ConsistencyReport, QualityDimension, CheckerResult,
     CheckScope, RealtimeIssue

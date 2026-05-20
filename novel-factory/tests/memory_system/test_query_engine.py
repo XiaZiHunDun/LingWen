@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch, AsyncMock
 
-from memory_system.gateway.query_engine import QueryEngine
+from infra.memory_system.gateway.query_engine import QueryEngine
 
 
 class TestQueryEngine:
@@ -362,12 +362,12 @@ class TestQueryEngineIntegration:
     @pytest.mark.skip(reason="需要真实的 Qdrant 和 OpenAI API")
     def test_hybrid_search_with_real_services(self, integration_config):
         """测试使用真实服务的混合检索"""
-        from memory_system.vector.qdrant_client import QdrantClientWrapper
-        from memory_system.vector.embedder import Embedder
-        from memory_system.state.character_tracker import CharacterTracker
-        from memory_system.state.plot_thread_tracker import PlotThreadTracker
-        from memory_system.state.timeline_manager import TimelineManager
-        from memory_system.state.fact_base import FactBase
+        from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
+        from infra.memory_system.vector.embedder import Embedder
+        from infra.memory_system.state.character_tracker import CharacterTracker
+        from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
+        from infra.memory_system.state.timeline_manager import TimelineManager
+        from infra.memory_system.state.fact_base import FactBase
 
         qdrant = QdrantClientWrapper()
         embedder = Embedder()
@@ -391,12 +391,12 @@ class TestQueryEngineIntegration:
     @pytest.mark.skip(reason="需要真实的 Qdrant 和 OpenAI API")
     def test_full_workflow(self, integration_config):
         """测试完整工作流"""
-        from memory_system.vector.qdrant_client import QdrantClientWrapper
-        from memory_system.vector.embedder import Embedder
-        from memory_system.state.character_tracker import CharacterTracker
-        from memory_system.state.plot_thread_tracker import PlotThreadTracker
-        from memory_system.state.timeline_manager import TimelineManager
-        from memory_system.state.fact_base import FactBase
+        from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
+        from infra.memory_system.vector.embedder import Embedder
+        from infra.memory_system.state.character_tracker import CharacterTracker
+        from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
+        from infra.memory_system.state.timeline_manager import TimelineManager
+        from infra.memory_system.state.fact_base import FactBase
 
         qdrant = QdrantClientWrapper()
         embedder = Embedder()

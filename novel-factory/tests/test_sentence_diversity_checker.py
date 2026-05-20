@@ -11,12 +11,12 @@ if str(_project_root) not in sys.path:
 
 def test_sentence_diversity_checker_init():
     """Test checker initialization"""
-    from consistency.checkers.sentence_diversity_checker import SentenceDiversityChecker
+    from infra.consistency.checkers.sentence_diversity_checker import SentenceDiversityChecker
     checker = SentenceDiversityChecker()
     assert checker.chapters_dir.exists()
 
 def test_diverse_patterns_defined():
     """Test that diverse patterns are defined"""
-    from consistency.checkers.sentence_diversity_checker import SentenceDiversityChecker
+    from infra.consistency.checkers.sentence_diversity_checker import SentenceDiversityChecker
     checker = SentenceDiversityChecker()
     assert len(checker.DIVERSE_PATTERNS) >= 10

@@ -105,25 +105,46 @@ class EventBus:
 
         return results
 
-    def publish_async(self, event: Event) -> asyncio.Task:
+    async def publish_async(self, event: Event) -> List[Any]:
         """
-        异步发布事件
+        异步发布事件（真正的异步执行）
 
         Args:
             event: 要发布的事件
 
         Returns:
-            asyncio.Task对象
+            所有handler的返回值列表
         """
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-        return loop.run_in_executor(None, self._async_publish, event)
+        tasks = []
+        with self._lock:
+            handlers = self._handlers.get(event.name, []).copy()
 
-    def _async_publish(self, event: Event) -> List[Any]:
-        """异步发布的具体实现"""
-        return self.publish(event)
+        for registration in handlers:
+            if registration.filter_func and not registration.filter_func(event):
+                continue
+            task = asyncio.create_task(self._safe_handle(registration, event))
+            tasks.append(task)
+
+        if not tasks:
+            return []
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return list(results)
+
+    async def _safe_handle(
+        self,
+        registration: HandlerRegistration,
+        event: Event
+    ) -> Any:
+        """安全执行handler（捕获异常）"""
+        try:
+            result = registration.handler(event)
+            # 如果handler返回协程，等待它完成
+            if asyncio.iscoroutine(result):
+                return await result
+            return result
+        except Exception as e:
+            return e
 
     def clear(self, event_name: Optional[str] = None) -> None:
         """

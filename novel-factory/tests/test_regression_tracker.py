@@ -13,8 +13,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-# Add tools directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
+# Add infra/tools directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "infra" / "tools"))
 
 # Import the module under test
 from regression_tracker import (

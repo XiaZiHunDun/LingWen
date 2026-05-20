@@ -10,7 +10,7 @@ from typing import List, Optional, Dict, Any
 
 import openai
 
-from ai_service.base import (
+from .base import (
     AIProvider,
     ProviderConfig,
     AIProviderError,

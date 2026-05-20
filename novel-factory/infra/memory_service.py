@@ -9,14 +9,16 @@
     gateway = get_memory_gateway()
     context = gateway.auto_push_context(chapter_num=5)
 """
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import logging
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Add project root to path
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+from infra.logging_config import logger
 
 from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 from infra.memory_system.vector.embedder import Embedder
@@ -28,7 +30,6 @@ from infra.memory_system.state.fact_base import FactBase
 from infra.memory_system.gateway.memory_gateway import MemoryGateway
 from infra.memory_system.config import load_yaml
 
-logger = logging.getLogger(__name__)
 
 # 全局单例实例
 _memory_gateway: Optional[MemoryGateway] = None

@@ -15,13 +15,13 @@ from pathlib import Path
 _project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(_project_root))
 
-from memory_system.utils.cache import (
+from infra.memory_system.utils.cache import (
     CacheStats,
     CacheEntry,
     LRUCache,
     CacheManager,
 )
-from memory_system.performance import (
+from infra.memory_system.performance import (
     PerformanceOptimizer,
     CachedEmbedder,
     CachedVectorSearch,

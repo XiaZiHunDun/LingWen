@@ -13,13 +13,13 @@ if str(_project_root) not in sys.path:
 
 def test_core_props_checker_init():
     """Test checker initialization"""
-    from consistency.checkers.core_props_checker import CorePropsChecker
+    from infra.consistency.checkers.core_props_checker import CorePropsChecker
     checker = CorePropsChecker()
     assert checker.chapters_dir.exists()
 
 def test_ch1_mandatory_props():
     """Test mandatory props list"""
-    from consistency.checkers.core_props_checker import CorePropsChecker
+    from infra.consistency.checkers.core_props_checker import CorePropsChecker
     checker = CorePropsChecker()
     assert '木勺' in checker.CH1_MANDATORY_PROPS
     assert '地窖' in checker.CH1_MANDATORY_PROPS

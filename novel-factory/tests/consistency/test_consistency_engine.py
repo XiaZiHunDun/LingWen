@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from consistency.engine.consistency_engine import ConsistencyEngine
-from consistency.engine.data_structures import CheckScope, IssueSeverity
+from infra.consistency.engine.consistency_engine import ConsistencyEngine
+from infra.consistency.engine.data_structures import CheckScope, IssueSeverity
 
 
 class TestConsistencyEngineInit:
@@ -130,7 +130,7 @@ class TestConsistencyEngineGetChecker:
     """测试获取检查器"""
 
     def test_get_existing_checker(self):
-        from consistency.engine.data_structures import CheckerType
+        from infra.consistency.engine.data_structures import CheckerType
 
         engine = ConsistencyEngine()
         checker = engine.get_checker(CheckerType.CHARACTER)
@@ -140,7 +140,7 @@ class TestConsistencyEngineGetChecker:
     def test_get_nonexistent_checker(self):
         engine = ConsistencyEngine()
         # 使用一个不存在的检查器类型
-        from consistency.engine.data_structures import CheckerType
+        from infra.consistency.engine.data_structures import CheckerType
 
         checker = engine.get_checker(CheckerType.ITEM)
         assert checker is not None

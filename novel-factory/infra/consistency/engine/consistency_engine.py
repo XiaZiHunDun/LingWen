@@ -9,20 +9,20 @@
 import time
 from typing import List, Dict, Any, Optional
 
-from consistency.engine.data_structures import (
+from .data_structures import (
     Issue, ConsistencyReport, CheckerResult, QualityDimension,
     CheckScope, IssueSeverity, CheckerType
 )
-from consistency.engine.report_generator import ReportGenerator
-from consistency.checkers.character_checker import CharacterChecker
-from consistency.checkers.character_state import CharacterStateChecker
-from consistency.checkers.item_checker import ItemChecker
-from consistency.checkers.timeline_checker import TimelineChecker
-from consistency.checkers.ability_checker import AbilityChecker
-from consistency.checkers.personality_checker import PersonalityChecker
-from consistency.checkers.foreshadow_checker import ForeshadowChecker
-from consistency.checkers.outline_checker import OutlineChecker
-from consistency.checkers.ai_gloss_checker import AIGlossChecker
+from .report_generator import ReportGenerator
+from ..checkers.character_checker import CharacterChecker
+from ..checkers.character_state import CharacterStateChecker
+from ..checkers.item_checker import ItemChecker
+from ..checkers.timeline_checker import TimelineChecker
+from ..checkers.ability_checker import AbilityChecker
+from ..checkers.personality_checker import PersonalityChecker
+from ..checkers.foreshadow_checker import ForeshadowChecker
+from ..checkers.outline_checker import OutlineChecker
+from ..checkers.ai_gloss_checker import AIGlossChecker
 
 
 class ConsistencyEngine:

@@ -8,18 +8,61 @@
 - upsert_batch: 大批量插入分批提交
 - LRU 缓存: search 操作结果缓存
 - batch_search: 批量查询多个向量
+- timeout: 单次请求超时（默认30秒）
+- retry: 自动重试机制（默认3次）
 """
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 import threading
+import time
 from collections import OrderedDict
-from typing import Any, Optional
+from functools import wraps
+from typing import Any, Callable, Optional
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, Filter, PointStruct, FieldCondition, MatchValue, PointIdsList
 
 from infra.memory_system.config import load_yaml
+
+logger = logging.getLogger(__name__)
+
+
+def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
+    """带指数退避重试的装饰器
+
+    Args:
+        max_retries: 最大重试次数，默认3
+        delay: 初始重试延迟（秒），默认1
+        backoff: 退避系数，默认2（1s, 2s, 4s...）
+
+    Returns:
+        装饰器函数
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            current_delay = delay
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            f"Attempt {attempt + 1}/{max_retries} failed for {func.__name__}: {e}. "
+                            f"Retrying in {current_delay}s..."
+                        )
+                        time.sleep(current_delay)
+                        current_delay *= backoff
+                    else:
+                        logger.error(f"All {max_retries} attempts failed for {func.__name__}: {e}")
+            raise last_exception
+        return wrapper
+    return decorator
 
 
 class _LRUCache:
@@ -113,6 +156,11 @@ class QdrantClientWrapper:
         self.port = qdrant_config["port"]
         self.grpc_port = qdrant_config["grpc_port"]
 
+        # 超时和重试配置（从配置文件读取，无则使用默认值）
+        self.timeout = qdrant_config.get("timeout", 30)  # 单次请求超时（秒）
+        self.max_retries = qdrant_config.get("max_retries", 3)  # 最大重试次数
+        self.retry_delay = qdrant_config.get("retry_delay", 1)  # 重试延迟（秒）
+
         # Embedding 配置
         embedding_config = memory_config["embedding"]
         self.dimension = embedding_config["dimension"]
@@ -130,6 +178,7 @@ class QdrantClientWrapper:
             host=self.host,
             port=self.port,
             grpc_port=self.grpc_port,
+            timeout=self.timeout,  # 单次请求超时
         )
 
         # 缓存配置
@@ -171,6 +220,7 @@ class QdrantClientWrapper:
         if collection_name not in self.collections:
             raise ValueError(f"Collection '{collection_name}' not found. Available: {list(self.collections.keys())}")
 
+    @with_retry(max_retries=3, delay=1.0)
     def upsert(self, collection_name: str, points: list[dict]) -> None:
         """Upsert 向量点到集合
 
@@ -251,6 +301,7 @@ class QdrantClientWrapper:
         # 清除该集合的缓存
         self._search_cache.clear_collection(collection_name)
 
+    @with_retry(max_retries=3, delay=1.0)
     def search(
         self,
         collection_name: str,
@@ -282,9 +333,10 @@ class QdrantClientWrapper:
         if top_k is None:
             top_k = self.default_top_k
 
-        # 构建缓存键
+        # 构建缓存键（使用JSON序列化float向量，因为float无法直接hash）
         filter_hash = _make_filter_hash(query_filter)
-        cache_key = f"{collection_name}:{tuple(query_vector)}:{top_k}:{filter_hash}"
+        vector_hash = hashlib.md5(json.dumps(list(query_vector), sort_keys=True).encode()).hexdigest()[:16]
+        cache_key = f"{collection_name}:{vector_hash}:{top_k}:{filter_hash}"
 
         # 检查缓存
         cached_result = self._search_cache.get(cache_key)
@@ -316,6 +368,7 @@ class QdrantClientWrapper:
 
         return converted_results
 
+    @with_retry(max_retries=3, delay=1.0)
     def batch_search(
         self,
         collection_name: str,
@@ -348,9 +401,10 @@ class QdrantClientWrapper:
                     f"Query vector dimension mismatch: expected {self.dimension}, got {len(query_vector)}"
                 )
 
-            # 构建缓存键
+            # 构建缓存键（使用JSON序列化float向量，因为float无法直接hash）
             filter_hash = _make_filter_hash(query_filter)
-            cache_key = f"{collection_name}:{tuple(query_vector)}:{top_k}:{filter_hash}"
+            vector_hash = hashlib.md5(json.dumps(list(query_vector), sort_keys=True).encode()).hexdigest()[:16]
+            cache_key = f"{collection_name}:{vector_hash}:{top_k}:{filter_hash}"
 
             # 检查缓存
             cached_result = self._search_cache.get(cache_key)

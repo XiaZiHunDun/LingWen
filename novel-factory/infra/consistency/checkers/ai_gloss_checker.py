@@ -13,8 +13,8 @@ AI痕迹检测器
 
 from typing import List, Dict, Any, Optional, Tuple
 
-from consistency.engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
-from consistency.checkers.base_checker import BaseChecker
+from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from .base_checker import BaseChecker
 
 
 class AIGlossChecker(BaseChecker):

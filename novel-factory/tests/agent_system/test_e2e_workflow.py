@@ -14,9 +14,9 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from agent_system.master_controller import MasterController
-from agent_system.social_engine.relationship_tracker import RelationshipTracker
-from agent_system.social_engine.event_effect_calculator import EventEffectCalculator
+from infra.agent_system.master_controller import MasterController
+from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
+from infra.agent_system.social_engine.event_effect_calculator import EventEffectCalculator
 
 
 class TestCompleteWorkflow:
@@ -77,11 +77,19 @@ class TestCompleteWorkflow:
             outline=outline,
             characters=characters,
             memory_context=memory_context,
-            style_guide=style_guide
+            style_guide=style_guide,
+            use_llm=True  # LLM mode returns content
         )
-        assert "prompt" in write_result
-        assert "context" in write_result
-        assert "铁蛋" in write_result["prompt"]
+        # LLM模式返回content和word_count，fallback模式返回prompt
+        if "content" in write_result:
+            assert "context" in write_result
+            assert "word_count" in write_result
+            assert write_result["word_count"] > 0  # 真实生成
+        else:
+            # fallback模式
+            assert "prompt" in write_result
+            assert "context" in write_result
+            assert "铁蛋" in write_result["prompt"]
 
         # 4. 审核章节
         chapter_content = "铁蛋冷静地站在原地，莫言阴险地笑着。铁蛋突然暴怒起来，这不符合他冷静的性格。"
@@ -420,7 +428,7 @@ class TestContextBuilderIntegration:
 
     def test_context_builder_with_empty_memory(self):
         """测试ContextBuilder处理空memory_context"""
-        from agent_system.shared.context_builder import ContextBuilder
+        from infra.agent_system.shared.context_builder import ContextBuilder
 
         builder = ContextBuilder()
         context = builder.build_writing_context(
@@ -438,7 +446,7 @@ class TestContextBuilderIntegration:
 
     def test_context_builder_merges_foreshadow(self):
         """测试ContextBuilder合并伏笔"""
-        from agent_system.shared.context_builder import ContextBuilder
+        from infra.agent_system.shared.context_builder import ContextBuilder
 
         builder = ContextBuilder()
         memory_context = {

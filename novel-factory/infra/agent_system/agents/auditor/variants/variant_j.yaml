@@ -1,0 +1,40 @@
+# Auditor Variant J - 综合审核专家
+# 审核员J：全维度综合评估
+
+variant_id: "J"
+name: "审核员J"
+specialty_dimensions: ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]  # 全维度
+secondary_dimensions: []
+
+# 均衡权重分布
+s1_weight: 0.125
+s2_weight: 0.125
+s3_weight: 0.125
+s4_weight: 0.125
+s5_weight: 0.125
+s6_weight: 0.125
+s7_weight: 0.125
+s8_weight: 0.125
+
+expertise_types:
+  - "全维度综合评估"
+  - "跨维度问题识别"
+  - "综合质量判定"
+  - "平衡性分析"
+
+audit_style:
+  strictness: "moderate"     # 不过严也不过松
+  focus: "macro"            # 宏观视角
+  verbosity: "concise"      # 简洁明了
+
+key_checkpoints:
+  - "各维度是否平衡"
+  - "有无明显短板"
+  - "综合质量是否达标"
+  - "最需改进的维度"
+
+prompt_enhancements:
+  - "进行全维度综合评估"
+  - "识别跨维度关联问题"
+  - "给出综合质量分数"
+  - "指出最需改进的维度"

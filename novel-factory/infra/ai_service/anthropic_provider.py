@@ -10,7 +10,7 @@ from typing import List, Optional, Dict, Any
 
 import anthropic
 
-from ai_service.base import (
+from .base import (
     AIProvider,
     ProviderConfig,
     AIProviderError,
@@ -79,7 +79,14 @@ class AnthropicProvider(AIProvider):
                     max_tokens=max_tokens,
                     **kwargs
                 )
-                return response.content[0].text
+                # Handle different block types (text, thinking, etc.)
+                for block in response.content:
+                    if hasattr(block, 'text') and block.text:
+                        return block.text
+                # Fallback: try to get text from first content block
+                if hasattr(response.content[0], 'text'):
+                    return response.content[0].text
+                return str(response.content[0])
 
             except anthropic.APITimeoutError as e:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")

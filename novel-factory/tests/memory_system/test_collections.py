@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-from memory_system.vector.collections import CollectionManager
+from infra.memory_system.vector.collections import CollectionManager
 
 
 class TestCollectionManager:
@@ -11,7 +11,7 @@ class TestCollectionManager:
     @pytest.fixture
     def collection_manager(self):
         """创建 CollectionManager 实例（mock QdrantClientWrapper）"""
-        with patch("memory_system.vector.collections.QdrantClientWrapper") as mock_wrapper_class:
+        with patch("infra.memory_system.vector.collections.QdrantClientWrapper") as mock_wrapper_class:
             mock_instance = Mock()
             mock_wrapper_class.return_value = mock_instance
 
@@ -139,7 +139,7 @@ class TestCollectionManagerEdgeCases:
     @pytest.fixture
     def manager_with_empty_config(self):
         """测试空配置情况"""
-        with patch("memory_system.vector.collections.QdrantClientWrapper") as mock_wrapper_class:
+        with patch("infra.memory_system.vector.collections.QdrantClientWrapper") as mock_wrapper_class:
             mock_instance = Mock()
             mock_wrapper_class.return_value = mock_instance
             mock_instance.collections = {}

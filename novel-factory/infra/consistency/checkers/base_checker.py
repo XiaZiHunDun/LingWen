@@ -8,7 +8,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 
-from consistency.engine.data_structures import Issue, CheckerType
+from ..engine.data_structures import Issue, CheckerType
 
 
 class BaseChecker(ABC):

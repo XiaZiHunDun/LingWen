@@ -10,9 +10,9 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from consistency.engine.report_generator import ReportGenerator
-from consistency.engine.consistency_engine import ConsistencyEngine
-from consistency.engine.data_structures import (
+from infra.consistency.engine.report_generator import ReportGenerator
+from infra.consistency.engine.consistency_engine import ConsistencyEngine
+from infra.consistency.engine.data_structures import (
     ConsistencyReport, Issue, IssueSeverity, CheckerType, IssueLocation
 )
 

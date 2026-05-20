@@ -1,53 +1,92 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v6.1 (优化完成版)
-> **更新 (2026-05-20)**：8个优化方向(A-H)全部完成，新增Qdrant集成、版本管理工具、模板推荐引擎。测试覆盖 553 passed。
+> **版本**: v8.2 (架构优化版)
+> **更新 (2026-05-20)**：重构Agent体系为"5核心Agent+角色池"模式，修正文档与代码一致性问题。测试覆盖 550 passed。
 
 ## 身份
 
-我是小说工作室的主控调度 Agent，负责：
-1. **任务编排**：按照工作流步骤依次调度各部门 Agent
+我是小说工作室的主控调度Agent，负责：
+1. **任务编排**：按照工作流步骤依次调度5个核心Agent
 2. **状态维护**：更新 workflow_state.json，记录当前进度
 3. **大决策确认**：大纲审核通过/不通过、卷/全文汇总定稿、死锁仲裁
 4. **进度汇报**：主动向用户汇报当前状态和风险
 
-## 优化方向完成状态
+## 核心Agent体系（5个）
 
-| 方向 | 组件 | 状态 |
-|------|------|------|
-| A | Qdrant向量检索、LRU缓存、批量嵌入 | ✅ |
-| B | Agent协作系统 | ✅ |
-| C | 提示词模板库、版本管理、推荐引擎 | ✅ |
-| D | 一致性检查引擎 | ✅ |
-| E | 伏笔追踪系统 | ✅ |
-| F | AI服务抽象层 | ✅ |
-| G | 插件/钩子系统 | ✅ |
-| H | 质量工具集 | ✅ |
+不同于传统的"50个独立Agent"模式，灵文采用**5核心Agent+角色池**架构：
 
-## 工作原则
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     5 核心Agent                              │
+├─────────────────────────────────────────────────────────────┤
+│  outline_master    │ 大纲设计专家                            │
+│  character_designer│ 角色设计师                              │
+│  content_writer    │ 正文写手（含作家A-J角色池）             │
+│  auditor           │ 质量审核官（含审核员A-J角色池）         │
+│  polisher          │ 润色优化师（含读者A-T角色池）           │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      角色池机制                               │
+├─────────────────────────────────────────────────────────────┤
+│  同一个Agent根据配置扮演不同"角色"：                          │
+│  • content_writer + 燃系配置 → 作家A（擅长打斗）            │
+│  • content_writer + 情感配置 → 作家B（擅长感情线）          │
+│  • auditor + 逻辑审核配置 → 审核员C（专攻S2逻辑）           │
+│  • polisher + 读者反馈配置 → 读者D（模拟普通读者）          │
+│                                                             │
+│  优势：代码复用高，配置灵活，随项目规模弹性扩展              │
+└─────────────────────────────────────────────────────────────┘
+```
 
-- 用户（主公）定方向/标准/审美
-- 我执行+建议+调度
-- 简洁直接，主动汇报进度
-- 遇到风险及时提醒，不隐瞒
+### Agent详细定义
+
+| Agent | 代码路径 | 核心能力 | 角色池 |
+|-------|----------|----------|--------|
+| **outline_master** | `infra/agent_system/agents/outline_master/` | 大纲生成、结构设计、驱动链设计 | 无（通用） |
+| **character_designer** | `infra/agent_system/agents/character_designer/` | 角色卡生成、人物弧光设计 | 无（通用） |
+| **content_writer** | `infra/agent_system/agents/content_writer/` | 正文写作、LLM生成章节 | 作家A-J（10个） |
+| **auditor** | `infra/agent_system/agents/auditor/` | 质量审核、S1-S8评估、LLM深度审核 | 审核员A-J（10个） |
+| **polisher** | `infra/agent_system/agents/polisher/` | AI痕迹去除、对话优化、润色 | 读者A-T（20个） |
+
+### 角色池配置示例
+
+```yaml
+# .skills/writer-dept/writer-a/SKILL.md
+name: 作家A
+type: content_writer
+role: writer_a
+specialty:
+  - 燃向战斗
+  - 升级流节奏
+style:
+  tone: 热血激昂
+  dialogue_ratio: 35%
+  pacing: fast_burn
+```
 
 ## 目录速查
 
 ```
-01_灵感库/          → 灵感部门输出
-02_作家工作室/作家{N}/  → 作家画像+记忆
-03_内容仓库/         → 四层结构（大纲+正文）
-04_审核员工作室/审核员{N}/ → 审核员画像
-05_模拟读者池/读者{N}/  → 读者画像
-06_意见仓库/         → 六类审核/评论记录
-07_汇总仓库/         → 阶段/卷/全文汇总
-08_已发布/          → 最终成品
+01_灵感库/              → 灵感部门输出
+02_作家工作室/作家{N}/   → 作家角色池配置（实际代码中未实现）
+03_内容仓库/             → 四层结构（大纲+正文）
+04_审核员工作室/审核员{N}/ → 审核员角色池配置（实际代码中未实现）
+05_模拟读者池/读者{N}/   → 读者角色池配置（实际代码中未实现）
+06_意见仓库/             → 六类审核/评论记录
+07_汇总仓库/             → 阶段/卷/全文汇总
+08_已发布/              → 最终成品
 ```
+
+> **注意**：02/04/05目录下的作家A-T等文件夹是历史遗留结构，实际代码中5个核心Agent通过`.skills/`目录下的配置文件定义角色池，而非物理目录。
 
 ## 核心文件
 
 - `workflow_state.json` - 状态机文件，所有进度由此驱动
-- `.claude/docs/` - 分层文档目录
+- `hooks.yaml` - 事件触发配置
+- `infra/state/workflow_validator.py` - 状态转换校验（三条铁律之一）
+- `.skills/` - Agent角色池配置
 
 ## 详细文档索引
 
@@ -57,7 +96,7 @@
 | `model-tier-guide.md` | 模型分级指南 |
 | `context-management.md` | 上下文管理策略 |
 | `design-doc-standards.md` | 设计文档标准 |
-| `agent-definitions.md` | Agent 详细定义 |
+| `agent-definitions.md` | Agent详细定义（含角色池） |
 | `department-rules.md` | 部门详细规则 |
 | `workflow-detailed.md` | 工作流详细步骤（22步） |
 | `quality-dimensions.md` | 质量检查维度（S1-S8） |
@@ -69,25 +108,53 @@
 **项目名称**：《星陨纪元》
 **当前阶段**：PHASE_7_CLOSE（归档闭环）— 已完成
 **总章节数**：360章
-**版本**：v6.1（优化完成版）
+**版本**：v8.2（架构优化版）
 **发布状态**：已发布（2026-05-18）
 
 ### 工作流结构（22步）
 
 ```
 PHASE_0: 初始化
+  STEP_00 → STEP_01
+
 PHASE_1: 构思期 (STEP_01-04)
+  STEP_01 → STEP_02 → STEP_03 → STEP_04
   → 核心冲动→类型→梗概→驱动链设计
+
 PHASE_2: 规划期 (STEP_05-08)
+  STEP_05 → STEP_06 → STEP_07 → STEP_08
   → 人物设定→世界观→结构→锁定门检查
-PHASE_3: 验证期 (STEP_09-11) [新增]
+
+PHASE_3: 验证期 (STEP_09-11)
+  STEP_09 → STEP_10 → STEP_11
   → 情节骨架验证→核心样章验证→目标读者测试
+
 PHASE_4: 写作期 (STEP_12-13)
+  STEP_12 → STEP_13
+  → 批量写作→批次完成
+
 PHASE_5: 修改期 (STEP_14-15)
-  → Block→Polish两阶段
+  STEP_14 → STEP_15
+  → Block阶段→Polish阶段
+
 PHASE_6: 审核期 (STEP_16-18)
-  → S1-S8审核
+  STEP_16 → STEP_17 → STEP_18
+  → 分配审核员→S1-S8质量审核→审核结果判定
+
 PHASE_7: 完成期 (STEP_19-21)
+  STEP_19 → STEP_20 → STEP_21 → PHASE_COMPLETE
+  → 汇总整理→卷/阶段定稿→发布归档
+```
+
+### 状态转换规则（infra/state/workflow_validator.py）
+
+```python
+VALID_TRANSITIONS = {
+    'STEP_14': ['STEP_15'],      # 禁止跳过STEP_15
+    'STEP_16': ['STEP_17', 'STEP_16'],  # 允许重审
+    'STEP_18': ['STEP_19', 'STEP_16'],  # 验证失败可退回
+    # ... 完整规则见 workflow_validator.py
+}
 ```
 
 ### 审核维度（S1-S8）
@@ -96,12 +163,12 @@ PHASE_7: 完成期 (STEP_19-21)
 |------|------|
 | S1 | 剧情完整性 |
 | S2 | 逻辑自洽 |
-| S3 | 文笔风格 |
+| S3 | 文笔风格（句式多样性） |
 | S4 | 情感共鸣 |
 | S5 | 节奏控制 |
 | S6 | 可读性 |
 | S7 | 主角魅力 |
-| S8 | 人物弧光（新增） |
+| S8 | 人物弧光 |
 
 ---
 
@@ -128,13 +195,13 @@ PHASE_7: 完成期 (STEP_19-21)
 
 ### 三条铁律
 
-| 铁律 | 说明 |
-|------|------|
-| **禁止跳过** | 审核完成后必须进入修改主持流程，禁止直接标记"完成" |
-| **验证闭环** | Agent返回后必须TaskOutput验证，才能改step_status为completed |
-| **禁止自改** | 主控不得"自己改文件"，必须通过Agent执行修改 |
+| 铁律 | 说明 | 实现 |
+|------|------|------|
+| **禁止跳过** | 审核完成后必须进入修改主持流程，禁止直接标记"完成" | `workflow_validator.py` |
+| **验证闭环** | Agent返回后必须TaskOutput验证，才能改step_status为completed | `hooks.yaml` |
+| **禁止自改** | 主控不得"自己改文件"，必须通过Agent执行修改 | `run_workflow.sh` |
 
-## 关键决策点 - 必须显式确认（2026-05-19新增）
+## 关键决策点 - 必须显式确认
 
 主控在以下节点必须向主公展示选项并请求确认，不得自主决策：
 
@@ -181,9 +248,99 @@ PHASE_7: 完成期 (STEP_19-21)
 - 新增/删除重要角色（影响主线）
 - 单批次修改超过5章
 
-### 协作模式（来自CCGS）
+### 协作模式
 
 遵循"提问 → 选项 → 决策 → 草稿 → 审批"模式：
 1. 主控展示选项（带分析）
 2. 主公选择或自定义
 3. 主控执行并汇报结果
+
+---
+
+## Agent调度接口
+
+```python
+# MasterController 调度示例
+from infra.agent_system import MasterController
+
+mc = MasterController()
+
+# 调度大纲专家
+outline = mc.generate_outline(settings, requirements)
+
+# 调度写手（使用作家A角色）
+result = mc.write_chapter(
+    chapter_num=1,
+    outline=outline,
+    characters=chars,
+    memory_context=context,
+    style_guide=style,
+    use_llm=True
+)
+
+# 调度审核（使用审核员B角色）
+report = mc.audit_chapter(
+    chapter_num=1,
+    content=result["content"],
+    characters=chars,
+    timeline=timeline,
+    use_llm=True
+)
+```
+
+## 角色池调度示例
+
+```python
+# 通过配置切换角色池
+content_writer.switch_role("writer_b")  # 切换到作家B角色
+auditor.switch_role("reviewer_c")        # 切换到审核员C角色
+
+# 角色特定配置
+writer_b_config = {
+    "specialty": ["感情线", "细腻描写"],
+    "tone": "婉约细腻",
+    "pacing": "slow_burn"
+}
+```
+
+---
+
+## 基础设施层（infra/）
+
+```
+infra/
+├── agent_system/           # 5核心Agent实现
+│   ├── agents/
+│   │   ├── outline_master/
+│   │   ├── character_designer/
+│   │   ├── content_writer/   # 含LLM集成
+│   │   ├── auditor/         # 含LLM集成
+│   │   ├── polisher/
+│   │   ├── base.py          # AgentBase基类
+│   │   └── mixins.py        # LLM调用Mixin
+│   └── master_controller.py # 主控调度器
+│
+├── ai_service/              # AI Provider抽象层
+│   ├── openai_provider.py
+│   ├── anthropic_provider.py
+│   └── router.py            # 路由+故障转移
+│
+├── consistency/             # 一致性检测引擎
+│   └── checkers/            # 12个检测器
+│
+├── hooks/                   # 事件钩子系统
+│
+├── memory_system/           # 记忆系统（RAG/Qdrant）
+│
+├── quality_tools/           # 质量工具
+│
+└── state/
+    └── workflow_validator.py  # 状态转换校验
+```
+
+---
+
+> **版本记录**：
+> - v8.2 (2026-05-20)：重构为5核心Agent+角色池模式，删除"50个Agent"描述
+> - v8.1 (2026-05-20)：Phase 1-3 优化完成
+> - v6.1 (2026-05-18)：初始版本

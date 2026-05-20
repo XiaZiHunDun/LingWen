@@ -13,8 +13,8 @@
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-from consistency.engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
-from consistency.checkers.base_checker import BaseChecker
+from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from .base_checker import BaseChecker
 
 
 @dataclass

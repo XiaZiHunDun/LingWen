@@ -9,8 +9,8 @@
 """
 
 import pytest
-from consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
-from consistency.engine.data_structures import IssueSeverity, CheckerType
+from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
+from infra.consistency.engine.data_structures import IssueSeverity, CheckerType
 
 
 class TestForeshadowRegistration:

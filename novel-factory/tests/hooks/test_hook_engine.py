@@ -7,13 +7,13 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from hooks import Event, EventBus, EventTypes
-from hooks.config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
-from hooks.hook_engine import HookEngine, HookStatus, HookExecutionError
-from hooks.actions.base import ActionResult
-from hooks.actions.run_checker import RunCheckerAction
-from hooks.actions.notify import NotifyAction
-from hooks.actions.update_state import UpdateStateAction
+from infra.hooks import Event, EventBus, EventTypes
+from infra.hooks.config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
+from infra.hooks.hook_engine import HookEngine, HookStatus, HookExecutionError
+from infra.hooks.actions.base import ActionResult
+from infra.hooks.actions.run_checker import RunCheckerAction
+from infra.hooks.actions.notify import NotifyAction
+from infra.hooks.actions.update_state import UpdateStateAction
 
 
 class TestConditionEvaluator(TestCase):

@@ -8,7 +8,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from hooks.actions.base import ActionResult, BaseAction
+from infra.logging_config import logger
+from .base import ActionResult, BaseAction
 
 
 class UpdateStateAction(BaseAction):
@@ -49,12 +50,15 @@ class UpdateStateAction(BaseAction):
         # 验证参数
         valid, error = self.validate_params(params, ["field", "value"])
         if not valid:
+            logger.warning(f"Update state: invalid params - {error}")
             return ActionResult(success=False, error=error)
 
         target = params.get("target", "workflow_state.json")
         field = params["field"]
         value = params["value"]
         merge = params.get("merge", True)
+
+        logger.info(f"Update state: target={target}, field={field}, value={value}")
 
         # 解析字段路径
         field_parts = field.split(".")
@@ -79,6 +83,7 @@ class UpdateStateAction(BaseAction):
             # 写回状态文件
             self._write_state(state_file, updated_state)
 
+            logger.info(f"Update state: successfully updated {field}")
             return ActionResult(
                 success=True,
                 output={
@@ -90,6 +95,7 @@ class UpdateStateAction(BaseAction):
             )
 
         except Exception as e:
+            logger.error(f"Update state failed: {e}")
             return ActionResult(success=False, error=str(e))
 
     def _resolve_value_from_context(self, value_expr: str, context: Dict[str, Any]) -> Any:

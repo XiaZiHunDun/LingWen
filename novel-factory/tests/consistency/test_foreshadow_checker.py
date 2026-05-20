@@ -2,8 +2,8 @@
 import pytest
 from unittest.mock import MagicMock
 
-from consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
-from consistency.engine.data_structures import IssueSeverity
+from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
+from infra.consistency.engine.data_structures import IssueSeverity
 
 
 class TestForeshadowChecker:

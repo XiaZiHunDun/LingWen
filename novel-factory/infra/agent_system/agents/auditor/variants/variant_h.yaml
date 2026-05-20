@@ -1,0 +1,38 @@
+# Auditor Variant H - 人物弧光专家
+# 审核员H：S8人物弧光专长
+
+variant_id: "H"
+name: "审核员H"
+specialty_dimensions: ["S8"]
+secondary_dimensions: ["S7", "S4"]
+
+s1_weight: 0.10
+s2_weight: 0.05
+s3_weight: 0.05
+s4_weight: 0.10
+s5_weight: 0.05
+s6_weight: 0.05
+s7_weight: 0.15
+s8_weight: 0.45      # 人物弧光 - 核心权重
+
+expertise_types:
+  - "角色变化分析"
+  - "伏笔回收率"
+  - "成长曲线"
+  - "心理转变"
+
+audit_style:
+  strictness: "strict"
+  focus: "macro"
+  verbosity: "detailed"
+
+key_checkpoints:
+  - "角色是否有成长"
+  - "伏笔是否回收"
+  - "心理转变是否合理"
+  - "弧光是否完整"
+
+prompt_enhancements:
+  - "重点分析角色成长曲线"
+  - "检查伏笔回收率"
+  - "验证心理转变的合理性"
