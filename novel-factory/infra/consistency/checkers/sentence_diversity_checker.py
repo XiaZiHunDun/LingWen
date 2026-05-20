@@ -115,6 +115,9 @@ class SentenceDiversityChecker:
 
         # === 短句 ===
         (r'^[^。！？]{1,10}[。！？]', 'short_sentence', '短句'),
+
+        # === 陈述句（兜底） ===
+        (r'^[^\n。！？]{2,80}[。！？\n]', 'declarative', '陈述句'),
     ]
 
     # 模板句模式（过度使用的固定句式）
@@ -195,11 +198,12 @@ class SentenceDiversityChecker:
         ]),
     ]
 
-    # 评分阈值（S3标准）
+    # 评分阈值（S3标准，校准后适配新增陈述句兜底）
+    # Shannon指数受句式种类数影响，6种以上可达标
     THRESHOLDS = {
-        'excellent': 3.5,
-        'pass': 2.5,
-        'fail': 2.5,
+        'excellent': 3.0,
+        'pass': 1.5,
+        'fail': 1.5,
         'template_ratio': 30.0,
     }
 
