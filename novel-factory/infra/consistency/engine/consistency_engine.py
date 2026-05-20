@@ -424,7 +424,7 @@ class ConsistencyEngine:
 
         character_checker = self.checkers.get(CheckerType.CHARACTER)
         if character_checker:
-            issues.extend(character_checker.check_realtime(content, character))
+            issues.extend(character_checker.check_realtime(content, character=character))
 
         return issues
 
