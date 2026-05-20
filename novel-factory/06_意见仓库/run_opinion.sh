@@ -249,6 +249,71 @@ function cmd_assign() {
     fi
 }
 
+# ==================== 权限检查 ====================
+
+# 当前用户角色 (可通过环境变量覆盖)
+CURRENT_USER_ROLE="${CURRENT_USER_ROLE:-editor}"
+CURRENT_USER_NAME="${CURRENT_USER_NAME:-未知}"
+
+# 权限级别定义
+ROLE_LEVEL_CHIEF=3      # 主公 - 最高权限
+ROLE_LEVEL_CHIEF_EDITOR=2  # 主编 - 中等权限
+ROLE_LEVEL_EDITOR=1     # 编辑/审核员 - 基本权限
+
+function get_role_level() {
+    local role=$1
+    case "$role" in
+        chief|主公) echo $ROLE_LEVEL_CHIEF ;;
+        chief-editor|主编) echo $ROLE_LEVEL_CHIEF_EDITOR ;;
+        editor|审核员) echo $ROLE_LEVEL_EDITOR ;;
+        *) echo 0 ;;
+    esac
+}
+
+# 检查是否有权限解决给定严重级别的意见
+function check_resolve_permission() {
+    local severity=$1
+
+    # 解析严重级别 (P0, P1, P2, P3)
+    local level_num=$(echo "$severity" | grep -oE "P[0-3]" | tr -d 'P')
+    [ -z "$level_num" ] && level_num=2  # 默认P2
+
+    local user_level=$(get_role_level "$CURRENT_USER_ROLE")
+
+    case "$severity" in
+        P0)
+            # P0: 只有主公可以解决
+            if [ "$user_level" -lt $ROLE_LEVEL_CHIEF ]; then
+                log_error "P0级意见必须由主公审批解决"
+                log_error "当前用户: $CURRENT_USER_NAME (角色: $CURRENT_USER_ROLE)"
+                log_error "需要权限: 主公"
+                return 1
+            fi
+            log_info "主公权限验证通过"
+            ;;
+        P1)
+            # P1: 主公或主编可以解决
+            if [ "$user_level" -lt $ROLE_LEVEL_CHIEF_EDITOR ]; then
+                log_error "P1级意见需要主编或主公审批解决"
+                log_error "当前用户: $CURRENT_USER_NAME (角色: $CURRENT_USER_ROLE)"
+                log_error "需要权限: 主编 或 主公"
+                return 1
+            fi
+            log_info "主编/主公权限验证通过"
+            ;;
+        *)
+            # P2及以下: 任何编辑角色都可以解决
+            if [ "$user_level" -lt $ROLE_LEVEL_EDITOR ]; then
+                log_error "权限不足，无法解决意见"
+                log_error "当前用户: $CURRENT_USER_NAME (角色: $CURRENT_USER_ROLE)"
+                return 1
+            fi
+            log_info "编辑权限验证通过"
+            ;;
+    esac
+    return 0
+}
+
 # ==================== 标记解决 ====================
 
 function cmd_resolve() {
@@ -274,26 +339,14 @@ function cmd_resolve() {
         exit 1
     fi
 
-    # 查找并标记
+    # 查找意见文件
     local found=false
+    local opinion_file=""
     for dir in "$OPINION_DIR"/*/; do
         local pattern="${chapter}_*审核*.md"
         local matches=$(ls "$dir" 2>/dev/null | grep -E "ch[0-9]+.*审核.*\.md$" | grep -i "$chapter" | head -1)
         if [ -n "$matches" ]; then
-            local full_path="$dir/$matches"
-            echo -e "\n  找到文件: $full_path"
-
-            # 检查是否已有解决标记
-            if grep -q "## 解决状态" "$full_path"; then
-                # 更新现有状态
-                sed -i "s/| $priority.*/| $priority | 已解决 | $(date '+%Y-%m-%d') |/" "$full_path"
-            else
-                # 添加解决状态节
-                echo -e "\n## 解决状态\n\n| 优先级 | 状态 | 解决时间 |" >> "$full_path"
-                echo "| $priority | 已解决 | $(date '+%Y-%m-%d') |" >> "$full_path"
-            fi
-
-            echo "  已标记为已解决"
+            opinion_file="$dir/$matches"
             found=true
             break
         fi
@@ -306,7 +359,28 @@ function cmd_resolve() {
         local resolve_file="$OPINION_DIR/resolved_log.md"
         echo "- $(date '+%Y-%m-%d %H:%M:%S') | $opinion_id | resolved" >> "$resolve_file"
         log_info "已记录解决"
+        exit 0
     fi
+
+    echo -e "\n  找到文件: $opinion_file"
+    echo "  意见ID声明优先级: $priority"
+
+    # 权限检查 - 基于意见ID中声明的优先级（而非文件内容）
+    if ! check_resolve_permission "$priority"; then
+        exit 1
+    fi
+
+    # 检查是否已有解决标记
+    if grep -q "## 解决状态" "$opinion_file"; then
+        # 更新现有状态
+        sed -i "s/| $priority.*/| $priority | 已解决 | $(date '+%Y-%m-%d') |/" "$opinion_file"
+    else
+        # 添加解决状态节
+        echo -e "\n## 解决状态\n\n| 优先级 | 状态 | 解决时间 |" >> "$opinion_file"
+        echo "| $priority | 已解决 | $(date '+%Y-%m-%d') |" >> "$opinion_file"
+    fi
+
+    echo "  已标记为已解决 (解决人: $CURRENT_USER_NAME)"
 }
 
 # ==================== 生成报告 ====================

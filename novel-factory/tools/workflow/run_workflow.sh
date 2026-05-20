@@ -9,7 +9,8 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 WORKFLOW_FILE="$PROJECT_ROOT/workflow_state.json"
 
 # flock锁保护workflow_state.json并发写
-LOCKFILE="/tmp/lingwen_workflow.lock"
+LOCKFILE="$PROJECT_ROOT/.locks/workflow.lock"
+mkdir -p "$(dirname "$LOCKFILE")"
 exec 200>"$LOCKFILE"
 flock -n 200 || { echo "[ERROR] Another instance is running"; exit 1; }
 
@@ -112,9 +113,35 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-function log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-function log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-function log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+# 引入日志审计函数
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$SCRIPT_DIR/logging.sh" ]; then
+    source "$SCRIPT_DIR/logging.sh"
+fi
+
+function log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+    log_audit "INFO" "$1" "run_workflow.sh" 2>/dev/null || true
+}
+function log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+    log_audit "WARN" "$1" "run_workflow.sh" 2>/dev/null || true
+}
+function log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+    log_audit "ERROR" "$1" "run_workflow.sh" 2>/dev/null || true
+}
+
+# Python heredoc error handler
+function run_py_safe() {
+    local py_script=$1
+    python3 "$py_script" 2>> logs/workflow_error.log || {
+        local exit_code=$?
+        log_error "Python script failed: $py_script (exit $exit_code)"
+        log_audit "ERROR" "Python failed: $py_script" "$exit_code" 2>/dev/null || true
+        return $exit_code
+    }
+}
 
 # jq封装（如果没有jq则使用Python fallback）
 function jq_get() {
@@ -254,11 +281,13 @@ function cmd_launch() {
 
     if [ "$JQ_AVAILABLE" = true ]; then
         local timestamp=$(date +%Y-%m-%dT%H:%M:%S)
+        local heartbeat=$(date +%Y-%m-%dT%H:%M:%S)
         jq --arg name "$task_name" \
            --arg agent "$agent" \
            --arg status "pending" \
            --arg dispatched "$timestamp" \
-           '.agent_tasks[$name] = {"agent": $agent, "status": $status, "dispatched_at": $dispatched, "task_id": null}' \
+           --arg heartbeat "$heartbeat" \
+           '.agent_tasks[$name] = {"agent": $agent, "status": $status, "dispatched_at": $dispatched, "task_id": null, "heartbeat_at": $heartbeat}' \
            "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
         log_info "已创建任务记录到agent_tasks"
     else

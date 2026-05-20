@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""
+SQLite-based workflow state management
+Provides atomic read-modify-write operations
+"""
+import json
+import sqlite3
+from pathlib import Path
+from datetime import datetime
+from contextlib import contextmanager
+from typing import Any, Optional
+
+
+class WorkflowDB:
+    def __init__(self, db_path: Optional[str] = None):
+        if db_path is None:
+            project_root = Path(__file__).parent.parent.parent
+            db_path = project_root / '.state' / 'workflow.db'
+
+        self.db_path = db_path
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._init_db()
+
+    def _init_db(self):
+        """Initialize database schema"""
+        with self._get_conn() as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS workflow_state (
+                    key TEXT PRIMARY KEY,
+                    value TEXT,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS agent_tasks (
+                    task_id TEXT PRIMARY KEY,
+                    task_name TEXT NOT NULL,
+                    agent TEXT NOT NULL,
+                    status TEXT DEFAULT 'pending',
+                    heartbeat_at TEXT,
+                    task_id_external TEXT,
+                    dispatched_at TEXT,
+                    error_msg TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS state_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    table_name TEXT,
+                    record_id TEXT,
+                    old_value TEXT,
+                    new_value TEXT,
+                    changed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    changed_by TEXT
+                )
+            """)
+
+    @contextmanager
+    def _get_conn(self):
+        """Get database connection with context manager"""
+        conn = sqlite3.connect(str(self.db_path))
+        conn.row_factory = sqlite3.Row
+        try:
+            yield conn
+        finally:
+            conn.close()
+
+    @contextmanager
+    def transaction(self):
+        """Atomic transaction context manager"""
+        conn = self._get_conn().__enter__()
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def get(self, key: str) -> Optional[dict]:
+        """Get a value by key"""
+        with self._get_conn() as conn:
+            row = conn.execute(
+                "SELECT value FROM workflow_state WHERE key = ?", (key,)
+            ).fetchone()
+            if row and row['value']:
+                return json.loads(row['value'])
+            return None
+
+    def set(self, key: str, value: dict):
+        """Atomically set a value"""
+        with self.transaction() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            """, (key, json.dumps(value, ensure_ascii=False)))
+
+    def get_task(self, task_id: str) -> Optional[dict]:
+        """Get agent task by ID"""
+        with self._get_conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM agent_tasks WHERE task_id = ?", (task_id,)
+            ).fetchone()
+            if row:
+                return dict(row)
+            return None
+
+    def update_task(self, task_id: str, updates: dict):
+        """Atomically update task fields"""
+        with self.transaction() as conn:
+            for key, value in updates.items():
+                if key == 'heartbeat_at':
+                    conn.execute(
+                        "UPDATE agent_tasks SET heartbeat_at = ? WHERE task_id = ?",
+                        (value, task_id)
+                    )
+                elif key == 'status':
+                    conn.execute(
+                        "UPDATE agent_tasks SET status = ? WHERE task_id = ?",
+                        (value, task_id)
+                    )
+
+    def create_task(self, task_id: str, task_name: str, agent: str):
+        """Create a new agent task"""
+        with self.transaction() as conn:
+            conn.execute("""
+                INSERT INTO agent_tasks (task_id, task_name, agent, status, dispatched_at, heartbeat_at)
+                VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (task_id, task_name, agent))
+
+    def record_history(self, table: str, record_id: str, old: dict, new: dict):
+        """Record state change to history"""
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT INTO state_history (table_name, record_id, old_value, new_value, changed_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (table, record_id, json.dumps(old), json.dumps(new)))
+
+    def get_all_tasks(self) -> list[dict]:
+        """Get all agent tasks"""
+        with self._get_conn() as conn:
+            rows = conn.execute("SELECT * FROM agent_tasks ORDER BY created_at").fetchall()
+            return [dict(row) for row in rows]
+
+    def get_stale_tasks(self, threshold_minutes: int = 30) -> list[dict]:
+        """Get tasks that haven't sent heartbeat within threshold"""
+        with self._get_conn() as conn:
+            rows = conn.execute("""
+                SELECT * FROM agent_tasks
+                WHERE status = 'running'
+                AND datetime(heartbeat_at) < datetime('now', '-' || ? || ' minutes')
+            """, (threshold_minutes,)).fetchall()
+            return [dict(row) for row in rows]

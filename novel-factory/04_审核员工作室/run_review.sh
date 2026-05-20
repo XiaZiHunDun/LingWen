@@ -11,7 +11,8 @@ REVIEW_DIR="$PROJECT_ROOT/04_审核员工作室"
 CONTENT_DIR="$PROJECT_ROOT/03_内容仓库"
 
 # flock锁保护workflow_state.json并发写
-LOCKFILE="/tmp/lingwen_workflow.lock"
+LOCKFILE="$PROJECT_ROOT/.locks/workflow.lock"
+mkdir -p "$(dirname "$LOCKFILE")"
 exec 200>"$LOCKFILE"
 flock -n 200 || { echo -e "${RED}[ERROR]${NC} Another instance is running"; exit 1; }
 
