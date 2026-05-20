@@ -469,6 +469,7 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
 
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
+
     try:
         cur = conn.execute(
             "SELECT snapshot FROM checkpoints WHERE checkpoint_id = ?",
@@ -477,10 +478,7 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
         row = cur.fetchone()
         if not row:
             return False, f"Checkpoint not found: {checkpoint_id}"
-    finally:
-        conn.close()
 
-    try:
         snapshot = json.loads(row['snapshot'])
 
         # 恢复状态
@@ -518,12 +516,12 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
         except Exception as e:
             conn.rollback()
             return False, f"Restore failed: {e}"
-        finally:
-            conn.close()
 
         return True, f"Restored checkpoint {checkpoint_id}"
     except Exception as e:
         return False, f"Failed to parse checkpoint: {e}"
+    finally:
+        conn.close()
 
 
 def delete_checkpoint(checkpoint_id: str) -> bool:
