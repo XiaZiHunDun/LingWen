@@ -126,7 +126,7 @@ function check_chapters_exist() {
 # 创建修改批次目录
 function create_batch_dirs() {
     local batch_id=$1
-    local batch_dir="$OPINION_DIR/05_作家修改/$batch_id"
+    local batch_dir="$OPINION_DIR/04_作家修改/$batch_id"
     mkdir -p "$batch_dir"
     echo "$batch_dir"
 }
@@ -383,7 +383,7 @@ function cmd_report() {
 
     log_info "筛选批次: $batch_filter"
 
-    local report_dir="$OPINION_DIR/05_作家修改"
+    local report_dir="$OPINION_DIR/04_作家修改"
     local batch_dir=""
 
     # 查找对应批次
@@ -484,7 +484,7 @@ function cmd_pending() {
     log_info "待处理修改任务"
     echo ""
 
-    local report_dir="$OPINION_DIR/05_作家修改"
+    local report_dir="$OPINION_DIR/04_作家修改"
     local pending_found=false
 
     for dir in "$report_dir"/*/; do

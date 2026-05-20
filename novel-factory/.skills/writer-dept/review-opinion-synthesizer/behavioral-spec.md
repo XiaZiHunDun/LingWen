@@ -16,7 +16,7 @@ When BOTH of the following are true:
 | 审核意见 (multiple) | 06_意见仓库/02_卷大纲_审核/ | No |
 | 审核意见 (multiple) | 06_意见仓库/03_阶段大纲_审核/ | No |
 | 审核意见 (multiple) | 06_意见仓库/04_正文_审核/ | No |
-| 作家修改记录 | 06_意见仓库/05_作家修改/ | No |
+| 作家修改记录 | 06_意见仓库/04_作家修改/ | No |
 
 | Output | Location | Required |
 |--------|----------|----------|

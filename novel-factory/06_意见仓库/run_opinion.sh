@@ -12,7 +12,7 @@ declare -A TYPE_DIRS=(
     ["volume"]="02_卷大纲_审核"
     ["stage"]="03_阶段大纲_审核"
     ["content"]="04_正文_审核"
-    ["writer"]="05_作家修改"
+    ["writer"]="04_作家修改"
     ["reader"]="05_读者评论"
     ["summary"]="06_汇总_审核"
 )

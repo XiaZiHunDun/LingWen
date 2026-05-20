@@ -42,7 +42,7 @@ ${YELLOW}示例:${NC}
     ./run_init.sh 新书名 100 2
 
 ${YELLOW}功能:${NC}
-    1. 验证方法论文档（10_方法论/）
+    1. 验证方法论文档（12_方法论/）
     2. 验证模板库（01_灵感库/模板库/）
     3. 创建项目文件夹结构
     4. 初始化 workflow_state.json（含methodology_markers）
@@ -94,16 +94,16 @@ verify_methodology() {
     echo -e "${YELLOW}[1/7] 验证方法论文档...${NC}"
 
     local required_docs=(
-        "10_方法论/00_总纲.md"
-        "10_方法论/01_灵感捕捉与筛选.md"
-        "10_方法论/02_核心三要素.md"
-        "10_方法论/03_世界观与设定.md"
-        "10_方法论/04_人物塑造体系.md"
-        "10_方法论/05_大纲结构设计.md"
-        "10_方法论/06_初稿写作.md"
-        "10_方法论/07_修改打磨.md"
-        "10_方法论/08_定稿发布.md"
-        "10_方法论/xx_术语表.md"
+        "12_方法论/PART0_总纲/00_总纲.md"
+        "12_方法论/PART1_创作方法论/01_灵感捕捉与筛选.md"
+        "12_方法论/PART1_创作方法论/02_核心三要素.md"
+        "12_方法论/PART1_创作方法论/03_世界观与设定.md"
+        "12_方法论/PART1_创作方法论/04_人物塑造体系.md"
+        "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
+        "12_方法论/PART1_创作方法论/06_初稿写作.md"
+        "12_方法论/PART1_创作方法论/07_修改打磨.md"
+        "12_方法论/PART1_创作方法论/08_定稿发布.md"
+        "12_方法论/PART0_总纲/xx_术语表.md"
     )
 
     local missing_docs=()
@@ -119,7 +119,7 @@ verify_methodology() {
             echo "    - $doc"
         done
         echo ""
-        echo -e "${YELLOW}  请先从 reference/写小说流程/ 的5份文档中提取方法论到 10_方法论/${NC}"
+        echo -e "${YELLOW}  请检查方法论文档是否在 12_方法论/ 目录${NC}"
         exit 1
     fi
 
@@ -180,7 +180,7 @@ create_dirs() {
     mkdir -p "$PROJECT_ROOT/06_意见仓库/02_卷大纲_审核"
     mkdir -p "$PROJECT_ROOT/06_意见仓库/03_阶段大纲_审核"
     mkdir -p "$PROJECT_ROOT/06_意见仓库/04_正文_审核"
-    mkdir -p "$PROJECT_ROOT/06_意见仓库/05_作家修改"
+    mkdir -p "$PROJECT_ROOT/06_意见仓库/04_作家修改"
     mkdir -p "$PROJECT_ROOT/06_意见仓库/05_读者评论"
     mkdir -p "$PROJECT_ROOT/06_意见仓库/06_汇总_审核"
     mkdir -p "$PROJECT_ROOT/06_意见仓库/情感审核"
@@ -236,7 +236,7 @@ init_workflow_state() {
                     "name": "初始化",
                     "methodology_markers": {
                         "stage": "阶段0: 灵感捕捉与筛选",
-                        "doc": "10_方法论/01_灵感捕捉与筛选.md"
+                        "doc": "12_方法论/PART1_创作方法论/01_灵感捕捉与筛选.md"
                     }
                 }
             }
@@ -249,7 +249,7 @@ init_workflow_state() {
                     "name": "灵感生成",
                     "methodology_markers": {
                         "stage": "阶段0: 灵感捕捉与筛选",
-                        "doc": "10_方法论/01_灵感捕捉与筛选.md",
+                        "doc": "12_方法论/PART1_创作方法论/01_灵感捕捉与筛选.md",
                         "output_template": "01_灵感库/模板库/基础层.yaml",
                         "screening_required": true
                     }
@@ -259,7 +259,7 @@ init_workflow_state() {
                     "name": "全文大纲初稿",
                     "methodology_markers": {
                         "stage": "阶段1-3: 核心三要素/世界观/大纲结构",
-                        "doc": "10_方法论/02_核心三要素.md, 03_世界观与设定.md, 05_大纲结构设计.md",
+                        "doc": "12_方法论/PART1_创作方法论/02_核心三要素.md, 03_世界观与设定.md, 05_大纲结构设计.md",
                         "output_template": "01_灵感库/{项目}/立项/00_核心三要素.yaml"
                     }
                 }
@@ -273,7 +273,7 @@ init_workflow_state() {
                     "name": "全文大纲审核",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计",
-                        "doc": "10_方法论/05_大纲结构设计.md",
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md",
                         "review_checklist": "三幕式8节点结构检查"
                     }
                 },
@@ -282,7 +282,7 @@ init_workflow_state() {
                     "name": "全文大纲修改",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨 - 第一轮宏观",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_05": {
@@ -290,7 +290,7 @@ init_workflow_state() {
                     "name": "全文大纲终审",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计",
-                        "doc": "10_方法论/05_大纲结构设计.md"
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
                     }
                 }
             }
@@ -303,7 +303,7 @@ init_workflow_state() {
                     "name": "卷大纲生成",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计 - 章纲",
-                        "doc": "10_方法论/05_大纲结构设计.md",
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md",
                         "structure_template": "8节点大纲"
                     }
                 },
@@ -312,7 +312,7 @@ init_workflow_state() {
                     "name": "卷大纲审核",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计",
-                        "doc": "10_方法论/05_大纲结构设计.md"
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
                     }
                 },
                 "STEP_08": {
@@ -320,7 +320,7 @@ init_workflow_state() {
                     "name": "卷大纲修改",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨 - 第一轮宏观",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_09": {
@@ -328,7 +328,7 @@ init_workflow_state() {
                     "name": "卷大纲终审",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计",
-                        "doc": "10_方法论/05_大纲结构设计.md"
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
                     }
                 }
             }
@@ -341,7 +341,7 @@ init_workflow_state() {
                     "name": "阶段大纲生成",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计 - 章纲写法",
-                        "doc": "10_方法论/05_大纲结构设计.md",
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md",
                         "chapter_outline_format": "本章目标+出场人物+剧情走向+情绪落点+留钩子"
                     }
                 },
@@ -350,7 +350,7 @@ init_workflow_state() {
                     "name": "阶段大纲审核",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计",
-                        "doc": "10_方法论/05_大纲结构设计.md"
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
                     }
                 },
                 "STEP_12": {
@@ -358,7 +358,7 @@ init_workflow_state() {
                     "name": "阶段大纲修改",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨 - 第一轮宏观",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_13": {
@@ -366,7 +366,7 @@ init_workflow_state() {
                     "name": "阶段大纲终审",
                     "methodology_markers": {
                         "stage": "阶段3: 大纲结构设计",
-                        "doc": "10_方法论/05_大纲结构设计.md"
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
                     }
                 }
             }
@@ -379,7 +379,7 @@ init_workflow_state() {
                     "name": "正文创作",
                     "methodology_markers": {
                         "stage": "阶段4: 初稿写作",
-                        "doc": "10_方法论/06_初稿写作.md",
+                        "doc": "12_方法论/PART1_创作方法论/06_初稿写作.md",
                         "writing_rules": "先完成再完美/不回读修改/卡住跳过"
                     }
                 },
@@ -388,7 +388,7 @@ init_workflow_state() {
                     "name": "读者评论",
                     "methodology_markers": {
                         "stage": "阶段4: 初稿写作 - 读者视角",
-                        "doc": "10_方法论/06_初稿写作.md"
+                        "doc": "12_方法论/PART1_创作方法论/06_初稿写作.md"
                     }
                 },
                 "STEP_16": {
@@ -396,7 +396,7 @@ init_workflow_state() {
                     "name": "正文审核",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨 - 三轮修改",
-                        "doc": "10_方法论/07_修改打磨.md",
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md",
                         "review_order": "宏观→中观→微观"
                     }
                 },
@@ -405,7 +405,7 @@ init_workflow_state() {
                     "name": "正文修改",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨 - 对应轮次",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_18": {
@@ -413,7 +413,7 @@ init_workflow_state() {
                     "name": "正文定稿",
                     "methodology_markers": {
                         "stage": "阶段5-6: 修改打磨+定稿发布",
-                        "doc": "10_方法论/07_修改打磨.md, 08_定稿发布.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md, 08_定稿发布.md"
                     }
                 }
             }
@@ -426,7 +426,7 @@ init_workflow_state() {
                     "name": "阶段汇总",
                     "methodology_markers": {
                         "stage": "阶段3-5: 伏笔回收+弧光完整性",
-                        "doc": "10_方法论/05_大纲结构设计.md, 04_人物塑造体系.md"
+                        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md, 04_人物塑造体系.md"
                     }
                 },
                 "STEP_20": {
@@ -434,7 +434,7 @@ init_workflow_state() {
                     "name": "阶段汇总审核",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_21": {
@@ -442,7 +442,7 @@ init_workflow_state() {
                     "name": "阶段汇总微调",
                     "methodology_markers": {
                         "stage": "阶段5: 修改打磨",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_22": {
@@ -450,7 +450,7 @@ init_workflow_state() {
                     "name": "卷汇总",
                     "methodology_markers": {
                         "stage": "阶段5-6: 全局一致性",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_23": {
@@ -458,7 +458,7 @@ init_workflow_state() {
                     "name": "全文汇总",
                     "methodology_markers": {
                         "stage": "阶段5-6: 全局一致性",
-                        "doc": "10_方法论/07_修改打磨.md"
+                        "doc": "12_方法论/PART1_创作方法论/07_修改打磨.md"
                     }
                 },
                 "STEP_24": {
@@ -466,7 +466,7 @@ init_workflow_state() {
                     "name": "终审与发布",
                     "methodology_markers": {
                         "stage": "阶段6: 定稿发布",
-                        "doc": "10_方法论/08_定稿发布.md"
+                        "doc": "12_方法论/PART1_创作方法论/08_定稿发布.md"
                     }
                 }
             }
@@ -479,7 +479,7 @@ init_workflow_state() {
                     "name": "归档与发布",
                     "methodology_markers": {
                         "stage": "阶段6: 定稿发布 - 最终校对",
-                        "doc": "10_方法论/08_定稿发布.md",
+                        "doc": "12_方法论/PART1_创作方法论/08_定稿发布.md",
                         "final_checklist": "错别字/标点/格式/人名统一/章节完整"
                     }
                 }
@@ -518,7 +518,7 @@ generate_indexes() {
     "methodology_markers": {
         "stage": "阶段3: 大纲结构设计",
         "structure": "三幕式",
-        "doc": "10_方法论/05_大纲结构设计.md"
+        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
     },
     "entries": []
 }
@@ -535,7 +535,7 @@ EOF
     "methodology_markers": {
         "stage": "阶段3: 大纲结构设计 - 8节点",
         "structure": "8节点大纲",
-        "doc": "10_方法论/05_大纲结构设计.md"
+        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
     },
     "entries": []
 }
@@ -553,7 +553,7 @@ EOF
     "methodology_markers": {
         "stage": "阶段3: 大纲结构设计 - 章纲",
         "chapter_format": "本章目标+出场人物+剧情走向+情绪落点+留钩子",
-        "doc": "10_方法论/05_大纲结构设计.md"
+        "doc": "12_方法论/PART1_创作方法论/05_大纲结构设计.md"
     },
     "entries": []
 }
@@ -581,7 +581,7 @@ EOF
     "created_at": "$(date +%Y-%m-%d)",
     "methodology_markers": {
         "stage": "阶段4: 初稿写作",
-        "doc": "10_方法论/06_初稿写作.md",
+        "doc": "12_方法论/PART1_创作方法论/06_初稿写作.md",
         "writing_rules": ["先完成再完美", "不回读修改", "卡住跳过用//TODO:"]
     },
     "entries": [$entries_json]
@@ -604,7 +604,7 @@ generate_project_templates() {
     # 核心三要素模板
     cat > "$proj_dir/00_核心三要素.yaml" << 'TEMPLATE'
 # 核心三要素 - {PROJECT_NAME}
-# 参照: 10_方法论/02_核心三要素.md
+# 参照: 12_方法论/PART1_创作方法论/02_核心三要素.md
 # 生成时间: {DATE}
 
 protagonist:
@@ -647,7 +647,7 @@ TEMPLATE
     # 世界观设定模板
     cat > "$proj_dir/01_世界观设定.yaml" << 'TEMPLATE'
 # 世界观设定 - {PROJECT_NAME}
-# 参照: 10_方法论/03_世界观与设定.md
+# 参照: 12_方法论/PART1_创作方法论/03_世界观与设定.md
 
 时代: ""
 时间跨度: ""
@@ -673,7 +673,7 @@ TEMPLATE
     # 灵感基础层（从模板库复制并定制）
     cat > "$proj_insp/基础层.yaml" << EOF
 # 灵感基础层 - $PROJECT_NAME
-# 参照: 10_方法论/01_灵感捕捉与筛选.md
+# 参照: 12_方法论/PART1_创作方法论/01_灵感捕捉与筛选.md
 # 生成时间: $(date +%Y-%m-%d)
 
 type: ""
@@ -719,14 +719,14 @@ EOF
 
 | 阶段 | 方法论文档 |
 |------|-----------|
-| 灵感捕捉 | 10_方法论/01_灵感捕捉与筛选.md |
-| 核心三要素 | 10_方法论/02_核心三要素.md |
-| 世界观设定 | 10_方法论/03_世界观与设定.md |
-| 人物塑造 | 10_方法论/04_人物塑造体系.md |
-| 大纲结构 | 10_方法论/05_大纲结构设计.md |
-| 初稿写作 | 10_方法论/06_初稿写作.md |
-| 修改打磨 | 10_方法论/07_修改打磨.md |
-| 定稿发布 | 10_方法论/08_定稿发布.md |
+| 灵感捕捉 | 12_方法论/PART1_创作方法论/01_灵感捕捉与筛选.md |
+| 核心三要素 | 12_方法论/PART1_创作方法论/02_核心三要素.md |
+| 世界观设定 | 12_方法论/PART1_创作方法论/03_世界观与设定.md |
+| 人物塑造 | 12_方法论/PART1_创作方法论/04_人物塑造体系.md |
+| 大纲结构 | 12_方法论/PART1_创作方法论/05_大纲结构设计.md |
+| 初稿写作 | 12_方法论/PART1_创作方法论/06_初稿写作.md |
+| 修改打磨 | 12_方法论/PART1_创作方法论/07_修改打磨.md |
+| 定稿发布 | 12_方法论/PART1_创作方法论/08_定稿发布.md |
 
 ## 立项文件清单
 
@@ -785,7 +785,7 @@ update_memory() {
 ## 关键文件
 - 主控人设：\`CLAUDE.md\`
 - 工作流状态：\`workflow_state.json\`（v1.4 含methodology_markers）
-- 方法论文档：\`10_方法论/\`
+- 方法论文档：\`12_方法论/\`
 - 模板库：\`01_灵感库/模板库/\`
 
 ## 方法论嵌入说明
@@ -806,9 +806,9 @@ update_memory() {
 ## 新项目启动流程
 1. 灵感生成（必须筛选）→ 01_灵感库/模板库/灵感筛选流程.md
 2. 核心三要素提取 → 01_灵感库/{项目}/立项/00_核心三要素.yaml
-3. 大纲起草（对照方法论）→ 10_方法论/05_大纲结构设计.md
-4. 正文创作（先完成再完美）→ 10_方法论/06_初稿写作.md
-5. 审核修改（先大后小）→ 10_方法论/07_修改打磨.md
+3. 大纲起草（对照方法论）→ 12_方法论/PART1_创作方法论/05_大纲结构设计.md
+4. 正文创作（先完成再完美）→ 12_方法论/PART1_创作方法论/06_初稿写作.md
+5. 审核修改（先大后小）→ 12_方法论/PART1_创作方法论/07_修改打磨.md
 
 ## 下一步操作
 - 启动灵感生成：\`./run_workflow.sh launch\`
@@ -834,7 +834,7 @@ show_summary() {
     echo "  版本: v1.4（含方法论嵌入）"
     echo ""
     echo -e "${YELLOW}方法论验证:${NC}"
-    echo "  ✓ 10_方法论/ 文档完整"
+    echo "  ✓ 12_方法论/ 文档完整"
     echo "  ✓ 01_灵感库/模板库/ 模板完整"
     echo "  ✓ workflow_state.json 含 methodology_markers"
     echo ""
@@ -852,7 +852,7 @@ show_summary() {
     echo -e "${YELLOW}目录结构:${NC}"
     echo "  01_灵感库/$PROJECT_NAME/    - 项目灵感文件"
     echo "  01_灵感库/模板库/           - 方法论模板库"
-    echo "  10_方法论/                  - 方法论文档"
+    echo "  12_方法论/                  - 方法论文档"
     echo "  03_内容仓库/               - 四层结构（大纲+正文）"
     echo "  06_意见仓库/               - 审核/评论记录"
     echo "  07_汇总仓库/               - 汇总文件"
