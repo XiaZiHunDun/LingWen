@@ -1,7 +1,0 @@
-{
-  "eval_id": 3,
-  "eval_name": "quality-check-workflow",
-  "prompt": "每批次10章创作完成后需要做什么检查？用自动化工具跑一下",
-  "expected_output": "说明质量检查流程，执行一致性检查脚本",
-  "assertions": []
-}

@@ -1,7 +1,0 @@
-{
-  "eval_id": 2,
-  "eval_name": "character-arc-analysis",
-  "prompt": "分析林夜这个角色的弧光完整性，ch001-ch050范围",
-  "expected_output": "林夜的弧光分析结果，包含当前阶段、缺失阶段、评分",
-  "assertions": []
-}
