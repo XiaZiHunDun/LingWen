@@ -152,13 +152,12 @@
 
 | 方向 | 组件 | 测试 | 位置 |
 |------|------|------|------|
-| **A** | memory_system/vector_store + embeddings | 19 passed | novel-factory/memory_system/ |
-| **B** | agent_system/ + e2e测试 | 29 passed | novel-factory/agent_system/ |
-| **D** | consistency/ + 记忆集成 | 68 passed | novel-factory/consistency/ |
+| **A** | memory_system/ + embeddings | 218 passed | novel-factory/memory_system/ |
+| **B** | agent_system/ + e2e测试 | 18 passed | novel-factory/agent_system/ |
+| **D** | consistency/ + 记忆集成 | 83 passed | novel-factory/consistency/ |
 | **E** | foreshadow_checker | 集成于D | novel-factory/consistency/checkers/ |
 | **F** | ai_service/ | 17 passed | novel-factory/ai_service/ |
 | **G** | hooks/ | 12+ passed | novel-factory/hooks/ |
-| **H** | quality_tools/ | 50+ passed | novel-factory/quality_tools/ |
 | **H** | quality_tools/ | 50+ passed | novel-factory/quality_tools/ |
 
 ### ⚠️ 部分完成方向（2个）

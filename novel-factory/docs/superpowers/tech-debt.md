@@ -30,7 +30,7 @@
 - `engine/consistency_engine.py` - 引擎核心
 - `engine/data_structures.py` - 数据结构 (Issue, CheckerResult, QualityDimension)
 - `engine/report_generator.py` - 报告生成器
-- `checkers/` - 10个检测器
+- `checkers/` - 8个检测器
 
 **检测器列表**:
 | 检测器 | 功能 |
@@ -43,8 +43,6 @@
 | foreshadow_checker | 伏笔追踪 |
 | outline_checker | 大纲偏离 |
 | ai_gloss_checker | AI痕迹 |
-| scene_density_checker | 场景密度 |
-| character_activity_checker | 角色活跃度 |
 
 **测试**: 15+ passed
 
@@ -134,8 +132,8 @@
 | quality_gate.py | 质量门控 (Bronze/Silver/Gold/Platinum) |
 | multi_style_drafter.py | 多风格草稿 |
 | writer_persona.py | 作家画像 |
-| hard_validators/ | 硬性验证器 (6个) |
-| soft_scorers/ | 软性评分器 (11个) |
+| hard_validators/ | 硬性验证器 (5个) |
+| soft_scorers/ | 软性评分器 (10个) |
 
 **测试**: 50+ passed
 

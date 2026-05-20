@@ -241,9 +241,11 @@ class ForeshadowChecker(BaseChecker):
         return alerts
 
     def get_overdue_count(self) -> int:
-        """获取超期伏笔数量"""
-        return sum(1 for t in self._plot_threads.values()
-                   if t.status == "unresolved" and False)  # Placeholder, will be updated per-chapter
+        """获取超期伏笔数量
+
+        Note: 此方法返回0因为占位实现，实际超期检测使用 get_overdue_count_at()
+        """
+        return 0  # Placeholder - use get_overdue_count_at(chapter) for actual overdue detection
 
     def get_overdue_count_at(self, current_chapter: int) -> int:
         """获取当前超期伏笔数量"""
