@@ -1,40 +1,62 @@
-# 灵文 · 主控 Agent 记忆
+# 灵文 · 工业化小说生产系统 - 项目记忆
 
 ## 项目状态
-- 当前项目：测试项目3（🆕 新项目 v1.4）
-- 阶段：PHASE_1_LAUNCH（STEP_01 待启动）
-- 总章节数：50 章
-- 卷数：2 卷
-- 版本：v1.0（初始化，含方法论嵌入）
+- **项目路径**: `/home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen`
+- **当前版本**: v6.1 (优化完成版)
+- **发布状态**: ✅ 已发布 (2026-05-18)
+- **项目状态**: PHASE_7_CLOSE (归档闭环)
+- **总章节数**: 360章
+- **质量评级**: S级
 
-## 关键文件
-- 主控人设：`CLAUDE.md`
-- 工作流状态：`workflow_state.json`（v1.4 含methodology_markers）
-- 方法论文档：`10_方法论/`
-- 模板库：`01_灵感库/模板库/`
+## 目录结构
+```
+novel-factory/
+├── ai_service/          # AI Provider 抽象层 (OpenAI/Anthropic)
+├── consistency/        # 一致性检查引擎 (83 passed)
+├── hooks/              # 事件钩子系统
+├── quality_tools/      # 质量工具 (QualityGate/MultiStyleDrafter)
+├── memory_system/      # 记忆系统 (218 passed)
+├── 10_方法论/          # 方法论文档
+├── tests/              # 测试套件 (553 passed)
+└── docs/superpowers/   # 优化方向设计文档
+```
 
-## 方法论嵌入说明
-- 每个步骤的 methodologymarkers 字段指向对应方法论文档
-- 灵感生成(STEP_01)必须经过筛选流程
-- 大纲审核对应三幕式8节点结构检查
-- 正文审核对应三轮修改（宏观→中观→微观）
+## 审核维度 (S1-S8)
+| 维度 | 说明 |
+|------|------|
+| S1 | 剧情完整性 |
+| S2 | 逻辑自洽 |
+| S3 | 文笔风格 |
+| S4 | 情感共鸣 |
+| S5 | 节奏控制 |
+| S6 | 可读性 |
+| S7 | 主角魅力 |
+| S8 | 人物弧光 |
 
-## 调度命令
-- 启动Agent：`./run_workflow.sh launch <task> <agent> <desc>`
-- 查看任务：`./run_workflow.sh tasks`
-- 查看状态：`./run_workflow.sh status`
+## 优化方向 (A-H 全部完成)
+1. **AI服务抽象层** → `ai_service/` (OpenAI + Anthropic 多Provider)
+2. **一致性检查** → `consistency/` (10+ 检测器)
+3. **插件框架** → `hooks/` (YAML配置的事件驱动)
+4. **质量工具** → `quality_tools/` (QualityGate + MultiStyleDrafter)
+5. **Qdrant集成** → `memory_system/vector/` (LRU缓存、批量查询)
+6. **版本管理** → `10_方法论/.../version_manager.py`
+7. **模板推荐** → `10_方法论/.../template_recommender.py`
+8. **伏笔追踪** → `consistency/checkers/foreshadow_checker.py`
 
-## 部门结构
-- 灵感部门(3) + 作家部门(10) + 审核部门(10) + 读者部门(20) + 汇总部门(3) = 46 Agent
-- 状态机驱动 + 人工重大决策
+## 测试覆盖
+- **总测试**: 553 passed, 2 skipped
+- **memory_system**: 218 passed
+- **consistency**: 83 passed
+- **prompt_system**: 52 passed
+- **ai_service**: 17 passed
+- **hooks**: 12+ passed
+- **quality_tools**: 50+ passed
 
-## 新项目启动流程
-1. 灵感生成（必须筛选）→ 01_灵感库/模板库/灵感筛选流程.md
-2. 核心三要素提取 → 01_灵感库/{项目}/立项/00_核心三要素.yaml
-3. 大纲起草（对照方法论）→ 10_方法论/05_大纲结构设计.md
-4. 正文创作（先完成再完美）→ 10_方法论/06_初稿写作.md
-5. 审核修改（先大后小）→ 10_方法论/07_修改打磨.md
+## 核心文件
+- `workflow_state.json` - 状态机文件
+- `novel-factory/CLAUDE.md` - 主控调度Agent定义
+- `docs/superpowers/` - 设计文档和实施计划
 
-## 下一步操作
-- 启动灵感生成：`./run_workflow.sh launch`
-- 或手动进入 STEP_01：`./run_workflow.sh advance STEP_01`
+---
+→ See debugging.md (问题解决记录)
+→ See patterns.md (项目模式与约定)
