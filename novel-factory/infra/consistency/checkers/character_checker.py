@@ -265,17 +265,115 @@ class CharacterChecker(BaseChecker):
         chapter_num: int,
         profile: CharacterProfile
     ) -> List[Issue]:
-        """检查语言风格一致性（简化版）"""
-        # 语言风格检查是复杂的，需要NLP，这里做基础检测
-        return []  # 暂时返回空，需要更复杂的实现
+        """检查语言风格一致性"""
+        issues = []
+        opposites_map = self.rules.get("personality_opposites", {})
 
-    def check_realtime(self, text: str, character: Optional[str] = None) -> List[Issue]:
+        # Extract dialogues using 「...」 or "..." patterns
+        dialogue_pattern = re.compile(r'「([^」]*)」|"([^"]*)"')
+        dialogues = dialogue_pattern.findall(content)
+
+        if not dialogues:
+            return issues
+
+        # Combine all dialogue text for analysis
+        all_dialogue = ' '.join([d[0] or d[1] for d in dialogues])
+
+        for tag in profile.personality_tags:
+            opposites = opposites_map.get(tag, [])
+            opposites.extend(profile.opposites.get(tag, []))
+
+            for opposite in opposites:
+                if opposite in all_dialogue:
+                    # Find which specific dialogue contains the conflict
+                    context = self._find_dialogue_context(content, opposite)
+                    issues.append(self._create_speech_issue(
+                        chapter_num=chapter_num,
+                        character=profile.name,
+                        personality=tag,
+                        opposite=opposite,
+                        context=context
+                    ))
+
+        return issues
+
+    def _create_speech_issue(
+        self,
+        chapter_num: int,
+        character: str,
+        personality: str,
+        opposite: str,
+        context: str
+    ) -> Issue:
+        """创建语言风格冲突问题"""
+        return Issue(
+            id=f"char_{chapter_num}_{character}_语言冲突",
+            severity=IssueSeverity.P2,
+            checker_type=CheckerType.CHARACTER,
+            issue_type="语言风格冲突",
+            title=f"角色语言风格与性格冲突",
+            description=f"性格为\"{personality}\"的{character}说出了\"{opposite}\"风格的话",
+            location=IssueLocation(chapter=chapter_num),
+            evidence=f"角色设定：{personality} | 对话中出现的词：{opposite}",
+            suggestion=f"将\"{opposite}\"替换为符合\"{personality}\"性格的措辞",
+            character=character
+        )
+
+    def _find_dialogue_context(self, content: str, keyword: str, window: int = 50) -> str:
+        """查找包含关键词的对话上下文"""
+        # Find dialogue containing the keyword
+        dialogue_pattern = re.compile(r'「([^」]*)」|"([^"]*)"')
+        for match in dialogue_pattern.finditer(content):
+            dialogue = match.group(1) or match.group(2)
+            if keyword in dialogue:
+                start = max(0, match.start() - window)
+                end = min(len(content), match.end() + window)
+                return f"...{content[start:end]}..."
+        return ""
+
+
+def _create_speech_issue(
+    self,
+    chapter_num: int,
+    character: str,
+    personality: str,
+    opposite: str,
+    context: str
+) -> Issue:
+    """创建语言风格冲突问题"""
+    return Issue(
+        id=f"char_{chapter_num}_{character}_语言冲突",
+        severity=IssueSeverity.P2,
+        checker_type=CheckerType.CHARACTER,
+        issue_type="语言风格冲突",
+        title=f"角色语言风格与性格冲突",
+        description=f"性格为\"{personality}\"的{character}说出了\"{opposite}\"风格的话",
+        location=IssueLocation(chapter=chapter_num),
+        evidence=f"角色设定：{personality} | 对话中出现的词：{opposite}",
+        suggestion=f"将\"{opposite}\"替换为符合\"{personality}\"性格的措辞",
+        character=character
+    )
+
+
+def _find_dialogue_context(self, content: str, keyword: str, window: int = 50) -> str:
+    """查找包含关键词的对话上下文"""
+    # Find dialogue containing the keyword
+    dialogue_pattern = re.compile(r'「([^」]*)」|"([^"]*)"')
+    for match in dialogue_pattern.finditer(content):
+        dialogue = match.group(1) or match.group(2)
+        if keyword in dialogue:
+            start = max(0, match.start() - window)
+            end = min(len(content), match.end() + window)
+            return f"...{content[start:end]}..."
+    return ""
+
+    def check_realtime(self, text: str, **kwargs) -> List[Issue]:
         """
         实时检查（轻量级）
 
         Args:
             text: 待检查文本
-            character: 指定角色名
+            character: 指定角色名（通过kwargs传递）
 
         Returns:
             实时问题列表
