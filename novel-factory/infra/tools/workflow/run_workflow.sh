@@ -100,8 +100,8 @@ function cmd_init() {
 # 状态查看
 function cmd_status() {
     log_section "当前状态"
-    echo "阶段: $(py_call "get_state('current_phase', 'N/A')")"
-    echo "步骤: $(py_call "get_state('current_step', 'N/A')")"
+    echo "阶段: $(py_call "print(get_state('current_phase', 'N/A'))")"
+    echo "步骤: $(py_call "print(get_state('current_step', 'N/A'))")"
     echo ""
 
     # 任务统计
