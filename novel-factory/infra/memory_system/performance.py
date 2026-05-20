@@ -21,7 +21,7 @@ import threading
 import time
 from typing import Any, Callable, Dict, List, Optional
 
-from memory_system.utils.cache import CacheManager, CacheStats, LRUCache
+from infra.memory_system.utils.cache import CacheManager, CacheStats, LRUCache
 
 
 class PerformanceOptimizer:
@@ -197,8 +197,8 @@ class CachedEmbedder:
     包装 Embedder，自动缓存嵌入结果。
 
     Usage:
-        from memory_system.vector.embedder import Embedder
-        from memory_system.performance import CachedEmbedder, PerformanceOptimizer
+        from infra.memory_system.vector.embedder import Embedder
+        from infra.memory_system.performance import CachedEmbedder, PerformanceOptimizer
 
         optimizer = PerformanceOptimizer()
         base_embedder = Embedder(...)
@@ -319,7 +319,7 @@ class CachedVectorSearch:
     包装 QdrantClientWrapper，自动缓存搜索结果。
 
     Usage:
-        from memory_system.vector.qdrant_client import QdrantClientWrapper
+        from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
         from memory_system.performance import CachedVectorSearch, PerformanceOptimizer
 
         optimizer = PerformanceOptimizer()

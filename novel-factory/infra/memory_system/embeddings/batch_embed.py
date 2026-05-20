@@ -4,8 +4,8 @@
 """
 from typing import Any, Dict, List, Optional
 
-from memory_system.vector.embedder import Embedder
-from memory_system.vector.qdrant_client import QdrantClientWrapper
+from infra.memory_system.vector.embedder import Embedder
+from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
 
 class BatchEmbedder:

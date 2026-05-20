@@ -10,7 +10,7 @@
 """
 from typing import Any, Dict, Optional
 
-from memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import StateManager
 
 
 class CharacterTracker:

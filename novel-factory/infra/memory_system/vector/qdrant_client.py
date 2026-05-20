@@ -19,7 +19,7 @@ from typing import Any, Optional
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, Filter, PointStruct, FieldCondition, MatchValue, PointIdsList
 
-from memory_system.config import load_yaml
+from infra.memory_system.config import load_yaml
 
 
 class _LRUCache:

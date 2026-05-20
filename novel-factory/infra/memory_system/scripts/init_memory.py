@@ -14,9 +14,9 @@ import argparse
 import sys
 from pathlib import Path
 
-from memory_system.config import load_yaml
-from memory_system.vector.collections import CollectionManager
-from memory_system.state.state_manager import StateManager
+from infra.memory_system.config import load_yaml
+from infra.memory_system.vector.collections import CollectionManager
+from infra.memory_system.state.state_manager import StateManager
 
 
 def validate_config() -> dict:

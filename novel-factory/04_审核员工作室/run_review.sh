@@ -187,6 +187,92 @@ function create_batch_dirs() {
     echo "$batch_dir"
 }
 
+# ==================== 记忆系统集成 ====================
+
+# 运行章节一致性检查
+function run_memory_consistency_check() {
+    local chapter=$1
+    local content_file="$CONTENT_DIR/04_正文/${chapter}.md"
+
+    if [ ! -f "$content_file" ]; then
+        echo "⚠ 章节文件不存在: $content_file"
+        return 0  # 不阻塞流程
+    fi
+
+    # 提取章节号
+    local chapter_num=$(echo "$chapter" | sed 's/ch0*//' | sed 's/^0//')
+    if [ -z "$chapter_num" ]; then
+        chapter_num=$(echo "$chapter" | grep -oE '[0-9]+')
+    fi
+
+    # 执行Python一致性检查，捕获输出和退出码
+    local output
+    local exit_code=0
+    output=$(python3 << INNER_PYEOF
+import sys
+sys.path.insert(0, '$PROJECT_ROOT')
+try:
+    from infra.memory_service import get_memory_gateway
+    gateway = get_memory_gateway()
+
+    with open('$content_file', 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    result = gateway.check_consistency(content, int('$chapter_num'))
+
+    if not result['is_consistent']:
+        print(f"一致性问题 (评分: {result['consistency_score']:.2f})")
+        for issue in result['issues'][:3]:
+            print(f"  - {issue.get('description', '未知问题')}")
+        sys.exit(1)
+    else:
+        print(f"一致性通过 (评分: {result['consistency_score']:.2f})")
+        sys.exit(0)
+except Exception as e:
+    print(f"一致性检查跳过: {e}")
+    sys.exit(0)
+INNER_PYEOF
+)
+    exit_code=$?
+    echo "$output"
+    return $exit_code
+}
+
+# 打印记忆上下文摘要（审核前）
+function log_review_memory_context() {
+    local chapter=$1
+    local chapter_num=$(echo "$chapter" | sed 's/ch0*//' | sed 's/^0//')
+    if [ -z "$chapter_num" ]; then
+        chapter_num=$(echo "$chapter" | grep -oE '[0-9]+')
+    fi
+
+    python3 << PYEOF 2>/dev/null
+import sys
+sys.path.insert(0, '$PROJECT_ROOT')
+try:
+    from infra.memory_service import get_memory_gateway
+    gateway = get_memory_gateway()
+    context = gateway.auto_push_context(chapter_num=int('$chapter_num'))
+
+    import json
+    chars = list(context.get('character_states', {}).keys())
+    fps = context.get('pending_foreshadows', {})
+    events = context.get('recent_events', [])
+
+    if chars or fps or events:
+        print(f"\n{BLUE}=== 记忆上下文 (第{'$chapter_num'}章) ==={NC}")
+        if chars:
+            print(f"  角色状态: {', '.join(chars[:5])}{'...' if len(chars) > 5 else ''}")
+        if fps:
+            print(f"  待回收伏笔: {len(fps)} 条")
+        if events:
+            print(f"  最近事件: {len(events)} 条")
+        print("")
+except Exception as e:
+    pass
+PYEOF
+}
+
 # ==================== 命令实现 ====================
 
 # 批量启动审核员并行审核
@@ -245,6 +331,9 @@ function cmd_batch() {
         # 记录审核任务
         local task_id="${batch_id}_${reviewer}_${ch_num}"
         log_step "分配: $reviewer → 审核 $ch_num"
+
+        # 运行记忆系统一致性检查
+        run_memory_consistency_check "ch$ch_num"
 
         # 这里应该调用Agent启动，实际实现时通过主控调度
         # 临时记录到任务文件
@@ -351,6 +440,10 @@ function cmd_assign() {
         local ch_num=$(printf "%03d" $i)
         local task_id="${batch_id}_${reviewer}_${ch_num}"
         log_step "分配: $reviewer → 审核 $ch_num"
+
+        # 运行记忆系统一致性检查
+        run_memory_consistency_check "ch$ch_num"
+
         echo "$task_id|$reviewer|ch$ch_num|pending" >> "$batch_dir/tasks.txt"
     done
 

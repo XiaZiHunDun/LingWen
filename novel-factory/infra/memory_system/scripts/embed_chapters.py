@@ -17,8 +17,8 @@ import time
 from pathlib import Path
 from datetime import datetime, timedelta
 
-from memory_system.vector.embedder import Embedder
-from memory_system.vector.qdrant_client import QdrantClientWrapper
+from infra.memory_system.vector.embedder import Embedder
+from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
 
 # 章节内容仓库路径（相对于项目根目录）

@@ -8,10 +8,10 @@
 """
 from typing import Any, Dict, List, Optional
 
-from memory_system.gateway.query_engine import QueryEngine
-from memory_system.state.character_tracker import CharacterTracker
-from memory_system.state.plot_thread_tracker import PlotThreadTracker
-from memory_system.state.timeline_manager import TimelineManager
+from infra.memory_system.gateway.query_engine import QueryEngine
+from infra.memory_system.state.character_tracker import CharacterTracker
+from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
+from infra.memory_system.state.timeline_manager import TimelineManager
 
 
 class PushEngine:

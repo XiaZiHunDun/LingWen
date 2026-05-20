@@ -7,7 +7,7 @@ from typing import Optional
 
 from openai import OpenAI
 
-from memory_system.config import load_yaml
+from infra.memory_system.config import load_yaml
 
 
 class Embedder:

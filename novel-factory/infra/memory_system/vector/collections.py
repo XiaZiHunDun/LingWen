@@ -5,7 +5,7 @@
 """
 from typing import Optional
 
-from memory_system.vector.qdrant_client import QdrantClientWrapper
+from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
 
 class CollectionManager:

@@ -13,10 +13,10 @@ import argparse
 import sys
 from typing import Any, Optional
 
-from memory_system.config import load_yaml
-from memory_system.gateway.memory_gateway import MemoryGateway
-from memory_system.vector.embedder import Embedder
-from memory_system.vector.qdrant_client import QdrantClientWrapper
+from infra.memory_system.config import load_yaml
+from infra.memory_system.gateway.memory_gateway import MemoryGateway
+from infra.memory_system.vector.embedder import Embedder
+from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
 
 def load_config() -> dict:

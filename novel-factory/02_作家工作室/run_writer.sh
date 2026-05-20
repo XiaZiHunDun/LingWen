@@ -131,6 +131,50 @@ function create_batch_dirs() {
     echo "$batch_dir"
 }
 
+# ==================== 记忆系统集成 ====================
+
+# 获取记忆上下文
+function get_memory_context() {
+    local chapter_num=$1
+    python3 << PYEOF 2>/dev/null
+import sys
+sys.path.insert(0, '$PROJECT_ROOT')
+try:
+    from infra.memory_service import get_memory_gateway
+    gateway = get_memory_gateway()
+    context = gateway.auto_push_context(chapter_num=$chapter_num)
+    # 格式化输出
+    import json
+    print(json.dumps(context, ensure_ascii=False, indent=2))
+except Exception as e:
+    print('{}')
+PYEOF
+}
+
+# 打印记忆上下文摘要
+function log_memory_context() {
+    local chapter=$1
+    local chapter_num=$(echo "$chapter" | sed 's/ch0*//' | sed 's/^0//')
+    if [ -z "$chapter_num" ]; then
+        chapter_num=$(echo "$chapter" | grep -oE '[0-9]+')
+    fi
+
+    local context=$(get_memory_context "$chapter_num" 2>/dev/null)
+    if [ -n "$context" ] && [ "$context" != "{}" ]; then
+        echo -e "\n${BLUE}=== 记忆上下文 (第${chapter_num}章) ===${NC}"
+        # 角色状态
+        local chars=$(echo "$context" | python3 -c "import json,sys; d=json.load(sys.stdin); print(', '.join(d.get('character_states',{}).keys()) or '(无)')" 2>/dev/null)
+        echo -e "  角色状态: $chars"
+        # 待回收伏笔
+        local fps=$(echo "$context" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('pending_foreshadows',{})))" 2>/dev/null)
+        echo -e "  待回收伏笔: $fps 条"
+        # 最近事件
+        local events=$(echo "$context" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('recent_events',[])))" 2>/dev/null)
+        echo -e "  最近事件: $events 条"
+        echo ""
+    fi
+}
+
 # ==================== 命令实现 ====================
 
 # 分配单章修改任务
@@ -217,6 +261,9 @@ except Exception as e:
 PYEOF
     fi
 
+    # 打印记忆上下文
+    log_memory_context "$chapter"
+
     log_info "任务分配完成: $writer → $chapter"
 }
 
@@ -270,6 +317,9 @@ function cmd_batch() {
         # 记录任务
         local task_id="${batch_id}_${writer}_ch${ch_formatted}"
         log_step "分配: $writer → 修改 ch${ch_formatted}"
+
+        # 打印记忆上下文（仅当NoOp模式时显示简要信息）
+        log_memory_context "ch${ch_formatted}"
 
         echo "$task_id|$writer|ch${ch_formatted}|pending" >> "$batch_dir/tasks.txt"
 
