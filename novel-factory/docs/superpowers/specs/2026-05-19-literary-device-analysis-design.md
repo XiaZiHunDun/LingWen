@@ -293,10 +293,12 @@ thresholds:
 
 ---
 
-## 八、存储结构
+## 八、存储结构（Proposed - 未实现）
+
+> **注意**: 此设计文档描述的功能尚未实现。以下是提案中的存储结构。
 
 ```
-novel-factory/tools/consistency/
+novel-factory/tools/consistency/  (提案位置 - 未实现)
 ├── literary_analyzer/
 │   ├── __init__.py
 │   ├── analyzer.py              # 主分析器

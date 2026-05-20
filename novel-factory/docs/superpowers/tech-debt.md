@@ -30,7 +30,7 @@
 - `engine/consistency_engine.py` - 引擎核心
 - `engine/data_structures.py` - 数据结构 (Issue, CheckerResult, QualityDimension)
 - `engine/report_generator.py` - 报告生成器
-- `checkers/` - 8个检测器
+- `checkers/` - 9个检测器
 
 **检测器列表**:
 | 检测器 | 功能 |
@@ -43,6 +43,7 @@
 | foreshadow_checker | 伏笔追踪 |
 | outline_checker | 大纲偏离 |
 | ai_gloss_checker | AI痕迹 |
+| character_state | 人物状态追踪 |
 
 **测试**: 83 passed (consistency/)
 
@@ -56,6 +57,12 @@
 - `auto_consistency_checker.py`: 一致性检查调度，涵盖命名/完整性/重复/人物状态/时间线
 - 建议：将 character_consistency 检查合并到 `consistency/checkers/character_checker.py` 作为通用实现
 - 当前状态：两者暂时独立运行，待后续优化
+
+**tools/consistency/ 目录说明**:
+- 该目录包含独立的一致性检查脚本，与 `consistency/` 引擎并行存在
+- `checkers/` 子目录有4个检测器: character_state, content_integrity, naming, timeline
+- 这些是早期实现，现已被 `consistency/checkers/` 中的对应检测器替代或增强
+- 建议：后续清理时将重复功能合并到一致性引擎
 
 ---
 
