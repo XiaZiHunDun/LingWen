@@ -1,303 +1,154 @@
 #!/bin/bash
-# 小说工作室 · 工作流编排脚本 v1.5
-# 支持22步工作流（PHASE_3验证期 v5.0）
+# 小说工作室 · 工作流编排脚本 v3.0
+# 简化为"传送带"：只做命令分发、参数解析、日志记录
+# 核心逻辑委托给 infra/tools/workflow/lib.py
+#
 # 用法: ./run_workflow.sh [command] [params]
+#
+# 环境变量:
+#   PROJECT_ROOT - 项目根目录（自动检测）
+#   WORKFLOW_FILE - JSON状态文件路径
+#   DB_PATH - SQLite数据库路径
 
 set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-WORKFLOW_FILE="$PROJECT_ROOT/workflow_state.json"
+# ============================================================
+# 路径初始化
+# ============================================================
 
-# flock锁保护workflow_state.json并发写
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+WORKFLOW_FILE="${WORKFLOW_FILE:-$PROJECT_ROOT/workflow_state.json}"
+DB_PATH="${DB_PATH:-$PROJECT_ROOT/.state/workflow.db}"
+
+# flock锁保护
 LOCKFILE="$PROJECT_ROOT/.locks/workflow.lock"
 mkdir -p "$(dirname "$LOCKFILE")"
 exec 200>"$LOCKFILE"
 flock -n 200 || { echo "[ERROR] Another instance is running"; exit 1; }
 
-# 检查jq是否可用
-JQ_AVAILABLE=false
-if command -v jq > /dev/null 2>&1; then
-    JQ_AVAILABLE=true
-fi
-
 # ============================================================
-# 依赖检查
-# ============================================================
-check_dependencies() {
-    local missing=0
-
-    # 检查 jq
-    if ! command -v jq >/dev/null 2>&1; then
-        echo "Warning: jq not installed. Some features may be limited."
-        echo "  Install with: apt-get install jq  or  brew install jq"
-    fi
-
-    # 检查 API key
-    if [ -z "${OPENAI_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-        echo "Error: API key required."
-        echo "  Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable."
-        missing=1
-    fi
-
-    [ $missing -eq 1 ] && return 1
-    return 0
-}
-
-# ============================================================
-# Quickstart 引导
-# ============================================================
-cmd_quickstart() {
-    echo "=========================================="
-    echo "  灵文 · 工业化小说生产系统 · 快速上手"
-    echo "=========================================="
-    echo ""
-
-    # 检查 jq
-    echo "[1/4] 检查 jq..."
-    if command -v jq >/dev/null 2>&1; then
-        echo "  ✓ jq 已安装 ($(jq --version))"
-    else
-        echo "  ⚠ jq 未安装 (部分功能受限)"
-        echo "    apt-get install jq  或  brew install jq"
-    fi
-    echo ""
-
-    # 检查 API key
-    echo "[2/4] 检查 API Key..."
-    if [ -n "${OPENAI_API_KEY:-}" ]; then
-        echo "  ✓ OPENAI_API_KEY 已设置"
-    elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-        echo "  ✓ ANTHROPIC_API_KEY 已设置"
-    else
-        echo "  ✗ 未设置 API Key"
-        echo "    请设置环境变量: export OPENAI_API_KEY=your_key"
-        echo "    或: export ANTHROPIC_API_KEY=your_key"
-    fi
-    echo ""
-
-    # 检查项目状态
-    echo "[3/4] 检查项目状态..."
-    if [ -f "$WORKFLOW_FILE" ]; then
-        echo "  ✓ workflow_state.json 存在"
-        python3 -c "
-import json
-with open('$WORKFLOW_FILE', 'r', encoding='utf-8') as f:
-    state = json.load(f)
-    phase = state.get('current_phase', 'N/A')
-    step = state.get('current_step', 'N/A')
-    print(f'    当前阶段: {phase}')
-    print(f'    当前步骤: {step}')
-" 2>/dev/null || echo "    (无法解析JSON)"
-    else
-        echo "  ⚠ workflow_state.json 不存在"
-        echo "    运行 ./run_workflow.sh init 初始化项目"
-    fi
-    echo ""
-
-    # 快速上手指南
-    echo "[4/4] 快速上手指南"
-    echo ""
-    echo "  1. 初始化新项目: ./run_workflow.sh init"
-    echo "  2. 查看状态:     ./run_workflow.sh status"
-    echo "  3. 启动Agent:    ./run_workflow.sh launch <task> <agent> <desc>"
-    echo "  4. 验证任务:     ./run_workflow.sh verify <task> <task_id>"
-    echo "  5. 查看任务:     ./run_workflow.sh tasks"
-    echo ""
-    echo "  完整文档: 参见 README.md 或 CLAUDE.md"
-    echo ""
-}
-
 # 颜色输出
+# ============================================================
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
-
-# 引入日志审计函数
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ -f "$SCRIPT_DIR/logging.sh" ]; then
-    source "$SCRIPT_DIR/logging.sh"
-fi
 
 function log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
-    log_audit "INFO" "$1" "run_workflow.sh" 2>/dev/null || true
 }
 function log_warn() {
     echo -e "${YELLOW}[WARN]${NC} $1"
-    log_audit "WARN" "$1" "run_workflow.sh" 2>/dev/null || true
 }
 function log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
-    log_audit "ERROR" "$1" "run_workflow.sh" 2>/dev/null || true
+}
+function log_section() {
+    echo -e "${CYAN}=== $1 ===${NC}"
 }
 
-# Python heredoc error handler
-function run_py_safe() {
-    local py_script=$1
-    python3 "$py_script" 2>> logs/workflow_error.log || {
-        local exit_code=$?
-        log_error "Python script failed: $py_script (exit $exit_code)"
-        log_audit "ERROR" "Python failed: $py_script" "$exit_code" 2>/dev/null || true
-        return $exit_code
-    }
+# ============================================================
+# Python封装调用
+# ============================================================
+
+PYTHON_LIB="from infra.tools.workflow.lib import get_state, set_state, advance_step, dispatch_task, verify_task, create_checkpoint, list_checkpoints, restore_checkpoint, list_tasks, get_task_status, init_sqlite, migrate_json_to_sqlite; "
+
+function py_call() {
+    python3 -c "${PYTHON_LIB} $1" 2>&1
 }
 
-# jq封装（如果没有jq则使用Python fallback）
-function jq_get() {
-    local key=$1
-    local fallback=${2:-""}
-    if [ "$JQ_AVAILABLE" = true ]; then
-        local val=$(jq -r "$key" "$WORKFLOW_FILE" 2>/dev/null)
-        if [ -n "$val" ] && [ "$val" != "null" ]; then
-            echo "$val"
-        else
-            echo "$fallback"
-        fi
-    else
-        # Python fallback - write script to temp file
-        local py_script=$(mktemp)
-        echo 'import json, sys' > "$py_script"
-        echo "wf = '$WORKFLOW_FILE'" >> "$py_script"
-        echo "key = '$key'" >> "$py_script"
-        echo "fallback = '$fallback'" >> "$py_script"
-        cat >> "$py_script" << 'PYEOF'
-try:
-    with open(wf, encoding='utf-8') as f:
-        data = json.load(f)
-    val = data
-    for k in key.split('.'):
-        if k == '':
-            continue
-        if k.isdigit():
-            val = val[int(k)]
-        else:
-            val = val[k]
-    print(val if val is not None else fallback)
-except Exception as e:
-    print(fallback)
-PYEOF
-        python3 "$py_script" 2>/dev/null
-        rm -f "$py_script"
-    fi
+function py_call_bg() {
+    python3 -c "${PYTHON_LIB} $1" &>/dev/null &
 }
 
-# 条件执行jq（仅当可用时）
-function jq_run() {
-    if [ "$JQ_AVAILABLE" = true ]; then
-        "$@" 2>/dev/null
-        return 0
-    fi
-    return 1
-}
+# ============================================================
+# 命令实现
+# ============================================================
 
-# ==================== 命令实现 ====================
-
+# 初始化
 function cmd_init() {
-    # 检查依赖
-    check_dependencies || exit 1
+    log_section "初始化工作流"
 
-    log_info "初始化小说工作室工作流..."
+    # 初始化SQLite
+    py_call "init_sqlite()"
+    log_info "SQLite初始化完成"
+
+    # 如果JSON存在则迁移
     if [ -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流已存在，不重复初始化"
-        exit 1
+        log_warn "检测到workflow_state.json，迁移到SQLite..."
+        result=$(py_call "migrate_json_to_sqlite()")
+        state_count=$(echo "$result" | head -1 | cut -d',' -f1)
+        task_count=$(echo "$result" | head -1 | cut -d',' -f2)
+        log_info "迁移完成: $state_count 条状态, $task_count 条任务"
+    else
+        # 初始化空状态
+        py_call "set_state(\"version\", \"v2.0\")"
+        py_call "set_state(\"workflow_version\", \"v5.0（22步工作流）\")"
+        py_call "set_state(\"current_phase\", \"PHASE_0_SETUP\")"
+        py_call "set_state(\"current_step\", \"SETUP_00\")"
+        py_call "set_state(\"initialized_at\", \"$(date +%Y-%m-%d)\")"
+        log_info "工作流初始化完成"
     fi
-    cat > "$WORKFLOW_FILE" << 'EOF'
-{
-  "version": "1.4",
-  "workflow_version": "v5.0（22步工作流，含PHASE_3验证期）",
-  "current_phase": "PHASE_0_SETUP",
-  "current_step": "SETUP_00",
-  "initialized_at": "2026-05-19",
-  "agent_tasks": {},
-  "project_info": {},
-  "review_queue": { "pending": [], "in_review": [], "completed": [] },
-  "phases": {},
-  "deadline_check": {},
-  "next_actions": []
-}
-EOF
-    log_info "工作流初始化完成，状态: PHASE_0_SETUP（22步工作流 v5.0）"
+
+    # 触发事件
+    py_call_bg '_trigger_event("OUTLINE_APPROVED", {"phase": "PHASE_0_SETUP", "step": "SETUP_00"})'
 }
 
+# 状态查看
 function cmd_status() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在，请先运行 init"
-        exit 1
-    fi
-    echo "=== 当前状态 ==="
-    echo "版本: $(jq_get '.version' 'N/A')"
-    echo "阶段: $(jq_get '.current_phase' 'N/A')"
-    echo "步骤: $(jq_get '.current_step' 'N/A')"
+    log_section "当前状态"
+    echo "阶段: $(py_call "get_state('current_phase', 'N/A')")"
+    echo "步骤: $(py_call "get_state('current_step', 'N/A')")"
     echo ""
 
-    local task_count=$(jq_get '.agent_tasks | length' '0')
-    echo "=== Agent任务 ($task_count) ==="
-    if [ "$task_count" -gt 0 ] && [ "$JQ_AVAILABLE" = true ]; then
-        jq -r '.agent_tasks | to_entries[] | "  \(.key): \(.value.status) (\(.value.agent))"' "$WORKFLOW_FILE" 2>/dev/null
-    else
-        echo "  (无进行中任务)"
-    fi
+    # 任务统计
+    local task_count=$(py_call "len([t for t in list_tasks() if t.get('status') != 'completed'])" 2>/dev/null || echo "0")
+    echo "进行中任务: $task_count"
     echo ""
-
-    local next=$(jq_get '.next_actions[0]' '')
-    if [ -n "$next" ]; then
-        echo "下一步: $next"
-    fi
 }
 
+# 步骤推进
 function cmd_advance() {
-    local target_step=$1
+    local target_step=${1:-}
     if [ -z "$target_step" ]; then
-        log_error "用法: ./run_workflow.sh advance STEP_03"
+        log_error "用法: ./run_workflow.sh advance <STEP_XX>"
         exit 1
     fi
-    log_info "推进到步骤: $target_step"
-    log_warn "注意: 状态更新需由主会话人工执行（遵守反馈循环规则）"
 
-    if [ "$JQ_AVAILABLE" = true ]; then
-        jq --arg step "$target_step" '.current_step = $step' "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
-    else
-        log_warn "jq不可用，无法自动更新文件，请手动编辑workflow_state.json"
+    result=$(py_call "advance_step('$target_step')")
+    if [[ "$result" == *"INVALID"* ]]; then
+        log_error "步骤校验失败: $result"
+        exit 1
     fi
+    log_info "$result"
 }
 
+# 启动任务
 function cmd_launch() {
-    local task_name=$1
-    local agent=$2
-    local task_desc=${3:-""}
+    local task_name=${1:-}
+    local agent=${2:-}
+    local desc=${3:-""}
 
     if [ -z "$task_name" ] || [ -z "$agent" ]; then
-        log_error "用法: ./run_workflow.sh launch <task_name> <agent> [task_desc]"
+        log_error "用法: ./run_workflow.sh launch <task_name> <agent> [desc]"
         exit 1
     fi
 
     log_info "启动Agent: [$agent] -> $task_name"
-    echo "任务描述: $task_desc"
+    task_id=$(py_call "dispatch_task('$task_name', '$agent', '$desc')")
+    echo "任务ID: $task_id"
     echo ""
-    echo "请在主会话中使用 Agent 工具启动，并记录返回的 task_id"
-    echo "然后运行: ./run_workflow.sh verify <task_name> <task_id>"
-    echo ""
-
-    if [ "$JQ_AVAILABLE" = true ]; then
-        local timestamp=$(date +%Y-%m-%dT%H:%M:%S)
-        local heartbeat=$(date +%Y-%m-%dT%H:%M:%S)
-        jq --arg name "$task_name" \
-           --arg agent "$agent" \
-           --arg status "pending" \
-           --arg dispatched "$timestamp" \
-           --arg heartbeat "$heartbeat" \
-           '.agent_tasks[$name] = {"agent": $agent, "status": $status, "dispatched_at": $dispatched, "task_id": null, "heartbeat_at": $heartbeat}' \
-           "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
-        log_info "已创建任务记录到agent_tasks"
-    else
-        log_warn "jq不可用，请在主会话中手动记录task_id到workflow_state.json"
-    fi
+    echo "请在主会话中使用 Agent 工具启动任务，并记录返回的 task_id"
+    echo "然后运行: ./run_workflow.sh verify $task_name <task_id>"
 }
 
+# 验证任务
 function cmd_verify() {
-    local task_name=$1
-    local task_id=$2
+    local task_name=${1:-}
+    local task_id=${2:-}
 
     if [ -z "$task_name" ] || [ -z "$task_id" ]; then
         log_error "用法: ./run_workflow.sh verify <task_name> <task_id>"
@@ -305,493 +156,140 @@ function cmd_verify() {
     fi
 
     log_info "验证任务: $task_name (task_id: $task_id)"
-    echo ""
-    echo "请在主会话中执行: TaskOutput(block=true, task_id=\"$task_id\", timeout=60000)"
-    echo ""
-    echo "验证通过后，更新workflow_state.json中agent_tasks的状态为'verified'"
+    success=$(py_call "verify_task('$task_name', '$task_id')")
+    if [ "$success" = "True" ]; then
+        log_info "任务验证完成"
+    else
+        log_error "验证失败"
+        exit 1
+    fi
 }
 
+# 批量分配作家
 function cmd_assign_batch() {
-    local type=$1
-    local range=$2
+    local type=${1:-}
+    local range=${2:-}
 
     if [ -z "$type" ] || [ -z "$range" ]; then
-        log_error "用法: ./run_workflow.sh assign_batch <type> <range>"
-        log_error "  type: writer/reviewer"
-        log_error "  range: ch001-ch010 或 卷1"
+        log_error "用法: ./run_workflow.sh assign_batch <writer|reviewer> <range>"
         exit 1
     fi
 
     log_info "批量分配: $type -> $range"
-    echo ""
 
-    if [ "$type" == "writer" ]; then
-        echo "10作家并行修改（每人一章）："
-        echo "  作家A → 第1章"
-        echo "  作家B → 第2章"
-        echo "  ..."
-        echo "  作家J → 第10章"
+    if [ "$type" = "writer" ]; then
+        echo "10作家并行写作（每人一章）："
+        echo "  作家A → ch001, 作家B → ch002, ..."
         echo ""
-        echo "请在主会话中启动10个作家Agent并行执行"
-        echo "每个Agent完成后验证并记录到agent_tasks"
-    elif [ "$type" == "reviewer" ]; then
-        echo "5审核员并行审核（每2人审一批）："
-        echo "  审核员A+审核员B → 审第1-5章"
-        echo "  审核员C+审核员D → 审第6-10章"
-        echo "  审核员E → 备用+终审"
+        echo "使用: ./run_workflow.sh launch write_ch001 writer-a '撰写第1章'"
+    elif [ "$type" = "reviewer" ]; then
+        echo "5审核员并行审核（每2人一组）："
+        echo "  审核员A+B → 审ch001-010"
         echo ""
-        echo "请在主会话中启动审核员Agent并行执行"
-    else
-        log_error "未知的type: $type"
+        echo "使用: ./run_workflow.sh launch review_ch001 reviewer-a '审核第1章'"
     fi
 }
 
-function cmd_assign_reviewer() {
-    local reviewer=$1
-    local range=$2
-
-    if [ -z "$reviewer" ] || [ -z "$range" ]; then
-        log_error "用法: ./run_workflow.sh assign_reviewer <reviewer> <range>"
-        exit 1
-    fi
-
-    log_info "分配审核员: [$reviewer] -> 审核 $range"
-    echo "请在主会话中启动审核员Agent执行审核任务"
-}
-
-function cmd_assign_汇总员() {
-    local role=$1
-    local task=$2
-
-    if [ -z "$role" ] || [ -z "$task" ]; then
-        log_error "用法: ./run_workflow.sh assign_汇总员 <role> <task>"
-        log_error "  role: 汇总主笔/汇总编辑/汇总校验"
-        exit 1
-    fi
-
-    log_info "调度汇总部门: [$role] -> $task"
-    echo ""
-    echo "汇总部门执行修复时必须："
-    echo "  1. 读取问题文件"
-    echo "  2. 执行指定修复"
-    echo "  3. 输出修复报告"
-    echo "  4. 主控验证后标记verified"
-    echo ""
-    echo "禁止：直接修改文件而不通过Agent"
-}
-
-function cmd_assign() {
-    local agent=$1
-    local task=$2
-    if [ -z "$agent" ] || [ -z "$task" ]; then
-        log_error "用法: ./run_workflow.sh assign <agent> <task>"
-        exit 1
-    fi
-    log_info "分配任务: [$agent] -> $task"
-}
-
-function cmd_report() {
-    echo "=== 小说工作室状态报告 ==="
-    echo "项目路径: $PROJECT_ROOT"
-    echo "状态文件: $WORKFLOW_FILE"
-    echo ""
-    if [ -f "$WORKFLOW_FILE" ]; then
-        echo "当前阶段: $(jq_get '.current_phase' 'N/A')"
-        echo "当前步骤: $(jq_get '.current_step' 'N/A')"
-        echo "版本: $(jq_get '.version' 'N/A')"
-        echo ""
-
-        echo "=== Agent 统计 ==="
-        echo "灵感部门: $(jq_get '.agents.灵感部门.count' '3') 人"
-        echo "作家部门: $(jq_get '.agents.作家部门.count' '10') 人"
-        echo "审核部门: $(jq_get '.agents.审核部门.count' '10') 人"
-        echo "读者部门: $(jq_get '.agents.读者部门.count' '20') 人"
-        echo "汇总部门: $(jq_get '.agents.汇总部门.count' '3') 人"
-        echo ""
-
-        echo "=== 进行中任务 ==="
-        local running=""
-        if [ "$JQ_AVAILABLE" = true ]; then
-            running=$(jq -r '.agent_tasks | to_entries[] | select(.value.status=="running") | "\(.key): \(.value.agent)"' "$WORKFLOW_FILE" 2>/dev/null)
-        fi
-        if [ -z "$running" ]; then
-            echo "（无进行中任务）"
-        else
-            echo "$running"
-        fi
-    fi
-}
-
-function cmd_phases() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在"
-        exit 1
-    fi
-    echo "=== 所有阶段（22步工作流 v5.0）==="
-    echo ""
-    echo "PHASE_0: 初始化        - 项目配置"
-    echo "PHASE_1: 构思期         - STEP_01-04（核心冲动→驱动链设计）"
-    echo "PHASE_2: 规划期         - STEP_05-08（锁定门检查）"
-    echo "PHASE_3: 验证期 [新增]  - STEP_09-11（灰盒→样章→读者测试）"
-    echo "PHASE_4: 写作期         - STEP_12-13"
-    echo "PHASE_5: 修改期         - STEP_14-15（Block→Polish）"
-    echo "PHASE_6: 审核期         - STEP_16-18（S1-S8审核）"
-    echo "PHASE_7: 完成期         - STEP_19-21"
-    echo ""
-    if [ "$JQ_AVAILABLE" = true ]; then
-        jq -r '.phases | to_entries[] | "\(.key): \(.value.name) - \(.value.status)"' "$WORKFLOW_FILE" 2>/dev/null
-    else
-        echo "（jq不可用，请查看workflow_state.json）"
-    fi
-}
-
+# 任务列表
 function cmd_tasks() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在"
-        exit 1
-    fi
-    echo "=== Agent任务追踪 ==="
-    local count=$(jq_get '.agent_tasks | length' '0')
-    echo "总任务数: $count"
-    echo ""
-
-    if [ "$count" -gt 0 ] && [ "$JQ_AVAILABLE" = true ]; then
-        jq -r '.agent_tasks | to_entries[] |
-            "任务: \(.key)
-             Agent: \(.value.agent)
-             状态: \(.value.status)
-             TaskID: \(.value.task_id // "null")
-             启动: \(.value.dispatched_at // "N/A")
-             验证: \(.value.verified_at // "N/A")
-             ---"' "$WORKFLOW_FILE" 2>/dev/null
-    else
-        echo "（无任务记录，或jq不可用）"
-    fi
+    log_section "Agent任务追踪"
+    py_call "print('\n'.join([f'{t[\"task_id\"]}: {t[\"agent\"]} ({t[\"status\"]})' for t in list_tasks()[:20]]))" 2>/dev/null || echo "（无任务记录）"
 }
 
-function cmd_next() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在"
-        exit 1
-    fi
-    echo "=== 下一步操作建议 ==="
-    local phase=$(jq_get '.current_phase' 'N/A')
-    local step=$(jq_get '.current_step' 'N/A')
-    echo "当前: $phase / $step"
-    echo ""
-
-    if [ "$JQ_AVAILABLE" = true ]; then
-        jq -r '.next_actions[]' "$WORKFLOW_FILE" 2>/dev/null | while read action; do
-            echo "  → $action"
-        done
-    else
-        echo "（jq不可用，请在workflow_state.json中查看next_actions）"
-    fi
+# 断点创建
+function cmd_checkpoint() {
+    local note=${1:-""}
+    checkpoint_id=$(py_call "create_checkpoint('$note')")
+    log_info "断点已创建: $checkpoint_id"
 }
 
-function cmd_block() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在"
-        exit 1
-    fi
-    echo "=== 当前阻塞点分析 ==="
+# 断点续跑
+function cmd_resume() {
+    local checkpoint_id=${1:-}
 
-    local phase=$(jq_get '.current_phase' 'N/A')
-    local step=$(jq_get '.current_step' 'N/A')
-
-    if [ "$JQ_AVAILABLE" = true ]; then
-        # 检查阻塞条件
-        local pending_count=$(jq -r '.review_queue.pending | length' "$WORKFLOW_FILE" 2>/dev/null || echo 0)
-        local in_review_count=$(jq -r '.review_queue.in_review | length' "$WORKFLOW_FILE" 2>/dev/null || echo 0)
-
-        echo "当前阶段: $phase"
-        echo "当前步骤: $step"
-        echo ""
-        echo "审核队列:"
-        echo "  待处理: $pending_count"
-        echo "  审核中: $in_review_count"
-        echo ""
-
-        # 检测可能的阻塞
-        if [ "$pending_count" -gt 10 ]; then
-            echo "⚠️  警告: 待处理审核超过10个，可能导致流程阻塞"
+    if [ -z "$checkpoint_id" ]; then
+        # 自动选择最新断点
+        checkpoint_id=$(py_call "list_checkpoints()[0]['checkpoint_id'] if list_checkpoints() else ''")
+        if [ -z "$checkpoint_id" ]; then
+            log_error "没有可用的断点"
+            exit 1
         fi
+        log_info "自动选择最新断点: $checkpoint_id"
+    fi
 
-        # 检查pending的任务
-        local running_tasks=$(jq -r '.agent_tasks | to_entries[] | select(.value.status=="running") | .key' "$WORKFLOW_FILE" 2>/dev/null | wc -l)
-        if [ "$running_tasks" -gt 5 ]; then
-            echo "⚠️  警告: 运行中任务超过5个，可能需要等待完成"
-        fi
-
-        echo ""
-        echo "如需解决阻塞，请执行："
-        echo "  ./run_workflow.sh review_status    # 查看审核队列"
-        echo "  ./run_workflow.sh tasks            # 查看进行中任务"
+    log_info "从断点恢复: $checkpoint_id"
+    result=$(py_call "restore_checkpoint('$checkpoint_id')")
+    if [[ "$result" == *"Restored"* ]]; then
+        log_info "$result"
     else
-        echo "jq不可用，请手动检查workflow_state.json"
+        log_error "$result"
+        exit 1
     fi
 }
 
-function cmd_agent_list() {
-    echo "=== 可用Agent列表 ==="
+# 列出断点
+function cmd_list_checkpoints() {
+    log_section "可用断点"
+    py_call "print('\n'.join([f'{c[\"checkpoint_id\"]}: {c[\"phase\"]}/{c[\"step\"]} - {c[\"note\"]} ({c[\"created_at\"]})' for c in list_checkpoints()]))" 2>/dev/null || echo "（无断点）"
+}
+
+# 快速上手
+function cmd_quickstart() {
+    log_section "灵文 · 快速上手"
     echo ""
-    echo "灵感部门 (3人):"
-    echo "  灵感A - 类型专家（都市/职场）"
-    echo "  灵感B - 幻想专家（玄幻/科幻）"
-    echo "  灵感C - 结构专家（悬疑/叙事）"
+    echo "  1. 初始化:        ./run_workflow.sh init"
+    echo "  2. 查看状态:      ./run_workflow.sh status"
+    echo "  3. 启动任务:       ./run_workflow.sh launch <task> <agent> <desc>"
+    echo "  4. 验证任务:       ./run_workflow.sh verify <task> <task_id>"
+    echo "  5. 任务列表:       ./run_workflow.sh tasks"
+    echo "  6. 创建断点:       ./run_workflow.sh checkpoint [note]"
+    echo "  7. 断点续跑:       ./run_workflow.sh resume [checkpoint_id]"
+    echo "  8. 列出断点:       ./run_workflow.sh list_checkpoints"
     echo ""
-    echo "作家部门 (10人):"
-    echo "  作家A ~ 作家J"
-    echo "  每位作家擅长不同类型，可并行修改"
+}
+
+# 帮助
+function cmd_help() {
+    echo "用法: $0 {command} [params]"
     echo ""
-    echo "审核部门 (10人):"
-    echo "  审核员A - 逻辑严密度"
-    echo "  审核员B - 人设稳定性"
-    echo "  审核员C - 叙事节奏"
-    echo "  审核员D - 市场适配"
-    echo "  审核员E - 设定冲突检测"
-    echo "  审核员F ~ J - 其他专项"
+    echo "Commands:"
+    echo "  init              - 初始化工作流"
+    echo "  quickstart       - 快速上手指南"
+    echo "  status           - 查看当前状态"
+    echo "  advance <step>    - 推进到指定步骤"
+    echo "  launch <t> <a> [d] - 启动Agent任务"
+    echo "  verify <t> <id>   - 验证任务完成"
+    echo "  assign_batch <t> <r> - 批量分配（writer/reviewer）"
+    echo "  tasks            - 查看任务列表"
+    echo "  checkpoint [note] - 创建断点"
+    echo "  resume [cp_id]    - 从断点恢复（默认最新）"
+    echo "  list_checkpoints  - 列出可用断点"
+    echo "  help             - 显示帮助"
     echo ""
-    echo "读者部门 (20人):"
-    echo "  读者A ~ 读者T"
-    echo "  批量阅读，并行评论"
-    echo ""
-    echo "汇总部门 (3人):"
-    echo "  汇总主笔 - 整合写作"
-    echo "  汇总编辑 - 润色统一"
-    echo "  汇总校验 - 一致性核查"
 }
 
-function cmd_review_status() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在"
-        exit 1
-    fi
-    echo "=== 审核队列状态 ==="
+# ============================================================
+# 主入口
+# ============================================================
 
-    if [ "$JQ_AVAILABLE" = true ]; then
-        echo "待处理:"
-        jq -r '.review_queue.pending[]' "$WORKFLOW_FILE" 2>/dev/null | while read batch; do
-            echo "  ○ $batch"
-        done
+COMMAND=${1:-help}
 
-        echo ""
-        echo "审核中:"
-        jq -r '.review_queue.in_review[]' "$WORKFLOW_FILE" 2>/dev/null | while read batch; do
-            echo "  ◐ $batch"
-        done
-
-        echo ""
-        echo "已完成: $(jq -r '.review_queue.completed | length' "$WORKFLOW_FILE" 2>/dev/null) 批次"
-        jq -r '.review_queue.completed[-5:][]' "$WORKFLOW_FILE" 2>/dev/null | while read batch; do
-            echo "  ✓ $batch"
-        done
-    else
-        echo "jq不可用，请查看workflow_state.json中的review_queue字段"
-    fi
-}
-
-function cmd_summary_status() {
-    echo "=== 汇总进度状态 ==="
-
-    if [ "$JQ_AVAILABLE" = true ]; then
-        # 阶段汇总
-        if [ -d "$PROJECT_ROOT/07_汇总仓库/阶段汇总" ]; then
-            local stage_count=$(find "$PROJECT_ROOT/07_汇总仓库/阶段汇总" -name "*.md" 2>/dev/null | wc -l)
-            echo "阶段汇总: $stage_count 个"
-        else
-            echo "阶段汇总: (目录不存在)"
-        fi
-
-        # 卷汇总
-        if [ -d "$PROJECT_ROOT/03_内容仓库/02_卷大纲" ]; then
-            local volume_count=$(find "$PROJECT_ROOT/03_内容仓库/02_卷大纲" -maxdepth 1 -type d | tail -n +2 | wc -l)
-            echo "卷大纲: $volume_count 卷"
-        else
-            echo "卷大纲: (目录不存在)"
-        fi
-
-        # 全文汇总
-        if [ -f "$PROJECT_ROOT/07_汇总仓库/汇总主笔/全文汇总_星陨纪元.md" ]; then
-            echo "全文汇总: ✓ 已生成"
-        else
-            echo "全文汇总: ✗ 未生成"
-        fi
-    else
-        echo "jq不可用，请手动检查"
-    fi
-}
-
-function cmd_issues() {
-    if [ ! -f "$WORKFLOW_FILE" ]; then
-        log_error "工作流文件不存在"
-        exit 1
-    fi
-    echo "=== 已发现问题汇总 ==="
-
-    if [ "$JQ_AVAILABLE" = true ]; then
-        local issue_count=$(jq -r '.issues_found | length' "$WORKFLOW_FILE" 2>/dev/null || echo 0)
-        echo "问题批次: $issue_count"
-        echo ""
-
-        jq -r '.issues_found | to_entries[] |
-            "\(.key):
-             \(.value | length) 条问题"' "$WORKFLOW_FILE" 2>/dev/null | head -20
-    else
-        echo "jq不可用，请查看workflow_state.json中的issues_found字段"
-    fi
-}
-
-# ==================== STEP_17 入口校验 & 迭代控制 ====================
-
-function verify_step17_eligibility() {
-    local ch=$1
-    if [ -z "$ch" ]; then
-        log_error "用法: verify_step17_eligibility <chapter>"
-        return 1
-    fi
-
-    if [ "$JQ_AVAILABLE" != true ]; then
-        log_warn "jq不可用，跳过STEP_17 eligibility检查"
-        return 0
-    fi
-
-    local review_status=$(jq -r ".chapters.\"$ch\".review_queue.status // empty" "$WORKFLOW_FILE" 2>/dev/null)
-    if [ -z "$review_status" ] || [ "$review_status" = "empty" ]; then
-        log_error "Chapter $ch not found in workflow_state.json"
-        return 1
-    fi
-
-    if [ "$review_status" != "verified" ]; then
-        log_error "ERROR: Chapter $ch review status is '$review_status', expected 'verified' for STEP_17"
-        return 1
-    fi
-
-    # 检查 deadlock_alert
-    local deadlock=$(jq -r ".chapters.\"$ch\".deadlock_alert // false" "$WORKFLOW_FILE" 2>/dev/null)
-    if [ "$deadlock" = "true" ]; then
-        log_error "ERROR: Chapter $ch is in deadlock state (deadlock_alert=true)"
-        return 1
-    fi
-
-    log_info "Chapter $ch eligible for STEP_17 (verified, no deadlock)"
-    return 0
-}
-
-function cmd_verify_step17() {
-    local ch=${2:-""}
-    if [ -z "$ch" ]; then
-        log_error "用法: $0 verify_step17 <chapter>"
-        exit 1
-    fi
-    verify_step17_eligibility "$ch"
-}
-
-function cmd_check_iteration() {
-    local ch=${2:-""}
-    if [ -z "$ch" ]; then
-        log_error "用法: $0 check_iteration <chapter>"
-        exit 1
-    fi
-
-    if [ "$JQ_AVAILABLE" != true ]; then
-        log_error "jq不可用，无法检查iteration"
-        exit 1
-    fi
-
-    local iteration=$(jq -r ".chapters.\"$ch\".iteration_count // 0" "$WORKFLOW_FILE" 2>/dev/null)
-    local max=$(jq -r ".chapters.\"$ch\".max_iterations // 2" "$WORKFLOW_FILE" 2>/dev/null)
-    local deadlock=$(jq -r ".chapters.\"$ch\".deadlock_alert // false" "$WORKFLOW_FILE" 2>/dev/null)
-
-    echo "Chapter $ch: iteration=$iteration, max=$max, deadlock_alert=$deadlock"
-
-    if [ "$iteration" -ge "$max" ] && [ "$deadlock" != "true" ]; then
-        log_warn "Iteration count $iteration >= max $max - setting deadlock_alert=true"
-        jq ".chapters.\"$ch\".deadlock_alert = true" "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
-        log_error "Flow paused for chapter $ch - deadlock_alert=true"
-        return 1
-    fi
-
-    return 0
-}
-
-function cmd_persist_rollback() {
-    local ch=${2:-""}
-    local issues=${3:-"[]"}
-    local deadline=${4:-""}
-
-    if [ -z "$ch" ]; then
-        log_error "用法: $0 persist_rollback <chapter> <issues_json> <deadline_check>"
-        exit 1
-    fi
-
-    if [ "$JQ_AVAILABLE" != true ]; then
-        log_error "jq不可用，无法持久化rollback"
-        exit 1
-    fi
-
-    local ts=$(date +%Y-%m-%dT%H:%M:%S)
-
-    # 写入 issues_found
-    jq ".issues_found.\"$ch\" += [{\"timestamp\": \"$ts\", \"issues\": $issues, \"deadline_check\": \"$deadline\"}]" \
-        "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
-
-    # 增加 iteration_count
-    local current=$(jq -r ".chapters.\"$ch\".iteration_count // 0" "$WORKFLOW_FILE" 2>/dev/null)
-    jq ".chapters.\"$ch\".iteration_count = ($current + 1)" \
-        "$WORKFLOW_FILE" > tmp_$$.json && mv tmp_$$.json "$WORKFLOW_FILE"
-
-    log_info "Rollback persisted for chapter $ch (iteration incremented, issues written)"
-}
-
-# ==================== 主入口 ====================
-
-case "$1" in
-    init)            cmd_init ;;
-    quickstart)      cmd_quickstart ;;
-    status)          cmd_status ;;
-    advance)         cmd_advance "$2" ;;
-    launch)          cmd_launch "$2" "$3" "$4" ;;
-    verify)          cmd_verify "$2" "$3" ;;
-    assign_batch)    cmd_assign_batch "$2" "$3" ;;
-    assign_reviewer) cmd_assign_reviewer "$2" "$3" ;;
-    assign_汇总员)   cmd_assign_汇总员 "$2" "$3" ;;
-    assign)          cmd_assign "$2" "$3" ;;
-    report)          cmd_report ;;
-    phases)          cmd_phases ;;
-    tasks)           cmd_tasks ;;
-    next)            cmd_next ;;
-    block)           cmd_block ;;
-    agent_list)      cmd_agent_list ;;
-    review_status)   cmd_review_status ;;
-    summary_status)  cmd_summary_status ;;
-    issues)          cmd_issues ;;
-    verify_step17)   cmd_verify_step17 "$2" ;;
-    check_iteration) cmd_check_iteration "$2" ;;
-    persist_rollback) cmd_persist_rollback "$2" "$3" "$4" ;;
+case "$COMMAND" in
+    init)              cmd_init ;;
+    quickstart)        cmd_quickstart ;;
+    status)            cmd_status ;;
+    advance)           cmd_advance "$2" ;;
+    launch)           cmd_launch "$2" "$3" "$4" ;;
+    verify)           cmd_verify "$2" "$3" ;;
+    assign_batch)     cmd_assign_batch "$2" "$3" ;;
+    tasks)            cmd_tasks ;;
+    checkpoint)       cmd_checkpoint "$2" ;;
+    resume)           cmd_resume "$2" ;;
+    list_checkpoints)  cmd_list_checkpoints ;;
+    help|--help|-h)   cmd_help ;;
     *)
-        echo "用法: $0 {init|quickstart|status|advance|launch|verify|assign|assign_batch|assign_reviewer|assign_汇总员|report|phases|tasks|next|block|agent_list|review_status|summary_status|issues|verify_step17|check_iteration|persist_rollback}"
-        echo ""
-        echo "Commands:"
-        echo "  init            - 初始化工作流（仅首次）"
-        echo "  quickstart     - 快速上手指南（检查依赖+引导配置）"
-        echo "  status          - 查看当前状态"
-        echo "  advance         - 推进到指定步骤"
-        echo "  launch          - 启动Agent并记录task_id"
-        echo "  verify          - TaskOutput验证Agent完成状态"
-        echo "  assign          - 分配任务给Agent（单任务）"
-        echo "  assign_batch    - 批量并行分配（10章→10作家）"
-        echo "  assign_reviewer - 分配审核员"
-        echo "  assign_汇总员   - 调度汇总部门"
-        echo "  report          - 生成状态报告"
-        echo "  phases          - 列出所有阶段"
-        echo "  tasks           - 查看当前agent_tasks"
-        echo "  next            - 下一步操作建议"
-        echo "  block           - 阻塞点分析"
-        echo "  agent_list      - 可用Agent列表"
-        echo "  review_status   - 审核队列状态"
-        echo "  summary_status  - 汇总进度状态"
-        echo "  issues          - 已发现问题汇总"
+        log_error "未知命令: $COMMAND"
+        cmd_help
         exit 1
         ;;
 esac
