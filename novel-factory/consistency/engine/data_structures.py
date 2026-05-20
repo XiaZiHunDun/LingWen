@@ -33,6 +33,7 @@ class CheckerType(Enum):
     FORESHADOW = "foreshadow_checker"
     OUTLINE = "outline_checker"
     AI_GLOSS = "ai_gloss_checker"
+    CHARACTER_STATE = "character_state"
 
 
 class CheckScope(Enum):

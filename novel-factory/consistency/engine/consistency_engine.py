@@ -15,6 +15,7 @@ from consistency.engine.data_structures import (
 )
 from consistency.engine.report_generator import ReportGenerator
 from consistency.checkers.character_checker import CharacterChecker
+from consistency.checkers.character_state import CharacterStateChecker
 from consistency.checkers.item_checker import ItemChecker
 from consistency.checkers.timeline_checker import TimelineChecker
 from consistency.checkers.ability_checker import AbilityChecker
@@ -72,6 +73,7 @@ class ConsistencyEngine:
         """初始化所有检查器"""
         return {
             CheckerType.CHARACTER: CharacterChecker(),
+            CheckerType.CHARACTER_STATE: CharacterStateChecker(),
             CheckerType.ITEM: ItemChecker(),
             CheckerType.TIMELINE: TimelineChecker(),
             CheckerType.ABILITY: AbilityChecker(),
