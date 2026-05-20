@@ -1,0 +1,15 @@
+collections:
+  chapters_seg:
+    description: "章节内容片段向量"
+    vector_size: 1536
+    distance: "Cosine"
+
+  entities:
+    description: "实体向量（角色/物品/地点）"
+    vector_size: 1536
+    distance: "Cosine"
+
+  relationships:
+    description: "关系向量"
+    vector_size: 1536
+    distance: "Cosine"

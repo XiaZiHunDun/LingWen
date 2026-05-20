@@ -1,0 +1,244 @@
+# 一致性规则配置
+# 版本: v1.0.0
+# 更新日期: 2026-05-19
+
+schema_version: "v1.0"
+
+# ==================== 严重程度定义 ====================
+severity_levels:
+  P0:
+    name: "致命"
+    description: "逻辑硬伤，影响阅读，无法合理解释"
+    check_level: required  # 必须修复
+    examples:
+      - "已死亡角色再次行动"
+      - "关键道具凭空消失"
+      - "核心设定被推翻"
+      - "时间线完全矛盾"
+
+  P1:
+    name: "严重"
+    description: "一致性冲突，需要修改"
+    check_level: required
+    examples:
+      - "性格与行为冲突"
+      - "时间线矛盾"
+      - "能力边界被破坏"
+      - "伏笔回收矛盾"
+
+  P2:
+    name: "中等"
+    description: "轻微不一致，建议修改"
+    check_level: recommended
+    examples:
+      - "物品状态细微矛盾"
+      - "能力表现略有不符"
+      - "语气略有偏差"
+      - "支线情节不连贯"
+
+  P3:
+    name: "提示"
+    description: "风格建议，不强制"
+    check_level: optional
+    examples:
+      - "AI痕迹"
+      - "句式重复"
+      - "轻微的格式问题"
+      - "优化建议"
+
+# ==================== 角色一致性规则 ====================
+character_rules:
+  personality_opposites:
+    冷静:
+      opposites: ["暴怒", "疯狂", "失控", "歇斯底里", "狂躁"]
+      detection_window: 200
+
+    热血:
+      opposites: ["冷漠", "退缩", "放弃", "动摇", "冷淡"]
+      detection_window: 200
+
+    狡猾:
+      opposites: ["单纯", "正直", "轻信", "坦诚", "愚钝"]
+      detection_window: 300
+
+    温柔:
+      opposites: ["粗暴", "冷漠", "残忍", "冷酷", "凶残"]
+      detection_window: 200
+
+    正直:
+      opposites: ["欺骗", "背叛", "阴谋", "虚伪", "陷害"]
+      detection_window: 300
+
+    谨慎:
+      opposites: ["鲁莽", "冲动", "草率", "冒失"]
+      detection_window: 200
+
+    乐观:
+      opposites: ["绝望", "悲观", "消沉", "抑郁"]
+      detection_window: 300
+
+    坚强:
+      opposites: ["崩溃", "瓦解", "脆弱"]
+      detection_window: 200
+
+  behavior_conflicts:
+    - trigger: "恐高"
+      forbidden_action: ["主动爬高", "站在高处", "俯视下方"]
+    - trigger: "旱鸭子"
+      forbidden_action: ["在水中游泳", "潜水", "进行水上战斗"]
+    - trigger: "不识字"
+      forbidden_action: ["阅读文件", "阅读书籍", "辨认文字"]
+
+# ==================== 物品连续性规则 ====================
+item_rules:
+  state_tracking:
+    required_states: ["owned_by", "location", "condition", "quantity"]
+
+    condition_values:
+      - "全新"
+      - "良好"
+      - "一般"
+      - "损坏"
+      - "严重损坏"
+      - "已销毁"
+
+  conflict_types:
+    - type: "状态冲突"
+      description: "物品状态与历史记录矛盾"
+      examples:
+        - "已损毁的物品再次使用"
+        - "已丢失的物品再次出现"
+        - "已使用的消耗品仍有存量"
+
+    - type: "归属冲突"
+      description: "物品拥有者与历史记录矛盾"
+      examples:
+        - "A的角色拥有B的物品"
+        - "已转手的物品仍在原角色手中"
+
+    - type: "数量冲突"
+      description: "物品数量与历史记录矛盾"
+      examples:
+        - "只有1个的物品出现2次"
+        - "消耗品数量未减少"
+
+# ==================== 时间线规则 ====================
+timeline_rules:
+  time_expression_consistency:
+    check_items:
+      - "季节与时间线是否匹配"
+      - "昼夜描述是否一致"
+      - "具体时间点是否矛盾"
+      - "时间流逝是否合理"
+
+  time_logic:
+    max_events_per_day: 24  # 一天最多24小时的事件
+    reasonable_travel_time:
+      within_city: 2  # 城内移动：2小时
+      between_cities: 8  # 城市间：8小时
+      wilderness: 12  # 荒野：12小时
+
+  conflict_patterns:
+    - pattern: "时间跳跃矛盾"
+      check: "前文说X天后，这里说Y天后"
+    - pattern: "季节矛盾"
+      check: "前文冬季，这里描写夏季景象"
+    - pattern: "昼夜矛盾"
+      check: "前文'夜幕降临'，这里'正午时分'"
+
+# ==================== 能力一致性规则 ====================
+ability_rules:
+  ability_boundaries:
+    check_items:
+      - "能力使用是否在设定边界内"
+      - "能力强度是否与设定一致"
+      - "学习曲线是否合理"
+      - "能力限制是否被遵守"
+
+  common_conflicts:
+    - ability_type: "瞬移"
+      common_issues: ["距离超出限制", "冷却时间未遵守", "场地限制被忽略"]
+    - ability_type: "治疗"
+      common_issues: ["治疗速度不合理", "伤势过重无法治疗", "后遗症缺失"]
+    - ability_type: "战斗"
+      common_issues: ["越级挑战无代价", "能力突然增强无解释", "技能无冷却"]
+
+# ==================== 人设稳定性规则 ====================
+personality_rules:
+  core_personality_change:
+    require_transition: true
+    min_chapters_for_change: 3
+    transition_indicators:
+      - "重大事件触发"
+      - "内心挣扎描写"
+      - "他人观察反馈"
+      - "反思性独白"
+
+  language_style:
+    check_items:
+      - "词汇量与角色背景是否匹配"
+      - "口头禅是否保持一致"
+      - "说话方式是否稳定"
+
+# ==================== 伏笔规则 ====================
+foreshadow_rules:
+  tracking:
+    required_fields: ["content", "introduced_chapter", "expected_resolve_chapter", "status"]
+
+  resolution_timing:
+    on_time: "expected_chapter ± 2"
+    early: "before expected_chapter - 2"
+    late: "after expected_chapter + 2"
+
+  density_guidelines:
+    per_chapter: 1  # 每章1个伏笔
+    max_unresolved: 10  # 最多10个未回收
+    resolve_ratio: 0.7  # 70%应在前半部分回收
+
+# ==================== 大纲偏离度规则 ====================
+outline_rules:
+  alignment_check:
+    check_items:
+      - "主要情节点是否按大纲发展"
+      - "角色行动是否与大钢一致"
+      - "节奏是否符合大纲规划"
+      - "结局是否在大纲范围内"
+
+  acceptable_deviation:
+    minor_subplot: 0.3  # 支线30%偏离可接受
+    main_plot: 0.1  # 主线10%偏离可接受
+    character_arc: 0.2  # 角色弧光20%偏离可接受
+
+# ==================== AI痕迹检测规则 ====================
+ai_gloss_rules:
+  patterns:
+    over_summary:
+      - "总之"
+      - "可以看出"
+      - "由此可见"
+      - "不难发现"
+      - "值得注意"
+
+    mechanical_transition:
+      - "首先"
+      - "其次"
+      - "然后"
+      - "最后"
+      - "第一点"
+      - "第二点"
+      - "第三点"
+
+    repetitive_structure:
+      - "有的...有的..."
+      - "有的...还有的..."
+      - "一边...一边..."
+
+    ai_phrases:
+      - "作为一个AI"
+      - "值得注意的是"
+      - "从某种意义上说"
+      - "从客观角度来看"
+
+  severity:
+    P3_count_threshold: 3  # 出现3次以上才是P3
+    density_threshold: 0.05  # 5%以上的文本包含AI痕迹

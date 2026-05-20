@@ -1,0 +1,17 @@
+qdrant:
+  host: "localhost"
+  port: 6333
+  grpc_port: 6334
+
+embedding:
+  model: "text-embedding-3-small"
+  dimension: 1536
+
+storage:
+  state_file: "state/state_tracker.json"
+  plot_threads_file: "state/plot_threads.yaml"
+  timeline_file: "state/timeline.json"
+
+retrieval:
+  default_top_k: 5
+  hybrid_alpha: 0.7  # 向量权重
