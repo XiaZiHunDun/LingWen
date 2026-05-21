@@ -297,15 +297,18 @@ class EmotionalRhythmChecker:
             if not result['passed']:
                 failed_chapters.append(ch_num)
 
+        # 过滤掉无segments的结果（如空章节）
+        valid_results = [r for r in all_results if 'segments' in r]
+
         # 统计
         total_issues = sum(
             len(r['issues']) + sum(len(s['issues']) for s in r['segments'])
-            for r in all_results
+            for r in valid_results
         )
         high_issues = sum(
             len([i for i in r['issues'] if i['severity'] == 'HIGH']) +
             sum(len([i for i in s['issues'] if i['severity'] == 'HIGH']) for s in r['segments'])
-            for r in all_results
+            for r in valid_results
         )
 
         return {

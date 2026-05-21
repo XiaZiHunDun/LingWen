@@ -304,10 +304,13 @@ class DialogueStyleChecker:
             if not result['passed']:
                 failed_chapters.append(ch_num)
 
+        # 过滤掉无dialogue_count的结果（如空章节）
+        valid_results = [r for r in all_results if 'dialogue_count' in r]
+
         # 统计
-        total_issues = sum(len(r['issues']) for r in all_results)
-        high_issues = sum(len([i for i in r['issues'] if i['severity'] == 'HIGH']) for r in all_results)
-        total_dialogues = sum(r['dialogue_count'] for r in all_results)
+        total_issues = sum(len(r['issues']) for r in valid_results)
+        high_issues = sum(len([i for i in r['issues'] if i['severity'] == 'HIGH']) for r in valid_results)
+        total_dialogues = sum(r['dialogue_count'] for r in valid_results)
 
         return {
             'checked_chapters': end_ch - start_ch + 1,

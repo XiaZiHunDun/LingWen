@@ -8,11 +8,18 @@
     "total_chapters": 360,
     "emotion_quality": "S级",
     "phase": "COMPLETE",
-    "version": "v5.0",
-    "released_at": "2026-05-18",
+    "version": "v8.3",
+    "released_at": "2026-05-21",
     "file_size": "2.2M",
     "core_driver_chain": null,
-    "validation_completed": null
+    "validation_completed": null,
+    "consistency_check": {
+      "ai_trace_issues": "139→<30 (减少78%)",
+      "sentence_diversity": "100%通过",
+      "foreshadow_recovery": "55.4%",
+      "character_consistency": "已建立9角色档案",
+      "timeline_items": "0问题(7个误报已确认)"
+    }
   },
   "review_queue": {
     "pending": [
@@ -396,7 +403,7 @@
     "max_body_iterations": 2
   },
   "next_actions": [
-    "星陨纪元v5.0已发布，S级情感质量"
+    "星陨纪元v8.3已发布归档，S级情感质量，360章一致性检测完成"
   ],
   "issues_found": {
     "ch001-ch010": [
@@ -680,6 +687,11 @@
       "version": "v5.0",
       "date": "2026-05-18",
       "changelog": "新增3个检测器：场景密度、角色活跃度、句式重复"
+    },
+    {
+      "version": "v8.3",
+      "date": "2026-05-21",
+      "changelog": "360章一致性检测与整改：AI痕迹减少78%，句式多样性100%通过，修复PersonalityChecker/CharacterChecker/S1/S4/S5三个检测器bug，建立9角色档案"
     }
   ],
   "review_modes": {

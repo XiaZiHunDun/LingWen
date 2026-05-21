@@ -75,11 +75,23 @@ class CharacterChecker(BaseChecker):
         Returns:
             Issue列表
         """
-        # 兼容两种调用方式：直接传character_profiles或通过context
+        # 兼容多种调用方式：直接传list、通过context传list、或通过context传dict包装
         if context is not None and isinstance(context, dict):
-            character_profiles = context.get('character_profiles', [])
+            raw_profiles = context.get('character_profiles', [])
+            # 支持三种格式：
+            # 1. list: [{}, {}, ...]
+            # 2. dict with "characters": {"characters": [...], ...}
+            # 3. dict without "characters": {...} (非角色格式)
+            if isinstance(raw_profiles, list):
+                character_profiles = raw_profiles
+            elif isinstance(raw_profiles, dict):
+                character_profiles = raw_profiles.get('characters', [])
+            else:
+                character_profiles = []
+        elif isinstance(context, list):
+            character_profiles = context
         else:
-            character_profiles = context if isinstance(context, list) else []
+            character_profiles = []
         issues = []
 
         for profile_data in character_profiles:
@@ -121,7 +133,7 @@ class CharacterChecker(BaseChecker):
             for opposite in opposites:
                 # 检测窗口内的冲突
                 pattern = opposite
-                if self._has_conflict_in_window(content, pattern, window_size):
+                if self._has_conflict_in_window(content, pattern, window_size, profile.name):
                     issues.append(self._create_personality_issue(
                         chapter_num=chapter_num,
                         character=profile.name,
@@ -132,11 +144,33 @@ class CharacterChecker(BaseChecker):
 
         return issues
 
-    def _has_conflict_in_window(self, content: str, pattern: str, window_size: int) -> bool:
-        """检测窗口内是否存在冲突"""
-        # 简化实现：直接搜索
-        if pattern in content:
+    def _has_conflict_in_window(self, content: str, pattern: str, window_size: int, char_name: str = "") -> bool:
+        """检测窗口内是否存在冲突
+
+        只有当 opposite 词与角色名在 window_size 字符内同时出现时才判定为冲突，
+        以减少对其他角色或叙述中出现相同词的误报。
+        """
+        if pattern not in content:
+            return False
+
+        # 如果没有角色名，仅检查词是否存在（向后兼容）
+        if not char_name:
             return True
+
+        # 查找 opposite 词的所有位置
+        pos = 0
+        while True:
+            idx = content.find(pattern, pos)
+            if idx == -1:
+                break
+            # 检查角色名是否在 [idx - window_size, idx + len(pattern)] 范围内
+            start = max(0, idx - window_size)
+            end = min(len(content), idx + len(pattern) + window_size)
+            window = content[start:end]
+            if char_name in window:
+                return True
+            pos = idx + 1
+
         return False
 
     def _create_personality_issue(

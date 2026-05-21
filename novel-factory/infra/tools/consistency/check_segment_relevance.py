@@ -291,12 +291,15 @@ class SegmentRelevanceChecker:
         for ch_num in range(start_ch, end_ch + 1):
             result = self.check_chapter(ch_num)
             all_results.append(result)
-            if not result['passed']:
+            if not result.get('passed', True):
                 failed_chapters.append(ch_num)
 
+        # 过滤掉无total_segments的结果（如空章节）
+        valid_results = [r for r in all_results if 'total_segments' in r]
+
         # 汇总统计
-        total_segments = sum(r['total_segments'] for r in all_results)
-        passed_segments = sum(r['passed_segments'] for r in all_results)
+        total_segments = sum(r['total_segments'] for r in valid_results)
+        passed_segments = sum(r['passed_segments'] for r in valid_results)
 
         return {
             'checked_chapters': end_ch - start_ch + 1,

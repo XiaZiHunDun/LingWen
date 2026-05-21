@@ -44,7 +44,18 @@ class PersonalityChecker(BaseChecker):
         """
         issues = []
         context = context or {}
-        character_profiles = context.get("character_profiles", {})
+        # 兼容两种调用方式：直接传character_profiles列表或通过context字典
+        if context and isinstance(context, dict):
+            raw_profiles = context.get("character_profiles", {})
+            # 支持两种格式：list或{"characters": [...]}
+            if isinstance(raw_profiles, list):
+                character_profiles = {p.get("name", ""): p for p in raw_profiles}
+            elif isinstance(raw_profiles, dict):
+                character_profiles = {p.get("name", ""): p for p in raw_profiles.get("characters", [])}
+            else:
+                character_profiles = {}
+        else:
+            character_profiles = {}
 
         # 检查核心性格变化
         issues.extend(self._check_personality_change(
@@ -82,10 +93,10 @@ class PersonalityChecker(BaseChecker):
         }
 
         for char_name, profile in character_profiles.items():
-            core_personality = profile.get("core_personality", [])
+            personality_tags = profile.get("personality_tags", [])
             speech_style = profile.get("speech_style", "")
 
-            for personality in core_personality:
+            for personality in personality_tags:
                 opposites = major_opposites.get(personality, [])
                 for opposite in opposites:
                     if opposite in content:
