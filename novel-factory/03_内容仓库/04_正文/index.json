@@ -7,7 +7,7 @@
     "updated_at": "2026-05-20 13:57:02"
   },
   "summary": {
-    "total_items": 360,
+    "total_items": 359,
     "status_counts": {
       "draft": 0,
       "reviewing": 0,
@@ -541,18 +541,6 @@
       "word_count": 1620,
       "char_count": 1431,
       "lines": 185,
-      "last_updated": "2026-05-18"
-    },
-    {
-      "id": "ch045",
-      "title": "",
-      "filename": "ch045.md",
-      "status": "finalized",
-      "version": "v1.0",
-      "author": "",
-      "word_count": 1222,
-      "char_count": 1101,
-      "lines": 117,
       "last_updated": "2026-05-18"
     },
     {
@@ -4335,5 +4323,6 @@
       "lines": 285,
       "last_updated": "2026-05-18"
     }
-  ]
+  ],
+  "chapters": []
 }
