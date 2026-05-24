@@ -5,6 +5,7 @@
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -53,7 +54,8 @@ class CheckerInspector:
         try:
             with open(PERFORMANCE_PATH, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except Exception:
+        except (json.JSONDecodeError, OSError, IOError) as e:
+            logging.warning(f"Failed to load performance data: {e}")
             return self._default_performance()
 
     def _default_performance(self) -> Dict[str, Any]:
