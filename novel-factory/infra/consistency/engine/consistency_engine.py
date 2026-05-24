@@ -7,12 +7,20 @@
 """
 
 import time
+import yaml
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from .data_structures import (
     Issue, ConsistencyReport, CheckerResult, QualityDimension,
     CheckScope, IssueSeverity, CheckerType
 )
+
+# 上下文配置文件路径
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+CONTEXT_DIR = PROJECT_ROOT / "context"
+CHARACTER_PROFILES_PATH = CONTEXT_DIR / "character_profiles.yaml"
+SCENE_TYPES_PATH = CONTEXT_DIR / "scene_types.yaml"
 from .report_generator import ReportGenerator
 from ..checkers.character_checker import CharacterChecker
 from ..checkers.character_state import CharacterStateChecker
@@ -23,6 +31,11 @@ from ..checkers.personality_checker import PersonalityChecker
 from ..checkers.foreshadow_checker import ForeshadowChecker
 from ..checkers.outline_checker import OutlineChecker
 from ..checkers.ai_gloss_checker import AIGlossChecker
+from ..checkers.scene_pattern_repeat import ScenePatternRepeatChecker
+from ..checkers.foreshadow_quality import ForeshadowQualityChecker
+from ..checkers.character_agency import CharacterAgencyChecker
+from ..checkers.timeline_age import TimelineAgeConsistencyChecker
+from ..checkers.battle_visualization import BattleVisualizationChecker
 
 
 class ConsistencyEngine:
@@ -81,6 +94,11 @@ class ConsistencyEngine:
             CheckerType.FORESHADOW: ForeshadowChecker(),
             CheckerType.OUTLINE: OutlineChecker(),
             CheckerType.AI_GLOSS: AIGlossChecker(),
+            CheckerType.SCENE_PATTERN: ScenePatternRepeatChecker(),
+            CheckerType.FORESHADOW_QUALITY: ForeshadowQualityChecker(),
+            CheckerType.CHARACTER_AGENCY: CharacterAgencyChecker(),
+            CheckerType.TIMELINE_AGE: TimelineAgeConsistencyChecker(),
+            CheckerType.BATTLE_VISUALIZATION: BattleVisualizationChecker(),
         }
 
     def _enrich_context_from_memory(
@@ -135,7 +153,96 @@ class ConsistencyEngine:
                 if key not in enriched or not enriched[key]:
                     enriched[key] = value
 
+        # 5. 加载角色档案（用于 CharacterChecker 置信度计算）
+        if "character_profiles" not in enriched:
+            enriched["character_profiles"] = self._load_character_profiles()
+
+        # 6. 加载场景类型（用于 TimelineChecker 误报规避）
+        if "scene_type" not in enriched:
+            enriched["scene_type"] = self._get_scene_type(chapter_num)
+
         return enriched
+
+    def _inject_scene_and_age_context(
+        self,
+        chapter_num: int,
+        chapter_content: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        注入场景标签和角色年龄上下文
+
+        Args:
+            chapter_num: 章节号
+            chapter_content: 章节内容
+            context: 已有上下文
+
+        Returns:
+            注入后的上下文
+        """
+        enriched = context.copy()
+
+        # 获取前三章场景标签（用于ScenePatternRepeatChecker）
+        if "recent_scene_labels" not in enriched:
+            enriched["recent_scene_labels"] = []
+
+        # 检测当前章节场景标签
+        current_label = self._detect_current_scene_label(chapter_content)
+        if current_label:
+            recent_labels = enriched["recent_scene_labels"]
+            # 添加当前标签到历史
+            enriched["recent_scene_labels"] = recent_labels[-2:] + [current_label] if recent_labels else [current_label]
+
+        # 获取角色年龄上下文（用于TimelineAgeConsistencyChecker）
+        if "character_ages" not in enriched:
+            enriched["character_ages"] = self._get_character_ages_context(chapter_num, enriched)
+
+        return enriched
+
+    def _detect_current_scene_label(self, content: str) -> Optional[str]:
+        """检测当前章节的场景标签"""
+        from ..checkers.scene_pattern_repeat import ScenePatternRepeatChecker
+        checker = ScenePatternRepeatChecker()
+        return checker.get_scene_label(content)
+
+    def _get_character_ages_context(
+        self,
+        chapter_num: int,
+        context: Dict[str, Any]
+    ) -> Dict[str, Dict[int, int]]:
+        """获取角色年龄上下文"""
+        # 从context或记忆系统获取角色年龄历史
+        if "character_ages" in context:
+            return context["character_ages"]
+
+        # 默认返回林夜的关键年龄节点
+        return {
+            "林夜": {1: 7, 24: 22}
+        }
+
+    def _load_character_profiles(self) -> Dict[str, Any]:
+        """加载角色档案"""
+        if not CHARACTER_PROFILES_PATH.exists():
+            return {}
+        try:
+            with open(CHARACTER_PROFILES_PATH, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                return data.get("characters", {})
+        except Exception:
+            return {}
+
+    def _get_scene_type(self, chapter_num: int) -> Dict[str, Any]:
+        """获取章节场景类型"""
+        if not SCENE_TYPES_PATH.exists():
+            return {}
+        try:
+            with open(SCENE_TYPES_PATH, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                scene_registry = data.get("scene_registry", {})
+                ch_key = f"ch{chapter_num:03d}"
+                return scene_registry.get(ch_key, {})
+        except Exception:
+            return {}
 
     def _find_similar_plots(
         self,
@@ -211,6 +318,8 @@ class ConsistencyEngine:
                 - timeline: 时间线
                 - plot_threads: 伏笔列表
                 - outline: 大纲
+                - recent_scene_labels: 前三章场景标签列表
+                - character_ages: 角色年龄历史
 
         Returns:
             ConsistencyReport: 一致性检查报告
@@ -223,6 +332,9 @@ class ConsistencyEngine:
             context = self._enrich_context_from_memory(
                 chapter_num, chapter_content, context
             )
+
+        # 注入场景标签和角色年龄上下文
+        context = self._inject_scene_and_age_context(chapter_num, chapter_content, context)
 
         report = ConsistencyReport(
             chapter=chapter_num,
@@ -294,17 +406,19 @@ class ConsistencyEngine:
         if scope == CheckScope.ALL:
             return list(CheckerType)
         elif scope == CheckScope.CRITICAL:
-            return [CheckerType.CHARACTER, CheckerType.ABILITY]
+            return [CheckerType.CHARACTER, CheckerType.ABILITY, CheckerType.TIMELINE_AGE]
         elif scope == CheckScope.IMPORTANT:
             return [
                 CheckerType.CHARACTER, CheckerType.ABILITY,
-                CheckerType.TIMELINE, CheckerType.ITEM, CheckerType.OUTLINE
+                CheckerType.TIMELINE, CheckerType.ITEM, CheckerType.OUTLINE,
+                CheckerType.SCENE_PATTERN, CheckerType.TIMELINE_AGE
             ]
         elif scope == CheckScope.STANDARD:
             return [
                 CheckerType.CHARACTER, CheckerType.ITEM,
                 CheckerType.TIMELINE, CheckerType.ABILITY,
-                CheckerType.PERSONALITY, CheckerType.FORESHADOW
+                CheckerType.PERSONALITY, CheckerType.FORESHADOW,
+                CheckerType.SCENE_PATTERN, CheckerType.FORESHADOW_QUALITY
             ]
         return list(CheckerType)
 
