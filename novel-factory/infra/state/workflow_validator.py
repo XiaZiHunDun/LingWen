@@ -33,7 +33,7 @@ VALID_TRANSITIONS = {
     # PHASE_6 审核期
     'STEP_16': ['STEP_17', 'STEP_16', 'STEP_18a'],  # 允许重审，退回重写，或进入LLM质检
     'STEP_17': ['STEP_18'],
-    'STEP_18': ['STEP_18a', 'STEP_19'],  # 验证失败可退回重写或进入LLM质检
+    'STEP_18': ['STEP_18a', 'STEP_19', 'STEP_16'],  # 验证失败可退回重写或进入LLM质检
     'STEP_18a': ['STEP_18b'],  # 角色一致性深度检测
     'STEP_18b': ['STEP_18c'],  # 逻辑矛盾全面扫描
     'STEP_18c': ['STEP_18d'],  # 伏笔回收完整性验证
