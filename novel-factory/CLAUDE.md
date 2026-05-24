@@ -1,7 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v9.0 (一致性优化版)
-> **更新 (2026-05-21)**：360章一致性优化完成，P0/P1一致性修复12项，套路句式清零，AI痕迹减少78%，结尾钩子360章全覆盖。
+> **版本**: v9.1 (章节大纲版)
+> **更新 (2026-05-24)**：增设章节大纲层（chXXX_大纲.md），生成323章大纲，质量框架重构完成。
 
 ## 身份
 
@@ -10,6 +10,46 @@
 2. **状态维护**：更新 workflow_state.json，记录当前进度
 3. **大决策确认**：大纲审核通过/不通过、卷/全文汇总定稿、死锁仲裁
 4. **进度汇报**：主动向用户汇报当前状态和风险
+
+## 质量框架（infra/quality/）
+
+```
+infra/quality/
+├── inspector.py              # 检测器基类
+├── repairer.py               # 修复器基类
+├── checkers/                 # 检测器实现
+│   ├── worldview_checker.py # 世界观一致性检测
+│   └── ai_trace_checker.py   # AI痕迹检测
+└── repairers/                # 修复器实现
+    ├── worldview_repairer.py # 世界观统一修复
+    └── ai_trace_repairer.py  # AI痕迹修复
+```
+
+**YAML规则配置** (`tools/rules/`):
+- `worldview_rules.yaml` - 科幻→修真术语替换规则
+- `ai_trace_rules.yaml` - AI模板句式替换规则
+
+**质量工具** (`tools/`):
+- `verify_quality.py` - 质量验证工具
+- `batch_repair.py` - 批量修复工具
+- `generate_chapter_outlines.py` - 章节大纲生成工具
+- `llm_quality_deep_check.py` - 正文LLM深度质检（PHASE_5_LLM_QUALITY）
+- `llm_outline_quality_check.py` - 大纲LLM质检（LLM_OUTLINE_QUALITY）
+
+**PreWrite/PostWrite Hooks** (`.claude/hooks/quality/`):
+- `pre-write-check.py` - 写入前检测质量问题（警告但不阻止）
+- `post-write-check.py` - 写入后生成检测报告
+
+**使用示例**:
+```bash
+# 验证质量
+python tools/verify_quality.py --chapters 1-30
+python tools/verify_quality.py --sample --sample-size 30
+
+# 批量修复
+python tools/batch_repair.py --chapters 1-120 --track worldview
+python tools/batch_repair.py --chapters 1-360 --track all --dry-run
+```
 
 ## 核心Agent体系（5个）
 
@@ -77,10 +117,13 @@ style:
 │   ├── hooks/               # 事件钩子系统
 │   └── state/               # 状态管理（SQLite）
 ├── 03_内容仓库/              # 四层结构（大纲+正文）
-├── 06_意见仓库/              # 六类审核/评论记录
-├── 07_汇总仓库/              # 阶段/卷/全文汇总
-├── 08_已发布/                # 最终成品
-└── 11_方法论/                # 创作方法论（PART0-6）
+│   ├── 01_全文总体大纲/      # 全文大纲
+│   ├── 02_卷大纲/            # 3卷大纲
+│   ├── 03_阶段大纲/          # 15+阶段大纲
+│   └── 04_正文/
+│       ├── ch001.md          # 正文章节
+│       ├── ch001_大纲.md     # 章节大纲（新增）
+│       └── ...
 ```
 
 > **注**：02/04/05目录为历史遗留结构（物理角色文件夹），实际角色池通过`.skills/`目录下的YAML配置定义。
@@ -106,6 +149,7 @@ style:
 | `quality-dimensions.md` | 质量检查维度（S1-S8） |
 | `methodology-outline.md` | 方法论v5.0大纲 |
 | `character-arc-guide.md` | 人物弧光设计指南 |
+| `运转流程.md` | **小说工厂运转指南（v9.1新增）** |
 
 ## 当前项目状态
 
@@ -141,6 +185,10 @@ PHASE_5: 修改期 (STEP_14-15)
   STEP_14 → STEP_15
   → Block阶段→Polish阶段
 
+PHASE_5_LLM_QUALITY: LLM深度质检 (STEP_18a-18e)
+  STEP_18a → STEP_18b → STEP_18c → STEP_18d → STEP_18e
+  → 角色一致性检测 → 逻辑矛盾扫描 → 伏笔回收验证 → 情感节奏诊断 → 质量修复
+
 PHASE_6: 审核期 (STEP_16-18)
   STEP_16 → STEP_17 → STEP_18
   → 分配审核员→S1-S8质量审核→审核结果判定
@@ -173,6 +221,9 @@ VALID_TRANSITIONS = {
 | S6 | 可读性 |
 | S7 | 主角魅力 |
 | S8 | 人物弧光 |
+| S9 | 角色一致性（LLM检测） |
+| S10 | 逻辑自洽度（LLM检测） |
+| S11 | 伏笔回收率（LLM检测） |
 
 ---
 
@@ -345,6 +396,7 @@ infra/
 ---
 
 > **版本记录**：
+> - v9.1 (2026-05-24)：质量框架重构版。Phase 2完成Inspector/Repairer体系，Phase 3完成标准化工具，Phase 4完成PreWrite/PostWrite Hooks。
 > - v9.0 (2026-05-21)：一致性优化版。P0修复4项（星月性别、命名统一、大灾变起因、剑尘子身份），P1修复4项（虚无之主/暗皇关系统一、堕落描述统一、孙长老内鬼回收、高频动作精简70%+），P2修复4项，套路句式清理2套，AI痕迹130+处，结尾钩子360章全覆盖。
 > - v8.3 (2026-05-21)：360章一致性检测与整改完成，修复3个检测器bug，AI痕迹减少78%，S/A级100%通过率。
 > - v8.2 (2026-05-20)：重构为5核心Agent+角色池模式，删除"50个Agent"描述

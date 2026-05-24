@@ -31,9 +31,14 @@ VALID_TRANSITIONS = {
     'STEP_14': ['STEP_15'],
     'STEP_15': ['STEP_16'],
     # PHASE_6 审核期
-    'STEP_16': ['STEP_17', 'STEP_16'],  # 允许重审（退回到16）
+    'STEP_16': ['STEP_17', 'STEP_16', 'STEP_18a'],  # 允许重审，退回重写，或进入LLM质检
     'STEP_17': ['STEP_18'],
-    'STEP_18': ['STEP_19', 'STEP_16'],   # 验证失败可退回重写
+    'STEP_18': ['STEP_18a', 'STEP_19'],  # 验证失败可退回重写或进入LLM质检
+    'STEP_18a': ['STEP_18b'],  # 角色一致性深度检测
+    'STEP_18b': ['STEP_18c'],  # 逻辑矛盾全面扫描
+    'STEP_18c': ['STEP_18d'],  # 伏笔回收完整性验证
+    'STEP_18d': ['STEP_18e'],  # 情感节奏诊断
+    'STEP_18e': ['STEP_19', 'STEP_18a'],  # 修复完成后进入汇总，或重修问题章节
     # PHASE_7 完成期
     'STEP_19': ['STEP_20'],
     'STEP_20': ['STEP_21'],
@@ -47,6 +52,7 @@ ALL_STEPS = [
     'STEP_09', 'STEP_10', 'STEP_11',
     'STEP_12', 'STEP_13', 'STEP_14', 'STEP_15',
     'STEP_16', 'STEP_17', 'STEP_18',
+    'STEP_18a', 'STEP_18b', 'STEP_18c', 'STEP_18d', 'STEP_18e',  # LLM质检步骤
     'STEP_19', 'STEP_20', 'STEP_21',
 ]
 

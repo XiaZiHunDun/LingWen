@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""
+统一LLM服务模块
+所有LLM调用应使用此模块
+
+支持多Provider自动故障转移:
+1. MiniMax (优先)
+2. Anthropic
+3. OpenAI
+"""
+
+import os
+import json
+import re
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass
+from enum import Enum
+
+from .ai_service.base import (
+    AIProvider,
+    ProviderConfig,
+    AIProviderError,
+)
+
+
+class TaskType(Enum):
+    """LLM任务类型"""
+    WORLDVIEW_CHECK = "worldview_check"      # 世界观检测
+    CHARACTER_CHECK = "character_check"      # 角色一致性检测
+    LOGIC_CHECK = "logic_check"              # 逻辑矛盾检测
+    AI_TRACE_CHECK = "ai_trace_check"       # AI痕迹检测
+    QUALITY_ANALYSIS = "quality_analysis"    # 质量综合分析
+    REPAIR = "repair"                        # 修复任务
+
+
+@dataclass
+class LLMTask:
+    """LLM任务描述"""
+    task_type: TaskType
+    prompt: str
+    max_tokens: int = 2000
+    temperature: float = 0.3
+    system: Optional[str] = None
+
+
+class LLMService:
+    """
+    统一LLM服务
+
+    使用方式:
+        from infra.llm_service import LLMService
+
+        service = LLMService.get()
+        result = service.execute(task)
+    """
+
+    _instance: Optional["LLMService"] = None
+
+    # Provider配置优先级
+    PROVIDER_PRIORITY = ["minimax", "anthropic", "openai"]
+
+    # 各任务类型的推荐模型和参数
+    TASK_CONFIGS: Dict[TaskType, Dict[str, Any]] = {
+        TaskType.WORLDVIEW_CHECK: {
+            "max_tokens": 1000,
+            "temperature": 0.3,
+        },
+        TaskType.CHARACTER_CHECK: {
+            "max_tokens": 1500,
+            "temperature": 0.3,
+        },
+        TaskType.AI_TRACE_CHECK: {
+            "max_tokens": 1000,
+            "temperature": 0.3,
+        },
+        TaskType.QUALITY_ANALYSIS: {
+            "max_tokens": 2000,
+            "temperature": 0.5,
+        },
+        TaskType.REPAIR: {
+            "max_tokens": 3000,
+            "temperature": 0.3,
+        },
+    }
+
+    def __init__(self):
+        self._provider: Optional[AIProvider] = None
+        self._provider_name: Optional[str] = None
+        self._init_provider()
+
+    def _init_provider(self):
+        """初始化可用Provider"""
+        for provider_name in self.PROVIDER_PRIORITY:
+            api_key = self._get_api_key(provider_name)
+            if api_key:
+                try:
+                    self._provider = self._create_provider(provider_name, api_key)
+                    self._provider_name = provider_name
+                    return
+                except Exception as e:
+                    print(f"[WARN] {provider_name} 初始化失败: {e}")
+                    continue
+
+        raise RuntimeError("无可用的LLM Provider")
+
+    def _get_api_key(self, provider_name: str) -> Optional[str]:
+        """获取Provider的API Key"""
+        env_vars = {
+            "minimax": "MINIMAX_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openai": "OPENAI_API_KEY",
+        }
+        return os.environ.get(env_vars.get(provider_name, ""))
+
+    def _create_provider(self, name: str, api_key: str) -> AIProvider:
+        """创建Provider实例"""
+        if name == "minimax":
+            from .minimax_provider import MiniMaxProvider
+            config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
+            return MiniMaxProvider(config)
+        elif name == "anthropic":
+            from .anthropic_provider import AnthropicProvider
+            config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
+            return AnthropicProvider(config)
+        elif name == "openai":
+            from .openai_provider import OpenAIProvider
+            config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
+            return OpenAIProvider(config)
+        else:
+            raise ValueError(f"Unknown provider: {name}")
+
+    def execute(self, task: LLMTask) -> str:
+        """
+        执行LLM任务
+
+        Args:
+            task: LLMTask任务描述
+
+        Returns:
+            LLM生成的文本
+        """
+        if not self._provider:
+            raise RuntimeError("No LLM provider available")
+
+        # 获取任务配置
+        config = self.TASK_CONFIGS.get(task.task_type, {})
+
+        response = self._provider.generate(
+            prompt=task.prompt,
+            system=task.system,
+            max_tokens=task.max_tokens or config.get("max_tokens", 2000),
+            temperature=task.temperature or config.get("temperature", 0.3),
+        )
+
+        return response
+
+    def parse_json_response(self, response: str) -> Any:
+        """
+        解析LLM的JSON响应
+
+        处理markdown代码块包裹的JSON
+        """
+        try:
+            text = response.strip()
+            if text.startswith("```"):
+                parts = text.split("```")
+                if len(parts) >= 2:
+                    text = parts[1]
+                    if text.startswith("json"):
+                        text = text[4:].lstrip("\n")
+            return json.loads(text.strip())
+        except json.JSONDecodeError as e:
+            # 尝试用正则提取
+            json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+            if json_match:
+                try:
+                    return json.loads(json_match.group())
+                except:
+                    pass
+            raise AIProviderError(f"JSON解析失败: {e}")
+
+    @classmethod
+    def get(cls) -> "LLMService":
+        """获取单例实例"""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @property
+    def provider_name(self) -> str:
+        """当前Provider名称"""
+        return self._provider_name or "unknown"
+
+
+# 便捷函数
+def get_llm_service() -> LLMService:
+    """获取LLM服务实例"""
+    return LLMService.get()
+
+
+def create_task(task_type: TaskType, prompt: str, **kwargs) -> LLMTask:
+    """创建LLM任务"""
+    return LLMTask(task_type=task_type, prompt=prompt, **kwargs)

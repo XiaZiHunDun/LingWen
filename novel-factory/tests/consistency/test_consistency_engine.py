@@ -19,7 +19,8 @@ class TestConsistencyEngineInit:
     def test_default_init(self):
         engine = ConsistencyEngine()
         assert engine is not None
-        assert len(engine.checkers) == 9
+        # 14 checkers: 9 original + 5 new (scene_pattern, foreshadow_quality, character_agency, timeline_age, battle_visualization)
+        assert len(engine.checkers) == 14
 
     def test_scope_init(self):
         engine = ConsistencyEngine(scope=CheckScope.CRITICAL)

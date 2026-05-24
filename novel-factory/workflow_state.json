@@ -1,5 +1,5 @@
 {
-  "version": "v4.0",
+  "version": "v9.1",
   "current_phase": "PHASE_7_CLOSE",
   "current_step": "STEP_25",
   "initialized_at": "2026-05-14",
@@ -8,7 +8,7 @@
     "total_chapters": 360,
     "emotion_quality": "S级",
     "phase": "COMPLETE",
-    "version": "v8.3",
+    "version": "v9.1",
     "released_at": "2026-05-21",
     "file_size": "2.2M",
     "core_driver_chain": null,
@@ -19,7 +19,10 @@
       "foreshadow_recovery": "55.4%",
       "character_consistency": "已建立9角色档案",
       "timeline_items": "0问题(7个误报已确认)"
-    }
+    },
+    "chapter_outlines_generated": true,
+    "outline_count": 323,
+    "missing_chapters": 37
   },
   "review_queue": {
     "pending": [
@@ -140,7 +143,14 @@
           "name": "全文大纲审核",
           "output": "星陨纪元_优化版大纲_审核.md",
           "completed_at": "2026-05-14",
-          "verdict": "通过(P0=0, P1=2, P2=3)"
+          "verdict": "通过(P0=0, P1=2, P2=3)",
+          "llm_pre_check": {
+            "enabled": true,
+            "checker": "LLMOutlineChecker.check_full_outline",
+            "description": "全文大纲LLM预检 - 360章全貌一致性、主线逻辑链、伏笔全局布局",
+            "llm_calls_estimate": 1,
+            "output": "logs/STEP_03_llm_check_full.json"
+          }
         },
         "STEP_04": {
           "status": "completed",
@@ -176,7 +186,14 @@
           "name": "卷大纲审核",
           "output": "卷大纲审核_综合.md",
           "completed_at": "2026-05-14",
-          "verdict": "通过（有P0问题：ch121-ch131章节归属缺口）"
+          "verdict": "通过（有P0问题：ch121-ch131章节归属缺口）",
+          "llm_pre_check": {
+            "enabled": true,
+            "checker": "LLMOutlineChecker.check_volume_outline",
+            "description": "卷大纲LLM预检 - 卷内阶段衔接、卷主题一致性、跨卷角色状态",
+            "llm_calls_estimate": 3,
+            "output": "logs/STEP_07_llm_check_volume.json"
+          }
         },
         "STEP_08": {
           "status": "completed",
@@ -238,7 +255,14 @@
           "name": "阶段大纲审核",
           "output": "阶段大纲抽样审核.md",
           "completed_at": "2026-05-14",
-          "verdict": "通过（抽样4个阶段均与卷大纲一致）"
+          "verdict": "通过（抽样4个阶段均与卷大纲一致）",
+          "llm_pre_check": {
+            "enabled": true,
+            "checker": "LLMOutlineChecker.check_stage_outline",
+            "description": "阶段大纲LLM预检 - 阶段内逻辑自洽、人物弧光连贯性、与卷大纲对齐",
+            "llm_calls_estimate": 17,
+            "output": "logs/STEP_11_llm_check_stage.json"
+          }
         },
         "STEP_12": {
           "status": "completed",
@@ -316,9 +340,71 @@
         }
       }
     },
+    "PHASE_5_LLM_QUALITY": {
+      "name": "LLM深度质检",
+      "status": "pending",
+      "description": "基于大量LLM API调用的全面质量检测与修复",
+      "entry_condition": "PHASE_5_BODY的STEP_18定稿判定通过后进入",
+      "exit_condition": "STEP_18e修复完成后P0/P1问题全部解决，方可进入PHASE_6_SUMMARY",
+      "llm_call_estimate": {
+        "character_consistency": "约360-720次（每章1-2次）",
+        "logic_scan": "约720次（每章2次，需要上下文）",
+        "foreshadow_verify": "约360次",
+        "emotional_rhythm": "约360次",
+        "repair": "约200-500次",
+        "total_estimate": "约2000-2700次LLM API调用"
+      },
+      "steps": {
+        "STEP_18a": {
+          "status": "pending",
+          "name": "角色一致性深度检测",
+          "checker": "CharacterConsistencyLLMChecker",
+          "description": "使用LLM分析360章角色行为、对话、决策一致性",
+          "output": "logs/STEP_18a_character_report.json",
+          "parallel": true,
+          "batch_size": 30,
+          "checkers_per_batch": 5
+        },
+        "STEP_18b": {
+          "status": "pending",
+          "name": "逻辑矛盾全面扫描",
+          "checker": "LogicContradictionLLMChecker",
+          "description": "检测跨章时间线、因果链、设定冲突",
+          "output": "logs/STEP_18b_logic_report.json",
+          "parallel": false,
+          "context_chapters": 10
+        },
+        "STEP_18c": {
+          "status": "pending",
+          "name": "伏笔回收完整性验证",
+          "checker": "ForeshadowRecoveryChecker",
+          "description": "对照大纲检查伏笔铺设与回收",
+          "output": "logs/STEP_18c_foreshadow_report.json",
+          "parallel": false
+        },
+        "STEP_18d": {
+          "status": "pending",
+          "name": "情感节奏诊断",
+          "checker": "EmotionalRhythmChecker",
+          "description": "分析高潮分布、情感曲线、爽点密度",
+          "output": "logs/STEP_18d_emotion_report.json",
+          "parallel": false
+        },
+        "STEP_18e": {
+          "status": "pending",
+          "name": "质量问题修复",
+          "description": "对检测出的问题调用LLM进行修复",
+          "repairers": ["CharacterRepairer", "LogicRepairer", "ForeshadowRepairer"],
+          "output": "logs/STEP_18e_repair_report.json",
+          "repair_target": "P0/P1问题100%修复",
+          "dry_run": false
+        }
+      }
+    },
     "PHASE_6_SUMMARY": {
       "name": "分层汇总与终审",
       "status": "completed",
+      "depends_on": "PHASE_5_LLM_QUALITY完成",
       "steps": {
         "STEP_19": {
           "status": "completed",
@@ -403,7 +489,7 @@
     "max_body_iterations": 2
   },
   "next_actions": [
-    "星陨纪元v8.3已发布归档，S级情感质量，360章一致性检测完成"
+    "星陨纪元v9.0已发布归档，S级情感质量，360章一致性优化完成，P0/P1/P2问题全部修复"
   ],
   "issues_found": {
     "ch001-ch010": [
@@ -692,6 +778,11 @@
       "version": "v8.3",
       "date": "2026-05-21",
       "changelog": "360章一致性检测与整改：AI痕迹减少78%，句式多样性100%通过，修复PersonalityChecker/CharacterChecker/S1/S4/S5三个检测器bug，建立9角色档案"
+    },
+    {
+      "version": "v9.0",
+      "date": "2026-05-21",
+      "changelog": "一致性优化版：P0一致性修复4项，P1一致性修复4项（虚无之主/暗皇关系、堕落描述统一、孙长老内鬼回收、高频动作精简70%+），P2修复4项，套路句式清理2套，AI痕迹130+处，结尾钩子360章全覆盖"
     }
   ],
   "review_modes": {
@@ -773,5 +864,11 @@
       "reviewed": 0,
       "pending": 2
     }
+  },
+  "quality_framework": {
+    "inspector_repairer": true,
+    "yaml_rules": true,
+    "prewrite_hooks": true,
+    "postwrite_hooks": true
   }
 }
