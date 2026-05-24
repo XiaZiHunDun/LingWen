@@ -165,6 +165,47 @@ class Issue:
 
 
 @dataclass
+class CheckerPerformance:
+    """检查器性能统计"""
+    checker_type: str
+    total_detections: int = 0
+    false_positive_count: int = 0
+    true_positive_count: int = 0
+    false_positive_rate: float = 0.0
+    avg_confidence_score: float = 0.5
+    last_updated: datetime = field(default_factory=datetime.now)
+    is_over_threshold: bool = False  # 是否超过误报阈值
+
+    def update(self, is_false_positive: bool, confidence_score: float = 0.5):
+        """更新性能统计"""
+        self.total_detections += 1
+        if is_false_positive:
+            self.false_positive_count += 1
+        else:
+            self.true_positive_count += 1
+        self.false_positive_rate = self.false_positive_count / max(self.total_detections, 1)
+        # 更新平均置信度分数
+        self.avg_confidence_score = (
+            (self.avg_confidence_score * (self.total_detections - 1) + confidence_score)
+            / self.total_detections
+        )
+        self.last_updated = datetime.now()
+
+
+@dataclass
+class IssueFeedback:
+    """问题反馈（用于自检）"""
+    issue_id: str
+    checker_type: str
+    chapter_num: int
+    is_false_positive: bool
+    user_confirmed: bool = False
+    llm_reviewed: bool = False
+    llm_verdict: Optional[str] = None  # "confirmed", "false_positive", "ambiguous"
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+
+
+@dataclass
 class ForeshadowAlert:
     """
     伏笔预警提示
