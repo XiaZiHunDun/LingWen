@@ -307,6 +307,24 @@ class SentenceDiversityChecker:
         'template_ratio': 30.0,
     }
 
+    # 模块级缓存 - 预编译所有正则表达式
+    _COMPILED_PATTERNS = None
+    _TEMPLATE_COMPILED = None
+
+    @classmethod
+    def _get_compiled_patterns(cls):
+        """获取预编译的模式列表（懒加载，只编译一次）"""
+        if cls._COMPILED_PATTERNS is None:
+            cls._COMPILED_PATTERNS = [
+                (re.compile(pattern), name, label)
+                for pattern, name, label in cls.DIVERSE_PATTERNS
+            ]
+            cls._TEMPLATE_COMPILED = [
+                (re.compile(pattern), name, suggestions)
+                for pattern, name, suggestions in cls.TEMPLATE_PATTERNS
+            ]
+        return cls._COMPILED_PATTERNS, cls._TEMPLATE_COMPILED
+
     def __init__(self, chapters_dir: Optional[str] = None):
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
@@ -339,8 +357,9 @@ class SentenceDiversityChecker:
             return 0.0, {}
 
         distribution = {}
-        for pattern, name, _ in self.DIVERSE_PATTERNS:
-            matches = re.findall(pattern, content)
+        compiled_patterns, _ = self._get_compiled_patterns()
+        for compiled_pattern, name, _ in compiled_patterns:
+            matches = compiled_pattern.findall(content)
             if matches:
                 distribution[name] = len(matches)
 
@@ -368,8 +387,9 @@ class SentenceDiversityChecker:
             return []
 
         distribution = {}
-        for pattern, name, _ in self.DIVERSE_PATTERNS:
-            matches = re.findall(pattern, content)
+        compiled_patterns, _ = self._get_compiled_patterns()
+        for compiled_pattern, name, _ in compiled_patterns:
+            matches = compiled_pattern.findall(content)
             if matches:
                 distribution[name] = len(matches)
 
@@ -398,8 +418,9 @@ class SentenceDiversityChecker:
             return []
 
         template_sentences = []
-        for pattern, template_name, suggestions in self.TEMPLATE_PATTERNS:
-            matches = re.findall(pattern, content)
+        _, compiled_templates = self._get_compiled_patterns()
+        for compiled_pattern, template_name, suggestions in compiled_templates:
+            matches = compiled_pattern.findall(content)
             if matches:
                 count = len(matches)
                 pct = (count / total_sentences) * 100
