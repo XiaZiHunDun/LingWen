@@ -25,6 +25,7 @@ class TimelinePoint:
     time_expr: str  # 原始时间表达
     parsed_time: str  # 解析后时间
     relative_day: int  # 相对天数
+    is_distorted_time: bool = False  # 是否是扭曲时间（修真/游戏/梦境场景）
 
 
 class TimelineChecker(BaseChecker):
@@ -78,6 +79,7 @@ class TimelineChecker(BaseChecker):
     def _extract_time_expressions(self, content: str) -> List[str]:
         """提取时间表达"""
         patterns = [
+            # 基础天数表达
             r"第\d+天",
             r"次日",
             r"前一日",
@@ -85,6 +87,7 @@ class TimelineChecker(BaseChecker):
             r"三天前",
             r"一周后",
             r"数日后",
+            # 模糊时间表达（修真世界常用）
             r"良久",
             r"片刻之后",
             r"不久",
@@ -94,6 +97,31 @@ class TimelineChecker(BaseChecker):
             r"旭日东升",
             r"正午时分",
             r"深夜",
+            # 长时间表达 - 需要特殊处理（可能跨越大量章节）
+            r"百年后",
+            r"千年后",
+            r"百年之前",
+            r"千年之前",
+            r"数百年后",
+            r"数千年后",
+            r"弹指间",
+            r"瞬息之间",
+            r"一晃[数天]?[多月]?",
+            r"匆匆[数月]?[多年]?",
+            r"光阴似箭",
+            r"日月如梭",
+            r"斗转星移",
+            r"星移斗转",
+            # 修行相关时间表达
+            r"修炼了?\d+年",
+            r"修行了?\d+年",
+            r"闭关[数月]?[多年]?",
+            r"沉睡[数月]?[多年]?",
+            r"长眠[数月]?[多年]?",
+            # 特殊场景时间（游戏/梦境）
+            r"游戏中?[的]?时间",
+            r"意识空间",
+            r"梦境中",
         ]
 
         time_exprs = []
@@ -106,6 +134,16 @@ class TimelineChecker(BaseChecker):
     def _parse_time_expr(self, expr: str, chapter: int) -> TimelinePoint:
         """解析时间表达"""
         relative_day = 0
+        is_distorted_time = False  # 是否是扭曲时间（修真/游戏/梦境场景）
+
+        # 检查是否是扭曲时间表达
+        distorted_patterns = ["百年", "千年", "数百年", "数千年", "弹指间", "瞬息", "一晃", "匆匆",
+                           "光阴似箭", "日月如梭", "斗转星移", "星移斗转", "闭关", "沉睡", "长眠",
+                           "游戏中", "意识空间", "梦境"]
+        if any(p in expr for p in distorted_patterns):
+            is_distorted_time = True
+            # 这些时间表达跨度太大，不做增量计算
+            relative_day = 0
 
         if "第" in expr and "天" in expr:
             match = re.search(r"第(\d+)天", expr)
@@ -124,7 +162,8 @@ class TimelineChecker(BaseChecker):
             chapter=chapter,
             time_expr=expr,
             parsed_time=expr,
-            relative_day=relative_day
+            relative_day=relative_day,
+            is_distorted_time=is_distorted_time
         )
 
     def _check_time_conflicts(
@@ -135,6 +174,10 @@ class TimelineChecker(BaseChecker):
     ) -> List[Issue]:
         """检查时间冲突"""
         issues = []
+
+        # 扭曲时间（如百年后、千年后）不做时间线冲突检查
+        if current_point.is_distorted_time:
+            return issues
 
         for point in existing_timeline:
             # 检查同一章节内的时间矛盾
