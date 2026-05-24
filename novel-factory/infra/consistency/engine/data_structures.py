@@ -107,6 +107,10 @@ class Issue:
     suggestion: str = ""
     character: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
+    confidence: ConfidenceLevel = ConfidenceLevel.MEDIUM
+    confidence_score: float = 0.5  # 0.0-1.0 详细分数
+    context_used: List[str] = field(default_factory=list)  # 使用的上下文
+    needs_llm_review: bool = False  # 是否需LLM复核
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
@@ -126,6 +130,10 @@ class Issue:
             "suggestion": self.suggestion,
             "character": self.character,
             "created_at": self.created_at.isoformat(),
+            "confidence": self.confidence.value,
+            "confidence_score": self.confidence_score,
+            "context_used": self.context_used,
+            "needs_llm_review": self.needs_llm_review,
         }
 
     @classmethod
@@ -149,6 +157,10 @@ class Issue:
             suggestion=data.get("suggestion", ""),
             character=data.get("character"),
             created_at=datetime.fromisoformat(data.get("created_at", datetime.now().isoformat())),
+            confidence=data.get("confidence", "MED"),
+            confidence_score=data.get("confidence_score", 0.5),
+            context_used=data.get("context_used", []),
+            needs_llm_review=data.get("needs_llm_review", False),
         )
 
 
