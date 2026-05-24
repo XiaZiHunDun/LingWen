@@ -1,0 +1,14 @@
+{
+  "feedback_entries": [],
+  "statistics": {
+    "total_confirmations": 0,
+    "total_false_positives": 0,
+    "accuracy_rate": 0.0
+  },
+  "learned_patterns": {
+    "scene_types_to_skip": [],
+    "characters_to_skip": [],
+    "vocabulary_exceptions": []
+  },
+  "last_updated": null
+}
