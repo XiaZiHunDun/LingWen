@@ -126,11 +126,11 @@ class ConsistencyArbitrator:
             ambiguous.append(issue)
         else:
             # MEDIUM置信度
-            if issue.confidence_score >= 0.75:
+            # 简单启发式：confidence_score < 0.35 的 MEDIUM 问题视为潜在误报
+            if issue.confidence_score < 0.35:
+                false_positives.append(issue)
+            elif issue.confidence_score >= 0.75:
                 resolved.append(issue)
-            elif issue.confidence_score <= 0.4:
-                issue.needs_llm_review = True
-                ambiguous.append(issue)
             else:
                 ambiguous.append(issue)
 
