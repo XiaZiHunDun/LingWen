@@ -418,14 +418,31 @@ def run_phase_18b(checker: LLMQualityChecker, chapters: List[int], parallel: boo
     print(f"[STEP_18b] 逻辑矛盾全面扫描 - {len(chapters)}章")
     reports = {}
 
-    for ch in chapters:
-        content = checker.load_chapter(ch)
-        if content:
-            # 加载前后各5章作为上下文
-            context_chs = [c for c in range(ch - 5, ch + 6) if c != ch and 1 <= c <= 360]
-            report = checker.scan_logic_contradictions(ch, content, context_chs)
-            reports[ch] = report
-            print(f"  ch{ch:03d}: {len(report.issues)}个问题 score={report.score:.2f}")
+    if parallel:
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {}
+            for ch in chapters:
+                content = checker.load_chapter(ch)
+                if content:
+                    context_chs = [c for c in range(ch - 5, ch + 6) if c != ch and 1 <= c <= 360]
+                    future = executor.submit(checker.scan_logic_contradictions, ch, content, context_chs)
+                    futures[future] = ch
+
+            for future in as_completed(futures):
+                ch = futures[future]
+                try:
+                    reports[ch] = future.result()
+                    print(f"  ch{ch:03d}: {len(reports[ch].issues)}个问题 score={reports[ch].score:.2f}")
+                except Exception as e:
+                    print(f"  ch{ch:03d}: 错误 - {e}")
+    else:
+        for ch in chapters:
+            content = checker.load_chapter(ch)
+            if content:
+                context_chs = [c for c in range(ch - 5, ch + 6) if c != ch and 1 <= c <= 360]
+                report = checker.scan_logic_contradictions(ch, content, context_chs)
+                reports[ch] = report
+                print(f"  ch{ch:03d}: {len(report.issues)}个问题 score={report.score:.2f}")
 
     return reports
 
@@ -435,12 +452,29 @@ def run_phase_18c(checker: LLMQualityChecker, chapters: List[int], parallel: boo
     print(f"[STEP_18c] 伏笔回收完整性验证 - {len(chapters)}章")
     reports = {}
 
-    for ch in chapters:
-        content = checker.load_chapter(ch)
-        if content:
-            report = checker.verify_foreshadow_completeness(ch, content)
-            reports[ch] = report
-            print(f"  ch{ch:03d}: {len(report.issues)}个问题 score={report.score:.2f}")
+    if parallel:
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {}
+            for ch in chapters:
+                content = checker.load_chapter(ch)
+                if content:
+                    future = executor.submit(checker.verify_foreshadow_completeness, ch, content)
+                    futures[future] = ch
+
+            for future in as_completed(futures):
+                ch = futures[future]
+                try:
+                    reports[ch] = future.result()
+                    print(f"  ch{ch:03d}: {len(reports[ch].issues)}个问题 score={reports[ch].score:.2f}")
+                except Exception as e:
+                    print(f"  ch{ch:03d}: 错误 - {e}")
+    else:
+        for ch in chapters:
+            content = checker.load_chapter(ch)
+            if content:
+                report = checker.verify_foreshadow_completeness(ch, content)
+                reports[ch] = report
+                print(f"  ch{ch:03d}: {len(report.issues)}个问题 score={report.score:.2f}")
 
     return reports
 
@@ -450,12 +484,29 @@ def run_phase_18d(checker: LLMQualityChecker, chapters: List[int], parallel: boo
     print(f"[STEP_18d] 情感节奏诊断 - {len(chapters)}章")
     reports = {}
 
-    for ch in chapters:
-        content = checker.load_chapter(ch)
-        if content:
-            report = checker.diagnose_emotional_rhythm(ch, content)
-            reports[ch] = report
-            print(f"  ch{ch:03d}: score={report.score:.2f} ({len(report.issues)}个建议)")
+    if parallel:
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {}
+            for ch in chapters:
+                content = checker.load_chapter(ch)
+                if content:
+                    future = executor.submit(checker.diagnose_emotional_rhythm, ch, content)
+                    futures[future] = ch
+
+            for future in as_completed(futures):
+                ch = futures[future]
+                try:
+                    reports[ch] = future.result()
+                    print(f"  ch{ch:03d}: score={reports[ch].score:.2f} ({len(reports[ch].issues)}个建议)")
+                except Exception as e:
+                    print(f"  ch{ch:03d}: 错误 - {e}")
+    else:
+        for ch in chapters:
+            content = checker.load_chapter(ch)
+            if content:
+                report = checker.diagnose_emotional_rhythm(ch, content)
+                reports[ch] = report
+                print(f"  ch{ch:03d}: score={report.score:.2f} ({len(report.issues)}个建议)")
 
     return reports
 
