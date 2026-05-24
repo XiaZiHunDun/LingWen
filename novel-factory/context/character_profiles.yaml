@@ -1,0 +1,35 @@
+# 角色档案 - 用于检测器上下文增强
+# 检测器使用 context["character_profiles"] 获取角色设定
+
+characters:
+  林夜:
+    personality_traits: ["沉稳", "果断", "内敛"]
+    behavior_patterns: ["战斗时冷静", "关键时刻爆发"]
+    language_style: ["简短有力", "少用感叹词"]
+    known_limitations: ["对林白羽有软肋"]
+    context_tags: ["主角", "成长型", "剑修"]
+    # 误报规避：这些场景/行为不触发检测
+    skip_checks:
+      - scene_types: ["cosmic", "dream", "game_world"]
+        reason: "特殊场景下行为可能异常"
+
+  苏琳:
+    personality_traits: ["活泼", "聪慧", "独立"]
+    behavior_patterns: ["善于观察", "关键时刻犹豫"]
+    language_style: ["带点俏皮", "常用反问"]
+    known_limitations: []
+    context_tags: ["女主", "辅助型", "法修"]
+
+  星澜:
+    personality_traits: ["神秘", "深沉", "高傲"]
+    behavior_patterns: ["操控局势", "幕后观察"]
+    language_style: ["文雅", "暗示性"]
+    known_limitations: []
+    context_tags: ["反派", "谋略型", "首脑"]
+
+  剑尘子:
+    personality_traits: ["严谨", "温和", "慈爱"]
+    behavior_patterns: ["指导后辈", "守护宗门"]
+    language_style: ["长辈语气", "关怀型"]
+    known_limitations: []
+    context_tags: ["长老", "导师型", "守护者"]
