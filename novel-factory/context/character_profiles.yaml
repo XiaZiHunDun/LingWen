@@ -19,6 +19,10 @@ characters:
     language_style: ["带点俏皮", "常用反问"]
     known_limitations: []
     context_tags: ["女主", "辅助型", "法修"]
+    # 误报规避：这些场景/行为不触发检测
+    skip_checks:
+      - scene_types: ["cosmic", "dream", "game_world"]
+        reason: "特殊场景下行为可能异常"
 
   星澜:
     personality_traits: ["神秘", "深沉", "高傲"]
@@ -26,6 +30,10 @@ characters:
     language_style: ["文雅", "暗示性"]
     known_limitations: []
     context_tags: ["反派", "谋略型", "首脑"]
+    # 误报规避：这些场景/行为不触发检测
+    skip_checks:
+      - scene_types: ["cosmic", "dream", "game_world"]
+        reason: "特殊场景下行为可能异常"
 
   剑尘子:
     personality_traits: ["严谨", "温和", "慈爱"]
@@ -33,3 +41,7 @@ characters:
     language_style: ["长辈语气", "关怀型"]
     known_limitations: []
     context_tags: ["长老", "导师型", "守护者"]
+    # 误报规避：这些场景/行为不触发检测
+    skip_checks:
+      - scene_types: ["cosmic", "dream", "game_world"]
+        reason: "特殊场景下行为可能异常"
