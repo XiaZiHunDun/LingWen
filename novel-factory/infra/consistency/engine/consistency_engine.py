@@ -393,9 +393,10 @@ class ConsistencyEngine:
         chapter_num: int,
         context: Dict[str, Any]
     ) -> List[Issue]:
-        """运行单个检查器"""
+        """运行单个检查器（集成白名单机制）"""
         try:
-            return checker.check(
+            # 使用 check_with_whitelist 方法集成白名单机制
+            return checker.check_with_whitelist(
                 chapter_content=chapter_content,
                 chapter_num=chapter_num,
                 context=context
