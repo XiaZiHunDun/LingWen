@@ -69,7 +69,7 @@ class BaseChecker(ABC):
 
             return should_skip, reason
         except Exception as e:
-            logger.warning(f"白名单检查失败: {e}")
+            logger.warning(f"白名单检查失败（默认不跳过）: {e}")
             return False, ""
 
     def check_with_whitelist(

@@ -46,11 +46,17 @@ class WhitelistManager:
         """加载白名单配置"""
         import yaml
         if not WHITELIST_PATH.exists():
+            logger.debug("白名单文件不存在，使用空白名单")
             return {}
         try:
             with open(WHITELIST_PATH, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f) or {}
-        except Exception:
+                data = yaml.safe_load(f)
+                if not data:
+                    logger.warning("白名单文件为空")
+                    return {}
+                return data
+        except (yaml.YAMLError, OSError, IOError) as e:
+            logger.error(f"白名单加载失败: {e}")
             return {}
 
     def _load_feedback(self) -> Dict[str, Any]:
