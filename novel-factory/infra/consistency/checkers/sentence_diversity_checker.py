@@ -12,6 +12,7 @@
 """
 import re
 import math
+import yaml
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass, field
@@ -40,16 +41,15 @@ class PatternRatio:
     percentage: float
     is_template: bool = False
 
-class SentenceDiversityChecker:
-    """
-    句式多样性检测器
-    使用Shannon多样性指数计算句式分布
-    """
 
-    # 句式模式定义（80+种中文小说句式分类）
-    # 扩充版：覆盖对话、叙述、描写、动作、心理等多元句式
-    DIVERSE_PATTERNS = [
-        # === 对话句（基础）===
+def _load_patterns_from_yaml():
+    """从YAML文件加载模式定义，如果文件不存在则使用默认模式"""
+    rules_dir = Path(__file__).parent.parent.parent.parent / 'tools' / 'rules'
+    diverse_path = rules_dir / 'sentence_diversity_rules.yaml'
+    template_path = rules_dir / 'template_sentence_rules.yaml'
+
+    # Default patterns as fallback
+    diverse_patterns = [
         (r'「[^」]+」', 'dialog', '对话句'),
         (r'"[^"]+"', 'dialog_english', '对话句(英文)'),
         (r'他[说问道喊叫笑叹谓称著显示露出透露出冒][^「"。，！？]*[。！？]?', 'narrate_he', '他述句'),
@@ -58,20 +58,14 @@ class SentenceDiversityChecker:
         (r'[林夜苏琳星月铁蛋父亲母亲][^。！？]{0,30}[说问道喊叫]', 'named_dialog', '命名人物对话'),
         (r'声音[低沉急促平静冷淡愤怒]?[^。！？]*[。！？]?', 'voice_desc', '声音描写'),
         (r'[喊叫笑喊哭]?道["""「]', 'dialog_verb', '对话引导词'),
-
-        # === 对话+动作复合句 ===
         (r'[^。，！？]{0,20}[：，][""][^"]+[""][^。！？]*[。！？]', 'dialog_action', '对话动作句'),
         (r'[^。，！？]{0,15}[：][""][^"]+[""][^。！？]*[。！？]', 'dialog_colon', '对话+描述'),
         (r'"[^"]+"[，。][^"]*"[^"]+[。！？]', 'quoted_dialog_chain', '连续对话'),
-
-        # === 动作描写句 ===
         (r'他[伸收抬举握拿抓拉推踢打杀砍劈刺剪拆拔]+[^。！？]*[。！？]?', 'action_他', '他动作句'),
         (r'她[伸收抬举握拿抓拉推踢打杀砍劈刺剪拆拔]+[^。！？]*[。！？]?', 'action_她', '她动作句'),
         (r'[林夜苏琳星月铁蛋]+[^。！？]{0,10}[站坐蹲趴躺靠爬跃冲滑]?[^。！？]*[。！？]?', 'action_named', '命名人物动作'),
         (r'[伸收抬举握拿抓拉推踢打杀砍劈刺剪拆拔扔掉丢接住送打翻拉抽鼓起迈跨踏冲]+[^。！？]*[。！？]?', 'action_verb', '动词动作句'),
         (r'用[^。！？]{0,20}[刀剑枪拳掌指]+[^。！？]*[。！？]?', 'tool_action', '工具动作'),
-
-        # === 心理/感知句 ===
         (r'[看听闻尝感到觉得意识到发现意识到]+[^。！？]*[。！？]?', 'perception', '感知句'),
         (r'他[看听闻尝觉得心想明白意识到]+[^。！？]*[。！？]?', 'he_perception', '他感知句'),
         (r'她[看听闻尝觉得心想明白意识到]+[^。！？]*[。！？]?', 'she_perception', '她感知句'),
@@ -82,8 +76,6 @@ class SentenceDiversityChecker:
         (r'脑海里?[^。！？]*[。！？]?', 'mind_desc', '脑海描写'),
         (r'想起[^。！？]*[。！？]?', 'remember', '回忆句'),
         (r'记得[^。！？]*[。！？]?', 'recall', '记得句'),
-
-        # === 环境/场景描写句 ===
         (r'黄昏[将染成变作]?[^。！？]*[。！？]?', 'env_dusk', '黄昏描写'),
         (r'夜色[降临笼罩弥漫充满]?[^。！？]*[。！？]?', 'env_night', '夜色描写'),
         (r'天空[^。！？]*[。！？]?', 'env_sky', '天空描写'),
@@ -92,16 +84,12 @@ class SentenceDiversityChecker:
         (r'周围[^。！？]*[。！？]?', 'env_surround', '周围描写'),
         (r'[房间屋内室内厅堂]+[^。！？]*[。！？]?', 'env_indoor', '室内描写'),
         (r'[街道野外荒原废墟]+[^。！？]*[。！？]?', 'env_outdoor', '室外描写'),
-
-        # === 状态描写句 ===
         (r'脸上[^。！？]*[。！？]?', 'state_face', '脸部状态'),
         (r'眼中[^。！？]*[。！？]?', 'state_eye', '眼部状态'),
         (r'身体[^。！？]*[。！？]?', 'state_body', '身体状态'),
         (r'他的[^。！？]{0,30}[，][^。！？]*[。！？]?', 'state_他', '他的状态'),
         (r'她的[^。！？]{0,30}[，][^。！？]*[。！？]?', 'state_她', '她的状态'),
         (r'[身影背影身形]+[^。！？]*[。！？]?', 'state_figure', '身影状态'),
-
-        # === 时间/进程句 ===
         (r'那一刻[^。！？]*[。！？]?', 'time_moment', '那一刻'),
         (r'下一秒[^。！？]*[。！？]?', 'time_next', '下一秒'),
         (r'片刻之后[^。！？]*[。！？]?', 'time_after', '片刻之后'),
@@ -112,8 +100,6 @@ class SentenceDiversityChecker:
         (r'就在这时[^。！？]*[。！？]?', 'time_here', '就在这时'),
         (r'霎时[^。！？]*[。！？]?', 'time_sudden', '霎时'),
         (r'少顷[^。！？]*[。！？]?', 'time_short', '少顷'),
-
-        # === 因果/条件句 ===
         (r'因为[^，]。*[。！？]?', 'cause_因为', '因果句'),
         (r'由于[^，]。*[。！？]?', 'cause_由于', '因果句'),
         (r'所以[^，]。*[。！？]?', 'cause_所以', '因果句'),
@@ -124,8 +110,6 @@ class SentenceDiversityChecker:
         (r'只要[^，]。*[。！？]?', 'cond_只要', '条件句'),
         (r'除非[^，]。*[。！？]?', 'cond_unless', '条件句'),
         (r'无论[^，]。*[。！？]?', 'cond_no matter', '条件句'),
-
-        # === 转折/对比句 ===
         (r'但是[^，]。*[。！？]?', 'contrast_但是', '转折句'),
         (r'然而[^，]。*[。！？]?', 'contrast_然而', '转折句'),
         (r'不过[^，]。*[。！？]?', 'contrast_不过', '转折句'),
@@ -135,21 +119,15 @@ class SentenceDiversityChecker:
         (r'尽管[^，]。*[。！？]?', 'concession_尽管', '让步句'),
         (r'虽然[^，]。*[。！？]?', 'concession_虽然', '让步句'),
         (r'即使[^，]。*[。！？]?', 'concession_even', '让步句'),
-
-        # === 递进/并列句 ===
         (r'不仅[^，]。*[，][^。！？]*[而且甚至]?[。！？]?', 'progressive_not only', '递进句'),
         (r'而且[^，]。*[。！？]?', 'progressive_and', '递进句'),
         (r'甚至[^，]。*[。！？]?', 'progressive_even', '递进句'),
         (r'既[^，]。*[，][^。！？]*[又也且]?[。！？]?', 'parallel_both', '并列句'),
         (r'[或者还是或是]?[^，]+[，][^。！？]*[。！？]?', 'parallel_or', '并列句'),
-
-        # === 被动/把字句 ===
         (r'被[^。，！？]{1,20}[了着过]', 'passive', '被动句'),
         (r'把[^。，！？]{1,30}[了着]', 'ba_construction', '把字句'),
         (r'让[^。！？]{1,15}[^。！？]*[。！？]?', 'let_action', '让字句'),
         (r'使[^。！？]{1,15}[^。！？]*[。！？]?', 'cause_action', '使字句'),
-
-        # === 疑问/反问/感叹句 ===
         (r'[^。！？]*[吗呢吧嘛呀啊][。！？]?', 'question_particle', '疑问句'),
         (r'[^。！？]*[谁什么哪几怎么如何为何为什么哪里哪个][^。！？]*[？?]', 'question_wh', '疑问词句'),
         (r'难道[^。！？]+[吗呢不成][。！？]?', 'rhetorical_难道', '反问句'),
@@ -157,38 +135,26 @@ class SentenceDiversityChecker:
         (r'[^。！？]*![。！？]?', 'exclamatory', '感叹句'),
         (r'[^。！？]*啊[。！？]?', 'exclaim_ah', '感叹句'),
         (r'[^。！？]*呀[。！？]?', 'exclaim_ya', '感叹句'),
-
-        # === 祈使句 ===
         (r'^[你要您咱们大家][^。！？]{0,20}[！。]', 'imperative_你', '祈使句'),
         (r'^[勿莫别不要不许不可]*[^。！？]{0,15}[！。]', 'imperative_no', '祈使句'),
         (r'^[来去走跑站坐][^。！？]{0,15}[！。]', 'imperative_go', '祈使句'),
         (r'^[给我帮我替我]?[^。！？]{0,15}[！。]', 'imperative_give', '祈使句'),
         (r'^"[^"]*[""]?[^。！？]{0,10}[！。]', 'imperative_dialog', '祈使句'),
-
-        # === 省略句/短句 ===
         (r'^，、[^。！？]{0,10}[。！？]', 'elliptical', '省略句'),
         (r'^\.{3,}[^。！？]*[。！？]?', 'elliptical_dots', '省略句'),
         (r'^[^。，！？]{1,15}$', 'short_sentence', '短句'),
-
-        # === 连动/兼语句 ===
         (r'请[^。！？]{1,15}[^。！？]+[做去来][^。！？]*[。！？]?', 'pivotal_请', '兼语句'),
         (r'让[^。！？]{1,10}[^。！？]+[做去来][^。！？]*[。！？]?', 'pivotal_让', '兼语句'),
         (r'派[^。！？]{1,10}[^。！？]+[去来][^。！？]*[。！？]?', 'pivotal_send', '兼语句'),
         (r'叫[^。！？]{1,10}[^。！？]+[去来做][^。！？]*[。！？]?', 'pivotal_call', '兼语句'),
-
-        # === 双宾句 ===
         (r'给[^。！？]{1,10}[^。！？]{1,10}[^。！？]{1,10}[了着][。！？]?', 'double_io_给', '双宾句'),
         (r'送[^。！？]{1,10}[^。！？]{1,10}[^。！？]{1,10}[了着][。！？]?', 'double_io_送', '双宾句'),
         (r'交给[^。！？]{1,10}[^。！？]{1,10}[了着][。！？]?', 'double_io_交给', '双宾句'),
-
-        # === 目的/解说句 ===
         (r'为了[^，]。*[，][^。！？]*[。！？]?', 'purpose_为了', '目的句'),
         (r'以便[^，]。*[。！？]?', 'purpose_以便', '目的句'),
         (r'即[^，]。*[，][^。！？]*[。！？]?', 'explanatory_即', '解说句'),
         (r'也就是说[^，]。*[。！？]?', 'explanatory_也就是说', '解说句'),
-        (r'所谓[^，]。*[，][^。！？]*[。！？]?', 'explanatory所谓', '解说句'),
-
-        # === 描写句（扩展）===
+        (r'所谓[^，]。*[，][^。！？]*[。！？]?', 'explanatory_所谓', '解说句'),
         (r'只见[^，]。*[。！？]?', 'desc_只见', '描写句'),
         (r'忽见[^，]。*[。！？]?', 'desc_忽见', '描写句'),
         (r'但见[^，]。*[。！？]?', 'desc_但见', '描写句'),
@@ -200,13 +166,9 @@ class SentenceDiversityChecker:
         (r'视野中[^，]。*[。！？]?', 'desc_vision', '描写句'),
         (r'一道[^，]。*[。！？]?', 'desc_one line', '描写句'),
         (r'声音[^，]。*[。！？]?', 'desc_sound', '描写句'),
-
-        # === 专业/术语句 ===
         (r'[能量波动信号数据系统程序]+[^。！？]*[。！？]?', 'tech_term', '科技术语'),
         (r'[宇宙星辰星系]+[^。！？]*[。！？]?', 'astro_term', '天文术语'),
         (r'[变异兽暗域]+[^。！？]*[。！？]?', 'world_term', '世界术语'),
-
-        # === 陈述句（兜底，适配中文小说特点）===
         (r'^[^\n。！？]{2,100}[。！？\n]', 'declarative', '陈述句'),
         (r'那[^，]。*[，][^。！？]*[。！？]', 'declarative_那', '那字句'),
         (r'这[^，]。*[，][^。！？]*[。！？]', 'declarative_这', '这字句'),
@@ -220,8 +182,7 @@ class SentenceDiversityChecker:
         (r'随后[^，]。*[。！？]?', 'declarative_after', '随后句'),
     ]
 
-    # 模板句模式（过度使用的固定句式）
-    TEMPLATE_PATTERNS = [
+    template_patterns = [
         (r'他[说问道喊叫笑叹谓称著显示露出透露出冒][^。！？]{0,15}[。！？]', '模板_他说道', [
             '减少"他说道"的使用，用动作和表情替代',
             '改为：他抬起下巴，目光冷冽',
@@ -297,6 +258,42 @@ class SentenceDiversityChecker:
             '示例：话音入耳，他面色微变'
         ]),
     ]
+
+    if diverse_path.exists():
+        try:
+            with open(diverse_path, encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                if data and 'diverse_patterns' in data:
+                    diverse_patterns = [
+                        (p['pattern'], p['name'], p['label'])
+                        for p in data['diverse_patterns']
+                    ]
+        except Exception:
+            pass
+
+    if template_path.exists():
+        try:
+            with open(template_path, encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+                if data and 'template_patterns' in data:
+                    template_patterns = [
+                        (p['pattern'], p['name'], p.get('suggestions', []))
+                        for p in data['template_patterns']
+                    ]
+        except Exception:
+            pass
+
+    return diverse_patterns, template_patterns
+
+
+class SentenceDiversityChecker:
+    """
+    句式多样性检测器
+    使用Shannon多样性指数计算句式分布
+    """
+
+    # 句式模式定义（从YAML加载，带有默认回退机制）
+    DIVERSE_PATTERNS, TEMPLATE_PATTERNS = _load_patterns_from_yaml()
 
     # 评分阈值（S3标准，校准后适配新增陈述句兜底）
     # Shannon指数受句式种类数影响，6种以上可达标
