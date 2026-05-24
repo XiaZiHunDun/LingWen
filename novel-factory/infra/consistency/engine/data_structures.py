@@ -23,6 +23,13 @@ class IssueSeverity(Enum):
     P3 = "P3"  # 提示：风格建议，不强制
 
 
+class ConfidenceLevel(Enum):
+    """检测置信度"""
+    HIGH = "HIGH"   # 置信度>85%，可直接处理
+    MEDIUM = "MED"  # 置信度60-85%，需LLM复核
+    LOW = "LOW"     # 置信度<60%，人工审核
+
+
 class CheckerType(Enum):
     """检查器类型"""
     CHARACTER = "character_checker"
@@ -34,6 +41,15 @@ class CheckerType(Enum):
     OUTLINE = "outline_checker"
     AI_GLOSS = "ai_gloss_checker"
     CHARACTER_STATE = "character_state"
+    SENTENCE_DIVERSITY = "sentence_diversity"
+    REPETITIVE_PHRASE = "repetitive_phrase"
+    CHAPTER_REDUNDANCY = "chapter_redundancy"
+    NARRATIVE_PERSPECTIVE = "narrative_perspective"
+    SCENE_PATTERN = "scene_pattern_repeat"
+    FORESHADOW_QUALITY = "foreshadow_quality"
+    CHARACTER_AGENCY = "character_agency"
+    TIMELINE_AGE = "timeline_age"
+    BATTLE_VISUALIZATION = "battle_visualization"
 
 
 class CheckScope(Enum):
