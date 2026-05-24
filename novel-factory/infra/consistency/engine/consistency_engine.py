@@ -155,7 +155,8 @@ class ConsistencyEngine:
         if auto_context:
             # 合并到 enriched 中，但不覆盖已有数据
             for key, value in auto_context.items():
-                if key not in enriched or not enriched[key]:
+                # 只在key不存在或值为None时覆盖，空列表/空dict是有效值
+                if key not in enriched or enriched[key] is None:
                     enriched[key] = value
 
         # 5. 加载角色档案（用于 CharacterChecker 置信度计算）

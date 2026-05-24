@@ -51,6 +51,9 @@ class CheckerInspector:
         """Reset singleton state for testing - clears persisted data"""
         self._initialized = False
         CheckerInspector._instance = None
+        # 清除内存中的性能数据
+        self.performance_data = self._default_performance()
+        # 清除性能文件
         if PERFORMANCE_PATH.exists():
             PERFORMANCE_PATH.unlink()
 
