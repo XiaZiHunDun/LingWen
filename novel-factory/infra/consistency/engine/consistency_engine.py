@@ -15,6 +15,8 @@ from .data_structures import (
     Issue, ConsistencyReport, CheckerResult, QualityDimension,
     CheckScope, IssueSeverity, CheckerType
 )
+from .checker_inspector import CheckerInspector
+from .consistency_arbitrator import ConsistencyArbitrator
 
 # 上下文配置文件路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -81,6 +83,9 @@ class ConsistencyEngine:
         self.memory_gateway = memory_gateway
         self.checkers = self._init_checkers()
         self.report_generator = ReportGenerator()
+        self.checker_inspector = CheckerInspector()
+        self.arbitrator = ConsistencyArbitrator()
+        self.use_arbitration = True
 
     def _init_checkers(self) -> Dict[CheckerType, Any]:
         """初始化所有检查器"""
@@ -371,6 +376,13 @@ class ConsistencyEngine:
             )
             report.checker_results.append(checker_result)
             report.issues.extend(issues)
+
+        # 仲裁过滤：如果开启了仲裁且有问题
+        if issues and self.use_arbitration:
+            arbitration_result = self.arbitrator.arbitrate(issues)
+            filtered_issues = arbitration_result.resolved_issues
+            # 使用仲裁后过滤的问题列表更新report
+            report.issues = filtered_issues
 
         # 计算质量维度评分
         report.quality = self._calculate_quality(report.checker_results, context)
