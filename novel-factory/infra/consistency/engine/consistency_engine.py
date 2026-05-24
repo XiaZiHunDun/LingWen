@@ -17,7 +17,7 @@ from .data_structures import (
 )
 
 # 上下文配置文件路径
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 CONTEXT_DIR = PROJECT_ROOT / "context"
 CHARACTER_PROFILES_PATH = CONTEXT_DIR / "character_profiles.yaml"
 SCENE_TYPES_PATH = CONTEXT_DIR / "scene_types.yaml"
