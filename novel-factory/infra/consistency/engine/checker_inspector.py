@@ -47,6 +47,13 @@ class CheckerInspector:
         self._initialized = True
         self.performance_data = self._load_performance()
 
+    def _reset_for_testing(self):
+        """Reset singleton state for testing - clears persisted data"""
+        self._initialized = False
+        CheckerInspector._instance = None
+        if PERFORMANCE_PATH.exists():
+            PERFORMANCE_PATH.unlink()
+
     def _load_performance(self) -> Dict[str, Any]:
         """加载性能数据"""
         if not PERFORMANCE_PATH.exists():

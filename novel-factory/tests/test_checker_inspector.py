@@ -8,6 +8,10 @@ class TestCheckerInspector:
         assert i1 is i2
 
     def test_record_issue_result(self):
+        # Reset singleton to avoid persisted data interference
+        Inspector = CheckerInspector()
+        Inspector._reset_for_testing()
+
         inspector = CheckerInspector()
         inspector.record_issue_result("timeline_checker", is_false_positive=False, confidence_score=0.8)
         inspector.record_issue_result("timeline_checker", is_false_positive=True, confidence_score=0.3)
@@ -16,11 +20,19 @@ class TestCheckerInspector:
         assert stats["false_positive_count"] == 1
 
     def test_inspect_checker_no_data(self):
+        # Reset singleton to avoid persisted data interference
+        Inspector = CheckerInspector()
+        Inspector._reset_for_testing()
+
         inspector = CheckerInspector()
         result = inspector.inspect_checker("nonexistent_checker")
         assert result.total_issues == 0
 
     def test_inspect_checker_with_data(self):
+        # Reset singleton to avoid persisted data interference
+        Inspector = CheckerInspector()
+        Inspector._reset_for_testing()
+
         inspector = CheckerInspector()
         for _ in range(5):
             inspector.record_issue_result("character_checker", is_false_positive=False, confidence_score=0.9)
