@@ -415,7 +415,7 @@ class ConsistencyEngine:
             )
         except Exception as e:
             # 检查器出错时返回空列表，记录日志
-            print(f"Checker {checker.get_checker_type()} failed: {e}")
+            logger.error(f"Checker {checker.get_checker_type()} failed: {e}")
             return []
 
     def _get_checkers_for_scope(self, scope: CheckScope) -> List[CheckerType]:

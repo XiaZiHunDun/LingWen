@@ -366,41 +366,6 @@ class CharacterChecker(BaseChecker):
         return ""
 
 
-def _create_speech_issue(
-    self,
-    chapter_num: int,
-    character: str,
-    personality: str,
-    opposite: str,
-    context: str
-) -> Issue:
-    """创建语言风格冲突问题"""
-    return Issue(
-        id=f"char_{chapter_num}_{character}_语言冲突",
-        severity=IssueSeverity.P2,
-        checker_type=CheckerType.CHARACTER,
-        issue_type="语言风格冲突",
-        title=f"角色语言风格与性格冲突",
-        description=f"性格为\"{personality}\"的{character}说出了\"{opposite}\"风格的话",
-        location=IssueLocation(chapter=chapter_num),
-        evidence=f"角色设定：{personality} | 对话中出现的词：{opposite}",
-        suggestion=f"将\"{opposite}\"替换为符合\"{personality}\"性格的措辞",
-        character=character
-    )
-
-
-def _find_dialogue_context(self, content: str, keyword: str, window: int = 50) -> str:
-    """查找包含关键词的对话上下文"""
-    # Find dialogue containing the keyword
-    dialogue_pattern = re.compile(r'「([^」]*)」|"([^"]*)"')
-    for match in dialogue_pattern.finditer(content):
-        dialogue = match.group(1) or match.group(2)
-        if keyword in dialogue:
-            start = max(0, match.start() - window)
-            end = min(len(content), match.end() + window)
-            return f"...{content[start:end]}..."
-    return ""
-
     def check_realtime(self, text: str, **kwargs) -> List[Issue]:
         """
         实时检查（轻量级）
