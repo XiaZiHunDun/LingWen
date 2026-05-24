@@ -31,16 +31,16 @@ class TaskOrchestrator:
         self,
         state_manager: Optional[Any] = None,
         event_bus: Optional[EventBus] = None,
-        state_file: str = "workflow_state.json"
+        state_file: Optional[str] = None  # 保留参数但不使用，由 state_manager 替代
     ):
         """初始化任务编排器
 
         Args:
             state_manager: 状态管理器实例（可选，默认创建SQLiteStateManager）
             event_bus: 事件总线实例（可选）
-            state_file: 状态文件路径
+            state_file: 已废弃，仅保留兼容性
         """
-        self._state_file = state_file
+        self._state_file = None  # 不再使用，保留兼容性
         self._event_bus = event_bus or EventBus()
 
         # 状态管理器 - 延迟导入避免循环依赖
@@ -57,7 +57,7 @@ class TaskOrchestrator:
         # 步骤回调
         self._step_callbacks: Dict[str, List[Callable]] = {}
 
-        logger.info(f"TaskOrchestrator initialized with state_file={state_file}")
+        logger.info("TaskOrchestrator initialized with SQLite state manager")
 
     # ==================== 步骤推进 ====================
 

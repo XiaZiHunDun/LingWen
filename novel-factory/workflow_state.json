@@ -1,5 +1,7 @@
 {
-  "version": "v9.1",
+  "_note": "DEPRECATED - 此文件已被 .state/workflow.db (SQLite) 替代，请勿手动修改",
+  "_deprecated_since": "v9.1",
+  "version": "v9.1-deprecated",
   "current_phase": "PHASE_7_CLOSE",
   "current_step": "STEP_25",
   "initialized_at": "2026-05-14",

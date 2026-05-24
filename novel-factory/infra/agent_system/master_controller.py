@@ -65,9 +65,9 @@ class MasterController:
             self._router = router
 
         # TaskOrchestrator（任务编排器）
-        self._orchestrator = TaskOrchestrator(
-            state_file=f"{state_dir}/workflow_state.json"
-        )
+        from infra.state.state_manager import StateManager
+        state_manager = StateManager()
+        self._orchestrator = TaskOrchestrator(state_manager=state_manager)
 
         # SkillRegistry（技能注册表）
         self._skill_registry = SkillRegistry()

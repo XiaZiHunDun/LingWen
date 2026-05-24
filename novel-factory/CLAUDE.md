@@ -130,7 +130,7 @@ style:
 
 ## 核心文件
 
-- `workflow_state.json` - 状态机文件，所有进度由此驱动
+- `.state/workflow.db` - SQLite状态数据库（v9.1+），所有进度由此驱动
 - `hooks.yaml` - 事件触发配置
 - `infra/state/workflow_validator.py` - 状态转换校验（三条铁律之一）
 - `.skills/` - Agent角色池配置
