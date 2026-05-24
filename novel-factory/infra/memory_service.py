@@ -130,9 +130,31 @@ def _load_default_config() -> Dict[str, Any]:
     try:
         config = load_yaml("config/memory_config.yaml")
         return config
-    except Exception as e:
-        logger.warning(f"无法加载 memory_config.yaml，使用内联默认配置: {e}")
+    except FileNotFoundError as e:
+        logger.warning(f"memory_config.yaml 未找到，使用内联默认配置: {e}")
         # 内联默认配置
+        return {
+            "qdrant": {
+                "host": "localhost",
+                "port": 6333,
+                "grpc_port": 6334,
+            },
+            "embedding": {
+                "model": "text-embedding-3-small",
+                "dimension": 1536,
+            },
+            "storage": {
+                "state_file": "state/state_tracker.json",
+                "plot_threads_file": "state/plot_threads.yaml",
+                "timeline_file": "state/timeline.json",
+            },
+            "retrieval": {
+                "default_top_k": 5,
+                "hybrid_alpha": 0.7,
+            },
+        }
+    except Exception as e:
+        logger.error(f"加载 memory_config.yaml 失败: {e}", exc_info=True)
         return {
             "qdrant": {
                 "host": "localhost",
@@ -168,8 +190,11 @@ def _check_qdrant_availability(qdrant_wrapper: QdrantClientWrapper) -> bool:
         # 尝试获取集合列表来验证连接
         collections = qdrant_wrapper.client.get_collections()
         return collections is not None
-    except Exception as e:
+    except (ConnectionError, TimeoutError, OSError) as e:
         logger.warning(f"Qdrant 连接检查失败: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Qdrant 连接检查时发生未预期错误: {e}", exc_info=True)
         return False
 
 
@@ -191,8 +216,11 @@ def _create_memory_gateway() -> MemoryGateway:
     # 2. 初始化 QdrantClientWrapper
     try:
         qdrant_wrapper = QdrantClientWrapper()
+    except (ConnectionError, TimeoutError, OSError) as e:
+        raise RuntimeError(f"Failed to initialize QdrantClientWrapper: {e}") from e
     except Exception as e:
-        raise RuntimeError(f"Failed to initialize QdrantClientWrapper: {e}")
+        logger.error(f"初始化 QdrantClientWrapper 时发生未预期错误: {e}", exc_info=True)
+        raise RuntimeError(f"Failed to initialize QdrantClientWrapper: {e}") from e
 
     # 3. 检查 Qdrant 是否可用
     if not _check_qdrant_availability(qdrant_wrapper):
@@ -201,8 +229,11 @@ def _create_memory_gateway() -> MemoryGateway:
     # 4. 初始化 Embedder
     try:
         embedder = Embedder()
+    except (ConnectionError, TimeoutError, OSError) as e:
+        raise RuntimeError(f"Failed to initialize Embedder: {e}") from e
     except Exception as e:
-        raise RuntimeError(f"Failed to initialize Embedder: {e}")
+        logger.error(f"初始化 Embedder 时发生未预期错误: {e}", exc_info=True)
+        raise RuntimeError(f"Failed to initialize Embedder: {e}") from e
 
     # 5. 初始化 BatchEmbedder
     batch_embedder = BatchEmbedder(
@@ -252,10 +283,15 @@ def get_memory_gateway() -> MemoryGateway:
     try:
         _memory_gateway = _create_memory_gateway()
         logger.info("MemoryGateway 初始化成功")
+    except (ConnectionError, TimeoutError, OSError, RuntimeError) as e:
+        error_msg = str(e)
+        _initialization_error = error_msg
+        logger.warning(f"MemoryGateway 初始化失败（预期异常），使用 NoOp 降级模式: {error_msg}")
+        _memory_gateway = NoOpMemoryGateway(error_msg)
     except Exception as e:
         error_msg = str(e)
         _initialization_error = error_msg
-        logger.error(f"MemoryGateway 初始化失败，使用 NoOp 降级模式: {error_msg}")
+        logger.error(f"MemoryGateway 初始化时发生未预期错误: {e}", exc_info=True)
         _memory_gateway = NoOpMemoryGateway(error_msg)
 
     return _memory_gateway
