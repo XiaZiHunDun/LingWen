@@ -182,6 +182,10 @@ class ConsistencyEngine:
         """
         enriched = context.copy()
 
+        # 获取场景类型（用于白名单判断）
+        if "scene_type" not in enriched:
+            enriched["scene_type"] = self._get_scene_type(chapter_num)
+
         # 获取前三章场景标签（用于ScenePatternRepeatChecker）
         if "recent_scene_labels" not in enriched:
             enriched["recent_scene_labels"] = []
