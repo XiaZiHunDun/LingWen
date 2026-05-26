@@ -679,6 +679,98 @@ class LLMRepairer:
         response = self.llm.execute(task)
         return response if response else chapter_content
 
+    def repair_pacing_issue(self, issue: Issue, chapter_content: str) -> str:
+        """修复节奏问题"""
+        from infra.llm_service import LLMTask, TaskType
+
+        prompt = f"""你是小说节奏优化专家，负责修复节奏问题。
+
+原文内容:
+{chapter_content[:4000]}
+
+问题描述:
+- 章节: {issue.chapter}
+- 问题: {issue.description}
+- 位置: {issue.location}
+
+修复要求:
+1. 在高潮段落后添加适当的缓冲描写（如：角色的内心活动、短暂的平静等）
+2. 使节奏更加张弛有度
+3. 不要改变剧情内容，只调整节奏分布
+4. 保持原文风格
+
+请直接输出修复后的完整章节内容。"""
+
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
+            prompt=prompt,
+            max_tokens=3000,
+            system="你是一个专业的小说节奏优化专家，能够使章节节奏更加合理。"
+        )
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
+    def repair_scene_transition(self, issue: Issue, chapter_content: str) -> str:
+        """修复场景转换问题"""
+        from infra.llm_service import LLMTask, TaskType
+
+        prompt = f"""你是小说场景转换修复专家，负责修复场景转换问题。
+
+原文内容:
+{chapter_content[:4000]}
+
+问题描述:
+- 章节: {issue.chapter}
+- 问题: {issue.description}
+- 证据: {issue.evidence}
+
+修复要求:
+1. 在突兀的场景转换处添加过渡描写（如：时间流逝、空间转移等）
+2. 使场景转换更加自然流畅
+3. 保持原文风格
+
+请直接输出修复后的完整章节内容。"""
+
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
+            prompt=prompt,
+            max_tokens=3000,
+            system="你是一个专业的小说场景转换修复专家，能够使场景转换自然流畅。"
+        )
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
+    def repair_dialogue_authenticity(self, issue: Issue, chapter_content: str) -> str:
+        """修复对话真实感问题"""
+        from infra.llm_service import LLMTask, TaskType
+
+        prompt = f"""你是小说对话优化专家，负责修复AI化对话问题。
+
+原文内容:
+{chapter_content[:4000]}
+
+问题描述:
+- 章节: {issue.chapter}
+- 问题: {issue.description}
+- 证据: {issue.evidence}
+
+修复要求:
+1. 将过于正式/书面化的AI对话替换为更口语化、符合角色性格的表达
+2. 减少"我相信"、"毫无疑问"等AI特征词
+3. 增加对话的自然感和角色特色
+4. 保持原文风格
+
+请直接输出修复后的完整章节内容。"""
+
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
+            prompt=prompt,
+            max_tokens=3000,
+            system="你是一个专业的小说对话优化专家，能够使对话更加真实自然。"
+        )
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
     def repair_with_context(self, issue: Issue, chapter_content: str, context_range: int = 2) -> str:
         """
         带上下文的修复方法（增强版）
