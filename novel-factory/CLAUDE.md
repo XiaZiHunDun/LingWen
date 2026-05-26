@@ -227,6 +227,30 @@ VALID_TRANSITIONS = {
 
 ---
 
+## CLI 工具
+
+统一入口: `lingwen.py <command>`
+
+```bash
+# 检查质量
+lingwen.py check 1-30 --quick
+lingwen.py check 1-30 --full
+lingwen.py check 1-30 --llm
+
+# 批量修复
+lingwen.py repair 1-120 --track worldview
+lingwen.py repair 1-120 --track all --regression
+
+# 验证
+lingwen.py verify 1-30
+
+# 状态和诊断
+lingwen.py status
+lingwen.py doctor
+```
+
+---
+
 ## 调度命令速查
 
 | 场景 | 命令 |
