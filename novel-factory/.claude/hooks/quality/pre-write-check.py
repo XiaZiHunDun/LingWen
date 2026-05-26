@@ -47,10 +47,25 @@ AI_PATTERNS = [
     "不断地", "持续地",
 ]
 
+# Phase 3: 新检测模式
+PACING_PATTERNS = [
+    "战斗", "攻击", "冲击", "爆发", "厮杀", "搏斗",
+    "对决", "交锋", "对抗",
+]
+
+SCENE_ABRUPT_PATTERNS = [
+    "忽然", "突然", "下一秒", "刹那间", "瞬间", "眨眼间",
+]
+
+DIALOGUE_FORMAL_PATTERNS = [
+    "我相信", "毫无疑问", "必须承认", "从某种意义上", "事实上",
+    "总的来说", "不言而喻", "显而易见", "众所周知",
+]
+
 
 def check_content(content: str) -> dict:
     """检测内容中的质量问题"""
-    issues = {"worldview": [], "ai_trace": []}
+    issues = {"worldview": [], "ai_trace": [], "pacing": [], "scene": [], "dialogue": []}
 
     for term in SCIFI_TERMS:
         if term in content:
@@ -61,6 +76,22 @@ def check_content(content: str) -> dict:
         if pattern in content:
             count = content.count(pattern)
             issues["ai_trace"].append(f"{pattern}({count}处)")
+
+    # Phase 3: 新检测
+    for pattern in PACING_PATTERNS:
+        if pattern in content:
+            count = content.count(pattern)
+            issues["pacing"].append(f"{pattern}({count}处)")
+
+    for pattern in SCENE_ABRUPT_PATTERNS:
+        if pattern in content:
+            count = content.count(pattern)
+            issues["scene"].append(f"{pattern}({count}处)")
+
+    for pattern in DIALOGUE_FORMAL_PATTERNS:
+        if pattern in content:
+            count = content.count(pattern)
+            issues["dialogue"].append(f"{pattern}({count}处)")
 
     return issues
 
@@ -94,7 +125,7 @@ def main():
         issues = check_content(content)
 
         # 汇总问题数量
-        total_issues = len(issues["worldview"]) + len(issues["ai_trace"])
+        total_issues = len(issues["worldview"]) + len(issues["ai_trace"]) + len(issues["pacing"]) + len(issues["scene"]) + len(issues["dialogue"])
 
         if total_issues > 0:
             warnings = []
@@ -102,6 +133,12 @@ def main():
                 warnings.append(f"世界观: {', '.join(issues['worldview'][:5])}")
             if issues["ai_trace"]:
                 warnings.append(f"AI痕迹: {', '.join(issues['ai_trace'][:5])}")
+            if issues["pacing"]:
+                warnings.append(f"节奏: {', '.join(issues['pacing'][:5])}")
+            if issues["scene"]:
+                warnings.append(f"场景: {', '.join(issues['scene'][:5])}")
+            if issues["dialogue"]:
+                warnings.append(f"对话: {', '.join(issues['dialogue'][:5])}")
 
             warning_msg = f"[Hook警告] 检测到{total_issues}处质量问题: {'; '.join(warnings)}"
 
