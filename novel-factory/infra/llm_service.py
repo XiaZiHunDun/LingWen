@@ -115,15 +115,15 @@ class LLMService:
     def _create_provider(self, name: str, api_key: str) -> AIProvider:
         """创建Provider实例"""
         if name == "minimax":
-            from .minimax_provider import MiniMaxProvider
+            from .ai_service.minimax_provider import MiniMaxProvider
             config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
             return MiniMaxProvider(config)
         elif name == "anthropic":
-            from .anthropic_provider import AnthropicProvider
+            from .ai_service.anthropic_provider import AnthropicProvider
             config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
             return AnthropicProvider(config)
         elif name == "openai":
-            from .openai_provider import OpenAIProvider
+            from .ai_service.openai_provider import OpenAIProvider
             config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
             return OpenAIProvider(config)
         else:
@@ -190,6 +190,28 @@ class LLMService:
     def provider_name(self) -> str:
         """当前Provider名称"""
         return self._provider_name or "unknown"
+
+    def generate(self, prompt: str, system: Optional[str] = None, model: str = "default", **kwargs) -> str:
+        """
+        便捷的generate方法
+
+        Args:
+            prompt: 用户提示词
+            system: 系统提示词
+            model: 模型名称（暂不支持）
+            **kwargs: 其他参数如max_tokens, temperature
+
+        Returns:
+            LLM生成的文本
+        """
+        task = LLMTask(
+            task_type=TaskType.QUALITY_ANALYSIS,
+            prompt=prompt,
+            system=system,
+            max_tokens=kwargs.get("max_tokens", 2000),
+            temperature=kwargs.get("temperature", 0.3),
+        )
+        return self.execute(task)
 
 
 # 便捷函数
