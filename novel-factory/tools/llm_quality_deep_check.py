@@ -25,6 +25,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.llm_service import LLMService
 from infra.quality import Issue, RepairResult
+from infra.cache import CheckerCache
+from infra.filter import FalsePositiveFilter
 
 
 @dataclass
@@ -59,6 +61,8 @@ class LLMQualityChecker:
         self.llm = llm_service or LLMService()
         self.project_root = PROJECT_ROOT
         self.chapters_dir = self.project_root / "03_内容仓库" / "04_正文"
+        self.cache = CheckerCache()
+        self.filter = FalsePositiveFilter()
 
     def load_chapter(self, chapter_num: int) -> Optional[str]:
         """加载章节内容"""
@@ -82,6 +86,13 @@ class LLMQualityChecker:
         使用LLM分析角色行为、对话、决策的一致性
         """
         report = QualityReport(chapter=chapter_num, checker="CharacterConsistencyLLMChecker")
+
+        # Try cache first
+        cached = self.cache.get("llm_character", chapter_num, content)
+        if cached:
+            report.issues = [Issue(**i) for i in cached.get("issues", [])]
+            report.score = cached.get("score", 1.0)
+            return report
 
         # 角色列表（从项目配置读取）
         main_characters = ["林夜", "苏琳", "星月", "小九", "铁蛋", "莫言", "暗皇", "虚无之主", "剑尘子"]
@@ -115,22 +126,54 @@ class LLMQualityChecker:
         report.llm_calls = 1
 
         try:
-            data = json.loads(response)
-            issues = data.get("issues", [])
-            report.issues = [Issue(**i) for i in issues]
-        except json.JSONDecodeError:
-            # 解析失败，尝试简单提取
-            if "issues" in response.lower():
-                report.issues = [Issue(
-                    chapter=chapter_num,
-                    type="character_inconsistency",
-                    severity="P2",
-                    description="LLM解析失败，请人工审核",
-                    location="全文"
-                )]
+            # Try direct parse first
+            try:
+                data = json.loads(response)
+            except json.JSONDecodeError:
+                # LLM returned markdown report with embedded JSON - extract the JSON part
+                import re
+                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group())
+                else:
+                    data = {"issues": []}
+            issues = data.get("issues", []) if isinstance(data, dict) else []
+            # Normalize field names: type -> issue_type, dimension defaults
+            normalized_issues = []
+            for i in issues:
+                normalized = {
+                    "chapter": i.get("chapter", chapter_num),
+                    "dimension": i.get("dimension", "S9_角色一致性"),
+                    "issue_type": i.get("type", i.get("issue_type", "character_inconsistency")),
+                    "severity": i.get("severity", "P2"),
+                    "description": i.get("description", ""),
+                    "location": i.get("location", ""),
+                    "evidence": i.get("evidence", ""),
+                    "suggestion": i.get("suggestion", ""),
+                }
+                normalized_issues.append(normalized)
+            report.issues = [Issue(**i) for i in normalized_issues]
+        except Exception as e:
+            # Parse failed, report the error
+            report.issues = [Issue(
+                chapter=chapter_num,
+                dimension="S9_角色一致性",
+                issue_type="character_inconsistency",
+                severity="P2",
+                description=f"LLM解析失败: {str(e)[:100]}",
+                location="全文",
+                evidence=response[:200] if len(response) > 200 else response,
+                suggestion=""
+            )]
             report.score = 0.5
 
         report.score = max(0, 1 - len(report.issues) * 0.1)
+
+        # Apply false positive filter
+        report.issues = self.filter.filter(report.issues, content)
+
+        # Save to cache
+        self.cache.set("llm_character", chapter_num, content, report.to_dict())
         return report
 
     def scan_logic_contradictions(self, chapter_num: int, content: str, context_chapters: List[int] = None) -> QualityReport:
@@ -139,6 +182,13 @@ class LLMQualityChecker:
         检测时间线、因果链、设定冲突
         """
         report = QualityReport(chapter=chapter_num, checker="LogicContradictionLLMChecker")
+
+        # Try cache first
+        cached = self.cache.get("llm_logic", chapter_num, content)
+        if cached:
+            report.issues = [Issue(**i) for i in cached.get("issues", [])]
+            report.score = cached.get("score", 1.0)
+            return report
 
         # 加载上下文章节（前后各5章）
         context = ""
@@ -178,14 +228,43 @@ class LLMQualityChecker:
         report.llm_calls = 1
 
         try:
-            data = json.loads(response)
-            issues = data.get("issues", [])
-            report.issues = [Issue(**i) for i in issues]
-        except json.JSONDecodeError:
+            # Try direct parse first
+            try:
+                data = json.loads(response)
+            except json.JSONDecodeError:
+                # LLM returned markdown report with embedded JSON - extract the JSON part
+                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group())
+                else:
+                    data = {"issues": []}
+            issues = data.get("issues", []) if isinstance(data, dict) else []
+            # Normalize field names: type -> issue_type, dimension defaults
+            normalized_issues = []
+            for i in issues:
+                normalized = {
+                    "chapter": i.get("chapter", chapter_num),
+                    "dimension": i.get("dimension", "S10_逻辑自洽度"),
+                    "issue_type": i.get("type", i.get("issue_type", "logic_contradiction")),
+                    "severity": i.get("severity", "P2"),
+                    "description": i.get("description", ""),
+                    "location": i.get("location", ""),
+                    "evidence": i.get("evidence", ""),
+                    "suggestion": i.get("suggestion", ""),
+                }
+                normalized_issues.append(normalized)
+            report.issues = [Issue(**i) for i in normalized_issues]
+        except Exception as e:
             report.issues = []
             report.score = 0.5
 
         report.score = max(0, 1 - len(report.issues) * 0.15)
+
+        # Apply false positive filter
+        report.issues = self.filter.filter(report.issues, content)
+
+        # Save to cache
+        self.cache.set("llm_logic", chapter_num, content, report.to_dict())
         return report
 
     def verify_foreshadow_completeness(self, chapter_num: int, content: str, outline_content: str = None) -> QualityReport:
@@ -194,6 +273,13 @@ class LLMQualityChecker:
         对照章节大纲检查伏笔铺设与回收
         """
         report = QualityReport(chapter=chapter_num, checker="ForeshadowRecoveryChecker")
+
+        # Try cache first
+        cached = self.cache.get("llm_foreshadow", chapter_num, content)
+        if cached:
+            report.issues = [Issue(**i) for i in cached.get("issues", [])]
+            report.score = cached.get("score", 1.0)
+            return report
 
         # 加载章节大纲
         outline_file = self.chapters_dir / f"ch{chapter_num:03d}_大纲.md"
@@ -232,14 +318,43 @@ class LLMQualityChecker:
         report.llm_calls = 1
 
         try:
-            data = json.loads(response)
-            issues = data.get("issues", [])
-            report.issues = [Issue(**i) for i in issues]
-        except json.JSONDecodeError:
+            # Try direct parse first
+            try:
+                data = json.loads(response)
+            except json.JSONDecodeError:
+                # LLM returned markdown report with embedded JSON - extract the JSON part
+                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group())
+                else:
+                    data = {"issues": []}
+            issues = data.get("issues", []) if isinstance(data, dict) else []
+            # Normalize field names: type -> issue_type, dimension defaults
+            normalized_issues = []
+            for i in issues:
+                normalized = {
+                    "chapter": i.get("chapter", chapter_num),
+                    "dimension": i.get("dimension", "S11_伏笔回收率"),
+                    "issue_type": i.get("type", i.get("issue_type", "foreshadow_issue")),
+                    "severity": i.get("severity", "P2"),
+                    "description": i.get("description", ""),
+                    "location": i.get("location", ""),
+                    "evidence": i.get("evidence", ""),
+                    "suggestion": i.get("suggestion", ""),
+                }
+                normalized_issues.append(normalized)
+            report.issues = [Issue(**i) for i in normalized_issues]
+        except Exception:
             report.issues = []
             report.score = 0.5
 
         report.score = max(0, 1 - len(report.issues) * 0.1)
+
+        # Apply false positive filter
+        report.issues = self.filter.filter(report.issues, content)
+
+        # Save to cache
+        self.cache.set("llm_foreshadow", chapter_num, content, report.to_dict())
         return report
 
     def diagnose_emotional_rhythm(self, chapter_num: int, content: str) -> QualityReport:
@@ -248,6 +363,13 @@ class LLMQualityChecker:
         分析高潮分布、情感曲线、爽点密度
         """
         report = QualityReport(chapter=chapter_num, checker="EmotionalRhythmChecker")
+
+        # Try cache first
+        cached = self.cache.get("llm_emotion", chapter_num, content)
+        if cached:
+            report.issues = [Issue(**i) for i in cached.get("issues", [])]
+            report.score = cached.get("score", 1.0)
+            return report
 
         prompt = f"""你是情感节奏专家，负责诊断小说的情感节奏。
 
@@ -275,14 +397,42 @@ score说明：0.8+优秀，0.6-0.8良好，0.4-0.6一般，<0.4需改进
         report.llm_calls = 1
 
         try:
-            data = json.loads(response)
-            issues = data.get("issues", [])
-            report.issues = [Issue(**i) for i in issues]
-            report.score = data.get("score", 0.5)
-        except json.JSONDecodeError:
+            # Try direct parse first
+            try:
+                data = json.loads(response)
+            except json.JSONDecodeError:
+                # LLM returned markdown report with embedded JSON - extract the JSON part
+                json_match = re.search(r'\{.*\}|\[.*\]', response, re.DOTALL)
+                if json_match:
+                    data = json.loads(json_match.group())
+                else:
+                    data = {"issues": [], "score": 0.5}
+            issues = data.get("issues", []) if isinstance(data, dict) else []
+            # Normalize field names: type -> issue_type, dimension defaults
+            normalized_issues = []
+            for i in issues:
+                normalized = {
+                    "chapter": i.get("chapter", chapter_num),
+                    "dimension": i.get("dimension", "S4_情感共鸣"),
+                    "issue_type": i.get("type", i.get("issue_type", "emotional_rhythm_issue")),
+                    "severity": i.get("severity", "P2"),
+                    "description": i.get("description", ""),
+                    "location": i.get("location", ""),
+                    "evidence": i.get("evidence", ""),
+                    "suggestion": i.get("suggestion", ""),
+                }
+                normalized_issues.append(normalized)
+            report.issues = [Issue(**i) for i in normalized_issues]
+            report.score = data.get("score", 0.5) if isinstance(data, dict) else 0.5
+        except Exception:
             report.issues = []
             report.score = 0.5
 
+        # Apply false positive filter
+        report.issues = self.filter.filter(report.issues, content)
+
+        # Save to cache
+        self.cache.set("llm_emotion", chapter_num, content, report.to_dict())
         return report
 
 
@@ -296,6 +446,8 @@ class LLMRepairer:
 
     def repair_character_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复角色一致性问题"""
+        from infra.llm_service import LLMTask, TaskType
+
         prompt = f"""你是小说内容修复专家，负责修复角色一致性问题。
 
 原文内容:
@@ -303,22 +455,26 @@ class LLMRepairer:
 
 问题描述:
 - 章节: {issue.chapter}
-- 类型: {issue.type}
+- 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
 - 修复建议: {issue.suggestion if hasattr(issue, 'suggestion') else '请根据角色设定进行修复'}
 
 请直接输出修复后的完整章节内容（保持原文风格，只修改问题部分）。"""
 
-        response = self.llm.generate(
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
             prompt=prompt,
-            system="你是一个专业的小说内容修复专家，能够保持原文风格进行修改。",
-            model="default"
+            max_tokens=3000,
+            system="你是一个专业的小说内容修复专家，能够保持原文风格进行修改。"
         )
-        return response
+        response = self.llm.execute(task)
+        return response if response else chapter_content
 
     def repair_logic_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复逻辑矛盾问题"""
+        from infra.llm_service import LLMTask, TaskType
+
         prompt = f"""你是小说逻辑修复专家，负责修复逻辑矛盾。
 
 原文内容:
@@ -326,22 +482,26 @@ class LLMRepairer:
 
 问题描述:
 - 章节: {issue.chapter}
-- 类型: {issue.type}
+- 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
 - 矛盾证据: {issue.evidence if hasattr(issue, 'evidence') else '请自行分析'}
 
 请直接输出修复后的完整章节内容（保持原文风格，只修改逻辑矛盾部分）。"""
 
-        response = self.llm.generate(
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
             prompt=prompt,
-            system="你是一个专业的小说逻辑修复专家，能够发现并修复时间线和因果矛盾。",
-            model="default"
+            max_tokens=3000,
+            system="你是一个专业的小说逻辑修复专家，能够发现并修复时间线和因果矛盾。"
         )
-        return response
+        response = self.llm.execute(task)
+        return response if response else chapter_content
 
     def repair_foreshadow_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复伏笔问题"""
+        from infra.llm_service import LLMTask, TaskType
+
         prompt = f"""你是小说伏笔修复专家，负责修复伏笔问题。
 
 原文内容:
@@ -349,19 +509,215 @@ class LLMRepairer:
 
 问题描述:
 - 章节: {issue.chapter}
-- 类型: {issue.type}
+- 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 伏笔原文: {issue.foreshadow_text if hasattr(issue, 'foreshadow_text') else '未知'}
 - 状态: {issue.status if hasattr(issue, 'status') else 'unknown'}
 
 请直接输出修复后的完整章节内容（增强伏笔铺设或完善伏笔回收）。"""
 
-        response = self.llm.generate(
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
             prompt=prompt,
-            system="你是一个专业的小说伏笔修复专家，能够完善伏笔的铺设与回收。",
-            model="default"
+            max_tokens=3000,
+            system="你是一个专业的小说伏笔修复专家，能够完善伏笔的铺设与回收。"
         )
-        return response
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
+    def repair_emotional_rhythm_issue(self, issue: Issue, chapter_content: str) -> str:
+        """修复情感节奏问题（爽点密度、情感共鸣点）"""
+        from infra.llm_service import LLMTask, TaskType
+
+        prompt = f"""你是小说情感节奏优化专家，负责修复情感节奏问题。
+
+原文内容:
+{chapter_content[:4000]}
+
+问题描述:
+- 章节: {issue.chapter}
+- 类型: {issue.issue_type}
+- 问题: {issue.description}
+- 位置: {issue.location}
+- 修复建议: {issue.suggestion if hasattr(issue, 'suggestion') else '请优化情感节奏，增强爽点密度或情感共鸣'}
+
+请直接输出修复后的完整章节内容，保持原文风格，优化以下方面:
+1. 增加爽点密度（打脸、装逼、逆转等）
+2. 强化情感共鸣点（情感冲突、角色羁绊）
+3. 优化节奏起伏（避免太平或太赶）
+
+只修改问题部分，不要改变原文核心情节。"""
+
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
+            prompt=prompt,
+            max_tokens=3000,
+            system="你是一个专业的小说情感节奏优化专家，能够增强爽点密度和情感共鸣。"
+        )
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
+    def repair_state_contradiction(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
+        """
+        修复状态矛盾问题（新增专项方法）
+
+        状态矛盾是指角色或物品的状态在前后文描述不一致。
+        例如：前面说死了，后面又说活着
+
+        Args:
+            issue: 问题对象
+            chapter_content: 章节内容
+            context_chapters: 上下文章节号列表（用于加载相邻章节）
+        """
+        from infra.llm_service import LLMTask, TaskType
+
+        # 加载上下文
+        context_content = ""
+        if context_chapters:
+            for ch in context_chapters[:5]:  # 最多加载5章上下文
+                ch_file = self.chapters_dir / f"ch{ch:03d}.md"
+                if ch_file.exists():
+                    context_content += f"\n\n=== ch{ch:03d} ===\n"
+                    context_content += ch_file.read_text(encoding='utf-8')[:1000]
+
+        prompt = f"""你是小说状态一致性修复专家，负责修复角色或物品状态矛盾。
+
+原文内容:
+{chapter_content[:4000]}
+
+上下文内容（相邻章节）:
+{context_content[:2000] if context_content else "无相邻章节内容"}
+
+问题描述:
+- 章节: {issue.chapter}
+- 问题: {issue.description}
+- 证据: {issue.evidence}
+
+修复要求:
+1. 确保角色/物品的状态在整个上下文中保持一致
+2. 如果角色死亡，后续不应出现存活状态
+3. 如果物品被描述为破损，不能突然变成完好
+4. 保持原文风格，只修改状态矛盾的部分
+
+请直接输出修复后的完整章节内容。"""
+
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
+            prompt=prompt,
+            max_tokens=3000,
+            system="你是一个专业的小说状态一致性修复专家，能够确保角色和物品状态在全文一致。"
+        )
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
+    def repair_timeline_issue(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
+        """
+        修复时间线问题（新增专项方法）
+
+        注意：对于宇宙级场景（如跨维度、星际、亿万年时间跨度），
+        检测器容易产生误报。修复时会考虑场景特殊性。
+
+        Args:
+            issue: 问题对象
+            chapter_content: 章节内容
+            context_chapters: 上下文章节号列表
+        """
+        from infra.llm_service import LLMTask, TaskType
+
+        # 加载上下文
+        context_content = ""
+        if context_chapters:
+            for ch in context_chapters[:3]:
+                ch_file = self.chapters_dir / f"ch{ch:03d}.md"
+                if ch_file.exists():
+                    context_content += f"\n\n=== ch{ch:03d} ===\n"
+                    context_content += ch_file.read_text(encoding='utf-8')[:800]
+
+        # 判断是否是宇宙级场景
+        cosmic_keywords = ["宇宙", "维度", "星际", "光年", "亿万年", "创世", "永恒", "时间夹缝"]
+        is_cosmic = any(kw in chapter_content for kw in cosmic_keywords)
+
+        cosmic_note = ""
+        if is_cosmic:
+            cosmic_note = """
+注意：这是宇宙级场景，时间线可能涉及：
+- 跨维度时间流速差异
+- 星际旅行导致的时间膨胀
+- 亿万年的时间跨度
+- 时间夹缝中的特殊规则
+
+这些情况下，时间线描述可以有特殊性，不需要强制按照线性时间理解。"""
+
+        prompt = f"""你是小说时间线修复专家，负责修复时间线矛盾。
+
+原文内容:
+{chapter_content[:4000]}
+
+上下文内容（相邻章节）:
+{context_content[:1500] if context_content else "无相邻章节内容"}
+{cosmic_note}
+
+问题描述:
+- 章节: {issue.chapter}
+- 问题: {issue.description}
+- 证据: {issue.evidence}
+
+修复要求:
+1. 确保时间描述在全文中保持一致
+2. 考虑宇宙级场景的特殊性
+3. 如果涉及时间跳跃，确保因果关系合理
+4. 保持原文风格
+
+请直接输出修复后的完整章节内容。"""
+
+        task = LLMTask(
+            task_type=TaskType.REPAIR,
+            prompt=prompt,
+            max_tokens=3000,
+            system="你是一个专业的小说时间线修复专家，能够修复时间线矛盾同时尊重宇宙级场景的特殊性。"
+        )
+        response = self.llm.execute(task)
+        return response if response else chapter_content
+
+    def repair_with_context(self, issue: Issue, chapter_content: str, context_range: int = 2) -> str:
+        """
+        带上下文的修复方法（增强版）
+
+        自动加载相邻章节的上下文，用于修复需要跨章节理解的问题。
+
+        Args:
+            issue: 问题对象
+            chapter_content: 章节内容
+            context_range: 前后各加载多少章
+
+        Returns:
+            修复后的内容
+        """
+        # 构建上下文章节列表
+        ch = issue.chapter
+        context_chapters = list(range(ch - context_range, ch)) + list(range(ch + 1, ch + context_range + 1))
+        context_chapters = [c for c in context_chapters if 1 <= c <= 360]
+
+        # 根据问题类型选择修复方法
+        issue_type = issue.issue_type.lower()
+        description = issue.description.lower()
+        evidence = issue.evidence.lower()
+
+        if "状态" in issue_type or "状态" in description or "状态" in evidence:
+            return self.repair_state_contradiction(issue, chapter_content, context_chapters)
+        elif "时间线" in issue_type or "时间" in issue_type:
+            return self.repair_timeline_issue(issue, chapter_content, context_chapters)
+        elif "角色" in issue_type or "行为" in issue_type or "人称" in issue_type:
+            return self.repair_character_issue(issue, chapter_content)
+        elif "逻辑" in issue_type or "因果" in issue_type:
+            return self.repair_logic_issue(issue, chapter_content)
+        elif "伏笔" in issue_type or "前后" in issue_type:
+            return self.repair_foreshadow_issue(issue, chapter_content)
+        elif "情感" in issue_type or "节奏" in issue_type:
+            return self.repair_emotional_rhythm_issue(issue, chapter_content)
+        else:
+            # 默认使用逻辑修复
+            return self.repair_logic_issue(issue, chapter_content)
 
 
 def parse_chapter_range(chapters_str: str) -> List[int]:
@@ -531,19 +887,44 @@ def run_phase_18e(repairer: LLMRepairer, issues: List[Issue], chapters_dir: Path
         chapter_content = ch_file.read_text(encoding='utf-8')
 
         try:
-            if issue.type == "character_inconsistency":
+            if issue.issue_type in ["character_inconsistency", "角色行为逻辑", "角色行为逻辑矛盾", "角色引入矛盾",
+                                     "角色设定矛盾", "角色动机矛盾", "角色信息脱节", "角色位置矛盾"]:
                 fixed_content = repairer.repair_character_issue(issue, chapter_content)
-            elif issue.type == "logic_contradiction":
+            elif issue.issue_type in ["logic_contradiction", "逻辑矛盾", "逻辑问题", "逻辑漏洞", "逻辑跳跃", "因果逻辑矛盾",
+                                       "数字矛盾", "规则逻辑矛盾", "前后逻辑矛盾", "世界观逻辑"]:
                 fixed_content = repairer.repair_logic_issue(issue, chapter_content)
-            elif issue.type in ["foreshadow_issue", "foreshadow_incomplete"]:
+            elif issue.issue_type in ["状态矛盾", "前后矛盾", "时间线矛盾", "设定矛盾", "视角混乱",
+                                       "场景/状态矛盾", "角色状态矛盾", "章节结构矛盾", "章节衔接矛盾",
+                                       "空间逻辑矛盾", "角色身份矛盾", "角色代词/状态矛盾",
+                                       "环境/场景矛盾", "世界观/设定矛盾", "性别矛盾", "地理/地点矛盾",
+                                       "境界体系矛盾", "内容重复/前后矛盾", "概念/设定矛盾", "视角逻辑矛盾",
+                                       "概念/状态矛盾", "信息缺失", "剧情逻辑", "情节逻辑矛盾", "世界观矛盾",
+                                       "物理逻辑错误", "感官描述矛盾", "环境描述矛盾", "环境描写矛盾",
+                                       "星尘碎片状态矛盾", "章节收尾不完整", "方向矛盾", "环境/物理矛盾",
+                                       "世界观设定矛盾", "视角/叙述矛盾", "视角切换矛盾", "叙述顺序矛盾",
+                                       "物理概念错误", "世界观设定", "称谓矛盾", "角色能力/状态矛盾",
+                                       "状态/情绪转换逻辑", "情节细节模糊", "角色代词矛盾", "角色人称不一致",
+                                       "信息传递缺失", "上下文缺失", "记忆细节矛盾", "空间位置模糊",
+                                       "时间线逻辑", "场景切换逻辑", "概念模糊", "指代不明"]:
+                fixed_content = repairer.repair_logic_issue(issue, chapter_content)
+            elif issue.issue_type in ["信息泄露", "信息获取矛盾", "信息重复/冗余", "重复描述", "情节重复",
+                                       "角色行为重复", "伏笔回收"]:
+                fixed_content = repairer.repair_logic_issue(issue, chapter_content)
+            elif issue.issue_type in ["断剑情节突兀"]:
+                fixed_content = repairer.repair_logic_issue(issue, chapter_content)
+            elif issue.issue_type in ["foreshadow_issue", "foreshadow_incomplete", "伏笔/悬念断裂", "伏笔未解释"]:
                 fixed_content = repairer.repair_foreshadow_issue(issue, chapter_content)
+            elif issue.issue_type in ["emotional_rhythm_issue", "emotional_rhythm", "rhythm_issue", "爽点缺失", "节奏问题", "pacing_issue"]:
+                fixed_content = repairer.repair_emotional_rhythm_issue(issue, chapter_content)
+            elif issue.issue_type in ["角色命名冲突"]:
+                fixed_content = repairer.repair_character_issue(issue, chapter_content)
             else:
                 continue
 
             if not dry_run and len(fixed_content) > len(chapter_content) * 0.8:
                 ch_file.write_text(fixed_content, encoding='utf-8')
                 repaired_count += 1
-                print(f"  ch{issue.chapter:03d}: ✓ 已修复 ({issue.type})")
+                print(f"  ch{issue.chapter:03d}: ✓ 已修复 ({issue.issue_type})")
             else:
                 print(f"  ch{issue.chapter:03d}: 跳过 (内容异常)")
 
@@ -578,7 +959,7 @@ def save_report(reports: Dict[int, QualityReport], output_file: Path):
     }
 
     for issue in all_issues:
-        report_data["summary"]["by_type"][issue.type] = report_data["summary"]["by_type"].get(issue.type, 0) + 1
+        report_data["summary"]["by_type"][issue.issue_type] = report_data["summary"]["by_type"].get(issue.issue_type, 0) + 1
         report_data["summary"]["by_severity"][issue.severity] = report_data["summary"]["by_severity"].get(issue.severity, 0) + 1
 
     output_file.write_text(json.dumps(report_data, ensure_ascii=False, indent=2), encoding='utf-8')
