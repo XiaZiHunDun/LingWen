@@ -136,34 +136,53 @@ class CheckCommand(Command):
 
     def _check_full(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run comprehensive quality check"""
-        try:
-            from tools.comprehensive_quality_check import ComprehensiveChecker
+        from infra.consistency.engine.consistency_engine import ConsistencyEngine, CheckScope
+        from infra.consistency.checkers.pacing_checker import PacingChecker
+        from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
+        from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
 
-            print(f"执行全面检查: {len(chapters)} 个章节")
+        print(f"执行全面检查: {len(chapters)} 个章节")
 
-            checker = ComprehensiveChecker()
-            issues = checker.check_batch(chapters)
+        issues = []
 
-            print(f"\n检查完成: 发现 {len(issues)} 个问题")
+        # 1. 运行一致性引擎
+        engine = ConsistencyEngine()
+        for ch in chapters:
+            content = self.paths.read_chapter(ch)
+            if content:
+                result = engine.check_chapter(ch, content, scope=CheckScope.ALL)
+                issues.extend(result.issues)
 
-            # Group by severity
-            by_severity = {"P0": 0, "P1": 0, "P2": 0, "P3": 0}
-            for issue in issues:
-                if issue.severity in by_severity:
-                    by_severity[issue.severity] += 1
+        # 2. 运行新检测器 (Phase 3)
+        new_checkers = [
+            ("节奏", PacingChecker()),
+            ("场景转换", SceneTransitionChecker()),
+            ("对话真实感", DialogueAuthenticityChecker()),
+        ]
 
-            for sev, count in by_severity.items():
-                if count > 0:
-                    print(f"  {sev}: {count}")
+        new_issues_count = 0
+        for checker_name, checker_instance in new_checkers:
+            for ch in chapters:
+                content = self.paths.read_chapter(ch)
+                if content:
+                    ch_issues = checker_instance.check(content, ch)
+                    for issue in ch_issues:
+                        issues.append(issue)
+                        new_issues_count += 1
 
-            return 0 if len(issues) == 0 else 1
+        print(f"\n检查完成: 发现 {len(issues)} 个问题 (含{new_issues_count}个新检测器问题)")
 
-        except ImportError as e:
-            print(f"[警告] ComprehensiveChecker 不可用: {e}")
-            return 1
-        except Exception as e:
-            print(f"[错误] ComprehensiveChecker 执行失败: {e}")
-            return 1
+        # Group by severity
+        by_severity = {"P0": 0, "P1": 0, "P2": 0, "P3": 0}
+        for issue in issues:
+            if issue.severity.value in by_severity:
+                by_severity[issue.severity.value] += 1
+
+        for sev, count in by_severity.items():
+            if count > 0:
+                print(f"  {sev}: {count}")
+
+        return 0 if len(issues) == 0 else 1
 
     def _check_llm(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run LLM-based quality check"""
