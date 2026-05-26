@@ -16,6 +16,7 @@ import yaml
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass, field
+from infra.patterns import PatternRegistry
 
 @dataclass
 class DiversityIssue:
@@ -310,16 +311,34 @@ class SentenceDiversityChecker:
 
     @classmethod
     def _get_compiled_patterns(cls):
-        """获取预编译的模式列表（懒加载，只编译一次）"""
+        """获取预编译的模式列表（懒加载，只编译一次）
+        优先使用PatternRegistry中的预编译模式，回退到本地编译
+        """
         if cls._COMPILED_PATTERNS is None:
-            cls._COMPILED_PATTERNS = [
-                (re.compile(pattern), name, label)
-                for pattern, name, label in cls.DIVERSE_PATTERNS
-            ]
-            cls._TEMPLATE_COMPILED = [
-                (re.compile(pattern), name, suggestions)
-                for pattern, name, suggestions in cls.TEMPLATE_PATTERNS
-            ]
+            registry = PatternRegistry.get_instance()
+
+            # 优先从PatternRegistry获取已编译的模式
+            cls._COMPILED_PATTERNS = []
+            for pattern, name, label in cls.DIVERSE_PATTERNS:
+                # 尝试从Registry获取同名模式
+                reg_pattern = registry.get(name)
+                if reg_pattern:
+                    cls._COMPILED_PATTERNS.append((reg_pattern, name, label))
+                else:
+                    # 回退：本地编译
+                    try:
+                        cls._COMPILED_PATTERNS.append((re.compile(pattern), name, label))
+                    except re.error:
+                        pass
+
+            # 模板模式处理（Registry中可能没有完整定义）
+            cls._TEMPLATE_COMPILED = []
+            for pattern, name, suggestions in cls.TEMPLATE_PATTERNS:
+                try:
+                    cls._TEMPLATE_COMPILED.append((re.compile(pattern), name, suggestions))
+                except re.error:
+                    pass
+
         return cls._COMPILED_PATTERNS, cls._TEMPLATE_COMPILED
 
     def __init__(self, chapters_dir: Optional[str] = None):
