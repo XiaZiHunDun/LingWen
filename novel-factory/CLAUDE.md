@@ -1,7 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v9.9 (全章节P0/P1修复版)
-> **更新 (2026-05-26)**：全部360章节P0/P1问题修复完成。
+> **版本**: v9.10 (Phase 3-4 质量提升版)
+> **更新 (2026-05-26)**：新增节奏/场景/对话检测器，CLI集成增强。
 
 ## 身份
 
@@ -36,9 +36,22 @@ infra/quality/
 - `llm_quality_deep_check.py` - 正文LLM深度质检（PHASE_5_LLM_QUALITY）
 - `llm_outline_quality_check.py` - 大纲LLM质检（LLM_OUTLINE_QUALITY）
 
+**Phase 3 新检测器** (`infra/consistency/checkers/`):
+- `PacingChecker` - 节奏检测（高潮密度、缓冲检查、铺垫长度）
+- `SceneTransitionChecker` - 场景转换检测（突兀转换、空间跳跃）
+- `DialogueAuthenticityChecker` - 对话AI化检测
+
+**Phase 3 新修复方法** (`tools/llm_quality_deep_check.py`):
+- `repair_pacing_issue` - 修复节奏问题
+- `repair_scene_transition` - 修复场景转换问题
+- `repair_dialogue_authenticity` - 修复对话真实感问题
+
+**Phase 4 CLI 集成**:
+- `lingwen.py check --full` 整合全部检测器
+
 **PreWrite/PostWrite Hooks** (`.claude/hooks/quality/`):
-- `pre-write-check.py` - 写入前检测质量问题（警告但不阻止）
-- `post-write-check.py` - 写入后生成检测报告
+- `pre-write-check.py` - 写入前检测（世界观、AI痕迹、节奏、场景、对话）
+- `post-write-check.py` - 写入后检测报告
 
 **使用示例**:
 ```bash
@@ -420,6 +433,8 @@ infra/
 ---
 
 > **版本记录**：
+> - v9.10 (2026-05-26)：Phase 3-4 质量提升版。新增PacingChecker/SceneTransitionChecker/DialogueAuthenticityChecker，CLI `--full` 集成全部检测器，Hook支持新检测器。
+> - v9.9 (2026-05-26)：全章节P0/P1修复版。全部360章节P0/P1问题修复完成。
 > - v9.6 (2026-05-25)：P0/P1扩展修复版。TOP 50章节118个P0/P1问题已修复，累计修复166个问题(10+118+34+2+2)。
 > - v9.5 (2026-05-25)：P0/P1修复版。TOP 10章节48个P0/P1问题已修复。
 > - v9.4 (2026-05-25)：情感节奏修复版。LLM深度质检360章，修复2章P1情感节奏问题，扩展repair_emotional_rhythm_issue方法。
