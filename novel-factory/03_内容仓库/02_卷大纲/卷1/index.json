@@ -1,19 +1,10 @@
 {
-  "$schema": "https://lingwen.novel/index-schema/v1",
-  "meta": {
-    "layer": "02_卷大纲",
-    "project": "测试项目3",
-    "version": "1.0",
-    "volume": 1,
-    "updated_at": "2026-05-19"
-  },
-  "summary": {
-    "total_items": 0,
-    "status_counts": {
-      "draft": 0,
-      "reviewing": 0,
-      "finalized": 0
+  "updated_at": "2026-05-27 14:10:57",
+  "total_files": 1,
+  "files": [
+    {
+      "filename": "卷1大纲.md",
+      "last_updated": "2026-05-13"
     }
-  },
-  "items": []
+  ]
 }

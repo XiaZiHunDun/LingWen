@@ -50,6 +50,7 @@ class CheckerType(Enum):
     CHARACTER_AGENCY = "character_agency"
     TIMELINE_AGE = "timeline_age"
     BATTLE_VISUALIZATION = "battle_visualization"
+    CROSS_CHAPTER_LOGIC = "cross_chapter_logic"
 
 
 class CheckScope(Enum):

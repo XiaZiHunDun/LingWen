@@ -1,18 +1,18 @@
 {
-  "$schema": "https://lingwen.novel/index-schema/v1",
-  "meta": {
-    "layer": "01_全文总体大纲",
-    "project": "测试项目3",
-    "version": "1.0",
-    "updated_at": "2026-05-19"
-  },
-  "summary": {
-    "total_items": 0,
-    "status_counts": {
-      "draft": 0,
-      "reviewing": 0,
-      "finalized": 0
+  "updated_at": "2026-05-27 14:10:57",
+  "total_files": 3,
+  "files": [
+    {
+      "filename": "星陨纪元_优化版大纲.md",
+      "last_updated": "2026-05-14"
+    },
+    {
+      "filename": "全局大纲.md",
+      "last_updated": "2026-05-19"
+    },
+    {
+      "filename": "全局大纲_v1.1.md",
+      "last_updated": "2026-05-12"
     }
-  },
-  "items": []
+  ]
 }

@@ -454,7 +454,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
@@ -481,7 +481,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
@@ -508,7 +508,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 伏笔原文: {issue.foreshadow_text if hasattr(issue, 'foreshadow_text') else '未知'}
@@ -535,7 +535,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 类型: {issue.issue_type}
 - 问题: {issue.description}
 - 位置: {issue.location}
@@ -589,7 +589,7 @@ class LLMRepairer:
 {context_content[:2000] if context_content else "无相邻章节内容"}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 问题: {issue.description}
 - 证据: {issue.evidence}
 
@@ -658,7 +658,7 @@ class LLMRepairer:
 {cosmic_note}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 问题: {issue.description}
 - 证据: {issue.evidence}
 
@@ -689,7 +689,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 问题: {issue.description}
 - 位置: {issue.location}
 
@@ -720,7 +720,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 问题: {issue.description}
 - 证据: {issue.evidence}
 
@@ -750,7 +750,7 @@ class LLMRepairer:
 {chapter_content[:4000]}
 
 问题描述:
-- 章节: {issue.location.chapter}
+- 章节: {issue.chapter}
 - 问题: {issue.description}
 - 证据: {issue.evidence}
 
@@ -786,7 +786,7 @@ class LLMRepairer:
             修复后的内容
         """
         # 构建上下文章节列表
-        ch = issue.location.chapter
+        ch = issue.chapter
         context_chapters = list(range(ch - context_range, ch)) + list(range(ch + 1, ch + context_range + 1))
         context_chapters = [c for c in context_chapters if 1 <= c <= 360]
 
@@ -972,7 +972,7 @@ def run_phase_18e(repairer: LLMRepairer, issues: List[Issue], chapters_dir: Path
 
     repaired_count = 0
     for issue in p0_issues + p1_issues:
-        ch_file = chapters_dir / f"ch{issue.location.chapter:03d}.md"
+        ch_file = chapters_dir / f"ch{issue.chapter:03d}.md"
         if not ch_file.exists():
             continue
 
@@ -1016,14 +1016,14 @@ def run_phase_18e(repairer: LLMRepairer, issues: List[Issue], chapters_dir: Path
             if not dry_run and len(fixed_content) > len(chapter_content) * 0.8:
                 ch_file.write_text(fixed_content, encoding='utf-8')
                 repaired_count += 1
-                print(f"  ch{issue.location.chapter:03d}: ✓ 已修复 ({issue.issue_type})")
+                print(f"  ch{issue.chapter:03d}: ✓ 已修复 ({issue.issue_type})")
             else:
-                print(f"  ch{issue.location.chapter:03d}: 跳过 (内容异常)")
+                print(f"  ch{issue.chapter:03d}: 跳过 (内容异常)")
 
-            results[issue.location.chapter] = fixed_content
+            results[issue.chapter] = fixed_content
 
         except Exception as e:
-            print(f"  ch{issue.location.chapter:03d}: ✗ 修复失败 - {e}")
+            print(f"  ch{issue.chapter:03d}: ✗ 修复失败 - {e}")
 
     print(f"  修复完成: {repaired_count}/{len(p0_issues) + len(p1_issues)}")
     return results

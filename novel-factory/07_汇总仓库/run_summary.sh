@@ -1,7 +1,12 @@
 #!/bin/bash
 #===============================================================================
-# 汇总部门 · 执行脚本 v2.0
+# 汇总部门 · 执行脚本 v2.1
 # 用法: ./run_summary.sh [command] [params]
+#
+# v2.1 更新: merge 命令使用Python脚本进行高质量合并
+#   - 跳过多余分隔行（只保留标题+正文）
+#   - 自动生成MD和TXT两个版本
+#   - 版本号更新为v9.10
 #
 # v2.0 新增: merge 命令支持分层合并
 #   ./run_summary.sh merge stage 卷1_阶段1  # 合并阶段正文
@@ -381,7 +386,7 @@ function cmd_merge() {
     echo ""
 
     local project_name=$(get_project_name)
-    local version="v1.0"
+    local version="v9.10"
     local output_dir="$PUBLISHED_DIR"
     local range_start=""
     local range_end=""
@@ -451,7 +456,22 @@ function cmd_merge() {
     # 获取文件锁
     acquire_lock "$output_file"
 
-    # 原子性写入：先写临时文件，再rename
+    # 使用Python脚本进行高质量合并（跳过多余分隔行）
+    local python_script="$PROJECT_ROOT/tools/merge_chapters.py"
+    if [[ -f "$python_script" ]]; then
+        if [[ "$merge_type" == "full" ]]; then
+            python3 "$python_script" full
+        elif [[ "$merge_type" == "volume" ]]; then
+            python3 "$python_script" volume "$merge_target" $range_start $range_end
+        elif [[ "$merge_type" == "stage" ]]; then
+            python3 "$python_script" stage "$merge_target" $range_start $range_end
+        fi
+        release_lock
+        return
+    fi
+
+    # Fallback: 使用原有的bash合并（带分隔符+标题注入问题）
+    log_warn "Python脚本不存在，使用bash合并"
     local tmp_file="${output_file}.tmp"
     > "$tmp_file"
 
