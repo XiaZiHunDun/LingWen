@@ -50,12 +50,16 @@ class RangeParser:
                     raise ValueError(f"Invalid range format: {part}")
                 if start > end:
                     raise ValueError(f"Invalid range: start ({start}) > end ({end})")
+                if start < 1 or end > self.all_chapters:
+                    raise ValueError(f"Range ({start}-{end}) exceeds valid chapter range (1-{self.all_chapters})")
                 result.update(range(start, end + 1))
             else:
                 try:
                     num = int(part)
                 except ValueError:
                     raise ValueError(f"Invalid number format: {part}")
+                if num < 1 or num > self.all_chapters:
+                    raise ValueError(f"Chapter number ({num}) exceeds valid range (1-{self.all_chapters})")
                 result.add(num)
 
         return sorted(list(result))

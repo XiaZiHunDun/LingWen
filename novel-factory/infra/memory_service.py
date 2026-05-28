@@ -9,13 +9,7 @@
     gateway = get_memory_gateway()
     context = gateway.auto_push_context(chapter_num=5)
 """
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-
 import logging
-import sys
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from infra.logging_config import logger

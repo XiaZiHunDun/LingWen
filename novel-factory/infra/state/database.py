@@ -68,10 +68,14 @@ class WorkflowDB:
 
     @contextmanager
     def transaction(self):
-        """Atomic transaction context manager"""
-        conn = self._get_conn().__enter__()
-        conn.execute("BEGIN IMMEDIATE")
+        """Atomic transaction context manager
+
+        Properly acquires connection and ensures cleanup.
+        """
+        conn = sqlite3.connect(str(self.db_path))
+        conn.row_factory = sqlite3.Row
         try:
+            conn.execute("BEGIN IMMEDIATE")
             yield conn
             conn.commit()
         except Exception:
