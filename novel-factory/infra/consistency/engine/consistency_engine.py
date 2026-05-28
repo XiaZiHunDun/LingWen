@@ -41,6 +41,7 @@ from ..checkers.battle_visualization import BattleVisualizationChecker
 from ..checkers.repair_trace_checker import RepairTraceChecker
 from ..checkers.gender_consistency_checker import GenderConsistencyChecker
 from ..checkers.causal_chain_checker import CausalChainChecker
+from ..checkers.spatial_transition_checker import SpatialTransitionChecker
 
 
 class ConsistencyEngine:
@@ -110,6 +111,7 @@ class ConsistencyEngine:
             CheckerType.REPAIR_TRACE: RepairTraceChecker(),
             CheckerType.GENDER_CONSISTENCY: GenderConsistencyChecker(),
             CheckerType.CAUSAL_CHAIN: CausalChainChecker(),
+            CheckerType.SPATIAL_TRANSITION: SpatialTransitionChecker(),
         }
 
     def _enrich_context_from_memory(
