@@ -52,6 +52,13 @@ class CheckerType(Enum):
     BATTLE_VISUALIZATION = "battle_visualization"
     CROSS_CHAPTER_LOGIC = "cross_chapter_logic"
     REPAIR_TRACE = "repair_trace"
+    GENDER_CONSISTENCY = "gender_consistency"
+    CAUSAL_CHAIN = "causal_chain"
+    SPATIAL_TRANSITION = "spatial_transition"
+    RELATIONSHIP_STATE = "relationship_state"
+    KNOWLEDGE_TRACKING = "knowledge_tracking"
+    DIALOGUE_ACTION = "dialogue_action"
+    LLM_CAUSAL_REASONING = "llm_causal_reasoning"
 
 
 class CheckScope(Enum):
