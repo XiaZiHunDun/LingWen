@@ -13,9 +13,10 @@
 
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, field
 
+from .base_checker import BaseChecker
 from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
 
 
@@ -30,7 +31,7 @@ class RepetitivePhraseIssue:
     severity: str = "MEDIUM"
 
 
-class RepetitivePhraseChecker:
+class RepetitivePhraseChecker(BaseChecker):
     """
     套路句式检测器
     检测"那一刻"等50+种套路句式的过度使用
@@ -251,6 +252,7 @@ class RepetitivePhraseChecker:
     }
 
     def __init__(self, chapters_dir: Optional[str] = None):
+        super().__init__(CheckerType.REPETITIVE_PHRASE)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
@@ -306,6 +308,38 @@ class RepetitivePhraseChecker:
                 issues.extend(ch_issues)
 
         return issues
+
+    def check(self, chapter_content: str, chapter_num: int, context: Optional[Dict[str, Any]] = None) -> List[Issue]:
+        """执行检查，返回Issue列表
+
+        Args:
+            chapter_content: 章节内容
+            chapter_num: 章节号
+            context: 上下文信息
+
+        Returns:
+            Issue列表
+        """
+        # 使用check_content检测当前章节
+        repetitive_issues = self.check_content(chapter_content, chapter_num)
+
+        # 转换为标准Issue格式
+        result = []
+        for issue in repetitive_issues:
+            if issue.severity in ('HIGH', 'MEDIUM'):
+                suggestion = self._get_suggestion(issue.phrase_type, issue.examples)
+                result.append(Issue(
+                    id=f"RP_{chapter_num:03d}_{issue.phrase_type}",
+                    severity=IssueSeverity.P2 if issue.severity == 'MEDIUM' else IssueSeverity.P1,
+                    checker_type=CheckerType.REPETITIVE_PHRASE,
+                    issue_type="repetitive_phrase",
+                    title=f"套路句式过度使用: {issue.phrase_type}",
+                    description=f"'{issue.phrase_type}'出现{issue.count}次，占比{issue.percentage}%，高于阈值",
+                    location=IssueLocation(chapter=chapter_num),
+                    evidence='; '.join(issue.examples[:2]),
+                    suggestion=suggestion
+                ))
+        return result
 
     def generate_issue_for_chapter(self, chapter_num: int) -> List[Issue]:
         """生成符合一致性引擎格式的Issue列表"""

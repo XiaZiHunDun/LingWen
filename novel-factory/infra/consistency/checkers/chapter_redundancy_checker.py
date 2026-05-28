@@ -15,11 +15,12 @@
 
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Set
+from typing import List, Dict, Tuple, Optional, Set, Any
 from collections import Counter
 from dataclasses import dataclass
 
 from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
+from .base_checker import BaseChecker
 
 
 @dataclass
@@ -37,7 +38,7 @@ class ChapterRedundancyIssue:
             self.shared_content = []
 
 
-class ChapterRedundancyChecker:
+class ChapterRedundancyChecker(BaseChecker):
     """
     章节重复度检测器
     检测章节间的内容重复
@@ -58,10 +59,62 @@ class ChapterRedundancyChecker:
     ]
 
     def __init__(self, chapters_dir: Optional[str] = None):
+        super().__init__(CheckerType.CHAPTER_REDUNDANCY)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
         self.chapters_dir = Path(chapters_dir)
+
+    def check(
+        self,
+        chapter_content: str,
+        chapter_num: int,
+        context: Optional[Dict[str, Any]] = None
+    ) -> List[Issue]:
+        """
+        执行章节重复度检查
+
+        检查指定章节与相邻章节的重复度
+        """
+        issues = []
+
+        # 检查与前一章的重复度
+        if chapter_num > 1:
+            pair_issues = self.check_chapter_pair(chapter_num - 1, chapter_num)
+            for issue in pair_issues:
+                if issue.severity in ('HIGH', 'MEDIUM'):
+                    issues.append(Issue(
+                        id=f"CR_{chapter_num-1:03d}_{chapter_num:03d}_{issue.repeat_type}",
+                        severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
+                        checker_type=CheckerType.CHAPTER_REDUNDANCY,
+                        issue_type="chapter_redundancy",
+                        title=f"章节重复: ch{chapter_num-1}-ch{chapter_num}",
+                        description=f"与前一章重复度{issue.similarity_score*100:.1f}%",
+                        location=IssueLocation(chapter=chapter_num),
+                        evidence=f"重复类型: {issue.repeat_type}",
+                        suggestion="考虑合并或删减重复内容"
+                    ))
+
+        # 检查与后一章的重复度
+        next_ch = chapter_num + 1
+        ch_file = self.chapters_dir / f'ch{next_ch:03d}.md'
+        if ch_file.exists():
+            pair_issues = self.check_chapter_pair(chapter_num, next_ch)
+            for issue in pair_issues:
+                if issue.severity in ('HIGH', 'MEDIUM'):
+                    issues.append(Issue(
+                        id=f"CR_{chapter_num:03d}_{next_ch:03d}_{issue.repeat_type}",
+                        severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
+                        checker_type=CheckerType.CHAPTER_REDUNDANCY,
+                        issue_type="chapter_redundancy",
+                        title=f"章节重复: ch{chapter_num}-ch{next_ch}",
+                        description=f"与后一章重复度{issue.similarity_score*100:.1f}%",
+                        location=IssueLocation(chapter=chapter_num),
+                        evidence=f"重复类型: {issue.repeat_type}",
+                        suggestion="考虑合并或删减重复内容"
+                    ))
+
+        return issues
 
     def _read_chapter(self, chapter_num: int) -> str:
         ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'

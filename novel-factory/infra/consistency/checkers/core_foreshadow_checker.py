@@ -5,8 +5,11 @@
 """
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+
+from .base_checker import BaseChecker
+from ..engine.data_structures import Issue, CheckerType, IssueSeverity, IssueLocation
 
 @dataclass
 class ForeshadowIssue:
@@ -16,7 +19,7 @@ class ForeshadowIssue:
     severity: str
     description: str
 
-class CoreForeshadowChecker:
+class CoreForeshadowChecker(BaseChecker):
     """
     核心伏笔检测器 - 强制100%回收
 
@@ -34,6 +37,7 @@ class CoreForeshadowChecker:
     }
 
     def __init__(self, chapters_dir: Optional[str] = None):
+        super().__init__(CheckerType.FORESHADOW)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
@@ -93,6 +97,48 @@ class CoreForeshadowChecker:
                     return True
 
         return False
+
+    def check(
+        self,
+        chapter_content: str,
+        chapter_num: int,
+        context: Optional[Dict[str, Any]] = None
+    ) -> List[Issue]:
+        """执行检查，返回标准Issue列表"""
+        # 从文件加载章节内容
+        ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
+        if not ch_file.exists():
+            return []
+
+        content = ch_file.read_text(encoding='utf-8')
+        issues = []
+
+        # 提取伏笔标记
+        foreshadow_pattern = r'【伏笔:(\w+):(.+?):([\w-]+)】'
+        matches = re.findall(foreshadow_pattern, content)
+
+        for level, foreshadow_text, expect_range in matches:
+            if self._is_recycled(foreshadow_text, chapter_num, expect_range):
+                continue
+
+            # 转换严重度
+            severity_map = {'core': IssueSeverity.P1, 'normal': IssueSeverity.P2, 'edge': IssueSeverity.P3}
+            severity = severity_map.get(level, IssueSeverity.P2)
+
+            # 转换为标准Issue
+            issues.append(Issue(
+                id=f"foreshadow-{chapter_num}-{len(issues)}",
+                severity=severity,
+                checker_type=CheckerType.FORESHADOW,
+                issue_type="foreshadow_unrecycled",
+                title=f"伏笔未回收",
+                description=f"{level}级伏笔'{foreshadow_text}'未在{expect_range}内回收",
+                location=IssueLocation(chapter=chapter_num),
+                evidence=foreshadow_text,
+                suggestion=f"在{expect_range}内添加伏笔回收情节",
+            ))
+
+        return issues
 
     def check_all(self) -> list[ForeshadowIssue]:
         """检查所有章节的伏笔"""

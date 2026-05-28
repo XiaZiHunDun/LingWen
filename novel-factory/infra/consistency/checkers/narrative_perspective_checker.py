@@ -10,10 +10,11 @@
 
 import re
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 
 from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
+from .base_checker import BaseChecker
 
 
 @dataclass
@@ -26,7 +27,7 @@ class PerspectiveIssue:
     severity: str = "MEDIUM"
 
 
-class NarrativePerspectiveChecker:
+class NarrativePerspectiveChecker(BaseChecker):
     """
     叙事视角检测器
     检测破坏林夜限知视角的段落
@@ -95,10 +96,25 @@ class NarrativePerspectiveChecker:
     OTHER_CHARACTERS = ['莫言', '苏琳', '星月', '铁蛋', '小九', '赵勇', '陈风', '周雪', '林夜父亲', '林夜母亲', '暗皇']
 
     def __init__(self, chapters_dir: Optional[str] = None):
+        super().__init__(CheckerType.NARRATIVE_PERSPECTIVE)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
         self.chapters_dir = Path(chapters_dir)
+
+    def check(
+        self,
+        chapter_content: str,
+        chapter_num: int,
+        context: Optional[Dict[str, Any]] = None
+    ) -> List[Issue]:
+        """
+        执行叙事视角检查
+
+        直接检查传入的章节内容
+        """
+        issues = self.check_content(chapter_content, chapter_num)
+        return self.generate_issues_for_chapter(chapter_num, issues)
 
     def check_chapter(self, chapter_num: int) -> List[PerspectiveIssue]:
         ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'

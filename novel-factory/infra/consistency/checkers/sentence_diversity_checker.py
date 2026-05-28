@@ -14,10 +14,14 @@ import logging
 import re
 import math
 import yaml
+import uuid
 from pathlib import Path
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
 from dataclasses import dataclass, field
 from infra.patterns import PatternRegistry
+
+from .base_checker import BaseChecker
+from ..engine.data_structures import Issue, CheckerType, IssueSeverity, IssueLocation
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +294,7 @@ def _load_patterns_from_yaml():
     return diverse_patterns, template_patterns
 
 
-class SentenceDiversityChecker:
+class SentenceDiversityChecker(BaseChecker):
     """
     句式多样性检测器
     使用Shannon多样性指数计算句式分布
@@ -311,6 +315,13 @@ class SentenceDiversityChecker:
     # 模块级缓存 - 预编译所有正则表达式
     _COMPILED_PATTERNS = None
     _TEMPLATE_COMPILED = None
+
+    def __init__(self, chapters_dir: Optional[str] = None):
+        super().__init__(CheckerType.SENTENCE_DIVERSITY)
+        if chapters_dir is None:
+            project_root = Path(__file__).parent.parent.parent.parent
+            chapters_dir = project_root / '03_内容仓库' / '04_正文'
+        self.chapters_dir = Path(chapters_dir)
 
     @classmethod
     def _get_compiled_patterns(cls):
@@ -344,11 +355,7 @@ class SentenceDiversityChecker:
 
         return cls._COMPILED_PATTERNS, cls._TEMPLATE_COMPILED
 
-    def __init__(self, chapters_dir: Optional[str] = None):
-        if chapters_dir is None:
-            project_root = Path(__file__).parent.parent.parent.parent
-            chapters_dir = project_root / '03_内容仓库' / '04_正文'
-        self.chapters_dir = Path(chapters_dir)
+    # 注意：__init__ 在上方Lines 319-324已定义，此处不重复
 
     def _count_sentences(self, content: str) -> int:
         return len(re.findall(r'[。！？]', content))
@@ -456,6 +463,33 @@ class SentenceDiversityChecker:
                     ))
         template_sentences.sort(key=lambda x: x.percentage, reverse=True)
         return template_sentences
+
+    def check(
+        self,
+        chapter_content: str,
+        chapter_num: int,
+        context: Optional[Dict[str, Any]] = None
+    ) -> List[Issue]:
+        """执行检查，返回标准Issue列表"""
+        diversity_issue = self.check_chapter(chapter_num)
+        if not diversity_issue:
+            return []
+
+        # 转换严重度
+        severity_map = {'HIGH': IssueSeverity.P1, 'MEDIUM': IssueSeverity.P2, 'LOW': IssueSeverity.P3}
+        severity = severity_map.get(diversity_issue.severity, IssueSeverity.P2)
+
+        return [Issue(
+            id=f"diversity-{chapter_num}-{diversity_issue.score}",
+            severity=severity,
+            checker_type=CheckerType.SENTENCE_DIVERSITY,
+            issue_type="sentence_diversity_low",
+            title="句式多样性不足",
+            description=diversity_issue.description,
+            location=IssueLocation(chapter=chapter_num),
+            evidence=f"Shannon指数={diversity_issue.score}",
+            suggestion="增加句式变化，避免重复使用相同句式结构",
+        )]
 
     def check_chapter(self, chapter_num: int) -> Optional[DiversityIssue]:
         score, distribution = self.score_chapter(chapter_num)

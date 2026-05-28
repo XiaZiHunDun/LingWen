@@ -133,13 +133,15 @@ class HookConfigLoader:
         "REVIEW_STARTED", "REVIEW_COMPLETED", "REVIEW_FAILED",
         "INSPIRATION_GENERATED", "OUTLINE_APPROVED",
         "STAGE_SUMMARIZED", "VOLUME_SUMMARIZED", "FINAL_SUMMARY_APPROVED",
-        "MANUAL_TRIGGER"
+        "MANUAL_TRIGGER",
+        "STEP_17_COMPLETED", "state_updated"
     }
 
     # 支持的动作类型
     VALID_ACTION_TYPES = {
         "run_checker", "notify", "update_state",
-        "run_script", "trigger_module", "request_approval"
+        "run_script", "trigger_module", "request_approval",
+        "block_proceed", "log_state_change"
     }
 
     def __init__(self):

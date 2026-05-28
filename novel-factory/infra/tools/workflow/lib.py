@@ -11,9 +11,13 @@ Usage:
 import json
 import sqlite3
 import os
+import sys
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
+
+logger = logging.getLogger(__name__)
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -82,15 +86,30 @@ def init_sqlite() -> None:
         conn.close()
 
 
+_lock_fd = None
+
 def _acquire_lock() -> bool:
     """获取flock锁"""
+    global _lock_fd
     import fcntl
     try:
-        fd = os.open(str(LOCKFILE), os.O_CREAT | os.O_RDWR)
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lock_fd = os.open(str(LOCKFILE), os.O_CREAT | os.O_RDWR)
+        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         return True
     except (IOError, OSError):
         return False
+
+def _release_lock() -> None:
+    """释放flock锁"""
+    global _lock_fd
+    import fcntl
+    if _lock_fd is not None:
+        try:
+            fcntl.flock(_lock_fd, fcntl.LOCK_UN)
+            os.close(_lock_fd)
+        except (IOError, OSError):
+            pass
+        _lock_fd = None
 
 
 # ============================================================
@@ -109,7 +128,9 @@ def get_state(key: str, fallback: str = "") -> str:
     """
     init_sqlite()
 
-    conn = sqlite3.connect(str(DB_PATH))
+    # 使用WAL模式和只读事务提高并发读性能
+    conn = sqlite3.connect(str(DB_PATH), timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.row_factory = sqlite3.Row
     try:
         cur = conn.execute(
@@ -119,8 +140,8 @@ def get_state(key: str, fallback: str = "") -> str:
         row = cur.fetchone()
         if row and row['value']:
             return row['value']
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"get_state读取失败: {e}")
     finally:
         conn.close()
 
@@ -250,6 +271,14 @@ def advance_step(target_step: str) -> Tuple[bool, str]:
         "key": "current_step",
         "value": target_step
     })
+
+    # STEP_17完成时触发强制验证闭环事件
+    if target_step == 'STEP_17':
+        _trigger_event("STEP_17_COMPLETED", {
+            "step": "STEP_17",
+            "previous_step": current_step,
+            "verify_result": None  # 初始为null，等待验证
+        })
 
     return True, f"Advanced to {target_step}"
 
@@ -398,42 +427,50 @@ def create_checkpoint(note: str = "") -> str:
     """
     init_sqlite()
 
-    checkpoint_id = datetime.now().strftime("cp_%Y%m%d_%H%M%S")
+    # 获取锁以确保读取一致快照
+    if not _acquire_lock():
+        logger.warning("无法获取锁，快照可能不一致")
+        return ""
 
-    phase = get_state("current_phase", "N/A")
-    step = get_state("current_step", "N/A")
-
-    # 获取完整状态快照
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
     try:
-        cur = conn.execute("SELECT * FROM workflow_state")
-        state_data = [dict(row) for row in cur.fetchall()]
+        checkpoint_id = datetime.now().strftime("cp_%Y%m%d_%H%M%S")
 
-        cur = conn.execute("SELECT * FROM agent_tasks ORDER BY created_at DESC")
-        task_data = [dict(row) for row in cur.fetchall()]
+        phase = get_state("current_phase", "N/A")
+        step = get_state("current_step", "N/A")
+
+        # 获取完整状态快照（在锁内）
+        conn = sqlite3.connect(str(DB_PATH))
+        conn.row_factory = sqlite3.Row
+        try:
+            cur = conn.execute("SELECT * FROM workflow_state")
+            state_data = [dict(row) for row in cur.fetchall()]
+
+            cur = conn.execute("SELECT * FROM agent_tasks ORDER BY created_at DESC")
+            task_data = [dict(row) for row in cur.fetchall()]
+        finally:
+            conn.close()
+
+        snapshot = {
+            "phase": phase,
+            "step": step,
+            "state": state_data,
+            "tasks": task_data,
+            "workflow_file": str(WORKFLOW_FILE)
+        }
+
+        conn = sqlite3.connect(str(DB_PATH))
+        try:
+            conn.execute("""
+                INSERT INTO checkpoints (checkpoint_id, phase, step, snapshot, note)
+                VALUES (?, ?, ?, ?, ?)
+            """, (checkpoint_id, phase, step, json.dumps(snapshot, ensure_ascii=False), note))
+            conn.commit()
+        finally:
+            conn.close()
+
+        return checkpoint_id
     finally:
-        conn.close()
-
-    snapshot = {
-        "phase": phase,
-        "step": step,
-        "state": state_data,
-        "tasks": task_data,
-        "workflow_file": str(WORKFLOW_FILE)
-    }
-
-    conn = sqlite3.connect(str(DB_PATH))
-    try:
-        conn.execute("""
-            INSERT INTO checkpoints (checkpoint_id, phase, step, snapshot, note)
-            VALUES (?, ?, ?, ?, ?)
-        """, (checkpoint_id, phase, step, json.dumps(snapshot, ensure_ascii=False), note))
-        conn.commit()
-    finally:
-        conn.close()
-
-    return checkpoint_id
+        _release_lock()
 
 
 def list_checkpoints() -> List[Dict]:
@@ -467,21 +504,29 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
     """
     init_sqlite()
 
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
+    # 获取锁以确保恢复操作原子性
+    if not _acquire_lock():
+        return False, "无法获取锁，另一个进程正在恢复"
 
     try:
-        cur = conn.execute(
-            "SELECT snapshot FROM checkpoints WHERE checkpoint_id = ?",
-            (checkpoint_id,)
-        )
-        row = cur.fetchone()
-        if not row:
-            return False, f"Checkpoint not found: {checkpoint_id}"
+        # 先读取快照
+        conn = sqlite3.connect(str(DB_PATH))
+        conn.row_factory = sqlite3.Row
+        try:
+            cur = conn.execute(
+                "SELECT snapshot FROM checkpoints WHERE checkpoint_id = ?",
+                (checkpoint_id,)
+            )
+            row = cur.fetchone()
+            if not row:
+                return False, f"Checkpoint not found: {checkpoint_id}"
 
-        snapshot = json.loads(row['snapshot'])
+            snapshot = json.loads(row['snapshot'])
+        finally:
+            conn.close()
 
-        # 恢复状态
+        # 然后执行恢复（在锁内）
+        conn = sqlite3.connect(str(DB_PATH))
         conn.execute("BEGIN IMMEDIATE")
         try:
             # 清空现有状态
@@ -513,15 +558,14 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
                 ))
 
             conn.commit()
+            return True, f"Restored checkpoint {checkpoint_id}"
         except Exception as e:
             conn.rollback()
             return False, f"Restore failed: {e}"
-
-        return True, f"Restored checkpoint {checkpoint_id}"
-    except Exception as e:
-        return False, f"Failed to parse checkpoint: {e}"
+        finally:
+            conn.close()
     finally:
-        conn.close()
+        _release_lock()
 
 
 def delete_checkpoint(checkpoint_id: str) -> bool:
@@ -550,18 +594,34 @@ def delete_checkpoint(checkpoint_id: str) -> bool:
 # 事件触发
 # ============================================================
 
-def _trigger_event(event_name: str, data: Dict) -> None:
-    """触发事件（异步）"""
+def _trigger_event(event_name: str, data: Dict) -> bool:
+    """触发事件（异步）
+
+    Returns:
+        True 成功，False 失败
+    """
     try:
         import asyncio
         sys.path.insert(0, str(PROJECT_ROOT))
-        from infra.hooks.event_bus import Event, get_event_bus
+        from infra.hooks.event_bus import Event
+        from infra.hooks.hook_engine import HookEngine
+        from infra.hooks.actions.block_proceed import BlockProceedAction
+        from infra.hooks.actions.log_state_change import LogStateChangeAction
 
-        eb = get_event_bus()
+        # 直接使用HookEngine触发事件
+        engine = HookEngine()
+        engine.register_action("block_proceed", BlockProceedAction)
+        engine.register_action("log_state_change", LogStateChangeAction)
+        config_path = PROJECT_ROOT / "hooks.yaml"
+        if config_path.exists():
+            engine.load_hooks(str(config_path))
+
         event = Event(name=event_name, source="lib.py", data=data)
-        asyncio.run(eb.publish_async(event))
-    except Exception:
-        pass  # EventBus不可用时静默失败
+        asyncio.run(asyncio.to_thread(engine.trigger, event))
+        return True
+    except Exception as e:
+        logger.error(f"事件触发失败: {event_name}, error: {e}")
+        return False
 
 
 def trigger_event(event_name: str, source: str = "lib.py", **data) -> None:

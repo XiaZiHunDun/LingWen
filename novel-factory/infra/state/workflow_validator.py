@@ -54,6 +54,10 @@ ALL_STEPS = [
     'STEP_16', 'STEP_17', 'STEP_18',
     'STEP_18a', 'STEP_18b', 'STEP_18c', 'STEP_18d', 'STEP_18e',  # LLM质检步骤
     'STEP_19', 'STEP_20', 'STEP_21',
+    # 阶段标记（转换目标）
+    'PHASE_2_START', 'PHASE_3_START', 'PHASE_4_START',
+    'PHASE_5_START', 'PHASE_5_LLM_QUALITY_START',
+    'PHASE_COMPLETE',
 ]
 
 
@@ -108,8 +112,12 @@ def is_valid_step(step: str) -> bool:
     # VALID_TRANSITIONS 的 key 都是有效步骤
     if step in VALID_TRANSITIONS:
         return True
-    # PHASE_COMPLETE 是有效的终点
-    if step == 'PHASE_COMPLETE':
+    # 阶段标记（如 PHASE_2_START, PHASE_3_START 等）是有效的转换目标
+    if step in ('PHASE_COMPLETE', 'PHASE_2_START', 'PHASE_3_START',
+                'PHASE_4_START', 'PHASE_5_START', 'PHASE_5_LLM_QUALITY_START'):
+        return True
+    # ALL_STEPS 中定义的其他步骤
+    if step in ALL_STEPS:
         return True
     return False
 

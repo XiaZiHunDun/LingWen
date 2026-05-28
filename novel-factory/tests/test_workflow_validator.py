@@ -107,6 +107,9 @@ class TestWorkflowIntegrity:
     def test_all_steps_have_at_least_one_transition(self):
         """所有步骤都有至少一个转换目标"""
         for step in ALL_STEPS:
+            # PHASE_* 标记是阶段入口，不是可转换的步骤，跳过
+            if step.startswith('PHASE_'):
+                continue
             allowed = get_allowed_transitions(step)
             assert len(allowed) > 0, f"{step} 没有允许的转换"
 
