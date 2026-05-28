@@ -114,7 +114,7 @@ class LLMCausalReasoningChecker(BaseChecker):
                 issues.append(self._create_issue(c, chapter_num))
         except Exception as e:
             # LLM调用失败时跳过，不阻塞其他检测器
-            logger.warning(f"LLM因果推理检测失败（章节{chapters_num}）: {e}")
+            logger.warning(f"LLM因果推理检测失败（章节{chapter_num}）: {e}")
             pass
 
         return issues
@@ -167,10 +167,7 @@ class LLMCausalReasoningChecker(BaseChecker):
 
     def _call_llm(self, prompt: str) -> Dict[str, Any]:
         """
-        调用LLM（需要集成到AI服务）
-
-        目前返回空结果，避免阻塞其他检测器。
-        实际LLM集成需要连接到项目的AI服务层。
+        调用MiniMax M2.7模型进行复杂因果推理
 
         Args:
             prompt: 构建好的prompt
@@ -178,23 +175,52 @@ class LLMCausalReasoningChecker(BaseChecker):
         Returns:
             LLM返回的JSON结果
         """
-        # TODO: 集成到项目的AI服务层
-        # 目前返回空结果，避免阻塞其他检测器
-        # 实际实现时需要：
-        # 1. 从 infra.ai_service 获取 AI provider
-        # 2. 调用对应的 LLM API
-        # 3. 解析返回结果
+        import json
+        from ...ai_service import ProviderConfig
+        from ...ai_service.router import AIRouter
 
-        # 示例实现（将来启用）：
-        # from infra.ai_service import get_ai_service
-        # ai_service = get_ai_service()
-        # response = ai_service.generate(
-        #     system=self.SYSTEM_PROMPT,
-        #     user=prompt
-        # )
-        # return json.loads(response)
+        api_key = "sk-cp-SAxCxlPVIoOKGXWH2o6Z3Ly_RfFwCRHUFNmpGkqMuJlJS3LBLKtDPCpAgCSjYGLUTQdBOazA3uDjgTIRteDdF4YYIH9qjnocwbOQRPySbHk7M4_BCV9psxs"
 
-        return {"contradictions": []}
+        # 创建MiniMax Provider
+        config = {
+            "minimax": ProviderConfig(api_key=api_key, model="MiniMax-M2.7")
+        }
+        router = AIRouter(config=config, primary_provider="minimax", enable_failover=False)
+
+        # 调用MiniMax
+        response = router.generate(
+            prompt=prompt,
+            system=self.SYSTEM_PROMPT,
+            temperature=0.1,
+            max_tokens=2048
+        )
+
+        # 解析JSON响应
+        try:
+            # 尝试提取JSON
+            json_text = response.strip()
+            if "```json" in json_text:
+                json_start = json_text.find("```json") + 7
+                json_end = json_text.rfind("```")  # 用rfind避免匹配开头的
+                if json_end > json_start:
+                    json_text = json_text[json_start:json_end].strip()
+            elif "```" in json_text:
+                # 可能有多余文本，尝试找JSON开始位置
+                json_start = json_text.find('{')
+                json_end = json_text.rfind('}')
+                if json_start >= 0 and json_end > json_start:
+                    json_text = json_text[json_start:json_end+1].strip()
+            elif not json_text.startswith('{'):
+                # 没有任何JSON标记，尝试找{和}
+                json_start = json_text.find('{')
+                json_end = json_text.rfind('}')
+                if json_start >= 0 and json_end > json_start:
+                    json_text = json_text[json_start:json_end+1].strip()
+
+            return json.loads(json_text)
+        except json.JSONDecodeError:
+            logger.warning(f"LLM返回非JSON格式: {response[:200]}")
+            return {"contradictions": []}
 
     def _create_issue(self, contradiction: Dict[str, Any], chapter_num: int) -> Issue:
         """
