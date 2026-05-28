@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import List, Dict, Any, Optional
 from .chapter_content import ChapterContent, LLMIssue
 
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 class LLMService:
     """LLM服务基类 - 提供批量检测能力"""
 
-    DEFAULT_API_KEY = "sk-cp-SAxCxlPVIoOKGXWH2o6Z3Ly_RfFwCRHUFNmpGkqMuJlJS3LBLKtDPCpAgCSjYGLUTQdBOazA3uDjgTIRteDdF4YYIH9qjnocwbOQRPySbHk7M4_BCV9psxs"
+    DEFAULT_API_KEY = os.environ.get("MINIMAX_API_KEY", "")
 
     def __init__(self, api_key: Optional[str] = None, batch_size: int = 10):
         self.api_key = api_key or self.DEFAULT_API_KEY
