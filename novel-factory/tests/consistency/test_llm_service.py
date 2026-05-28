@@ -43,3 +43,16 @@ def test_llm_service_batch_threshold():
     assert not service._should_execute()
     service.add_to_batch(3, "内容3", [])
     assert service._should_execute()
+
+def test_prompts_defined():
+    from infra.consistency.llm_service.prompts import (
+        ABILITY_LLM_PROMPT, CHARACTER_LLM_PROMPT, RELATIONSHIP_LLM_PROMPT,
+        FORESHADOW_LLM_PROMPT, BATTLE_LLM_PROMPT, PERSONALITY_LLM_PROMPT, KNOWLEDGE_LLM_PROMPT
+    )
+    assert "能力" in ABILITY_LLM_PROMPT
+    assert "角色" in CHARACTER_LLM_PROMPT
+    assert "关系" in RELATIONSHIP_LLM_PROMPT
+    assert "伏笔" in FORESHADOW_LLM_PROMPT
+    assert "战斗" in BATTLE_LLM_PROMPT
+    assert "性格" in PERSONALITY_LLM_PROMPT
+    assert "知识" in KNOWLEDGE_LLM_PROMPT
