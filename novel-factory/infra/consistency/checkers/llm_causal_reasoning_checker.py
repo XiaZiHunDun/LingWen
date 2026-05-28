@@ -176,10 +176,13 @@ class LLMCausalReasoningChecker(BaseChecker):
             LLM返回的JSON结果
         """
         import json
+        import os
         from ...ai_service import ProviderConfig
         from ...ai_service.router import AIRouter
 
-        api_key = "sk-cp-SAxCxlPVIoOKGXWH2o6Z3Ly_RfFwCRHUFNmpGkqMuJlJS3LBLKtDPCpAgCSjYGLUTQdBOazA3uDjgTIRteDdF4YYIH9qjnocwbOQRPySbHk7M4_BCV9psxs"
+        api_key = os.environ.get("MINIMAX_API_KEY")
+        if not api_key:
+            raise RuntimeError("MINIMAX_API_KEY environment variable not set")
 
         # 创建MiniMax Provider
         config = {

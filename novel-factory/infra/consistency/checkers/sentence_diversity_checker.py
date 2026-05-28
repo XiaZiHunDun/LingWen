@@ -269,8 +269,8 @@ def _load_patterns_from_yaml():
                         (p['pattern'], p['name'], p['label'])
                         for p in data['diverse_patterns']
                     ]
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"加载 sentence_diversity_rules.yaml 失败，使用默认模式: {e}")
 
     if template_path.exists():
         try:
@@ -281,8 +281,8 @@ def _load_patterns_from_yaml():
                         (p['pattern'], p['name'], p.get('suggestions', []))
                         for p in data['template_patterns']
                     ]
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"加载 template_sentence_rules.yaml 失败，使用默认模式: {e}")
 
     return diverse_patterns, template_patterns
 
@@ -328,16 +328,16 @@ class SentenceDiversityChecker:
                     # 回退：本地编译
                     try:
                         cls._COMPILED_PATTERNS.append((re.compile(pattern), name, label))
-                    except re.error:
-                        pass
+                    except re.error as e:
+                        logger.warning(f"正则表达式编译失败 ({name}): {e}")
 
             # 模板模式处理（Registry中可能没有完整定义）
             cls._TEMPLATE_COMPILED = []
             for pattern, name, suggestions in cls.TEMPLATE_PATTERNS:
                 try:
                     cls._TEMPLATE_COMPILED.append((re.compile(pattern), name, suggestions))
-                except re.error:
-                    pass
+                except re.error as e:
+                    logger.warning(f"模板正则表达式编译失败 ({name}): {e}")
 
         return cls._COMPILED_PATTERNS, cls._TEMPLATE_COMPILED
 

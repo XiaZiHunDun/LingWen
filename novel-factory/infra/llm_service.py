@@ -9,12 +9,15 @@
 3. OpenAI
 """
 
+import logging
 import os
 import json
 import re
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 from .ai_service.base import (
     AIProvider,
@@ -98,7 +101,7 @@ class LLMService:
                     self._provider_name = provider_name
                     return
                 except Exception as e:
-                    print(f"[WARN] {provider_name} 初始化失败: {e}")
+                    logger.warning(f"{provider_name} 初始化失败: {e}")
                     continue
 
         raise RuntimeError("无可用的LLM Provider")
