@@ -38,6 +38,7 @@ from ..checkers.foreshadow_quality import ForeshadowQualityChecker
 from ..checkers.character_agency import CharacterAgencyChecker
 from ..checkers.timeline_age import TimelineAgeConsistencyChecker
 from ..checkers.battle_visualization import BattleVisualizationChecker
+from ..checkers.repair_trace_checker import RepairTraceChecker
 
 
 class ConsistencyEngine:
@@ -104,6 +105,7 @@ class ConsistencyEngine:
             CheckerType.CHARACTER_AGENCY: CharacterAgencyChecker(),
             CheckerType.TIMELINE_AGE: TimelineAgeConsistencyChecker(),
             CheckerType.BATTLE_VISUALIZATION: BattleVisualizationChecker(),
+            CheckerType.REPAIR_TRACE: RepairTraceChecker(),
         }
 
     def _enrich_context_from_memory(

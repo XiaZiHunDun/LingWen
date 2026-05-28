@@ -51,6 +51,7 @@ class CheckerType(Enum):
     TIMELINE_AGE = "timeline_age"
     BATTLE_VISUALIZATION = "battle_visualization"
     CROSS_CHAPTER_LOGIC = "cross_chapter_logic"
+    REPAIR_TRACE = "repair_trace"
 
 
 class CheckScope(Enum):
