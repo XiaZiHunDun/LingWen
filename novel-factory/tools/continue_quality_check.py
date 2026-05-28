@@ -11,6 +11,7 @@
 
 import asyncio
 import json
+import logging
 import os
 import re
 import sys
@@ -19,6 +20,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import time
+
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -132,7 +135,8 @@ class ContinueQualityChecker:
                     )
                     results = self._parse_check_response(chapter_num, check_type, response)
                     return results
-                except:
+                except Exception as e:
+                    logger.warning(f"重试失败 ch{chapter_num:03d}: {e}")
                     pass
             print(f"[ERROR] ch{chapter_num:03d} {check_type}: {e}")
             return []
@@ -167,8 +171,8 @@ class ContinueQualityChecker:
                         evidence=data.get('evidence', ''),
                         suggestion=data.get('suggestion', '')
                     ))
-            except:
-                pass
+            except json.JSONDecodeError:
+                logger.debug(f"JSON解析失败 ch{chapter_num:03d}")
         return results
 
     LOGIC_CONSISTENCY_PROMPT = """你是一个严格的小说审核员。请检查以下章节的逻辑一致性问题。

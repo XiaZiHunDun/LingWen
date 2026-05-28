@@ -8,6 +8,7 @@
 
 import asyncio
 import json
+import logging
 import os
 import re
 import sys
@@ -17,6 +18,8 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 import time
+
+logger = logging.getLogger(__name__)
 
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -170,8 +173,8 @@ class ComprehensiveQualityChecker:
                         evidence=data.get('evidence', ''),
                         suggestion=data.get('suggestion', '')
                     ))
-            except:
-                pass
+            except json.JSONDecodeError:
+                logger.debug(f"JSON解析失败 (chapter {chapter_num})")
         return results
 
     # ==================== 检查提示词模板 ====================

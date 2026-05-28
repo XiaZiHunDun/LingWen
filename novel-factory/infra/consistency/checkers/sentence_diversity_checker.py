@@ -10,6 +10,7 @@
 当前阈值(excellent=3.0/pass=1.5)已校准，因模式覆盖受限。
 随着模式增加，阈值将逐步调整至标准值(Shannon≥3.5/2.5)。
 """
+import logging
 import re
 import math
 import yaml
@@ -17,6 +18,8 @@ from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass, field
 from infra.patterns import PatternRegistry
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class DiversityIssue:

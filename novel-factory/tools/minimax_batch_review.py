@@ -8,6 +8,7 @@ MiniMax M2.7 全量检查脚本 - 360章 / 4000次调用
 检查维度：S1-S8 + 一致性 + 伏笔 + AI痕迹
 """
 
+import logging
 import os
 import sys
 import json
@@ -15,6 +16,8 @@ import time
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 # 立即刷新stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', buffering=1)
@@ -39,7 +42,8 @@ class MiniMaxReviewer:
             with open(profile_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return {c["name"]: c for c in data.get("characters", [])}
-        except:
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning(f"加载角色配置失败: {e}")
             return {}
 
     def _load_chapter(self, chapter_num: int) -> Optional[str]:
@@ -47,7 +51,8 @@ class MiniMaxReviewer:
         try:
             with open(chapter_file, "r", encoding="utf-8") as f:
                 return f.read()
-        except:
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning(f"文件读取失败: {e}")
             return None
 
     def _call(self, prompt: str, max_tokens: int = 1500) -> str:
@@ -66,7 +71,8 @@ class MiniMaxReviewer:
                     if text.startswith("json"):
                         text = text[4:].lstrip("\n")
             return json.loads(text.strip())
-        except:
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON解析失败: {e}")
             return {}
 
     def review_chapter(self, chapter_num: int) -> Dict[str, Any]:

@@ -6,10 +6,13 @@
 与记忆系统集成，通过 MemoryGateway 获取上下文
 """
 
+import logging
 import time
 import yaml
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 from .data_structures import (
     Issue, ConsistencyReport, CheckerResult, QualityDimension,
