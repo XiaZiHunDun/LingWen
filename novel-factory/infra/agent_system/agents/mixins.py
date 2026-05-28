@@ -241,19 +241,19 @@ class AnalysisMixin:
     提供基于LLM的内容分析能力。
     """
 
-    def analyze_chapter(
+    def _build_analysis_prompt(
         self,
         content: str,
-        dimensions: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """分析章节质量
+        dimensions: List[str]
+    ) -> str:
+        """构建章节分析Prompt
 
         Args:
             content: 章节内容
-            dimensions: 分析维度列表 (S1-S8)
+            dimensions: 分析维度列表
 
         Returns:
-            分析结果
+            格式化的分析Prompt
         """
         dimension_map = {
             "S1": "剧情完整性",
@@ -266,18 +266,15 @@ class AnalysisMixin:
             "S8": "人物弧光",
         }
 
-        if dimensions is None:
-            dimensions = list(dimension_map.keys())
-
         dims_desc = "\n".join([f"- {d}: {dimension_map.get(d, d)}" for d in dimensions])
 
-        prompt = f"""请分析以下小说章节的质量：
+        return f"""请分析以下小说章节的质量：
 
 ## 分析维度
 {dims_desc}
 
 ## 章节内容
-{content[:8000]}  # 限制长度避免超出token限制
+{content[:8000]}
 
 ## 输出要求
 请以JSON格式输出分析结果：
@@ -300,4 +297,23 @@ class AnalysisMixin:
     "summary": "总体评价"
 }}
 """
+
+    def analyze_chapter(
+        self,
+        content: str,
+        dimensions: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """分析章节质量
+
+        Args:
+            content: 章节内容
+            dimensions: 分析维度列表 (S1-S8)
+
+        Returns:
+            分析结果
+        """
+        if dimensions is None:
+            dimensions = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]
+
+        prompt = self._build_analysis_prompt(content, dimensions)
         return self.chat_json(prompt)

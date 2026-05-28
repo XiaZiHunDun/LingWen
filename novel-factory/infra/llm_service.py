@@ -175,7 +175,7 @@ class LLMService:
             if json_match:
                 try:
                     return json.loads(json_match.group())
-                except:
+                except json.JSONDecodeError:
                     pass
             raise AIProviderError(f"JSON解析失败: {e}")
 

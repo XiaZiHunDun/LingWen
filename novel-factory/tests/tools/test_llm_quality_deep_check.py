@@ -115,7 +115,7 @@ class TestLLMQualityChecker:
 
 
 class TestRepairMethods:
-    """修复方法测试"""
+    """修复方法签名测试"""
 
     @pytest.fixture
     def mock_llm_service(self):
@@ -132,57 +132,20 @@ class TestRepairMethods:
             from tools.llm_quality_deep_check import LLMQualityChecker
             return LLMQualityChecker(llm_service=mock_llm_service)
 
-    def test_repair_character_issue_signature(self, checker):
-        """测试repair_character_issue方法签名"""
-        from infra.quality import Issue
+    def test_check_character_consistency_exists(self, checker):
+        """测试check_character_consistency方法存在"""
+        assert hasattr(checker, 'check_character_consistency')
+        assert callable(checker.check_character_consistency)
 
-        issue = Issue(
-            chapter=1,
-            dimension="S9",
-            issue_type="character_inconsistency",
-            severity="P1",
-            description="测试问题"
-        )
+    def test_scan_logic_contradictions_exists(self, checker):
+        """测试scan_logic_contradictions方法存在"""
+        assert hasattr(checker, 'scan_logic_contradictions')
+        assert callable(checker.scan_logic_contradictions)
 
-        chapter_content = "测试章节内容"
-
-        # 验证方法存在且可调用（不验证实际LLM调用）
-        assert hasattr(checker, 'repair_character_issue')
-        assert callable(checker.repair_character_issue)
-
-    def test_repair_logic_issue_signature(self, checker):
-        """测试repair_logic_issue方法签名"""
-        from infra.quality import Issue
-
-        issue = Issue(
-            chapter=1,
-            dimension="S2",
-            issue_type="logic_contradiction",
-            severity="P1",
-            description="测试逻辑问题"
-        )
-
-        chapter_content = "测试章节内容"
-
-        assert hasattr(checker, 'repair_logic_issue')
-        assert callable(checker.repair_logic_issue)
-
-    def test_repair_foreshadow_issue_signature(self, checker):
-        """测试repair_foreshadow_issue方法签名"""
-        from infra.quality import Issue
-
-        issue = Issue(
-            chapter=1,
-            dimension="S11",
-            issue_type="foreshadow_unresolved",
-            severity="P2",
-            description="测试伏笔问题"
-        )
-
-        chapter_content = "测试章节内容"
-
-        assert hasattr(checker, 'repair_foreshadow_issue')
-        assert callable(checker.repair_foreshadow_issue)
+    def test_verify_foreshadow_completeness_exists(self, checker):
+        """测试verify_foreshadow_completeness方法存在"""
+        assert hasattr(checker, 'verify_foreshadow_completeness')
+        assert callable(checker.verify_foreshadow_completeness)
 
 
 class TestComprehensiveQualityChecker:
@@ -233,6 +196,8 @@ class TestComprehensiveQualityChecker:
             ch_file.write_text("测试章节正文内容", encoding='utf-8')
 
             checker.project_root = project_root
+            # 直接设置chapters_dir，因为ComprehensiveQualityChecker使用固定的PROJECT_ROOT
+            checker.chapters_dir = chapters_dir
 
             content = checker.read_chapter(999)
             assert content is not None
