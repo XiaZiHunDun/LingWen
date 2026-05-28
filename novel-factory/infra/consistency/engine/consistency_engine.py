@@ -45,6 +45,7 @@ from ..checkers.spatial_transition_checker import SpatialTransitionChecker
 from ..checkers.relationship_state_checker import RelationshipStateChecker
 from ..checkers.knowledge_tracker import KnowledgeTracker
 from ..checkers.dialogue_action_checker import DialogueActionChecker
+from ..checkers.llm_causal_reasoning_checker import LLMCausalReasoningChecker
 
 
 class ConsistencyEngine:
@@ -118,6 +119,7 @@ class ConsistencyEngine:
             CheckerType.RELATIONSHIP_STATE: RelationshipStateChecker(),
             CheckerType.KNOWLEDGE_TRACKING: KnowledgeTracker(),
             CheckerType.DIALOGUE_ACTION: DialogueActionChecker(),
+            CheckerType.LLM_CAUSAL_REASONING: LLMCausalReasoningChecker(),
         }
 
     def _enrich_context_from_memory(
