@@ -39,7 +39,6 @@ from ..checkers.character_agency import CharacterAgencyChecker
 from ..checkers.timeline_age import TimelineAgeConsistencyChecker
 from ..checkers.battle_visualization import BattleVisualizationChecker
 from ..checkers.repair_trace_checker import RepairTraceChecker
-from ..checkers.gender_consistency_checker import GenderConsistencyChecker
 from ..checkers.causal_chain_checker import CausalChainChecker
 from ..checkers.spatial_transition_checker import SpatialTransitionChecker
 from ..checkers.relationship_state_checker import RelationshipStateChecker
@@ -113,7 +112,6 @@ class ConsistencyEngine:
             CheckerType.TIMELINE_AGE: TimelineAgeConsistencyChecker(),
             CheckerType.BATTLE_VISUALIZATION: BattleVisualizationChecker(),
             CheckerType.REPAIR_TRACE: RepairTraceChecker(),
-            CheckerType.GENDER_CONSISTENCY: GenderConsistencyChecker(),
             CheckerType.CAUSAL_CHAIN: CausalChainChecker(),
             CheckerType.SPATIAL_TRANSITION: SpatialTransitionChecker(),
             CheckerType.RELATIONSHIP_STATE: RelationshipStateChecker(),

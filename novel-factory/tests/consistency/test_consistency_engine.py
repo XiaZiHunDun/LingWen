@@ -19,9 +19,9 @@ class TestConsistencyEngineInit:
     def test_default_init(self):
         engine = ConsistencyEngine()
         assert engine is not None
-        # 14 checkers: 9 original + 5 new (scene_pattern, foreshadow_quality, character_agency, timeline_age, battle_visualization)
-        # 16 original + 6 new (causal_chain, spatial_transition, relationship_state, knowledge_tracking, dialogue_action, llm_causal_reasoning) = 22 total
-        assert len(engine.checkers) == 22
+        # 16 original + 5 new (causal_chain, spatial_transition, relationship_state, knowledge_tracking, dialogue_action, llm_causal_reasoning) = 21 total
+        # Note: GENDER_CONSISTENCY was in the plan but never implemented
+        assert len(engine.checkers) == 21
 
     def test_scope_init(self):
         engine = ConsistencyEngine(scope=CheckScope.CRITICAL)
