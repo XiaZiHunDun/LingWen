@@ -20,3 +20,26 @@ def test_chapter_content_regions():
     ch = ChapterContent(chapter_num=5, content="内容", uncertain_regions=regions)
     assert len(ch.uncertain_regions) == 2
     assert ch.uncertain_regions[0]["type"] == "ability"
+
+
+def test_llm_service_initialization():
+    from infra.consistency.llm_service.base import LLMService
+    service = LLMService(api_key="test-key", batch_size=10)
+    assert service.batch_size == 10
+    assert service.api_key == "test-key"
+
+def test_llm_service_add_to_batch():
+    from infra.consistency.llm_service.base import LLMService
+    service = LLMService(api_key="test-key", batch_size=10)
+    service.add_to_batch(1, "内容", [])
+    assert len(service._pending) == 1
+
+def test_llm_service_batch_threshold():
+    from infra.consistency.llm_service.base import LLMService
+    service = LLMService(api_key="test-key", batch_size=3)
+    service.add_to_batch(1, "内容1", [])
+    service.add_to_batch(2, "内容2", [])
+    assert len(service._pending) == 2
+    assert not service._should_execute()
+    service.add_to_batch(3, "内容3", [])
+    assert service._should_execute()
