@@ -10,6 +10,7 @@
 import sys
 import re
 from pathlib import Path
+from typing import Tuple, List, Any
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -34,7 +35,7 @@ class GenderConsistencyRepairer(BaseConsistencyRepairer):
             ('他（', '他'),
         ]
 
-    def _apply_fixes(self, content, issues=None):
+    def _apply_fixes(self, content: str, issues: List[Any] = None) -> Tuple[str, int, List[str]]:
         """
         应用性别一致性修复
 

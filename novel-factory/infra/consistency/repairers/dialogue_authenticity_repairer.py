@@ -10,6 +10,7 @@
 import sys
 import re
 from pathlib import Path
+from typing import Tuple, List, Any
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -69,7 +70,7 @@ class DialogueAuthenticityRepairer(BaseConsistencyRepairer):
             ('"确实如此，"', '"是这么回事"', '规整确认'),
         ]
 
-    def _apply_fixes(self, content, issues=None):
+    def _apply_fixes(self, content: str, issues: List[Any] = None) -> Tuple[str, int, List[str]]:
         """
         应用对话真实性修复
 

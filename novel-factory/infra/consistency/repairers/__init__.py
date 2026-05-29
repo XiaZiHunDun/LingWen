@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 import logging
 
@@ -45,7 +46,6 @@ class BaseConsistencyRepairer:
 
     def _get_project_root(self) -> Path:
         """获取项目根目录"""
-        from pathlib import Path
         return Path(__file__).parent.parent.parent.parent
 
     def repair(self, chapter_num: int, issues: List[Any] = None) -> ConsistencyRepairResult:
