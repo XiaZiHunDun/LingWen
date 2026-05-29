@@ -8,6 +8,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from typing import Tuple, List, Any
 from infra.consistency.repairers import BaseConsistencyRepairer, ConsistencyRepairResult
 
 
@@ -93,7 +94,7 @@ class CorePropsRepairer(BaseConsistencyRepairer):
         }
         return contexts.get(prop_name, f'看到{prop_name}')
 
-    def _apply_fixes(self, content: str, issues=None, chapter_num: int = None) -> tuple:
+    def _apply_fixes(self, content: str, issues: List[Any] = None) -> Tuple[str, int, List[str]]:
         """应用修复
 
         对于缺少核心道具的章节，在合适位置插入道具引用
@@ -103,9 +104,10 @@ class CorePropsRepairer(BaseConsistencyRepairer):
         """
         import re
 
-        if chapter_num is None:
-            # 从文件名提取章节号
-            match = re.search(r'ch(\d+)\.md', self._current_file or '')
+        # 从文件名提取章节号
+        chapter_num = None
+        if self._current_file:
+            match = re.search(r'ch(\d+)\.md', self._current_file)
             if match:
                 chapter_num = int(match.group(1))
 
@@ -159,7 +161,7 @@ class CorePropsRepairer(BaseConsistencyRepairer):
             )
 
         try:
-            new_content, changes, repaired = self._apply_fixes(content, issues or [], chapter_num=chapter_num)
+            new_content, changes, repaired = self._apply_fixes(content, issues or [])
             if changes > 0:
                 self._write_chapter(chapter_num, new_content)
 
@@ -173,7 +175,7 @@ class CorePropsRepairer(BaseConsistencyRepairer):
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.exception(f"修复章节{ch}失败: {e}")
+            logger.exception(f"修复章节{chapter_num}失败: {e}")
             return ConsistencyRepairResult(
                 chapter=chapter_num,
                 success=False,
