@@ -53,7 +53,7 @@ print(f'worldview:{{result.changes}}')
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
         results["worldview"] = int(output.strip().split(":")[-1])
-    except:
+    except (subprocess.CalledProcessError, ValueError, IndexError):
         results["worldview"] = 0
 
     # 修复AI痕迹
@@ -71,7 +71,7 @@ print(f'ai_trace:{{result.changes}}')
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
         results["ai_trace"] = int(output.strip().split(":")[-1])
-    except:
+    except (subprocess.CalledProcessError, ValueError, IndexError):
         results["ai_trace"] = 0
 
     return results

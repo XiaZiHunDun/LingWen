@@ -19,7 +19,7 @@ class SceneTransitionChecker(BaseChecker):
     """场景转换检测器"""
 
     def __init__(self):
-        super().__init__(CheckerType.SCENE_PATTERN)
+        super().__init__(CheckerType.SCENE_TRANSITION)
 
         # 突兀转换标记词
         self.abrupt_markers = [

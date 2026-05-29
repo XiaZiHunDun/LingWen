@@ -19,7 +19,7 @@ class PacingChecker(BaseChecker):
     """节奏检测器"""
 
     def __init__(self):
-        super().__init__(CheckerType.SCENE_PATTERN)
+        super().__init__(CheckerType.PACING)
 
         # 高潮/动作关键词
         self.action_keywords = [

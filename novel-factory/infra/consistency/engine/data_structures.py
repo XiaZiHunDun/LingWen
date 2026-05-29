@@ -46,6 +46,8 @@ class CheckerType(Enum):
     CHAPTER_REDUNDANCY = "chapter_redundancy"
     NARRATIVE_PERSPECTIVE = "narrative_perspective"
     SCENE_PATTERN = "scene_pattern_repeat"
+    PACING = "pacing_checker"
+    SCENE_TRANSITION = "scene_transition_checker"
     FORESHADOW_QUALITY = "foreshadow_quality"
     CHARACTER_AGENCY = "character_agency"
     TIMELINE_AGE = "timeline_age"
@@ -166,7 +168,7 @@ class Issue:
             suggestion=data.get("suggestion", ""),
             character=data.get("character"),
             created_at=datetime.fromisoformat(data.get("created_at", datetime.now().isoformat())),
-            confidence=data.get("confidence", "MED"),
+            confidence=ConfidenceLevel(data.get("confidence", "MED")),
             confidence_score=data.get("confidence_score", 0.5),
             context_used=data.get("context_used", []),
             needs_llm_review=data.get("needs_llm_review", False),

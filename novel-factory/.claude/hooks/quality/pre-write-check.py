@@ -20,7 +20,7 @@ def get_chapter_content_from_input() -> tuple:
     try:
         data = json.load(sys.stdin)
         return data.get("tool_input", {})
-    except:
+    except json.JSONDecodeError as e:
         return {}
 
 
