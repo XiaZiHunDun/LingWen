@@ -184,13 +184,6 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
 
         return content
 
-    def repair_batch(self, chapter_nums: List[int], issues_map: Dict[int, List[Any]] = None) -> Dict[int, ConsistencyRepairResult]:
-        """批量修复章节"""
-        results = {}
-        for ch in chapter_nums:
-            results[ch] = self.repair(ch, issues_map.get(ch) if issues_map else None)
-        return results
-
 
 def main():
     import argparse

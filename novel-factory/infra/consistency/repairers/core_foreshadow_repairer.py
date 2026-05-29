@@ -154,13 +154,6 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
         # 修复问题
         return self.repair(chapter_num, issues)
 
-    def repair_batch(self, chapter_nums: List[int], issues_map: Dict[int, List[Any]] = None) -> Dict[int, ConsistencyRepairResult]:
-        """批量修复章节"""
-        results = {}
-        for ch in chapter_nums:
-            results[ch] = self.check_and_repair_chapter(ch)
-        return results
-
 
 def main():
     import argparse

@@ -10,7 +10,7 @@
 import sys
 import re
 from pathlib import Path
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -35,7 +35,7 @@ class SceneTransitionRepairer(BaseConsistencyRepairer):
         '与此同时，', '与此同时的',
     ]
 
-    def __init__(self, project_root=None):
+    def __init__(self, project_root: Optional[str] = None):
         super().__init__(project_root)
 
     def _get_fix_rules(self) -> List[Tuple[str, str, str]]:

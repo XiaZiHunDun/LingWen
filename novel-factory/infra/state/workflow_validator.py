@@ -33,7 +33,7 @@ VALID_TRANSITIONS = {
     # PHASE_6 审核期
     'STEP_16': ['STEP_17', 'STEP_16', 'STEP_18a'],  # 允许重审，退回重写，或进入LLM质检
     'STEP_17': ['STEP_18'],
-    'STEP_18': ['STEP_18a', 'STEP_19', 'STEP_16'],  # 验证失败可退回重写或进入LLM质检
+    'STEP_18': ['STEP_18a', 'STEP_16'],  # 验证失败可退回重写或进入LLM质检，禁止直接跳转到STEP_19
     'STEP_18a': ['STEP_18b'],  # 角色一致性深度检测
     'STEP_18b': ['STEP_18c'],  # 逻辑矛盾全面扫描
     'STEP_18c': ['STEP_18d'],  # 伏笔回收完整性验证
@@ -133,8 +133,9 @@ if __name__ == '__main__':
         ('STEP_15', 'STEP_16'),
         ('STEP_16', 'STEP_17'),
         ('STEP_16', 'STEP_16'),  # 重审
-        ('STEP_18', 'STEP_19'),
+        ('STEP_18', 'STEP_18a'),  # LLM质检流程
         ('STEP_18', 'STEP_16'),  # 退回重写
+        ('STEP_18e', 'STEP_19'),  # LLM质检完成后进入汇总
         ('STEP_21', 'PHASE_COMPLETE'),
     ]
 

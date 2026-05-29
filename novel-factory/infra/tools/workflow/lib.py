@@ -595,6 +595,33 @@ def delete_checkpoint(checkpoint_id: str) -> bool:
 # 事件触发
 # ============================================================
 
+# HookEngine单例缓存
+_hook_engine_instance: Optional[Any] = None
+_hook_engine_lock: Any = None  # 延迟初始化
+
+def _get_hook_engine():
+    """获取或创建HookEngine单例（线程安全）"""
+    global _hook_engine_instance, _hook_engine_lock
+    if _hook_engine_instance is None:
+        import threading
+        if _hook_engine_lock is None:
+            _hook_engine_lock = threading.Lock()
+        with _hook_engine_lock:
+            if _hook_engine_instance is None:
+                from infra.hooks.hook_engine import HookEngine
+                from infra.hooks.actions.block_proceed import BlockProceedAction
+                from infra.hooks.actions.log_state_change import LogStateChangeAction
+
+                engine = HookEngine()
+                engine.register_action("block_proceed", BlockProceedAction)
+                engine.register_action("log_state_change", LogStateChangeAction)
+                config_path = PROJECT_ROOT / "hooks.yaml"
+                if config_path.exists():
+                    engine.load_hooks(str(config_path))
+                _hook_engine_instance = engine
+    return _hook_engine_instance
+
+
 def _trigger_event(event_name: str, data: Dict) -> bool:
     """触发事件（异步）
 
@@ -603,20 +630,9 @@ def _trigger_event(event_name: str, data: Dict) -> bool:
     """
     try:
         import asyncio
-        sys.path.insert(0, str(PROJECT_ROOT))
         from infra.hooks.event_bus import Event
-        from infra.hooks.hook_engine import HookEngine
-        from infra.hooks.actions.block_proceed import BlockProceedAction
-        from infra.hooks.actions.log_state_change import LogStateChangeAction
 
-        # 直接使用HookEngine触发事件
-        engine = HookEngine()
-        engine.register_action("block_proceed", BlockProceedAction)
-        engine.register_action("log_state_change", LogStateChangeAction)
-        config_path = PROJECT_ROOT / "hooks.yaml"
-        if config_path.exists():
-            engine.load_hooks(str(config_path))
-
+        engine = _get_hook_engine()
         event = Event(name=event_name, source="lib.py", data=data)
         asyncio.run(asyncio.to_thread(engine.trigger, event))
         return True

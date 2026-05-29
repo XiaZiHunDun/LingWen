@@ -53,6 +53,7 @@ from ..checkers.sentence_diversity_checker import SentenceDiversityChecker
 from ..checkers.repetitive_phrase_checker import RepetitivePhraseChecker
 from ..checkers.chapter_redundancy_checker import ChapterRedundancyChecker
 from ..checkers.narrative_perspective_checker import NarrativePerspectiveChecker
+from ..checkers.cross_chapter_logic_checker import CrossChapterLogicChecker
 
 
 class ConsistencyEngine:
@@ -131,6 +132,7 @@ class ConsistencyEngine:
             CheckerType.REPETITIVE_PHRASE: RepetitivePhraseChecker(),
             CheckerType.CHAPTER_REDUNDANCY: ChapterRedundancyChecker(),
             CheckerType.NARRATIVE_PERSPECTIVE: NarrativePerspectiveChecker(),
+            CheckerType.CROSS_CHAPTER_LOGIC: CrossChapterLogicChecker(),
         }
 
     def _enrich_context_from_memory(

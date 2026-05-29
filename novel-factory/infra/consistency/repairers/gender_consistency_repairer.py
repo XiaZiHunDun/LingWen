@@ -10,7 +10,7 @@
 import sys
 import re
 from pathlib import Path
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -21,7 +21,7 @@ from infra.consistency.repairers import BaseConsistencyRepairer, ConsistencyRepa
 class GenderConsistencyRepairer(BaseConsistencyRepairer):
     """性别一致性修复器 - 消除性别引用错误"""
 
-    def __init__(self, project_root=None):
+    def __init__(self, project_root: Optional[str] = None):
         super().__init__(project_root)
 
     def _get_fix_rules(self):
