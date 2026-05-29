@@ -49,6 +49,10 @@ from ..checkers.relationship_state_checker import RelationshipStateChecker
 from ..checkers.knowledge_tracker import KnowledgeTracker
 from ..checkers.dialogue_action_checker import DialogueActionChecker
 from ..checkers.llm_causal_reasoning_checker import LLMCausalReasoningChecker
+from ..checkers.sentence_diversity_checker import SentenceDiversityChecker
+from ..checkers.repetitive_phrase_checker import RepetitivePhraseChecker
+from ..checkers.chapter_redundancy_checker import ChapterRedundancyChecker
+from ..checkers.narrative_perspective_checker import NarrativePerspectiveChecker
 
 
 class ConsistencyEngine:
@@ -123,6 +127,10 @@ class ConsistencyEngine:
             CheckerType.KNOWLEDGE_TRACKING: KnowledgeTracker(),
             CheckerType.DIALOGUE_ACTION: DialogueActionChecker(),
             CheckerType.LLM_CAUSAL_REASONING: LLMCausalReasoningChecker(),
+            CheckerType.SENTENCE_DIVERSITY: SentenceDiversityChecker(),
+            CheckerType.REPETITIVE_PHRASE: RepetitivePhraseChecker(),
+            CheckerType.CHAPTER_REDUNDANCY: ChapterRedundancyChecker(),
+            CheckerType.NARRATIVE_PERSPECTIVE: NarrativePerspectiveChecker(),
         }
 
     def _enrich_context_from_memory(

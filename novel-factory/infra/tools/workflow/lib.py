@@ -181,7 +181,8 @@ def set_state(key: str, value: str) -> bool:
     """
     init_sqlite()
 
-    conn = sqlite3.connect(str(DB_PATH))
+    conn = sqlite3.connect(str(DB_PATH), timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL")
     try:
         conn.execute("BEGIN IMMEDIATE")
         conn.execute("""

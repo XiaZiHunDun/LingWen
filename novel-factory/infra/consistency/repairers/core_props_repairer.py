@@ -190,7 +190,7 @@ class CorePropsRepairer(BaseConsistencyRepairer):
         if not content:
             return ""
 
-        new_content, _, _ = self._apply_fixes(content, issues or [], chapter_num=chapter_num)
+        new_content, _, _ = self._apply_fixes(content, issues or [])
         return new_content
 
 
