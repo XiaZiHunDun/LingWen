@@ -13,6 +13,7 @@ import sqlite3
 import os
 import sys
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -439,8 +440,10 @@ def create_checkpoint(note: str = "") -> str:
         phase = get_state("current_phase", "N/A")
         step = get_state("current_step", "N/A")
 
-        # 获取完整状态快照（在锁内）
-        conn = sqlite3.connect(str(DB_PATH))
+        # 获取完整状态快照（在单一事务内）
+        conn = sqlite3.connect(str(DB_PATH), timeout=30)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("BEGIN IMMEDIATE")
         conn.row_factory = sqlite3.Row
         try:
             cur = conn.execute("SELECT * FROM workflow_state")
@@ -448,19 +451,15 @@ def create_checkpoint(note: str = "") -> str:
 
             cur = conn.execute("SELECT * FROM agent_tasks ORDER BY created_at DESC")
             task_data = [dict(row) for row in cur.fetchall()]
-        finally:
-            conn.close()
 
-        snapshot = {
-            "phase": phase,
-            "step": step,
-            "state": state_data,
-            "tasks": task_data,
-            "workflow_file": str(WORKFLOW_FILE)
-        }
+            snapshot = {
+                "phase": phase,
+                "step": step,
+                "state": state_data,
+                "tasks": task_data,
+                "workflow_file": str(WORKFLOW_FILE)
+            }
 
-        conn = sqlite3.connect(str(DB_PATH))
-        try:
             conn.execute("""
                 INSERT INTO checkpoints (checkpoint_id, phase, step, snapshot, note)
                 VALUES (?, ?, ?, ?, ?)
@@ -597,15 +596,12 @@ def delete_checkpoint(checkpoint_id: str) -> bool:
 
 # HookEngine单例缓存
 _hook_engine_instance: Optional[Any] = None
-_hook_engine_lock: Any = None  # 延迟初始化
+_hook_engine_lock: Any = threading.Lock()  # 模块级初始化，确保线程安全
 
 def _get_hook_engine():
     """获取或创建HookEngine单例（线程安全）"""
-    global _hook_engine_instance, _hook_engine_lock
+    global _hook_engine_instance
     if _hook_engine_instance is None:
-        import threading
-        if _hook_engine_lock is None:
-            _hook_engine_lock = threading.Lock()
         with _hook_engine_lock:
             if _hook_engine_instance is None:
                 from infra.hooks.hook_engine import HookEngine

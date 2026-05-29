@@ -156,6 +156,7 @@ if __name__ == '__main__':
         ('STEP_21', 'STEP_19'),   # 倒退
         ('STEP_15', 'STEP_13'),   # 倒退
         ('STEP_99', 'STEP_01'),   # 无效步骤
+        ('STEP_18', 'STEP_19'),  # 跳过LLM质检流程
     ]
 
     print("\n非法转换测试:")

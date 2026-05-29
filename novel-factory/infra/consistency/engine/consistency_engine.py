@@ -240,7 +240,6 @@ class ConsistencyEngine:
 
     def _detect_current_scene_label(self, content: str) -> Optional[str]:
         """检测当前章节的场景标签"""
-        from ..checkers.scene_pattern_repeat import ScenePatternRepeatChecker
         checker = ScenePatternRepeatChecker()
         return checker.get_scene_label(content)
 
