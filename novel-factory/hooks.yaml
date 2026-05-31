@@ -159,6 +159,70 @@ hooks:
     required: false
     timeout: 10
 
+  # ==================== 追读力分析Hook ====================
+  - name: "追读力分析"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+      conditions:
+        - "chapter_status == 'draft_completed'"
+    actions:
+      - type: "trigger_module"
+        module: "infra.reading_power.engine"
+        method: "analyze_chapter"
+      - type: "log_state_change"
+        state: "reading_power_analyzed"
+        value: "true"
+    required: false
+    timeout: 120
+
+# ==================== Claude/MiniMax 增强层Hook ====================
+
+# ==================== Node 1: 大纲反套路创意注入 ====================
+  - name: "大纲反套路创意选项生成"
+    trigger:
+      event: "OUTLINE_APPROVED"
+    actions:
+      - type: "trigger_module"
+        module: "tools.anti_trope_enhancer"
+        method: "generate_options"
+      - type: "log_state_change"
+        state: "anti_trope_options_generated"
+        value: "true"
+    required: false
+    timeout: 60
+
+# ==================== Node 2: 关键章节MiniMax深度润色 ====================
+  - name: "关键章节深度润色"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    conditions:
+      - "chapter_num in [239, 240, 241, 261, 262, 263, 270, 271, 272, 291, 292, 293, 340, 341, 342]"
+    actions:
+      - type: "trigger_module"
+        module: "tools.claude_key_chapter_polisher"
+        method: "polish_with_backup"
+      - type: "log_state_change"
+        state: "key_chapter_polished"
+        value: "true"
+    required: false
+    timeout: 180
+
+# ==================== Node 3: LLM质检决策分析 ====================
+  - name: "LLM质检决策分析"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    conditions:
+      - "chapter_status == 'review_pending'"
+    actions:
+      - type: "trigger_module"
+        module: "tools.llm_quality_analyzer"
+        method: "filter_issues"
+      - type: "log_state_change"
+        state: "llm_quality_analyzed"
+        value: "true"
+    required: false
+    timeout: 120
+
 # ==================== 安全配置 ====================
 security:
   max_execution_time: 120  # 最大执行时间（秒）
