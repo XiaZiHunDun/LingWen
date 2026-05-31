@@ -28,9 +28,9 @@ def sample_csv(csv_dir):
                 "意图与同义词",
                 "核心调性",
                 "节奏策略",
-                "禁止模式",
-                "推荐基础表",
-                "推荐动态表",
+                "强制禁忌/毒点",
+                "推荐基础检索表",
+                "推荐动态检索表",
             ],
         )
         writer.writeheader()
@@ -42,9 +42,9 @@ def sample_csv(csv_dir):
                 "意图与同义词": "修仙|升级",
                 "核心调性": "热血",
                 "节奏策略": "升级流",
-                "禁止模式": "系统流|签到",
-                "推荐基础表": "character_base",
-                "推荐动态表": "cultivation_levels",
+                "强制禁忌/毒点": "系统流|签到",
+                "推荐基础检索表": "character_base",
+                "推荐动态检索表": "cultivation_levels",
             }
         )
         writer.writerow(
@@ -55,9 +55,9 @@ def sample_csv(csv_dir):
                 "意图与同义词": "现实|当代",
                 "核心调性": "写实",
                 "节奏策略": "慢热",
-                "禁止模式": "超能力",
-                "推荐基础表": "modern_base",
-                "推荐动态表": "career_progression",
+                "强制禁忌/毒点": "超能力",
+                "推荐基础检索表": "modern_base",
+                "推荐动态检索表": "career_progression",
             }
         )
     return csv_path
@@ -123,9 +123,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -137,9 +137,9 @@ class TestGenreRouter:
                     "意图与同义词": "修仙|升级",
                     "核心调性": "热血",
                     "节奏策略": "升级流",
-                    "禁止模式": "系统流|签到",
-                    "推荐基础表": "character_base",
-                    "推荐动态表": "cultivation_levels",
+                    "强制禁忌/毒点": "系统流|签到",
+                    "推荐基础检索表": "character_base",
+                    "推荐动态检索表": "cultivation_levels",
                 }
             )
 
@@ -167,9 +167,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -181,9 +181,9 @@ class TestGenreRouter:
                     "意图与同义词": "修仙",
                     "核心调性": "热血",
                     "节奏策略": "升级流",
-                    "禁止模式": "系统流",
-                    "推荐基础表": "character_base",
-                    "推荐动态表": "cultivation_levels",
+                    "强制禁忌/毒点": "系统流",
+                    "推荐基础检索表": "character_base",
+                    "推荐动态检索表": "cultivation_levels",
                 }
             )
             writer.writerow(
@@ -194,9 +194,9 @@ class TestGenreRouter:
                     "意图与同义词": "现实",
                     "核心调性": "写实",
                     "节奏策略": "慢热",
-                    "禁止模式": "超能力",
-                    "推荐基础表": "modern_base",
-                    "推荐动态表": "career_progression",
+                    "强制禁忌/毒点": "超能力",
+                    "推荐基础检索表": "modern_base",
+                    "推荐动态检索表": "career_progression",
                 }
             )
 
@@ -235,9 +235,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -249,9 +249,9 @@ class TestGenreRouter:
                     "意图与同义词": "修仙",
                     "核心调性": "热血",
                     "节奏策略": "升级流",
-                    "禁止模式": "",
-                    "推荐基础表": "character_base",
-                    "推荐动态表": "cultivation_levels",
+                    "强制禁忌/毒点": "",
+                    "推荐基础检索表": "character_base",
+                    "推荐动态检索表": "cultivation_levels",
                 }
             )
 
@@ -281,9 +281,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -295,9 +295,9 @@ class TestGenreRouter:
                     "意图与同义词": "修仙",
                     "核心调性": "热血",
                     "节奏策略": "升级流",
-                    "禁止模式": "",
-                    "推荐基础表": "character_base",
-                    "推荐动态表": "cultivation_levels",
+                    "强制禁忌/毒点": "",
+                    "推荐基础检索表": "character_base",
+                    "推荐动态检索表": "cultivation_levels",
                 }
             )
 
@@ -322,9 +322,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -350,9 +350,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -364,9 +364,9 @@ class TestGenreRouter:
                     "意图与同义词": "修仙|升级",
                     "核心调性": "热血",
                     "节奏策略": "升级流",
-                    "禁止模式": "",
-                    "推荐基础表": "character_base",
-                    "推荐动态表": "cultivation_levels",
+                    "强制禁忌/毒点": "",
+                    "推荐基础检索表": "character_base",
+                    "推荐动态检索表": "cultivation_levels",
                 }
             )
 
@@ -391,9 +391,9 @@ class TestGenreRouter:
                     "意图与同义词",
                     "核心调性",
                     "节奏策略",
-                    "禁止模式",
-                    "推荐基础表",
-                    "推荐动态表",
+                    "强制禁忌/毒点",
+                    "推荐基础检索表",
+                    "推荐动态检索表",
                 ],
             )
             writer.writeheader()
@@ -405,9 +405,9 @@ class TestGenreRouter:
                     "意图与同义词": "修仙",
                     "核心调性": "热血",
                     "节奏策略": "升级流",
-                    "禁止模式": "",
-                    "推荐基础表": "character_base",
-                    "推荐动态表": "cultivation_levels",
+                    "强制禁忌/毒点": "",
+                    "推荐基础检索表": "character_base",
+                    "推荐动态检索表": "cultivation_levels",
                 }
             )
 

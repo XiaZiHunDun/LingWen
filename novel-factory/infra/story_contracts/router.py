@@ -136,9 +136,9 @@ class GenreRouter:
             genre_aliases=self._split_multi_value(row.get("题材别名", "")),
             core_tone=row.get("核心调性", "neutral"),
             pacing_strategy=row.get("节奏策略", "standard"),
-            forbidden_patterns=self._split_multi_value(row.get("禁止模式", "")),
-            recommended_base_tables=self._split_multi_value(row.get("推荐基础表", "")),
-            recommended_dynamic_tables=self._split_multi_value(row.get("推荐动态表", "")),
+            forbidden_patterns=self._split_multi_value(row.get("强制禁忌/毒点", "")),
+            recommended_base_tables=self._split_multi_value(row.get("推荐基础检索表", "")),
+            recommended_dynamic_tables=self._split_multi_value(row.get("推荐动态检索表", "")),
             route_source=route_source,
         )
 
