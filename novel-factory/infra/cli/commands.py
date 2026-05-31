@@ -12,8 +12,9 @@ Provides command classes for the novel-factory CLI:
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
+import argparse
 
-from infra.cli.options import UnifiedOptions, CheckOptions, RepairOptions, VerifyOptions
+from infra.cli.options import UnifiedOptions, CheckOptions, RepairOptions, VerifyOptions, PolishOptions
 from infra.cli.output import OutputFormatter
 from infra.cli.range_parser import RangeParser
 from infra.paths import ProjectPaths
@@ -147,7 +148,7 @@ class CheckCommand(Command):
 
         # 1. 运行一致性引擎
         engine = ConsistencyEngine()
-        for ch in chapters:
+        for ch in chapters[:options.limit]:  # Apply limit
             content = self.paths.read_chapter(ch)
             if content:
                 result = engine.check_chapter(ch, content, scope=CheckScope.ALL)
@@ -162,7 +163,7 @@ class CheckCommand(Command):
 
         new_issues_count = 0
         for checker_name, checker_instance in new_checkers:
-            for ch in chapters:
+            for ch in chapters[:options.limit]:  # Apply limit
                 content = self.paths.read_chapter(ch)
                 if content:
                     ch_issues = checker_instance.check(content, ch)
@@ -194,7 +195,7 @@ class CheckCommand(Command):
             checker = LLMQualityChecker()
 
             # Run for limited chapters in CLI mode
-            for ch in chapters[:5]:  # Limit for CLI
+            for ch in chapters[:options.limit]:  # Use limit from options
                 issues = checker.check(ch)
                 print(f"ch{ch:03d}: 发现 {len(issues)} 个问题")
 
@@ -407,6 +408,103 @@ class VerifyCommand(Command):
 
 
 # ============================================================================
+# Polish Command
+# ============================================================================
+
+class PolishCommand(Command):
+    """Key chapter polishing command using Claude"""
+
+    name = "polish"
+    description = "关键章节Claude深度润色"
+
+    def execute(self, options: UnifiedOptions) -> int:
+        """
+        Execute key chapter polishing.
+
+        Args:
+            options: PolishOptions with chapter, key_type, auto_detect flags
+
+        Returns:
+            Exit code
+        """
+        polish_options = options if isinstance(options, PolishOptions) else PolishOptions()
+
+        if polish_options.chapter:
+            chapters = [polish_options.chapter]
+        else:
+            chapters = self.get_range(polish_options)
+
+        summary = self.format_chapter_summary(chapters)
+        print(f"润色命令 | 范围: {summary}")
+        print(f"自动检测: {polish_options.auto_detect}")
+
+        return self._polish(chapters, polish_options)
+
+    def _polish(self, chapters: List[int], options: PolishOptions) -> int:
+        """Run key chapter polishing"""
+        try:
+            from tools.claude_key_chapter_polisher import KeyChapterPolisher, KeyChapterType
+
+            print(f"执行关键章节润色: {len(chapters)} 个章节")
+
+            polisher = KeyChapterPolisher()
+
+            polished = 0
+            skipped = 0
+            errors = []
+
+            for ch in chapters:
+                try:
+                    # Determine key_type if specified
+                    key_type = None
+                    if options.key_type:
+                        try:
+                            key_type = KeyChapterType(options.key_type)
+                        except ValueError:
+                            print(f"[警告] 未知key_type: {options.key_type}，将自动检测")
+
+                    if options.dry_run:
+                        # Dry run mode - just classify
+                        result = polisher.polish_chapter(
+                            ch, "", dry_run=True
+                        )
+                        if result.get("polished"):
+                            print(f"ch{ch:03d}: [干跑] 将润色 ({result.get('type')})")
+                            polished += 1
+                        else:
+                            print(f"ch{ch:03d}: [干跑] 跳过 ({result.get('reason', '普通章节')})")
+                            skipped += 1
+                    else:
+                        # Actual polishing with backup
+                        result = polisher.polish_with_backup(ch)
+                        if result.get("polished"):
+                            polished += 1
+                            print(f"ch{ch:03d}: ✓ 已润色 ({result.get('type')})")
+                        else:
+                            skipped += 1
+                            reason = result.get("reason", result.get("error", "未知原因"))
+                            print(f"ch{ch:03d}: ✗ 跳过 ({reason})")
+                except Exception as e:
+                    errors.append(f"ch{ch:03d}: {e}")
+                    print(f"ch{ch:03d}: [错误] {e}")
+
+            print("-" * 50)
+            print(f"完成: 润色 {polished}, 跳过 {skipped}")
+
+            if errors:
+                print(f"错误: {len(errors)} 个")
+
+            return 0 if len(errors) == 0 else 1
+
+        except ImportError as e:
+            print(f"[错误] KeyChapterPolisher 不可用: {e}")
+            return 1
+        except Exception as e:
+            print(f"[错误] 润色执行失败: {e}")
+            return 1
+
+
+# ============================================================================
 # Status Command
 # ============================================================================
 
@@ -480,6 +578,142 @@ class StatusCommand(Command):
             print(f"  ... 还有 {total - 20} 章")
 
         return 0
+
+
+# ============================================================================
+# AntiTrope Command
+# ============================================================================
+
+class AntiTropeCommand(Command):
+    """反套路创意生成命令"""
+
+    name = "anti-trope"
+    description = "生成反套路创意选项"
+
+    def execute(self, args: argparse.Namespace) -> int:
+        """
+        Execute anti-trope generation.
+
+        Args:
+            args: Namespace with outline, count, format
+
+        Returns:
+            Exit code
+        """
+        outline = getattr(args, 'outline', '')
+        count = getattr(args, 'count', 3)
+        format_output = getattr(args, 'format', True)
+
+        if not outline:
+            print("[错误] 需要提供 --outline 参数")
+            return 1
+
+        print(f"反套路创意生成 | 数量: {count}")
+        print(f"大纲: {outline[:100]}...")
+
+        return self._generate_anti_trope(outline, count, format_output)
+
+    def _generate_anti_trope(self, outline: str, count: int, format_output: bool) -> int:
+        """Run anti-trope generation"""
+        try:
+            from tools.anti_trope_enhancer import AntiTropeEnhancer
+
+            enhancer = AntiTropeEnhancer()
+            options_list = enhancer.generate_options(outline, count)
+
+            if not options_list:
+                print("[错误] 生成失败")
+                return 1
+
+            if format_output:
+                print(enhancer.format_options(options_list))
+            else:
+                import json
+                print(json.dumps([{
+                    "setting": o.setting,
+                    "conflict": o.conflict,
+                    "character": o.character,
+                    "twist": o.twist,
+                    "anti_trope_tags": o.anti_trope_tags,
+                } for o in options_list], ensure_ascii=False, indent=2))
+
+            return 0
+
+        except ImportError as e:
+            print(f"[错误] AntiTropeEnhancer 不可用: {e}")
+            return 1
+        except Exception as e:
+            print(f"[错误] 生成失败: {e}")
+            return 1
+
+
+# ============================================================================
+# LLMAnalyze Command
+# ============================================================================
+
+class LLMAnalyzeCommand(Command):
+    """LLM质检分析命令"""
+
+    name = "llm-analyze"
+    description = "LLM质检决策分析"
+
+    def execute(self, options: UnifiedOptions) -> int:
+        """
+        Execute LLM quality analysis.
+
+        Args:
+            options: VerifyOptions with chapter, issue_file
+
+        Returns:
+            Exit code
+        """
+        chapter = getattr(options, 'chapter', None)
+        issue_file = getattr(options, 'issue_file', None)
+
+        if not chapter:
+            print("[错误] 需要提供 --chapter 参数")
+            return 1
+
+        print(f"LLM质检分析 | 章节: {chapter}")
+
+        return self._analyze(chapter, issue_file)
+
+    def _analyze(self, chapter: int, issue_file: str = None) -> int:
+        """Run LLM analysis"""
+        try:
+            from tools.llm_quality_analyzer import LLMQualityAnalyzer
+            from infra.quality import Issue
+            import json
+
+            analyzer = LLMQualityAnalyzer()
+
+            if issue_file:
+                with open(issue_file, "r", encoding="utf-8") as f:
+                    issues_data = json.load(f)
+                issues = [Issue(**i) for i in issues_data]
+            else:
+                issues = []
+
+            if issues:
+                results = analyzer.analyze_batch(issues, chapter)
+                for issue, result in zip(issues, results):
+                    print(f"\n问题: {issue.description}")
+                    print(f"  严重性: {result.severity.value}")
+                    print(f"  决策: {result.repair_decision.value}")
+                    print(f"  理由: {result.reasoning}")
+                    print(f"  建议: {result.repair_suggestion}")
+                    print(f"  置信度: {result.confidence:.2f}")
+            else:
+                print("无可分析的问题")
+
+            return 0
+
+        except ImportError as e:
+            print(f"[错误] LLMQualityAnalyzer 不可用: {e}")
+            return 1
+        except Exception as e:
+            print(f"[错误] 分析失败: {e}")
+            return 1
 
 
 # ============================================================================
@@ -624,6 +858,72 @@ class DoctorCommand(Command):
 
 
 # ============================================================================
+# Reading Power Command
+# ============================================================================
+
+class ReadingPowerCommand(Command):
+    """Reading power analysis command"""
+
+    name = "reading-power"
+    description = "追读力分析"
+
+    def execute(self, options: UnifiedOptions) -> int:
+        """
+        Execute reading power analysis.
+
+        Args:
+            options: UnifiedOptions
+
+        Returns:
+            Exit code
+        """
+        try:
+            from infra.reading_power import ReadingPowerEngine
+            from pathlib import Path
+        except ImportError as e:
+            print(f"[错误] 追读力模块不可用: {e}")
+            return 1
+
+        chapters = self.get_range(options)
+        summary = self.format_chapter_summary(chapters)
+        print(f"追读力分析 | 范围: {summary}")
+
+        engine = ReadingPowerEngine()
+        results = []
+
+        for chapter_num in chapters:
+            chapter_path = self.paths.get_chapter_path(chapter_num)
+            if not chapter_path.exists():
+                print(f"  章节 {chapter_num}: 文件不存在")
+                continue
+
+            try:
+                with open(chapter_path, encoding="utf-8") as f:
+                    content = f.read()
+
+                result = engine.analyze_chapter(chapter_num, content)
+                data = engine.get_chapter_reading_power(chapter_num)
+                summary_data = data.get("summary", {})
+
+                hook_count = summary_data.get("hook_count", 0)
+                coolpoint_count = summary_data.get("coolpoint_count", 0)
+
+                print(f"  章节 {chapter_num}: {hook_count} 钩子, {coolpoint_count} 爽点")
+                results.append((chapter_num, hook_count, coolpoint_count))
+
+            except Exception as e:
+                print(f"  章节 {chapter_num}: 分析失败 - {e}")
+
+        # Summary
+        if results:
+            total_hooks = sum(r[1] for r in results)
+            total_coolpoints = sum(r[2] for r in results)
+            print(f"\n汇总: {len(results)} 章, {total_hooks} 钩子, {total_coolpoints} 爽点")
+
+        return 0
+
+
+# ============================================================================
 # Command Registry
 # ============================================================================
 
@@ -633,6 +933,10 @@ COMMANDS = {
     "verify": VerifyCommand,
     "status": StatusCommand,
     "doctor": DoctorCommand,
+    "polish": PolishCommand,
+    "anti-trope": AntiTropeCommand,
+    "llm-analyze": LLMAnalyzeCommand,
+    "reading-power": ReadingPowerCommand,
 }
 
 
