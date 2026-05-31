@@ -41,3 +41,12 @@ class PolishOptions(UnifiedOptions):
     chapter: Optional[int] = None
     key_type: Optional[str] = None
     auto_detect: bool = False
+
+
+@dataclass
+class StoryContractOptions(UnifiedOptions):
+    """story-contract 命令选项"""
+    genre: Optional[str] = None
+    chapter: Optional[int] = None
+    persist: bool = False
+    query: str = ""

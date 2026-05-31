@@ -23,7 +23,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.cli import RangeParser, CheckOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions
+from infra.cli import RangeParser, CheckOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions, StoryContractOptions
 from infra.cli.commands import get_command, list_commands
 from infra.cli.output import OutputFormatter
 
@@ -303,6 +303,41 @@ Examples:
         help="问题JSON文件路径"
     )
 
+    # =========================================================================
+    # story-contract 命令
+    # =========================================================================
+    story_contract_parser = subparsers.add_parser(
+        "story-contract",
+        help="生成故事合约",
+        description="根据题材和查询生成故事合约，包含反套路约束"
+    )
+    story_contract_parser.add_argument(
+        "query",
+        nargs="?",
+        default="",
+        help="查询文本，用于题材路由 (默认: 空字符串)"
+    )
+    story_contract_parser.add_argument(
+        "--genre",
+        type=str,
+        help="指定题材 (如: 都市, 玄幻)"
+    )
+    story_contract_parser.add_argument(
+        "--chapter",
+        type=int,
+        help="章节号，用于生成章节级合约"
+    )
+    story_contract_parser.add_argument(
+        "--persist",
+        action="store_true",
+        help="持久化合约到 .story-system/ 目录"
+    )
+    story_contract_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="详细输出"
+    )
+
     return parser
 
 
@@ -359,6 +394,16 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             range=[],
             parallel=1,
             verbose=False,
+        )
+    elif command == "story-contract":
+        return StoryContractOptions(
+            range=[],
+            parallel=1,
+            verbose=args.verbose,
+            query=args.query,
+            genre=args.genre,
+            chapter=args.chapter,
+            persist=args.persist,
         )
 
     chapter_range = parse_range(args.range, RangeParser())

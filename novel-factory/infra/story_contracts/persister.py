@@ -96,9 +96,17 @@ class ContractPersister:
         master_setting = self._read_json(self.paths.master_json)
         anti_patterns = self._read_json(self.paths.anti_patterns_json)
 
+        # Try to load most recent chapter_brief if chapters dir exists
+        chapter_brief: Optional[Dict[str, Any]] = None
+        if self.paths.chapters_dir.exists():
+            chapter_files = sorted(self.paths.chapters_dir.glob("chapter_*.json"))
+            if chapter_files:
+                chapter_brief = self._read_json(chapter_files[-1])
+
         return ContractPayload(
             master_setting=master_setting,
             anti_patterns=anti_patterns if anti_patterns else [],
+            chapter_brief=chapter_brief,
         )
 
     def _write_json(self, path: Path, data: Any) -> None:
@@ -160,7 +168,36 @@ class ContractPersister:
         Returns:
             Markdown formatted master setting content.
         """
-        return "## Master Setting\n\n"
+        # Lazy-load master_setting for rendering
+        try:
+            master_setting = self._read_json(self.paths.master_json)
+        except FileNotFoundError:
+            return "## Master Setting\n\n"
+
+        lines = ["## Master Setting\n"]
+
+        # Render route info
+        route = master_setting.get("route", {})
+        if route:
+            lines.append(f"- **Primary Genre**: {route.get('primary_genre', 'N/A')}")
+            aliases = route.get("genre_aliases", [])
+            if aliases:
+                lines.append(f"- **Aliases**: {', '.join(aliases)}")
+            lines.append(f"- **Route Source**: {route.get('route_source', 'N/A')}")
+
+        # Render master constraints
+        constraints = master_setting.get("master_constraints", {})
+        if constraints:
+            lines.append(f"- **Core Tone**: {constraints.get('core_tone', 'N/A')}")
+            lines.append(f"- **Pacing**: {constraints.get('pacing_strategy', 'N/A')}")
+            forbidden = constraints.get("forbidden_patterns", [])
+            if forbidden:
+                lines.append("- **Forbidden Patterns**:")
+                for pattern in forbidden:
+                    lines.append(f"  - {pattern}")
+
+        lines.append("")
+        return "\n".join(lines)
 
     def _render_anti_patterns_markdown(self) -> str:
         """Render anti_patterns to markdown format.
@@ -168,7 +205,24 @@ class ContractPersister:
         Returns:
             Markdown formatted anti-patterns content.
         """
-        return "## Anti-Patterns\n\n"
+        # Lazy-load anti_patterns for rendering
+        try:
+            anti_patterns = self._read_json(self.paths.anti_patterns_json)
+        except FileNotFoundError:
+            return "## Anti-Patterns\n\n"
+
+        lines = ["## Anti-Patterns\n"]
+        if not anti_patterns:
+            lines.append("*No anti-patterns defined.*\n")
+            return "\n".join(lines)
+
+        for ap in anti_patterns:
+            text = ap.get("text", ap.get("anti_pattern", ""))
+            source = ap.get("source_table", ap.get("source", "Unknown"))
+            lines.append(f"- **{text}** _(via {source})_")
+
+        lines.append("")
+        return "\n".join(lines)
 
     def _render_chapter_markdown(self, chapter_brief: Dict[str, Any]) -> str:
         """Render chapter_brief to markdown format.
@@ -179,4 +233,21 @@ class ContractPersister:
         Returns:
             Markdown formatted chapter brief content.
         """
-        return f"## Chapter {chapter_brief.get('chapter_number', '?')} Brief\n\n"
+        chapter_num = chapter_brief.get("chapter_number", "?")
+        lines = [f"## Chapter {chapter_num} Brief\n"]
+
+        # Render chapter constraints if present
+        constraints = chapter_brief.get("chapter_constraints", {})
+        if constraints:
+            tone = constraints.get("tone", "N/A")
+            lines.append(f"- **Tone**: {tone}")
+            pacing = constraints.get("pacing_strategy", "N/A")
+            lines.append(f"- **Pacing**: {pacing}")
+            chapter_fp = constraints.get("forbidden_patterns", [])
+            if chapter_fp:
+                lines.append("- **Chapter Forbidden Patterns**:")
+                for fp in chapter_fp:
+                    lines.append(f"  - {fp}")
+
+        lines.append("")
+        return "\n".join(lines)

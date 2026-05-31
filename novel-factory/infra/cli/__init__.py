@@ -1,5 +1,5 @@
 from infra.cli.range_parser import RangeParser
-from infra.cli.options import UnifiedOptions, CheckOptions, RepairOptions, VerifyOptions
+from infra.cli.options import UnifiedOptions, CheckOptions, RepairOptions, VerifyOptions, PolishOptions, StoryContractOptions
 
 __all__ = [
     "RangeParser",
@@ -7,4 +7,6 @@ __all__ = [
     "CheckOptions",
     "RepairOptions",
     "VerifyOptions",
+    "PolishOptions",
+    "StoryContractOptions",
 ]
