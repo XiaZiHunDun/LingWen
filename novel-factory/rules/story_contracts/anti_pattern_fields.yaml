@@ -1,0 +1,39 @@
+# Anti-Pattern 字段映射配置
+# 定义 anti_patterns.json 中各字段的含义和来源
+
+fields:
+  text:
+    description: "反套路/毒点的文字描述"
+    required: true
+    type: string
+
+  source_table:
+    description: "来源表名（如：题材与调性推理）"
+    required: true
+    type: string
+
+  source_id:
+    description: "来源记录ID（如：GR-001）"
+    required: true
+    type: string
+
+  severity:
+    description: "严重程度（critical/high/medium/low）"
+    required: false
+    type: string
+    default: "medium"
+
+  category:
+    description: "分类（pace/tone/character/plot/dialogue）"
+    required: false
+    type: string
+
+# 来源表定义
+source_tables:
+  题材与调性推理:
+    primary_key: 编号
+    anti_pattern_column: 强制禁忌/毒点
+
+  自定义反套路:
+    primary_key: id
+    anti_pattern_column: text
