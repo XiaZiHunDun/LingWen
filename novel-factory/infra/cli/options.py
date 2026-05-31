@@ -18,6 +18,7 @@ class CheckOptions(UnifiedOptions):
     quick: bool = False
     full: bool = False
     llm: bool = False
+    limit: int = 20
 
 
 @dataclass
@@ -32,3 +33,11 @@ class VerifyOptions(UnifiedOptions):
     """verify 命令选项"""
     repaired: bool = False
     compare: Optional[str] = None
+
+
+@dataclass
+class PolishOptions(UnifiedOptions):
+    """polish 命令选项"""
+    chapter: Optional[int] = None
+    key_type: Optional[str] = None
+    auto_detect: bool = False

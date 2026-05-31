@@ -6,11 +6,14 @@ Usage:
     lingwen.py <command> [options]
 
 Commands:
-    check    - 检查章节质量 (quick/full/llm)
-    repair   - 批量修复章节问题
-    verify   - 验证章节质量
-    status   - 查看章节状态
-    doctor   - 系统诊断
+    check      - 检查章节质量 (quick/full/llm)
+    repair     - 批量修复章节问题
+    verify     - 验证章节质量
+    status     - 查看章节状态
+    doctor     - 系统诊断
+    polish     - 关键章节深度润色
+    anti-trope - 生成反套路创意选项
+    llm-analyze - LLM质检决策分析
 """
 
 import sys
@@ -20,7 +23,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.cli import RangeParser, CheckOptions, RepairOptions, VerifyOptions, UnifiedOptions
+from infra.cli import RangeParser, CheckOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions
 from infra.cli.commands import get_command, list_commands
 from infra.cli.output import OutputFormatter
 
@@ -92,6 +95,12 @@ Examples:
     check_parser.add_argument(
         "-o", "--output",
         help="输出文件路径"
+    )
+    check_parser.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="最大处理章节数 (默认: 20)"
     )
 
     # =========================================================================
@@ -201,6 +210,99 @@ Examples:
         description="检查环境、数据库、章节文件等系统状态"
     )
 
+    # =========================================================================
+    # polish 命令
+    # =========================================================================
+    polish_parser = subparsers.add_parser(
+        "polish",
+        help="关键章节Claude深度润色",
+        description="使用 Claude Code 对关键章节进行深度润色"
+    )
+    polish_parser.add_argument(
+        "range",
+        nargs="?",
+        default="all",
+        help="章节范围，如 1-10, 5, 20-30 或 all (默认: all)"
+    )
+    polish_parser.add_argument(
+        "--chapter",
+        type=int,
+        help="指定单个章节号"
+    )
+    polish_parser.add_argument(
+        "--key-type",
+        choices=["regular", "climax", "emotional", "foreshadow", "creation"],
+        help="指定关键章节类型"
+    )
+    polish_parser.add_argument(
+        "--auto-detect",
+        action="store_true",
+        help="自动检测关键章节"
+    )
+    polish_parser.add_argument(
+        "--parallel",
+        type=int,
+        default=4,
+        help="并行处理数量 (默认: 4)"
+    )
+    polish_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="详细输出"
+    )
+    polish_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="干跑模式 (不实际修改)"
+    )
+
+    # =========================================================================
+    # anti-trope 命令
+    # =========================================================================
+    anti_trope_parser = subparsers.add_parser(
+        "anti-trope",
+        help="生成反套路创意选项",
+        description="在章节大纲生成后、审核前，生成反套路创意选项供选择"
+    )
+    anti_trope_parser.add_argument(
+        "--outline",
+        type=str,
+        required=True,
+        help="章节大纲内容"
+    )
+    anti_trope_parser.add_argument(
+        "--count",
+        type=int,
+        default=3,
+        help="生成数量 (默认: 3)"
+    )
+    anti_trope_parser.add_argument(
+        "--format",
+        action="store_true",
+        default=True,
+        help="格式化输出"
+    )
+
+    # =========================================================================
+    # llm-analyze 命令
+    # =========================================================================
+    llm_analyze_parser = subparsers.add_parser(
+        "llm-analyze",
+        help="LLM质检决策分析",
+        description="对检测到的问题进行严重性判断和修复建议"
+    )
+    llm_analyze_parser.add_argument(
+        "--chapter",
+        type=int,
+        required=True,
+        help="章节号"
+    )
+    llm_analyze_parser.add_argument(
+        "--issue-file",
+        type=str,
+        help="问题JSON文件路径"
+    )
+
     return parser
 
 
@@ -234,8 +336,10 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
     """
     command = args.command
 
-    # 解析 range
-    range_parser = RangeParser()
+    # 不需要range的命令
+    no_range_commands = {"doctor", "anti-trope", "llm-analyze"}
+    if command in no_range_commands:
+        range_parser = RangeParser()  # still need to create for parse_range calls below
 
     # doctor 命令没有 range 参数
     if command == "doctor":
@@ -244,8 +348,20 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             parallel=1,
             verbose=False,
         )
+    elif command == "anti-trope":
+        return UnifiedOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+        )
+    elif command == "llm-analyze":
+        return UnifiedOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+        )
 
-    chapter_range = parse_range(args.range, range_parser)
+    chapter_range = parse_range(args.range, RangeParser())
 
     if command == "check":
         return CheckOptions(
@@ -257,6 +373,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             quick=args.quick,
             full=args.full,
             llm=args.llm,
+            limit=args.limit,
         )
     elif command == "repair":
         return RepairOptions(
@@ -273,6 +390,16 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             parallel=args.parallel,
             verbose=args.verbose,
             repaired=args.repaired,
+        )
+    elif command == "polish":
+        return PolishOptions(
+            range=chapter_range,
+            parallel=args.parallel,
+            verbose=args.verbose,
+            dry_run=args.dry_run,
+            chapter=args.chapter,
+            key_type=args.key_type,
+            auto_detect=args.auto_detect,
         )
     else:
         # status
@@ -307,6 +434,13 @@ def main() -> int:
 
     # 执行命令
     try:
+        # anti-trope和llm-analyze需要直接传递args
+        if args.command in ("anti-trope", "llm-analyze"):
+            cmd = get_command(args.command)
+            if cmd is None:
+                print(f"[错误] 未知命令: {args.command}")
+                return 1
+            return cmd.execute(args)
         return cmd.execute(options)
     except KeyboardInterrupt:
         print("\n[中断] 命令被用户中断")

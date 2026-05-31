@@ -59,6 +59,18 @@ class HookEngine:
         self._hook_results: Dict[str, HookResult] = {}
         self._current_context: Dict[str, Any] = {}
 
+        # 注册默认actions
+        self._register_default_actions()
+
+    def _register_default_actions(self) -> None:
+        """注册默认的action类型"""
+        from .actions.trigger_module import TriggerModuleAction
+        from .actions.log_state_change import LogStateChangeAction
+
+        # 注册这些action类型
+        self.register_action("trigger_module", TriggerModuleAction)
+        self.register_action("log_state_change", LogStateChangeAction)
+
     def register_action(self, action_type: str, action_class: type) -> None:
         """
         注册动作类型

@@ -74,10 +74,7 @@ class MiniMaxProvider(AIProvider):
         temperature = kwargs.pop("temperature", 0.7)
         max_tokens = kwargs.pop("max_tokens", 4096)
 
-        messages = []
-        if system:
-            messages.append({"role": "assistant", "content": system})
-        messages.append({"role": "user", "content": prompt})
+        messages = [{"role": "user", "content": prompt}]
 
         last_error = None
         for attempt in range(self.config.max_retries):

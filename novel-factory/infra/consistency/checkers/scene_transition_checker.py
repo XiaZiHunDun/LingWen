@@ -56,7 +56,7 @@ class SceneTransitionChecker(BaseChecker):
             issues.append(Issue(
                 id=f"scene_transition_{chapter_num}",
                 severity=IssueSeverity.P2,
-                checker_type=CheckerType.SCENE_PATTERN,
+                checker_type=CheckerType.SCENE_TRANSITION,
                 issue_type="场景转换突兀",
                 title="场景转换过于频繁且缺少过渡",
                 description=f"章节中{len(abrupt_transitions)}处场景转换缺少过渡",
@@ -69,7 +69,7 @@ class SceneTransitionChecker(BaseChecker):
             issues.append(Issue(
                 id=f"space_jump_{chapter_num}",
                 severity=IssueSeverity.P2,
-                checker_type=CheckerType.SCENE_PATTERN,
+                checker_type=CheckerType.SCENE_TRANSITION,
                 issue_type="空间跳跃过频",
                 title="短时间内多次空间跳跃缺乏合理性",
                 description="短时间内多次空间跳跃缺乏合理性",

@@ -59,7 +59,7 @@ class PacingChecker(BaseChecker):
                 issues.append(Issue(
                     id=f"pacing_density_{chapter_num}",
                     severity=IssueSeverity.P2,
-                    checker_type=CheckerType.SCENE_PATTERN,
+                    checker_type=CheckerType.PACING,
                     issue_type="节奏过密",
                     title="章节节奏过于密集",
                     description=f"章节中动作/冲突段过于密集（{action_count}处，占比{action_ratio:.0%}）",
