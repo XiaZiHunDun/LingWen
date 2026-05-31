@@ -29,11 +29,8 @@
       <HookTrendChart :data="chartData" />
     </section>
 
-    <section class="chart-section">
-      <CoolpointChart
-        :data="chartData"
-        :typeDistribution="typeDistribution"
-      />
+       <section class="chart-section">
+      <CoolpointChart :data="chartData" />
     </section>
 
     <section class="table-section">
@@ -61,13 +58,6 @@ const chartData = computed(() => {
     hook_count: ch.hook_count,
     coolpoint_count: ch.coolpoint_count
   }))
-})
-
-const typeDistribution = computed(() => {
-  if (!overview.value || !overview.value.type_distribution) {
-    return {}
-  }
-  return overview.value.type_distribution
 })
 
 const statCards = computed(() => {
