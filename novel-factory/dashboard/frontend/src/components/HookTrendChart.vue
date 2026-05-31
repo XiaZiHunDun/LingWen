@@ -101,7 +101,7 @@ const initChart = () => {
     },
     series: [
       {
-        data: hookCounts,
+        data: props.data.map(d => [d.chapter, d.hook_count]),
         type: 'line',
         smooth: false,
         symbol: 'square',
