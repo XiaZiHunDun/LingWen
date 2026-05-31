@@ -223,6 +223,20 @@ hooks:
     required: false
     timeout: 120
 
+# ==================== Story Contracts: 合约上下文注入 ====================
+  - name: "story_contract_inject"
+    trigger:
+      event: "BEFORE_WRITE"
+    actions:
+      - type: "trigger_module"
+        module: "infra.story_contracts.injector"
+        method: "inject_story_contract"
+      - type: "log_state_change"
+        state: "story_contract_injected"
+        value: "true"
+    required: false
+    timeout: 30
+
 # ==================== 安全配置 ====================
 security:
   max_execution_time: 120  # 最大执行时间（秒）
