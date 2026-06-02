@@ -285,14 +285,57 @@ class TaskOrchestrator:
 
     # ==================== 死锁检测 ====================
 
-    def check_deadlock(self) -> tuple[bool, str]:
-        """检查是否存在死锁
+    # 默认死锁超时：10分钟
+    DEADLOCK_TIMEOUT_SECONDS = 600
+
+    def check_deadlock(self, timeout_seconds: Optional[int] = None) -> tuple[bool, str]:
+        """检查是否存在死锁（任务长时间未终结）
+
+        扫描 _active_tasks 与 _task_queue 中所有任务，若单个任务
+        停留在 running/pending 状态超过阈值，则视为可能死锁。
+
+        Args:
+            timeout_seconds: 自定义阈值（秒），None=使用 DEADLOCK_TIMEOUT_SECONDS
 
         Returns:
-            tuple[bool, str]: (是否存在死锁, 死锁描述)
+            tuple[bool, str]: (是否检测到疑似死锁, 死锁描述)
         """
-        # 检查是否有任务一直处于pending状态超过阈值
-        # （实际实现需要结合时间戳，这里是简化版）
+        threshold = timeout_seconds if timeout_seconds is not None else self.DEADLOCK_TIMEOUT_SECONDS
+        now = datetime.now()
+        stuck: List[str] = []
+
+        for task in list(self._active_tasks.values()):
+            dispatched_at = task.get("dispatched_at")
+            if not dispatched_at:
+                continue
+            try:
+                ts = datetime.fromisoformat(dispatched_at)
+            except ValueError:
+                continue
+            elapsed = (now - ts).total_seconds()
+            if elapsed > threshold:
+                stuck.append(
+                    f"{task.get('name', '?')}(id={task.get('task_id', '?')}, "
+                    f"agent={task.get('agent', '?')}, stuck={elapsed:.0f}s)"
+                )
+
+        for task in self._task_queue:
+            created_at = task.get("created_at")
+            if not created_at:
+                continue
+            try:
+                ts = datetime.fromisoformat(created_at)
+            except ValueError:
+                continue
+            elapsed = (now - ts).total_seconds()
+            if elapsed > threshold:
+                stuck.append(
+                    f"{task.get('name', '?')}(id={task.get('task_id', '?')}, "
+                    f"agent={task.get('agent', '?')}, pending={elapsed:.0f}s)"
+                )
+
+        if stuck:
+            return (True, f"疑似死锁：{len(stuck)} 个任务超时（>{threshold}s）：" + "; ".join(stuck[:3]))
         return (False, "")
 
     # ==================== 重置 ====================

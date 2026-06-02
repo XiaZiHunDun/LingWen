@@ -59,12 +59,18 @@ def build_router(config: MasterControllerConfig) -> AIRouter:
     )
 
 
-def build_orchestrator() -> TaskOrchestrator:
+def build_orchestrator(state_manager: Optional[StateManager] = None) -> TaskOrchestrator:
     """构造 TaskOrchestrator（任务编排器）
 
-    使用默认 StateManager（SQLite 后端）。
+    Args:
+        state_manager: 共享的 StateManager 实例（None = 创建新实例）。
+            推荐由 MasterController 创建并传入，避免多个组件各持一份独立状态。
+
+    Returns:
+        TaskOrchestrator 实例
     """
-    state_manager = StateManager()
+    if state_manager is None:
+        state_manager = StateManager()
     return TaskOrchestrator(state_manager=state_manager)
 
 

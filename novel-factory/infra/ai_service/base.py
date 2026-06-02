@@ -35,6 +35,10 @@ class TimeoutError(AIProviderError):
     pass
 
 
+# 默认模型（low-level fallback；生产环境由 infra/agent_system/agent_config.PROVIDER_MODEL_DEFAULTS 注入）
+DEFAULT_MODEL = "gpt-4"
+
+
 @dataclass
 class ProviderConfig:
     """Provider配置
@@ -42,13 +46,13 @@ class ProviderConfig:
     Attributes:
         api_key: API密钥
         endpoint: 可选的API端点（用于自定义或代理）
-        model: 模型名称，默认 "gpt-4"
+        model: 模型名称，默认 DEFAULT_MODEL
         timeout: 超时时间（秒），默认60
         max_retries: 最大重试次数，默认3
     """
     api_key: str
     endpoint: Optional[str] = None
-    model: str = "gpt-4"
+    model: str = DEFAULT_MODEL
     timeout: int = 60
     max_retries: int = 3
 

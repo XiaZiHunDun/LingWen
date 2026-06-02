@@ -22,6 +22,9 @@ if TYPE_CHECKING:
     from ....ai_service.router import AIRouter
 
 
+from ..agent_config import PROVIDER_MODEL_DEFAULTS
+
+
 class AgentBase:
     """Agent工具基类
 
@@ -29,11 +32,11 @@ class AgentBase:
 
     Attributes:
         router: AIRouter实例，用于AI服务调用
-        default_model: 默认模型
+        default_model: 默认模型（取自 PROVIDER_MODEL_DEFAULTS 注册表，避免硬编码）
         default_temperature: 默认温度参数
     """
 
-    default_model: str = "gpt-4"
+    default_model: str = PROVIDER_MODEL_DEFAULTS.get("openai", "gpt-4")
     default_temperature: float = 0.7
     default_max_tokens: int = 4096
 

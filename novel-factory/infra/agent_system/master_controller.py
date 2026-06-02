@@ -56,7 +56,10 @@ class MasterController:
         self._router = router if router is not None else build_router(self._config)
 
         # ==================== 基础设施 ====================
-        self._orchestrator = build_orchestrator()
+        # 共享 StateManager 实例：避免 TaskOrchestrator / 社交引擎 各持一份
+        from ..state.state_manager import StateManager
+        self._state_manager = StateManager()
+        self._orchestrator = build_orchestrator(state_manager=self._state_manager)
         self._skill_registry = build_skill_registry()
 
         # ==================== 5个核心Agent工具 ====================
