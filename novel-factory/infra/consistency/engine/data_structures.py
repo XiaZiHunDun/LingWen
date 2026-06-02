@@ -61,6 +61,10 @@ class CheckerType(Enum):
     KNOWLEDGE_TRACKING = "knowledge_tracking"
     DIALOGUE_ACTION = "dialogue_action"
     LLM_CAUSAL_REASONING = "llm_causal_reasoning"
+    # 2026-06-02 新增：与主检测器并行的"核心版"检测器，避免与主类共用同一 CheckerType
+    FORESHADOW_CORE = "core_foreshadow_checker"  # CoreForeshadowChecker - 核心伏笔追踪
+    ITEM_CORE = "core_props_checker"  # CorePropsChecker - 核心物品/道具追踪
+    AI_GLOSS_DIALOGUE = "dialogue_authenticity_checker"  # DialogueAuthenticityChecker - 对话AI化专项
 
 
 class CheckScope(Enum):

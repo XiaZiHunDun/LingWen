@@ -27,33 +27,7 @@ CONTEXT_DIR = PROJECT_ROOT / "context"
 CHARACTER_PROFILES_PATH = CONTEXT_DIR / "character_profiles.yaml"
 SCENE_TYPES_PATH = CONTEXT_DIR / "scene_types.yaml"
 from .report_generator import ReportGenerator
-from ..checkers.character_checker import CharacterChecker
-from ..checkers.character_state import CharacterStateChecker
-from ..checkers.item_checker import ItemChecker
-from ..checkers.timeline_checker import TimelineChecker
-from ..checkers.ability_checker import AbilityChecker
-from ..checkers.personality_checker import PersonalityChecker
-from ..checkers.foreshadow_checker import ForeshadowChecker
-from ..checkers.outline_checker import OutlineChecker
-from ..checkers.ai_gloss_checker import AIGlossChecker
-from ..checkers.scene_pattern_repeat import ScenePatternRepeatChecker
-from ..checkers.foreshadow_quality import ForeshadowQualityChecker
-from ..checkers.character_agency import CharacterAgencyChecker
-from ..checkers.timeline_age import TimelineAgeConsistencyChecker
-from ..checkers.battle_visualization import BattleVisualizationChecker
-from ..checkers.repair_trace_checker import RepairTraceChecker
-from ..checkers.gender_consistency_checker import GenderConsistencyChecker
-from ..checkers.causal_chain_checker import CausalChainChecker
-from ..checkers.spatial_transition_checker import SpatialTransitionChecker
-from ..checkers.relationship_state_checker import RelationshipStateChecker
-from ..checkers.knowledge_tracker import KnowledgeTracker
-from ..checkers.dialogue_action_checker import DialogueActionChecker
-from ..checkers.llm_causal_reasoning_checker import LLMCausalReasoningChecker
-from ..checkers.sentence_diversity_checker import SentenceDiversityChecker
-from ..checkers.repetitive_phrase_checker import RepetitivePhraseChecker
-from ..checkers.chapter_redundancy_checker import ChapterRedundancyChecker
-from ..checkers.narrative_perspective_checker import NarrativePerspectiveChecker
-from ..checkers.cross_chapter_logic_checker import CrossChapterLogicChecker
+from ..checkers.base_checker import CheckerRegistry
 
 
 class ConsistencyEngine:
@@ -104,36 +78,8 @@ class ConsistencyEngine:
         self.use_arbitration = True
 
     def _init_checkers(self) -> Dict[CheckerType, Any]:
-        """初始化所有检查器"""
-        return {
-            CheckerType.CHARACTER: CharacterChecker(),
-            CheckerType.CHARACTER_STATE: CharacterStateChecker(),
-            CheckerType.ITEM: ItemChecker(),
-            CheckerType.TIMELINE: TimelineChecker(),
-            CheckerType.ABILITY: AbilityChecker(),
-            CheckerType.PERSONALITY: PersonalityChecker(),
-            CheckerType.FORESHADOW: ForeshadowChecker(),
-            CheckerType.OUTLINE: OutlineChecker(),
-            CheckerType.AI_GLOSS: AIGlossChecker(),
-            CheckerType.SCENE_PATTERN: ScenePatternRepeatChecker(),
-            CheckerType.FORESHADOW_QUALITY: ForeshadowQualityChecker(),
-            CheckerType.CHARACTER_AGENCY: CharacterAgencyChecker(),
-            CheckerType.TIMELINE_AGE: TimelineAgeConsistencyChecker(),
-            CheckerType.BATTLE_VISUALIZATION: BattleVisualizationChecker(),
-            CheckerType.REPAIR_TRACE: RepairTraceChecker(),
-            CheckerType.GENDER_CONSISTENCY: GenderConsistencyChecker(),
-            CheckerType.CAUSAL_CHAIN: CausalChainChecker(),
-            CheckerType.SPATIAL_TRANSITION: SpatialTransitionChecker(),
-            CheckerType.RELATIONSHIP_STATE: RelationshipStateChecker(),
-            CheckerType.KNOWLEDGE_TRACKING: KnowledgeTracker(),
-            CheckerType.DIALOGUE_ACTION: DialogueActionChecker(),
-            CheckerType.LLM_CAUSAL_REASONING: LLMCausalReasoningChecker(),
-            CheckerType.SENTENCE_DIVERSITY: SentenceDiversityChecker(),
-            CheckerType.REPETITIVE_PHRASE: RepetitivePhraseChecker(),
-            CheckerType.CHAPTER_REDUNDANCY: ChapterRedundancyChecker(),
-            CheckerType.NARRATIVE_PERSPECTIVE: NarrativePerspectiveChecker(),
-            CheckerType.CROSS_CHAPTER_LOGIC: CrossChapterLogicChecker(),
-        }
+        """初始化所有检查器（从 CheckerRegistry 自动加载）"""
+        return CheckerRegistry.instantiate_all()
 
     def _enrich_context_from_memory(
         self,
@@ -240,8 +186,10 @@ class ConsistencyEngine:
 
     def _detect_current_scene_label(self, content: str) -> Optional[str]:
         """检测当前章节的场景标签"""
-        checker = ScenePatternRepeatChecker()
-        return checker.get_scene_label(content)
+        cls = CheckerRegistry.get(CheckerType.SCENE_PATTERN)
+        if cls is None:
+            return None
+        return cls().get_scene_label(content)
 
     def _get_character_ages_context(
         self,

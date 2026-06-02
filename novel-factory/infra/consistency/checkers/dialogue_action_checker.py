@@ -20,6 +20,8 @@ from .base_checker import BaseChecker
 
 class DialogueActionChecker(BaseChecker):
     """言行不一检测器 - 检测说A做B的矛盾"""
+    _checker_type = CheckerType.DIALOGUE_ACTION
+
 
     # 承诺类对话模式
     PROMISE_PATTERNS = [
@@ -53,7 +55,7 @@ class DialogueActionChecker(BaseChecker):
     ]
 
     def __init__(self):
-        super().__init__(CheckerType.DIALOGUE_ACTION)
+        super().__init__(self._checker_type)
 
     def check(
         self,

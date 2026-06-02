@@ -19,9 +19,11 @@ from .base_checker import BaseChecker
 
 class AIGlossChecker(BaseChecker):
     """AI痕迹检测器"""
+    _checker_type = CheckerType.AI_GLOSS
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.AI_GLOSS)
+        super().__init__(self._checker_type)
         self.rules = rules or self._default_rules()
 
     def _default_rules(self) -> Dict[str, Any]:

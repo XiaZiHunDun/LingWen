@@ -43,6 +43,8 @@ class ChapterRedundancyChecker(BaseChecker):
     章节重复度检测器
     检测章节间的内容重复
     """
+    _checker_type = CheckerType.CHAPTER_REDUNDANCY
+
 
     # N-gram参数
     NGRAM_SIZE = 3  # 连续3句话为N-gram
@@ -59,7 +61,7 @@ class ChapterRedundancyChecker(BaseChecker):
     ]
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.CHAPTER_REDUNDANCY)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

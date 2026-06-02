@@ -33,6 +33,8 @@ class CorePropsChecker(BaseChecker):
     2. 检查这些道具是否在后续章节中再现
     3. 未再现的道具标记为HIGH严重度
     """
+    _checker_type = CheckerType.ITEM_CORE
+
 
     # 第1章必须贯穿的核心道具
     CH1_MANDATORY_PROPS = [
@@ -43,7 +45,7 @@ class CorePropsChecker(BaseChecker):
     ]
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.ITEM)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

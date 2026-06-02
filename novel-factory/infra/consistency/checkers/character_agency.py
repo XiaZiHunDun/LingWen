@@ -25,6 +25,8 @@ class CharacterAgencyChecker(BaseChecker):
 
     计算主动:被动比率，低于阈值时报告问题
     """
+    _checker_type = CheckerType.CHARACTER_AGENCY
+
 
     # 被动情感反应模式
     REACTIVE_PATTERNS = [
@@ -90,7 +92,7 @@ class CharacterAgencyChecker(BaseChecker):
     AGENCY_RATIO_THRESHOLD = 0.3
 
     def __init__(self):
-        super().__init__(CheckerType.CHARACTER_AGENCY)
+        super().__init__(self._checker_type)
 
     def check(
         self,

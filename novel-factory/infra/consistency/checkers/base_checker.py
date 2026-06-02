@@ -6,7 +6,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Type
 import logging
 
 from ..engine.data_structures import Issue, CheckerType
@@ -14,11 +14,75 @@ from ..engine.data_structures import Issue, CheckerType
 logger = logging.getLogger(__name__)
 
 
+class CheckerRegistry:
+    """检查器注册表（自动维护）
+
+    BaseChecker 的子类通过声明 `_checker_type` 类属性自动注册到此表。
+    ConsistencyEngine 通过 `instantiate_all()` 获取所有已注册的检查器，
+    新增/删除检查器无需修改 engine.py。
+    """
+
+    _registry: Dict[CheckerType, Type["BaseChecker"]] = {}
+
+    @classmethod
+    def register(
+        cls,
+        checker_type: CheckerType,
+        checker_cls: Type["BaseChecker"],
+    ) -> None:
+        if checker_type in cls._registry:
+            existing = cls._registry[checker_type]
+            if existing is not checker_cls:
+                raise ValueError(
+                    f"CheckerType {checker_type} 已被 {existing.__name__} 注册，"
+                    f"不能再次注册到 {checker_cls.__name__}"
+                )
+        cls._registry[checker_type] = checker_cls
+
+    @classmethod
+    def get(cls, checker_type: CheckerType) -> Optional[Type["BaseChecker"]]:
+        return cls._registry.get(checker_type)
+
+    @classmethod
+    def instantiate_all(cls) -> Dict[CheckerType, "BaseChecker"]:
+        return {t: c() for t, c in cls._registry.items()}
+
+    @classmethod
+    def all_types(cls) -> List[CheckerType]:
+        return list(cls._registry.keys())
+
+    @classmethod
+    def clear(cls) -> None:
+        """清空注册表（仅用于测试）"""
+        cls._registry.clear()
+
+
 class BaseChecker(ABC):
-    """检查器基类"""
+    """检查器基类
+
+    子类需声明 `_checker_type` 类属性指向对应的 CheckerType 枚举值，
+    即可自动注册到 CheckerRegistry。
+
+    Example:
+        class CharacterChecker(BaseChecker):
+            _checker_type = CheckerType.CHARACTER
+            def __init__(self, rules=None):
+                super().__init__(self._checker_type)
+                self.rules = rules or self._default_rules()
+    """
+
+    # 子类设置此属性即可自动注册到 CheckerRegistry
+    # 不设置 = 不注册（适用于中间抽象类）
+    _checker_type: Optional[CheckerType] = None
 
     def __init__(self, checker_type: CheckerType):
         self.checker_type = checker_type
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        ctype = getattr(cls, "_checker_type", None)
+        if ctype is not None:
+            CheckerRegistry.register(ctype, cls)
 
     @abstractmethod
     def check(

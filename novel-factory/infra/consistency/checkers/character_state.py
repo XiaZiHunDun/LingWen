@@ -28,9 +28,11 @@ class CharacterState:
 
 class CharacterStateChecker(BaseChecker):
     """人物状态一致性检查器"""
+    _checker_type = CheckerType.CHARACTER_STATE
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.CHARACTER_STATE)
+        super().__init__(self._checker_type)
         self.rules = rules or self._default_rules()
         self._state_history: Dict[str, List[CharacterState]] = {}
         self._init_tracker()

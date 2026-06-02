@@ -16,6 +16,8 @@ from .base_checker import BaseChecker
 
 class KnowledgeTracker(BaseChecker):
     """信息知晓追踪检测器 - 检测角色知道某事却无反应"""
+    _checker_type = CheckerType.KNOWLEDGE_TRACKING
+
 
     # 透露秘密的动作模式
     REVEAL_PATTERNS = [
@@ -64,7 +66,7 @@ class KnowledgeTracker(BaseChecker):
     ]
 
     def __init__(self):
-        super().__init__(CheckerType.KNOWLEDGE_TRACKING)
+        super().__init__(self._checker_type)
 
     def check(
         self,

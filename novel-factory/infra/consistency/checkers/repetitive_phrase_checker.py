@@ -36,6 +36,8 @@ class RepetitivePhraseChecker(BaseChecker):
     套路句式检测器
     检测"那一刻"等50+种套路句式的过度使用
     """
+    _checker_type = CheckerType.REPETITIVE_PHRASE
+
 
     # 套路句式模式定义（按评审意见新增）
     # 格式: (正则模式, 句式名称, 替换建议列表)
@@ -252,7 +254,7 @@ class RepetitivePhraseChecker(BaseChecker):
     }
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.REPETITIVE_PHRASE)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

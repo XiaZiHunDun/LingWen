@@ -19,6 +19,8 @@ from .base_checker import BaseChecker
 
 class SpatialTransitionChecker(BaseChecker):
     """空间位置突兀转移检测器"""
+    _checker_type = CheckerType.SPATIAL_TRANSITION
+
 
     SUDDEN_TRANSITION_PATTERNS = [
         r"突然出现在([^，。、。！\n]+)",
@@ -45,7 +47,7 @@ class SpatialTransitionChecker(BaseChecker):
     ]
 
     def __init__(self):
-        super().__init__(CheckerType.SPATIAL_TRANSITION)
+        super().__init__(self._checker_type)
 
     def check(
         self,

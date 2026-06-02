@@ -40,6 +40,8 @@ class LLMCausalReasoningChecker(BaseChecker):
     - 夸张修辞
     - 尚未发生但可能发生的矛盾
     """
+    _checker_type = CheckerType.LLM_CAUSAL_REASONING
+
 
     SYSTEM_PROMPT = """你是一个小说一致性检测专家。
     检测以下文本是否存在以下类型的逻辑矛盾：
@@ -77,7 +79,7 @@ class LLMCausalReasoningChecker(BaseChecker):
         Args:
             enabled: 是否启用LLM调用，默认为True
         """
-        super().__init__(CheckerType.LLM_CAUSAL_REASONING)
+        super().__init__(self._checker_type)
         self.enabled = enabled
 
     def check(

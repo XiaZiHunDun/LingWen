@@ -18,9 +18,11 @@ from .base_checker import BaseChecker
 
 class AbilityChecker(BaseChecker):
     """能力一致性检查器"""
+    _checker_type = CheckerType.ABILITY
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.ABILITY)
+        super().__init__(self._checker_type)
         self.rules = rules or {}
         self._ability_log: Dict[str, List[str]] = {}  # 角色 -> 能力使用记录
 

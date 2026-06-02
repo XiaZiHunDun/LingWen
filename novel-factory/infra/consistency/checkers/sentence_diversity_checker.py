@@ -299,6 +299,8 @@ class SentenceDiversityChecker(BaseChecker):
     句式多样性检测器
     使用Shannon多样性指数计算句式分布
     """
+    _checker_type = CheckerType.SENTENCE_DIVERSITY
+
 
     # 句式模式定义（从YAML加载，带有默认回退机制）
     DIVERSE_PATTERNS, TEMPLATE_PATTERNS = _load_patterns_from_yaml()
@@ -317,7 +319,7 @@ class SentenceDiversityChecker(BaseChecker):
     _TEMPLATE_COMPILED = None
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.SENTENCE_DIVERSITY)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

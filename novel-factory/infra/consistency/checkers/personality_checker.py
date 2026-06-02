@@ -18,9 +18,11 @@ from .base_checker import BaseChecker
 
 class PersonalityChecker(BaseChecker):
     """人设稳定性检查器"""
+    _checker_type = CheckerType.PERSONALITY
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.PERSONALITY)
+        super().__init__(self._checker_type)
         self.rules = rules or {}
         self._personality_history: Dict[str, List[str]] = {}  # 角色 -> 性格记录
 

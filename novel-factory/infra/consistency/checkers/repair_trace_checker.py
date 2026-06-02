@@ -34,6 +34,8 @@ class RepairTraceChecker(BaseChecker):
     AI痕迹与修复标记检测器
     检测元文本残留和模板句式
     """
+    _checker_type = CheckerType.REPAIR_TRACE
+
 
     # P0级：修复标记（最严重）
     REPAIR_MARK_PATTERNS = [
@@ -90,7 +92,7 @@ class RepairTraceChecker(BaseChecker):
     ]
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.REPAIR_TRACE)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

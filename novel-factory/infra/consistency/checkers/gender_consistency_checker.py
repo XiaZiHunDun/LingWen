@@ -31,9 +31,11 @@ class GenderConsistencyChecker(BaseChecker):
     检测角色代词使用的跨章节一致性
     只检测"角色自身属性被错误性别描述"的情况
     """
+    _checker_type = CheckerType.GENDER_CONSISTENCY
+
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.GENDER_CONSISTENCY)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

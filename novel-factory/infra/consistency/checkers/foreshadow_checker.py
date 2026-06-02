@@ -32,9 +32,11 @@ class PlotThread:
 
 class ForeshadowChecker(BaseChecker):
     """伏笔回收检查器"""
+    _checker_type = CheckerType.FORESHADOW
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.FORESHADOW)
+        super().__init__(self._checker_type)
         self.rules = rules or {}
         self._plot_threads: Dict[str, PlotThread] = {}
         self._pending_foreshadow: List[str] = []  # 待回收的伏笔关键词

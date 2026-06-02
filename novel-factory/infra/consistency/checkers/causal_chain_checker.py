@@ -50,9 +50,11 @@ class EntityStateTracker:
 
 class CausalChainChecker(BaseChecker):
     """因果断裂检测器 - 检测A做了X但Y没有发生相应改变"""
+    _checker_type = CheckerType.CAUSAL_CHAIN
+
 
     def __init__(self):
-        super().__init__(CheckerType.CAUSAL_CHAIN)
+        super().__init__(self._checker_type)
         self.rules = CAUSAL_BREAK_RULES
         self.rule_engine = CausalRuleEngine(self.rules)
         self.tracker = EntityStateTracker()

@@ -32,6 +32,8 @@ class ForeshadowQualityChecker(BaseChecker):
     - "而此刻"
     - "讽刺的是"
     """
+    _checker_type = CheckerType.FORESHADOW_QUALITY
+
 
     # 机械悬念标记词
     MECHANICAL_SUSPENSE = [
@@ -54,7 +56,7 @@ class ForeshadowQualityChecker(BaseChecker):
     DENSITY_THRESHOLD = 2.0
 
     def __init__(self):
-        super().__init__(CheckerType.FORESHADOW_QUALITY)
+        super().__init__(self._checker_type)
 
     def check(
         self,

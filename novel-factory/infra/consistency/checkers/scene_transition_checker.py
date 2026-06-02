@@ -17,9 +17,11 @@ from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, Checke
 
 class SceneTransitionChecker(BaseChecker):
     """场景转换检测器"""
+    _checker_type = CheckerType.SCENE_TRANSITION
+
 
     def __init__(self):
-        super().__init__(CheckerType.SCENE_TRANSITION)
+        super().__init__(self._checker_type)
 
         # 突兀转换标记词
         self.abrupt_markers = [

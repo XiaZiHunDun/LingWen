@@ -32,9 +32,11 @@ class CharacterProfile:
 
 class CharacterChecker(BaseChecker):
     """角色一致性检查器"""
+    _checker_type = CheckerType.CHARACTER
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.CHARACTER)
+        super().__init__(self._checker_type)
         self.rules = rules or self._default_rules()
 
     def _default_rules(self) -> Dict[str, Any]:

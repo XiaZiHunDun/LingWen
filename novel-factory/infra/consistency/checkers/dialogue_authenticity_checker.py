@@ -17,9 +17,11 @@ from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, Checke
 
 class DialogueAuthenticityChecker(BaseChecker):
     """对话真实性检测器"""
+    _checker_type = CheckerType.AI_GLOSS_DIALOGUE
+
 
     def __init__(self):
-        super().__init__(CheckerType.AI_GLOSS)
+        super().__init__(self._checker_type)
 
         # AI对话特征词
         self.ai_patterns = [

@@ -25,6 +25,8 @@ class BattleVisualizationChecker(BaseChecker):
 
     抽象占比过高会降低战斗场景的可读性和视觉冲击力
     """
+    _checker_type = CheckerType.BATTLE_VISUALIZATION
+
 
     # 抽象修炼概念
     ABSTRACT_CULTIVATION = [
@@ -101,7 +103,7 @@ class BattleVisualizationChecker(BaseChecker):
     ABSTRACT_RATIO_THRESHOLD = 0.6
 
     def __init__(self):
-        super().__init__(CheckerType.BATTLE_VISUALIZATION)
+        super().__init__(self._checker_type)
 
     def check(
         self,

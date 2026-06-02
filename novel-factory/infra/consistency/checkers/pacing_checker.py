@@ -17,9 +17,11 @@ from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, Checke
 
 class PacingChecker(BaseChecker):
     """节奏检测器"""
+    _checker_type = CheckerType.PACING
+
 
     def __init__(self):
-        super().__init__(CheckerType.PACING)
+        super().__init__(self._checker_type)
 
         # 高潮/动作关键词
         self.action_keywords = [

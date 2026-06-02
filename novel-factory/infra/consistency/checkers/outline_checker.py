@@ -18,9 +18,11 @@ from .base_checker import BaseChecker
 
 class OutlineChecker(BaseChecker):
     """大纲偏离度检查器"""
+    _checker_type = CheckerType.OUTLINE
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.OUTLINE)
+        super().__init__(self._checker_type)
         self.rules = rules or {}
         self._outline: Dict[str, Any] = {}
 

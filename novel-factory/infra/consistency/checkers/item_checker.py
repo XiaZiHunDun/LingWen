@@ -29,9 +29,11 @@ class ItemState:
 
 class ItemChecker(BaseChecker):
     """物品连续性检查器"""
+    _checker_type = CheckerType.ITEM
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.ITEM)
+        super().__init__(self._checker_type)
         self.rules = rules or {}
         self._item_history: Dict[str, List[ItemState]] = {}
 

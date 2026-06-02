@@ -30,9 +30,11 @@ class TimelinePoint:
 
 class TimelineChecker(BaseChecker):
     """时间线合理性检查器"""
+    _checker_type = CheckerType.TIMELINE
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.TIMELINE)
+        super().__init__(self._checker_type)
         self.rules = rules or {}
         self._timeline: List[TimelinePoint] = []
 

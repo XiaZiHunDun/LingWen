@@ -17,6 +17,8 @@ from .base_checker import BaseChecker
 
 class RelationshipStateChecker(BaseChecker):
     """关系状态突变检测器"""
+    _checker_type = CheckerType.RELATIONSHIP_STATE
+
 
     # 负面关系词汇（信任度低）
     NEGATIVE_TRUST_WORDS = [
@@ -65,7 +67,7 @@ class RelationshipStateChecker(BaseChecker):
     ]
 
     def __init__(self):
-        super().__init__(CheckerType.RELATIONSHIP_STATE)
+        super().__init__(self._checker_type)
 
     def check(
         self,

@@ -29,6 +29,8 @@ class CoreForeshadowChecker(BaseChecker):
     - normal级伏笔回收率阈值80%
     - edge级伏笔回收率阈值50%
     """
+    _checker_type = CheckerType.FORESHADOW_CORE
+
 
     LEVEL_THRESHOLDS = {
         'core': 1.0,    # 100% must be recycled
@@ -37,7 +39,7 @@ class CoreForeshadowChecker(BaseChecker):
     }
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.FORESHADOW)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'

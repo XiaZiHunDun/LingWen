@@ -24,6 +24,8 @@ class TimelineAgeConsistencyChecker(BaseChecker):
     - 年龄计算错误（生存时间不一致）
     - "X岁那年"与当前年龄矛盾
     """
+    _checker_type = CheckerType.TIMELINE_AGE
+
 
     # 林夜年龄时间线关键节点
     LINYE_AGE_RULES = {
@@ -46,7 +48,7 @@ class TimelineAgeConsistencyChecker(BaseChecker):
     }
 
     def __init__(self):
-        super().__init__(CheckerType.TIMELINE_AGE)
+        super().__init__(self._checker_type)
 
     def check(
         self,

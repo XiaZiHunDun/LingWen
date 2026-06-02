@@ -35,9 +35,11 @@ class EntityState:
 
 class CrossChapterLogicChecker(BaseChecker):
     """跨章节逻辑一致性检查器"""
+    _checker_type = CheckerType.CROSS_CHAPTER_LOGIC
+
 
     def __init__(self, rules: Optional[Dict[str, Any]] = None):
-        super().__init__(CheckerType.CROSS_CHAPTER_LOGIC)
+        super().__init__(self._checker_type)
         self.rules = rules or self._default_rules()
         self.entity_states: Dict[int, Dict[str, EntityState]] = defaultdict(dict)
         self._chapter_cache: Dict[int, str] = {}

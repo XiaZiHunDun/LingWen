@@ -19,9 +19,12 @@ class TestConsistencyEngineInit:
     def test_default_init(self):
         engine = ConsistencyEngine()
         assert engine is not None
-        # 14 checkers: 9 original + 5 new (scene_pattern, foreshadow_quality, character_agency, timeline_age, battle_visualization)
-        # 14 original + 9 later (causal_chain, spatial_transition, relationship_state, knowledge_tracking, dialogue_action, llm_causal_reasoning, sentence_diversity, repetitive_phrase, chapter_redundancy, narrative_perspective, cross_chapter_logic) = 27 total
-        assert len(engine.checkers) == 27
+        # Registry 模式自动注册所有声明了 _checker_type 的检查器
+        # 旧硬编码 27 个，registry 模式：
+        #   +2 新激活的（Pacing/SceneTransition）
+        #   +3 新枚举值的（CoreForeshadow/CoreProps/DialogueAuthenticity）
+        # = 32 个全部 BaseChecker 子类均注册
+        assert len(engine.checkers) == 32
 
     def test_scope_init(self):
         engine = ConsistencyEngine(scope=CheckScope.CRITICAL)

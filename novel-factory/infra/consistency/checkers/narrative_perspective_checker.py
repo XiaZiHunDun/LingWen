@@ -32,6 +32,8 @@ class NarrativePerspectiveChecker(BaseChecker):
     叙事视角检测器
     检测破坏林夜限知视角的段落
     """
+    _checker_type = CheckerType.NARRATIVE_PERSPECTIVE
+
 
     # 视角跳脱模式
     VIEWPOINT_SHIFT_PATTERNS = [
@@ -96,7 +98,7 @@ class NarrativePerspectiveChecker(BaseChecker):
     OTHER_CHARACTERS = ['莫言', '苏琳', '星月', '铁蛋', '小九', '赵勇', '陈风', '周雪', '林夜父亲', '林夜母亲', '暗皇']
 
     def __init__(self, chapters_dir: Optional[str] = None):
-        super().__init__(CheckerType.NARRATIVE_PERSPECTIVE)
+        super().__init__(self._checker_type)
         if chapters_dir is None:
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
