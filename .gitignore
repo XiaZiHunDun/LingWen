@@ -43,9 +43,8 @@ credentials.json
 # 系统文件
 *.bak
 *.tmp
-reference/Claude-Code-Game-Studios-English/
-reference/Claude-Code-Game-Studios/
-reference/webnovel-writer/
+# reference/ 整体脱管（已 git rm --cached 移除所有 tracked 文件）
+reference/
 
 # Worktrees
 .worktrees/
