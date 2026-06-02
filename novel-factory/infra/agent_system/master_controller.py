@@ -1,41 +1,30 @@
 # novel-factory/agent_system/master_controller.py
 """主控调度器（Facade模式）
 
-协调各子模块，不做具体逻辑实现。
-职责：
-- 依赖注入（Router、Orchestrator、Registry）
-- 工作流方法委托给Agent工具
-- 社交引擎协调
+只负责协调，不做具体逻辑。
+
+委托关系：
+- 配置加载 → self._config (由 agent_config.load_default_config 构建)
+- AI Router → self._router (由 agent_factory.build_router 构建)
+- 任务编排 → self._orchestrator (由 agent_factory.build_orchestrator 构建)
+- 角色池 → self._skill_registry (由 agent_factory.build_skill_registry 构建)
+- 5个Agent工具 → self.outline_master / self.content_writer / ...
+- 社交引擎 → self.relationship_tracker / self.conflict_alert / ...
 """
 
-from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 
-from .agents.outline_master.tools import OutlineMasterTools
-from .agents.character_designer.tools import CharacterDesignerTools
-from .agents.content_writer.tools import ContentWriterTools
-from .agents.auditor.tools import AuditorTools
-from .agents.polisher.tools import PolisherTools
-from .social_engine.relationship_tracker import RelationshipTracker, DEFAULT_STATE_FILE
-from .social_engine.event_effect_calculator import EventEffectCalculator
-from .social_engine.conflict_alert import ConflictAlert
-from .social_engine.writing_suggestion import WritingSuggestion
-from .shared.context_builder import ContextBuilder
-
-# 基于 DEFAULT_STATE_FILE 反推 state_dir，避免 cwd-相对路径
-# DEFAULT_STATE_FILE = .../novel-factory/agent_system/social_engine/relationship_network.json
-# DEFAULT_STATE_DIR  = .../novel-factory/agent_system/
-DEFAULT_STATE_DIR = str(Path(DEFAULT_STATE_FILE).parent.parent)
-
-# 导入AI Service
-from ..ai_service import ProviderConfig
 from ..ai_service.router import AIRouter
-
-# 导入TaskOrchestrator
+from .agent_config import MasterControllerConfig, load_default_config
+from .agent_factory import (
+    build_agent_tools,
+    build_orchestrator,
+    build_router,
+    build_skill_registry,
+    build_social_engine,
+)
 from .task_orchestrator import TaskOrchestrator
-
-# 导入SkillRegistry
 from .skill_registry import SkillRegistry
 
 logger = logging.getLogger(__name__)
@@ -45,94 +34,46 @@ class MasterController:
     """主控调度器（Facade模式）
 
     只负责协调，不做具体逻辑。
-
-    委托关系：
-    - AI Router管理 → self._router
-    - 任务编排 → self._orchestrator
-    - 角色池 → self._skill_registry
-    - 5个Agent工具保持不变
-    - 社交引擎保持不变
     """
 
     def __init__(
         self,
         state_dir: Optional[str] = None,
-        router: Optional[AIRouter] = None
+        router: Optional[AIRouter] = None,
+        config: Optional[MasterControllerConfig] = None,
     ):
         """初始化主控调度器
 
         Args:
-            state_dir: 状态目录（默认基于 __file__ 解析的绝对路径，cwd-无关）
-            router: AIRouter实例，如果为None则创建默认实例
+            state_dir: 状态目录（None = 使用 agent_config 中的默认值，cwd-无关）
+            router: 显式传入的 AIRouter（None = 从 config 构造）
+            config: 显式传入的配置（None = 从 env vars 加载）
         """
-        if state_dir is None:
-            state_dir = DEFAULT_STATE_DIR
+        # ==================== 配置层 ====================
+        self._config = config or load_default_config(state_dir=state_dir)
+
+        # ==================== AI Router ====================
+        self._router = router if router is not None else build_router(self._config)
+
         # ==================== 基础设施 ====================
-
-        # AI Router
-        if router is None:
-            self._router = self._create_default_router()
-        else:
-            self._router = router
-
-        # TaskOrchestrator（任务编排器）
-        from infra.state.state_manager import WorkflowStateManager
-        state_manager = WorkflowStateManager()
-        self._orchestrator = TaskOrchestrator(state_manager=state_manager)
-
-        # SkillRegistry（技能注册表）
-        self._skill_registry = SkillRegistry()
+        self._orchestrator = build_orchestrator()
+        self._skill_registry = build_skill_registry()
 
         # ==================== 5个核心Agent工具 ====================
-
-        self.outline_master = OutlineMasterTools()
-        self.character_designer = CharacterDesignerTools()
-        self.content_writer = ContentWriterTools(router=self._router)
-        self.auditor = AuditorTools(router=self._router)
-        self.polisher = PolisherTools()
+        tools = build_agent_tools(self._router)
+        self.outline_master = tools.outline_master
+        self.character_designer = tools.character_designer
+        self.content_writer = tools.content_writer
+        self.auditor = tools.auditor
+        self.polisher = tools.polisher
 
         # ==================== 社交引擎 ====================
-
-        self.relationship_tracker = RelationshipTracker(f"{state_dir}/social_engine/relationship_network.json")
-        self.event_calculator = EventEffectCalculator()
-        self.conflict_alert = ConflictAlert()
-        self.writing_suggestion = WritingSuggestion()
-        self.context_builder = ContextBuilder()
-
-    def _create_default_router(self) -> AIRouter:
-        """创建默认的AIRouter实例
-
-        从环境变量读取配置
-
-        Returns:
-            AIRouter实例
-        """
-        import os
-
-        # 从环境变量获取API密钥
-        openai_key = os.getenv("OPENAI_API_KEY", "")
-        anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
-        minimax_key = os.getenv("MINIMAX_API_KEY", "")
-
-        config = {}
-        if openai_key:
-            config["openai"] = ProviderConfig(api_key=openai_key, model="gpt-4")
-        if anthropic_key:
-            config["anthropic"] = ProviderConfig(api_key=anthropic_key, model="claude-3-5-sonnet-20241022")
-        if minimax_key:
-            config["minimax"] = ProviderConfig(api_key=minimax_key, model="MiniMax-M2.7", timeout=180, max_retries=2)
-
-        if not config:
-            raise RuntimeError(
-                "No AI provider configured. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or MINIMAX_API_KEY environment variable."
-            )
-
-        # 默认使用minimax（成本最低），启用故障转移
-        return AIRouter(
-            config=config,
-            primary_provider="minimax" if "minimax" in config else ("anthropic" if "anthropic" in config else "openai"),
-            enable_failover=True
-        )
+        social = build_social_engine(self._config.state_dir)
+        self.relationship_tracker = social.relationship_tracker
+        self.event_calculator = social.event_calculator
+        self.conflict_alert = social.conflict_alert
+        self.writing_suggestion = social.writing_suggestion
+        self.context_builder = social.context_builder
 
     def get_router(self) -> AIRouter:
         """获取AIRouter实例
