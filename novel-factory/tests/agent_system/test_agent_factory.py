@@ -105,10 +105,10 @@ def test_build_social_engine_returns_bundle_with_all_5_types(tmp_path):
 
 
 def test_build_social_engine_relationship_state_file_under_state_dir(tmp_path):
-    """relationship_tracker 的 state_file 应在 state_dir/social_engine/ 下"""
+    """relationship_tracker 的 state_file 应在 state_dir/social_engine/ 下 (R2-012: .db)"""
     social = build_social_engine(str(tmp_path))
 
-    expected = tmp_path / "social_engine" / "relationship_network.json"
+    expected = tmp_path / "social_engine" / "relationship_network.db"
     assert social.relationship_tracker.state_file == str(expected)
     # 状态文件父目录已创建
     assert expected.parent.exists()

@@ -99,10 +99,11 @@ def build_agent_tools(router: AIRouter) -> AgentToolsBundle:
 def build_social_engine(state_dir: str) -> SocialEngineBundle:
     """构造 5 个社交引擎组件
 
-    state_dir 是 agent_system 根目录；relationship_tracker 的 state_file
-    路径基于此派生（state_dir/social_engine/relationship_network.json）。
+    state_dir 是 agent_system 根目录;relationship_tracker 的 state_file
+    路径基于此派生 (state_dir/social_engine/relationship_network.db)。
+    (R2-012: 默认 SQLite 后端 .db)
     """
-    relationship_state_file = str(Path(state_dir) / "social_engine" / "relationship_network.json")
+    relationship_state_file = str(Path(state_dir) / "social_engine" / "relationship_network.db")
     return SocialEngineBundle(
         relationship_tracker=RelationshipTracker(relationship_state_file),
         event_calculator=EventEffectCalculator(),

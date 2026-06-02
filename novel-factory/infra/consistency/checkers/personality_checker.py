@@ -2,12 +2,13 @@
 """
 人设稳定性检查器
 
-检查角色核心性格、行为动机、语言风格是否稳定
+检查角色**跨章节**的行为动机一致性。
 
-检测维度：
-1. 核心性格变化：性格发生重大变化无过渡
-2. 行为动机不一致：行为与角色目标不符
-3. 语言风格变化：角色说话方式突然改变
+注意 (R2-004)：
+"核心性格变化"检测已从本类移除 — 与 character_checker.py 的
+personality_opposites 逻辑重叠。character_checker 用窗口机制做
+单章节内反义词检测；本类仅保留**单章节 → 角色目标**的
+动机一致性检查（独有功能）。
 """
 
 from typing import List, Dict, Any, Optional
@@ -35,6 +36,9 @@ class PersonalityChecker(BaseChecker):
         """
         检查人设稳定性
 
+        仅保留行为动机一致性检测（与 character_checker 不重叠）。
+        核心性格变化检测已迁移到 character_checker (R2-004)。
+
         Args:
             chapter_content: 章节内容
             chapter_num: 章节号
@@ -59,66 +63,10 @@ class PersonalityChecker(BaseChecker):
         else:
             character_profiles = {}
 
-        # 检查核心性格变化
-        issues.extend(self._check_personality_change(
-            chapter_content, chapter_num, character_profiles
-        ))
-
-        # 检查行为动机一致性
+        # 仅检查行为动机一致性（独有功能，不与 character_checker 重复）
         issues.extend(self._check_motivation_consistency(
             chapter_content, chapter_num, character_profiles
         ))
-
-        # 检查语言风格一致性
-        issues.extend(self._check_speech_style_change(
-            chapter_content, chapter_num, character_profiles
-        ))
-
-        return issues
-
-    def _check_personality_change(
-        self,
-        content: str,
-        chapter_num: int,
-        character_profiles: Dict[str, Dict]
-    ) -> List[Issue]:
-        """检查核心性格变化"""
-        issues = []
-
-        # 定义重大性格转变的反义词对
-        major_opposites = {
-            "善良": ["邪恶", "狠毒", "残忍"],
-            "正直": ["奸诈", "阴险", "虚伪"],
-            "信任": ["怀疑", "猜忌"],
-            "勇敢": ["怯懦", "胆小"],
-            "乐观": ["悲观", "消沉"],
-        }
-
-        for char_name, profile in character_profiles.items():
-            personality_tags = profile.get("personality_tags", [])
-            speech_style = profile.get("speech_style", "")
-
-            for personality in personality_tags:
-                opposites = major_opposites.get(personality, [])
-                for opposite in opposites:
-                    if opposite in content:
-                        # 检查是否有转变铺垫
-                        transition_keywords = ["变得", "转变为", "终于", "最终"]
-                        has_transition = any(kw in content for kw in transition_keywords)
-
-                        if not has_transition:
-                            issues.append(Issue(
-                                id=f"personality_{chapter_num}_{char_name}_变化",
-                                severity=IssueSeverity.P2,
-                                checker_type=CheckerType.PERSONALITY,
-                                issue_type="核心性格变化",
-                                title=f"人设突然转变",
-                                description=f"角色{char_name}的核心性格\"{personality}\"发生变化，缺乏过渡",
-                                location=IssueLocation(chapter=chapter_num),
-                                evidence=f"出现\"{opposite}\"描述",
-                                suggestion="增加性格转变的过渡描写",
-                                character=char_name
-                            ))
 
         return issues
 

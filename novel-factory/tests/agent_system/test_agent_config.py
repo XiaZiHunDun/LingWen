@@ -48,17 +48,17 @@ def test_default_state_dir_under_project_root():
 def test_default_state_file_is_sibling_of_relationship_tracker():
     """DEFAULT_STATE_FILE 应与 relationship_tracker.py 在同一目录
 
-    Lockdown: relationship_network.json 必须在 social_engine/ 下，
+    Lockdown: relationship_network.db 必须在 social_engine/ 下 (R2-012: 迁移到 .db),
     而不是 project root 旁边的孤儿目录里。
     """
     from infra.agent_system.social_engine.relationship_tracker import (
         DEFAULT_STATE_FILE as RT_FILE,
     )
-    # 期望位置：.../infra/agent_system/social_engine/relationship_network.json
-    assert Path(RT_FILE).name == "relationship_network.json"
+    # R2-012: 默认后端 .db
+    assert Path(RT_FILE).name == "relationship_network.db"
     assert Path(RT_FILE).parent.name == "social_engine"
-    # 与 DEFAULT_STATE_DIR 的关系：state_dir + 'social_engine/relationship_network.json'
-    assert Path(RT_FILE) == Path(DEFAULT_STATE_DIR) / "social_engine" / "relationship_network.json", (
+    # 与 DEFAULT_STATE_DIR 的关系:state_dir + 'social_engine/relationship_network.db'
+    assert Path(RT_FILE) == Path(DEFAULT_STATE_DIR) / "social_engine" / "relationship_network.db", (
         f"DEFAULT_STATE_FILE 与 DEFAULT_STATE_DIR 不一致:\n"
         f"  DEFAULT_STATE_DIR  = {DEFAULT_STATE_DIR}\n"
         f"  DEFAULT_STATE_FILE = {RT_FILE}"
