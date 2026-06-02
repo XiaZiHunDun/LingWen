@@ -6,7 +6,7 @@
 
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from dataclasses import dataclass, field
 
 # 添加项目根目录到路径
@@ -15,18 +15,34 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.paths import ProjectPaths
 
+# 允许与 consistency 子系统的 IssueSeverity 互操作
+try:
+    from infra.consistency.engine.data_structures import IssueSeverity
+    _SeverityType = Union[str, IssueSeverity]
+except ImportError:
+    _SeverityType = str  # type: ignore[misc]
+
 
 @dataclass
 class Issue:
-    """问题描述"""
+    """问题描述
+
+    severity 接受 str（如 "P0"/"P1"/"P2"/"P3"）或 IssueSeverity 枚举值。
+    实际存储和比较统一使用 str 值。
+    """
     chapter: int
     dimension: str          # 问题维度
     issue_type: str         # 问题类型
-    severity: str           # P0/P1/P2/P3
+    severity: _SeverityType  # P0/P1/P2/P3 (str 或 IssueSeverity)
     description: str        # 问题描述
     location: str = ""      # 位置
     evidence: str = ""       # 证据
     suggestion: str = ""    # 建议修复方案
+
+    def __post_init__(self):
+        # 归一化：Enum 转 str，避免后续字符串比较失败
+        if hasattr(self.severity, "value"):
+            self.severity = self.severity.value
 
 
 class Inspector:

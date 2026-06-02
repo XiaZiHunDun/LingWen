@@ -120,6 +120,11 @@ class TaskOrchestrator:
 
         Returns:
             str: 任务ID
+
+        Note:
+            同步调度模式：入队后立即 start_task 推入 _active_tasks，
+            避免任务永远停留在 pending 队列无人消费。
+            调用方通过 verify_task/fail_task 终结任务。
         """
         import uuid
         task_id = str(uuid.uuid4())[:8]
@@ -139,6 +144,10 @@ class TaskOrchestrator:
 
         self._task_queue.append(task_info)
         self._task_queue.sort(key=lambda t: t["priority"], reverse=True)
+
+        # 同步调度：入队后立即 start_task（移入 _active_tasks）
+        # 任务由外部执行者通过 verify_task/fail_task 终结
+        self.start_task(task_id)
 
         logger.info(f"任务已分发: task_id={task_id}, name={task_name}, agent={agent}")
         return task_id

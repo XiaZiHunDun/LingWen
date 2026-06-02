@@ -6,7 +6,9 @@ from ...core.character_schema import CharacterSchema
 class CharacterDesignerTools:
     """人设师工具集"""
 
-    def __init__(self):
+    def __init__(self, router=None):
+        # router 当前未使用（纯规则实现）；保留参数以保持与其他 Agent 接口一致
+        self.router = router
         self.schema = CharacterSchema()
 
     def generate_character_card(self, requirements: Dict) -> Dict:

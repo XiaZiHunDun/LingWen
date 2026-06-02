@@ -76,14 +76,17 @@ def build_skill_registry() -> SkillRegistry:
 def build_agent_tools(router: AIRouter) -> AgentToolsBundle:
     """构造 5 个核心 Agent 工具
 
-    4 个工具无依赖，content_writer 和 auditor 接收 AIRouter 用于 LLM 调用。
+    所有 5 个 Agent 都接收 router 参数，保持接口一致。
+    content_writer/auditor 当前使用 router 调用 LLM；
+    outline_master/character_designer/polisher 当前为纯规则实现，
+    接收 router 但暂不调用，为未来 LLM 升级保留扩展点。
     """
     return AgentToolsBundle(
-        outline_master=OutlineMasterTools(),
-        character_designer=CharacterDesignerTools(),
+        outline_master=OutlineMasterTools(router=router),
+        character_designer=CharacterDesignerTools(router=router),
         content_writer=ContentWriterTools(router=router),
         auditor=AuditorTools(router=router),
-        polisher=PolisherTools(),
+        polisher=PolisherTools(router=router),
     )
 
 

@@ -87,33 +87,49 @@ class LLMService:
     }
 
     def __init__(self):
+        self._providers: list[tuple[str, AIProvider]] = []
         self._provider: Optional[AIProvider] = None
         self._provider_name: Optional[str] = None
-        self._init_provider()
+        self._init_providers()
 
-    def _init_provider(self):
-        """初始化可用Provider"""
+    def _init_providers(self):
+        """初始化所有可用Provider列表（支持运行时故障转移）"""
         for provider_name in self.PROVIDER_PRIORITY:
             api_key = self._get_api_key(provider_name)
-            if api_key:
-                try:
-                    self._provider = self._create_provider(provider_name, api_key)
-                    self._provider_name = provider_name
-                    return
-                except Exception as e:
-                    logger.warning(f"{provider_name} 初始化失败: {e}")
-                    continue
+            if not api_key:
+                continue
+            try:
+                provider = self._create_provider(provider_name, api_key)
+                self._providers.append((provider_name, provider))
+            except Exception as e:
+                logger.warning(f"{provider_name} 初始化失败: {e}")
 
-        raise RuntimeError("无可用的LLM Provider")
+        if not self._providers:
+            raise RuntimeError("无可用的LLM Provider")
+
+        # 第一个可用 provider 作为默认
+        self._provider_name, self._provider = self._providers[0]
 
     def _get_api_key(self, provider_name: str) -> Optional[str]:
-        """获取Provider的API Key"""
+        """获取Provider的API Key
+
+        验证：空字符串/纯空白视为未配置，返回 None 并 logger 警告。
+        """
         env_vars = {
             "minimax": "MINIMAX_API_KEY",
             "anthropic": "ANTHROPIC_API_KEY",
             "openai": "OPENAI_API_KEY",
         }
-        return os.environ.get(env_vars.get(provider_name, ""))
+        env_var = env_vars.get(provider_name, "")
+        if not env_var:
+            return None
+        api_key = os.environ.get(env_var, "")
+        if not api_key or not api_key.strip():
+            logger.warning(
+                f"{provider_name} 的 API key 环境变量 {env_var} 为空或仅含空白"
+            )
+            return None
+        return api_key
 
     def _create_provider(self, name: str, api_key: str) -> AIProvider:
         """创建Provider实例"""
@@ -148,14 +164,23 @@ class LLMService:
         # 获取任务配置
         config = self.TASK_CONFIGS.get(task.task_type, {})
 
-        response = self._provider.generate(
-            prompt=task.prompt,
-            system=task.system,
-            max_tokens=task.max_tokens or config.get("max_tokens", 2000),
-            temperature=task.temperature or config.get("temperature", 0.3),
-        )
+        # 运行时故障转移：依次尝试每个 provider，直到成功
+        last_error: Optional[Exception] = None
+        for provider_name, provider in self._providers:
+            try:
+                response = provider.generate(
+                    prompt=task.prompt,
+                    system=task.system,
+                    max_tokens=task.max_tokens or config.get("max_tokens", 2000),
+                    temperature=task.temperature or config.get("temperature", 0.3),
+                )
+                return response
+            except Exception as e:
+                logger.warning(f"{provider_name} 调用失败，尝试下一个 provider: {e}")
+                last_error = e
+                continue
 
-        return response
+        raise RuntimeError(f"所有 LLM provider 均失败: {last_error}")
 
     def parse_json_response(self, response: str) -> Any:
         """

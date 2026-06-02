@@ -132,7 +132,8 @@ class BaseChecker(ABC):
                     return False, ""
 
             return should_skip, reason
-        except Exception as e:
+        except (ImportError, AttributeError) as e:
+            # 白名单基础设施异常：吞掉但记录，默认不跳过
             logger.warning(f"白名单检查失败（默认不跳过）: {e}")
             return False, ""
 

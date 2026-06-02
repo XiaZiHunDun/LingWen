@@ -5,6 +5,10 @@ from typing import Dict, List
 class PolisherTools:
     """润色师工具集"""
 
+    def __init__(self, router=None):
+        # router 当前未使用（纯规则实现）；保留参数以保持与其他 Agent 接口一致
+        self.router = router
+
     def optimize_dialogue(self, content: str) -> str:
         """优化对话"""
         return content

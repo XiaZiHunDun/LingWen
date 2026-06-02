@@ -293,9 +293,11 @@ class MasterController:
                 if "scores" in llm_report:
                     return self.auditor.generate_audit_report(chapter_num, all_issues, llm_report["scores"])
             except Exception as e:
-                # LLM审核失败不影响规则检查结果
-                logger.warning(f"LLM审核失败 (chapter {chapter_num}): {e}")
-                pass
+                # LLM审核失败不影响规则检查结果，但记录 traceback 便于排查
+                logger.warning(
+                    f"LLM审核失败 (chapter {chapter_num}): {e}",
+                    exc_info=True,
+                )
 
         return self.auditor.generate_audit_report(chapter_num, all_issues, scores={})
 

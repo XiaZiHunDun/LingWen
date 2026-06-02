@@ -105,9 +105,9 @@ class TestKnowledgeTracker:
         # 如果简化版的实现不检测这种情况，也是可以接受的
 
     def test_checker_type(self):
-        """检查 checker_type 正确"""
+        """检查 checker_type 正确（R2-003 统一为 _checker 后缀）"""
         checker = KnowledgeTracker()
-        assert checker.get_checker_type().value == "knowledge_tracking"
+        assert checker.get_checker_type().value == "knowledge_tracking_checker"
 
 
 if __name__ == "__main__":

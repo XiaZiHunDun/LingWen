@@ -100,7 +100,12 @@ class TestTaskManagement:
         assert len(task_id) == 8  # UUID前8位
 
     def test_dispatch_task_with_priority(self, orchestrator):
-        """测试优先级任务分发"""
+        """测试优先级任务分发（R2-008 同步调度模式：任务立即进入 active 状态）
+
+        dispatch_task 入队后立即 start_task，所以待执行任务留在 _active_tasks 中，
+        而不是 _task_queue。验证最后一个 dispatch 的任务（按 priority 排序）应
+        在 _active_tasks 中存在。
+        """
         task_id_low = orchestrator.dispatch_task(
             task_name="low_priority",
             agent="content_writer",
@@ -113,23 +118,28 @@ class TestTaskManagement:
             context={},
             priority=1
         )
+        # 同步调度：所有任务都在 _active_tasks，_task_queue 为空
         pending = orchestrator.get_pending_tasks()
-        # 高优先级任务应该在前面
-        assert pending[0]["name"] == "high_priority"
+        assert pending == []
+        active = orchestrator.get_active_tasks()
+        # 两个任务都在 active 中
+        names = [t["name"] for t in active]
+        assert "low_priority" in names
+        assert "high_priority" in names
 
     def test_start_task(self, orchestrator):
-        """测试开始任务"""
+        """测试开始任务（R2-008：dispatch_task 已自动 start_task）"""
         task_id = orchestrator.dispatch_task(
             task_name="test_task",
             agent="content_writer",
             context={}
         )
-        result = orchestrator.start_task(task_id)
-        assert result is True
-
+        # 同步调度：任务已直接进入 _active_tasks
+        # start_task 在新语义下不应再被调用
         active = orchestrator.get_active_tasks()
         assert len(active) == 1
         assert active[0]["task_id"] == task_id
+        assert active[0]["status"] == "running"
 
     def test_verify_task(self, orchestrator):
         """测试验证任务完成"""
@@ -180,16 +190,18 @@ class TestTaskManagement:
         assert task_before_fail["error"] == "执行失败"
 
     def test_get_pending_tasks_filter_by_agent(self, orchestrator):
-        """测试按Agent过滤待处理任务"""
+        """测试按Agent过滤任务（R2-008：同步调度后任务在 active 而非 pending）"""
         orchestrator.dispatch_task("task1", "content_writer", {})
         orchestrator.dispatch_task("task2", "auditor", {})
         orchestrator.dispatch_task("task3", "content_writer", {})
 
-        writer_tasks = orchestrator.get_pending_tasks(agent="content_writer")
-        assert len(writer_tasks) == 2
-
-        auditor_tasks = orchestrator.get_pending_tasks(agent="auditor")
-        assert len(auditor_tasks) == 1
+        # 同步调度模式下，pending queue 为空，所有任务都在 active
+        pending = orchestrator.get_pending_tasks()
+        assert pending == []
+        active_writer = orchestrator.get_active_tasks(agent="content_writer")
+        assert len(active_writer) == 2
+        active_auditor = orchestrator.get_active_tasks(agent="auditor")
+        assert len(active_auditor) == 1
 
 
 class TestWorkflowStatus:
@@ -201,7 +213,7 @@ class TestWorkflowStatus:
         assert step == 'STEP_14'
 
     def test_get_workflow_status(self, orchestrator):
-        """测试获取工作流整体状态"""
+        """测试获取工作流整体状态（R2-008：同步调度后任务在 active）"""
         orchestrator.dispatch_task("task1", "content_writer", {})
         orchestrator.dispatch_task("task2", "auditor", {})
 
@@ -210,7 +222,10 @@ class TestWorkflowStatus:
         assert "current_step" in status
         assert "allowed_steps" in status
         assert "pending_tasks" in status
-        assert status["pending_tasks"] == 2
+        assert "active_tasks" in status
+        # 同步调度：pending 为 0，active 为 2
+        assert status["pending_tasks"] == 0
+        assert status["active_tasks"] == 2
 
 
 class TestStepCallbacks:

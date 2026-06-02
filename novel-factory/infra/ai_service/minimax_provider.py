@@ -41,6 +41,7 @@ class MiniMaxProvider(AIProvider):
         api_host = config.endpoint or os.getenv("MINIMAX_API_HOST", self.DEFAULT_API_HOST)
 
         # MiniMax使用X-Api-Key header，需要自定义httpx客户端
+        # httpx.Client 接受 headers 参数（自 0.20+ 起），用于透传自定义 header
         import httpx
         self._client = anthropic.Anthropic(
             api_key=config.api_key,

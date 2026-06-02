@@ -6,7 +6,9 @@ from ...core.outline_schema import OutlineSchema
 class OutlineMasterTools:
     """大纲师工具集"""
 
-    def __init__(self):
+    def __init__(self, router=None):
+        # router 当前未使用（纯规则实现）；保留参数以保持与其他 Agent 接口一致
+        self.router = router
         self.schema = OutlineSchema()
 
     def generate_outline(self, settings: Dict, requirements: Dict) -> Dict:

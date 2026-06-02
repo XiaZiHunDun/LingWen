@@ -13,6 +13,7 @@
 import logging
 import re
 import math
+import threading
 import yaml
 import uuid
 from pathlib import Path
@@ -317,6 +318,7 @@ class SentenceDiversityChecker(BaseChecker):
     # 模块级缓存 - 预编译所有正则表达式
     _COMPILED_PATTERNS = None
     _TEMPLATE_COMPILED = None
+    _compile_lock = threading.Lock()
 
     def __init__(self, chapters_dir: Optional[str] = None):
         super().__init__(self._checker_type)
@@ -330,7 +332,13 @@ class SentenceDiversityChecker(BaseChecker):
         """获取预编译的模式列表（懒加载，只编译一次）
         优先使用PatternRegistry中的预编译模式，回退到本地编译
         """
-        if cls._COMPILED_PATTERNS is None:
+        if cls._COMPILED_PATTERNS is not None:
+            return cls._COMPILED_PATTERNS, cls._TEMPLATE_COMPILED
+
+        with cls._compile_lock:
+            if cls._COMPILED_PATTERNS is not None:
+                return cls._COMPILED_PATTERNS, cls._TEMPLATE_COMPILED
+
             registry = PatternRegistry.get_instance()
 
             # 优先从PatternRegistry获取已编译的模式
