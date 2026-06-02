@@ -134,7 +134,8 @@ class HookConfigLoader:
         "INSPIRATION_GENERATED", "OUTLINE_APPROVED",
         "STAGE_SUMMARIZED", "VOLUME_SUMMARIZED", "FINAL_SUMMARY_APPROVED",
         "MANUAL_TRIGGER",
-        "STEP_17_COMPLETED", "state_updated"
+        "STEP_17_COMPLETED", "state_updated",
+        "BEFORE_WRITE",  # R3-011: 用于 story_contract 注入
     }
 
     # 支持的动作类型

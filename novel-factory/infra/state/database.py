@@ -55,12 +55,18 @@ class WorkflowDB:
                     changed_by TEXT
                 )
             """)
+            # WAL 模式：让多 reader + 1 writer 并发不互相阻塞
+            conn.execute("PRAGMA journal_mode=WAL")
+            # 5s busy timeout：写冲突时自动等待而不是直接抛 SQLITE_BUSY
+            conn.execute("PRAGMA busy_timeout=5000")
 
     @contextmanager
     def _get_conn(self):
         """Get database connection with context manager"""
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
+        # 每个连接也设置 busy_timeout（PRAGMA 是 per-connection）
+        conn.execute("PRAGMA busy_timeout=5000")
         try:
             yield conn
         finally:
@@ -74,6 +80,7 @@ class WorkflowDB:
         """
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA busy_timeout=5000")
         try:
             conn.execute("BEGIN IMMEDIATE")
             yield conn
