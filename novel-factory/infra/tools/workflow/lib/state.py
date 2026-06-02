@@ -15,29 +15,44 @@ logger = logging.getLogger(__name__)
 
 
 def get_state(key: str, fallback: str = "") -> str:
-    """从SQLite获取状态，fallback到JSON
+    """从SQLite获取状态,fallback到JSON
 
     Args:
-        key: 状态键（如 'current_step'）
-        fallback: 备用值（SQLite无数据时返回）
+        key: 状态键(如 'current_step')
+        fallback: 备用值(SQLite无数据时返回)
 
     Returns:
         状态值字符串
+
+    R3-003: 用显式 BEGIN (DEFERRED) 把 SELECT 包在只读事务里。
+    写方 set_state 用 BEGIN IMMEDIATE 持排他锁;读方 BEGIN 在首次
+    SELECT 时升级为 SHARED 锁,与写方互斥。配合 busy_timeout=30s
+    等待写完成,保证读到的不是"半提交"中间态。
     """
     db.init_sqlite()
 
-    # 使用WAL模式和只读事务提高并发读性能
     conn = sqlite3.connect(str(db.DB_PATH), timeout=30)
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=30000")
     conn.row_factory = sqlite3.Row
     try:
-        cur = conn.execute(
-            "SELECT value FROM workflow_state WHERE key = ?",
-            (key,)
-        )
-        row = cur.fetchone()
-        if row and row['value']:
-            return row['value']
+        # R3-003: 显式 BEGIN 让读事务与写事务 (BEGIN IMMEDIATE) 互斥
+        conn.execute("BEGIN")
+        try:
+            cur = conn.execute(
+                "SELECT value FROM workflow_state WHERE key = ?",
+                (key,)
+            )
+            row = cur.fetchone()
+            conn.commit()  # 释放 SHARED 锁
+            if row and row['value']:
+                return row['value']
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
     except Exception as e:
         logger.warning(f"get_state读取失败: {e}")
     finally:
