@@ -30,12 +30,15 @@ def mock_env(tmp_path, monkeypatch):
     locks_dir = tmp_path / ".locks"
     locks_dir.mkdir()
 
-    # Override the module-level variables via monkeypatch
-    monkeypatch.setattr("infra.tools.workflow.lib.PROJECT_ROOT", tmp_path)
-    monkeypatch.setattr("infra.tools.workflow.lib.WORKFLOW_FILE", tmp_path / "workflow_state.json")
-    monkeypatch.setattr("infra.tools.workflow.lib.DB_DIR", db_dir)
-    monkeypatch.setattr("infra.tools.workflow.lib.DB_PATH", db_dir / "workflow.db")
-    monkeypatch.setattr("infra.tools.workflow.lib.LOCKFILE", locks_dir / "workflow.lock")
+    # Override the module-level variables via monkeypatch.
+    # After lib.py → lib/ split, the path constants live in lib.db (the
+    # canonical owner). lib/__init__.py re-imports them for backward
+    # compat, but the real writes happen through .db, so we patch there.
+    monkeypatch.setattr("infra.tools.workflow.lib.db.PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr("infra.tools.workflow.lib.db.WORKFLOW_FILE", tmp_path / "workflow_state.json")
+    monkeypatch.setattr("infra.tools.workflow.lib.db.DB_DIR", db_dir)
+    monkeypatch.setattr("infra.tools.workflow.lib.db.DB_PATH", db_dir / "workflow.db")
+    monkeypatch.setattr("infra.tools.workflow.lib.db.LOCKFILE", locks_dir / "workflow.lock")
 
     # Fix lib.py bug: sys is used in advance_step but not imported at module level
     # lib.py has `sys.path.insert(...)` in advance_step but only imports sys inside __main__ block
@@ -285,7 +288,7 @@ class TestAdvanceStep:
 
         set_state("current_step", "STEP_14")
 
-        with patch('infra.tools.workflow.lib._trigger_event') as mock_trigger:
+        with patch('infra.tools.workflow.lib.events._trigger_event') as mock_trigger:
             advance_step("STEP_15")
 
             # Check that STEP_COMPLETED event was triggered
@@ -343,7 +346,7 @@ class TestDispatchTask:
         """Test that dispatch_task triggers MANUAL_TRIGGER event"""
         from infra.tools.workflow.lib import dispatch_task
 
-        with patch('infra.tools.workflow.lib._trigger_event') as mock_trigger:
+        with patch('infra.tools.workflow.lib.events._trigger_event') as mock_trigger:
             dispatch_task("event_test_task", "agent-z", "desc")
 
             mock_trigger.assert_called()
