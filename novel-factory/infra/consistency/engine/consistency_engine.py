@@ -380,9 +380,22 @@ class ConsistencyEngine:
         checker: Any,
         chapter_content: str,
         chapter_num: int,
-        context: Dict[str, Any]
+        context: Dict[str, Any],
+        propagate_errors: bool = False
     ) -> List[Issue]:
-        """运行单个检查器（集成白名单机制）"""
+        """运行单个检查器（集成白名单机制）
+
+        Args:
+            checker: 检查器实例
+            chapter_content: 章节内容
+            chapter_num: 章节编号
+            context: 上下文
+            propagate_errors: 是否传播异常（默认 False：吞掉+日志，
+                让其他 checkers 继续跑；True：让上层决定如何处理）
+
+        Returns:
+            检查器产出的 Issue 列表
+        """
         try:
             # 使用 check_with_whitelist 方法集成白名单机制
             return checker.check_with_whitelist(
@@ -391,8 +404,12 @@ class ConsistencyEngine:
                 context=context
             )
         except Exception as e:
-            # 检查器出错时返回空列表，记录日志
-            logger.error(f"Checker {checker.get_checker_type()} failed: {e}")
+            logger.error(
+                f"Checker {checker.get_checker_type()} failed: {e}",
+                exc_info=True
+            )
+            if propagate_errors:
+                raise
             return []
 
     def _get_checkers_for_scope(self, scope: CheckScope) -> List[CheckerType]:

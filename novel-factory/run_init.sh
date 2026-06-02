@@ -640,9 +640,10 @@ methodology_check:
   筛选标准通过: false
 TEMPLATE
 
-    # 替换占位符
-    sed -i "s/{PROJECT_NAME}/$PROJECT_NAME/g" "$proj_dir/00_核心三要素.yaml"
-    sed -i "s/{DATE}/$(date +%Y-%m-%d)/g" "$proj_dir/00_核心三要素.yaml"
+    # 替换占位符（用 Python 替代 sed -i，避免特殊字符转义与平台差异）
+    python tools/template_substitute.py "$proj_dir/00_核心三要素.yaml" \
+      --set "{PROJECT_NAME}=$PROJECT_NAME" \
+      --set "{DATE}=$(date +%Y-%m-%d)"
 
     # 世界观设定模板
     cat > "$proj_dir/01_世界观设定.yaml" << 'TEMPLATE'

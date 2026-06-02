@@ -20,13 +20,24 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 
-# 添加项目路径
-PROJECT_ROOT = Path('/home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory')
+# 添加项目路径（从脚本位置反推，支持任意 cwd）
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, '.')
 
 from infra.ai_service import MiniMaxProvider, ProviderConfig
 from tools.minimax_batch_review import MiniMaxReviewer
+
+
+def _resolve_max_chapter() -> int:
+    return int(os.getenv("PARALLEL_BATCH_MAX_CHAPTER", "360"))
+
+
+def _resolve_log_dir() -> Path:
+    override = os.getenv("PARALLEL_BATCH_LOG_DIR")
+    if override:
+        return Path(override)
+    return PROJECT_ROOT / "logs" / "minimax_review"
 
 
 def main():
@@ -39,9 +50,10 @@ def main():
     session_id = args.session
     start_ch = args.start
     end_ch = args.end
+    max_chapter = _resolve_max_chapter()
 
     # 日志文件
-    log_dir = PROJECT_ROOT / 'logs' / 'minimax_review'
+    log_dir = _resolve_log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f'session{session_id}.log'
     results_file = log_dir / f'session{session_id}_results.json'
@@ -58,8 +70,8 @@ def main():
         sys.exit(1)
 
     # 验证范围
-    if start_ch < 1 or end_ch > 360 or start_ch > end_ch:
-        log(f"ERROR: Invalid range {start_ch}-{end_ch}, must be 1-360 and start <= end")
+    if start_ch < 1 or end_ch > max_chapter or start_ch > end_ch:
+        log(f"ERROR: Invalid range {start_ch}-{end_ch}, must be 1-{max_chapter} and start <= end")
         sys.exit(1)
 
     log(f"Starting session {session_id}: ch{start_ch:03d}-ch{end_ch:03d}")

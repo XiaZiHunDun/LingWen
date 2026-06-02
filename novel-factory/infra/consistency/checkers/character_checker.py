@@ -124,27 +124,51 @@ class CharacterChecker(BaseChecker):
         profile: CharacterProfile
     ) -> List[Issue]:
         """检查性格关键词冲突"""
-        issues = []
         opposites_map = self.rules.get("personality_opposites", {})
-        window_size = self.rules.get("detection_window", 200)
+        default_window = self.rules.get("detection_window", 200)
 
-        for tag in profile.personality_tags:
-            opposites = opposites_map.get(tag, [])
-            opposites.extend(profile.opposites.get(tag, []))
-
-            for opposite in opposites:
-                # 检测窗口内的冲突
-                pattern = opposite
-                if self._has_conflict_in_window(content, pattern, window_size, profile.name):
-                    issues.append(self._create_personality_issue(
-                        chapter_num=chapter_num,
-                        character=profile.name,
-                        personality=tag,
-                        opposite=opposite,
-                        issue_type="性格-行为冲突"
-                    ))
+        issues: List[Issue] = []
+        for tag, opposite in self._iter_opposites(profile, opposites_map):
+            window_size = self._resolve_window_size(opposites_map, tag, default_window)
+            if self._has_conflict_in_window(content, opposite, window_size, profile.name):
+                issues.append(self._create_personality_issue(
+                    chapter_num=chapter_num,
+                    character=profile.name,
+                    personality=tag,
+                    opposite=opposite,
+                    issue_type="性格-行为冲突"
+                ))
 
         return issues
+
+    def _iter_opposites(
+        self,
+        profile: CharacterProfile,
+        opposites_map: Dict[str, List[str]]
+    ):
+        """生成 (tag, opposite) 对，合并全局规则与角色自定义"""
+        for tag in profile.personality_tags:
+            yield from ((tag, opp) for opp in opposites_map.get(tag, []))
+            yield from ((tag, opp) for opp in profile.opposites.get(tag, []))
+
+    @staticmethod
+    def _resolve_window_size(
+        opposites_map: Dict[str, Any],
+        tag: str,
+        default: int
+    ) -> int:
+        """解析检测窗口：先查 tag 级覆盖，再回退到全局默认
+
+        Supports both shapes:
+          - {"tag": ["opposite_a", ...]}              (list, legacy)
+          - {"tag": {"opposites": [...], "detection_window": 300}}  (dict, new)
+        """
+        entry = opposites_map.get(tag)
+        if isinstance(entry, dict):
+            override = entry.get("detection_window")
+            if isinstance(override, int) and override > 0:
+                return override
+        return default
 
     def _has_conflict_in_window(self, content: str, pattern: str, window_size: int, char_name: str = "") -> bool:
         """检测窗口内是否存在冲突
@@ -160,20 +184,24 @@ class CharacterChecker(BaseChecker):
             return True
 
         # 查找 opposite 词的所有位置
+        for idx in self._iter_pattern_indices(content, pattern):
+            start = max(0, idx - window_size)
+            end = min(len(content), idx + len(pattern) + window_size)
+            if char_name in content[start:end]:
+                return True
+
+        return False
+
+    @staticmethod
+    def _iter_pattern_indices(content: str, pattern: str):
+        """生成 pattern 在 content 中出现的所有起始索引"""
         pos = 0
         while True:
             idx = content.find(pattern, pos)
             if idx == -1:
-                break
-            # 检查角色名是否在 [idx - window_size, idx + len(pattern)] 范围内
-            start = max(0, idx - window_size)
-            end = min(len(content), idx + len(pattern) + window_size)
-            window = content[start:end]
-            if char_name in window:
-                return True
+                return
+            yield idx
             pos = idx + 1
-
-        return False
 
     def _create_personality_issue(
         self,

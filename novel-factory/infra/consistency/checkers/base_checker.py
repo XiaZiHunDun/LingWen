@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Type
 import logging
 
 from ..engine.data_structures import Issue, CheckerType
+from ..engine.whitelist_manager import WhitelistManager
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,6 @@ class BaseChecker(ABC):
             return False, ""
 
         try:
-            from ..engine.whitelist_manager import WhitelistManager
             whitelist = WhitelistManager()
 
             # 构建检查器名称
