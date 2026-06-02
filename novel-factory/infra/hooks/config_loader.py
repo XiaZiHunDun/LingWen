@@ -142,7 +142,8 @@ class HookConfigLoader:
     VALID_ACTION_TYPES = {
         "run_checker", "notify", "update_state",
         "run_script", "trigger_module", "request_approval",
-        "block_proceed", "log_state_change"
+        "block_proceed", "log_state_change",
+        "slow",  # R3-004: 测试用慢动作(校验时也允许)
     }
 
     def __init__(self):

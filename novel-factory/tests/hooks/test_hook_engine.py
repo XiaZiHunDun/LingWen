@@ -4,16 +4,30 @@ Hook引擎测试
 """
 import os
 import tempfile
+import time
 from pathlib import Path
 from unittest import TestCase
 
 from infra.hooks import Event, EventBus, EventTypes
 from infra.hooks.config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
 from infra.hooks.hook_engine import HookEngine, HookStatus, HookExecutionError
-from infra.hooks.actions.base import ActionResult
+from infra.hooks.actions.base import ActionResult, BaseAction
 from infra.hooks.actions.run_checker import RunCheckerAction
 from infra.hooks.actions.notify import NotifyAction
 from infra.hooks.actions.update_state import UpdateStateAction
+
+
+class _SlowAction(BaseAction):
+    """R3-004: 慢动作 - 用于验证 timeout 强制
+
+    sleep_time 由 params 控制,默认 2.0s。
+    """
+    action_type = "slow"
+
+    def execute(self, params, context):
+        sleep_time = params.get("sleep", 2.0)
+        time.sleep(sleep_time)
+        return ActionResult(success=True, output=f"slept {sleep_time}s")
 
 
 class TestConditionEvaluator(TestCase):
@@ -324,6 +338,135 @@ hooks:
 
             status = self.engine.get_hook_status("状态测试Hook")
             self.assertEqual(status, HookStatus.SUCCESS)
+        finally:
+            os.unlink(config_path)
+
+
+class TestHookEngineTimeout(TestCase):
+    """R3-004: required hook 同步等待 + action 超时强制
+
+    HookEngine._execute_action 用 ThreadPoolExecutor + future.result
+    带 timeout 跑 action.execute()。required hook 超时/失败会
+    抛 HookExecutionError,调用方据此回滚。
+    """
+
+    def setUp(self):
+        self.event_bus = EventBus()
+        self.config_loader = HookConfigLoader()
+        self.engine = HookEngine(self.event_bus, self.config_loader)
+        # 注册慢动作
+        self.engine.register_action("slow", _SlowAction)
+
+    def _create_config(self, content: str) -> str:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(content)
+            return f.name
+
+    def test_required_hook_timeout_raises(self):
+        """required hook 慢动作超时 → 抛 HookExecutionError"""
+        config_content = """
+hooks:
+  - name: "慢动作必需Hook"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    actions:
+      - type: "slow"
+        params:
+          sleep: 3.0
+    required: true
+    timeout: 1
+"""
+        config_path = self._create_config(config_content)
+        try:
+            self.engine.load_hooks(config_path)
+            event = Event(name="CHAPTER_WRITTEN", source="test")
+            t0 = time.time()
+            with self.assertRaises(HookExecutionError) as ctx:
+                self.engine.trigger(event)
+            elapsed = time.time() - t0
+            # 超时应该约 1s,绝不超过 sleep 时间 3s(节省测试时间)
+            self.assertLess(elapsed, 2.5, f"超时未生效,实际耗时 {elapsed:.2f}s")
+            self.assertIn("timed out", str(ctx.exception).lower())
+        finally:
+            os.unlink(config_path)
+
+    def test_required_hook_timeout_status_recorded(self):
+        """required hook 超时 → 状态为 TIMEOUT,失败为 FAILED (区分二者)"""
+        config_content = """
+hooks:
+  - name: "超时Hook"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    actions:
+      - type: "slow"
+        params:
+          sleep: 2.0
+    required: true
+    timeout: 1
+"""
+        config_path = self._create_config(config_content)
+        try:
+            self.engine.load_hooks(config_path)
+            event = Event(name="CHAPTER_WRITTEN", source="test")
+            try:
+                self.engine.trigger(event)
+            except HookExecutionError:
+                pass
+            last = self.engine.get_last_result("超时Hook")
+            self.assertIsNotNone(last)
+            self.assertEqual(last.status, HookStatus.TIMEOUT)
+        finally:
+            os.unlink(config_path)
+
+    def test_optional_hook_timeout_does_not_raise(self):
+        """optional hook 超时 → 不抛异常,继续执行"""
+        config_content = """
+hooks:
+  - name: "可选慢Hook"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    actions:
+      - type: "slow"
+        params:
+          sleep: 2.0
+    required: false
+    timeout: 1
+"""
+        config_path = self._create_config(config_content)
+        try:
+            self.engine.load_hooks(config_path)
+            event = Event(name="CHAPTER_WRITTEN", source="test")
+            t0 = time.time()
+            # optional hook 超时不应抛异常
+            results = self.engine.trigger(event)
+            elapsed = time.time() - t0
+            self.assertLess(elapsed, 2.5, f"超时未生效,实际耗时 {elapsed:.2f}s")
+            self.assertEqual(len(results), 1)
+            # 状态应是 TIMEOUT 但不抛异常
+            self.assertEqual(results[0].status, HookStatus.TIMEOUT)
+        finally:
+            os.unlink(config_path)
+
+    def test_action_completes_within_timeout_succeeds(self):
+        """action 在 timeout 内完成 → 正常返回 SUCCESS"""
+        config_content = """
+hooks:
+  - name: "快速Hook"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    actions:
+      - type: "slow"
+        params:
+          sleep: 0.2
+    required: true
+    timeout: 5
+"""
+        config_path = self._create_config(config_content)
+        try:
+            self.engine.load_hooks(config_path)
+            event = Event(name="CHAPTER_WRITTEN", source="test")
+            results = self.engine.trigger(event)
+            self.assertEqual(results[0].status, HookStatus.SUCCESS)
         finally:
             os.unlink(config_path)
 

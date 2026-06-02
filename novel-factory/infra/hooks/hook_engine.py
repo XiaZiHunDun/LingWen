@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -13,6 +14,11 @@ from typing import Any, Dict, List, Optional
 from .event_bus import Event, EventBus
 from .config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
 from .actions.base import ActionResult
+
+
+# R3-004: 共享线程池,避免每个 hook 创建一个 executor
+# max_workers 留出余量,允许并发执行多个 hook
+_ACTION_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="hook-action")
 
 
 class HookStatus(Enum):
@@ -115,10 +121,16 @@ class HookEngine:
             results.append(result)
             self._hook_results[hook_config.name] = result
 
-            # 如果是required hook且失败，抛出异常
-            if hook_config.required and result.status == HookStatus.FAILED:
+            # R3-004: required hook 同步等待 — 失败/超时都阻塞调用方
+            if hook_config.required and result.status in (
+                HookStatus.FAILED,
+                HookStatus.TIMEOUT,
+            ):
+                status_label = (
+                    "timed out" if result.status == HookStatus.TIMEOUT else "failed"
+                )
                 raise HookExecutionError(
-                    f"Required hook '{hook_config.name}' failed: {result.error}"
+                    f"Required hook '{hook_config.name}' {status_label}: {result.error}"
                 )
 
         return results
@@ -195,21 +207,28 @@ class HookEngine:
                 )
                 result.action_results.append(action_result)
 
-                # 如果动作失败且是required，停止执行
+                # R3-004: 超时也算失败 — required hook 应阻止流程
                 if not action_result.success:
+                    is_timeout = action_result.error and "timed out" in action_result.error
                     if hook_config.required:
-                        result.status = HookStatus.FAILED
+                        # 区分超时与普通失败
+                        result.status = HookStatus.TIMEOUT if is_timeout else HookStatus.FAILED
                         result.error = f"Action failed: {action_result.error}"
                         break
-                    # optional hook失败不阻止，但记录
-                    result.action_results[-1].error = f"Optional action failed: {action_result.error}"
+                    # optional hook 失败不阻止,但记录 (区分超时/普通失败)
+                    result.action_results[-1].error = (
+                        f"Optional action failed: {action_result.error}"
+                    )
+                    if is_timeout:
+                        result.status = HookStatus.TIMEOUT
+                        result.error = f"Optional action timed out: {action_result.error}"
 
             # 检查是否所有动作都成功
             if all(ar.success for ar in result.action_results):
                 result.status = HookStatus.SUCCESS
             else:
-                # 有失败的动作，但可能不是required
-                if result.status != HookStatus.FAILED:
+                # 有失败的动作,但可能不是required
+                if result.status != HookStatus.FAILED and result.status != HookStatus.TIMEOUT:
                     result.status = HookStatus.SUCCESS  # optional hook不标记失败
 
         except asyncio.TimeoutError:
@@ -234,10 +253,15 @@ class HookEngine:
         Args:
             action_def: 动作定义
             context: 执行上下文
-            timeout: 超时时间
+            timeout: 超时时间(秒)
 
         Returns:
             动作执行结果
+
+        R3-004: 用 ThreadPoolExecutor 跑 action.execute(),future.result
+        带 timeout — 超过 timeout 返回失败结果。Python 线程无法
+        强制 kill,所以慢线程会继续跑但其结果被丢弃;required hook
+        因此被标记为 TIMEOUT,调用方应据此回滚。
         """
         action_type = action_def.get("type", "")
         action_class = self._action_registry.get(action_type)
@@ -251,12 +275,20 @@ class HookEngine:
         try:
             action = action_class()
             start_time = time.time()
+            params = action_def.get("params", {})
 
-            # 在超时内执行
-            # 注意：这里使用简单的执行，复杂场景可用线程池
-            result = action.execute(action_def.get("params", {}), context)
+            # R3-004: 提交到共享线程池,future.result 同步等待,带 timeout
+            future = _ACTION_EXECUTOR.submit(action.execute, params, context)
+            try:
+                result = future.result(timeout=timeout)
+            except FuturesTimeoutError:
+                # Python 线程无法强制 kill,标记失败但允许线程在后台跑完
+                result = ActionResult(
+                    success=False,
+                    error=f"Action '{action_type}' timed out after {timeout}s",
+                )
+
             result.duration_ms = (time.time() - start_time) * 1000
-
             return result
 
         except Exception as e:
