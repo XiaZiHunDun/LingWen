@@ -8,18 +8,25 @@
 - 社交引擎协调
 """
 
+from pathlib import Path
 from typing import Dict, List, Optional, Any
+import logging
 
 from .agents.outline_master.tools import OutlineMasterTools
 from .agents.character_designer.tools import CharacterDesignerTools
 from .agents.content_writer.tools import ContentWriterTools
 from .agents.auditor.tools import AuditorTools
 from .agents.polisher.tools import PolisherTools
-from .social_engine.relationship_tracker import RelationshipTracker
+from .social_engine.relationship_tracker import RelationshipTracker, DEFAULT_STATE_FILE
 from .social_engine.event_effect_calculator import EventEffectCalculator
 from .social_engine.conflict_alert import ConflictAlert
 from .social_engine.writing_suggestion import WritingSuggestion
 from .shared.context_builder import ContextBuilder
+
+# 基于 DEFAULT_STATE_FILE 反推 state_dir，避免 cwd-相对路径
+# DEFAULT_STATE_FILE = .../novel-factory/agent_system/social_engine/relationship_network.json
+# DEFAULT_STATE_DIR  = .../novel-factory/agent_system/
+DEFAULT_STATE_DIR = str(Path(DEFAULT_STATE_FILE).parent.parent)
 
 # 导入AI Service
 from ..ai_service import ProviderConfig
@@ -30,6 +37,8 @@ from .task_orchestrator import TaskOrchestrator
 
 # 导入SkillRegistry
 from .skill_registry import SkillRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class MasterController:
@@ -47,15 +56,17 @@ class MasterController:
 
     def __init__(
         self,
-        state_dir: str = "novel-factory/agent_system",
+        state_dir: Optional[str] = None,
         router: Optional[AIRouter] = None
     ):
         """初始化主控调度器
 
         Args:
-            state_dir: 状态目录
+            state_dir: 状态目录（默认基于 __file__ 解析的绝对路径，cwd-无关）
             router: AIRouter实例，如果为None则创建默认实例
         """
+        if state_dir is None:
+            state_dir = DEFAULT_STATE_DIR
         # ==================== 基础设施 ====================
 
         # AI Router
@@ -65,8 +76,8 @@ class MasterController:
             self._router = router
 
         # TaskOrchestrator（任务编排器）
-        from infra.state.state_manager import StateManager
-        state_manager = StateManager()
+        from infra.state.state_manager import WorkflowStateManager
+        state_manager = WorkflowStateManager()
         self._orchestrator = TaskOrchestrator(state_manager=state_manager)
 
         # SkillRegistry（技能注册表）
@@ -109,7 +120,7 @@ class MasterController:
         if anthropic_key:
             config["anthropic"] = ProviderConfig(api_key=anthropic_key, model="claude-3-5-sonnet-20241022")
         if minimax_key:
-            config["minimax"] = ProviderConfig(api_key=minimax_key, model="MiniMax-M2.7")
+            config["minimax"] = ProviderConfig(api_key=minimax_key, model="MiniMax-M2.7", timeout=180, max_retries=2)
 
         if not config:
             raise RuntimeError(
@@ -342,6 +353,7 @@ class MasterController:
                     return self.auditor.generate_audit_report(chapter_num, all_issues, llm_report["scores"])
             except Exception as e:
                 # LLM审核失败不影响规则检查结果
+                logger.warning(f"LLM审核失败 (chapter {chapter_num}): {e}")
                 pass
 
         return self.auditor.generate_audit_report(chapter_num, all_issues, scores={})

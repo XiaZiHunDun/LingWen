@@ -4,11 +4,21 @@ from pathlib import Path
 import json
 
 
+# 基于 __file__ 解析的绝对路径，避免 cwd-相对路径在不同工作目录下产生歧义
+# Path(__file__).parent.parent.parent.parent = novel-factory/ (项目根)
+DEFAULT_STATE_FILE = str(
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "agent_system"
+    / "social_engine"
+    / "relationship_network.json"
+)
+
+
 class RelationshipTracker:
     """关系追踪器"""
 
-    def __init__(self, state_file: str = "novel-factory/agent_system/social_engine/relationship_network.json"):
-        self.state_file = state_file
+    def __init__(self, state_file: Optional[str] = None):
+        self.state_file = state_file or DEFAULT_STATE_FILE
         self._ensure_initial_state()
 
     def _ensure_initial_state(self):
