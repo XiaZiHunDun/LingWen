@@ -175,9 +175,9 @@ hooks:
     required: false
     timeout: 120
 
-# ==================== Claude/MiniMax 增强层Hook ====================
+  # ==================== Claude/MiniMax 增强层Hook ====================
 
-# ==================== Node 1: 大纲反套路创意注入 ====================
+  # ==================== Node 1: 大纲反套路创意注入 ====================
   - name: "大纲反套路创意选项生成"
     trigger:
       event: "OUTLINE_APPROVED"
@@ -191,7 +191,7 @@ hooks:
     required: false
     timeout: 60
 
-# ==================== Node 2: 关键章节MiniMax深度润色 ====================
+  # ==================== Node 2: 关键章节MiniMax深度润色 ====================
   - name: "关键章节深度润色"
     trigger:
       event: "CHAPTER_WRITTEN"
@@ -207,7 +207,7 @@ hooks:
     required: false
     timeout: 180
 
-# ==================== Node 3: LLM质检决策分析 ====================
+  # ==================== Node 3: LLM质检决策分析 ====================
   - name: "LLM质检决策分析"
     trigger:
       event: "CHAPTER_WRITTEN"
@@ -223,7 +223,7 @@ hooks:
     required: false
     timeout: 120
 
-# ==================== Story Contracts: 合约上下文注入 ====================
+  # ==================== Story Contracts: 合约上下文注入 ====================
   - name: "story_contract_inject"
     trigger:
       event: "BEFORE_WRITE"
