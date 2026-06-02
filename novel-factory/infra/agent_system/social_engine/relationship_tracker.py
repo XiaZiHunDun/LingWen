@@ -5,12 +5,10 @@ import json
 
 
 # 基于 __file__ 解析的绝对路径，避免 cwd-相对路径在不同工作目录下产生歧义
-# Path(__file__).parent.parent.parent.parent = novel-factory/ (项目根)
+# __file__ = .../infra/agent_system/social_engine/relationship_tracker.py
+# .parent   = .../infra/agent_system/social_engine/
 DEFAULT_STATE_FILE = str(
-    Path(__file__).resolve().parent.parent.parent.parent
-    / "agent_system"
-    / "social_engine"
-    / "relationship_network.json"
+    Path(__file__).resolve().parent / "relationship_network.json"
 )
 
 

@@ -65,3 +65,7 @@ novel-factory/.story-system/
 novel-factory/config/api_config.yaml
 novel-factory/context/checker_performance.json
 novel-factory/logs/lingwen.json
+# Social engine runtime state (relationship network snapshot)
+novel-factory/infra/agent_system/social_engine/relationship_network.json
+# Orphan agent_system/ from historical bug — should not be recreated
+novel-factory/agent_system/
