@@ -1,0 +1,95 @@
+/* Pixel-Art Theme CSS for LingWen Dashboard */
+
+:root {
+  /* Pixel-art theme colors */
+  --bg-primary: #fff7e8;
+  --bg-secondary: #f5efe6;
+  --color-accent: #26a8ff;
+  --color-warning: #f5a524;
+  --color-danger: #d7263e;
+  --color-success: #2ec27e;
+  --color-text: #2a220f;
+  --border-color: #2a220f;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Press Start 2P', monospace;
+  background-color: var(--bg-primary);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Pixel border style */
+.pixel-border {
+  border: 4px solid var(--border-color);
+  box-shadow: 6px 6px 0 var(--border-color);
+}
+
+/* Card component */
+.pixel-card {
+  background-color: var(--bg-secondary);
+  border: 4px solid var(--border-color);
+  box-shadow: 6px 6px 0 var(--border-color);
+  padding: var(--space-md);
+}
+
+/* Button styles */
+.pixel-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--bg-secondary);
+  color: var(--color-text);
+  border: 4px solid var(--border-color);
+  box-shadow: 4px 4px 0 var(--border-color);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.pixel-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--border-color);
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--border-color);
+}
+
+.pixel-btn--primary {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.pixel-btn--danger {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.pixel-btn--success {
+  background-color: var(--color-success);
+  color: white;
+}
+
+/* Utility classes */
+.text-accent { color: var(--color-accent); }
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
