@@ -3,15 +3,30 @@
 测试 Claude/MiniMax 增强工具
 """
 
+import os
+
 import pytest
 from unittest.mock import MagicMock, patch
 from tools.anti_trope_enhancer import AntiTropeEnhancer, CreativeOption
 from tools.llm_quality_analyzer import LLMQualityAnalyzer, SeverityDecision, RepairDecision, AnalysisResult
 
 
+# Some tests construct real LLMService (which needs an API key in env).
+# Per-test skipif so the pure-enum / dataclass tests still run offline.
+_REQUIRES_API_KEY = pytest.mark.skipif(
+    not (
+        os.environ.get("MINIMAX_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    ),
+    reason="requires MINIMAX_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY env var",
+)
+
+
 class TestAntiTropeEnhancer:
     """AntiTropeEnhancer 测试"""
 
+    @_REQUIRES_API_KEY
     def test_init(self):
         """测试初始化"""
         enhancer = AntiTropeEnhancer()
@@ -40,6 +55,7 @@ class TestAntiTropeEnhancer:
 
                 assert isinstance(options, list)
 
+    @_REQUIRES_API_KEY
     def test_format_options(self):
         """测试格式化输出"""
         enhancer = AntiTropeEnhancer()
@@ -60,6 +76,7 @@ class TestAntiTropeEnhancer:
         assert "废土世界" in formatted
         assert "生存竞争" in formatted
 
+    @_REQUIRES_API_KEY
     def test_format_options_empty(self):
         """测试空选项格式化"""
         enhancer = AntiTropeEnhancer()
@@ -70,6 +87,7 @@ class TestAntiTropeEnhancer:
 class TestLLMQualityAnalyzer:
     """LLM质检分析器测试"""
 
+    @_REQUIRES_API_KEY
     def test_init(self):
         """测试初始化"""
         analyzer = LLMQualityAnalyzer()
@@ -103,6 +121,7 @@ class TestLLMQualityAnalyzer:
         assert result.repair_decision == RepairDecision.REQUIRED
         assert result.confidence == 0.95
 
+    @_REQUIRES_API_KEY
     def test_should_repair_required(self):
         """测试should_repair - 包含REQUIRED"""
         analyzer = LLMQualityAnalyzer()
@@ -126,6 +145,7 @@ class TestLLMQualityAnalyzer:
 
         assert analyzer.should_repair(results) == True
 
+    @_REQUIRES_API_KEY
     def test_should_repair_no_required(self):
         """测试should_repair - 无REQUIRED"""
         analyzer = LLMQualityAnalyzer()

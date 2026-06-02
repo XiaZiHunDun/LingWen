@@ -19,6 +19,20 @@ from infra.agent_system.social_engine.relationship_tracker import RelationshipTr
 from infra.agent_system.social_engine.event_effect_calculator import EventEffectCalculator
 
 
+# End-to-end tests need a real AI provider to construct MasterController.
+# Skip the whole class when no API key is available, so this file is
+# safe to run in offline / no-credential environments.
+_REQUIRES_API_KEY = pytest.mark.skipif(
+    not (
+        os.environ.get("MINIMAX_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or os.environ.get("ANTHROPIC_API_KEY")
+    ),
+    reason="requires MINIMAX_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY env var",
+)
+
+
+@_REQUIRES_API_KEY
 class TestCompleteWorkflow:
     """完整工作流测试"""
 
