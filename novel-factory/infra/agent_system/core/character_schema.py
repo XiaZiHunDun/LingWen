@@ -1,4 +1,4 @@
-# novel-factory/agent_system/shared/character_schema.py
+# novel-factory/agent_system/core/character_schema.py
 from typing import Dict, List, Any
 import yaml
 

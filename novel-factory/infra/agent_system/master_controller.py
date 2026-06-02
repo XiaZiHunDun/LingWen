@@ -24,8 +24,8 @@ from .agent_factory import (
     build_skill_registry,
     build_social_engine,
 )
-from .task_orchestrator import TaskOrchestrator
-from .skill_registry import SkillRegistry
+from .orchestration.task_orchestrator import TaskOrchestrator
+from .registry.skill_registry import SkillRegistry
 
 logger = logging.getLogger(__name__)
 

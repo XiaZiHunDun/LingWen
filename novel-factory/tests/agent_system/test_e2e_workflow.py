@@ -428,7 +428,7 @@ class TestContextBuilderIntegration:
 
     def test_context_builder_with_empty_memory(self):
         """测试ContextBuilder处理空memory_context"""
-        from infra.agent_system.shared.context_builder import ContextBuilder
+        from infra.agent_system.core.context_builder import ContextBuilder
 
         builder = ContextBuilder()
         context = builder.build_writing_context(
@@ -446,7 +446,7 @@ class TestContextBuilderIntegration:
 
     def test_context_builder_merges_foreshadow(self):
         """测试ContextBuilder合并伏笔"""
-        from infra.agent_system.shared.context_builder import ContextBuilder
+        from infra.agent_system.core.context_builder import ContextBuilder
 
         builder = ContextBuilder()
         memory_context = {

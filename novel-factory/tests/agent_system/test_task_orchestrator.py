@@ -9,7 +9,7 @@ from unittest.mock import Mock, MagicMock, patch
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from infra.agent_system.task_orchestrator import TaskOrchestrator
+from infra.agent_system.orchestration.task_orchestrator import TaskOrchestrator
 
 
 class MockStateManager:
@@ -46,7 +46,7 @@ def mock_event_bus():
 @pytest.fixture
 def orchestrator(mock_state_manager, mock_event_bus):
     """Fixture: 创建TaskOrchestrator实例"""
-    with patch('infra.agent_system.task_orchestrator.EventBus', return_value=mock_event_bus):
+    with patch('infra.agent_system.orchestration.task_orchestrator.EventBus', return_value=mock_event_bus):
         return TaskOrchestrator(
             state_manager=mock_state_manager,
             event_bus=mock_event_bus,
