@@ -45,6 +45,7 @@ credentials.json
 *.tmp
 reference/Claude-Code-Game-Studios-English/
 reference/Claude-Code-Game-Studios/
+reference/webnovel-writer/
 
 # Worktrees
 .worktrees/
@@ -52,3 +53,13 @@ novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/一致性检查报�
 novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/审核报告/
 novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/工作流备份/
 novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/避坑指南/
+
+# 运行时/测试产物（不进入版本控制）
+novel-factory/.locks/
+novel-factory/.state/test*.db
+novel-factory/.test_json_backend.json
+novel-factory/.test_json_backend.lock
+novel-factory/.story-system/
+novel-factory/config/api_config.yaml
+novel-factory/context/checker_performance.json
+novel-factory/logs/lingwen.json
