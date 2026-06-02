@@ -1,0 +1,161 @@
+# 叙事视角检测规则 (R2-007: 从 narrative_perspective_checker.py 提取)
+# 检测破坏林夜限知视角的段落
+#
+# 规则结构:
+#   - pattern: 正则表达式
+#     type: viewpoint_shift | other_char_inner | omniscient
+#     phrase: 触发短语(报告/建议用)
+#     suggestion: 修复建议
+#     severity: HIGH | MEDIUM
+#
+# 注: 严格第三人称限知(林夜视角) — 任何其他角色内心/全知叙事
+#     /镜头术语都视为视角跳脱
+
+version: "1.0"
+description: "叙事视角检测 - 锁定林夜限知视角"
+
+# 镜头切换类（评审一致指出）
+viewpoint_shift_rules:
+  - pattern: '与此同时[，\s][^\n。！？]{0,20}[。！？]?'
+    phrase: "与此同时"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除或改为：镜头跟随林夜所见"
+
+  - pattern: '视线转向[^\n。！？]{0,30}[。！？]?'
+    phrase: "视线转向"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除，改为林夜视角的直接观察"
+
+  - pattern: '与此同时[，\s][在从]?[^\n。！？]{0,20}(?:另一|别的|其他)[^\n。！？]{0,30}[。！？]?'
+    phrase: "镜头切换另一处"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "改为跟随林夜的行动"
+
+  - pattern: '镜头[拉远切换转到转向]?[^\n。！？]{0,20}[。！？]?'
+    phrase: "镜头术语"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除电影术语，保持小说视角"
+
+  - pattern: '视角[切换转回到]?[^\n。！？]{0,20}[。！？]?'
+    phrase: "视角术语"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除，用叙事手法而非技术术语"
+
+  # 时间线跳脱
+  - pattern: '三年后[^\n。！？]{0,20}[。！？]?'
+    phrase: "三年后"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "避免宏观时间跳跃，用场景过渡"
+
+  - pattern: '五年后[^\n。！？]{0,20}[。！？]?'
+    phrase: "五年后"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "避免宏观时间跳跃，用场景过渡"
+
+  - pattern: '多年后[^\n。！？]{0,20}[。！？]?'
+    phrase: "多年后"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "避免宏观时间跳跃，用场景过渡"
+
+  - pattern: '那之后[^\n。！？]{0,20}[。！？]?'
+    phrase: "那之后"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "避免模糊时间跳跃，改为具体场景"
+
+  # 突然的场景切换标记
+  - pattern: '画面[切换到]?[^\n。！？]{0,20}[。！？]?'
+    phrase: "画面切换"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除，用叙事过渡"
+
+  - pattern: '场景[切换到转到回到]?[^\n。！？]{0,20}[。！？]?'
+    phrase: "场景切换"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除，用自然叙事过渡"
+
+  - pattern: '镜头回到[^\n。！？]{0,20}[。！？]?'
+    phrase: "镜头回到"
+    type: viewpoint_shift
+    severity: MEDIUM
+    suggestion: "删除，改为林夜视角"
+
+# 其他角色内心直接呈现（评审2/3指出）
+other_char_inner_rules:
+  - pattern: '莫言没有走远[^\n。！？]{0,20}[。！？]?'
+    phrase: "莫言位置切换"
+    type: other_char_inner
+    severity: HIGH
+    suggestion: "通过林夜观察莫言行为，而非直接告知"
+
+  - pattern: '莫言[的]?(?:内心|心理|想法)[^\n。！？]{0,20}[。！？]?'
+    phrase: "莫言内心直接呈现"
+    type: other_char_inner
+    severity: HIGH
+    suggestion: "删除莫言内心描写，通过林夜观察推断"
+
+  - pattern: '苏琳[的]?(?:内心|心理|想法)[^\n。！？]{0,20}[。！？]?'
+    phrase: "苏琳内心直接呈现"
+    type: other_char_inner
+    severity: HIGH
+    suggestion: "删除苏琳内心描写，通过林夜观察推断"
+
+  - pattern: '星月[的]?(?:内心|心理|想法)[^\n。！？]{0,20}[。！？]?'
+    phrase: "星月内心直接呈现"
+    type: other_char_inner
+    severity: HIGH
+    suggestion: "删除星月内心描写，通过林夜观察推断"
+
+  - pattern: '铁蛋[的]?(?:内心|心理|想法)[^\n。！？]{0,20}[。！？]?'
+    phrase: "铁蛋内心直接呈现"
+    type: other_char_inner
+    severity: HIGH
+    suggestion: "删除铁蛋内心描写，通过林夜观察推断"
+
+  - pattern: '小九[的]?(?:内心|心理|想法|记忆)[^\n。！？]{0,20}[。！？]?'
+    phrase: "小九内心直接呈现"
+    type: other_char_inner
+    severity: HIGH
+    suggestion: "删除小九内心描写，通过林夜观察推断"
+
+# 全知叙事打断沉浸感（评审2/3指出）
+omniscient_rules:
+  - pattern: '而[此时此刻][\s，][^\n。！？]{0,30}[。！？]?'
+    phrase: "而此刻全知"
+    type: omniscient
+    severity: HIGH
+    suggestion: "改为限知叙事：林夜看到/听到/注意到"
+
+  - pattern: '就在同一时刻[^\n。！？]{0,30}[。！？]?'
+    phrase: "同一时刻"
+    type: omniscient
+    severity: HIGH
+    suggestion: "删除并发视角，避免全知视角"
+
+  - pattern: '读者[^\n。！？]{0,20}[。！？]?'
+    phrase: "读者称呼"
+    type: omniscient
+    severity: HIGH
+    suggestion: "删除\"读者\"，用\"林夜注意到\"替代"
+
+  - pattern: '众所周知[^\n。！？]{0,20}[。！？]?'
+    phrase: "众所周知"
+    type: omniscient
+    severity: HIGH
+    suggestion: "删除全知陈述，改为林夜知道的信息"
+
+  - pattern: '没有人知道[^\n。！？]{0,20}[。！？]?'
+    phrase: "没有人知道"
+    type: omniscient
+    severity: HIGH
+    suggestion: "删除全知视角，改为具体角色感知"
