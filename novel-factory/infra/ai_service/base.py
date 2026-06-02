@@ -7,7 +7,7 @@ AI服务提供商抽象层
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Type
 
 
 class AIProviderError(Exception):
@@ -141,3 +141,58 @@ class AIProvider(ABC):
             Provider名称（如 "openai", "anthropic"）
         """
         return self.__class__.__name__.replace("Provider", "").lower()
+
+
+# R3-012: Provider 类型注册表
+# 加新 provider 只需在对应模块加 @register_provider("name"),无需改动
+# router/__init__ 等。镜像 hooks/_action_registry 的设计。
+_PROVIDER_REGISTRY: Dict[str, Type["AIProvider"]] = {}
+
+
+def register_provider(name: str):
+    """类装饰器:把 AIProvider 子类注册到 _PROVIDER_REGISTRY
+
+    Usage:
+        @register_provider("openai")
+        class OpenAIProvider(AIProvider):
+            ...
+
+    Args:
+        name: 注册名(小写,如 "openai" / "anthropic" / "minimax")
+
+    Returns:
+        装饰器函数,原样返回类(不修改)
+    """
+    normalized = name.lower()
+
+    def decorator(cls: Type["AIProvider"]) -> Type["AIProvider"]:
+        if not isinstance(cls, type) or not issubclass(cls, AIProvider):
+            raise TypeError(
+                f"@register_provider target must subclass AIProvider, "
+                f"got {cls!r}"
+            )
+        _PROVIDER_REGISTRY[normalized] = cls
+        return cls
+
+    return decorator
+
+
+def get_provider_class(name: str) -> Optional[Type["AIProvider"]]:
+    """按注册名查找 Provider 类
+
+    Args:
+        name: 注册名(不区分大小写)
+
+    Returns:
+        Provider 类,未注册返回 None
+    """
+    return _PROVIDER_REGISTRY.get(name.lower())
+
+
+def list_registered_providers() -> List[str]:
+    """列出所有已注册的 Provider 名
+
+    Returns:
+        注册名列表(顺序为注册顺序)
+    """
+    return list(_PROVIDER_REGISTRY.keys())

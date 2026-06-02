@@ -3,6 +3,10 @@
 AI Provider路由选择器
 
 支持多Provider路由、故障转移和成本优化
+
+R3-012: Provider 实例化改为通过 `get_provider_class(name)` 查表,
+不再硬编码 if/elif 分派。新增 provider 只需在对应模块加
+`@register_provider("name")`,无需修改本文件。
 """
 
 from typing import Dict, List, Optional, Any, Callable
@@ -11,10 +15,8 @@ from .base import (
     AIProvider,
     ProviderConfig,
     AIProviderError,
+    get_provider_class,
 )
-from .openai_provider import OpenAIProvider
-from .anthropic_provider import AnthropicProvider
-from .minimax_provider import MiniMaxProvider
 
 
 class AIRouter:
@@ -62,13 +64,11 @@ class AIRouter:
         }
 
         # 自动创建并注册Providers
+        # R3-012: 通过 registry 查表,不再硬编码分支
         for name, cfg in config.items():
-            if name == "openai":
-                self._providers[name] = OpenAIProvider(cfg)
-            elif name == "anthropic":
-                self._providers[name] = AnthropicProvider(cfg)
-            elif name == "minimax":
-                self._providers[name] = MiniMaxProvider(cfg)
+            cls = get_provider_class(name)
+            if cls is not None:
+                self._providers[name] = cls(cfg)
             else:
                 self._providers[name] = self._create_provider(name, cfg)
 

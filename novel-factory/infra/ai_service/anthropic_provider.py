@@ -17,9 +17,11 @@ from .base import (
     APIError,
     NetworkError,
     TimeoutError,
+    register_provider,
 )
 
 
+@register_provider("anthropic")
 class AnthropicProvider(AIProvider):
     """Anthropic Provider
 

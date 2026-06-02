@@ -18,9 +18,11 @@ from .base import (
     APIError,
     NetworkError,
     TimeoutError,
+    register_provider,
 )
 
 
+@register_provider("minimax")
 class MiniMaxProvider(AIProvider):
     """MiniMax Provider
 
