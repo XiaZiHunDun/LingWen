@@ -6,6 +6,7 @@
 
 import sys
 import yaml
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Tuple, Any, Optional
 from dataclasses import dataclass
@@ -28,9 +29,9 @@ class RepairResult:
     error: str = ""
 
 
-class Repairer:
+class Repairer(ABC):
     """
-    修复器基类
+    修复器抽象基类（R4-005：使用 ABC + abstractmethod 防止直接实例化）
 
     使用方式:
         class WorldviewRepairer(Repairer):
@@ -107,6 +108,7 @@ class Repairer:
         new_content, _ = self._apply_rules(content, issues or [])
         return new_content
 
+    @abstractmethod
     def _apply_rules(self, content: str, issues: List[Issue]) -> Tuple[str, int]:
         """
         应用规则替换
@@ -116,6 +118,7 @@ class Repairer:
         """
         raise NotImplementedError("子类必须实现 _apply_rules 方法")
 
+    @abstractmethod
     def _get_rules(self) -> List[Tuple[str, str, str]]:
         """
         获取规则列表

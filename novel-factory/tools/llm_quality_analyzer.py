@@ -40,6 +40,15 @@ class RepairDecision(Enum):
     SKIP = "skip"              # 跳过
 
 
+# RepairDecision 字符串值 → Enum 映射（解析 LLM JSON 响应时使用）
+REPAIR_DECISION_MAP: Dict[str, RepairDecision] = {e.value: e for e in RepairDecision}
+DEFAULT_REPAIR_DECISION = RepairDecision.OPTIONAL
+
+# SeverityDecision 名称 → Enum 映射（解析 LLM JSON 响应时使用）
+SEVERITY_DECISION_MAP: Dict[str, SeverityDecision] = {e.name: e for e in SeverityDecision}
+DEFAULT_SEVERITY_DECISION = SeverityDecision.P2
+
+
 @dataclass
 class AnalysisResult:
     """分析结果"""
@@ -248,11 +257,11 @@ class LLMQualityAnalyzer:
             else:
                 data = json.loads(response)
 
-            severity_str = data.get("severity", "P2")
-            severity = SeverityDecision[severity_str] if severity_str in [e.name for e in SeverityDecision] else SeverityDecision.P2
+            severity_str = data.get("severity", DEFAULT_SEVERITY_DECISION.name)
+            severity = SEVERITY_DECISION_MAP.get(severity_str, DEFAULT_SEVERITY_DECISION)
 
-            repair_str = data.get("repair_decision", "optional")
-            repair = RepairDecision[repair_str.upper()] if repair_str.upper() in [e.name for e in RepairDecision] else RepairDecision.OPTIONAL
+            repair_str = data.get("repair_decision", DEFAULT_REPAIR_DECISION.value)
+            repair = REPAIR_DECISION_MAP.get(repair_str.lower(), DEFAULT_REPAIR_DECISION)
 
             return AnalysisResult(
                 severity=severity,
@@ -264,8 +273,8 @@ class LLMQualityAnalyzer:
         except Exception as e:
             logger.error(f"Failed to parse response: {e}")
             return AnalysisResult(
-                severity=SeverityDecision.P2,
-                repair_decision=RepairDecision.OPTIONAL,
+                severity=DEFAULT_SEVERITY_DECISION,
+                repair_decision=DEFAULT_REPAIR_DECISION,
                 reasoning=f"解析失败: {e}",
                 repair_suggestion="",
                 confidence=0.0,
