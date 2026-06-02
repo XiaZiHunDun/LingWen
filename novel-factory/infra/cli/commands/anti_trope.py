@@ -2,8 +2,7 @@
 
 Mirrors lines 588-648 of the original infra/cli/commands.py.
 """
-import argparse
-
+from infra.cli.options import UnifiedOptions
 from .base import Command
 
 
@@ -13,19 +12,19 @@ class AntiTropeCommand(Command):
     name = "anti-trope"
     description = "生成反套路创意选项"
 
-    def execute(self, args: argparse.Namespace) -> int:
+    def execute(self, options: UnifiedOptions) -> int:
         """
         Execute anti-trope generation.
 
         Args:
-            args: Namespace with outline, count, format
+            options: AntiTropeOptions with outline, count, format
 
         Returns:
             Exit code
         """
-        outline = getattr(args, 'outline', '')
-        count = getattr(args, 'count', 3)
-        format_output = getattr(args, 'format', True)
+        outline = getattr(options, 'outline', '')
+        count = getattr(options, 'count', 3)
+        format_output = getattr(options, 'format', True)
 
         if not outline:
             print("[错误] 需要提供 --outline 参数")

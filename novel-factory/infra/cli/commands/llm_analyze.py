@@ -17,7 +17,7 @@ class LLMAnalyzeCommand(Command):
         Execute LLM quality analysis.
 
         Args:
-            options: VerifyOptions with chapter, issue_file
+            options: LLMAnalyzeOptions with chapter, issue_file
 
         Returns:
             Exit code

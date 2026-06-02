@@ -13,29 +13,58 @@ from pathlib import Path
 from datetime import datetime
 
 PROJECT_ROOT = Path(__file__).parent
-WORKFLOW_FILE = PROJECT_ROOT / "workflow_state.json"
 CONTENT_DIR = PROJECT_ROOT / "03_内容仓库" / "04_正文"
 OPINION_DIR = PROJECT_ROOT / "06_意见仓库" / "04_正文_审核"
+
+# 旧 JSON 状态文件（已废弃，保留路径仅用于兼容旧 hook 配置）
+LEGACY_WORKFLOW_FILE = PROJECT_ROOT / "workflow_state.json"
+
+# SQLite 后端：使用 .state/workflow.db（CLAUDE.md 已声明 workflow_state.json 废弃）
+SQLITE_STATE_KEY = "verify_engine_state"
+
 
 class VerificationEngine:
     """修复验证引擎"""
 
     def __init__(self):
+        self._db = None  # lazy-init
         self.state = self.load_state()
         self.issues_found = self.state.get('issues_found', {})
         self.verification_results = []
 
+    def _get_db(self):
+        """延迟初始化 SQLite 状态数据库"""
+        if self._db is None:
+            from infra.state.database import WorkflowDB
+            self._db = WorkflowDB()
+        return self._db
+
     def load_state(self):
-        """加载状态文件"""
-        if WORKFLOW_FILE.exists():
-            with open(WORKFLOW_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+        """加载状态（从 SQLite，缺省回退到旧 JSON 文件）"""
+        try:
+            data = self._get_db().get(SQLITE_STATE_KEY)
+            if isinstance(data, dict):
+                return data
+        except Exception:
+            pass
+        # 回退：旧 JSON 文件（仅在首次迁移时使用）
+        if LEGACY_WORKFLOW_FILE.exists():
+            try:
+                with open(LEGACY_WORKFLOW_FILE, 'r', encoding='utf-8') as f:
+                    legacy = json.load(f)
+                # 一次性迁移到 SQLite
+                try:
+                    self._get_db().set(SQLITE_STATE_KEY, legacy)
+                except Exception:
+                    pass
+                return legacy
+            except Exception:
+                return {}
         return {}
 
     def save_state(self):
-        """保存状态文件"""
-        with open(WORKFLOW_FILE, 'w', encoding='utf-8') as f:
-            json.dump(self.state, f, ensure_ascii=False, indent=2)
+        """保存状态到 SQLite"""
+        self._get_db().set(SQLITE_STATE_KEY, self.state)
 
     # -------------------------------------------------------------------------
     # 问题检测

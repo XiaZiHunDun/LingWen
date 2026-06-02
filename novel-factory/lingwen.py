@@ -23,7 +23,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.cli import RangeParser, CheckOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions, StoryContractOptions
+from infra.cli import RangeParser, AntiTropeOptions, CheckOptions, LLMAnalyzeOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions, StoryContractOptions
 from infra.cli.commands import get_command, list_commands
 from infra.cli.output import OutputFormatter
 
@@ -384,16 +384,21 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             verbose=False,
         )
     elif command == "anti-trope":
-        return UnifiedOptions(
+        return AntiTropeOptions(
             range=[],
             parallel=1,
             verbose=False,
+            outline=getattr(args, "outline", ""),
+            count=getattr(args, "count", 3),
+            format=getattr(args, "format", True),
         )
     elif command == "llm-analyze":
-        return UnifiedOptions(
+        return LLMAnalyzeOptions(
             range=[],
             parallel=1,
             verbose=False,
+            chapter=args.chapter,
+            issue_file=getattr(args, "issue_file", None),
         )
     elif command == "story-contract":
         return StoryContractOptions(
@@ -479,13 +484,6 @@ def main() -> int:
 
     # 执行命令
     try:
-        # anti-trope和llm-analyze需要直接传递args
-        if args.command in ("anti-trope", "llm-analyze"):
-            cmd = get_command(args.command)
-            if cmd is None:
-                print(f"[错误] 未知命令: {args.command}")
-                return 1
-            return cmd.execute(args)
         return cmd.execute(options)
     except KeyboardInterrupt:
         print("\n[中断] 命令被用户中断")

@@ -50,3 +50,18 @@ class StoryContractOptions(UnifiedOptions):
     chapter: Optional[int] = None
     persist: bool = False
     query: str = ""
+
+
+@dataclass
+class AntiTropeOptions(UnifiedOptions):
+    """anti-trope 命令选项"""
+    outline: str = ""
+    count: int = 3
+    format: bool = True
+
+
+@dataclass
+class LLMAnalyzeOptions(UnifiedOptions):
+    """llm-analyze 命令选项"""
+    chapter: Optional[int] = None
+    issue_file: Optional[str] = None
