@@ -74,15 +74,15 @@ class BattleVisualizationChecker(BaseChecker):
         if not battle_paragraphs:
             return []
 
-        # 统计抽象和具象描写
+        # 统计抽象和具象描写(去重:同一处被多个重叠 pattern 命中只算 1 次)
         abstract_count = 0
         concrete_count = 0
 
         for para in battle_paragraphs:
-            for pattern in self.ABSTRACT_CULTIVATION:
-                abstract_count += len(re.findall(pattern, para))
-            for pattern in self.CONCRETE_VISUAL + self.CONCRETE_ACTION:
-                concrete_count += len(re.findall(pattern, para))
+            abstract_count += self._count_unique_matches(self.ABSTRACT_CULTIVATION, para)
+            concrete_count += self._count_unique_matches(
+                self.CONCRETE_VISUAL + self.CONCRETE_ACTION, para
+            )
 
         total = abstract_count + concrete_count
         if total == 0:
@@ -169,16 +169,33 @@ class BattleVisualizationChecker(BaseChecker):
         Returns:
             抽象占比
         """
-        abstract_count = 0
-        concrete_count = 0
-
-        for pattern in self.ABSTRACT_CULTIVATION:
-            abstract_count += len(re.findall(pattern, content))
-        for pattern in self.CONCRETE_VISUAL + self.CONCRETE_ACTION:
-            concrete_count += len(re.findall(pattern, content))
+        abstract_count = self._count_unique_matches(self.ABSTRACT_CULTIVATION, content)
+        concrete_count = self._count_unique_matches(
+            self.CONCRETE_VISUAL + self.CONCRETE_ACTION, content
+        )
 
         total = abstract_count + concrete_count
         if total == 0:
             return 0.0
 
         return abstract_count / total
+
+    @staticmethod
+    def _count_unique_matches(patterns, content: str) -> int:
+        """去重计数:同一段文本被多个重叠 pattern 命中只算 1 次
+
+        为什么需要:
+        ABSTRACT_CULTIVATION 含 '能量波动' / '能量' / '能量汇聚' 等重叠子串。
+        简单 `for p in patterns: re.findall(p, content)` 会让 '能量波动剧烈' 同时
+        被 '能量波动' (1) 和 '能量' (1) 命中,同 1 处算 2 次,虚高抽象占比。
+
+        修复:把所有 pattern 合并成一个 alternation regex,按长度倒序排列 →
+        长的优先匹配,sub-string 没机会被重复数。
+        `re.findall` 在 alternation 上是非重叠的、最左最长,正好契合需求。
+        """
+        if not patterns or not content:
+            return 0
+        # 按长度倒序:长的 pattern 排前面,alternation 时优先匹配
+        sorted_patterns = sorted(patterns, key=len, reverse=True)
+        combined = "|".join(re.escape(p) for p in sorted_patterns)
+        return len(re.findall(combined, content))

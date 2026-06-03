@@ -60,6 +60,7 @@ CONCRETE_VISUAL: List[str] = [
     "喷涌",
     "炸开",
     "碎裂",
+    "火星",  # R2-013: 修复 test_mixed_content_ratio — 测试文案把"火星"作具象
 ]
 
 # 具象动作描写 — 单字动词,直接可感知的攻击/位移

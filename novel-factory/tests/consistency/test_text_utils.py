@@ -78,12 +78,15 @@ class TestBattleVocabularyShared:
 
         修复前:['光芒', '火焰', '血', '碎片', '声响', '声音', '碎片', ...]
               25 行 (去重前),1 个 '碎片' 重复
-        修复后:24 项,无重复
+        修复后(R2-012):24 项,无重复
+        R2-013:新增 '火星' 修复 test_mixed_content_ratio → 25 项
         """
         # '碎片' 应只出现 1 次
         assert CONCRETE_VISUAL.count("碎片") == 1
-        # 总数应为 24 (去重后)
-        assert len(CONCRETE_VISUAL) == 24
+        # 总数应为 25 (R2-013 新增 '火星')
+        assert len(CONCRETE_VISUAL) == 25
+        # R2-013 新增的具象词应在
+        assert "火星" in CONCRETE_VISUAL
 
     def test_concrete_action_has_18_items(self):
         """具象动作词表 18 项,与修复前数量一致"""
