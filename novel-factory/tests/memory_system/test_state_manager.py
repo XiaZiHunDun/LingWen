@@ -1,15 +1,15 @@
-"""StateManager 测试"""
+"""MemoryStateManager 测试"""
 import json
 import tempfile
 import pytest
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-from infra.memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import MemoryStateManager
 
 
-class TestStateManager:
-    """StateManager 测试套件"""
+class TestMemoryStateManager:
+    """MemoryStateManager 测试套件"""
 
     @pytest.fixture
     def temp_state_dir(self, tmp_path):
@@ -31,21 +31,21 @@ class TestStateManager:
 
     def test_get_state_path_returns_configured_path(self, mock_config):
         """测试 get_state_path 返回配置文件中的路径"""
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
 
         state_path = manager.get_state_path("state_file")
         assert state_path == mock_config["storage"]["state_file"]
 
     def test_get_state_path_unknown_key_raises_error(self, mock_config):
         """测试 get_state_path 对未知 key 抛出错误"""
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
 
         with pytest.raises(ValueError, match="Unknown state file key"):
             manager.get_state_path("unknown_key")
 
     def test_load_returns_empty_dict_for_missing_file(self, mock_config):
         """测试 load 对不存在的文件返回空状态"""
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
 
         result = manager.load("state_file")
         assert result == {}
@@ -57,7 +57,7 @@ class TestStateManager:
         state_file = Path(mock_config["storage"]["state_file"])
         state_file.write_text(json.dumps(test_data), encoding="utf-8")
 
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
         result = manager.load("state_file")
 
         assert result == test_data
@@ -66,7 +66,7 @@ class TestStateManager:
         """测试 save 将数据写入文件"""
         test_data = {"chapter": 5, "scene": 10}
 
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
         manager.save("state_file", test_data)
 
         state_file = Path(mock_config["storage"]["state_file"])
@@ -89,7 +89,7 @@ class TestStateManager:
             }
         }
 
-        manager = StateManager(config)
+        manager = MemoryStateManager(config)
         manager.save("state_file", {"test": "data"})
 
         assert nested_path.exists()
@@ -99,14 +99,14 @@ class TestStateManager:
         state_file = Path(mock_config["storage"]["state_file"])
         state_file.write_text("invalid json content", encoding="utf-8")
 
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
         result = manager.load("state_file")
 
         assert result == {}
 
     def test_multiple_save_load_cycles(self, mock_config, temp_state_dir):
         """测试多次保存和加载的完整性"""
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
 
         # 第一轮
         data1 = {"count": 1}
@@ -131,6 +131,43 @@ class TestStateManager:
         yaml_content = {"threads": [{"id": 1, "name": "main"}]}
         plot_file.write_text(yaml.dump(yaml_content), encoding="utf-8")
 
-        manager = StateManager(mock_config)
+        manager = MemoryStateManager(mock_config)
         # YAML 加载需要特殊处理，这里验证文件存在性
         assert plot_file.exists()
+
+class TestR2019Rename:
+    """R2-019: 类名从 StateManager → MemoryStateManager,保留向后兼容 shim"""
+
+    def test_new_name_is_canonical(self):
+        """新名 MemoryStateManager 才是真类,旧名是 alias"""
+        from infra.memory_system.state.state_manager import (
+            MemoryStateManager,
+            StateManager,
+        )
+        # alias 指向同一个类
+        assert StateManager is MemoryStateManager
+
+    def test_backward_compat_import_still_works(self):
+        """旧代码 `from ... import StateManager` 仍能导入"""
+        from infra.memory_system.state.state_manager import StateManager
+        # 实例化能用 — 兼容层生效
+        mgr = StateManager({"storage": {"state_file": "tmp.json"}})
+        assert isinstance(mgr, StateManager)
+
+    def test_state_package_exports_new_name(self):
+        """state 包应同时导出新名 + 别名"""
+        from infra.memory_system.state import MemoryStateManager, StateManager
+        assert MemoryStateManager is StateManager  # 同一类
+        assert "MemoryStateManager" in dir(__import__("infra.memory_system.state", fromlist=["*"]))
+
+    def test_no_collision_with_infra_state_state_manager(self):
+        """R2-019 核心收益:与 infra.state.state_manager.StateManager 区分清楚
+
+        两个模块都有 StateManager,但指代不同类 — 之前是 name 冲突,
+        现在 memory_system 这边用新名 MemoryStateManager,IDE 跳转不会混。
+        """
+        from infra.memory_system.state.state_manager import MemoryStateManager
+        from infra.state.state_manager import StateManager as InfraStateManager
+
+        # 来自不同模块,即便叫 StateManager 也是不同类
+        assert MemoryStateManager is not InfraStateManager

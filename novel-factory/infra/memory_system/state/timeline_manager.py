@@ -7,13 +7,13 @@
 """
 from typing import Any, Dict, List, Optional
 
-from infra.memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import MemoryStateManager
 
 
 class TimelineManager:
     """时间线管理器
 
-    管理所有事件的时间线信息，基于 StateManager 提供持久化存储。
+    管理所有事件的时间线信息，基于 MemoryStateManager 提供持久化存储。
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -22,7 +22,7 @@ class TimelineManager:
         Args:
             config: 配置字典，需包含 storage 字段
         """
-        self.state_manager = StateManager(config)
+        self.state_manager = MemoryStateManager(config)
 
     def add_event(
         self,

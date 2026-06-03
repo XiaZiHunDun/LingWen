@@ -9,13 +9,13 @@
 """
 from typing import Any, Dict, List, Optional
 
-from infra.memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import MemoryStateManager
 
 
 class PlotThreadTracker:
     """伏笔追踪器
 
-    管理所有伏笔的状态信息，基于 StateManager 提供持久化存储。
+    管理所有伏笔的状态信息，基于 MemoryStateManager 提供持久化存储。
     伏笔状态：
     - pending: 待回收
     - in_progress: 进行中
@@ -32,7 +32,7 @@ class PlotThreadTracker:
         Args:
             config: 配置字典，需包含 storage 字段
         """
-        self.state_manager = StateManager(config)
+        self.state_manager = MemoryStateManager(config)
 
     def plant_foreshadow(self, fp_id: str, metadata: Dict[str, Any]) -> None:
         """登记伏笔

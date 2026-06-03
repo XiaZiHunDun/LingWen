@@ -10,13 +10,13 @@
 """
 from typing import Any, Dict, Optional
 
-from infra.memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import MemoryStateManager
 
 
 class CharacterTracker:
     """角色状态追踪器
 
-    管理所有角色的状态信息，基于 StateManager 提供持久化存储。
+    管理所有角色的状态信息，基于 MemoryStateManager 提供持久化存储。
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -25,7 +25,7 @@ class CharacterTracker:
         Args:
             config: 配置字典，需包含 storage 字段
         """
-        self.state_manager = StateManager(config)
+        self.state_manager = MemoryStateManager(config)
 
     def update_character_state(
         self, character: str, state: Dict[str, Any]

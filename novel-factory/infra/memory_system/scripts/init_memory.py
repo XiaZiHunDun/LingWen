@@ -16,7 +16,7 @@ from pathlib import Path
 
 from infra.memory_system.config import load_yaml
 from infra.memory_system.vector.collections import CollectionManager
-from infra.memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import MemoryStateManager
 
 
 def validate_config() -> dict:
@@ -66,14 +66,14 @@ def initialize_state_files(config: dict, reset: bool = False) -> dict:
     Returns:
         状态文件初始化结果
     """
-    state_manager = StateManager(config)
+    state_manager = MemoryStateManager(config)
     results = {
         "state_file": {"path": None, "initialized": False},
         "plot_threads_file": {"path": None, "initialized": False},
         "timeline_file": {"path": None, "initialized": False},
     }
 
-    for key in StateManager.STATE_FILE_KEYS:
+    for key in MemoryStateManager.STATE_FILE_KEYS:
         file_path = Path(state_manager.get_state_path(key))
 
         if file_path.exists() and not reset:

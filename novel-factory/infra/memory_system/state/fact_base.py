@@ -5,13 +5,13 @@
 """
 from typing import Any, Dict, List, Optional
 
-from infra.memory_system.state.state_manager import StateManager
+from infra.memory_system.state.state_manager import MemoryStateManager
 
 
 class FactBase:
     """事实库
 
-    管理所有已确认的事实，基于 StateManager 提供持久化存储。
+    管理所有已确认的事实，基于 MemoryStateManager 提供持久化存储。
     事实包含：fact_id, content, source_chapter, category, confidence, verified
     """
 
@@ -21,7 +21,7 @@ class FactBase:
         Args:
             config: 配置字典，需包含 storage 字段
         """
-        self.state_manager = StateManager(config)
+        self.state_manager = MemoryStateManager(config)
 
     def add_fact(
         self,
