@@ -9,11 +9,28 @@
 """
 
 import re
-from typing import Dict, List, Optional
+from collections import Counter
+from typing import Dict, List, Optional, Protocol
 
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 from .text_utils import split_chinese_sentences
+
+# Phase 2.4 — 涟漪密度检测
+# Lazy import 避开 consistency → world_model 循环
+def _get_ripple() -> "type":
+    from infra.world_model.data_structures import Ripple
+    return Ripple
+
+
+class _RippleRegistryLike(Protocol):
+    """Ripple Registry 最小接口 (Protocol 解耦)
+
+    PacingChecker 实际需要: list_active + get_ripple
+    """
+
+    def list_active(self) -> tuple: ...
+    def get_ripple(self, ripple_id: str) -> Optional["Ripple"]: ...
 
 
 class PacingChecker(BaseChecker):
@@ -147,3 +164,97 @@ class PacingChecker(BaseChecker):
         )
 
         return foreshadow_count / max(1, len(setup_sentences))
+
+    # ============ Phase 2.4 — Ripple 密度检测 ============
+
+    def check_ripple_density(
+        self,
+        ripple_registry: _RippleRegistryLike,
+        current_ch: int,
+        active_threshold: int = 6,
+        convergence_threshold: int = 3,
+    ) -> List[Issue]:
+        """章节涟漪密度检测 (Phase 2.4)
+
+        检测两类问题:
+        1. 密度过高:active ripple 数 > active_threshold → P2 issue
+        2. 集中爆发:同一章节 wavefront 出现 > convergence_threshold 次 → P1 issue
+
+        Args:
+            ripple_registry: 实现 list_active + get_ripple 的对象
+            current_ch: 当前章节号 (用于过滤未来章节)
+            active_threshold: 活跃 ripple 上限 (默认 6)
+            convergence_threshold: 单章节集中上限 (默认 3)
+
+        Returns:
+            Issue 列表 (空 = 无问题)
+        """
+        Ripple = _get_ripple()
+        issues: List[Issue] = []
+
+        # 1. 收集活跃 ripple
+        active_ripples = ripple_registry.list_active()
+        active_count = len(active_ripples)
+
+        # 2. 密度检测
+        if active_count > active_threshold:
+            issues.append(Issue(
+                id=f"ripple_density_{current_ch}",
+                severity=IssueSeverity.P2,
+                checker_type=CheckerType.PACING,
+                issue_type="涟漪密度过高",
+                title=f"章节涟漪密度过高 ({active_count} > {active_threshold})",
+                description=(
+                    f"活跃涟漪数 {active_count} 超过阈值 {active_threshold},"
+                    f"读者可能感到伏笔负担过重"
+                ),
+                location=IssueLocation(chapter=current_ch),
+                evidence=f"active_count={active_count}, threshold={active_threshold}",
+                suggestion="考虑提前平复部分涟漪 (resolve) 或暂缓新涟漪注册",
+            ))
+
+        # 3. 集中检测 (wavefront 章节分布)
+        #    用 get_active_wavefront 过滤未来章节 → 统计每章出现次数
+        chapter_counter: Counter = Counter()
+        for ripple in active_ripples:
+            # 优先用 registry.get_ripple (可能含最新 wavefront)
+            r = ripple_registry.get_ripple(ripple.ripple_id) or ripple
+            active_wave = self._filter_active_wavefront(r, current_ch)
+            for ch in active_wave:
+                chapter_counter[ch] += 1
+
+        # 找集中爆发的章节 (> convergence_threshold)
+        convergence_chapters = [
+            (ch, count) for ch, count in chapter_counter.items()
+            if count > convergence_threshold
+        ]
+        for ch, count in convergence_chapters:
+            issues.append(Issue(
+                id=f"ripple_convergence_{current_ch}_{ch}",
+                severity=IssueSeverity.P1,
+                checker_type=CheckerType.PACING,
+                issue_type="涟漪集中爆发",
+                title=f"ch{ch} 涟漪集中爆发 ({count} 个)",
+                description=(
+                    f"ch{ch} 出现 {count} 个 ripple wavefront,"
+                    f"超过集中阈值 {convergence_threshold},"
+                    f"读者可能感到信息过载"
+                ),
+                location=IssueLocation(chapter=ch),
+                evidence=f"ch{ch}: {count} ripples",
+                suggestion="考虑将部分 ripple 推到后续章节展开",
+            ))
+
+        return issues
+
+    @staticmethod
+    def _filter_active_wavefront(ripple, current_ch: int) -> tuple:
+        """过滤 ripple.wavefront 中 ≤ current_ch 的章节
+
+        复用 RippleEngine.get_active_wavefront 逻辑
+        (避免直接 import engine 造成依赖)
+        """
+        return tuple(
+            w for w in ripple.wavefront
+            if ripple.origin_ch <= w <= current_ch
+        )
