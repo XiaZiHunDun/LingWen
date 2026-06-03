@@ -15,7 +15,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
 from prompt_assembler import PromptAssembler, TemplateCategory
-from template_recommender import RecommendationCriteria, TemplateRecommender, TemplateScore
+from template_recommender import TemplateRecommender, TemplateScore
 
 
 class TestTemplateRecommenderBasic:

@@ -19,8 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "infra" / "tools"))
 
 # Import the module under test
 from regression_tracker import (
-    NEIGHBORHOOD_RANGE,
-    VOLUME_DEFINITIONS,
     clear_all_regression_checks,
     clear_regression_check,
     get_chapters_in_volume,

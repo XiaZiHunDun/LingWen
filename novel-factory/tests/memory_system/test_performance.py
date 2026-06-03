@@ -20,11 +20,8 @@ from infra.memory_system.performance import (
     CachedEmbedder,
     CachedVectorSearch,
     PerformanceOptimizer,
-    create_cached_embedder,
-    create_cached_vector_client,
 )
 from infra.memory_system.utils.cache import (
-    CacheEntry,
     CacheManager,
     CacheStats,
     LRUCache,

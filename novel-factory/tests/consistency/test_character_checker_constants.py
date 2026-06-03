@@ -4,7 +4,6 @@
 必须显式更新测试,而不是悄悄改字面量。
 """
 from infra.consistency.checkers import character_checker
-from infra.consistency.checkers.character_checker import CharacterChecker
 
 
 class TestR1006DetectionWindowConstant:

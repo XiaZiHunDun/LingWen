@@ -1,9 +1,7 @@
 import pytest
 
 from infra.consistency.engine.consistency_arbitrator import (
-    ArbitrationResult,
     ConsistencyArbitrator,
-    IssueGroup,
 )
 from infra.consistency.engine.data_structures import (
     CheckerType,
