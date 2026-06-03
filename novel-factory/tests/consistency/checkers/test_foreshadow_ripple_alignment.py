@@ -24,9 +24,8 @@ from infra.consistency.engine.data_structures import (
     IssueSeverity,
 )
 from infra.world_model.data_structures import Ripple, RippleState
-from infra.world_model.registry import RippleRegistry
 from infra.world_model.lifecycle import RESOLUTION_GRACE_CH
-
+from infra.world_model.registry import RippleRegistry
 
 # === Helpers ===
 

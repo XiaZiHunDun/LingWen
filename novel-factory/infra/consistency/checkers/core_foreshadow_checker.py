@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Protocol
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
+
 # Phase 2.5 — Ripple 状态机对齐
 def _get_ripple_state_and_grace():
     from infra.world_model.data_structures import RippleState

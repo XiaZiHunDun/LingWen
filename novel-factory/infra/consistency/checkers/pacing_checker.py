@@ -10,17 +10,14 @@
 
 import re
 from collections import Counter
-from typing import Dict, List, Optional, Protocol
+from typing import TYPE_CHECKING, Dict, List, Optional, Protocol
 
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 from .text_utils import split_chinese_sentences
 
-# Phase 2.4 — 涟漪密度检测
-# Lazy import 避开 consistency → world_model 循环
-def _get_ripple() -> "type":
+if TYPE_CHECKING:
     from infra.world_model.data_structures import Ripple
-    return Ripple
 
 
 class _RippleRegistryLike(Protocol):
@@ -189,7 +186,6 @@ class PacingChecker(BaseChecker):
         Returns:
             Issue 列表 (空 = 无问题)
         """
-        Ripple = _get_ripple()
         issues: List[Issue] = []
 
         # 1. 收集活跃 ripple

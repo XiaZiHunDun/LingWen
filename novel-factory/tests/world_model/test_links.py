@@ -28,13 +28,12 @@ from infra.subplot.data_structures import (
 )
 from infra.subplot.registry import PlotRegistry
 from infra.world_model.data_structures import Ripple, RippleState
-from infra.world_model.registry import RippleNotFoundError, RippleRegistry
 from infra.world_model.links import (
     LinkAction,
     apply_ripple_resolution,
     link_subplot_to_ripple,
 )
-
+from infra.world_model.registry import RippleNotFoundError, RippleRegistry
 
 # === Helpers ===
 

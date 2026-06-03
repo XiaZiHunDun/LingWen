@@ -43,7 +43,6 @@ from infra.world_model import (
 )
 from infra.world_model.snapshot_diff import ChangeKind, EntityKind
 
-
 # === Helpers ===
 
 def _ripple(ripple_id: str, state: RippleState = RippleState.OPEN) -> Ripple:
@@ -149,7 +148,7 @@ class TestE2E_SnapshotDiff:
     """SnapshotDiff 检测两章世界状态变化"""
 
     def test_diff_ripple_state_change(self, tmp_path):
-        from infra.world_model.data_structures import WorldSnapshot, PhysicalLine, MentalLine
+        from infra.world_model.data_structures import MentalLine, PhysicalLine, WorldSnapshot
 
         prev = WorldSnapshot(
             snapshot_id="s1",
@@ -174,7 +173,7 @@ class TestE2E_SnapshotDiff:
         assert state_fc[2] == RippleState.RESOLVED
 
     def test_diff_add_new_ripple(self, tmp_path):
-        from infra.world_model.data_structures import WorldSnapshot, PhysicalLine, MentalLine
+        from infra.world_model.data_structures import MentalLine, PhysicalLine, WorldSnapshot
 
         prev = WorldSnapshot(
             snapshot_id="s1", chapter=100, timestamp=datetime(2026, 6, 4),

@@ -24,9 +24,7 @@ from infra.consistency.engine.data_structures import (
     IssueSeverity,
 )
 from infra.world_model.data_structures import Ripple, RippleState
-from infra.world_model.engine import RippleEngine
 from infra.world_model.registry import RippleRegistry
-
 
 # === Helpers ===
 
@@ -158,7 +156,6 @@ class TestProtocolDecoupling:
     """最小 stub registry 也能用"""
 
     def test_works_with_stub_registry(self, tmp_path):
-        eng = RippleEngine()
         r1 = Ripple(ripple_id="r1", origin_event="e", origin_ch=10, wavefront=(10, 50, 100))
         r2 = Ripple(ripple_id="r2", origin_event="e", origin_ch=10, wavefront=(10, 50))
         ripples: dict[str, Ripple] = {"r1": r1, "r2": r2}

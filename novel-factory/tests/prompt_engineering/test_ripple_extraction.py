@@ -26,7 +26,6 @@ from infra.prompt_engineering.extraction import (
     parse_ripple_extraction,
 )
 
-
 # === TestParsePlainJSON ===
 
 class TestParsePlainJSON:
