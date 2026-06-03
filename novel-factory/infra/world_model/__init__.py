@@ -55,6 +55,11 @@ from .lifecycle import (
     can_transition,
     is_terminal,
 )
+from .links import (
+    LinkAction,
+    apply_ripple_resolution,
+    link_subplot_to_ripple,
+)
 from .queries import (
     detect_unresolved_ripples,
     predict_collapse_risk,
@@ -145,4 +150,8 @@ __all__ = [
     "detect_unresolved_ripples",
     "predict_collapse_risk",
     "suggest_resolution_chapter",
+    # Phase 2.3 — Ripple ↔ Subplot 联动
+    "LinkAction",
+    "link_subplot_to_ripple",
+    "apply_ripple_resolution",
 ]
