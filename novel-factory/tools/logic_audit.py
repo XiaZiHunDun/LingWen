@@ -283,7 +283,7 @@ async def main():
     print("开始LLM逻辑审核...")
     print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     if api_key:
-        print(f"API Key: {api_key[:8]}...")
+        print("[OK] API Key loaded")
     else:
         print("[WARN] 未设置API Key，将使用占位符")
 
