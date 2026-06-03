@@ -19,7 +19,27 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.quality import WorldviewRepairer, AITraceRepairer
+from tools.verify_quality import QualityVerifier
 from infra.paths import ProjectPaths
+
+
+def run_post_repair_verify(chapter_nums: List[int]) -> Dict[str, Any]:
+    """R4-008: 修复后自动 verify,形成闭环。
+
+    对同一批章节跑 QualityVerifier,返回标准 verify_chapters 结果 dict。
+    verify 是 informational — 不强制 re-repair(可能是检测器误报),
+    只把数字回给用户判断。
+
+    异常上抛:如果 Qdrant / 检查器挂了,让 traceback 出来,用户能直接定位。
+
+    Args:
+        chapter_nums: 刚跑过 repair 的章节列表(原样传给 verify)
+
+    Returns:
+        QualityVerifier.verify_chapters() 的标准 dict
+    """
+    verifier = QualityVerifier()
+    return verifier.verify_chapters(chapter_nums)
 
 
 class BatchRepairer:
@@ -148,6 +168,8 @@ def main():
                         help='限制处理章节数量')
     parser.add_argument('--output', type=str, default=None,
                         help='输出JSON文件路径')
+    parser.add_argument('--verify', action='store_true',
+                        help='修复后自动跑 verify_quality 闭环检查(informational,不强制 re-repair)')
 
     args = parser.parse_args()
 
@@ -190,6 +212,22 @@ def main():
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
         print(f"\n结果已保存: {output_path}")
+
+    # R4-008: 修复后自动 verify 闭环
+    if args.verify:
+        print("\n" + "=" * 60)
+        print("修复后 verify 闭环检查 (R4-008)")
+        print("=" * 60)
+        verify_result = run_post_repair_verify(chapters)
+        wv_issues = verify_result.get("worldview", {}).get("total_issues", 0)
+        ai_issues = verify_result.get("ai_trace", {}).get("total_issues", 0)
+        print(f"  检测章节数: {verify_result.get('chapters_checked', 0)}")
+        print(f"  世界观问题: {wv_issues}")
+        print(f"  AI痕迹问题: {ai_issues}")
+        if wv_issues + ai_issues == 0:
+            print("  ✓ 全部通过(无剩余问题)")
+        else:
+            print(f"  ⚠ 仍有 {wv_issues + ai_issues} 个问题(可能为检测器误报,需人工 review)")
 
 
 if __name__ == '__main__':

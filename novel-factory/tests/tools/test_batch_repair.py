@@ -340,3 +340,155 @@ class TestMainCLI:
         assert wv_result["total_chapters"] == 2
         assert wv_result["modified_chapters"] == 2
         assert wv_result["total_changes"] == 6
+
+
+# ---------------------------------------------------------------------------
+# R4-008: 修复后自动 verify 闭环
+# ---------------------------------------------------------------------------
+
+class TestRunPostRepairVerify:
+    """R4-008: batch_repair 修复后自动跑 verify_quality,形成闭环。
+
+    设计:
+    - 新增 --verify 标志,触发后对同一批章节跑 QualityVerifier
+    - verify 是 informational(不强制 re-repair)— verify 失败只提示用户
+    - 期望返回 dict 含 worldview/ai_trace 统计,便于测试
+    """
+
+    def test_returns_verify_chapters_result_shape(self, monkeypatch):
+        """返回值必须含 verify_quality 标准的字段集"""
+        from tools import batch_repair as br_module
+
+        # mock QualityVerifier 实例
+        mock_verifier = MagicMock()
+        mock_verifier.verify_chapters.return_value = {
+            "chapters_checked": 3,
+            "worldview": {"total_issues": 1, "issues": [{"ch": 1, "desc": "x"}]},
+            "ai_trace": {"total_issues": 0, "issues": []},
+        }
+        monkeypatch.setattr(
+            br_module, "QualityVerifier", lambda: mock_verifier
+        )
+
+        result = br_module.run_post_repair_verify([1, 2, 3])
+
+        assert result["chapters_checked"] == 3
+        assert result["worldview"]["total_issues"] == 1
+        assert result["ai_trace"]["total_issues"] == 0
+        mock_verifier.verify_chapters.assert_called_once_with([1, 2, 3])
+
+    def test_propagates_quality_verifier_errors(self, monkeypatch):
+        """如果 Qdrant / 检查器挂了,应让异常上抛(便于 user 看到 traceback)
+
+        为什么不 swallow:用户需要知道 verify 失败的原因,而不是看到
+        一个模糊的 "verify failed" 信息。
+        """
+        from tools import batch_repair as br_module
+
+        mock_verifier = MagicMock()
+        mock_verifier.verify_chapters.side_effect = RuntimeError("Qdrant down")
+        monkeypatch.setattr(
+            br_module, "QualityVerifier", lambda: mock_verifier
+        )
+
+        with pytest.raises(RuntimeError, match="Qdrant down"):
+            br_module.run_post_repair_verify([1])
+
+
+class TestMainVerifyFlag:
+    """main() 集成测试:--verify 触发 run_post_repair_verify"""
+
+    def test_verify_flag_invokes_post_repair_verify(
+        self, batch_repairer, mock_repairer_pair, monkeypatch, capsys
+    ):
+        wv, _ = mock_repairer_pair
+        wv.repair.side_effect = lambda ch: _result(ch, changes=1)
+
+        def fake_init(self, paths=None):
+            self.worldview_repairer = wv
+            self.ai_trace_repairer = MagicMock()
+        monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
+
+        # mock 整个 run_post_repair_verify,避免触发真实检查器
+        from tools import batch_repair as br_module
+        called_with = []
+        monkeypatch.setattr(
+            br_module, "run_post_repair_verify",
+            lambda chapters: called_with.append(chapters) or {
+                "chapters_checked": len(chapters),
+                "worldview": {"total_issues": 0, "issues": []},
+                "ai_trace": {"total_issues": 0, "issues": []},
+            }
+        )
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview",
+             "--verify"]
+        )
+        batch_main()
+
+        # 验证 run_post_repair_verify 被调用,传入正确的章节列表
+        assert called_with == [[1, 2]]
+        captured = capsys.readouterr().out
+        # 输出应包含 verify 提示
+        assert "verify" in captured.lower() or "验证" in captured
+
+    def test_no_verify_flag_skips_post_repair_verify(
+        self, batch_repairer, mock_repairer_pair, monkeypatch
+    ):
+        """不传 --verify,run_post_repair_verify 不应被调用"""
+        wv, _ = mock_repairer_pair
+        wv.repair.side_effect = lambda ch: _result(ch, changes=1)
+
+        def fake_init(self, paths=None):
+            self.worldview_repairer = wv
+            self.ai_trace_repairer = MagicMock()
+        monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
+
+        from tools import batch_repair as br_module
+        called = []
+        monkeypatch.setattr(
+            br_module, "run_post_repair_verify",
+            lambda chapters: called.append(chapters) or {}
+        )
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview"]
+        )
+        batch_main()
+
+        assert called == []  # 没有 --verify 就不该调
+
+    def test_verify_works_with_dry_run(
+        self, batch_repairer, mock_repairer_pair, monkeypatch
+    ):
+        """--verify + --dry-run:仍跑 verify(用户想看"假设改完"会怎样)"""
+        wv, _ = mock_repairer_pair
+        wv.repair.side_effect = lambda ch: _result(ch, changes=1)
+
+        def fake_init(self, paths=None):
+            self.worldview_repairer = wv
+            self.ai_trace_repairer = MagicMock()
+        monkeypatch.setattr(BatchRepairer, "__init__", fake_init)
+
+        from tools import batch_repair as br_module
+        called = []
+        monkeypatch.setattr(
+            br_module, "run_post_repair_verify",
+            lambda chapters: called.append(chapters) or {
+                "chapters_checked": len(chapters),
+                "worldview": {"total_issues": 0, "issues": []},
+                "ai_trace": {"total_issues": 0, "issues": []},
+            }
+        )
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["batch_repair.py", "--chapters", "1-2", "--track", "worldview",
+             "--dry-run", "--verify"]
+        )
+        batch_main()
+
+        assert called == [[1, 2]]
