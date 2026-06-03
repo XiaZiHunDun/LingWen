@@ -471,6 +471,79 @@ hooks:
             os.unlink(config_path)
 
 
+class TestHookEngineDefaultActions(TestCase):
+    """R3-014: 默认应注册所有 actions/ 下的 action,不只是 2 个"""
+
+    def test_all_action_classes_auto_registered(self):
+        """新 HookEngine 实例应自动注册 actions/ 下的全部 7 个 action"""
+        from infra.hooks.actions import ACTION_REGISTRY
+
+        engine = HookEngine()
+        registered = set(engine.get_registered_action_types())
+
+        # 1) 7 个内置 action 必须全部就位
+        expected = set(ACTION_REGISTRY.keys())
+        self.assertEqual(
+            registered, expected,
+            f"缺少默认注册: {expected - registered};"
+            f"多余注册: {registered - expected}",
+        )
+
+    def test_action_type_matches_registry_class(self):
+        """每个注册的 action_class().action_type 必须等于 registry key"""
+        from infra.hooks.actions import ACTION_REGISTRY
+
+        engine = HookEngine()
+        for type_name, action_cls in ACTION_REGISTRY.items():
+            # 校验:engine 里注册的类就是 registry 里的类
+            self.assertIs(engine._action_registry[type_name], action_cls)
+            # 校验:每个 action 实例自报的 type_name == registry key
+            self.assertEqual(action_cls().action_type, type_name)
+
+    def test_legacy_two_actions_still_present(self):
+        """回归保护:之前已注册的两个(trigger_module, log_state_change)仍在"""
+        engine = HookEngine()
+        registered = set(engine.get_registered_action_types())
+        self.assertIn("trigger_module", registered)
+        self.assertIn("log_state_change", registered)
+
+    def test_unknown_action_type_rejected_at_load(self):
+        """未注册的 action_type 必须在 load_hooks 时被 validator 拒绝,不能等到 trigger"""
+        config_content = """
+hooks:
+  - name: "未知动作Hook"
+    trigger:
+      event: "CHAPTER_WRITTEN"
+    actions:
+      - type: "nonexistent_action_xyz"
+    required: false
+    timeout: 5
+"""
+        engine = HookEngine()
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(config_content)
+            config_path = f.name
+        try:
+            # 7 个 action 全部默认注册后,任何 actions: 列表里的 type
+            # 若不在 ACTION_REGISTRY 里,load_hooks 就会抛 ValueError
+            with self.assertRaises(ValueError) as ctx:
+                engine.load_hooks(config_path)
+            self.assertIn("无效类型", str(ctx.exception))
+            self.assertIn("nonexistent_action_xyz", str(ctx.exception))
+        finally:
+            os.unlink(config_path)
+
+    def test_can_still_register_custom_action(self):
+        """修复后:用户仍可在默认注册之上添加自定义 action (不冲突)"""
+        engine = HookEngine()
+        # 默认就有 7 个,再注册一个 'slow'
+        before = len(engine.get_registered_action_types())
+        engine.register_action("slow", _SlowAction)
+        after = len(engine.get_registered_action_types())
+        self.assertEqual(after, before + 1)
+        self.assertIn("slow", engine.get_registered_action_types())
+
+
 class TestActionResult(TestCase):
     """ActionResult数据类测试"""
 

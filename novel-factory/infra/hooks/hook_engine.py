@@ -69,13 +69,17 @@ class HookEngine:
         self._register_default_actions()
 
     def _register_default_actions(self) -> None:
-        """注册默认的action类型"""
-        from .actions.trigger_module import TriggerModuleAction
-        from .actions.log_state_change import LogStateChangeAction
+        """R3-014: 从 actions.ACTION_REGISTRY 单点注册所有内置 action
 
-        # 注册这些action类型
-        self.register_action("trigger_module", TriggerModuleAction)
-        self.register_action("log_state_change", LogStateChangeAction)
+        之前只硬编码 2 个(trigger_module + log_state_change),其余 5 个
+        (block_proceed/notify/run_checker/run_script/update_state) 必须
+        外部 register_action 才能用,容易遗漏。新增 action 只需修改
+        actions/__init__.py 一处,本方法无需变更。
+        """
+        from .actions import ACTION_REGISTRY
+
+        for action_type, action_class in ACTION_REGISTRY.items():
+            self.register_action(action_type, action_class)
 
     def register_action(self, action_type: str, action_class: type) -> None:
         """
