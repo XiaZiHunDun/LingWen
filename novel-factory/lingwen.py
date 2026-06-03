@@ -25,8 +25,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.cli import RangeParser, AntiTropeOptions, CheckOptions, LLMAnalyzeOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions, StoryContractOptions
 from infra.cli.commands import get_command, list_commands
-from infra.cli.output import OutputFormatter
-
 
 def create_parser() -> argparse.ArgumentParser:
     """创建参数解析器"""
@@ -371,12 +369,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
     """
     command = args.command
 
-    # 不需要range的命令
-    no_range_commands = {"doctor", "anti-trope", "llm-analyze"}
-    if command in no_range_commands:
-        range_parser = RangeParser()  # still need to create for parse_range calls below
-
-    # doctor 命令没有 range 参数
+    # 不需要 range 的命令
     if command == "doctor":
         return UnifiedOptions(
             range=[],
