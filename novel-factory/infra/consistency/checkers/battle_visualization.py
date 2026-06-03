@@ -12,6 +12,11 @@ import re
 from typing import List, Optional, Dict, Any
 
 from .base_checker import BaseChecker
+from .vocabulary import (
+    ABSTRACT_CULTIVATION,
+    CONCRETE_VISUAL,
+    CONCRETE_ACTION,
+)
 from ..engine.data_structures import Issue, IssueLocation, IssueSeverity, CheckerType
 
 
@@ -27,77 +32,11 @@ class BattleVisualizationChecker(BaseChecker):
     """
     _checker_type = CheckerType.BATTLE_VISUALIZATION
 
-
-    # 抽象修炼概念
-    ABSTRACT_CULTIVATION = [
-        "星辰能量",
-        "能量波动",
-        "灵气",
-        "虚无",
-        "暗能量",
-        "神秘力量",
-        "一股力量",
-        "某种力量",
-        "能量",
-        "气场",
-        "气势",
-        "威压",
-        "力量涌动",
-        "力量流转",
-        "能量汇聚",
-        "能量爆发",
-    ]
-
-    # 具象视觉描写
-    CONCRETE_VISUAL = [
-        "光芒",
-        "火焰",
-        "血",
-        "碎片",
-        "声响",
-        "声音",
-        "碎片",
-        "碎屑",
-        "尘埃",
-        "烟雾",
-        "血泊",
-        "伤口",
-        "伤痕",
-        "焦黑",
-        "裂痕",
-        "裂缝",
-        "倒下",
-        "后退",
-        "跌倒",
-        "翻滚",
-        "迸发",
-        "溅出",
-        "喷涌",
-        "炸开",
-        "碎裂",
-    ]
-
-    # 具象动作描写
-    CONCRETE_ACTION = [
-        "砍",
-        "劈",
-        "刺",
-        "斩",
-        "割",
-        "划",
-        "砸",
-        "摔",
-        "踢",
-        "踹",
-        "撞",
-        "推",
-        "拉",
-        "扯",
-        "撕",
-        "抓",
-        "掐",
-        "扼",
-    ]
+    # R2-012: 词汇表已迁出至 vocabulary.py — 共享给其他 checker
+    # 保留类属性引用,API 零变化 (外部仍写 self.ABSTRACT_CULTIVATION)
+    ABSTRACT_CULTIVATION = ABSTRACT_CULTIVATION
+    CONCRETE_VISUAL = CONCRETE_VISUAL
+    CONCRETE_ACTION = CONCRETE_ACTION
 
     # 抽象占比阈值
     ABSTRACT_RATIO_THRESHOLD = 0.6
