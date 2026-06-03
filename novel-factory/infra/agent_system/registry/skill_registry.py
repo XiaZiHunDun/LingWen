@@ -21,6 +21,7 @@ Usage:
 """
 
 import os
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -250,21 +251,28 @@ class SkillRegistry:
 
 # Global singleton instance
 _registry_instance: Optional[SkillRegistry] = None
+# R2-017: 单例 init + reset 都加锁,防止多线程下重复实例化 / 撕裂
+_registry_lock = threading.RLock()
 
 
 def get_registry() -> SkillRegistry:
     """Get the global SkillRegistry singleton instance.
 
-    Returns:
-        SkillRegistry instance
+    R2-017: 双重检查锁,避免并发线程同时进入 None 分支重复创建实例。
     """
     global _registry_instance
     if _registry_instance is None:
-        _registry_instance = SkillRegistry()
+        with _registry_lock:
+            if _registry_instance is None:
+                _registry_instance = SkillRegistry()
     return _registry_instance
 
 
 def reset_registry() -> None:
-    """Reset the global registry instance (for testing)."""
+    """Reset the global registry instance (for testing).
+
+    R2-017: 加锁,避免与正在 init 的线程产生 race。
+    """
     global _registry_instance
-    _registry_instance = None
+    with _registry_lock:
+        _registry_instance = None
