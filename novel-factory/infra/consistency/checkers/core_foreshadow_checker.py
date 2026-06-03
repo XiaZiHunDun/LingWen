@@ -6,10 +6,25 @@
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Protocol
 
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
+
+# Phase 2.5 — Ripple 状态机对齐
+def _get_ripple_state_and_grace():
+    from infra.world_model.data_structures import RippleState
+    from infra.world_model.lifecycle import RESOLUTION_GRACE_CH
+    return RippleState, RESOLUTION_GRACE_CH
+
+
+class _RippleRegistryLike(Protocol):
+    """Ripple Registry 最小接口 (Protocol 解耦)
+
+    check_ripple_alignment 实际需要: list_all
+    """
+
+    def list_all(self) -> tuple: ...
 
 
 @dataclass
@@ -170,6 +185,85 @@ class CoreForeshadowChecker(BaseChecker):
                 evidence=foreshadow_text,
                 suggestion=f"在{expect_range}内添加伏笔回收情节",
             ))
+
+        return issues
+
+    # ============ Phase 2.5 — Ripple 状态机对齐检测 ============
+
+    def check_ripple_alignment(
+        self,
+        ripple_registry: _RippleRegistryLike,
+        current_ch: int,
+    ) -> List[Issue]:
+        """涟漪状态机对齐检测 (Phase 2.5)
+
+        检测 3 类问题:
+        1. 超期未平复 (P1): OPEN/PROPAGATING/RESOLVING + planned_resolve_ch < current_ch - 5
+        2. 计划缺失 (P3): OPEN/PROPAGATING + planned_resolve_ch is None
+        3. RESOLVED 状态 + resolved_ch 在合理范围 (current_ch - 5..current_ch) → 无 issue
+
+        Args:
+            ripple_registry: 实现 list_all 的对象
+            current_ch: 当前章节号
+
+        Returns:
+            Issue 列表 (空 = 无问题)
+        """
+        RippleState, RESOLUTION_GRACE_CH = _get_ripple_state_and_grace()
+        issues: List[Issue] = []
+
+        for ripple in ripple_registry.list_all():
+            state = ripple.state
+
+            # RESOLVED 状态 → 检查是否最近平复
+            if state == RippleState.RESOLVED:
+                if ripple.resolved_ch is not None:
+                    # resolved_ch 在 grace 范围内 → 合法
+                    if current_ch - ripple.resolved_ch <= RESOLUTION_GRACE_CH:
+                        continue
+                    # 否则太久以前平复,无需 issue
+                continue
+
+            # OPEN/PROPAGATING/RESOLVING 状态
+            # 检查 planned_resolve_ch
+            if ripple.planned_resolve_ch is None:
+                # 缺计划 → P3 warning
+                issues.append(Issue(
+                    id=f"ripple_alignment_no_plan_{ripple.ripple_id}",
+                    severity=IssueSeverity.P3,
+                    checker_type=CheckerType.FORESHADOW,
+                    issue_type="ripple_no_planned_resolve",
+                    title=f"涟漪 {ripple.ripple_id} 缺少平复计划",
+                    description=(
+                        f"状态 {state.value} 的涟漪未设置 planned_resolve_ch,"
+                        f"无法评估是否超期"
+                    ),
+                    location=IssueLocation(chapter=current_ch),
+                    evidence=f"ripple_id={ripple.ripple_id}, state={state.value}",
+                    suggestion="设置 planned_resolve_ch (预估章节号)",
+                ))
+                continue
+
+            # 超期检测
+            overdue_chs = current_ch - ripple.planned_resolve_ch
+            if overdue_chs > RESOLUTION_GRACE_CH:
+                issues.append(Issue(
+                    id=f"ripple_alignment_overdue_{ripple.ripple_id}",
+                    severity=IssueSeverity.P1,
+                    checker_type=CheckerType.FORESHADOW,
+                    issue_type="ripple_overdue",
+                    title=f"涟漪 {ripple.ripple_id} 超期未平复",
+                    description=(
+                        f"状态 {state.value} 的涟漪 planned_resolve_ch={ripple.planned_resolve_ch},"
+                        f"当前章节 {current_ch},已超 {overdue_chs} 章 (> grace {RESOLUTION_GRACE_CH})"
+                    ),
+                    location=IssueLocation(chapter=current_ch),
+                    evidence=(
+                        f"ripple_id={ripple.ripple_id}, planned={ripple.planned_resolve_ch},"
+                        f" current={current_ch}, overdue={overdue_chs}"
+                    ),
+                    suggestion="立即调用 resolve 平复,或调整 planned_resolve_ch",
+                ))
 
         return issues
 
