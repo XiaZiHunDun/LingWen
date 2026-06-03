@@ -13,7 +13,6 @@ Why:
     - 不需要手动转义 / & 等正则特殊字符
     - 可被 Python 单测覆盖（bash + sed 难测试）
 """
-from __future__ import annotations
 
 import argparse
 import sys

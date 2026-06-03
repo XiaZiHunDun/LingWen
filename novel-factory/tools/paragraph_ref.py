@@ -17,7 +17,6 @@ Usage:
     opinion_with_ref = build_opinion_with_ref(existing_opinion, "ch001.md")
 """
 
-from __future__ import annotations
 
 import re
 from datetime import datetime
@@ -373,7 +372,6 @@ def find_line_for_text(
 # ============================================================================
 
 if __name__ == "__main__":
-    import sys
 
     # 测试用例
     print("=" * 60)
