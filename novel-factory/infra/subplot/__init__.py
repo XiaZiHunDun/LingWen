@@ -22,6 +22,12 @@ from .data_structures import (
     PlotStatus,
     PlotType,
 )
+from .registry import (
+    DuplicatePlotIdError,
+    PlotNotFoundError,
+    PlotRegistry,
+    SubplotLimitExceeded,
+)
 
 __all__ = [
     "MAX_ACTIVE_SUBPLOTS",
@@ -30,6 +36,9 @@ __all__ = [
     "PlotStatus",
     "PlotType",
     "PlotRegistry",
+    "PlotNotFoundError",
+    "DuplicatePlotIdError",
+    "SubplotLimitExceeded",
     "VALID_TRANSITIONS",
     "CLOSING_MIN_CHAPTERS",
     "STAGES",
