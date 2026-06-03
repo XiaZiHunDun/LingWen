@@ -1,0 +1,59 @@
+# 灵文 GoT · novel_writing 工作流 v1
+#
+# Doc 4 (GoT 适配设计 v1.0) §7 — 章节写作最小工作流
+#
+# 4 阶段:read_snapshot → write_chapter → review_chapter → emit_chapter
+# 覆盖 PoC 范围 (1+4 端到端跑通 1 卷 50 章)
+#
+# 不实施 (后续阶段):
+# - 并行 batch (e.g. review + foreshadow_scan 一起跑)
+# - backtrack 软回溯 (<=2) 集成到 scheduler run 循环
+# - 4 个 subplot 各自的工作流变体
+
+workflow: novel_writing
+version: 1
+
+nodes:
+  # === Stage 1: 数据输入 ===
+  - id: read_snapshot
+    type: input
+    name: Read WorldSnapshot
+    description: 读取当前 WorldSnapshot (角色 / 设定 / 已写章节摘要)
+    depends_on: []
+    prompt_scenario: null
+    output_schema: null
+    token_budget: 0
+    timeout_s: 30
+
+  # === Stage 2: 内容生成 ===
+  - id: write_chapter
+    type: generation
+    name: Write Chapter
+    description: 根据 WorldSnapshot + 主线约束,生成章节正文
+    depends_on: [read_snapshot]
+    prompt_scenario: chapter_writing
+    output_schema: ChapterDraft
+    token_budget: 8000
+    timeout_s: 120
+
+  # === Stage 3: 质量审核 ===
+  - id: review_chapter
+    type: evaluation
+    name: Review Chapter
+    description: 对章节做 S1-S8 质量审核 + LLM 深度质检
+    depends_on: [write_chapter]
+    prompt_scenario: chapter_review
+    output_schema: QualityReport
+    token_budget: 4000
+    timeout_s: 90
+
+  # === Stage 4: 落盘输出 ===
+  - id: emit_chapter
+    type: output
+    name: Emit Chapter
+    description: 将审核通过的章节写入 content_repo + 更新索引
+    depends_on: [review_chapter]
+    prompt_scenario: null
+    output_schema: null
+    token_budget: 0
+    timeout_s: 30
