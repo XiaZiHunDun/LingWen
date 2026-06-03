@@ -4,6 +4,9 @@ Phase 1.1.a — RED tests for NodeId, KeyPoint, Relation, PhysicalLine,
 MentalLine, Ripple, WorldSnapshot. Cover immutability (frozen) and
 to_dict / from_dict roundtrip so that JSON persistence and inter-process
 exchange both work.
+
+Phase 1.5.a — Ripple extended with state/wavefront/decay_rate/affected_relations/
+planned_resolve_ch fields (Doc 1 §3.4). Backward-compatible with legacy JSON.
 """
 from __future__ import annotations
 
@@ -20,7 +23,9 @@ from infra.world_model.data_structures import (
     PhysicalLine,
     PlotStatus,
     Relation,
+    ResolutionMode,
     Ripple,
+    RippleState,
     WorldSnapshot,
 )
 
@@ -151,6 +156,72 @@ class TestRipple:
         d = r.to_dict()
         restored = Ripple.from_dict(d)
         assert restored == r
+
+    # === Phase 1.5.a — extended fields ===
+
+    def test_ripple_state_default_open(self):
+        r = Ripple(ripple_id="r1", origin_event="e", origin_ch=1)
+        assert r.state == RippleState.OPEN
+
+    def test_ripple_wavefront_default_empty(self):
+        r = Ripple(ripple_id="r1", origin_event="e", origin_ch=1)
+        assert r.wavefront == ()
+
+    def test_ripple_decay_rate_default_0_2(self):
+        r = Ripple(ripple_id="r1", origin_event="e", origin_ch=1)
+        assert r.decay_rate == 0.2
+
+    def test_ripple_affected_relations_default_empty(self):
+        r = Ripple(ripple_id="r1", origin_event="e", origin_ch=1)
+        assert r.affected_relations == ()
+
+    def test_ripple_planned_resolve_ch_default_none(self):
+        r = Ripple(ripple_id="r1", origin_event="e", origin_ch=1)
+        assert r.planned_resolve_ch is None
+
+    def test_ripple_extended_to_dict_roundtrip(self):
+        r = Ripple(
+            ripple_id="r1",
+            origin_event="e",
+            origin_ch=10,
+            state=RippleState.PROPAGATING,
+            wavefront=(10, 50, 100),
+            decay_rate=0.3,
+            affected_relations=(
+                Relation(
+                    src=NodeId(NodeType.CHARACTER, "林尘"),
+                    dst=NodeId(NodeType.CHARACTER, "暗皇"),
+                    type="opposed_to",
+                    first_ch=10,
+                ),
+            ),
+            planned_resolve_ch=200,
+        )
+        d = r.to_dict()
+        assert d["state"] == "propagating"
+        assert d["wavefront"] == [10, 50, 100]
+        assert d["decay_rate"] == 0.3
+        assert d["planned_resolve_ch"] == 200
+        restored = Ripple.from_dict(d)
+        assert restored == r
+
+    def test_ripple_legacy_from_dict_omits_new_fields(self):
+        """旧 JSON (Phase 1.1 持久化文件) 不含新字段,Ripple.from_dict 必须兼容"""
+        legacy = {
+            "ripple_id": "ripple_legacy",
+            "origin_event": "e",
+            "origin_ch": 1,
+            "affected_nodes": [],
+            "resolved_ch": None,
+            "collapse_risk": 0.0,
+        }
+        r = Ripple.from_dict(legacy)
+        assert r.ripple_id == "ripple_legacy"
+        assert r.state == RippleState.OPEN  # default
+        assert r.wavefront == ()  # default
+        assert r.decay_rate == 0.2  # default
+        assert r.affected_relations == ()  # default
+        assert r.planned_resolve_ch is None  # default
 
 
 class TestPlotStatus:

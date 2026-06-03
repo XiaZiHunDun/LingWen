@@ -1,23 +1,32 @@
-"""灵文世界模型 (Phase 1.1 + 1.2)
+"""灵文世界模型 (Phase 1.1 + 1.2 + 1.5)
 
 Doc 1 (灵文理论框架 v1.0) 实施层。
 Phase 1.2 (Doc 3) 扩展: WorldSnapshot 加 active_subplots 字段。
+Phase 1.5 (Doc 1 §3.4) 扩展: Ripple 5 字段 + RippleState/ResolutionMode enums +
+RippleEngine (6 方法) + RippleRegistry (CRUD + 10-limit + JSON 持久化) +
+3 query helpers (detect_unresolved_ripples / predict_collapse_risk /
+suggest_resolution_chapter)。
 
 核心导出:
 - WorldSnapshot / KeyPoint / Relation / NodeId / NodeType
-- PhysicalLine / MentalLine / Ripple
+- PhysicalLine / MentalLine / Ripple / RippleState / ResolutionMode
 - KeyPointGraph — N² 矛盾检测
 - SnapshotStore — JSON 持久化
 - Contradiction / ContradictionKind
 - (1.2) subplots_count / add_subplot / get_active_subplots 工具方法
+- (1.5) RippleEngine / RippleRegistry / 3 exceptions
+- (1.5) 3 query helpers + MAX_OPEN_RIPPLOTS + RESOLUTION_GRACE_CH
 
 不导出 (后续阶段):
-- RippleEngine (1.5+)
-- SnapshotDiff (跨章节检测, 1.5+)
 - LLM 关键点抽取 prompt (1.3+)
+- SnapshotDiff (跨章节检测, 1.5+ → 仍 deferred,Phase 2)
+- LLM `new_ripples/resolved_ripples` 抽取模板 (Phase 2)
+- Ripple ↔ Subplot 跨包联动 (Phase 2+)
+- 真实 LLM 集成
 """
 
 from .data_structures import (
+    MAX_OPEN_RIPPLOTS,
     KeyPoint,
     MentalLine,
     NodeId,
@@ -25,13 +34,34 @@ from .data_structures import (
     PhysicalLine,
     PlotStatus,
     Relation,
+    ResolutionMode,
     Ripple,
+    RippleState,
     WorldSnapshot,
 )
+from .engine import RippleEngine
 from .key_point_graph import (
     Contradiction,
     ContradictionKind,
     KeyPointGraph,
+)
+from .lifecycle import (
+    COLLAPSE_RISK_THRESHOLD,
+    RESOLUTION_GRACE_CH,
+    VALID_TRANSITIONS,
+    can_transition,
+    is_terminal,
+)
+from .queries import (
+    detect_unresolved_ripples,
+    predict_collapse_risk,
+    suggest_resolution_chapter,
+)
+from .registry import (
+    DuplicateRippleIdError,
+    OpenRippleLimitExceeded,
+    RippleNotFoundError,
+    RippleRegistry,
 )
 from .snapshot_store import (
     SnapshotIntegrityError,
@@ -66,6 +96,7 @@ def get_active_subplots(snapshot: "WorldSnapshot"):
 
 
 __all__ = [
+    # Data structures (Phase 1.1)
     "KeyPoint",
     "MentalLine",
     "NodeId",
@@ -85,4 +116,21 @@ __all__ = [
     "subplots_count",
     "add_subplot",
     "get_active_subplots",
+    # Phase 1.5 — Ripple (Doc 1 §3.4)
+    "RippleState",
+    "ResolutionMode",
+    "MAX_OPEN_RIPPLOTS",
+    "RESOLUTION_GRACE_CH",
+    "COLLAPSE_RISK_THRESHOLD",
+    "VALID_TRANSITIONS",
+    "can_transition",
+    "is_terminal",
+    "RippleEngine",
+    "RippleRegistry",
+    "RippleNotFoundError",
+    "DuplicateRippleIdError",
+    "OpenRippleLimitExceeded",
+    "detect_unresolved_ripples",
+    "predict_collapse_risk",
+    "suggest_resolution_chapter",
 ]
