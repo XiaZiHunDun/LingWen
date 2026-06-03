@@ -5,6 +5,7 @@ Provides atomic read-modify-write operations
 """
 import json
 import sqlite3
+import fcntl
 from pathlib import Path
 from datetime import datetime
 from contextlib import contextmanager
@@ -17,8 +18,10 @@ class WorkflowDB:
             project_root = Path(__file__).parent.parent.parent
             db_path = project_root / '.state' / 'workflow.db'
 
-        self.db_path = db_path
+        self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # R3-001: 与 state_manager.py 一致,使用 fcntl.flock 防止多进程写竞争
+        self._lock_path = self.db_path.with_suffix('.lock')
         self._init_db()
 
     def _init_db(self):
@@ -74,14 +77,19 @@ class WorkflowDB:
 
     @contextmanager
     def transaction(self):
-        """Atomic transaction context manager
+        """Atomic transaction with fcntl.flock 跨进程互斥 (R3-001)
 
-        Properly acquires connection and ensures cleanup.
+        与 infra/state/state_manager.py 的 _transaction 保持一致,
+        通过 fcntl.flock 防止多进程同时写 SQLite 时的竞争条件。
+        配合 BEGIN IMMEDIATE 提供 SQLite 进程内写锁,
+        busy_timeout=5000 避免短冲突直接抛 SQLITE_BUSY。
         """
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA busy_timeout=5000")
+        lock_file = open(self._lock_path, 'w')
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
         try:
+            conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA busy_timeout=5000")
             conn.execute("BEGIN IMMEDIATE")
             yield conn
             conn.commit()
@@ -90,6 +98,8 @@ class WorkflowDB:
             raise
         finally:
             conn.close()
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            lock_file.close()
 
     def get(self, key: str) -> Optional[dict]:
         """Get a value by key"""
