@@ -8,26 +8,28 @@ from unittest.mock import patch, mock_open
 from infra.memory_system.state.state_manager import MemoryStateManager
 
 
+@pytest.fixture
+def temp_state_dir(tmp_path):
+    """创建临时状态目录"""
+    state_dir = tmp_path / "state"
+    state_dir.mkdir()
+    return state_dir
+
+
+@pytest.fixture
+def mock_config(temp_state_dir):
+    """模拟配置"""
+    return {
+        "storage": {
+            "state_file": str(temp_state_dir / "state_tracker.json"),
+            "plot_threads_file": str(temp_state_dir / "plot_threads.yaml"),
+            "timeline_file": str(temp_state_dir / "timeline.json"),
+        }
+    }
+
+
 class TestMemoryStateManager:
     """MemoryStateManager 测试套件"""
-
-    @pytest.fixture
-    def temp_state_dir(self, tmp_path):
-        """创建临时状态目录"""
-        state_dir = tmp_path / "state"
-        state_dir.mkdir()
-        return state_dir
-
-    @pytest.fixture
-    def mock_config(self, temp_state_dir):
-        """模拟配置"""
-        return {
-            "storage": {
-                "state_file": str(temp_state_dir / "state_tracker.json"),
-                "plot_threads_file": str(temp_state_dir / "plot_threads.yaml"),
-                "timeline_file": str(temp_state_dir / "timeline.json"),
-            }
-        }
 
     def test_get_state_path_returns_configured_path(self, mock_config):
         """测试 get_state_path 返回配置文件中的路径"""
@@ -171,3 +173,164 @@ class TestR2019Rename:
 
         # 来自不同模块,即便叫 StateManager 也是不同类
         assert MemoryStateManager is not InfraStateManager
+
+
+class TestR2020AtomicSave:
+    """R2-020: save() 改用 fcntl.flock + temp-file + atomic rename。
+
+    回归点:
+    1. 多进程并发写时,flock 互斥,不会读到半截 JSON
+    2. 写过程中崩溃,temp 文件不会污染 target
+    3. os.replace() 原子 rename,reader 不会看到不一致状态
+    4. 异常路径下,.tmp 文件被清理
+    """
+
+    def test_save_uses_flock_exclusive_lock(self, mock_config, temp_state_dir):
+        """save() 必须用 fcntl.flock 拿 LOCK_EX,保证多进程互斥"""
+        from infra.memory_system.state import state_manager as sm_module
+
+        manager = MemoryStateManager(mock_config)
+        test_data = {"key": "value"}
+
+        with patch.object(sm_module.fcntl, "flock") as mock_flock:
+            manager.save("state_file", test_data)
+            # 至少调用了 2 次:1 次 LOCK_EX,1 次 LOCK_UN
+            assert mock_flock.call_count >= 2
+            # 第一次调用应该是 LOCK_EX
+            first_call_args = mock_flock.call_args_list[0][0]
+            assert sm_module.fcntl.LOCK_EX in first_call_args
+
+    def test_save_writes_to_temp_file_then_renames(self, mock_config, temp_state_dir):
+        """save() 必须先写 .tmp.{pid} 再 atomic rename,不能直接写 target"""
+        from infra.memory_system.state import state_manager as sm_module
+
+        manager = MemoryStateManager(mock_config)
+        test_data = {"chapter": 99, "scene": 100}
+
+        with patch.object(sm_module.os, "replace") as mock_replace:
+            manager.save("state_file", test_data)
+            # os.replace 必须被调用
+            assert mock_replace.called
+            # replace 的第二个参数是 target file path(原 state_file)
+            replace_args = mock_replace.call_args[0]
+            target_path = str(replace_args[1])
+            assert target_path.endswith("state_tracker.json")
+
+    def test_save_uses_pid_in_temp_filename(self, mock_config, temp_state_dir):
+        """temp 文件名要带 pid,避免多进程 race 时都写同一 tmp"""
+        import os as os_module
+
+        manager = MemoryStateManager(mock_config)
+        test_data = {"pid_test": True}
+
+        # patch Path.with_suffix to capture the suffix passed
+        original_with_suffix = Path.with_suffix
+        captured_suffixes = []
+
+        def mock_with_suffix(self, suffix):
+            captured_suffixes.append(suffix)
+            return original_with_suffix(self, suffix)
+
+        with patch.object(Path, "with_suffix", mock_with_suffix):
+            manager.save("state_file", test_data)
+
+        # 至少有 .lock 和 .tmp.{pid} 两个 suffix
+        pid_suffix = f".tmp.{os_module.getpid()}"
+        assert any(pid_suffix in s for s in captured_suffixes), \
+            f"expected temp suffix with pid, got: {captured_suffixes}"
+
+    def test_save_fsuncs_temp_file_before_rename(self, mock_config, temp_state_dir):
+        """fsync 必须在 os.replace 之前,否则断电后 temp → target 不一致"""
+        from infra.memory_system.state import state_manager as sm_module
+
+        manager = MemoryStateManager(mock_config)
+        test_data = {"durability": "test"}
+
+        # 用 side_effect 记录真实调用顺序
+        call_order = []
+        with patch.object(sm_module.os, "fsync", side_effect=lambda *a, **kw: call_order.append("fsync")), \
+             patch.object(sm_module.os, "replace", side_effect=lambda *a, **kw: call_order.append("replace")):
+            manager.save("state_file", test_data)
+
+        # 关键:fsync 必须在 replace 之前(否则 rename 后断电,内容可能没落盘)
+        assert "fsync" in call_order
+        assert "replace" in call_order
+        assert call_order.index("fsync") < call_order.index("replace"), \
+            f"fsync must precede replace, got order: {call_order}"
+
+    def test_save_cleans_up_temp_file_on_write_error(self, mock_config, temp_state_dir):
+        """写过程中崩溃,target 不被污染;.tmp 文件被清理或可被识别"""
+        manager = MemoryStateManager(mock_config)
+
+        # 让 json.dump 抛异常 → 中断写流程
+        with patch("json.dump", side_effect=RuntimeError("disk full simulation")):
+            with pytest.raises(RuntimeError, match="disk full simulation"):
+                manager.save("state_file", {"will_fail": True})
+
+        # 验证:target 文件不存在(从来没被写过)
+        target = Path(mock_config["storage"]["state_file"])
+        assert not target.exists(), "target must not exist if save failed before rename"
+
+        # 验证:所有 .tmp.{pid} 文件都被清理(否则下次 save 会冲突)
+        parent = target.parent
+        tmp_files = list(parent.glob("state_tracker.json.tmp.*"))
+        assert tmp_files == [], f"orphan .tmp files remain: {tmp_files}"
+
+    def test_concurrent_saves_do_not_corrupt_target(self, mock_config, temp_state_dir):
+        """两个并发 save 不会导致 target 被截断到一半(JSON 解析报错)"""
+        import threading
+
+        manager = MemoryStateManager(mock_config)
+        results = {"errors": []}
+
+        def writer(idx):
+            try:
+                for i in range(5):
+                    manager.save("state_file", {"writer": idx, "iter": i})
+            except Exception as e:
+                results["errors"].append((idx, repr(e)))
+
+        threads = [threading.Thread(target=writer, args=(i,)) for i in range(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert results["errors"] == [], f"concurrent writes failed: {results['errors']}"
+
+        # 最终 target 文件必须是 valid JSON(没被截断)
+        target = Path(mock_config["storage"]["state_file"])
+        assert target.exists()
+        with open(target, "r", encoding="utf-8") as f:
+            final = json.load(f)  # 若被截断,这里抛 JSONDecodeError
+        assert final["writer"] in {0, 1, 2}
+
+    def test_save_creates_lock_file_sibling(self, mock_config, temp_state_dir):
+        """.lock 文件与 target 同目录,避免污染 data 文件(独立 metadata)"""
+        manager = MemoryStateManager(mock_config)
+        manager.save("state_file", {"k": "v"})
+
+        target = Path(mock_config["storage"]["state_file"])
+        lock_path = target.with_suffix(target.suffix + ".lock")
+        assert lock_path.exists(), f"expected lock file at {lock_path}"
+
+    def test_save_uses_exclusive_lock_pattern(self, mock_config, temp_state_dir):
+        """finally 块确保 LOCK_UN 总是被调用(即使 rename 抛异常)"""
+        from infra.memory_system.state import state_manager as sm_module
+
+        manager = MemoryStateManager(mock_config)
+        test_data = {"finally_test": True}
+
+        # 让 os.replace 抛异常
+        with patch.object(sm_module.os, "replace", side_effect=OSError("rename failed")), \
+             patch.object(sm_module.fcntl, "flock") as mock_flock:
+            with pytest.raises(OSError, match="rename failed"):
+                manager.save("state_file", test_data)
+
+            # LOCK_UN 必须被调用(在 finally 中)— 即便 rename 失败
+            lock_un_calls = [
+                call for call in mock_flock.call_args_list
+                if sm_module.fcntl.LOCK_UN in call[0]
+            ]
+            assert len(lock_un_calls) == 1, \
+                f"LOCK_UN must be called exactly once in finally, got {len(lock_un_calls)}"
