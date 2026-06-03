@@ -11,7 +11,13 @@ class TestInitSqlite:
 
     def test_init_creates_tables(self, mock_env):
         """Test that init_sqlite creates all required tables"""
-        from infra.tools.workflow.lib import init_sqlite, DB_PATH
+        from infra.tools.workflow.lib import init_sqlite
+        # 必须从 .db 子模块 import DB_PATH — lib/__init__.py 用
+        # `from .db import DB_PATH` 在 import 时把值冻结,后续 monkeypatch
+        # 改的 infra.tools.workflow.lib.db.DB_PATH 不会反映到 lib.DB_PATH。
+        # init_sqlite 函数自身在 db.py 内,会读 monkeypatch 后的 db.DB_PATH;
+        # 但本测试需要从同一处读,才能连到 init 过的 tmp DB。
+        from infra.tools.workflow.lib.db import DB_PATH
 
         init_sqlite()
 
@@ -36,7 +42,9 @@ class TestInitSqlite:
 
     def test_init_creates_workflow_state_table(self, mock_env):
         """Test workflow_state table structure"""
-        from infra.tools.workflow.lib import init_sqlite, DB_PATH
+        from infra.tools.workflow.lib import init_sqlite
+        # 见 test_init_creates_tables — 从 .db 子模块 import 拿到 monkeypatch 后的值
+        from infra.tools.workflow.lib.db import DB_PATH
 
         init_sqlite()
 
@@ -50,7 +58,8 @@ class TestInitSqlite:
 
     def test_init_creates_agent_tasks_table(self, mock_env):
         """Test agent_tasks table structure"""
-        from infra.tools.workflow.lib import init_sqlite, DB_PATH
+        from infra.tools.workflow.lib import init_sqlite
+        from infra.tools.workflow.lib.db import DB_PATH
 
         init_sqlite()
 
