@@ -3,18 +3,23 @@
 报告生成器测试
 """
 
-import pytest
-from datetime import datetime
-
 import sys
+from datetime import datetime
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.engine.report_generator import ReportGenerator
 from infra.consistency.engine.consistency_engine import ConsistencyEngine
 from infra.consistency.engine.data_structures import (
-    ConsistencyReport, Issue, IssueSeverity, CheckerType, IssueLocation
+    CheckerType,
+    ConsistencyReport,
+    Issue,
+    IssueLocation,
+    IssueSeverity,
 )
+from infra.consistency.engine.report_generator import ReportGenerator
 
 
 @pytest.fixture
@@ -116,7 +121,7 @@ class TestReportGeneratorSave:
     def test_save_report(self, report_generator, sample_report, tmp_path):
         output_path = tmp_path / "report.md"
 
-        saved_path = report_generator.save_report(
+        report_generator.save_report(
             sample_report,
             str(output_path),
             format="markdown"

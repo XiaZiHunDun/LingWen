@@ -214,7 +214,7 @@ class LLMQualityChecker:
                 }
                 normalized_issues.append(normalized)
             report.issues = [Issue(**i) for i in normalized_issues]
-        except Exception as e:
+        except Exception:
             report.issues = []
             report.score = 0.5
 

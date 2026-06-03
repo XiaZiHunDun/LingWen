@@ -6,15 +6,15 @@
 改进日志：
 - v2.0: 新增工单生成机制、同义替换建议、AUTO vs MANUAL分类
 """
+import json
 import os
 import re
 import sys
-import json
-import yaml
-from typing import List, Dict, Tuple
 from collections import Counter
 from datetime import datetime
+from typing import Dict, List, Tuple
 
+import yaml
 
 # 已知的模板句式（需要检测的重复模式）
 TEMPLATE_PATTERNS = [
@@ -245,7 +245,7 @@ def generate_template_workorders(results: Dict, chapters_dir: str = None, output
                     'synonyms': issue.get('synonyms', []),
                     'priority': 'P0' if issue.get('type') == 'MANUAL' else 'P1',
                     'status': 'pending',
-                    'suggestion': f'建议替换为同义表达' if issue.get('synonyms') else '必须人工重写'
+                    'suggestion': '建议替换为同义表达' if issue.get('synonyms') else '必须人工重写'
                 }
                 workorders.append(wo)
 

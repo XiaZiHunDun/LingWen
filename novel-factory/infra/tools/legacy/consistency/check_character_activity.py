@@ -12,9 +12,8 @@
 import os
 import re
 import sys
-from typing import List, Dict, Tuple
 from collections import defaultdict
-
+from typing import Dict, List, Tuple
 
 # 主要角色列表
 MAIN_CHARACTERS = ['林夜', '苏琳', '小九', '铁蛋', '莫言', '星月', '墨白', '本源', '虚无', '暗皇', '星辰']
@@ -258,7 +257,6 @@ def check_character_activity(chapters_dir: str,
     char_chapters: Dict[str, List[int]] = {c: [] for c in characters}
     char_late_chapters: Dict[str, List[int]] = {c: [] for c in characters}
 
-    issues = []
 
     for i in range(start, end + 1):
         fname = f"ch{i:03d}.md"

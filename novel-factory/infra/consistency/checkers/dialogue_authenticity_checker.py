@@ -9,10 +9,10 @@
 """
 
 import re
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
-from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, CheckerType
 
 
 class DialogueAuthenticityChecker(BaseChecker):

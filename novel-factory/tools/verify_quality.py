@@ -8,18 +8,18 @@
     python verify_quality.py --chapters 1-360 --output report.json
 """
 
-import sys
 import json
 import random
-from pathlib import Path
+import sys
 from datetime import datetime
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.quality import WorldviewChecker, AITraceChecker
 from infra.paths import ProjectPaths
+from infra.quality import AITraceChecker, WorldviewChecker
 
 
 class QualityVerifier:

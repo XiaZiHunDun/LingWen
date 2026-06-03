@@ -6,7 +6,7 @@ Provides SQLite-based storage for hooks, coolpoints, and chapter analysis result
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 
 class ReadingPowerDB:

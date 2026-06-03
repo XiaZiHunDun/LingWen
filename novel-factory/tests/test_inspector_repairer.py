@@ -18,23 +18,31 @@
 - 任何 repairer 写操作都落到 tmp_path
 """
 
-import pytest
 import sys
-import yaml
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+import yaml
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.paths import ProjectPaths
 from infra.quality import (
-    Inspector, Issue, RuleBasedInspector, LLMBasedInspector,
-    Repairer, RepairResult, RuleBasedRepairer, YAMLRuleRepairer,
-    WorldviewChecker, AITraceChecker,
-    WorldviewRepairer, AITraceRepairer,
+    AITraceChecker,
+    AITraceRepairer,
+    Inspector,
+    Issue,
+    LLMBasedInspector,
+    Repairer,
+    RepairResult,
+    RuleBasedInspector,
+    RuleBasedRepairer,
+    WorldviewChecker,
+    WorldviewRepairer,
+    YAMLRuleRepairer,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -573,7 +581,7 @@ class TestAITraceRepairer:
         # 写一个肯定含 "首先" 的章节
         _write_chapter(chapters_dir, 1, "首先，林夜走入山谷。其次，天色渐暗。")
         r = AITraceRepairer(paths=paths)
-        result = r.repair(1)
+        r.repair(1)
         # 至少处理了一些 (数量取决于 YAML 规则定义)
         new_text = (chapters_dir / "ch001.md").read_text(encoding="utf-8")
         # "首先" 应已被删除或替换

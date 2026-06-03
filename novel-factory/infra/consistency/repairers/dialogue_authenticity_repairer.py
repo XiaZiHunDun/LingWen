@@ -7,10 +7,10 @@
 - 增强对话的自然感和人物特色
 - 去除AI生成的"完美对话"痕迹
 """
-import sys
 import re
+import sys
 from pathlib import Path
-from typing import Tuple, List, Any, Optional
+from typing import Any, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

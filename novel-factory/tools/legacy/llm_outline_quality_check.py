@@ -22,13 +22,13 @@
     python tools/llm_outline_quality_check.py --check full --output logs/outline_quality_report.json
 """
 
-import sys
-import json
 import argparse
-from pathlib import Path
-from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Tuple
+import json
+import sys
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -439,7 +439,6 @@ class LLMOutlineChecker:
         for vol_num, ch_list in sorted(volume_chapters.items()):
             # 加载章节正文（每卷抽样5章）
             body_samples = {}
-            sample_indices = [1, 60, 120]  # 每卷开头、中间、结尾
             for ch_num, _ in ch_list[:5]:
                 ch_path = self.path_mgr.body_dir / f"ch{ch_num:03d}.md"
                 if ch_path.exists():
@@ -641,7 +640,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print(f"大纲层级LLM质检工具 v9.2 - LLM_OUTLINE_QUALITY")
+    print("大纲层级LLM质检工具 v9.2 - LLM_OUTLINE_QUALITY")
     print(f"检测层级: {args.check}")
     if args.volume:
         print(f"指定卷: {args.volume}")

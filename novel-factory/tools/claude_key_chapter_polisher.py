@@ -4,20 +4,20 @@
 使用MiniMax M2.7对关键章节进行深度润色
 """
 
+import logging
 import os
 import re
 import sys
-import logging
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.ai_service.minimax_provider import MiniMaxProvider
 from infra.ai_service.base import ProviderConfig
+from infra.ai_service.minimax_provider import MiniMaxProvider
 from infra.config.api_config_loader import get_api_config
 
 logger = logging.getLogger(__name__)

@@ -3,11 +3,11 @@
 情节关联度检查器
 检查每个段落与前后章节的关联程度，确保情节不孤立
 """
-import re
 import os
+import re
 import sys
-from typing import List, Tuple, Dict, Set
 from collections import defaultdict
+from typing import Dict, List, Set, Tuple
 
 
 class SegmentRelevanceChecker:

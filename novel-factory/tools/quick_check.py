@@ -128,7 +128,7 @@ class QuickChecker:
             ]
         }
 
-        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        datetime.now().strftime('%Y%m%d_%H%M%S')
         latest = self.output_dir / "comprehensive_quality_report_latest.json"
         with open(latest, 'w') as f:
             json.dump(report, f, ensure_ascii=False, indent=2)

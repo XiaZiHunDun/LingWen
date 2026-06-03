@@ -26,8 +26,8 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from infra.quality.repairer import RepairResult  # noqa: E402
-from tools.batch_repair import BatchRepairer, main as batch_main  # noqa: E402
-
+from tools.batch_repair import BatchRepairer  # noqa: E402
+from tools.batch_repair import main as batch_main
 
 # ---------------------------------------------------------------------------
 # Fixtures

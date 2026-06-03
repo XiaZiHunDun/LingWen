@@ -1,12 +1,12 @@
 # novel-factory/infra/consistency/checkers/llm_enhanced/__init__.py
-from .base import LLMEnhancedChecker
 from .ability_llm import LLMEnhancedAbilityChecker
+from .base import LLMEnhancedChecker
+from .battle_llm import LLMEnhancedBattleVisualizationChecker
 from .character_llm import LLMEnhancedCharacterChecker
 from .foreshadow_llm import LLMEnhancedForeshadowChecker
-from .relationship_llm import LLMEnhancedRelationshipStateChecker
-from .battle_llm import LLMEnhancedBattleVisualizationChecker
-from .personality_llm import LLMEnhancedPersonalityChecker
 from .knowledge_llm import LLMEnhancedKnowledgeTracker
+from .personality_llm import LLMEnhancedPersonalityChecker
+from .relationship_llm import LLMEnhancedRelationshipStateChecker
 
 __all__ = [
     "LLMEnhancedChecker",

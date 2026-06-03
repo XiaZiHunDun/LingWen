@@ -2,11 +2,12 @@
 
 测试 Qdrant 客户端、批量嵌入和相似度搜索功能。
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-from infra.memory_system.vector_store.qdrant_client import QdrantClientWrapper
+import pytest
+
 from infra.memory_system.embeddings.batch_embed import BatchEmbedder, find_similar_chapters
+from infra.memory_system.vector_store.qdrant_client import QdrantClientWrapper
 
 
 class TestQdrantClientWrapper:
@@ -94,7 +95,7 @@ class TestQdrantClientWrapper:
         ]
         mock_qdrant_client.search.return_value = mock_results
 
-        results = wrapper.search_with_filter(collection_name, query_vector, must={"chapter_id": "ch_001"})
+        wrapper.search_with_filter(collection_name, query_vector, must={"chapter_id": "ch_001"})
 
         mock_qdrant_client.search.assert_called_once()
 

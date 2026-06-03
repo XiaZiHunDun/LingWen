@@ -5,22 +5,17 @@
 Tests for PromptAssembler
 """
 
-import pytest
-import tempfile
 import os
+import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from prompt_assembler import (
-    PromptAssembler,
-    TemplateMetadata,
-    TemplateCategory,
-    TemperatureConfig
-)
-
+from prompt_assembler import PromptAssembler, TemperatureConfig, TemplateCategory, TemplateMetadata
 
 # ==================== Fixtures ====================
 

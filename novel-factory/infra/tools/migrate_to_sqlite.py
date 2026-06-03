@@ -5,8 +5,8 @@ Backup original JSON file before migration
 """
 import json
 import sqlite3
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def migrate(workflow_json: str, db_path: str):

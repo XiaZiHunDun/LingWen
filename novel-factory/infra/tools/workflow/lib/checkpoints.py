@@ -8,8 +8,7 @@ import sqlite3
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-from . import db
-from . import state
+from . import db, state
 
 logger = logging.getLogger(__name__)
 

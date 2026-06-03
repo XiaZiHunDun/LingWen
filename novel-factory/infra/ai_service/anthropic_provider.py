@@ -6,16 +6,16 @@ Anthropic Provider实现
 """
 
 import time
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 import anthropic
 
 from .base import (
     AIProvider,
-    ProviderConfig,
     AIProviderError,
     APIError,
     NetworkError,
+    ProviderConfig,
     TimeoutError,
     register_provider,
 )
@@ -90,7 +90,7 @@ class AnthropicProvider(AIProvider):
                     return response.content[0].text
                 return str(response.content[0])
 
-            except anthropic.APITimeoutError as e:
+            except anthropic.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
                     time.sleep(2 ** attempt)  # 指数退避

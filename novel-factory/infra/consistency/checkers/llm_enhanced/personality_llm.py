@@ -6,7 +6,7 @@ LLM增强性格检测器
 """
 
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from .base import LLMEnhancedChecker
 
@@ -15,8 +15,8 @@ class LLMEnhancedPersonalityChecker(LLMEnhancedChecker):
     """性格检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..personality_checker import PersonalityChecker
         from ...llm_service.base import LLMService
+        from ..personality_checker import PersonalityChecker
 
         super().__init__(
             base_checker=PersonalityChecker(),

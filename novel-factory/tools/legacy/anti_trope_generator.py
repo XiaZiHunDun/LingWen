@@ -9,9 +9,10 @@
 """
 
 import random
-import yaml
 import sys
 from pathlib import Path
+
+import yaml
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -146,7 +147,7 @@ class AntiTropeGenerator:
             # 检查是否符合高概念库
             matched = self.match_concepts(combo)
             if matched:
-                lines.append(f"  匹配高概念:")
+                lines.append("  匹配高概念:")
                 for m in matched[:2]:
                     lines.append(f"    - {m['id']}: {m['名称']}")
 

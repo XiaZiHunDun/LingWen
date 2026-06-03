@@ -1,12 +1,18 @@
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.state.models import (
-    LocationState, KnowledgeState, RelationshipState,
-    CapabilityState, EntityState
+    CapabilityState,
+    EntityState,
+    KnowledgeState,
+    LocationState,
+    RelationshipState,
 )
+
 
 def test_location_state_creation():
     loc = LocationState(

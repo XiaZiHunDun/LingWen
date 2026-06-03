@@ -6,9 +6,9 @@ Quality System Unified Interfaces
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import List, Dict, Any, Optional, Protocol
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol
 
 
 class QualitySource(Enum):

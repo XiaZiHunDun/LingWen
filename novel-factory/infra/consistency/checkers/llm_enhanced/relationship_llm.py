@@ -6,7 +6,7 @@ LLM增强关系状态检测器
 """
 
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from .base import LLMEnhancedChecker
 
@@ -15,8 +15,8 @@ class LLMEnhancedRelationshipStateChecker(LLMEnhancedChecker):
     """关系状态检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..relationship_state_checker import RelationshipStateChecker
         from ...llm_service.base import LLMService
+        from ..relationship_state_checker import RelationshipStateChecker
 
         super().__init__(
             base_checker=RelationshipStateChecker(),

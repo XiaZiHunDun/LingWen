@@ -3,8 +3,8 @@ LLMAnalyzer - Deep analysis of reading power elements using LLM
 """
 
 import json
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

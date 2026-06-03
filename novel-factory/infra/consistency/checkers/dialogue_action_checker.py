@@ -10,11 +10,10 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from infra.consistency.engine.data_structures import (
-    Issue, IssueLocation, CheckerType, IssueSeverity
-)
+from infra.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
+
 from .base_checker import BaseChecker
 
 
@@ -107,7 +106,7 @@ class DialogueActionChecker(BaseChecker):
             checker_type=CheckerType.DIALOGUE_ACTION,
             issue_type="dialogue_action_contradiction",
             title="言行不一: 承诺与行动相悖",
-            description=f"角色做出承诺但随后立即采取相反行动",
+            description="角色做出承诺但随后立即采取相反行动",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"承诺: {promise[:50]}... 行动: {action[:50]}...",
             suggestion="承诺后的行动应与承诺一致，或有过渡说明"

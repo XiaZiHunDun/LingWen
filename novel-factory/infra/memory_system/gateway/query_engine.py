@@ -2,18 +2,17 @@
 
 提供混合检索、角色状态查询、关系网络查询和一致性检查功能。
 """
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
-import time
 
 from infra.memory_system.config import load_yaml
-from infra.memory_system.vector.embedder import Embedder
+from infra.memory_system.gateway.query_helpers import PerformanceMonitor
 from infra.memory_system.state.character_tracker import CharacterTracker
+from infra.memory_system.state.fact_base import FactBase
 from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
 from infra.memory_system.state.timeline_manager import TimelineManager
-from infra.memory_system.state.fact_base import FactBase
-
-from infra.memory_system.gateway.query_helpers import PerformanceMonitor
+from infra.memory_system.vector.embedder import Embedder
 
 
 class QueryEngine:
@@ -176,7 +175,7 @@ class QueryEngine:
         if not filters:
             return None
 
-        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         conditions = []
         for field, value in filters.items():
@@ -347,7 +346,7 @@ class QueryEngine:
             # 检查角色名称是否在内容中出现
             if char_name in chapter_content:
                 # 检查状态一致性
-                current_location = char_state.get("current_location", "")
+                char_state.get("current_location", "")
                 alive = char_state.get("alive", True)
 
                 # 如果角色已死亡，警告不要在内容中描述其活动
@@ -384,7 +383,7 @@ class QueryEngine:
         all_facts = self._fact_base.get_all_facts()
 
         for fact_id, fact in all_facts.items():
-            content = fact.get("content", "")
+            fact.get("content", "")
             verified = fact.get("verified", False)
 
             # 只检查已验证的事实
@@ -452,7 +451,7 @@ class QueryEngine:
             return issues
 
         # 获取本章事件
-        chapter_events = self._timeline_manager.get_events_by_chapter(chapter)
+        self._timeline_manager.get_events_by_chapter(chapter)
 
         # 检查时间顺序是否合理
         # 这需要解析内容中的时间描述，暂时简化处理

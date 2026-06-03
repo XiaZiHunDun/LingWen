@@ -165,7 +165,7 @@ class RuleBasedDetector:
                     # 提取上下文
                     context_start = max(0, death_pos - 50)
                     context_end = min(len(content), action_pos + 50)
-                    context = content[context_start:context_end]
+                    content[context_start:context_end]
 
                     contradictions.append(Contradiction(
                         entity_name="UNKNOWN",
@@ -446,7 +446,7 @@ class ContradictionDetector:
             p1_contradictions = [c for c in contradictions if c.severity in ("P0", "P1")]
             if len(p1_contradictions) <= self.config.max_llm_cases:
                 # 简化context用于LLM
-                llm_context = {
+                {
                     "related_chunks": context.get("related_chunks", []),
                 }
                 # 注意：LLM是异步的，这里简化处理

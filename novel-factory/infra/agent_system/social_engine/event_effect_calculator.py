@@ -1,7 +1,8 @@
 # novel-factory/agent_system/social_engine/event_effect_calculator.py
-from typing import Dict, List, Optional, Any
-import yaml
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class EventEffectCalculator:

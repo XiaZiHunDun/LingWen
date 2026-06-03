@@ -10,12 +10,13 @@
     python3 update_index.py --verify   # 验证索引一致性
 """
 
-import re
-import os
-import json
 import argparse
+import json
+import os
+import re
 from datetime import datetime
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
 
 # 中文数字转阿拉伯数字
 def chinese_to_num(zh: str) -> Optional[int]:

@@ -6,12 +6,11 @@
 这个脚本在Claude Code中运行时，可以直接利用Claude Code的LLM能力
 通过标准输入/输出与Claude Code会话交互
 """
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from typing import List, Dict, Optional
-
+from typing import Dict, List, Optional
 
 # 主要角色及其弧光类型配置
 CHARACTER_ARCS = {

@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Set
 
 from infra.quality.rule_based.validators.base import (
     BaseValidator,
-    ValidationResult,
     IssueSeverity,
+    ValidationResult,
 )
 
 
@@ -33,7 +33,7 @@ class KnowledgeStateValidator(BaseValidator):
             # 获取角色已获得的技能
             acquired_skills = set(char.get("acquired_skills", []))
             # 获取角色已知的知识
-            acquired_knowledge = set(char.get("known_knowledge", []))
+            set(char.get("known_knowledge", []))
 
             # 检查内容中角色是否使用了未获得的技能
             used_skills = self._extract_skill_usages(content, name)

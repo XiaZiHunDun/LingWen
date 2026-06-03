@@ -16,9 +16,10 @@ R2-020: save() 改用 fcntl.flock + temp-file + atomic rename,防止
 import fcntl
 import json
 import os
-import yaml
 from pathlib import Path
 from typing import Any, Dict
+
+import yaml
 
 
 class MemoryStateManager:

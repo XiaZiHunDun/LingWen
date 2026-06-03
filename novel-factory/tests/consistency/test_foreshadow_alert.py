@@ -9,8 +9,9 @@
 """
 
 import pytest
+
 from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
-from infra.consistency.engine.data_structures import IssueSeverity, CheckerType
+from infra.consistency.engine.data_structures import CheckerType, IssueSeverity
 
 
 class TestForeshadowRegistration:
@@ -221,7 +222,7 @@ class TestApproachingDeadline:
         assert len(delay_issues) == 0  # delay=28-30=-2，不应触发
 
         # 第31章检查（delay=1，P3提示）
-        issues_31 = checker.check(
+        checker.check(
             chapter_content="章节内容",
             chapter_num=31,
             context={"plot_threads": [], "new_foreshadow": []}

@@ -12,8 +12,8 @@
 - 社交引擎 → self.relationship_tracker / self.conflict_alert / ...
 """
 
-from typing import Dict, List, Optional, Any
 import logging
+from typing import Any, Dict, List, Optional
 
 from ..ai_service.router import AIRouter
 from .agent_config import MasterControllerConfig, load_default_config

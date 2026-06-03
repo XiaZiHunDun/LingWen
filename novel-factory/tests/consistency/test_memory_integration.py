@@ -8,12 +8,13 @@
 3. 检查上下文在运行检查器之前被记忆数据丰富
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
-from typing import Dict, Any, List, Optional
-
 import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.engine.consistency_engine import ConsistencyEngine

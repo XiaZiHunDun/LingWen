@@ -14,11 +14,10 @@ import argparse
 import json
 import os
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-
 
 # ========== 路径配置 ==========
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -52,7 +51,8 @@ class Feedback:
 
     def to_markdown(self) -> str:
         """转换为Markdown格式"""
-        stars = lambda n: "★" * (n or 0) + "☆" * (5 - (n or 0)) if n else "未评分"
+        def stars(n):
+            return "★" * (n or 0) + "☆" * (5 - (n or 0)) if n else "未评分"
 
         md = f"""
 ## 反馈记录 {self.date}

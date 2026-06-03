@@ -73,7 +73,7 @@ def main():
     chapters = parse_chapter_range(args.chapters)
 
     print("=" * 60)
-    print(f"LLM深度质检工具 v9.1 - PHASE_5_LLM_QUALITY")
+    print("LLM深度质检工具 v9.1 - PHASE_5_LLM_QUALITY")
     print(f"检测类型: {args.check}")
     print(f"章节范围: {chapters[0]}-{chapters[-1]} ({len(chapters)}章)")
     print(f"批处理大小: {args.batch}")

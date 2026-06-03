@@ -1,6 +1,7 @@
 """配置模块"""
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 def load_yaml(file_path: str) -> dict:

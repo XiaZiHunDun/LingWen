@@ -8,8 +8,8 @@
     python test_cross_chapter_checker.py --full-scan     # 全量扫描
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
 from typing import List, Tuple
 

@@ -6,29 +6,30 @@ Tests for the regression tracking system that identifies related chapters
 when a chapter is fixed to prevent new inconsistencies.
 """
 
-import pytest
 import json
-import tempfile
 import sys
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add infra/tools directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "infra" / "tools"))
 
 # Import the module under test
 from regression_tracker import (
-    parse_chapter_id,
-    get_volume_for_chapter,
+    NEIGHBORHOOD_RANGE,
+    VOLUME_DEFINITIONS,
+    clear_all_regression_checks,
+    clear_regression_check,
     get_chapters_in_volume,
     get_neighbor_chapters,
-    get_regression_chapters,
-    register_regression_check,
     get_pending_regression_checks,
-    clear_regression_check,
-    clear_all_regression_checks,
-    VOLUME_DEFINITIONS,
-    NEIGHBORHOOD_RANGE,
+    get_regression_chapters,
+    get_volume_for_chapter,
+    parse_chapter_id,
+    register_regression_check,
 )
 
 
@@ -229,7 +230,7 @@ class TestRegressionQueueOperations:
         register_regression_check("ch005", "Test fix")
 
         # Then clear
-        result = clear_regression_check("ch005")
+        clear_regression_check("ch005")
         # Note: This test may not find the item if the chapter wasn't added
         # The function returns True only if item was found and removed
 

@@ -8,13 +8,13 @@ MiniMax M2.7 章节检查脚本 - 试点30章
 检查维度：S1-S8 + 一致性 + 伏笔 + AI痕迹
 """
 
+import json
 import os
 import sys
-import json
 import time
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -572,7 +572,7 @@ def main():
     for dim, count in sorted(summary["issue_count_by_dimension"].items(), key=lambda x: -x[1]):
         md_content += f"- {dim}: {count}个问题\n"
 
-    md_content += f"""
+    md_content += """
 ## 详细问题
 
 """
@@ -606,7 +606,7 @@ def main():
     print("试点完成！")
     print("=" * 60)
     print(f"总调用: {total_calls}次 / 500次预算")
-    print(f"输出文件:")
+    print("输出文件:")
     print(f"  - {report_path}")
     print(f"  - {summary_path}")
     print(f"  - {md_report_path}")

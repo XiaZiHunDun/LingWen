@@ -4,7 +4,7 @@ Tracks and retrieves cool points from chapters.
 """
 
 import json
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
 
 from infra.reading_power.db import ReadingPowerDB
 

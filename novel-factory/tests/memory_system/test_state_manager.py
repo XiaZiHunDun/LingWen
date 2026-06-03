@@ -1,9 +1,10 @@
 """MemoryStateManager 测试"""
 import json
 import tempfile
-import pytest
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
+import pytest
 
 from infra.memory_system.state.state_manager import MemoryStateManager
 
@@ -133,7 +134,7 @@ class TestMemoryStateManager:
         yaml_content = {"threads": [{"id": 1, "name": "main"}]}
         plot_file.write_text(yaml.dump(yaml_content), encoding="utf-8")
 
-        manager = MemoryStateManager(mock_config)
+        MemoryStateManager(mock_config)
         # YAML 加载需要特殊处理，这里验证文件存在性
         assert plot_file.exists()
 

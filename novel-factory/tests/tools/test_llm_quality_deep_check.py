@@ -4,9 +4,10 @@ llm_quality_deep_check.py 测试
 
 测试工具脚本的核心修复逻辑，不调用实际LLM API。
 """
-import pytest
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestLLMQualityChecker:
@@ -81,8 +82,8 @@ class TestLLMQualityChecker:
 
     def test_quality_report_creation(self, checker):
         """测试质检报告创建"""
-        from tools.llm_quality_deep_check import QualityReport
         from infra.quality import Issue
+        from tools.llm_quality_deep_check import QualityReport
 
         report = QualityReport(
             chapter=1,

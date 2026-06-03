@@ -7,11 +7,9 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import (
-    Issue, IssueLocation, CheckerType, IssueSeverity
-)
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -187,7 +185,7 @@ class RelationshipStateChecker(BaseChecker):
             checker_type=CheckerType.RELATIONSHIP_STATE,
             issue_type="relationship_state_change",
             title=f"关系状态突变: {change_type}",
-            description=description or f"关系发生剧烈变化但无过渡描述",
+            description=description or "关系发生剧烈变化但无过渡描述",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"证据: {evidence}",
             suggestion="需要加入过渡描述（如：经过、几天后、终于、渐渐地等）来说明关系是如何变化的"

@@ -5,16 +5,17 @@
 Tests for TemplateRecommender
 """
 
-import pytest
-import tempfile
 import os
+import sys
+import tempfile
 from pathlib import Path
 
-import sys
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
 from prompt_assembler import PromptAssembler, TemplateCategory
-from template_recommender import TemplateRecommender, TemplateScore, RecommendationCriteria
+from template_recommender import RecommendationCriteria, TemplateRecommender, TemplateScore
 
 
 class TestTemplateRecommenderBasic:

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from typing import List
 
-
 # 抽象修炼/能量概念 — 修真/玄幻小说里常被过度使用,缺乏视觉冲击
 ABSTRACT_CULTIVATION: List[str] = [
     "星辰能量",

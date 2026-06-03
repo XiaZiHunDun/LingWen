@@ -64,7 +64,7 @@ class ScenePurposeScorer(BaseScorer):
 
     def _check_purpose_fulfilled(self, content: str, purpose: str) -> bool:
         """检查章节目的是否达成"""
-        purpose_lower = purpose.lower()
+        purpose.lower()
         content_lower = content.lower()
 
         # 简单实现：检查目的关键词是否在内容中出现

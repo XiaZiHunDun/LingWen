@@ -1,15 +1,14 @@
 # infra/agent_system/task_orchestrator.py
 """任务编排器 - 负责工作流步骤推进和任务调度"""
 
-from typing import Dict, List, Optional, Any, Callable
 import logging
 from datetime import datetime
-
-from infra.logging_config import logger
-from infra.state.workflow_validator import validate_transition, get_allowed_transitions, is_valid_step
+from typing import Any, Callable, Dict, List, Optional
 
 # 导入事件总线（用于触发事件）
 from infra.hooks.event_bus import EventBus
+from infra.logging_config import logger
+from infra.state.workflow_validator import get_allowed_transitions, is_valid_step, validate_transition
 
 
 class TaskOrchestrator:

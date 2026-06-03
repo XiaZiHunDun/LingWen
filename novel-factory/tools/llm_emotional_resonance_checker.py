@@ -11,15 +11,15 @@ LLM情感共鸣分析器 - S4情感共鸣检测
 目标：防止"煽情油腻"，提升真实情感共鸣
 """
 
-import sys
+import argparse
 import json
 import re
-import argparse
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from datetime import datetime
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -264,7 +264,7 @@ class EmotionalResonanceChecker:
 
             points = data.get("emotional_points", [])
             summary = data.get("summary", {})
-            warnings = data.get("warnings", [])
+            data.get("warnings", [])
 
             # 构建情感点记录
             for pt in points:
@@ -299,7 +299,7 @@ class EmotionalResonanceChecker:
 
             report.score = max(0, min(1, report.score))
 
-        except Exception as e:
+        except Exception:
             report.score = 0.5
 
         return report

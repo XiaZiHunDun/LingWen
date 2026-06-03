@@ -8,11 +8,11 @@ v9.0 小说正文LLM辅助修改脚本
     python tools/llm_polish_chapters.py --all --dry-run
 """
 
-import sys
-import re
 import os
+import re
+import sys
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent

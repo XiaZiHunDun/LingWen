@@ -1,13 +1,15 @@
 # tests/agent_system/test_conflict_alert.py
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from infra.agent_system.social_engine.conflict_alert import ConflictAlert
 from infra.agent_system.social_engine.writing_suggestion import WritingSuggestion
+
 
 def test_conflict_alert_init():
     """测试冲突预警初始化"""

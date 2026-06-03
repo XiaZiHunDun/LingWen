@@ -7,12 +7,12 @@ MemoryGateway 是记忆系统的统一入口，整合所有组件，提供：
 """
 from typing import Any, Dict, List, Optional
 
-from infra.memory_system.gateway.query_engine import QueryEngine
 from infra.memory_system.gateway.push_engine import PushEngine
+from infra.memory_system.gateway.query_engine import QueryEngine
 from infra.memory_system.state.character_tracker import CharacterTracker
+from infra.memory_system.state.fact_base import FactBase
 from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
 from infra.memory_system.state.timeline_manager import TimelineManager
-from infra.memory_system.state.fact_base import FactBase
 from infra.memory_system.vector.embedder import Embedder
 from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 

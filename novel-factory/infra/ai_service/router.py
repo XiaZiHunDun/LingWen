@@ -9,12 +9,12 @@ R3-012: Provider 实例化改为通过 `get_provider_class(name)` 查表,
 `@register_provider("name")`,无需修改本文件。
 """
 
-from typing import Dict, List, Optional, Any, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 from .base import (
     AIProvider,
-    ProviderConfig,
     AIProviderError,
+    ProviderConfig,
     get_provider_class,
 )
 

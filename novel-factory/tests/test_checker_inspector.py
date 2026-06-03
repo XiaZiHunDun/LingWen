@@ -1,5 +1,7 @@
 import pytest
+
 from infra.consistency.engine.checker_inspector import CheckerInspector, InspectionResult
+
 
 class TestCheckerInspector:
     def test_singleton(self):
@@ -41,4 +43,4 @@ class TestCheckerInspector:
         result = inspector.inspect_checker("character_checker")
         assert result.total_issues == 8
         assert result.false_positive_rate == 0.375  # 3/8 = 37.5%
-        assert result.should_auto_fix == True  # > 30%
+        assert result.should_auto_fix  # > 30%

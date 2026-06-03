@@ -1,7 +1,8 @@
 """QdrantClientWrapper 测试 (TDD 模式)"""
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
@@ -189,7 +190,7 @@ class TestQdrantClientWrapper:
         mock_qdrant_client.search.return_value = mock_results
 
         # 使用默认 top_k
-        results = wrapper.search_with_filter(collection_name, query_vector, must={"chapter_id": "ch001"})
+        wrapper.search_with_filter(collection_name, query_vector, must={"chapter_id": "ch001"})
 
         mock_qdrant_client.search.assert_called_once()
         call_args = mock_qdrant_client.search.call_args

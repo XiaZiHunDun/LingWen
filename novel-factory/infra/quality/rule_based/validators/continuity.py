@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Set
 
 from infra.quality.rule_based.validators.base import (
     BaseValidator,
-    ValidationResult,
     IssueSeverity,
+    ValidationResult,
 )
 
 
@@ -28,7 +28,7 @@ class ContinuityValidator(BaseValidator):
 
         # 提取内容中的角色引用
         content_lower = content.lower()
-        mentioned_names = self._extract_character_names(content, characters)
+        self._extract_character_names(content, characters)
 
         # 检查每个角色的状态一致性
         for char in characters:
@@ -71,7 +71,7 @@ class ContinuityValidator(BaseValidator):
 
     def _check_vitality_consistency(self, name: str, content: str) -> bool:
         """检查生死状态一致性"""
-        name_lower = name.lower()
+        name.lower()
         content_lower = content.lower()
 
         # 检测死亡相关词汇
@@ -91,7 +91,7 @@ class ContinuityValidator(BaseValidator):
         if not expected_gender:
             return True
 
-        name_lower = name.lower()
+        name.lower()
         content_lower = content.lower()
 
         # 男性特征词

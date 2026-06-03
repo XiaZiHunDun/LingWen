@@ -9,18 +9,18 @@
     python batch_repair.py --chapters 1-120 --track all
 """
 
-import sys
 import json
-from pathlib import Path
+import sys
 from datetime import datetime
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.quality import WorldviewRepairer, AITraceRepairer
-from tools.verify_quality import QualityVerifier
 from infra.paths import ProjectPaths
+from infra.quality import AITraceRepairer, WorldviewRepairer
+from tools.verify_quality import QualityVerifier
 
 
 def run_post_repair_verify(chapter_nums: List[int]) -> Dict[str, Any]:

@@ -18,9 +18,10 @@
 
 import re
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
+from infra.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
+
 from .base_checker import BaseChecker
 
 
@@ -150,7 +151,7 @@ class GenderConsistencyChecker(BaseChecker):
         if not match:
             return False
 
-        attribute = match.group(1)
+        match.group(1)
 
         # 检查这个属性是否是用来描述角色的身体部位
         # 错误模式: "脸上浮现出他的神色" - "神色"描述"脸"
@@ -190,7 +191,7 @@ class GenderConsistencyChecker(BaseChecker):
                 # 获取上下文
                 start = max(0, m.start() - 20)
                 end = min(len(content), m.end() + 20)
-                context_text = content[start:end]
+                content[start:end]
 
                 issues.append(Issue(
                     id=f"GC_{chapter_num:03d}_{char_name}_{body_part}",
@@ -226,7 +227,7 @@ class GenderConsistencyChecker(BaseChecker):
 
                 start = max(0, m.start() - 20)
                 end = min(len(content), m.end() + 20)
-                context_text = content[start:end]
+                content[start:end]
 
                 issues.append(Issue(
                     id=f"GC_{chapter_num:03d}_{char_name}_{body_part}",

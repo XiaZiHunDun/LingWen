@@ -9,10 +9,11 @@ Auditor Variant Loader
 - 支持动态切换审核员角色
 """
 
-import yaml
 import re
 from pathlib import Path
 from typing import Dict, Optional
+
+import yaml
 
 
 class VariantLoader:

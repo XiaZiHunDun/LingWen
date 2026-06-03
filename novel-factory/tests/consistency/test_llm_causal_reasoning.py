@@ -5,14 +5,14 @@ LLM因果推理检测器测试
 测试LLM辅助的复杂因果推理检测器
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.checkers.llm_causal_reasoning_checker import (
-    LLMCausalReasoningChecker
-)
+from infra.consistency.checkers.llm_causal_reasoning_checker import LLMCausalReasoningChecker
 from infra.consistency.engine.data_structures import Issue
 
 

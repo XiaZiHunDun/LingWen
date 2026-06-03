@@ -1,7 +1,8 @@
 """MemoryGateway 测试"""
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from infra.memory_system.gateway.memory_gateway import MemoryGateway
 
@@ -409,7 +410,7 @@ class TestMemoryGatewayEdgeCases:
         )
         # QueryEngine 会自动创建，但依赖于 mock 的 qdrant_wrapper 和 embedder
         # 由于 hybrid_search 被 mock，返回的是 MagicMock 而不是 list
-        result = gateway.query(query="测试", scope="all")
+        gateway.query(query="测试", scope="all")
         # 当 query 为空字符串时应该返回空列表
         assert gateway.query_engine is not None  # 验证自动创建
 

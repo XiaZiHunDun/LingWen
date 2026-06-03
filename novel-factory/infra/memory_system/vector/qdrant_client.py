@@ -23,7 +23,15 @@ from functools import wraps
 from typing import Any, Callable, Optional
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, Filter, PointStruct, FieldCondition, MatchValue, PointIdsList
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointIdsList,
+    PointStruct,
+    VectorParams,
+)
 
 from infra.memory_system.config import load_yaml
 
@@ -241,7 +249,6 @@ class QdrantClientWrapper:
                 )
 
         # 转换 points 格式
-        from qdrant_client.models import PointStruct
 
         qdrant_points = [
             PointStruct(
@@ -281,7 +288,6 @@ class QdrantClientWrapper:
                 )
 
         # 转换 points 格式
-        from qdrant_client.models import PointStruct
 
         qdrant_points = [
             PointStruct(

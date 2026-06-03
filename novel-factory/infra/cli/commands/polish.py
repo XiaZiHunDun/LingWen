@@ -5,6 +5,7 @@ Mirrors lines 415-505 of the original infra/cli/commands.py.
 from typing import List
 
 from infra.cli.options import PolishOptions, UnifiedOptions
+
 from .base import Command
 
 
@@ -53,10 +54,9 @@ class PolishCommand(Command):
             for ch in chapters:
                 try:
                     # Determine key_type if specified
-                    key_type = None
                     if options.key_type:
                         try:
-                            key_type = KeyChapterType(options.key_type)
+                            KeyChapterType(options.key_type)
                         except ValueError:
                             print(f"[警告] 未知key_type: {options.key_type}，将自动检测")
 

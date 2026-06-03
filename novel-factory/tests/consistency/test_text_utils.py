@@ -1,11 +1,11 @@
 """R2-011: split_chinese_sentences 行为测试 + 等价性回归"""
+from infra.consistency.checkers.battle_visualization import BattleVisualizationChecker
 from infra.consistency.checkers.text_utils import split_chinese_sentences
 from infra.consistency.checkers.vocabulary import (
     ABSTRACT_CULTIVATION,
-    CONCRETE_VISUAL,
     CONCRETE_ACTION,
+    CONCRETE_VISUAL,
 )
-from infra.consistency.checkers.battle_visualization import BattleVisualizationChecker
 
 
 class TestSplitChineseSentences:

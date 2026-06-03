@@ -1,15 +1,16 @@
 """AI Service Providers 测试"""
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from infra.ai_service.anthropic_provider import AnthropicProvider
 from infra.ai_service.base import (
     AIProvider,
-    ProviderConfig,
     AIProviderError,
+    ProviderConfig,
     ProviderConfigError,
 )
 from infra.ai_service.openai_provider import OpenAIProvider
-from infra.ai_service.anthropic_provider import AnthropicProvider
 
 
 class TestProviderConfig:
@@ -103,7 +104,7 @@ class TestOpenAIProvider:
             mock_client.return_value.chat.completions.create.return_value = mock_response
 
             provider = OpenAIProvider(config)
-            result = provider.generate("用户问题", system="你是一个助手")
+            provider.generate("用户问题", system="你是一个助手")
             call_args = mock_client.return_value.chat.completions.create.call_args
             messages = call_args.kwargs["messages"]
             assert len(messages) == 2

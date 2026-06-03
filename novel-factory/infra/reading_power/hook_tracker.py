@@ -3,7 +3,7 @@ HookTracker for the reading power system (追读力系统).
 Tracks and retrieves reading hooks from chapters.
 """
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from infra.reading_power.db import ReadingPowerDB
 

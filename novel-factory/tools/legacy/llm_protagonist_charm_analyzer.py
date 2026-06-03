@@ -11,15 +11,15 @@ LLM主角魅力分析器 - S7主角魅力检测
 目标：提升代入感，防止主角成为工具人
 """
 
-import sys
+import argparse
 import json
 import re
-import argparse
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from datetime import datetime
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -278,7 +278,7 @@ class ProtagonistCharmAnalyzer:
             score = 1.0 - goldfinger_penalty - passive_penalty - motivation_penalty
             report.score = max(0, min(1, score))
 
-        except Exception as e:
+        except Exception:
             report.score = 0.5
 
         return report

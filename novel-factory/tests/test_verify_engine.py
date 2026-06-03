@@ -9,13 +9,14 @@
 - 任何 save_state() 只写到 tmp_path 下的临时 DB
 """
 
-import pytest
-import sys
 import json
-import tempfile
 import shutil
+import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 # 添加父目录到路径以导入模块
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -37,7 +38,7 @@ def isolated_engine(monkeypatch, tmp_path):
     # 2) 隔离 SQLite 状态库到 tmp_path
     from infra.state import database as dbmod
     fake_db_path = tmp_path / "wf.db"
-    fake_workflow_db = dbmod.WorkflowDB(fake_db_path)
+    dbmod.WorkflowDB(fake_db_path)
     # 替换 WorkflowDB 构造（无参时返回我们的 fake 实例）
     original_init = dbmod.WorkflowDB.__init__
 
@@ -304,8 +305,8 @@ class TestR5004Consolidation:
         不依赖 isolated_engine fixture(它会 patch LEGACY_WORKFLOW_FILE),
         直接读模块的源常量。
         """
-        from pathlib import Path
         import importlib
+        from pathlib import Path
         # 重新 import 拿到未 patch 状态
         fresh_rve = importlib.import_module("run_verify_engine")
         # 顶层 file 自身路径
@@ -357,6 +358,7 @@ class TestR5004Consolidation:
         )
         # 把 LEGACY_WORKFLOW_FILE 重定向到我们准备的 JSON
         from unittest.mock import patch
+
         # 隔离 SQLite + CONTENT_DIR (用全新 tmp_path 避免 fixture 冲突)
         from infra.state import database as dbmod
         own_tmp = tmp_path / "fallback_test"

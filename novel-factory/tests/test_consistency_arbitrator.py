@@ -1,8 +1,18 @@
 import pytest
-from infra.consistency.engine.consistency_arbitrator import ConsistencyArbitrator, IssueGroup, ArbitrationResult
-from infra.consistency.engine.data_structures import (
-    Issue, IssueSeverity, IssueLocation, CheckerType, ConfidenceLevel
+
+from infra.consistency.engine.consistency_arbitrator import (
+    ArbitrationResult,
+    ConsistencyArbitrator,
+    IssueGroup,
 )
+from infra.consistency.engine.data_structures import (
+    CheckerType,
+    ConfidenceLevel,
+    Issue,
+    IssueLocation,
+    IssueSeverity,
+)
+
 
 class TestConsistencyArbitrator:
     def test_arbitrate_empty(self):
@@ -55,4 +65,4 @@ class TestConsistencyArbitrator:
         )
         result = arb.arbitrate([issue])
         assert len(result.ambiguous_issues) == 1
-        assert result.needs_llm_review == True
+        assert result.needs_llm_review

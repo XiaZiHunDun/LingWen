@@ -13,20 +13,21 @@
     Session 5: --session 5 --start 241 --end 300    (ch241-ch300)
     Session 6: --session 6 --start 301 --end 360    (ch301-ch360)
 """
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目路径（从脚本位置反推，支持任意 cwd）
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, '.')
 
-from infra.ai_service import MiniMaxProvider, ProviderConfig
 from tools.minimax_batch_review import MiniMaxReviewer
+
+from infra.ai_service import MiniMaxProvider, ProviderConfig
 
 
 def _resolve_max_chapter() -> int:

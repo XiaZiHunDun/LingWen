@@ -21,8 +21,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.consistency.checkers import (
     ContradictionDetector,
-    DetectionConfig,
     ContradictionResult,
+    DetectionConfig,
 )
 from infra.consistency.reports import ContradictionReporter
 from infra.paths import ProjectPaths
@@ -142,7 +142,7 @@ class ContradictionChecker:
 
         lines.append("## 汇总统计")
         lines.append("")
-        lines.append(f"| 指标 | 值 |")
+        lines.append("| 指标 | 值 |")
         lines.append("|------|-----|")
         lines.append(f"| 检测章节数 | {len(results)} |")
         lines.append(f"| 有问题章节 | {chapters_with_issues} |")

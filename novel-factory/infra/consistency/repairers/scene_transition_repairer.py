@@ -7,10 +7,10 @@
 - 空间跳跃: 突然切换地点缺少说明
 - 视角跳跃: 视角切换过于突兀
 """
-import sys
 import re
+import sys
 from pathlib import Path
-from typing import List, Tuple, Any, Optional
+from typing import Any, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests for TimelineAgeConsistencyChecker"""
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Ensure project root (novel-factory/) is in sys.path
 _project_root = Path(__file__).parent.parent
@@ -60,7 +61,7 @@ class TestTimelineAgeConsistencyChecker:
         # 10岁 is less than expected 21-22, so no issue
         content = "林夜想起10岁那年的事，心中感慨万千。"
 
-        issues = self.checker.check(content, 22, context)
+        self.checker.check(content, 22, context)
 
         # 10 < 21 (expected at ch22), so no P0 issue expected
         # This test validates the logic works without issues for consistent ages

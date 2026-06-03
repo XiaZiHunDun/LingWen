@@ -6,8 +6,8 @@ PreToolUse Hook: 检测章节文件是否包含质量问题
 触发条件: Write/Edit 工具作用于 03_内容仓库/**/*.md 文件
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # 添加项目路径
@@ -20,7 +20,7 @@ def get_chapter_content_from_input() -> tuple:
     try:
         data = json.load(sys.stdin)
         return data.get("tool_input", {})
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         return {}
 
 
@@ -150,7 +150,7 @@ def main():
         else:
             print(json.dumps({"allowed": True}))
 
-    except Exception as e:
+    except Exception:
         # 出错时允许通过，避免阻塞工作
         print(json.dumps({"allowed": True}))
 

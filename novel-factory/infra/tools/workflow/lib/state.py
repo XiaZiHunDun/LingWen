@@ -8,8 +8,7 @@ import sqlite3
 import sys
 from typing import Any, Tuple
 
-from . import db
-from . import events
+from . import db, events
 
 logger = logging.getLogger(__name__)
 

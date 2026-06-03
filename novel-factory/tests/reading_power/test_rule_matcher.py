@@ -1,7 +1,8 @@
 """Tests for RuleMatcher."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from infra.reading_power.rule_matcher import RuleMatcher, SuspectedSegment
 

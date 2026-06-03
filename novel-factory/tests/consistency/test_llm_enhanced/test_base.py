@@ -5,14 +5,15 @@ LLMEnhancedChecker基类测试
 验证LLMEnhancedChecker基类的初始化和基本功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_llm_enhanced_base_initialization():
     """测试LLMEnhancedChecker基类初始化"""
-    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.checkers.ability_checker import AbilityChecker
+    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.llm_service.base import LLMService
 
     base_checker = AbilityChecker()
@@ -26,8 +27,8 @@ def test_llm_enhanced_base_initialization():
 
 def test_llm_enhanced_prompt_mapping():
     """测试PROMPT_MAP正确映射"""
-    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.checkers.ability_checker import AbilityChecker
+    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.llm_service.base import LLMService
     from infra.consistency.llm_service.prompts import ABILITY_LLM_PROMPT
 
@@ -40,8 +41,8 @@ def test_llm_enhanced_prompt_mapping():
 
 def test_llm_enhanced_checker_type_all():
     """测试所有checker_type都能正确映射"""
-    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.checkers.ability_checker import AbilityChecker
+    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.llm_service.base import LLMService
 
     checker_types = [
@@ -59,8 +60,8 @@ def test_llm_enhanced_checker_type_all():
 
 def test_llm_enhanced_find_uncertain_regions():
     """测试_find_uncertain_regions返回空列表（基类实现）"""
-    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.checkers.ability_checker import AbilityChecker
+    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.llm_service.base import LLMService
 
     base_checker = AbilityChecker()
@@ -73,8 +74,8 @@ def test_llm_enhanced_find_uncertain_regions():
 
 def test_llm_enhanced_convert_llm_issues():
     """测试_convert_llm_issues正确转换LLMIssue为Issue"""
-    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.checkers.ability_checker import AbilityChecker
+    from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
     from infra.consistency.llm_service.base import LLMService
     from infra.consistency.llm_service.chapter_content import LLMIssue
 

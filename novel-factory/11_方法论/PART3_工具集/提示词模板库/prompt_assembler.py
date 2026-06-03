@@ -21,11 +21,12 @@ Usage:
 
 import os
 import re
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class TemplateCategory(Enum):
@@ -244,14 +245,14 @@ class PromptAssembler:
         """生成提示词头部"""
         header_lines = [
             f"# CARE提示词：{template.name}",
-            f"",
+            "",
             f"> 模板ID: {template.id}",
             f"> 版本: {template.version}",
             f"> 状态: {template.status}",
             f"> 温度: {temperature}",
             f"> 类型: {genre}",
-            f"",
-            f"---",
+            "",
+            "---",
         ]
         return "\n".join(header_lines)
 
@@ -275,9 +276,9 @@ class PromptAssembler:
         )
         missing = []
 
-        for field in required_fields:
-            if field not in context or not context[field]:
-                missing.append(field)
+        for field_name in required_fields:
+            if field_name not in context or not context[field_name]:
+                missing.append(field_name)
 
         return missing
 

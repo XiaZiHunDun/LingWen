@@ -11,15 +11,15 @@ LLM节奏分析器增强版 - S5节奏控制
 目标：提升追读欲望，优化阅读体验
 """
 
-import sys
+import argparse
 import json
 import re
-import argparse
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from datetime import datetime
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -303,7 +303,7 @@ class PacingAnalyzer:
             report.tension_curve = summary.get("tension_curve", report.tension_curve)
             report.avg_tension = summary.get("avg_tension", report.avg_tension)
 
-        except Exception as e:
+        except Exception:
             report.score = 0.5
 
         return report

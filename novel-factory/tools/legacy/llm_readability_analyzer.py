@@ -11,15 +11,15 @@ LLM可读性分析器 - S6可读性检测
 目标：减少水字数，提升阅读体验
 """
 
-import sys
+import argparse
 import json
 import re
-import argparse
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from datetime import datetime
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -299,7 +299,7 @@ class ReadabilityAnalyzer:
             else:
                 report.score = 1.0
 
-        except Exception as e:
+        except Exception:
             report.score = 0.5
 
         return report

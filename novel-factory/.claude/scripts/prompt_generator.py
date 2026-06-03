@@ -22,7 +22,6 @@ from typing import Any, Optional
 
 import yaml
 
-
 # ========== 路径配置 ==========
 BASE_DIR = Path(__file__).parent.parent.parent
 PROMPTS_DIR = BASE_DIR / ".claude" / "prompts"
@@ -133,7 +132,7 @@ class ProjectData:
                 content = chapter_file.read_text(encoding="utf-8")
                 # 跳过标题行，取第一段正文内容
                 lines = content.split("\n")
-                content_lines = [l for l in lines[1:] if l.strip() and not l.startswith("#")]
+                content_lines = [line for line in lines[1:] if line.strip() and not line.startswith("#")]
                 first_content = " ".join(content_lines[:3]) if content_lines else ""
                 summaries.append(f"ch{i:03d}: {first_content[:100]}...")
         return "\n".join(summaries)

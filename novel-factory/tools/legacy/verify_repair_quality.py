@@ -4,13 +4,13 @@
 抽样检查修复效果
 """
 
-import os
-import sys
 import json
-from pathlib import Path
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
+import os
 import random
+import sys
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -205,17 +205,17 @@ def main():
     print("=" * 60)
     print(f"抽样章节: {result['sample_chapters']}")
     print()
-    print(f"【世界观一致性】")
+    print("【世界观一致性】")
     print(f"  违规模拟术语总数: {result['worldview']['total_violations']}")
     print(f"  涉及章节数: {result['worldview']['chapters_affected']}/30")
     print(f"  平均每章: {result['worldview']['avg_per_chapter']:.1f}处")
     print()
-    print(f"【AI痕迹】")
+    print("【AI痕迹】")
     print(f"  AI痕迹总数: {result['ai_traces']['total_traces']}")
     print(f"  涉及章节数: {result['ai_traces']['chapters_affected']}/30")
     print(f"  平均每章: {result['ai_traces']['avg_per_chapter']:.1f}处")
     print()
-    print(f"【角色一致性】")
+    print("【角色一致性】")
     print(f"  角色问题总数: {result['character']['total_issues']}")
     print(f"  涉及章节数: {result['character']['chapters_affected']}/30")
     print(f"  平均每章: {result['character']['avg_per_chapter']:.1f}处")

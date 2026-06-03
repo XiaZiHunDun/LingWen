@@ -2,9 +2,9 @@
 
 提供查询构建、混合搜索和调试工具。
 """
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
-import time
 
 
 @dataclass
@@ -134,9 +134,9 @@ class QueryBuilder:
         self._top_k: int = 5
         self._collection: str = "chapters_seg"
 
-    def set_filter(self, field: str, value: Any) -> "QueryBuilder":
+    def set_filter(self, field_name: str, value: Any) -> "QueryBuilder":
         """设置过滤条件"""
-        self._filters[field] = value
+        self._filters[field_name] = value
         return self
 
     def set_top_k(self, top_k: int) -> "QueryBuilder":
@@ -182,7 +182,7 @@ class HybridSearch:
         Returns:
             搜索结果列表
         """
-        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         # 生成查询向量
         query_vectors = self.embedder.embed_texts([query])

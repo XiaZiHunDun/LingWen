@@ -5,9 +5,11 @@ KnowledgeTracker 测试
 检测信息知晓矛盾（A告诉了B秘密，但B后续毫无反应）
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.checkers.knowledge_tracker import KnowledgeTracker
@@ -98,7 +100,7 @@ class TestKnowledgeTracker:
         苏琳看了看玉佩："哦，是吗？"
         """
 
-        issues = checker.check(chapter_content, chapter_num=10, context={})
+        checker.check(chapter_content, chapter_num=10, context={})
 
         # 苏琳只是说"哦，是吗？"这种敷衍式回应，可能也算没完全理解
         # 这个测试检查至少不会误报

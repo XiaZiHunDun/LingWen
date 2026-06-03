@@ -5,28 +5,29 @@
 测试缓存机制、性能优化器和带缓存的包装器
 """
 
-import pytest
-import time
-from unittest.mock import Mock, MagicMock
-
 import sys
+import time
 from pathlib import Path
+from unittest.mock import MagicMock, Mock
+
+import pytest
+
 # Add project root to path: tests/memory_system/test_performance.py -> project root
 _project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(_project_root))
 
-from infra.memory_system.utils.cache import (
-    CacheStats,
-    CacheEntry,
-    LRUCache,
-    CacheManager,
-)
 from infra.memory_system.performance import (
-    PerformanceOptimizer,
     CachedEmbedder,
     CachedVectorSearch,
+    PerformanceOptimizer,
     create_cached_embedder,
     create_cached_vector_client,
+)
+from infra.memory_system.utils.cache import (
+    CacheEntry,
+    CacheManager,
+    CacheStats,
+    LRUCache,
 )
 
 

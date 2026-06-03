@@ -3,6 +3,7 @@
 Mirrors lines 655-717 of the original infra/cli/commands.py.
 """
 from infra.cli.options import UnifiedOptions
+
 from .base import Command
 
 
@@ -36,9 +37,10 @@ class LLMAnalyzeCommand(Command):
     def _analyze(self, chapter: int, issue_file: str = None) -> int:
         """Run LLM analysis"""
         try:
-            from tools.llm_quality_analyzer import LLMQualityAnalyzer
-            from infra.quality import Issue
             import json
+
+            from infra.quality import Issue
+            from tools.llm_quality_analyzer import LLMQualityAnalyzer
 
             analyzer = LLMQualityAnalyzer()
 

@@ -6,11 +6,9 @@ KnowledgeTracker - 信息知晓追踪检测器
 """
 
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import (
-    Issue, IssueLocation, CheckerType, IssueSeverity
-)
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 

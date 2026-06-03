@@ -10,10 +10,10 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -193,7 +193,7 @@ class CharacterStateChecker(BaseChecker):
                     if re.search(rf'{character}(?!的)' + r'.{0,3}' + r'牺牲(?:了?|$)', sentence):
                         return alive
                     # 倒装：牺牲了[角色]
-                    if re.search(rf'牺牲了' + r'.{0,3}' + character, sentence):
+                    if re.search(r'牺牲了' + r'.{0,3}' + character, sentence):
                         return alive
                 else:
                     # 正向匹配：[角色]...死亡词 且角色在死亡词之前5字内
@@ -217,7 +217,7 @@ class CharacterStateChecker(BaseChecker):
             severity=IssueSeverity.P1,
             checker_type=CheckerType.CHARACTER_STATE,
             issue_type="生死状态冲突",
-            title=f"角色生死状态矛盾",
+            title="角色生死状态矛盾",
             description=f"{character}生死状态变化: {'存活' if prev_alive else '死亡'}→{'存活' if curr_alive else '死亡'}",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"前章状态: {'存活' if prev_alive else '死亡'}",

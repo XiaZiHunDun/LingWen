@@ -5,7 +5,7 @@
 
 import sys
 from pathlib import Path
-from typing import List, Tuple, Optional, Dict
+from typing import Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -51,7 +51,7 @@ def check_character_consistency(chapter_num: int, content: str, neighboring: Dic
     issues = []
 
     # 收集所有章节中的角色名
-    all_content = content + "".join(neighboring.values())
+    content + "".join(neighboring.values())
     characters = ["林夜", "苏琳", "星月", "小九", "铁蛋", "莫言", "暗皇", "虚无之主", "剑尘子"]
 
     for char in characters:
@@ -100,7 +100,7 @@ def check_state_consistency(chapter_num: int, content: str, neighboring: Dict[in
         for keyword in death_keywords:
             if keyword in content and any(a in content for a in alive_keywords):
                 # 简单检查：死亡和复活在同一段
-                issues.append(f"章节中同时出现死亡和存活描述，可能存在状态矛盾")
+                issues.append("章节中同时出现死亡和存活描述，可能存在状态矛盾")
                 break
 
     # 检查关键物品状态

@@ -5,15 +5,15 @@
 """
 
 from .paragraph_ref import (
-    ParagraphRef,
     OpinionBase,
-    OpinionType,
     OpinionSeverity,
-    extract_paragraph_ref,
+    OpinionType,
+    ParagraphRef,
     build_opinion_with_ref,
     extract_opinions_with_refs,
-    parse_line_reference,
+    extract_paragraph_ref,
     find_line_for_text,
+    parse_line_reference,
 )
 
 __all__ = [

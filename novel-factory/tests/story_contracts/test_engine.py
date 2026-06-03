@@ -1,8 +1,9 @@
 """Tests for StoryContractEngine."""
 
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 from infra.story_contracts.engine import StoryContractEngine
 from infra.story_contracts.paths import StoryContractPaths

@@ -10,9 +10,9 @@
 3. 学习曲线矛盾：刚学的能力就能熟练使用
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -93,11 +93,11 @@ class AbilityChecker(BaseChecker):
                                 severity=IssueSeverity.P1,
                                 checker_type=CheckerType.ABILITY,
                                 issue_type="能力使用冲突",
-                                title=f"能力与行为冲突",
+                                title="能力与行为冲突",
                                 description=f"角色{char_name}设定为\"{limit}\"，但执行了\"{trigger}\"",
                                 location=IssueLocation(chapter=chapter_num),
                                 evidence=f"角色设定：{limit}",
-                                suggestion=f"修改行为或补充角色学习经过",
+                                suggestion="修改行为或补充角色学习经过",
                                 character=char_name
                             ))
 
@@ -129,7 +129,7 @@ class AbilityChecker(BaseChecker):
                             severity=IssueSeverity.P2,
                             checker_type=CheckerType.ABILITY,
                             issue_type="能力强度矛盾",
-                            title=f"能力强度突变",
+                            title="能力强度突变",
                             description=f"角色{char_name}的能力出现突然变化（{desc}），缺乏铺垫",
                             location=IssueLocation(chapter=chapter_num),
                             evidence=f"文本描述：{desc}",

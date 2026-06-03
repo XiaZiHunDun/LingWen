@@ -6,8 +6,8 @@
 import os
 import re
 import sys
-from typing import List, Tuple, Dict, Set, Optional
 from collections import defaultdict
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class SceneLogicChecker:
@@ -278,11 +278,11 @@ def report_results(results: Dict, output_file: str = None) -> str:
     lines.append(f"发现问题: {results['total_issues']} 处")
     lines.append(f"高严重度问题: {results['high_severity_issues']} 处")
     lines.append(f"未通过章节: {len(results['failed_chapters'])} 个")
-    lines.append(f"")
+    lines.append("")
 
     # 孤岛章节
     if results['isolated_chapters']:
-        lines.append(f"--- 孤岛章节（与前后章相似度<15%）---")
+        lines.append("--- 孤岛章节（与前后章相似度<15%）---")
         for ch in results['isolated_chapters'][:10]:
             lines.append(f"  ch{ch:03d}")
         if len(results['isolated_chapters']) > 10:

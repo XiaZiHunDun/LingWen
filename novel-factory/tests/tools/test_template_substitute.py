@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+r"""
 Tests for tools.template_substitute — R2-015 verification.
 
 The motivation: run_init.sh previously used `sed -i "s/{X}/$value/g"`,
@@ -13,8 +13,8 @@ These tests pin the Python replacement behavior so run_init.sh can
 delegate to template_substitute.py with confidence.
 """
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest

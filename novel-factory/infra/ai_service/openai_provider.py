@@ -6,16 +6,16 @@ OpenAI Provider实现
 """
 
 import time
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 import openai
 
 from .base import (
     AIProvider,
-    ProviderConfig,
     AIProviderError,
     APIError,
     NetworkError,
+    ProviderConfig,
     TimeoutError,
     register_provider,
 )
@@ -83,7 +83,7 @@ class OpenAIProvider(AIProvider):
                 )
                 return response.choices[0].message.content
 
-            except openai.APITimeoutError as e:
+            except openai.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
                     time.sleep(2 ** attempt)  # 指数退避
@@ -138,8 +138,8 @@ class OpenAIProvider(AIProvider):
                 )
                 return response.data[0].embedding
 
-            except openai.APITimeoutError as e:
-                last_error = TimeoutError(f"Embedding request timed out")
+            except openai.APITimeoutError:
+                last_error = TimeoutError("Embedding request timed out")
                 if attempt < self.config.max_retries - 1:
                     time.sleep(2 ** attempt)
                     continue

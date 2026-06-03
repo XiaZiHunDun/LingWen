@@ -10,9 +10,8 @@
 import os
 import re
 import sys
-from typing import List, Dict, Tuple
 from collections import Counter
-
+from typing import Dict, List, Tuple
 
 # ========== 场景类型定义 ==========
 

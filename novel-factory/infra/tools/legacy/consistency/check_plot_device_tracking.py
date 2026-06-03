@@ -7,14 +7,13 @@
 - v2.0: 扩展提取策略（括号外提取）、分级窗口（核心30/普通60/边缘90）、
         工单生成机制、语义相似度匹配
 """
-import re
-import os
-import sys
 import json
-from typing import List, Dict, Set, Tuple
+import os
+import re
+import sys
 from collections import defaultdict
 from datetime import datetime
-
+from typing import Dict, List, Set, Tuple
 
 # ========== 分级窗口配置 ==========
 WINDOW_TIERS = {

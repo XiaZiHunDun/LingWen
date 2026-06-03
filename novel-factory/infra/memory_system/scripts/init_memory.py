@@ -15,8 +15,8 @@ import sys
 from pathlib import Path
 
 from infra.memory_system.config import load_yaml
-from infra.memory_system.vector.collections import CollectionManager
 from infra.memory_system.state.state_manager import MemoryStateManager
+from infra.memory_system.vector.collections import CollectionManager
 
 
 def validate_config() -> dict:

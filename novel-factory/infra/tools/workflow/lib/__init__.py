@@ -20,23 +20,8 @@ Usage:
 `from infra.tools.workflow.lib import ...` 访问。
 """
 # 路径常量（测试通过 monkeypatch 修改）
-from .db import (
-    DB_DIR,
-    DB_PATH,
-    LOCKFILE,
-    PROJECT_ROOT,
-    WORKFLOW_FILE,
-    init_sqlite,
-)
-
-# 锁（内部使用，但暴露以保持向后兼容）
-from .db import _acquire_lock, _release_lock
-
-# 状态管理
-from .state import advance_step, get_json, get_state, set_state
-
-# 任务管理
-from .tasks import dispatch_task, get_task_status, list_tasks, verify_task
+# 批量
+from .batch import batch_dispatch_reviewer, batch_dispatch_writer
 
 # 断点
 from .checkpoints import (
@@ -46,14 +31,29 @@ from .checkpoints import (
     restore_checkpoint,
 )
 
+# 锁（内部使用，但暴露以保持向后兼容）
+from .db import (
+    DB_DIR,
+    DB_PATH,
+    LOCKFILE,
+    PROJECT_ROOT,
+    WORKFLOW_FILE,
+    _acquire_lock,
+    _release_lock,
+    init_sqlite,
+)
+
 # 事件
 from .events import _get_hook_engine, _trigger_event, trigger_event
 
-# 批量
-from .batch import batch_dispatch_reviewer, batch_dispatch_writer
-
 # 迁移
 from .migration import migrate_json_to_sqlite
+
+# 状态管理
+from .state import advance_step, get_json, get_state, set_state
+
+# 任务管理
+from .tasks import dispatch_task, get_task_status, list_tasks, verify_task
 
 __all__ = [
     # 常量

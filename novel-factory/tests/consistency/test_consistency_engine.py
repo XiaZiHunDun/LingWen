@@ -3,10 +3,11 @@
 一致性引擎测试
 """
 
-import pytest
-
 import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.engine.consistency_engine import ConsistencyEngine

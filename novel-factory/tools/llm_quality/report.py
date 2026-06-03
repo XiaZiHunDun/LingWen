@@ -2,7 +2,7 @@
 
 原 llm_quality_deep_check.py 第 32-54 行 QualityReport dataclass 独立出来。
 """
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import List
 

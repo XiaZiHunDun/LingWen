@@ -5,8 +5,8 @@ Creates backup of original JSON and imports all data
 """
 import json
 import shutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def migrate_from_json(json_path: str, db_path: str) -> dict:
@@ -28,10 +28,11 @@ def migrate_from_json(json_path: str, db_path: str) -> dict:
 
     # Import here to avoid circular imports
     import sqlite3
+
     from infra.state.state_manager import StateManager
 
     # Initialize StateManager (creates schema)
-    sm = StateManager(db_path)
+    StateManager(db_path)
 
     # Migrate current step/phase
     current_step = data.get('current_step', 'STEP_00')

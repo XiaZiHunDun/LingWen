@@ -10,11 +10,11 @@
 3. 伏笔逻辑矛盾：回收方式与埋设矛盾
 """
 
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation, ForeshadowAlert
+from ..engine.data_structures import CheckerType, ForeshadowAlert, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -100,7 +100,7 @@ class ForeshadowChecker(BaseChecker):
                             severity=IssueSeverity.P2,
                             checker_type=CheckerType.FORESHADOW,
                             issue_type="伏笔未及时回收",
-                            title=f"伏笔回收延迟",
+                            title="伏笔回收延迟",
                             description=f"伏笔\"{thread.content}\"应在ch{thread.expected_resolve_chapter}回收，已延迟{delay}章",
                             location=IssueLocation(chapter=chapter_num),
                             evidence=f"预期回收章节：ch{thread.expected_resolve_chapter}",
@@ -159,7 +159,7 @@ class ForeshadowChecker(BaseChecker):
                     severity=IssueSeverity.P3,
                     checker_type=CheckerType.FORESHADOW,
                     issue_type="伏笔不明确",
-                    title=f"伏笔描述不够明确",
+                    title="伏笔描述不够明确",
                     description=f"伏笔\"{foreshadow}\"可能不够明确，读者可能无法识别",
                     location=IssueLocation(chapter=chapter_num),
                     evidence=f"伏笔长度：{len(foreshadow)}字符",

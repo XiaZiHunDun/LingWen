@@ -91,7 +91,7 @@ class ProblemClassifier:
         issue_type = issue.issue_type
         description = issue.description.lower()
         evidence = issue.evidence.lower()
-        content = chapter_content.lower() if chapter_content else ""
+        chapter_content.lower() if chapter_content else ""
 
         # 0. 先检查关键词中是否有明确的检测器局限关键词
         # 如果有明确的检测器局限关键词(如"亿万年"、"光年"、"宇宙"等)，

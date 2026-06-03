@@ -1,7 +1,8 @@
 """PushEngine 测试"""
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from infra.memory_system.gateway.push_engine import PushEngine
 
@@ -274,7 +275,7 @@ class TestPushEngine:
         self, push_engine, mock_timeline_manager
     ):
         """测试推送上下文包含当前章节的事件"""
-        result = push_engine.push_context(chapter_num=3)
+        push_engine.push_context(chapter_num=3)
 
         mock_timeline_manager.get_events_by_chapter.assert_called_with(3)
 
@@ -283,7 +284,6 @@ class TestPushEngine:
         result = push_engine.push_context(chapter_num=5)
 
         mock_query_engine.hybrid_search.assert_called()
-        call_args = mock_query_engine.hybrid_search.call_args
         # 应该传入包含章节信息的查询
         assert "related_segments" in result
 

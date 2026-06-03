@@ -11,9 +11,9 @@ personality_opposites 逻辑重叠。character_checker 用窗口机制做
 动机一致性检查（独有功能）。
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -103,7 +103,7 @@ class PersonalityChecker(BaseChecker):
                                 severity=IssueSeverity.P2,
                                 checker_type=CheckerType.PERSONALITY,
                                 issue_type="行为动机不一致",
-                                title=f"行为与目标矛盾",
+                                title="行为与目标矛盾",
                                 description=f"角色{char_name}的目标是\"{goal}\"，却做出了相反的行为",
                                 location=IssueLocation(chapter=chapter_num),
                                 evidence=f"目标：{current_goal}",

@@ -6,7 +6,7 @@ LLM增强能力检测器
 """
 
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from .base import LLMEnhancedChecker
 
@@ -15,8 +15,8 @@ class LLMEnhancedAbilityChecker(LLMEnhancedChecker):
     """能力检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..ability_checker import AbilityChecker
         from ...llm_service.base import LLMService
+        from ..ability_checker import AbilityChecker
 
         super().__init__(
             base_checker=AbilityChecker(),

@@ -5,8 +5,9 @@ LLMEnhancedForeshadowChecker测试
 验证伏笔检测器的LLM增强功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_foreshadow_llm_finds_uncertain_regions():

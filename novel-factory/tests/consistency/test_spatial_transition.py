@@ -3,9 +3,11 @@
 空间位置突兀转移检测器测试
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.checkers.spatial_transition_checker import SpatialTransitionChecker

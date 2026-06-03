@@ -15,11 +15,11 @@ import logging
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
-import time
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +294,7 @@ class ContinueQualityChecker:
         calls_used = 0
 
         # 1. 情感节奏检查（继续）- 180章
-        print(f"\n[1] 情感节奏检查 - 180章")
+        print("\n[1] 情感节奏检查 - 180章")
         emotion_chapters = chapters[80:180]  # 80-180章
         tasks = []
         for chapter_num in emotion_chapters:
@@ -316,7 +316,7 @@ class ContinueQualityChecker:
         print(f"  情感节奏检查完成，已调用API: {self.api_calls_made}")
 
         # 2. 章节钩子检查（继续）- 180章
-        print(f"\n[2] 章节钩子检查 - 180章")
+        print("\n[2] 章节钩子检查 - 180章")
         tasks = []
         for chapter_num in chapters[100:280]:
             task = self.check_chapter_llm(chapter_num, "chapter_hook", self.CHAPTER_HOOK_PROMPT)
@@ -335,7 +335,7 @@ class ContinueQualityChecker:
         print(f"  章节钩子检查完成，已调用API: {self.api_calls_made}")
 
         # 3. 角色一致性检查 - 360章
-        print(f"\n[3] 角色一致性检查 - 360章")
+        print("\n[3] 角色一致性检查 - 360章")
         tasks = []
         for chapter_num in chapters:
             task = self.check_chapter_llm(chapter_num, "character_consistency", self.CHARACTER_CONSISTENCY_PROMPT)
@@ -354,7 +354,7 @@ class ContinueQualityChecker:
         print(f"  角色一致性检查完成，已调用API: {self.api_calls_made}")
 
         # 4. 伏笔回收验证 - 180章
-        print(f"\n[4] 伏笔回收验证 - 180章")
+        print("\n[4] 伏笔回收验证 - 180章")
         tasks = []
         for chapter_num in chapters:
             task = self.check_chapter_llm(chapter_num, "foreshadow_recovery", self.LOGIC_CONSISTENCY_PROMPT)
@@ -373,7 +373,7 @@ class ContinueQualityChecker:
         print(f"  伏笔回收验证完成，已调用API: {self.api_calls_made}")
 
         # 5. 关键章节深度复查
-        print(f"\n[5] 关键章节深度复查")
+        print("\n[5] 关键章节深度复查")
         key_chapters = [1, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 100,
                         120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360]
 
@@ -458,7 +458,7 @@ class ContinueQualityChecker:
         print(f"API调用: {self.api_calls_made}/{self.budget}")
         print(f"发现问题: {len(self.results)}")
         print(f"有问题的章节: {len(by_chapter)}")
-        print(f"\n按严重程度:")
+        print("\n按严重程度:")
         print(f"  P0 (致命): {len(by_severity['P0'])}")
         print(f"  P1 (严重): {len(by_severity['P1'])}")
         print(f"  P2 (轻微): {len(by_severity['P2'])}")

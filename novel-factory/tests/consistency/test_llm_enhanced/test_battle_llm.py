@@ -5,8 +5,9 @@ LLMEnhancedBattleVisualizationChecker测试
 验证战斗描写检测器的LLM增强功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_battle_llm_finds_uncertain_regions():

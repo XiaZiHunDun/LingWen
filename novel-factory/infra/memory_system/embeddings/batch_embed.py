@@ -261,7 +261,7 @@ def find_similar_chapters(
     # 构建过滤器
     query_filter = None
     if filters:
-        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
         conditions = [
             FieldCondition(key=field, match=MatchValue(value=value))
             for field, value in filters.items()

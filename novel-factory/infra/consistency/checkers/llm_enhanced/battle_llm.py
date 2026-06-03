@@ -6,7 +6,7 @@ LLM增强战斗描写检测器
 """
 
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from .base import LLMEnhancedChecker
 
@@ -15,8 +15,8 @@ class LLMEnhancedBattleVisualizationChecker(LLMEnhancedChecker):
     """战斗描写检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..battle_visualization import BattleVisualizationChecker
         from ...llm_service.base import LLMService
+        from ..battle_visualization import BattleVisualizationChecker
 
         super().__init__(
             base_checker=BattleVisualizationChecker(),

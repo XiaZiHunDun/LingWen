@@ -13,7 +13,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.quality import Inspector, Issue
 
-
 # AI痕迹模式列表
 AI_TRACE_PATTERNS = [
     "首先", "其次", "最后",
@@ -62,7 +61,7 @@ class AITraceChecker(Inspector):
                     description=f"发现{count}处AI模板句式: {pattern}",
                     location=f"全文约{count}处",
                     evidence=f"句式 '{pattern}' 为AI常用模板",
-                    suggestion=f"使用 ai_trace_repairer.py 进行替换或删除"
+                    suggestion="使用 ai_trace_repairer.py 进行替换或删除"
                 ))
 
         return issues

@@ -6,7 +6,7 @@ LLM增强角色检测器
 """
 
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from .base import LLMEnhancedChecker
 
@@ -15,8 +15,8 @@ class LLMEnhancedCharacterChecker(LLMEnhancedChecker):
     """角色检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..character_checker import CharacterChecker
         from ...llm_service.base import LLMService
+        from ..character_checker import CharacterChecker
 
         super().__init__(
             base_checker=CharacterChecker(),

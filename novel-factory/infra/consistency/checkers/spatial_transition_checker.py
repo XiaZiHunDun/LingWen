@@ -11,9 +11,9 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 

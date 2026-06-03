@@ -5,15 +5,15 @@
 Tests for VersionManager
 """
 
-import pytest
+import sys
 import tempfile
 from pathlib import Path
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from version_manager import VersionManager, TemplateVersion, VersionDiff
-
+from version_manager import TemplateVersion, VersionDiff, VersionManager
 
 # ==================== Fixtures ====================
 

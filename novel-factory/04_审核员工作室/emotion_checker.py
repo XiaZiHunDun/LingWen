@@ -15,7 +15,6 @@ S4 情感共鸣 · 自动检测器
 import re
 from typing import List, Tuple
 
-
 # ==================== 情绪词典 ====================
 
 # 情绪词典 - 标记章节的情绪倾向
@@ -68,12 +67,6 @@ def _detect_emotion_shifts(text: str) -> List[dict]:
     shifts = []
 
     # 情绪转变模式
-    shift_patterns = [
-        # 情绪词 + 事件描述 + 情绪词
-        (r'(.{0,30}?)(恐惧|害怕|愤怒|悲伤|绝望)(.{0,30}?)(突然|随后|然后|接着|于是|因此|于是乎|没想到)(.{0,30}?)(坚定|决绝|愤怒|悲伤|绝望|希望)', 'shift'),
-        # 因果句式
-        (r'(因为|由于|为了|因)(.{0,50}?)(他|她|林夜|主角)(.{0,30}?)(情绪变化关键词)', 'causal'),
-    ]
 
     # 简单检测：连续出现的不同情绪词
     lines = text.split('\n')
@@ -220,8 +213,8 @@ def check_emotion_standards(chapter_path: str) -> Tuple[bool, List[str]]:
     layer_count, layers = _analyze_emotion_layers(content)
 
     # 计算有层次的场景数
-    scenes_with_layers = sum(1 for l in layers if l["has_surface"] and l["has_deep"])
-    total_scenes = sum(1 for l in layers if l["has_surface"] or l["has_deep"])
+    scenes_with_layers = sum(1 for layer in layers if layer["has_surface"] and layer["has_deep"])
+    total_scenes = sum(1 for layer in layers if layer["has_surface"] or layer["has_deep"])
 
     if total_scenes > 0:
         layer_ratio = scenes_with_layers / total_scenes
@@ -233,11 +226,11 @@ def check_emotion_standards(chapter_path: str) -> Tuple[bool, List[str]]:
             )
     else:
         violations.append(
-            f"[S4.2] 未检测到足够的情感层次描写"
+            "[S4.2] 未检测到足够的情感层次描写"
         )
 
     # ==================== S4.4 情绪节奏（单章节检测） ====================
-    tone = _detect_emotion_tone(content)
+    _detect_emotion_tone(content)
 
     # 统计情绪词分布
     emotion_words = _extract_emotion_words(content)
@@ -246,7 +239,7 @@ def check_emotion_standards(chapter_path: str) -> Tuple[bool, List[str]]:
 
     if positive_count == 0 and negative_count == 0:
         violations.append(
-            f"[S4.4] 章节缺少明显情绪描写，无法判断节奏健康度"
+            "[S4.4] 章节缺少明显情绪描写，无法判断节奏健康度"
         )
     elif positive_count > 0 and negative_count > 0 and abs(positive_count - negative_count) < 3:
         # 正面和负面情绪数量接近，说明有情绪变化，节奏健康
@@ -266,7 +259,7 @@ def check_emotion_standards(chapter_path: str) -> Tuple[bool, List[str]]:
     # 这两项需要人工判断，在violations中标注
     if len(emotion_shifts) >= 2:
         violations.append(
-            f"[S4.3] 人工审核: 请检查章节是否包含≥2个有效情感共鸣触发点"
+            "[S4.3] 人工审核: 请检查章节是否包含≥2个有效情感共鸣触发点"
         )
 
     # 检查是否有伏笔性描写（情感类伏笔）
@@ -279,7 +272,7 @@ def check_emotion_standards(chapter_path: str) -> Tuple[bool, List[str]]:
     has_foreshadowing = any(re.search(p, content) for p in foreshadowing_patterns)
     if has_foreshadowing:
         violations.append(
-            f"[S4.5] 人工审核: 检测到情感伏笔线索，请确认是否在±15章内回收"
+            "[S4.5] 人工审核: 检测到情感伏笔线索，请确认是否在±15章内回收"
         )
 
     passed = len([v for v in violations if not v.startswith("[S4.3]") and not v.startswith("[S4.5]")]) == 0

@@ -7,7 +7,7 @@ AI服务提供商抽象层
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any, Type
+from typing import Any, Dict, List, Optional, Type
 
 
 class AIProviderError(Exception):

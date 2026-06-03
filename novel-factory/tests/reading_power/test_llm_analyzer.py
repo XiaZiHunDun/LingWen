@@ -8,14 +8,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-import pytest
 from unittest.mock import MagicMock
 
-from infra.reading_power.llm_analyzer import (
-    LLMAnalyzer,
-    AnalysisResult,
-    SuspectedSegment
-)
+import pytest
+
+from infra.reading_power.llm_analyzer import AnalysisResult, LLMAnalyzer, SuspectedSegment
 
 
 @pytest.fixture

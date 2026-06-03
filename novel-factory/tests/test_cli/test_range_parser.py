@@ -1,5 +1,6 @@
 """Tests for RangeParser"""
 import pytest
+
 from infra.cli.range_parser import RangeParser
 
 

@@ -1,6 +1,7 @@
 # novel-factory/tests/consistency/test_llm_enhanced/test_knowledge_llm.py
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestLLMEnhancedKnowledgeTracker:
@@ -70,8 +71,8 @@ class TestLLMEnhancedKnowledgeTracker:
 
     def test_prompt_template_is_knowledge_llm(self):
         """测试prompt模板是KNOWLEDGE_LLM_PROMPT"""
-        from infra.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
         from infra.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
+        from infra.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
 
         checker = LLMEnhancedKnowledgeTracker()
 

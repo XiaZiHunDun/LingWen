@@ -7,10 +7,10 @@
 - 确保角色性别描述的一致性
 - 修复代词和称谓的混用问题
 """
-import sys
 import re
+import sys
 from pathlib import Path
-from typing import Tuple, List, Any, Optional
+from typing import Any, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

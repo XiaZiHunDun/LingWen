@@ -5,8 +5,9 @@ LLMEnhancedPersonalityChecker测试
 验证性格检测器的LLM增强功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_personality_llm_finds_uncertain_regions():

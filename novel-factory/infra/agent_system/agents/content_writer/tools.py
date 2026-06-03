@@ -1,13 +1,13 @@
 # novel-factory/agent_system/agents/content_writer/tools.py
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ..base import AgentBase
 from .variant_loader import (
-    load_writer_variant,
+    get_variant_for_scene,
+    get_writer_name,
     get_writer_style,
     get_writer_system_prompt_additions,
-    get_writer_name,
-    get_variant_for_scene,
+    load_writer_variant,
 )
 
 

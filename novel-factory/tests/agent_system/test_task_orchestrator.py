@@ -1,10 +1,11 @@
 # tests/agent_system/test_task_orchestrator.py
 """TaskOrchestrator单元测试"""
 
-import pytest
 import os
 import sys
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
@@ -106,13 +107,13 @@ class TestTaskManagement:
         而不是 _task_queue。验证最后一个 dispatch 的任务（按 priority 排序）应
         在 _active_tasks 中存在。
         """
-        task_id_low = orchestrator.dispatch_task(
+        orchestrator.dispatch_task(
             task_name="low_priority",
             agent="content_writer",
             context={},
             priority=-1
         )
-        task_id_high = orchestrator.dispatch_task(
+        orchestrator.dispatch_task(
             task_name="high_priority",
             agent="auditor",
             context={},

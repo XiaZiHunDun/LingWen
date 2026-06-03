@@ -7,10 +7,10 @@
 2. 在预期回收章节前添加伏笔触发描述
 3. 确保伏笔关键词在预期位置出现
 """
+import re
 import sys
 from pathlib import Path
-from typing import List, Any, Tuple, Dict, Optional
-import re
+from typing import Any, Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -84,7 +84,7 @@ class CoreForeshadowRepairer(BaseConsistencyRepairer):
         # 提取伏笔信息
         foreshadow_text = getattr(issue, 'foreshadow_text', '')
         level = getattr(issue, 'level', 'core')
-        chapter = getattr(issue, 'chapter', '')
+        getattr(issue, 'chapter', '')
 
         if not foreshadow_text or level != 'core':
             return content, 0

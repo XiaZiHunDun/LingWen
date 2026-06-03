@@ -8,7 +8,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from typing import Tuple, List, Any, Optional
+from typing import Any, List, Optional, Tuple
+
 from infra.consistency.repairers import BaseConsistencyRepairer, ConsistencyRepairResult
 
 
@@ -87,10 +88,10 @@ class CorePropsRepairer(BaseConsistencyRepairer):
         根据道具类型生成自然的出现语句
         """
         contexts = {
-            '木勺': f'握着母亲留下的木勺',
-            '地窖': f'走进地窖',
-            '母亲': f'想起母亲',
-            '父亲': f'想起父亲'
+            '木勺': '握着母亲留下的木勺',
+            '地窖': '走进地窖',
+            '母亲': '想起母亲',
+            '父亲': '想起父亲'
         }
         return contexts.get(prop_name, f'看到{prop_name}')
 

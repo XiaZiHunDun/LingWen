@@ -15,7 +15,7 @@ Usage:
             return await self.check_consistency(content, check_type)
 """
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from .base import AgentBase

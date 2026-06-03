@@ -3,12 +3,12 @@
 Tests for SQLite State Manager
 """
 import os
-import sys
 import sqlite3
+import sys
 import threading
 import time
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import pytest
 
@@ -16,8 +16,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from infra.state.state_manager import StateManager
 from infra.state.migrate_from_json import migrate_from_json
+from infra.state.state_manager import StateManager
 
 
 @pytest.fixture

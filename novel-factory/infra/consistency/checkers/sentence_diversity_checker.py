@@ -11,18 +11,20 @@
 随着模式增加，阈值将逐步调整至标准值(Shannon≥3.5/2.5)。
 """
 import logging
-import re
 import math
+import re
 import threading
-import yaml
 import uuid
-from pathlib import Path
-from typing import Optional, List, Dict, Tuple, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
+
 from infra.patterns import PatternRegistry
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
-from ..engine.data_structures import Issue, CheckerType, IssueSeverity, IssueLocation
 
 logger = logging.getLogger(__name__)
 
@@ -569,7 +571,7 @@ class SentenceDiversityChecker(BaseChecker):
         medium_issues = [i for i in issues if i.severity == 'MEDIUM']
 
         report = ["# 句式多样性检查报告\n"]
-        report.append(f"## 汇总\n")
+        report.append("## 汇总\n")
         report.append(f"- HIGH级问题: {len(high_issues)}章节\n")
         report.append(f"- MEDIUM级问题: {len(medium_issues)}章节\n")
 

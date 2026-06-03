@@ -8,14 +8,14 @@ MiniMax M2.7 全量检查脚本 - 360章 / 4000次调用
 检查维度：S1-S8 + 一致性 + 伏笔 + AI痕迹
 """
 
+import json
 import logging
 import os
 import sys
-import json
 import time
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -420,9 +420,9 @@ def run_full_review():
             "chapters_processed": 360
         }, f, ensure_ascii=False, indent=2)
 
-    print(f"\n完成！")
+    print("\n完成！")
     print(f"总调用: {total_calls}次")
-    print(f"输出文件:")
+    print("输出文件:")
     print(f"  - {full_path}")
     print(f"  - {summary_path}")
     print(f"  - {md_path}")

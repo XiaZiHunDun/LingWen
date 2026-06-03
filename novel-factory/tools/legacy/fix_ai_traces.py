@@ -12,8 +12,8 @@ AI痕迹消除 - 规则替换版本
 - 像枯叶/像星辰 → 具体描写
 """
 
-import sys
 import re
+import sys
 from pathlib import Path
 from typing import List, Tuple
 

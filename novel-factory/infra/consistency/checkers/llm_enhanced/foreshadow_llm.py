@@ -1,6 +1,7 @@
 # novel-factory/infra/consistency/checkers/llm_enhanced/foreshadow_llm.py
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from .base import LLMEnhancedChecker
 
 
@@ -8,8 +9,8 @@ class LLMEnhancedForeshadowChecker(LLMEnhancedChecker):
     """伏笔检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..foreshadow_checker import ForeshadowChecker
         from ...llm_service.base import LLMService
+        from ..foreshadow_checker import ForeshadowChecker
 
         super().__init__(
             base_checker=ForeshadowChecker(),

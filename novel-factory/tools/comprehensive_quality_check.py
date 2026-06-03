@@ -12,12 +12,12 @@ import logging
 import os
 import re
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
-from concurrent.futures import ThreadPoolExecutor
-import time
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class ComprehensiveQualityChecker:
                 max_retries=3
             )
             self.provider = MiniMaxProvider(config)
-            print(f"[INIT] MiniMax M2.7 Provider已初始化")
+            print("[INIT] MiniMax M2.7 Provider已初始化")
 
         # API调用计数
         self.api_calls_made = 0
@@ -111,7 +111,7 @@ class ComprehensiveQualityChecker:
         if not self.provider:
             return []
         if self.api_calls_made >= self.budget:
-            print(f"[BUDGET] API额度已耗尽，停止调用")
+            print("[BUDGET] API额度已耗尽，停止调用")
             return []
 
         self.api_calls_made += 1
@@ -304,8 +304,8 @@ class ComprehensiveQualityChecker:
         calls_used = 0
 
         # 1. 逻辑一致性检查 - 360章
-        print(f"\n[Phase 1.1] 逻辑一致性检查 - 360章")
-        semaphore = asyncio.Semaphore(self.max_concurrency)
+        print("\n[Phase 1.1] 逻辑一致性检查 - 360章")
+        asyncio.Semaphore(self.max_concurrency)
         tasks = []
 
         for chapter_num in chapters:
@@ -326,7 +326,7 @@ class ComprehensiveQualityChecker:
         print(f"  逻辑一致性检查完成，已调用API: {calls_used}")
 
         # 2. 情感节奏检查 - 180章（抽样50%）
-        print(f"\n[Phase 1.2] 情感节奏检查 - 180章")
+        print("\n[Phase 1.2] 情感节奏检查 - 180章")
         emotion_chapters = chapters[:180]
         tasks = []
 
@@ -346,7 +346,7 @@ class ComprehensiveQualityChecker:
         print(f"  情感节奏检查完成，已调用API: {calls_used}")
 
         # 3. 章节钩子检查 - 180章
-        print(f"\n[Phase 1.3] 章节钩子检查 - 180章")
+        print("\n[Phase 1.3] 章节钩子检查 - 180章")
         tasks = []
 
         for chapter_num in chapters[:180]:
@@ -382,7 +382,7 @@ class ComprehensiveQualityChecker:
         batch_size = 40
 
         # 1. 角色一致性检查 - 360章
-        print(f"\n[Phase 2.1] 角色一致性检查 - 360章")
+        print("\n[Phase 2.1] 角色一致性检查 - 360章")
         tasks = []
 
         for chapter_num in chapters:
@@ -401,7 +401,7 @@ class ComprehensiveQualityChecker:
         print(f"  角色一致性检查完成，已调用API: {calls_used}")
 
         # 2. 伏笔回收验证 - 180章
-        print(f"\n[Phase 2.2] 伏笔回收验证 - 180章")
+        print("\n[Phase 2.2] 伏笔回收验证 - 180章")
         tasks = []
 
         for chapter_num in chapters[:180]:
@@ -420,7 +420,7 @@ class ComprehensiveQualityChecker:
         print(f"  伏笔回收验证完成，已调用API: {calls_used}")
 
         # 3. 关键章节复查（约220章×3次 = 660次）
-        print(f"\n[Phase 2.3] 关键章节复查 - 660次")
+        print("\n[Phase 2.3] 关键章节复查 - 660次")
         # 选取关键章节：每10章选1章作为关键章节
         key_chapters = []
         for i, cn in enumerate(chapters):
@@ -512,7 +512,7 @@ class ComprehensiveQualityChecker:
         # 交叉验证：100章×3次
         chapters = [f[0] for f in self.get_chapter_files()]
         cross_chapters = chapters[:100]
-        print(f"\n[Phase 3.3] 交叉验证 - 100章 × 3次 = 300次")
+        print("\n[Phase 3.3] 交叉验证 - 100章 × 3次 = 300次")
 
         cross_tasks = []
         for _ in range(3):
@@ -536,7 +536,7 @@ class ComprehensiveQualityChecker:
         print("\n" + "="*60)
         print("《星陨纪元》360章全方位质量检查")
         print(f"总API额度: {self.budget}次")
-        print(f"MiniMax模型: MiniMax-M2.7")
+        print("MiniMax模型: MiniMax-M2.7")
         print("="*60)
 
         total_calls = 0
@@ -637,7 +637,7 @@ class ComprehensiveQualityChecker:
         print(f"API调用: {total_calls}/{self.budget}")
         print(f"发现问题: {len(self.results)}")
         print(f"有问题的章节: {len(by_chapter)}")
-        print(f"\n按严重程度:")
+        print("\n按严重程度:")
         print(f"  P0 (致命): {len(by_severity['P0'])}")
         print(f"  P1 (严重): {len(by_severity['P1'])}")
         print(f"  P2 (轻微): {len(by_severity['P2'])}")

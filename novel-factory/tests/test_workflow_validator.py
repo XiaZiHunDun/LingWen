@@ -1,12 +1,13 @@
 """workflow_validator 单元测试"""
 
 import pytest
+
 from infra.state.workflow_validator import (
-    validate_transition,
+    ALL_STEPS,
+    VALID_TRANSITIONS,
     get_allowed_transitions,
     is_valid_step,
-    VALID_TRANSITIONS,
-    ALL_STEPS,
+    validate_transition,
 )
 
 

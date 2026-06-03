@@ -9,11 +9,11 @@
     python tools/generate_chapter_outlines.py --ch 1-30  # 生成指定范围
 """
 
-import sys
 import re
+import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
-from dataclasses import dataclass
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

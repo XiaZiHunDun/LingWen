@@ -4,12 +4,12 @@
 """
 
 import os
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import MagicMock, patch
-from tools.anti_trope_enhancer import AntiTropeEnhancer, CreativeOption
-from tools.llm_quality_analyzer import LLMQualityAnalyzer, SeverityDecision, RepairDecision, AnalysisResult
 
+from tools.anti_trope_enhancer import AntiTropeEnhancer, CreativeOption
+from tools.llm_quality_analyzer import AnalysisResult, LLMQualityAnalyzer, RepairDecision, SeverityDecision
 
 # Some tests construct real LLMService (which needs an API key in env).
 # Per-test skipif so the pure-enum / dataclass tests still run offline.
@@ -143,7 +143,7 @@ class TestLLMQualityAnalyzer:
             ),
         ]
 
-        assert analyzer.should_repair(results) == True
+        assert analyzer.should_repair(results)
 
     @_REQUIRES_API_KEY
     def test_should_repair_no_required(self):
@@ -160,7 +160,7 @@ class TestLLMQualityAnalyzer:
             ),
         ]
 
-        assert analyzer.should_repair(results) == False
+        assert not analyzer.should_repair(results)
 
 
 if __name__ == "__main__":

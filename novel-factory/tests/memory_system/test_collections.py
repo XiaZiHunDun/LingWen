@@ -1,6 +1,7 @@
 """CollectionManager 测试 (TDD 模式)"""
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 from infra.memory_system.vector.collections import CollectionManager
 

@@ -1,5 +1,6 @@
 # novel-factory/agent_system/core/character_schema.py
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 import yaml
 
 

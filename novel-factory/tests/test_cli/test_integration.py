@@ -2,6 +2,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def test_lingwen_help():
     result = subprocess.run(
         [sys.executable, "lingwen.py", "--help"],

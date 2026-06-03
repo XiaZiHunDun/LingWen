@@ -7,10 +7,10 @@
 - 节奏过慢: 铺垫过长, 信息密度低
 - 节奏失衡: 章节内波动过大
 """
-import sys
 import re
+import sys
 from pathlib import Path
-from typing import List, Tuple, Any, Optional
+from typing import Any, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -89,7 +89,7 @@ class PacingRepairer(BaseConsistencyRepairer):
                 repaired.append(f"{desc}: {cnt}处")
 
         # 规则4: 检测并修复高潮后突然结束
-        climax_ending = re.compile(r'([^。]+。)($|\n\n)', re.MULTILINE)
+        re.compile(r'([^。]+。)($|\n\n)', re.MULTILINE)
         # 在高潮句后添加短暂过渡
         fixed, c, r = self._fix_climax_ending(result)
         result = fixed

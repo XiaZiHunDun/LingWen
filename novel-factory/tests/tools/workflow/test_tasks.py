@@ -80,7 +80,7 @@ class TestVerifyTask:
 
     def test_verify_task_updates_status(self, init_db):
         """Test that verify_task updates the task status"""
-        from infra.tools.workflow.lib import dispatch_task, verify_task, get_task_status
+        from infra.tools.workflow.lib import dispatch_task, get_task_status, verify_task
 
         dispatch_task("status_test_task", "agent", "")
         verify_task("status_test_task", "ext_456", "completed")
@@ -98,7 +98,7 @@ class TestVerifyTask:
 
     def test_verify_task_with_different_statuses(self, init_db):
         """Test verify_task with various status values"""
-        from infra.tools.workflow.lib import dispatch_task, verify_task, get_task_status
+        from infra.tools.workflow.lib import dispatch_task, get_task_status, verify_task
 
         for status in ["pending", "running", "completed", "failed"]:
             dispatch_task(f"status_{status}", "agent", "")

@@ -10,12 +10,12 @@
   python update_index.py --update ch001    # 更新ch001的索引（作家提交后调用）
 """
 
-import os
-import json
 import argparse
+import json
+import os
 import tempfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 CONTENT_ROOT = Path(__file__).parent.absolute()
 
@@ -90,7 +90,7 @@ def update_stage_index(volume=None):
 
             atomic_write_json(index_file, index_data)
 
-    print(f"Updated stage indices")
+    print("Updated stage indices")
 
 def update_volume_index():
     """更新卷大纲索引（02_卷大纲/*/index.json）"""
@@ -117,7 +117,7 @@ def update_volume_index():
 
             atomic_write_json(index_file, index_data)
 
-    print(f"Updated volume indices")
+    print("Updated volume indices")
 
 def update_full_index():
     """更新全文大纲索引（01_全文总体大纲/index.json）"""
@@ -141,7 +141,7 @@ def update_full_index():
 
     atomic_write_json(index_file, index_data)
 
-    print(f"Updated full novel index")
+    print("Updated full novel index")
 
 def update_all():
     """更新所有索引"""

@@ -4,8 +4,8 @@
 将文件名重命名为内容中的实际章节号
 """
 import os
-import sys
 import re
+import sys
 from pathlib import Path
 
 ZH_DIGIT_MAP = {'零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,

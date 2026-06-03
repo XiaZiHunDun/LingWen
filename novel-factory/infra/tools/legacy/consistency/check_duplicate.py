@@ -6,8 +6,8 @@
 import os
 import sys
 from difflib import SequenceMatcher
-from typing import List, Tuple, Dict
 from multiprocessing import Pool, cpu_count
+from typing import Dict, List, Tuple
 
 
 def calculate_similarity(text1: str, text2: str) -> float:

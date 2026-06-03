@@ -1,5 +1,6 @@
 # novel-factory/agent_system/agents/outline_master/tools.py
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 from ...core.outline_schema import OutlineSchema
 
 

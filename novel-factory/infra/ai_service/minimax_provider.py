@@ -7,16 +7,16 @@ MiniMax Provider实现
 
 import os
 import time
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 import anthropic
 
 from .base import (
     AIProvider,
-    ProviderConfig,
     AIProviderError,
     APIError,
     NetworkError,
+    ProviderConfig,
     TimeoutError,
     register_provider,
 )
@@ -102,7 +102,7 @@ class MiniMaxProvider(AIProvider):
                         return text_blocks[0].text if text_blocks else ""
                 return str(response.content[0]) if response.content else ""
 
-            except anthropic.APITimeoutError as e:
+            except anthropic.APITimeoutError:
                 last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
                 if attempt < self.config.max_retries - 1:
                     time.sleep(2 ** attempt)  # 指数退避

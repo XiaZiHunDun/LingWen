@@ -3,8 +3,8 @@
 章节命名一致性检查器
 检测文件名与内容章节号是否匹配
 """
-import re
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -78,7 +78,7 @@ def check_naming(chapters_dir: str, chapter_range: tuple[int, int] = (1, 360)) -
         fpath = os.path.join(chapters_dir, fname)
 
         if not os.path.exists(fpath):
-            issues.append(("MISSING_FILE", i, fname, f"文件缺失"))
+            issues.append(("MISSING_FILE", i, fname, "文件缺失"))
             continue
 
         try:

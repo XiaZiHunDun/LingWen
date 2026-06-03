@@ -7,17 +7,17 @@ Agent系统端到端测试
 2. Agent间数据传递和状态共享
 3. 社交引擎关系追踪
 """
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from infra.agent_system.master_controller import MasterController
-from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
 from infra.agent_system.social_engine.event_effect_calculator import EventEffectCalculator
-
+from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
 
 # End-to-end tests need a real AI provider to construct MasterController.
 # Skip the whole class when no API key is available, so this file is

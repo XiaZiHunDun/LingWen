@@ -3,6 +3,7 @@
 Mirrors lines 930-989 of the original infra/cli/commands.py.
 """
 from infra.cli.options import UnifiedOptions
+
 from .base import Command
 
 
@@ -23,8 +24,9 @@ class ReadingPowerCommand(Command):
             Exit code
         """
         try:
-            from infra.reading_power import ReadingPowerEngine
             from pathlib import Path
+
+            from infra.reading_power import ReadingPowerEngine
         except ImportError as e:
             print(f"[错误] 追读力模块不可用: {e}")
             return 1
@@ -46,7 +48,7 @@ class ReadingPowerCommand(Command):
                 with open(chapter_path, encoding="utf-8") as f:
                     content = f.read()
 
-                result = engine.analyze_chapter(chapter_num, content)
+                engine.analyze_chapter(chapter_num, content)
                 data = engine.get_chapter_reading_power(chapter_num)
                 summary_data = data.get("summary", {})
 

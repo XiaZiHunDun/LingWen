@@ -11,9 +11,9 @@ AI痕迹检测器
 4. AI特有表达：某些AI特有的句式结构
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 

@@ -14,12 +14,13 @@
 """
 
 import re
-from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Set, Any
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
+from infra.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
+
 from .base_checker import BaseChecker
 
 
@@ -281,7 +282,7 @@ class ChapterRedundancyChecker(BaseChecker):
                     (11, 15): "压缩为2章，保留篝火夜话、小九噩梦等关键情感场景",
                     (46, 50): "压缩为2章，保留'修断剑'和'噩梦'关键场景",
                 }
-                suggestion = suggestions.get((start, end), f"考虑合并或删减重复内容")
+                suggestion = suggestions.get((start, end), "考虑合并或删减重复内容")
 
                 issues.append(Issue(
                     id=f"CR_{start:03d}_{end:03d}_{issue.repeat_type}",
@@ -305,7 +306,7 @@ class ChapterRedundancyChecker(BaseChecker):
         medium_issues = [i for i in issues if i.severity == 'MEDIUM']
 
         report = ["# 章节重复度检查报告\n"]
-        report.append(f"## 汇总\n")
+        report.append("## 汇总\n")
         report.append(f"- HIGH级问题: {len(high_issues)}对\n")
         report.append(f"- MEDIUM级问题: {len(medium_issues)}对\n")
 

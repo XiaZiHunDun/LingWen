@@ -3,8 +3,9 @@
 workflow_state.json 处理测试
 """
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestWorkflowState:

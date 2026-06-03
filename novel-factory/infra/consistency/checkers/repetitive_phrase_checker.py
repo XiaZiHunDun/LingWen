@@ -12,12 +12,13 @@
 """
 
 import re
-from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+from infra.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 
 from .base_checker import BaseChecker
-from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
 
 
 @dataclass
@@ -350,7 +351,7 @@ class RepetitivePhraseChecker(BaseChecker):
         for issue in issues:
             if issue.severity in ('HIGH', 'MEDIUM'):
                 ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
-                content = ch_file.read_text(encoding='utf-8') if ch_file.exists() else ''
+                ch_file.read_text(encoding='utf-8') if ch_file.exists() else ''
 
                 # 生成修改建议
                 suggestion = self._get_suggestion(issue.phrase_type, issue.examples)
@@ -395,7 +396,7 @@ class RepetitivePhraseChecker(BaseChecker):
         medium_issues = [i for i in issues if i.severity == 'MEDIUM']
 
         report = ["# 套路句式检查报告\n"]
-        report.append(f"## 汇总\n")
+        report.append("## 汇总\n")
         report.append(f"- HIGH级问题: {len(high_issues)}处\n")
         report.append(f"- MEDIUM级问题: {len(medium_issues)}处\n")
 

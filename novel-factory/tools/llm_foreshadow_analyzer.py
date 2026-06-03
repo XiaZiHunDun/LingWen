@@ -11,15 +11,15 @@ LLM伏笔分析器 - S11伏笔回收率增强
 目标：伏笔回收率从55.4%提升到85%+
 """
 
-import sys
+import argparse
 import json
 import re
-import argparse
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -294,7 +294,7 @@ class ForeshadowAnalyzer:
             else:
                 report.score = 1.0  # 无伏笔视为满分
 
-        except Exception as e:
+        except Exception:
             report.score = 0.5
 
         return report

@@ -1,7 +1,8 @@
 """TimelineManager 测试"""
-import pytest
 from datetime import datetime
 from pathlib import Path
+
+import pytest
 
 from infra.memory_system.state.timeline_manager import TimelineManager
 
@@ -50,14 +51,14 @@ class TestTimelineManager:
 
     def test_add_multiple_events(self, manager):
         """测试添加多个事件"""
-        event1 = manager.add_event(
+        manager.add_event(
             event_id="evt_001",
             timestamp="2026-05-19T10:00:00",
             description="事件1",
             chapter=1,
             metadata={}
         )
-        event2 = manager.add_event(
+        manager.add_event(
             event_id="evt_002",
             timestamp="2026-05-19T11:00:00",
             description="事件2",

@@ -5,16 +5,17 @@ get_popular_templates 方法测试
 Tests for get_popular_templates method of TemplateRecommender
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from pathlib import Path
 import sys
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from template_recommender import TemplateRecommender, TemplateMetadata, TemplateCategory
 from prompt_assembler import TemperatureConfig
+from template_recommender import TemplateCategory, TemplateMetadata, TemplateRecommender
 
 
 class TestGetPopularTemplates:

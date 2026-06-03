@@ -3,12 +3,12 @@
 质量维度检查器 - 统一调度
 在Claude Code中运行时，通过Agent机制调用LLM执行需要理解能力的检查
 """
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict, List
 
 
 def run_segment_relevance(chapters_dir: str, chapter_range: tuple) -> Dict:
@@ -98,7 +98,7 @@ def run_character_arc_with_agent(chapters_dir: str, chapter_range: tuple,
     print("▶ 人物弧光完整性检查（通过Agent调用LLM）...")
 
     try:
-        from check_character_arc_llm import CharacterArcChecker, CHARACTER_ARCS
+        from check_character_arc_llm import CHARACTER_ARCS, CharacterArcChecker
     except ImportError:
         print("  错误: 无法导入角色弧光检查模块")
         return []
@@ -123,17 +123,18 @@ def run_character_arc_with_agent(chapters_dir: str, chapter_range: tuple,
         # 检查Agent是否可用（通过globals检查）
         if 'Agent' not in globals():
             # Agent工具不可用，说明不是在Claude Code环境中运行
-            print(f"  [提示] Agent工具不可用，请使用Claude Code会话运行此检查")
+            print("  [提示] Agent工具不可用，请使用Claude Code会话运行此检查")
             arc_results.append({
                 'character': char,
                 'checked': False,
                 'reason': 'Agent工具不可用，需在Claude Code中运行',
-                'prompt_hint': f"请在Claude Code中执行角色弧光分析"
+                'prompt_hint': "请在Claude Code中执行角色弧光分析"
             })
             continue
 
         # 使用Claude Code的Agent机制调用LLM
-        agent = Agent(
+        # Agent 是 Claude Code 框架注入的全局类,静态分析无法识别
+        agent = Agent(  # noqa: F821
             description=f"角色弧光分析_{char}",
             prompt=task['prompt'],
             subagent_type="general-purpose"

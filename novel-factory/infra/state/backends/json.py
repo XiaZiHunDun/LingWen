@@ -4,8 +4,8 @@ JSON 文件状态后端
 基于 JSON 文件的状态存储实现（legacy 支持）
 """
 
-import json
 import fcntl
+import json
 from pathlib import Path
 from typing import Any, Optional
 

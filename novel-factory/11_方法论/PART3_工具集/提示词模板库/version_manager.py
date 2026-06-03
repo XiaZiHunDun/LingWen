@@ -11,14 +11,15 @@ Usage:
     vm.create_version("outline_full_novel", "修复了bug")
     history = vm.get_history("outline_full_novel")
 """
-import os
-import yaml
-import shutil
 import hashlib
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
+import os
+import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
 
 
 @dataclass
@@ -251,7 +252,7 @@ class VersionManager:
         to_info = next((v for v in versions if v['version'] == version_to), None)
 
         if not from_info or not to_info:
-            raise ValueError(f"Version not found")
+            raise ValueError("Version not found")
 
         # 读取文件内容对比
         diff_content = None
@@ -526,7 +527,7 @@ def main():
         if success:
             print(f"成功回滚到 {args.target_version}")
         else:
-            print(f"回滚失败")
+            print("回滚失败")
         return
 
     if args.command == "export":

@@ -13,17 +13,15 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from infra.logging_config import logger
-
-from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
-from infra.memory_system.vector.embedder import Embedder
+from infra.memory_system.config import load_yaml
 from infra.memory_system.embeddings.batch_embed import BatchEmbedder
+from infra.memory_system.gateway.memory_gateway import MemoryGateway
 from infra.memory_system.state.character_tracker import CharacterTracker
+from infra.memory_system.state.fact_base import FactBase
 from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
 from infra.memory_system.state.timeline_manager import TimelineManager
-from infra.memory_system.state.fact_base import FactBase
-from infra.memory_system.gateway.memory_gateway import MemoryGateway
-from infra.memory_system.config import load_yaml
-
+from infra.memory_system.vector.embedder import Embedder
+from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
 
 # 全局单例实例
 _memory_gateway: Optional[MemoryGateway] = None
@@ -230,7 +228,7 @@ def _create_memory_gateway() -> MemoryGateway:
         raise RuntimeError(f"Failed to initialize Embedder: {e}") from e
 
     # 5. 初始化 BatchEmbedder
-    batch_embedder = BatchEmbedder(
+    BatchEmbedder(
         qdrant_wrapper=qdrant_wrapper,
         embedder=embedder,
     )

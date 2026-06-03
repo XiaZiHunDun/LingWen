@@ -25,9 +25,9 @@ class QualityEngine:
         """注册所有检查器"""
         from checkers import (
             CharacterStateChecker,
+            ContentIntegrityChecker,
             NamingChecker,
             TimelineChecker,
-            ContentIntegrityChecker,
         )
 
         self.register_checker(CharacterStateChecker(self.chapters_dir))

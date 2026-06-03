@@ -7,21 +7,22 @@
 - AIRouter 走 registry 实例化(新增 provider 即可用)
 - 向后兼容:`from infra.ai_service import XxxProvider` 仍工作
 """
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from infra.ai_service import (
     AIProvider,
-    ProviderConfig,
-    register_provider,
-    get_provider_class,
-    list_registered_providers,
-    OpenAIProvider,
     AnthropicProvider,
     MiniMaxProvider,
+    OpenAIProvider,
+    ProviderConfig,
+    get_provider_class,
+    list_registered_providers,
+    register_provider,
 )
-from infra.ai_service.router import AIRouter
 from infra.ai_service.base import _PROVIDER_REGISTRY
+from infra.ai_service.router import AIRouter
 
 
 class TestBuiltinRegistration:
@@ -226,8 +227,8 @@ class TestBackwardCompat:
 
     def test_submodule_imports_still_work(self):
         """tools/*.py 中用过的子模块 import 路径不应被破坏"""
-        from infra.ai_service.minimax_provider import MiniMaxProvider
         from infra.ai_service.base import ProviderConfig
+        from infra.ai_service.minimax_provider import MiniMaxProvider
         assert MiniMaxProvider is not None
         assert ProviderConfig is not None
 

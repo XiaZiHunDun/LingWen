@@ -11,15 +11,15 @@ LLM人物弧光分析器 - S8人物弧光检测
 目标：角色深度提升，防止角色成为剧情工具
 """
 
-import sys
+import argparse
 import json
 import re
-import argparse
-from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set
-from datetime import datetime
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -313,7 +313,7 @@ class CharacterArcAnalyzer:
             else:
                 report.score = 1.0
 
-        except Exception as e:
+        except Exception:
             report.score = 0.5
 
         return report

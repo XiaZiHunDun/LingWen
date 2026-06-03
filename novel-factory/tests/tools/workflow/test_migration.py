@@ -21,7 +21,7 @@ class TestMigrateJsonToSqlite:
 
     def test_migrate_json_to_sqlite_migrates_state(self, sample_workflow_json):
         """Test migrate_json_to_sqlite migrates workflow state"""
-        from infra.tools.workflow.lib import migrate_json_to_sqlite, get_state
+        from infra.tools.workflow.lib import get_state, migrate_json_to_sqlite
 
         migrate_json_to_sqlite()
 
@@ -29,7 +29,7 @@ class TestMigrateJsonToSqlite:
 
     def test_migrate_json_to_sqlite_migrates_tasks(self, sample_workflow_json):
         """Test migrate_json_to_sqlite migrates agent_tasks"""
-        from infra.tools.workflow.lib import migrate_json_to_sqlite, get_task_status, init_sqlite
+        from infra.tools.workflow.lib import get_task_status, init_sqlite, migrate_json_to_sqlite
 
         init_sqlite()
         migrate_json_to_sqlite()
@@ -49,7 +49,7 @@ class TestMigrateJsonToSqlite:
 
     def test_migrate_json_to_sqlite_handles_complex_values(self, mock_env):
         """Test migration of complex nested values (dicts/lists)"""
-        from infra.tools.workflow.lib import migrate_json_to_sqlite, get_state, init_sqlite
+        from infra.tools.workflow.lib import get_state, init_sqlite, migrate_json_to_sqlite
 
         init_sqlite()
 

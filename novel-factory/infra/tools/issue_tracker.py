@@ -82,7 +82,7 @@ def create_issue(chapter_id: str, severity: str, issue_type: str,
             f.write(f"\n## 新问题 - {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
             f.write(f"\n**严重程度**: {severity}\n")
             f.write(f"**问题类型**: {issue_type}\n")
-            f.write(f"**状态**: open\n")
+            f.write("**状态**: open\n")
             f.write(f"\n### 问题描述\n\n{description}\n")
 
     return str(issue_file)

@@ -14,11 +14,11 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional, Set, Tuple
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation, ConfidenceLevel
+from ..engine.data_structures import CheckerType, ConfidenceLevel, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 

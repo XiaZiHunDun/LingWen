@@ -246,7 +246,8 @@ class TestRunCheckerAction(TestCase):
         `infra/tools/consistency/`,旧路径从来 import 不通。这是 P4-2 删
         auto_consistency_checker 留下的潜在 bug,P5-1 修复 + 锁定。
         """
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
+
         from infra.hooks.actions.run_checker import RunCheckerAction
 
         fake_result = {"passed": True, "score": 0.95}
@@ -307,7 +308,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
     def _mock_subprocess(self):
         """注入一个 mock subprocess.run,记录所有调用参数"""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
 
         mock = MagicMock()
         # 模拟 CompletedProcess-like 对象
@@ -326,7 +327,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
     def test_execute_via_cli_uses_list_not_string(self):
         """subprocess.run 的第一个位置参数必须是 list,不能是 string"""
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
 
         def fake_run(*args, **kwargs):
             self._run_calls.append((args, kwargs))
@@ -353,7 +354,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
     def test_execute_via_cli_does_not_use_shell_true(self):
         """shell=True 绝不能出现(参数里没有,或显式 False)"""
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
 
         def fake_run(*args, **kwargs):
             self._run_calls.append((args, kwargs))
@@ -383,7 +384,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
         旧行为:' '.join + shell=True → /bin/sh 看到 '$(rm -rf /)' 会执行替换
         新行为:list 传参 → 该字符串作为 argv[2..] 给 lingwen.py,不会触发 shell
         """
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
 
         def fake_run(*args, **kwargs):
             self._run_calls.append((args, kwargs))
@@ -413,7 +414,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
     def test_execute_via_cli_includes_expected_args(self):
         """契约回归:context/params 里的 key 应正确映射到 CLI 参数"""
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
 
         def fake_run(*args, **kwargs):
             self._run_calls.append((args, kwargs))
@@ -444,7 +445,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
 
     def test_execute_via_cli_uses_subprocess_timeout(self):
         """超时参数应传给 subprocess.run"""
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
 
         def fake_run(*args, **kwargs):
             self._run_calls.append((args, kwargs))
@@ -698,7 +699,7 @@ class TestRunScriptAction(TestCase):
         """缺 'script' 必需参数 → 不调 subprocess,直接返回错误"""
         from unittest.mock import patch
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()) as fake:
+        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             result = self.action.execute(params={}, context={})
 
         self.assertFalse(result.success)

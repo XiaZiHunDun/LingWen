@@ -16,14 +16,24 @@ Commands:
     llm-analyze - LLM质检决策分析
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.cli import RangeParser, AntiTropeOptions, CheckOptions, LLMAnalyzeOptions, RepairOptions, VerifyOptions, PolishOptions, UnifiedOptions, StoryContractOptions
+from infra.cli import (
+    AntiTropeOptions,
+    CheckOptions,
+    LLMAnalyzeOptions,
+    PolishOptions,
+    RangeParser,
+    RepairOptions,
+    StoryContractOptions,
+    UnifiedOptions,
+    VerifyOptions,
+)
 from infra.cli.commands import get_command, list_commands
 from infra.cli.parsers import create_parser
 

@@ -1,5 +1,6 @@
 from infra.cli.output import OutputFormatter
 
+
 def test_init_formatter():
     formatter = OutputFormatter(verbose=False)
     assert formatter.verbose is False

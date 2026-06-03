@@ -8,26 +8,32 @@
 
 import logging
 import time
-import yaml
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
-from .data_structures import (
-    Issue, ConsistencyReport, CheckerResult, QualityDimension,
-    CheckScope, IssueSeverity, CheckerType
-)
 from .checker_inspector import CheckerInspector
 from .consistency_arbitrator import ConsistencyArbitrator
+from .data_structures import (
+    CheckerResult,
+    CheckerType,
+    CheckScope,
+    ConsistencyReport,
+    Issue,
+    IssueSeverity,
+    QualityDimension,
+)
 
 # 上下文配置文件路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 CONTEXT_DIR = PROJECT_ROOT / "context"
 CHARACTER_PROFILES_PATH = CONTEXT_DIR / "character_profiles.yaml"
 SCENE_TYPES_PATH = CONTEXT_DIR / "scene_types.yaml"
-from .report_generator import ReportGenerator
 from ..checkers.base_checker import CheckerRegistry
+from .report_generator import ReportGenerator
 
 
 class ConsistencyEngine:

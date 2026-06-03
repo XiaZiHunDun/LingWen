@@ -1,6 +1,7 @@
 # novel-factory/infra/consistency/checkers/llm_enhanced/knowledge_llm.py
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from .base import LLMEnhancedChecker
 
 
@@ -8,8 +9,8 @@ class LLMEnhancedKnowledgeTracker(LLMEnhancedChecker):
     """知识追踪检测器的LLM增强版本"""
 
     def __init__(self):
-        from ..knowledge_tracker import KnowledgeTracker
         from ...llm_service.base import LLMService
+        from ..knowledge_tracker import KnowledgeTracker
 
         super().__init__(
             base_checker=KnowledgeTracker(),

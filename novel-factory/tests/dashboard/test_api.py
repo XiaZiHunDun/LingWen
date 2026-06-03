@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app, ReadingPowerDB
+from dashboard.app import ReadingPowerDB, create_app
 
 
 class TestHealthEndpoint:
@@ -50,7 +50,7 @@ class TestOverviewEndpoint:
 
         try:
             # Create empty database
-            db = ReadingPowerDB(db_path)
+            ReadingPowerDB(db_path)
             app = create_app(db_path=db_path)
             client = TestClient(app)
             response = client.get("/api/overview")
@@ -113,7 +113,7 @@ class TestChaptersEndpoint:
             db_path = Path(f.name)
 
         try:
-            db = ReadingPowerDB(db_path)
+            ReadingPowerDB(db_path)
             app = create_app(db_path=db_path)
             client = TestClient(app)
             response = client.get("/api/chapters")

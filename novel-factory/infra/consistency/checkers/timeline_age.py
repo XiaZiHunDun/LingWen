@@ -9,10 +9,10 @@
 """
 
 import re
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
-from ..engine.data_structures import Issue, IssueLocation, IssueSeverity, CheckerType
 
 
 class TimelineAgeConsistencyChecker(BaseChecker):
@@ -98,14 +98,14 @@ class TimelineAgeConsistencyChecker(BaseChecker):
         if chapter_num == 24:
             if expected_age != 22:
                 issue = Issue(
-                    id=f"timeline_age_24_22",
+                    id="timeline_age_24_22",
                     severity=IssueSeverity.P0,
                     checker_type=CheckerType.TIMELINE_AGE,
                     issue_type="survival_time_contradiction",
                     title="生存时间矛盾：15年生存",
                     description="第24章应为林夜15年生存后的第22岁，如年龄不符则存在矛盾。",
                     location=IssueLocation(chapter=24),
-                    evidence=f"ch001:7岁 → ch024:22岁（15年生存）",
+                    evidence="ch001:7岁 → ch024:22岁（15年生存）",
                     suggestion="确认第24章林夜年龄为22岁，15年生存时间正确。",
                     character="林夜",
                 )
@@ -174,7 +174,7 @@ class TimelineAgeConsistencyChecker(BaseChecker):
         # 匹配"X岁那年"或"X岁时"等模式
         patterns = [
             rf'{character}[^。]*(?P<age>\d+)岁(?:的那年|时|候|那年|的日子)',
-            rf'(?P<age>\d+)岁(?:的那年|时|候|那年)',
+            r'(?P<age>\d+)岁(?:的那年|时|候|那年)',
         ]
 
         for pattern in patterns:

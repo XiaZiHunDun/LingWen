@@ -32,7 +32,7 @@ class TestCreateCheckpoint:
 
     def test_create_checkpoint_includes_state(self, init_db):
         """Test checkpoint snapshot includes workflow state"""
-        from infra.tools.workflow.lib import create_checkpoint, set_state, list_checkpoints
+        from infra.tools.workflow.lib import create_checkpoint, list_checkpoints, set_state
 
         set_state("current_step", "STEP_20")
         create_checkpoint("State test")
@@ -42,7 +42,7 @@ class TestCreateCheckpoint:
 
     def test_create_checkpoint_multiple_checkpoints(self, init_db):
         """Test creating multiple checkpoints with unique IDs"""
-        from infra.tools.workflow.lib import create_checkpoint, list_checkpoints, delete_checkpoint
+        from infra.tools.workflow.lib import create_checkpoint, delete_checkpoint, list_checkpoints
 
         cp1 = create_checkpoint("First checkpoint")
         time.sleep(1.1)
@@ -67,7 +67,7 @@ class TestListCheckpoints:
 
     def test_list_checkpoints_orders_by_created_at(self, init_db):
         """Test list_checkpoints returns most recent first"""
-        from infra.tools.workflow.lib import create_checkpoint, list_checkpoints, delete_checkpoint
+        from infra.tools.workflow.lib import create_checkpoint, delete_checkpoint, list_checkpoints
 
         cp1 = create_checkpoint("Older checkpoint - first")
         time.sleep(1.1)
@@ -110,7 +110,7 @@ class TestRestoreCheckpoint:
 
     def test_restore_checkpoint_restores_state(self, init_db):
         """Test restore_checkpoint actually restores state"""
-        from infra.tools.workflow.lib import create_checkpoint, restore_checkpoint, set_state, get_state
+        from infra.tools.workflow.lib import create_checkpoint, get_state, restore_checkpoint, set_state
 
         set_state("current_step", "STEP_19")
         set_state("current_phase", "PHASE_7")
@@ -126,7 +126,13 @@ class TestRestoreCheckpoint:
 
     def test_restore_checkpoint_clears_old_tasks(self, init_db):
         """Test restore_checkpoint clears existing tasks before restore"""
-        from infra.tools.workflow.lib import create_checkpoint, restore_checkpoint, dispatch_task, set_state, list_tasks
+        from infra.tools.workflow.lib import (
+            create_checkpoint,
+            dispatch_task,
+            list_tasks,
+            restore_checkpoint,
+            set_state,
+        )
 
         set_state("current_step", "STEP_12")
         dispatch_task("old_task_1", "writer", "")

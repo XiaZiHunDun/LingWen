@@ -9,11 +9,11 @@
 """
 
 import re
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 from .text_utils import split_chinese_sentences
-from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, CheckerType
 
 
 class SceneTransitionChecker(BaseChecker):

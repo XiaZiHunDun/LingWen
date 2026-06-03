@@ -6,14 +6,12 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import (
-    Issue, IssueLocation, CheckerType, IssueSeverity
-)
-from .base_checker import BaseChecker
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from ..state.causal_rules import CAUSAL_BREAK_RULES, CausalRuleEngine
 from ..state.models import EntityState
+from .base_checker import BaseChecker
 
 
 class EntityStateTracker:
@@ -75,7 +73,7 @@ class CausalChainChecker(BaseChecker):
                     matches = self._find_action_with_target(chapter_content, keyword)
                     for match in matches:
                         target = match["target"]
-                        action_text = match["text"]
+                        match["text"]
 
                         # 2. 检查该目标的历史状态（是否被此动作影响）
                         entity_state = self.tracker.get_entity_state(target)

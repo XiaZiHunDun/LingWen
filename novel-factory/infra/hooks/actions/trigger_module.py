@@ -9,9 +9,9 @@ import importlib
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
-from .base import BaseAction, ActionResult
+from .base import ActionResult, BaseAction
 
 logger = logging.getLogger(__name__)
 

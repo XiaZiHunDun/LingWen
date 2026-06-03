@@ -2,14 +2,15 @@
 End-to-end tests for the reading power system.
 """
 
-import pytest
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import tempfile
+
+import pytest
 
 from infra.reading_power import (
-    ReadingPowerEngine,
     ReadingPowerDB,
+    ReadingPowerEngine,
 )
 
 

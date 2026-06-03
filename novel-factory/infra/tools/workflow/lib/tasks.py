@@ -6,8 +6,7 @@ import sqlite3
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from . import db
-from . import events
+from . import db, events
 
 
 def dispatch_task(task_name: str, agent: str, desc: str = "") -> str:

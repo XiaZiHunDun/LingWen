@@ -4,12 +4,12 @@
 确保第1章出现的重要道具在后续有再现
 """
 import re
-from pathlib import Path
-from typing import Optional, List
 from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
-from ..engine.data_structures import Issue, CheckerType, IssueSeverity, IssueLocation
 
 
 @dataclass
@@ -158,7 +158,7 @@ class CorePropsChecker(BaseChecker):
         medium_issues = [i for i in issues if i.severity == 'MEDIUM']
 
         report = ["# 核心道具贯穿检查报告\n"]
-        report.append(f"## 汇总\n")
+        report.append("## 汇总\n")
         report.append(f"- HIGH级问题: {len(high_issues)}")
         report.append(f"- MEDIUM级问题: {len(medium_issues)}\n")
 

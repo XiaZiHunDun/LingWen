@@ -10,10 +10,10 @@
 3. 数量冲突：消耗品数量未减少
 """
 
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -59,7 +59,7 @@ class ItemChecker(BaseChecker):
         issues = []
         context = context or {}
         item_history = context.get("item_history", {})
-        mentioned_items = context.get("mentioned_items", [])
+        context.get("mentioned_items", [])
 
         # 更新历史记录
         for item_name, states in item_history.items():
@@ -105,11 +105,11 @@ class ItemChecker(BaseChecker):
                                 severity=IssueSeverity.P1,
                                 checker_type=CheckerType.ITEM,
                                 issue_type="物品状态冲突",
-                                title=f"物品状态矛盾",
+                                title="物品状态矛盾",
                                 description=f"物品\"{item_name}\"已被{conflict_state}，但文本中再次出现",
                                 location=IssueLocation(chapter=chapter_num),
                                 evidence=f"历史记录：{latest_state.condition}",
-                                suggestion=f"修改物品状态或说明物品如何恢复",
+                                suggestion="修改物品状态或说明物品如何恢复",
                                 character=None
                             ))
 
@@ -173,11 +173,11 @@ class ItemChecker(BaseChecker):
                         severity=IssueSeverity.P2,
                         checker_type=CheckerType.ITEM,
                         issue_type="物品数量冲突",
-                        title=f"消耗品数量未减少",
+                        title="消耗品数量未减少",
                         description=f"物品\"{item_name}\"之前已被消耗完毕，但文本中仍有数量描述",
                         location=IssueLocation(chapter=chapter_num),
                         evidence=f"历史记录：数量={latest_state.quantity}",
-                        suggestion=f"修改物品数量描述或补充获取途径",
+                        suggestion="修改物品数量描述或补充获取途径",
                         character=None
                     ))
 

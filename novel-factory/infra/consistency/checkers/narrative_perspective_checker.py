@@ -12,15 +12,15 @@ R2-007: 模式从硬编码移到 tools/rules/narrative_perspective_rules.yaml
 
 import logging
 import re
-from pathlib import Path
-from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
-from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
-from .base_checker import BaseChecker
+from infra.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 
+from .base_checker import BaseChecker
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +282,7 @@ class NarrativePerspectiveChecker(BaseChecker):
         medium_issues = [i for i in issues if i.severity == 'MEDIUM']
 
         report = ["# 叙事视角检查报告\n"]
-        report.append(f"## 汇总\n")
+        report.append("## 汇总\n")
         report.append(f"- HIGH级问题: {len(high_issues)}处\n")
         report.append(f"- MEDIUM级问题: {len(medium_issues)}处\n")
 

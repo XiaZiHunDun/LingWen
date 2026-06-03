@@ -10,8 +10,8 @@ index.json Schema 迁移脚本
 
 import json
 import os
-import sys
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -431,9 +431,9 @@ def main():
         if args.verify:
             is_valid, errors = validate_index(path)
             if is_valid:
-                print(f"  ✅ 验证通过")
+                print("  ✅ 验证通过")
             else:
-                print(f"  ❌ 验证失败:")
+                print("  ❌ 验证失败:")
                 for err in errors:
                     print(f"     - {err}")
             results.append((path, is_valid, errors))

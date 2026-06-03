@@ -9,9 +9,8 @@
 import os
 import re
 import sys
-from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
-
+from typing import Dict, List, Optional, Tuple
 
 # 主要势力（2-5字中文名称）
 FACTIONS = [

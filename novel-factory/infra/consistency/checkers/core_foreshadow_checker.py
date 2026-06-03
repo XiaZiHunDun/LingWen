@@ -4,12 +4,13 @@
 检测core级伏笔是否在后续章节中被回收
 """
 import re
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
-from ..engine.data_structures import Issue, CheckerType, IssueSeverity, IssueLocation
+
 
 @dataclass
 class ForeshadowIssue:
@@ -163,7 +164,7 @@ class CoreForeshadowChecker(BaseChecker):
                 severity=severity,
                 checker_type=CheckerType.FORESHADOW,
                 issue_type="foreshadow_unrecycled",
-                title=f"伏笔未回收",
+                title="伏笔未回收",
                 description=f"{level}级伏笔'{foreshadow_text}'未在{expect_range}内回收",
                 location=IssueLocation(chapter=chapter_num),
                 evidence=foreshadow_text,
@@ -196,7 +197,7 @@ class CoreForeshadowChecker(BaseChecker):
         edge_issues = [i for i in issues if i.level == 'edge']
 
         report = ["# 伏笔回收检查报告\n"]
-        report.append(f"## 汇总\n")
+        report.append("## 汇总\n")
         report.append(f"- Core级未回收: {len(core_issues)}")
         report.append(f"- Normal级未回收: {len(normal_issues)}")
         report.append(f"- Edge级未回收: {len(edge_issues)}\n")

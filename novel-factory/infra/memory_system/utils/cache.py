@@ -11,7 +11,7 @@ import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, Dict
+from typing import Any, Callable, Dict, Optional
 
 
 @dataclass

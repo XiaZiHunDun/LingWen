@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Tests for CoreForeshadowChecker"""
-import pytest
 from pathlib import Path
+
+import pytest
+
 
 def test_core_foreshadow_checker_init():
     """Test checker initialization"""

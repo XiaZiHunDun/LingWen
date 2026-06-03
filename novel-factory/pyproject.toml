@@ -89,6 +89,8 @@ extend-exclude = [
     "**/__pycache__",
     ".venv",
     "venv",
+    # 已归档代码不再 lint:legacy/ 目录代码冻结,只保 git 历史
+    "**/legacy/**",
 ]
 
 [tool.ruff.lint]
@@ -97,6 +99,7 @@ select = ["E", "F", "I", "W"]
 ignore = [
     "E501",  # line too long — 项目有大量中文长行,关闭
     "F401",  # imported but unused — tools/ 脚本有 re-export 模式
+    "E402",  # module level import not at top of file — 项目大量用 sys.path.insert(...) + 紧随其后的 import 的合法模式
 ]
 
 [tool.ruff.lint.per-file-ignores]

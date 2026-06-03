@@ -7,7 +7,6 @@ Maps reader feedback to P0/P1/P2 severity levels for proper triage and resolutio
 import re
 from typing import Tuple
 
-
 # P0 keywords: Plot breaks, character death inconsistencies, timeline contradictions,
 # core world-building contradictions
 P0_PATTERNS = [

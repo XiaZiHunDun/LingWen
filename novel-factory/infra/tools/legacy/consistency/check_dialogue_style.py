@@ -6,8 +6,8 @@
 import os
 import re
 import sys
-from typing import List, Dict, Tuple, Set, Optional
 from collections import defaultdict
+from typing import Dict, List, Optional, Set, Tuple
 
 
 class DialogueStyleChecker:

@@ -5,7 +5,7 @@ Scans chapter text for hooks and coolpoints using YAML rule libraries.
 
 import re
 from pathlib import Path
-from typing import List, Dict, Any, NamedTuple
+from typing import Any, Dict, List, NamedTuple
 
 import yaml
 
@@ -117,11 +117,10 @@ class RuleMatcher:
             return "中段"
 
         # Use character-based position for Chinese text
-        pos_ratio = 0.5  # default to middle
         if length > 0:
             # Simple thirds-based approach
             first_third = length // 3
-            last_third = length - first_third
+            length - first_third
 
             # For short texts, use more nuanced approach
             if length < 100:

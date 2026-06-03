@@ -5,7 +5,7 @@
 """
 
 from .base import StateBackend
-from .sqlite import SQLiteBackend
 from .json import JSONBackend
+from .sqlite import SQLiteBackend
 
 __all__ = ["StateBackend", "SQLiteBackend", "JSONBackend"]

@@ -7,15 +7,18 @@ and produces a single UnifiedQualityReport.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Type
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Type
 
-from .interfaces import (
-    UnifiedIssue, UnifiedQualityReport, UnifiedSeverity,
-    QualitySource, DomainSpecificReport
-)
 from .adapters import RuleBasedAdapter
+from .interfaces import (
+    DomainSpecificReport,
+    QualitySource,
+    UnifiedIssue,
+    UnifiedQualityReport,
+    UnifiedSeverity,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +247,7 @@ class QualityCoordinator:
         """Run foreshadow analyzer"""
         try:
             from tools.llm_foreshadow_analyzer import ForeshadowAnalyzer
+
             from .adapters import LLMForeshadowAdapter
 
             analyzer = ForeshadowAnalyzer()
@@ -260,6 +264,7 @@ class QualityCoordinator:
         """Run emotional resonance checker"""
         try:
             from tools.llm_emotional_resonance_checker import EmotionalResonanceChecker
+
             from .adapters import LLMEmotionalAdapter
 
             checker = EmotionalResonanceChecker()
@@ -276,6 +281,7 @@ class QualityCoordinator:
         """Run pacing analyzer"""
         try:
             from tools.llm_pacing_analyzer import PacingAnalyzer
+
             from .adapters import LLMPacingAdapter
 
             analyzer = PacingAnalyzer()

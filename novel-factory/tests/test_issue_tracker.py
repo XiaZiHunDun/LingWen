@@ -2,11 +2,12 @@
 """
 问题追踪工具测试
 """
-import pytest
 import json
-import tempfile
 import sys
+import tempfile
 from pathlib import Path
+
+import pytest
 
 # 添加 tools 目录到 path
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))

@@ -13,7 +13,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.quality import Inspector, Issue
 
-
 # 科幻术语列表（用于检测未替换的术语）
 SCIFI_TERMS = [
     "核废土", "辐射区", "辐射污染", "放射性污染", "核辐射",
@@ -66,7 +65,7 @@ class WorldviewChecker(Inspector):
                     description=f"发现{count}处未替换的科幻术语: {term}",
                     location=f"全文约{count}处",
                     evidence=f"术语 '{term}' 应替换为修真术语",
-                    suggestion=f"使用 worldview_repairer.py 进行替换"
+                    suggestion="使用 worldview_repairer.py 进行替换"
                 ))
 
         return issues

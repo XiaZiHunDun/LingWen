@@ -15,12 +15,12 @@ Usage:
     )
 """
 import os
-import yaml
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
+import yaml
 from prompt_assembler import PromptAssembler, TemplateCategory, TemplateMetadata
 
 
@@ -315,35 +315,35 @@ class TemplateRecommender:
         """生成推荐理由说明"""
         lines = [
             f"# 模板推荐: {template_score.template.name}",
-            f"",
-            f"## 基本信息",
+            "",
+            "## 基本信息",
             f"- ID: {template_score.template.id}",
             f"- 版本: {template_score.template.version}",
             f"- 类别: {template_score.template.category.value}",
             f"- 描述: {template_score.template.description}",
-            f"",
-            f"## 评分详情",
+            "",
+            "## 评分详情",
             f"- 综合得分: {template_score.total_score:.2f}",
             f"- 温度匹配: {template_score.temperature_match:.2f}",
             f"- 类别加成: {template_score.category_bonus:.2f}",
             f"- 历史加成: {template_score.history_bonus:.2f}",
-            f"",
-            f"## 推荐理由",
+            "",
+            "## 推荐理由",
         ]
 
         for reason in template_score.reasons:
             lines.append(f"- {reason}")
 
         if template_score.metric_scores:
-            lines.append(f"")
-            lines.append(f"## 质量维度匹配")
+            lines.append("")
+            lines.append("## 质量维度匹配")
             for metric, score in template_score.metric_scores.items():
                 weight = self.QUALITY_WEIGHTS.get(metric, {})
                 lines.append(f"- {metric} ({weight.get('name', '')}): {score:.1f}/10")
 
         lines.extend([
-            f"",
-            f"## 温度参数",
+            "",
+            "## 温度参数",
             f"- 推荐温度: {template_score.template.temperature.recommended}",
             f"- 温度范围: [{template_score.template.temperature.min_value}, {template_score.template.temperature.max_value}]",
         ])

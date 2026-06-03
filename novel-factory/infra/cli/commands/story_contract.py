@@ -5,6 +5,7 @@ Mirrors lines 724-782 of the original infra/cli/commands.py.
 from pathlib import Path
 
 from infra.cli.options import StoryContractOptions, UnifiedOptions
+
 from .base import Command
 
 

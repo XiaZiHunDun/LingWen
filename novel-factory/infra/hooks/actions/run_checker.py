@@ -13,6 +13,7 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 from infra.logging_config import logger
+
 from .base import ActionResult, BaseAction
 
 
@@ -85,17 +86,18 @@ class RunCheckerAction(BaseAction):
         """运行一致性检查引擎"""
         # 动态导入避免循环依赖
         import re
+
         from ....consistency.engine.consistency_engine import ConsistencyEngine
         from ....consistency.engine.data_structures import CheckScope
 
         # 从context获取chapters_dir，如果没有则从项目根目录推导
         if "chapters_dir" in context:
-            chapters_dir = context["chapters_dir"]
+            context["chapters_dir"]
         else:
             # 从项目根目录推导章节目录
             from pathlib import Path
             project_root = Path(__file__).resolve().parents[2]
-            chapters_dir = str(project_root / "03_内容仓库" / "04_正文")
+            str(project_root / "03_内容仓库" / "04_正文")
 
         engine = ConsistencyEngine()
         # Register all checkers

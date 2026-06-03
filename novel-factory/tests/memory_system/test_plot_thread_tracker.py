@@ -1,7 +1,8 @@
 """PlotThreadTracker 测试"""
-import pytest
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
 

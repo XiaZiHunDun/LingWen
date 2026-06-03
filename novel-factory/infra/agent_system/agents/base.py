@@ -16,7 +16,7 @@ Usage:
             return self.chat(prompt, system="你是一位专业小说作家。")
 """
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from ....ai_service.router import AIRouter

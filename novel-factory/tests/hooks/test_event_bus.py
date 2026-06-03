@@ -139,8 +139,10 @@ class TestEventBus(TestCase):
 
     def test_get_handler_count(self):
         """测试获取handler数量"""
-        handler1 = lambda e: None
-        handler2 = lambda e: None
+        def handler1(e):
+            return None
+        def handler2(e):
+            return None
 
         self.event_bus.subscribe("TEST_EVENT", handler1)
         self.assertEqual(self.event_bus.get_handler_count("TEST_EVENT"), 1)

@@ -9,9 +9,10 @@ Polisher Variant Loader
 - 支持动态切换润色师角色
 """
 
-import yaml
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
+
+import yaml
 
 
 class VariantLoader:

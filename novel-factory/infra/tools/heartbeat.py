@@ -4,6 +4,7 @@ import json
 import sys
 from pathlib import Path
 
+
 def update_heartbeat(task_name: str):
     project_root = Path(__file__).parent.parent
     workflow_file = project_root / 'workflow_state.json'

@@ -11,11 +11,11 @@
 
 import json
 import logging
-import sys
-import re
 import os
+import re
+import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

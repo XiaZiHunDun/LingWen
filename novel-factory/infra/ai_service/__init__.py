@@ -9,28 +9,29 @@ router.py 通过 `get_provider_class(name)` 查找,新增 provider 只需
 无需改 router / __init__。
 """
 
+# 触发各 provider 模块的 @register_provider 装饰器
+from . import (
+    anthropic_provider,  # noqa: F401
+    minimax_provider,  # noqa: F401
+    openai_provider,  # noqa: F401
+)
+from .anthropic_provider import AnthropicProvider
 from .base import (
     AIProvider,
-    ProviderConfig,
     AIProviderError,
-    ProviderConfigError,
     APIError,
     NetworkError,
+    ProviderConfig,
+    ProviderConfigError,
     TimeoutError,
-    register_provider,
     get_provider_class,
     list_registered_providers,
+    register_provider,
 )
-
-# 触发各 provider 模块的 @register_provider 装饰器
-from . import openai_provider  # noqa: F401
-from . import anthropic_provider  # noqa: F401
-from . import minimax_provider  # noqa: F401
+from .minimax_provider import MiniMaxProvider
 
 # 显式 re-export provider 类(向后兼容: `from infra.ai_service import OpenAIProvider`)
 from .openai_provider import OpenAIProvider
-from .anthropic_provider import AnthropicProvider
-from .minimax_provider import MiniMaxProvider
 
 __all__ = [
     "AIProvider",

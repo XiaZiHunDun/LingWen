@@ -1,5 +1,6 @@
 # novel-factory/agent_system/agents/character_designer/tools.py
 from typing import Dict, List, Optional
+
 from ...core.character_schema import CharacterSchema
 
 

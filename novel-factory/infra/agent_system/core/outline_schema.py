@@ -1,5 +1,6 @@
 # novel-factory/agent_system/core/outline_schema.py
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import yaml
 
 

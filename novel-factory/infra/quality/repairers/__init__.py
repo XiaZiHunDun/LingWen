@@ -2,7 +2,7 @@
 质量修复器模块
 """
 
-from .worldview_repairer import WorldviewRepairer
 from .ai_trace_repairer import AITraceRepairer
+from .worldview_repairer import WorldviewRepairer
 
 __all__ = ["WorldviewRepairer", "AITraceRepairer"]

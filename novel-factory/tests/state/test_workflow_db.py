@@ -8,12 +8,12 @@ Verifies:
 - 锁在异常路径上正确释放
 - _lock_path 与 db_path 在同一目录(.lock 后缀)
 """
-import os
-import sys
-import time
 import fcntl
 import multiprocessing
+import os
+import sys
 import threading
+import time
 from pathlib import Path
 
 import pytest

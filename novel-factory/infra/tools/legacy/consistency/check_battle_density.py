@@ -9,8 +9,7 @@
 import os
 import re
 import sys
-from typing import List, Dict, Tuple
-
+from typing import Dict, List, Tuple
 
 # ========== 基础战斗动作词（原有）==========
 BATTLE_ACTION_WORDS = [

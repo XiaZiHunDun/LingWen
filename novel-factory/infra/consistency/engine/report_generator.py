@@ -5,13 +5,11 @@
 生成一致性检查报告
 """
 
-from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from .data_structures import (
-    ConsistencyReport, Issue, IssueSeverity, CheckerType, QualityDimension
-)
+from .data_structures import CheckerType, ConsistencyReport, Issue, IssueSeverity, QualityDimension
 
 
 class ReportGenerator:

@@ -11,11 +11,12 @@ AI痕迹与修复标记检测器
 """
 
 import re
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from infra.consistency.engine.data_structures import Issue, IssueLocation, CheckerType, IssueSeverity
+from infra.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
+
 from .base_checker import BaseChecker
 
 

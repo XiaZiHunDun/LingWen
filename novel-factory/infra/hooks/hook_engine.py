@@ -6,15 +6,15 @@ from __future__ import annotations
 
 import asyncio
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from .event_bus import Event, EventBus
-from .config_loader import HookConfig, HookConfigLoader, ConditionEvaluator
 from .actions.base import ActionResult
-
+from .config_loader import ConditionEvaluator, HookConfig, HookConfigLoader
+from .event_bus import Event, EventBus
 
 # R3-004: 共享线程池,避免每个 hook 创建一个 executor
 # max_workers 留出余量,允许并发执行多个 hook

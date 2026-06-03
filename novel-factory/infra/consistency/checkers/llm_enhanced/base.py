@@ -1,13 +1,18 @@
 # novel-factory/infra/consistency/checkers/llm_enhanced/base.py
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from ...engine.data_structures import Issue, IssueLocation, IssueSeverity
 from ...llm_service.base import LLMService
-from ...llm_service.prompts import (
-    ABILITY_LLM_PROMPT, CHARACTER_LLM_PROMPT, RELATIONSHIP_LLM_PROMPT,
-    FORESHADOW_LLM_PROMPT, BATTLE_LLM_PROMPT, PERSONALITY_LLM_PROMPT, KNOWLEDGE_LLM_PROMPT
-)
 from ...llm_service.chapter_content import LLMIssue
+from ...llm_service.prompts import (
+    ABILITY_LLM_PROMPT,
+    BATTLE_LLM_PROMPT,
+    CHARACTER_LLM_PROMPT,
+    FORESHADOW_LLM_PROMPT,
+    KNOWLEDGE_LLM_PROMPT,
+    PERSONALITY_LLM_PROMPT,
+    RELATIONSHIP_LLM_PROMPT,
+)
 from ..base_checker import BaseChecker
 
 

@@ -8,23 +8,23 @@ Adapters for converting existing formats to unified format.
 """
 
 import uuid
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from .interfaces import (
-    UnifiedIssue, UnifiedQualityReport, UnifiedSeverity,
-    UnifiedLocation, QualitySource, QualityDimension,
-    DomainSpecificReport
+    DomainSpecificReport,
+    QualityDimension,
+    QualitySource,
+    UnifiedIssue,
+    UnifiedLocation,
+    UnifiedQualityReport,
+    UnifiedSeverity,
 )
 
 if TYPE_CHECKING:
-    from infra.consistency.engine.data_structures import (
-        Issue as RuleBasedIssue,
-        ConsistencyReport,
-        IssueSeverity,
-        CheckerType
-    )
-    from tools.llm_foreshadow_analyzer import ForeshadowAnalysisReport
+    from infra.consistency.engine.data_structures import CheckerType, ConsistencyReport, IssueSeverity
+    from infra.consistency.engine.data_structures import Issue as RuleBasedIssue
     from tools.llm_emotional_resonance_checker import EmotionalResonanceReport
+    from tools.llm_foreshadow_analyzer import ForeshadowAnalysisReport
     from tools.llm_pacing_analyzer import PacingReport
 
 

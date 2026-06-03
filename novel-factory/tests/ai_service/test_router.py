@@ -1,11 +1,12 @@
 """AIRouter 测试"""
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from infra.ai_service.base import ProviderConfig, AIProviderError
-from infra.ai_service.router import AIRouter
-from infra.ai_service.openai_provider import OpenAIProvider
+import pytest
+
 from infra.ai_service.anthropic_provider import AnthropicProvider
+from infra.ai_service.base import AIProviderError, ProviderConfig
+from infra.ai_service.openai_provider import OpenAIProvider
+from infra.ai_service.router import AIRouter
 
 
 class TestAIRouter:

@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional
 
 from infra.quality.rule_based.validators.base import (
     BaseValidator,
-    ValidationResult,
     IssueSeverity,
+    ValidationResult,
 )
 
 

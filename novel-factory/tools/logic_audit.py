@@ -14,7 +14,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 # 添加项目路径
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -239,14 +239,14 @@ B. 设定合理内容（不需要修复）：
         print(f"审核章节: {report['total_chapters']}")
         print(f"发现问题: {report['total_issues']}")
         print(f"有问题的章节: {report['chapters_with_issues']}")
-        print(f"\n按严重程度:")
+        print("\n按严重程度:")
         print(f"  P0 (致命): {report['by_severity'].get('P0', 0)}")
         print(f"  P1 (严重): {report['by_severity'].get('P1', 0)}")
         print(f"  P2 (轻微): {report['by_severity'].get('P2', 0)}")
         print(f"  P3 (提示): {report['by_severity'].get('P3', 0)}")
 
         if report['issues']:
-            print(f"\n前10个P0/P1问题:")
+            print("\n前10个P0/P1问题:")
             count = 0
             for issue in report['issues']:
                 if issue['severity'] in ['P0', 'P1'] and count < 10:

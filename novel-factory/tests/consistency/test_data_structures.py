@@ -3,17 +3,24 @@
 一致性系统数据结构和Issue定义测试
 """
 
-import pytest
-from datetime import datetime
-
 import sys
+from datetime import datetime
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.engine.data_structures import (
-    Issue, IssueSeverity, CheckerType, IssueLocation,
-    ConsistencyReport, QualityDimension, CheckerResult,
-    CheckScope, RealtimeIssue
+    CheckerResult,
+    CheckerType,
+    CheckScope,
+    ConsistencyReport,
+    Issue,
+    IssueLocation,
+    IssueSeverity,
+    QualityDimension,
+    RealtimeIssue,
 )
 
 

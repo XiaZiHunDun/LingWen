@@ -11,10 +11,10 @@
 """
 
 import re
-from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Set
 
-from ..engine.data_structures import Issue, IssueSeverity, CheckerType, IssueLocation
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
 
@@ -217,7 +217,7 @@ class CharacterChecker(BaseChecker):
             severity=IssueSeverity.P1,
             checker_type=CheckerType.CHARACTER,
             issue_type=issue_type,
-            title=f"角色性格-行为冲突",
+            title="角色性格-行为冲突",
             description=f"性格为\"{personality}\"的{character}出现了\"{opposite}\"行为",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{personality}",
@@ -265,11 +265,11 @@ class CharacterChecker(BaseChecker):
             severity=IssueSeverity.P1,
             checker_type=CheckerType.CHARACTER,
             issue_type="行为逻辑冲突",
-            title=f"角色行为与设定冲突",
+            title="角色行为与设定冲突",
             description=f"角色{character}具有\"{conflict}\"的设定，但却执行了\"{action}\"",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{conflict}",
-            suggestion=f"修改行为或补充说明为何可以执行该行为",
+            suggestion="修改行为或补充说明为何可以执行该行为",
             character=character
         )
 
@@ -315,11 +315,11 @@ class CharacterChecker(BaseChecker):
             severity=IssueSeverity.P1,
             checker_type=CheckerType.CHARACTER,
             issue_type="知识技能冲突",
-            title=f"角色能力与行为冲突",
+            title="角色能力与行为冲突",
             description=f"角色{character}具有\"{limit}\"的设定，但却执行了\"{action}\"",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{limit}",
-            suggestion=f"修改行为或补充角色学习该技能的经过",
+            suggestion="修改行为或补充角色学习该技能的经过",
             character=character
         )
 
@@ -375,7 +375,7 @@ class CharacterChecker(BaseChecker):
             severity=IssueSeverity.P2,
             checker_type=CheckerType.CHARACTER,
             issue_type="语言风格冲突",
-            title=f"角色语言风格与性格冲突",
+            title="角色语言风格与性格冲突",
             description=f"性格为\"{personality}\"的{character}说出了\"{opposite}\"风格的话",
             location=IssueLocation(chapter=chapter_num),
             evidence=f"角色设定：{personality} | 对话中出现的词：{opposite}",

@@ -14,12 +14,11 @@ import argparse
 import re
 import sys
 import time
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from infra.memory_system.vector.embedder import Embedder
 from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
-
 
 # 章节内容仓库路径（相对于项目根目录）
 CHAPTERS_DIR = Path("03_内容仓库/04_正文")
@@ -350,15 +349,15 @@ def main():
 
     args = parser.parse_args()
 
-    print(f"=" * 60)
-    print(f"批量嵌入章节到 Qdrant")
-    print(f"=" * 60)
+    print("=" * 60)
+    print("批量嵌入章节到 Qdrant")
+    print("=" * 60)
     print(f"Loading chapters from {CHAPTERS_DIR}")
     if args.start is not None or args.end is not None:
         print(f"  Range: ch{args.start or 1:03d} - ch{args.end or 'end':03d}")
 
     if args.resume:
-        print(f"  Resume mode: ON (will skip existing points)")
+        print("  Resume mode: ON (will skip existing points)")
 
     try:
         chapters = load_chapters(start=args.start, end=args.end)
@@ -404,18 +403,18 @@ def main():
     # 显示结果和性能统计
     print(f"\n{'=' * 60}")
     if args.dry_run:
-        print(f"[Dry-run] Would process:")
+        print("[Dry-run] Would process:")
         print(f"  - {results['total_chapters']} chapters")
         print(f"  - {results['total_segments']} segments")
     else:
-        print(f"Completed:")
+        print("Completed:")
         print(f"  - {results['total_chapters']} chapters found")
         print(f"  - {results['success_count']} succeeded")
         print(f"  - {results['fail_count']} failed")
         print(f"  - {results['skipped_count']} skipped (resume mode)")
         print(f"  - {results['total_segments']} segments created")
         print(f"  - {results['embeddings_generated']} embeddings stored")
-        print(f"\nPerformance Statistics:")
+        print("\nPerformance Statistics:")
         print(f"  - Total time: {timedelta(seconds=int(results['elapsed_time']))}")
         if results['success_count'] > 0:
             avg_time = results['elapsed_time'] / results['success_count']

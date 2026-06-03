@@ -1,4 +1,3 @@
-from infra.cli.range_parser import RangeParser
 from infra.cli.options import (
     AntiTropeOptions,
     CheckOptions,
@@ -9,6 +8,7 @@ from infra.cli.options import (
     UnifiedOptions,
     VerifyOptions,
 )
+from infra.cli.range_parser import RangeParser
 
 __all__ = [
     "RangeParser",

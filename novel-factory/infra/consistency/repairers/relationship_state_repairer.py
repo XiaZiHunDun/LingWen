@@ -9,7 +9,7 @@
 """
 import sys
 from pathlib import Path
-from typing import List, Any, Tuple, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -142,7 +142,7 @@ class RelationshipStateRepairer(BaseConsistencyRepairer):
 
         # 根据问题类型选择修复策略
         issue_desc = getattr(issue, 'description', '')
-        issue_type = getattr(issue, 'issue_type', '')
+        getattr(issue, 'issue_type', '')
 
         if '敌对' in issue_desc and '盟友' in issue_desc:
             # 敌人变盟友，添加过渡描述

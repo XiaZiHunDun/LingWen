@@ -5,8 +5,9 @@ LLMEnhancedCharacterChecker测试
 验证角色检测器的LLM增强功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_character_llm_finds_uncertain_regions():

@@ -1,7 +1,8 @@
 import json
 import logging
 import os
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from .chapter_content import ChapterContent, LLMIssue
 
 logger = logging.getLogger(__name__)

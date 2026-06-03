@@ -2,16 +2,18 @@
 """
 质量检查器测试
 """
-import pytest
-from pathlib import Path
-import tempfile
 import os
 
 # 添加父目录到 path 以便导入
 import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "infra" / "tools" / "consistency"))
 
-from check_naming import check_naming, extract_chapter_num, chinese_to_arabic
+from check_naming import check_naming, chinese_to_arabic, extract_chapter_num
 from integrity_checker import check_integrity
 
 

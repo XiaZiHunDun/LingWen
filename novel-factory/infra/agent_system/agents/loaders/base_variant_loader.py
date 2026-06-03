@@ -18,11 +18,12 @@ Usage:
                 id_mapping={...}
             )
 """
+import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Optional, List, Union, Callable
+from typing import Callable, Dict, List, Optional, Union
+
 import yaml
-import re
 
 
 class BaseVariantLoader(ABC):

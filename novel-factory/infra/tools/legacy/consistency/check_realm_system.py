@@ -9,9 +9,8 @@
 import os
 import re
 import sys
-from typing import List, Dict, Tuple, Optional
 from collections import OrderedDict, defaultdict
-
+from typing import Dict, List, Optional, Tuple
 
 # ========== 扩展后的境界体系 ==========
 REALM_HIERARCHY = [
@@ -187,7 +186,7 @@ def check_realm_consistency(chapters_dir: str,
     # 记录每个境界首次出现的位置
     first_appearance: Dict[str, int] = {}
     # 记录每个角色的境界晋升时间线
-    realm_history: Dict[str, List[Dict]] = defaultdict(list)
+    defaultdict(list)
 
     # 检测到的矛盾
     contradictions = []
@@ -205,7 +204,7 @@ def check_realm_consistency(chapters_dir: str,
 
         # 提取境界描述
         definitions, references = extract_realms(content)
-        all_realms = definitions + references
+        definitions + references
 
         # 记录首次出现（仅定义语句才算"首次定义"）
         for realm in definitions:
@@ -260,7 +259,7 @@ def check_realm_consistency(chapters_dir: str,
                 if re.search(rf'{re.escape(realm)}.*(?:定义|体系|属于|是.*境)', prev_content):
                     defined = True
                     break
-                realm_list = '|'.join(REALM_HIERARCHY + ['创世境'])
+                '|'.join(REALM_HIERARCHY + ['创世境'])
                 if re.search(rf'(?:粒子境|星火境|脉冲境|裂变境|黑洞境).*{re.escape(realm)}', prev_content):
                     defined = True
                     break

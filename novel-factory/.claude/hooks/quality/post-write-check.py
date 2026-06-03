@@ -9,9 +9,9 @@ PostToolUse Hook: 章节文件自动检测报告
       如需自动修复，请使用 batch_repair.py 工具
 """
 
-import sys
 import json
 import re
+import sys
 from pathlib import Path
 
 # 添加项目路径
@@ -30,8 +30,8 @@ def extract_chapter_num(file_path: str) -> int:
 def check_chapter(chapter_num: int) -> dict:
     """检测章节质量问题"""
     try:
-        from infra.quality import WorldviewChecker, AITraceChecker
         from infra.paths import ProjectPaths
+        from infra.quality import AITraceChecker, WorldviewChecker
 
         worldview_checker = WorldviewChecker()
         ai_trace_checker = AITraceChecker()
@@ -45,9 +45,9 @@ def check_chapter(chapter_num: int) -> dict:
         dialogue_issues = []
 
         try:
+            from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
             from infra.consistency.checkers.pacing_checker import PacingChecker
             from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
-            from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
 
             paths = ProjectPaths.get()
             content = paths.read_chapter(chapter_num)
@@ -119,7 +119,7 @@ def main():
         else:
             print(json.dumps({"allowed": True}))
 
-    except Exception as e:
+    except Exception:
         print(json.dumps({"allowed": True}))
 
 

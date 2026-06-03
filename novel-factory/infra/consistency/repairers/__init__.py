@@ -5,11 +5,11 @@
 """
 from __future__ import annotations
 
+import logging
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -174,14 +174,13 @@ class BaseConsistencyRepairer:
 
 
 # Import all repairers
-from .character_repairer import CharacterRepairer
 from .causal_chain_repairer import CausalChainRepairer
-from .pacing_repairer import PacingRepairer
-from .scene_transition_repairer import SceneTransitionRepairer
-from .dialogue_authenticity_repairer import DialogueAuthenticityRepairer
-from .gender_consistency_repairer import GenderConsistencyRepairer
-from .relationship_state_repairer import RelationshipStateRepairer
+from .character_repairer import CharacterRepairer
 from .core_foreshadow_repairer import CoreForeshadowRepairer
 from .core_props_repairer import CorePropsRepairer
+from .dialogue_authenticity_repairer import DialogueAuthenticityRepairer
+from .gender_consistency_repairer import GenderConsistencyRepairer
+from .pacing_repairer import PacingRepairer
+from .relationship_state_repairer import RelationshipStateRepairer
+from .scene_transition_repairer import SceneTransitionRepairer
 
-from pathlib import Path

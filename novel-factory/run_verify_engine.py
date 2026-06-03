@@ -4,13 +4,13 @@
 # 实现 AUDIT_ACCEPTANCE_CRITERIA.md 中定义的验证逻辑
 #===============================================================================
 
-import os
-import sys
 import json
-import re
+import os
 import random
-from pathlib import Path
+import re
+import sys
 from datetime import datetime
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent
 # R5-004: workflow_state.json 已废弃 (v9.1+),state 走 SQLite (.state/workflow.db)
@@ -159,7 +159,7 @@ class VerificationEngine:
 
         # 检查文件名中的章节号是否与实际内容匹配
         # 这里假设ch295应该是"第二百九十五章"
-        expected_title = self.number_to_chinese(chapter_num)
+        self.number_to_chinese(chapter_num)
 
         return issues if issues else None
 
@@ -426,8 +426,8 @@ class VerificationEngine:
             s = results['summary']
             report.append("## 汇总")
             report.append("")
-            report.append(f"| 指标 | 数值 |")
-            report.append(f"|------|------|")
+            report.append("| 指标 | 数值 |")
+            report.append("|------|------|")
             report.append(f"| 总章节数 | {s['total']} |")
             report.append(f"| 通过 | {s['passed']} |")
             report.append(f"| 失败 | {s['failed']} |")

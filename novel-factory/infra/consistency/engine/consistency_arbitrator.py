@@ -4,11 +4,11 @@
 多检查器交叉验证，模糊问题提交LLM复核
 """
 
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from .data_structures import Issue, IssueSeverity, ConfidenceLevel
+from .data_structures import ConfidenceLevel, Issue, IssueSeverity
 
 
 @dataclass
@@ -105,13 +105,11 @@ class ConsistencyArbitrator:
             # 多个检查器确认，这是个真实问题
             # 取最高严重性
             max_priority = max(self._get_severity_priority(s) for s in group.severities)
-            max_severity = None
             for s in group.severities:
                 if self._get_severity_priority(s) == max_priority:
                     for issue in group.issues:
                         if issue.severity == s and issue not in resolved:
                             resolved.append(issue)
-                            max_severity = s
                             break
                     break
             return resolved, ambiguous, false_positives

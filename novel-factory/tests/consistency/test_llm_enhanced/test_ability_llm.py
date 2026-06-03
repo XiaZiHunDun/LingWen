@@ -5,8 +5,9 @@ LLMEnhancedAbilityChecker测试
 验证能力检测器的LLM增强功能
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_ability_llm_finds_uncertain_regions():

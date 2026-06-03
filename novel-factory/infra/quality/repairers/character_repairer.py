@@ -4,18 +4,18 @@
 基于LLM修复角色行为/对话不一致问题
 """
 
-import sys
-import os
 import json
 import logging
+import os
+import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.quality import Repairer, RepairResult, YAMLRuleRepairer
 from infra.ai_service import MiniMaxProvider, ProviderConfig
+from infra.quality import Repairer, RepairResult, YAMLRuleRepairer
 
 logger = logging.getLogger(__name__)
 

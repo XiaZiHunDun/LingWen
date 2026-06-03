@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_chapter_content_creation():
     from infra.consistency.llm_service.chapter_content import ChapterContent
     ch = ChapterContent(
@@ -46,8 +47,13 @@ def test_llm_service_batch_threshold():
 
 def test_prompts_defined():
     from infra.consistency.llm_service.prompts import (
-        ABILITY_LLM_PROMPT, CHARACTER_LLM_PROMPT, RELATIONSHIP_LLM_PROMPT,
-        FORESHADOW_LLM_PROMPT, BATTLE_LLM_PROMPT, PERSONALITY_LLM_PROMPT, KNOWLEDGE_LLM_PROMPT
+        ABILITY_LLM_PROMPT,
+        BATTLE_LLM_PROMPT,
+        CHARACTER_LLM_PROMPT,
+        FORESHADOW_LLM_PROMPT,
+        KNOWLEDGE_LLM_PROMPT,
+        PERSONALITY_LLM_PROMPT,
+        RELATIONSHIP_LLM_PROMPT,
     )
     assert "能力" in ABILITY_LLM_PROMPT
     assert "角色" in CHARACTER_LLM_PROMPT

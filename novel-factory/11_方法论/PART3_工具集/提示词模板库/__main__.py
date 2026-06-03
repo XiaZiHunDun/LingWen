@@ -104,7 +104,7 @@ def cmd_rollback(args, vm: VersionManager):
             print("(Current version has been backed up)")
             return 0
         else:
-            print(f"Error: Rollback failed", file=sys.stderr)
+            print("Error: Rollback failed", file=sys.stderr)
             return 1
     except Exception as e:
         print(f"Error during rollback: {e}", file=sys.stderr)
@@ -118,8 +118,8 @@ def cmd_diff(args, vm: VersionManager):
 
     # Parse version identifiers (format: template_id@version or just version_id)
     # If just version IDs are provided, we need to find the template first
-    parts_a = version_a.split("@") if "@" in version_a else [None, version_a]
-    parts_b = version_b.split("@") if "@" in version_b else [None, version_b]
+    version_a.split("@") if "@" in version_a else [None, version_a]
+    version_b.split("@") if "@" in version_b else [None, version_b]
 
     # Get all templates with history to find matching versions
     all_history = vm.get_all_templates_with_history()

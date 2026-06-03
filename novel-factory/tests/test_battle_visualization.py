@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests for BattleVisualizationChecker"""
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Ensure project root (novel-factory/) is in sys.path
 _project_root = Path(__file__).parent.parent

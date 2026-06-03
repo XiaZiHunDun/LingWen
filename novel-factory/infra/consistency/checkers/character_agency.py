@@ -9,10 +9,10 @@
 """
 
 import re
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
+from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
-from ..engine.data_structures import Issue, IssueLocation, IssueSeverity, CheckerType
 
 
 class CharacterAgencyChecker(BaseChecker):

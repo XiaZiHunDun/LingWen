@@ -15,6 +15,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def get_chapter_title(content: str) -> str:
     """从章节内容中提取标题（第一行）"""
     lines = content.strip().split('\n')
@@ -94,7 +95,7 @@ def merge_chapters(chapter_dir: Path, start: int, end: int, output_file: Path, w
     # 写入文件统计
     size = output_file.stat().st_size
     print()
-    print(f"=== 合并完成 ===")
+    print("=== 合并完成 ===")
     print(f"输出文件: {output_file}")
     print(f"合并章节: {merged_count} 个")
     print(f"文件大小: {size / 1024 / 1024:.2f} MB")

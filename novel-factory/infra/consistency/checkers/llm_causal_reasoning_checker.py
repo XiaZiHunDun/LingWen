@@ -12,14 +12,19 @@ LLM辅助的复杂因果推理检测器
 由于LLM调用可能较慢或昂贵，它设计为可配置启用/禁用。
 """
 
-import re
 import json
 import logging
-from typing import List, Dict, Any, Optional
+import re
+from typing import Any, Dict, List, Optional
 
 from infra.consistency.engine.data_structures import (
-    Issue, IssueLocation, CheckerType, IssueSeverity, ConfidenceLevel
+    CheckerType,
+    ConfidenceLevel,
+    Issue,
+    IssueLocation,
+    IssueSeverity,
 )
+
 from .base_checker import BaseChecker
 
 logger = logging.getLogger(__name__)
@@ -177,8 +182,8 @@ class LLMCausalReasoningChecker(BaseChecker):
         Returns:
             LLM返回的JSON结果
         """
-        import json
         import os
+
         from ...ai_service import ProviderConfig
         from ...ai_service.router import AIRouter
 

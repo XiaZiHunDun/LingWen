@@ -4,17 +4,17 @@
 在章节大纲生成后、审核前，提供3-5个反套路创意选项供选择
 """
 
-import sys
 import logging
-from pathlib import Path
-from typing import List, Dict, Optional, Any
+import sys
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.llm_service import LLMService, LLMTask, TaskType
 from infra.config.api_config_loader import get_api_config
+from infra.llm_service import LLMService, LLMTask, TaskType
 
 logger = logging.getLogger(__name__)
 

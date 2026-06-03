@@ -4,9 +4,11 @@
 检测说A做B的矛盾（如承诺后立即违背）
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from infra.consistency.checkers.dialogue_action_checker import DialogueActionChecker

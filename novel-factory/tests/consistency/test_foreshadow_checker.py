@@ -1,6 +1,7 @@
 """ForeshadowChecker 测试"""
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
 from infra.consistency.engine.data_structures import IssueSeverity
@@ -99,7 +100,7 @@ class TestForeshadowChecker:
         )
 
         # 在第55章检查（已过预期回收章节3章以上）
-        issues = checker.check(
+        checker.check(
             chapter_content="章节内容",
             chapter_num=55,
             context={"plot_threads": [], "new_foreshadow": []}
@@ -160,7 +161,7 @@ class TestForeshadowChecker:
             )
         ]
 
-        issues = checker.check(
+        checker.check(
             chapter_content="章节内容",
             chapter_num=30,
             context={"plot_threads": plot_threads, "new_foreshadow": []}

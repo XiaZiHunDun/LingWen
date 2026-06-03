@@ -5,6 +5,7 @@ Mirrors lines 78-210 of the original infra/cli/commands.py.
 from typing import List
 
 from infra.cli.options import UnifiedOptions
+
 from .base import Command
 
 
@@ -71,10 +72,10 @@ class CheckCommand(Command):
 
     def _check_full(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run comprehensive quality check"""
-        from infra.consistency.engine.consistency_engine import ConsistencyEngine, CheckScope
+        from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
         from infra.consistency.checkers.pacing_checker import PacingChecker
         from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
-        from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
+        from infra.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
 
         print(f"执行全面检查: {len(chapters)} 个章节")
 

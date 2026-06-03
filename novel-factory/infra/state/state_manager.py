@@ -3,13 +3,13 @@
 SQLite State Manager - replaces workflow_state.json
 Provides atomic state operations with transaction support
 """
-import json
-import sqlite3
-import shutil
 import fcntl
-from pathlib import Path
-from datetime import datetime
+import json
+import shutil
+import sqlite3
 from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 

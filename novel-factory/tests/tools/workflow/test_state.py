@@ -76,7 +76,7 @@ class TestGetState:
 
     def test_get_state_falls_back_to_json(self, sample_workflow_json):
         """Test fallback to JSON when SQLite has no data"""
-        from infra.tools.workflow.lib import get_state, DB_PATH
+        from infra.tools.workflow.lib import DB_PATH, get_state
 
         result = get_state("version")
         assert result == "v8.2"
@@ -122,7 +122,7 @@ class TestSetState:
 
     def test_set_state_stores_value(self, init_db):
         """Test that set_state actually stores the value"""
-        from infra.tools.workflow.lib import set_state, get_state
+        from infra.tools.workflow.lib import get_state, set_state
 
         set_state("my_key", "my_value")
         result = get_state("my_key")
@@ -130,7 +130,7 @@ class TestSetState:
 
     def test_set_state_overwrites_existing(self, init_db):
         """Test that set_state overwrites existing value"""
-        from infra.tools.workflow.lib import set_state, get_state
+        from infra.tools.workflow.lib import get_state, set_state
 
         set_state("overwrite_key", "first_value")
         set_state("overwrite_key", "second_value")
@@ -140,7 +140,7 @@ class TestSetState:
 
     def test_set_state_multiple_keys(self, init_db):
         """Test setting multiple keys independently"""
-        from infra.tools.workflow.lib import set_state, get_state
+        from infra.tools.workflow.lib import get_state, set_state
 
         set_state("key1", "value1")
         set_state("key2", "value2")
@@ -150,7 +150,7 @@ class TestSetState:
 
     def test_set_state_with_special_characters(self, init_db):
         """Test storing values with special characters"""
-        from infra.tools.workflow.lib import set_state, get_state
+        from infra.tools.workflow.lib import get_state, set_state
 
         special_value = "value with 'quotes' and unicode 中 文"
         set_state("special_key", special_value)
@@ -176,7 +176,7 @@ class TestAdvanceStep:
 
     def test_advance_step_invalid_transition(self, init_db):
         """Test that invalid transition is rejected"""
-        from infra.tools.workflow.lib import advance_step, set_state, get_state
+        from infra.tools.workflow.lib import advance_step, get_state, set_state
 
         set_state("current_step", "STEP_14")
 
@@ -201,7 +201,7 @@ class TestAdvanceStep:
 
     def test_advance_step_with_validator(self, init_db):
         """Test advance_step works when validator is available"""
-        from infra.tools.workflow.lib import advance_step, set_state, get_state
+        from infra.tools.workflow.lib import advance_step, get_state, set_state
 
         set_state("current_step", "STEP_14")
 
@@ -259,7 +259,7 @@ class TestGetStateReadLock:
         通过 monkeypatch db.sqlite3.connect 返回一个轻量级 ConnectionProxy,
         记录所有 execute() 调用的 SQL。
         """
-        from infra.tools.workflow.lib import get_state, set_state, db
+        from infra.tools.workflow.lib import db, get_state, set_state
 
         set_state("current_step", "STEP_15")
 
@@ -314,6 +314,7 @@ class TestGetStateReadLock:
           3. 读事务内再 SELECT key1 应仍是 v1(快照一致)
         """
         import sqlite3
+
         from infra.tools.workflow.lib import db, set_state
 
         set_state("r3_003_key1", "v1")
@@ -322,7 +323,6 @@ class TestGetStateReadLock:
         # 单独写线程
         import threading
         commit_done = threading.Event()
-        snap_holder = {}
 
         def mutator():
             conn = sqlite3.connect(str(db.DB_PATH), timeout=30)

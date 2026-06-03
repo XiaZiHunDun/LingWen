@@ -4,16 +4,16 @@
 修复角色行为、对话、决策不一致的问题
 """
 
-import sys
 import re
+import sys
 from pathlib import Path
-from typing import List, Tuple, Any, Optional
+from typing import Any, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.consistency.repairers import BaseConsistencyRepairer, ConsistencyRepairResult
 from infra.consistency.engine.data_structures import Issue
+from infra.consistency.repairers import BaseConsistencyRepairer, ConsistencyRepairResult
 
 
 class CharacterRepairer(BaseConsistencyRepairer):

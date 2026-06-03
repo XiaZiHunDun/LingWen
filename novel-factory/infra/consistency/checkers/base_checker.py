@@ -5,11 +5,11 @@
 所有检查器应继承此基类
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type
-import logging
 
-from ..engine.data_structures import Issue, CheckerType
+from ..engine.data_structures import CheckerType, Issue
 from ..engine.whitelist_manager import WhitelistManager
 
 logger = logging.getLogger(__name__)
