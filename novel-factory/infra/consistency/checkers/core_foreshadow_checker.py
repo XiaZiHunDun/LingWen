@@ -44,6 +44,33 @@ class CoreForeshadowChecker(BaseChecker):
             project_root = Path(__file__).parent.parent.parent.parent
             chapters_dir = project_root / '03_内容仓库' / '04_正文'
         self.chapters_dir = Path(chapters_dir)
+        # R2-009: 章节内容缓存。check_chapter 会为同一章节文件调用
+        # _is_recycled 多次 (每个伏笔一次),每次都在循环里 read_text
+        # 是 O(N×M) 次磁盘读。缓存后变 O(M)。
+        # key: ch_num, value: content (None 表示文件不存在)
+        self._chapter_content_cache: Dict[int, Optional[str]] = {}
+
+    def _get_chapter_content(self, ch_num: int) -> Optional[str]:
+        """R2-009: 缓存章节内容,避免 _is_recycled 在循环中重复 read_text
+
+        返回 None 表示文件不存在 (与 read_text 抛 FileNotFoundError 区分)。
+        """
+        if ch_num not in self._chapter_content_cache:
+            ch_file = self.chapters_dir / f'ch{ch_num:03d}.md'
+            if ch_file.exists():
+                self._chapter_content_cache[ch_num] = ch_file.read_text(encoding='utf-8')
+            else:
+                self._chapter_content_cache[ch_num] = None
+        return self._chapter_content_cache[ch_num]
+
+    def clear_chapter_cache(self) -> None:
+        """R2-009: 清空章节缓存 (测试隔离用)
+
+        正常业务代码不需要调,check_all 跨章节会自然填充新缓存。
+        仅当磁盘文件被外部修改 (e.g. 修复 pipeline 写入新内容)
+        时需要主动清空,否则会读到旧内容。
+        """
+        self._chapter_content_cache.clear()
 
     def check_chapter(self, chapter_num: int) -> list[ForeshadowIssue]:
         """检查单章的伏笔记录"""
@@ -76,7 +103,11 @@ class CoreForeshadowChecker(BaseChecker):
         return issues
 
     def _is_recycled(self, foreshadow_text: str, start_chapter: int, expect_range: str) -> bool:
-        """检查伏笔是否被回收"""
+        """检查伏笔是否被回收
+
+        R2-009: 改用 _get_chapter_content 走缓存,避免每次调用都对
+        expect_range 内每个 chapter 重新 read_text。
+        """
         # 解析expect_range (如 "ch027-ch060")
         match = re.match(r'ch(\d+)-ch(\d+)', expect_range)
         if not match:
@@ -84,19 +115,18 @@ class CoreForeshadowChecker(BaseChecker):
 
         start = int(match.group(1))
         end = int(match.group(2))
+        keywords = foreshadow_text.split('/')
 
         # 检查start到end之间的章节
         for ch_num in range(start, end + 1):
             if ch_num <= start_chapter:
                 continue  # 跳过伏笔植入章节本身
-
-            ch_file = self.chapters_dir / f'ch{ch_num:03d}.md'
-            if ch_file.exists():
-                content = ch_file.read_text(encoding='utf-8')
-                # 检查关键词是否出现
-                keywords = foreshadow_text.split('/')
-                if any(kw.strip() in content for kw in keywords):
-                    return True
+            content = self._get_chapter_content(ch_num)
+            if content is None:
+                continue
+            # 检查关键词是否出现
+            if any(kw.strip() in content for kw in keywords):
+                return True
 
         return False
 
