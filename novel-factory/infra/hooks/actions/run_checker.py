@@ -65,8 +65,6 @@ class RunCheckerAction(BaseAction):
                 result = self._run_consistency_check(chapter_range, context)
             elif checker_name == "quality_gate":
                 result = self._run_quality_gate(chapter_range, threshold, context)
-            elif checker_name == "auto_consistency_checker":
-                result = self._run_auto_consistency_check(chapter_range, context)
             else:
                 return ActionResult(
                     success=False,
@@ -157,7 +155,7 @@ class RunCheckerAction(BaseAction):
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """运行质量门禁检查"""
-        from tools.consistency.run_quality_checks import run_quality_checks
+        from infra.tools.consistency.run_quality_checks import run_quality_checks
 
         chapters_dir = self._get_chapters_dir(context)
 
@@ -173,32 +171,5 @@ class RunCheckerAction(BaseAction):
             "passed": results.get("passed", False),
             "score": results.get("score", 0),
             "threshold": threshold,
-            "chapter_range": chapter_range
-        }
-
-    def _run_auto_consistency_check(
-        self,
-        chapter_range: str,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """运行自动一致性检查器"""
-        from tools.consistency.auto_consistency_checker import check_chapter
-
-        chapter_id = context.get("chapter_id", "")
-        if not chapter_id:
-            return {
-                "checker": "auto_consistency_checker",
-                "error": "No chapter_id in context"
-            }
-
-        chapters_dir = self._get_chapters_dir(context)
-
-        issues = check_chapter(chapter_id, chapters_dir)
-
-        return {
-            "checker": "auto_consistency_checker",
-            "chapter_id": chapter_id,
-            "issues_found": len(issues),
-            "issues": issues,
             "chapter_range": chapter_range
         }

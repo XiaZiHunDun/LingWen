@@ -222,6 +222,67 @@ class TestRunCheckerAction(TestCase):
         self.assertFalse(result.success)
         self.assertIn("Unknown checker", result.error)
 
+    def test_auto_consistency_checker_is_removed(self):
+        """auto_consistency_checker 已在 P4-2 删除,RunCheckerAction 不应再支持
+
+        P4-2 删除了 tools/consistency/auto_consistency_checker.py;
+        原 _run_auto_consistency_check 方法变成死代码(P0 broken import)。
+        契约:任何 "auto_consistency_checker" 请求都应返回 Unknown。
+        """
+        from infra.hooks.actions.run_checker import RunCheckerAction
+        action = RunCheckerAction()
+
+        result = action.execute(
+            params={"checker": "auto_consistency_checker", "chapter_id": "ch001"},
+            context={}
+        )
+        self.assertFalse(result.success)
+        self.assertIn("Unknown checker", result.error)
+
+    def test_run_quality_gate_uses_correct_import_path(self):
+        """质量门禁应走正确的 import path: infra.tools.consistency.run_quality_checks
+
+        原代码用 `from tools.consistency.run_quality_checks` — 但实际目录是
+        `infra/tools/consistency/`,旧路径从来 import 不通。这是 P4-2 删
+        auto_consistency_checker 留下的潜在 bug,P5-1 修复 + 锁定。
+        """
+        from unittest.mock import patch, MagicMock
+        from infra.hooks.actions.run_checker import RunCheckerAction
+
+        fake_result = {"passed": True, "score": 0.95}
+        with patch(
+            "infra.tools.consistency.run_quality_checks.run_quality_checks",
+            return_value=fake_result,
+            create=True,
+        ) as mock_run:
+            # 还需要让 import 走通 — patch 掉整个模块
+            with patch.dict("sys.modules", {
+                "infra.tools.consistency.run_quality_checks": MagicMock(
+                    run_quality_checks=mock_run
+                )
+            }):
+                action = RunCheckerAction()
+                result = action.execute(
+                    params={
+                        "checker": "quality_gate",
+                        "chapter_range": "1-10",
+                        "threshold": "Silver"
+                    },
+                    context={}
+                )
+
+        # 修复后契约:成功返回,score / threshold / range 正确
+        self.assertTrue(result.success, f"应成功 (error={result.error})")
+        self.assertEqual(result.output["checker"], "quality_gate")
+        self.assertEqual(result.output["score"], 0.95)
+        self.assertEqual(result.output["threshold"], "Silver")
+        self.assertEqual(result.output["chapter_range"], "1-10")
+        # run_quality_checks 必须被以正确参数调用
+        mock_run.assert_called_once()
+        call_kwargs = mock_run.call_args.kwargs
+        self.assertEqual(call_kwargs.get("chapter_range"), "1-10")
+        self.assertEqual(call_kwargs.get("threshold"), "Silver")
+
 
 class TestTriggerModuleActionShellSafety(TestCase):
     """TriggerModuleAction 安全性回归测试 — P0 修复锁定契约
