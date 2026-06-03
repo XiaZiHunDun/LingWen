@@ -12,6 +12,7 @@ import re
 from typing import List, Dict, Optional
 
 from .base_checker import BaseChecker
+from .text_utils import split_chinese_sentences
 from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, CheckerType
 
 
@@ -99,7 +100,7 @@ class PacingChecker(BaseChecker):
     def _count_action_segments(self, content: str) -> int:
         """统计动作段数量"""
         count = 0
-        sentences = content.split('。')
+        sentences = split_chinese_sentences(content)
 
         for sentence in sentences:
             action_count = sum(1 for kw in self.action_keywords if kw in sentence)
@@ -114,7 +115,7 @@ class PacingChecker(BaseChecker):
 
     def _has_climax_without_cooldown(self, content: str) -> bool:
         """检测高潮后是否有缓冲"""
-        sentences = content.split('。')
+        sentences = split_chinese_sentences(content)
         recent_actions = 0
         recent_cooldowns = 0
 
@@ -133,7 +134,7 @@ class PacingChecker(BaseChecker):
 
     def _measure_foreshadow_length(self, content: str) -> float:
         """测量铺垫长度占比"""
-        sentences = content.split('。')
+        sentences = split_chinese_sentences(content)
 
         if len(sentences) < 3:
             return 0.0

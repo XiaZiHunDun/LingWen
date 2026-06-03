@@ -12,6 +12,7 @@ import re
 from typing import List, Dict, Optional
 
 from .base_checker import BaseChecker
+from .text_utils import split_chinese_sentences
 from ..engine.data_structures import Issue, IssueSeverity, IssueLocation, CheckerType
 
 
@@ -97,7 +98,7 @@ class SceneTransitionChecker(BaseChecker):
 
     def _has_consecutive_space_jumps(self, content: str) -> bool:
         """检测是否在短距离内有多次空间跳跃"""
-        sentences = content.split('。')
+        sentences = split_chinese_sentences(content)
         jump_count = 0
 
         for sentence in sentences[-15:]:  # 检查最近15句
