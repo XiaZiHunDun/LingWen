@@ -13,57 +13,53 @@ from pathlib import Path
 from datetime import datetime
 
 PROJECT_ROOT = Path(__file__).parent
+# R5-004: workflow_state.json 已废弃 (v9.1+),state 走 SQLite (.state/workflow.db)
+# 保留 LEGACY_WORKFLOW_FILE 仅为旧 hook 配置平滑过渡(读时 fallback,写时不写回)
+LEGACY_WORKFLOW_FILE = PROJECT_ROOT / "workflow_state.json"
 CONTENT_DIR = PROJECT_ROOT / "03_内容仓库" / "04_正文"
 OPINION_DIR = PROJECT_ROOT / "06_意见仓库" / "04_正文_审核"
 
-# 旧 JSON 状态文件（已废弃，保留路径仅用于兼容旧 hook 配置）
-LEGACY_WORKFLOW_FILE = PROJECT_ROOT / "workflow_state.json"
-
-# SQLite 后端：使用 .state/workflow.db（CLAUDE.md 已声明 workflow_state.json 废弃）
+# SQLite key:存整个 engine.state 字典
 SQLITE_STATE_KEY = "verify_engine_state"
+
+
+def _get_workflow_db():
+    """获取项目级 WorkflowDB 单例(延迟初始化)"""
+    from infra.state.database import WorkflowDB
+    return WorkflowDB()
 
 
 class VerificationEngine:
     """修复验证引擎"""
 
     def __init__(self):
-        self._db = None  # lazy-init
+        self._db = None
         self.state = self.load_state()
         self.issues_found = self.state.get('issues_found', {})
         self.verification_results = []
 
     def _get_db(self):
-        """延迟初始化 SQLite 状态数据库"""
+        """获取/复用本 engine 关联的 WorkflowDB 实例(测试可通过替换该方法共享 DB)"""
         if self._db is None:
-            from infra.state.database import WorkflowDB
-            self._db = WorkflowDB()
+            self._db = _get_workflow_db()
         return self._db
 
     def load_state(self):
-        """加载状态（从 SQLite，缺省回退到旧 JSON 文件）"""
-        try:
-            data = self._get_db().get(SQLITE_STATE_KEY)
-            if isinstance(data, dict):
-                return data
-        except Exception:
-            pass
-        # 回退：旧 JSON 文件（仅在首次迁移时使用）
+        """加载状态:R5-004 优先 SQLite,无则回退到废弃的 JSON 文件,再无则空 dict"""
+        db_state = self._get_db().get(SQLITE_STATE_KEY)
+        if db_state is not None:
+            return db_state
+        # SQLite 无数据,尝试从废弃的 JSON 文件读一次
         if LEGACY_WORKFLOW_FILE.exists():
             try:
                 with open(LEGACY_WORKFLOW_FILE, 'r', encoding='utf-8') as f:
-                    legacy = json.load(f)
-                # 一次性迁移到 SQLite
-                try:
-                    self._get_db().set(SQLITE_STATE_KEY, legacy)
-                except Exception:
-                    pass
-                return legacy
-            except Exception:
-                return {}
+                    return json.load(f)
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"[warn] 读取废弃 workflow_state.json 失败: {e}", file=sys.stderr)
         return {}
 
     def save_state(self):
-        """保存状态到 SQLite"""
+        """保存状态:R5-004 写入 SQLite (atomic, fcntl.flock 保护);不写回废弃的 JSON"""
         self._get_db().set(SQLITE_STATE_KEY, self.state)
 
     # -------------------------------------------------------------------------

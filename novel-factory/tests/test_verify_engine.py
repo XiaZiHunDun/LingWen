@@ -283,5 +283,98 @@ class TestVerificationResults:
         assert len(result['results']) == 3
 
 
+class TestR5004Consolidation:
+    """P5-2 整合后契约 — 锁定 R5-004 SQLite-first 行为
+
+    原 scripts/run_verify_engine.py 与顶层 run_verify_engine.py 99% 重叠,
+    仅 load_state() 行为略不同。整合后(top-level 应用了 scripts/ 改进):
+    - 优先读 SQLite,SQLite 无数据时回退到废弃的 JSON
+    - 不再在 load_state() 中触发一次性 JSON→SQLite 写回(写由 save_state() 负责)
+    - LEGACY_WORKFLOW_FILE 路径:顶层 file 所在目录 = 项目根,所以
+      `LEGACY_WORKFLOW_FILE = PROJECT_ROOT / "workflow_state.json"`
+    """
+
+    def test_legacy_workflow_file_at_project_root(self):
+        """LEGACY_WORKFLOW_FILE 应在项目根(顶层 file 解析),不在 scripts/ 子目录
+
+        整合时删了 scripts/run_verify_engine.py;该副本的 path 修正
+        (PROJECT_ROOT.parent) 是为 scripts/ 子目录做的,顶层 file 不需要。
+        锁定:LEGACY_WORKFLOW_FILE = PROJECT_ROOT / "workflow_state.json"。
+
+        不依赖 isolated_engine fixture(它会 patch LEGACY_WORKFLOW_FILE),
+        直接读模块的源常量。
+        """
+        from pathlib import Path
+        import importlib
+        # 重新 import 拿到未 patch 状态
+        fresh_rve = importlib.import_module("run_verify_engine")
+        # 顶层 file 自身路径
+        rve_file = Path(fresh_rve.__file__).resolve()
+        # 它所在目录就是 PROJECT_ROOT (Path(__file__).parent)
+        project_root = rve_file.parent
+        # LEGACY_WORKFLOW_FILE 必须是 project_root 下的 workflow_state.json
+        assert fresh_rve.LEGACY_WORKFLOW_FILE == project_root / "workflow_state.json", (
+            f"LEGACY_WORKFLOW_FILE 应指向 {project_root}/workflow_state.json,"
+            f" 实际 {fresh_rve.LEGACY_WORKFLOW_FILE}"
+        )
+        # 不应在 scripts/ 子目录
+        assert "scripts" not in fresh_rve.LEGACY_WORKFLOW_FILE.parts, (
+            f"顶层 file 的 LEGACY_WORKFLOW_FILE 不应在 scripts/ 下: {fresh_rve.LEGACY_WORKFLOW_FILE}"
+        )
+
+    def test_load_state_reads_sqlite_first(self, isolated_engine, tmp_path):
+        """load_state 应优先读 SQLite,SQLite 有数据时不读 JSON
+
+        R5-004 行为:SQLite 是 source of truth,JSON 仅作 fallback。
+        """
+        engine, _, _ = isolated_engine
+        # 写 SQLite 状态
+        engine.state = {"issues_found": {"ch1": ["test_issue"]}}
+        engine.save_state()
+        # 创建一个会"污染"的 JSON(应被忽略)
+        polluted_json = tmp_path / "should_be_ignored.json"
+        polluted_json.write_text(
+            json.dumps({"issues_found": {"WRONG": ["from_json"]}}),
+            encoding="utf-8"
+        )
+        from unittest.mock import patch
+        with patch.object(rve, "LEGACY_WORKFLOW_FILE", polluted_json):
+            fresh = rve.VerificationEngine()
+            # SQLite 优先 → 应读 SQLite 数据
+            assert fresh.state.get("issues_found", {}).get("ch1") == ["test_issue"]
+            assert "WRONG" not in fresh.state.get("issues_found", {})
+
+    def test_load_state_falls_back_to_json_when_sqlite_empty(self, isolated_engine, tmp_path):
+        """SQLite 无数据时,load_state 应回退到 JSON 文件
+
+        R5-004 行为:SQLite 为空 + JSON 存在 → 读 JSON(不写回 SQLite)
+        """
+        # 准备一个 JSON 文件作为 fallback
+        legacy = tmp_path / "workflow_state.json"
+        legacy.write_text(
+            json.dumps({"issues_found": {"ch2": ["legacy_issue"]}}),
+            encoding="utf-8"
+        )
+        # 把 LEGACY_WORKFLOW_FILE 重定向到我们准备的 JSON
+        from unittest.mock import patch
+        # 隔离 SQLite + CONTENT_DIR (用全新 tmp_path 避免 fixture 冲突)
+        from infra.state import database as dbmod
+        own_tmp = tmp_path / "fallback_test"
+        own_tmp.mkdir()
+        fake_db = own_tmp / "wf.db"
+        original_init = dbmod.WorkflowDB.__init__
+
+        def patched_init(self, db_path=None):
+            original_init(self, fake_db)
+
+        with patch.object(rve, "LEGACY_WORKFLOW_FILE", legacy), \
+             patch.object(dbmod.WorkflowDB, "__init__", patched_init), \
+             patch.object(rve, "CONTENT_DIR", own_tmp / "content"), \
+             patch.object(rve, "OPINION_DIR", own_tmp / "opinion"):
+            fresh = rve.VerificationEngine()
+            # 应回退到 JSON 数据
+            assert fresh.state.get("issues_found", {}).get("ch2") == ["legacy_issue"]
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '--tb=short'])
