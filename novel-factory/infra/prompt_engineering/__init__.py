@@ -27,6 +27,13 @@ from .data_structures import (
     PromptContext,
     StepContract,
 )
+from .extraction import (
+    ExtractedResolution,
+    ExtractedRipple,
+    ExtractionParseError,
+    RippleExtractionResult,
+    parse_ripple_extraction,
+)
 from .scenarios import (
     SCENARIOS,
     STEP_CONTRACTS,
@@ -64,4 +71,10 @@ __all__ = [
     "TemplateParseError",
     "load_template",
     "render_template",
+    # Phase 2.1 — LLM ripple extraction
+    "ExtractedRipple",
+    "ExtractedResolution",
+    "RippleExtractionResult",
+    "ExtractionParseError",
+    "parse_ripple_extraction",
 ]
