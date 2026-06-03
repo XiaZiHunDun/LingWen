@@ -78,8 +78,7 @@ class TriggerModuleAction(BaseAction):
 
         try:
             result = subprocess.run(
-                " ".join(cmd_parts),
-                shell=True,
+                cmd_parts,
                 capture_output=True,
                 text=True,
                 timeout=params.get("timeout", 120)
