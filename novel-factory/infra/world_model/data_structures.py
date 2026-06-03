@@ -10,10 +10,13 @@ Phase 1.1 — Doc 1 (灵文理论框架 v1.0) 实施层。
 - Ripple: 剧情波浪 (挖坑→扩散→平复)
 - WorldSnapshot: 一章一个版本的世界快照
 
+Phase 1.2 (Doc 3): 加 active_subplots 字段 (lazy import 避免循环依赖)
+
 设计原则:
 - 不可变 (frozen=True) 优先,便于 reasoning 和缓存
 - to_dict / from_dict 用于 JSON 持久化
 - NodeId 用 type+name 复合,避免 id 冲突
+- 跨包引用用 TYPE_CHECKING + 字符串注解,运行时 lazy import
 """
 from __future__ import annotations
 
@@ -22,7 +25,10 @@ import json
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from infra.subplot.data_structures import Plot
 
 
 class NodeType(str, Enum):
@@ -236,26 +242,33 @@ class WorldSnapshot:
     physical: PhysicalLine = field(default_factory=lambda: PhysicalLine(ch=0))
     mental: MentalLine = field(default_factory=lambda: MentalLine(ch=0))
     active_ripples: tuple[Ripple, ...] = ()
+    active_subplots: tuple["Plot", ...] = ()  # Phase 1.2 (Doc 3)
     world_mood: str = "neutral"
     consistency_hash: str = ""
 
     def __post_init__(self) -> None:
-        # 自动计算 hash (如果未提供)
-        if not self.consistency_hash:
-            object.__setattr__(self, "consistency_hash", self.compute_consistency_hash())
+        # 始终重新计算 hash — 每次 new / dataclasses.replace 都是新快照,hash 必须反映当前内容
+        # (旧的 `if not self.consistency_hash` 写法会让 dataclasses.replace 继承旧 hash,导致不一致)
+        object.__setattr__(self, "consistency_hash", self.compute_consistency_hash())
 
     def compute_consistency_hash(self) -> str:
-        """基于 nodes + relations + lines 计算一致性 hash"""
+        """基于 nodes + relations + lines + subplots 计算一致性 hash"""
         payload = {
             "nodes": {str(k): v.to_dict() for k, v in sorted(self.nodes.items(), key=lambda x: str(x[0]))},
             "relations": [r.to_dict() for r in sorted(self.relations, key=lambda r: (str(r.src), str(r.dst)))],
             "physical": self.physical.to_dict(),
             "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
+            "active_subplots": [self._plot_to_dict(p) for p in self.active_subplots],
             "world_mood": self.world_mood,
         }
         encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
+
+    @staticmethod
+    def _plot_to_dict(p: Any) -> dict[str, Any]:
+        """Plot → dict (duck typing: 调用 p.to_dict())"""
+        return p.to_dict() if hasattr(p, "to_dict") else p
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -267,13 +280,18 @@ class WorldSnapshot:
             "physical": self.physical.to_dict(),
             "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
+            "active_subplots": [self._plot_to_dict(p) for p in self.active_subplots],
             "world_mood": self.world_mood,
             "consistency_hash": self.consistency_hash,
         }
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "WorldSnapshot":
+        # Lazy import to avoid circular dependency (subplot → world_model)
+        from infra.subplot.data_structures import Plot
+
         nodes = {NodeId.from_string(s): KeyPoint.from_dict(kd) for s, kd in d.get("nodes", {}).items()}
+        subplots = tuple(Plot.from_dict(pd) for pd in d.get("active_subplots", []))
         return cls(
             snapshot_id=d["snapshot_id"],
             chapter=d["chapter"],
@@ -283,6 +301,7 @@ class WorldSnapshot:
             physical=PhysicalLine.from_dict(d.get("physical", {"ch": 0})),
             mental=MentalLine.from_dict(d.get("mental", {"ch": 0})),
             active_ripples=tuple(Ripple.from_dict(rd) for rd in d.get("active_ripples", [])),
+            active_subplots=subplots,
             world_mood=d.get("world_mood", "neutral"),
             consistency_hash=d.get("consistency_hash", ""),
         )
