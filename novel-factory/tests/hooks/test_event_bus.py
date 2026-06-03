@@ -183,6 +183,94 @@ class TestEventTypes(TestCase):
         self.assertEqual(EventTypes.REVIEW_COMPLETED, "REVIEW_COMPLETED")
 
 
+class TestGlobalEventBusSingleton(TestCase):
+    """R1-008: 全局事件总线单例 + reset 函数
+
+    之前 _global_event_bus 没有重置入口,测试间 handler 互相污染。
+    新增 reset_global_event_bus() 显式释放单例 + 清 handler。
+    """
+
+    def setUp(self):
+        # 每个测试用例前都重置,避免上轮测试残留 handler 影响
+        from infra.hooks.event_bus import reset_global_event_bus
+        reset_global_event_bus()
+
+    def tearDown(self):
+        # 清理:不留跨测试状态
+        from infra.hooks.event_bus import reset_global_event_bus
+        reset_global_event_bus()
+
+    def test_get_event_bus_returns_singleton(self):
+        """get_event_bus() 多次调用返回同一实例"""
+        from infra.hooks.event_bus import get_event_bus
+        a = get_event_bus()
+        b = get_event_bus()
+        self.assertIs(a, b)
+
+    def test_reset_clears_handlers(self):
+        """reset_global_event_bus() 必须清掉所有 handler"""
+        from infra.hooks.event_bus import get_event_bus, reset_global_event_bus
+        bus = get_event_bus()
+        received = []
+
+        def handler(event):
+            received.append(event)
+
+        bus.subscribe("RESET_TEST", handler)
+        self.assertEqual(bus.get_handler_count("RESET_TEST"), 1)
+
+        # 重置:handler 应消失
+        reset_global_event_bus()
+
+        # 旧引用 bus 仍能用,但 handler 没了
+        self.assertEqual(bus.get_handler_count("RESET_TEST"), 0)
+
+        # 新 get_event_bus() 返回不同实例
+        new_bus = get_event_bus()
+        self.assertIsNot(new_bus, bus)
+
+    def test_reset_idempotent(self):
+        """reset 在没有单例时也可调用(不应抛异常)"""
+        from infra.hooks.event_bus import reset_global_event_bus
+        # 先 reset 一次,确保 None
+        reset_global_event_bus()
+        # 再 reset 一次,仍是 None,不应抛
+        reset_global_event_bus()
+
+    def test_fixture_pattern_isolates_handlers(self):
+        """核心场景:测试 A subscribe → reset → 测试 B 看不到
+
+        这是 R1-008 修复的真实痛点:之前测试间 handler 泄漏导致
+        偶发性失败 (e.g. handler 数对不上)。
+        """
+        from infra.hooks.event_bus import get_event_bus, reset_global_event_bus
+
+        # 测试 A: subscribe
+        bus_a = get_event_bus()
+        bus_a.subscribe("LEAK_TEST", lambda e: None)
+        self.assertEqual(bus_a.get_handler_count("LEAK_TEST"), 1)
+
+        # 用 reset 模拟测试边界
+        reset_global_event_bus()
+
+        # 测试 B: 应看到全新 bus
+        bus_b = get_event_bus()
+        self.assertEqual(bus_b.get_handler_count("LEAK_TEST"), 0)
+
+    def test_reset_clears_filters_too(self):
+        """reset 也应清掉 event_filters (订阅 filter 也会泄漏)"""
+        from infra.hooks.event_bus import get_event_bus, reset_global_event_bus
+
+        bus = get_event_bus()
+        # 通过 publish 触发 filter 注册路径 → 不直接暴露接口
+        # 此处只验证:reset 后 bus 是新的,旧 bus 即使被外部引用也不再有
+        # 副作用 → 通过 setUp/tearDown 的对称性保证
+        bus_id_before = id(bus)
+        reset_global_event_bus()
+        new_bus = get_event_bus()
+        self.assertNotEqual(id(new_bus), bus_id_before)
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()

@@ -227,11 +227,34 @@ class EventTypes:
 
 # 全局事件总线实例（方便复用）
 _global_event_bus: Optional[EventBus] = None
+_global_event_bus_lock = threading.RLock()
 
 
 def get_event_bus() -> EventBus:
     """获取全局事件总线实例"""
     global _global_event_bus
     if _global_event_bus is None:
-        _global_event_bus = EventBus()
+        with _global_event_bus_lock:
+            # 双重检查,避免多线程下重复创建
+            if _global_event_bus is None:
+                _global_event_bus = EventBus()
     return _global_event_bus
+
+
+def reset_global_event_bus() -> None:
+    """R1-008: 重置全局事件总线单例
+
+    清空所有 handler + 释放单例引用,下次 get_event_bus() 会创建新实例。
+    主要用于测试隔离:不同测试用例之间通过 fixture 调用本函数,
+    避免 handler 跨用例泄漏 (e.g. 一次性 fixture 在 test_xxx1 里
+    subscribe,test_xxx2 还看到那个 handler)。
+
+    生产代码不应用本函数 — 业务逻辑应各自 new EventBus() 或在用完后
+    unsubscribe 自己的 handler。
+    """
+    global _global_event_bus
+    with _global_event_bus_lock:
+        if _global_event_bus is not None:
+            # 清掉所有 handler,防止旧 handler 仍持有引用导致内存泄漏
+            _global_event_bus.clear()
+        _global_event_bus = None
