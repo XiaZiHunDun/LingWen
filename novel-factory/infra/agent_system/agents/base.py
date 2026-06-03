@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ....ai_service.router import AIRouter
 
 
-from ..agent_config import PROVIDER_MODEL_DEFAULTS
+from ..agent_config import AGENT_DEFAULTS, PROVIDER_MODEL_DEFAULTS
 
 
 class AgentBase:
@@ -37,8 +37,8 @@ class AgentBase:
     """
 
     default_model: str = PROVIDER_MODEL_DEFAULTS.get("openai", "gpt-4")
-    default_temperature: float = 0.7
-    default_max_tokens: int = 4096
+    default_temperature: float = AGENT_DEFAULTS["temperature"]
+    default_max_tokens: int = AGENT_DEFAULTS["max_tokens"]
 
     def __init__(self, router: Optional['AIRouter'] = None):
         """初始化Agent

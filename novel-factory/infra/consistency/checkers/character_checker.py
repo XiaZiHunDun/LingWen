@@ -17,6 +17,10 @@ from typing import Any, Dict, List, Optional, Set
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
+# 性格-行为冲突检测窗口: opposite 词与角色名在多少字符内同时出现算冲突
+# 业务调整建议改 YAML 的 detection_window, 而非改此常量
+DEFAULT_DETECTION_WINDOW = 200
+
 
 @dataclass
 class CharacterProfile:
@@ -125,7 +129,7 @@ class CharacterChecker(BaseChecker):
     ) -> List[Issue]:
         """检查性格关键词冲突"""
         opposites_map = self.rules.get("personality_opposites", {})
-        default_window = self.rules.get("detection_window", 200)
+        default_window = self.rules.get("detection_window", DEFAULT_DETECTION_WINDOW)
 
         issues: List[Issue] = []
         for tag, opposite in self._iter_opposites(profile, opposites_map):

@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from ..ai_service import ProviderConfig
 from .social_engine.relationship_tracker import DEFAULT_STATE_FILE
@@ -48,6 +48,13 @@ PROVIDER_MODEL_DEFAULTS: Dict[str, str] = {
     "minimax": "MiniMax-M2.7",
     "anthropic": "claude-3-5-sonnet-20241022",
     "openai": "gpt-4",
+}
+
+# Agent LLM 调用默认参数 (R1-011: 抽 0.7 / 4096 出 base.py, 集中管理)
+# 业务调整: 改这里即可影响所有 Agent, 旧 AgentBase 裸字面量已废弃
+AGENT_DEFAULTS: Dict[str, Any] = {
+    "temperature": 0.7,
+    "max_tokens": 4096,
 }
 
 # minimax 特殊的 timeout/retries（其他 provider 使用 ProviderConfig 默认值）
