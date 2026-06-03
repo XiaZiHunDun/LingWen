@@ -142,6 +142,62 @@ class TestVerificationEngine:
         loaded = new_engine.load_state()
         assert loaded == {"issues_found": {"ch001-ch010": [{"id": "x", "severity": "P0"}]}}
 
+    def test_legacy_json_fallback_when_sqlite_empty(self, isolated_engine):
+        """R5-004: SQLite 无数据时,回退读废弃的 workflow_state.json"""
+        engine, _content, tmp = isolated_engine
+        # fixture 已把 LEGACY_WORKFLOW_FILE patch 到 tmp/legacy_ws.json
+        legacy = tmp / "legacy_ws.json"
+        legacy.write_text(
+            '{"issues_found": {"ch100": [{"id": "legacy", "severity": "P0"}]}}',
+            encoding="utf-8",
+        )
+
+        # SQLite 是空的(load_state_persists_via_sqlite 没污染它)
+        # 重新构造 engine 读:走 JSON fallback
+        fresh = rve.VerificationEngine()
+        fresh._get_db = engine._get_db  # 共享 fake DB
+        loaded = fresh.load_state()
+        assert loaded == {"issues_found": {"ch100": [{"id": "legacy", "severity": "P0"}]}}
+
+    def test_sqlite_wins_over_legacy_json(self, isolated_engine):
+        """R5-004: 当 SQLite 已有数据时,优先 SQLite,忽略 JSON"""
+        engine, _content, tmp = isolated_engine
+        # 同时存在 SQLite 和 JSON,但 SQLite 的数据应胜出
+        engine.state = {"src": "sqlite"}
+        engine.save_state()
+        legacy = tmp / "legacy_ws.json"
+        legacy.write_text('{"src": "json"}', encoding="utf-8")
+
+        fresh = rve.VerificationEngine()
+        fresh._get_db = engine._get_db
+        loaded = fresh.load_state()
+        assert loaded == {"src": "sqlite"}
+
+    def test_corrupt_legacy_json_falls_through_to_empty(self, isolated_engine):
+        """R5-004: 废弃的 JSON 损坏时,返回空 dict 而不抛异常"""
+        engine, _content, tmp = isolated_engine
+        legacy = tmp / "legacy_ws.json"
+        legacy.write_text("{not valid json", encoding="utf-8")
+
+        fresh = rve.VerificationEngine()
+        fresh._get_db = engine._get_db
+        loaded = fresh.load_state()
+        assert loaded == {}
+
+    def test_save_state_does_not_write_legacy_json(self, isolated_engine, monkeypatch):
+        """R5-004: save_state 只写 SQLite,绝不回写废弃的 JSON 文件"""
+        engine, _content, tmp = isolated_engine
+        # 用一个 '假' 的 legacy 路径监控:如果代码尝试写它,我们就检测到
+        legacy = tmp / "should_not_be_written.json"
+        legacy.write_text('{"preexisting": true}', encoding="utf-8")
+        monkeypatch.setattr(rve, "LEGACY_WORKFLOW_FILE", legacy)
+
+        engine.state = {"src": "sqlite-only"}
+        engine.save_state()
+
+        # legacy JSON 文件应保持原样,不被回写
+        assert legacy.read_text(encoding="utf-8") == '{"preexisting": true}'
+
     def test_check_repeat_content_no_file(self, isolated_engine):
         """测试检查不存在的章节"""
         engine, _content, _tmp = isolated_engine
