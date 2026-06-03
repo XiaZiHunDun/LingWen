@@ -669,7 +669,10 @@ methodology_check:
   无堆砌设定: false
 TEMPLATE
 
-    sed -i "s/{PROJECT_NAME}/$PROJECT_NAME/g" "$proj_dir/01_世界观设定.yaml"
+    # R2-015: 用 Python 替代 sed,避免 PROJECT_NAME 含 / 或 & 时 sed 替换破坏
+    # 模式与上方 00_核心三要素.yaml 的替换保持一致
+    python tools/template_substitute.py "$proj_dir/01_世界观设定.yaml" \
+      --set "{PROJECT_NAME}=$PROJECT_NAME"
 
     # 灵感基础层（从模板库复制并定制）
     cat > "$proj_insp/基础层.yaml" << EOF
