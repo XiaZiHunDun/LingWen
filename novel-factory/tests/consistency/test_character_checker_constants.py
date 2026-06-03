@@ -30,10 +30,7 @@ class TestR1006DetectionWindowConstant:
         """CharacterPersonalityChecker 在 rules 缺 detection_window 时
         必须回退到模块常量,不能回退到裸字面量。
         """
-        # rules 中无 detection_window 字段
-        checker = CharacterChecker(rules={})
-        # 通过 _check_personality_conflicts 触发 fallback 逻辑
-        # 实际值由 self.rules.get("detection_window", DEFAULT_...) 决定
         # 间接验证: 显式比较 rules.get() 的行为
+        # 空 rules → fallback 到模块常量 DEFAULT_DETECTION_WINDOW
         rules = {}
         assert rules.get("detection_window", character_checker.DEFAULT_DETECTION_WINDOW) == 200
