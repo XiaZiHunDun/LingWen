@@ -28,6 +28,8 @@
       </header>
       <main class="main-content">
         <OverviewPage v-if="activeNav === 'overview'" />
+        <DecisionsPage v-else-if="activeNav === 'decisions'" />
+        <WorkflowsPage v-else-if="activeNav === 'workflows'" />
         <div v-else-if="activeNav === 'chapters'" class="placeholder-view">
           <p class="pixel-text">章节管理 - 开发中</p>
         </div>
@@ -45,11 +47,15 @@
 <script setup>
 import { ref } from 'vue'
 import OverviewPage from './pages/OverviewPage.vue'
+import DecisionsPage from './pages/DecisionsPage.vue'
+import WorkflowsPage from './pages/WorkflowsPage.vue'
 
 const activeNav = ref('overview')
 
 const navItems = [
   { id: 'overview', label: '总览', icon: '📊' },
+  { id: 'decisions', label: '决策', icon: '⚡' },
+  { id: 'workflows', label: '工作流', icon: '🔀' },
   { id: 'chapters', label: '章节', icon: '📖' },
   { id: 'analytics', label: '分析', icon:'📈' },
   { id: 'settings', label: '设置', icon: '⚙️' }

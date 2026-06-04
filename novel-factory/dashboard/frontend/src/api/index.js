@@ -1,6 +1,11 @@
 /**
  * API Client for LingWen Dashboard
  * Communicates with FastAPI backend on port 8765
+ *
+ * Phase 6.2 扩展:
+ * - 决策 API:pendingDecisions, allDecisions, resolveDecision, deferDecision, cancelDecision
+ * - 工作流 API:listWorkflows, runWorkflow, resumeWorkflow, activeWorkflow
+ * - request() helper 支持 method + body
  */
 
 const BASE_URL = 'http://localhost:8765/api';
@@ -8,12 +13,21 @@ const BASE_URL = 'http://localhost:8765/api';
 /**
  * Make a request to the API with error handling
  * @param {string} path - API endpoint path
+ * @param {object} [opts] - { method, body }
  * @returns {Promise<any>} Response JSON
  * @throws {Error} Descriptive error on failure
  */
-async function request(path) {
+async function request(path, opts = {}) {
+  const { method = 'GET', body } = opts;
+  const fetchOpts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body !== undefined) {
+    fetchOpts.body = typeof body === 'string' ? body : JSON.stringify(body);
+  }
   try {
-    const response = await fetch(`${BASE_URL}${path}`);
+    const response = await fetch(`${BASE_URL}${path}`, fetchOpts);
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
@@ -28,6 +42,8 @@ async function request(path) {
     throw error;
   }
 }
+
+// === Reading Power (Phase 1-3) ===
 
 /**
  * Fetch overview data from the API
@@ -53,4 +69,103 @@ export async function fetchChapters(range) {
  */
 export async function fetchHealth() {
   return request('/health');
+}
+
+// === Decisions (Phase 6.2) ===
+
+/**
+ * 列出 PENDING 决策 (按 priority desc + due_at asc 排序)
+ * @returns {Promise<Array<DecisionResponse>>}
+ */
+export async function fetchPendingDecisions() {
+  return request('/decisions/pending');
+}
+
+/**
+ * 列出全部决策 (含 RESOLVED/DEFERRED/CANCELLED)
+ * @returns {Promise<Array<DecisionResponse>>}
+ */
+export async function fetchAllDecisions() {
+  return request('/decisions/all');
+}
+
+/**
+ * 解决决策 (PENDING → RESOLVED)
+ * @param {string} decisionId
+ * @param {string} option
+ * @param {string} [resolvedBy='human']
+ * @returns {Promise<DecisionResponse>}
+ */
+export async function resolveDecision(decisionId, option, resolvedBy = 'human') {
+  return request(`/decisions/${encodeURIComponent(decisionId)}/resolve`, {
+    method: 'POST',
+    body: { option, resolved_by: resolvedBy },
+  });
+}
+
+/**
+ * 推迟决策 (PENDING → DEFERRED)
+ * @param {string} decisionId
+ * @param {string} [reason='']
+ * @returns {Promise<DecisionResponse>}
+ */
+export async function deferDecision(decisionId, reason = '') {
+  return request(`/decisions/${encodeURIComponent(decisionId)}/defer`, {
+    method: 'POST',
+    body: { reason },
+  });
+}
+
+/**
+ * 取消决策 (PENDING → CANCELLED)
+ * @param {string} decisionId
+ * @param {string} [reason='']
+ * @returns {Promise<DecisionResponse>}
+ */
+export async function cancelDecision(decisionId, reason = '') {
+  return request(`/decisions/${encodeURIComponent(decisionId)}/cancel`, {
+    method: 'POST',
+    body: { reason },
+  });
+}
+
+// === Workflows (Phase 6.2) ===
+
+/**
+ * 列出 infra/got/workflows/*.yaml
+ * @returns {Promise<Array<WorkflowListItem>>}
+ */
+export async function fetchWorkflows() {
+  return request('/workflows/list');
+}
+
+/**
+ * 启动工作流
+ * @param {object} req - { workflow_name, initial_inputs?, start_nodes?, max_backtracks?, base_dir? }
+ * @returns {Promise<WorkflowStatusResponse>}
+ */
+export async function runWorkflow(req) {
+  return request('/workflows/run', { method: 'POST', body: req });
+}
+
+/**
+ * 恢复 DECISION 暂停的工作流
+ * @param {string} decisionId
+ * @param {string} option
+ * @param {string} [resolvedBy='human']
+ * @returns {Promise<WorkflowStatusResponse>}
+ */
+export async function resumeWorkflow(decisionId, option, resolvedBy = 'human') {
+  return request('/workflows/resume', {
+    method: 'POST',
+    body: { decision_id: decisionId, option, resolved_by: resolvedBy },
+  });
+}
+
+/**
+ * 查询当前活跃工作流状态
+ * @returns {Promise<WorkflowStatusResponse>}
+ */
+export async function fetchActiveWorkflow() {
+  return request('/workflows/active');
 }
