@@ -225,7 +225,8 @@ async function loadGraph() {
   graphLoading.value = true;
   error.value = null;
   try {
-    graphData.value = await fetchWorkflowGraph(selected.value.name);
+    // Phase 6.6.D: includeStatus=true 触发后端叠加活跃工作流节点状态染色
+    graphData.value = await fetchWorkflowGraph(selected.value.name, { includeStatus: true });
   } catch (e) {
     error.value = `加载图失败: ${e?.message || e}`;
   } finally {

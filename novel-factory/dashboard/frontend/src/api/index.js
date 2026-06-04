@@ -171,10 +171,14 @@ export async function fetchActiveWorkflow() {
 }
 
 /**
- * 获取工作流 mermaid 图 (Phase 6.3)
+ * 获取工作流 mermaid 图 (Phase 6.3 + 6.6.D)
  * @param {string} workflowName
- * @returns {Promise<{workflow_name: string, mermaid: string, node_count: number, has_decision_nodes: boolean}>}
+ * @param {object} [opts] - { includeStatus?: boolean }
+ * @returns {Promise<{workflow_name: string, mermaid: string, node_count: number, has_decision_nodes: boolean, status_applied: boolean, node_statuses: object<string, string>}>}
  */
-export async function fetchWorkflowGraph(workflowName) {
-  return request(`/workflows/${encodeURIComponent(workflowName)}/mermaid`);
+export async function fetchWorkflowGraph(workflowName, opts = {}) {
+  const params = new URLSearchParams();
+  if (opts.includeStatus) params.set('include_status', 'true');
+  const qs = params.toString();
+  return request(`/workflows/${encodeURIComponent(workflowName)}/mermaid${qs ? `?${qs}` : ''}`);
 }

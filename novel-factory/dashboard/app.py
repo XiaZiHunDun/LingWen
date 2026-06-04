@@ -134,14 +134,17 @@ class WorkflowStatusResponse(BaseModel):
     node_count: int = 0
     steps: int = 0
     pending_decisions: list[dict[str, Any]] = Field(default_factory=list)
+    executions: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
 
 
 class WorkflowMermaidResponse(BaseModel):
-    """工作流 mermaid 图响应 (Phase 6.3)"""
+    """工作流 mermaid 图响应 (Phase 6.3 + 6.6.D)"""
     workflow_name: str
     mermaid: str
     node_count: int
     has_decision_nodes: bool
+    status_applied: bool = False  # Phase 6.6.D: true = 染色基于 active workflow
+    node_statuses: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
 
 
 # ==================== Database Helper ====================
@@ -709,19 +712,30 @@ def create_app(
         "/api/workflows/{workflow_name}/mermaid",
         response_model=WorkflowMermaidResponse,
     )
-    def get_workflow_mermaid(workflow_name: str) -> WorkflowMermaidResponse:
+    def get_workflow_mermaid(
+        workflow_name: str,
+        include_status: bool = False,
+    ) -> WorkflowMermaidResponse:
         """渲染工作流 YAML 为 mermaid 字符串 (供前端 mermaid.js 渲染)
 
         流程:
         1. load_workflow(name) → ThoughtGraph
-        2. render_mermaid(graph, executions={}) → mermaid 字符串
-        3. 返回 {workflow_name, mermaid, node_count, has_decision_nodes}
+        2. 可选:若 include_status=true 且有活跃工作流 → 拿 executions 染色
+        3. render_mermaid(graph, executions=...) → mermaid 字符串
+        4. 返回 {workflow_name, mermaid, node_count, has_decision_nodes,
+                 status_applied, node_statuses}
+
+        Query:
+            include_status (bool, default False): true → 叠加当前活跃工作流
+                节点状态染色 (Phase 6.6.D,修正 Phase 6.3 染色启用缺失)
 
         Raises:
             404: workflow YAML 不存在
             422: workflow 解析/验证失败
         """
-        from infra.got.data_structures import NodeType
+        from datetime import datetime, timezone
+
+        from infra.got.data_structures import NodeExecution, NodeStatus, NodeType
         from infra.got.visualizer import render_mermaid
         from infra.got.workflow_loader import (
             WorkflowError,
@@ -736,7 +750,33 @@ def create_app(
         except WorkflowError as e:
             raise HTTPException(status_code=422, detail=f"workflow load failed: {e}")
 
-        mermaid_str = render_mermaid(graph, executions={}, include_classdef=True)
+        # Phase 6.6.D: 叠加 status 染色 (默认关闭,保后向兼容)
+        status_applied = False
+        node_statuses: dict[str, str] = {}
+        executions: dict[str, NodeExecution] = {}
+        if include_status:
+            try:
+                ctrl = _require_controller()
+                active = ctrl.get_active_workflow_status()
+                if active.get("is_active"):
+                    raw = active.get("executions", {}) or {}
+                    for nid, st in raw.items():
+                        try:
+                            executions[nid] = NodeExecution(
+                                node_id=nid,
+                                status=NodeStatus(st),
+                                started_at=datetime.now(timezone.utc),
+                            )
+                        except ValueError:
+                            # 非法 status 字符串 → 跳过
+                            continue
+                    node_statuses = dict(raw)
+                    status_applied = True
+            except Exception:
+                # 染色失败 → graceful degradation
+                pass
+
+        mermaid_str = render_mermaid(graph, executions=executions, include_classdef=True)
         has_decision = any(
             graph.get_node(nid).type == NodeType.DECISION
             for nid in graph.node_ids()
@@ -746,6 +786,8 @@ def create_app(
             mermaid=mermaid_str,
             node_count=len(list(graph.node_ids())),
             has_decision_nodes=has_decision,
+            status_applied=status_applied,
+            node_statuses=node_statuses,
         )
 
     return app

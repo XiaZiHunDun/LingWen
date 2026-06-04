@@ -250,6 +250,10 @@ class MasterControllerAdapter:
             "node_count": len(list(graph.node_ids())),
             "steps": steps,
             "pending_decisions": pending,
+            "executions": {
+                nid: ex.status.value  # "completed" | "running" | "waiting" | "pending" | ...
+                for nid, ex in executions.items()
+            },
         }
 
 
