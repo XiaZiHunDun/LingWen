@@ -31,6 +31,9 @@ from .graph import (
     NodeNotFoundError,
     ThoughtGraph,
 )
+
+# Phase 2.12a — 真实 LLM compute_fn
+from .llm_compute import LLMComputeFn, default_prompt_builder
 from .scheduler import (
     ComputeResult,
     ExecutionSummary,
@@ -71,4 +74,7 @@ __all__ = [
     "WorkflowNotFoundError",
     "WorkflowParseError",
     "WorkflowValidationError",
+    # Phase 2.12a
+    "LLMComputeFn",
+    "default_prompt_builder",
 ]
