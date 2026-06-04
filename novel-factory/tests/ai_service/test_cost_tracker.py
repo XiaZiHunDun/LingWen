@@ -1,0 +1,160 @@
+"""Tests for ai_service.cost_tracker (Phase 2.13).
+
+Doc 2 §6.3: 每 scenario/tier 调用后记录成本,支持按维度聚合。
+
+API:
+- CostRecord frozen dataclass: (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
+- CostTracker:
+  - record(scenario, tier, input_tokens, output_tokens) → CostRecord
+  - total_cost() → USD 总额
+  - cost_by_scenario() → dict[scenario, USD]
+  - cost_by_tier() → dict[ModelTier, USD]
+  - count_by_scenario() → dict[scenario, int]
+  - reset() 清空
+  - records() 全部记录列表
+"""
+from __future__ import annotations
+
+from datetime import datetime
+
+import pytest
+
+from infra.ai_service.cost_tracker import CostRecord, CostTracker
+from infra.ai_service.model_tiers import ModelTier, compute_cost
+
+
+class TestCostRecord:
+    """CostRecord 不可变 + 字段语义"""
+
+    def test_frozen_immutable(self):
+        r = CostRecord(
+            scenario="chapter_writing",
+            tier=ModelTier.SONNET,
+            input_tokens=1000,
+            output_tokens=500,
+            cost_usd=0.0105,
+        )
+        with pytest.raises((AttributeError, Exception)):
+            r.scenario = "other"  # type: ignore[misc]
+
+    def test_fields_accessible(self):
+        r = CostRecord(
+            scenario="s",
+            tier=ModelTier.HAIKU,
+            input_tokens=100,
+            output_tokens=50,
+            cost_usd=0.0001,
+        )
+        assert r.scenario == "s"
+        assert r.tier == ModelTier.HAIKU
+        assert r.input_tokens == 100
+        assert r.output_tokens == 50
+        assert r.cost_usd == 0.0001
+
+
+class TestCostTrackerBasic:
+    """基本 record + 查询"""
+
+    def test_empty_tracker(self):
+        tracker = CostTracker()
+        assert tracker.records() == []
+        assert tracker.total_cost() == 0.0
+
+    def test_record_one_call(self):
+        tracker = CostTracker()
+        rec = tracker.record("chapter_writing", ModelTier.SONNET, 1_000_000, 1_000_000)
+        assert rec.scenario == "chapter_writing"
+        assert rec.tier == ModelTier.SONNET
+        # cost = 3 + 15 = 18
+        assert rec.cost_usd == pytest.approx(18.0)
+
+    def test_total_cost_after_multiple(self):
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 1_000_000, 1_000_000)
+        tracker.record("hook_extraction", ModelTier.HAIKU, 100_000, 50_000)
+        # 18 + 0.1*1 + 0.05*5 = 18 + 0.1 + 0.25 = 18.35
+        haiku_cost = compute_cost(100_000, 50_000, ModelTier.HAIKU)
+        expected = 18.0 + haiku_cost
+        assert tracker.total_cost() == pytest.approx(expected)
+
+
+class TestCostAggregation:
+    """按 scenario / tier 维度聚合"""
+
+    def test_cost_by_scenario(self):
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 1_000_000, 0)
+        tracker.record("chapter_writing", ModelTier.SONNET, 0, 1_000_000)
+        tracker.record("hook_extraction", ModelTier.HAIKU, 0, 1_000_000)
+        by_scenario = tracker.cost_by_scenario()
+        # chapter_writing: 3 + 15 = 18; hook_extraction: 5
+        assert by_scenario["chapter_writing"] == pytest.approx(18.0)
+        assert by_scenario["hook_extraction"] == pytest.approx(5.0)
+
+    def test_cost_by_tier(self):
+        tracker = CostTracker()
+        tracker.record("a", ModelTier.SONNET, 1_000_000, 0)  # 3
+        tracker.record("b", ModelTier.SONNET, 0, 1_000_000)  # 15
+        tracker.record("c", ModelTier.OPUS, 1_000_000, 0)    # 15
+        by_tier = tracker.cost_by_tier()
+        assert by_tier[ModelTier.SONNET] == pytest.approx(18.0)
+        assert by_tier[ModelTier.OPUS] == pytest.approx(15.0)
+        assert ModelTier.HAIKU not in by_tier  # 没有 haiku 调用
+
+    def test_count_by_scenario(self):
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        tracker.record("hook_extraction", ModelTier.HAIKU, 100, 50)
+        counts = tracker.count_by_scenario()
+        assert counts["chapter_writing"] == 2
+        assert counts["hook_extraction"] == 1
+
+
+class TestCostTrackerReset:
+    """reset() 清空记录"""
+
+    def test_reset_clears_records(self):
+        tracker = CostTracker()
+        tracker.record("a", ModelTier.SONNET, 1000, 500)
+        assert len(tracker.records()) == 1
+        tracker.reset()
+        assert tracker.records() == []
+        assert tracker.total_cost() == 0.0
+
+
+class TestCostTrackerEdgeCases:
+    """边界场景"""
+
+    def test_zero_tokens(self):
+        tracker = CostTracker()
+        rec = tracker.record("test", ModelTier.OPUS, 0, 0)
+        assert rec.cost_usd == 0.0
+
+    def test_negative_tokens_raises(self):
+        tracker = CostTracker()
+        with pytest.raises(ValueError):
+            tracker.record("test", ModelTier.SONNET, -100, 0)
+        with pytest.raises(ValueError):
+            tracker.record("test", ModelTier.SONNET, 0, -100)
+
+
+class TestImportContract:
+    """Public API 完整性"""
+
+    def test_top_level_imports(self):
+        from infra.ai_service import CostRecord, CostTracker
+        assert CostRecord is not None
+        assert CostTracker is not None
+
+    def test_cost_record_repr_contains_scenario(self):
+        r = CostRecord(
+            scenario="chapter_writing",
+            tier=ModelTier.SONNET,
+            input_tokens=100,
+            output_tokens=50,
+            cost_usd=0.001,
+        )
+        text = repr(r)
+        assert "chapter_writing" in text
+        assert "sonnet" in text
