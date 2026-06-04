@@ -24,6 +24,12 @@ from .agent_factory import (
     build_skill_registry,
     build_social_engine,
 )
+from .decision_queue import (
+    DecisionKind,
+    HumanDecision,
+    HumanDecisionQueue,
+    create_decision,
+)
 from .orchestration.task_orchestrator import TaskOrchestrator
 from .registry.skill_registry import SkillRegistry
 
@@ -77,6 +83,9 @@ class MasterController:
         self.conflict_alert = social.conflict_alert
         self.writing_suggestion = social.writing_suggestion
         self.context_builder = social.context_builder
+
+        # ==================== 决策队列 (Phase 4.2/4.3) ====================
+        self._decision_queue = HumanDecisionQueue(state_dir=self._config.state_dir)
 
     def get_router(self) -> AIRouter:
         """获取AIRouter实例
@@ -160,8 +169,9 @@ class MasterController:
         start_nodes: Optional[list[str]] = None,
         initial_inputs: Optional[Dict[str, Any]] = None,
         max_backtracks: int = 2,
+        base_dir: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """用 GoT 调度器运行工作流 (Doc 4 Phase 3)
+        """用 GoT 调度器运行工作流 (Doc 4 Phase 3 + 4)
 
         这是 MasterController 的新入口,GoT 替代 22 步状态机。
         保留 advance_step/dispatch_task 等老方法,GoT 失败时可回退。
@@ -171,12 +181,15 @@ class MasterController:
             start_nodes: 起点节点 ID 列表 (None = 自动找无依赖节点)
             initial_inputs: 起点节点的 seed inputs (e.g. chapter_num=1, characters=[...])
             max_backtracks: 软回溯预算 (默认 2)
+            base_dir: workflow YAML 目录 (None = 默认 infra/got/workflows/)
 
         Returns:
             {
                 "summary": ExecutionSummary (completed, failed, steps, ...),
                 "graph": ThoughtGraph (含 mermaid 导出),
                 "executions": dict[node_id, NodeExecution] 全部执行记录,
+                "pending_decisions": list[dict] 本次 run 扫描到的 DECISION 节点
+                                  生成的 HumanDecision 序列化,
             }
 
         Raises:
@@ -189,10 +202,16 @@ class MasterController:
 
         from .got_bridge import build_got_scheduler
 
+        bd_path: Optional[Any] = None
+        if base_dir is not None:
+            from pathlib import Path
+            bd_path = Path(base_dir)
+
         try:
             scheduler, graph = build_got_scheduler(
                 master=self,
                 workflow_name=workflow_name,
+                base_dir=str(bd_path) if bd_path else None,
                 max_backtracks=max_backtracks,
             )
         except WorkflowError:
@@ -204,6 +223,9 @@ class MasterController:
                 nid for nid in graph.node_ids()
                 if not graph.get_node(nid).depends_on
             ]
+
+        # 扫描 DECISION 节点 → 创建 HumanDecision (Phase 4.3)
+        pending_decisions = self._harvest_decision_specs(graph)
 
         summary = scheduler.run(
             start_nodes=start_nodes,
@@ -220,7 +242,77 @@ class MasterController:
             "summary": summary,
             "graph": graph,
             "executions": executions,
+            "pending_decisions": pending_decisions,
         }
+
+    def resolve_decision(self, decision_id: str, option: str) -> HumanDecision:
+        """解决决策 (delegates to HumanDecisionQueue.resolve)
+
+        Args:
+            decision_id: 决策 ID
+            option: 选定的选项
+
+        Returns:
+            更新后的 HumanDecision
+
+        Raises:
+            RuntimeError: decision queue 未初始化
+            KeyError / ValueError: 见 HumanDecisionQueue.resolve
+        """
+        queue = getattr(self, "_decision_queue", None)
+        if queue is None:
+            raise RuntimeError("decision queue not initialized")
+        resolved = queue.resolve(decision_id, option)
+        queue.save()  # 立即持久化
+        return resolved
+
+    def list_pending_decisions(self) -> list[dict[str, Any]]:
+        """列出 PENDING 决策 (按 priority desc + due_at asc 排序)
+
+        Returns:
+            list of HumanDecision.to_dict() 序列化结果
+        """
+        queue = getattr(self, "_decision_queue", None)
+        if queue is None:
+            return []
+        return [d.to_dict() for d in queue.pending()]
+
+    def get_decision_queue(self) -> HumanDecisionQueue:
+        """返回底层 HumanDecisionQueue (供高级操作:defer/cancel/save)"""
+        queue = getattr(self, "_decision_queue", None)
+        if queue is None:
+            raise RuntimeError("decision queue not initialized")
+        return queue
+
+    def _harvest_decision_specs(self, graph: Any) -> list[dict[str, Any]]:
+        """扫描图中的 DECISION 节点 → 创建 HumanDecision → 返回序列化列表
+
+        Phase 4.3: run_workflow 自动从工作流图中识别 DECISION 类型节点,
+        包装为 HumanDecision 放入决策队列,供人工介入。
+        """
+        from infra.got.data_structures import NodeType
+
+        # 防御:__new__ 构造的测试 stub 可能没有 _decision_queue
+        queue = getattr(self, "_decision_queue", None)
+        if queue is None:
+            return []
+
+        harvested: list[dict[str, Any]] = []
+        for nid in graph.node_ids():
+            node = graph.get_node(nid)
+            if node.type != NodeType.DECISION:
+                continue
+            kind = _infer_decision_kind(nid)
+            decision = create_decision(
+                decision_kind=kind,
+                node_id=nid,
+                prompt=node.description or f"决策点: {node.name or nid}",
+                options=_default_options_for(kind),
+                priority=_default_priority_for(kind),
+            )
+            queue.add(decision)
+            harvested.append(decision.to_dict())
+        return harvested
 
     def switch_agent_role(self, agent_name: str, role_id: str) -> bool:
         """切换Agent角色
@@ -392,3 +484,100 @@ class MasterController:
     def get_writing_suggestions(self, chapter: int) -> List[str]:
         """获取写作建议"""
         return self.writing_suggestion.generate_suggestions(self.relationship_tracker, chapter)
+
+
+# === Decision helpers (Phase 4.3) ===
+
+_DEFAULT_DECISION_OPTIONS: dict[str, tuple[str, ...]] = {
+    DecisionKind.OUTLINE_JUDGMENT.value: ("approve", "revise", "abandon"),
+    DecisionKind.VOLUME_JUDGMENT.value: ("approve", "minor_fix", "major_revise"),
+    DecisionKind.CHAPTER_ITERATION_JUDGMENT.value: (
+        "next_batch",
+        "iterate",
+        "human_review",
+    ),
+    DecisionKind.PUBLISH_JUDGMENT.value: ("S_publish", "A_publish", "B_revise", "reject"),
+    DecisionKind.SUBPLOT_OPEN.value: ("open", "defer", "abandon"),
+    DecisionKind.SUBPLOT_CLOSE.value: ("close", "extend", "abandon"),
+    DecisionKind.STYLE_PICK.value: ("燃系", "细腻", "冷峻", "幽默"),
+}
+
+_DEFAULT_DECISION_PRIORITY: dict[str, int] = {
+    DecisionKind.PUBLISH_JUDGMENT.value: 10,
+    DecisionKind.OUTLINE_JUDGMENT.value: 8,
+    DecisionKind.VOLUME_JUDGMENT.value: 7,
+    DecisionKind.CHAPTER_ITERATION_JUDGMENT.value: 6,
+    DecisionKind.STYLE_PICK.value: 4,
+    DecisionKind.SUBPLOT_OPEN.value: 3,
+    DecisionKind.SUBPLOT_CLOSE.value: 3,
+}
+
+
+def _infer_decision_kind(node_id: str) -> DecisionKind:
+    """从 node_id 推断 DecisionKind
+
+    规则:子串匹配 (顺序敏感)
+    - "publish" → PUBLISH_JUDGMENT
+    - "outline" → OUTLINE_JUDGMENT
+    - "volume" → VOLUME_JUDGMENT
+    - "iteration" / "iter" → CHAPTER_ITERATION_JUDGMENT
+    - "style" → STYLE_PICK
+    - "subplot_close" → SUBPLOT_CLOSE
+    - "subplot" → SUBPLOT_OPEN (兜底)
+    - 其他 → OUTLINE_JUDGMENT 兜底
+    """
+    nid = node_id.lower()
+    if "publish" in nid:
+        return DecisionKind.PUBLISH_JUDGMENT
+    if "outline" in nid:
+        return DecisionKind.OUTLINE_JUDGMENT
+    if "volume" in nid:
+        return DecisionKind.VOLUME_JUDGMENT
+    if "iteration" in nid or "iter" in nid:
+        return DecisionKind.CHAPTER_ITERATION_JUDGMENT
+    if "style" in nid:
+        return DecisionKind.STYLE_PICK
+    if "subplot_close" in nid:
+        return DecisionKind.SUBPLOT_CLOSE
+    if "subplot" in nid:
+        return DecisionKind.SUBPLOT_OPEN
+    return DecisionKind.OUTLINE_JUDGMENT
+
+
+def _default_options_for(kind: DecisionKind) -> tuple[str, ...]:
+    return _DEFAULT_DECISION_OPTIONS.get(kind.value, ("approve", "reject"))
+
+
+def _default_priority_for(kind: DecisionKind) -> int:
+    return _DEFAULT_DECISION_PRIORITY.get(kind.value, 5)
+
+
+def _collect_decision_specs_from_graph(graph: Any) -> list[dict[str, Any]]:
+    """从图中扫描 DECISION 节点 → 返回 spec 列表 (供单元测试 / 上层 UI 使用)
+
+    注:实际创建 HumanDecision 由 MasterController._harvest_decision_specs 完成。
+    本函数仅返回元数据 (node_id, kind),不创建 HumanDecision。
+    """
+    from infra.got.data_structures import NodeType
+
+    specs: list[dict[str, Any]] = []
+    for nid in graph.node_ids():
+        node = graph.get_node(nid)
+        if node.type != NodeType.DECISION:
+            continue
+        kind = _infer_decision_kind(nid)
+        specs.append({
+            "node_id": nid,
+            "decision_kind": kind,
+            "prompt": node.description or f"决策点: {node.name or nid}",
+            "options": list(_default_options_for(kind)),
+            "priority": _default_priority_for(kind),
+        })
+    return specs
+
+
+__all__ = [
+    "MasterController",
+    "_infer_decision_kind",
+    "_collect_decision_specs_from_graph",
+]
