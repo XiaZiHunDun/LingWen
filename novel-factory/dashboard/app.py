@@ -135,6 +135,7 @@ class WorkflowStatusResponse(BaseModel):
     steps: int = 0
     pending_decisions: list[dict[str, Any]] = Field(default_factory=list)
     executions: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
+    score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据
 
 
 class WorkflowMermaidResponse(BaseModel):

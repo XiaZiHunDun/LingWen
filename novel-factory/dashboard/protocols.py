@@ -231,15 +231,37 @@ class MasterControllerAdapter:
                     paused_nodes.append(nid)
         completed = sum(1 for e in executions.values() if e.status == NodeStatus.COMPLETED)
         failed = sum(1 for e in executions.values() if e.status == NodeStatus.FAILED)
-        # 扫描 pending decisions
+        # 扫描 pending decisions (调 controller 方法;__new__ stub 可能无 _decision_queue,
+        # method 内部 hasattr/getattr 防御返 [])
         pending: list[dict[str, Any]] = []
-        from infra.agent_system.master_controller import _harvest_decision_specs
         try:
-            pending = _harvest_decision_specs(self._controller, graph)
+            pending = self._controller._harvest_decision_specs(graph)
         except Exception:
             pending = []
         summary_obj = getattr(scheduler, "_summary", None)
         steps = getattr(summary_obj, "steps", 0) if summary_obj else 0
+
+        # Phase 7.6: 抽 S1-S8 评分数据 (从 NodeExecution.output)
+        score_data: dict[str, dict[str, Any]] = {}
+        for nid, ex in executions.items():
+            output = getattr(ex, "output", None) or {}
+            if not isinstance(output, dict):
+                continue
+            # 识别: 7.5 polish_merge_synthesis 返的 dict (含 scores_a + scores_b)
+            if "scores_a" in output and "scores_b" in output:
+                labels = output.get("_labels", ()) or ()
+                score_data[nid] = {
+                    "scores_a": output.get("scores_a", {}),
+                    "scores_b": output.get("scores_b", {}),
+                    "scores_total_a": output.get("scores_total_a", 0.0),
+                    "scores_total_b": output.get("scores_total_b", 0.0),
+                    "scores_delta": output.get("scores_delta", 0.0),
+                    "winner": output.get("winner"),
+                    "label_a": labels[0] if len(labels) >= 1 else None,
+                    "label_b": labels[1] if len(labels) >= 2 else None,
+                    "fallback": output.get("fallback"),
+                }
+
         return {
             "is_active": True,
             "workflow_name": workflow_name,
@@ -254,6 +276,7 @@ class MasterControllerAdapter:
                 nid: ex.status.value  # "completed" | "running" | "waiting" | "pending" | ...
                 for nid, ex in executions.items()
             },
+            "score_data": score_data,  # Phase 7.6
         }
 
 

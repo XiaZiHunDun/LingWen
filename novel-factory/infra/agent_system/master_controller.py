@@ -653,13 +653,14 @@ class MasterController:
                 "scores_total_b": float,
                 "scores_delta": float,      # total_a - total_b
                 "fallback": str | None,     # 兜底原因 (None=走 LLM)
+                "_labels": list[str],       # Phase 7.6: 透传 labels (dashboard 雷达图消费)
             }
         """
         empty = self._merge_synthesis_len_fallback
         if not content_a or not content_b:
-            return empty(content_a, content_b, labels, reason="empty_content")
-        if content_a == content_b:
-            return {
+            result: Dict[str, Any] = empty(content_a, content_b, labels, reason="empty_content")
+        elif content_a == content_b:
+            result = {
                 "content": content_a,
                 "winner": labels[0],
                 "scores_a": {},
@@ -669,11 +670,15 @@ class MasterController:
                 "scores_delta": 0.0,
                 "fallback": "identical",
             }
-        try:
-            return self._merge_synthesis_llm(content_a, content_b, labels)
-        except Exception as e:
-            logger.warning("polish_merge_synthesis: LLM failed, len fallback: %s", e)
-            return empty(content_a, content_b, labels, reason="llm_fail")
+        else:
+            try:
+                result = self._merge_synthesis_llm(content_a, content_b, labels)
+            except Exception as e:
+                logger.warning("polish_merge_synthesis: LLM failed, len fallback: %s", e)
+                result = empty(content_a, content_b, labels, reason="llm_fail")
+        # Phase 7.6: 透传 labels 给 dashboard 雷达图抽 label_a/b
+        result["_labels"] = list(labels)
+        return result
 
     def _merge_synthesis_llm(
         self,

@@ -576,3 +576,151 @@ class TestWorkflowMermaidEndpoint:
         # workflow_loader 的 _resolve_path 可能已经处理 .yaml 后缀
         assert response.status_code in (200, 404)
 
+
+# === TestScoreDataExtraction (Phase 7.6 NEW) ===
+
+def _make_fake_master_with_polish_merge_scores(
+    *,
+    scores_a: dict[str, int] | None = None,
+    scores_b: dict[str, int] | None = None,
+    labels: tuple[str, str] = ("polish_emotional_pacing", "polish_ai_trace_removal"),
+    winner: str | None = "polish_emotional_pacing",
+    fallback: str | None = None,
+):
+    """构造 MasterController.__new__ 实例 + fake scheduler + fake graph.
+
+    模拟 run_workflow 写入了 _last_* 缓存 + polish_merge 节点的 NodeExecution.output
+    含 7.5 polish_merge_synthesis 的全部字段。给 MasterControllerAdapter 用,测 score_data 提取。
+    """
+    from datetime import datetime, timezone
+
+    from infra.agent_system import master_controller as mc_mod
+    from infra.got.data_structures import NodeExecution, NodeStatus, NodeType, ThoughtNode
+
+    s1_s8 = {"S1": 8, "S2": 7, "S3": 9, "S4": 8, "S5": 7, "S6": 8, "S7": 9, "S8": 8}
+    if scores_a is None:
+        scores_a = s1_s8
+    if scores_b is None:
+        scores_b = {k: 5 for k in s1_s8}
+
+    output = {
+        "content": "winner content",
+        "winner": winner,
+        "scores_a": scores_a,
+        "scores_b": scores_b,
+        "scores_total_a": sum(scores_a.values()) / 8.0 if scores_a else 0.0,
+        "scores_total_b": sum(scores_b.values()) / 8.0 if scores_b else 0.0,
+        "scores_delta": (
+            (sum(scores_a.values()) - sum(scores_b.values())) / 8.0
+            if scores_a and scores_b else 0.0
+        ),
+        "fallback": fallback,
+        "_labels": list(labels),  # Phase 7.6: 透传 labels
+    }
+
+    graph_node = ThoughtNode(
+        node_id="polish_merge",
+        type=NodeType.AGGREGATION,
+        name="Merge",
+        description="",
+        depends_on=(),
+    )
+    exec_obj = NodeExecution(
+        node_id="polish_merge",
+        status=NodeStatus.COMPLETED,
+        started_at=datetime.now(timezone.utc),
+        finished_at=datetime.now(timezone.utc),
+        output=output,
+        cost_tokens=0,
+        error=None,
+    )
+
+    class _FakeGraph:
+        def node_ids(self):
+            return ["polish_merge"]
+        def has_execution(self, nid):
+            return nid == "polish_merge"
+        def get_execution(self, nid):
+            return exec_obj
+        def get_node(self, nid):
+            return graph_node
+
+    class _FakeSummary:
+        steps = 7
+
+    class _FakeScheduler:
+        _summary = _FakeSummary()
+
+    controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
+    controller._last_scheduler = _FakeScheduler()
+    controller._last_graph = _FakeGraph()
+    controller._last_workflow_name = "novel_writing"
+    return controller
+
+
+class TestScoreDataExtraction:
+    """Phase 7.6: MasterControllerAdapter 从 NodeExecution.output 抽 S1-S8 评分
+    到 score_data 字段, 供 dashboard 雷达图消费"""
+
+    def test_score_data_extracted_from_polish_merge_output(self, tmp_path: Path):
+        """NodeExecution.output 含 scores_a + scores_b → adapter 抽 score_data"""
+        from dashboard.protocols import MasterControllerAdapter
+
+        fake_controller = _make_fake_master_with_polish_merge_scores()
+        adapter = MasterControllerAdapter(fake_controller)
+        result = adapter.get_active_workflow_status()
+
+        assert "score_data" in result
+        assert "polish_merge" in result["score_data"]
+        sd = result["score_data"]["polish_merge"]
+        assert sd["scores_a"]["S1"] == 8
+        assert sd["scores_b"]["S3"] == 5  # 5 分 variant
+        assert sd["scores_total_a"] == pytest.approx(8.0)
+        assert sd["scores_total_b"] == pytest.approx(5.0)
+        assert sd["winner"] == "polish_emotional_pacing"
+        assert sd["label_a"] == "polish_emotional_pacing"
+        assert sd["label_b"] == "polish_ai_trace_removal"
+        assert sd["fallback"] is None
+
+    def test_score_data_empty_when_no_active_workflow(self, tmp_path: Path):
+        """无活跃工作流 → score_data 默认空 dict"""
+        stub = _StubMasterController(state_dir=str(tmp_path))
+        result = stub.get_active_workflow_status()
+        assert result["is_active"] is False
+        # 默认 Pydantic field default_factory=dict → frontend 读 .score_data 返 {}
+        # 实际 key 不在 (无 active), 验证不是 None
+        assert result.get("score_data", {}) == {}
+
+    def test_score_data_includes_fallback_reason(self, tmp_path: Path):
+        """fallback="llm_fail" → score_data[polish_merge].fallback 透传"""
+        from dashboard.protocols import MasterControllerAdapter
+
+        fake_controller = _make_fake_master_with_polish_merge_scores(
+            scores_a={},  # 兜底路径不填 scores
+            scores_b={},
+            winner="polish_emotional_pacing",
+            fallback="llm_fail",
+        )
+        adapter = MasterControllerAdapter(fake_controller)
+        result = adapter.get_active_workflow_status()
+
+        assert result["score_data"]["polish_merge"]["fallback"] == "llm_fail"
+        # 兜底时 scores 是空 dict
+        assert result["score_data"]["polish_merge"]["scores_a"] == {}
+
+    def test_workflow_status_endpoint_returns_score_data(self, tmp_path: Path):
+        """GET /api/workflows/active 响应 JSON 含 score_data 字段"""
+        from dashboard.protocols import MasterControllerAdapter
+
+        fake_controller = _make_fake_master_with_polish_merge_scores()
+        adapter = MasterControllerAdapter(fake_controller)
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
+        client = TestClient(app)
+
+        response = client.get("/api/workflows/active")
+        assert response.status_code == 200
+        data = response.json()
+        assert "score_data" in data
+        assert "polish_merge" in data["score_data"]
+        assert data["score_data"]["polish_merge"]["label_a"] == "polish_emotional_pacing"
+

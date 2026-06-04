@@ -64,11 +64,22 @@
         </li>
       </ul>
     </div>
+
+    <ScoreRadarChart
+      v-if="hasScores && firstScore"
+      :scores-a="firstScore.scores_a || {}"
+      :scores-b="firstScore.scores_b || {}"
+      :label-a="firstScore.label_a || 'Variant A'"
+      :label-b="firstScore.label_b || 'Variant B'"
+      :winner="firstScore.winner || ''"
+      :fallback="firstScore.fallback"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
+import ScoreRadarChart from './ScoreRadarChart.vue';
 
 const props = defineProps({
   status: {
@@ -90,6 +101,13 @@ const statusClass = computed(() => {
   if (props.status.paused) return 'status-paused';
   return 'status-running';
 });
+
+const scoreEntries = computed(() => {
+  const data = props.status?.score_data || {};
+  return Object.entries(data);
+});
+const firstScore = computed(() => scoreEntries.value[0]?.[1] || null);
+const hasScores = computed(() => scoreEntries.value.length > 0);
 
 function onResume(decision, option) {
   emit('resume', { decisionId: decision.decision_id, option });
