@@ -165,8 +165,8 @@ class TestMasterControllerRunWorkflow:
             start_nodes=["read_snapshot"],
             initial_inputs={"chapter_num": 1, "characters": [], "style_guide": {}, "timeline": []},
         )
-        # 4 节点全 COMPLETED
-        assert result["summary"].completed == 4
+        # Phase 7.3: 5 节点全 COMPLETED (含 polish_chapter)
+        assert result["summary"].completed == 5
         assert result["summary"].failed == 0
 
     def test_run_workflow_executions_has_all_nodes(self, monkeypatch):
@@ -189,8 +189,8 @@ class TestMasterControllerRunWorkflow:
             workflow_name="novel_writing",
             initial_inputs={"chapter_num": 1, "characters": [], "style_guide": {}, "timeline": []},
         )
-        # 默认起点 read_snapshot,跑完整链
-        assert result["summary"].completed == 4
+        # Phase 7.3: 默认起点 read_snapshot,跑完整 5 节点链
+        assert result["summary"].completed == 5
 
     def test_run_workflow_dispatches_to_real_agent_methods(self, monkeypatch):
         """run_workflow 通过 AgentComputeFn 调 content_writer / auditor"""

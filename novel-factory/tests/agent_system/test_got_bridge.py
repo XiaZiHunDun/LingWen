@@ -205,8 +205,8 @@ class TestBuildGoTScheduler:
     def test_loads_novel_writing_workflow(self):
         master = _StubMaster()
         scheduler, graph = build_got_scheduler(master, "novel_writing")
-        # 4 节点: read_snapshot → write_chapter → review_chapter → emit_chapter
-        assert len(graph.node_ids()) == 4
+        # Phase 7.3: 5 节点 (含 polish_chapter) — read_snapshot → write_chapter → review_chapter → polish_chapter → emit_chapter
+        assert len(graph.node_ids()) == 5
         # scheduler 是 GoTScheduler 实例
         from infra.got.scheduler import GoTScheduler
         assert isinstance(scheduler, GoTScheduler)

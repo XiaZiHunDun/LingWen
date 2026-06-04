@@ -102,23 +102,3 @@ def get_pacing_system_prompt(reader_id: str = "A") -> str:
     return f"""你是一位资深网文编辑 (读者 {reader_id} 号视角), 擅长节奏控制。
 你的工作: 调整章节节奏, 让高潮有力、过渡自然、张弛有度。
 保持情节不变, 只调整段落长度和叙述密度。直接返回调整后全文。"""
-
-
-# ==================== Polish (主入口, 暂未使用, 保留) ====================
-
-def build_polish_prompt(content: str, reader_id: str = "A") -> str:
-    """主入口 prompt — 暂未使用, polish_chapter 串联子方法, 留待 Phase 7.3 完整版"""
-    enhancement = _load_variant_enhancement(reader_id)
-    enhancement_block = f"\n{enhancement}\n" if enhancement else ""
-    return f"""请综合润色以下章节。
-
-{enhancement_block}
-## 原文
-{content[:3000]}
-
-请进行综合润色, 返回全文。"""
-
-
-def get_polish_system_prompt(reader_id: str = "A") -> str:
-    """主入口系统提示 — 暂未使用"""
-    return f"""你是读者 {reader_id} 号视角的资深网文编辑, 擅长综合润色。"""

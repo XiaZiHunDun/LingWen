@@ -2,7 +2,7 @@
 #
 # Doc 4 (GoT 适配设计 v1.0) §7 — 章节写作最小工作流
 #
-# 4 阶段:read_snapshot → write_chapter → review_chapter → emit_chapter
+# 5 阶段 (Phase 7.3:read_snapshot → write_chapter → review_chapter → polish_chapter → emit_chapter)
 # 覆盖 PoC 范围 (1+4 端到端跑通 1 卷 50 章)
 #
 # 不实施 (后续阶段):
@@ -47,12 +47,23 @@ nodes:
     token_budget: 4000
     timeout_s: 90
 
-  # === Stage 4: 落盘输出 ===
+  # === Stage 3.5: LLM 增强润色 (Phase 7.3) ===
+  - id: polish_chapter
+    type: synthesis
+    name: Polish Chapter
+    description: LLM 增强润色 — 对话自然化 + 节奏调整 + AI 痕迹去除 (Phase 7.2 路径)
+    depends_on: [review_chapter]
+    prompt_scenario: ai_trace_removal
+    output_schema: PolishedDraft
+    token_budget: 6000
+    timeout_s: 90
+
+  # === Stage 4: 落盘输出 (Phase 7.3: 改 depends_on) ===
   - id: emit_chapter
     type: output
     name: Emit Chapter
-    description: 将审核通过的章节写入 content_repo + 更新索引
-    depends_on: [review_chapter]
+    description: 将润色后的章节写入 content_repo + 更新索引
+    depends_on: [polish_chapter]    # ← 改: 从 [review_chapter] 改为 [polish_chapter]
     prompt_scenario: null
     output_schema: null
     token_budget: 0

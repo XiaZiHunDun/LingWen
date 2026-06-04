@@ -174,9 +174,27 @@ class TestMinimalWorkflowE2E:
         assert result["summary"].paused is False
         assert result.get("pending_decisions", []) == []
 
+    def test_minimal_e2e_unchanged_no_polish(self, tmp_path: Path):
+        """Sanity: minimal_e2e.yaml 不应有 polish 节点 (防止误改)"""
+        router, _ = make_stub_router()
+        master = make_master_with_router(tmp_path, router)
+
+        result = master.run_workflow(
+            workflow_name="minimal_e2e",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": self.MINIMAL_OUTLINE,
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "use_llm": True,
+            },
+        )
+        assert "polish_chapter" not in result["executions"]
+
 
 class TestNovelWritingE2E:
-    """novel_writing.yaml 端到端 (4 节点:read_snapshot → write_chapter → review_chapter → emit_chapter)"""
+    """novel_writing.yaml 端到端 (5 节点:read_snapshot → write_chapter → review_chapter → polish_chapter → emit_chapter)"""
 
     MINIMAL_OUTLINE = {
         "chapters": [
@@ -206,25 +224,60 @@ class TestNovelWritingE2E:
         return result
 
     def test_four_nodes_all_completed(self, tmp_path: Path):
+        """Phase 7.3: novel_writing 5 节点 — 含 polish_chapter (read/write/review/polish/emit)"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
-        assert result["summary"].completed == 4
+        assert result["summary"].completed == 5
         assert result["summary"].failed == 0
         assert result["summary"].paused is False
 
     def test_at_least_one_llm_call(self, tmp_path: Path):
-        """read_snapshot (input) + emit_chapter (output) 走旁路不调 LLM。
-        write_chapter 至少 1 次 LLM 调用 (review_chapter 因 auditor.llm_audit
-        不存在,AttributeError 被吞,可能为 0 次)。"""
+        """Phase 7.3: novel_writing 5 节点 — write(1) + audit(1) + dialogue(1) + pacing(1) = 4 次 LLM
+        read_snapshot/emit_chapter 旁路,polish_chapter 走 ai_trace_removal → master.polish_chapter
+        → 2 LLM 路径 (Phase 7.2)"""
         router, providers = make_stub_router()
         self._run_novel_writing(tmp_path, router)
 
         total_calls = sum(len(p.calls) for p in providers.values())
-        assert total_calls >= 2, (
-            f"expected at least 2 LLM calls (write + audit), got {total_calls}. "
-            f"per-provider: {[(n, len(p.calls)) for n, p in providers.items()]}"
+        assert total_calls >= 4, (
+            f"expected at least 4 LLM calls (write + audit + dialogue + pacing), "
+            f"got {total_calls}. per-provider: {[(n, len(p.calls)) for n, p in providers.items()]}"
         )
+
+    def test_novel_writing_has_polish_node(self, tmp_path: Path):
+        """Phase 7.3: novel_writing.yaml 应含 polish_chapter 节点 (在 review 之后,emit 之前)"""
+        router, _ = make_stub_router()
+        result = self._run_novel_writing(tmp_path, router)
+
+        executions = result["executions"]
+        assert "polish_chapter" in executions, (
+            f"expected polish_chapter in executions, got {list(executions.keys())}"
+        )
+        # 拓扑: review → polish → emit
+        assert "review_chapter" in executions
+        assert "emit_chapter" in executions
+
+    def test_polish_node_completed_in_production_path(self, tmp_path: Path):
+        """Phase 7.3: polish_chapter 节点应跑完,不是 SKIPPED/FAILED"""
+        router, _ = make_stub_router()
+        result = self._run_novel_writing(tmp_path, router)
+
+        polish_exec = result["executions"]["polish_chapter"]
+        assert polish_exec.status == NodeStatus.COMPLETED
+        assert polish_exec.cost_tokens == 0  # token 估算在 TieredRouter 层
+
+    def test_polish_chapter_output_has_content(self, tmp_path: Path):
+        """Phase 7.3: polish 节点 output 含非空 content 字段 (供 emit 落盘)"""
+        router, _ = make_stub_router()
+        result = self._run_novel_writing(tmp_path, router)
+
+        polish_output = result["executions"]["polish_chapter"].output
+        assert isinstance(polish_output, dict)
+        assert "content" in polish_output
+        content = polish_output["content"]
+        assert isinstance(content, str)
+        assert len(content) > 0, "polish_chapter output.content should be non-empty"
 
     def test_bypass_nodes_have_no_llm_call(self, tmp_path: Path):
         router, _ = make_stub_router()
@@ -237,11 +290,12 @@ class TestNovelWritingE2E:
             assert ex.cost_tokens == 0
 
     def test_executions_graph_complete(self, tmp_path: Path):
+        """Phase 7.3: novel_writing 5 节点 — 含 polish_chapter"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
         executions = result["executions"]
-        expected_ids = {"read_snapshot", "write_chapter", "review_chapter", "emit_chapter"}
+        expected_ids = {"read_snapshot", "write_chapter", "review_chapter", "polish_chapter", "emit_chapter"}
         assert set(executions.keys()) == expected_ids
         for ex in executions.values():
             assert ex.status == NodeStatus.COMPLETED
@@ -339,3 +393,21 @@ class TestRouterFailure:
         for p in prompts:
             assert isinstance(p, str)
             assert len(p) > 0
+
+
+def test_emit_chapter_depends_on_polish_yaml_static():
+    """Phase 7.3: YAML 静态检查 — emit_chapter.depends_on == [polish_chapter]"""
+    from pathlib import Path
+
+    import yaml
+
+    yaml_path = Path(__file__).parent.parent.parent / "infra" / "got" / "workflows" / "novel_writing.yaml"
+    assert yaml_path.exists(), f"workflow YAML not found: {yaml_path}"
+    data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+
+    nodes_by_id = {n["id"]: n for n in data["nodes"]}
+    assert "polish_chapter" in nodes_by_id
+    emit = nodes_by_id["emit_chapter"]
+    assert "polish_chapter" in emit["depends_on"], (
+        f"emit_chapter.depends_on should contain polish_chapter, got {emit['depends_on']}"
+    )

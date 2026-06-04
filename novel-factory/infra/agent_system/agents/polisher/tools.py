@@ -2,21 +2,14 @@
 from typing import Any, Dict, List, Optional
 
 from ..base import AgentBase
-
-try:
-    from .variant_loader import get_variant_loader
-    VARIANT_LOADER_AVAILABLE = True
-except ImportError:
-    VARIANT_LOADER_AVAILABLE = False
-
 from .prompts import (
     build_dialogue_prompt,
     build_pacing_prompt,
-    build_polish_prompt,
     get_dialogue_system_prompt,
     get_pacing_system_prompt,
-    get_polish_system_prompt,
 )
+
+DEFAULT_MAX_TOKENS = 3000
 
 
 class PolisherTools(AgentBase):
@@ -31,8 +24,6 @@ class PolisherTools(AgentBase):
     def __init__(self, router=None):
         super().__init__(router)
         self._current_reader_id: Optional[str] = None
-        if VARIANT_LOADER_AVAILABLE:
-            self._variant_loader = get_variant_loader()
 
     # ==================== Reader 切换 ====================
 
@@ -92,7 +83,7 @@ class PolisherTools(AgentBase):
         effective_reader = reader_id or self._current_reader_id or "A"
         prompt = build_dialogue_prompt(content, effective_reader)
         system = get_dialogue_system_prompt(effective_reader)
-        return self.chat(prompt=prompt, system=system, temperature=0.5, max_tokens=3000)
+        return self.chat(prompt=prompt, system=system, temperature=0.5, max_tokens=DEFAULT_MAX_TOKENS)
 
     def adjust_pacing_llm(
         self,
@@ -102,7 +93,7 @@ class PolisherTools(AgentBase):
         effective_reader = reader_id or self._current_reader_id or "A"
         prompt = build_pacing_prompt(content, effective_reader)
         system = get_pacing_system_prompt(effective_reader)
-        return self.chat(prompt=prompt, system=system, temperature=0.4, max_tokens=3000)
+        return self.chat(prompt=prompt, system=system, temperature=0.4, max_tokens=DEFAULT_MAX_TOKENS)
 
     # ==================== 规则方法 (保留, 不破坏 test_agent_tools.py) ====================
 
