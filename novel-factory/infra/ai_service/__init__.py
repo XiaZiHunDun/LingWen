@@ -33,6 +33,9 @@ from .minimax_provider import MiniMaxProvider
 # Phase 2.11 — 多模型分级路由
 from .model_tiers import MODEL_TIERS, ModelTier, ModelTierConfig, compute_cost
 
+# Phase 2.12 — TieredRouter
+from .tiered_router import TieredRouter, TieredRouterError
+
 # 显式 re-export provider 类(向后兼容: `from infra.ai_service import OpenAIProvider`)
 from .openai_provider import OpenAIProvider
 
@@ -55,4 +58,7 @@ __all__ = [
     "ModelTierConfig",
     "MODEL_TIERS",
     "compute_cost",
+    # Phase 2.12
+    "TieredRouter",
+    "TieredRouterError",
 ]
