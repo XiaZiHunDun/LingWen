@@ -580,10 +580,9 @@ class MasterController:
         return self.auditor.generate_audit_report(chapter_num, all_issues, scores={})
 
     def polish_chapter(self, content: str) -> str:
-        """润色章节（委托给polisher）"""
-        result = self.polisher.remove_ai_gloss(content)
-        result = self.polisher.optimize_dialogue(result)
-        return result
+        """润色章节（委托给polisher, LLM 化路径 Phase 7.2）"""
+        result = self.polisher.polish_chapter(chapter_num=0, content=content)
+        return result["content"]
 
     # ==================== 社交引擎方法 ====================
 
