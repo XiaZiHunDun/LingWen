@@ -146,9 +146,9 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
 class TestMasterControllerRunWorkflow:
     """MasterController.run_workflow API 验证"""
 
-    def test_run_workflow_returns_three_part_dict(self):
+    def test_run_workflow_returns_three_part_dict(self, monkeypatch):
         """run_workflow 返回 {summary, graph, executions}"""
-        controller, _ = _make_controller_with_stubs(pytest.MonkeyPatch())
+        controller, _ = _make_controller_with_stubs(monkeypatch)
         result = controller.run_workflow(
             workflow_name="novel_writing",
             start_nodes=["read_snapshot"],
@@ -158,8 +158,8 @@ class TestMasterControllerRunWorkflow:
         assert "graph" in result
         assert "executions" in result
 
-    def test_run_workflow_summary_has_completed_count(self):
-        controller, _ = _make_controller_with_stubs(pytest.MonkeyPatch())
+    def test_run_workflow_summary_has_completed_count(self, monkeypatch):
+        controller, _ = _make_controller_with_stubs(monkeypatch)
         result = controller.run_workflow(
             workflow_name="novel_writing",
             start_nodes=["read_snapshot"],
@@ -169,8 +169,8 @@ class TestMasterControllerRunWorkflow:
         assert result["summary"].completed == 4
         assert result["summary"].failed == 0
 
-    def test_run_workflow_executions_has_all_nodes(self):
-        controller, _ = _make_controller_with_stubs(pytest.MonkeyPatch())
+    def test_run_workflow_executions_has_all_nodes(self, monkeypatch):
+        controller, _ = _make_controller_with_stubs(monkeypatch)
         result = controller.run_workflow(
             workflow_name="novel_writing",
             start_nodes=["read_snapshot"],
@@ -182,9 +182,9 @@ class TestMasterControllerRunWorkflow:
         assert "review_chapter" in executions
         assert "emit_chapter" in executions
 
-    def test_run_workflow_default_start_nodes(self):
+    def test_run_workflow_default_start_nodes(self, monkeypatch):
         """start_nodes=None → 自动选无依赖节点 (read_snapshot)"""
-        controller, _ = _make_controller_with_stubs(pytest.MonkeyPatch())
+        controller, _ = _make_controller_with_stubs(monkeypatch)
         result = controller.run_workflow(
             workflow_name="novel_writing",
             initial_inputs={"chapter_num": 1, "characters": [], "style_guide": {}, "timeline": []},
@@ -192,9 +192,9 @@ class TestMasterControllerRunWorkflow:
         # 默认起点 read_snapshot,跑完整链
         assert result["summary"].completed == 4
 
-    def test_run_workflow_dispatches_to_real_agent_methods(self):
+    def test_run_workflow_dispatches_to_real_agent_methods(self, monkeypatch):
         """run_workflow 通过 AgentComputeFn 调 content_writer / auditor"""
-        controller, stub = _make_controller_with_stubs(pytest.MonkeyPatch())
+        controller, stub = _make_controller_with_stubs(monkeypatch)
         controller.run_workflow(
             workflow_name="novel_writing",
             start_nodes=["read_snapshot"],
@@ -207,8 +207,8 @@ class TestMasterControllerRunWorkflow:
         write_call = next(c for c in stub.calls if c[0] == "write_chapter")
         assert write_call[1]["chapter_num"] == 5
 
-    def test_run_workflow_invalid_workflow_raises(self):
-        controller, _ = _make_controller_with_stubs(pytest.MonkeyPatch())
+    def test_run_workflow_invalid_workflow_raises(self, monkeypatch):
+        controller, _ = _make_controller_with_stubs(monkeypatch)
         with pytest.raises(Exception):  # WorkflowNotFoundError
             controller.run_workflow(workflow_name="nonexistent_workflow_xyz")
 
@@ -218,9 +218,9 @@ class TestMasterControllerRunWorkflow:
 class TestMasterControllerRunWorkflowBackwardCompat:
     """run_workflow 不破坏老 API (advance_step/dispatch_task)"""
 
-    def test_old_methods_still_exist(self):
+    def test_old_methods_still_exist(self, monkeypatch):
         """MasterController 仍含 advance_step / dispatch_task / verify_task"""
-        controller, _ = _make_controller_with_stubs(pytest.MonkeyPatch())
+        controller, _ = _make_controller_with_stubs(monkeypatch)
         assert hasattr(controller, "advance_step")
         assert hasattr(controller, "dispatch_task")
         assert hasattr(controller, "verify_task")

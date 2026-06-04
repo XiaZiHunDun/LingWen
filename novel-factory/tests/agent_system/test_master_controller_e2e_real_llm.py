@@ -10,14 +10,18 @@ Doc 4 (GoT 适配设计 v1.0) §11 Phase 7:
 - 那个文件用 types.MethodType 替换 master.write_chapter/audit_chapter/polish_chapter
 - 本文件保留 master 方法原样,只把 router 换成 AIRouter(3 StubProvider)
 
-生产现实 (Phase 7 实测):
+生产现实 (Phase 7.1 修复后):
 - master.write_chapter → content_writer.generate_chapter → 1 次 LLM 调用
-- master.audit_chapter → auditor.llm_audit() 不存在,被 AttributeError 捕获 → 0 次 LLM 调用
-- master.polish_chapter → PolisherTools.remove_ai_gloss → 纯正则 → 0 次 LLM 调用
+- master.audit_chapter → auditor.audit_chapter (Phase 7.1 修复: 原 llm_audit 方法名错误)
+                → 1 次 LLM 调用
 - read_snapshot / emit_chapter → AgentComputeFn 旁路 (got_bridge.py:168) → 0 次 LLM 调用
 
-minimal_e2e (2 节点 write→review):预期至少 1 次 LLM 调用
-novel_writing (4 节点 read→write→review→emit):预期至少 1 次 LLM 调用
+minimal_e2e (2 节点 write→review):预期至少 2 次 LLM 调用 (write + audit)
+novel_writing (4 节点 read→write→review→emit):预期至少 2 次 LLM 调用 (write + audit)
+
+Out of scope (Phase 7.1 跳过的 Polisher 候选):
+- master.polish_chapter → PolisherTools 纯正则,0 次 LLM 调用
+- minimal_e2e 不含 polish 节点,production 现实下 polish 链不入测试
 
 合计:2 类 11 tests + 1 类 3 tests = 14 tests
 """
@@ -116,8 +120,8 @@ class TestMinimalWorkflowE2E:
         )
 
         total_calls = sum(len(p.calls) for p in providers.values())
-        assert total_calls >= 1, (
-            f"expected at least 1 LLM call (write), got {total_calls}. "
+        assert total_calls >= 2, (
+            f"expected at least 2 LLM calls (write + audit), got {total_calls}. "
             f"per-provider: {[(n, len(p.calls)) for n, p in providers.items()]}"
         )
 
@@ -217,8 +221,8 @@ class TestNovelWritingE2E:
         self._run_novel_writing(tmp_path, router)
 
         total_calls = sum(len(p.calls) for p in providers.values())
-        assert total_calls >= 1, (
-            f"expected at least 1 LLM call from write_chapter, got {total_calls}. "
+        assert total_calls >= 2, (
+            f"expected at least 2 LLM calls (write + audit), got {total_calls}. "
             f"per-provider: {[(n, len(p.calls)) for n, p in providers.items()]}"
         )
 

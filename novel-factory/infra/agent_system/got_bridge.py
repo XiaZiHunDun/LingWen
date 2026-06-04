@@ -80,18 +80,22 @@ def _handler_chapter_review(master: MasterController, inputs: dict[str, Any]) ->
     """scenario=chapter_review → auditor.audit_chapter
 
     inputs 期望含 content (来自 write_chapter 的 output.content) 和 chapter_num
+    返回 dict 透传 content 字段,供下游 polish / emit 节点继续使用。
     """
     chapter_num = int(_resolve_field(inputs, "chapter_num", 0))
     content = _resolve_field(inputs, "content", "")
     if not chapter_num or not content:
         return {"_error": "chapter_num and content are required for chapter_review"}
-    return master.audit_chapter(
+    report = master.audit_chapter(
         chapter_num=chapter_num,
         content=content,
         characters=_resolve_field(inputs, "characters", []),
         timeline=_resolve_field(inputs, "timeline", []),
         use_llm=bool(_resolve_field(inputs, "use_llm", True)),
     )
+    if isinstance(report, dict):
+        report.setdefault("content", content)
+    return report
 
 
 def _handler_polish(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:

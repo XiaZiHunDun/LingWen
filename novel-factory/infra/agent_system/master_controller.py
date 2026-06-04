@@ -559,7 +559,7 @@ class MasterController:
         if use_llm:
             # 使用LLM进行深度审核
             try:
-                llm_report = self.auditor.llm_audit(
+                llm_report = self.auditor.audit_chapter(
                     chapter_num=chapter_num,
                     content=content,
                     characters=characters,
