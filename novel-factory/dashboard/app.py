@@ -2,7 +2,12 @@
 Reading Power Dashboard - FastAPI Backend
 
 This module provides a REST API for the Reading Power Dashboard,
-serving hook and coolpoint data stored in reading_power.db.
+serving hook and coolpoint data + MasterController 决策/工作流 API (Phase 6).
+
+Phase 6 新增:
+- /api/decisions/* (pending, all, resolve, defer, cancel)
+- /api/workflows/* (list, run, resume, active)
+- master_controller kwarg (Protocol 注入,默认 None)
 """
 
 import os
@@ -10,10 +15,12 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from dashboard.protocols import MasterControllerLike
 
 # ==================== Pydantic Models ====================
 
@@ -49,6 +56,78 @@ class ChaptersResponse(BaseModel):
     """Chapters list response model."""
 
     chapters: list[ChapterData]
+
+
+# === Phase 6: Decision/Workflow models ===
+
+class DecisionResponse(BaseModel):
+    """HumanDecision 序列化(决策面板用)"""
+    decision_id: str
+    kind: str
+    node_id: str
+    prompt: str
+    options: list[str]
+    priority: int
+    status: str
+    context: dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[str] = None
+    resolution: Optional[str] = None
+    resolved_at: Optional[str] = None
+    resolved_by: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class ResolveDecisionRequest(BaseModel):
+    """解决决策请求"""
+    option: str
+    resolved_by: str = "human"
+
+
+class DeferDecisionRequest(BaseModel):
+    """推迟决策请求"""
+    reason: str = ""
+
+
+class CancelDecisionRequest(BaseModel):
+    """取消决策请求"""
+    reason: str = ""
+
+
+class WorkflowListItem(BaseModel):
+    """工作流列表项"""
+    name: str
+    path: str
+    node_count: int
+    has_decision_nodes: bool
+
+
+class RunWorkflowRequest(BaseModel):
+    """运行工作流请求"""
+    workflow_name: str
+    initial_inputs: Optional[dict[str, Any]] = None
+    start_nodes: Optional[list[str]] = None
+    max_backtracks: int = 2
+    base_dir: Optional[str] = None
+
+
+class ResumeWorkflowRequest(BaseModel):
+    """恢复工作流请求"""
+    decision_id: str
+    option: str
+    resolved_by: str = "human"
+
+
+class WorkflowStatusResponse(BaseModel):
+    """工作流状态响应"""
+    workflow_name: Optional[str] = None
+    is_active: bool = False
+    completed: int = 0
+    failed: int = 0
+    paused: bool = False
+    paused_nodes: list[str] = Field(default_factory=list)
+    node_count: int = 0
+    steps: int = 0
+    pending_decisions: list[dict[str, Any]] = Field(default_factory=list)
 
 
 # ==================== Database Helper ====================
@@ -247,15 +326,75 @@ class ReadingPowerDB:
             return [dict(row) for row in rows]
 
 
+# ==================== Workflow Listing Helper ====================
+
+
+def _list_workflow_yamls() -> list[WorkflowListItem]:
+    """扫描 infra/got/workflows/*.yaml → WorkflowListItem 列表
+
+    简化:不调 workflow_loader,只读 YAML 文本粗略统计
+    - node_count: text 中 `- id:` 出现次数
+    - has_decision_nodes: text 中是否含 `type: decision`
+    """
+    wf_dir = Path(__file__).parent.parent / "infra" / "got" / "workflows"
+    if not wf_dir.exists():
+        return []
+    items: list[WorkflowListItem] = []
+    for yaml_path in sorted(wf_dir.glob("*.yaml")):
+        try:
+            text = yaml_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        node_count = text.count("- id:")
+        has_decision = "type: decision" in text
+        items.append(
+            WorkflowListItem(
+                name=yaml_path.stem,
+                path=str(yaml_path.relative_to(wf_dir.parent.parent)),
+                node_count=node_count,
+                has_decision_nodes=has_decision,
+            )
+        )
+    return items
+
+
+def _decision_to_response(d: Any) -> DecisionResponse:
+    """HumanDecision / dict → DecisionResponse"""
+    if hasattr(d, "to_dict"):
+        d = d.to_dict()
+    return DecisionResponse(
+        decision_id=d.get("decision_id", ""),
+        kind=d.get("decision_kind") or d.get("kind", ""),
+        node_id=d.get("node_id", ""),
+        prompt=d.get("prompt", ""),
+        options=list(d.get("options", [])),
+        priority=d.get("priority", 0),
+        status=d.get("status", "pending"),
+        context=d.get("context", {}) or {},
+        created_at=d.get("created_at"),
+        resolution=d.get("resolution"),
+        resolved_at=d.get("resolved_at"),
+        resolved_by=d.get("resolved_by"),
+        reason=d.get("reason"),
+    )
+
+
 # ==================== App Factory ====================
 
 
-def create_app(db_path: Optional[Path] = None) -> FastAPI:
+def create_app(
+    db_path: Optional[Path] = None,
+    master_controller: Optional[MasterControllerLike] = None,
+) -> FastAPI:
     """
     Create and configure the FastAPI application.
 
     Args:
         db_path: Optional custom path to reading_power.db
+        master_controller: Optional MasterControllerLike 实现 (Phase 6)
+            - None: decision/workflow endpoints 返回 503
+            - Stub (测试用):满足 Protocol 的轻量对象
+            - MasterControllerAdapter(MasterController()): 生产
 
     Returns:
         Configured FastAPI application instance
@@ -268,6 +407,15 @@ def create_app(db_path: Optional[Path] = None) -> FastAPI:
 
     # Use init_if_missing=False to avoid trying to create directories for non-existent paths
     db = ReadingPowerDB(db_path, init_if_missing=False)
+
+    def _require_controller() -> MasterControllerLike:
+        """Require master_controller,否则 503"""
+        if master_controller is None:
+            raise HTTPException(
+                status_code=503,
+                detail="master_controller not configured for this dashboard instance",
+            )
+        return master_controller
 
     # ==================== Endpoints ====================
 
@@ -322,7 +470,6 @@ def create_app(db_path: Optional[Path] = None) -> FastAPI:
         Args:
             range: Chapter range in format "start-end" (e.g., "1-30")
         """
-        # Parse range parameter
         try:
             parts = range.split("-")
             if len(parts) != 2:
@@ -354,7 +501,173 @@ def create_app(db_path: Optional[Path] = None) -> FastAPI:
             ]
         )
 
+    # ==================== Phase 6: Decision Endpoints ====================
+
+    @app.get("/api/decisions/pending", response_model=list[DecisionResponse])
+    def get_pending_decisions() -> list[DecisionResponse]:
+        """列出 PENDING 决策 (按 priority desc + due_at asc)"""
+        ctrl = _require_controller()
+        return [_decision_to_response(d) for d in ctrl.list_pending_decisions()]
+
+    @app.get("/api/decisions/all", response_model=list[DecisionResponse])
+    def get_all_decisions() -> list[DecisionResponse]:
+        """列出全部决策 (含 RESOLVED/DEFERRED/CANCELLED)"""
+        ctrl = _require_controller()
+        queue = ctrl.get_decision_queue()
+        return [_decision_to_response(d) for d in queue.all_decisions()]
+
+    @app.post(
+        "/api/decisions/{decision_id}/resolve",
+        response_model=DecisionResponse,
+    )
+    def resolve_decision(decision_id: str, body: ResolveDecisionRequest) -> DecisionResponse:
+        """解决决策 (PENDING → RESOLVED)"""
+        ctrl = _require_controller()
+        try:
+            d = ctrl.resolve_decision(
+                decision_id, body.option, resolved_by=body.resolved_by
+            )
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=f"decision not found: {e}")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return _decision_to_response(d)
+
+    @app.post(
+        "/api/decisions/{decision_id}/defer",
+        response_model=DecisionResponse,
+    )
+    def defer_decision(decision_id: str, body: DeferDecisionRequest) -> DecisionResponse:
+        """推迟决策 (PENDING → DEFERRED)"""
+        ctrl = _require_controller()
+        try:
+            d = ctrl.defer_decision(decision_id, reason=body.reason)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=f"decision not found: {e}")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return _decision_to_response(d)
+
+    @app.post(
+        "/api/decisions/{decision_id}/cancel",
+        response_model=DecisionResponse,
+    )
+    def cancel_decision(decision_id: str, body: CancelDecisionRequest) -> DecisionResponse:
+        """取消决策 (PENDING → CANCELLED)"""
+        ctrl = _require_controller()
+        try:
+            d = ctrl.cancel_decision(decision_id, reason=body.reason)
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=f"decision not found: {e}")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return _decision_to_response(d)
+
+    # ==================== Phase 6: Workflow Endpoints ====================
+
+    @app.get("/api/workflows/list", response_model=list[WorkflowListItem])
+    def list_workflows() -> list[WorkflowListItem]:
+        """列出 infra/got/workflows/*.yaml"""
+        return _list_workflow_yamls()
+
+    @app.post(
+        "/api/workflows/run",
+        response_model=WorkflowStatusResponse,
+    )
+    def run_workflow(body: RunWorkflowRequest) -> WorkflowStatusResponse:
+        """运行工作流 (Phase 4-5: 会扫描 DECISION 节点暂停)"""
+        ctrl = _require_controller()
+        try:
+            result = ctrl.run_workflow(
+                workflow_name=body.workflow_name,
+                start_nodes=body.start_nodes,
+                initial_inputs=body.initial_inputs,
+                max_backtracks=body.max_backtracks,
+                base_dir=body.base_dir,
+            )
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=f"not found: {e}")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except RuntimeError as e:
+            if "no active workflow" in str(e):
+                raise HTTPException(status_code=409, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e))
+        except Exception as e:  # noqa: BLE001
+            # WorkflowError / MaxStepsExceeded 等
+            err_type = type(e).__name__
+            if "WorkflowError" in err_type or "workflow load" in str(e).lower():
+                raise HTTPException(status_code=422, detail=f"workflow load failed: {e}")
+            if "MaxSteps" in err_type:
+                raise HTTPException(status_code=500, detail=f"max steps: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+        return _workflow_result_to_response(result)
+
+    @app.post(
+        "/api/workflows/resume",
+        response_model=WorkflowStatusResponse,
+    )
+    def resume_workflow(body: ResumeWorkflowRequest) -> WorkflowStatusResponse:
+        """恢复 DECISION 暂停的工作流"""
+        ctrl = _require_controller()
+        try:
+            result = ctrl.resume_workflow(
+                body.decision_id, body.option, resolved_by=body.resolved_by
+            )
+        except KeyError as e:
+            raise HTTPException(status_code=404, detail=f"decision not found: {e}")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except RuntimeError as e:
+            if "no active workflow" in str(e):
+                raise HTTPException(status_code=409, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e))
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(status_code=500, detail=str(e))
+        return _workflow_result_to_response(result)
+
+    @app.get("/api/workflows/active", response_model=WorkflowStatusResponse)
+    def get_active_workflow() -> WorkflowStatusResponse:
+        """当前活跃工作流状态 (Phase 5+)"""
+        if master_controller is None:
+            return WorkflowStatusResponse(is_active=False, workflow_name=None)
+        return WorkflowStatusResponse(**master_controller.get_active_workflow_status())
+
     return app
+
+
+def _workflow_result_to_response(result: dict[str, Any]) -> WorkflowStatusResponse:
+    """run_workflow / resume_workflow 返回 dict → WorkflowStatusResponse
+
+    summary 可能是 dict (adapter 转换后) 或 dataclass (测试 stub 直接返回)
+    """
+    summary = result.get("summary") or {}
+    if not isinstance(summary, dict):
+        # dataclass → 用 getattr
+        paused_nodes = list(getattr(summary, "paused_nodes", []) or [])
+        summary_dict = {
+            "completed": getattr(summary, "completed", 0),
+            "failed": getattr(summary, "failed", 0),
+            "paused": getattr(summary, "paused", False),
+            "paused_nodes": paused_nodes,
+            "node_count": getattr(summary, "node_count", 0),
+            "steps": getattr(summary, "steps", 0),
+        }
+    else:
+        summary_dict = summary
+    executions = result.get("executions") or {}
+    paused_nodes = list(summary_dict.get("paused_nodes", []))
+    return WorkflowStatusResponse(
+        workflow_name=result.get("workflow_name"),
+        is_active=True,
+        completed=int(summary_dict.get("completed", 0)),
+        failed=int(summary_dict.get("failed", 0)),
+        paused=bool(summary_dict.get("paused", False)),
+        paused_nodes=paused_nodes,
+        node_count=int(summary_dict.get("node_count", len(executions))),
+        steps=int(summary_dict.get("steps", 0)),
+        pending_decisions=list(result.get("pending_decisions", [])),
+    )
 
 
 # ==================== App Instance ====================
