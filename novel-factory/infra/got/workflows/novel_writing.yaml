@@ -72,7 +72,7 @@ nodes:
     depends_on: [review_chapter]
     prompt_scenario: ai_trace_removal
     output_schema: PolishedDraft
-    token_budget: 6000
+    token_budget: 4000   # ← fixup M2: 1 LLM call vs emotional_pacing 的 2 LLM calls
     timeout_s: 90
 
   # === Stage 3.7: AGGREGATION 合并 (Phase 7.4 NEW) ===

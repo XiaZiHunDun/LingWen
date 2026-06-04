@@ -589,18 +589,36 @@ class MasterController:
 
         跳过 remove_ai_gloss 规则, 留给 ai_trace_removal 节点处理
         (两个 variant 是正交优化维度)
+
+        韧性契约 (Phase 7.2 模式, fixup M1): 每个 LLM 调 try/except 兜底,
+        失败不致命 — logger.warning 后 content 继续流转. 防止单 LLM 失败
+        → AgentComputeFn fail=True → 节点 FAILED → backtrack.
         """
-        polished = self.polisher.optimize_dialogue_llm(content)
-        polished = self.polisher.adjust_pacing_llm(polished)
+        polished = content
+        try:
+            polished = self.polisher.optimize_dialogue_llm(polished)
+        except Exception as e:
+            logger.warning("polish_emotional_pacing: dialogue_llm failed: %s", e)
+        try:
+            polished = self.polisher.adjust_pacing_llm(polished)
+        except Exception as e:
+            logger.warning("polish_emotional_pacing: pacing_llm failed: %s", e)
         return polished
 
     def polish_ai_trace_removal(self, content: str) -> str:
         """AI 痕迹 variant — 规则去 AI 痕迹 + 对话自然化 (Phase 7.4)
 
         跳过 adjust_pacing_llm, 留给 emotional_pacing 节点处理
+
+        韧性契约 (fixup M1): remove_ai_gloss 是纯规则从不出错, 不兜底;
+        optimize_dialogue_llm try/except 兜底 (失败 → logger.warning +
+        保留规则去 AI 痕迹结果).
         """
         polished = self.polisher.remove_ai_gloss(content)
-        polished = self.polisher.optimize_dialogue_llm(polished)
+        try:
+            polished = self.polisher.optimize_dialogue_llm(polished)
+        except Exception as e:
+            logger.warning("polish_ai_trace_removal: dialogue_llm failed: %s", e)
         return polished
 
     # ==================== 社交引擎方法 ====================

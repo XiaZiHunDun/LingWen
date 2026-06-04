@@ -383,3 +383,126 @@ class TestPolishMergeHandler:
         result = compute(node, {"upstream": {"other": "value"}})
         assert result.fail is True
         assert "polish_merge requires" in result.error
+
+
+# === TestPolishVariantResilience (Phase 7.4 fixup M1 NEW) ===
+
+class TestPolishVariantResilience:
+    """Phase 7.4 fixup M1: polish_emotional_pacing + polish_ai_trace_removal 加
+    per-step try/except 兜底, 沿用 Phase 7.2 polish_chapter 韧性契约 (LLM
+    失败 → logger.warning + content 继续). 锁住 2 个 entry methods 在
+    polisher LLM 抛错时仍返回 str (不冒泡到 AgentComputeFn → 节点 FAILED).
+    """
+
+    def _make_master_with_broken_polisher(
+        self,
+        dialogue_raises: bool = True,
+        pacing_raises: bool = True,
+    ):
+        """构造 stub MasterController + polisher (可控 LLM 失败).
+
+        通过 MasterController.__new__ 绕过 __init__ (避免 build_router 等重操作),
+        只塞 self.polisher 即可 — polish_xxx methods 只读 self.polisher.
+        """
+        from infra.agent_system import master_controller as mc_mod
+
+        controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
+
+        class _BrokenPolisher:
+            """LLM 方法可控抛错, 规则方法正常"""
+
+            def optimize_dialogue_llm(self, content, **kwargs):
+                if dialogue_raises:
+                    raise RuntimeError("dialogue_llm upstream error")
+                return content + " [dialogue_ok]"
+
+            def adjust_pacing_llm(self, content, **kwargs):
+                if pacing_raises:
+                    raise RuntimeError("pacing_llm upstream error")
+                return content + " [pacing_ok]"
+
+            def remove_ai_gloss(self, content):
+                # 规则路径, 模拟 "首先/其次/..." 替换
+                return content.replace("首先", "")
+
+        controller.polisher = _BrokenPolisher()
+        return controller
+
+    def test_polish_emotional_pacing_survives_dialogue_llm_failure(self):
+        """dialogue_llm 抛错 → emotional_pacing 仍返 str, content 走 fallback"""
+        master = self._make_master_with_broken_polisher(
+            dialogue_raises=True, pacing_raises=False,
+        )
+        result = master.polish_emotional_pacing("raw text")
+        # 韧性契约: dialogue 失败 → content 不变, pacing 继续 → 加 [pacing_ok]
+        assert isinstance(result, str)
+        assert "[pacing_ok]" in result
+        assert "raw text" in result
+
+    def test_polish_emotional_pacing_survives_pacing_llm_failure(self):
+        """pacing_llm 抛错 → emotional_pacing 仍返 str, dialogue 结果保留"""
+        master = self._make_master_with_broken_polisher(
+            dialogue_raises=False, pacing_raises=True,
+        )
+        result = master.polish_emotional_pacing("raw text")
+        # 韧性契约: dialogue 成功 + pacing 失败 → 保留 dialogue 后的内容
+        assert isinstance(result, str)
+        assert "[dialogue_ok]" in result
+        assert "[pacing_ok]" not in result
+
+    def test_polish_emotional_pacing_survives_both_llm_failures(self):
+        """双 LLM 全失败 → 返原 content (str), 不抛"""
+        master = self._make_master_with_broken_polisher(
+            dialogue_raises=True, pacing_raises=True,
+        )
+        result = master.polish_emotional_pacing("raw text")
+        # 韧性契约: 双失败 → 走 fallback → 返原 content
+        assert isinstance(result, str)
+        assert result == "raw text"
+
+    def test_polish_ai_trace_removal_survives_dialogue_llm_failure(self):
+        """ai_trace_removal: remove_ai_gloss 规则先跑 (从不出错), dialogue 失败时仍返 str"""
+        master = self._make_master_with_broken_polisher(
+            dialogue_raises=True, pacing_raises=True,  # pacing 不被调
+        )
+        result = master.polish_ai_trace_removal("首先 raw text")
+        # 韧性契约: remove_ai_gloss 成功 (规则) + dialogue 失败 → 返规则结果
+        assert isinstance(result, str)
+        assert "首先" not in result
+        assert "raw text" in result
+        # pacing 不被调 (orthogonal design)
+        # 已隐式验证 (上面 _BrokenPolisher.adjust_pacing_llm 若被调会抛, 但 ai_trace_removal 不调)
+
+    def test_polish_ai_trace_removal_happy_path(self):
+        """ai_trace_removal 正常路径: remove_ai_gloss + dialogue_llm 都成功"""
+        master = self._make_master_with_broken_polisher(
+            dialogue_raises=False, pacing_raises=True,
+        )
+        result = master.polish_ai_trace_removal("首先 raw")
+        # 规则去掉 "首先" → dialogue 加 [dialogue_ok]
+        assert isinstance(result, str)
+        assert "首先" not in result
+        assert "[dialogue_ok]" in result
+
+
+# === TestPolishHandlerTypoContract (Phase 7.4 fixup L3 NEW) ===
+
+class TestPolishHandlerTypoContract:
+    """Phase 7.4 fixup L3: 锁住 _make_polish_handler(method_name) 契约 —
+    getattr(master, method_name) 拼错时抛 AttributeError, 由 AgentComputeFn
+    try/except 捕获转 fail=True. 防止未来加 scenario 时拼错 method_name 静默漏掉.
+    """
+
+    def test_polish_handler_typo_propagates_as_attribute_error(self):
+        """_make_polish_handler('nonexistent_method_xyz') → getattr 抛 AttributeError"""
+        from infra.agent_system.got_bridge import _make_polish_handler
+
+        handler = _make_polish_handler("nonexistent_method_xyz")
+
+        class _BrokenMaster:
+            """故意没定义 nonexistent_method_xyz"""
+
+        # handler 是闭包, 在被调用时做 getattr(master, method_name)
+        # 期望抛 AttributeError 含 method_name 字串 (AgentComputeFn 会捕获转 fail)
+        with pytest.raises(AttributeError, match="nonexistent_method_xyz"):
+            handler(_BrokenMaster(), {"content": "raw text"})
