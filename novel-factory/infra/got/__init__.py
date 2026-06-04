@@ -42,6 +42,15 @@ from .scheduler import (
     MaxStepsExceeded,
     SchedulerError,
 )
+from .visualizer import (
+    NODE_STATUS_CLASS,
+    render_mermaid,
+    render_mermaid_from_scheduler,
+    render_status_table,
+    render_status_table_from_scheduler,
+    render_summary,
+    render_summary_from_scheduler,
+)
 from .workflow_loader import (
     WorkflowError,
     WorkflowNotFoundError,
@@ -77,4 +86,12 @@ __all__ = [
     # Phase 2.12a
     "LLMComputeFn",
     "default_prompt_builder",
+    # Phase 4.1
+    "NODE_STATUS_CLASS",
+    "render_mermaid",
+    "render_mermaid_from_scheduler",
+    "render_status_table",
+    "render_status_table_from_scheduler",
+    "render_summary",
+    "render_summary_from_scheduler",
 ]

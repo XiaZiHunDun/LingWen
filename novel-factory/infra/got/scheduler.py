@@ -224,24 +224,12 @@ class GoTScheduler:
         )
 
     def visualize(self) -> str:
-        """生成 mermaid 流程图字符串
+        """生成 mermaid 流程图字符串 (按 NodeStatus 染色)
 
-        格式:
-            graph TD
-                a[INPUT: a]
-                b[GENERATION: b]
-                a --> b
+        委托给 infra.got.visualizer.render_mermaid_from_scheduler
         """
-        lines = ["graph TD"]
-        for nid in self._graph.node_ids():
-            node = self._graph.get_node(nid)
-            label = f"{node.type.value}: {node.name}" if node.name else nid
-            lines.append(f"    {nid}[\"{label}\"]")
-        for nid in self._graph.node_ids():
-            node = self._graph.get_node(nid)
-            for dep in node.depends_on:
-                lines.append(f"    {dep} --> {nid}")
-        return "\n".join(lines)
+        from infra.got.visualizer import render_mermaid_from_scheduler
+        return render_mermaid_from_scheduler(self)
 
     # === Internals ===
 

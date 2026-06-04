@@ -127,6 +127,10 @@ class ThoughtGraph:
     def has_execution(self, node_id: str) -> bool:
         return node_id in self._executions
 
+    def all_executions(self) -> dict[str, NodeExecution]:
+        """返回全部执行记录的浅拷贝 (供可视化/统计用)"""
+        return dict(self._executions)
+
     def reset_execution(self, node_id: str) -> None:
         """重置节点执行记录(回溯时用)
 
