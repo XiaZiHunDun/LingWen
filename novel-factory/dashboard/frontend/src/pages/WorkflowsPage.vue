@@ -1,7 +1,7 @@
 <!--
-  WorkflowsPage.vue — 工作流页面 (Phase 6.2)
-  - 左侧:工作流列表
-  - 右侧:启动表单 + 当前活跃状态
+  WorkflowsPage.vue — 工作流页面 (Phase 6.2 + 6.3)
+  - 左侧:工作流列表 (含"查看图"按钮,Phase 6.3)
+  - 右侧:启动表单 + 当前活跃状态 + 图渲染面板
 -->
 <template>
   <div class="workflows-page">
@@ -37,6 +37,14 @@
               <span class="meta-item">{{ wf.node_count }} 节点</span>
               <span class="meta-path">{{ wf.path }}</span>
             </div>
+            <button
+              v-if="selected?.name === wf.name"
+              class="view-graph-btn pixel-border"
+              :class="{ 'view-graph-btn--active': showGraph }"
+              @click.stop="toggleGraph"
+            >
+              {{ showGraph ? '✕ 隐藏图' : '📊 查看图' }}
+            </button>
           </li>
         </ul>
         <div v-if="!loading && !workflows.length" class="empty">
@@ -84,6 +92,17 @@
             @resume="handleResume"
           />
         </div>
+
+        <div v-if="showGraph" class="graph-section">
+          <WorkflowGraph
+            v-if="graphData"
+            :mermaid="graphData.mermaid"
+            :workflow-name="graphData.workflow_name"
+          />
+          <div v-else-if="graphLoading" class="loading pixel-card">
+            <p class="pixel-text">加载图中…</p>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -92,9 +111,11 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
 import WorkflowStatus from '../components/WorkflowStatus.vue';
+import WorkflowGraph from '../components/WorkflowGraph.vue';
 import {
   fetchWorkflows,
   fetchActiveWorkflow,
+  fetchWorkflowGraph,
   runWorkflow,
   resumeWorkflow,
 } from '../api/index.js';
@@ -107,6 +128,9 @@ const maxBacktracks = ref(2);
 const running = ref(false);
 const loading = ref(false);
 const error = ref(null);
+const showGraph = ref(false);
+const graphData = ref(null);
+const graphLoading = ref(false);
 let pollHandle = null;
 
 async function refresh() {
@@ -130,6 +154,9 @@ function select(wf) {
   selected.value = wf;
   initialInputsJson.value = '{}';
   maxBacktracks.value = 2;
+  // 切换工作流时清空图状态,避免显示旧的 mermaid
+  showGraph.value = false;
+  graphData.value = null;
 }
 
 async function runIt() {
@@ -170,6 +197,26 @@ async function handleResume({ decisionId, option }) {
     }
   } catch (e) {
     error.value = `恢复失败: ${e?.message || e}`;
+  }
+}
+
+async function toggleGraph() {
+  showGraph.value = !showGraph.value;
+  if (showGraph.value && selected.value && !graphData.value) {
+    await loadGraph();
+  }
+}
+
+async function loadGraph() {
+  if (!selected.value) return;
+  graphLoading.value = true;
+  error.value = null;
+  try {
+    graphData.value = await fetchWorkflowGraph(selected.value.name);
+  } catch (e) {
+    error.value = `加载图失败: ${e?.message || e}`;
+  } finally {
+    graphLoading.value = false;
   }
 }
 
@@ -367,5 +414,36 @@ onUnmounted(stopPolling);
 
 .active-status {
   margin-top: var(--space-md);
+}
+
+.view-graph-btn {
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 4px 8px;
+  margin-top: var(--space-xs);
+  background: var(--bg-primary);
+  color: var(--color-text);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+}
+
+.view-graph-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 var(--border-color);
+}
+
+.view-graph-btn--active {
+  background: var(--color-accent);
+  color: var(--bg-primary);
+}
+
+.graph-section {
+  margin-top: var(--space-md);
+}
+
+.graph-section .loading {
+  font-size: 10px;
+  text-align: center;
+  padding: var(--space-lg);
 }
 </style>

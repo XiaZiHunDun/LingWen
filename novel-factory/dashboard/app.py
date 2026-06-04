@@ -130,6 +130,14 @@ class WorkflowStatusResponse(BaseModel):
     pending_decisions: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class WorkflowMermaidResponse(BaseModel):
+    """工作流 mermaid 图响应 (Phase 6.3)"""
+    workflow_name: str
+    mermaid: str
+    node_count: int
+    has_decision_nodes: bool
+
+
 # ==================== Database Helper ====================
 
 
@@ -632,6 +640,51 @@ def create_app(
         if master_controller is None:
             return WorkflowStatusResponse(is_active=False, workflow_name=None)
         return WorkflowStatusResponse(**master_controller.get_active_workflow_status())
+
+    # ==================== Phase 6.3: Mermaid Graph Endpoint ====================
+
+    @app.get(
+        "/api/workflows/{workflow_name}/mermaid",
+        response_model=WorkflowMermaidResponse,
+    )
+    def get_workflow_mermaid(workflow_name: str) -> WorkflowMermaidResponse:
+        """渲染工作流 YAML 为 mermaid 字符串 (供前端 mermaid.js 渲染)
+
+        流程:
+        1. load_workflow(name) → ThoughtGraph
+        2. render_mermaid(graph, executions={}) → mermaid 字符串
+        3. 返回 {workflow_name, mermaid, node_count, has_decision_nodes}
+
+        Raises:
+            404: workflow YAML 不存在
+            422: workflow 解析/验证失败
+        """
+        from infra.got.data_structures import NodeType
+        from infra.got.visualizer import render_mermaid
+        from infra.got.workflow_loader import (
+            WorkflowError,
+            WorkflowNotFoundError,
+            load_workflow,
+        )
+
+        try:
+            graph = load_workflow(workflow_name)
+        except WorkflowNotFoundError:
+            raise HTTPException(status_code=404, detail=f"workflow not found: {workflow_name}")
+        except WorkflowError as e:
+            raise HTTPException(status_code=422, detail=f"workflow load failed: {e}")
+
+        mermaid_str = render_mermaid(graph, executions={}, include_classdef=True)
+        has_decision = any(
+            graph.get_node(nid).type == NodeType.DECISION
+            for nid in graph.node_ids()
+        )
+        return WorkflowMermaidResponse(
+            workflow_name=workflow_name,
+            mermaid=mermaid_str,
+            node_count=len(list(graph.node_ids())),
+            has_decision_nodes=has_decision,
+        )
 
     return app
 

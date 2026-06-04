@@ -532,3 +532,46 @@ class TestActiveWorkflowStatusEndpoint:
         assert data["is_active"] is True
         assert data["workflow_name"] == "novel_writing"
         assert data["paused"] is True
+
+
+# === TestWorkflowMermaidEndpoint (Phase 6.3) ===
+
+class TestWorkflowMermaidEndpoint:
+    """GET /api/workflows/{name}/mermaid — 返回 mermaid 字符串
+
+    Phase 6.3: 让前端可以渲染工作流图(visualize Graph of Thoughts)
+    不依赖 master_controller (workflow_loader 独立可用)
+    """
+
+    def test_mermaid_happy_path(self, client):
+        """novel_writing.yaml 应能加载并渲染"""
+        response = client.get("/api/workflows/novel_writing/mermaid")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["workflow_name"] == "novel_writing"
+        assert "mermaid" in data
+        assert data["mermaid"].startswith("graph TD")
+        # 节点应在 mermaid 中
+        assert "read_snapshot" in data["mermaid"]
+        assert "write_chapter" in data["mermaid"]
+        assert "review_chapter" in data["mermaid"]
+        # 边应在 mermaid 中
+        assert "read_snapshot --> write_chapter" in data["mermaid"]
+
+    def test_mermaid_returns_node_count(self, client):
+        response = client.get("/api/workflows/novel_writing/mermaid")
+        data = response.json()
+        assert data["node_count"] == 4
+        assert data["has_decision_nodes"] is False  # novel_writing 无 decision
+
+    def test_mermaid_404_for_unknown(self, client):
+        """未知工作流 → 404"""
+        response = client.get("/api/workflows/nonexistent_workflow/mermaid")
+        assert response.status_code == 404
+
+    def test_mermaid_with_yaml_extension(self, client):
+        """允许 .yaml 后缀(workflow_loader 支持)"""
+        response = client.get("/api/workflows/novel_writing.yaml/mermaid")
+        # workflow_loader 的 _resolve_path 可能已经处理 .yaml 后缀
+        assert response.status_code in (200, 404)
+

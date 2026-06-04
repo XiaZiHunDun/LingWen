@@ -169,3 +169,12 @@ export async function resumeWorkflow(decisionId, option, resolvedBy = 'human') {
 export async function fetchActiveWorkflow() {
   return request('/workflows/active');
 }
+
+/**
+ * 获取工作流 mermaid 图 (Phase 6.3)
+ * @param {string} workflowName
+ * @returns {Promise<{workflow_name: string, mermaid: string, node_count: number, has_decision_nodes: boolean}>}
+ */
+export async function fetchWorkflowGraph(workflowName) {
+  return request(`/workflows/${encodeURIComponent(workflowName)}/mermaid`);
+}
