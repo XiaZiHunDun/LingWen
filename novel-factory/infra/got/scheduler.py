@@ -25,6 +25,7 @@ from infra.got.cache import ThoughtCache
 from infra.got.data_structures import (
     NodeExecution,
     NodeStatus,
+    NodeType,
     ThoughtNode,
 )
 from infra.got.graph import (
@@ -88,6 +89,8 @@ class ExecutionSummary:
     - backtrack_count: 实际回溯次数
     - steps: 执行步数 (compute_fn 实际调用次数,不含 cache 命中)
     - node_count: 图节点总数
+    - paused: Phase 5 — 是否因 DECISION 节点暂停
+    - paused_nodes: Phase 5 — 暂停的 DECISION 节点 ID (按发现顺序)
     """
     completed: int = 0
     failed: int = 0
@@ -95,6 +98,8 @@ class ExecutionSummary:
     backtrack_count: int = 0
     steps: int = 0
     node_count: int = 0
+    paused: bool = False
+    paused_nodes: tuple[str, ...] = ()
 
 
 # === Default compute_fn protocol ===
@@ -177,6 +182,7 @@ class GoTScheduler:
         failed = 0
         total_cost = 0
         backtrack_count = 0
+        paused_nodes: list[str] = []
 
         while True:
             ready = self._graph.ready_nodes()
@@ -191,6 +197,13 @@ class GoTScheduler:
                     raise MaxStepsExceeded(steps, max_steps)
 
                 node = self._graph.get_node(nid)
+
+                # Phase 5: DECISION 节点 → 标记 WAITING 并暂停,不调 compute_fn
+                if node.type == NodeType.DECISION:
+                    self._mark_decision_waiting(node)
+                    paused_nodes.append(nid)
+                    continue
+
                 exec_result, from_cache = self._run_node(node)
                 steps += 1  # 仅记录实际调用的步数
                 total_cost += exec_result.cost_tokens
@@ -221,6 +234,8 @@ class GoTScheduler:
             backtrack_count=backtrack_count,
             steps=steps,
             node_count=len(self._graph.node_ids()),
+            paused=bool(paused_nodes),
+            paused_nodes=tuple(paused_nodes),
         )
 
     def visualize(self) -> str:
@@ -230,6 +245,52 @@ class GoTScheduler:
         """
         from infra.got.visualizer import render_mermaid_from_scheduler
         return render_mermaid_from_scheduler(self)
+
+    def resume(
+        self,
+        decision_node_id: str,
+        option: str,
+        resolved_by: str = "human",
+    ) -> NodeExecution:
+        """恢复 DECISION 节点 (Phase 5) — 把 WAITING 节点标 COMPLETED,写入 option
+
+        Args:
+            decision_node_id: DECISION 节点 ID (必须存在且 status=WAITING)
+            option: 选定的选项
+            resolved_by: 解决者标识 (默认 'human')
+
+        Returns:
+            更新后的 NodeExecution (status=COMPLETED, output 含 option)
+
+        Raises:
+            KeyError: 节点不存在
+            ValueError: 节点不是 WAITING 状态
+        """
+        if decision_node_id not in self._graph.node_ids():
+            raise KeyError(f"node {decision_node_id!r} not found in graph")
+        if not self._graph.has_execution(decision_node_id):
+            raise ValueError(
+                f"node {decision_node_id!r} has no execution record; "
+                f"call run() first to enter paused state"
+            )
+        current = self._graph.get_execution(decision_node_id)
+        if current.status != NodeStatus.WAITING:
+            raise ValueError(
+                f"node {decision_node_id!r} is {current.status.value}, "
+                f"cannot resume (expected waiting)"
+            )
+        updated = NodeExecution(
+            node_id=current.node_id,
+            status=NodeStatus.COMPLETED,
+            started_at=current.started_at,
+            finished_at=datetime.now(),
+            output={"option": option, "resolved_by": resolved_by},
+            error=current.error,
+            attempt=current.attempt,
+            cost_tokens=current.cost_tokens,
+        )
+        self._graph.record_execution(decision_node_id, updated)
+        return updated
 
     # === Internals ===
 
@@ -329,6 +390,22 @@ class GoTScheduler:
         # STALE 字段保留,语义在 Phase 1.5+ 扩展
         # 此处 no-op 即可,因为 ready_nodes 自然处理
         return
+
+    def _mark_decision_waiting(self, node: ThoughtNode) -> None:
+        """Phase 5: 把 DECISION 节点标记为 WAITING (不调 compute_fn)
+
+        下游节点依赖 WAITING 节点时不会 ready (WAITING 非 terminal),
+        等待 resume() 写入 option + COMPLETED 后,下游才可执行。
+        """
+        exec_ = NodeExecution(
+            node_id=node.node_id,
+            status=NodeStatus.WAITING,
+            started_at=datetime.now(),
+            finished_at=None,
+            output=None,
+            error=None,
+        )
+        self._graph.record_execution(node.node_id, exec_)
 
 
 __all__ = [

@@ -87,6 +87,14 @@ class MasterController:
         # ==================== 决策队列 (Phase 4.2/4.3) ====================
         self._decision_queue = HumanDecisionQueue(state_dir=self._config.state_dir)
 
+        # ==================== 活跃工作流缓存 (Phase 5) ====================
+        # run_workflow() 调用后填充,resume_workflow() 用它来"接着跑"
+        # 注:仅支持单一活跃工作流;若需多工作流,应改为 dict[workflow_name, ...]
+        self._last_scheduler: Optional[Any] = None
+        self._last_graph: Optional[Any] = None
+        self._last_workflow_name: Optional[str] = None
+        self._last_start_nodes: List[str] = []
+
     def get_router(self) -> AIRouter:
         """获取AIRouter实例
 
@@ -238,6 +246,12 @@ class MasterController:
             if graph.has_execution(nid):
                 executions[nid] = graph.get_execution(nid)
 
+        # 缓存活跃工作流状态 (Phase 5) — resume_workflow() 用它
+        self._last_scheduler = scheduler
+        self._last_graph = graph
+        self._last_workflow_name = workflow_name
+        self._last_start_nodes = list(start_nodes)
+
         return {
             "summary": summary,
             "graph": graph,
@@ -245,12 +259,18 @@ class MasterController:
             "pending_decisions": pending_decisions,
         }
 
-    def resolve_decision(self, decision_id: str, option: str) -> HumanDecision:
+    def resolve_decision(
+        self,
+        decision_id: str,
+        option: str,
+        resolved_by: str = "human",
+    ) -> HumanDecision:
         """解决决策 (delegates to HumanDecisionQueue.resolve)
 
         Args:
             decision_id: 决策 ID
             option: 选定的选项
+            resolved_by: 解决者标识 (默认 'human')
 
         Returns:
             更新后的 HumanDecision
@@ -262,9 +282,100 @@ class MasterController:
         queue = getattr(self, "_decision_queue", None)
         if queue is None:
             raise RuntimeError("decision queue not initialized")
-        resolved = queue.resolve(decision_id, option)
+        resolved = queue.resolve(decision_id, option, resolved_by=resolved_by)
         queue.save()  # 立即持久化
         return resolved
+
+    def resume_workflow(
+        self,
+        decision_id: str,
+        option: str,
+        resolved_by: str = "human",
+    ) -> Dict[str, Any]:
+        """恢复 DECISION 暂停的工作流 (Phase 5)
+
+        三步合一:
+        1. 标记 HumanDecision 为 RESOLVED (PENDING → RESOLVED)
+        2. 把对应 GoT DECISION 节点从 WAITING → COMPLETED,写入 option
+        3. 重新调用 scheduler.run() 让下游节点继续执行
+
+        用法:
+            result1 = controller.run_workflow("novel_writing")
+            # summary.paused=True (DECISION 节点等待)
+            for d in result1["pending_decisions"]:
+                controller.resume_workflow(d["decision_id"], "approve")
+            # 最终一次调用后,summary.paused=False (全部 COMPLETED)
+
+        Args:
+            decision_id: HumanDecision ID (从 list_pending_decisions / pending_decisions 取)
+            option: 选定的选项
+            resolved_by: 解决者标识
+
+        Returns:
+            同 run_workflow() 结构 + 额外 resolved_decision 字段:
+            {
+                "summary": ExecutionSummary,
+                "graph": ThoughtGraph,
+                "executions": dict[node_id, NodeExecution],
+                "pending_decisions": list[dict] (本轮扫描的新决策),
+                "resolved_decision": HumanDecision (本轮已解决),
+            }
+
+        Raises:
+            RuntimeError: 无活跃工作流 (从未 run_workflow)
+            KeyError: decision_id 不存在
+            ValueError: 决策已 RESOLVED / option 不在 options 中 / node 非 WAITING
+        """
+        # 1. 检查有活跃工作流
+        scheduler = getattr(self, "_last_scheduler", None)
+        graph = getattr(self, "_last_graph", None)
+        if scheduler is None or graph is None:
+            raise RuntimeError(
+                "no active workflow; call run_workflow() first before resume_workflow()"
+            )
+
+        # 2. 查决策 → 拿 node_id
+        queue = getattr(self, "_decision_queue", None)
+        if queue is None:
+            raise RuntimeError("decision queue not initialized")
+        decision = queue.get(decision_id)  # 抛 KeyError if missing
+
+        # 3. 标 RESOLVED (PENDING → RESOLVED)
+        resolved = self.resolve_decision(decision_id, option, resolved_by=resolved_by)
+
+        # 4. 标 DECISION 节点 WAITING → COMPLETED,写入 option
+        scheduler.resume(
+            decision_node_id=decision.node_id,
+            option=option,
+            resolved_by=resolved_by,
+        )
+
+        # 5. 扫描新 DECISION 节点 (下游可能有)
+        pending_decisions = self._harvest_decision_specs(graph)
+
+        # 6. 继续执行 — 用上次缓存的 start_nodes
+        start_nodes = self._last_start_nodes
+        if not start_nodes:
+            start_nodes = [
+                nid for nid in graph.node_ids()
+                if not graph.get_node(nid).depends_on
+            ]
+
+        summary = scheduler.run(start_nodes=start_nodes)
+
+        # 7. 收集 executions
+        executions: Dict[str, Any] = {}
+        for nid in graph.node_ids():
+            if graph.has_execution(nid):
+                executions[nid] = graph.get_execution(nid)
+
+        return {
+            "summary": summary,
+            "graph": graph,
+            "executions": executions,
+            "pending_decisions": pending_decisions,
+            "resolved_decision": resolved,
+        }
 
     def list_pending_decisions(self) -> list[dict[str, Any]]:
         """列出 PENDING 决策 (按 priority desc + due_at asc 排序)

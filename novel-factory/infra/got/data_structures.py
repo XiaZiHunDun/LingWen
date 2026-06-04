@@ -37,11 +37,12 @@ class NodeType(str, Enum):
 
 
 class NodeStatus(str, Enum):
-    """7 种节点状态"""
+    """8 种节点状态 (Phase 5: 新增 WAITING)"""
 
     PENDING = "pending"      # 等待依赖
     READY = "ready"          # 依赖全 COMPLETED,可运行
     RUNNING = "running"      # 正在运行
+    WAITING = "waiting"      # Phase 5: 等待人工决策 (DECISION 节点,非 terminal)
     COMPLETED = "completed"  # 成功完成 (terminal)
     FAILED = "failed"        # 失败 (terminal)
     SKIPPED = "skipped"      # 跳过 (terminal)

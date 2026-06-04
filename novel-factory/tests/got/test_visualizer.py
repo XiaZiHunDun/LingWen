@@ -130,7 +130,7 @@ class TestRenderMermaidStatusColoring:
         assert NODE_STATUS_CLASS[NodeStatus.SKIPPED] in out
 
     def test_all_status_classes_declared(self):
-        """classDef 块涵盖全部 7 状态"""
+        """classDef 块涵盖全部 8 状态 (Phase 5: 新增 WAITING)"""
         graph = ThoughtGraph()
         for status in NodeStatus:
             nid = f"n_{status.value}"
@@ -138,7 +138,7 @@ class TestRenderMermaidStatusColoring:
         out = render_mermaid(graph, {nid: _exec(nid, status) for nid, status in [
             (f"n_{s.value}", s) for s in NodeStatus
         ]})
-        # 全部 7 个 classDef
+        # 全部 8 个 classDef
         for status in NodeStatus:
             assert NODE_STATUS_CLASS[status] in out
 

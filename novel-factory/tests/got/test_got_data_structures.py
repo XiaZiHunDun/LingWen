@@ -35,13 +35,14 @@ class TestNodeType:
 
 
 class TestNodeStatus:
-    def test_7_node_statuses_defined(self):
+    def test_8_node_statuses_defined(self):
+        """Phase 5 新增 WAITING → 7 → 8"""
         from infra.got.data_structures import NodeStatus
 
-        assert len(NodeStatus) == 7
+        assert len(NodeStatus) == 8
         assert {s.value for s in NodeStatus} == {
-            "pending", "ready", "running", "completed",
-            "failed", "skipped", "stale",
+            "pending", "ready", "running", "waiting",
+            "completed", "failed", "skipped", "stale",
         }
 
     def test_terminal_statuses(self):
