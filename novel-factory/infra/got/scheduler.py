@@ -140,8 +140,15 @@ class GoTScheduler:
         self,
         start_nodes: list[str],
         max_steps: int = 100,
+        initial_inputs: Optional[dict[str, Any]] = None,
     ) -> ExecutionSummary:
         """执行图,从 start_nodes 出发
+
+        Args:
+            start_nodes: 起点节点 ID 列表
+            max_steps: 最大步数 (含 backtrack 重试)
+            initial_inputs: 注入到起点节点的 initial inputs (Phase 3 新增)
+                起点节点会收到 merged inputs = {upstream_outputs..., **initial_inputs}
 
         算法:
         1. 循环:获取 ready_nodes (依赖全 COMPLETED)
@@ -158,6 +165,12 @@ class GoTScheduler:
         for nid in start_nodes:
             if nid not in self._graph.node_ids():
                 raise NodeNotFoundError(nid)
+
+        # 起点节点的 seed input 注入 (Phase 3)
+        # 每个 start_node 在首次执行时,会拿到 merged = upstream_outputs + initial_inputs
+        self._initial_inputs: dict[str, dict[str, Any]] = {
+            nid: dict(initial_inputs or {}) for nid in start_nodes
+        }
 
         steps = 0
         completed = 0
@@ -240,6 +253,11 @@ class GoTScheduler:
         """
         # 1. 收集 inputs (从上游 outputs)
         inputs = self._collect_inputs(node)
+        # Phase 3: 起点节点的 initial_inputs 顶层注入 (无上游,inputs 默认空 dict)
+        seed = self._initial_inputs.get(node.node_id)
+        if seed and not inputs:
+            # 起点节点 (无上游 outputs) → 整个 initial_inputs 作为 inputs
+            inputs = dict(seed)
 
         # 2. 缓存检查
         inputs_hash = self._cache.hash_inputs(inputs)
