@@ -1,6 +1,7 @@
 <!--
   DecisionCard.vue — 单个决策卡片
   Phase 6.2: 显示 kind badge + prompt + options (按钮组) + resolve/defer/cancel
+  Phase 6.6.B: + status badge (✅⏸❌) + meta info (解决人/选项/时间/原因) + resolve 守卫
 -->
 <template>
   <div class="decision-card pixel-card">
@@ -9,6 +10,11 @@
       <span class="priority-badge" v-if="decision.priority !== undefined">
         P{{ decision.priority }}
       </span>
+      <span
+        v-if="statusBadge"
+        class="status-badge"
+        :class="statusBadge.cls"
+      >{{ statusBadge.label }}</span>
       <span class="node-id">{{ decision.node_id }}</span>
     </div>
 
@@ -21,7 +27,7 @@
       </details>
     </div>
 
-    <div class="options">
+    <div v-if="decision.status === 'pending'" class="options">
       <button
         v-for="opt in decision.options || []"
         :key="opt"
@@ -33,7 +39,7 @@
       </button>
     </div>
 
-    <div class="actions">
+    <div v-if="decision.status === 'pending'" class="actions">
       <button
         class="action-btn defer-btn pixel-border"
         :disabled="busy"
@@ -48,6 +54,16 @@
       >
         取消
       </button>
+    </div>
+
+    <div v-else class="actions actions-readonly">
+      <span class="readonly-hint">🔒 此决策已{{
+        decision.status === 'resolved' ? '解决' : decision.status === 'cancelled' ? '取消' : '推迟'
+      }}</span>
+    </div>
+
+    <div v-if="metaInfo" class="meta-info">
+      {{ metaInfo }}
     </div>
 
     <div v-if="error" class="error-text">{{ error }}</div>
@@ -84,6 +100,34 @@ const kindLabel = computed(() => {
 
 const kindClass = computed(() => {
   return (props.decision.kind || 'unknown').replace(/_/g, '-');
+});
+
+// Phase 6.6.B: status badge (resolved/deferred/cancelled 才有, pending 不显示)
+const statusBadge = computed(() => {
+  const map = {
+    resolved: { label: '✅ 已解决', cls: 'status-resolved' },
+    deferred: { label: '⏸ 已推迟', cls: 'status-deferred' },
+    cancelled: { label: '❌ 已取消', cls: 'status-cancelled' },
+  };
+  return map[props.decision.status] || null;
+});
+
+// Phase 6.6.B: meta info (解决人/选项/时间/原因)
+const metaInfo = computed(() => {
+  const d = props.decision;
+  if (d.status === 'pending') return null;
+  const parts = [];
+  if (d.resolved_by) parts.push(`解决人: ${d.resolved_by}`);
+  if (d.resolution) parts.push(`选项: ${d.resolution}`);
+  if (d.resolved_at) {
+    const dt = new Date(d.resolved_at);
+    parts.push(`时间: ${dt.toLocaleString('zh-CN', { hour12: false })}`);
+  }
+  if (d.reason) {
+    const verb = d.status === 'cancelled' ? '取消' : '推迟';
+    parts.push(`${verb}原因: ${d.reason}`);
+  }
+  return parts.join(' · ');
 });
 
 async function onResolve(option) {
@@ -241,5 +285,53 @@ async function onCancel() {
   font-size: 10px;
   color: #c62828;
   font-family: monospace;
+}
+
+/* Phase 6.6.B: status badge (resolved/deferred/cancelled 颜色) */
+.status-badge {
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 3px 6px;
+  border: 2px solid;
+  margin-left: var(--space-xs);
+}
+
+.status-resolved {
+  color: #2e7d32;
+  border-color: #2e7d32;
+  background: #c8e6c9;
+}
+
+.status-deferred {
+  color: #f57c00;
+  border-color: #f57c00;
+  background: #ffe0b2;
+}
+
+.status-cancelled {
+  color: #616161;
+  border-color: #616161;
+  background: #e0e0e0;
+}
+
+.meta-info {
+  font-size: 9px;
+  font-family: monospace;
+  color: var(--color-text-dim);
+  background: var(--bg-primary);
+  border-left: 3px solid var(--color-accent);
+  padding: var(--space-xs) var(--space-sm);
+  margin-top: var(--space-sm);
+  word-break: break-all;
+}
+
+.actions-readonly {
+  opacity: 0.6;
+}
+
+.readonly-hint {
+  font-size: 9px;
+  font-family: 'Press Start 2P', monospace;
+  color: var(--color-text-dim);
 }
 </style>
