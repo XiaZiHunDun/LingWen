@@ -35,6 +35,7 @@ from .extraction import (
     parse_ripple_extraction,
 )
 from .scenarios import (
+    SCENARIO_TIER_MAP,
     SCENARIOS,
     STEP_CONTRACTS,
     get_scenario,
@@ -55,6 +56,7 @@ __all__ = [
     "StepContract",
     "PromptContext",
     "SCENARIOS",
+    "SCENARIO_TIER_MAP",
     "STEP_CONTRACTS",
     "get_scenario",
     "get_step_contract",

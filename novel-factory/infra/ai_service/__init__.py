@@ -30,6 +30,9 @@ from .base import (
 )
 from .minimax_provider import MiniMaxProvider
 
+# Phase 2.11 — 多模型分级路由
+from .model_tiers import MODEL_TIERS, ModelTier, ModelTierConfig, compute_cost
+
 # 显式 re-export provider 类(向后兼容: `from infra.ai_service import OpenAIProvider`)
 from .openai_provider import OpenAIProvider
 
@@ -47,4 +50,9 @@ __all__ = [
     "register_provider",
     "get_provider_class",
     "list_registered_providers",
+    # Phase 2.11
+    "ModelTier",
+    "ModelTierConfig",
+    "MODEL_TIERS",
+    "compute_cost",
 ]

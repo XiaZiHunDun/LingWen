@@ -98,6 +98,39 @@ _SCENARIO_METADATA: dict[str, dict[str, str]] = {
 }
 
 
+# Phase 2.11 — SCENARIO → ModelTier 映射
+# 设计原则 (per Doc 2 §6.3):
+# - HAIKU: 事实核查/简单提取/规则改写 (便宜,90% Sonnet 能力)
+# - SONNET: 生成/中等审核/跨章节分析 (默认)
+# - OPUS: 结构推理/创意 (大纲建议/支线建议/审核关键路径)
+#
+# NOTE: 引用 infra.ai_service.model_tiers.ModelTier; 延迟导入避免循环
+def _build_scenario_tier_map() -> dict:
+    """构造 SCENARIO_TIER_MAP (12 SCENARIOS → ModelTier)"""
+    from infra.ai_service.model_tiers import ModelTier
+    return {
+        # --- 简单任务 → HAIKU ---
+        "worldview_check": ModelTier.HAIKU,        # 境界/术语/规则事实核查
+        "character_consistency": ModelTier.HAIKU,  # 性格/能力档案对比
+        "hook_extraction": ModelTier.HAIKU,        # 开篇/结尾钩子识别
+        "ai_trace_removal": ModelTier.HAIKU,       # 模板句/套话改写
+        # --- 中等任务 → SONNET ---
+        "chapter_writing": ModelTier.SONNET,       # 长文生成
+        "chapter_outline": ModelTier.SONNET,       # 单章大纲设计
+        "chapter_review": ModelTier.SONNET,        # S1-S8 八维评估
+        "foreshadow_scan": ModelTier.SONNET,       # 跨章伏笔状态
+        "emotional_pacing": ModelTier.SONNET,      # 跨章情感曲线
+        "ripple_audit": ModelTier.SONNET,          # 涟漪挖坑/平复审计
+        # --- 复杂任务 → OPUS ---
+        "outline_review": ModelTier.OPUS,          # 整卷结构推理
+        "subplot_suggest": ModelTier.OPUS,         # 创意支线开/关
+    }
+
+
+# 12 SCENARIOS → 3 个 ModelTier 的静态映射
+SCENARIO_TIER_MAP: dict = _build_scenario_tier_map()
+
+
 # 输出类型占位 (class 引用,运行时替换)
 # 为简化 22 STEP_CONTRACTS 序列化,使用 class 而不是嵌套定义
 class _GenericOutput:
