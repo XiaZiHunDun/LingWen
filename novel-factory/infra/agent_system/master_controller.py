@@ -154,6 +154,74 @@ class MasterController:
 
     # ==================== 角色池方法 ====================
 
+    def run_workflow(
+        self,
+        workflow_name: str,
+        start_nodes: Optional[list[str]] = None,
+        initial_inputs: Optional[Dict[str, Any]] = None,
+        max_backtracks: int = 2,
+    ) -> Dict[str, Any]:
+        """用 GoT 调度器运行工作流 (Doc 4 Phase 3)
+
+        这是 MasterController 的新入口,GoT 替代 22 步状态机。
+        保留 advance_step/dispatch_task 等老方法,GoT 失败时可回退。
+
+        Args:
+            workflow_name: workflow YAML 名 (如 'novel_writing')
+            start_nodes: 起点节点 ID 列表 (None = 自动找无依赖节点)
+            initial_inputs: 起点节点的 seed inputs (e.g. chapter_num=1, characters=[...])
+            max_backtracks: 软回溯预算 (默认 2)
+
+        Returns:
+            {
+                "summary": ExecutionSummary (completed, failed, steps, ...),
+                "graph": ThoughtGraph (含 mermaid 导出),
+                "executions": dict[node_id, NodeExecution] 全部执行记录,
+            }
+
+        Raises:
+            WorkflowError: 加载失败
+            HumanInterventionRequired: 回溯超限
+            MaxStepsExceeded: 步数超限
+        """
+        # 延迟 import 避免 got ↔ agent_system 循环
+        from infra.got.workflow_loader import WorkflowError
+
+        from .got_bridge import build_got_scheduler
+
+        try:
+            scheduler, graph = build_got_scheduler(
+                master=self,
+                workflow_name=workflow_name,
+                max_backtracks=max_backtracks,
+            )
+        except WorkflowError:
+            raise
+
+        # 默认起点:无依赖的节点
+        if start_nodes is None:
+            start_nodes = [
+                nid for nid in graph.node_ids()
+                if not graph.get_node(nid).depends_on
+            ]
+
+        summary = scheduler.run(
+            start_nodes=start_nodes,
+            initial_inputs=initial_inputs or {},
+        )
+
+        # 收集全部 executions
+        executions: Dict[str, Any] = {}
+        for nid in graph.node_ids():
+            if graph.has_execution(nid):
+                executions[nid] = graph.get_execution(nid)
+
+        return {
+            "summary": summary,
+            "graph": graph,
+            "executions": executions,
+        }
+
     def switch_agent_role(self, agent_name: str, role_id: str) -> bool:
         """切换Agent角色
 
