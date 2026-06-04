@@ -98,15 +98,37 @@ def _handler_chapter_review(master: MasterController, inputs: dict[str, Any]) ->
     return report
 
 
-def _handler_polish(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:
-    """scenario=ai_trace_removal / emotional_pacing → polisher
+def _make_polish_handler(method_name: str) -> HandlerFn:
+    """Phase 7.4: 工厂函数 — 每个 polish scenario 走独立 entry method
 
-    inputs 期望含 content (来自上游节点的 output.content 或 input["content"])
+    把 _handler_polish 拆为闭包, 通过 getattr(master, method_name) 路由:
+    - ai_trace_removal → master.polish_ai_trace_removal
+    - emotional_pacing → master.polish_emotional_pacing
+    - hook_extraction → master.polish_chapter (向后兼容, 走完整 3 路径)
     """
-    content = _resolve_field(inputs, "content", "")
-    if not content:
-        return {"_error": "content is required for polish scenarios"}
-    return {"content": master.polish_chapter(content)}
+    def handler(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:
+        content = _resolve_field(inputs, "content", "")
+        if not content:
+            return {"_error": "content is required for polish scenarios"}
+        method = getattr(master, method_name)
+        return {"content": method(content)}
+    return handler
+
+
+def _handler_polish_merge(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:
+    """Phase 7.4: scenario=polish_merge — 合并多个上游 polish 节点 output
+
+    策略: 选 max(len(content)) (避免拼接两个 variant 的矛盾, 优先保留更多润色结果)
+
+    YAGNI: 后续可扩展 LLM 评分择优 / 按段落拼接 (Phase 7.5+)
+    """
+    contents: list[str] = []
+    for upstream in inputs.values():
+        if isinstance(upstream, dict) and "content" in upstream:
+            contents.append(upstream["content"])
+    if not contents:
+        return {"_error": "polish_merge requires >= 1 upstream with content"}
+    return {"content": max(contents, key=len)}
 
 
 def _handler_outline_review(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:
@@ -127,13 +149,15 @@ SCENARIO_HANDLERS: dict[str, HandlerFn] = {
     "worldview_check": _handler_chapter_review,
     "character_consistency": _handler_chapter_review,
     "ripple_audit": _handler_chapter_review,
-    # polisher
-    "ai_trace_removal": _handler_polish,
-    "emotional_pacing": _handler_polish,
-    "hook_extraction": _handler_polish,  # 简化:复用 polish
+    # polisher (Phase 7.4: 拆为按 scenario 路由)
+    "ai_trace_removal": _make_polish_handler("polish_ai_trace_removal"),
+    "emotional_pacing": _make_polish_handler("polish_emotional_pacing"),
+    "hook_extraction": _make_polish_handler("polish_chapter"),  # 兜底
     # outline_master
     "outline_review": _handler_outline_review,
     "subplot_suggest": _handler_outline_review,
+    # AGGREGATION (Phase 7.4 NEW)
+    "polish_merge": _handler_polish_merge,
 }
 
 

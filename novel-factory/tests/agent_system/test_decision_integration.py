@@ -79,6 +79,13 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     controller.polish_chapter = types.MethodType(
         lambda self, content: stub.polish_chapter(content), controller,
     )
+    # Phase 7.4: stub 新增的 2 个 variant entry methods
+    controller.polish_emotional_pacing = types.MethodType(
+        lambda self, content: stub.polish_chapter(content), controller,
+    )
+    controller.polish_ai_trace_removal = types.MethodType(
+        lambda self, content: stub.polish_chapter(content), controller,
+    )
     controller.generate_outline = types.MethodType(
         lambda self, settings, requirements: stub.generate_outline(settings, requirements), controller,
     )

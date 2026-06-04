@@ -68,7 +68,9 @@ class TestMermaidStatusEndpoint:
             "read_snapshot": "completed",
             "write_chapter": "completed",
             "review_chapter": "running",
-            "polish_chapter": "pending",
+            "polish_emotional_pacing": "pending",
+            "polish_ai_trace_removal": "pending",
+            "polish_merge": "pending",
             "emit_chapter": "pending",
         })
         app = create_app(db_path=tmp_db, master_controller=stub)
@@ -82,13 +84,15 @@ class TestMermaidStatusEndpoint:
             "read_snapshot": "completed",
             "write_chapter": "completed",
             "review_chapter": "running",
-            "polish_chapter": "pending",
+            "polish_emotional_pacing": "pending",
+            "polish_ai_trace_removal": "pending",
+            "polish_merge": "pending",
             "emit_chapter": "pending",
         }
         # mermaid 字符串应包含 status-based class 声明
         assert "class read_snapshot node-completed" in data["mermaid"]
         assert "class review_chapter node-running" in data["mermaid"]
-        assert "class polish_chapter node-pending" in data["mermaid"]
+        assert "class polish_merge node-pending" in data["mermaid"]
 
     def test_mermaid_endpoint_with_no_active_workflow_returns_empty_statuses(self, tmp_db: Path):
         """?include_status=true + 无活跃工作流 → status_applied=False, node_statuses={} (不报错)"""

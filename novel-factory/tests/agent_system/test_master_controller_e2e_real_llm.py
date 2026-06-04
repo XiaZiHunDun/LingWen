@@ -224,78 +224,84 @@ class TestNovelWritingE2E:
         return result
 
     def test_four_nodes_all_completed(self, tmp_path: Path):
-        """Phase 7.3: novel_writing 5 节点 — 含 polish_chapter (read/write/review/polish/emit)"""
+        """Phase 7.4: novel_writing 7 节点 — 含 2 个并行 polish + 1 merge (read/write/review/polish_e/polish_a/merge/emit)"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
-        assert result["summary"].completed == 5
+        assert result["summary"].completed == 7
         assert result["summary"].failed == 0
         assert result["summary"].paused is False
 
     def test_at_least_one_llm_call(self, tmp_path: Path):
-        """Phase 7.3: novel_writing 5 节点 — write(1) + audit(1) + dialogue(1) + pacing(1) = 4 次 LLM
-        read_snapshot/emit_chapter 旁路,polish_chapter 走 ai_trace_removal → master.polish_chapter
-        → 2 LLM 路径 (Phase 7.2)"""
+        """Phase 7.4: novel_writing 7 节点 — write(1) + audit(1) + emotional_pacing{2 LLM} + ai_trace_removal{1 LLM} = 5 次 LLM
+        read_snapshot/emit_chapter/polish_merge 旁路或纯 Python
+        (polish_ai_trace_removal 走规则 remove_ai_gloss 0 LLM + optimize_dialogue_llm 1 LLM)"""
         router, providers = make_stub_router()
         self._run_novel_writing(tmp_path, router)
 
         total_calls = sum(len(p.calls) for p in providers.values())
-        assert total_calls >= 4, (
-            f"expected at least 4 LLM calls (write + audit + dialogue + pacing), "
+        assert total_calls >= 5, (
+            f"expected at least 5 LLM calls (write + audit + emotional_pacing{2} + ai_trace_removal{1}), "
             f"got {total_calls}. per-provider: {[(n, len(p.calls)) for n, p in providers.items()]}"
         )
 
     def test_novel_writing_has_polish_node(self, tmp_path: Path):
-        """Phase 7.3: novel_writing.yaml 应含 polish_chapter 节点 (在 review 之后,emit 之前)"""
+        """Phase 7.4: novel_writing.yaml 应含 2 个并行 polish 节点 + 1 merge (在 review 之后,emit 之前)"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
         executions = result["executions"]
-        assert "polish_chapter" in executions, (
-            f"expected polish_chapter in executions, got {list(executions.keys())}"
+        assert "polish_emotional_pacing" in executions, (
+            f"expected polish_emotional_pacing in executions, got {list(executions.keys())}"
         )
-        # 拓扑: review → polish → emit
+        assert "polish_ai_trace_removal" in executions
+        assert "polish_merge" in executions
+        # 拓扑: review → 2 个 polish → merge → emit
         assert "review_chapter" in executions
         assert "emit_chapter" in executions
 
     def test_polish_node_completed_in_production_path(self, tmp_path: Path):
-        """Phase 7.3: polish_chapter 节点应跑完,不是 SKIPPED/FAILED"""
+        """Phase 7.4: polish_merge 节点应跑完,不是 SKIPPED/FAILED"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
-        polish_exec = result["executions"]["polish_chapter"]
-        assert polish_exec.status == NodeStatus.COMPLETED
-        assert polish_exec.cost_tokens == 0  # token 估算在 TieredRouter 层
+        merge_exec = result["executions"]["polish_merge"]
+        assert merge_exec.status == NodeStatus.COMPLETED
+        assert merge_exec.cost_tokens == 0  # token 估算在 TieredRouter 层
 
     def test_polish_chapter_output_has_content(self, tmp_path: Path):
-        """Phase 7.3: polish 节点 output 含非空 content 字段 (供 emit 落盘)"""
+        """Phase 7.4: polish_merge 节点 output 含非空 content 字段 (供 emit 落盘)"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
-        polish_output = result["executions"]["polish_chapter"].output
-        assert isinstance(polish_output, dict)
-        assert "content" in polish_output
-        content = polish_output["content"]
+        merge_output = result["executions"]["polish_merge"].output
+        assert isinstance(merge_output, dict)
+        assert "content" in merge_output
+        content = merge_output["content"]
         assert isinstance(content, str)
-        assert len(content) > 0, "polish_chapter output.content should be non-empty"
+        assert len(content) > 0, "polish_merge output.content should be non-empty"
 
     def test_bypass_nodes_have_no_llm_call(self, tmp_path: Path):
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
-        bypass_nodes = ("read_snapshot", "emit_chapter")
+        bypass_nodes = ("read_snapshot", "emit_chapter", "polish_merge")
         for node_id in bypass_nodes:
             ex = result["executions"][node_id]
             assert isinstance(ex.output, dict)
             assert ex.cost_tokens == 0
 
     def test_executions_graph_complete(self, tmp_path: Path):
-        """Phase 7.3: novel_writing 5 节点 — 含 polish_chapter"""
+        """Phase 7.4: novel_writing 7 节点 — 含 2 个并行 polish + 1 merge"""
         router, _ = make_stub_router()
         result = self._run_novel_writing(tmp_path, router)
 
         executions = result["executions"]
-        expected_ids = {"read_snapshot", "write_chapter", "review_chapter", "polish_chapter", "emit_chapter"}
+        expected_ids = {
+            "read_snapshot", "write_chapter", "review_chapter",
+            "polish_emotional_pacing", "polish_ai_trace_removal",
+            "polish_merge", "emit_chapter",
+        }
         assert set(executions.keys()) == expected_ids
         for ex in executions.values():
             assert ex.status == NodeStatus.COMPLETED
@@ -396,7 +402,7 @@ class TestRouterFailure:
 
 
 def test_emit_chapter_depends_on_polish_yaml_static():
-    """Phase 7.3: YAML 静态检查 — emit_chapter.depends_on == [polish_chapter]"""
+    """Phase 7.4 兼容: YAML 静态检查 — emit_chapter.depends_on 包含 polish_merge (旧 polish_chapter 已拆)"""
     from pathlib import Path
 
     import yaml
@@ -406,8 +412,119 @@ def test_emit_chapter_depends_on_polish_yaml_static():
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
 
     nodes_by_id = {n["id"]: n for n in data["nodes"]}
-    assert "polish_chapter" in nodes_by_id
+    # Phase 7.4: polish_chapter 拆为 polish_emotional_pacing + polish_ai_trace_removal + polish_merge
+    assert "polish_merge" in nodes_by_id
+    assert "polish_chapter" not in nodes_by_id, "Phase 7.3 polish_chapter node should be removed in 7.4"
     emit = nodes_by_id["emit_chapter"]
-    assert "polish_chapter" in emit["depends_on"], (
-        f"emit_chapter.depends_on should contain polish_chapter, got {emit['depends_on']}"
+    assert "polish_merge" in emit["depends_on"], (
+        f"emit_chapter.depends_on should contain polish_merge, got {emit['depends_on']}"
     )
+
+
+# === TestNovelWritingMultiVariantPolish (Phase 7.4 NEW) ===
+
+class TestNovelWritingMultiVariantPolish:
+    """Phase 7.4: novel_writing.yaml 7 节点 — review_chapter 后 2 个并行 polish + AGGREGATION merge"""
+
+    MINIMAL_OUTLINE = {
+        "chapters": [
+            {"num": 1, "title": "第一章", "events": ["event_a"], "word_count_target": 2500}
+        ]
+    }
+
+    def _run_novel_writing(self, tmp_path: Path, router: AIRouter):
+        master = make_master_with_router(tmp_path, router)
+        result = master.run_workflow(
+            workflow_name="novel_writing",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": self.MINIMAL_OUTLINE,
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "timeline": [],
+                "use_llm": True,
+            },
+        )
+        return result
+
+    def test_seven_nodes_all_completed(self, tmp_path: Path):
+        """Phase 7.4: novel_writing 7 节点 (read/write/review/polish_e/polish_a/merge/emit)"""
+        router, _ = make_stub_router()
+        result = self._run_novel_writing(tmp_path, router)
+
+        assert result["summary"].completed == 7
+        assert result["summary"].failed == 0
+        assert result["summary"].paused is False
+
+    def test_novel_writing_has_parallel_polish_nodes(self, tmp_path: Path):
+        """Phase 7.4: review_chapter 后应有 2 个 polish 节点 (emotional_pacing + ai_trace_removal)"""
+        router, _ = make_stub_router()
+        result = self._run_novel_writing(tmp_path, router)
+
+        executions = result["executions"]
+        assert "polish_emotional_pacing" in executions
+        assert "polish_ai_trace_removal" in executions
+        # 拓扑: review → 2 个 polish → merge → emit
+        assert "polish_merge" in executions
+        assert "emit_chapter" in executions
+
+    def test_polish_merge_output_has_content(self, tmp_path: Path):
+        """Phase 7.4: polish_merge.output 含非空 content (供 emit 落盘)"""
+        router, _ = make_stub_router()
+        result = self._run_novel_writing(tmp_path, router)
+
+        merge_output = result["executions"]["polish_merge"].output
+        assert isinstance(merge_output, dict)
+        assert "content" in merge_output
+        content = merge_output["content"]
+        assert isinstance(content, str)
+        assert len(content) > 0, "polish_merge output.content should be non-empty"
+
+    def test_at_least_six_llm_calls(self, tmp_path: Path):
+        """Phase 7.4: 7 节点, LLM 调用 >= 5 次
+        write(1) + audit(1) + emotional_pacing(2: dialogue+pacing) + ai_trace_removal(1: dialogue)
+        = 5 次. read_snapshot/emit_chapter/polish_merge 旁路或纯 Python.
+        (ai_trace_removal 走规则 remove_ai_gloss 不调 LLM, 留下 optimize_dialogue_llm 1 次)"""
+        router, providers = make_stub_router()
+        self._run_novel_writing(tmp_path, router)
+
+        total_calls = sum(len(p.calls) for p in providers.values())
+        assert total_calls >= 5, (
+            f"expected at least 5 LLM calls (write + audit + emotional_pacing{2} + ai_trace_removal{1}), "
+            f"got {total_calls}. per-provider: {[(n, len(p.calls)) for n, p in providers.items()]}"
+        )
+
+
+# === TestNovelWritingMultiVariantPolishYAML (Phase 7.4 NEW) ===
+
+def test_novel_writing_emit_depends_on_polish_merge_yaml_static():
+    """Phase 7.4: YAML 静态检查 — emit_chapter.depends_on == [polish_merge]"""
+    from pathlib import Path
+
+    import yaml
+
+    yaml_path = Path(__file__).parent.parent.parent / "infra" / "got" / "workflows" / "novel_writing.yaml"
+    assert yaml_path.exists(), f"workflow YAML not found: {yaml_path}"
+    data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+
+    nodes_by_id = {n["id"]: n for n in data["nodes"]}
+    assert "polish_merge" in nodes_by_id, "polish_merge node must exist"
+    assert "polish_emotional_pacing" in nodes_by_id
+    assert "polish_ai_trace_removal" in nodes_by_id
+    # polish_chapter 旧节点应已删除
+    assert "polish_chapter" not in nodes_by_id, "old polish_chapter node should be removed"
+
+    emit = nodes_by_id["emit_chapter"]
+    assert "polish_merge" in emit["depends_on"], (
+        f"emit_chapter.depends_on should contain polish_merge, got {emit['depends_on']}"
+    )
+
+    # polish_merge 应为 aggregation 类型
+    merge_node = nodes_by_id["polish_merge"]
+    assert merge_node["type"] == "aggregation", (
+        f"polish_merge.type should be aggregation, got {merge_node['type']}"
+    )
+    # polish_merge 应依赖 2 个 polish 节点
+    assert "polish_emotional_pacing" in merge_node["depends_on"]
+    assert "polish_ai_trace_removal" in merge_node["depends_on"]

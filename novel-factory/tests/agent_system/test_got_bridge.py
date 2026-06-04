@@ -46,6 +46,15 @@ class _StubMaster:
         self.calls.append(("polish_chapter", {"content_len": len(content)}))
         return content + " [polished]"
 
+    # Phase 7.4: 新增 2 个 variant entry methods (用于 test_got_bridge 路由测试)
+    def polish_emotional_pacing(self, content: str) -> str:
+        self.calls.append(("polish_emotional_pacing", {"content_len": len(content)}))
+        return content + " [emotional]"
+
+    def polish_ai_trace_removal(self, content: str) -> str:
+        self.calls.append(("polish_ai_trace_removal", {"content_len": len(content)}))
+        return content + " [ai_removed]"
+
     def generate_outline(self, settings, requirements):
         self.calls.append(("generate_outline", {"settings_keys": list(settings.keys())}))
         return {"chapters": [], "volume": 1}
@@ -75,7 +84,8 @@ class TestScenarioCoverage:
     def test_registered_scenarios_returns_tuple(self):
         scenarios = registered_scenarios()
         assert isinstance(scenarios, tuple)
-        assert len(scenarios) == 12
+        # Phase 7.4: 12 SCENARIOS + 1 polish_merge (自定义) = 13
+        assert len(scenarios) == 13
 
     def test_uncovered_scenarios_is_empty(self):
         assert uncovered_scenarios() == ()
@@ -111,14 +121,15 @@ class TestAgentComputeFnBasic:
         assert result.output["chapter"] == 1
         assert master.calls[0][0] == "audit_chapter"
 
-    def test_ai_trace_removal_routes_to_polish(self):
+    def test_ai_trace_removal_routes_to_polish_ai_trace_removal(self):
+        """Phase 7.4: scenario=ai_trace_removal 走新的 polish_ai_trace_removal entry method"""
         master = _StubMaster()
         compute = AgentComputeFn(master)
         node = _node("pol1", "ai_trace_removal")
         result = compute(node, {"content": "raw text"})
         assert result.fail is False
-        assert "[polished]" in result.output["content"]
-        assert master.calls[0][0] == "polish_chapter"
+        assert "[ai_removed]" in result.output["content"]
+        assert master.calls[0][0] == "polish_ai_trace_removal"
 
     def test_outline_review_routes_to_generate_outline(self):
         master = _StubMaster()
@@ -205,8 +216,8 @@ class TestBuildGoTScheduler:
     def test_loads_novel_writing_workflow(self):
         master = _StubMaster()
         scheduler, graph = build_got_scheduler(master, "novel_writing")
-        # Phase 7.3: 5 节点 (含 polish_chapter) — read_snapshot → write_chapter → review_chapter → polish_chapter → emit_chapter
-        assert len(graph.node_ids()) == 5
+        # Phase 7.4: 7 节点 (含 2 个并行 polish + 1 merge) — read_snapshot → write_chapter → review_chapter → polish_emotional_pacing + polish_ai_trace_removal → polish_merge → emit_chapter
+        assert len(graph.node_ids()) == 7
         # scheduler 是 GoTScheduler 实例
         from infra.got.scheduler import GoTScheduler
         assert isinstance(scheduler, GoTScheduler)
@@ -282,3 +293,93 @@ class TestE2EWorkflow:
         # 顺序:read_snapshot 必在 write_chapter 前
         assert execution_order.index("read_snapshot") < execution_order.index("write_chapter")
         assert execution_order.index("write_chapter") < execution_order.index("review_chapter")
+
+
+# === TestPolishHandlerRouting (Phase 7.4 NEW) ===
+
+class TestPolishHandlerRouting:
+    """Phase 7.4: _handler_polish 拆为 _make_polish_handler 工厂, 按 scenario 路由"""
+
+    def test_emotional_pacing_routes_to_polish_emotional_pacing(self):
+        """scenario=emotional_pacing → master.polish_emotional_pacing 被调 (非 polish_chapter)"""
+        master = _StubMaster()
+        # 给 stub 加 emotional_pacing 方法 (区分于 polish_chapter)
+        master.emotional_pacing_calls = []
+        def _stub_emotional(content):
+            master.emotional_pacing_calls.append(content)
+            return content + " [emotional]"
+        master.polish_emotional_pacing = _stub_emotional
+
+        compute = AgentComputeFn(master)
+        node = _node("pol1", "emotional_pacing")
+        result = compute(node, {"content": "raw text"})
+        assert result.fail is False
+        assert "[emotional]" in result.output["content"]
+        assert len(master.emotional_pacing_calls) == 1
+        # 验证 polish_chapter 没被调
+        assert not any(call[0] == "polish_chapter" for call in master.calls)
+
+    def test_ai_trace_removal_routes_to_polish_ai_trace_removal(self):
+        """scenario=ai_trace_removal → master.polish_ai_trace_removal 被调 (非 polish_chapter)"""
+        master = _StubMaster()
+        master.ai_trace_calls = []
+        def _stub_ai_trace(content):
+            master.ai_trace_calls.append(content)
+            return content + " [ai_removed]"
+        master.polish_ai_trace_removal = _stub_ai_trace
+
+        compute = AgentComputeFn(master)
+        node = _node("pol2", "ai_trace_removal")
+        result = compute(node, {"content": "raw text"})
+        assert result.fail is False
+        assert "[ai_removed]" in result.output["content"]
+        assert len(master.ai_trace_calls) == 1
+        assert not any(call[0] == "polish_chapter" for call in master.calls)
+
+    def test_hook_extraction_still_routes_to_polish_chapter(self):
+        """反向: hook_extraction 仍走 master.polish_chapter (向后兼容)"""
+        master = _StubMaster()
+        compute = AgentComputeFn(master)
+        node = _node("pol3", "hook_extraction")
+        result = compute(node, {"content": "raw text"})
+        assert result.fail is False
+        assert master.calls[0][0] == "polish_chapter"
+
+
+# === TestPolishMergeHandler (Phase 7.4 NEW) ===
+
+class TestPolishMergeHandler:
+    """Phase 7.4: _handler_polish_merge 按 max(len) 合并多个上游 content"""
+
+    def test_polish_merge_picks_longer_content(self):
+        """输入 2 个上游, 返 max(len(content)) 版本"""
+        master = _StubMaster()
+        compute = AgentComputeFn(master)
+        node = _node("merge1", "polish_merge")
+        inputs = {
+            "polish_emotional_pacing": {"content": "short"},
+            "polish_ai_trace_removal": {"content": "this is a much longer content version"},
+        }
+        result = compute(node, inputs)
+        assert result.fail is False
+        # max(len("short")=5, len("this is a much longer content version")=36) = 36
+        assert result.output["content"] == "this is a much longer content version"
+
+    def test_polish_merge_with_single_upstream(self):
+        """单上游也能 merge (兜底, 不报错)"""
+        master = _StubMaster()
+        compute = AgentComputeFn(master)
+        node = _node("merge2", "polish_merge")
+        inputs = {"polish_emotional_pacing": {"content": "only one"}}
+        result = compute(node, inputs)
+        assert result.fail is False
+        assert result.output["content"] == "only one"
+
+    def test_polish_merge_no_content_returns_error(self):
+        """无 content 上游 → _error (不调 master)"""
+        master = _StubMaster()
+        compute = AgentComputeFn(master)
+        node = _node("merge3", "polish_merge")
+        result = compute(node, {"upstream": {"other": "value"}})
+        assert result.fail is True
+        assert "polish_merge requires" in result.error

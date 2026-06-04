@@ -584,6 +584,25 @@ class MasterController:
         result = self.polisher.polish_chapter(chapter_num=0, content=content)
         return result["content"]
 
+    def polish_emotional_pacing(self, content: str) -> str:
+        """情绪节奏 variant — 对话自然化 + 节奏调整 (Phase 7.4)
+
+        跳过 remove_ai_gloss 规则, 留给 ai_trace_removal 节点处理
+        (两个 variant 是正交优化维度)
+        """
+        polished = self.polisher.optimize_dialogue_llm(content)
+        polished = self.polisher.adjust_pacing_llm(polished)
+        return polished
+
+    def polish_ai_trace_removal(self, content: str) -> str:
+        """AI 痕迹 variant — 规则去 AI 痕迹 + 对话自然化 (Phase 7.4)
+
+        跳过 adjust_pacing_llm, 留给 emotional_pacing 节点处理
+        """
+        polished = self.polisher.remove_ai_gloss(content)
+        polished = self.polisher.optimize_dialogue_llm(polished)
+        return polished
+
     # ==================== 社交引擎方法 ====================
 
     def apply_event(self, event_type: str, from_char: str, to_char: str, chapter: int):

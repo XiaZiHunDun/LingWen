@@ -561,8 +561,8 @@ class TestWorkflowMermaidEndpoint:
     def test_mermaid_returns_node_count(self, client):
         response = client.get("/api/workflows/novel_writing/mermaid")
         data = response.json()
-        # Phase 7.3: 5 节点 (含 polish_chapter)
-        assert data["node_count"] == 5
+        # Phase 7.4: 7 节点 (含 2 个并行 polish + 1 merge)
+        assert data["node_count"] == 7
         assert data["has_decision_nodes"] is False  # novel_writing 无 decision
 
     def test_mermaid_404_for_unknown(self, client):

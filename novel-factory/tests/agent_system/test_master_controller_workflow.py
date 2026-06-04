@@ -65,6 +65,13 @@ class _StubAgents:
     def polish_chapter(self, content: str) -> str:
         return content + " (polished)"
 
+    # Phase 7.4: 新增 2 个 variant entry methods (用于 stub 测试)
+    def polish_emotional_pacing(self, content: str) -> str:
+        return content + " (emotional)"
+
+    def polish_ai_trace_removal(self, content: str) -> str:
+        return content + " (ai_removed)"
+
     def generate_outline(self, settings, requirements):
         return {"chapters": [], "volume": 1}
 
@@ -135,6 +142,13 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     controller.polish_chapter = types.MethodType(
         lambda self, content: stub.polish_chapter(content), controller,
     )
+    # Phase 7.4: stub 新增的 2 个 variant entry methods
+    controller.polish_emotional_pacing = types.MethodType(
+        lambda self, content: stub.polish_emotional_pacing(content), controller,
+    )
+    controller.polish_ai_trace_removal = types.MethodType(
+        lambda self, content: stub.polish_ai_trace_removal(content), controller,
+    )
     controller.generate_outline = types.MethodType(
         lambda self, settings, requirements: stub.generate_outline(settings, requirements), controller,
     )
@@ -165,8 +179,8 @@ class TestMasterControllerRunWorkflow:
             start_nodes=["read_snapshot"],
             initial_inputs={"chapter_num": 1, "characters": [], "style_guide": {}, "timeline": []},
         )
-        # Phase 7.3: 5 节点全 COMPLETED (含 polish_chapter)
-        assert result["summary"].completed == 5
+        # Phase 7.4: 7 节点全 COMPLETED (含 2 个并行 polish + 1 merge)
+        assert result["summary"].completed == 7
         assert result["summary"].failed == 0
 
     def test_run_workflow_executions_has_all_nodes(self, monkeypatch):
@@ -189,8 +203,8 @@ class TestMasterControllerRunWorkflow:
             workflow_name="novel_writing",
             initial_inputs={"chapter_num": 1, "characters": [], "style_guide": {}, "timeline": []},
         )
-        # Phase 7.3: 默认起点 read_snapshot,跑完整 5 节点链
-        assert result["summary"].completed == 5
+        # Phase 7.4: 默认起点 read_snapshot,跑完整 7 节点链
+        assert result["summary"].completed == 7
 
     def test_run_workflow_dispatches_to_real_agent_methods(self, monkeypatch):
         """run_workflow 通过 AgentComputeFn 调 content_writer / auditor"""
