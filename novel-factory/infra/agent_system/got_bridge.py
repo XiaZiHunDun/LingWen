@@ -116,19 +116,41 @@ def _make_polish_handler(method_name: str) -> HandlerFn:
 
 
 def _handler_polish_merge(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:
-    """Phase 7.4: scenario=polish_merge — 合并多个上游 polish 节点 output
+    """Phase 7.5: scenario=polish_merge — 调 master.polish_merge_synthesis, LLM S1-S8 加权选高者
 
-    策略: 选 max(len(content)) (避免拼接两个 variant 的矛盾, 优先保留更多润色结果)
-
-    YAGNI: 后续可扩展 LLM 评分择优 / 按段落拼接 (Phase 7.5+)
+    收集 2 个上游 variant (按 input key 排序, 确定性), 调 master 评分。
+    1 上游 → 兜底, 0 上游 → _error。LLM 失败由 master 内部兜底 max(len)。
     """
-    contents: list[str] = []
-    for upstream in inputs.values():
+    # 按 input key 排序收集 (确定性 — 同 input 顺序下, winner 一致)
+    variants: dict[str, str] = {}
+    for upstream_id, upstream in sorted(inputs.items()):
         if isinstance(upstream, dict) and "content" in upstream:
-            contents.append(upstream["content"])
-    if not contents:
+            variants[upstream_id] = upstream["content"]
+
+    if not variants:
         return {"_error": "polish_merge requires >= 1 upstream with content"}
-    return {"content": max(contents, key=len)}
+
+    if len(variants) == 1:
+        only_id, only_content = next(iter(variants.items()))
+        return {
+            "content": only_content,
+            "winner": only_id,
+            "scores_a": {},
+            "scores_b": {},
+            "scores_total_a": 0.0,
+            "scores_total_b": 0.0,
+            "scores_delta": 0.0,
+            "fallback": "single_upstream",
+        }
+
+    # 2+ variants 调 LLM 评分
+    ids = list(variants.keys())
+    label_a, label_b = ids[0], ids[1]
+    return master.polish_merge_synthesis(
+        content_a=variants[label_a],
+        content_b=variants[label_b],
+        labels=(label_a, label_b),
+    )
 
 
 def _handler_outline_review(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:

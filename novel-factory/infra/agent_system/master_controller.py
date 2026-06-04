@@ -35,6 +35,9 @@ from .registry.skill_registry import SkillRegistry
 
 logger = logging.getLogger(__name__)
 
+# Phase 7.5: S1-S8 8 维评分维度 — 用于 polish_merge LLM 评分
+_S1_S8_KEYS: tuple[str, ...] = ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8")
+
 
 class MasterController:
     """主控调度器（Facade模式）
@@ -620,6 +623,148 @@ class MasterController:
         except Exception as e:
             logger.warning("polish_ai_trace_removal: dialogue_llm failed: %s", e)
         return polished
+
+    def polish_merge_synthesis(
+        self,
+        content_a: str,
+        content_b: str,
+        *,
+        labels: tuple[str, str] = ("A", "B"),
+    ) -> Dict[str, Any]:
+        """Phase 7.5: LLM S1-S8 8 维加权评分, 选高者 (polish_merge 节点)
+
+        调 polisher.chat() (HAIKU tier, 4000 tokens) 评分 2 个 variant, 加权
+        (等权 0.125 each) 求总分, winner = 高者。韧性契约: LLM 失败 → 走
+        max(len) 兜底, reason="llm_fail"。
+
+        Args:
+            content_a: variant A 内容
+            content_b: variant B 内容
+            labels: 2 个 label (默认 ("A", "B")), 也可用上游节点 id
+                    (e.g. ("polish_emotional_pacing", "polish_ai_trace_removal"))
+
+        Returns:
+            {
+                "content": str,             # winner 内容
+                "winner": str,              # labels[0] or labels[1]
+                "scores_a": dict[str, int], # {S1: 8, ..., S8: 7}
+                "scores_b": dict[str, int],
+                "scores_total_a": float,    # 0-10 平均
+                "scores_total_b": float,
+                "scores_delta": float,      # total_a - total_b
+                "fallback": str | None,     # 兜底原因 (None=走 LLM)
+            }
+        """
+        empty = self._merge_synthesis_len_fallback
+        if not content_a or not content_b:
+            return empty(content_a, content_b, labels, reason="empty_content")
+        if content_a == content_b:
+            return {
+                "content": content_a,
+                "winner": labels[0],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "identical",
+            }
+        try:
+            return self._merge_synthesis_llm(content_a, content_b, labels)
+        except Exception as e:
+            logger.warning("polish_merge_synthesis: LLM failed, len fallback: %s", e)
+            return empty(content_a, content_b, labels, reason="llm_fail")
+
+    def _merge_synthesis_llm(
+        self,
+        content_a: str,
+        content_b: str,
+        labels: tuple[str, str],
+    ) -> Dict[str, Any]:
+        """Phase 7.5: 调 polisher LLM 评分 2 variant, 等权求总分选高者"""
+        from .agents.polisher.prompts import (
+            build_merge_synthesis_prompt,
+            get_merge_synthesis_system_prompt,
+        )
+
+        prompt = build_merge_synthesis_prompt(content_a, content_b, labels=labels)
+        system = get_merge_synthesis_system_prompt()
+        response = self.polisher.chat(
+            prompt=prompt, system=system, temperature=0.2, max_tokens=2000
+        )
+        parsed = self.polisher.parse_response(response, format_type="json")
+
+        label_a, label_b = labels
+        scores_a = {k: int(parsed[f"scores_{label_a}"][k]) for k in _S1_S8_KEYS}
+        scores_b = {k: int(parsed[f"scores_{label_b}"][k]) for k in _S1_S8_KEYS}
+        total_a = sum(scores_a.values()) / 8.0
+        total_b = sum(scores_b.values()) / 8.0
+        winner = label_a if total_a >= total_b else label_b
+        content = content_a if winner == label_a else content_b
+        return {
+            "content": content,
+            "winner": winner,
+            "scores_a": scores_a,
+            "scores_b": scores_b,
+            "scores_total_a": total_a,
+            "scores_total_b": total_b,
+            "scores_delta": total_a - total_b,
+        }
+
+    def _merge_synthesis_len_fallback(
+        self,
+        content_a: str,
+        content_b: str,
+        labels: tuple[str, str],
+        *,
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Phase 7.5: max(len) 兜底 (LLM 失败 / 空 content 时)"""
+        if not content_a and not content_b:
+            return {
+                "content": "",
+                "winner": "",
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": reason,
+            }
+        if not content_a:
+            return {
+                "content": content_b,
+                "winner": labels[1],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": reason,
+            }
+        if not content_b:
+            return {
+                "content": content_a,
+                "winner": labels[0],
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": reason,
+            }
+        winner = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        content = content_a if winner == labels[0] else content_b
+        return {
+            "content": content,
+            "winner": winner,
+            "scores_a": {},
+            "scores_b": {},
+            "scores_total_a": 0.0,
+            "scores_total_b": 0.0,
+            "scores_delta": 0.0,
+            "fallback": reason,
+        }
 
     # ==================== 社交引擎方法 ====================
 

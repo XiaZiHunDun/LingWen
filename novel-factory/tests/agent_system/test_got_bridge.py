@@ -55,6 +55,19 @@ class _StubMaster:
         self.calls.append(("polish_ai_trace_removal", {"content_len": len(content)}))
         return content + " [ai_removed]"
 
+    # Phase 7.5: stub polish_merge_synthesis — 默认走 max(len) 兜底 (不调 LLM)
+    def polish_merge_synthesis(self, content_a: str, content_b: str, *, labels=("A", "B")) -> dict:
+        """Stub: 模拟 master.polish_merge_synthesis 的 max(len) 兜底 (默认 stub 不调 LLM)"""
+        if not content_a or not content_b:
+            winner = labels[0] if content_a else labels[1]
+            content = content_a or content_b
+            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+        if content_a == content_b:
+            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+        winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        content = content_a if winner_label == labels[0] else content_b
+        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
+
     def generate_outline(self, settings, requirements):
         self.calls.append(("generate_outline", {"settings_keys": list(settings.keys())}))
         return {"chapters": [], "volume": 1}
@@ -383,6 +396,62 @@ class TestPolishMergeHandler:
         result = compute(node, {"upstream": {"other": "value"}})
         assert result.fail is True
         assert "polish_merge requires" in result.error
+
+
+# === TestPolishMergeHandlerScored (Phase 7.5 NEW) ===
+
+class TestPolishMergeHandlerScored:
+    """Phase 7.5: _handler_polish_merge 调 master.polish_merge_synthesis (LLM S1-S8)"""
+
+    def test_handler_returns_winner_with_score_fields(self):
+        """2 上游走 LLM 评分路径, 返回 dict 含 winner / scores_total_* 字段"""
+        # 构造 _StubMaster with LLM-模拟 chat response
+        class _ScoringStub(_StubMaster):
+            def __init__(self):
+                super().__init__()
+                # 加 polish_merge_synthesis 方法
+                from infra.agent_system.agents.polisher.prompts import _S1_S8_NAMES  # noqa
+                self._llm_response = {
+                    "scores_A": {"S1": 9, "S2": 9, "S3": 9, "S4": 9, "S5": 9, "S6": 9, "S7": 9, "S8": 9},
+                    "scores_B": {"S1": 5, "S2": 5, "S3": 5, "S4": 5, "S5": 5, "S6": 5, "S7": 5, "S8": 5},
+                    "reason": "A wins",
+                }
+            def polish_merge_synthesis(self, content_a, content_b, *, labels=("A", "B")):
+                # 模拟 LLM 评分 — A 9 分, B 5 分
+                total_a = 9.0
+                total_b = 5.0
+                winner = labels[0] if total_a >= total_b else labels[1]
+                content = content_a if winner == labels[0] else content_b
+                return {
+                    "content": content,
+                    "winner": winner,
+                    "scores_a": self._llm_response["scores_A"],
+                    "scores_b": self._llm_response["scores_B"],
+                    "scores_total_a": total_a,
+                    "scores_total_b": total_b,
+                    "scores_delta": total_a - total_b,
+                }
+
+        master = _ScoringStub()
+        compute = AgentComputeFn(master)
+        node = _node("merge_scored", "polish_merge")
+        inputs = {
+            "polish_emotional_pacing": {"content": "A version here" * 3},
+            "polish_ai_trace_removal": {"content": "B version here" * 2},
+        }
+        result = compute(node, inputs)
+        assert result.fail is False
+        # handler 按 input key 字典序排序: polish_ai_trace_removal < polish_emotional_pacing
+        # → label_a = "polish_ai_trace_removal" (得分 9)
+        # → label_b = "polish_emotional_pacing" (得分 5)
+        # → 9 > 5 → 选 label_a = "polish_ai_trace_removal"
+        # → content = content_a = "B version here" * 2 (polish_ai_trace_removal 的值)
+        assert result.output["winner"] == "polish_ai_trace_removal"
+        assert result.output["scores_total_a"] == 9.0
+        assert result.output["scores_total_b"] == 5.0
+        assert "scores_a" in result.output
+        assert "scores_b" in result.output
+        assert result.output["content"] == "B version here" * 2
 
 
 # === TestPolishVariantResilience (Phase 7.4 fixup M1 NEW) ===

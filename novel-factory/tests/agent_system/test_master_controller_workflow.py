@@ -38,6 +38,19 @@ class _StubMaster:
     def polish_chapter(self, content: str) -> str:
         return content + " [polished]"
 
+    # Phase 7.5: stub polish_merge_synthesis — 走 max(len) 兜底
+    def polish_merge_synthesis(self, content_a: str, content_b: str, *, labels=("A", "B")) -> dict:
+        """Stub: 走 max(len) 兜底 (默认不调 LLM)"""
+        if not content_a or not content_b:
+            winner = labels[0] if content_a else labels[1]
+            content = content_a or content_b
+            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+        if content_a == content_b:
+            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+        winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        content = content_a if winner_label == labels[0] else content_b
+        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
+
     def generate_outline(self, settings, requirements):
         return {"chapters": [], "volume": 1}
 
@@ -71,6 +84,18 @@ class _StubAgents:
 
     def polish_ai_trace_removal(self, content: str) -> str:
         return content + " (ai_removed)"
+
+    # Phase 7.5: stub polish_merge_synthesis
+    def polish_merge_synthesis(self, content_a, content_b, *, labels=("A", "B")) -> dict:
+        if not content_a or not content_b:
+            winner = labels[0] if content_a else labels[1]
+            content = content_a or content_b
+            return {"content": content, "winner": winner, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "empty_content"}
+        if content_a == content_b:
+            return {"content": content_a, "winner": labels[0], "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "identical"}
+        winner_label = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        content = content_a if winner_label == labels[0] else content_b
+        return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
 
     def generate_outline(self, settings, requirements):
         return {"chapters": [], "volume": 1}
@@ -148,6 +173,13 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     )
     controller.polish_ai_trace_removal = types.MethodType(
         lambda self, content: stub.polish_ai_trace_removal(content), controller,
+    )
+    # Phase 7.5: stub polish_merge_synthesis
+    controller.polish_merge_synthesis = types.MethodType(
+        lambda self, content_a, content_b, *, labels=("A", "B"): stub.polish_merge_synthesis(
+            content_a, content_b, labels=labels,
+        ),
+        controller,
     )
     controller.generate_outline = types.MethodType(
         lambda self, settings, requirements: stub.generate_outline(settings, requirements), controller,

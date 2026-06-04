@@ -481,11 +481,16 @@ class TestNovelWritingMultiVariantPolish:
         assert isinstance(content, str)
         assert len(content) > 0, "polish_merge output.content should be non-empty"
 
-    def test_at_least_six_llm_calls(self, tmp_path: Path):
-        """Phase 7.4: 7 节点, LLM 调用 >= 5 次
+    def test_at_least_seven_llm_calls(self, tmp_path: Path):
+        """Phase 7.5: 7 节点, LLM 调用 >= 5 次 (测试桩下 polish_merge 走 identical fallback)
+
         write(1) + audit(1) + emotional_pacing(2: dialogue+pacing) + ai_trace_removal(1: dialogue)
-        = 5 次. read_snapshot/emit_chapter/polish_merge 旁路或纯 Python.
-        (ai_trace_removal 走规则 remove_ai_gloss 不调 LLM, 留下 optimize_dialogue_llm 1 次)"""
+        = 5 次. read_snapshot/emit_chapter 旁路.
+        (ai_trace_removal 走规则 remove_ai_gloss 不调 LLM, 留下 optimize_dialogue_llm 1 次)
+
+        注: 测试桩 StubProvider 返相同字符串, 两个 polish 节点都返 "anthropic-response",
+        polish_merge 走 identical fallback (不调 LLM)。生产路径下两个 polish variant
+        内容不同, polish_merge 会调 1 次 LLM S1-S8 评分 (= 6 次 LLM)。"""
         router, providers = make_stub_router()
         self._run_novel_writing(tmp_path, router)
 
@@ -528,3 +533,8 @@ def test_novel_writing_emit_depends_on_polish_merge_yaml_static():
     # polish_merge 应依赖 2 个 polish 节点
     assert "polish_emotional_pacing" in merge_node["depends_on"]
     assert "polish_ai_trace_removal" in merge_node["depends_on"]
+    # Phase 7.5: polish_merge token_budget=4000, timeout_s=90
+    assert merge_node["token_budget"] == 4000, f"polish_merge.token_budget should be 4000, got {merge_node['token_budget']}"
+    assert merge_node["timeout_s"] == 90
+    # version 升级到 3
+    assert data["version"] == 3, f"novel_writing workflow version should be 3, got {data['version']}"

@@ -102,3 +102,54 @@ def get_pacing_system_prompt(reader_id: str = "A") -> str:
     return f"""你是一位资深网文编辑 (读者 {reader_id} 号视角), 擅长节奏控制。
 你的工作: 调整章节节奏, 让高潮有力、过渡自然、张弛有度。
 保持情节不变, 只调整段落长度和叙述密度。直接返回调整后全文。"""
+
+
+# ==================== Merge Synthesis (Phase 7.5) ====================
+
+_S1_S8_NAMES = {
+    "S1": "剧情完整性 (Plot Completeness)",
+    "S2": "逻辑自洽 (Logic Consistency)",
+    "S3": "文笔风格 (Writing Style)",
+    "S4": "情感共鸣 (Emotional Resonance)",
+    "S5": "节奏控制 (Pacing Control)",
+    "S6": "可读性 (Readability)",
+    "S7": "主角魅力 (Protagonist Appeal)",
+    "S8": "人物弧光 (Character Arc)",
+}
+
+
+def build_merge_synthesis_prompt(content_a: str, content_b: str, labels: tuple[str, str] = ("A", "B")) -> str:
+    """Phase 7.5: 构建 polish_merge S1-S8 多维评分 prompt
+
+    把 2 个润色 variant 给 LLM, 按 S1-S8 8 维打分 (0-10), 选总平均分高者。
+    label 参数允许上游节点用 input id (e.g. "polish_emotional_pacing") 当 label,
+    输出 JSON 的 scores key 用 label 命名 (e.g. "scores_polish_emotional_pacing")。
+    """
+    label_a, label_b = labels
+    s1_s8_list = "\n".join(f"- {k}: {v}" for k, v in _S1_S8_NAMES.items())
+    return f"""你是资深网文质量审核官, 需要对比 2 个章节润色 variant, 按 S1-S8 8 维评分 (0-10 分, 越高越好), 并选出优胜者。
+
+## 评分维度
+{s1_s8_list}
+
+## Variant {label_a}
+{content_a[:3000]}
+
+## Variant {label_b}
+{content_b[:3000]}
+
+## 输出格式 (严格 JSON)
+{{
+  "scores_{label_a}": {{"S1": <int>, "S2": <int>, "S3": <int>, "S4": <int>, "S5": <int>, "S6": <int>, "S7": <int>, "S8": <int>}},
+  "scores_{label_b}": {{"S1": <int>, "S2": <int>, "S3": <int>, "S4": <int>, "S5": <int>, "S6": <int>, "S7": <int>, "S8": <int>}},
+  "reason": "<50 字以内, 解释为什么选 {label_a} 或 {label_b}>"
+}}
+
+只返 JSON, 不要其他文字。"""
+
+
+def get_merge_synthesis_system_prompt() -> str:
+    """Phase 7.5: polish_merge S1-S8 评分系统提示"""
+    return """你是一位资深网文质量审核官, 擅长多维度对比 2 个润色版本。
+你的工作: 客观评分 S1-S8 8 维, 选总平均分高者。
+不要因为 variant 长度或风格偏好而偏袒, 严格按 8 维定义评估。"""

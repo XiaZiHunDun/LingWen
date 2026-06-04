@@ -17,7 +17,7 @@
 # ✓ Phase 7.4 实现: 多 variant 并行 + AGGREGATION merge (5→7 节点)
 
 workflow: novel_writing
-version: 2  # 升级: 5→7 节点 + AGGREGATION 引入
+version: 3  # Phase 7.5 升级: polish_merge 从 max(len) → LLM S1-S8 加权评分
 
 nodes:
   # === Stage 1: 数据输入 ===
@@ -75,16 +75,16 @@ nodes:
     token_budget: 4000   # ← fixup M2: 1 LLM call vs emotional_pacing 的 2 LLM calls
     timeout_s: 90
 
-  # === Stage 3.7: AGGREGATION 合并 (Phase 7.4 NEW) ===
+  # === Stage 3.7: AGGREGATION 合并 (Phase 7.4 + Phase 7.5 LLM 评分) ===
   - id: polish_merge
     type: aggregation
-    name: Merge Polish Variants
-    description: "合并 2 个并行 polish 节点结果 (Phase 7.4 策略: max(len) 选较长版本)"
+    name: Merge Polish Variants (LLM-Scored)
+    description: "合并 2 个并行 polish 节点结果 (Phase 7.5 策略: LLM S1-S8 多维加权评分, 选高者, 兜底 max(len))"
     depends_on: [polish_emotional_pacing, polish_ai_trace_removal]
     prompt_scenario: polish_merge
     output_schema: PolishedDraft
-    token_budget: 0
-    timeout_s: 30
+    token_budget: 4000
+    timeout_s: 90
 
   # === Stage 4: 落盘输出 (Phase 7.4: 改 depends_on) ===
   - id: emit_chapter
