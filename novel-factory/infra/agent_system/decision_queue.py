@@ -22,11 +22,14 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
+
+from ._file_lock import FileLock
 
 logger = logging.getLogger(__name__)
 
@@ -186,13 +189,40 @@ class HumanDecisionQueue:
     """
 
     DEFAULT_FILENAME = "decisions.json"
+    LOCK_FILENAME = "decisions.json.lock"
 
     def __init__(self, state_dir: Optional[str] = None) -> None:
         self._decisions: dict[str, HumanDecision] = {}
         self._state_path: Optional[Path] = None
+        self._lock_path: Optional[Path] = None
         if state_dir:
             self._state_path = Path(state_dir) / self.DEFAULT_FILENAME
+            self._lock_path = Path(state_dir) / self.LOCK_FILENAME
             self._load()
+
+    # === Phase 6.5: file lock for cross-process safety ===
+
+    @contextmanager
+    def with_lock(self) -> Iterator[None]:
+        """拿文件锁 + 进入时 reload + 退出时 save。
+
+        用于跨进程原子的 read-modify-write:
+            with queue.with_lock():
+                queue.add(decision)
+                queue.resolve(...)
+            # 退出 with 时自动 save
+
+        state_dir=None 时退化为 no-op (in-memory only)。
+        """
+        if self._state_path is None or self._lock_path is None:
+            yield
+            return
+        with FileLock(self._lock_path):
+            self._load()  # 重新读最新 (其他进程可能改过)
+            try:
+                yield
+            finally:
+                self._save_unlocked()  # 写回 (caller 持有锁)
 
     # === Core API ===
 
@@ -355,8 +385,18 @@ class HumanDecisionQueue:
     def save(self) -> None:
         """持久化到 JSON (state_dir/decisions.json)
 
-        注:仅在 __init__ 传了 state_dir 时才有意义
+        内部用 FileLock 串行化跨进程写 (Phase 6.5)。
+        state_dir=None 时 no-op (in-memory only)。
+
+        跨进程 read-modify-write 推荐用 with_lock() 而不是直接 save。
         """
+        if self._state_path is None or self._lock_path is None:
+            return
+        with FileLock(self._lock_path):
+            self._save_unlocked()
+
+    def _save_unlocked(self) -> None:
+        """写 JSON 到文件 — 假定 caller 持有 FileLock"""
         if self._state_path is None:
             return
         self._state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -367,11 +407,12 @@ class HumanDecisionQueue:
         )
 
     def _load(self) -> None:
-        """从 JSON 加载 (启动时)"""
+        """从 JSON 加载 (启动时; 无锁)"""
         if self._state_path is None or not self._state_path.exists():
             return
         try:
             data = json.loads(self._state_path.read_text(encoding="utf-8"))
+            self._decisions.clear()
             for item in data:
                 d = HumanDecision.from_dict(item)
                 self._decisions[d.decision_id] = d

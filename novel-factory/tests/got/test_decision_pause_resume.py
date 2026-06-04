@@ -597,14 +597,16 @@ class TestControllerResumeWorkflow:
         # b 仍未执行
         assert not graph.has_execution("b") or graph.get_execution("b").status.value != "completed"
 
-        # 注入 d2 decision
+        # 注入 d2 decision (Phase 6.5: 必须经 with_lock,否则下一次 with_lock
+        # 重新读文件会覆盖 in-memory 状态)
         d2 = create_decision(
             decision_kind=DecisionKind.OUTLINE_JUDGMENT,
             node_id="d2",
             prompt="second?",
             options=("approve", "revise"),
         )
-        controller._decision_queue.add(d2)
+        with controller._decision_queue.with_lock():
+            controller._decision_queue.add(d2)
 
         # resume d2 → 应全部完成
         result2 = controller.resume_workflow(d2.decision_id, "approve")

@@ -282,8 +282,10 @@ class MasterController:
         queue = getattr(self, "_decision_queue", None)
         if queue is None:
             raise RuntimeError("decision queue not initialized")
-        resolved = queue.resolve(decision_id, option, resolved_by=resolved_by)
-        queue.save()  # 立即持久化
+        # Phase 6.5: with_lock() 拿 fcntl 排他锁 + 重新读 + 写回,
+        # 防止 CLI 与 dashboard 跨进程写 decisions.json 时的 race condition
+        with queue.with_lock():
+            resolved = queue.resolve(decision_id, option, resolved_by=resolved_by)
         return resolved
 
     def resume_workflow(
@@ -421,7 +423,9 @@ class MasterController:
                 options=_default_options_for(kind),
                 priority=_default_priority_for(kind),
             )
-            queue.add(decision)
+            # Phase 6.5: with_lock() 让 add 也是原子的
+            with queue.with_lock():
+                queue.add(decision)
             harvested.append(decision.to_dict())
         return harvested
 
