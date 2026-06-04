@@ -10,17 +10,23 @@ Phase 6 新增:
 - master_controller kwarg (Protocol 注入,默认 None)
 """
 
+import asyncio
 import os
 import sqlite3
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
 from dashboard.protocols import MasterControllerLike
+from dashboard.ws import (
+    EVENT_CONNECTED,
+    ConnectionManager,
+    start_broadcast_task,
+)
 
 # ==================== Pydantic Models ====================
 
@@ -407,10 +413,30 @@ def create_app(
     Returns:
         Configured FastAPI application instance
     """
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        """Phase 6.4: 启动/停止 WS broadcast 任务"""
+        task: Optional[asyncio.Task] = None
+        if master_controller is not None:
+            task = await start_broadcast_task(manager, master_controller)
+        try:
+            yield
+        finally:
+            if task is not None:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
+    # manager 是 closure-scoped,供 lifespan 和 endpoint 共享
+    manager = ConnectionManager()
+
     app = FastAPI(
         title="Reading Power Dashboard API",
         description="REST API for the LingWen Reading Power Dashboard",
         version="1.0.0",
+        lifespan=lifespan,
     )
 
     # Use init_if_missing=False to avoid trying to create directories for non-existent paths
@@ -640,6 +666,42 @@ def create_app(
         if master_controller is None:
             return WorkflowStatusResponse(is_active=False, workflow_name=None)
         return WorkflowStatusResponse(**master_controller.get_active_workflow_status())
+
+    # ==================== Phase 6.4: WebSocket Endpoint ====================
+
+    @app.websocket("/api/ws/workflows")
+    async def ws_workflows(ws: WebSocket) -> None:
+        """实时推送工作流状态变化
+
+        事件类型:
+        - connected (握手):{type, snapshot: <active workflow dict>}
+        - workflow.status:{type, payload: <active workflow dict>}
+        - decision.snapshot:{type, payload: <pending decisions list>}
+
+        master_controller 缺失时拒绝连接 (close 1011)。
+        """
+        if master_controller is None:
+            await ws.close(code=1011, reason="master_controller not configured")
+            return
+
+        await manager.connect(ws)
+        try:
+            # 握手:推初始 snapshot
+            initial_workflow = master_controller.get_active_workflow_status()
+            initial_decisions = master_controller.list_pending_decisions()
+            await manager.send_to(ws, {
+                "type": EVENT_CONNECTED,
+                "snapshot": initial_workflow,
+                "pending_decisions": initial_decisions,
+            })
+            # 阻塞等 client 关闭 (server 不主动 send 客户端消息)
+            while True:
+                try:
+                    await ws.receive_text()
+                except WebSocketDisconnect:
+                    break
+        finally:
+            await manager.disconnect(ws)
 
     # ==================== Phase 6.3: Mermaid Graph Endpoint ====================
 

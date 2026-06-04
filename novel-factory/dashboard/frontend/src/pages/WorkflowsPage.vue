@@ -7,9 +7,18 @@
   <div class="workflows-page">
     <header class="page-header">
       <h1 class="page-title">工作流</h1>
-      <button class="refresh-btn pixel-border" @click="refresh" :disabled="loading">
-        {{ loading ? '加载中…' : '刷新' }}
-      </button>
+      <div class="header-actions">
+        <span
+          class="ws-indicator pixel-border"
+          :class="{ 'ws-indicator--on': wsConnected, 'ws-indicator--off': !wsConnected }"
+          :title="wsError || (wsConnected ? '实时推送已连接' : '实时推送未连接')"
+        >
+          {{ wsConnected ? '● 实时' : '○ 离线' }}
+        </span>
+        <button class="refresh-btn pixel-border" @click="refresh" :disabled="loading">
+          {{ loading ? '加载中…' : '刷新' }}
+        </button>
+      </div>
     </header>
 
     <div v-if="error" class="error-banner pixel-border">{{ error }}</div>
@@ -109,16 +118,16 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import WorkflowStatus from '../components/WorkflowStatus.vue';
 import WorkflowGraph from '../components/WorkflowGraph.vue';
 import {
   fetchWorkflows,
-  fetchActiveWorkflow,
   fetchWorkflowGraph,
   runWorkflow,
   resumeWorkflow,
 } from '../api/index.js';
+import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 
 const workflows = ref([]);
 const selected = ref(null);
@@ -131,18 +140,25 @@ const error = ref(null);
 const showGraph = ref(false);
 const graphData = ref(null);
 const graphLoading = ref(false);
-let pollHandle = null;
+
+// Phase 6.4: WebSocket 实时推送替代 2s 轮询
+const {
+  status: wsStatus,
+  pendingDecisions: wsPending,
+  connected: wsConnected,
+  lastError: wsError,
+} = useWorkflowSocket();
+
+// 同步 WS 推送的 status → active
+watch(wsStatus, (s) => {
+  if (s) active.value = s;
+}, { immediate: true });
 
 async function refresh() {
   loading.value = true;
   error.value = null;
   try {
-    const [wfs, act] = await Promise.all([
-      fetchWorkflows(),
-      fetchActiveWorkflow(),
-    ]);
-    workflows.value = wfs;
-    active.value = act;
+    workflows.value = await fetchWorkflows();
   } catch (e) {
     error.value = e?.message || String(e);
   } finally {
@@ -178,9 +194,8 @@ async function runIt() {
       initial_inputs,
       max_backtracks: maxBacktracks.value,
     });
+    // 立即更新一次 (不等 WS 推送)
     active.value = result;
-    // 启动轮询 (暂停时每 2s 拉一次状态)
-    startPolling();
   } catch (e) {
     error.value = `运行失败: ${e?.message || e}`;
   } finally {
@@ -191,10 +206,8 @@ async function runIt() {
 async function handleResume({ decisionId, option }) {
   try {
     const result = await resumeWorkflow(decisionId, option);
+    // 立即更新,WS 也会推
     active.value = result;
-    if (!result.paused) {
-      stopPolling();
-    }
   } catch (e) {
     error.value = `恢复失败: ${e?.message || e}`;
   }
@@ -220,34 +233,7 @@ async function loadGraph() {
   }
 }
 
-function startPolling() {
-  if (pollHandle) return;
-  pollHandle = setInterval(async () => {
-    try {
-      const act = await fetchActiveWorkflow();
-      active.value = act;
-      if (!act.is_active || !act.paused) {
-        stopPolling();
-      }
-    } catch {
-      stopPolling();
-    }
-  }, 2000);
-}
-
-function stopPolling() {
-  if (pollHandle) {
-    clearInterval(pollHandle);
-    pollHandle = null;
-  }
-}
-
-onMounted(() => {
-  refresh();
-  startPolling();
-});
-
-onUnmounted(stopPolling);
+onMounted(refresh);
 </script>
 
 <style scoped>
@@ -262,6 +248,33 @@ onUnmounted(stopPolling);
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ws-indicator {
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  color: var(--color-text-dim);
+  border-width: 2px;
+  cursor: default;
+  user-select: none;
+}
+
+.ws-indicator--on {
+  color: #4caf50;
+  background: #e8f5e9;
+}
+
+.ws-indicator--off {
+  color: #c62828;
+  background: #ffebee;
 }
 
 .workflows-layout {
