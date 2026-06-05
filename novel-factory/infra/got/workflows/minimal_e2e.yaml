@@ -5,7 +5,7 @@
 #
 # 设计:写 → 审 2 节点。
 # 生产现实:write 节点 1 次 LLM 调用,review 节点 0 次 (auditor.llm_audit 不存在,被吞)。
-# 详细原因见 tests/agent_system/test_master_controller_e2e_real_llm.py 模块 docstring。
+# 详细原因见 tests/agent_system/test_master_controller_stub_router_e2e.py 模块 docstring。
 # 不含 polish 节点,因为生产 PolisherTools 是纯规则实现 (无 LLM),
 # _handler_chapter_review 不向下游传播 content,会让 polish 失败。
 #

@@ -6,7 +6,7 @@
 
 Phase 7.5 (`polish_merge_synthesis` S1-S8 LLM 评分) + Phase 7.6 (dashboard 雷达图) 都已完成, 但**所有相关测试都用 StubProvider 模拟 LLM**:
 - `tests/agent_system/test_master_controller.py::TestPolishMergeSynthesis` (5 tests) 调 `_merge_synthesis_llm` 但 polisher 是 stub
-- `tests/agent_system/test_master_controller_e2e_real_llm.py` 文件名误导 (实际用 StubProvider, "real" 指 LLM 形接口不是真实 API)
+- `tests/agent_system/test_master_controller_stub_router_e2e.py` 文件名误导 (实际用 StubProvider, "real" 指 LLM 形接口不是真实 API)
 - 真实 API 路径从未在 CI 或开发机器上跑过
 
 **风险**: 真实 LLM 路径可能有问题但未被发现:
@@ -119,7 +119,7 @@ _REQUIRES_ANTHROPIC_KEY = pytest.mark.skipif(
 - **CI 集成**: real LLM 测试不跑 CI (成本 + 密钥管理), 留给本地 opt-in
 - **多 provider matrix**: 只测 Anthropic, OpenAI/MiniMax 留给 Phase 8.x
 - **Cost tracking 集成**: 不接 `CostTracker` (范围是验证 S1-S8 评分, 不是成本归因)
-- **Rename `test_master_controller_e2e_real_llm.py`**: 误导性命名问题已知, Phase 8.x 单独处理
+- **Rename `test_master_controller_stub_router_e2e.py`**: 误导性命名问题已知, Phase 8.x 单独处理
 - **`.env` 文件模式**: 项目传统是 shell env, 不引入 python-dotenv
 - **加 `pytest.mark.real_llm` marker**: 用 skipif 足够, marker 需要 `pytest.ini` 注册
 - **改 `_e2e_helpers.py`**: YAGNI, 真实 LLM 构造只 1 个文件用
@@ -161,7 +161,7 @@ _REQUIRES_ANTHROPIC_KEY = pytest.mark.skipif(
 
 ## Critical files (NOT 修改)
 
-- `tests/agent_system/test_master_controller_e2e_real_llm.py` — 误导性命名, 实际是 StubProvider; **不**改名
+- `tests/agent_system/test_master_controller_stub_router_e2e.py` — 误导性命名, 实际是 StubProvider; **不**改名
 - `tests/agent_system/_e2e_helpers.py` — **不**加 `_make_real_router()` helper, YAGNI
 - `config/api_config.yaml` — **不**加示例 key 值, 模板已存在
 - `pytest.ini` / `pyproject.toml` — **不**加 `real_llm` marker
@@ -201,7 +201,7 @@ _REQUIRES_ANTHROPIC_KEY = pytest.mark.skipif(
 - **Phase 8.1**: 修真实 LLM 暴露的问题 (JSON parse / score range / 标签对齐)
 - **Phase 8.2**: 加 OpenAI + MiniMax provider 矩阵
 - **Phase 8.3**: CI 集成 (GitHub Actions secrets + 定时跑, 不在 PR 跑)
-- **Phase 8.4**: Rename `test_master_controller_e2e_real_llm.py` → `_stub_router_e2e.py`
+- **Phase 8.4**: Rename `test_master_controller_stub_router_e2e.py` → `_stub_router_e2e.py`
 - **Phase 8.5**: 接 `CostTracker` 进 `AgentComputeFn` (real cost 归因)
 - **Phase 9**: 跨卷涟漪 (独立大方向, 跟当前 polish 路线分叉)
 

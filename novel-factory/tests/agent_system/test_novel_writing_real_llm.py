@@ -6,8 +6,8 @@
 
 成本: HAIKU × 6 LLM calls ≈ $0.005-0.020 per test.
 
-跟 tests/agent_system/test_master_controller_e2e_real_llm.py 区别:
-- test_master_controller_e2e_real_llm.py: 文件名误导, 实际用 StubProvider
+跟 tests/agent_system/test_master_controller_stub_router_e2e.py 区别:
+- test_master_controller_stub_router_e2e.py: 文件名误导, 实际用 StubProvider
 - test_novel_writing_real_llm.py (本文件): 真实 Anthropic API 调用
 """
 

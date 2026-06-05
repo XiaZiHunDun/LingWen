@@ -32,8 +32,8 @@
 
 成本: HAIKU × 6 LLM calls ≈ $0.005-0.020 per test.
 
-跟 tests/agent_system/test_master_controller_e2e_real_llm.py 区别:
-- test_master_controller_e2e_real_llm.py: 文件名误导, 实际用 StubProvider
+跟 tests/agent_system/test_master_controller_stub_router_e2e.py 区别:
+- test_master_controller_stub_router_e2e.py: 文件名误导, 实际用 StubProvider
 - test_novel_writing_real_llm.py (本文件): 真实 Anthropic API 调用
 """
 
@@ -280,7 +280,7 @@ wc -l MEMORY.md
 ### Step 4.2: 在 Phase 7.6 之后**插入** Phase 8 entry
 
 ```markdown
-- **Phase 8 (2026-06-05)**: Doc 4 §11 Phase 8 — Real LLM E2E (polish_merge S1-S8 验证) — 加 2 opt-in 真实 LLM 测试 tests/agent_system/test_novel_writing_real_llm.py (NEW, ~120L): TestNovelWritingRealLLM.test_novel_writing_yaml_polish_merge_produces_s1_s8_scores (novel_writing.yaml 7 节点端到端, 6 LLM calls 30-60s) + TestPolishMergeSynthesisRealLLM.test_polish_merge_synthesis_with_distinct_contents (直接调 polish_merge_synthesis, 1 LLM call 5-10s) + _make_real_router helper (HAIKU claude-haiku-4-5-20251001, timeout=180, max_retries=1) + _assert_s1_s8_score_dict 共享断言 (8 keys + int + 0-10 范围); 默认 SKIP (无 ANTHROPIC_API_KEY) 跟 test_e2e_workflow.py 模式一致, opt-in 跑 (export ANTHROPIC_API_KEY=sk-ant-... pytest ...); 9 步断言: workflow 跑通 (completed≥6, failed=0) + fallback is None + S1-S8 完整 + int 范围 0-10 + winner in _labels + totals 0-10 + delta 一致性 (< 1e-6) + _labels 透传 Phase 7.6 dashboard 雷达图依赖; 复用 make_master_with_router (Phase 7.1 已就位) + tmp_path 状态隔离 + max_backtracks=0 fail-fast (避免 6×2=12 LLM calls 成本 +10x); YAGNI: 不改 _e2e_helpers.py / 不加 real_llm marker / 不引入 .env / 不 rename 误导性 test_master_controller_e2e_real_llm.py; 2073 + 19 skipped (新增 2 skipped opt-in), ruff 0; spec docs/superpowers/specs/2026-06-05-phase8-real-llm-e2e-design.md (commit 3bc88a5); plan docs/superpowers/plans/2026-06-05-phase8-real-llm-e2e.md; impl commit <hash> 推送 origin/master
+- **Phase 8 (2026-06-05)**: Doc 4 §11 Phase 8 — Real LLM E2E (polish_merge S1-S8 验证) — 加 2 opt-in 真实 LLM 测试 tests/agent_system/test_novel_writing_real_llm.py (NEW, ~120L): TestNovelWritingRealLLM.test_novel_writing_yaml_polish_merge_produces_s1_s8_scores (novel_writing.yaml 7 节点端到端, 6 LLM calls 30-60s) + TestPolishMergeSynthesisRealLLM.test_polish_merge_synthesis_with_distinct_contents (直接调 polish_merge_synthesis, 1 LLM call 5-10s) + _make_real_router helper (HAIKU claude-haiku-4-5-20251001, timeout=180, max_retries=1) + _assert_s1_s8_score_dict 共享断言 (8 keys + int + 0-10 范围); 默认 SKIP (无 ANTHROPIC_API_KEY) 跟 test_e2e_workflow.py 模式一致, opt-in 跑 (export ANTHROPIC_API_KEY=sk-ant-... pytest ...); 9 步断言: workflow 跑通 (completed≥6, failed=0) + fallback is None + S1-S8 完整 + int 范围 0-10 + winner in _labels + totals 0-10 + delta 一致性 (< 1e-6) + _labels 透传 Phase 7.6 dashboard 雷达图依赖; 复用 make_master_with_router (Phase 7.1 已就位) + tmp_path 状态隔离 + max_backtracks=0 fail-fast (避免 6×2=12 LLM calls 成本 +10x); YAGNI: 不改 _e2e_helpers.py / 不加 real_llm marker / 不引入 .env / 不 rename 误导性 test_master_controller_stub_router_e2e.py; 2073 + 19 skipped (新增 2 skipped opt-in), ruff 0; spec docs/superpowers/specs/2026-06-05-phase8-real-llm-e2e-design.md (commit 3bc88a5); plan docs/superpowers/plans/2026-06-05-phase8-real-llm-e2e.md; impl commit <hash> 推送 origin/master
 ```
 
 ### Step 4.3: 验证 < 200 行

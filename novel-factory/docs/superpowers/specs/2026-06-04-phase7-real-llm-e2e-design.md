@@ -39,7 +39,7 @@ StubProvider (返回固定 response,记录所有 calls + 估算 token cost)
 |---|---|---|
 | `infra/got/workflows/minimal_e2e.yaml` | NEW | 3 节点 linear 工作流 (write → review → polish),不含 DECISION |
 | `tests/agent_system/_e2e_helpers.py` | NEW | `_make_test_tiered_router()` + `_make_master_with_router()` fixture helpers |
-| `tests/agent_system/test_master_controller_e2e_real_llm.py` | NEW | 3 个 test class,~17 tests |
+| `tests/agent_system/test_master_controller_stub_router_e2e.py` | NEW | 3 个 test class,~17 tests |
 | `MEMORY.md` | UPDATE | Phase 7 进度条目 |
 
 **估计**: 2 新 src + 1 新 test = 3 新文件, ~17 新测试, 1 commit
@@ -99,7 +99,7 @@ def _make_master_with_router(
 - `test_master_controller_workflow.py:121` 用了"替换 master 方法"模式,跟 Phase 7 的"不替换"模式不冲突但要明确分离
 - 避免污染现有测试结构
 
-### 3. `tests/agent_system/test_master_controller_e2e_real_llm.py`
+### 3. `tests/agent_system/test_master_controller_stub_router_e2e.py`
 
 | Test class | Tests | 覆盖 |
 |---|---|---|
@@ -207,10 +207,10 @@ def test_provider_failure_triggers_downgrade(self, tmp_path):
 ```bash
 # 1. 新文件 ruff 0
 ruff check tests/agent_system/_e2e_helpers.py \
-          tests/agent_system/test_master_controller_e2e_real_llm.py
+          tests/agent_system/test_master_controller_stub_router_e2e.py
 
 # 2. 新测试通过
-pytest tests/agent_system/test_master_controller_e2e_real_llm.py -v
+pytest tests/agent_system/test_master_controller_stub_router_e2e.py -v
 
 # 3. 全套不回归
 pytest -q --ignore=tests/e2e

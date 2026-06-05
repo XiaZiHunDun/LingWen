@@ -16,7 +16,7 @@
 |--------|------|
 | `infra/got/workflows/minimal_e2e.yaml` | 3 节点 linear 工作流 (write → review → polish),无 DECISION |
 | `tests/agent_system/_e2e_helpers.py` | `StubProvider` + `make_master_with_router` fixture helpers |
-| `tests/agent_system/test_master_controller_e2e_real_llm.py` | 3 个 test class,~14 tests |
+| `tests/agent_system/test_master_controller_stub_router_e2e.py` | 3 个 test class,~14 tests |
 
 **估计**: 3 新文件,~14 新测试,1 commit
 
@@ -114,7 +114,7 @@ Expected: 打印 `nodes: ['write', 'review', 'polish']` 和 3 条 edge (write→
 """E2E 集成测试 helpers (Phase 7)
 
 目标:把 MasterController 的 router 注入点封装为可复用 fixture,
-让 test_master_controller_e2e_real_llm.py 集中精力写业务断言。
+让 test_master_controller_stub_router_e2e.py 集中精力写业务断言。
 
 设计:
 - StubProvider 继承 AIProvider,记录所有 generate() calls,返回固定 response
@@ -255,7 +255,7 @@ Expected: 0 errors
 ## Task 3: 写 TestMinimalWorkflowE2E (6 tests)
 
 **Files:**
-- Create: `tests/agent_system/test_master_controller_e2e_real_llm.py`
+- Create: `tests/agent_system/test_master_controller_stub_router_e2e.py`
 
 - [ ] **Step 1: 写第 1 个 test (happy path)**
 
@@ -416,7 +416,7 @@ class TestMinimalWorkflowE2E:
 
 ```bash
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory
-pytest tests/agent_system/test_master_controller_e2e_real_llm.py::TestMinimalWorkflowE2E -v
+pytest tests/agent_system/test_master_controller_stub_router_e2e.py::TestMinimalWorkflowE2E -v
 ```
 
 Expected: 6 passed
@@ -432,11 +432,11 @@ Expected: 6 passed
 ## Task 4: 写 TestNovelWritingE2E (5 tests)
 
 **Files:**
-- Modify: `tests/agent_system/test_master_controller_e2e_real_llm.py` (追加 test class)
+- Modify: `tests/agent_system/test_master_controller_stub_router_e2e.py` (追加 test class)
 
 - [ ] **Step 1: 追加 TestNovelWritingE2E**
 
-在 `tests/agent_system/test_master_controller_e2e_real_llm.py` 文件末尾追加:
+在 `tests/agent_system/test_master_controller_stub_router_e2e.py` 文件末尾追加:
 
 ```python
 class TestNovelWritingE2E:
@@ -522,7 +522,7 @@ class TestNovelWritingE2E:
 
 ```bash
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory
-pytest tests/agent_system/test_master_controller_e2e_real_llm.py::TestNovelWritingE2E -v
+pytest tests/agent_system/test_master_controller_stub_router_e2e.py::TestNovelWritingE2E -v
 ```
 
 Expected: 5 passed
@@ -536,11 +536,11 @@ Expected: 5 passed
 ## Task 5: 写 TestRouterFailure (3 tests)
 
 **Files:**
-- Modify: `tests/agent_system/test_master_controller_e2e_real_llm.py` (追加 test class)
+- Modify: `tests/agent_system/test_master_controller_stub_router_e2e.py` (追加 test class)
 
 - [ ] **Step 1: 追加 TestRouterFailure**
 
-在 `tests/agent_system/test_master_controller_e2e_real_llm.py` 文件末尾追加:
+在 `tests/agent_system/test_master_controller_stub_router_e2e.py` 文件末尾追加:
 
 ```python
 class TestRouterFailure:
@@ -628,7 +628,7 @@ class TestRouterFailure:
 
 ```bash
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory
-pytest tests/agent_system/test_master_controller_e2e_real_llm.py::TestRouterFailure -v
+pytest tests/agent_system/test_master_controller_stub_router_e2e.py::TestRouterFailure -v
 ```
 
 Expected: 3 passed
@@ -649,7 +649,7 @@ Expected: 3 passed
 ```bash
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory
 ruff check tests/agent_system/_e2e_helpers.py \
-          tests/agent_system/test_master_controller_e2e_real_llm.py \
+          tests/agent_system/test_master_controller_stub_router_e2e.py \
           infra/got/workflows/minimal_e2e.yaml
 ```
 
@@ -659,7 +659,7 @@ Expected: 0 errors (yaml 应该被 ruff 忽略或 OK)
 
 ```bash
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory
-pytest tests/agent_system/test_master_controller_e2e_real_llm.py -v
+pytest tests/agent_system/test_master_controller_stub_router_e2e.py -v
 ```
 
 Expected: 14 passed
@@ -689,7 +689,7 @@ git status
 git diff --stat
 ```
 
-Expected: 3 untracked files (minimal_e2e.yaml, _e2e_helpers.py, test_master_controller_e2e_real_llm.py)
+Expected: 3 untracked files (minimal_e2e.yaml, _e2e_helpers.py, test_master_controller_stub_router_e2e.py)
 
 - [ ] **Step 2: commit**
 
@@ -697,7 +697,7 @@ Expected: 3 untracked files (minimal_e2e.yaml, _e2e_helpers.py, test_master_cont
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory
 git add infra/got/workflows/minimal_e2e.yaml \
         tests/agent_system/_e2e_helpers.py \
-        tests/agent_system/test_master_controller_e2e_real_llm.py
+        tests/agent_system/test_master_controller_stub_router_e2e.py
 git commit -m "$(cat <<'EOF'
 feat(agent_system): phase 7 — MasterController.run_workflow E2E 集成 (StubProvider 模拟 LLM)
 
@@ -713,7 +713,7 @@ master 方法 → router → 真实 LLM 替代品。
 文件:
 - infra/got/workflows/minimal_e2e.yaml: 3 节点 linear (write → review → polish)
 - tests/agent_system/_e2e_helpers.py: StubProvider + make_master_with_router helpers
-- tests/agent_system/test_master_controller_e2e_real_llm.py: 14 tests / 3 classes
+- tests/agent_system/test_master_controller_stub_router_e2e.py: 14 tests / 3 classes
   - TestMinimalWorkflowE2E (6): happy path / node 状态 / LLM 调用次数 /
     sanity check master 方法未替换 / output 是 dict / 无 DECISION pause
   - TestNovelWritingE2E (5): 4 节点走完 / 只 2 次 LLM 调用 (read/emit 旁路) /
@@ -760,7 +760,7 @@ Expected: < 200
 在 MEMORY.md 顶部 "测试覆盖" 段后追加:
 
 ```markdown
-- **Phase 7 (2026-06-04)**: Doc 4 §11 Phase 7 — MasterController.run_workflow E2E 集成 (StubProvider 模拟真实 LLM) — infra/got/workflows/minimal_e2e.yaml (3 节点 linear) + tests/agent_system/_e2e_helpers.py (StubProvider 继承 AIProvider + make_master_with_router 注入 AIRouter 不替换 master 方法) + tests/agent_system/test_master_controller_e2e_real_llm.py (14 tests / 3 classes: MinimalWorkflowE2E 6 / NovelWritingE2E 5 / RouterFailure 3); 利用 MasterController(router=) 现有参数 (master_controller.py:48-62) 注入测试 AIRouter,区别 test_master_controller_workflow.py:121-141 的 types.MethodType 替换模式; novel_writing.yaml 4 节点含 read/emit 旁路只调 2 次 LLM,DECISION+MasterController 已被 test_decision_pause_resume.py 17 tests 覆盖不重复; 2006→2020 passed (+14); 1 commit 推送 origin/master
+- **Phase 7 (2026-06-04)**: Doc 4 §11 Phase 7 — MasterController.run_workflow E2E 集成 (StubProvider 模拟真实 LLM) — infra/got/workflows/minimal_e2e.yaml (3 节点 linear) + tests/agent_system/_e2e_helpers.py (StubProvider 继承 AIProvider + make_master_with_router 注入 AIRouter 不替换 master 方法) + tests/agent_system/test_master_controller_stub_router_e2e.py (14 tests / 3 classes: MinimalWorkflowE2E 6 / NovelWritingE2E 5 / RouterFailure 3); 利用 MasterController(router=) 现有参数 (master_controller.py:48-62) 注入测试 AIRouter,区别 test_master_controller_workflow.py:121-141 的 types.MethodType 替换模式; novel_writing.yaml 4 节点含 read/emit 旁路只调 2 次 LLM,DECISION+MasterController 已被 test_decision_pause_resume.py 17 tests 覆盖不重复; 2006→2020 passed (+14); 1 commit 推送 origin/master
 ```
 
 - [ ] **Step 3: 验证总行数**
@@ -798,7 +798,7 @@ Expected: 仍在 < 200 (如果接近 200,精简已有条目)
 **4. 文件路径精确性**:
 - `infra/got/workflows/minimal_e2e.yaml` — 新建,跟现有 `novel_writing.yaml` 同目录 ✓
 - `tests/agent_system/_e2e_helpers.py` — 新建,跟 `test_master_controller_workflow.py` 同目录 ✓
-- `tests/agent_system/test_master_controller_e2e_real_llm.py` — 新建 ✓
+- `tests/agent_system/test_master_controller_stub_router_e2e.py` — 新建 ✓
 - `~/.claude/projects/-.../memory/MEMORY.md` — 已存在,append-only ✓
 
 **完成定义**:

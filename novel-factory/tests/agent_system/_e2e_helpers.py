@@ -1,7 +1,7 @@
 """E2E 集成测试 helpers (Phase 7)
 
 目标:把 MasterController 的 router 注入点封装为可复用 fixture,
-让 test_master_controller_e2e_real_llm.py 集中精力写业务断言。
+让 test_master_controller_stub_router_e2e.py 集中精力写业务断言。
 
 设计:
 - StubProvider 继承 AIProvider,记录所有 generate() calls,返回固定 response
