@@ -49,7 +49,7 @@ class AuditorTools(AgentBase):
         context: Dict,
         reviewer_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """使用LLM进行章节审核（支持变体配置）
+        """使用LLM进行章节审核（支持变体配置, Phase 8.6.1: 委托 _impl(record_usage=False))
 
         Args:
             chapter_num: 章节编号
@@ -61,6 +61,43 @@ class AuditorTools(AgentBase):
         Returns:
             审核报告
         """
+        return self._impl_audit_chapter(
+            chapter_num, content, characters, context, reviewer_id, record_usage=False
+        )
+
+    def audit_chapter_with_usage(
+        self,
+        chapter_num: int,
+        content: str,
+        characters: List[Dict],
+        context: Dict,
+        reviewer_id: Optional[str] = None,
+    ) -> tuple[Dict[str, Any], Dict[str, int]]:
+        """Phase 8.6.1: 同 audit_chapter + 返回 real usage.
+
+        返回 (result, usage) tuple, usage dict 含 input_tokens/output_tokens.
+        走 self.chat_with_usage() → router.generate_with_usage() 拿真实 token 计数.
+        旧 audit_chapter() 签名 0 改, 保 2120 baseline.
+
+        Args:
+            (同 audit_chapter)
+
+        Returns:
+            (result_dict, usage_dict) tuple
+        """
+        return self._impl_audit_chapter(
+            chapter_num, content, characters, context, reviewer_id, record_usage=True
+        )
+
+    def _impl_audit_chapter(
+        self,
+        chapter_num: int,
+        content: str,
+        characters: List[Dict],
+        context: Dict,
+        reviewer_id: Optional[str],
+        record_usage: bool,
+    ):
         # 确定使用哪个审核员
         effective_reviewer = reviewer_id or self._current_reviewer_id or "J"
 
@@ -69,12 +106,21 @@ class AuditorTools(AgentBase):
         )
         system = self._get_audit_system_prompt(effective_reviewer)
 
-        response = self.chat(
-            prompt=prompt,
-            system=system,
-            temperature=0.3,
-            max_tokens=2000
-        )
+        # 调用LLM (record_usage 决定走 chat() 估算 还是 chat_with_usage() 真实)
+        if record_usage:
+            response, usage = self.chat_with_usage(
+                prompt=prompt,
+                system=system,
+                temperature=0.3,
+                max_tokens=2000,
+            )
+        else:
+            response = self.chat(
+                prompt=prompt,
+                system=system,
+                temperature=0.3,
+                max_tokens=2000,
+            )
 
         result = self.parse_response(response, format_type="json")
 
@@ -82,6 +128,8 @@ class AuditorTools(AgentBase):
         if isinstance(result, dict):
             result["reviewer_id"] = effective_reviewer
 
+        if record_usage:
+            return result, usage
         return result
 
     def check_character_consistency(self, content: str, character_cards: List[Dict]) -> List[Dict]:
