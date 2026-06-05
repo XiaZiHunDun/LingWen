@@ -119,7 +119,9 @@ class AIProvider(ABC):
             (text, usage) 元组, usage 含 "input_tokens" / "output_tokens" keys
 
         Raises:
-            AIProviderError: 当 generate() 失败
+            透传 generate() 抛出的任何异常 (不静默吞错). 典型子类抛
+            AIProviderError (APIError / NetworkError / TimeoutError) 或
+            ProviderConfigError; 但 default impl 不包装, 原样 propagate.
         """
         text = self.generate(prompt, **kwargs)
         return text, {
