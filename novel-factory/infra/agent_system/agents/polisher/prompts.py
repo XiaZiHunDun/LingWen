@@ -117,15 +117,20 @@ _S1_S8_NAMES = {
     "S8": "人物弧光 (Character Arc)",
 }
 
+_MERGE_SYNTHESIS_TRUNCATE = 6000  # Phase 8.1: 3000→6000 chars (~3000-4000 tokens), HAIKU 4.5 上下文 200k 足够
+
 
 def build_merge_synthesis_prompt(content_a: str, content_b: str, labels: tuple[str, str] = ("A", "B")) -> str:
-    """Phase 7.5: 构建 polish_merge S1-S8 多维评分 prompt
+    """Phase 7.5 + 8.1: 构建 polish_merge S1-S8 多维评分 prompt
 
     把 2 个润色 variant 给 LLM, 按 S1-S8 8 维打分 (0-10), 选总平均分高者。
     label 参数允许上游节点用 input id (e.g. "polish_emotional_pacing") 当 label,
-    输出 JSON 的 scores key 用 label 命名 (e.g. "scores_polish_emotional_pacing")。
+    JSON key 用 sanitized label (Phase 8.1: 防御性 normalize 非 [a-zA-Z0-9_] 字符).
     """
+    from infra.agent_system.master_controller import _safe_label  # Phase 8.1
+
     label_a, label_b = labels
+    safe_a, safe_b = _safe_label(label_a), _safe_label(label_b)
     s1_s8_list = "\n".join(f"- {k}: {v}" for k, v in _S1_S8_NAMES.items())
     return f"""你是资深网文质量审核官, 需要对比 2 个章节润色 variant, 按 S1-S8 8 维评分 (0-10 分, 越高越好), 并选出优胜者。
 
@@ -133,15 +138,15 @@ def build_merge_synthesis_prompt(content_a: str, content_b: str, labels: tuple[s
 {s1_s8_list}
 
 ## Variant {label_a}
-{content_a[:3000]}
+{content_a[:_MERGE_SYNTHESIS_TRUNCATE]}
 
 ## Variant {label_b}
-{content_b[:3000]}
+{content_b[:_MERGE_SYNTHESIS_TRUNCATE]}
 
 ## 输出格式 (严格 JSON)
 {{
-  "scores_{label_a}": {{"S1": <int>, "S2": <int>, "S3": <int>, "S4": <int>, "S5": <int>, "S6": <int>, "S7": <int>, "S8": <int>}},
-  "scores_{label_b}": {{"S1": <int>, "S2": <int>, "S3": <int>, "S4": <int>, "S5": <int>, "S6": <int>, "S7": <int>, "S8": <int>}},
+  "scores_{safe_a}": {{"S1": <int>, "S2": <int>, "S3": <int>, "S4": <int>, "S5": <int>, "S6": <int>, "S7": <int>, "S8": <int>}},
+  "scores_{safe_b}": {{"S1": <int>, "S2": <int>, "S3": <int>, "S4": <int>, "S5": <int>, "S6": <int>, "S7": <int>, "S8": <int>}},
   "reason": "<50 字以内, 解释为什么选 {label_a} 或 {label_b}>"
 }}
 

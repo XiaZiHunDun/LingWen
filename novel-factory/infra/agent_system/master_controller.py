@@ -13,6 +13,8 @@
 """
 
 import logging
+import math
+import re
 from typing import Any, Dict, List, Optional
 
 from ..ai_service.router import AIRouter
@@ -37,6 +39,50 @@ logger = logging.getLogger(__name__)
 
 # Phase 7.5: S1-S8 8 维评分维度 — 用于 polish_merge LLM 评分
 _S1_S8_KEYS: tuple[str, ...] = ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8")
+
+# Phase 8.1: Static LLM robustness helpers
+_NON_SAFE_LABEL_CHARS = re.compile(r"[^a-zA-Z0-9_]")
+
+
+def _coerce_score(value: Any, *, default: int = 5) -> int:
+    """Phase 8.1: 把 LLM 返回的 score coerce + clamp 到 [0, 10] int 范围.
+
+    Why: HAIKU 真实输出常给 float (7.5), str ("7"), 或越界 (15, -3).
+    当前 int() 强转: float 截断丢精度, str raise, 越界未 clamp.
+    This helper handles all cases + 给缺失/无效回退 (默认 5 = 中性).
+
+    Args:
+        value: 任意 LLM 输出 (int/float/str/None/list)
+        default: coerce 失败时的回退 (默认 5)
+
+    Returns:
+        int in [0, 10], 越界 clamp, 非数回 default
+    """
+    if value is None:
+        return default
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return default
+    if math.isnan(n):
+        return default
+    return max(0, min(10, round(n)))
+
+
+def _safe_label(label: str) -> str:
+    """Phase 8.1: 把 label 规范成 JSON key 安全的 [a-zA-Z0-9_]+.
+
+    Why: f"scores_{label}" 当 JSON key 时, 如果 label 含特殊字符 (., -, 空格, 中文),
+    LLM 输出可能错位. 防御性 normalize 两端 — prompt 用 sanitized 当 JSON key,
+    winner 仍用原始 (dashboard 显示期望原始).
+
+    Args:
+        label: 原始 label (默认是 upstream node id)
+
+    Returns:
+        sanitized label, 非 [a-zA-Z0-9_] 字符替换为 _
+    """
+    return _NON_SAFE_LABEL_CHARS.sub("_", label)
 
 
 class MasterController:
@@ -673,12 +719,34 @@ class MasterController:
         else:
             try:
                 result = self._merge_synthesis_llm(content_a, content_b, labels)
+            except self._MergeParseError as e:
+                logger.warning("polish_merge_synthesis: JSON parse failed, len fallback: %s", e)
+                result = empty(content_a, content_b, labels, reason="json_parse_failed")
             except Exception as e:
                 logger.warning("polish_merge_synthesis: LLM failed, len fallback: %s", e)
                 result = empty(content_a, content_b, labels, reason="llm_fail")
         # Phase 7.6: 透传 labels 给 dashboard 雷达图抽 label_a/b
         result["_labels"] = list(labels)
         return result
+
+    class _MergeParseError(Exception):
+        """Phase 8.1: polish_merge LLM 响应 parse 失败 (非 JSON / 缺 scores 字段 / 类型错)."""
+
+    def _parse_merge_response(self, response: str) -> dict:
+        """解析 LLM JSON 响应, 失败抛 _MergeParseError (根因清晰).
+
+        Why: base.py parse_response 失败兜底返 {raw: response}, 之前 master_controller
+        读 parsed["scores_X"] KeyError 被外层通用 try/except 吞, 走 llm_fail 兜底,
+        日志看不到根因. 这个方法显式抛 _MergeParseError → 外层 catch → fallback
+        设为 "json_parse_failed" 更具体.
+        """
+        parsed = self.polisher.parse_response(response, format_type="json")
+        # base.py:178-181 失败兜底返 {"raw": response}, 检测这个
+        if not isinstance(parsed, dict) or "raw" in parsed:
+            raise self._MergeParseError(
+                f"JSON parse failed (raw response, first 200 chars): {response[:200]}"
+            )
+        return parsed
 
     def _merge_synthesis_llm(
         self,
@@ -697,14 +765,23 @@ class MasterController:
         response = self.polisher.chat(
             prompt=prompt, system=system, temperature=0.2, max_tokens=2000
         )
-        parsed = self.polisher.parse_response(response, format_type="json")
+        parsed = self._parse_merge_response(response)
 
         label_a, label_b = labels
-        scores_a = {k: int(parsed[f"scores_{label_a}"][k]) for k in _S1_S8_KEYS}
-        scores_b = {k: int(parsed[f"scores_{label_b}"][k]) for k in _S1_S8_KEYS}
+        safe_a, safe_b = _safe_label(label_a), _safe_label(label_b)
+        # 防御性: scores_X 字段是 dict (HAIKU 可能给 int)
+        scores_a_raw = parsed.get(f"scores_{safe_a}")
+        scores_b_raw = parsed.get(f"scores_{safe_b}")
+        if not isinstance(scores_a_raw, dict) or not isinstance(scores_b_raw, dict):
+            raise self._MergeParseError(
+                f"scores field not dict (scores_{safe_a}={type(scores_a_raw).__name__}, "
+                f"scores_{safe_b}={type(scores_b_raw).__name__})"
+            )
+        scores_a = {k: _coerce_score(scores_a_raw.get(k, 5)) for k in _S1_S8_KEYS}
+        scores_b = {k: _coerce_score(scores_b_raw.get(k, 5)) for k in _S1_S8_KEYS}
         total_a = sum(scores_a.values()) / 8.0
         total_b = sum(scores_b.values()) / 8.0
-        winner = label_a if total_a >= total_b else label_b
+        winner = label_a if total_a >= total_b else label_b  # 原始 label, dashboard 友好
         content = content_a if winner == label_a else content_b
         return {
             "content": content,
