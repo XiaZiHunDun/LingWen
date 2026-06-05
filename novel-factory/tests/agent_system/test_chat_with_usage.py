@@ -107,3 +107,75 @@ class TestMasterControllerChatWithUsage:
         assert text == "new-path text"
         assert usage == {"input_tokens": 42, "output_tokens": 24}
         assert len(router.calls) == 1
+
+
+class TestEndToEndChatWithUsage:
+    """E2E: MasterController + TieredRouter + stub provider chain."""
+
+    def test_real_usage_flows_through_full_chain(self) -> None:
+        """Master.chat_with_usage → TieredRouter → Provider → 返 SDK real usage."""
+        from infra.agent_system.master_controller import MasterController
+        from infra.ai_service.model_tiers import ModelTier
+        from infra.ai_service.tiered_router import TieredRouter
+
+        class _FullChainProvider:
+            """Stub provider 返 real usage (模拟 SDK 行为)."""
+
+            def __init__(self) -> None:
+                self._call_count = 0
+
+            def generate(self, prompt: str, **kwargs) -> str:
+                self._call_count += 1
+                return f"response #{self._call_count}"
+
+            def generate_with_usage(self, prompt: str, **kwargs):
+                self._call_count += 1
+                return (
+                    f"response #{self._call_count}",
+                    {"input_tokens": 7, "output_tokens": 11},
+                )
+
+        provider = _FullChainProvider()
+        providers = {tier: provider for tier in ModelTier}
+        router = TieredRouter(providers=providers)
+
+        master = MasterController.__new__(MasterController)
+        master._router = router  # type: ignore[attr-defined]
+
+        # End-to-end: Master → TieredRouter → Provider
+        text, usage = master.chat_with_usage("chapter_writing", "end to end test")
+        assert text == "response #1"
+        assert usage == {"input_tokens": 7, "output_tokens": 11}
+        # Provider.generate_with_usage 被调 1 次 (没走旧 generate)
+        assert provider._call_count == 1
+
+    def test_scenario_routing_resolved_correctly(self) -> None:
+        """scenario → TieredRouter 正确路由到对应 tier 的 provider."""
+        from infra.agent_system.master_controller import MasterController
+        from infra.ai_service.model_tiers import ModelTier
+        from infra.ai_service.tiered_router import TieredRouter
+
+        # 不同 tier 返不同 usage, 验证 routing
+        class _TierAwareProvider:
+            def __init__(self, tier: ModelTier) -> None:
+                self._tier = tier
+
+            def generate(self, prompt: str, **kwargs) -> str:
+                return f"{self._tier.value} text"
+
+            def generate_with_usage(self, prompt: str, **kwargs):
+                return (
+                    f"{self._tier.value} text",
+                    {"input_tokens": self._tier.value, "output_tokens": 0},
+                )
+
+        providers = {tier: _TierAwareProvider(tier) for tier in ModelTier}
+        router = TieredRouter(providers=providers)
+
+        master = MasterController.__new__(MasterController)
+        master._router = router  # type: ignore[attr-defined]
+
+        # chapter_writing → SONNET tier (per SCENARIO_TIER_MAP)
+        text, usage = master.chat_with_usage("chapter_writing", "test")
+        assert text == "sonnet text"
+        assert usage["input_tokens"] == "sonnet"
