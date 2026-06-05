@@ -16,11 +16,12 @@ from __future__ import annotations
 import importlib
 import os
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from infra.agent_system.agent_config import MasterControllerConfig
 from infra.agent_system.master_controller import MasterController
 from infra.ai_service.base import AIProvider, ProviderConfig
+from infra.ai_service.cost_tracker import CostTracker
 from infra.ai_service.router import AIRouter
 
 
@@ -108,12 +109,17 @@ def _minimal_config(state_dir: str) -> MasterControllerConfig:
 def make_master_with_router(
     state_dir: Path,
     router: AIRouter,
+    cost_tracker: Optional[CostTracker] = None,
 ) -> MasterController:
-    """构造 MasterController,注入测试 router,不替换任何 master 方法。"""
+    """构造 MasterController,注入测试 router,不替换任何 master 方法。
+
+    Phase 8.5: cost_tracker 默认 None 兜底,旧 14 e2e tests 零修改。
+    """
     return MasterController(
         state_dir=str(state_dir),
         router=router,
         config=_minimal_config(str(state_dir)),
+        cost_tracker=cost_tracker,
     )
 
 

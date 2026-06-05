@@ -724,3 +724,52 @@ class TestScoreDataExtraction:
         assert "polish_merge" in data["score_data"]
         assert data["score_data"]["polish_merge"]["label_a"] == "polish_emotional_pacing"
 
+
+# === TestTotalCostUsdField (Phase 8.5 NEW) ===
+
+class TestTotalCostUsdField:
+    """Phase 8.5: WorkflowStatusResponse.total_cost_usd 反映 cost_tracker.total_cost()
+
+    - 未注入 cost_tracker → 0.0 (default Pydantic field)
+    - 注入 cost_tracker (有 records) → total_cost() 算的 USD 值
+    - /api/workflows/active 端点序列化包含 total_cost_usd 字段
+    """
+
+    def test_active_workflow_status_includes_total_cost_usd(self, tmp_path: Path):
+        """Phase 8.5: 注入 cost_tracker + 跑 1 笔 → active workflow total_cost_usd > 0"""
+        from dashboard.protocols import MasterControllerAdapter
+        from infra.agent_system import master_controller as mc_mod
+        from infra.ai_service.cost_tracker import CostTracker
+        from infra.ai_service.model_tiers import ModelTier
+
+        # 构造 fake master, _last_* 缓存指向有 polish_merge 节点
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master.cost_tracker = CostTracker()
+        # 1 笔 SONNET 1000/500 = 0.0105 USD
+        master.cost_tracker.record("chapter_writing", ModelTier.SONNET, 1000, 500)
+
+        class _StubGraph:
+            def node_ids(self): return []
+            def has_execution(self, nid): return False
+            def get_execution(self, nid): return None
+            def get_node(self, nid): return None
+
+        class _StubSummary:
+            steps = 0
+
+        class _StubScheduler:
+            _summary = _StubSummary()
+        master._last_scheduler = _StubScheduler()
+        master._last_graph = _StubGraph()
+        master._last_workflow_name = "novel_writing"
+
+        adapter = MasterControllerAdapter(master)
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
+        client = TestClient(app)
+        response = client.get("/api/workflows/active")
+        assert response.status_code == 200
+        data = response.json()
+        assert "total_cost_usd" in data
+        # SONNET 1000/500 = 1000*3e-6 + 500*15e-6 = 0.003 + 0.0075 = 0.0105
+        assert data["total_cost_usd"] == pytest.approx(0.0105, abs=1e-6)
+

@@ -15,9 +15,12 @@
 import logging
 import math
 import re
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ..ai_service.router import AIRouter
+
+if TYPE_CHECKING:
+    from ..ai_service.cost_tracker import CostTracker
 from .agent_config import MasterControllerConfig, load_default_config
 from .agent_factory import (
     build_agent_tools,
@@ -96,6 +99,7 @@ class MasterController:
         state_dir: Optional[str] = None,
         router: Optional[AIRouter] = None,
         config: Optional[MasterControllerConfig] = None,
+        cost_tracker: Optional["CostTracker"] = None,
     ):
         """初始化主控调度器
 
@@ -103,12 +107,19 @@ class MasterController:
             state_dir: 状态目录（None = 使用 agent_config 中的默认值，cwd-无关）
             router: 显式传入的 AIRouter（None = 从 config 构造）
             config: 显式传入的配置（None = 从 env vars 加载）
+            cost_tracker: 显式传入的 CostTracker（None = 不追踪成本,AgentComputeFn 走 no-op）
+                          (Phase 8.5: 透传给 build_got_scheduler → AgentComputeFn.record())
         """
         # ==================== 配置层 ====================
         self._config = config or load_default_config(state_dir=state_dir)
 
         # ==================== AI Router ====================
         self._router = router if router is not None else build_router(self._config)
+
+        # ==================== 成本追踪 (Phase 8.5) ====================
+        # 透传给 build_got_scheduler → AgentComputeFn.record() 写记录
+        # 默认 None 兜底:旧测试零修改,旧生产路径 cost_tokens=0 (老行为)
+        self.cost_tracker = cost_tracker
 
         # ==================== 基础设施 ====================
         # 共享 StateManager 实例：避免 TaskOrchestrator / 社交引擎 各持一份

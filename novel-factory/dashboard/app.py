@@ -133,6 +133,7 @@ class WorkflowStatusResponse(BaseModel):
     paused_nodes: list[str] = Field(default_factory=list)
     node_count: int = 0
     steps: int = 0
+    total_cost_usd: float = 0.0  # Phase 8.5: 0.0 if no cost_tracker wired
     pending_decisions: list[dict[str, Any]] = Field(default_factory=list)
     executions: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
     score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据

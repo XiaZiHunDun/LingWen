@@ -23,6 +23,8 @@ from infra.agent_system.got_bridge import (
     registered_scenarios,
     uncovered_scenarios,
 )
+from infra.ai_service.cost_tracker import CostTracker
+from infra.ai_service.model_tiers import ModelTier
 from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult, ExecutionSummary
 
@@ -575,3 +577,68 @@ class TestPolishHandlerTypoContract:
         # 期望抛 AttributeError 含 method_name 字串 (AgentComputeFn 会捕获转 fail)
         with pytest.raises(AttributeError, match="nonexistent_method_xyz"):
             handler(_BrokenMaster(), {"content": "raw text"})
+
+
+# === TestCostTrackerWiring (Phase 8.5 NEW) ===
+
+class TestCostTrackerWiring:
+    """Phase 8.5: AgentComputeFn 加 cost_tracker kwarg, handler 成功后估 token +
+    写 cost_tracker.record(). 默认 None 兜底 (旧测试零修改)."""
+
+    def test_compute_fn_records_cost_when_tracker_provided(self) -> None:
+        """AgentComputeFn 注入 CostTracker → handler 调 → cost_tracker 至少 1 条"""
+        master = _StubMaster()
+        cost_tracker = CostTracker()
+        compute = AgentComputeFn(master, cost_tracker=cost_tracker)
+
+        node = _node("n1", "chapter_writing")
+        result = compute(node, {"chapter_num": 1, "use_llm": False})
+
+        assert result.fail is False
+        # 1 笔记录, scenario=chapter_writing, tier=SONNET (per SCENARIO_TIER_MAP)
+        records = cost_tracker.records()
+        assert len(records) == 1
+        assert records[0].scenario == "chapter_writing"
+        assert records[0].tier == ModelTier.SONNET
+        # cost_tokens 也填了 (替代硬编码 0)
+        assert result.cost_tokens > 0
+        # total_cost > 0
+        assert cost_tracker.total_cost() > 0
+
+    def test_compute_fn_no_tracker_is_noop(self) -> None:
+        """AgentComputeFn 不传 cost_tracker → handler 调 → 0 AttributeError, cost_tokens=0"""
+        master = _StubMaster()
+        compute = AgentComputeFn(master)  # 不传 cost_tracker (旧用法)
+
+        node = _node("n1", "chapter_writing")
+        result = compute(node, {"chapter_num": 1, "use_llm": False})
+
+        # 旧 path 不破: result 正常, cost_tokens=0 (向后兼容)
+        assert result.fail is False
+        assert result.cost_tokens == 0
+        # 0 AttributeError (master 调, not cost_tracker)
+
+    def test_compute_result_cost_tokens_filled(self) -> None:
+        """AgentComputeFn 注入 CostTracker → ComputeResult.cost_tokens = in_tok + out_tok"""
+        master = _StubMaster()
+        cost_tracker = CostTracker()
+        compute = AgentComputeFn(master, cost_tracker=cost_tracker)
+
+        # 用 audit (返 dict 含 S1 score) — 验证 output 被估
+        node = _node("n1", "chapter_review")
+        inputs = {
+            "chapter_num": 1,
+            "content": "x" * 400,  # 400 chars input prompt
+            "use_llm": False,
+        }
+        result = compute(node, inputs)
+
+        assert result.fail is False
+        # len(inputs)=400 chars / 4 = 100, len(output) 估 ~50 / 4 = 12-13
+        # cost_tokens = 100 + ~13 = ~113 (精确值依赖 stub 返回)
+        assert result.cost_tokens > 0
+        # 至少 1 笔记录
+        assert len(cost_tracker.records()) == 1
+        # record.input_tokens 反映估 input
+        records = cost_tracker.records()
+        assert records[0].input_tokens == len(str(inputs)) // 4

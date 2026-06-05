@@ -277,7 +277,26 @@ class MasterControllerAdapter:
                 for nid, ex in executions.items()
             },
             "score_data": score_data,  # Phase 7.6
+            # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
+            "total_cost_usd": _extract_total_cost(self._controller),
         }
+
+
+def _extract_total_cost(controller: Any) -> float:
+    """Phase 8.5: 拿 master.cost_tracker.total_cost() 填字段, 0.0 if 未注入
+
+    用 getattr + None 防御 (测试 stub 可能没 cost_tracker 字段)
+    """
+    cost_tracker = getattr(controller, "cost_tracker", None)
+    if cost_tracker is None:
+        return 0.0
+    total_fn = getattr(cost_tracker, "total_cost", None)
+    if total_fn is None:
+        return 0.0
+    try:
+        return float(total_fn())
+    except Exception:
+        return 0.0
 
 
 # === 序列化 helpers ===

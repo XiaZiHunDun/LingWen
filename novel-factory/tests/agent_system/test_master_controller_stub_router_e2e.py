@@ -313,6 +313,41 @@ class TestNovelWritingE2E:
         assert result["summary"].paused is False
         assert result.get("pending_decisions", []) == []
 
+    def test_novel_writing_records_cost_to_tracker(self, tmp_path: Path) -> None:
+        """Phase 8.5: 跑生产 path 后, cost_tracker 至少记录 1 笔 (写+审核+polish)
+
+        StubProvider 每次返固定 'anthropic-response' 字符串 — 3 scenario 都会调 LLM:
+        - chapter_writing (write_chapter → generate_chapter)
+        - chapter_review (audit_chapter → auditor.audit_chapter)
+        - polish_emotional_pacing (LLM 2 次: dialogue + pacing) + polish_ai_trace_removal (LLM 1 次)
+        走 production path 后 cost_tracker 应有 5+ 笔 (write + audit + 2 polish_e + 1 polish_a),
+        不依赖 polish_merge (走 identical fallback 不调 LLM)
+        """
+        from infra.ai_service.cost_tracker import CostTracker
+
+        cost_tracker = CostTracker()
+        router, _ = make_stub_router()
+        master = make_master_with_router(tmp_path, router, cost_tracker=cost_tracker)
+        self._run_novel_writing(tmp_path, master) if False else None  # noqa: E501
+        # 直接调 _run_novel_writing 用 master 而非自己重写 — 但需要重写以注入 cost_tracker
+        master.run_workflow(
+            workflow_name="novel_writing",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": self.MINIMAL_OUTLINE,
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "timeline": [],
+                "use_llm": True,
+            },
+        )
+        # 至少 1 笔 + 至少 1 scenario
+        assert cost_tracker.total_cost() > 0
+        assert cost_tracker.count_by_scenario(), (
+            f"expected at least 1 scenario recorded, got {cost_tracker.count_by_scenario()}"
+        )
+
 
 class TestRouterFailure:
     """router 失败路径:provider 抛错降级 / 默认走 primary"""

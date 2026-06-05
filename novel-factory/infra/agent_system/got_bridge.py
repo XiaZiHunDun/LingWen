@@ -20,9 +20,11 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
+from infra.ai_service.cost_tracker import CostTracker
+from infra.ai_service.model_tiers import ModelTier
 from infra.got.data_structures import ThoughtNode
 from infra.got.scheduler import ComputeResult
-from infra.prompt_engineering.scenarios import SCENARIOS
+from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP, SCENARIOS
 
 from .master_controller import MasterController
 
@@ -190,6 +192,7 @@ class AgentComputeFn:
 
     用法:
         compute = AgentComputeFn(master)
+        compute_with_cost = AgentComputeFn(master, cost_tracker=tracker)
         scheduler = GoTScheduler(graph, compute_fn=compute)
         summary = scheduler.run(start_nodes=["root"])
 
@@ -201,12 +204,20 @@ class AgentComputeFn:
         2. 若未注册 → ComputeResult(fail=True, error=...)
         3. 调 handler(master, inputs) → dict
         4. 失败 (抛异常或 _error 字段) → ComputeResult(fail=True, error=...)
-        5. 成功 → ComputeResult(output=dict, cost_tokens=0)
-           (token 估算在 TieredRouter 层做,这里不重复)
+        5. 成功 → ComputeResult(output=dict, cost_tokens=in_tok+out_tok)
+           (Phase 8.5: 估算 token (len()//4, 跟 tiered_router.py:148 一致)
+            + 调 cost_tracker.record(scenario, tier, in_tok, out_tok)
+            + 用 SCENARIO_TIER_MAP[scenario] 取 tier (默认 SONNET))
+        6. cost_tracker=None 兜底: 0 调用 record, cost_tokens=0 (旧 path 不破)
     """
 
-    def __init__(self, master: MasterController) -> None:
+    def __init__(
+        self,
+        master: MasterController,
+        cost_tracker: Optional[CostTracker] = None,
+    ) -> None:
         self._master = master
+        self._cost_tracker = cost_tracker
 
     def __call__(self, node: ThoughtNode, inputs: dict[str, Any]) -> ComputeResult:
         scenario = node.prompt_scenario
@@ -240,7 +251,16 @@ class AgentComputeFn:
                 error=str(output["_error"]),
             )
 
-        return ComputeResult(output=output, cost_tokens=0, fail=False)
+        # Phase 8.5: 估算 token + 写 cost_tracker (None 时跳过)
+        cost_tokens = 0
+        if self._cost_tracker is not None:
+            in_tok = len(str(inputs)) // 4
+            out_tok = len(str(output)) // 4
+            tier = SCENARIO_TIER_MAP.get(scenario, ModelTier.SONNET)
+            self._cost_tracker.record(scenario, tier, in_tok, out_tok)
+            cost_tokens = in_tok + out_tok
+
+        return ComputeResult(output=output, cost_tokens=cost_tokens, fail=False)
 
 
 # === Workflow → GoTScheduler 工厂 ===
@@ -274,7 +294,9 @@ def build_got_scheduler(
 
     bd = Path(base_dir) if base_dir else None
     graph = load_workflow(workflow_name, base_dir=bd)
-    compute = AgentComputeFn(master)
+    # Phase 8.5: 透传 master.cost_tracker (None 兜底) → AgentComputeFn 写 record
+    cost_tracker = getattr(master, "cost_tracker", None)
+    compute = AgentComputeFn(master, cost_tracker=cost_tracker)
     scheduler = GoTScheduler(graph, compute_fn=compute, max_backtracks=max_backtracks)
     return scheduler, graph
 
