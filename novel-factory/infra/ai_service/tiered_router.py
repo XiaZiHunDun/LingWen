@@ -133,6 +133,46 @@ class TieredRouter:
             f"all tiers failed for scenario {scenario!r}: {last_error}"
         )
 
+    def generate_with_usage(
+        self, scenario: str, prompt: str, **kwargs
+    ) -> tuple[str, dict[str, int]]:
+        """按 scenario 路由 + 失败时降级 + 返回 real usage (Phase 8.6).
+
+        跟 generate() 区别:
+        - 返回 tuple[str, dict] (real usage from provider.generate_with_usage)
+        - **不调 _notify_tracker** (AgentComputeFn 在上层记录, 防双计数)
+
+        Args:
+            scenario: 12 SCENARIOS 之一
+            prompt: 输入提示
+            **kwargs: 传给底层 provider 的额外参数
+
+        Returns:
+            (text, usage) 元组, usage 含 "input_tokens" / "output_tokens"
+
+        Raises:
+            TieredRouterError: scenario 未知 / 所有 tier 失败
+        """
+        primary_tier, _ = self.route(scenario)
+        downgrade_chain = self._build_downgrade_chain(primary_tier)
+        last_error: Optional[Exception] = None
+
+        for tier in downgrade_chain:
+            provider = self._providers[tier]
+            try:
+                text, usage = provider.generate_with_usage(prompt, **kwargs)
+                # 不调 _notify_tracker — 留给上层 AgentComputeFn
+                return text, usage
+            except Exception as exc:
+                last_error = exc
+                if self.disable_downgrade:
+                    break
+                continue
+
+        raise TieredRouterError(
+            f"all tiers failed for scenario {scenario!r}: {last_error}"
+        )
+
     def _build_downgrade_chain(self, start_tier: ModelTier) -> tuple[ModelTier, ...]:
         """从 start_tier 开始的降级链 (高 → 低)"""
         idx = self.DOWNGRADE_ORDER.index(start_tier)

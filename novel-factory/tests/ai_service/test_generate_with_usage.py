@@ -157,3 +157,61 @@ class TestMiniMaxProviderGenerateWithUsage:
         assert text == "M2.7 text"
         assert usage == {"input_tokens": 200, "output_tokens": 100}
         assert usage["input_tokens"] != len("Hello M2.7") // 4
+
+
+class TestTieredRouterGenerateWithUsage:
+    """tiered_router.py: chains provider.generate_with_usage, skips _notify_tracker."""
+
+    def test_chains_to_provider_with_real_usage(self) -> None:
+        """Stub provider 返 (text, {real_usage}) → router 透传."""
+        from infra.ai_service.model_tiers import ModelTier
+        from infra.ai_service.tiered_router import TieredRouter
+
+        class _RealUsageProvider:
+            def __init__(self, tier: ModelTier) -> None:
+                self._tier = tier
+            def generate(self, prompt: str, **kwargs) -> str:
+                return f"text from {self._tier.value}"
+            def generate_with_usage(self, prompt: str, **kwargs):
+                return f"text from {self._tier.value}", {
+                    "input_tokens": 10, "output_tokens": 5,
+                }
+
+        providers = {tier: _RealUsageProvider(tier) for tier in ModelTier}
+        router = TieredRouter(providers=providers)
+        text, usage = router.generate_with_usage("chapter_writing", "test prompt")
+
+        assert text == "text from sonnet"  # SCENARIO_TIER_MAP["chapter_writing"] = SONNET
+        assert usage == {"input_tokens": 10, "output_tokens": 5}
+
+    def test_does_not_call_notify_tracker(self) -> None:
+        """TieredRouter.generate_with_usage 不调 _notify_tracker (防双计数)."""
+        from infra.ai_service.model_tiers import ModelTier
+        from infra.ai_service.tiered_router import TieredRouter
+
+        class _SpyProvider:
+            def __init__(self) -> None:
+                self.calls = 0
+            def generate(self, prompt: str, **kwargs) -> str:
+                return "text"
+            def generate_with_usage(self, prompt: str, **kwargs):
+                self.calls += 1
+                return "text", {"input_tokens": 1, "output_tokens": 1}
+
+        spy = _SpyProvider()
+        providers = {tier: spy for tier in ModelTier}
+
+        class _RecordingTracker:
+            def __init__(self) -> None:
+                self.records = []
+            def record(self, *args, **kwargs) -> None:
+                self.records.append((args, kwargs))
+
+        tracker = _RecordingTracker()
+        router = TieredRouter(providers=providers, cost_tracker=tracker)
+        router.generate_with_usage("chapter_writing", "test")
+
+        # Provider.generate_with_usage 被调 1 次
+        assert spy.calls == 1
+        # _notify_tracker **未**触发 → tracker.records 为空
+        assert tracker.records == []
