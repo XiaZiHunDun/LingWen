@@ -124,6 +124,95 @@ class AnthropicProvider(AIProvider):
 
         raise last_error or AIProviderError("Max retries exceeded")
 
+    def generate_with_usage(
+        self, prompt: str, **kwargs
+    ) -> tuple[str, dict[str, int]]:
+        """生成文本 + 返回 SDK 原生 usage (Anthropic).
+
+        跟 generate() 区别: 同时返回 response.usage.input_tokens / output_tokens
+        (取代 len()//4 估算). retry 模式同 generate() (5x attempt + 指数退避).
+
+        Args:
+            prompt: 输入提示
+            **kwargs: 额外参数 (model, system, temperature, max_tokens)
+
+        Returns:
+            (text, usage) 元组, usage 含 "input_tokens" / "output_tokens"
+
+        Raises:
+            透传 generate() 抛出的任何异常 (不静默吞错). 典型: AIProviderError
+            (APIError / NetworkError / TimeoutError) 或 ProviderConfigError.
+        """
+        model = kwargs.pop("model", self._model)
+        system = kwargs.pop("system", None)
+        temperature = kwargs.pop("temperature", 0.7)
+        max_tokens = kwargs.pop("max_tokens", 4096)
+
+        messages = []
+        if system:
+            messages.append({"role": "assistant", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        last_error = None
+        for attempt in range(self.config.max_retries):
+            try:
+                response = self._client.messages.create(
+                    model=model,
+                    system=system,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs
+                )
+                # Extract text (跟 generate() 同)
+                for block in response.content:
+                    if hasattr(block, 'text') and block.text:
+                        text = block.text
+                        break
+                else:
+                    text = (response.content[0].text
+                            if hasattr(response.content[0], 'text')
+                            else str(response.content[0]))
+                usage = {
+                    "input_tokens": response.usage.input_tokens,
+                    "output_tokens": response.usage.output_tokens,
+                }
+                return text, usage
+
+            except anthropic.APITimeoutError:
+                last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
+                if attempt < self.config.max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise last_error
+
+            except anthropic.APIConnectionError as e:
+                last_error = NetworkError(f"Connection failed: {e}")
+                if attempt < self.config.max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise last_error
+
+            except anthropic.RateLimitError as e:
+                last_error = APIError(f"Rate limit exceeded: {e}")
+                if attempt < self.config.max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise last_error
+
+            except anthropic.APIError as e:
+                last_error = APIError(f"Anthropic API error: {e}")
+                if attempt < self.config.max_retries - 1:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise last_error
+
+            except Exception as e:
+                last_error = AIProviderError(f"Unexpected error: {e}")
+                raise last_error
+
+        raise last_error or AIProviderError("Max retries exceeded")
+
     def embed(self, text: str) -> List[float]:
         """生成嵌入向量
 

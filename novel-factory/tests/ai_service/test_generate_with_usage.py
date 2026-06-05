@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from typing import Any, List
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -64,3 +65,35 @@ class TestAIProviderDefault:
         provider = _FailProvider()
         with pytest.raises(RuntimeError, match="boom"):
             provider.generate_with_usage("test")
+
+
+class TestAnthropicProviderGenerateWithUsage:
+    """anthropic_provider.py: override returns real usage from SDK."""
+
+    def test_returns_real_input_output_tokens(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stub anthropic SDK → response.usage.input_tokens=100, output_tokens=50."""
+        from infra.ai_service import anthropic_provider
+
+        # Stub anthropic.Anthropic class
+        fake_client = MagicMock()
+        fake_response = MagicMock()
+        fake_response.usage.input_tokens = 100
+        fake_response.usage.output_tokens = 50
+        # response.content[0].text (跟 generate() 同)
+        text_block = MagicMock()
+        text_block.text = "Generated text"
+        fake_response.content = [text_block]
+        fake_client.messages.create.return_value = fake_response
+
+        # Patch anthropic.Anthropic constructor
+        monkeypatch.setattr(anthropic_provider.anthropic, "Anthropic",
+                            lambda **kw: fake_client)
+
+        config = ProviderConfig(api_key="sk-test", model="claude-test")
+        provider = anthropic_provider.AnthropicProvider(config)
+        text, usage = provider.generate_with_usage("Hello Claude")
+
+        assert text == "Generated text"
+        assert usage == {"input_tokens": 100, "output_tokens": 50}
+        # 不走 len()//4 估算
+        assert usage["input_tokens"] != len("Hello Claude") // 4
