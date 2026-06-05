@@ -42,58 +42,161 @@ class PolisherTools(AgentBase):
         style_guide: Optional[Dict] = None,
         reader_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """LLM 化润色主入口
+        """LLM 化润色主入口 (Phase 8.6.1: 委托 _impl(record_usage=False))
 
         串联 3 个路径, 每个 LLM 调用 try/except 兜底, 失败不致命。
         返回 dict: {content, reader, issues, chapter_num}
         """
+        return self._impl_polish_chapter(
+            chapter_num, content, style_guide, reader_id, record_usage=False
+        )
+
+    def polish_chapter_with_usage(
+        self,
+        chapter_num: int,
+        content: str,
+        style_guide: Optional[Dict] = None,
+        reader_id: Optional[str] = None,
+    ) -> tuple[Dict[str, Any], Dict[str, int]]:
+        """Phase 8.6.1: 同 polish_chapter + 返回 2 LLM usage sum (dialogue + pacing).
+
+        返回 (result, usage) tuple, usage dict 含 input_tokens/output_tokens (2x single).
+        走 self.chat_with_usage() → router.generate_with_usage() 拿真实 token 计数.
+        旧 polish_chapter() 签名 0 改, 保 2120 baseline.
+
+        Args:
+            (同 polish_chapter)
+
+        Returns:
+            (result_dict, usage_dict) tuple, usage = 2 LLM sum
+        """
+        return self._impl_polish_chapter(
+            chapter_num, content, style_guide, reader_id, record_usage=True
+        )
+
+    def _impl_polish_chapter(
+        self,
+        chapter_num: int,
+        content: str,
+        style_guide: Optional[Dict],
+        reader_id: Optional[str],
+        record_usage: bool,
+    ):
         effective_reader = reader_id or self._current_reader_id or "A"
         polished = content
         issues: List[Dict] = []
+        usage_total: Dict[str, int] = {"input_tokens": 0, "output_tokens": 0}
 
-        # 步骤 1: LLM 优化对话
+        # 步骤 1: LLM 优化对话 (调 public 方法, 旧 tests 通过 monkeypatch 替换)
         try:
-            polished = self.optimize_dialogue_llm(polished, reader_id=effective_reader)
+            if record_usage:
+                polished, u1 = self.optimize_dialogue_llm_with_usage(polished, effective_reader)
+                usage_total["input_tokens"] += u1["input_tokens"]
+                usage_total["output_tokens"] += u1["output_tokens"]
+            else:
+                polished = self.optimize_dialogue_llm(polished, effective_reader)
         except Exception as e:
             issues.append({"type": "dialogue_llm_fail", "severity": "P3", "issue": str(e)})
 
-        # 步骤 2: LLM 调整节奏
+        # 步骤 2: LLM 调整节奏 (调 public 方法, 旧 tests 通过 monkeypatch 替换)
         try:
-            polished = self.adjust_pacing_llm(polished, reader_id=effective_reader)
+            if record_usage:
+                polished, u2 = self.adjust_pacing_llm_with_usage(polished, effective_reader)
+                usage_total["input_tokens"] += u2["input_tokens"]
+                usage_total["output_tokens"] += u2["output_tokens"]
+            else:
+                polished = self.adjust_pacing_llm(polished, effective_reader)
         except Exception as e:
             issues.append({"type": "pacing_llm_fail", "severity": "P3", "issue": str(e)})
 
         # 步骤 3: 规则去 AI 痕迹 (快速 + 兜底, 从不失败)
         polished = self.remove_ai_gloss(polished)
 
-        return {
+        result: Dict[str, Any] = {
             "content": polished,
             "reader": effective_reader,
             "issues": issues,
             "chapter_num": chapter_num,
         }
+        if record_usage:
+            return result, usage_total
+        return result
 
-    # ==================== LLM 子方法 (Phase 7.2 NEW) ====================
+    # ==================== LLM 子方法 (Phase 7.2 NEW, Phase 8.6.1: parallel _with_usage) ====================
 
     def optimize_dialogue_llm(
         self,
         content: str,
         reader_id: Optional[str] = None,
     ) -> str:
+        return self._impl_optimize_dialogue(content, reader_id, record_usage=False)
+
+    def optimize_dialogue_llm_with_usage(
+        self,
+        content: str,
+        reader_id: Optional[str] = None,
+    ) -> tuple[str, Dict[str, int]]:
+        """Phase 8.6.1: 单独调 optimize_dialogue_llm + 返回 real usage.
+
+        旧 optimize_dialogue_llm() 签名 0 改 (返回 str).
+        """
+        return self._impl_optimize_dialogue(content, reader_id, record_usage=True)
+
+    def _impl_optimize_dialogue(
+        self,
+        content: str,
+        reader_id: Optional[str],
+        record_usage: bool,
+    ):
         effective_reader = reader_id or self._current_reader_id or "A"
         prompt = build_dialogue_prompt(content, effective_reader)
         system = get_dialogue_system_prompt(effective_reader)
-        return self.chat(prompt=prompt, system=system, temperature=0.5, max_tokens=DEFAULT_MAX_TOKENS)
+        if record_usage:
+            return self.chat_with_usage(
+                prompt=prompt, system=system,
+                temperature=0.5, max_tokens=DEFAULT_MAX_TOKENS,
+            )
+        return self.chat(
+            prompt=prompt, system=system,
+            temperature=0.5, max_tokens=DEFAULT_MAX_TOKENS,
+        )
 
     def adjust_pacing_llm(
         self,
         content: str,
         reader_id: Optional[str] = None,
     ) -> str:
+        return self._impl_adjust_pacing(content, reader_id, record_usage=False)
+
+    def adjust_pacing_llm_with_usage(
+        self,
+        content: str,
+        reader_id: Optional[str] = None,
+    ) -> tuple[str, Dict[str, int]]:
+        """Phase 8.6.1: 单独调 adjust_pacing_llm + 返回 real usage.
+
+        旧 adjust_pacing_llm() 签名 0 改 (返回 str).
+        """
+        return self._impl_adjust_pacing(content, reader_id, record_usage=True)
+
+    def _impl_adjust_pacing(
+        self,
+        content: str,
+        reader_id: Optional[str],
+        record_usage: bool,
+    ):
         effective_reader = reader_id or self._current_reader_id or "A"
         prompt = build_pacing_prompt(content, effective_reader)
         system = get_pacing_system_prompt(effective_reader)
-        return self.chat(prompt=prompt, system=system, temperature=0.4, max_tokens=DEFAULT_MAX_TOKENS)
+        if record_usage:
+            return self.chat_with_usage(
+                prompt=prompt, system=system,
+                temperature=0.4, max_tokens=DEFAULT_MAX_TOKENS,
+            )
+        return self.chat(
+            prompt=prompt, system=system,
+            temperature=0.4, max_tokens=DEFAULT_MAX_TOKENS,
+        )
 
     # ==================== 规则方法 (保留, 不破坏 test_agent_tools.py) ====================
 
