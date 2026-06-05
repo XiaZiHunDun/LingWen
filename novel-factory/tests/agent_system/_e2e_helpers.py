@@ -13,6 +13,8 @@
 """
 from __future__ import annotations
 
+import importlib
+import os
 from pathlib import Path
 from typing import Union
 
@@ -112,4 +114,75 @@ def make_master_with_router(
         state_dir=str(state_dir),
         router=router,
         config=_minimal_config(str(state_dir)),
+    )
+
+
+# ==================== Phase 8.2: Multi-Provider Real LLM Matrix ====================
+
+_PROVIDER_REGISTRY = {
+    "anthropic": {
+        "class_path": "infra.ai_service.anthropic_provider.AnthropicProvider",
+        "env_var": "ANTHROPIC_API_KEY",
+        "default_model": "claude-haiku-4-5-20251001",
+    },
+    "openai": {
+        "class_path": "infra.ai_service.openai_provider.OpenAIProvider",
+        "env_var": "OPENAI_API_KEY",
+        "default_model": "gpt-4o-mini",
+    },
+    "minimax": {
+        "class_path": "infra.ai_service.minimax_provider.MiniMaxProvider",
+        "env_var": "MINIMAX_API_KEY",
+        "default_model": "MiniMax-M2.7",
+    },
+}
+
+
+def _make_real_router(provider_name: str) -> AIRouter:
+    """Phase 8.2: 构造单 provider 的 AIRouter (multi-provider matrix).
+
+    Phase 8 只测 Anthropic, Phase 8.2 加 OpenAI + MiniMax 跨 provider 验证
+    Phase 7.5 polish_merge 评分在多 provider 都能走 LLM 路径. 抽到 _e2e_helpers.py
+    是因为现在 3 个 provider 共用同一个 helper, 分散在多个 test 文件会重复代码.
+
+    Args:
+        provider_name: "anthropic" / "openai" / "minimax" (lowercase, 跟
+                        @register_provider 注册名一致)
+
+    Returns:
+        AIRouter with single provider, primary=provider_name, enable_failover=False
+
+    Raises:
+        ValueError: 不支持的 provider_name
+        KeyError: 缺少对应 env var (e.g. OPENAI_API_KEY not set)
+        ImportError: 依赖未装 (e.g. openai 包缺失)
+    """
+    if provider_name not in _PROVIDER_REGISTRY:
+        raise ValueError(
+            f"Unsupported provider_name: {provider_name!r}. "
+            f"Supported: {list(_PROVIDER_REGISTRY.keys())}"
+        )
+    spec = _PROVIDER_REGISTRY[provider_name]
+    api_key = os.environ.get(spec["env_var"])
+    if not api_key:
+        raise KeyError(
+            f"Provider {provider_name!r} requires env var {spec['env_var']!r} "
+            f"to be set"
+        )
+
+    # Lazy import 避免循环 + 允许 provider 缺依赖时 (e.g. openai 包未装) fail gracefully
+    module_path, class_name = spec["class_path"].rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    provider_cls = getattr(module, class_name)
+
+    provider = provider_cls(ProviderConfig(
+        api_key=api_key,
+        model=spec["default_model"],
+        timeout=180,  # 1 LLM call 留 180s headroom
+        max_retries=1,  # fail-fast
+    ))
+    return AIRouter(
+        config={provider_name: provider.config},
+        primary_provider=provider_name,
+        enable_failover=False,  # 单 provider, 失败立即 raise
     )
