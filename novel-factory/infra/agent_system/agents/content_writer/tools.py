@@ -45,7 +45,7 @@ class ContentWriterTools(AgentBase):
         context: Dict,
         writer_id: Optional[Union[str, int]] = None,
     ) -> Dict[str, Any]:
-        """生成章节
+        """生成章节 (Phase 8.6.1: 委托 _impl(record_usage=False))
 
         Args:
             chapter_num: 章节编号
@@ -55,6 +55,35 @@ class ContentWriterTools(AgentBase):
         Returns:
             包含content和metadata的字典
         """
+        return self._impl_generate_chapter(chapter_num, context, writer_id, record_usage=False)
+
+    def generate_chapter_with_usage(
+        self,
+        chapter_num: int,
+        context: Dict,
+        writer_id: Optional[Union[str, int]] = None,
+    ) -> tuple[Dict[str, Any], Dict[str, int]]:
+        """Phase 8.6.1: 同 generate_chapter + 返回 real usage.
+
+        返回 (result, usage) tuple, usage dict 含 input_tokens/output_tokens.
+        走 self.chat_with_usage() → router.generate_with_usage() 拿真实 token 计数.
+        旧 generate_chapter() 签名 0 改, 保 2120 baseline.
+
+        Args:
+            (同 generate_chapter)
+
+        Returns:
+            (result_dict, usage_dict) tuple
+        """
+        return self._impl_generate_chapter(chapter_num, context, writer_id, record_usage=True)
+
+    def _impl_generate_chapter(
+        self,
+        chapter_num: int,
+        context: Dict,
+        writer_id: Optional[Union[str, int]],
+        record_usage: bool,
+    ):
         # 解析writer_id
         effective_writer_id = writer_id or self._current_writer_id or "a"
 
@@ -72,13 +101,21 @@ class ContentWriterTools(AgentBase):
             context, prompt_additions, writer_name, variant_config
         )
 
-        # 调用LLM
-        response = self.chat(
-            prompt=prompt,
-            system=system,
-            temperature=0.8,
-            max_tokens=4000
-        )
+        # 调用LLM (record_usage 决定走 chat() 估算 还是 chat_with_usage() 真实)
+        if record_usage:
+            response, usage = self.chat_with_usage(
+                prompt=prompt,
+                system=system,
+                temperature=0.8,
+                max_tokens=4000,
+            )
+        else:
+            response = self.chat(
+                prompt=prompt,
+                system=system,
+                temperature=0.8,
+                max_tokens=4000,
+            )
 
         # 解析响应
         result = self.parse_response(response, format_type="chapter")
@@ -89,6 +126,8 @@ class ContentWriterTools(AgentBase):
         result["metadata"]["writer_name"] = writer_name
         result["metadata"]["specialization"] = variant_config.get("specialization", {}).get("primary", [])
 
+        if record_usage:
+            return result, usage
         return result
 
     def build_writing_prompt(self, context: Dict, writer_style: Optional[Dict] = None) -> str:
