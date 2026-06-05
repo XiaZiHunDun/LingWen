@@ -25,12 +25,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from dashboard.app import create_app
+from dashboard.protocols import MasterControllerAdapter
+from infra.agent_system import master_controller as mc_mod
 from infra.agent_system.decision_queue import (
     DecisionKind,
     HumanDecision,
     HumanDecisionQueue,
     create_decision,
 )
+from infra.ai_service.cost_tracker import CostTracker
+from infra.ai_service.model_tiers import ModelTier
 
 # === Stub MasterController ===
 
@@ -737,11 +741,6 @@ class TestTotalCostUsdField:
 
     def test_active_workflow_status_includes_total_cost_usd(self, tmp_path: Path):
         """Phase 8.5: 注入 cost_tracker + 跑 1 笔 → active workflow total_cost_usd > 0"""
-        from dashboard.protocols import MasterControllerAdapter
-        from infra.agent_system import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
-
         # 构造 fake master, _last_* 缓存指向有 polish_merge 节点
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         master.cost_tracker = CostTracker()

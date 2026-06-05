@@ -14,6 +14,8 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from infra.agent_system.cost_persistence import CostTrackerDB
 from infra.ai_service.cost_tracker import CostRecord
 from infra.ai_service.model_tiers import ModelTier
@@ -121,8 +123,3 @@ class TestCostTrackerDB:
         # 父目录 = infra/.state (跟 reading_power.db / workflow.db 错开)
         assert _DB_PATH.parent.name == ".state"
         assert _DB_PATH.parent.parent.name == "infra"
-
-
-# === 复用 pytest.approx 导入 (避免 module 顶部 import 加负担) ===
-
-import pytest  # noqa: E402

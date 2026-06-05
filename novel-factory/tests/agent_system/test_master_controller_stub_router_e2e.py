@@ -328,8 +328,6 @@ class TestNovelWritingE2E:
         cost_tracker = CostTracker()
         router, _ = make_stub_router()
         master = make_master_with_router(tmp_path, router, cost_tracker=cost_tracker)
-        self._run_novel_writing(tmp_path, master) if False else None  # noqa: E501
-        # 直接调 _run_novel_writing 用 master 而非自己重写 — 但需要重写以注入 cost_tracker
         master.run_workflow(
             workflow_name="novel_writing",
             initial_inputs={

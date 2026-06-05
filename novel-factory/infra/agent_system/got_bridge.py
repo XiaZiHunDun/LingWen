@@ -205,7 +205,8 @@ class AgentComputeFn:
         3. 调 handler(master, inputs) → dict
         4. 失败 (抛异常或 _error 字段) → ComputeResult(fail=True, error=...)
         5. 成功 → ComputeResult(output=dict, cost_tokens=in_tok+out_tok)
-           (Phase 8.5: 估算 token (len()//4, 跟 tiered_router.py:148 一致)
+           (Phase 8.5: 估算 token (len()//4, 4 chars/token 经验值, ~85% accuracy;
+            真实 usage 留 Phase 8.6 followup)
             + 调 cost_tracker.record(scenario, tier, in_tok, out_tok)
             + 用 SCENARIO_TIER_MAP[scenario] 取 tier (默认 SONNET))
         6. cost_tracker=None 兜底: 0 调用 record, cost_tokens=0 (旧 path 不破)
@@ -252,6 +253,8 @@ class AgentComputeFn:
             )
 
         # Phase 8.5: 估算 token + 写 cost_tracker (None 时跳过)
+        # Token 估算: len() // 4 (4 chars/token 经验值, ~85% accuracy;
+        # 真实 usage 留 Phase 8.6 followup)
         cost_tokens = 0
         if self._cost_tracker is not None:
             in_tok = len(str(inputs)) // 4
@@ -295,6 +298,7 @@ def build_got_scheduler(
     bd = Path(base_dir) if base_dir else None
     graph = load_workflow(workflow_name, base_dir=bd)
     # Phase 8.5: 透传 master.cost_tracker (None 兜底) → AgentComputeFn 写 record
+    # getattr 防御: 测试用 _StubMaster 等 fake 不一定有 cost_tracker 字段
     cost_tracker = getattr(master, "cost_tracker", None)
     compute = AgentComputeFn(master, cost_tracker=cost_tracker)
     scheduler = GoTScheduler(graph, compute_fn=compute, max_backtracks=max_backtracks)

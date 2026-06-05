@@ -20,12 +20,15 @@ Reference:
 """
 from __future__ import annotations
 
+import logging
 from typing import Any, Optional, Protocol, runtime_checkable
 
 from infra.agent_system.decision_queue import (
     HumanDecision,
     HumanDecisionQueue,
 )
+
+logger = logging.getLogger(__name__)
 
 # === Protocol (duck-typed) ===
 
@@ -285,17 +288,15 @@ class MasterControllerAdapter:
 def _extract_total_cost(controller: Any) -> float:
     """Phase 8.5: 拿 master.cost_tracker.total_cost() 填字段, 0.0 if 未注入
 
-    用 getattr + None 防御 (测试 stub 可能没 cost_tracker 字段)
+    用 getattr 防御 cost_tracker 字段 (测试 stub 可能没) + 失败时 log warning 而非静默。
     """
     cost_tracker = getattr(controller, "cost_tracker", None)
     if cost_tracker is None:
         return 0.0
-    total_fn = getattr(cost_tracker, "total_cost", None)
-    if total_fn is None:
-        return 0.0
     try:
-        return float(total_fn())
-    except Exception:
+        return float(cost_tracker.total_cost())
+    except Exception as exc:
+        logger.warning("cost_tracker.total_cost() failed: %s", exc)
         return 0.0
 
 

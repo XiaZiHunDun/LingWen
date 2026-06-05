@@ -606,7 +606,7 @@ class TestCostTrackerWiring:
         assert cost_tracker.total_cost() > 0
 
     def test_compute_fn_no_tracker_is_noop(self) -> None:
-        """AgentComputeFn 不传 cost_tracker → handler 调 → 0 AttributeError, cost_tokens=0"""
+        """AgentComputeFn 不传 cost_tracker → handler 调 → cost_tokens=0 (向后兼容旧 path)"""
         master = _StubMaster()
         compute = AgentComputeFn(master)  # 不传 cost_tracker (旧用法)
 
@@ -616,10 +616,9 @@ class TestCostTrackerWiring:
         # 旧 path 不破: result 正常, cost_tokens=0 (向后兼容)
         assert result.fail is False
         assert result.cost_tokens == 0
-        # 0 AttributeError (master 调, not cost_tracker)
 
     def test_compute_result_cost_tokens_filled(self) -> None:
-        """AgentComputeFn 注入 CostTracker → ComputeResult.cost_tokens = in_tok + out_tok"""
+        """AgentComputeFn 注入 CostTracker → ComputeResult.cost_tokens = in_tok + out_tok > 0"""
         master = _StubMaster()
         cost_tracker = CostTracker()
         compute = AgentComputeFn(master, cost_tracker=cost_tracker)
@@ -634,11 +633,11 @@ class TestCostTrackerWiring:
         result = compute(node, inputs)
 
         assert result.fail is False
-        # len(inputs)=400 chars / 4 = 100, len(output) 估 ~50 / 4 = 12-13
-        # cost_tokens = 100 + ~13 = ~113 (精确值依赖 stub 返回)
+        # 行为级断言 (不耦合 //4 启发式): estimator 改成 tiktoken 也不破
         assert result.cost_tokens > 0
-        # 至少 1 笔记录
+        # 至少 1 笔记录 + 字段正 (input/output tokens > 0, cost_usd > 0)
         assert len(cost_tracker.records()) == 1
-        # record.input_tokens 反映估 input
         records = cost_tracker.records()
-        assert records[0].input_tokens == len(str(inputs)) // 4
+        assert records[0].input_tokens > 0
+        assert records[0].output_tokens > 0
+        assert records[0].cost_usd > 0
