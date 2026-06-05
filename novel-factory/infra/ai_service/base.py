@@ -103,6 +103,30 @@ class AIProvider(ABC):
         """
         pass
 
+    def generate_with_usage(
+        self, prompt: str, **kwargs
+    ) -> tuple[str, dict[str, int]]:
+        """生成文本 + 返回 usage dict (Phase 8.6).
+
+        Default impl: 调 self.generate() + len()//4 估算 (跟 Phase 8.5 一致).
+        Subclass 可重写以返回 SDK 原生 usage (real input_tokens / output_tokens).
+
+        Args:
+            prompt: 输入提示
+            **kwargs: 传给 generate() 的额外参数
+
+        Returns:
+            (text, usage) 元组, usage 含 "input_tokens" / "output_tokens" keys
+
+        Raises:
+            AIProviderError: 当 generate() 失败
+        """
+        text = self.generate(prompt, **kwargs)
+        return text, {
+            "input_tokens": len(prompt) // 4,
+            "output_tokens": len(text) // 4,
+        }
+
     @abstractmethod
     def embed(self, text: str) -> List[float]:
         """生成嵌入向量
