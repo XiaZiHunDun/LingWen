@@ -130,7 +130,7 @@ class AnthropicProvider(AIProvider):
         """生成文本 + 返回 SDK 原生 usage (Anthropic).
 
         跟 generate() 区别: 同时返回 response.usage.input_tokens / output_tokens
-        (取代 len()//4 估算). retry 模式同 generate() (5x attempt + 指数退避).
+        (取代 len()//4 估算). retry 模式同 generate() (N 次 attempt + 指数退避, N=self.config.max_retries).
 
         Args:
             prompt: 输入提示
