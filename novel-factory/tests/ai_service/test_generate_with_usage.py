@@ -97,3 +97,32 @@ class TestAnthropicProviderGenerateWithUsage:
         assert usage == {"input_tokens": 100, "output_tokens": 50}
         # 不走 len()//4 估算
         assert usage["input_tokens"] != len("Hello Claude") // 4
+
+
+class TestOpenAIProviderGenerateWithUsage:
+    """openai_provider.py: override returns real usage from SDK (prompt/completion tokens)."""
+
+    def test_returns_real_prompt_completion_tokens(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stub openai SDK → response.usage.prompt_tokens=80, completion_tokens=40."""
+        from infra.ai_service import openai_provider
+
+        fake_client = MagicMock()
+        fake_response = MagicMock()
+        fake_response.usage.prompt_tokens = 80
+        fake_response.usage.completion_tokens = 40
+        # response.choices[0].message.content (跟 generate() 同)
+        fake_response.choices = [MagicMock(message=MagicMock(content="OpenAI text"))]
+        fake_client.chat.completions.create.return_value = fake_response
+
+        # Patch openai.OpenAI constructor
+        monkeypatch.setattr(openai_provider.openai, "OpenAI",
+                            lambda **kw: fake_client)
+
+        config = ProviderConfig(api_key="sk-test", model="gpt-test")
+        provider = openai_provider.OpenAIProvider(config)
+        text, usage = provider.generate_with_usage("Hello GPT")
+
+        # 映射 prompt_tokens → input_tokens, completion_tokens → output_tokens
+        assert text == "OpenAI text"
+        assert usage == {"input_tokens": 80, "output_tokens": 40}
+        assert usage["input_tokens"] != len("Hello GPT") // 4
