@@ -96,6 +96,52 @@ class AgentBase:
             **kwargs
         )
 
+    def chat_with_usage(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs,
+    ) -> tuple[str, dict[str, int]]:
+        """chat() + usage 透传 (Phase 8.6).
+
+        限制: 需 router 具备 generate_with_usage() 方法 (TieredRouter ✓, AIRouter ✗).
+        fallback: router 无新方法 → 调 self.chat() + len()//4 估算 (跟 Phase 8.5 一致).
+
+        Args:
+            (同 chat())
+
+        Returns:
+            (text, usage) 元组, usage dict 含 "input_tokens"/"output_tokens" keys
+        """
+        if self._fallback_mode:
+            text = self._fallback_response(prompt, **kwargs)
+            return text, {
+                "input_tokens": len(prompt) // 4,
+                "output_tokens": len(text) // 4,
+            }
+
+        if not hasattr(self._router, "generate_with_usage"):
+            # 兼容旧 AIRouter (无新方法) → 走 chat() + 估算
+            text = self.chat(
+                prompt=prompt, system=system, model=model,
+                temperature=temperature, max_tokens=max_tokens, **kwargs,
+            )
+            return text, {
+                "input_tokens": len(prompt) // 4,
+                "output_tokens": len(text) // 4,
+            }
+
+        return self._router.generate_with_usage(
+            prompt=prompt, system=system,
+            model=model or self.default_model,
+            temperature=temperature or self.default_temperature,
+            max_tokens=max_tokens or self.default_max_tokens,
+            **kwargs,
+        )
+
     def chat_json(
         self,
         prompt: str,
