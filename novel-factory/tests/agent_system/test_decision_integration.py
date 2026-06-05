@@ -41,10 +41,35 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
     stub = _StubMaster()
     controller.content_writer = type(
-        "cw", (), {"generate_chapter": stub.write_chapter}
+        "cw",
+        (),
+        {
+            "generate_chapter": stub.write_chapter,
+            # Phase 8.6.2: handler 调 write_chapter_with_usage → content_writer.generate_chapter_with_usage
+            "generate_chapter_with_usage": stub.generate_chapter_with_usage,
+        },
     )()
-    controller.auditor = type("au", (), {})()
-    controller.polisher = type("po", (), {"remove_ai_gloss": stub.polish_chapter})()
+    controller.auditor = type(
+        "au",
+        (),
+        {
+            "check_character_consistency": staticmethod(lambda content, characters: []),
+            "detect_ai_gloss": staticmethod(lambda content: []),
+            "generate_audit_report": staticmethod(lambda chapter_num, issues, scores: {"chapter": chapter_num, "issues": issues, "scores": scores}),
+            # Phase 8.6.2: handler 调 audit_chapter_with_usage (调 self.auditor.audit_chapter_with_usage)
+            "audit_chapter_with_usage": stub.audit_chapter_with_usage,
+        },
+    )()
+    controller.polisher = type(
+        "po",
+        (),
+        {
+            "remove_ai_gloss": stub.polish_chapter,
+            "polish_chapter_with_usage": stub.polish_chapter_with_usage,
+            "optimize_dialogue_llm_with_usage": lambda content: (content + " (dialogue)", {"input_tokens": 100, "output_tokens": 50}),
+            "adjust_pacing_llm_with_usage": lambda content: (content + " (pacing)", {"input_tokens": 100, "output_tokens": 50}),
+        },
+    )()
     controller.outline_master = type(
         "om",
         (),
@@ -113,6 +138,41 @@ class _StubMaster:
 
     def polish_chapter(self, content: str) -> str:
         return content + " [polished]"
+
+    # Phase 8.6.2: 5 *_with_usage methods (handler 调 variant 拿真实 usage)
+    def write_chapter_with_usage(self, chapter_num, outline, characters, memory_context, style_guide, use_llm):
+        self.calls.append(("write_chapter_with_usage", {"chapter_num": chapter_num}))
+        return (
+            {"content": f"ch{chapter_num} text", "word_count": 100, "chapter_num": chapter_num},
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
+    def generate_chapter_with_usage(self, chapter_num, context, writer_id=None):
+        """content_writer.generate_chapter_with_usage 签名: (chapter_num, context, writer_id=None)"""
+        self.calls.append(("generate_chapter_with_usage", {"chapter_num": chapter_num}))
+        return (
+            {"content": f"ch{chapter_num} text", "word_count": 100, "chapter_num": chapter_num},
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
+    def audit_chapter_with_usage(self, *args, **kwargs):
+        """Accept both master signature (timeline=) and auditor signature (context=)"""
+        chapter_num = kwargs.get("chapter_num", args[0] if args else 0)
+        content = kwargs.get("content", args[1] if len(args) > 1 else "")
+        self.calls.append(("audit_chapter_with_usage", {"chapter_num": chapter_num, "content_len": len(content)}))
+        return (
+            {"chapter": chapter_num, "issues": [], "scores": {"S1": 80}},
+            {"input_tokens": 80, "output_tokens": 40},
+        )
+
+    def polish_chapter_with_usage(self, chapter_num, content, style_guide=None):
+        return (content + " [polished]", {"input_tokens": 200, "output_tokens": 100})
+
+    def polish_emotional_pacing_with_usage(self, chapter_num, content):
+        return (content + " [emotional]", {"input_tokens": 200, "output_tokens": 100})
+
+    def polish_ai_trace_removal_with_usage(self, chapter_num, content):
+        return (content + " [ai_removed]", {"input_tokens": 100, "output_tokens": 50})
 
     # Phase 7.5: stub polish_merge_synthesis
     def polish_merge_synthesis(self, content_a, content_b, *, labels=("A", "B")) -> dict:

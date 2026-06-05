@@ -65,19 +65,22 @@ def test_review_handler_propagates_content_to_downstream():
     等于 inputs["content"]。下游 _handler_polish 读 inputs["content"] 拿不到会
     return {"_error": "content is required"} 中断。
 
-    使用 MasterController.__new__ 跳过 __init__,handler 只调 master.audit_chapter
-    (我们在外部 stub 掉),不依赖完整 controller 状态。
+    使用 MasterController.__new__ 跳过 __init__,handler 只调 master.audit_chapter_with_usage
+    (Phase 8.6.2: handler 调 variant 拿真实 usage, 我们在外部 stub 掉),不依赖完整 controller 状态。
     """
     master = MasterController.__new__(MasterController)
 
-    # stub master.audit_chapter 返回 audit report (无 content 字段)
-    master.audit_chapter = lambda **kwargs: {
-        "chapter_num": kwargs.get("chapter_num"),
-        "issues": [],
-        "scores": {"S1": 8},
-    }
+    # Phase 8.6.2: handler 调 audit_chapter_with_usage, 返 (audit_report, usage) tuple
+    master.audit_chapter_with_usage = lambda **kwargs: (
+        {
+            "chapter_num": kwargs.get("chapter_num"),
+            "issues": [],
+            "scores": {"S1": 8},
+        },
+        {"input_tokens": 80, "output_tokens": 40},
+    )
 
-    result = _handler_chapter_review(
+    result, usage = _handler_chapter_review(
         master=master,
         inputs={
             "chapter_num": 1,
@@ -93,6 +96,8 @@ def test_review_handler_propagates_content_to_downstream():
     # 不破坏 audit 报告其他字段
     assert result["issues"] == []
     assert result["scores"] == {"S1": 8}
+    # usage 透传
+    assert usage == {"input_tokens": 80, "output_tokens": 40}
 
 
 def test_audit_chapter_failure_does_not_crash_workflow(tmp_path: Path):

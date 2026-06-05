@@ -346,6 +346,52 @@ class TestNovelWritingE2E:
             f"expected at least 1 scenario recorded, got {cost_tracker.count_by_scenario()}"
         )
 
+    def test_novel_writing_records_real_cost_usage(self, tmp_path: Path) -> None:
+        """Phase 8.6.2: 走 production path, cost_tracker 收到真实 usage (非 len()//4 估算).
+
+        record_usage=True 注入 _RecordingRouter (Phase 8.6.1 stub), _UsageRecordingProvider
+        硬编码 {input_tokens: 100, output_tokens: 50} — 每次 LLM call 喂 cost_tracker
+        真实 100+50=150, 而非 StubProvider + len()//4 估算.
+        """
+        from infra.ai_service.cost_tracker import CostTracker
+
+        cost_tracker = CostTracker()
+        master = make_master_with_router(
+            state_dir=tmp_path,
+            cost_tracker=cost_tracker,
+            record_usage=True,  # Phase 8.6.2: 注入 _RecordingRouter
+        )
+        master.run_workflow(
+            workflow_name="novel_writing",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": self.MINIMAL_OUTLINE,
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "timeline": [],
+                "use_llm": True,
+            },
+        )
+        recs = cost_tracker.records()
+        # 至少 4 LLM calls (write + audit + polish_e + polish_a), 每笔 100/50
+        # polish_emotional_pacing sums 2 LLM (dialogue + pacing) → 200 input
+        # polish_merge_synthesis 无 _with_usage variant (留 Phase 8.7), 走 dict path
+        # 估算法 (len()//4), 故 5th record 可能是估算值
+        assert len(recs) >= 4, f"expected >= 4 records, got {len(recs)}"
+        # 真实 usage 不是 0
+        total = sum(r.input_tokens + r.output_tokens for r in recs)
+        assert total > 0
+        # 前 4 笔都是 _with_usage 真实 100/50 (polish_e sum=200)
+        real_path_recs = recs[:4]
+        for r in real_path_recs:
+            assert r.input_tokens in (100, 200), (
+                f"expected input_tokens=100 (or 200 for polish_e sum), got {r.input_tokens}"
+            )
+            assert r.output_tokens in (50, 100), (
+                f"expected output_tokens=50 (or 100 for polish_e sum), got {r.output_tokens}"
+            )
+
 
 class TestRouterFailure:
     """router 失败路径:provider 抛错降级 / 默认走 primary"""

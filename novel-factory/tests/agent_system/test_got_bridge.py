@@ -57,6 +57,34 @@ class _StubMaster:
         self.calls.append(("polish_ai_trace_removal", {"content_len": len(content)}))
         return content + " [ai_removed]"
 
+    # Phase 8.6.2: 5 *_with_usage methods — 供 test_got_bridge 验证 tuple return path
+    # 返回 max(len(content)) fallback 模拟真实 LLM usage (含 input/output tokens)
+    def write_chapter_with_usage(self, chapter_num, outline, characters, memory_context, style_guide, use_llm):
+        self.calls.append(("write_chapter_with_usage", {"chapter_num": chapter_num, "use_llm": use_llm}))
+        return (
+            {"content": f"ch{chapter_num} text", "word_count": 100, "suggestions": []},
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
+    def audit_chapter_with_usage(self, chapter_num, content, characters, timeline, use_llm):
+        self.calls.append(("audit_chapter_with_usage", {"chapter_num": chapter_num, "content_len": len(content)}))
+        return (
+            {"chapter": chapter_num, "issues": [], "scores": {"S1": 80}},
+            {"input_tokens": 80, "output_tokens": 40},
+        )
+
+    def polish_chapter_with_usage(self, chapter_num, content, style_guide=None):
+        self.calls.append(("polish_chapter_with_usage", {"content_len": len(content)}))
+        return (content + " [polished]", {"input_tokens": 200, "output_tokens": 100})
+
+    def polish_emotional_pacing_with_usage(self, chapter_num, content):
+        self.calls.append(("polish_emotional_pacing_with_usage", {"content_len": len(content)}))
+        return (content + " [emotional]", {"input_tokens": 200, "output_tokens": 100})
+
+    def polish_ai_trace_removal_with_usage(self, chapter_num, content):
+        self.calls.append(("polish_ai_trace_removal_with_usage", {"content_len": len(content)}))
+        return (content + " [ai_removed]", {"input_tokens": 100, "output_tokens": 50})
+
     # Phase 7.5: stub polish_merge_synthesis — 默认走 max(len) 兜底 (不调 LLM)
     def polish_merge_synthesis(self, content_a: str, content_b: str, *, labels=("A", "B")) -> dict:
         """Stub: 模拟 master.polish_merge_synthesis 的 max(len) 兜底 (默认 stub 不调 LLM)"""
@@ -124,7 +152,8 @@ class TestAgentComputeFnBasic:
         assert isinstance(result, ComputeResult)
         assert result.fail is False
         assert "ch1 text" in result.output["content"]
-        assert master.calls[0][0] == "write_chapter"
+        # Phase 8.6.2: handler 调 write_chapter_with_usage 拿真实 usage
+        assert master.calls[0][0] == "write_chapter_with_usage"
         assert master.calls[0][1]["chapter_num"] == 1
 
     def test_chapter_review_routes_to_audit(self):
@@ -134,7 +163,8 @@ class TestAgentComputeFnBasic:
         result = compute(node, {"chapter_num": 1, "content": "abcdefg", "use_llm": False})
         assert result.fail is False
         assert result.output["chapter"] == 1
-        assert master.calls[0][0] == "audit_chapter"
+        # Phase 8.6.2: handler 调 audit_chapter_with_usage 拿真实 usage
+        assert master.calls[0][0] == "audit_chapter_with_usage"
 
     def test_ai_trace_removal_routes_to_polish_ai_trace_removal(self):
         """Phase 7.4: scenario=ai_trace_removal 走新的 polish_ai_trace_removal entry method"""
@@ -144,7 +174,8 @@ class TestAgentComputeFnBasic:
         result = compute(node, {"content": "raw text"})
         assert result.fail is False
         assert "[ai_removed]" in result.output["content"]
-        assert master.calls[0][0] == "polish_ai_trace_removal"
+        # Phase 8.6.2: 工厂调 polish_ai_trace_removal_with_usage 拿真实 usage
+        assert master.calls[0][0] == "polish_ai_trace_removal_with_usage"
 
     def test_outline_review_routes_to_generate_outline(self):
         master = _StubMaster()
@@ -183,10 +214,10 @@ class TestAgentComputeFnFailure:
 
     def test_handler_exception_caught_as_fail(self):
         master = _StubMaster()
-        # 强行让 write_chapter 抛错
+        # Phase 8.6.2: handler 调 write_chapter_with_usage, 强行让该 variant 抛错
         def boom(*args, **kwargs):
             raise RuntimeError("upstream error")
-        master.write_chapter = boom
+        master.write_chapter_with_usage = boom
 
         compute = AgentComputeFn(master)
         node = _node("n1", "chapter_writing")
@@ -269,10 +300,11 @@ class TestE2EWorkflow:
         summary = scheduler.run(start_nodes=["read_snapshot"], initial_inputs=initial)
         assert isinstance(summary, ExecutionSummary)
 
-        # write_chapter + audit_chapter 都被调用
+        # write_chapter_with_usage + audit_chapter_with_usage 都被调用
+        # Phase 8.6.2: handler 走 *_with_usage variant 拿真实 usage
         called = [c[0] for c in master.calls]
-        assert "write_chapter" in called
-        assert "audit_chapter" in called
+        assert "write_chapter_with_usage" in called
+        assert "audit_chapter_with_usage" in called
 
     def test_review_chapter_receives_write_chapter_output(self):
         """review_chapter 的 content 来自 write_chapter 的 output"""
@@ -281,8 +313,8 @@ class TestE2EWorkflow:
         initial = {"chapter_num": 1, "characters": [], "style_guide": {}, "timeline": []}
         scheduler.run(start_nodes=["read_snapshot"], initial_inputs=initial)
 
-        # 找到 audit_chapter 调用,验证 content_len > 0
-        audit_call = next(c for c in master.calls if c[0] == "audit_chapter")
+        # 找到 audit_chapter_with_usage 调用,验证 content_len > 0
+        audit_call = next(c for c in master.calls if c[0] == "audit_chapter_with_usage")
         assert audit_call[1]["content_len"] > 0
 
     def test_graph_topology_respected(self):
@@ -318,12 +350,12 @@ class TestPolishHandlerRouting:
     def test_emotional_pacing_routes_to_polish_emotional_pacing(self):
         """scenario=emotional_pacing → master.polish_emotional_pacing 被调 (非 polish_chapter)"""
         master = _StubMaster()
-        # 给 stub 加 emotional_pacing 方法 (区分于 polish_chapter)
+        # Phase 8.6.2: 工厂调 polish_emotional_pacing_with_usage, stub 该方法
         master.emotional_pacing_calls = []
-        def _stub_emotional(content):
+        def _stub_emotional_with_usage(chapter_num, content):
             master.emotional_pacing_calls.append(content)
-            return content + " [emotional]"
-        master.polish_emotional_pacing = _stub_emotional
+            return content + " [emotional]", {"input_tokens": 0, "output_tokens": 0}
+        master.polish_emotional_pacing_with_usage = _stub_emotional_with_usage
 
         compute = AgentComputeFn(master)
         node = _node("pol1", "emotional_pacing")
@@ -331,17 +363,18 @@ class TestPolishHandlerRouting:
         assert result.fail is False
         assert "[emotional]" in result.output["content"]
         assert len(master.emotional_pacing_calls) == 1
-        # 验证 polish_chapter 没被调
+        # 验证 polish_chapter (旧 path) 没被调
         assert not any(call[0] == "polish_chapter" for call in master.calls)
 
     def test_ai_trace_removal_routes_to_polish_ai_trace_removal(self):
         """scenario=ai_trace_removal → master.polish_ai_trace_removal 被调 (非 polish_chapter)"""
         master = _StubMaster()
+        # Phase 8.6.2: 工厂调 polish_ai_trace_removal_with_usage, stub 该方法
         master.ai_trace_calls = []
-        def _stub_ai_trace(content):
+        def _stub_ai_trace_with_usage(chapter_num, content):
             master.ai_trace_calls.append(content)
-            return content + " [ai_removed]"
-        master.polish_ai_trace_removal = _stub_ai_trace
+            return content + " [ai_removed]", {"input_tokens": 0, "output_tokens": 0}
+        master.polish_ai_trace_removal_with_usage = _stub_ai_trace_with_usage
 
         compute = AgentComputeFn(master)
         node = _node("pol2", "ai_trace_removal")
@@ -358,7 +391,8 @@ class TestPolishHandlerRouting:
         node = _node("pol3", "hook_extraction")
         result = compute(node, {"content": "raw text"})
         assert result.fail is False
-        assert master.calls[0][0] == "polish_chapter"
+        # Phase 8.6.2: 工厂调 polish_chapter_with_usage
+        assert master.calls[0][0] == "polish_chapter_with_usage"
 
 
 # === TestPolishMergeHandler (Phase 7.4 NEW) ===
@@ -641,3 +675,49 @@ class TestCostTrackerWiring:
         assert records[0].input_tokens > 0
         assert records[0].output_tokens > 0
         assert records[0].cost_usd > 0
+
+    def test_handler_returns_tuple_when_mc_variant_exists(self) -> None:
+        """Phase 8.6.2: handler 调 MC *_with_usage variant → 返 (output, usage) tuple.
+
+        AgentComputeFn 检测 tuple 拆 usage 喂 cost_tracker.record() 用真实数据
+        (非 len()//4 估算). _StubMaster 5 *_with_usage methods 返 hardcoded 100/50.
+        """
+        master = _StubMaster()
+        cost_tracker = CostTracker()
+        compute = AgentComputeFn(master, cost_tracker=cost_tracker)
+
+        node = _node("n1", "chapter_writing")
+        result = compute(node, {"chapter_num": 1, "use_llm": False})
+
+        assert result.fail is False
+        # _StubMaster.write_chapter_with_usage 返 hardcoded 100/50
+        records = cost_tracker.records()
+        assert len(records) == 1
+        assert records[0].input_tokens == 100  # 真实, 非 len()//4 估算
+        assert records[0].output_tokens == 50
+        # cost_tokens = 100 + 50 = 150 (真实)
+        assert result.cost_tokens == 150
+
+    def test_agent_compute_fn_uses_real_usage_from_tuple(self) -> None:
+        """Phase 8.6.2: AgentComputeFn isinstance(output, tuple) 检测,
+        tuple path 用真实 usage 喂 cost_tracker.record() (替换 Phase 8.5 len()//4 估算)."""
+        master = _StubMaster()
+        cost_tracker = CostTracker()
+        compute = AgentComputeFn(master, cost_tracker=cost_tracker)
+
+        # chapter_review scenario → audit_chapter_with_usage 返 (output, 80/40)
+        node = _node("n1", "chapter_review")
+        inputs = {
+            "chapter_num": 1,
+            "content": "x" * 400,  # 任意长度, 不影响真实 usage
+            "use_llm": False,
+        }
+        result = compute(node, inputs)
+
+        assert result.fail is False
+        records = cost_tracker.records()
+        assert len(records) == 1
+        # 真实 usage (80/40 from _StubMaster), 不是 len()//4 估算 (100/100 chars)
+        assert records[0].input_tokens == 80
+        assert records[0].output_tokens == 40
+        assert result.cost_tokens == 120  # 80 + 40 = 120

@@ -85,6 +85,45 @@ class _StubAgents:
     def polish_ai_trace_removal(self, content: str) -> str:
         return content + " (ai_removed)"
 
+    # Phase 8.6.2: 5 *_with_usage methods (handler 调 variant 拿真实 usage)
+    def write_chapter_with_usage(self, chapter_num, outline, characters, memory_context, style_guide, use_llm):
+        self.calls.append(("write_chapter_with_usage", {"chapter_num": chapter_num}))
+        return (
+            {
+                "content": f"chapter {chapter_num} content",
+                "chapter_num": chapter_num,
+                "word_count": 50,
+            },
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
+    def generate_chapter_with_usage(self, chapter_num, context, writer_id=None):
+        """content_writer.generate_chapter_with_usage 签名: (chapter_num, context, writer_id=None)"""
+        self.calls.append(("generate_chapter_with_usage", {"chapter_num": chapter_num}))
+        return (
+            {"content": f"chapter {chapter_num} content", "word_count": 50},
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
+    def audit_chapter_with_usage(self, *args, **kwargs):
+        """Accept both master signature (timeline=) and auditor signature (context=)"""
+        chapter_num = kwargs.get("chapter_num", args[0] if args else 0)
+        kwargs.get("content", args[1] if len(args) > 1 else "")
+        self.calls.append(("audit_chapter_with_usage", {"chapter_num": chapter_num}))
+        return (
+            {"chapter": chapter_num, "issues": [], "scores": {"S1": 90}},
+            {"input_tokens": 80, "output_tokens": 40},
+        )
+
+    def polish_chapter_with_usage(self, chapter_num, content, style_guide=None):
+        return (content + " (polished)", {"input_tokens": 200, "output_tokens": 100})
+
+    def polish_emotional_pacing_with_usage(self, chapter_num, content):
+        return (content + " (emotional)", {"input_tokens": 200, "output_tokens": 100})
+
+    def polish_ai_trace_removal_with_usage(self, chapter_num, content):
+        return (content + " (ai_removed)", {"input_tokens": 100, "output_tokens": 50})
+
     # Phase 7.5: stub polish_merge_synthesis
     def polish_merge_synthesis(self, content_a, content_b, *, labels=("A", "B")) -> dict:
         if not content_a or not content_b:
@@ -123,10 +162,35 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     # 但 AgentComputeFn 直接调 master.write_chapter,这里 master.write_chapter 走原方法
     # 实际我们 stub 的是 content_writer.generate_chapter (write_chapter 内部)
     controller.content_writer = type(
-        "cw", (), {"generate_chapter": stub.write_chapter}
+        "cw",
+        (),
+        {
+            "generate_chapter": stub.write_chapter,
+            # Phase 8.6.2: handler 调 write_chapter_with_usage → content_writer.generate_chapter_with_usage
+            "generate_chapter_with_usage": stub.generate_chapter_with_usage,
+        },
     )()
-    controller.auditor = type("au", (), {})()
-    controller.polisher = type("po", (), {"remove_ai_gloss": stub.polish_chapter})()
+    controller.auditor = type(
+        "au",
+        (),
+        {
+            "check_character_consistency": staticmethod(lambda content, characters: []),
+            "detect_ai_gloss": staticmethod(lambda content: []),
+            "generate_audit_report": staticmethod(lambda chapter_num, issues, scores: {"chapter": chapter_num, "issues": issues, "scores": scores}),
+            # Phase 8.6.2: handler 调 audit_chapter_with_usage (调 self.auditor.audit_chapter_with_usage)
+            "audit_chapter_with_usage": stub.audit_chapter_with_usage,
+        },
+    )()
+    controller.polisher = type(
+        "po",
+        (),
+        {
+            "remove_ai_gloss": stub.polish_chapter,
+            "polish_chapter_with_usage": stub.polish_chapter_with_usage,
+            "optimize_dialogue_llm_with_usage": lambda content: (content + " (dialogue)", {"input_tokens": 100, "output_tokens": 50}),
+            "adjust_pacing_llm_with_usage": lambda content: (content + " (pacing)", {"input_tokens": 100, "output_tokens": 50}),
+        },
+    )()
     # outline_master 需要 .schema.get_chapter_outline (write_chapter 调它)
     controller.outline_master = type(
         "om",
@@ -173,6 +237,33 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     )
     controller.polish_ai_trace_removal = types.MethodType(
         lambda self, content: stub.polish_ai_trace_removal(content), controller,
+    )
+    # Phase 8.6.2: 5 *_with_usage methods — handler 调 variant 拿真实 usage
+    controller.write_chapter_with_usage = types.MethodType(
+        lambda self, chapter_num, outline, characters, memory_context, style_guide, use_llm: stub.write_chapter_with_usage(
+            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+        ),
+        controller,
+    )
+    controller.audit_chapter_with_usage = types.MethodType(
+        lambda self, chapter_num, content, characters, timeline, use_llm: stub.audit_chapter_with_usage(
+            chapter_num, content, characters, timeline, use_llm,
+        ),
+        controller,
+    )
+    controller.polish_chapter_with_usage = types.MethodType(
+        lambda self, chapter_num, content, style_guide=None: stub.polish_chapter_with_usage(
+            chapter_num, content, style_guide=style_guide,
+        ),
+        controller,
+    )
+    controller.polish_emotional_pacing_with_usage = types.MethodType(
+        lambda self, chapter_num, content: stub.polish_emotional_pacing_with_usage(chapter_num, content),
+        controller,
+    )
+    controller.polish_ai_trace_removal_with_usage = types.MethodType(
+        lambda self, chapter_num, content: stub.polish_ai_trace_removal_with_usage(chapter_num, content),
+        controller,
     )
     # Phase 7.5: stub polish_merge_synthesis
     controller.polish_merge_synthesis = types.MethodType(
@@ -247,10 +338,11 @@ class TestMasterControllerRunWorkflow:
             initial_inputs={"chapter_num": 5, "characters": [], "style_guide": {}, "timeline": []},
         )
         called = [c[0] for c in stub.calls]
-        assert "write_chapter" in called
-        assert "audit_chapter" in called
-        # write_chapter 收到的 chapter_num=5
-        write_call = next(c for c in stub.calls if c[0] == "write_chapter")
+        # Phase 8.6.2: handler 调 *_with_usage variant 拿真实 usage
+        assert "write_chapter_with_usage" in called
+        assert "audit_chapter_with_usage" in called
+        # write_chapter_with_usage 收到的 chapter_num=5
+        write_call = next(c for c in stub.calls if c[0] == "write_chapter_with_usage")
         assert write_call[1]["chapter_num"] == 5
 
     def test_run_workflow_invalid_workflow_raises(self, monkeypatch):

@@ -541,6 +541,9 @@ class MasterController:
     ) -> Dict:
         """写章节流程（委托给content_writer）
 
+        Phase 8.6.2: 内部调 _impl(record_usage=False) — 旧契约返 dict.
+        真实 usage variant 见 write_chapter_with_usage.
+
         Args:
             chapter_num: 章节编号
             outline: 章节大纲
@@ -552,6 +555,40 @@ class MasterController:
         Returns:
             包含content、prompt、suggestions的字典
         """
+        return self._impl_write_chapter(
+            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+            record_usage=False,
+        )
+
+    def write_chapter_with_usage(
+        self,
+        chapter_num: int,
+        outline: Dict,
+        characters: List[Dict],
+        memory_context: Dict,
+        style_guide: Dict,
+        use_llm: bool = True
+    ) -> tuple[Dict, Dict[str, int]]:
+        """Phase 8.6.2: 写章节 variant — 真实 usage.
+
+        调 self.content_writer.generate_chapter_with_usage() 拿真实 token,
+        返 (result_dict, usage_dict). 旧契约 (write_chapter) 0 改.
+        """
+        return self._impl_write_chapter(
+            chapter_num, outline, characters, memory_context, style_guide, use_llm,
+            record_usage=True,
+        )
+
+    def _impl_write_chapter(
+        self,
+        chapter_num: int,
+        outline: Dict,
+        characters: List[Dict],
+        memory_context: Dict,
+        style_guide: Dict,
+        use_llm: bool,
+        record_usage: bool,
+    ):
         # 获取章节大纲
         chapter_outline = self.outline_master.schema.get_chapter_outline(outline, chapter_num)
 
@@ -571,20 +608,38 @@ class MasterController:
 
         if use_llm:
             # 使用LLM生成章节
+            if record_usage:
+                # Phase 8.6.2: 真实 usage path
+                result, usage = self.content_writer.generate_chapter_with_usage(
+                    chapter_num, context,
+                )
+                return {
+                    "content": result["content"],
+                    "word_count": result.get("word_count", len(result["content"])),
+                    "suggestions": suggestions,
+                    "context": context,
+                }, usage
+            # 旧契约: dict-only
             result = self.content_writer.generate_chapter(chapter_num, context)
             return {
                 "content": result["content"],
                 "word_count": result.get("word_count", len(result["content"])),
                 "suggestions": suggestions,
-                "context": context
+                "context": context,
             }
         else:
             # 仅返回prompt（用于调试）
             prompt = self.content_writer.build_writing_prompt(context)
+            if record_usage:
+                return {
+                    "prompt": prompt,
+                    "suggestions": suggestions,
+                    "context": context,
+                }, {"input_tokens": 0, "output_tokens": 0}
             return {
                 "prompt": prompt,
                 "suggestions": suggestions,
-                "context": context
+                "context": context,
             }
 
     def audit_chapter(
@@ -597,6 +652,9 @@ class MasterController:
     ) -> Dict:
         """审核章节（委托给auditor）
 
+        Phase 8.6.2: 内部调 _impl(record_usage=False) — 旧契约返 dict.
+        真实 usage variant 见 audit_chapter_with_usage.
+
         Args:
             chapter_num: 章节编号
             content: 章节内容
@@ -607,36 +665,88 @@ class MasterController:
         Returns:
             审核报告
         """
-        # 角色一致性检查
+        return self._impl_audit_chapter(
+            chapter_num, content, characters, timeline, use_llm, record_usage=False,
+        )
+
+    def audit_chapter_with_usage(
+        self,
+        chapter_num: int,
+        content: str,
+        characters: List[Dict],
+        timeline: List[Dict],
+        use_llm: bool = True
+    ) -> tuple[Dict, Dict[str, int]]:
+        """Phase 8.6.2: 审核章节 variant — 真实 usage + try/except 兜底."""
+        return self._impl_audit_chapter(
+            chapter_num, content, characters, timeline, use_llm, record_usage=True,
+        )
+
+    def _impl_audit_chapter(
+        self,
+        chapter_num: int,
+        content: str,
+        characters: List[Dict],
+        timeline: List[Dict],
+        use_llm: bool,
+        record_usage: bool,
+    ):
+        # 角色一致性检查 (规则, 无 LLM)
         char_issues = self.auditor.check_character_consistency(content, characters)
-
-        # AI痕迹检测
+        # AI 痕迹检测 (规则, 无 LLM)
         ai_issues = self.auditor.detect_ai_gloss(content)
-
-        # 生成报告
         all_issues = char_issues + ai_issues
 
         if use_llm:
-            # 使用LLM进行深度审核
-            try:
-                llm_report = self.auditor.audit_chapter(
-                    chapter_num=chapter_num,
-                    content=content,
-                    characters=characters,
-                    context={"timeline": timeline}
-                )
-                # 合并LLM报告中的issues
-                if "issues" in llm_report:
-                    all_issues.extend(llm_report["issues"])
-                if "scores" in llm_report:
-                    return self.auditor.generate_audit_report(chapter_num, all_issues, llm_report["scores"])
-            except Exception as e:
-                # LLM审核失败不影响规则检查结果，但记录 traceback 便于排查
-                logger.warning(
-                    f"LLM审核失败 (chapter {chapter_num}): {e}",
-                    exc_info=True,
-                )
-
+            if record_usage:
+                # Phase 8.6.2: 真实 usage path
+                try:
+                    llm_report, usage = self.auditor.audit_chapter_with_usage(
+                        chapter_num=chapter_num,
+                        content=content,
+                        characters=characters,
+                        context={"timeline": timeline},
+                    )
+                    if "issues" in llm_report:
+                        all_issues.extend(llm_report["issues"])
+                    if "scores" in llm_report:
+                        return self.auditor.generate_audit_report(
+                            chapter_num, all_issues, llm_report["scores"],
+                        ), usage
+                    return self.auditor.generate_audit_report(
+                        chapter_num, all_issues, scores={},
+                    ), usage
+                except Exception as e:
+                    # 韧性契约: LLM审核失败不影响规则检查结果 (跟 record_usage=False 一致),
+                    # 记录 traceback 便于排查, 不在 error_report 设 _error (避免
+                    # AgentComputeFn 标 fail=True 中断 workflow).
+                    logger.warning(
+                        f"LLM审核失败 (chapter {chapter_num}): {e}",
+                        exc_info=True,
+                    )
+                    return self.auditor.generate_audit_report(
+                        chapter_num, all_issues, scores={},
+                    ), {"input_tokens": 0, "output_tokens": 0}
+            else:
+                # 旧契约: dict-only
+                try:
+                    llm_report = self.auditor.audit_chapter(
+                        chapter_num=chapter_num,
+                        content=content,
+                        characters=characters,
+                        context={"timeline": timeline},
+                    )
+                    if "issues" in llm_report:
+                        all_issues.extend(llm_report["issues"])
+                    if "scores" in llm_report:
+                        return self.auditor.generate_audit_report(
+                            chapter_num, all_issues, llm_report["scores"],
+                        )
+                except Exception as e:
+                    logger.warning(
+                        f"LLM审核失败 (chapter {chapter_num}): {e}",
+                        exc_info=True,
+                    )
         return self.auditor.generate_audit_report(chapter_num, all_issues, scores={})
 
     def chat_with_usage(
@@ -670,9 +780,31 @@ class MasterController:
         }
 
     def polish_chapter(self, content: str) -> str:
-        """润色章节（委托给polisher, LLM 化路径 Phase 7.2）"""
-        result = self.polisher.polish_chapter(chapter_num=0, content=content)
+        """润色章节 (委托给polisher, LLM 化路径 Phase 7.2)
+
+        Phase 8.6.2: 旧契约返 str, 内部调 _impl(record_usage=False).
+        真实 usage variant 见 polish_chapter_with_usage.
+        """
+        result = self._impl_polish_chapter(
+            chapter_num=0, content=content, style_guide=None, record_usage=False,
+        )
         return result["content"]
+
+    def polish_chapter_with_usage(
+        self, chapter_num: int, content: str, style_guide: Optional[Dict] = None,
+    ) -> tuple[str, dict[str, int]]:
+        """Phase 8.6.2: 润色章节 variant — 真实 usage (2 LLM sum)."""
+        result, usage = self._impl_polish_chapter(
+            chapter_num, content, style_guide, record_usage=True,
+        )
+        return result["content"], usage
+
+    def _impl_polish_chapter(
+        self, chapter_num: int, content: str, style_guide: Optional[Dict], record_usage: bool,
+    ):
+        if record_usage:
+            return self.polisher.polish_chapter_with_usage(chapter_num, content, style_guide)
+        return self.polisher.polish_chapter(chapter_num, content, style_guide)
 
     def polish_emotional_pacing(self, content: str) -> str:
         """情绪节奏 variant — 对话自然化 + 节奏调整 (Phase 7.4)
@@ -683,17 +815,53 @@ class MasterController:
         韧性契约 (Phase 7.2 模式, fixup M1): 每个 LLM 调 try/except 兜底,
         失败不致命 — logger.warning 后 content 继续流转. 防止单 LLM 失败
         → AgentComputeFn fail=True → 节点 FAILED → backtrack.
+
+        Phase 8.6.2: 旧契约返 str, 内部调 _impl(record_usage=False).
+        真实 usage variant 见 polish_emotional_pacing_with_usage.
         """
+        result = self._impl_polish_emotional_pacing(
+            chapter_num=0, content=content, record_usage=False,
+        )
+        return result
+
+    def polish_emotional_pacing_with_usage(
+        self, chapter_num: int, content: str,
+    ) -> tuple[str, dict[str, int]]:
+        """Phase 8.6.2: 情绪节奏 variant — 真实 usage (2 LLM sum)."""
+        return self._impl_polish_emotional_pacing(
+            chapter_num, content, record_usage=True,
+        )
+
+    def _impl_polish_emotional_pacing(
+        self, chapter_num: int, content: str, record_usage: bool,
+    ):
         polished = content
+        usage_total = {"input_tokens": 0, "output_tokens": 0}
+        # LLM 1: optimize_dialogue
         try:
-            polished = self.polisher.optimize_dialogue_llm(polished)
+            if record_usage:
+                r1, u1 = self.polisher.optimize_dialogue_llm_with_usage(polished)
+                usage_total["input_tokens"] += u1["input_tokens"]
+                usage_total["output_tokens"] += u1["output_tokens"]
+            else:
+                r1 = self.polisher.optimize_dialogue_llm(polished)
         except Exception as e:
             logger.warning("polish_emotional_pacing: dialogue_llm failed: %s", e)
+            r1 = polished
+        # LLM 2: adjust_pacing
         try:
-            polished = self.polisher.adjust_pacing_llm(polished)
+            if record_usage:
+                r2, u2 = self.polisher.adjust_pacing_llm_with_usage(r1)
+                usage_total["input_tokens"] += u2["input_tokens"]
+                usage_total["output_tokens"] += u2["output_tokens"]
+            else:
+                r2 = self.polisher.adjust_pacing_llm(r1)
         except Exception as e:
             logger.warning("polish_emotional_pacing: pacing_llm failed: %s", e)
-        return polished
+            r2 = r1
+        if record_usage:
+            return r2, usage_total
+        return r2
 
     def polish_ai_trace_removal(self, content: str) -> str:
         """AI 痕迹 variant — 规则去 AI 痕迹 + 对话自然化 (Phase 7.4)
@@ -703,13 +871,41 @@ class MasterController:
         韧性契约 (fixup M1): remove_ai_gloss 是纯规则从不出错, 不兜底;
         optimize_dialogue_llm try/except 兜底 (失败 → logger.warning +
         保留规则去 AI 痕迹结果).
+
+        Phase 8.6.2: 旧契约返 str, 内部调 _impl(record_usage=False).
+        真实 usage variant 见 polish_ai_trace_removal_with_usage.
         """
-        polished = self.polisher.remove_ai_gloss(content)
+        result = self._impl_polish_ai_trace_removal(
+            chapter_num=0, content=content, record_usage=False,
+        )
+        return result
+
+    def polish_ai_trace_removal_with_usage(
+        self, chapter_num: int, content: str,
+    ) -> tuple[str, dict[str, int]]:
+        """Phase 8.6.2: AI 痕迹 variant — 真实 usage (1 LLM + 1 rule)."""
+        return self._impl_polish_ai_trace_removal(
+            chapter_num, content, record_usage=True,
+        )
+
+    def _impl_polish_ai_trace_removal(
+        self, chapter_num: int, content: str, record_usage: bool,
+    ):
+        cleaned = self.polisher.remove_ai_gloss(content)
+        usage_total = {"input_tokens": 0, "output_tokens": 0}
         try:
-            polished = self.polisher.optimize_dialogue_llm(polished)
+            if record_usage:
+                r, u = self.polisher.optimize_dialogue_llm_with_usage(cleaned)
+                usage_total["input_tokens"] += u["input_tokens"]
+                usage_total["output_tokens"] += u["output_tokens"]
+            else:
+                r = self.polisher.optimize_dialogue_llm(cleaned)
         except Exception as e:
             logger.warning("polish_ai_trace_removal: dialogue_llm failed: %s", e)
-        return polished
+            r = cleaned
+        if record_usage:
+            return r, usage_total
+        return r
 
     def polish_merge_synthesis(
         self,

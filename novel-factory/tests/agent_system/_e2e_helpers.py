@@ -108,13 +108,40 @@ def _minimal_config(state_dir: str) -> MasterControllerConfig:
 
 def make_master_with_router(
     state_dir: Path,
-    router: AIRouter,
+    router: Optional[AIRouter] = None,
     cost_tracker: Optional[CostTracker] = None,
+    record_usage: bool = False,
 ) -> MasterController:
     """构造 MasterController,注入测试 router,不替换任何 master 方法。
 
     Phase 8.5: cost_tracker 默认 None 兜底,旧 14 e2e tests 零修改。
+    Phase 8.6.2: record_usage kwarg 注入 _RecordingRouter 走真实 usage path.
+      - record_usage=False (default) → 走传入 router (旧 14 e2e 兼容)
+      - record_usage=True → 注入 _RecordingRouter (Phase 8.6.1 stub),
+        替换 content_writer/auditor/polisher._router,验证 AgentComputeFn
+        tuple 路径喂 cost_tracker
     """
+    if record_usage:
+        from tests.agent_system.test_agent_with_usage import (
+            _RecordingRouter,
+            _UsageRecordingProvider,
+        )
+        recording_router = _RecordingRouter(_UsageRecordingProvider())
+        master = MasterController(
+            state_dir=str(state_dir),
+            router=recording_router,
+            config=_minimal_config(str(state_dir)),
+            cost_tracker=cost_tracker,
+        )
+        # 替换 3 agent 内部 router 走 _RecordingRouter (Phase 8.6.1 stub)
+        master.content_writer._router = recording_router
+        master.auditor._router = recording_router
+        master.polisher._router = recording_router
+        return master
+
+    if router is None:
+        # 默认 path: 构造 stub router (Phase 7.1 e2e 模式)
+        router, _providers = make_stub_router()
     return MasterController(
         state_dir=str(state_dir),
         router=router,
