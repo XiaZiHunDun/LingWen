@@ -215,3 +215,102 @@ class TestTieredRouterGenerateWithUsage:
         assert spy.calls == 1
         # _notify_tracker **未**触发 → tracker.records 为空
         assert tracker.records == []
+
+    def test_chains_downgrade_to_next_tier_with_usage(self) -> None:
+        """OPUS tier raises → router falls back to SONNET + 调 generate_with_usage.
+
+        Locks the chain parity contract: 降级时调 provider.generate_with_usage
+        (NOT provider.generate) on the fallback tier, ensuring real usage
+        propagation across the chain. Code review 发现的 gap: 原 only happy path
+        被测, 没断言降级时仍走 generate_with_usage 路径.
+        """
+        from infra.ai_service.model_tiers import ModelTier
+        from infra.ai_service.tiered_router import TieredRouter
+
+        class _OpusRaises:
+            def generate(self, prompt: str, **kwargs) -> str:
+                raise RuntimeError("opus boom")
+
+            def generate_with_usage(self, prompt: str, **kwargs):
+                raise RuntimeError("opus boom")
+
+        class _SonnetSucceeds:
+            def __init__(self) -> None:
+                self.generate_calls = 0
+                self.usage_calls = 0
+
+            def generate(self, prompt: str, **kwargs) -> str:
+                self.generate_calls += 1
+                return "sonnet text via generate"
+
+            def generate_with_usage(self, prompt: str, **kwargs):
+                self.usage_calls += 1
+                return "sonnet text", {"input_tokens": 10, "output_tokens": 20}
+
+        class _HaikuUnreached:
+            def __init__(self) -> None:
+                self.usage_calls = 0
+
+            def generate(self, prompt: str, **kwargs) -> str:
+                return "haiku text"
+
+            def generate_with_usage(self, prompt: str, **kwargs):
+                self.usage_calls += 1
+                return "haiku text", {"input_tokens": 0, "output_tokens": 0}
+
+        sonnet = _SonnetSucceeds()
+        haiku = _HaikuUnreached()
+        providers = {
+            ModelTier.OPUS: _OpusRaises(),
+            ModelTier.SONNET: sonnet,
+            ModelTier.HAIKU: haiku,
+        }
+        router = TieredRouter(providers=providers)
+        # subplot_suggest → OPUS primary, chain = (OPUS, SONNET, HAIKU)
+        text, usage = router.generate_with_usage("subplot_suggest", "test")
+
+        # SONNET 的 generate_with_usage 被调 1 次 (降级成功)
+        assert sonnet.usage_calls == 1
+        # **关键**: 降级走 generate_with_usage, NOT generate
+        assert sonnet.generate_calls == 0
+        # HAIKU 未被调 (降级在 SONNET 终止)
+        assert haiku.usage_calls == 0
+        # 返回值透传 SONNET 的 real usage
+        assert text == "sonnet text"
+        assert usage == {"input_tokens": 10, "output_tokens": 20}
+
+    def test_disable_downgrade_propagates_with_usage_error(self) -> None:
+        """disable_downgrade=True → first tier raises 立即抛错, 不降级.
+
+        Locks the disable_downgrade parity contract: generate_with_usage 跟
+        generate() 行为一致, 失败时不调下一个 tier 的 provider. 三个 tier
+        都不该被调到 (OPUS 抛错就 break).
+        """
+        from infra.ai_service.model_tiers import ModelTier
+        from infra.ai_service.tiered_router import TieredRouter, TieredRouterError
+
+        class _BoomProvider:
+            def __init__(self) -> None:
+                self.usage_calls = 0
+
+            def generate(self, prompt: str, **kwargs) -> str:
+                raise RuntimeError("always boom")
+
+            def generate_with_usage(self, prompt: str, **kwargs):
+                self.usage_calls += 1
+                raise RuntimeError("always boom")
+
+        providers = {tier: _BoomProvider() for tier in ModelTier}
+        router = TieredRouter(providers=providers)
+        # 关键: disable_downgrade 是 instance attribute, 不是 constructor kwarg
+        # (跟 test_tiered_router.py:204 的 test_no_downgrade_when_disabled 模式一致)
+        router.disable_downgrade = True
+
+        # subplot_suggest → OPUS primary, chain = (OPUS, SONNET, HAIKU)
+        # disable_downgrade=True → OPUS raises 立即抛错, 不调 SONNET/HAIKU
+        with pytest.raises(TieredRouterError, match="all tiers failed"):
+            router.generate_with_usage("subplot_suggest", "test")
+
+        assert providers[ModelTier.OPUS].usage_calls == 1
+        assert providers[ModelTier.SONNET].usage_calls == 0
+        assert providers[ModelTier.HAIKU].usage_calls == 0
