@@ -18,8 +18,11 @@ class _TieredRouterStub:
     def generate(self, prompt: str, **kwargs) -> str:
         return "old-path text"
 
-    def generate_with_usage(self, prompt: str, **kwargs):
-        self.calls.append({"prompt": prompt, "kwargs": kwargs})
+    def generate_with_usage(self, *args, **kwargs):
+        # 灵活签名: AgentBase 走全 kwargs (prompt=..., temperature=...),
+        # MasterController 走 (scenario, prompt) 位置参数。
+        # 真实 TieredRouter.generate_with_usage(self, scenario, prompt, **kwargs) 形状。
+        self.calls.append({"args": args, "kwargs": kwargs})
         return "new-path text", {"input_tokens": 42, "output_tokens": 24}
 
 
@@ -72,3 +75,35 @@ class TestAgentBaseChatWithUsage:
         assert text.startswith("[FALLBACK]")
         assert usage["input_tokens"] == len("test prompt") // 4
         assert usage["output_tokens"] == len(text) // 4
+
+
+class TestMasterControllerChatWithUsage:
+    """master_controller.py: MasterController.chat_with_usage public API."""
+
+    def test_falls_back_to_estimate_when_router_lacks_method(self) -> None:
+        """_router 是旧 AIRouter (无 generate_with_usage) → 走估算 fallback."""
+        from infra.agent_system.master_controller import MasterController
+
+        # Use MasterController.__new__ to bypass __init__ (跟 Phase 7.1 / 8.5 模式)
+        master = MasterController.__new__(MasterController)
+        master._router = _LegacyRouterStub()  # type: ignore[attr-defined]
+
+        text, usage = master.chat_with_usage("chapter_writing", "test prompt")
+        assert text == "legacy text"
+        assert usage == {
+            "input_tokens": len("test prompt") // 4,
+            "output_tokens": len("legacy text") // 4,
+        }
+
+    def test_uses_router_new_method_when_available(self) -> None:
+        """_router 有 generate_with_usage → 走新方法, 返 real usage."""
+        from infra.agent_system.master_controller import MasterController
+
+        master = MasterController.__new__(MasterController)
+        router = _TieredRouterStub()
+        master._router = router  # type: ignore[attr-defined]
+
+        text, usage = master.chat_with_usage("chapter_writing", "test prompt")
+        assert text == "new-path text"
+        assert usage == {"input_tokens": 42, "output_tokens": 24}
+        assert len(router.calls) == 1

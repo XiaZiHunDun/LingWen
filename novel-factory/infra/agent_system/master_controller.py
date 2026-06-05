@@ -639,6 +639,36 @@ class MasterController:
 
         return self.auditor.generate_audit_report(chapter_num, all_issues, scores={})
 
+    def chat_with_usage(
+        self, scenario: str, prompt: str, **kwargs
+    ) -> tuple[str, dict[str, int]]:
+        """Public API: scenario → tiered_router.generate_with_usage() (Phase 8.6).
+
+        跟 TieredRouter.generate_with_usage 区别: 接受任意 router (TieredRouter
+        或 AIRouter), 若 router 无新方法 → 走 len()//4 估算 fallback.
+
+        YAGNI: 不写 master.write_chapter_with_usage() 等 8 个变体 (留 followup).
+        本方法只暴露 scenario + prompt 接口, 给 Phase 8.7 dashboard / Phase 8.8
+        budget alarm 复用.
+
+        Args:
+            scenario: 12 SCENARIOS 之一 (用于 router 路由)
+            prompt: 输入提示
+            **kwargs: 透传给底层 provider
+
+        Returns:
+            (text, usage) 元组
+        """
+        if hasattr(self._router, "generate_with_usage"):
+            return self._router.generate_with_usage(scenario, prompt, **kwargs)
+
+        # Fallback: router 是旧 AIRouter, 无新方法 → 估算法
+        text = self._router.generate(prompt=prompt, **kwargs)
+        return text, {
+            "input_tokens": len(prompt) // 4,
+            "output_tokens": len(text) // 4,
+        }
+
     def polish_chapter(self, content: str) -> str:
         """润色章节（委托给polisher, LLM 化路径 Phase 7.2）"""
         result = self.polisher.polish_chapter(chapter_num=0, content=content)
