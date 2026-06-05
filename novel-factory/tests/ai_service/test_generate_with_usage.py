@@ -126,3 +126,34 @@ class TestOpenAIProviderGenerateWithUsage:
         assert text == "OpenAI text"
         assert usage == {"input_tokens": 80, "output_tokens": 40}
         assert usage["input_tokens"] != len("Hello GPT") // 4
+
+
+class TestMiniMaxProviderGenerateWithUsage:
+    """minimax_provider.py: override returns real usage (Anthropic-compatible)."""
+
+    def test_returns_real_input_output_tokens(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stub anthropic SDK (MiniMax 走 Anthropic 兼容) → usage.input/output_tokens."""
+        from infra.ai_service import minimax_provider
+
+        fake_client = MagicMock()
+        fake_response = MagicMock()
+        fake_response.usage.input_tokens = 200
+        fake_response.usage.output_tokens = 100
+        # response.content[0].type='text' (跟 generate() 同)
+        text_block = MagicMock()
+        text_block.type = "text"
+        text_block.text = "M2.7 text"
+        fake_response.content = [text_block]
+        fake_client.messages.create.return_value = fake_response
+
+        # Patch anthropic.Anthropic constructor (minimax 走 anthropic SDK)
+        monkeypatch.setattr(minimax_provider.anthropic, "Anthropic",
+                            lambda **kw: fake_client)
+
+        config = ProviderConfig(api_key="sk-test", model="MiniMax-M2.7")
+        provider = minimax_provider.MiniMaxProvider(config)
+        text, usage = provider.generate_with_usage("Hello M2.7")
+
+        assert text == "M2.7 text"
+        assert usage == {"input_tokens": 200, "output_tokens": 100}
+        assert usage["input_tokens"] != len("Hello M2.7") // 4
