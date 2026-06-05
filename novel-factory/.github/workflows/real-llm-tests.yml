@@ -1,0 +1,76 @@
+# Phase 8.3: Real LLM tests CI
+# 跑 Phase 8 (Anthropic) 2 个真实 LLM 测试, 抓 production 路径 regression.
+# - 触发: cron (UTC 02:00 daily = 北京 10:00) + 手动 workflow_dispatch
+# - Provider: Anthropic only (Phase 8 HAIKU, ~$0.025/run, $0.75/月)
+# - 完整 setup 见 docs/CI_SETUP.md
+# 维护: 修改 trigger 频率/provider 范围/测试 selection 在此文件
+
+name: real-llm-tests
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # UTC 02:00 daily
+  workflow_dispatch:
+
+concurrency:
+  group: real-llm-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-llm-tests:
+    name: Real LLM tests (Anthropic, Python 3.13)
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check ANTHROPIC_API_KEY secret
+        # Fail-loud on missing secret — skipif 静默 SKIP 会让主公误以为成功
+        run: |
+          if [ -z "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not set in repo Settings → Secrets → Actions"
+            exit 1
+          fi
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install (editable + dev)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run real LLM tests (Anthropic only)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          pytest tests/agent_system/test_novel_writing_real_llm.py \
+            -k "TestNovelWritingRealLLM or TestPolishMergeSynthesisRealLLM" \
+            --tb=short -v
+
+      - name: Ruff (informational, non-blocking)
+        run: |
+          pip install ruff
+          ruff check tests/agent_system/test_novel_writing_real_llm.py tests/agent_system/_e2e_helpers.py \
+            || echo "::warning::Ruff found issues (informational only)"
+
+      - name: Upload pytest output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-llm-tests-output
+          path: |
+            .pytest_cache/
+            pytest.log
+          retention-days: 14
+          if-no-files-found: ignore
