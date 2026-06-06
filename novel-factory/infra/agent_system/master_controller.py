@@ -916,6 +916,9 @@ class MasterController:
     ) -> Dict[str, Any]:
         """Phase 7.5: LLM S1-S8 8 维加权评分, 选高者 (polish_merge 节点)
 
+        Phase 8.7: 内部调 _impl(record_usage=False) — 旧契约返 dict.
+        真实 usage variant 见 polish_merge_synthesis_with_usage.
+
         调 polisher.chat() (HAIKU tier, 4000 tokens) 评分 2 个 variant, 加权
         (等权 0.125 each) 求总分, winner = 高者。韧性契约: LLM 失败 → 走
         max(len) 兜底, reason="llm_fail"。
@@ -939,7 +942,61 @@ class MasterController:
                 "_labels": list[str],       # Phase 7.6: 透传 labels (dashboard 雷达图消费)
             }
         """
+        return self._impl_polish_merge_synthesis(
+            content_a, content_b, labels=labels, record_usage=False,
+        )
+
+    def polish_merge_synthesis_with_usage(
+        self,
+        content_a: str,
+        content_b: str,
+        *,
+        labels: tuple[str, str] = ("A", "B"),
+    ) -> tuple[Dict[str, Any], Dict[str, int]]:
+        """Phase 8.7: polish_merge_synthesis variant — 真实 usage + 4 fallback path 返 zero usage.
+
+        跟其他 5 MC variants (write_chapter/audit_chapter/polish_chapter/
+        polish_emotional_pacing/polish_ai_trace_removal) 同模式:
+        - 委托 _impl(record_usage=True)
+        - 旧 method (polish_merge_synthesis) 走 record_usage=False 调
+          polisher.chat() 估算 (Phase 7.5 baseline)
+        - 新 variant 调 polisher.chat_with_usage 拿真实 token usage (Phase 8.6)
+        - 4 fallback path (empty/identical/json_parse_failed/llm_fail) 返
+          (normal_dict, zero_usage)
+        - 韧性契约: 不设 _error 字段 (跟 8.6.2 _impl_audit_chapter 同 fix),
+          避免 AgentComputeFn fail=True 中断 workflow
+
+        Args:
+            content_a: 第 1 个 upstream variant
+            content_b: 第 2 个 upstream variant
+            labels: (label_a, label_b) for dashboard radar passthrough (Phase 7.6)
+
+        Returns:
+            (output_dict, usage_dict) tuple — output_dict 跟 polish_merge_synthesis 一致,
+            usage_dict 含 "input_tokens" / "output_tokens" keys
+        """
+        return self._impl_polish_merge_synthesis(
+            content_a, content_b, labels=labels, record_usage=True,
+        )
+
+    def _impl_polish_merge_synthesis(
+        self,
+        content_a: str,
+        content_b: str,
+        *,
+        labels: tuple[str, str] = ("A", "B"),
+        record_usage: bool,
+    ):
+        """Phase 7.5 baseline + Phase 8.7 record_usage kwarg.
+
+        Returns:
+            - record_usage=True: tuple[dict, {"input_tokens": int, "output_tokens": int}]
+            - record_usage=False: dict (旧契约, backward compat)
+        """
+        empty_usage: Dict[str, int] = {"input_tokens": 0, "output_tokens": 0}
         empty = self._merge_synthesis_len_fallback
+        usage: Dict[str, int] = empty_usage  # 初始化以保 4 fallback path 也 bound
+
         if not content_a or not content_b:
             result: Dict[str, Any] = empty(content_a, content_b, labels, reason="empty_content")
         elif content_a == content_b:
@@ -954,16 +1011,40 @@ class MasterController:
                 "fallback": "identical",
             }
         else:
+            # LLM path: 走 chat_with_usage (record_usage=True) 或 chat (False)
+            from .agents.polisher.prompts import (
+                build_merge_synthesis_prompt,
+                get_merge_synthesis_system_prompt,
+            )
+            prompt = build_merge_synthesis_prompt(content_a, content_b, labels=labels)
+            system = get_merge_synthesis_system_prompt()
             try:
-                result = self._merge_synthesis_llm(content_a, content_b, labels)
+                if record_usage:
+                    response, usage = self.polisher.chat_with_usage(
+                        prompt=prompt, system=system,
+                        temperature=0.2, max_tokens=2000,
+                    )
+                else:
+                    response = self.polisher.chat(
+                        prompt=prompt, system=system,
+                        temperature=0.2, max_tokens=2000,
+                    )
+                    usage = empty_usage
+                result = self._merge_synthesis_score(response, content_a, content_b, labels)
             except self._MergeParseError as e:
                 logger.warning("polish_merge_synthesis: JSON parse failed, len fallback: %s", e)
                 result = empty(content_a, content_b, labels, reason="json_parse_failed")
+                usage = empty_usage
             except Exception as e:
                 logger.warning("polish_merge_synthesis: LLM failed, len fallback: %s", e)
                 result = empty(content_a, content_b, labels, reason="llm_fail")
+                usage = empty_usage
+
         # Phase 7.6: 透传 labels 给 dashboard 雷达图抽 label_a/b
         result["_labels"] = list(labels)
+
+        if record_usage:
+            return result, usage
         return result
 
     class _MergeParseError(Exception):
@@ -985,23 +1066,17 @@ class MasterController:
             )
         return parsed
 
-    def _merge_synthesis_llm(
+    def _merge_synthesis_score(
         self,
+        response: Any,
         content_a: str,
         content_b: str,
         labels: tuple[str, str],
     ) -> Dict[str, Any]:
-        """Phase 7.5: 调 polisher LLM 评分 2 variant, 等权求总分选高者"""
-        from .agents.polisher.prompts import (
-            build_merge_synthesis_prompt,
-            get_merge_synthesis_system_prompt,
-        )
+        """Phase 7.5 共享: parse_response + 等权求总分选高者.
 
-        prompt = build_merge_synthesis_prompt(content_a, content_b, labels=labels)
-        system = get_merge_synthesis_system_prompt()
-        response = self.polisher.chat(
-            prompt=prompt, system=system, temperature=0.2, max_tokens=2000
-        )
+        Phase 8.7: 跟 _merge_synthesis_llm 共享的 parse+score 部分.
+        """
         parsed = self._parse_merge_response(response)
 
         label_a, label_b = labels

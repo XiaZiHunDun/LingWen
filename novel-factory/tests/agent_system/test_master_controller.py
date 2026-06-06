@@ -28,6 +28,9 @@ def _make_master(chat_response: Optional[Any] = None, chat_raises: bool = False)
 
     走 __new__ 绕过 __init__ (避免 build_router 等重操作),只塞 self.polisher
     即可 — polish_merge_synthesis 只读 self.polisher.chat + parse_response.
+
+    Phase 8.7: 同时 stub chat_with_usage() (走 polisher.chat() 估算 / 跟 Phase 8.6.1
+    硬编码 {input_tokens: 100, output_tokens: 50} 一致) 供 *_with_usage 变体使用.
     """
     from infra.agent_system import master_controller as mc_mod
 
@@ -40,6 +43,13 @@ def _make_master(chat_response: Optional[Any] = None, chat_raises: bool = False)
             if chat_raises:
                 raise RuntimeError("simulated LLM failure")
             return _FakeLLMResponse(chat_response)
+
+        def chat_with_usage(self, *, prompt: str, system: str, temperature: float, max_tokens: int):
+            """Phase 8.7: 跟 chat() 行为一致, 但额外返硬编码 usage (跟 Phase 8.6.1 一致)."""
+            self.calls.append({"prompt": prompt, "system": system, "temperature": temperature, "max_tokens": max_tokens, "via": "chat_with_usage"})
+            if chat_raises:
+                raise RuntimeError("simulated LLM failure")
+            return _FakeLLMResponse(chat_response), {"input_tokens": 100, "output_tokens": 50}
 
         def parse_response(self, response: Any, *, format_type: str = "json"):
             if format_type != "json":
@@ -147,6 +157,85 @@ class TestPolishMergeSynthesis:
         assert result["scores_b"] == {}
         # LLM 调过 1 次 (然后失败)
         assert len(master.polisher.calls) == 1
+
+
+# ==================== Phase 8.7: polish_merge_synthesis_with_usage ====================
+
+
+class TestPolishMergeWithUsage:
+    """Phase 8.7: MasterController.polish_merge_synthesis_with_usage 返 (dict, usage) tuple.
+
+    模式: 跟其他 5 MC variants (write_chapter/audit_chapter/polish_chapter/
+    polish_emotional_pacing/polish_ai_trace_removal) 一致 — 委托 _impl(record_usage=True),
+    旧 method 走 record_usage=False 保 baseline.
+    """
+
+    def test_returns_tuple_with_real_usage_on_llm_success(self) -> None:
+        """LLM success path: 返 (scored_dict, {input_tokens: 100, output_tokens: 50})."""
+        # A 8 分, B 5 分 → winner=A
+        scores_a = {f"S{i}": 8 for i in range(1, 9)}
+        scores_b = {f"S{i}": 5 for i in range(1, 9)}
+        chat_response = {
+            "scores_emotional_pacing": scores_a,
+            "scores_ai_trace_removal": scores_b,
+            "reason": "A 整体质量更高",
+        }
+        master = _make_master(chat_response=chat_response)
+        result, usage = master.polish_merge_synthesis_with_usage(
+            content_a="A 章节内容" * 20,
+            content_b="B 章节内容" * 20,
+            labels=("emotional_pacing", "ai_trace_removal"),
+        )
+        # 1. result 是 dict (scored)
+        assert isinstance(result, dict)
+        assert "winner" in result
+        assert "scores_a" in result
+        assert "scores_b" in result
+        assert result["winner"] == "emotional_pacing"
+        # 2. usage 是 真实 dict (硬编码 _StubPolisher 走 chat_with_usage)
+        assert usage == {"input_tokens": 100, "output_tokens": 50}
+        # 3. 确认走的是 chat_with_usage (不是 chat)
+        assert master.polisher.calls[-1].get("via") == "chat_with_usage"
+
+    def test_returns_zero_usage_on_llm_failure(self) -> None:
+        """LLM fail path: 返 (fallback_dict, zero_usage), 韧性契约不设 _error."""
+        master = _make_master(chat_raises=True)
+        result, usage = master.polish_merge_synthesis_with_usage(
+            content_a="A 内容" * 20,
+            content_b="B 内容" * 20,
+        )
+        assert isinstance(result, dict)
+        # 韧性契约: 无 _error (跟 8.6.2 _impl_audit_chapter 同 fix)
+        assert "_error" not in result
+        assert result.get("fallback") == "llm_fail"
+        # usage 是 0 (LLM fail 不录)
+        assert usage == {"input_tokens": 0, "output_tokens": 0}
+
+    def test_returns_zero_usage_on_empty_content(self) -> None:
+        """Empty content path: 不调 LLM, 返 (empty_fallback, zero_usage)."""
+        master = _make_master(chat_response="{}")
+        result, usage = master.polish_merge_synthesis_with_usage(
+            content_a="",  # empty
+            content_b="B 内容" * 20,
+        )
+        assert isinstance(result, dict)
+        assert result.get("fallback") == "empty_content"
+        assert usage == {"input_tokens": 0, "output_tokens": 0}
+        # 不调 LLM
+        assert master.polisher.calls == []
+
+    def test_returns_zero_usage_on_identical_content(self) -> None:
+        """Identical content path: 不调 LLM, 返 (identical_fallback, zero_usage)."""
+        master = _make_master(chat_response="{}")
+        result, usage = master.polish_merge_synthesis_with_usage(
+            content_a="相同内容" * 10,
+            content_b="相同内容" * 10,
+        )
+        assert isinstance(result, dict)
+        assert result.get("fallback") == "identical"
+        assert usage == {"input_tokens": 0, "output_tokens": 0}
+        # 不调 LLM
+        assert master.polisher.calls == []
 
 
 # ==================== Phase 8.1: Static LLM Robustness ====================
