@@ -113,7 +113,16 @@ class MasterControllerAdapter:
     3. 转换 run_workflow/resume_workflow 的返回值
        (ExecutionSummary/NodeExecution 含 datetime/Enum,
        FastAPI 不能自动序列化 → 转 dict)
+
+    Phase 8.12: 类级别 _controller 单例 — dashboard 新 budget endpoints
+    (GET/PUT /api/budgets) 直接读 MasterControllerAdapter._controller
+    (不走 closure 捕获的 master_controller),便于测试注入。
+    create_app() 启动时如果传 MasterControllerAdapter 实例,
+    会自动同步 _controller 到类级别。
     """
+
+    # 类级别单例 (Phase 8.12):dashboard budget endpoints 直接读这个
+    _controller: Any = None
 
     def __init__(self, controller: Any) -> None:
         self._controller = controller
@@ -282,6 +291,8 @@ class MasterControllerAdapter:
             "score_data": score_data,  # Phase 7.6
             "cost_by_scenario": _extract_cost_by_scenario(self._controller),  # Phase 8.7
             "cost_budget_status": _extract_budget_status(self._controller),  # Phase 8.8 T5
+            "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # Phase 8.12 T5
+            "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # Phase 8.12 T5
             # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
             "total_cost_usd": _extract_total_cost(self._controller),
         }
@@ -355,6 +366,55 @@ def _extract_budget_status(controller: Any) -> dict[str, Any]:
         }
     except Exception as exc:
         logger.warning("_extract_budget_status 失败: %s", exc)
+        return {}
+
+
+def _extract_budget_per_window(controller: Any, scope: str) -> dict[str, Any]:
+    """Phase 8.12 T5: 拿 controller.budget_service 查 current scope + window check,
+    算 status (跟 _extract_budget_status 同模式, silent degrade 返 {}).
+
+    Args:
+        controller: MasterController 实例
+        scope: 'day' or 'week' (per-run 走 _extract_budget_status 旧 path)
+
+    Returns:
+        dict with keys (status, budget_usd, used_usd, used_pct) or {} if no budget or budget_service missing
+    """
+    from datetime import datetime, timedelta, timezone
+    try:
+        service = getattr(controller, "budget_service", None)
+        if service is None:
+            return {}
+        entry = service.get_current(scope)
+        if entry is None:
+            return {}
+        # Window check (per-day = UTC same date, per-week = Mon-Sun)
+        now = datetime.now(timezone.utc)
+        if scope == "day":
+            in_window = entry.set_at.date() == now.date()
+        elif scope == "week":
+            days_since_monday = now.weekday()
+            week_start = (now - timedelta(days=days_since_monday)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            in_window = entry.set_at >= week_start
+        else:
+            in_window = True
+        if not in_window:
+            return {}  # window 失效, 视为无 budget
+        # 算 used
+        cost_tracker = getattr(controller, "cost_tracker", None)
+        used = float(cost_tracker.total_cost()) if cost_tracker is not None else 0.0
+        used_pct = (used / entry.usd * 100) if entry.usd > 0 else 0.0
+        status = "exceeded" if used > entry.usd else "ok"
+        return {
+            "status": status,
+            "budget_usd": entry.usd,
+            "used_usd": used,
+            "used_pct": used_pct,
+        }
+    except Exception as exc:
+        logger.warning("_extract_budget_per_window failed for scope=%s: %s", scope, exc)
         return {}
 
 

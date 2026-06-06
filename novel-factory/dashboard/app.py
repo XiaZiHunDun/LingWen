@@ -131,6 +131,11 @@ class ResumeWorkflowRequest(BaseModel):
     cost_budget_usd: Optional[float] = None  # Phase 8.8: budget alarm (None=清空 budget)
 
 
+class BudgetSetRequest(BaseModel):
+    """Phase 8.12 T5: 设置 day/week budget (per-run 不暴露, run 启动时传)"""
+    usd: float = Field(ge=0, le=10000)  # 0 表示"无限但仍写行 0"
+
+
 class WorkflowStatusResponse(BaseModel):
     """工作流状态响应"""
     workflow_name: Optional[str] = None
@@ -147,6 +152,9 @@ class WorkflowStatusResponse(BaseModel):
     score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据
     cost_by_scenario: dict[str, float] = Field(default_factory=dict)  # Phase 8.7: by-scenario 累计 USD
     cost_budget_status: dict[str, Any] = Field(default_factory=dict)  # Phase 8.8 T5: budget alarm 状态
+    # Phase 8.12 T5 NEW: per-day / per-week budget status (per-run 仍走 cost_budget_status 旧 path)
+    budget_per_day: dict[str, Any] = Field(default_factory=dict)
+    budget_per_week: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowMermaidResponse(BaseModel):
@@ -695,6 +703,54 @@ def create_app(
         if master_controller is None:
             return WorkflowStatusResponse(is_active=False, workflow_name=None)
         return WorkflowStatusResponse(**master_controller.get_active_workflow_status())
+
+    # ==================== Phase 8.12 T5: Budget Endpoints ====================
+
+    @app.get("/api/budgets")
+    async def get_budgets() -> dict[str, Any]:
+        """Phase 8.12 T5: 返 3 档 current budget + status
+
+        Returns:
+            dict with keys: per_run, per_day, per_week
+            每个 value 是 dict {status, budget_usd, used_usd, used_pct} 或 {} (无 budget)
+        """
+        from dashboard.protocols import (
+            MasterControllerAdapter,
+            _extract_budget_per_window,
+            _extract_budget_status,
+        )
+        controller = MasterControllerAdapter._controller
+        return {
+            "per_run": _extract_budget_status(controller),
+            "per_day": _extract_budget_per_window(controller, "day"),
+            "per_week": _extract_budget_per_window(controller, "week"),
+        }
+
+    @app.put("/api/budgets/{scope}")
+    async def set_budget(scope: str, req: BudgetSetRequest) -> dict[str, Any]:
+        """Phase 8.12 T5: 设置 day/week budget (per-run 不暴露, run 启动时传)
+
+        Args:
+            scope: 'day' or 'week' (其他 scope 返 400)
+            req: BudgetSetRequest {usd: float, ge=0 le=10000}
+
+        Returns:
+            dict with keys: ok, scope, usd
+
+        Raises:
+            400: scope not in ('day', 'week')
+            422: usd < 0 or usd > 10000 (Pydantic validation)
+            503: budget_service not initialized on controller
+        """
+        if scope not in ("day", "week"):
+            raise HTTPException(400, "scope must be 'day' or 'week'")
+        from dashboard.protocols import MasterControllerAdapter
+        controller = MasterControllerAdapter._controller
+        service = getattr(controller, "budget_service", None)
+        if service is None:
+            raise HTTPException(503, "budget service not initialized")
+        service.set(scope, req.usd, run_id=None)
+        return {"ok": True, "scope": scope, "usd": req.usd}
 
     # ==================== Phase 6.4: WebSocket Endpoint ====================
 
