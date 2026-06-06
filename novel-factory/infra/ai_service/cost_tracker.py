@@ -55,10 +55,17 @@ class CostBudgetExceeded(Exception):
     Strictly greater than triggers (equal is OK).
     """
 
-    def __init__(self, used_usd: float, budget_usd: float, scenario: str | None = None) -> None:
+    def __init__(
+        self,
+        used_usd: float,
+        budget_usd: float,
+        scenario: str | None = None,
+        scope: str = "run",
+    ) -> None:
         self.used_usd = used_usd
         self.budget_usd = budget_usd
         self.scenario = scenario
+        self.scope = scope
         scenario_msg = f" (last scenario: {scenario})" if scenario else ""
         super().__init__(
             f"Cost budget exceeded: ${used_usd:.4f} / ${budget_usd:.4f}{scenario_msg}"
