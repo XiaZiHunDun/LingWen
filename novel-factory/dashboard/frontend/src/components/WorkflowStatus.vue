@@ -80,13 +80,17 @@
       <p class="cost-total-usd">
         总计: ${{ totalCostText }}
       </p>
-      <CostBarChart :cost-by-scenario="status.cost_by_scenario || {}" />
+      <CostBarChart
+        :cost-by-scenario="status.cost_by_scenario || {}"
+        :cost-by-tier="status.cost_by_tier || {}"
+        v-model:mode="costMode"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ScoreRadarChart from './ScoreRadarChart.vue';
 import CostBarChart from './CostBarChart.vue';
 
@@ -98,6 +102,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['resume']);
+
+// Phase 8.13: CostBarChart 切 mode (scenario | tier), v-model:mode 接
+// default 'scenario' 保旧行为 (CostBarChart 也 default 'scenario' 兜底)
+const costMode = ref('scenario');
 
 const statusLabel = computed(() => {
   if (!props.status.is_active) return '未运行';
