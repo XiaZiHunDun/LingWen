@@ -18,7 +18,7 @@ MasterController / 5-Agent 工具作为 GoT 节点的可调用目标。
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 from infra.ai_service.cost_tracker import CostTracker
 from infra.ai_service.model_tiers import ModelTier
@@ -27,6 +27,9 @@ from infra.got.scheduler import ComputeResult
 from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP, SCENARIOS
 
 from .master_controller import MasterController
+
+if TYPE_CHECKING:
+    from .budget_persistence import BudgetService  # noqa: F401  (Phase 8.12)
 
 # === Scenario → MasterController method 映射表 ===
 #
@@ -252,9 +255,11 @@ class AgentComputeFn:
         self,
         master: MasterController,
         cost_tracker: Optional[CostTracker] = None,
+        budget_service: Optional["BudgetService"] = None,  # NEW Phase 8.12
     ) -> None:
         self._master = master
         self._cost_tracker = cost_tracker
+        self._budget_service = budget_service
 
     def __call__(self, node: ThoughtNode, inputs: dict[str, Any]) -> ComputeResult:
         scenario = node.prompt_scenario
@@ -325,6 +330,17 @@ class AgentComputeFn:
             )
         # === END Phase 8.8 NEW ===
 
+        # === Phase 8.12 NEW: 3-tier budget enforcement (per-run/per-day/per-week) ===
+        # 跟 Phase 8.8 同模式: 超 budget 时 raise 让 scheduler 兜底 (node FAILED)
+        # budget_service None 兜底: 旧 path 0 改 (backward compat)
+        if self._budget_service is not None:
+            current_run_id = getattr(self._master, "_current_run_id", None)
+            self._budget_service.check_all_scopes(
+                total_cost_usd=self._cost_tracker.total_cost() if self._cost_tracker else 0.0,
+                current_run_id=current_run_id,
+            )
+        # === END Phase 8.12 NEW ===
+
         return ComputeResult(output=output, cost_tokens=cost_tokens, fail=False)
 
 
@@ -360,9 +376,13 @@ def build_got_scheduler(
     bd = Path(base_dir) if base_dir else None
     graph = load_workflow(workflow_name, base_dir=bd)
     # Phase 8.5: 透传 master.cost_tracker (None 兜底) → AgentComputeFn 写 record
-    # getattr 防御: 测试用 _StubMaster 等 fake 不一定有 cost_tracker 字段
+    # Phase 8.12: 透传 master.budget_service (None 兜底) → 3-tier budget check
+    # getattr 防御: 测试用 _StubMaster 等 fake 不一定有 cost_tracker / budget_service 字段
     cost_tracker = getattr(master, "cost_tracker", None)
-    compute = AgentComputeFn(master, cost_tracker=cost_tracker)
+    budget_service = getattr(master, "budget_service", None)
+    compute = AgentComputeFn(
+        master, cost_tracker=cost_tracker, budget_service=budget_service
+    )
     scheduler = GoTScheduler(graph, compute_fn=compute, max_backtracks=max_backtracks)
     return scheduler, graph
 
