@@ -176,6 +176,14 @@ export async function resumeWorkflow(decisionId, option, resolvedBy = 'human') {
  */
 
 /**
+ * @typedef {Object} BudgetStatus
+ * @property {string} status - "ok" | "exceeded"
+ * @property {number} budget_usd - threshold USD
+ * @property {number} used_usd - cumulative USD
+ * @property {number} used_pct - 0-100+ percent
+ */
+
+/**
  * @typedef {Object} WorkflowStatusResponse
  * @property {string} [workflow_name] - Active workflow name
  * @property {boolean} is_active - Whether a workflow is running
@@ -190,11 +198,7 @@ export async function resumeWorkflow(decisionId, option, resolvedBy = 'human') {
  * @property {Object<string, string>} executions - Node execution states
  * @property {Object<string, ScoreEntry>} score_data - S1-S8 score data — Phase 7.6
  * @property {Object<string, number>} cost_by_scenario - Cost breakdown by scenario — Phase 8.7
- * @property {Object} cost_budget_status - Phase 8.8: budget alarm state (empty {} if no budget)
- * @property {string} cost_budget_status.status - "ok" | "exceeded"
- * @property {number} cost_budget_status.budget_usd - threshold USD
- * @property {number} cost_budget_status.used_usd - cumulative USD
- * @property {number} cost_budget_status.used_pct - 0-100+ percent
+ * @property {BudgetStatus} cost_budget_status - Phase 8.8: budget alarm state (empty {} if no budget)
  */
 
 /**

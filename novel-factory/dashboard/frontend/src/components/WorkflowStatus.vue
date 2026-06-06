@@ -84,18 +84,25 @@
     </div>
 
     <!-- Phase 8.8 NEW: cost budget banner -->
-    <div v-if="hasBudget" class="cost-budget-section" :class="budgetStatusClass">
+    <div
+      v-if="hasBudget"
+      class="cost-budget-section"
+      :class="budgetStatusClass"
+      :role="ariaRole"
+      :aria-live="ariaLive"
+      aria-label="成本预算状态"
+    >
       <template v-if="budget.status === 'exceeded'">
         <span class="cost-budget-icon">⚠️</span>
         <span class="cost-budget-text">
-          Budget exceeded: ${{ formatUsd(budget.used_usd) }} / ${{ formatUsd(budget.budget_usd) }}
-          ({{ formatPct(budget.used_pct) }}%) — workflow aborted
+          预算超支: ${{ formatUsd(budget.used_usd) }} / ${{ formatUsd(budget.budget_usd) }}
+          ({{ formatPct(budget.used_pct) }}%) — workflow 已中止
         </span>
       </template>
       <template v-else>
         <span class="cost-budget-icon">💰</span>
         <span class="cost-budget-text">
-          Budget: ${{ formatUsd(budget.used_usd) }} / ${{ formatUsd(budget.budget_usd) }}
+          预算: ${{ formatUsd(budget.used_usd) }} / ${{ formatUsd(budget.budget_usd) }}
           ({{ formatPct(budget.used_pct) }}%)
         </span>
       </template>
@@ -152,6 +159,12 @@ const hasBudget = computed(() =>
 );
 const budgetStatusClass = computed(() =>
   budget.value.status === 'exceeded' ? 'exceeded' : 'ok'
+);
+const ariaRole = computed(() =>
+  budget.value.status === 'exceeded' ? 'alert' : 'status'
+);
+const ariaLive = computed(() =>
+  budget.value.status === 'exceeded' ? 'assertive' : 'polite'
 );
 const formatUsd = (v) => (v == null ? '0.0000' : Number(v).toFixed(4));
 const formatPct = (v) => (v == null ? '0.0' : Number(v).toFixed(1));
@@ -340,7 +353,7 @@ function onResume(decision, option) {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  border-left-width: 4px;
+  border-left-width: 3px;
 }
 
 .cost-budget-section.exceeded {
