@@ -98,6 +98,23 @@ class _StubMaster:
         content = content_a if winner_label == labels[0] else content_b
         return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
 
+    # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
+    # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
+    def polish_merge_synthesis_with_usage(self, content_a, content_b, *, labels=("A", "B")):
+        """Phase 8.7: stub 返 (max(len) fallback dict, 100/50 hardcoded)."""
+        chosen = content_a if len(content_a) >= len(content_b) else content_b
+        winner = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        return (
+            {
+                "content": chosen,
+                "winner": winner,
+                "scores_a": {}, "scores_b": {},
+                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "fallback": "stub_max_len",
+            },
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
     def generate_outline(self, settings, requirements):
         self.calls.append(("generate_outline", {"settings_keys": list(settings.keys())}))
         return {"chapters": [], "volume": 1}
@@ -452,21 +469,25 @@ class TestPolishMergeHandlerScored:
                     "scores_B": {"S1": 5, "S2": 5, "S3": 5, "S4": 5, "S5": 5, "S6": 5, "S7": 5, "S8": 5},
                     "reason": "A wins",
                 }
-            def polish_merge_synthesis(self, content_a, content_b, *, labels=("A", "B")):
-                # 模拟 LLM 评分 — A 9 分, B 5 分
+            def polish_merge_synthesis_with_usage(self, content_a, content_b, *, labels=("A", "B")):
+                # Phase 8.7: handler 改调 _with_usage variant, 模拟 LLM 评分
+                # 返 (scored_dict, usage_dict) tuple (跟其他 5 *_with_usage methods 同模式)
                 total_a = 9.0
                 total_b = 5.0
                 winner = labels[0] if total_a >= total_b else labels[1]
                 content = content_a if winner == labels[0] else content_b
-                return {
-                    "content": content,
-                    "winner": winner,
-                    "scores_a": self._llm_response["scores_A"],
-                    "scores_b": self._llm_response["scores_B"],
-                    "scores_total_a": total_a,
-                    "scores_total_b": total_b,
-                    "scores_delta": total_a - total_b,
-                }
+                return (
+                    {
+                        "content": content,
+                        "winner": winner,
+                        "scores_a": self._llm_response["scores_A"],
+                        "scores_b": self._llm_response["scores_B"],
+                        "scores_total_a": total_a,
+                        "scores_total_b": total_b,
+                        "scores_delta": total_a - total_b,
+                    },
+                    {"input_tokens": 100, "output_tokens": 50},
+                )
 
         master = _ScoringStub()
         compute = AgentComputeFn(master)
@@ -721,3 +742,73 @@ class TestCostTrackerWiring:
         assert records[0].input_tokens == 80
         assert records[0].output_tokens == 40
         assert result.cost_tokens == 120  # 80 + 40 = 120
+
+    def test_polish_merge_handler_returns_tuple(self) -> None:
+        """Phase 8.7: _handler_polish_merge 调 MC variant, 返 (dict, usage) tuple."""
+        from infra.agent_system import master_controller as mc_mod
+        from infra.agent_system.got_bridge import _handler_polish_merge
+
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        # Phase 8.7: handler 调 polish_merge_synthesis_with_usage, 返 tuple
+        master.polish_merge_synthesis_with_usage = lambda **kw: (
+            {
+                "content": "winner content",
+                "winner": "emotional_pacing",
+                "scores_a": {f"S{i}": 8 for i in range(1, 9)},
+                "scores_b": {f"S{i}": 5 for i in range(1, 9)},
+                "scores_total_a": 7.0, "scores_total_b": 4.5, "scores_delta": 0.25,
+            },
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
+        result, usage = _handler_polish_merge(
+            master=master,
+            inputs={
+                "polish_emotional_pacing": {"content": "variant A content here"},
+                "polish_ai_trace_removal": {"content": "variant B content here"},
+            },
+        )
+        # 1. tuple
+        assert isinstance(result, dict)
+        assert usage == {"input_tokens": 100, "output_tokens": 50}
+        # 2. result 含 S1-S8 (Phase 7.6 dashboard radar 依赖)
+        assert "scores_a" in result
+        assert "scores_b" in result
+
+    def test_agent_compute_fn_records_polish_merge_real_usage(self) -> None:
+        """Phase 8.7: _handler_polish_merge 返 tuple → AgentComputeFn 喂 cost_tracker 真实 usage."""
+        from infra.agent_system import master_controller as mc_mod
+
+        cost_tracker = CostTracker()
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        # Phase 8.7: handler 调 master.polish_merge_synthesis_with_usage, stub 该方法返 tuple
+        # (走真实 tuple path 喂 cost_tracker, 替换 Phase 8.5 len()//4 估算)
+        master.polish_merge_synthesis_with_usage = lambda content_a, content_b, *, labels=("A", "B"): (
+            {
+                "content": "winner content",
+                "winner": "emotional_pacing",
+                "scores_a": {}, "scores_b": {},
+                "scores_total_a": 7.0, "scores_total_b": 4.5,
+                "scores_delta": 0.25,
+            },
+            {"input_tokens": 200, "output_tokens": 100},
+        )
+
+        compute = AgentComputeFn(master, cost_tracker=cost_tracker)
+        node = _node("n1", "polish_merge")
+        inputs = {
+            "polish_emotional_pacing": {"content": "A"},
+            "polish_ai_trace_removal": {"content": "B"},
+        }
+        result = compute(node, inputs)
+
+        # 1. success (无 _error, 不 fail)
+        assert result.fail is False
+        # 2. cost_tokens 是真实 200+100=300 (非 len()//4 估算)
+        assert result.cost_tokens == 300
+        # 3. cost_tracker 收到真实 200/100
+        recs = cost_tracker.records()
+        assert len(recs) == 1
+        assert recs[0].scenario == "polish_merge"
+        assert recs[0].input_tokens == 200
+        assert recs[0].output_tokens == 100

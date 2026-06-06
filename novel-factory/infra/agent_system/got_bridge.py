@@ -145,11 +145,13 @@ def _make_polish_handler(method_name: str) -> HandlerFn:
     return handler
 
 
-def _handler_polish_merge(master: MasterController, inputs: dict[str, Any]) -> dict[str, Any]:
-    """Phase 7.5: scenario=polish_merge — 调 master.polish_merge_synthesis, LLM S1-S8 加权选高者
+def _handler_polish_merge(master: MasterController, inputs: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
+    """scenario=polish_merge — 调 master.polish_merge_synthesis_with_usage 拿真实 usage.
 
-    收集 2 个上游 variant (按 input key 排序, 确定性), 调 master 评分。
-    1 上游 → 兜底, 0 上游 → _error。LLM 失败由 master 内部兜底 max(len)。
+    Phase 7.5: 收集 2 个上游 variant, 调 LLM 评分选高者.
+    Phase 8.7: 改调 _with_usage variant, 返 (output_dict, usage_dict) tuple
+              (跟其他 4 handlers 同模式). 旧 polish_merge_synthesis method 保留
+              (backward compat).
     """
     # 按 input key 排序收集 (确定性 — 同 input 顺序下, winner 一致)
     variants: dict[str, str] = {}
@@ -158,25 +160,31 @@ def _handler_polish_merge(master: MasterController, inputs: dict[str, Any]) -> d
             variants[upstream_id] = upstream["content"]
 
     if not variants:
-        return {"_error": "polish_merge requires >= 1 upstream with content"}
+        return (
+            {"_error": "polish_merge requires >= 1 upstream with content"},
+            {"input_tokens": 0, "output_tokens": 0},
+        )
 
     if len(variants) == 1:
         only_id, only_content = next(iter(variants.items()))
-        return {
-            "content": only_content,
-            "winner": only_id,
-            "scores_a": {},
-            "scores_b": {},
-            "scores_total_a": 0.0,
-            "scores_total_b": 0.0,
-            "scores_delta": 0.0,
-            "fallback": "single_upstream",
-        }
+        return (
+            {
+                "content": only_content,
+                "winner": only_id,
+                "scores_a": {},
+                "scores_b": {},
+                "scores_total_a": 0.0,
+                "scores_total_b": 0.0,
+                "scores_delta": 0.0,
+                "fallback": "single_upstream",
+            },
+            {"input_tokens": 0, "output_tokens": 0},
+        )
 
-    # 2+ variants 调 LLM 评分
+    # 2+ variants 调 MC variant 拿 (scored_dict, usage)
     ids = list(variants.keys())
     label_a, label_b = ids[0], ids[1]
-    return master.polish_merge_synthesis(
+    return master.polish_merge_synthesis_with_usage(
         content_a=variants[label_a],
         content_b=variants[label_b],
         labels=(label_a, label_b),
