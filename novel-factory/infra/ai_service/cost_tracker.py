@@ -1,6 +1,10 @@
-"""成本追踪 — Phase 2.13
+"""成本追踪 — Phase 2.13 + Phase 8.8 budget alarm
 
 Doc 2 §6.3: 每次 LLM 调用记录 (scenario, tier, tokens, cost),支持维度聚合。
+
+Phase 8.8 新增:
+- CostBudgetExceeded exception
+- CostTracker.check_budget() 同步检查总成本是否超阈值
 
 设计:
 - CostRecord: 不可变单次记录 (含时间戳)
@@ -41,6 +45,23 @@ class CostRecord:
             f"CostRecord({self.scenario!r}, {self.tier.value}, "
             f"in={self.input_tokens}, out={self.output_tokens}, "
             f"${self.cost_usd:.4f})"
+        )
+
+
+class CostBudgetExceeded(Exception):
+    """Phase 8.8: raised by CostTracker.check_budget when total_cost() > budget_usd.
+
+    Attributes are exposed for caller introspection (no re-parsing of message).
+    Strictly greater than triggers (equal is OK).
+    """
+
+    def __init__(self, used_usd: float, budget_usd: float, scenario: str | None = None) -> None:
+        self.used_usd = used_usd
+        self.budget_usd = budget_usd
+        self.scenario = scenario
+        scenario_msg = f" (last scenario: {scenario})" if scenario else ""
+        super().__init__(
+            f"Cost budget exceeded: ${used_usd:.4f} / ${budget_usd:.4f}{scenario_msg}"
         )
 
 
@@ -131,3 +152,24 @@ class CostTracker:
     def reset(self) -> None:
         """清空所有记录"""
         self._records.clear()
+
+    def check_budget(self, budget_usd: Optional[float]) -> None:
+        """Phase 8.8: enforce hard cap on cumulative cost. No-op when budget_usd is None.
+
+        Raises CostBudgetExceeded if self.total_cost() > budget_usd.
+        Strictly greater than (equal is OK, only over-budget triggers).
+
+        Args:
+            budget_usd: 阈值 (USD)。None 表示 unlimited,不抛。
+
+        Raises:
+            CostBudgetExceeded: 累计 cost > 阈值
+        """
+        if budget_usd is None:
+            return  # unlimited
+        used = self.total_cost()
+        if used > budget_usd:
+            last_scenario = self._records[-1].scenario if self._records else None
+            raise CostBudgetExceeded(
+                used_usd=used, budget_usd=budget_usd, scenario=last_scenario
+            )

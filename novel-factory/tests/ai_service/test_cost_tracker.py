@@ -158,3 +158,45 @@ class TestImportContract:
         text = repr(r)
         assert "chapter_writing" in text
         assert "sonnet" in text
+
+
+class TestCheckBudget:
+    """Phase 8.8: CostTracker.check_budget() enforces hard cap on cumulative cost.
+
+    - check_budget(None) → no-op (unlimited)
+    - check_budget(0.0) with any cost → raise
+    - check_budget(very_large) → no-op
+    - check_budget(very_small) → raise
+    - exact equal → no raise (strict >)
+    """
+
+    def test_check_budget_none_always_passes(self):
+        tracker = CostTracker()
+        # Record 大量 cost, budget=None 不该 raise
+        tracker.record("s1", ModelTier.OPUS, 1_000_000, 1_000_000)  # cost = $15 + $75 = $90
+        tracker.check_budget(None)  # 不抛
+
+    def test_check_budget_under_threshold_passes(self):
+        tracker = CostTracker()
+        # cost = $10.5 (1M SONNET input $3 + 500K SONNET output $7.5)
+        tracker.record("s1", ModelTier.SONNET, 1_000_000, 500_000)
+        # budget = $20.0, used = $10.5, OK
+        tracker.check_budget(20.0)
+
+    def test_check_budget_over_threshold_raises(self):
+        tracker = CostTracker()
+        # 制造 $90 cost
+        tracker.record("s1", ModelTier.OPUS, 1_000_000, 1_000_000)
+        # budget = $0.001, used = $90, raise
+        with pytest.raises(Exception) as exc_info:  # CostBudgetExceeded
+            tracker.check_budget(0.001)
+        # Exception message contains "exceeded"
+        assert "exceeded" in str(exc_info.value).lower()
+
+    def test_check_budget_exact_threshold_passes(self):
+        tracker = CostTracker()
+        # cost = $90 (OPUS 1M+1M)
+        tracker.record("s1", ModelTier.OPUS, 1_000_000, 1_000_000)
+        used = tracker.total_cost()
+        # 严格 > 触发,等号 OK
+        tracker.check_budget(used)  # 应该不抛
