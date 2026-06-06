@@ -867,8 +867,8 @@ class TestCostByScenarioExtraction:
         直接 send_json 该 dict — 故 Task 4.2 在 MasterControllerAdapter.get_active_workflow_status
         加 cost_by_scenario 字段, WebSocket 自动获得, 0 改 endpoint 协议.
         """
-        from infra.agent_system.master_controller import MasterController
         from dashboard.protocols import MasterControllerAdapter
+        from infra.agent_system.master_controller import MasterController
 
         cost_tracker = CostTracker()
         cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
