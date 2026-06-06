@@ -19,6 +19,7 @@
           <span class="nav-label">{{ item.label }}</span>
         </a>
       </nav>
+      <SidebarCostBanner :status="status" /> <!-- Phase 8.11 -->
     </aside>
 
     <!-- Main Content -->
@@ -49,8 +50,11 @@ import { ref } from 'vue'
 import OverviewPage from './pages/OverviewPage.vue'
 import DecisionsPage from './pages/DecisionsPage.vue'
 import WorkflowsPage from './pages/WorkflowsPage.vue'
+import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
+import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
 
 const activeNav = ref('overview')
+const { status } = useWorkflowSocket() // Phase 8.11
 
 const navItems = [
   { id: 'overview', label: '总览', icon: '📊' },
