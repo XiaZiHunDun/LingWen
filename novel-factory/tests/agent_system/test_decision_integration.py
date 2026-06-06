@@ -186,6 +186,23 @@ class _StubMaster:
         content = content_a if winner_label == labels[0] else content_b
         return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
 
+    # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
+    # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
+    def polish_merge_synthesis_with_usage(self, content_a, content_b, *, labels=("A", "B")):
+        """Phase 8.7: stub 返 (max(len) fallback dict, 100/50 hardcoded)."""
+        chosen = content_a if len(content_a) >= len(content_b) else content_b
+        winner = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        return (
+            {
+                "content": chosen,
+                "winner": winner,
+                "scores_a": {}, "scores_b": {},
+                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "fallback": "stub_max_len",
+            },
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
     def generate_outline(self, settings, requirements):
         return {"chapters": [], "volume": 1}
 

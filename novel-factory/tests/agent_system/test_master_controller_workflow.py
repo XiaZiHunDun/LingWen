@@ -51,6 +51,23 @@ class _StubMaster:
         content = content_a if winner_label == labels[0] else content_b
         return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
 
+    # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
+    # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
+    def polish_merge_synthesis_with_usage(self, content_a, content_b, *, labels=("A", "B")):
+        """Phase 8.7: stub 返 (max(len) fallback dict, 100/50 hardcoded)."""
+        chosen = content_a if len(content_a) >= len(content_b) else content_b
+        winner = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        return (
+            {
+                "content": chosen,
+                "winner": winner,
+                "scores_a": {}, "scores_b": {},
+                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "fallback": "stub_max_len",
+            },
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
     def generate_outline(self, settings, requirements):
         return {"chapters": [], "volume": 1}
 
@@ -136,6 +153,23 @@ class _StubAgents:
         content = content_a if winner_label == labels[0] else content_b
         return {"content": content, "winner": winner_label, "scores_a": {}, "scores_b": {}, "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0, "fallback": "llm_fail"}
 
+    # Phase 8.7: stub polish_merge_synthesis_with_usage — 跟 5 *_with_usage methods 同模式
+    # 返 (max(len) fallback dict, hardcoded 100/50). _handler_polish_merge 改调此方法.
+    def polish_merge_synthesis_with_usage(self, content_a, content_b, *, labels=("A", "B")):
+        """Phase 8.7: stub 返 (max(len) fallback dict, 100/50 hardcoded)."""
+        chosen = content_a if len(content_a) >= len(content_b) else content_b
+        winner = labels[0] if len(content_a) >= len(content_b) else labels[1]
+        return (
+            {
+                "content": chosen,
+                "winner": winner,
+                "scores_a": {}, "scores_b": {},
+                "scores_total_a": 0.0, "scores_total_b": 0.0, "scores_delta": 0.0,
+                "fallback": "stub_max_len",
+            },
+            {"input_tokens": 100, "output_tokens": 50},
+        )
+
     def generate_outline(self, settings, requirements):
         return {"chapters": [], "volume": 1}
 
@@ -189,6 +223,11 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
             "polish_chapter_with_usage": stub.polish_chapter_with_usage,
             "optimize_dialogue_llm_with_usage": lambda content: (content + " (dialogue)", {"input_tokens": 100, "output_tokens": 50}),
             "adjust_pacing_llm_with_usage": lambda content: (content + " (pacing)", {"input_tokens": 100, "output_tokens": 50}),
+            # Phase 8.7: 加 polish_merge_synthesis_with_usage (虽然实际 handler 调 master, 但 stub 完整保)
+            "polish_merge_synthesis_with_usage": lambda content_a, content_b, *, labels=("A", "B"): (
+                content_a if len(content_a) >= len(content_b) else content_b,
+                {"input_tokens": 100, "output_tokens": 50},
+            ),
         },
     )()
     # outline_master 需要 .schema.get_chapter_outline (write_chapter 调它)
