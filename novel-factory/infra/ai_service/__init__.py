@@ -30,7 +30,7 @@ from .base import (
 )
 
 # Phase 2.11 — 多模型分级路由
-from .cost_tracker import CostRecord, CostTracker
+from .cost_tracker import CostBudgetExceeded, CostRecord, CostTracker
 from .minimax_provider import MiniMaxProvider
 from .model_tiers import MODEL_TIERS, ModelTier, ModelTierConfig, compute_cost
 
@@ -65,4 +65,6 @@ __all__ = [
     # Phase 2.13
     "CostRecord",
     "CostTracker",
+    # Phase 8.8
+    "CostBudgetExceeded",
 ]

@@ -184,13 +184,19 @@ class TestCheckBudget:
         tracker.check_budget(20.0)
 
     def test_check_budget_over_threshold_raises(self):
+        from infra.ai_service.cost_tracker import CostBudgetExceeded
+
         tracker = CostTracker()
         # 制造 $90 cost
         tracker.record("s1", ModelTier.OPUS, 1_000_000, 1_000_000)
         # budget = $0.001, used = $90, raise
-        with pytest.raises(Exception) as exc_info:  # CostBudgetExceeded
+        with pytest.raises(CostBudgetExceeded) as exc_info:
             tracker.check_budget(0.001)
-        # Exception message contains "exceeded"
+        # Attributes exposed for caller introspection
+        assert exc_info.value.used_usd == pytest.approx(90.0)
+        assert exc_info.value.budget_usd == 0.001
+        assert exc_info.value.scenario == "s1"
+        # Message also informative
         assert "exceeded" in str(exc_info.value).lower()
 
     def test_check_budget_exact_threshold_passes(self):
