@@ -74,12 +74,21 @@
       :winner="firstScore.winner || ''"
       :fallback="firstScore.fallback"
     />
+
+    <div v-if="hasCost" class="cost-section">
+      <h4 class="section-title">💰 Token 成本 (累计 USD)</h4>
+      <p class="cost-total-usd">
+        总计: ${{ totalCostText }}
+      </p>
+      <CostBarChart :cost-by-scenario="status.cost_by_scenario || {}" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import ScoreRadarChart from './ScoreRadarChart.vue';
+import CostBarChart from './CostBarChart.vue';
 
 const props = defineProps({
   status: {
@@ -108,6 +117,16 @@ const scoreEntries = computed(() => {
 });
 const firstScore = computed(() => scoreEntries.value[0]?.[1] || null);
 const hasScores = computed(() => scoreEntries.value.length > 0);
+
+const costByScenario = computed(() => props.status?.cost_by_scenario || {});
+const hasCost = computed(() => {
+  const data = costByScenario.value;
+  return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0);
+});
+const totalCostText = computed(() => {
+  const v = Number(props.status?.total_cost_usd ?? 0);
+  return v.toFixed(4);
+});
 
 function onResume(decision, option) {
   emit('resume', { decisionId: decision.decision_id, option });
@@ -264,5 +283,22 @@ function onResume(decision, option) {
 .resume-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 2px 2px 0 var(--border-color);
+}
+
+.cost-section {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cost-total-usd {
+  font-size: 10px;
+  font-family: 'Press Start 2P', monospace;
+  color: var(--color-accent);
+  margin: 0;
 }
 </style>

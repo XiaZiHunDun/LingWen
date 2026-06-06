@@ -163,6 +163,36 @@ export async function resumeWorkflow(decisionId, option, resolvedBy = 'human') {
 }
 
 /**
+ * @typedef {Object} ScoreEntry
+ * @property {Object<string, number>} scores_a - S1-S8 scores for variant A
+ * @property {Object<string, number>} scores_b - S1-S8 scores for variant B
+ * @property {number} scores_total_a - Total score for variant A
+ * @property {number} scores_total_b - Total score for variant B
+ * @property {number} scores_delta - Score delta (a - b)
+ * @property {string} winner - Winning variant label
+ * @property {string} label_a - Display label for variant A
+ * @property {string} label_b - Display label for variant B
+ * @property {string|null} fallback - Fallback reason if LLM scoring failed
+ */
+
+/**
+ * @typedef {Object} WorkflowStatusResponse
+ * @property {string} [workflow_name] - Active workflow name
+ * @property {boolean} is_active - Whether a workflow is running
+ * @property {number} completed - Number of completed nodes
+ * @property {number} failed - Number of failed nodes
+ * @property {boolean} paused - Whether the workflow is paused
+ * @property {string[]} paused_nodes - List of paused node IDs
+ * @property {number} node_count - Total number of nodes
+ * @property {number} steps - Number of steps executed
+ * @property {number} total_cost_usd - Total accumulated cost (USD) — Phase 8.5
+ * @property {Object[]} pending_decisions - Pending human decisions
+ * @property {Object<string, string>} executions - Node execution states
+ * @property {Object<string, ScoreEntry>} score_data - S1-S8 score data — Phase 7.6
+ * @property {Object<string, number>} cost_by_scenario - Cost breakdown by scenario — Phase 8.7
+ */
+
+/**
  * 查询当前活跃工作流状态
  * @returns {Promise<WorkflowStatusResponse>}
  */
