@@ -729,6 +729,135 @@ class TestScoreDataExtraction:
         assert data["score_data"]["polish_merge"]["label_a"] == "polish_emotional_pacing"
 
 
+# === TestCostByScenarioExtraction (Phase 8.7 NEW) ===
+
+class TestCostByScenarioExtraction:
+    """Phase 8.7: _extract_cost_by_scenario helper + WorkflowStatusResponse.cost_by_scenario
+
+    跟 _extract_total_cost (Phase 8.5) 同模式: getattr 兜底 cost_tracker=None,
+    返 {} empty dict. 修 Phase 8.5 留 gap: _workflow_result_to_response
+    实际未透传 total_cost_usd — POST /run + /resume 端点返 total_cost_usd=0 hardcoded.
+    """
+
+    def test_extract_cost_by_scenario_from_controller(self) -> None:
+        """正常 path: cost_tracker 有 3 scenario records → dict 3 keys."""
+        from dashboard.protocols import _extract_cost_by_scenario
+
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        tracker.record("chapter_review", ModelTier.SONNET, 100, 50)
+        tracker.record("polish_merge", ModelTier.HAIKU, 200, 100)
+
+        # 用 MasterController.__new__ bypass __init__ 注入 cost_tracker
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master.cost_tracker = tracker
+
+        result = _extract_cost_by_scenario(master)
+        assert isinstance(result, dict)
+        assert "chapter_writing" in result
+        assert "chapter_review" in result
+        assert "polish_merge" in result
+        # cost_usd > 0 (Phase 8.5 baseline 验证)
+        assert all(v > 0 for v in result.values())
+
+    def test_extract_cost_by_scenario_empty_when_no_tracker(self) -> None:
+        """兜底 path: cost_tracker=None 或无 cost_tracker 属性 → 返 {}."""
+        from dashboard.protocols import _extract_cost_by_scenario
+
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        # 故意不设 cost_tracker
+        result = _extract_cost_by_scenario(master)
+        assert result == {}
+
+    def test_workflow_status_response_includes_cost_by_scenario(self, tmp_path: Path) -> None:
+        """GET /api/workflows/active 返 cost_by_scenario 字段 (跟 score_data 同模式)."""
+        from dashboard.protocols import MasterControllerAdapter
+
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        cost_tracker = CostTracker()
+        cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        master.cost_tracker = cost_tracker
+
+        # 注入 _last_* 缓存 (get_active_workflow_status 需要)
+        class _StubGraph:
+            def node_ids(self): return []
+            def has_execution(self, nid): return False
+            def get_execution(self, nid): return None
+            def get_node(self, nid): return None
+        class _StubSummary:
+            steps = 0
+        class _StubScheduler:
+            _summary = _StubSummary()
+        master._last_scheduler = _StubScheduler()
+        master._last_graph = _StubGraph()
+        master._last_workflow_name = "novel_writing"
+
+        adapter = MasterControllerAdapter(master)
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
+        client = TestClient(app)
+        response = client.get("/api/workflows/active")
+        assert response.status_code == 200
+        data = response.json()
+        assert "cost_by_scenario" in data
+        assert "chapter_writing" in data["cost_by_scenario"]
+        assert data["cost_by_scenario"]["chapter_writing"] > 0
+
+    def test_workflow_run_response_includes_cost_by_scenario(self, tmp_path: Path) -> None:
+        """修 Phase 8.5 gap: POST /api/workflows/run 也返 cost_by_scenario 字段 (透传).
+
+        走真实 FastAPI endpoint + custom stub (满足 Protocol + 携带 cost_tracker)
+        验证 run endpoint 走 helper → 透传到 WorkflowStatusResponse.
+        """
+        from dashboard.app import _workflow_result_to_response
+
+        # custom stub:有 cost_tracker + run_workflow 返合法 result
+        cost_tracker = CostTracker()
+        cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+
+        class _CostStub:
+            """满足 MasterControllerLike + 携带 cost_tracker (跟 Phase 8.5 stub 模式)."""
+
+            def __init__(self):
+                self.cost_tracker = cost_tracker
+
+            def list_pending_decisions(self): return []
+            def get_decision_queue(self): return None
+            def resolve_decision(self, *a, **kw): raise NotImplementedError
+            def defer_decision(self, *a, **kw): raise NotImplementedError
+            def cancel_decision(self, *a, **kw): raise NotImplementedError
+            def get_active_workflow_status(self): return {"is_active": False, "pending_decisions": []}
+
+            def run_workflow(self, workflow_name, **kwargs):
+                return {
+                    "summary": _FakeSummary(
+                        completed=1, steps=1, node_count=1, paused=False, paused_nodes=(),
+                    ),
+                    "graph": None,
+                    "executions": {},
+                    "pending_decisions": [],
+                    "workflow_name": workflow_name,
+                }
+
+            def resume_workflow(self, *a, **kw): raise NotImplementedError
+
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=_CostStub())
+        client = TestClient(app)
+
+        response = client.post(
+            "/api/workflows/run",
+            json={"workflow_name": "novel_writing"},
+        )
+        assert response.status_code == 200, f"got {response.status_code}: {response.text}"
+        data = response.json()
+        # Phase 8.7: 新字段 — cost_by_scenario 透传 (not hardcoded empty)
+        assert "cost_by_scenario" in data
+        assert "chapter_writing" in data["cost_by_scenario"]
+        assert data["cost_by_scenario"]["chapter_writing"] > 0
+        # Phase 8.5 修 gap: total_cost_usd 不再 hardcoded 0
+        assert "total_cost_usd" in data
+        assert data["total_cost_usd"] > 0
+
+
 # === TestTotalCostUsdField (Phase 8.5 NEW) ===
 
 class TestTotalCostUsdField:

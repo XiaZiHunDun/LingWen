@@ -21,7 +21,11 @@ from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
-from dashboard.protocols import MasterControllerLike
+from dashboard.protocols import (
+    MasterControllerLike,
+    _extract_cost_by_scenario,
+    _extract_total_cost,
+)
 from dashboard.ws import (
     EVENT_CONNECTED,
     ConnectionManager,
@@ -137,6 +141,7 @@ class WorkflowStatusResponse(BaseModel):
     pending_decisions: list[dict[str, Any]] = Field(default_factory=list)
     executions: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
     score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据
+    cost_by_scenario: dict[str, float] = Field(default_factory=dict)  # Phase 8.7: by-scenario 累计 USD
 
 
 class WorkflowMermaidResponse(BaseModel):
@@ -640,7 +645,14 @@ def create_app(
             if "MaxSteps" in err_type:
                 raise HTTPException(status_code=500, detail=f"max steps: {e}")
             raise HTTPException(status_code=500, detail=str(e))
-        return _workflow_result_to_response(result)
+        # Phase 8.7: 修 Phase 8.5 gap — 透传 cost_by_scenario + total_cost_usd
+        # getattr 兜底 _controller 字段 (测试 stub 可能没,fallback 用 ctrl 自身)
+        inner_ctrl = getattr(ctrl, "_controller", ctrl)
+        return _workflow_result_to_response(
+            result,
+            cost_by_scenario=_extract_cost_by_scenario(inner_ctrl),
+            total_cost_usd=_extract_total_cost(inner_ctrl),
+        )
 
     @app.post(
         "/api/workflows/resume",
@@ -663,7 +675,13 @@ def create_app(
             raise HTTPException(status_code=500, detail=str(e))
         except Exception as e:  # noqa: BLE001
             raise HTTPException(status_code=500, detail=str(e))
-        return _workflow_result_to_response(result)
+        # Phase 8.7: 修 Phase 8.5 gap — 透传 cost_by_scenario + total_cost_usd
+        inner_ctrl = getattr(ctrl, "_controller", ctrl)
+        return _workflow_result_to_response(
+            result,
+            cost_by_scenario=_extract_cost_by_scenario(inner_ctrl),
+            total_cost_usd=_extract_total_cost(inner_ctrl),
+        )
 
     @app.get("/api/workflows/active", response_model=WorkflowStatusResponse)
     def get_active_workflow() -> WorkflowStatusResponse:
@@ -795,10 +813,18 @@ def create_app(
     return app
 
 
-def _workflow_result_to_response(result: dict[str, Any]) -> WorkflowStatusResponse:
+def _workflow_result_to_response(
+    result: dict[str, Any],
+    score_data: dict[str, dict[str, Any]] | None = None,
+    cost_by_scenario: dict[str, float] | None = None,  # Phase 8.7
+    total_cost_usd: float = 0.0,  # Phase 8.7: 修 Phase 8.5 gap
+) -> WorkflowStatusResponse:
     """run_workflow / resume_workflow 返回 dict → WorkflowStatusResponse
 
     summary 可能是 dict (adapter 转换后) 或 dataclass (测试 stub 直接返回)
+
+    Phase 8.7: 修 Phase 8.5 gap — 显式接 cost_by_scenario + total_cost_usd params
+    透传到 response (不再 hardcoded 0)
     """
     summary = result.get("summary") or {}
     if not isinstance(summary, dict):
@@ -826,6 +852,9 @@ def _workflow_result_to_response(result: dict[str, Any]) -> WorkflowStatusRespon
         node_count=int(summary_dict.get("node_count", len(executions))),
         steps=int(summary_dict.get("steps", 0)),
         pending_decisions=list(result.get("pending_decisions", [])),
+        score_data=score_data or {},
+        cost_by_scenario=cost_by_scenario or {},  # Phase 8.7
+        total_cost_usd=total_cost_usd,  # Phase 8.7: 修 Phase 8.5 gap
     )
 
 

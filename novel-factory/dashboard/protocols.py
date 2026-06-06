@@ -280,6 +280,7 @@ class MasterControllerAdapter:
                 for nid, ex in executions.items()
             },
             "score_data": score_data,  # Phase 7.6
+            "cost_by_scenario": _extract_cost_by_scenario(self._controller),  # Phase 8.7
             # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
             "total_cost_usd": _extract_total_cost(self._controller),
         }
@@ -298,6 +299,25 @@ def _extract_total_cost(controller: Any) -> float:
     except Exception as exc:
         logger.warning("cost_tracker.total_cost() failed: %s", exc)
         return 0.0
+
+
+def _extract_cost_by_scenario(controller: Any) -> dict[str, float]:
+    """Phase 8.7: 跟 _extract_total_cost 同模式 — 拿 controller.cost_tracker 调 cost_by_scenario().
+
+    Args:
+        controller: MasterController 实例 (decoupling Protocol)
+
+    Returns:
+        dict[scenario, cost_usd] — 空 dict if cost_tracker is None / 无该属性 / 无 records
+    """
+    cost_tracker = getattr(controller, "cost_tracker", None)
+    if cost_tracker is None:
+        return {}
+    try:
+        return dict(cost_tracker.cost_by_scenario())
+    except Exception as exc:
+        logger.warning("cost_tracker.cost_by_scenario() failed: %s", exc)
+        return {}
 
 
 # === 序列化 helpers ===
