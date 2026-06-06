@@ -374,11 +374,8 @@ class TestNovelWritingE2E:
             },
         )
         recs = cost_tracker.records()
-        # 至少 4 LLM calls (write + audit + polish_e + polish_a), 每笔 100/50
-        # polish_emotional_pacing sums 2 LLM (dialogue + pacing) → 200 input
-        # polish_merge_synthesis 无 _with_usage variant (留 Phase 8.7), 走 dict path
-        # 估算法 (len()//4), 故 5th record 可能是估算值
-        assert len(recs) >= 4, f"expected >= 4 records, got {len(recs)}"
+        # Phase 8.7: 5 LLM calls (write + audit + polish_e + polish_a + polish_merge),
+        # 5th 是 polish_merge 走 _with_usage variant.
         # 真实 usage 不是 0
         total = sum(r.input_tokens + r.output_tokens for r in recs)
         assert total > 0
@@ -391,6 +388,23 @@ class TestNovelWritingE2E:
             assert r.output_tokens in (50, 100), (
                 f"expected output_tokens=50 (or 100 for polish_e sum), got {r.output_tokens}"
             )
+        # 5th (polish_merge): StubProvider 返相同响应 → identical content →
+        # identical fallback (Phase 7.5) → 0/0 (无 LLM call, 正常契约).
+        # 生产 2 variant 不同时会走 LLM scoring → 100/50.
+        # 验证 polish_merge handler 被调用 (scenario + record 存在) + usage 合理
+        # (0=identical 兜底 / 100=distinct 真调).
+        merge_rec = recs[4]
+        assert merge_rec.scenario == "polish_merge", (
+            f"expected 5th record scenario=polish_merge, got {merge_rec.scenario}"
+        )
+        assert merge_rec.input_tokens in (100, 0), (
+            f"expected 5th input_tokens=100 (distinct) or 0 (identical fallback), "
+            f"got {merge_rec.input_tokens}"
+        )
+        assert merge_rec.output_tokens in (50, 0), (
+            f"expected 5th output_tokens=50 (distinct) or 0 (identical fallback), "
+            f"got {merge_rec.output_tokens}"
+        )
 
 
 class TestRouterFailure:

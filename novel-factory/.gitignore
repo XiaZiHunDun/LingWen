@@ -113,3 +113,7 @@ Thumbs.dblogs/lingwen.json
 # Runtime artifacts (R2-012: 社交引擎)
 infra/agent_system/social_engine/relationship_network.db
 infra/agent_system/social_engine/relationship_network.db-*
+
+# Phase 8.7: CostTracker SQLite 持久化 (R2-013: cost tracking)
+infra/.state/cost_tracker.db
+infra/.state/cost_tracker.db-*
