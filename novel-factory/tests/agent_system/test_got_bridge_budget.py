@@ -20,9 +20,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from infra.agent_system.got_bridge import AgentComputeFn
 from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
 from infra.ai_service.model_tiers import ModelTier
-from infra.agent_system.got_bridge import AgentComputeFn
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult
 
