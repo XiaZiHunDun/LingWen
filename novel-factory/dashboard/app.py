@@ -146,6 +146,7 @@ class WorkflowStatusResponse(BaseModel):
     executions: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
     score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据
     cost_by_scenario: dict[str, float] = Field(default_factory=dict)  # Phase 8.7: by-scenario 累计 USD
+    cost_budget_status: dict[str, Any] = Field(default_factory=dict)  # Phase 8.8 T5: budget alarm 状态
 
 
 class WorkflowMermaidResponse(BaseModel):

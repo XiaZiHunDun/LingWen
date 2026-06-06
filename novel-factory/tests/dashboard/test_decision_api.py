@@ -945,3 +945,118 @@ class TestTotalCostUsdField:
         # SONNET 1000/500 = 1000*3e-6 + 500*15e-6 = 0.003 + 0.0075 = 0.0105
         assert data["total_cost_usd"] == pytest.approx(0.0105, abs=1e-6)
 
+
+# === TestBudgetStatusExtraction (Phase 8.8 T5 NEW) ===
+
+class TestBudgetStatusExtraction:
+    """Phase 8.8 T5: _extract_budget_status adapter 跟 Phase 8.7 _extract_cost_by_scenario 对称.
+
+    - 无 budget / 无 cost_tracker → 返 {} (silent degrade, 跟 _extract_cost_by_scenario 同模式)
+    - 有 budget + cost_tracker 记录 → 返 {status, budget_usd, used_usd, used_pct}
+    - 累计 cost > budget → status="exceeded", used_pct > 100
+    - 累计 cost < budget → status="ok", used_pct < 100
+    """
+
+    def _make_controller_with_budget(
+        self,
+        budget: Optional[float] = 10.0,
+        cost_usd: float = 0.0,
+        has_tracker: bool = True,
+    ) -> Any:
+        """Build a MasterController-like stub with cost_tracker + _current_budget_usd"""
+        from infra.agent_system.master_controller import MasterController
+        from infra.ai_service.cost_tracker import CostTracker
+
+        ctrl = MasterController.__new__(MasterController)
+        ctrl.cost_tracker = CostTracker() if has_tracker else None
+        if has_tracker and cost_usd > 0:
+            # SONNET 1000 in / 0 out = 0.003 USD → record 1 笔 SONNET 1M tokens ≈ $3
+            ctrl.cost_tracker.record("chapter_writing", ModelTier.SONNET, 1_000_000, 0)
+        ctrl._current_budget_usd = budget
+        return ctrl
+
+    def test_extract_returns_ok_status_when_under_budget(self) -> None:
+        from dashboard.protocols import _extract_budget_status
+
+        ctrl = self._make_controller_with_budget(budget=10.0, cost_usd=3.0)
+        result = _extract_budget_status(ctrl)
+        assert result["status"] == "ok"
+        assert result["budget_usd"] == 10.0
+        assert result["used_usd"] > 0
+        # 3/10 = 30%
+        assert result["used_pct"] < 100.0
+        assert result["used_pct"] > 0.0
+
+    def test_extract_returns_exceeded_status_when_over_budget(self) -> None:
+        from dashboard.protocols import _extract_budget_status
+
+        ctrl = self._make_controller_with_budget(budget=0.001, cost_usd=3.0)  # way over
+        result = _extract_budget_status(ctrl)
+        assert result["status"] == "exceeded"
+        assert result["budget_usd"] == 0.001
+        assert result["used_usd"] > 0.001
+        # used_pct > 100 (over budget)
+        assert result["used_pct"] > 100.0
+
+    def test_extract_returns_empty_when_no_budget(self) -> None:
+        from dashboard.protocols import _extract_budget_status
+
+        ctrl = self._make_controller_with_budget(budget=None, cost_usd=3.0)
+        result = _extract_budget_status(ctrl)
+        assert result == {}
+
+    def test_extract_returns_empty_when_no_cost_tracker(self) -> None:
+        from dashboard.protocols import _extract_budget_status
+
+        ctrl = self._make_controller_with_budget(budget=5.0, has_tracker=False)
+        result = _extract_budget_status(ctrl)
+        assert result == {}
+
+    def test_workflow_active_includes_cost_budget_status(self, tmp_path: Path) -> None:
+        """Phase 8.8 T5: GET /api/workflows/active 返 cost_budget_status 字段.
+
+        MasterControllerAdapter.get_active_workflow_status 应调用 _extract_budget_status
+        并把结果塞进返回 dict (跟 cost_by_scenario 同模式), 然后 WorkflowStatusResponse
+        通过 **kwargs 序列化.
+        """
+        from dashboard.protocols import MasterControllerAdapter
+
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        master.cost_tracker = CostTracker()
+        master.cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        master._current_budget_usd = 1.0  # under budget
+
+        class _StubGraph:
+            def node_ids(self): return []
+            def has_execution(self, nid): return False
+            def get_execution(self, nid): return None
+            def get_node(self, nid): return None
+        class _StubSummary:
+            steps = 0
+        class _StubScheduler:
+            _summary = _StubSummary()
+        master._last_scheduler = _StubScheduler()
+        master._last_graph = _StubGraph()
+        master._last_workflow_name = "novel_writing"
+
+        adapter = MasterControllerAdapter(master)
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
+        client = TestClient(app)
+        response = client.get("/api/workflows/active")
+        assert response.status_code == 200
+        data = response.json()
+        # T5: cost_budget_status 字段
+        assert "cost_budget_status" in data
+        bs = data["cost_budget_status"]
+        assert bs["status"] == "ok"
+        assert bs["budget_usd"] == 1.0
+        assert bs["used_usd"] > 0
+        assert bs["used_pct"] < 100.0
+        # 无 budget 透传 (master._current_budget_usd is None) → cost_budget_status={}
+        # 重新跑一次, 验证 silent degrade
+        master._current_budget_usd = None
+        response2 = client.get("/api/workflows/active")
+        assert response2.status_code == 200
+        data2 = response2.json()
+        assert data2["cost_budget_status"] == {}
+

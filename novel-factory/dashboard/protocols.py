@@ -281,6 +281,7 @@ class MasterControllerAdapter:
             },
             "score_data": score_data,  # Phase 7.6
             "cost_by_scenario": _extract_cost_by_scenario(self._controller),  # Phase 8.7
+            "cost_budget_status": _extract_budget_status(self._controller),  # Phase 8.8 T5
             # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
             "total_cost_usd": _extract_total_cost(self._controller),
         }
@@ -317,6 +318,43 @@ def _extract_cost_by_scenario(controller: Any) -> dict[str, float]:
         return dict(cost_tracker.cost_by_scenario())
     except Exception as exc:
         logger.warning("cost_tracker.cost_by_scenario() failed: %s", exc)
+        return {}
+
+
+def _extract_budget_status(controller: Any) -> dict[str, Any]:
+    """Phase 8.8 T5: 拿 controller._current_budget_usd + cost_tracker 算 budget status.
+
+    跟 _extract_cost_by_scenario 同模式 (silent degrade 返 {}):
+    - 无 budget (_current_budget_usd=None) → {}
+    - 无 cost_tracker → {}
+    - 异常 → log warning + {}
+
+    Returns:
+        dict with keys:
+            status: "ok" | "exceeded"
+            budget_usd: float
+            used_usd: float
+            used_pct: float (0-100+ range, >100 when over budget)
+        or {} if no budget set or cost_tracker missing.
+    """
+    try:
+        budget = getattr(controller, "_current_budget_usd", None)
+        if budget is None:
+            return {}
+        cost_tracker = getattr(controller, "cost_tracker", None)
+        if cost_tracker is None:
+            return {}
+        used = float(cost_tracker.total_cost())
+        used_pct = (used / budget * 100) if budget > 0 else 0.0
+        status = "exceeded" if used > budget else "ok"
+        return {
+            "status": status,
+            "budget_usd": budget,
+            "used_usd": used,
+            "used_pct": used_pct,
+        }
+    except Exception as exc:
+        logger.warning("_extract_budget_status 失败: %s", exc)
         return {}
 
 
