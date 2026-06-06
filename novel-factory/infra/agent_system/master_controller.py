@@ -15,12 +15,14 @@
 import logging
 import math
 import re
+import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ..ai_service.router import AIRouter
 
 if TYPE_CHECKING:
     from ..ai_service.cost_tracker import CostTracker
+    from .budget_persistence import BudgetService  # Phase 8.12
 from .agent_config import MasterControllerConfig, load_default_config
 from .agent_factory import (
     build_agent_tools,
@@ -100,6 +102,7 @@ class MasterController:
         router: Optional[AIRouter] = None,
         config: Optional[MasterControllerConfig] = None,
         cost_tracker: Optional["CostTracker"] = None,
+        budget_service: Optional["BudgetService"] = None,
     ):
         """初始化主控调度器
 
@@ -109,6 +112,8 @@ class MasterController:
             config: 显式传入的配置（None = 从 env vars 加载）
             cost_tracker: 显式传入的 CostTracker（None = 不追踪成本,AgentComputeFn 走 no-op）
                           (Phase 8.5: 透传给 build_got_scheduler → AgentComputeFn.record())
+            budget_service: 显式传入的 BudgetService (None = 不持久化 budget,旧路径)
+                          (Phase 8.12: 透传给 run_workflow 调 .set(scope='run', usd, run_id))
         """
         # ==================== 配置层 ====================
         self._config = config or load_default_config(state_dir=state_dir)
@@ -121,10 +126,19 @@ class MasterController:
         # 默认 None 兜底:旧测试零修改,旧生产路径 cost_tokens=0 (老行为)
         self.cost_tracker = cost_tracker
 
+        # Phase 8.12: budget 持久化 (Optional 注入,默认 None 兜底旧路径)
+        # run_workflow 期间调 .set(scope='run', usd=..., run_id=...)
+        # 默认 None 兜底:旧测试零修改,旧生产路径不持久化 (老行为)
+        self.budget_service = budget_service
+
         # Phase 8.8: budget alarm state — 跨 run 累积 (cost_tracker.total_cost() 共享),
         # 单 run 期间记录当前 budget, finally 必 reset 防 leak 跨 run
         # AgentComputeFn 走 getattr(self._master, "_current_budget_usd", None) 读这个字段
         self._current_budget_usd: Optional[float] = None
+
+        # Phase 8.12: 当前 run 的 uuid4().hex — AgentComputeFn 读这个传 budget_service.check_all_scopes
+        # 跨 run 必 reset 防 leak (per-run isolation 强约束)
+        self._current_run_id: Optional[str] = None
 
         # ==================== 基础设施 ====================
         # 共享 StateManager 实例：避免 TaskOrchestrator / 社交引擎 各持一份
@@ -280,6 +294,17 @@ class MasterController:
         # Phase 8.8: store budget before try, so AgentComputeFn 读得到
         # finally reset 防止跨 run leak (即使 raise 也走 finally)
         self._current_budget_usd = cost_budget_usd
+        # Phase 8.12: generate run_id (uuid4 hex) + 暴露给 AgentComputeFn +
+        # 持久化到 budget_service (仅 budget_service 非 None + cost_budget_usd 非 None 时)
+        run_id = uuid.uuid4().hex
+        self._current_run_id = run_id
+        # 用 getattr 兜底 __new__ 构造的 test stub (它们没走 __init__,
+        # 没 self.budget_service 属性;同 _current_budget_usd 的 getattr 模式)
+        _budget_service = getattr(self, "budget_service", None)
+        if _budget_service is not None and cost_budget_usd is not None:
+            _budget_service.set(
+                scope="run", usd=cost_budget_usd, run_id=run_id,
+            )
         try:
             # 延迟 import 避免 got ↔ agent_system 循环
             from infra.got.workflow_loader import WorkflowError
@@ -337,6 +362,8 @@ class MasterController:
         finally:
             # Phase 8.8: reset for next run, even on exception
             self._current_budget_usd = None
+            # Phase 8.12: reset run_id (防 leak 跨 run,per-run isolation 强约束)
+            self._current_run_id = None
 
     def resolve_decision(
         self,
