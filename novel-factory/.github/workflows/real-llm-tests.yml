@@ -1,7 +1,7 @@
 # Phase 8.3: Real LLM tests CI
-# 跑 Phase 8 (Anthropic) 2 个真实 LLM 测试, 抓 production 路径 regression.
+# 跑 Phase 8 + 8.9 (Anthropic) 4 个真实 LLM 测试, 抓 production 路径 regression.
 # - 触发: cron (UTC 02:00 daily = 北京 10:00) + 手动 workflow_dispatch
-# - Provider: Anthropic only (Phase 8 HAIKU, ~$0.025/run, $0.75/月)
+# - Provider: Anthropic only (Phase 8 HAIKU, ~$0.075/run, $2.25/月)
 # - 完整 setup 见 docs/CI_SETUP.md
 # 维护: 修改 trigger 频率/provider 范围/测试 selection 在此文件
 
@@ -55,7 +55,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           pytest tests/agent_system/test_novel_writing_real_llm.py \
-            -k "TestNovelWritingRealLLM or TestPolishMergeSynthesisRealLLM" \
+            -k "TestNovelWritingRealLLM or TestPolishMergeSynthesisRealLLM or TestNovelWritingBudgetRealLLM" \
             --tb=short -v
 
       - name: Ruff (informational, non-blocking)
