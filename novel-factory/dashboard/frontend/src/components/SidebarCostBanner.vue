@@ -1,8 +1,10 @@
 <!--
-  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup)
+  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12)
   显示 total USD + budget line + progress bar。
   有 cost_by_scenario entry 才显示 (空状态隐藏避免占 vertical space)。
   跨 4 page (Overview / Decisions / Workflows / placeholders) 持续可见。
+  Phase 8.12: 3 档 budget (per-run/per-day/per-week) priority cascade — 显最紧急档
+  (exceeded 优先, 同状态按 used_pct desc), 含 label 本次/今日/本周。
 -->
 <template>
   <div
@@ -17,28 +19,28 @@
       </span>
     </div>
     <div
-      v-if="hasBudget"
+      v-if="activeBudget"
       class="sidebar-cost-row"
       role="status"
       aria-live="polite"
     >
       <span class="sidebar-cost-budget-text">
-        预算: ${{ usedText }} / ${{ budgetText }} ({{ pctText }}%)
+        {{ activeBudget.label }}预算: ${{ activeUsedText }} / ${{ activeBudgetText }} ({{ activePctText }}%)
       </span>
     </div>
     <div
-      v-if="hasBudget"
+      v-if="activeBudget"
       class="progress-bar"
       role="progressbar"
-      :aria-valuenow="Math.round(pct)"
+      :aria-valuenow="Math.round(activePct)"
       aria-valuemin="0"
       aria-valuemax="100"
-      :aria-label="`成本预算状态: 已用 ${usedText} 美元 / 预算 ${budgetText} 美元 (${pctText}%)`"
+      :aria-label="`${activeBudget.label}预算状态: 已用 ${activeUsedText} 美元 / 预算 ${activeBudgetText} 美元 (${activePctText}%)`"
     >
       <div
         class="progress-bar-fill"
-        :class="budgetClass"
-        :style="{ width: pct + '%' }"
+        :class="activeBudget.status === 'exceeded' ? 'exceeded' : 'ok'"
+        :style="{ width: activePct + '%' }"
       ></div>
     </div>
   </div>
@@ -63,16 +65,49 @@ const hasCost = computed(() => {
 const totalUsd = computed(() => Number(props.status?.total_cost_usd ?? 0));
 const totalText = computed(() => totalUsd.value.toFixed(4));
 
-const budget = computed(() => props.status?.cost_budget_status || {});
-const hasBudget = computed(() => budget.value && budget.value.budget_usd != null);
-const usedText = computed(() => (budget.value.used_usd == null ? '0.0000' : Number(budget.value.used_usd).toFixed(4)));
-const budgetText = computed(() => (budget.value.budget_usd == null ? '0.0000' : Number(budget.value.budget_usd).toFixed(4)));
-const pct = computed(() => {
-  const p = Number(budget.value.used_pct ?? 0);
-  return Math.max(0, Math.min(100, p));
+// Phase 8.12 NEW: 3 档 budget 收集 + label
+// 收 3 档 budget (per-run/per-day/per-week), 每档加 label (本次/今日/本周)
+// 旧 1 档 (per-run cost_budget_status) 保留兼容, 通过 list 合并入 allBudgets
+const allBudgets = computed(() => {
+  const list = [];
+  const perRun = props.status?.cost_budget_status;
+  if (perRun && perRun.budget_usd != null) {
+    list.push({ ...perRun, scope: 'run', label: '本次' });
+  }
+  const perDay = props.status?.budget_per_day;
+  if (perDay && perDay.budget_usd != null) {
+    list.push({ ...perDay, scope: 'day', label: '今日' });
+  }
+  const perWeek = props.status?.budget_per_week;
+  if (perWeek && perWeek.budget_usd != null) {
+    list.push({ ...perWeek, scope: 'week', label: '本周' });
+  }
+  return list;
 });
-const pctText = computed(() => pct.value.toFixed(1));
-const budgetClass = computed(() => (budget.value.status === 'exceeded' ? 'exceeded' : 'ok'));
+
+// Phase 8.12 NEW: priority cascade — exceeded 优先, 同状态按 used_pct desc
+// 例如 per-run 50% ok + per-day 120% exceeded + per-week 80% ok → 返 per-day
+// 旧 hasBudget 单一 budget 块 → activeBudget 替代 (list 长度 0 时 activeBudget = null)
+const activeBudget = computed(() => {
+  if (allBudgets.value.length === 0) return null;
+  return [...allBudgets.value].sort((a, b) => {
+    if (a.status === 'exceeded' && b.status !== 'exceeded') return -1;
+    if (b.status === 'exceeded' && a.status !== 'exceeded') return 1;
+    return b.used_pct - a.used_pct;
+  })[0];
+});
+
+const activePct = computed(() => {
+  if (!activeBudget.value) return 0;
+  return Math.max(0, Math.min(100, Number(activeBudget.value.used_pct ?? 0)));
+});
+const activeUsedText = computed(() =>
+  activeBudget.value ? Number(activeBudget.value.used_usd ?? 0).toFixed(4) : '0.0000'
+);
+const activeBudgetText = computed(() =>
+  activeBudget.value ? Number(activeBudget.value.budget_usd ?? 0).toFixed(4) : '0.0000'
+);
+const activePctText = computed(() => activePct.value.toFixed(1));
 </script>
 
 <style scoped>
