@@ -1,22 +1,40 @@
 <!--
-  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11)
+  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup)
   显示 total USD + budget line + progress bar。
   有 cost_by_scenario entry 才显示 (空状态隐藏避免占 vertical space)。
   跨 4 page (Overview / Decisions / Workflows / placeholders) 持续可见。
 -->
 <template>
-  <div v-if="hasCost" class="sidebar-cost-banner">
-    <div class="sidebar-cost-row">
+  <div
+    v-if="hasCost"
+    class="sidebar-cost-banner"
+    role="region"
+    aria-label="成本追踪"
+  >
+    <div class="sidebar-cost-row" role="status" aria-live="polite">
       <span class="sidebar-cost-total-text">
         <span class="sidebar-cost-icon">💰</span>${{ totalText }}
       </span>
     </div>
-    <div v-if="hasBudget" class="sidebar-cost-row">
+    <div
+      v-if="hasBudget"
+      class="sidebar-cost-row"
+      role="status"
+      aria-live="polite"
+    >
       <span class="sidebar-cost-budget-text">
         预算: ${{ usedText }} / ${{ budgetText }} ({{ pctText }}%)
       </span>
     </div>
-    <div v-if="hasBudget" class="progress-bar">
+    <div
+      v-if="hasBudget"
+      class="progress-bar"
+      role="progressbar"
+      :aria-valuenow="Math.round(pct)"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      :aria-label="`成本预算状态: 已用 ${usedText} 美元 / 预算 ${budgetText} 美元 (${pctText}%)`"
+    >
       <div
         class="progress-bar-fill"
         :class="budgetClass"
