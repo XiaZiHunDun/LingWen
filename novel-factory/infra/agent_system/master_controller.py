@@ -121,6 +121,11 @@ class MasterController:
         # 默认 None 兜底:旧测试零修改,旧生产路径 cost_tokens=0 (老行为)
         self.cost_tracker = cost_tracker
 
+        # Phase 8.8: budget alarm state — 跨 run 累积 (cost_tracker.total_cost() 共享),
+        # 单 run 期间记录当前 budget, finally 必 reset 防 leak 跨 run
+        # AgentComputeFn 走 getattr(self._master, "_current_budget_usd", None) 读这个字段
+        self._current_budget_usd: Optional[float] = None
+
         # ==================== 基础设施 ====================
         # 共享 StateManager 实例：避免 TaskOrchestrator / 社交引擎 各持一份
         from ..state.state_manager import StateManager
@@ -236,6 +241,7 @@ class MasterController:
         workflow_name: str,
         start_nodes: Optional[list[str]] = None,
         initial_inputs: Optional[Dict[str, Any]] = None,
+        cost_budget_usd: Optional[float] = None,
         max_backtracks: int = 2,
         base_dir: Optional[str] = None,
     ) -> Dict[str, Any]:
@@ -248,6 +254,12 @@ class MasterController:
             workflow_name: workflow YAML 名 (如 'novel_writing')
             start_nodes: 起点节点 ID 列表 (None = 自动找无依赖节点)
             initial_inputs: 起点节点的 seed inputs (e.g. chapter_num=1, characters=[...])
+            cost_budget_usd: Phase 8.8 cost budget 阈值 (USD, None=unlimited).
+                             AgentComputeFn 每次 record() 后调
+                             cost_tracker.check_budget() 验证, 超 raise CostBudgetExceeded
+                             (scheduler 兜底 → node FAILED). 跨 run 累积 cost_tracker
+                             (单 instance 共享), 但 _current_budget_usd 单 run 期间有效,
+                             finally 必 reset 防 leak 跨 run.
             max_backtracks: 软回溯预算 (默认 2)
             base_dir: workflow YAML 目录 (None = 默认 infra/got/workflows/)
 
@@ -265,59 +277,66 @@ class MasterController:
             HumanInterventionRequired: 回溯超限
             MaxStepsExceeded: 步数超限
         """
-        # 延迟 import 避免 got ↔ agent_system 循环
-        from infra.got.workflow_loader import WorkflowError
-
-        from .got_bridge import build_got_scheduler
-
-        bd_path: Optional[Any] = None
-        if base_dir is not None:
-            from pathlib import Path
-            bd_path = Path(base_dir)
-
+        # Phase 8.8: store budget before try, so AgentComputeFn 读得到
+        # finally reset 防止跨 run leak (即使 raise 也走 finally)
+        self._current_budget_usd = cost_budget_usd
         try:
-            scheduler, graph = build_got_scheduler(
-                master=self,
-                workflow_name=workflow_name,
-                base_dir=str(bd_path) if bd_path else None,
-                max_backtracks=max_backtracks,
+            # 延迟 import 避免 got ↔ agent_system 循环
+            from infra.got.workflow_loader import WorkflowError
+
+            from .got_bridge import build_got_scheduler
+
+            bd_path: Optional[Any] = None
+            if base_dir is not None:
+                from pathlib import Path
+                bd_path = Path(base_dir)
+
+            try:
+                scheduler, graph = build_got_scheduler(
+                    master=self,
+                    workflow_name=workflow_name,
+                    base_dir=str(bd_path) if bd_path else None,
+                    max_backtracks=max_backtracks,
+                )
+            except WorkflowError:
+                raise
+
+            # 默认起点:无依赖的节点
+            if start_nodes is None:
+                start_nodes = [
+                    nid for nid in graph.node_ids()
+                    if not graph.get_node(nid).depends_on
+                ]
+
+            # 扫描 DECISION 节点 → 创建 HumanDecision (Phase 4.3)
+            pending_decisions = self._harvest_decision_specs(graph)
+
+            summary = scheduler.run(
+                start_nodes=start_nodes,
+                initial_inputs=initial_inputs or {},
             )
-        except WorkflowError:
-            raise
 
-        # 默认起点:无依赖的节点
-        if start_nodes is None:
-            start_nodes = [
-                nid for nid in graph.node_ids()
-                if not graph.get_node(nid).depends_on
-            ]
+            # 收集全部 executions
+            executions: Dict[str, Any] = {}
+            for nid in graph.node_ids():
+                if graph.has_execution(nid):
+                    executions[nid] = graph.get_execution(nid)
 
-        # 扫描 DECISION 节点 → 创建 HumanDecision (Phase 4.3)
-        pending_decisions = self._harvest_decision_specs(graph)
+            # 缓存活跃工作流状态 (Phase 5) — resume_workflow() 用它
+            self._last_scheduler = scheduler
+            self._last_graph = graph
+            self._last_workflow_name = workflow_name
+            self._last_start_nodes = list(start_nodes)
 
-        summary = scheduler.run(
-            start_nodes=start_nodes,
-            initial_inputs=initial_inputs or {},
-        )
-
-        # 收集全部 executions
-        executions: Dict[str, Any] = {}
-        for nid in graph.node_ids():
-            if graph.has_execution(nid):
-                executions[nid] = graph.get_execution(nid)
-
-        # 缓存活跃工作流状态 (Phase 5) — resume_workflow() 用它
-        self._last_scheduler = scheduler
-        self._last_graph = graph
-        self._last_workflow_name = workflow_name
-        self._last_start_nodes = list(start_nodes)
-
-        return {
-            "summary": summary,
-            "graph": graph,
-            "executions": executions,
-            "pending_decisions": pending_decisions,
-        }
+            return {
+                "summary": summary,
+                "graph": graph,
+                "executions": executions,
+                "pending_decisions": pending_decisions,
+            }
+        finally:
+            # Phase 8.8: reset for next run, even on exception
+            self._current_budget_usd = None
 
     def resolve_decision(
         self,

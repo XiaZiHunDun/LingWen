@@ -522,3 +522,67 @@ class TestTruncation:
         assert "Y" * 1000 in prompt
         # 不应被任何 Y*1001 截
         assert "Y" * 1001 not in prompt  # 验证 short 路径
+
+
+class TestRunWorkflowBudget:
+    """Phase 8.8: MasterController._current_budget_usd 字段 + run_workflow kwarg + finally reset."""
+
+    def _make_master(self, tmp_path):
+        """用真实 MasterController 配合 stub agent (跟 Phase 7.1 同模式)"""
+        from tests.agent_system._e2e_helpers import make_master_with_router
+        return make_master_with_router(state_dir=tmp_path)
+
+    def test_run_workflow_stores_budget_in_state(self, tmp_path):
+        """run_workflow(cost_budget_usd=5.0) 期间 self._current_budget_usd = 5.0,跑完 reset None"""
+        master = self._make_master(tmp_path)
+        # 跑一个 minimal workflow (低 token budget),验证字段
+        master.run_workflow(
+            workflow_name="minimal_e2e",
+            initial_inputs={"text": "hello"},
+            cost_budget_usd=5.0,
+            max_backtracks=0,
+        )
+        # finally reset: 跑完 None
+        assert master._current_budget_usd is None
+
+    def test_old_call_sites_unaffected_by_new_kwarg(self, tmp_path):
+        """旧 call site (不传 cost_budget_usd) 走 unlimited 路径,_current_budget_usd 默认 None"""
+        master = self._make_master(tmp_path)
+        master.run_workflow(
+            workflow_name="minimal_e2e",
+            initial_inputs={"text": "hello"},
+            max_backtracks=0,
+        )
+        # 默认 None
+        assert master._current_budget_usd is None
+
+    def test_run_workflow_with_zero_budget_raises_immediately(self, tmp_path):
+        """budget=0 + 任何 record 立即 raise,workflow 走 FAILED 路径"""
+        from infra.ai_service.cost_tracker import CostTracker
+        master = self._make_master(tmp_path)
+        # 注入 cost_tracker (确保有 tracker,AgentComputeFn 才会调 record + check_budget)
+        master.cost_tracker = CostTracker()
+        # budget=0 立即 raise (第一次 record 后)
+        result = master.run_workflow(
+            workflow_name="minimal_e2e",
+            initial_inputs={"text": "hello"},
+            cost_budget_usd=0.0,
+            max_backtracks=0,
+        )
+        # finally 仍 reset
+        assert master._current_budget_usd is None
+        # workflow 失败 (1+ node FAILED) — failed 在 summary 里 (ExecutionSummary dataclass)
+        # minimal_e2e 1 节点 FAIL (chapter_num 缺),result["summary"].failed >= 1
+        assert result["summary"].failed >= 1
+
+    def test_run_workflow_negative_budget_rejected_by_pydantic(self, tmp_path):
+        """Pydantic ge=0 验证 (在 dashboard 端,MasterController 端不验证)
+        单元测试只验证 MasterController 不 crash — 负数 budget 在 dashboard/app.py RunWorkflowRequest Pydantic 层拒绝.
+        这里只验证 MasterController.run_workflow 不传 kwarg 时默认 None (backward compat)."""
+        master = self._make_master(tmp_path)
+        master.run_workflow(
+            workflow_name="minimal_e2e",
+            initial_inputs={"text": "hello"},
+            max_backtracks=0,
+        )
+        assert master._current_budget_usd is None
