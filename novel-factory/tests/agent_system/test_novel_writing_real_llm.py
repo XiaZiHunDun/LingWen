@@ -413,3 +413,99 @@ class TestNovelWritingBudgetRealLLMOpenAI:
         )
         # 5. 至少 1 笔 record 写入
         assert len(cost_tracker.records()) >= 1
+
+
+@_REQUIRES_MINIMAX_KEY
+class TestNovelWritingBudgetRealLLMMiniMax:
+    """Phase 8.10: MiniMax M2.7 real LLM e2e 验证 cost_budget_usd 触阈.
+
+    复用 Phase 8.9 pattern (skipif MINIMAX_API_KEY + _make_real_router("minimax") +
+    make_master_with_router + inline 7-key initial_inputs dict). 默认 SKIP, opt-in 跑:
+        export MINIMAX_API_KEY=...
+        pytest tests/agent_system/test_novel_writing_real_llm.py::TestNovelWritingBudgetRealLLMMiniMax -v
+    成本: MiniMax M2.7 × ~5 LLM calls × 2 tests ≈ $0.01-0.05 per run, ~30-60s per test.
+    """
+
+    def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
+        """Phase 8.10: MiniMax M2.7 generous budget, 验证 success + cost < budget + finally reset."""
+        from infra.ai_service.cost_tracker import CostTracker
+        cost_tracker = CostTracker()
+        master = make_master_with_router(
+            state_dir=tmp_path,
+            router=_make_real_router("minimax"),
+            cost_tracker=cost_tracker,
+        )
+        result = master.run_workflow(
+            workflow_name="novel_writing",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": {"chapters": [{
+                    "num": 1, "title": "第一章 测试", "events": ["e1"],
+                    "word_count_target": 800,  # 短内容加速 M2.7 处理
+                }]},
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "timeline": [],
+                "use_llm": True,
+            },  # 跟 Phase 8 现有 pattern (L63-74) + Phase 8.9 L248-259 完全一致
+            cost_budget_usd=0.10,  # 2x 预期 <$0.05 (M2.7 单价 <$0.01/call)
+            max_backtracks=0,
+        )
+
+        summary = result["summary"]
+        # 1. 完整跑通
+        assert summary.completed >= 5, f"期望 ≥5 completed (5 LLM 节点), 实际 {summary.completed}"
+        assert summary.failed == 0, f"期望 0 failed (under-budget), 实际 {summary.failed}"
+        # 2. cost 在预算内
+        total_cost = cost_tracker.total_cost()
+        assert 0 < total_cost < 0.10, f"期望 0 < cost < 0.10, 实际 {total_cost}"
+        # 3. finally reset
+        assert master._current_budget_usd is None, (
+            f"期望 finally reset to None, 实际 {master._current_budget_usd}"
+        )
+
+    def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
+        """Phase 8.10: MiniMax M2.7 sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
+        from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
+        _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
+        cost_tracker = CostTracker()
+        master = make_master_with_router(
+            state_dir=tmp_path,
+            router=_make_real_router("minimax"),
+            cost_tracker=cost_tracker,
+        )
+        result = master.run_workflow(
+            workflow_name="novel_writing",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": {"chapters": [{
+                    "num": 1, "title": "第一章 测试", "events": ["e1"],
+                    "word_count_target": 800,
+                }]},
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "timeline": [],
+                "use_llm": True,
+            },  # 跟 Phase 8 现有 pattern 一致
+            cost_budget_usd=0.0001,  # sub-cent, 必超
+            max_backtracks=0,
+        )
+
+        summary = result["summary"]
+        # 1. 至少 1 node FAILED (触阈那个)
+        assert summary.failed >= 1, (
+            f"期望 ≥1 FAILED, 实际 completed={summary.completed} failed={summary.failed}"
+        )
+        # 2. workflow 中止, 不全跑 (Phase 7.4 = 7 节点)
+        total = summary.completed + summary.failed
+        assert total < 7, f"期望 total < 7 (workflow 被中止), 实际 {total}"
+        # 3. cost 累加 > budget (触阈发生)
+        assert cost_tracker.total_cost() > 0.0001
+        # 4. finally reset 在 raise 后仍生效
+        assert master._current_budget_usd is None, (
+            f"期望 finally reset after raise, 实际 {master._current_budget_usd}"
+        )
+        # 5. 至少 1 笔 record 写入
+        assert len(cost_tracker.records()) >= 1
