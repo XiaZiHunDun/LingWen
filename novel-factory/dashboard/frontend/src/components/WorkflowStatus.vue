@@ -82,6 +82,24 @@
       </p>
       <CostBarChart :cost-by-scenario="status.cost_by_scenario || {}" />
     </div>
+
+    <!-- Phase 8.8 NEW: cost budget banner -->
+    <div v-if="hasBudget" class="cost-budget-section" :class="budgetStatusClass">
+      <template v-if="budget.status === 'exceeded'">
+        <span class="cost-budget-icon">⚠️</span>
+        <span class="cost-budget-text">
+          Budget exceeded: ${{ formatUsd(budget.used_usd) }} / ${{ formatUsd(budget.budget_usd) }}
+          ({{ formatPct(budget.used_pct) }}%) — workflow aborted
+        </span>
+      </template>
+      <template v-else>
+        <span class="cost-budget-icon">💰</span>
+        <span class="cost-budget-text">
+          Budget: ${{ formatUsd(budget.used_usd) }} / ${{ formatUsd(budget.budget_usd) }}
+          ({{ formatPct(budget.used_pct) }}%)
+        </span>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -127,6 +145,16 @@ const totalCostText = computed(() => {
   const v = Number(props.status?.total_cost_usd ?? 0);
   return v.toFixed(4);
 });
+
+const budget = computed(() => props.status?.cost_budget_status || {});
+const hasBudget = computed(() =>
+  budget.value && budget.value.budget_usd != null
+);
+const budgetStatusClass = computed(() =>
+  budget.value.status === 'exceeded' ? 'exceeded' : 'ok'
+);
+const formatUsd = (v) => (v == null ? '0.0000' : Number(v).toFixed(4));
+const formatPct = (v) => (v == null ? '0.0' : Number(v).toFixed(1));
 
 function onResume(decision, option) {
   emit('resume', { decisionId: decision.decision_id, option });
@@ -300,5 +328,38 @@ function onResume(decision, option) {
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
   margin: 0;
+}
+
+.cost-budget-section {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--border-color);
+  background: var(--bg-primary);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border-left-width: 4px;
+}
+
+.cost-budget-section.exceeded {
+  border-left-color: #f56c6c;
+  background: #fef0f0;
+  color: #c45656;
+}
+
+.cost-budget-section.ok {
+  border-left-color: var(--color-success);
+}
+
+.cost-budget-icon {
+  font-size: 14px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+}
+
+.cost-budget-text {
+  flex: 1;
+  line-height: 1.5;
 }
 </style>
