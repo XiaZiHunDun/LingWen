@@ -299,25 +299,31 @@ class AgentComputeFn:
                 tier = SCENARIO_TIER_MAP.get(scenario, ModelTier.SONNET)
                 self._cost_tracker.record(scenario, tier, in_tok, out_tok)
                 cost_tokens = in_tok + out_tok
-            return ComputeResult(output=output, cost_tokens=cost_tokens, fail=False)
+        else:
+            # dict path (backward compat): dict 含 _error 字段 → 业务失败
+            if isinstance(output, dict) and output.get("_error"):
+                return ComputeResult(
+                    fail=True,
+                    error=str(output["_error"]),
+                )
+            # Phase 8.5: 估算 token + 写 cost_tracker (None 时跳过)
+            # Token 估算: len() // 4 (4 chars/token 经验值, ~85% accuracy;
+            # 真实 usage 留 Phase 8.6 followup)
+            cost_tokens = 0
+            if self._cost_tracker is not None:
+                in_tok = len(str(inputs)) // 4
+                out_tok = len(str(output)) // 4
+                tier = SCENARIO_TIER_MAP.get(scenario, ModelTier.SONNET)
+                self._cost_tracker.record(scenario, tier, in_tok, out_tok)
+                cost_tokens = in_tok + out_tok
 
-        # dict path (backward compat): dict 含 _error 字段 → 业务失败
-        if isinstance(output, dict) and output.get("_error"):
-            return ComputeResult(
-                fail=True,
-                error=str(output["_error"]),
-            )
-
-        # Phase 8.5: 估算 token + 写 cost_tracker (None 时跳过)
-        # Token 估算: len() // 4 (4 chars/token 经验值, ~85% accuracy;
-        # 真实 usage 留 Phase 8.6 followup)
-        cost_tokens = 0
+        # === Phase 8.8 NEW: 集中 budget enforcement (1 次,tuple+dict 双路径均覆盖) ===
+        # 业务失败 _error 已在前面早 return,不会到这 — 超 budget 时 raise 让 scheduler 兜底
         if self._cost_tracker is not None:
-            in_tok = len(str(inputs)) // 4
-            out_tok = len(str(output)) // 4
-            tier = SCENARIO_TIER_MAP.get(scenario, ModelTier.SONNET)
-            self._cost_tracker.record(scenario, tier, in_tok, out_tok)
-            cost_tokens = in_tok + out_tok
+            self._cost_tracker.check_budget(
+                getattr(self._master, "_current_budget_usd", None)
+            )
+        # === END Phase 8.8 NEW ===
 
         return ComputeResult(output=output, cost_tokens=cost_tokens, fail=False)
 

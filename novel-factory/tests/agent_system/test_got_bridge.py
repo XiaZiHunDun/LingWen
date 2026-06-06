@@ -812,3 +812,90 @@ class TestCostTrackerWiring:
         assert recs[0].scenario == "polish_merge"
         assert recs[0].input_tokens == 200
         assert recs[0].output_tokens == 100
+
+
+# === Phase 8.8 Task 2: AgentComputeFn 集中 check_budget (tuple+dict 双路径) ===
+
+class TestBudgetEnforcement:
+    """Phase 8.8 T2: AgentComputeFn 集中调 cost_tracker.check_budget(master._current_budget_usd).
+
+    行为契约:
+    - tuple path (handler 返 (output, usage)) 成功后 → 调 check_budget, 超 raise CostBudgetExceeded
+    - dict path  (handler 返 dict)         成功后 → 调 check_budget, 超 raise CostBudgetExceeded
+    - _current_budget_usd=None → check_budget(None) 立即 return, 不抛 (无限额)
+    - 业务失败 (_error 字段) → 早 return ComputeResult(fail=True), 不调 check_budget (因为没 record 成本)
+    """
+
+    def _make_compute_with_budget(self, budget_usd):
+        """建一个 mini master (含 _current_budget_usd + cost_tracker) + AgentComputeFn"""
+        from infra.agent_system.got_bridge import AgentComputeFn
+
+        class _MiniMaster:
+            def __init__(self, budget):
+                self._current_budget_usd = budget
+                self.cost_tracker = CostTracker()
+
+        master = _MiniMaster(budget_usd)
+        compute = AgentComputeFn(master, cost_tracker=master.cost_tracker)
+        return master, compute
+
+    def _stub_chapter_writing(self, return_value):
+        """替换 SCENARIO_HANDLERS["chapter_writing"] → 返 return_value (保留原 handler 引用, finally 恢复)"""
+        from infra.agent_system.got_bridge import SCENARIO_HANDLERS
+
+        original = SCENARIO_HANDLERS.get("chapter_writing")
+        SCENARIO_HANDLERS["chapter_writing"] = lambda m, inputs: return_value
+        return original
+
+    def _uninstall_stub(self, original):
+        from infra.agent_system.got_bridge import SCENARIO_HANDLERS
+
+        if original is not None:
+            SCENARIO_HANDLERS["chapter_writing"] = original
+        else:
+            SCENARIO_HANDLERS.pop("chapter_writing", None)
+
+    def test_tuple_path_raises_after_budget_exceeded(self) -> None:
+        """tuple path: handler 返 (output, usage) → record() 后 → check_budget raise"""
+        from infra.ai_service import CostBudgetExceeded
+
+        master, compute = self._make_compute_with_budget(budget_usd=0.0001)
+        original = self._stub_chapter_writing(
+            ({"content": "x" * 100}, {"input_tokens": 100, "output_tokens": 50})
+        )
+        try:
+            node = _node("n1", "chapter_writing")
+            with pytest.raises(CostBudgetExceeded):
+                compute(
+                    node,
+                    {"chapter_num": 1, "outline": {}, "characters": [], "context": {}},
+                )
+        finally:
+            self._uninstall_stub(original)
+
+    def test_dict_path_raises_after_budget_exceeded(self) -> None:
+        """dict path (旧 handler 返 dict): 同样 raise, 无 tuple 时也走 check"""
+        from infra.ai_service import CostBudgetExceeded
+
+        master, compute = self._make_compute_with_budget(budget_usd=0.0001)
+        original = self._stub_chapter_writing({"content": "x" * 100, "_test": True})
+        try:
+            node = _node("n1", "chapter_writing")
+            with pytest.raises(CostBudgetExceeded):
+                compute(node, {"chapter_num": 1})
+        finally:
+            self._uninstall_stub(original)
+
+    def test_no_budget_set_skips_check(self) -> None:
+        """_current_budget_usd=None → check_budget(None) 立即 return, 不抛"""
+        master, compute = self._make_compute_with_budget(budget_usd=None)
+        original = self._stub_chapter_writing(
+            ({"content": "x"}, {"input_tokens": 100, "output_tokens": 50})
+        )
+        try:
+            node = _node("n1", "chapter_writing")
+            result = compute(node, {"chapter_num": 1})
+            assert result.fail is False
+            assert result.cost_tokens == 150  # 100 + 50
+        finally:
+            self._uninstall_stub(original)
