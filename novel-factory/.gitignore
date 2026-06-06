@@ -117,3 +117,7 @@ infra/agent_system/social_engine/relationship_network.db-*
 # Phase 8.7: CostTracker SQLite 持久化 (R2-013: cost tracking)
 infra/.state/cost_tracker.db
 infra/.state/cost_tracker.db-*
+
+# Phase 8.12 followup: workflow.db de-track (cbca7b5 claimed but missed)
+infra/.state/workflow.db
+infra/.state/workflow.db-*
