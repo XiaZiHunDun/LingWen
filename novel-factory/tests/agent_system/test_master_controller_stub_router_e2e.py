@@ -406,6 +406,85 @@ class TestNovelWritingE2E:
             f"got {merge_rec.output_tokens}"
         )
 
+    def test_novel_writing_workflow_aborts_on_budget_exceeded(self, tmp_path: Path) -> None:
+        """Phase 8.8: 极小 budget 触发 abort, workflow 不全跑完.
+
+        设 cost_budget_usd=0.0001 → _UsageRecordingProvider 100+50 token/次
+        → 第一次 record 后 cost > 0.0001 → check_budget raise
+        → CostBudgetExceeded 抛出 → scheduler 捕获 → node FAILED
+        → 下游 PENDING 不跑 → summary.completed+failed < 7.
+
+        验证 4 个核心契约:
+        1. summary.failed >= 1 (触阈那个 node 失败)
+        2. summary.completed + summary.failed < 7 (workflow 被中止)
+        3. master._current_budget_usd is None (T3 finally reset 验证)
+        4. cost_tracker 至少 1 笔 + total_cost > budget (record 链路工作)
+
+        NOTE: 修正 plan 错误 (line 935-1024) — result 是 dict 含 "summary" 键,
+        summary 是 ExecutionSummary dataclass (.completed/.failed attrs),
+        不是 flat dict keys. 此外 summary 无 .skipped 字段, SKIPPED 不在
+        ExecutionSummary 计数里 (downstream 节点留 PENDING 不进 executions).
+        """
+        from infra.ai_service.cost_tracker import CostTracker
+
+        cost_tracker = CostTracker()
+        master = make_master_with_router(
+            state_dir=tmp_path,
+            cost_tracker=cost_tracker,
+            record_usage=True,  # Phase 8.6.2: 注入 _RecordingRouter
+        )
+        # 极小 budget 立即触发 (第一次 record 后 check_budget raise)
+        result = master.run_workflow(
+            workflow_name="novel_writing",
+            initial_inputs={
+                "chapter_num": 1,
+                "outline": self.MINIMAL_OUTLINE,
+                "characters": [],
+                "memory_context": {},
+                "style_guide": {},
+                "timeline": [],
+                "use_llm": True,
+            },
+            cost_budget_usd=0.0001,  # 极小 budget 几乎必超
+            max_backtracks=0,
+        )
+
+        # 验证: budget exceeded 后 workflow 没全跑完
+        # NOTE: result["summary"] is ExecutionSummary dataclass, not flat dict
+        summary = result["summary"]
+        completed = summary.completed
+        failed = summary.failed
+
+        # 至少 1 node FAILED (触阈那个)
+        assert failed >= 1, (
+            f"期望 ≥1 FAILED (触阈), 实际 completed={completed} failed={failed}"
+        )
+
+        # 触阈后下游 node 不跑 (留 PENDING), total 应 < 7 (Phase 7.4 节点数)
+        # NOTE: ExecutionSummary 无 .skipped 字段, PENDING 节点不计入
+        # summary.completed/summary.failed, 所以只需验证 completed+failed < 7
+        total = completed + failed
+        assert total < 7, (
+            f"期望 total (completed+failed) < 7 (workflow 被 budget 中止), "
+            f"实际 completed={completed} failed={failed} total={total}"
+        )
+
+        # finally reset: run 完后 _current_budget_usd = None
+        assert master._current_budget_usd is None, (
+            f"期望 master._current_budget_usd = None (T3 finally reset), "
+            f"实际 {master._current_budget_usd}"
+        )
+
+        # cost_tracker 至少 1 笔 record (触阈前 N 个 node)
+        records = cost_tracker.records()
+        assert len(records) >= 1, (
+            f"期望 cost_tracker 至少 1 笔 record, 实际 {len(records)}"
+        )
+        # record 后 cost 累加, 触阈时已 > 0.0001
+        assert cost_tracker.total_cost() > 0.0001, (
+            f"期望 total_cost > 0.0001 (超 budget 触发), 实际 {cost_tracker.total_cost()}"
+        )
+
 
 class TestRouterFailure:
     """router 失败路径:provider 抛错降级 / 默认走 primary"""
