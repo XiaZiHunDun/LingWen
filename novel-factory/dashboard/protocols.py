@@ -290,6 +290,7 @@ class MasterControllerAdapter:
             },
             "score_data": score_data,  # Phase 7.6
             "cost_by_scenario": _extract_cost_by_scenario(self._controller),  # Phase 8.7
+            "cost_by_tier": _extract_cost_by_tier(self._controller),  # Phase 8.13
             "cost_budget_status": _extract_budget_status(self._controller),  # Phase 8.8 T5
             "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # Phase 8.12 T5
             "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # Phase 8.12 T5
@@ -329,6 +330,29 @@ def _extract_cost_by_scenario(controller: Any) -> dict[str, float]:
         return dict(cost_tracker.cost_by_scenario())
     except Exception as exc:
         logger.warning("cost_tracker.cost_by_scenario() failed: %s", exc)
+        return {}
+
+
+def _extract_cost_by_tier(controller: Any) -> dict[str, float]:
+    """Phase 8.13: 跟 _extract_cost_by_scenario 同模式 — 拿 controller.cost_tracker 调 cost_by_tier().
+
+    Mirrors _extract_cost_by_scenario silent-degrade pattern: returns empty
+    dict when controller has no cost_tracker or when cost_tracker.cost_by_tier()
+    raises. ModelTier enum keys are serialized via .value (e.g. HAIKU → "haiku").
+
+    Args:
+        controller: MasterController 实例 (decoupling Protocol)
+
+    Returns:
+        dict[tier_name, cost_usd] — 空 dict if cost_tracker is None / 无该属性 / 抛异常
+    """
+    cost_tracker = getattr(controller, "cost_tracker", None)
+    if cost_tracker is None:
+        return {}
+    try:
+        return {tier.value: float(amt) for tier, amt in cost_tracker.cost_by_tier().items()}
+    except Exception as exc:  # noqa: BLE001 — silent degrade by design
+        logger.warning("cost_tracker.cost_by_tier() failed: %s", exc)
         return {}
 
 

@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 from dashboard.protocols import (
     MasterControllerLike,
     _extract_cost_by_scenario,
+    _extract_cost_by_tier,
     _extract_total_cost,
 )
 from dashboard.ws import (
@@ -151,6 +152,7 @@ class WorkflowStatusResponse(BaseModel):
     executions: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
     score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据
     cost_by_scenario: dict[str, float] = Field(default_factory=dict)  # Phase 8.7: by-scenario 累计 USD
+    cost_by_tier: dict[str, float] = Field(default_factory=dict)  # Phase 8.13: by-tier 累计 USD (haiku/sonnet/opus)
     cost_budget_status: dict[str, Any] = Field(default_factory=dict)  # Phase 8.8 T5: budget alarm 状态
     # Phase 8.12 T5 NEW: per-day / per-week budget status (per-run 仍走 cost_budget_status 旧 path)
     budget_per_day: dict[str, Any] = Field(default_factory=dict)
@@ -660,11 +662,13 @@ def create_app(
                 raise HTTPException(status_code=500, detail=f"max steps: {e}")
             raise HTTPException(status_code=500, detail=str(e))
         # Phase 8.7: 修 Phase 8.5 gap — 透传 cost_by_scenario + total_cost_usd
+        # Phase 8.13: 增 cost_by_tier 透传 (haiku/sonnet/opus breakdown)
         # getattr 兜底 _controller 字段 (测试 stub 可能没,fallback 用 ctrl 自身)
         inner_ctrl = getattr(ctrl, "_controller", ctrl)
         return _workflow_result_to_response(
             result,
             cost_by_scenario=_extract_cost_by_scenario(inner_ctrl),
+            cost_by_tier=_extract_cost_by_tier(inner_ctrl),  # Phase 8.13
             total_cost_usd=_extract_total_cost(inner_ctrl),
         )
 
@@ -690,10 +694,12 @@ def create_app(
         except Exception as e:  # noqa: BLE001
             raise HTTPException(status_code=500, detail=str(e))
         # Phase 8.7: 修 Phase 8.5 gap — 透传 cost_by_scenario + total_cost_usd
+        # Phase 8.13: 增 cost_by_tier 透传
         inner_ctrl = getattr(ctrl, "_controller", ctrl)
         return _workflow_result_to_response(
             result,
             cost_by_scenario=_extract_cost_by_scenario(inner_ctrl),
+            cost_by_tier=_extract_cost_by_tier(inner_ctrl),  # Phase 8.13
             total_cost_usd=_extract_total_cost(inner_ctrl),
         )
 
@@ -879,6 +885,7 @@ def _workflow_result_to_response(
     result: dict[str, Any],
     score_data: dict[str, dict[str, Any]] | None = None,
     cost_by_scenario: dict[str, float] | None = None,  # Phase 8.7
+    cost_by_tier: dict[str, float] | None = None,  # Phase 8.13
     total_cost_usd: float = 0.0,  # Phase 8.7: 修 Phase 8.5 gap
 ) -> WorkflowStatusResponse:
     """run_workflow / resume_workflow 返回 dict → WorkflowStatusResponse
@@ -887,6 +894,7 @@ def _workflow_result_to_response(
 
     Phase 8.7: 修 Phase 8.5 gap — 显式接 cost_by_scenario + total_cost_usd params
     透传到 response (不再 hardcoded 0)
+    Phase 8.13: 增 cost_by_tier param (additive, default None → empty dict)
     """
     summary = result.get("summary") or {}
     if not isinstance(summary, dict):
@@ -916,6 +924,7 @@ def _workflow_result_to_response(
         pending_decisions=list(result.get("pending_decisions", [])),
         score_data=score_data or {},
         cost_by_scenario=cost_by_scenario or {},  # Phase 8.7
+        cost_by_tier=cost_by_tier or {},  # Phase 8.13
         total_cost_usd=total_cost_usd,  # Phase 8.7: 修 Phase 8.5 gap
     )
 
