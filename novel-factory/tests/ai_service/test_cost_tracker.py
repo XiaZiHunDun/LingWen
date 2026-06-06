@@ -206,3 +206,33 @@ class TestCheckBudget:
         used = tracker.total_cost()
         # 严格 > 触发,等号 OK
         tracker.check_budget(used)  # 应该不抛
+
+
+class TestCostBudgetExceededMessage:
+    """Phase 8.12: CostBudgetExceeded.__str__ scope_msg backward compat.
+
+    - scope='run' (default) → message 0 含 [scope=run] (Phase 8.8/8.9/8.10 message 0 改)
+    - scope='day' / scope='week' → message 含 [scope=day] / [scope=week] 帮 ops 区分
+    """
+
+    def test_cost_budget_exceeded_message_includes_scope(self) -> None:
+        """Phase 8.12: scope='day' or 'week' appears in message, default 'run' does not"""
+        from infra.ai_service.cost_tracker import CostBudgetExceeded
+
+        # Default 'run' scope → no [scope=run] in message
+        exc_default = CostBudgetExceeded(
+            used_usd=0.15, budget_usd=0.10, scenario="chapter_writing"
+        )
+        assert exc_default.scope == "run"
+        assert "[scope=run]" not in str(exc_default)
+        assert "(last scenario: chapter_writing)" in str(exc_default)
+
+        # Explicit 'day' scope → [scope=day] appears
+        exc_day = CostBudgetExceeded(used_usd=0.6, budget_usd=0.5, scope="day")
+        assert exc_day.scope == "day"
+        assert "[scope=day]" in str(exc_day)
+
+        # Explicit 'week' scope → [scope=week] appears
+        exc_week = CostBudgetExceeded(used_usd=2.1, budget_usd=2.0, scope="week")
+        assert exc_week.scope == "week"
+        assert "[scope=week]" in str(exc_week)

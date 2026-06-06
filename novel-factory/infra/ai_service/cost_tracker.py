@@ -50,6 +50,8 @@ class CostRecord:
 
 class CostBudgetExceeded(Exception):
     """Phase 8.8: raised by CostTracker.check_budget when total_cost() > budget_usd.
+    Phase 8.12: 扩 scope field (default 'run' 保 backward compat, Phase 8.8/8.9/8.10
+                tests 0 改; 新 BudgetService.check_all_scopes 显式传 'run'/'day'/'week').
 
     Attributes are exposed for caller introspection (no re-parsing of message).
     Strictly greater than triggers (equal is OK).
@@ -60,15 +62,16 @@ class CostBudgetExceeded(Exception):
         used_usd: float,
         budget_usd: float,
         scenario: str | None = None,
-        scope: str = "run",
+        scope: str = "run",  # NEW Phase 8.12 (default 'run' backward compat)
     ) -> None:
         self.used_usd = used_usd
         self.budget_usd = budget_usd
         self.scenario = scenario
         self.scope = scope
         scenario_msg = f" (last scenario: {scenario})" if scenario else ""
+        scope_msg = f" [scope={scope}]" if scope != "run" else ""
         super().__init__(
-            f"Cost budget exceeded: ${used_usd:.4f} / ${budget_usd:.4f}{scenario_msg}"
+            f"Cost budget exceeded: ${used_usd:.4f} / ${budget_usd:.4f}{scope_msg}{scenario_msg}"
         )
 
 
