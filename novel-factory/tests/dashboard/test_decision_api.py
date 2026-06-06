@@ -857,6 +857,50 @@ class TestCostByScenarioExtraction:
         assert "total_cost_usd" in data
         assert data["total_cost_usd"] > 0
 
+    def test_websocket_message_includes_cost_by_scenario(self) -> None:
+        """Phase 8.7: WebSocket /api/ws/workflows 推送 dict 包含 cost_by_scenario.
+
+        跟 Phase 7.6 score_data 同位置加, 验证 useWorkflowSocket composable
+        自动 rerender CostBarChart.
+
+        WebSocket 推送路径 (dashboard/app.py:713) 走 master_controller.get_active_workflow_status()
+        直接 send_json 该 dict — 故 Task 4.2 在 MasterControllerAdapter.get_active_workflow_status
+        加 cost_by_scenario 字段, WebSocket 自动获得, 0 改 endpoint 协议.
+        """
+        from infra.agent_system.master_controller import MasterController
+        from dashboard.protocols import MasterControllerAdapter
+
+        cost_tracker = CostTracker()
+        cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        master = MasterController.__new__(MasterController)
+        master.cost_tracker = cost_tracker
+
+        # 注入 _last_* 缓存 (get_active_workflow_status 需要)
+        class _StubGraph:
+            def node_ids(self): return []
+            def has_execution(self, nid): return False
+            def get_execution(self, nid): return None
+            def get_node(self, nid): return None
+
+        class _StubSummary:
+            steps = 0
+
+        class _StubScheduler:
+            _summary = _StubSummary()
+        master._last_scheduler = _StubScheduler()
+        master._last_graph = _StubGraph()
+        master._last_workflow_name = "novel_writing"
+
+        adapter = MasterControllerAdapter(master)
+        # 触发 get_active_workflow_status (跟 WebSocket 推送路径同源)
+        status = adapter.get_active_workflow_status()
+        assert "cost_by_scenario" in status
+        # 跟 score_data 同位置, 字段类型一致 (dict)
+        assert isinstance(status["cost_by_scenario"], dict)
+        # 验证值 (跟其他 test 一致 — 验证真的 cost 而非空 dict)
+        assert "chapter_writing" in status["cost_by_scenario"]
+        assert status["cost_by_scenario"]["chapter_writing"] > 0
+
 
 # === TestTotalCostUsdField (Phase 8.5 NEW) ===
 
