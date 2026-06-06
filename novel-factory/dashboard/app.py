@@ -118,6 +118,7 @@ class RunWorkflowRequest(BaseModel):
     start_nodes: Optional[list[str]] = None
     max_backtracks: int = 2
     base_dir: Optional[str] = None
+    cost_budget_usd: Optional[float] = None  # Phase 8.8: budget alarm (None=unlimited)
 
 
 class ResumeWorkflowRequest(BaseModel):
@@ -125,6 +126,9 @@ class ResumeWorkflowRequest(BaseModel):
     decision_id: str
     option: str
     resolved_by: str = "human"
+    # Phase 8.8: 字段保留 (前端可传),但 master.resume_workflow 当前不接 (T3 留 followup)
+    # 透传后 _current_budget_usd 仍为 None,resumed run 不受新 budget 影响
+    cost_budget_usd: Optional[float] = None  # Phase 8.8: budget alarm (None=清空 budget)
 
 
 class WorkflowStatusResponse(BaseModel):
@@ -628,6 +632,7 @@ def create_app(
                 initial_inputs=body.initial_inputs,
                 max_backtracks=body.max_backtracks,
                 base_dir=body.base_dir,
+                cost_budget_usd=body.cost_budget_usd,  # Phase 8.8 NEW
             )
         except KeyError as e:
             raise HTTPException(status_code=404, detail=f"not found: {e}")
