@@ -123,3 +123,42 @@ class TestCostTrackerDB:
         # 父目录 = infra/.state (跟 reading_power.db / workflow.db 错开)
         assert _DB_PATH.parent.name == ".state"
         assert _DB_PATH.parent.parent.name == "infra"
+
+
+class TestCostTrackerDBSinceFilter:
+    """Phase 8.16: total_cost / cost_by_scenario / cost_by_tier 加 since 透传
+    (SQL WHERE timestamp >= ?). since=None 走旧 path (0 改)."""
+
+    def test_total_cost_with_since_filters_old_records(self, tmp_path: Path) -> None:
+        """since=future → SQL WHERE 排除全部 records, total=0.0"""
+        from datetime import datetime, timedelta, timezone
+
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        db.record("chapter_writing", ModelTier.SONNET, 1000, 500)  # 0.0105
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert db.total_cost(since=future) == 0.0
+
+    def test_cost_by_scenario_with_since_returns_recent(self, tmp_path: Path) -> None:
+        """since=1h ago → 全部新近 records >= since → 走全量"""
+        from datetime import datetime, timedelta, timezone
+
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        db.record("chapter_writing", ModelTier.SONNET, 1000, 500)  # 0.0105
+        db.record("hook_extraction", ModelTier.HAIKU, 100, 50)     # 0.00035
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        by_scenario = db.cost_by_scenario(since=one_hour_ago)
+        assert by_scenario == {
+            "chapter_writing": pytest.approx(0.0105, abs=1e-9),
+            "hook_extraction": pytest.approx(0.00035, abs=1e-9),
+        }
+
+    def test_cost_by_tier_with_since_none_returns_all(self, tmp_path: Path) -> None:
+        """backward compat: since=None → 走旧 SQL (no WHERE), 返全量"""
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        db.record("a", ModelTier.SONNET, 100, 50)
+        db.record("b", ModelTier.OPUS, 100, 50)
+        by_tier = db.cost_by_tier(since=None)
+        assert set(by_tier.keys()) == {ModelTier.SONNET, ModelTier.OPUS}

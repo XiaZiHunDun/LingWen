@@ -134,33 +134,56 @@ class CostTrackerDB:
             for r in rows
         ]
 
-    def total_cost(self) -> float:
-        """总成本 (USD)"""
+    def total_cost(self, since: Optional[datetime] = None) -> float:
+        """总成本 (USD). Phase 8.16: since 透传 (additive, default None 走旧 SQL)."""
         self.init_db()
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT COALESCE(SUM(cost_usd), 0.0) as total FROM cost_records"
-            ).fetchone()
+            if since is None:
+                row = conn.execute(
+                    "SELECT COALESCE(SUM(cost_usd), 0.0) as total FROM cost_records"
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    "SELECT COALESCE(SUM(cost_usd), 0.0) as total "
+                    "FROM cost_records WHERE timestamp >= ?",
+                    (since.isoformat(),),
+                ).fetchone()
         return float(row["total"])
 
-    def cost_by_scenario(self) -> dict[str, float]:
-        """按 scenario 聚合成本 (USD)"""
+    def cost_by_scenario(self, since: Optional[datetime] = None) -> dict[str, float]:
+        """按 scenario 聚合成本 (USD). Phase 8.16: since 透传 (additive)."""
         self.init_db()
         with self._connect() as conn:
-            rows = conn.execute(
-                """SELECT scenario, SUM(cost_usd) as total
-                   FROM cost_records GROUP BY scenario"""
-            ).fetchall()
+            if since is None:
+                rows = conn.execute(
+                    """SELECT scenario, SUM(cost_usd) as total
+                       FROM cost_records GROUP BY scenario"""
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """SELECT scenario, SUM(cost_usd) as total
+                       FROM cost_records WHERE timestamp >= ?
+                       GROUP BY scenario""",
+                    (since.isoformat(),),
+                ).fetchall()
         return {r["scenario"]: float(r["total"]) for r in rows}
 
-    def cost_by_tier(self) -> dict[ModelTier, float]:
-        """按 tier 聚合成本 (USD)"""
+    def cost_by_tier(self, since: Optional[datetime] = None) -> dict[ModelTier, float]:
+        """按 tier 聚合成本 (USD). Phase 8.16: since 透传 (additive)."""
         self.init_db()
         with self._connect() as conn:
-            rows = conn.execute(
-                """SELECT tier, SUM(cost_usd) as total
-                   FROM cost_records GROUP BY tier"""
-            ).fetchall()
+            if since is None:
+                rows = conn.execute(
+                    """SELECT tier, SUM(cost_usd) as total
+                       FROM cost_records GROUP BY tier"""
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """SELECT tier, SUM(cost_usd) as total
+                       FROM cost_records WHERE timestamp >= ?
+                       GROUP BY tier""",
+                    (since.isoformat(),),
+                ).fetchall()
         return {ModelTier(r["tier"]): float(r["total"]) for r in rows}
 
 
