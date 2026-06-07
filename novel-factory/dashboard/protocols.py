@@ -27,6 +27,7 @@ from infra.agent_system.decision_queue import (
     HumanDecision,
     HumanDecisionQueue,
 )
+from infra.ai_service.model_tiers import ModelTier
 
 logger = logging.getLogger(__name__)
 
@@ -294,6 +295,7 @@ class MasterControllerAdapter:
             "cost_budget_status": _extract_budget_status(self._controller),  # Phase 8.8 T5
             "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # Phase 8.12 T5
             "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # Phase 8.12 T5
+            "budget_by_tier": _extract_budget_by_tier(self._controller),  # Phase 8.15 T5
             # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
             "total_cost_usd": _extract_total_cost(self._controller),
         }
@@ -440,6 +442,42 @@ def _extract_budget_per_window(controller: Any, scope: str) -> dict[str, Any]:
     except Exception as exc:
         logger.warning("_extract_budget_per_window failed for scope=%s: %s", scope, exc)
         return {}
+
+
+def _extract_budget_by_tier(master: Any) -> dict[str, dict[str, Any] | None]:
+    """Phase 8.15 T5: 拿 master.budget_service_by_tier 查 3 tier current budget entries.
+
+    Mirror _extract_budget_per_window silent-degrade pattern (getattr + try/except).
+    3 tier 顺序: haiku → sonnet → opus (Enum 顺序, deterministic).
+
+    Args:
+        master: MasterController 实例 (duck-typed via getattr)
+
+    Returns:
+        dict[tier_name, {"usd": float, "set_at": str} | None] (3 tier 永远 present)
+        - master.budget_service_by_tier = None → 3 tier 都 None
+        - service.get_by_tier(tier) returns None → 该 tier None
+        - 否则 {"usd": entry.usd, "set_at": entry.set_at.isoformat()}
+    """
+    empty: dict[str, dict[str, Any] | None] = {tier.value: None for tier in ModelTier}
+    try:
+        service = getattr(master, "budget_service_by_tier", None)
+        if service is None:
+            return empty
+        result: dict[str, dict[str, Any] | None] = {}
+        for tier in ModelTier:  # haiku, sonnet, opus (Enum 顺序, deterministic)
+            entry = service.get_by_tier(tier)
+            if entry is None:
+                result[tier.value] = None
+            else:
+                result[tier.value] = {
+                    "usd": entry.usd,
+                    "set_at": entry.set_at.isoformat() if entry.set_at else None,
+                }
+        return result
+    except Exception as exc:
+        logger.warning("_extract_budget_by_tier failed: %s", exc)
+        return empty
 
 
 # === 序列化 helpers ===

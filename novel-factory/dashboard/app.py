@@ -887,6 +887,7 @@ def _workflow_result_to_response(
     cost_by_scenario: dict[str, float] | None = None,  # Phase 8.7
     cost_by_tier: dict[str, float] | None = None,  # Phase 8.13
     total_cost_usd: float = 0.0,  # Phase 8.7: 修 Phase 8.5 gap
+    budget_by_tier: dict[str, dict[str, Any] | None] | None = None,  # Phase 8.15 T5
 ) -> WorkflowStatusResponse:
     """run_workflow / resume_workflow 返回 dict → WorkflowStatusResponse
 
@@ -895,6 +896,9 @@ def _workflow_result_to_response(
     Phase 8.7: 修 Phase 8.5 gap — 显式接 cost_by_scenario + total_cost_usd params
     透传到 response (不再 hardcoded 0)
     Phase 8.13: 增 cost_by_tier param (additive, default None → empty dict)
+    Phase 8.15 T5: 增 budget_by_tier param (additive, default None → empty dict).
+    Pydantic v2 默认 extra='ignore', 未在 model 注册的 field 静默忽略; T6 会
+    在 WorkflowStatusResponse 加 budget_by_tier Field (Task 6 范围).
     """
     summary = result.get("summary") or {}
     if not isinstance(summary, dict):
@@ -926,6 +930,7 @@ def _workflow_result_to_response(
         cost_by_scenario=cost_by_scenario or {},  # Phase 8.7
         cost_by_tier=cost_by_tier or {},  # Phase 8.13
         total_cost_usd=total_cost_usd,  # Phase 8.7: 修 Phase 8.5 gap
+        budget_by_tier=budget_by_tier or {},  # Phase 8.15 T5 (Pydantic 暂 ignore, T6 补 model Field)
     )
 
 
