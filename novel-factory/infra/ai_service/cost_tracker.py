@@ -52,6 +52,8 @@ class CostBudgetExceeded(Exception):
     """Phase 8.8: raised by CostTracker.check_budget when total_cost() > budget_usd.
     Phase 8.12: 扩 scope field (default 'run' 保 backward compat, Phase 8.8/8.9/8.10
                 tests 0 改; 新 BudgetService.check_all_scopes 显式传 'run'/'day'/'week').
+    Phase 8.15: 扩 tier field (default None 保 backward compat; 新
+                BudgetService.check_all_tiers 传 scope='tier'+tier=ModelTier.X).
 
     Attributes are exposed for caller introspection (no re-parsing of message).
     Strictly greater than triggers (equal is OK).
@@ -62,16 +64,19 @@ class CostBudgetExceeded(Exception):
         used_usd: float,
         budget_usd: float,
         scenario: str | None = None,
-        scope: str = "run",  # NEW Phase 8.12 (default 'run' backward compat)
+        scope: str = "run",  # 'run'|'day'|'week'|'tier'  (Phase 8.12 +1, Phase 8.15 +1)
+        tier: "ModelTier | None" = None,  # NEW Phase 8.15 (default None, 旧 tests 0 改)
     ) -> None:
         self.used_usd = used_usd
         self.budget_usd = budget_usd
         self.scenario = scenario
         self.scope = scope
+        self.tier = tier  # NEW Phase 8.15
         scenario_msg = f" (last scenario: {scenario})" if scenario else ""
         scope_msg = f" [scope={scope}]" if scope != "run" else ""
+        tier_msg = f" [tier={tier.value}]" if scope == "tier" and tier else ""  # NEW Phase 8.15
         super().__init__(
-            f"Cost budget exceeded: ${used_usd:.4f} / ${budget_usd:.4f}{scope_msg}{scenario_msg}"
+            f"Cost budget exceeded: ${used_usd:.4f} / ${budget_usd:.4f}{scope_msg}{tier_msg}{scenario_msg}"
         )
 
 
