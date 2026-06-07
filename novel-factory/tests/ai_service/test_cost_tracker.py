@@ -236,3 +236,42 @@ class TestCostBudgetExceededMessage:
         exc_week = CostBudgetExceeded(used_usd=2.1, budget_usd=2.0, scope="week")
         assert exc_week.scope == "week"
         assert "[scope=week]" in str(exc_week)
+
+
+class TestCostTrackerSinceFilter:
+    """Phase 8.16: total_cost / cost_by_scenario / cost_by_tier 加 since 透传
+    过滤 timestamp < since 的 records. since=None 走旧 path (0 改)."""
+
+    def test_total_cost_with_since_filters_old_records(self) -> None:
+        """since=now → 旧 records 全过滤, total=0.0"""
+        from datetime import datetime, timedelta, timezone
+
+        tracker = CostTracker()
+        tracker.record("s1", ModelTier.SONNET, 1000, 500)  # 0.0105
+        # since=now+1s (未来) → 全部 records 都在 since 之前
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert tracker.total_cost(since=future) == 0.0
+
+    def test_cost_by_scenario_with_since_returns_only_recent(self) -> None:
+        """since=now-1h → 全部 records 仍 >= since (新近插入) → 走全量"""
+        from datetime import datetime, timedelta, timezone
+
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 1_000, 500)  # 0.0105
+        tracker.record("hook_extraction", ModelTier.HAIKU, 100, 50)     # 0.00035
+        # 1h 前 → 全部 records 都在 since 之后
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        by_scenario = tracker.cost_by_scenario(since=one_hour_ago)
+        assert by_scenario == {
+            "chapter_writing": pytest.approx(0.0105),
+            "hook_extraction": pytest.approx(0.00035),
+        }
+
+    def test_cost_by_tier_with_since_none_returns_all(self) -> None:
+        """backward compat: since=None 走旧 path, 返全部 records 聚合"""
+        tracker = CostTracker()
+        tracker.record("a", ModelTier.SONNET, 100, 50)
+        tracker.record("b", ModelTier.OPUS, 100, 50)
+        by_tier = tracker.cost_by_tier(since=None)
+        assert ModelTier.SONNET in by_tier
+        assert ModelTier.OPUS in by_tier

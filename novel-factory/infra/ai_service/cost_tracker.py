@@ -133,9 +133,12 @@ class CostTracker:
         """全部记录 (按时间顺序)"""
         return list(self._records)
 
-    def total_cost(self) -> float:
-        """总成本 (USD)"""
-        return sum(r.cost_usd for r in self._records)
+    def total_cost(self, since: Optional[datetime] = None) -> float:
+        """总成本 (USD). Phase 8.16: since 透传 (additive, default None 走旧 path)."""
+        records = self._records if since is None else [
+            r for r in self._records if r.timestamp >= since
+        ]
+        return sum(r.cost_usd for r in records)
 
     def total_tokens(self) -> tuple[int, int]:
         """总 (input, output) tokens"""
@@ -143,17 +146,23 @@ class CostTracker:
         out_t = sum(r.output_tokens for r in self._records)
         return in_t, out_t
 
-    def cost_by_scenario(self) -> dict[str, float]:
-        """按 scenario 聚合成本"""
+    def cost_by_scenario(self, since: Optional[datetime] = None) -> dict[str, float]:
+        """按 scenario 聚合成本. Phase 8.16: since 透传 (additive, default None 走旧 path)."""
+        records = self._records if since is None else [
+            r for r in self._records if r.timestamp >= since
+        ]
         result: dict[str, float] = {}
-        for r in self._records:
+        for r in records:
             result[r.scenario] = result.get(r.scenario, 0.0) + r.cost_usd
         return result
 
-    def cost_by_tier(self) -> dict[ModelTier, float]:
-        """按 tier 聚合成本"""
+    def cost_by_tier(self, since: Optional[datetime] = None) -> dict[ModelTier, float]:
+        """按 tier 聚合成本. Phase 8.16: since 透传 (additive, default None 走旧 path)."""
+        records = self._records if since is None else [
+            r for r in self._records if r.timestamp >= since
+        ]
         result: dict[ModelTier, float] = {}
-        for r in self._records:
+        for r in records:
             result[r.tier] = result.get(r.tier, 0.0) + r.cost_usd
         return result
 
