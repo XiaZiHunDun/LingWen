@@ -126,10 +126,16 @@ const scoreEntries = computed(() => {
 const firstScore = computed(() => scoreEntries.value[0]?.[1] || null);
 const hasScores = computed(() => scoreEntries.value.length > 0);
 
+// Phase 8.14: hasCost OR check costByTier, 防 tier-only 数据时整 cost section 隐藏
+// 跟 Phase 8.13 CostBarChart.hasData 对称 (任一 mode 有正值即 visible)
 const costByScenario = computed(() => props.status?.cost_by_scenario || {});
+const costByTier = computed(() => props.status?.cost_by_tier || {});
 const hasCost = computed(() => {
-  const data = costByScenario.value;
-  return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0);
+  const scenarioHas = Object.keys(costByScenario.value).length > 0
+    && Object.values(costByScenario.value).some((v) => v > 0);
+  const tierHas = Object.keys(costByTier.value).length > 0
+    && Object.values(costByTier.value).some((v) => v > 0);
+  return scenarioHas || tierHas;
 });
 const totalCostText = computed(() => {
   const v = Number(props.status?.total_cost_usd ?? 0);
