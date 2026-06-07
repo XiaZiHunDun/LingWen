@@ -255,11 +255,13 @@ class AgentComputeFn:
         self,
         master: MasterController,
         cost_tracker: Optional[CostTracker] = None,
-        budget_service: Optional["BudgetService"] = None,  # NEW Phase 8.12
+        budget_service: Optional["BudgetService"] = None,  # Phase 8.12
+        budget_service_by_tier: Optional["BudgetService"] = None,  # NEW Phase 8.15
     ) -> None:
         self._master = master
         self._cost_tracker = cost_tracker
         self._budget_service = budget_service
+        self._budget_service_by_tier = budget_service_by_tier  # NEW Phase 8.15
 
     def __call__(self, node: ThoughtNode, inputs: dict[str, Any]) -> ComputeResult:
         scenario = node.prompt_scenario
@@ -341,6 +343,14 @@ class AgentComputeFn:
             )
         # === END Phase 8.12 NEW ===
 
+        # === Phase 8.15 NEW: per-tier budget enforcement (haiku/sonnet/opus) ===
+        # 跟 Phase 8.12 同模式: 超 tier budget 时 raise 让 scheduler 兜底 (node FAILED)
+        # 顺序: total → run/day/week → tier (跟 Phase 8.12 顺序同栈, deterministic)
+        # budget_service_by_tier None 兜底: 旧 path 0 改 (backward compat)
+        if self._budget_service_by_tier is not None and self._cost_tracker is not None:
+            self._budget_service_by_tier.check_all_tiers(self._cost_tracker.cost_by_tier())
+        # === END Phase 8.15 NEW ===
+
         return ComputeResult(output=output, cost_tokens=cost_tokens, fail=False)
 
 
@@ -377,11 +387,16 @@ def build_got_scheduler(
     graph = load_workflow(workflow_name, base_dir=bd)
     # Phase 8.5: 透传 master.cost_tracker (None 兜底) → AgentComputeFn 写 record
     # Phase 8.12: 透传 master.budget_service (None 兜底) → 3-tier budget check
+    # Phase 8.15: 透传 master.budget_service_by_tier (None 兜底) → per-tier check
     # getattr 防御: 测试用 _StubMaster 等 fake 不一定有 cost_tracker / budget_service 字段
     cost_tracker = getattr(master, "cost_tracker", None)
     budget_service = getattr(master, "budget_service", None)
+    budget_service_by_tier = getattr(master, "budget_service_by_tier", None)  # NEW Phase 8.15
     compute = AgentComputeFn(
-        master, cost_tracker=cost_tracker, budget_service=budget_service
+        master,
+        cost_tracker=cost_tracker,
+        budget_service=budget_service,
+        budget_service_by_tier=budget_service_by_tier,  # NEW Phase 8.15
     )
     scheduler = GoTScheduler(graph, compute_fn=compute, max_backtracks=max_backtracks)
     return scheduler, graph
