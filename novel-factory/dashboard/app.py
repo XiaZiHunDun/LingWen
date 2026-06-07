@@ -137,6 +137,11 @@ class BudgetSetRequest(BaseModel):
     usd: float = Field(ge=0, le=10000)  # 0 表示"无限但仍写行 0"
 
 
+class BudgetTierSetRequest(BaseModel):
+    """Phase 8.15 T6: 设置 tier budget (haiku/sonnet/opus 各自)."""
+    usd: float = Field(ge=0, le=10000)  # 0 表示"无限但仍写行 0"
+
+
 class WorkflowStatusResponse(BaseModel):
     """工作流状态响应"""
     workflow_name: Optional[str] = None
@@ -157,6 +162,8 @@ class WorkflowStatusResponse(BaseModel):
     # Phase 8.12 T5 NEW: per-day / per-week budget status (per-run 仍走 cost_budget_status 旧 path)
     budget_per_day: dict[str, Any] = Field(default_factory=dict)
     budget_per_week: dict[str, Any] = Field(default_factory=dict)
+    # Phase 8.15 T6 NEW: per-tier budget status (haiku/sonnet/opus, 跟 run/day/week 完全 orthogonal)
+    budget_by_tier: dict[str, dict[str, Any] | None] = Field(default_factory=dict)
 
 
 class WorkflowMermaidResponse(BaseModel):
@@ -757,6 +764,61 @@ def create_app(
             raise HTTPException(503, "budget service not initialized")
         service.set(scope, req.usd, run_id=None)
         return {"ok": True, "scope": scope, "usd": req.usd}
+
+    # ==================== Phase 8.15 T6: Per-Tier Budget Endpoints ====================
+
+    @app.get("/api/budgets/by-tier")
+    async def get_budgets_by_tier() -> dict[str, Any]:
+        """Phase 8.15 T6: 返 3 tier current budget entries (haiku/sonnet/opus).
+
+        跟 GET /api/budgets 同 pattern, 调 _extract_budget_by_tier helper
+        (Phase 8.15 T5 已实现, silent-degrade, 3 tier 永远 present).
+
+        Returns:
+            dict with keys: haiku, sonnet, opus (Enum 顺序, deterministic)
+            每个 value 是 dict {usd, set_at} 或 None (无 budget set)
+        """
+        from dashboard.protocols import (
+            MasterControllerAdapter,
+            _extract_budget_by_tier,
+        )
+        controller = MasterControllerAdapter._controller
+        return _extract_budget_by_tier(controller)
+
+    @app.put("/api/budgets/by-tier/{tier}")
+    async def set_budget_by_tier(tier: str, req: BudgetTierSetRequest) -> dict[str, Any]:
+        """Phase 8.15 T6: 设置 tier budget (haiku/sonnet/opus 各自).
+
+        跟 PUT /api/budgets/{scope} 同 pattern, 调 BudgetService.set_by_tier
+        (Phase 8.15 T2 已实现). tier validation 用 ModelTier enum 防非法输入.
+
+        Args:
+            tier: 'haiku' | 'sonnet' | 'opus' (其他返 404)
+            req: BudgetTierSetRequest {usd: float, ge=0 le=10000}
+
+        Returns:
+            dict with keys: ok, tier, usd
+
+        Raises:
+            404: tier not in ('haiku','sonnet','opus') (ModelTier ValueError)
+            422: usd < 0 or usd > 10000 (Pydantic validation)
+            503: budget_service_by_tier not initialized on controller
+        """
+        from dashboard.protocols import MasterControllerAdapter
+        from infra.ai_service.model_tiers import ModelTier
+
+        try:
+            tier_enum = ModelTier(tier)
+        except ValueError:
+            raise HTTPException(
+                404, f"invalid tier: {tier!r}, must be 'haiku'/'sonnet'/'opus'"
+            )
+        controller = MasterControllerAdapter._controller
+        service = getattr(controller, "budget_service_by_tier", None)
+        if service is None:
+            raise HTTPException(503, "tier budget service not initialized")
+        service.set_by_tier(tier_enum, req.usd)
+        return {"ok": True, "tier": tier, "usd": req.usd}
 
     # ==================== Phase 6.4: WebSocket Endpoint ====================
 
