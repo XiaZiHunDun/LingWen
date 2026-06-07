@@ -16,6 +16,20 @@
     role="region"
     aria-label="成本追踪"
   >
+    <!-- Phase 8.16 NEW: 顶部 segmented control (在 total 之前) -->
+    <div class="time-window-tabs" role="tablist" aria-label="成本时间窗口">
+      <button
+        v-for="opt in TIME_OPTIONS"
+        :key="opt.value"
+        :class="['time-window-tab', { active: timeWindow === opt.value }]"
+        :data-testid="`sidebar-time-window-${opt.value}`"
+        role="tab"
+        :aria-selected="timeWindow === opt.value"
+        @click="setTimeWindow(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
     <div class="sidebar-cost-row" role="status" aria-live="polite">
       <span class="sidebar-cost-total-text">
         <span class="sidebar-cost-icon">💰</span>${{ totalText }}
@@ -79,6 +93,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
 
 const props = defineProps({
   status: {
@@ -87,13 +102,33 @@ const props = defineProps({
   },
 });
 
-const costByScenario = computed(() => props.status?.cost_by_scenario || {});
+// Phase 8.16: time window composable (跟 WorkflowStatus 共享 singleton)
+const { timeWindow, windowedCost, setTimeWindow } = useCostWindow();
+
+const TIME_OPTIONS = [
+  { value: '7d', label: '7天' },
+  { value: '30d', label: '30天' },
+  { value: 'all', label: '全部' },
+];
+
+// display* 模式同 WorkflowStatus
+const displayCostByScenario = computed(() =>
+  windowedCost.value?.cost_by_scenario ?? props.status?.cost_by_scenario ?? {}
+);
+const displayTotalCost = computed(() =>
+  windowedCost.value?.total_cost_usd ?? props.status?.total_cost_usd ?? 0.0
+);
+
+// Phase 8.16: hasCost 用 display* 走 windowedCost 路径. 维持 Phase 8.15 旧版
+// (仅 scenario check, 不 OR tier) — 7d/30d 切时 banner 可能 hidden 接受
+// (scope A 锁, Phase 8.17 独立 followup).
+const costByScenario = computed(() => displayCostByScenario.value);
 const hasCost = computed(() => {
   const data = costByScenario.value;
   return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0);
 });
 
-const totalUsd = computed(() => Number(props.status?.total_cost_usd ?? 0));
+const totalUsd = computed(() => Number(displayTotalCost.value ?? 0));
 const totalText = computed(() => totalUsd.value.toFixed(4));
 
 // Phase 8.12 NEW: 3 档 budget 收集 + label
@@ -237,5 +272,25 @@ const tierBudgets = computed(() => {
 .sidebar-cost-tier-text {
   flex: 1;
   color: var(--color-text-dim);
+}
+
+/* Phase 8.16 NEW: .time-window-tabs 跟 .time-window-tab (跟 WorkflowStatus 同 pattern,
+   scoped CSS 不冲突 — 独立 component). */
+.time-window-tabs {
+  display: flex;
+  gap: var(--space-xs);
+}
+.time-window-tab {
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+}
+.time-window-tab:hover { transform: translate(-1px, -1px); }
+.time-window-tab.active {
+  background: var(--color-accent);
+  color: var(--bg-primary);
 }
 </style>
