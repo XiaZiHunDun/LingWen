@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Iterator, Optional
 
 from infra.ai_service.cost_tracker import CostBudgetExceeded
+from infra.ai_service.model_tiers import ModelTier
 
 # 默认 DB 路径: 复用 cost_tracker.db (gitignored)
 _DB_PATH = Path(__file__).parent.parent / ".state" / "cost_tracker.db"
@@ -37,6 +38,19 @@ class BudgetEntry:
     scope: str  # 'run' | 'day' | 'week'
     usd: float
     run_id: Optional[str]
+    set_at: datetime  # UTC
+
+
+@dataclass(frozen=True)
+class TierBudgetEntry:
+    """Per-tier budget persistence entry (append-only) — Phase 8.15.
+
+    Mirror BudgetEntry 但用 ModelTier 替 scope. 跟现 'run/day/week' budget
+    独立表 `budgets_by_tier` 共存, 0 共享列 (除 id PK + usd + set_at).
+    """
+    id: int
+    tier: ModelTier
+    usd: float
     set_at: datetime  # UTC
 
 
@@ -85,7 +99,11 @@ class BudgetService:
             conn.close()
 
     def init_db(self) -> None:
-        """初始化 budgets 表 + 2 索引 (幂等 CREATE IF NOT EXISTS)"""
+        """初始化 budgets 表 + 2 索引 (幂等 CREATE IF NOT EXISTS)
+
+        Phase 8.15: 同时建 budgets_by_tier 表 + idx (per-tier budget).
+        旧 budgets 表 0 改, 0 删行/列. CREATE IF NOT EXISTS 幂等.
+        """
         with self._connect() as conn:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS budgets (
@@ -99,6 +117,14 @@ class BudgetService:
                     ON budgets(scope, set_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_budgets_run_id
                     ON budgets(run_id);
+                CREATE TABLE IF NOT EXISTS budgets_by_tier (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tier TEXT NOT NULL CHECK(tier IN ('haiku', 'sonnet', 'opus')),
+                    usd REAL NOT NULL CHECK(usd >= 0),
+                    set_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_budgets_by_tier_tier
+                    ON budgets_by_tier(tier, id DESC);
             """)
 
     def set(
@@ -219,5 +245,114 @@ class BudgetService:
             ).fetchall()
         return [r["run_id"] for r in rows]
 
+    # === Phase 8.15: Per-Tier Budget (parallel to run/day/week) ===
 
-__all__ = ["BudgetService", "BudgetEntry"]
+    def set_by_tier(
+        self,
+        tier: ModelTier,
+        usd: float,
+    ) -> TierBudgetEntry:
+        """插一条新 tier budget (append-only) — Phase 8.15.
+
+        Mirror `set` 但用 ModelTier 替 scope. 跟 run/day/week 0 共享行.
+        """
+        if usd < 0:
+            raise ValueError(f"usd must be non-negative, got {usd}")
+        self.init_db()
+        set_at = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            cursor = conn.execute(
+                "INSERT INTO budgets_by_tier (tier, usd, set_at) VALUES (?, ?, ?)",
+                (tier.value, usd, set_at),
+            )
+            new_id = cursor.lastrowid
+        return TierBudgetEntry(
+            id=new_id,
+            tier=tier,
+            usd=usd,
+            set_at=datetime.fromisoformat(set_at),
+        )
+
+    def get_by_tier(
+        self,
+        tier: ModelTier,
+    ) -> Optional[TierBudgetEntry]:
+        """返该 tier 最新一条 (None if 0 行) — Phase 8.15.
+
+        Mirror `get_current` 但用 ModelTier 替 scope.
+        """
+        self.init_db()
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT id, tier, usd, set_at FROM budgets_by_tier "
+                "WHERE tier = ? ORDER BY id DESC LIMIT 1",
+                (tier.value,),
+            ).fetchone()
+        if row is None:
+            return None
+        return TierBudgetEntry(
+            id=row["id"],
+            tier=ModelTier(row["tier"]),
+            usd=row["usd"],
+            set_at=datetime.fromisoformat(row["set_at"]),
+        )
+
+    def list_by_tiers(self) -> list[TierBudgetEntry]:
+        """返每 tier 最新一条 (current per tier) — Phase 8.15.
+
+        SQL: 子查询 MAX(id) GROUP BY tier 取每 tier current id,
+        跟 Phase 8.12 list_runs 同 pattern.
+        """
+        self.init_db()
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT b.id, b.tier, b.usd, b.set_at
+                FROM budgets_by_tier b
+                INNER JOIN (
+                    SELECT tier, MAX(id) AS max_id FROM budgets_by_tier GROUP BY tier
+                ) m ON b.tier = m.tier AND b.id = m.max_id
+                ORDER BY b.id DESC
+                """,
+            ).fetchall()
+        return [
+            TierBudgetEntry(
+                id=row["id"],
+                tier=ModelTier(row["tier"]),
+                usd=row["usd"],
+                set_at=datetime.fromisoformat(row["set_at"]),
+            )
+            for row in rows
+        ]
+
+    def check_all_tiers(
+        self,
+        cost_by_tier: dict[ModelTier, float],
+    ) -> None:
+        """检查 3 tier budget, 第 1 个超阈 raise CostBudgetExceeded(scope='tier', tier=...).
+
+        顺序: haiku → sonnet → opus (Enum 迭代顺序, deterministic).
+        跟 Phase 8.12 check_all_scopes 同 pattern: 显 for tier in ModelTier:,
+        raise 早于 scheduler 兜底, record 已在 raise 前.
+
+        Args:
+            cost_by_tier: {tier: used_usd} 当前累计 (从 CostTracker.cost_by_tier() 拿)
+
+        Raises:
+            CostBudgetExceeded: 第 1 个超阈 raise (scope='tier', tier=ModelTier.X)
+        """
+        for tier in ModelTier:  # haiku, sonnet, opus (Enum 顺序, deterministic)
+            entry = self.get_by_tier(tier)
+            if entry is None or entry.usd <= 0:
+                continue  # 未设跳过
+            used = cost_by_tier.get(tier, 0.0)
+            if used > entry.usd:
+                raise CostBudgetExceeded(
+                    used_usd=used,
+                    budget_usd=entry.usd,
+                    scope="tier",
+                    tier=tier,
+                )
+
+
+__all__ = ["BudgetService", "BudgetEntry", "TierBudgetEntry"]
