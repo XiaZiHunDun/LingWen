@@ -1,11 +1,12 @@
 """Phase 8.15 T6: per-tier budget endpoints + WorkflowStatusResponse.budget_by_tier.
 
-5 tests:
+6 tests:
 1. GET /api/budgets/by-tier → 3 tier dict (haiku/sonnet/opus, 顺序 Enum 顺序)
 2. PUT /api/budgets/by-tier/opus usd=1.0 → service.set_by_tier called, returns ok
 3. PUT /api/budgets/by-tier/invalid → 404 (tier not in enum)
 4. PUT usd=-0.01 → 422 (Pydantic ge=0 兜底)
-5. GET /api/workflows/active 返 dict 含 budget_by_tier field (3 keys)
+5. PUT /api/budgets/by-tier/opus with service=None → 503 (Phase 8.12 same pattern)
+6. GET /api/workflows/active 返 dict 含 budget_by_tier field (3 keys)
 
 Pattern 跟 tests/agent_system/test_dashboard_budget_endpoints.py 1:1 mirror
 (Phase 8.12 _make_test_client + MasterControllerAdapter._controller singleton).
@@ -91,6 +92,27 @@ class TestBudgetByTierEndpoints:
         client, _ = _make_test_client(tmp_path)
         response = client.put("/api/budgets/by-tier/opus", json={"usd": -0.01})
         assert response.status_code == 422
+
+    def test_set_budget_by_tier_endpoint_returns_503_when_service_none(
+        self, tmp_path: Path
+    ) -> None:
+        """PUT /api/budgets/by-tier/opus → 503 (master.budget_service_by_tier = None)."""
+        from dashboard.app import create_app
+        from dashboard.protocols import MasterControllerAdapter
+
+        master = MagicMock()
+        master.budget_service = None
+        master.budget_service_by_tier = None  # 503 触发: service 未配
+        master.cost_tracker = None
+
+        MasterControllerAdapter._controller = master
+        try:
+            app = create_app()
+            client = TestClient(app)
+            response = client.put("/api/budgets/by-tier/opus", json={"usd": 1.0})
+            assert response.status_code == 503
+        finally:
+            MasterControllerAdapter._controller = None
 
     def test_workflow_status_response_includes_budget_by_tier_field(self, tmp_path: Path) -> None:
         """GET /api/workflows/active 返 dict 含 budget_by_tier 3 keys (T5 helper 透传, T6 补 model Field)."""
