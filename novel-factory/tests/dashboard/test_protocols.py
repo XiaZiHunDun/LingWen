@@ -13,6 +13,7 @@ Phase 8.15: per-tier BUDGET extraction helper (mirror _extract_budget_per_window
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -82,7 +83,7 @@ class TestExtractBudgetByTier:
         result = _extract_budget_by_tier(_StubMaster())
         assert result == {"haiku": None, "sonnet": None, "opus": None}
 
-    def test_extract_budget_by_tier_with_set_tiers_returns_dict(self, tmp_path: Any) -> None:
+    def test_extract_budget_by_tier_with_set_tiers_returns_dict(self, tmp_path: Path) -> None:
         """Phase 8.15: set haiku/opus → 返 haiku+opus dict, sonnet None."""
         from infra.agent_system.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
@@ -106,7 +107,7 @@ class TestExtractBudgetByTier:
         assert isinstance(result["opus"]["set_at"], str)
         assert result["sonnet"] is None
 
-    def test_extract_budget_by_tier_includes_all_three_tiers(self, tmp_path: Any) -> None:
+    def test_extract_budget_by_tier_includes_all_three_tiers(self, tmp_path: Path) -> None:
         """Phase 8.15: 3 tier keys (haiku/sonnet/opus) 永远 present, 顺序 Enum 顺序."""
         from infra.agent_system.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
@@ -123,7 +124,7 @@ class TestExtractBudgetByTier:
         # 3 keys 永远 present, 顺序 haiku/sonnet/opus (Enum 顺序)
         assert list(result.keys()) == ["haiku", "sonnet", "opus"]
 
-    def test_extract_budget_by_tier_appears_in_workflow_status_response(self, tmp_path: Any) -> None:
+    def test_extract_budget_by_tier_appears_in_workflow_status_response(self, tmp_path: Path) -> None:
         """Phase 8.15: get_active_workflow_status 返 dict 含 budget_by_tier 3 tier dict.
 
         Mock _last_scheduler/_last_graph 触发 active workflow path (Phase 5+
@@ -174,7 +175,7 @@ class TestExtractBudgetByTier:
             # Phase 8.15 新 field
             assert "budget_by_tier" in status
             budget_by_tier = status["budget_by_tier"]
-            assert set(budget_by_tier.keys()) == {"haiku", "sonnet", "opus"}
+            assert list(budget_by_tier.keys()) == ["haiku", "sonnet", "opus"]
             # opus + sonnet 设了 → dict with usd/set_at
             assert budget_by_tier["opus"]["usd"] == 1.0
             assert budget_by_tier["sonnet"]["usd"] == 0.5
