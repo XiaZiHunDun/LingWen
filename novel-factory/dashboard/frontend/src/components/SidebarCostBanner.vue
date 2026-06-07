@@ -1,10 +1,13 @@
 <!--
-  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12)
+  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15)
   显示 total USD + budget line + progress bar。
   有 cost_by_scenario entry 才显示 (空状态隐藏避免占 vertical space)。
   跨 4 page (Overview / Decisions / Workflows / placeholders) 持续可见。
   Phase 8.12: 3 档 budget (per-run/per-day/per-week) priority cascade — 显最紧急档
   (exceeded 优先, 同状态按 used_pct desc), 含 label 本次/今日/本周。
+  Phase 8.15: 加 3 个 per-tier budget row (haiku/sonnet/opus) 在 activeBudget 进度条下方
+  (跟 Phase 8.12 cascade 不冲突, 4 块: total + active + 3 tier rows). 顺序 Enum
+  顺序 (haiku → sonnet → opus, deterministic). 未设 tier 跳过 (filter entry 为空 dict).
 -->
 <template>
   <div
@@ -43,6 +46,34 @@
         :style="{ width: activePct + '%' }"
       ></div>
     </div>
+    <!-- Phase 8.15 NEW: per-tier budget rows (haiku/sonnet/opus) -->
+    <template v-for="tier in tierBudgets" :key="tier.name">
+      <div data-testid="sidebar-cost-tier-row">
+        <div
+          class="sidebar-cost-row sidebar-cost-tier-row"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="sidebar-cost-tier-text">
+            {{ tier.label }} 预算: ${{ tier.used }} / ${{ tier.budget }} ({{ tier.pct }}%)
+          </span>
+        </div>
+        <div
+          class="progress-bar"
+          role="progressbar"
+          :aria-valuenow="Math.round(parseFloat(tier.pct))"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-label="`${tier.label} 预算状态: 已用 ${tier.used} 美元 / 预算 ${tier.budget} 美元 (${tier.pct}%)`"
+        >
+          <div
+            class="progress-bar-fill"
+            :class="tier.status === 'exceeded' ? 'exceeded' : 'ok'"
+            :style="{ width: tier.pct + '%' }"
+          ></div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -108,6 +139,32 @@ const activeBudgetText = computed(() =>
   activeBudget.value ? Number(activeBudget.value.budget_usd ?? 0).toFixed(4) : '0.0000'
 );
 const activePctText = computed(() => activePct.value.toFixed(1));
+
+// Phase 8.15 NEW: per-tier budget rows (haiku/sonnet/opus, 顺序 Enum 顺序)
+// 跟 Phase 8.12 activeBudget cascade 不冲突 — 加 row 不动 cascade
+// 未设 tier (空 dict) → 跳过 (filter out)
+// 顺序 hardcode: haiku → sonnet → opus (跟 ModelTier 枚举顺序一致, deterministic)
+const TIER_ORDER = ['haiku', 'sonnet', 'opus'];
+const tierBudgets = computed(() => {
+  const data = props.status?.budget_by_tier || {};
+  const list = [];
+  for (const tierName of TIER_ORDER) {
+    const entry = data[tierName];
+    if (!entry || entry.budget_usd == null) continue;  // 未设跳过
+    const used = Number(entry.used_usd ?? 0);
+    const budget = Number(entry.budget_usd ?? 0);
+    const pct = budget > 0 ? (used / budget) * 100 : 0;
+    list.push({
+      name: tierName,
+      label: tierName,  // 3 tier 用 lowercase key (跟 Phase 8.13 CostBarChart mode toggle 一致)
+      used: used.toFixed(4),
+      budget: budget.toFixed(4),
+      pct: Math.max(0, Math.min(100, pct)).toFixed(1),  // 0-100 范围 clamp
+      status: entry.status || 'ok',
+    });
+  }
+  return list;
+});
 </script>
 
 <style scoped>
@@ -165,5 +222,20 @@ const activePctText = computed(() => activePct.value.toFixed(1));
 
 .progress-bar-fill.exceeded {
   background: #f56c6c;
+}
+
+/* Phase 8.15 NEW: per-tier budget row (跟 .sidebar-cost-row 同 layout,
+   独立 class for data-testid selector). 0 改 .sidebar-cost-row 旧 layout. */
+.sidebar-cost-tier-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.sidebar-cost-tier-text {
+  flex: 1;
+  color: var(--color-text-dim);
 }
 </style>
