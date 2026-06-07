@@ -164,7 +164,9 @@ class _StubMasterController:
             "resolved_decision": d,
         }
 
-    def get_active_workflow_status(self) -> dict:
+    def get_active_workflow_status(self, since=None) -> dict:
+        # Phase 8.16: since 接受 (default None, 旧 path) — adapter/Protocol 透传,
+        # stub 不消费 since, 仅满足 endpoint get_active_workflow_status(since=...) 调用
         if self._last_workflow_status is None:
             return {"is_active": False, "workflow_name": None, "pending_decisions": []}
         return self._last_workflow_status

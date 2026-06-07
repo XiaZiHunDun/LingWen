@@ -96,8 +96,11 @@ class MasterControllerLike(Protocol):
         """恢复 DECISION 暂停的工作流(Phase 5)"""
         ...
 
-    def get_active_workflow_status(self) -> dict[str, Any]:
-        """当前活跃工作流状态(is_active / workflow_name / paused / ...)"""
+    def get_active_workflow_status(
+        self, since: Optional[datetime] = None
+    ) -> dict[str, Any]:
+        """当前活跃工作流状态(is_active / workflow_name / paused / ...).
+        Phase 8.16: since 透传 (additive kwarg, default None 走旧 path)."""
         ...
 
 

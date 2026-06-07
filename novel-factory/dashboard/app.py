@@ -14,11 +14,11 @@ import asyncio
 import os
 import sqlite3
 from contextlib import asynccontextmanager, contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
 from dashboard.protocols import (
@@ -174,6 +174,26 @@ class WorkflowMermaidResponse(BaseModel):
     has_decision_nodes: bool
     status_applied: bool = False  # Phase 6.6.D: true = 染色基于 active workflow
     node_statuses: dict[str, str] = Field(default_factory=dict)  # Phase 6.6.D
+
+
+# ==================== Phase 8.16: Time Window Helper ====================
+
+_TIME_WINDOW_DAYS = {"7d": 7, "30d": 30}
+
+
+def _parse_time_window(window: str) -> Optional[datetime]:
+    """Phase 8.16: 翻译 time_window query param → since datetime (UTC).
+
+    Args:
+        window: "7d" | "30d" | "all" | 其他 (silent fallback to None)
+
+    Returns:
+        datetime (UTC, now-7d 或 now-30d) for "7d"/"30d"
+        None for "all" or invalid (silent fallback, 防呆, 跟 Phase 8.13 silent degrade 模式一致)
+    """
+    if window in _TIME_WINDOW_DAYS:
+        return datetime.now(timezone.utc) - timedelta(days=_TIME_WINDOW_DAYS[window])
+    return None
 
 
 # ==================== Database Helper ====================
@@ -711,11 +731,19 @@ def create_app(
         )
 
     @app.get("/api/workflows/active", response_model=WorkflowStatusResponse)
-    def get_active_workflow() -> WorkflowStatusResponse:
-        """当前活跃工作流状态 (Phase 5+)"""
+    def get_active_workflow(
+        time_window: str = Query("all", description="7d|30d|all (Phase 8.16)"),
+    ) -> WorkflowStatusResponse:
+        """当前活跃工作流状态 (Phase 5+).
+        Phase 8.16: 加 time_window query param (7d|30d|all, default all), 透传 since
+        到 3 _extract_cost helper. since=None (all) 走旧 path 保 backward compat.
+        Invalid time_window → silent fallback to None (跟 Phase 8.13 silent degrade)."""
         if master_controller is None:
             return WorkflowStatusResponse(is_active=False, workflow_name=None)
-        return WorkflowStatusResponse(**master_controller.get_active_workflow_status())
+        since = _parse_time_window(time_window)
+        return WorkflowStatusResponse(
+            **master_controller.get_active_workflow_status(since=since)
+        )
 
     # ==================== Phase 8.12 T5: Budget Endpoints ====================
 
