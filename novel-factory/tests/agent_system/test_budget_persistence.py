@@ -1,6 +1,8 @@
-"""Tests for BudgetService (Phase 8.12)
+"""Tests for BudgetService (Phase 8.12 + Phase 8.15)
 
-Per-run / per-day / per-week budget persistence. Append-only `budgets` table.
+Per-run / per-day / per-week budget persistence (Phase 8.12) +
+per-tier (haiku/sonnet/opus) budget persistence (Phase 8.15).
+Append-only `budgets` + `budgets_by_tier` tables.
 Per-day = UTC 00:00-23:59, per-week = Mon-Sun.
 """
 from __future__ import annotations
@@ -12,7 +14,9 @@ from typing import Optional
 
 import pytest
 
-from infra.agent_system.budget_persistence import BudgetService
+from infra.agent_system.budget_persistence import BudgetService, TierBudgetEntry
+from infra.ai_service.cost_tracker import CostBudgetExceeded
+from infra.ai_service.model_tiers import ModelTier
 
 
 class TestBudgetService:
@@ -161,15 +165,13 @@ class TestBudgetService:
 
 
 # === Phase 8.15: Per-Tier Budget ===
-from infra.ai_service.cost_tracker import CostBudgetExceeded
-from infra.ai_service.model_tiers import ModelTier
 
 
 class TestBudgetByTierPersistence:
     """Phase 8.15: BudgetService per-tier methods (4 new methods)."""
 
-    def test_set_by_tier_inserts_row(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService, TierBudgetEntry
+    def test_set_by_tier_inserts_row(self, tmp_path: Path) -> None:
+        """set_by_tier 返回 TierBudgetEntry with id/tier/usd 正确."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         entry = svc.set_by_tier(ModelTier.OPUS, 1.0)
         assert isinstance(entry, TierBudgetEntry)
@@ -177,14 +179,14 @@ class TestBudgetByTierPersistence:
         assert entry.usd == 1.0
         assert entry.id > 0
 
-    def test_set_by_tier_negative_usd_raises(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService
+    def test_set_by_tier_negative_usd_raises(self, tmp_path: Path) -> None:
+        """set_by_tier 负数 usd → ValueError 'usd must be non-negative'."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         with pytest.raises(ValueError, match="usd must be non-negative"):
             svc.set_by_tier(ModelTier.OPUS, -0.01)
 
-    def test_get_by_tier_returns_latest(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService
+    def test_get_by_tier_returns_latest(self, tmp_path: Path) -> None:
+        """同 tier 多次 set → get_by_tier 返最后一次 (latest)."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         svc.set_by_tier(ModelTier.OPUS, 2.0)  # 后 set 覆盖 (current)
@@ -192,13 +194,13 @@ class TestBudgetByTierPersistence:
         assert entry is not None
         assert entry.usd == 2.0  # latest
 
-    def test_get_by_tier_returns_none_if_unset(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService
+    def test_get_by_tier_returns_none_if_unset(self, tmp_path: Path) -> None:
+        """未设 tier → get_by_tier 返 None."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         assert svc.get_by_tier(ModelTier.OPUS) is None
 
-    def test_list_by_tiers_returns_current_per_tier(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService
+    def test_list_by_tiers_returns_current_per_tier(self, tmp_path: Path) -> None:
+        """list_by_tiers 只返 current per tier (历史折成 current)."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         svc.set_by_tier(ModelTier.OPUS, 2.0)  # 2nd set
@@ -208,14 +210,14 @@ class TestBudgetByTierPersistence:
         assert len(opus_entries) == 1
         assert opus_entries[0].usd == 2.0
 
-    def test_check_all_tiers_no_exceed_no_raise(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService
+    def test_check_all_tiers_no_exceed_no_raise(self, tmp_path: Path) -> None:
+        """cost < budget → check_all_tiers 不 raise."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         svc.check_all_tiers({ModelTier.OPUS: 0.5})  # 0.5 < 1.0 ok
 
-    def test_check_all_tiers_raises_on_first_exceed(self, tmp_path):
-        from infra.agent_system.budget_persistence import BudgetService
+    def test_check_all_tiers_raises_on_first_exceed(self, tmp_path: Path) -> None:
+        """cost > budget → raise CostBudgetExceeded(scope='tier', tier=OPUS)."""
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         with pytest.raises(CostBudgetExceeded) as exc_info:
@@ -224,9 +226,8 @@ class TestBudgetByTierPersistence:
         assert exc_info.value.tier == ModelTier.OPUS
         assert "tier=opus" in str(exc_info.value)
 
-    def test_check_all_tiers_haiku_checked_first(self, tmp_path):
+    def test_check_all_tiers_haiku_checked_first(self, tmp_path: Path) -> None:
         """Phase 8.15: deterministic 顺序 haiku → sonnet → opus (Enum 顺序)."""
-        from infra.agent_system.budget_persistence import BudgetService
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.HAIKU, 0.1)
         svc.set_by_tier(ModelTier.SONNET, 0.5)
@@ -240,9 +241,8 @@ class TestBudgetByTierPersistence:
         # 第 1 个超阈 raise (haiku), 后续不检查
         assert exc_info.value.tier == ModelTier.HAIKU
 
-    def test_check_all_tiers_skips_unset(self, tmp_path):
+    def test_check_all_tiers_skips_unset(self, tmp_path: Path) -> None:
         """Phase 8.15: 未设 tier 跳过, 不抛 (跟 run/day/week check_all_scopes 同)."""
-        from infra.agent_system.budget_persistence import BudgetService
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)
         # 只设 opus, haiku/sonnet 未设, cost_by_tier 含这 3 档 → 只 check opus
@@ -252,9 +252,10 @@ class TestBudgetByTierPersistence:
             ModelTier.OPUS: 0.5,  # 0.5 < 1.0 ok
         })
 
-    def test_tier_budget_persistence_independent_from_run_day_week(self, tmp_path):
+    def test_tier_budget_persistence_independent_from_run_day_week(
+        self, tmp_path: Path
+    ) -> None:
         """Phase 8.15: tier budget 跟 run/day/week budget 共存同一 DB 不同表."""
-        from infra.agent_system.budget_persistence import BudgetService
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set("run", 5.0)  # Phase 8.12 旧
         svc.set_by_tier(ModelTier.OPUS, 1.0)  # Phase 8.15 新
