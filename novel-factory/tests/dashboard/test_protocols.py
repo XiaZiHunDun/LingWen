@@ -19,7 +19,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dashboard.protocols import _extract_budget_by_tier, _extract_cost_by_tier
+from dashboard.protocols import (
+    _extract_budget_by_tier,
+    _extract_cost_by_scenario,
+    _extract_cost_by_tier,
+    _extract_total_cost,
+)
 
 
 class TestExtractCostByTier:
@@ -183,3 +188,44 @@ class TestExtractBudgetByTier:
             assert budget_by_tier["haiku"] is None
         finally:
             MasterControllerAdapter._controller = None
+
+
+# === Phase 8.16: since 透传到 3 _extract_cost_* helper + adapter ===
+
+class TestExtractCostSincePassthrough:
+    """Phase 8.16: 3 _extract_cost_* helper 加 since 透传.
+    验证 kwarg 透传到 cost_tracker method, default None 走旧 path (0 改)."""
+
+    def test_extract_total_cost_passes_since_to_tracker(self) -> None:
+        """_extract_total_cost(since=future) → cost_tracker.total_cost(since=future) 被调."""
+        from datetime import datetime, timedelta, timezone
+
+        tracker = MagicMock()
+        tracker.total_cost.return_value = 0.0
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        _extract_total_cost(controller, since=future)
+        # 验证 since 透传
+        tracker.total_cost.assert_called_once_with(since=future)
+
+    def test_extract_cost_by_scenario_passes_since_to_tracker(self) -> None:
+        """_extract_cost_by_scenario(since=...) → cost_tracker.cost_by_scenario(since=...) 被调."""
+        from datetime import datetime, timedelta, timezone
+
+        tracker = MagicMock()
+        tracker.cost_by_scenario.return_value = {}
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        _extract_cost_by_scenario(controller, since=one_hour_ago)
+        tracker.cost_by_scenario.assert_called_once_with(since=one_hour_ago)
+
+    def test_extract_cost_by_tier_passes_since_to_tracker(self) -> None:
+        """_extract_cost_by_tier(since=None) → cost_tracker.cost_by_tier(since=None) 被调 (backward compat)."""
+        tracker = MagicMock()
+        tracker.cost_by_tier.return_value = {}
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        _extract_cost_by_tier(controller)  # since 缺省 → None
+        tracker.cost_by_tier.assert_called_once_with(since=None)

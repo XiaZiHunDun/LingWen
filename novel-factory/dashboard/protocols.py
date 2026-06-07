@@ -21,6 +21,7 @@ Reference:
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any, Optional, Protocol, runtime_checkable
 
 from infra.agent_system.decision_queue import (
@@ -219,8 +220,12 @@ class MasterControllerAdapter:
                 d["resolved_decision"] = resolved.to_dict()
         return d
 
-    def get_active_workflow_status(self) -> dict[str, Any]:
-        """读 MC._last_* 缓存(Phase 5 run_workflow 写入)"""
+    def get_active_workflow_status(
+        self, since: Optional[datetime] = None
+    ) -> dict[str, Any]:
+        """读 MC._last_* 缓存(Phase 5 run_workflow 写入).
+        Phase 8.16: since 透传到 3 _extract_cost_* helper (additive kwarg).
+        """
         scheduler = getattr(self._controller, "_last_scheduler", None)
         graph = getattr(self._controller, "_last_graph", None)
         workflow_name = getattr(self._controller, "_last_workflow_name", None)
@@ -290,19 +295,22 @@ class MasterControllerAdapter:
                 for nid, ex in executions.items()
             },
             "score_data": score_data,  # Phase 7.6
-            "cost_by_scenario": _extract_cost_by_scenario(self._controller),  # Phase 8.7
-            "cost_by_tier": _extract_cost_by_tier(self._controller),  # Phase 8.13
-            "cost_budget_status": _extract_budget_status(self._controller),  # Phase 8.8 T5
-            "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # Phase 8.12 T5
-            "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # Phase 8.12 T5
-            "budget_by_tier": _extract_budget_by_tier(self._controller),  # Phase 8.15 T5
+            "cost_by_scenario": _extract_cost_by_scenario(self._controller, since=since),  # Phase 8.16
+            "cost_by_tier": _extract_cost_by_tier(self._controller, since=since),  # Phase 8.16
+            "cost_budget_status": _extract_budget_status(self._controller),  # 0 改 (走 since=None)
+            "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # 0 改
+            "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # 0 改
+            "budget_by_tier": _extract_budget_by_tier(self._controller),  # 0 改
             # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
-            "total_cost_usd": _extract_total_cost(self._controller),
+            "total_cost_usd": _extract_total_cost(self._controller, since=since),  # Phase 8.16
         }
 
 
-def _extract_total_cost(controller: Any) -> float:
-    """Phase 8.5: 拿 master.cost_tracker.total_cost() 填字段, 0.0 if 未注入
+def _extract_total_cost(
+    controller: Any, since: Optional[datetime] = None
+) -> float:
+    """Phase 8.5: 拿 master.cost_tracker.total_cost() 填字段, 0.0 if 未注入.
+    Phase 8.16: 加 since 透传 (additive kwarg, default None 走旧 path).
 
     用 getattr 防御 cost_tracker 字段 (测试 stub 可能没) + 失败时 log warning 而非静默。
     """
@@ -310,17 +318,21 @@ def _extract_total_cost(controller: Any) -> float:
     if cost_tracker is None:
         return 0.0
     try:
-        return float(cost_tracker.total_cost())
+        return float(cost_tracker.total_cost(since=since))
     except Exception as exc:
         logger.warning("cost_tracker.total_cost() failed: %s", exc)
         return 0.0
 
 
-def _extract_cost_by_scenario(controller: Any) -> dict[str, float]:
+def _extract_cost_by_scenario(
+    controller: Any, since: Optional[datetime] = None
+) -> dict[str, float]:
     """Phase 8.7: 跟 _extract_total_cost 同模式 — 拿 controller.cost_tracker 调 cost_by_scenario().
+    Phase 8.16: 加 since 透传 (additive kwarg, default None 走旧 path).
 
     Args:
         controller: MasterController 实例 (decoupling Protocol)
+        since: UTC datetime, Phase 8.16 time window filter (default None = 全部)
 
     Returns:
         dict[scenario, cost_usd] — 空 dict if cost_tracker is None / 无该属性 / 无 records
@@ -329,14 +341,17 @@ def _extract_cost_by_scenario(controller: Any) -> dict[str, float]:
     if cost_tracker is None:
         return {}
     try:
-        return dict(cost_tracker.cost_by_scenario())
+        return dict(cost_tracker.cost_by_scenario(since=since))
     except Exception as exc:
         logger.warning("cost_tracker.cost_by_scenario() failed: %s", exc)
         return {}
 
 
-def _extract_cost_by_tier(controller: Any) -> dict[str, float]:
+def _extract_cost_by_tier(
+    controller: Any, since: Optional[datetime] = None
+) -> dict[str, float]:
     """Phase 8.13: 跟 _extract_cost_by_scenario 同模式 — 拿 controller.cost_tracker 调 cost_by_tier().
+    Phase 8.16: 加 since 透传 (additive kwarg, default None 走旧 path).
 
     Mirrors _extract_cost_by_scenario silent-degrade pattern: returns empty
     dict when controller has no cost_tracker or when cost_tracker.cost_by_tier()
@@ -344,6 +359,7 @@ def _extract_cost_by_tier(controller: Any) -> dict[str, float]:
 
     Args:
         controller: MasterController 实例 (decoupling Protocol)
+        since: UTC datetime, Phase 8.16 time window filter (default None = 全部)
 
     Returns:
         dict[tier_name, cost_usd] — 空 dict if cost_tracker is None / 无该属性 / 抛异常
@@ -352,7 +368,10 @@ def _extract_cost_by_tier(controller: Any) -> dict[str, float]:
     if cost_tracker is None:
         return {}
     try:
-        return {tier.value: float(amt) for tier, amt in cost_tracker.cost_by_tier().items()}
+        return {
+            tier.value: float(amt)
+            for tier, amt in cost_tracker.cost_by_tier(since=since).items()
+        }
     except Exception as exc:  # noqa: BLE001 — silent degrade by design
         logger.warning("cost_tracker.cost_by_tier() failed: %s", exc)
         return {}
