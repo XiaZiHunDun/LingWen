@@ -65,7 +65,7 @@ class CostBudgetExceeded(Exception):
         budget_usd: float,
         scenario: str | None = None,
         scope: str = "run",  # 'run'|'day'|'week'|'tier'  (Phase 8.12 +1, Phase 8.15 +1)
-        tier: "ModelTier | None" = None,  # NEW Phase 8.15 (default None, 旧 tests 0 改)
+        tier: ModelTier | None = None,  # NEW Phase 8.15 (default None, 旧 tests 0 改)
     ) -> None:
         self.used_usd = used_usd
         self.budget_usd = budget_usd
