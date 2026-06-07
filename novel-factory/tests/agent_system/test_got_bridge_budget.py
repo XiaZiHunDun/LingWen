@@ -24,6 +24,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from infra.agent_system.budget_persistence import BudgetService
 from infra.agent_system.got_bridge import AgentComputeFn
 from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
 from infra.ai_service.model_tiers import ModelTier
@@ -194,9 +195,6 @@ class TestAgentComputeFnBudget:
 
 
 # === Phase 8.15: Per-Tier Budget ===
-from infra.agent_system.budget_persistence import BudgetService
-from infra.ai_service.cost_tracker import CostBudgetExceeded
-from infra.ai_service.model_tiers import ModelTier
 
 
 class TestAgentComputeFnByTier:
