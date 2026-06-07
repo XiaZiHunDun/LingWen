@@ -75,14 +75,29 @@
       :fallback="firstScore.fallback"
     />
 
+    <!-- Phase 8.16 NEW: time window segmented control (在 cost-section 之前, 仅当 hasCost) -->
+    <div v-if="hasCost" class="time-window-tabs" role="tablist" aria-label="成本时间窗口">
+      <button
+        v-for="opt in TIME_OPTIONS"
+        :key="opt.value"
+        :class="['time-window-tab', { active: timeWindow === opt.value }]"
+        :data-testid="`time-window-${opt.value}`"
+        role="tab"
+        :aria-selected="timeWindow === opt.value"
+        @click="setTimeWindow(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
+
     <div v-if="hasCost" class="cost-section">
       <h4 class="section-title">💰 Token 成本 (累计 USD)</h4>
       <p class="cost-total-usd">
         总计: ${{ totalCostText }}
       </p>
       <CostBarChart
-        :cost-by-scenario="status.cost_by_scenario || {}"
-        :cost-by-tier="status.cost_by_tier || {}"
+        :cost-by-scenario="displayCostByScenario"
+        :cost-by-tier="displayCostByTier"
         v-model:mode="costMode"
       />
     </div>
@@ -93,6 +108,7 @@
 import { computed, ref } from 'vue';
 import ScoreRadarChart from './ScoreRadarChart.vue';
 import CostBarChart from './CostBarChart.vue';
+import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
 
 const props = defineProps({
   status: {
@@ -106,6 +122,27 @@ const emit = defineEmits(['resume']);
 // Phase 8.13: CostBarChart 切 mode (scenario | tier), v-model:mode 接
 // default 'scenario' 保旧行为 (CostBarChart 也 default 'scenario' 兜底)
 const costMode = ref('scenario');
+
+// Phase 8.16: time window composable (跟 SidebarCostBanner 共享 singleton)
+const { timeWindow, windowedCost, setTimeWindow } = useCostWindow();
+
+// 3 window options (跟 SidebarCostBanner 1:1 mirror, 2 处不抽 utilities.js YAGNI)
+const TIME_OPTIONS = [
+  { value: '7d', label: '7天' },
+  { value: '30d', label: '30天' },
+  { value: 'all', label: '全部' },
+];
+
+// Phase 8.16: cost display 优先用 windowedCost, fallback 到 status (WS 全量)
+const displayCostByScenario = computed(() =>
+  windowedCost.value?.cost_by_scenario ?? props.status?.cost_by_scenario ?? {}
+);
+const displayCostByTier = computed(() =>
+  windowedCost.value?.cost_by_tier ?? props.status?.cost_by_tier ?? {}
+);
+const displayTotalCost = computed(() =>
+  windowedCost.value?.total_cost_usd ?? props.status?.total_cost_usd ?? 0.0
+);
 
 const statusLabel = computed(() => {
   if (!props.status.is_active) return '未运行';
@@ -127,9 +164,9 @@ const firstScore = computed(() => scoreEntries.value[0]?.[1] || null);
 const hasScores = computed(() => scoreEntries.value.length > 0);
 
 // Phase 8.14: hasCost OR check costByTier, 防 tier-only 数据时整 cost section 隐藏
-// 跟 Phase 8.13 CostBarChart.hasData 对称 (任一 mode 有正值即 visible)
-const costByScenario = computed(() => props.status?.cost_by_scenario || {});
-const costByTier = computed(() => props.status?.cost_by_tier || {});
+// Phase 8.16: 改用 display* 走 windowedCost 路径 (windowedCost 优先, fallback status)
+const costByScenario = computed(() => displayCostByScenario.value);
+const costByTier = computed(() => displayCostByTier.value);
 const hasCost = computed(() => {
   const scenarioHas = Object.keys(costByScenario.value).length > 0
     && Object.values(costByScenario.value).some((v) => v > 0);
@@ -138,7 +175,7 @@ const hasCost = computed(() => {
   return scenarioHas || tierHas;
 });
 const totalCostText = computed(() => {
-  const v = Number(props.status?.total_cost_usd ?? 0);
+  const v = Number(displayTotalCost.value ?? 0);
   return v.toFixed(4);
 });
 
@@ -314,5 +351,25 @@ function onResume(decision, option) {
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
   margin: 0;
+}
+
+/* Phase 8.16 NEW: .time-window-tabs 跟 .time-window-tab (跟 sidebar 同 pattern) */
+.time-window-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+.time-window-tab {
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 4px 8px;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+}
+.time-window-tab:hover { transform: translate(-1px, -1px); }
+.time-window-tab.active {
+  background: var(--color-accent);
+  color: var(--bg-primary);
 }
 </style>
