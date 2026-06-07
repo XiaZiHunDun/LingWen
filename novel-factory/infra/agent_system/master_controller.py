@@ -103,6 +103,7 @@ class MasterController:
         config: Optional[MasterControllerConfig] = None,
         cost_tracker: Optional["CostTracker"] = None,
         budget_service: Optional["BudgetService"] = None,
+        budget_service_by_tier: Optional["BudgetService"] = None,  # NEW Phase 8.15
     ):
         """初始化主控调度器
 
@@ -114,6 +115,8 @@ class MasterController:
                           (Phase 8.5: 透传给 build_got_scheduler → AgentComputeFn.record())
             budget_service: 显式传入的 BudgetService (None = 不持久化 budget,旧路径)
                           (Phase 8.12: 透传给 run_workflow 调 .set(scope='run', usd, run_id))
+            budget_service_by_tier: 显式传入的 BudgetService (None = 不持久化 tier budget,旧路径)
+                          (Phase 8.15: 透传给 build_got_scheduler → AgentComputeFn.check_all_tiers)
         """
         # ==================== 配置层 ====================
         self._config = config or load_default_config(state_dir=state_dir)
@@ -130,6 +133,12 @@ class MasterController:
         # run_workflow 期间调 .set(scope='run', usd=..., run_id=...)
         # 默认 None 兜底:旧测试零修改,旧生产路径不持久化 (老行为)
         self.budget_service = budget_service
+
+        # Phase 8.15: per-tier budget 持久化 (Optional 注入,默认 None 兜底旧路径)
+        # build_got_scheduler 走 getattr(master, "budget_service_by_tier", None) 透传
+        # 给 AgentComputeFn → check_all_tiers (跟 budget_service 1:1 mirror pattern)
+        # 默认 None 兜底:旧测试零修改,旧生产路径不持久化 (老行为)
+        self.budget_service_by_tier = budget_service_by_tier
 
         # Phase 8.8: budget alarm state — 跨 run 累积 (cost_tracker.total_cost() 共享),
         # 单 run 期间记录当前 budget, finally 必 reset 防 leak 跨 run
