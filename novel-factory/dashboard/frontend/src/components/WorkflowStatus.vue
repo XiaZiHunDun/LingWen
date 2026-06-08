@@ -100,6 +100,8 @@
         :cost-by-tier="displayCostByTier"
         v-model:mode="costMode"
       />
+      <!-- Phase 8.24 NEW: cost by day trend chart (after CostBarChart, 跟 time-window-tabs 同步) -->
+      <CostTrendChart :cost-by-day="displayCostByDay" />
     </div>
   </div>
 </template>
@@ -108,6 +110,7 @@
 import { computed, ref } from 'vue';
 import ScoreRadarChart from './ScoreRadarChart.vue';
 import CostBarChart from './CostBarChart.vue';
+import CostTrendChart from './CostTrendChart.vue';  // Phase 8.24
 import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
 import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
 
@@ -128,11 +131,15 @@ const costMode = ref('scenario');
 const { timeWindow, windowedCost, setTimeWindow } = useCostWindow();
 
 // Phase 8.16: cost display 优先用 windowedCost, fallback 到 status (WS 全量)
+// Phase 8.24: 加 displayCostByDay 走 cost_by_day 字段 (Phase 8.23 后端)
 const displayCostByScenario = computed(() =>
   windowedCost.value?.cost_by_scenario ?? props.status?.cost_by_scenario ?? {}
 );
 const displayCostByTier = computed(() =>
   windowedCost.value?.cost_by_tier ?? props.status?.cost_by_tier ?? {}
+);
+const displayCostByDay = computed(() =>
+  windowedCost.value?.cost_by_day ?? props.status?.cost_by_day ?? {}
 );
 const displayTotalCost = computed(() =>
   windowedCost.value?.total_cost_usd ?? props.status?.total_cost_usd ?? 0.0
@@ -159,14 +166,18 @@ const hasScores = computed(() => scoreEntries.value.length > 0);
 
 // Phase 8.14: hasCost OR check costByTier, 防 tier-only 数据时整 cost section 隐藏
 // Phase 8.16: 改用 display* 走 windowedCost 路径 (windowedCost 优先, fallback status)
+// Phase 8.24: 加 dayHas 跟 scenarioHas/tierHas 同 pattern (additive OR, 防 day-only 隐藏)
 const costByScenario = computed(() => displayCostByScenario.value);
 const costByTier = computed(() => displayCostByTier.value);
+const costByDay = computed(() => displayCostByDay.value);
 const hasCost = computed(() => {
   const scenarioHas = Object.keys(costByScenario.value).length > 0
     && Object.values(costByScenario.value).some((v) => v > 0);
   const tierHas = Object.keys(costByTier.value).length > 0
     && Object.values(costByTier.value).some((v) => v > 0);
-  return scenarioHas || tierHas;
+  const dayHas = Object.keys(costByDay.value).length > 0
+    && Object.values(costByDay.value).some((v) => v > 0);
+  return scenarioHas || tierHas || dayHas;
 });
 const totalCostText = computed(() => {
   const v = Number(displayTotalCost.value ?? 0);
