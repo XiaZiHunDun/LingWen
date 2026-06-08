@@ -9,7 +9,10 @@
     "lint:testid": "eslint tests/unit/**/*.spec.ts tests/fixtures/lint-testid/*.spec.ts --no-eslintrc -c .eslintrc.cjs --no-error-on-unmatched-pattern",
     "lint:testid-sync": "eslint --no-error-on-unmatched-pattern --no-eslintrc -c .eslintrc-testid-sync.cjs --rule '{\"testid-class-sync\": \"warn\"}' --rulesdir eslint-rules --ext .vue src/",
     "lint:vue": "eslint --no-error-on-unmatched-pattern --no-eslintrc -c .eslintrc-vue.cjs --ext .vue src/",
-    "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs"
+    "lint:all": "pnpm lint:testid; pnpm lint:testid-sync && pnpm lint:vue",
+    "lint:staged": "pnpm lint:all",
+    "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "echarts": "^5.5.0",
@@ -25,6 +28,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-local-rules": "^1.1.0",
     "eslint-plugin-vue": "^9.33.0",
+    "husky": "9",
     "jsdom": "^29.1.1",
     "vite": "^6.0.0",
     "vitest": "^4.1.8",

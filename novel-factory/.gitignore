@@ -121,3 +121,6 @@ infra/.state/cost_tracker.db-*
 # Phase 8.12 followup: workflow.db de-track (cbca7b5 claimed but missed)
 infra/.state/workflow.db
 infra/.state/workflow.db-*
+
+# Phase 8.40: husky 9 internal shim dir
+dashboard/frontend/.husky/_/

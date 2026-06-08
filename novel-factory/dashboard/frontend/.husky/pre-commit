@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Phase 8.40: Pre-commit hook — run all lint checks on staged files
+# Mirrors CI but scoped to staged changes only (Phase 8.41 will run full on CI)
+. "$(dirname -- "$0")/_/h"
+
+pnpm lint:all
