@@ -26,7 +26,10 @@ async function refresh() {
       fetchChapters('1-30'),
     ])
     overview.value = overviewData
-    chapters.value = chaptersData
+    // Phase 8.34 修正 (Task 3 subagent 误用 envelope-as-array):
+    //   fetchChapters 实际返回 { chapters: [...] } envelope (mirror OverviewPage 原 L110),
+    //   store 应解包为 array, 保 page 透传 store.chapters 即可直接用于 v-for
+    chapters.value = chaptersData.chapters || []
   } catch (e) {
     lastError.value = e?.message || String(e)
   } finally {

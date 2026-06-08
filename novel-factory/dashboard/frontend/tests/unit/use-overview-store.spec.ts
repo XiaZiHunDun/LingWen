@@ -57,10 +57,13 @@ describe('useOverviewStore — Phase 8.34 module-level singleton', () => {
 
   test('refresh fetches overview + chapters in parallel via Promise.all', async () => {
     api.fetchOverview.mockResolvedValue({ total_chapters: 359, total_words: 1234567 })
-    api.fetchChapters.mockResolvedValue([
-      { chapter_num: 1, title: 'ch1' },
-      { chapter_num: 2, title: 'ch2' },
-    ])
+    // fetchChapters 实际返回 envelope { chapters: [...] } (mirror OverviewPage 原 L110)
+    api.fetchChapters.mockResolvedValue({
+      chapters: [
+        { chapter_num: 1, title: 'ch1' },
+        { chapter_num: 2, title: 'ch2' },
+      ],
+    })
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as {
