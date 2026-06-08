@@ -1,11 +1,17 @@
 <!--
-  CostTrendChart.vue — Phase 8.24
+  CostTrendChart.vue — Phase 8.24 + 8.29
   Token 成本时间序列折线图 (ECharts line, by-day UTC date → USD)
   跟 CostBarChart 同模式: dispose + re-init on watch, Press Start 2P 像素风
   color #ff6b6b 跟 CostBarChart 一致, 边框 #2a220f 像素风
   Phase 8.24: 接收 costByDay dict (Phase 8.23 后端), 按 UTC 日期升序 render
   empty 走 CostBarChart 同样 center "暂无 trend 数据" 提示
   跟 useCostWindow 集成: windowedCost 走 cost_by_day 透传 (Phase 8.18+ URL 同步)
+  Phase 8.29: per-tier 趋势线 — 加 costByDayPerTier prop (additive, default null)
+  shape: { "2026-06-01": { haiku: 0.005, sonnet: 0.015, opus: 0.020 }, ... }
+  非空时切换 multi-series (3 lines: haiku/sonnet/opus) + ECharts legend.
+  配色: haiku #67c23a (绿, 便宜) / sonnet #ff6b6b (红, 主力) / opus #9b59b6 (紫, 贵)
+  backend 暂未提供 per-day-per-tier 聚合, 留 Phase 8.31 实施 cross-dim aggregation.
+  当前 additive prop 接受, render path 完整, 数据从空 → 单线 path 不破 baseline.
 -->
 <template>
   <div class="cost-trend-chart-wrapper pixel-border" data-testid="cost-trend-chart-wrapper">
@@ -26,6 +32,33 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  // Phase 8.29: per-day-per-tier breakdown (additive, default null)
+  // shape: { "2026-06-01": { haiku: 0.005, sonnet: 0.015, opus: 0.020 }, ... }
+  // 当非空时, render multi-series (3 lines) + ECharts legend, 覆盖单线 baseline
+  // backend 暂未提供 (Phase 8.31 实施 cross-dim aggregation), 当前 prop 接受
+  // 但 default null → 走原单线 path, 0 破 baseline
+  costByDayPerTier: {
+    type: Object,
+    default: null,
+  },
+})
+
+// Phase 8.29: tier 配色 (haiku 便宜 / sonnet 主力 / opus 贵)
+const TIER_COLORS = {
+  haiku: '#67c23a',
+  sonnet: '#ff6b6b',
+  opus: '#9b59b6',
+}
+const TIER_ORDER = ['haiku', 'sonnet', 'opus']
+
+// Phase 8.29: per-tier mode gate (costByDayPerTier 非空且有非零 value → multi-series)
+const hasMultiSeries = computed(() => {
+  if (!props.costByDayPerTier) return false
+  for (const dateKey of Object.keys(props.costByDayPerTier)) {
+    const tierMap = props.costByDayPerTier[dateKey]
+    if (tierMap && Object.values(tierMap).some((v) => v > 0)) return true
+  }
+  return false
 })
 
 const chartRef = ref(null)
@@ -39,10 +72,95 @@ const hasData = computed(() => {
 
 function render() {
   if (!chartInstance) return
-  if (!hasData.value) {
+  if (!hasData.value && !hasMultiSeries.value) {
     chartInstance.clear()
     return
   }
+
+  // Phase 8.29: per-tier multi-series path (优先 over 单线)
+  if (hasMultiSeries.value) {
+    renderPerTier()
+  } else {
+    renderTotal()
+  }
+}
+
+// Phase 8.29: multi-series 渲染 (per-day per-tier breakdown)
+function renderPerTier() {
+  const entries = Object.entries(props.costByDayPerTier || {})
+    .sort(([a], [b]) => a.localeCompare(b))
+  const dates = entries.map(([k]) => k)
+  const series = TIER_ORDER
+    .filter((tier) => entries.some(([, m]) => m && m[tier] > 0))  // 只渲染有数据的 tier
+    .map((tier) => ({
+      name: tier,
+      type: 'line',
+      data: entries.map(([, m]) => Number(m?.[tier] ?? 0)),
+      symbol: 'rect',
+      symbolSize: 6,
+      lineStyle: { color: TIER_COLORS[tier], width: 2 },
+      itemStyle: { color: TIER_COLORS[tier], borderColor: '#2a220f', borderWidth: 2 },
+      smooth: false,
+    }))
+
+  chartInstance.setOption({
+    grid: { top: 50, right: 20, bottom: 50, left: 70 },
+    legend: {
+      data: series.map((s) => s.name),
+      top: 10,
+      right: 10,
+      textStyle: {
+        fontFamily: 'Press Start 2P',
+        fontSize: 8,
+        color: '#2a220f',
+      },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#2a220f',
+      borderColor: '#2a220f',
+      borderWidth: 2,
+      textStyle: {
+        fontFamily: 'Press Start 2P',
+        fontSize: 8,
+        color: '#fff7e8',
+      },
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: { lineStyle: { color: '#2a220f', width: 2 } },
+      axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
+      axisLabel: {
+        rotate: 30,
+        fontSize: 7,
+        fontFamily: 'Press Start 2P',
+        color: '#2a220f',
+        interval: 'auto',
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: 'USD',
+      nameLocation: 'end',
+      nameGap: 8,
+      nameTextStyle: { fontFamily: 'Press Start 2P', fontSize: 8, color: '#2a220f' },
+      axisLine: { lineStyle: { color: '#2a220f', width: 2 } },
+      axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
+      axisLabel: {
+        fontSize: 7,
+        fontFamily: 'Press Start 2P',
+        color: '#2a220f',
+        formatter: (v) => `$${Number(v).toFixed(4)}`,
+      },
+      splitLine: { lineStyle: { color: '#2a220f', width: 1, type: 'dashed' } },
+    },
+    series,
+  })
+}
+
+// Phase 8.24 原 single-line path (per-day total, 跟 baseline 兼容)
+function renderTotal() {
   // Phase 8.24: sort by date asc (后端 ORDER BY day 已升序, 防御性再排一次)
   const entries = Object.entries(props.costByDay || {})
     .sort(([a], [b]) => a.localeCompare(b))
@@ -139,8 +257,8 @@ onUnmounted(() => {
   }
 })
 
-// Phase 8.24: watch costByDay (深 watch, dict 引用变就 re-render)
-watch(() => props.costByDay, render, { deep: true })
+// Phase 8.24 + 8.29: watch costByDay + costByDayPerTier (深 watch, dict 引用变就 re-render)
+watch(() => [props.costByDay, props.costByDayPerTier], render, { deep: true })
 </script>
 
 <style scoped>
