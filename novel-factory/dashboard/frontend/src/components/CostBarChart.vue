@@ -27,8 +27,8 @@
         @click="switchMode('tier')"
       >By Tier</button>
     </div>
-    <div ref="chartRef" class="cost-bar-chart" :style="{ width: '100%', height: '260px' }"></div>
-    <p v-if="!hasData" class="cost-bar-chart-empty">暂无成本数据</p>
+    <div ref="chartRef" class="cost-bar-chart" data-testid="cost-bar-chart" :style="{ width: '100%', height: '260px' }"></div>
+    <p v-if="!hasData" class="cost-bar-chart-empty" data-testid="cost-bar-chart-empty">暂无成本数据</p>
   </div>
 </template>
 

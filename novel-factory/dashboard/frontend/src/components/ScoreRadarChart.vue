@@ -1,14 +1,14 @@
 <template>
-  <div class="score-radar-chart">
+  <div class="score-radar-chart" data-testid="score-radar-chart">
     <h4 class="radar-title">S1-S8 评分对比</h4>
 
-    <div v-if="fallback" class="score-radar-fallback-warning">
+    <div v-if="fallback" class="score-radar-fallback-warning" data-testid="score-radar-fallback-warning">
       ⚠️ LLM 评分未生效, 兜底: {{ fallback }}
     </div>
 
     <div ref="chartRef" class="radar-canvas"></div>
 
-    <div v-if="winner" class="winner-badge">
+    <div v-if="winner" class="winner-badge" data-testid="winner-badge">
       🏆 优胜: <strong>{{ winnerLabel }}</strong>
       <span class="delta">(Δ {{ deltaText }})</span>
     </div>

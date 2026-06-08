@@ -77,16 +77,16 @@ test.describe('Sidebar Cost Banner Priority Cascade (Phase 8.12)', () => {
     await page.waitForLoadState('networkidle')
 
     // Sidebar banner 可见
-    const banner = page.locator('.sidebar-cost-banner')
+    const banner = page.getByTestId('sidebar-cost-banner')
     await expect(banner).toBeVisible({ timeout: 10000 })
 
     // Total USD 正常显 (cost_by_scenario has entry)
-    const totalText = page.locator('.sidebar-cost-total-text')
+    const totalText = page.getByTestId('sidebar-cost-total-text')
     await expect(totalText).toContainText('💰')
     await expect(totalText).toContainText('$0.0600')
 
     // Banner 文本含 "今日" (per-day, exceeded 优先 over per-run/per-week)
-    const budgetText = page.locator('.sidebar-cost-budget-text')
+    const budgetText = page.getByTestId('sidebar-cost-budget-text')
     await expect(budgetText).toContainText('今日')
     await expect(budgetText).toContainText('$0.0600') // active.used_usd (per-day)
     await expect(budgetText).toContainText('$0.0500') // active.budget_usd (per-day)
@@ -97,7 +97,7 @@ test.describe('Sidebar Cost Banner Priority Cascade (Phase 8.12)', () => {
     await expect(budgetText).not.toContainText('本周')
 
     // Progress bar 100% (exceeded 红色 fill, clip 在 100%)
-    const fill = page.locator('.progress-bar-fill')
+    const fill = page.getByTestId('progress-bar-fill')
     await expect(fill).toBeVisible({ timeout: 5000 })
     const widthStyle = await fill.getAttribute('style')
     expect(widthStyle).toContain('width: 100%')

@@ -1,6 +1,6 @@
 <template>
   <div class="chapter-table-wrapper pixel-border">
-    <table class="chapter-table">
+    <table class="chapter-table" data-testid="chapter-table">
       <thead>
         <tr>
           <th

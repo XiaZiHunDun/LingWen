@@ -8,10 +8,10 @@
   跟 useCostWindow 集成: windowedCost 走 cost_by_day 透传 (Phase 8.18+ URL 同步)
 -->
 <template>
-  <div class="cost-trend-chart-wrapper pixel-border">
+  <div class="cost-trend-chart-wrapper pixel-border" data-testid="cost-trend-chart-wrapper">
     <h5 class="cost-trend-chart-title">📈 每日成本 trend</h5>
-    <div ref="chartRef" class="cost-trend-chart" :style="{ width: '100%', height: '220px' }"></div>
-    <p v-if="!hasData" class="cost-trend-chart-empty">暂无 trend 数据</p>
+    <div ref="chartRef" class="cost-trend-chart" data-testid="cost-trend-chart" :style="{ width: '100%', height: '220px' }"></div>
+    <p v-if="!hasData" class="cost-trend-chart-empty" data-testid="cost-trend-chart-empty">暂无 trend 数据</p>
   </div>
 </template>
 

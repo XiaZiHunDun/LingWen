@@ -46,11 +46,11 @@ test.describe('Dashboard Score Radar (Phase 7.6)', () => {
     await page.waitForLoadState('networkidle')
 
     // 雷达图组件应可见
-    const radar = page.locator('.score-radar-chart')
+    const radar = page.getByTestId('score-radar-chart')
     await expect(radar).toBeVisible({ timeout: 10000 })
 
     // 8 维 indicator (S1-S8) 应渲染 (ECharts 会渲染 text 元素)
-    const indicators = page.locator('.score-radar-chart canvas')
+    const indicators = [data-testid="score-radar-chart"] canvas
     await expect(indicators.first()).toBeVisible({ timeout: 5000 })
 
     // winner badge 可见

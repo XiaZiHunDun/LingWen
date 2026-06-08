@@ -44,20 +44,20 @@ test.describe('Sidebar Cost Banner (Phase 8.11)', () => {
     await page.goto('http://localhost:3000/')
     await page.waitForLoadState('networkidle')
 
-    const banner = page.locator('.sidebar-cost-banner')
+    const banner = page.getByTestId('sidebar-cost-banner')
     await expect(banner).toBeVisible({ timeout: 10000 })
 
-    const totalText = page.locator('.sidebar-cost-total-text')
+    const totalText = page.getByTestId('sidebar-cost-total-text')
     await expect(totalText).toContainText('💰')
     await expect(totalText).toContainText('$0.0023')
 
-    const budgetText = page.locator('.sidebar-cost-budget-text')
+    const budgetText = page.getByTestId('sidebar-cost-budget-text')
     await expect(budgetText).toContainText('预算:')
     await expect(budgetText).toContainText('$0.0023')
     await expect(budgetText).toContainText('$0.1000')
     await expect(budgetText).toContainText('2.3%')
 
-    const progressFill = page.locator('.progress-bar-fill')
+    const progressFill = page.getByTestId('progress-bar-fill')
     await expect(progressFill).toBeVisible({ timeout: 5000 })
   })
 
@@ -79,7 +79,7 @@ test.describe('Sidebar Cost Banner (Phase 8.11)', () => {
     await page.goto('http://localhost:3000/')
     await page.waitForLoadState('networkidle')
 
-    const banner = page.locator('.sidebar-cost-banner')
+    const banner = page.getByTestId('sidebar-cost-banner')
     await expect(banner).not.toBeVisible({ timeout: 5000 })
   })
 
@@ -114,14 +114,14 @@ test.describe('Sidebar Cost Banner (Phase 8.11)', () => {
 
     await page.goto('http://localhost:3000/')
     await page.waitForLoadState('networkidle')
-    await expect(page.locator('.sidebar-cost-banner')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('sidebar-cost-banner')).toBeVisible({ timeout: 10000 })
 
     await page.click('a.nav-item:has-text("决策")')
     await page.waitForTimeout(500)
-    await expect(page.locator('.sidebar-cost-banner')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByTestId('sidebar-cost-banner')).toBeVisible({ timeout: 5000 })
 
     await page.click('a.nav-item:has-text("工作流")')
     await page.waitForTimeout(500)
-    await expect(page.locator('.sidebar-cost-banner')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByTestId('sidebar-cost-banner')).toBeVisible({ timeout: 5000 })
   })
 })

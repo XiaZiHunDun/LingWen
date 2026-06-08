@@ -19,6 +19,7 @@
   <div
     v-if="hasCost"
     class="sidebar-cost-banner"
+    data-testid="sidebar-cost-banner"
     role="region"
     aria-label="成本追踪"
   >
@@ -37,7 +38,7 @@
       </button>
     </div>
     <div class="sidebar-cost-row" role="status" aria-live="polite">
-      <span class="sidebar-cost-total-text">
+      <span class="sidebar-cost-total-text" data-testid="sidebar-cost-total-text">
         <span class="sidebar-cost-icon">💰</span>${{ totalText }}
       </span>
     </div>
@@ -47,7 +48,7 @@
       role="status"
       aria-live="polite"
     >
-      <span class="sidebar-cost-budget-text">
+      <span class="sidebar-cost-budget-text" data-testid="sidebar-cost-budget-text">
         {{ activeBudget.label }}预算: ${{ activeUsedText }} / ${{ activeBudgetText }} ({{ activePctText }}%)
       </span>
     </div>
@@ -62,6 +63,7 @@
     >
       <div
         class="progress-bar-fill"
+        data-testid="progress-bar-fill"
         :class="activeBudget.status === 'exceeded' ? 'exceeded' : 'ok'"
         :style="{ width: activePct + '%' }"
       ></div>

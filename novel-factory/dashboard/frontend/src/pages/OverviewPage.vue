@@ -1,9 +1,10 @@
 <template>
   <div class="overview-page">
     <header class="page-header">
-      <h1 class="page-title">追读力总览</h1>
+      <h1 class="page-title" data-testid="page-title">追读力总览</h1>
       <button
         class="refresh-btn pixel-border"
+        data-testid="refresh-btn"
         @click="refresh"
         :disabled="loading"
       >
@@ -11,7 +12,7 @@
       </button>
     </header>
 
-    <div v-if="error" class="error-banner pixel-border">
+    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
     </div>
 

@@ -61,14 +61,14 @@ test.describe('Dashboard Cost Budget Banner (Phase 8.8)', () => {
     await page.waitForLoadState('networkidle')
 
     // banner 容器 + exceeded class 可见
-    const banner = page.locator('.cost-budget-section')
+    const banner = page.getByTestId('cost-budget-section')
     await expect(banner).toBeVisible({ timeout: 10000 })
 
-    const exceeded = page.locator('.cost-budget-section.exceeded')
+    const exceeded = [data-testid="cost-budget-section"].exceeded
     await expect(exceeded).toBeVisible({ timeout: 5000 })
 
     // 文本断言 (中文 UI 跟同 component 现有 '⏸ 暂停于节点' / '💰 Token 成本' 一致)
-    const text = page.locator('.cost-budget-text')
+    const text = page.getByTestId('cost-budget-text')
     await expect(text).toContainText('预算超支')
     await expect(text).toContainText('workflow 已中止')
     await expect(text).toContainText('$0.0450')
@@ -119,14 +119,14 @@ test.describe('Dashboard Cost Budget Banner (Phase 8.8)', () => {
     await page.waitForLoadState('networkidle')
 
     // banner 容器 + ok class 可见 (无 exceeded)
-    const banner = page.locator('.cost-budget-section')
+    const banner = page.getByTestId('cost-budget-section')
     await expect(banner).toBeVisible({ timeout: 10000 })
 
-    const ok = page.locator('.cost-budget-section.ok')
+    const ok = [data-testid="cost-budget-section"].ok
     await expect(ok).toBeVisible({ timeout: 5000 })
 
     // 文本断言 (中文 UI,无 "exceeded")
-    const text = page.locator('.cost-budget-text')
+    const text = page.getByTestId('cost-budget-text')
     await expect(text).toContainText('预算:')
     await expect(text).not.toContainText('预算超支')
     await expect(text).toContainText('$0.0200')
@@ -167,11 +167,11 @@ test.describe('Dashboard Cost Budget Banner (Phase 8.8)', () => {
     await page.waitForLoadState('networkidle')
 
     // banner 容器 NOT visible (v-if=hasBudget 锁 false,防止 API 漏返字段误渲染)
-    const banner = page.locator('.cost-budget-section')
+    const banner = page.getByTestId('cost-budget-section')
     await expect(banner).not.toBeVisible({ timeout: 5000 })
 
     // 断言 cost-section 仍可见 (其他 UI 块未受影响)
-    const costSection = page.locator('.cost-section')
+    const costSection = page.getByTestId('cost-section')
     await expect(costSection).toBeVisible({ timeout: 5000 })
   })
 })

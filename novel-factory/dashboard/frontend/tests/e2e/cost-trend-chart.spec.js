@@ -67,7 +67,7 @@ test.describe('CostTrendChart trend line (Phase 8.24)', () => {
     await page.waitForLoadState('networkidle')
 
     // CostTrendChart canvas 可见 (跟 CostBarChart canvas 一样)
-    const trendCanvas = page.locator('.cost-trend-chart canvas')
+    const trendCanvas = [data-testid="cost-trend-chart"] canvas
     await expect(trendCanvas.first()).toBeVisible({ timeout: 10000 })
   })
 
@@ -102,14 +102,14 @@ test.describe('CostTrendChart trend line (Phase 8.24)', () => {
     await page.waitForLoadState('networkidle')
 
     // CostBarChart 仍渲染 (scenarioHas)
-    const barCanvas = page.locator('.cost-bar-chart canvas')
+    const barCanvas = [data-testid="cost-bar-chart"] canvas
     await expect(barCanvas.first()).toBeVisible({ timeout: 10000 })
 
     // CostTrendChart 也仍渲染 (hasCost=true, scenario OR tier OR day → scenario 触发)
     // 但 hasData (costByDay.length === 0) → 走 .cost-trend-chart-empty 提示
-    const trendWrapper = page.locator('.cost-trend-chart-wrapper')
+    const trendWrapper = page.getByTestId('cost-trend-chart-wrapper')
     await expect(trendWrapper).toBeVisible()
-    const emptyMsg = page.locator('.cost-trend-chart-empty')
+    const emptyMsg = page.getByTestId('cost-trend-chart-empty')
     await expect(emptyMsg).toBeVisible({ timeout: 10000 })
     await expect(emptyMsg).toContainText('暂无 trend 数据')
   })
@@ -146,16 +146,16 @@ test.describe('CostTrendChart trend line (Phase 8.24)', () => {
     await page.waitForLoadState('networkidle')
 
     // hasCost gate 走 dayHas → cost-section 仍渲染
-    const costSection = page.locator('.cost-section')
+    const costSection = page.getByTestId('cost-section')
     await expect(costSection).toBeVisible({ timeout: 10000 })
 
     // CostTrendChart 也仍渲染 (有 day data → hasData=true)
-    const trendCanvas = page.locator('.cost-trend-chart canvas')
+    const trendCanvas = [data-testid="cost-trend-chart"] canvas
     await expect(trendCanvas.first()).toBeVisible({ timeout: 10000 })
 
     // CostBarChart 在 hasData=false (costByScenario + costByTier 都空)
     // → 走 .cost-bar-chart-empty
-    const barEmpty = page.locator('.cost-bar-chart-empty')
+    const barEmpty = page.getByTestId('cost-bar-chart-empty')
     await expect(barEmpty).toBeVisible()
   })
 
@@ -189,7 +189,7 @@ test.describe('CostTrendChart trend line (Phase 8.24)', () => {
     await page.waitForLoadState('networkidle')
 
     // hasCost=false → cost-section 隐藏
-    const costSection = page.locator('.cost-section')
+    const costSection = page.getByTestId('cost-section')
     await expect(costSection).not.toBeVisible()
   })
 })

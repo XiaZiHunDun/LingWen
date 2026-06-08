@@ -1,5 +1,5 @@
 <template>
-  <div class="hook-trend-chart pixel-border">
+  <div class="hook-trend-chart pixel-border" data-testid="hook-trend-chart">
     <div ref="chartRef" class="chart-container"></div>
   </div>
 </template>

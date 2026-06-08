@@ -90,9 +90,9 @@
       </button>
     </div>
 
-    <div v-if="hasCost" class="cost-section">
+    <div v-if="hasCost" class="cost-section" data-testid="cost-section">
       <h4 class="section-title">💰 Token 成本 (累计 USD)</h4>
-      <p class="cost-total-usd">
+      <p class="cost-total-usd" data-testid="cost-total-usd">
         总计: ${{ totalCostText }}
       </p>
       <CostBarChart

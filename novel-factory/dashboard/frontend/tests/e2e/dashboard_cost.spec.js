@@ -52,15 +52,15 @@ test.describe('Dashboard Cost Bar Chart (Phase 8.7)', () => {
     await page.waitForLoadState('networkidle')
 
     // cost 柱状图组件应可见
-    const chart = page.locator('.cost-bar-chart')
+    const chart = page.getByTestId('cost-bar-chart')
     await expect(chart).toBeVisible({ timeout: 10000 })
 
     // 验证 ECharts canvas 渲染 (跟 radar 同模式)
-    const canvas = page.locator('.cost-bar-chart canvas')
+    const canvas = [data-testid="cost-bar-chart"] canvas
     await expect(canvas.first()).toBeVisible({ timeout: 5000 })
 
     // 验证总计 USD 显示
-    const totalUsd = page.locator('.cost-total-usd')
+    const totalUsd = page.getByTestId('cost-total-usd')
     await expect(totalUsd).toContainText('$0.0450')
   })
 })

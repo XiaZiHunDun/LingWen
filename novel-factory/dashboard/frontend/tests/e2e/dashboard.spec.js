@@ -21,7 +21,7 @@ test.describe('Dashboard E2E Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Check title "追读力总览" is visible
-    const title = page.locator('.page-title')
+    const title = page.getByTestId('page-title')
     await expect(title).toBeVisible()
     await expect(title).toHaveText('追读力总览')
   })
@@ -31,7 +31,7 @@ test.describe('Dashboard E2E Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Find refresh button
-    const refreshButton = page.locator('.refresh-btn')
+    const refreshButton = page.getByTestId('refresh-btn')
     await expect(refreshButton).toBeVisible()
     await expect(refreshButton).toHaveText('刷新')
 
@@ -50,11 +50,11 @@ test.describe('Dashboard E2E Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Wait for table to load
-    const table = page.locator('.chapter-table')
+    const table = page.getByTestId('chapter-table')
     await expect(table).toBeVisible({ timeout: 10000 })
 
     // Check table headers
-    const headers = page.locator('.chapter-table th')
+    const headers = [data-testid="chapter-table"] th
     await expect(headers).toHaveCount(5)
 
     // Verify column headers
@@ -69,7 +69,7 @@ test.describe('Dashboard E2E Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Wait for stat cards to load
-    const statCards = page.locator('.stat-card')
+    const statCards = page.getByTestId('stat-card')
     await expect(statCards).toHaveCount(5, { timeout: 10000 })
 
     // Verify stat labels (order matters)
@@ -79,7 +79,7 @@ test.describe('Dashboard E2E Tests', () => {
     }
 
     // Verify stat values are present (not empty)
-    const statValues = page.locator('.stat-value')
+    const statValues = page.getByTestId('stat-value')
     await expect(statValues.first()).toBeVisible()
   })
 
@@ -88,11 +88,11 @@ test.describe('Dashboard E2E Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Wait for chart to render
-    const chartContainer = page.locator('.hook-trend-chart')
+    const chartContainer = page.getByTestId('hook-trend-chart')
     await expect(chartContainer).toBeVisible({ timeout: 10000 })
 
     // Verify chart has canvas element (ECharts renders to canvas)
-    const chartCanvas = page.locator('.hook-trend-chart canvas')
+    const chartCanvas = [data-testid="hook-trend-chart"] canvas
     await expect(chartCanvas).toBeVisible({ timeout: 5000 })
   })
 
@@ -102,7 +102,7 @@ test.describe('Dashboard E2E Tests', () => {
     await page.goto('http://localhost:3000')
 
     // Error banner should not be visible in happy path
-    const errorBanner = page.locator('.error-banner')
+    const errorBanner = page.getByTestId('error-banner')
     // We don't assert it doesn't exist, since API might genuinely fail
     // Just verify the banner element exists in DOM
     await expect(errorBanner).toBeAttached().catch(() => {
