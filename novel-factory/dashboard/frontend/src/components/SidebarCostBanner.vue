@@ -115,17 +115,24 @@ const TIME_OPTIONS = [
 const displayCostByScenario = computed(() =>
   windowedCost.value?.cost_by_scenario ?? props.status?.cost_by_scenario ?? {}
 );
+const displayCostByTier = computed(() =>
+  windowedCost.value?.cost_by_tier ?? props.status?.cost_by_tier ?? {}
+);
 const displayTotalCost = computed(() =>
   windowedCost.value?.total_cost_usd ?? props.status?.total_cost_usd ?? 0.0
 );
 
-// Phase 8.16: hasCost 用 display* 走 windowedCost 路径. 维持 Phase 8.15 旧版
-// (仅 scenario check, 不 OR tier) — 7d/30d 切时 banner 可能 hidden 接受
-// (scope A 锁, Phase 8.17 独立 followup).
+// Phase 8.17: hasCost OR scenario + tier (symmetric to Phase 8.14 WorkflowStatus fix)
+// — 防止 tier-only 数据时整 banner 隐藏. display* 走 windowedCost 路径优先
+// (windowedCost 7d/30d 时 → time window 路径; null 时 → WS 全量 fallback).
 const costByScenario = computed(() => displayCostByScenario.value);
+const costByTier = computed(() => displayCostByTier.value);
 const hasCost = computed(() => {
-  const data = costByScenario.value;
-  return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0);
+  const scenarioHas = Object.keys(costByScenario.value).length > 0
+    && Object.values(costByScenario.value).some((v) => v > 0);
+  const tierHas = Object.keys(costByTier.value).length > 0
+    && Object.values(costByTier.value).some((v) => v > 0);
+  return scenarioHas || tierHas;
 });
 
 const totalUsd = computed(() => Number(displayTotalCost.value ?? 0));
