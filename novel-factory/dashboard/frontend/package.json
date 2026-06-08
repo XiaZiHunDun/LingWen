@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:testid": "eslint tests/unit/**/*.spec.ts tests/fixtures/lint-testid/*.spec.ts --no-eslintrc -c .eslintrc.cjs --no-error-on-unmatched-pattern",
+    "test:rule": "node --test eslint-rules/*.test.js"
   },
   "dependencies": {
     "echarts": "^5.5.0",
