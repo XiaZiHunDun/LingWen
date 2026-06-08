@@ -1,7 +1,9 @@
 <!--
-  WorkflowsPage.vue — 工作流页面 (Phase 6.2 + 6.3)
+  WorkflowsPage.vue — 工作流页面 (Phase 6.2 + 6.3 + 8.34)
   - 左侧:工作流列表 (含"查看图"按钮,Phase 6.3)
   - 右侧:启动表单 + 当前活跃状态 + 图渲染面板
+  - Phase 8.34: workflows 列表 + loading + lastError 拆到 useWorkflowListStore;
+    active 仍由 useWorkflowSocket (WS 权威) 驱动; run/resume/loadGraph 突变仍 page-local
 -->
 <template>
   <div class="workflows-page">
@@ -118,30 +120,23 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import WorkflowStatus from '../components/WorkflowStatus.vue';
 import WorkflowGraph from '../components/WorkflowGraph.vue';
 import {
-  fetchWorkflows,
   fetchWorkflowGraph,
   runWorkflow,
   resumeWorkflow,
 } from '../api/index.js';
+import { useWorkflowListStore } from '../composables/useWorkflowListStore.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 
-const workflows = ref([]);
-const selected = ref(null);
-const active = ref(null);
-const initialInputsJson = ref('{}');
-const maxBacktracks = ref(2);
-const running = ref(false);
-const loading = ref(false);
-const error = ref(null);
-const showGraph = ref(false);
-const graphData = ref(null);
-const graphLoading = ref(false);
-
-// Phase 6.4: WebSocket 实时推送替代 2s 轮询
+// Phase 8.34: 拆分为 module-level singleton stores
+//   useWorkflowListStore 管 workflows 列表 (REST 拉) + loading + lastError
+//   useWorkflowSocket 管 active status (WS 权威源) + connected + lastError
+//   页面 UI state (selected/initialInputsJson/maxBacktracks/running/showGraph/
+//   graphData/graphLoading/localError) 仍 page-local
+const listStore = useWorkflowListStore();
 const {
   status: wsStatus,
   pendingDecisions: wsPending,
@@ -149,21 +144,32 @@ const {
   lastError: wsError,
 } = useWorkflowSocket();
 
+// computed 包装 store refs, 让 template 用 listStore.workflows 自动 unwrap
+// 也保 script 内访问时显式 .value (符合 Vue 3 style guide)
+const workflows = computed(() => listStore.workflows.value);
+const loading = computed(() => listStore.loading.value);
+// error 合并 store (workflow 列表拉) + localError (run/resume/loadGraph)
+const localError = ref(null);
+const error = computed(() => listStore.lastError.value || localError.value);
+
+// 页面 UI state
+const selected = ref(null);
+const active = ref(null);
+const initialInputsJson = ref('{}');
+const maxBacktracks = ref(2);
+const running = ref(false);
+const showGraph = ref(false);
+const graphData = ref(null);
+const graphLoading = ref(false);
+
 // 同步 WS 推送的 status → active
 watch(wsStatus, (s) => {
   if (s) active.value = s;
 }, { immediate: true });
 
-async function refresh() {
-  loading.value = true;
-  error.value = null;
-  try {
-    workflows.value = await fetchWorkflows();
-  } catch (e) {
-    error.value = e?.message || String(e);
-  } finally {
-    loading.value = false;
-  }
+function refresh() {
+  // Phase 8.34: 委托给 listStore.refresh, store 内部管理 loading + lastError
+  return listStore.refresh();
 }
 
 function select(wf) {
@@ -178,7 +184,7 @@ function select(wf) {
 async function runIt() {
   if (!selected.value) return;
   running.value = true;
-  error.value = null;
+  localError.value = null;
   try {
     let initial_inputs = {};
     try {
@@ -197,7 +203,7 @@ async function runIt() {
     // 立即更新一次 (不等 WS 推送)
     active.value = result;
   } catch (e) {
-    error.value = `运行失败: ${e?.message || e}`;
+    localError.value = `运行失败: ${e?.message || e}`;
   } finally {
     running.value = false;
   }
@@ -209,7 +215,7 @@ async function handleResume({ decisionId, option }) {
     // 立即更新,WS 也会推
     active.value = result;
   } catch (e) {
-    error.value = `恢复失败: ${e?.message || e}`;
+    localError.value = `恢复失败: ${e?.message || e}`;
   }
 }
 
@@ -223,18 +229,16 @@ async function toggleGraph() {
 async function loadGraph() {
   if (!selected.value) return;
   graphLoading.value = true;
-  error.value = null;
+  localError.value = null;
   try {
     // Phase 6.6.D: includeStatus=true 触发后端叠加活跃工作流节点状态染色
     graphData.value = await fetchWorkflowGraph(selected.value.name, { includeStatus: true });
   } catch (e) {
-    error.value = `加载图失败: ${e?.message || e}`;
+    localError.value = `加载图失败: ${e?.message || e}`;
   } finally {
     graphLoading.value = false;
   }
 }
-
-onMounted(refresh);
 </script>
 
 <style scoped>
