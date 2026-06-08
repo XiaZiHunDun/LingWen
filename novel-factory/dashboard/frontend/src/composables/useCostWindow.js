@@ -39,31 +39,55 @@ const lastError = ref(null);
 
 let pollTimer = null;
 let mountedCount = 0;
+// Phase 8.19: 跟踪 in-flight fetch 的 controller, 7d→30d 快速切换时主动 abort 上一个
+// + 即使 abort 失败 (response 已在 pipeline) 也用 currentController 守卫防覆盖新 state
+let currentController = null;
 
 async function fetchCost() {
   if (timeWindow.value === 'all') {
     // "all" 不需要 fetch — component 读 WS status.cost_* (default path)
+    // Phase 8.19: 切 'all' 时主动 abort any in-flight windowed fetch
+    if (currentController) {
+      currentController.abort();
+      currentController = null;
+    }
     windowedCost.value = null;
     return;
   }
+  // Phase 8.19: 每次新 fetch abort 上一个 in-flight request
+  if (currentController) {
+    currentController.abort();
+  }
+  const controller = new AbortController();
+  currentController = controller;
+
   loading.value = true;
   lastError.value = null;
   try {
     const url = new URL('/api/workflows/active', window.location.origin);
     url.searchParams.set('time_window', timeWindow.value);
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { signal: controller.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    // Phase 8.19: 即使 abort 失败 (response 已在 pipeline), 仅 latest 才 apply
+    if (currentController !== controller) return;
     windowedCost.value = {
       cost_by_scenario: data.cost_by_scenario || {},
       cost_by_tier: data.cost_by_tier || {},
       total_cost_usd: data.total_cost_usd || 0.0,
     };
   } catch (e) {
+    // Phase 8.19: AbortError 静默 ignore (被新 fetch supersede 时正常预期)
+    if (e?.name === 'AbortError') return;
+    // Phase 8.19: superseded fetch 错误不污染新 fetch 的 lastError state
+    if (currentController !== controller) return;
     lastError.value = e?.message || String(e);
     // Silent degrade: 保留旧 windowedCost (避免 race 闪空)
   } finally {
-    loading.value = false;
+    // Phase 8.19: 仅 latest fetch 关闭 loading, 防旧 fetch 抢先 set false
+    if (currentController === controller) {
+      loading.value = false;
+    }
   }
 }
 
