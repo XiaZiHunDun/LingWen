@@ -13,6 +13,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import * as echarts from 'echarts'
 import CostTrendChart from '../../src/components/CostTrendChart.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const dayData = {
   '2026-06-01': 0.020,
@@ -37,8 +38,8 @@ describe('CostTrendChart: single-line baseline (Phase 8.24)', () => {
       props: { costByDay: dayData },
     })
     await flushPromises()
-    expect(wrapper.find('[data-testid="cost-trend-chart"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="cost-trend-chart-wrapper"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart-wrapper')).exists()).toBe(true)
   })
 
   test('hides empty state when costByDay has values', async () => {
@@ -46,7 +47,7 @@ describe('CostTrendChart: single-line baseline (Phase 8.24)', () => {
       props: { costByDay: dayData },
     })
     await flushPromises()
-    expect(wrapper.find('[data-testid="cost-trend-chart-empty"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(false)
   })
 
   test('shows empty state when costByDay is empty', async () => {
@@ -54,7 +55,7 @@ describe('CostTrendChart: single-line baseline (Phase 8.24)', () => {
       props: { costByDay: {} },
     })
     await flushPromises()
-    expect(wrapper.find('[data-testid="cost-trend-chart-empty"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(true)
   })
 
   test('costByDayPerTier=null falls back to single-line baseline (no regression)', async () => {
@@ -62,7 +63,7 @@ describe('CostTrendChart: single-line baseline (Phase 8.24)', () => {
       props: { costByDay: dayData, costByDayPerTier: null },
     })
     await flushPromises()
-    expect(wrapper.find('[data-testid="cost-trend-chart"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart')).exists()).toBe(true)
   })
 })
 
@@ -106,7 +107,7 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
     // NOTE: 已知 hasData 当前只检查 costByDay, 不检查 costByDayPerTier.
     // 当 costByDay={} 时, 即使 costByDayPerTier 有数据, empty state 仍会显示.
     // 这是 Phase 8.29 已知 contract (未改 baseline), render() 内部仍走 multi-series path.
-    expect(wrapper.find('[data-testid="cost-trend-chart-empty"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(true)
   })
 
   test('uses single-line baseline when costByDayPerTier is empty dict', async () => {

@@ -13,6 +13,7 @@ import { describe, test, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (
   costByScenario: Record<string, number> = {},
@@ -62,7 +63,7 @@ describe('Sidebar Soft Warning Three-State (Phase 8.28)', () => {
     await flushPromises()
 
     // activeBudget fill class: ok (绿) (20% < 80%)
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('ok')
     expect(fill.classes()).not.toContain('warning')
@@ -81,7 +82,7 @@ describe('Sidebar Soft Warning Three-State (Phase 8.28)', () => {
     await flushPromises()
 
     // 80% ≤ 85% < 100% → warning (黄, 前端从 ok 升级)
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('warning')
     expect(fill.classes()).not.toContain('ok')
@@ -100,7 +101,7 @@ describe('Sidebar Soft Warning Three-State (Phase 8.28)', () => {
     await flushPromises()
 
     // >= 100% → exceeded (红)
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('exceeded')
     expect(fill.classes()).not.toContain('ok')

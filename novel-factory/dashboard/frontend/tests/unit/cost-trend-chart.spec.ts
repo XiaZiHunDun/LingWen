@@ -16,6 +16,7 @@ import { describe, test, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowStatus from '../../src/components/WorkflowStatus.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (
   costByScenario: Record<string, number> = {},
@@ -59,12 +60,12 @@ describe('CostTrendChart trend line (Phase 8.24)', () => {
     await flushPromises()
 
     // cost-section 渲染 (3 维度都非空)
-    expect(wrapper.find('[data-testid="cost-section"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-section')).exists()).toBe(true)
     // CostTrendChart wrapper + canvas 渲染 (echarts stub 走空壳)
-    expect(wrapper.find('[data-testid="cost-trend-chart-wrapper"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="cost-trend-chart"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart-wrapper')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart')).exists()).toBe(true)
     // hasData=true → empty msg 不显示
-    expect(wrapper.find('[data-testid="cost-trend-chart-empty"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(false)
   })
 
   test('shows empty fallback when cost_by_day is empty (但 scenario/tier 仍非空)', async () => {
@@ -80,11 +81,11 @@ describe('CostTrendChart trend line (Phase 8.24)', () => {
     await flushPromises()
 
     // hasCost=true (scenario OR tier 触发) → cost-section 仍渲染
-    expect(wrapper.find('[data-testid="cost-section"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-section')).exists()).toBe(true)
     // CostTrendChart wrapper 仍渲染
-    expect(wrapper.find('[data-testid="cost-trend-chart-wrapper"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart-wrapper')).exists()).toBe(true)
     // empty msg 显示
-    const emptyMsg = wrapper.find('[data-testid="cost-trend-chart-empty"]')
+    const emptyMsg = wrapper.find(byTestid('cost-trend-chart-empty'))
     expect(emptyMsg.exists()).toBe(true)
     expect(emptyMsg.text()).toContain('暂无 trend 数据')
   })
@@ -102,11 +103,11 @@ describe('CostTrendChart trend line (Phase 8.24)', () => {
     await flushPromises()
 
     // hasCost 走 (false || false || true) = true → cost-section 渲染
-    expect(wrapper.find('[data-testid="cost-section"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-section')).exists()).toBe(true)
     // CostTrendChart canvas 渲染 (day data → hasData=true)
-    expect(wrapper.find('[data-testid="cost-trend-chart"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-trend-chart')).exists()).toBe(true)
     // empty msg 不显示
-    expect(wrapper.find('[data-testid="cost-trend-chart-empty"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(false)
   })
 
   test('cost-section hidden when no scenario/tier/day data (all empty)', async () => {
@@ -118,8 +119,8 @@ describe('CostTrendChart trend line (Phase 8.24)', () => {
     await flushPromises()
 
     // hasCost=false → cost-section 隐藏
-    expect(wrapper.find('[data-testid="cost-section"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('cost-section')).exists()).toBe(false)
     // CostTrendChart wrapper 也隐藏 (v-if hasCost)
-    expect(wrapper.find('[data-testid="cost-trend-chart-wrapper"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('cost-trend-chart-wrapper')).exists()).toBe(false)
   })
 })

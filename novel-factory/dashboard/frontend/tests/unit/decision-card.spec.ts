@@ -8,6 +8,7 @@
 import { describe, test, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DecisionCard from '../../src/components/DecisionCard.vue'
+import { byTestid } from '../helpers/by-testid'
 
 interface Decision {
   decision_id: string
@@ -40,13 +41,13 @@ describe('DecisionCard inner sub-element testid (Phase 8.32)', () => {
     })
 
     // pending: 3 个 option 按钮 + defer + cancel 显
-    expect(wrapper.findAll('[data-testid="option-btn"]')).toHaveLength(3)
-    expect(wrapper.find('[data-testid="defer-btn"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="cancel-btn"]').exists()).toBe(true)
+    expect(wrapper.findAll(byTestid('option-btn'))).toHaveLength(3)
+    expect(wrapper.find(byTestid('defer-btn')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('cancel-btn')).exists()).toBe(true)
     // pending: status-badge 0 (statusBadge map 不含 pending) + readonly-hint 0 (v-else 不触发) + meta-info 0 (metaInfo computed 返 null)
-    expect(wrapper.findAll('[data-testid="status-badge"]')).toHaveLength(0)
-    expect(wrapper.findAll('[data-testid="readonly-hint"]')).toHaveLength(0)
-    expect(wrapper.findAll('[data-testid="meta-info"]')).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('status-badge'))).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('readonly-hint'))).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('meta-info'))).toHaveLength(0)
   })
 
   test('resolved decision renders status-badge (status-resolved) + readonly-hint (解决) + meta-info, no buttons', () => {
@@ -65,18 +66,18 @@ describe('DecisionCard inner sub-element testid (Phase 8.32)', () => {
     })
 
     // resolved: 无 button (pending 才渲染)
-    expect(wrapper.findAll('[data-testid="option-btn"]')).toHaveLength(0)
-    expect(wrapper.findAll('[data-testid="defer-btn"]')).toHaveLength(0)
-    expect(wrapper.findAll('[data-testid="cancel-btn"]')).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('option-btn'))).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('defer-btn'))).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('cancel-btn'))).toHaveLength(0)
     // resolved: status-badge 1 (含 status-resolved class) + readonly-hint 1
     // (走 v-else L59 + 三元 fallback 'resolved' ? '解决' : ...) + meta-info 1
-    const statusBadge = wrapper.find('[data-testid="status-badge"]')
+    const statusBadge = wrapper.find(byTestid('status-badge'))
     expect(statusBadge.exists()).toBe(true)
     expect(statusBadge.classes()).toContain('status-resolved')
-    const readonlyHint = wrapper.find('[data-testid="readonly-hint"]')
+    const readonlyHint = wrapper.find(byTestid('readonly-hint'))
     expect(readonlyHint.exists()).toBe(true)
     expect(readonlyHint.text()).toContain('解决')
-    const metaInfo = wrapper.find('[data-testid="meta-info"]')
+    const metaInfo = wrapper.find(byTestid('meta-info'))
     expect(metaInfo.exists()).toBe(true)
     expect(metaInfo.text()).toContain('解决人')
     expect(metaInfo.text()).toContain('选项 A')
@@ -97,19 +98,19 @@ describe('DecisionCard inner sub-element testid (Phase 8.32)', () => {
     })
 
     // cancelled: 无 button
-    expect(wrapper.findAll('[data-testid="option-btn"]')).toHaveLength(0)
-    expect(wrapper.findAll('[data-testid="defer-btn"]')).toHaveLength(0)
-    expect(wrapper.findAll('[data-testid="cancel-btn"]')).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('option-btn'))).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('defer-btn'))).toHaveLength(0)
+    expect(wrapper.findAll(byTestid('cancel-btn'))).toHaveLength(0)
     // cancelled: status-badge 1 (含 status-cancelled class, cancelled 在 map L110)
     // + readonly-hint 1 (走 v-else L59 + 三元 fallback 'cancelled' ? '取消' : '推迟')
-    const statusBadge = wrapper.find('[data-testid="status-badge"]')
+    const statusBadge = wrapper.find(byTestid('status-badge'))
     expect(statusBadge.exists()).toBe(true)
     expect(statusBadge.classes()).toContain('status-cancelled')
-    const readonlyHint = wrapper.find('[data-testid="readonly-hint"]')
+    const readonlyHint = wrapper.find(byTestid('readonly-hint'))
     expect(readonlyHint.exists()).toBe(true)
     expect(readonlyHint.text()).toContain('取消')
     // cancelled: meta-info 走 cancelled 分支 ("取消原因" 而非 "推迟原因")
-    const metaInfo = wrapper.find('[data-testid="meta-info"]')
+    const metaInfo = wrapper.find(byTestid('meta-info'))
     expect(metaInfo.exists()).toBe(true)
     expect(metaInfo.text()).toContain('取消原因: 实验失败')
   })

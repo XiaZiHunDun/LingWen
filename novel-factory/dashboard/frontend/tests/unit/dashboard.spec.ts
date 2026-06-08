@@ -18,6 +18,7 @@
 import { describe, test, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import OverviewPage from '../../src/pages/OverviewPage.vue'
+import { byTestid } from '../helpers/by-testid'
 
 // Phase 8.30b: mock api/index.js 模块 (fetchOverview + fetchChapters)
 // 返 fixture 让页面 mount 后 loadData() 不抛错. 后续 5 stat-card + chapter
@@ -42,7 +43,7 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
   test('page title "追读力总览" renders', async () => {
     const wrapper = mount(OverviewPage)
     await flushPromises()
-    const title = wrapper.find('[data-testid="page-title"]')
+    const title = wrapper.find(byTestid('page-title'))
     expect(title.exists()).toBe(true)
     expect(title.text()).toBe('追读力总览')
   })
@@ -50,7 +51,7 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
   test('refresh button renders + click triggers load', async () => {
     const wrapper = mount(OverviewPage)
     await flushPromises()
-    const refreshBtn = wrapper.find('[data-testid="refresh-btn"]')
+    const refreshBtn = wrapper.find(byTestid('refresh-btn'))
     expect(refreshBtn.exists()).toBe(true)
     expect(refreshBtn.text()).toContain('刷新')
 
@@ -58,13 +59,13 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
     await refreshBtn.trigger('click')
     await flushPromises()
     // error banner 不显 (api 返 fixture, loadData 成功)
-    expect(wrapper.find('[data-testid="error-banner"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('error-banner')).exists()).toBe(false)
   })
 
   test('chapter table renders with 5 columns (章节/钩子数/钩子强度/爽点数/爽点密度)', async () => {
     const wrapper = mount(OverviewPage)
     await flushPromises()
-    const table = wrapper.find('[data-testid="chapter-table"]')
+    const table = wrapper.find(byTestid('chapter-table'))
     expect(table.exists()).toBe(true)
 
     // 5 column headers
@@ -79,7 +80,7 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
     await flushPromises()
 
     // .stat-card 5 个 (StatCard 组件无 data-testid, 用 class 选)
-    const statCards = wrapper.findAll('[data-testid="stat-card"]')
+    const statCards = wrapper.findAll(byTestid('stat-card'))
     expect(statCards.length).toBe(5)
 
     // labels
@@ -92,7 +93,7 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
   test('hook-trend-chart canvas renders (ECharts stub → empty init)', async () => {
     const wrapper = mount(OverviewPage)
     await flushPromises()
-    const chartContainer = wrapper.find('[data-testid="hook-trend-chart"]')
+    const chartContainer = wrapper.find(byTestid('hook-trend-chart'))
     expect(chartContainer.exists()).toBe(true)
   })
 
@@ -100,13 +101,13 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
     const wrapper = mount(OverviewPage)
     await flushPromises()
     // loadData 成功 → error=null → v-if="error" 不显
-    expect(wrapper.find('[data-testid="error-banner"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('error-banner')).exists()).toBe(false)
   })
 
   test('StatCard renders with data-testid="stat-card" (Phase 8.31 unification)', async () => {
     const wrapper = mount(OverviewPage)
     await flushPromises()
-    const statCards = wrapper.findAll('[data-testid="stat-card"]')
+    const statCards = wrapper.findAll(byTestid('stat-card'))
     expect(statCards.length).toBe(5)  // OverviewPage mount 5 个 StatCard (跟已有 test 一致)
   })
 })

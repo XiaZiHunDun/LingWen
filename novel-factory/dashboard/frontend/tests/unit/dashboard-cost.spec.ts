@@ -11,6 +11,7 @@
 import { describe, test, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowStatus from '../../src/components/WorkflowStatus.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (costByScenario: Record<string, number>, totalUsd: number) => ({
   workflow_name: 'novel_writing',
@@ -63,11 +64,11 @@ describe('Dashboard Cost Bar Chart (Phase 8.7)', () => {
     await flushPromises()
 
     // cost-section visible
-    expect(wrapper.find('[data-testid="cost-section"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-section')).exists()).toBe(true)
     // CostBarChart 组件 render
-    expect(wrapper.find('[data-testid="cost-bar-chart"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('cost-bar-chart')).exists()).toBe(true)
     // total USD 文本断言
-    const totalUsd = wrapper.get('[data-testid="cost-total-usd"]')
+    const totalUsd = wrapper.get(byTestid('cost-total-usd'))
     expect(totalUsd.text()).toContain('$0.0450')
   })
 })

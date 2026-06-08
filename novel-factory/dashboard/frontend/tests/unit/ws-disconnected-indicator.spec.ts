@@ -15,6 +15,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = () => ({
   workflow_name: 'novel_writing',
@@ -65,13 +66,13 @@ describe('Sidebar WebSocket Disconnected Indicator (Phase 8.27)', () => {
     await flushPromises()
 
     // 200ms 内: hasMounted=false → banner NOT visible
-    expect(wrapper.find('[data-testid="ws-disconnected-banner"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('ws-disconnected-banner')).exists()).toBe(false)
 
     // 推进 200ms → hasMounted=true + connected=false → banner 可见
     vi.advanceTimersByTime(200)
     await flushPromises()
 
-    const banner = wrapper.find('[data-testid="ws-disconnected-banner"]')
+    const banner = wrapper.find(byTestid('ws-disconnected-banner'))
     expect(banner.exists()).toBe(true)
     expect(banner.text()).toContain('实时同步已断开')
     expect(banner.text()).toContain('成本数据可能过期')
@@ -94,6 +95,6 @@ describe('Sidebar WebSocket Disconnected Indicator (Phase 8.27)', () => {
     await flushPromises()
 
     // connected=true → banner NOT visible
-    expect(wrapper.find('[data-testid="ws-disconnected-banner"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('ws-disconnected-banner')).exists()).toBe(false)
   })
 })

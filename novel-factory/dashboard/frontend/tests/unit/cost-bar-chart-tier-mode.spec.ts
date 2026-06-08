@@ -14,6 +14,7 @@
 import { describe, test, expect } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import CostBarChart from '../../src/components/CostBarChart.vue'
+import { byTestid } from '../helpers/by-testid'
 
 // ECharts 内部 canvas 渲染走 zrender.Painter, jsdom 无 HTMLCanvasElement.getContext('2d')
 // 完整支持 → clearRect null deref 报错. stub 集中在 tests/unit/setup.ts (Phase 8.30).
@@ -40,8 +41,8 @@ describe('CostBarChart tier-mode toggle (Phase 8.30 pilot)', () => {
     })
     await flushPromises()
 
-    const scenarioTab = wrapper.get('[data-testid="mode-tab-scenario"]')
-    const tierTab = wrapper.get('[data-testid="mode-tab-tier"]')
+    const scenarioTab = wrapper.get(byTestid('mode-tab-scenario'))
+    const tierTab = wrapper.get(byTestid('mode-tab-tier'))
 
     expect(scenarioTab.exists()).toBe(true)
     expect(tierTab.exists()).toBe(true)
@@ -56,7 +57,7 @@ describe('CostBarChart tier-mode toggle (Phase 8.30 pilot)', () => {
     })
     await flushPromises()
 
-    const scenarioTab = wrapper.get('[data-testid="mode-tab-scenario"]')
+    const scenarioTab = wrapper.get(byTestid('mode-tab-scenario'))
     expect(scenarioTab.classes()).toContain('active')
     expect(scenarioTab.attributes('aria-selected')).toBe('true')
   })
@@ -72,7 +73,7 @@ describe('CostBarChart tier-mode toggle (Phase 8.30 pilot)', () => {
     })
     await flushPromises()
 
-    const tierTab = wrapper.get('[data-testid="mode-tab-tier"]')
+    const tierTab = wrapper.get(byTestid('mode-tab-tier'))
     await tierTab.trigger('click')
     await flushPromises()
 
@@ -91,7 +92,7 @@ describe('CostBarChart tier-mode toggle (Phase 8.30 pilot)', () => {
     })
     await flushPromises()
 
-    const tierTab = wrapper.get('[data-testid="mode-tab-tier"]')
+    const tierTab = wrapper.get(byTestid('mode-tab-tier'))
     expect(tierTab.classes()).toContain('active')
     expect(tierTab.attributes('aria-selected')).toBe('true')
   })

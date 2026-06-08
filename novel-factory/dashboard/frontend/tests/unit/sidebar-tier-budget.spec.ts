@@ -18,6 +18,7 @@ import { describe, test, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 interface TierBudget {
   status?: string
@@ -82,9 +83,9 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     await flushPromises()
 
     // banner 渲染
-    expect(wrapper.find('[data-testid="sidebar-cost-banner"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-cost-banner')).exists()).toBe(true)
     // 3 tier rows
-    const rows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const rows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(rows.length).toBe(3)
   })
 
@@ -105,7 +106,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     await flushPromises()
 
     // 只 sonnet 可见
-    const rows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const rows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(rows.length).toBe(1)
     // 验证 sonnet tier text 包含 "sonnet"
     const tierText = rows[0].find('[data-testid="sidebar-cost-tier-text"]')
@@ -129,7 +130,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     await flushPromises()
 
     // opus row 找
-    const rows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const rows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     const opusRow = rows.find((r) => r.text().includes('opus'))
     expect(opusRow).toBeTruthy()
 
@@ -157,7 +158,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     await flushPromises()
 
     // sonnet row
-    const rows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const rows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     const sonnetRow = rows.find((r) => r.text().includes('sonnet'))
     expect(sonnetRow).toBeTruthy()
 
@@ -184,7 +185,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     await flushPromises()
 
     // 顺序 haiku → sonnet → opus (跟 TierOrder 枚举一致)
-    const rows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const rows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(rows.length).toBe(3)
     expect(rows[0].text()).toContain('haiku')
     expect(rows[1].text()).toContain('sonnet')
@@ -209,13 +210,13 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     await flushPromises()
 
     // Phase 8.12 activeBudget cascade 仍显 (per-run cost_budget_status)
-    const activeBudgetText = wrapper.find('[data-testid="sidebar-cost-budget-text"]')
+    const activeBudgetText = wrapper.find(byTestid('sidebar-cost-budget-text'))
     expect(activeBudgetText.exists()).toBe(true)
     expect(activeBudgetText.text()).toContain('本次')
     expect(activeBudgetText.text()).toContain('75.0')
 
     // Phase 8.15 tier row 也可见 (opus only)
-    const tierRows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const tierRows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(tierRows.length).toBe(1)
     expect(tierRows[0].text()).toContain('opus')
   })
@@ -238,7 +239,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
       },
     })
     await flushPromises()
-    const tierText = wrapper.find('[data-testid="sidebar-cost-tier-text"]')
+    const tierText = wrapper.find(byTestid('sidebar-cost-tier-text'))
     expect(tierText.exists()).toBe(true)
   })
 })

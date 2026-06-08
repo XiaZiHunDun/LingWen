@@ -13,6 +13,7 @@
 import { describe, test, expect } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const baseStatus = (overrides = {}) => ({
   workflow_name: 'novel_writing',
@@ -39,12 +40,12 @@ describe('SidebarCostBanner: Phase 8.27 WS disconnected indicator', () => {
     })
     // connected 默认 false, hasMounted gate 是 200ms
     // 立即 query 看不到 banner (hasMounted=false)
-    expect(wrapper.find('[data-testid="ws-disconnected-banner"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('ws-disconnected-banner')).exists()).toBe(false)
 
     // 等 200ms gate 过, connected 仍 false → banner 出现
     await new Promise((r) => setTimeout(r, 250))
     await flushPromises()
-    const banner = wrapper.find('[data-testid="ws-disconnected-banner"]')
+    const banner = wrapper.find(byTestid('ws-disconnected-banner'))
     expect(banner.exists()).toBe(true)
     expect(banner.text()).toContain('实时同步已断开')
     expect(banner.text()).toContain('成本数据可能过期')
@@ -57,7 +58,7 @@ describe('SidebarCostBanner: Phase 8.27 WS disconnected indicator', () => {
       props: { status: baseStatus() },
     })
     // 立即 query (200ms 内) → banner 不可见 (gate 防初次 mount flash)
-    expect(wrapper.find('[data-testid="ws-disconnected-banner"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('ws-disconnected-banner')).exists()).toBe(false)
   })
 })
 
@@ -71,7 +72,7 @@ describe('SidebarCostBanner: Phase 8.28 soft warning three-state', () => {
       },
     })
     await flushPromises()
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('ok')
     expect(fill.classes()).not.toContain('warning')
@@ -87,7 +88,7 @@ describe('SidebarCostBanner: Phase 8.28 soft warning three-state', () => {
       },
     })
     await flushPromises()
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('warning')
     expect(fill.classes()).not.toContain('ok')
@@ -103,7 +104,7 @@ describe('SidebarCostBanner: Phase 8.28 soft warning three-state', () => {
       },
     })
     await flushPromises()
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('exceeded')
     expect(fill.classes()).not.toContain('ok')
@@ -119,7 +120,7 @@ describe('SidebarCostBanner: Phase 8.28 soft warning three-state', () => {
       },
     })
     await flushPromises()
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.attributes('style')).toContain('width: 45%')
   })
 })
@@ -138,7 +139,7 @@ describe('SidebarCostBanner: per-tier budget rows (Phase 8.15)', () => {
       },
     })
     await flushPromises()
-    const tierRows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const tierRows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(tierRows.length).toBe(3)
   })
 
@@ -155,7 +156,7 @@ describe('SidebarCostBanner: per-tier budget rows (Phase 8.15)', () => {
       },
     })
     await flushPromises()
-    const tierRows = wrapper.findAll('[data-testid="sidebar-cost-tier-row"]')
+    const tierRows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(tierRows.length).toBe(2)
   })
 })

@@ -12,6 +12,7 @@
 import { describe, test, expect } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowStatus from '../../src/components/WorkflowStatus.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (
   costByScenario: Record<string, number> = {},
@@ -37,9 +38,9 @@ describe('WorkflowStatus hasCost gate (Phase 8.14 scenario + tier OR)', () => {
     await flushPromises()
 
     // Phase 8.14 fix: tier-only 数据时 cost section 必须 visible
-    expect(wrapper.get('[data-testid="cost-section"]').exists()).toBe(true)
+    expect(wrapper.get(byTestid('cost-section')).exists()).toBe(true)
     // Wrapper 也可见
-    expect(wrapper.find('[data-testid="cost-section"]').isVisible()).toBe(true)
+    expect(wrapper.find(byTestid('cost-section')).isVisible()).toBe(true)
   })
 
   test('hides cost section when neither scenario nor tier present', async () => {
@@ -49,7 +50,7 @@ describe('WorkflowStatus hasCost gate (Phase 8.14 scenario + tier OR)', () => {
     await flushPromises()
 
     // 旧行为保: 双方都空 → cost section hidden
-    expect(wrapper.find('[data-testid="cost-section"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('cost-section')).exists()).toBe(false)
   })
 
   test('shows cost section when both scenario and tier present', async () => {
@@ -64,6 +65,6 @@ describe('WorkflowStatus hasCost gate (Phase 8.14 scenario + tier OR)', () => {
     await flushPromises()
 
     // Sanity: 双方有值 → visible (Phase 8.13 path 不破)
-    expect(wrapper.get('[data-testid="cost-section"]').exists()).toBe(true)
+    expect(wrapper.get(byTestid('cost-section')).exists()).toBe(true)
   })
 })

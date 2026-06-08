@@ -13,6 +13,7 @@ import { describe, test, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowStatus from '../../src/components/WorkflowStatus.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (scoreData: Record<string, any> = {}, costByScenario: Record<string, number> = {}) => ({
   workflow_name: 'novel_writing',
@@ -59,16 +60,16 @@ describe('Dashboard Score Radar (Phase 7.6)', () => {
     await flushPromises()
 
     // 雷达图容器 渲染 (data-testid 来自 ScoreRadarChart 内部)
-    const radar = wrapper.find('[data-testid="score-radar-chart"]')
+    const radar = wrapper.find(byTestid('score-radar-chart'))
     expect(radar.exists()).toBe(true)
 
     // winner badge 显 (label_a "polish_emotional_pacing")
-    const winnerBadge = wrapper.find('[data-testid="winner-badge"]')
+    const winnerBadge = wrapper.find(byTestid('winner-badge'))
     expect(winnerBadge.exists()).toBe(true)
     expect(winnerBadge.text()).toContain('polish_emotional_pacing')
 
     // fallback warning NOT shown (fallback=null)
-    expect(wrapper.find('[data-testid="score-radar-fallback-warning"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('score-radar-fallback-warning')).exists()).toBe(false)
   })
 
   test('fallback warning shown when score_data has fallback reason', async () => {
@@ -92,7 +93,7 @@ describe('Dashboard Score Radar (Phase 7.6)', () => {
     await flushPromises()
 
     // 警告横幅 可见 (含 "LLM 评分未生效")
-    const warning = wrapper.find('[data-testid="score-radar-fallback-warning"]')
+    const warning = wrapper.find(byTestid('score-radar-fallback-warning'))
     expect(warning.exists()).toBe(true)
     expect(warning.text()).toContain('LLM 评分未生效')
   })

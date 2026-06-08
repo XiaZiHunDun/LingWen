@@ -15,6 +15,7 @@ import { describe, test, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (
   costBudgetStatus: object | null,
@@ -68,15 +69,15 @@ describe('Sidebar Cost Banner Priority Cascade (Phase 8.12)', () => {
     await flushPromises()
 
     // Sidebar banner 可见
-    expect(wrapper.find('[data-testid="sidebar-cost-banner"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-cost-banner')).exists()).toBe(true)
 
     // Total USD 正常显 (cost_by_scenario has entry)
-    const totalText = wrapper.find('[data-testid="sidebar-cost-total-text"]')
+    const totalText = wrapper.find(byTestid('sidebar-cost-total-text'))
     expect(totalText.text()).toContain('💰')
     expect(totalText.text()).toContain('$0.0600')
 
     // Banner 文本含 "今日" (per-day, exceeded 优先)
-    const budgetText = wrapper.find('[data-testid="sidebar-cost-budget-text"]')
+    const budgetText = wrapper.find(byTestid('sidebar-cost-budget-text'))
     expect(budgetText.text()).toContain('今日')
     expect(budgetText.text()).toContain('$0.0600')  // active.used_usd (per-day)
     expect(budgetText.text()).toContain('$0.0500')  // active.budget_usd (per-day)
@@ -87,7 +88,7 @@ describe('Sidebar Cost Banner Priority Cascade (Phase 8.12)', () => {
     expect(budgetText.text()).not.toContain('本周')
 
     // Progress bar fill width = 100% (exceeded clip), class "exceeded"
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.attributes('style')).toContain('width: 100%')
     expect(fill.classes()).toContain('exceeded')

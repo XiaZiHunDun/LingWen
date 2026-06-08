@@ -16,6 +16,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowGraph from '../../src/components/WorkflowGraph.vue'
+import { byTestid } from '../helpers/by-testid'
 
 // Phase 8.32: 局部 vi.mock mermaid, render 立即返 fake svg 让 zoom-controls
 // (v-if='svg') 渲染. 0 改 setup.ts, 0 jsdom canvas/svg 风险.
@@ -42,27 +43,27 @@ describe('WorkflowGraph zoom controls inner sub-element testid (Phase 8.32)', ()
 
   test('zoom-in-btn click increases zoom display to 120%', async () => {
     // 初始 zoom = 1.0
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('100%')
-    await wrapper.find('[data-testid="zoom-in-btn"]').trigger('click')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('100%')
+    await wrapper.find(byTestid('zoom-in-btn')).trigger('click')
     // zoomIn(): Math.min(2, 1.0 + 0.2) = 1.2 → "120%"
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('120%')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('120%')
   })
 
   test('zoom-out-btn click decreases zoom display to 80%', async () => {
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('100%')
-    await wrapper.find('[data-testid="zoom-out-btn"]').trigger('click')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('100%')
+    await wrapper.find(byTestid('zoom-out-btn')).trigger('click')
     // zoomOut(): Math.max(0.4, 1.0 - 0.2) = 0.8 → "80%"
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('80%')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('80%')
   })
 
   test('reset-zoom-btn returns to 100% after zoom in twice', async () => {
     // click 2 次: 1.0 → 1.2 → 1.4
-    await wrapper.find('[data-testid="zoom-in-btn"]').trigger('click')
-    await wrapper.find('[data-testid="zoom-in-btn"]').trigger('click')
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('140%')
+    await wrapper.find(byTestid('zoom-in-btn')).trigger('click')
+    await wrapper.find(byTestid('zoom-in-btn')).trigger('click')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('140%')
     // click reset-zoom-btn → 1.0
-    await wrapper.find('[data-testid="reset-zoom-btn"]').trigger('click')
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('100%')
+    await wrapper.find(byTestid('reset-zoom-btn')).trigger('click')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('100%')
   })
 
   test('zoom-in-btn disabled at max 2x (after 6 clicks — JS float drift requires 6 not 5)', async () => {
@@ -70,12 +71,12 @@ describe('WorkflowGraph zoom controls inner sub-element testid (Phase 8.32)', ()
     // 6 次而非 5 次: JS float 1.0 + 0.2*5 = 1.9999999999999998 (drift), 需 6 次
     // 才能让 Math.min(2, 1.999... + 0.2) = 2.0 精确 clamp.
     for (let i = 0; i < 6; i++) {
-      await wrapper.find('[data-testid="zoom-in-btn"]').trigger('click')
+      await wrapper.find(byTestid('zoom-in-btn')).trigger('click')
     }
     // 第 6 次后 zoom = 2.0 (exact), display "200%"
-    expect(wrapper.find('[data-testid="zoom-display"]').text()).toBe('200%')
+    expect(wrapper.find(byTestid('zoom-display')).text()).toBe('200%')
     // :disabled="zoom >= 2" 触发后, button 显 disabled attribute
-    const zoomInBtn = wrapper.find('[data-testid="zoom-in-btn"]')
+    const zoomInBtn = wrapper.find(byTestid('zoom-in-btn'))
     expect(zoomInBtn.attributes('disabled')).not.toBeUndefined()
   })
 })

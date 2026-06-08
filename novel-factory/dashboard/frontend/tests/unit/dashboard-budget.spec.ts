@@ -23,6 +23,7 @@ import { describe, test, expect, vi } from 'vitest'
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (
   costByScenario: Record<string, number> = {},
@@ -71,7 +72,7 @@ describe('Dashboard cost budget banner (Phase 8.8, 实际落在 Sidebar 8.11+)',
 
     // Sidebar budget text 渲染 (中文 "本次" 标签 + $used/$budget + pct)
     // 注: activePct 走 Math.min(100, used_pct) clip, 112.5% → 100.0% 显示
-    const budgetText = wrapper.find('[data-testid="sidebar-cost-budget-text"]')
+    const budgetText = wrapper.find(byTestid('sidebar-cost-budget-text'))
     expect(budgetText.exists()).toBe(true)
     expect(budgetText.text()).toContain('本次')
     expect(budgetText.text()).toContain('$0.0450')  // used_usd
@@ -79,7 +80,7 @@ describe('Dashboard cost budget banner (Phase 8.8, 实际落在 Sidebar 8.11+)',
     expect(budgetText.text()).toContain('100.0')   // clipped from 112.5%
 
     // progress-bar-fill class 含 "exceeded" (跟 ceremonial 契约对齐)
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('exceeded')
     // width clip 100% (112.5% → 100%)
@@ -98,7 +99,7 @@ describe('Dashboard cost budget banner (Phase 8.8, 实际落在 Sidebar 8.11+)',
     await flushPromises()
 
     // Sidebar budget text 渲染
-    const budgetText = wrapper.find('[data-testid="sidebar-cost-budget-text"]')
+    const budgetText = wrapper.find(byTestid('sidebar-cost-budget-text'))
     expect(budgetText.exists()).toBe(true)
     expect(budgetText.text()).toContain('本次')
     expect(budgetText.text()).toContain('$0.0200')
@@ -106,7 +107,7 @@ describe('Dashboard cost budget banner (Phase 8.8, 实际落在 Sidebar 8.11+)',
     expect(budgetText.text()).toContain('20.0')
 
     // ok fill (Phase 8.28 soft warning: < 80% → ok 绿)
-    const fill = wrapper.find('[data-testid="progress-bar-fill"]')
+    const fill = wrapper.find(byTestid('progress-bar-fill'))
     expect(fill.exists()).toBe(true)
     expect(fill.classes()).toContain('ok')
     expect(fill.classes()).not.toContain('exceeded')
@@ -124,11 +125,11 @@ describe('Dashboard cost budget banner (Phase 8.8, 实际落在 Sidebar 8.11+)',
     await flushPromises()
 
     // banner 仍渲染 (hasCost=true, cost_by_scenario 非空)
-    expect(wrapper.find('[data-testid="sidebar-cost-banner"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-cost-banner')).exists()).toBe(true)
     // total text 显
-    expect(wrapper.find('[data-testid="sidebar-cost-total-text"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-cost-total-text')).exists()).toBe(true)
     // budget text 不显 (v-if=activeBudget 锁 false, 0 误渲染空 banner)
-    expect(wrapper.find('[data-testid="sidebar-cost-budget-text"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="progress-bar-fill"]').exists()).toBe(false)
+    expect(wrapper.find(byTestid('sidebar-cost-budget-text')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('progress-bar-fill')).exists()).toBe(false)
   })
 })

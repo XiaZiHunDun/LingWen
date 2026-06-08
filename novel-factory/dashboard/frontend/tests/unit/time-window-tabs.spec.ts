@@ -19,6 +19,7 @@ import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowStatus from '../../src/components/WorkflowStatus.vue'
 import SidebarCostBanner from '../../src/components/SidebarCostBanner.vue'
+import { byTestid } from '../helpers/by-testid'
 
 const makeStatus = (
   costByScenario: Record<string, number> = {},
@@ -60,12 +61,12 @@ describe('Time window segmented control (Phase 8.16)', () => {
     await flushPromises()
 
     // 3 tab button visible
-    expect(wrapper.find('[data-testid="time-window-7d"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="time-window-30d"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="time-window-all"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('time-window-7d')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('time-window-30d')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('time-window-all')).exists()).toBe(true)
 
     // default 'all' active
-    const allTab = wrapper.get('[data-testid="time-window-all"]')
+    const allTab = wrapper.get(byTestid('time-window-all'))
     expect(allTab.classes()).toContain('active')
     expect(allTab.attributes('aria-selected')).toBe('true')
   })
@@ -78,9 +79,9 @@ describe('Time window segmented control (Phase 8.16)', () => {
     })
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="sidebar-time-window-7d"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="sidebar-time-window-30d"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="sidebar-time-window-all"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-time-window-7d')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-time-window-30d')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-time-window-all')).exists()).toBe(true)
   })
 
   test('clicking 7d tab triggers setTimeWindow("7d")', async () => {
@@ -92,11 +93,11 @@ describe('Time window segmented control (Phase 8.16)', () => {
     await flushPromises()
 
     // 触发 7d tab click
-    await wrapper.get('[data-testid="time-window-7d"]').trigger('click')
+    await wrapper.get(byTestid('time-window-7d')).trigger('click')
     await flushPromises()
     // 实际 fetch 行为由 useCostWindow 单元测试覆盖, 本 component 测试契约
     // 是 click 不报错 + tab 存在
-    expect(wrapper.find('[data-testid="time-window-7d"]').exists()).toBe(true)
+    expect(wrapper.find(byTestid('time-window-7d')).exists()).toBe(true)
   })
 
   test('clicking 30d tab updates active class', async () => {
@@ -111,15 +112,15 @@ describe('Time window segmented control (Phase 8.16)', () => {
     await flushPromises()
 
     // 初始 'all' active, '30d' 不 active
-    expect(wrapper.get('[data-testid="time-window-all"]').classes()).toContain('active')
-    expect(wrapper.get('[data-testid="time-window-30d"]').classes()).not.toContain('active')
+    expect(wrapper.get(byTestid('time-window-all')).classes()).toContain('active')
+    expect(wrapper.get(byTestid('time-window-30d')).classes()).not.toContain('active')
 
     // click 30d
-    await wrapper.get('[data-testid="time-window-30d"]').trigger('click')
+    await wrapper.get(byTestid('time-window-30d')).trigger('click')
     await flushPromises()
 
     // 30d 应该 active, 'all' 应该不 active
-    const tab30d = wrapper.get('[data-testid="time-window-30d"]')
+    const tab30d = wrapper.get(byTestid('time-window-30d'))
     expect(tab30d.classes()).toContain('active')
     expect(tab30d.attributes('aria-selected')).toBe('true')
   })
