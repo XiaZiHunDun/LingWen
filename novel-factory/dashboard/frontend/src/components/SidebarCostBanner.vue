@@ -91,7 +91,7 @@
           role="status"
           aria-live="polite"
         >
-          <span class="sidebar-cost-tier-text">
+          <span class="sidebar-cost-tier-text" data-testid="sidebar-cost-tier-text">
             {{ tier.label }} 预算: ${{ tier.used }} / ${{ tier.budget }} ({{ tier.pct }}%)
             <!-- Phase 8.21: tier 维度 alarm (7d/30d 选时, windowed cost vs budget 比例) -->
             <span

@@ -3,7 +3,7 @@
   接受 mermaid 字符串 + 可选 workflow_name,异步渲染为 SVG
 -->
 <template>
-  <div class="workflow-graph">
+  <div class="workflow-graph" data-testid="workflow-graph">
     <div v-if="loading" class="loading-state pixel-card">
       <p class="pixel-text">渲染图中…</p>
     </div>

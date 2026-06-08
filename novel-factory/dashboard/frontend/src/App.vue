@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard" data-testid="app-root">
     <!-- Sidebar -->
     <aside class="sidebar pixel-card">
       <div class="sidebar-header">

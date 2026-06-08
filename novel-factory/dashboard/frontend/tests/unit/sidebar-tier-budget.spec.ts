@@ -219,4 +219,26 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     expect(tierRows.length).toBe(1)
     expect(tierRows[0].text()).toContain('opus')
   })
+
+  test('tier row contains data-testid="sidebar-cost-tier-text" (Phase 8.31 unification)', async () => {
+    // 注: plan/spec 原本 makeStatus(2-arg) 无法让 tier row 渲染 (无 budget_by_tier
+    // → tierBudgets computed 空 → 无 row → 无 inner span). 修正为 3-arg 模式,
+    // 跟现有 6 spec 同契约, 让 1 个 sonnet row 渲染, 验证 inner testid.
+    const wrapper = mount(SidebarCostBanner, {
+      props: {
+        status: makeStatus(
+          { chapter_writing: 0.012, chapter_review: 0.008 },
+          { haiku: 0.0, sonnet: 0.012, opus: 0.0 },
+          {
+            haiku: {},
+            sonnet: { status: 'ok', budget_usd: 0.10, used_usd: 0.012, used_pct: 12.0 },
+            opus: {},
+          },
+        ),
+      },
+    })
+    await flushPromises()
+    const tierText = wrapper.find('[data-testid="sidebar-cost-tier-text"]')
+    expect(tierText.exists()).toBe(true)
+  })
 })

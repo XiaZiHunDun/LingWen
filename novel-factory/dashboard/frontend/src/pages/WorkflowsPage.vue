@@ -6,7 +6,7 @@
 <template>
   <div class="workflows-page">
     <header class="page-header">
-      <h1 class="page-title">工作流</h1>
+      <h1 class="page-title" data-testid="page-title">工作流</h1>
       <div class="header-actions">
         <span
           class="ws-indicator pixel-border"

@@ -102,4 +102,11 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
     // loadData 成功 → error=null → v-if="error" 不显
     expect(wrapper.find('[data-testid="error-banner"]').exists()).toBe(false)
   })
+
+  test('StatCard renders with data-testid="stat-card" (Phase 8.31 unification)', async () => {
+    const wrapper = mount(OverviewPage)
+    await flushPromises()
+    const statCards = wrapper.findAll('[data-testid="stat-card"]')
+    expect(statCards.length).toBe(5)  // OverviewPage mount 5 个 StatCard (跟已有 test 一致)
+  })
 })

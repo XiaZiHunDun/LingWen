@@ -7,7 +7,7 @@
 <template>
   <div class="decisions-page">
     <header class="page-header">
-      <h1 class="page-title">决策中心</h1>
+      <h1 class="page-title" data-testid="page-title">决策中心</h1>
       <div class="header-actions">
         <span class="count-badge">
           待处理: {{ pending.length }} / 总计: {{ all.length }}

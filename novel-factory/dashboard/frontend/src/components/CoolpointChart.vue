@@ -1,5 +1,5 @@
 <template>
-  <div class="coolpoint-chart pixel-border">
+  <div class="coolpoint-chart pixel-border" data-testid="coolpoint-chart">
     <div ref="barRef" class="chart-container bar-chart"></div>
   </div>
 </template>
