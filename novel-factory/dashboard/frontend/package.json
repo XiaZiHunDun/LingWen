@@ -14,9 +14,12 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
+    "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-vue": "^5.1.0",
     "@vue/server-renderer": "^3.5.35",
     "@vue/test-utils": "^2.4.11",
+    "eslint": "^8.57.0",
+    "eslint-plugin-local-rules": "^1.1.0",
     "jsdom": "^29.1.1",
     "vite": "^5.4.0",
     "vitest": "^4.1.8"
