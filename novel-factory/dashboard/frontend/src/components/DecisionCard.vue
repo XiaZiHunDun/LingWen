@@ -6,7 +6,7 @@
 <template>
   <div class="decision-card pixel-card" data-testid="decision-card">
     <div class="card-header">
-      <span class="kind-badge" :class="`kind-${kindClass}`">{{ kindLabel }}</span>
+      <span class="kind-badge" :class="`kind-${kindClass}`" :data-testid="`decision-kind-${kindClass}`">{{ kindLabel }}</span>
       <span class="priority-badge" v-if="decision.priority !== undefined">
         P{{ decision.priority }}
       </span>
