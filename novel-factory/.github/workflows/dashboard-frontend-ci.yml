@@ -1,0 +1,66 @@
+# Phase 8.41: Dashboard Frontend CI
+# 跑 dashboard/frontend 的 lint (testid / testid-sync / vue) + vitest + build smoke.
+# 跟 Phase 8.40 husky pre-commit 共用 pnpm lint:all 聚合入口.
+# 触发: push master / PR master, 仅在 dashboard/frontend/** 变更时跑 (paths filter).
+# 维护: 改 trigger 路径 / 改 lint 步骤 / 加 build step 在此文件.
+
+name: Dashboard Frontend CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'dashboard/frontend/**'
+      - '.github/workflows/dashboard-frontend-ci.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'dashboard/frontend/**'
+      - '.github/workflows/dashboard-frontend-ci.yml'
+
+# 取消同分支的旧 in-progress run, 避免冗余排队 (跟 .github/workflows/test.yml 一致)
+concurrency:
+  group: dashboard-frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint + Vitest + Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Pin Node 20 (跟本地 dev 一致, 跟 Phase 8.40 corepack pnpm@9.15.0 兼容)
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        # Pin pnpm 9 (跟 Phase 8.40 corepack pnpm@9.15.0 workaround 一致, 避开 Node 20.20 兼容性)
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        # --frozen-lockfile 强制 lockfile 一致, 避免 CI 跟本地 drift
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint suite (testid / testid-sync / vue)
+        # Phase 8.41: 聚合 Phase 8.40 pnpm lint:all 入口
+        # 期望 0 errors (10 from lint:testid 走 ; 软警告, 跟 Phase 8.40 D2 一致)
+        run: pnpm lint:all
+
+      - name: Run vitest
+        # Phase 8.41: 23 spec files / 95 tests expected
+        run: pnpm vitest run
+
+      - name: Build (smoke test)
+        # 验证 vite build 0 errors, 产出 dist/ (CI 不上传, 仅 smoke)
+        run: pnpm build
