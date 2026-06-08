@@ -162,3 +162,38 @@ class TestCostTrackerDBSinceFilter:
         db.record("b", ModelTier.OPUS, 100, 50)
         by_tier = db.cost_by_tier(since=None)
         assert set(by_tier.keys()) == {ModelTier.SONNET, ModelTier.OPUS}
+
+
+class TestCostTrackerDBTimestampIndex:
+    """Phase 8.22: idx_cost_records_timestamp 索引存在
+    (优化 WHERE timestamp >= ? 性能, rows > 1k 时显著)."""
+
+    def test_init_db_creates_timestamp_index(self, tmp_path: Path) -> None:
+        """DB 不存在 → 调 init_db → idx_cost_records_timestamp 索引存在"""
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        with sqlite3.connect(str(tmp_path / "test.db")) as conn:
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master "
+                "WHERE type='index' AND name='idx_cost_records_timestamp'"
+            )
+            assert cursor.fetchone() is not None, (
+                "idx_cost_records_timestamp index should exist after init_db()"
+            )
+
+    def test_timestamp_index_idempotent_with_existing_data(self, tmp_path: Path) -> None:
+        """re-init DB 已有 records → IF NOT EXISTS 不报错, 索引仍在"""
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        db.record("chapter_writing", ModelTier.SONNET, 1000, 500)
+        # 第二次 init_db (idempotent migration 场景)
+        db.init_db()
+        with sqlite3.connect(str(tmp_path / "test.db")) as conn:
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master "
+                "WHERE type='index' AND name='idx_cost_records_timestamp'"
+            )
+            assert cursor.fetchone() is not None
+            # 旧 data 不丢 (用 index 访问, 此 conn 0 row_factory 默认 tuple)
+            row = conn.execute("SELECT COUNT(*) FROM cost_records").fetchone()
+            assert row[0] == 1

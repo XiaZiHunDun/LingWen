@@ -4,7 +4,9 @@ Doc 4 §11 Phase 8.5: SQLite 持久化 CostRecord 列表 (mirror ReadingPowerDB 
 
 设计:
 - 单表 cost_records (id PK, scenario, tier, input_tokens, output_tokens,
-  cost_usd, timestamp) + 2 索引 (scenario, tier)
+  cost_usd, timestamp) + 3 索引 (scenario, tier, timestamp)
+  (Phase 8.22: 加 timestamp 索引, 优化 WHERE timestamp >= ? 性能,
+   rows > 1k 时显著; 当前 ~50 rows 不卡, 0 行为破坏)
 - 复用 CostRecord frozen dataclass (in-memory CostTracker 一致)
 - 路径: infra/.state/cost_tracker.db (gitignored, 跟 reading_power.db 错开)
 - 初始化: lazy _init_db (调 record/records/cost_*_methods 时触发)
@@ -75,6 +77,8 @@ class CostTrackerDB:
                     ON cost_records(scenario);
                 CREATE INDEX IF NOT EXISTS idx_cost_records_tier
                     ON cost_records(tier);
+                CREATE INDEX IF NOT EXISTS idx_cost_records_timestamp
+                    ON cost_records(timestamp);
             """)
 
     def record(
