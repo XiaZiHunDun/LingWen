@@ -79,7 +79,7 @@ describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {
     await flushPromises()
 
     // .stat-card 5 个 (StatCard 组件无 data-testid, 用 class 选)
-    const statCards = wrapper.findAll('.stat-card')
+    const statCards = wrapper.findAll('[data-testid="stat-card"]')
     expect(statCards.length).toBe(5)
 
     // labels
