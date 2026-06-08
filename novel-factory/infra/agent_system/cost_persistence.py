@@ -11,6 +11,8 @@ Doc 4 §11 Phase 8.5: SQLite 持久化 CostRecord 列表 (mirror ReadingPowerDB 
 - 路径: infra/.state/cost_tracker.db (gitignored, 跟 reading_power.db 错开)
 - 初始化: lazy _init_db (调 record/records/cost_*_methods 时触发)
 - 复用 compute_cost (model_tiers.py) 算 cost_usd, 不重新实现
+- Phase 8.23: 加 cost_by_day(since) — 按 UTC 日期聚合 USD, 给 dashboard
+  trend chart; SQL DATE(timestamp) GROUP BY day ORDER BY day (无 records 返 {})
 """
 from __future__ import annotations
 
@@ -189,6 +191,33 @@ class CostTrackerDB:
                     (since.isoformat(),),
                 ).fetchall()
         return {ModelTier(r["tier"]): float(r["total"]) for r in rows}
+
+    def cost_by_day(self, since: Optional[datetime] = None) -> dict[str, float]:
+        """Phase 8.23: 按 UTC 日期 (YYYY-MM-DD) 聚合 cost_usd, 给 dashboard trend chart.
+        跟 cost_by_scenario/tier 同 since 透传 (additive, default None 走旧 path).
+
+        SQLite DATE(timestamp) 函数从 'YYYY-MM-DD HH:MM:SS' 字符串抽 date 部分
+        (假设 UTC, 跟 cost_records 默认 CURRENT_TIMESTAMP 行为一致).
+        ORDER BY day 保返回按日期升序 (跟 in-memory CostTracker.cost_by_day 行为对齐).
+
+        Returns:
+            dict[date_str, total_usd] — date_str 'YYYY-MM-DD', 按日期升序.
+        """
+        self.init_db()
+        with self._connect() as conn:
+            if since is None:
+                rows = conn.execute(
+                    """SELECT DATE(timestamp) as day, SUM(cost_usd) as total
+                       FROM cost_records GROUP BY day ORDER BY day"""
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """SELECT DATE(timestamp) as day, SUM(cost_usd) as total
+                       FROM cost_records WHERE timestamp >= ?
+                       GROUP BY day ORDER BY day""",
+                    (since.isoformat(),),
+                ).fetchall()
+        return {r["day"]: float(r["total"]) for r in rows}
 
 
 __all__ = ["CostTrackerDB"]

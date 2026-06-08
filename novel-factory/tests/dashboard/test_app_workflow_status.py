@@ -97,8 +97,10 @@ class TestWorkflowStatusTimeWindow:
             def has_execution(self, nid): return False
             def get_execution(self, nid): return None
             def get_node(self, nid): return None
-        class _StubSummary: steps = 0
-        class _StubScheduler: _summary = _StubSummary()
+        class _StubSummary:
+            steps = 0
+        class _StubScheduler:
+            _summary = _StubSummary()
         master._last_scheduler = _StubScheduler()
         master._last_graph = _StubGraph()
         master._last_workflow_name = "novel_writing"
@@ -157,3 +159,87 @@ class TestWorkflowStatusTimeWindow:
         body = response.json()
         # 仍能返 cost (走 since=None 旧 path)
         assert body["total_cost_usd"] > 0
+
+
+class TestWorkflowStatusResponseCostByDay:
+    """Phase 8.23: GET /api/workflows/active 暴露 cost_by_day 字段 (trend chart data).
+    5 测试: 7d/30d/all/default/invalid silent fallback."""
+
+    def _make_master_with_cost_tracker(self, tmp_path: Path):
+        """复用 TestWorkflowStatusTimeWindow pattern."""
+        from dashboard.protocols import MasterControllerAdapter
+        from infra.agent_system import master_controller as mc_mod
+        from infra.ai_service.cost_tracker import CostTracker
+        from infra.ai_service.model_tiers import ModelTier
+
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        cost_tracker = CostTracker()
+        cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        master.cost_tracker = cost_tracker
+
+        class _StubGraph:
+            def node_ids(self): return []
+            def has_execution(self, nid): return False
+            def get_execution(self, nid): return None
+            def get_node(self, nid): return None
+        class _StubSummary:
+            steps = 0
+        class _StubScheduler:
+            _summary = _StubSummary()
+        master._last_scheduler = _StubScheduler()
+        master._last_graph = _StubGraph()
+        master._last_workflow_name = "novel_writing"
+
+        adapter = MasterControllerAdapter(master)
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
+        return TestClient(app)
+
+    def test_time_window_7d_returns_cost_by_day(self, tmp_path: Path) -> None:
+        """time_window=7d + 全部 records 新近 → cost_by_day 包含 'YYYY-MM-DD' → USD key."""
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active?time_window=7d")
+        assert response.status_code == 200
+        body = response.json()
+        cost_by_day = body["cost_by_day"]
+        assert isinstance(cost_by_day, dict)
+        assert len(cost_by_day) >= 1
+        # 'YYYY-MM-DD' 格式 key, 全部 records 是 today → 1 key, USD > 0
+        for date_str, usd in cost_by_day.items():
+            assert len(date_str) == 10 and date_str[4] == "-" and date_str[7] == "-"
+            assert usd > 0
+
+    def test_time_window_30d_returns_cost_by_day(self, tmp_path: Path) -> None:
+        """time_window=30d → cost_by_day 透传, 验证 30d path."""
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active?time_window=30d")
+        assert response.status_code == 200
+        body = response.json()
+        assert isinstance(body["cost_by_day"], dict)
+        assert len(body["cost_by_day"]) >= 1
+
+    def test_time_window_all_returns_cost_by_day(self, tmp_path: Path) -> None:
+        """time_window=all → since=None → 走旧 path, cost_by_day 返全量."""
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active?time_window=all")
+        assert response.status_code == 200
+        body = response.json()
+        assert isinstance(body["cost_by_day"], dict)
+        assert len(body["cost_by_day"]) >= 1
+
+    def test_time_window_default_omitted_returns_cost_by_day(self, tmp_path: Path) -> None:
+        """time_window 缺省 → default 'all' → since=None → 走旧 path."""
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active")
+        assert response.status_code == 200
+        body = response.json()
+        assert isinstance(body["cost_by_day"], dict)
+
+    def test_time_window_invalid_silently_falls_back_to_all(self, tmp_path: Path) -> None:
+        """time_window=invalid → silent fallback to None → cost_by_day 仍返全量 (since=None 旧 path).
+        不抛 422, 0 破旧 caller 用错 URL 行为."""
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active?time_window=invalid_value")
+        assert response.status_code == 200
+        body = response.json()
+        assert isinstance(body["cost_by_day"], dict)
+        assert len(body["cost_by_day"]) >= 1

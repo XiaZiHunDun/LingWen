@@ -300,6 +300,7 @@ class MasterControllerAdapter:
             "score_data": score_data,  # Phase 7.6
             "cost_by_scenario": _extract_cost_by_scenario(self._controller, since=since),  # Phase 8.16
             "cost_by_tier": _extract_cost_by_tier(self._controller, since=since),  # Phase 8.16
+            "cost_by_day": _extract_cost_by_day(self._controller, since=since),  # Phase 8.23
             "cost_budget_status": _extract_budget_status(self._controller),  # 0 改 (走 since=None)
             "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # 0 改
             "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # 0 改
@@ -377,6 +378,32 @@ def _extract_cost_by_tier(
         }
     except Exception as exc:  # noqa: BLE001 — silent degrade by design
         logger.warning("cost_tracker.cost_by_tier() failed: %s", exc)
+        return {}
+
+
+def _extract_cost_by_day(
+    controller: Any, since: Optional[datetime] = None
+) -> dict[str, float]:
+    """Phase 8.23: 跟 _extract_cost_by_tier 同模式 — 拿 controller.cost_tracker 调 cost_by_day().
+
+    Mirrors _extract_cost_by_scenario silent-degrade pattern: returns empty
+    dict when controller has no cost_tracker or when cost_tracker.cost_by_day()
+    raises. Keys are 'YYYY-MM-DD' UTC date strings, values are float USD.
+
+    Args:
+        controller: MasterController 实例 (decoupling Protocol)
+        since: UTC datetime, Phase 8.16 time window filter (default None = 全部)
+
+    Returns:
+        dict[date_str, cost_usd] — 空 dict if cost_tracker is None / 无该属性 / 抛异常
+    """
+    cost_tracker = getattr(controller, "cost_tracker", None)
+    if cost_tracker is None:
+        return {}
+    try:
+        return dict(cost_tracker.cost_by_day(since=since))
+    except Exception as exc:  # noqa: BLE001 — silent degrade by design
+        logger.warning("cost_tracker.cost_by_day() failed: %s", exc)
         return {}
 
 

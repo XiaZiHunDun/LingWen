@@ -166,6 +166,24 @@ class CostTracker:
             result[r.tier] = result.get(r.tier, 0.0) + r.cost_usd
         return result
 
+    def cost_by_day(self, since: Optional[datetime] = None) -> dict[str, float]:
+        """Phase 8.23: 按 UTC 日期 (YYYY-MM-DD) 聚合 cost_usd, 给 dashboard trend chart.
+        跟 cost_by_scenario/tier 同 since 透传 (additive, default None 走旧 path).
+
+        Returns:
+            dict[date_str, total_usd] — date_str 是 'YYYY-MM-DD' 格式.
+            Python 3.7+ dict 保 insertion order, 记录按时间顺序插入 → 返回值按 date 升序
+            (同一天多条 records 合并; 不同天按时间序).
+        """
+        records = self._records if since is None else [
+            r for r in self._records if r.timestamp >= since
+        ]
+        result: dict[str, float] = {}
+        for r in records:
+            day = r.timestamp.date().isoformat()  # UTC date 'YYYY-MM-DD'
+            result[day] = result.get(day, 0.0) + r.cost_usd
+        return result
+
     def count_by_scenario(self) -> dict[str, int]:
         """按 scenario 计数"""
         result: dict[str, int] = {}

@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 
 from dashboard.protocols import (
     MasterControllerLike,
+    _extract_cost_by_day,
     _extract_cost_by_scenario,
     _extract_cost_by_tier,
     _extract_total_cost,
@@ -158,6 +159,7 @@ class WorkflowStatusResponse(BaseModel):
     score_data: dict[str, dict[str, Any]] = Field(default_factory=dict)  # Phase 7.6: S1-S8 评分数据
     cost_by_scenario: dict[str, float] = Field(default_factory=dict)  # Phase 8.7: by-scenario 累计 USD
     cost_by_tier: dict[str, float] = Field(default_factory=dict)  # Phase 8.13: by-tier 累计 USD (haiku/sonnet/opus)
+    cost_by_day: dict[str, float] = Field(default_factory=dict)  # Phase 8.23: trend chart data (YYYY-MM-DD → USD)
     cost_budget_status: dict[str, Any] = Field(default_factory=dict)  # Phase 8.8 T5: budget alarm 状态
     # Phase 8.12 T5 NEW: per-day / per-week budget status (per-run 仍走 cost_budget_status 旧 path)
     budget_per_day: dict[str, Any] = Field(default_factory=dict)
@@ -696,6 +698,7 @@ def create_app(
             result,
             cost_by_scenario=_extract_cost_by_scenario(inner_ctrl),
             cost_by_tier=_extract_cost_by_tier(inner_ctrl),  # Phase 8.13
+            cost_by_day=_extract_cost_by_day(inner_ctrl),  # Phase 8.23
             total_cost_usd=_extract_total_cost(inner_ctrl),
         )
 
@@ -727,6 +730,7 @@ def create_app(
             result,
             cost_by_scenario=_extract_cost_by_scenario(inner_ctrl),
             cost_by_tier=_extract_cost_by_tier(inner_ctrl),  # Phase 8.13
+            cost_by_day=_extract_cost_by_day(inner_ctrl),  # Phase 8.23
             total_cost_usd=_extract_total_cost(inner_ctrl),
         )
 
@@ -976,6 +980,7 @@ def _workflow_result_to_response(
     score_data: dict[str, dict[str, Any]] | None = None,
     cost_by_scenario: dict[str, float] | None = None,  # Phase 8.7
     cost_by_tier: dict[str, float] | None = None,  # Phase 8.13
+    cost_by_day: dict[str, float] | None = None,  # Phase 8.23
     total_cost_usd: float = 0.0,  # Phase 8.7: 修 Phase 8.5 gap
     budget_by_tier: dict[str, dict[str, Any] | None] | None = None,  # Phase 8.15 T5
 ) -> WorkflowStatusResponse:
@@ -989,6 +994,8 @@ def _workflow_result_to_response(
     Phase 8.15 T5: 增 budget_by_tier param (additive, default None → empty dict).
     Pydantic v2 默认 extra='ignore', 未在 model 注册的 field 静默忽略; T6 会
     在 WorkflowStatusResponse 加 budget_by_tier Field (Task 6 范围).
+    Phase 8.23: 增 cost_by_day param (additive, default None → empty dict)
+    给 dashboard trend chart.
     """
     summary = result.get("summary") or {}
     if not isinstance(summary, dict):
@@ -1019,6 +1026,7 @@ def _workflow_result_to_response(
         score_data=score_data or {},
         cost_by_scenario=cost_by_scenario or {},  # Phase 8.7
         cost_by_tier=cost_by_tier or {},  # Phase 8.13
+        cost_by_day=cost_by_day or {},  # Phase 8.23
         total_cost_usd=total_cost_usd,  # Phase 8.7: 修 Phase 8.5 gap
         budget_by_tier=budget_by_tier or {},  # Phase 8.15 T5 (Pydantic 暂 ignore, T6 补 model Field)
     )

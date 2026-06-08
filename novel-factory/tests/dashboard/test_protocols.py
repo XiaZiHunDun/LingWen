@@ -21,6 +21,7 @@ import pytest
 
 from dashboard.protocols import (
     _extract_budget_by_tier,
+    _extract_cost_by_day,
     _extract_cost_by_scenario,
     _extract_cost_by_tier,
     _extract_total_cost,
@@ -229,3 +230,37 @@ class TestExtractCostSincePassthrough:
         controller.cost_tracker = tracker
         _extract_cost_by_tier(controller)  # since 缺省 → None
         tracker.cost_by_tier.assert_called_once_with(since=None)
+
+
+class TestExtractCostByDay:
+    """Phase 8.23: _extract_cost_by_day helper 跟 _extract_cost_by_tier 同模式
+    (silent degrade 返 {}, 跟 _extract_cost_by_scenario mirror)."""
+
+    def test_no_cost_tracker_returns_empty_dict(self) -> None:
+        """无 cost_tracker 字段 → 返 {} (silent degrade, 不抛)."""
+        controller = MagicMock(spec=[])  # 无 cost_tracker 属性
+        assert _extract_cost_by_day(controller) == {}
+
+    def test_happy_path_returns_dict_from_tracker(self) -> None:
+        """happy path: 透传 cost_tracker.cost_by_day() 返 dict (YYYY-MM-DD → USD)."""
+        tracker = MagicMock()
+        tracker.cost_by_day.return_value = {
+            "2026-06-01": 0.0105,
+            "2026-06-02": 0.00525,
+        }
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        result = _extract_cost_by_day(controller)
+        assert result == {
+            "2026-06-01": 0.0105,
+            "2026-06-02": 0.00525,
+        }
+        tracker.cost_by_day.assert_called_once_with(since=None)
+
+    def test_exception_silently_returns_empty_dict(self) -> None:
+        """cost_tracker.cost_by_day() 抛异常 → log warning + 返 {} (noqa: BLE001)."""
+        tracker = MagicMock()
+        tracker.cost_by_day.side_effect = RuntimeError("boom")
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        assert _extract_cost_by_day(controller) == {}

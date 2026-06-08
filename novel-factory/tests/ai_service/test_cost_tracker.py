@@ -275,3 +275,56 @@ class TestCostTrackerSinceFilter:
         by_tier = tracker.cost_by_tier(since=None)
         assert ModelTier.SONNET in by_tier
         assert ModelTier.OPUS in by_tier
+
+
+class TestCostTrackerCostByDay:
+    """Phase 8.23: cost_by_day() 按 UTC 日期 (YYYY-MM-DD) 聚合 USD
+    给 dashboard trend chart. 跟 cost_by_scenario/tier 同 since 透传."""
+
+    def test_cost_by_day_groups_by_utc_date(self) -> None:
+        """3 records 跨 2 天 → 2 keys, 各天 sum 正确"""
+        from datetime import datetime, timedelta, timezone
+        from unittest.mock import patch
+
+        tracker = CostTracker()
+        # Patch CostRecord.timestamp 来制造 2 天的 records
+        day1 = datetime(2026, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
+        day2 = datetime(2026, 6, 2, 14, 0, 0, tzinfo=timezone.utc)
+        # 直接插预制 timestamp 的 records (绕过 record() 调 datetime.now)
+        from infra.ai_service.cost_tracker import CostRecord
+        from infra.ai_service.model_tiers import compute_cost
+        tracker._records.append(CostRecord(
+            scenario="chapter_writing", tier=ModelTier.SONNET,
+            input_tokens=1000, output_tokens=500, cost_usd=0.0105,
+            timestamp=day1,
+        ))
+        tracker._records.append(CostRecord(
+            scenario="hook_extraction", tier=ModelTier.HAIKU,
+            input_tokens=100, output_tokens=50, cost_usd=0.00035,
+            timestamp=day1,
+        ))
+        tracker._records.append(CostRecord(
+            scenario="chapter_review", tier=ModelTier.SONNET,
+            input_tokens=500, output_tokens=250, cost_usd=0.00525,
+            timestamp=day2,
+        ))
+        by_day = tracker.cost_by_day()
+        assert by_day == {
+            "2026-06-01": pytest.approx(0.0105 + 0.00035, abs=1e-9),
+            "2026-06-02": pytest.approx(0.00525, abs=1e-9),
+        }
+
+    def test_cost_by_day_with_since_filters_old_records(self) -> None:
+        """since=future → 全部 records 都在 since 之前 → 返 {} (0 个 keys)"""
+        from datetime import datetime, timedelta, timezone
+
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 1000, 500)
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert tracker.cost_by_day(since=future) == {}
+
+    def test_cost_by_day_empty_tracker_returns_empty_dict(self) -> None:
+        """backward compat: 空 tracker → 返 {}, 不抛"""
+        tracker = CostTracker()
+        assert tracker.cost_by_day() == {}
+        assert tracker.cost_by_day(since=None) == {}

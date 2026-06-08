@@ -197,3 +197,48 @@ class TestCostTrackerDBTimestampIndex:
             # 旧 data 不丢 (用 index 访问, 此 conn 0 row_factory 默认 tuple)
             row = conn.execute("SELECT COUNT(*) FROM cost_records").fetchone()
             assert row[0] == 1
+
+
+class TestCostTrackerDBCostByDay:
+    """Phase 8.23: cost_by_day(since=None) 按 UTC 日期聚合 USD
+    (SQL DATE(timestamp) GROUP BY day ORDER BY day), 给 dashboard trend chart."""
+
+    def test_cost_by_day_groups_by_utc_date(self, tmp_path: Path) -> None:
+        """3 records 跨 2 天 → 2 keys, 各天 sum 正确, 按 day 升序"""
+        from datetime import datetime, timezone
+
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        # 直接 insert 预制 timestamp (绕开 record() 的 datetime.now)
+        with db._connect() as conn:
+            conn.executemany(
+                """INSERT INTO cost_records
+                   (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                [
+                    ("chapter_writing", "sonnet", 1000, 500, 0.0105, "2026-06-01T10:00:00+00:00"),
+                    ("hook_extraction", "haiku",  100,  50,  0.00035, "2026-06-01T14:00:00+00:00"),
+                    ("chapter_review",  "sonnet", 500,  250, 0.00525, "2026-06-02T09:00:00+00:00"),
+                ],
+            )
+        by_day = db.cost_by_day()
+        assert list(by_day.keys()) == ["2026-06-01", "2026-06-02"]  # 升序
+        assert by_day["2026-06-01"] == pytest.approx(0.0105 + 0.00035, abs=1e-9)
+        assert by_day["2026-06-02"] == pytest.approx(0.00525, abs=1e-9)
+
+    def test_cost_by_day_with_since_filters_old_records(self, tmp_path: Path) -> None:
+        """since=future → SQL WHERE 排除全部 records → 返 {}"""
+        from datetime import datetime, timedelta, timezone
+
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        db.record("chapter_writing", ModelTier.SONNET, 1000, 500)  # now
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert db.cost_by_day(since=future) == {}
+
+    def test_cost_by_day_empty_db_returns_empty_dict(self, tmp_path: Path) -> None:
+        """backward compat: 空 DB → 返 {}, 不抛"""
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        assert db.cost_by_day() == {}
+        assert db.cost_by_day(since=None) == {}
