@@ -13,6 +13,7 @@
       <span
         v-if="statusBadge"
         class="status-badge"
+        data-testid="status-badge"
         :class="statusBadge.cls"
       >{{ statusBadge.label }}</span>
       <span class="node-id">{{ decision.node_id }}</span>
@@ -32,6 +33,7 @@
         v-for="opt in decision.options || []"
         :key="opt"
         class="option-btn pixel-border"
+        data-testid="option-btn"
         :disabled="busy"
         @click="onResolve(opt)"
       >
@@ -42,6 +44,7 @@
     <div v-if="decision.status === 'pending'" class="actions">
       <button
         class="action-btn defer-btn pixel-border"
+        data-testid="defer-btn"
         :disabled="busy"
         @click="onDefer"
       >
@@ -49,6 +52,7 @@
       </button>
       <button
         class="action-btn cancel-btn pixel-border"
+        data-testid="cancel-btn"
         :disabled="busy"
         @click="onCancel"
       >
@@ -57,12 +61,12 @@
     </div>
 
     <div v-else class="actions actions-readonly">
-      <span class="readonly-hint">🔒 此决策已{{
+      <span class="readonly-hint" data-testid="readonly-hint">🔒 此决策已{{
         decision.status === 'resolved' ? '解决' : decision.status === 'cancelled' ? '取消' : '推迟'
       }}</span>
     </div>
 
-    <div v-if="metaInfo" class="meta-info">
+    <div v-if="metaInfo" class="meta-info" data-testid="meta-info">
       {{ metaInfo }}
     </div>
 
