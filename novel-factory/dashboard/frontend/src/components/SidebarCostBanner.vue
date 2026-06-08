@@ -1,5 +1,5 @@
 <!--
-  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15 + 8.17 + 8.21 + 8.27)
+  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15 + 8.17 + 8.21 + 8.27 + 8.28)
   显示 total USD + budget line + progress bar。
   有 cost_by_scenario entry 才显示 (空状态隐藏避免占 vertical space)。
   跨 4 page (Overview / Decisions / Workflows / placeholders) 持续可见。
@@ -13,6 +13,9 @@
   ratio 触发 alarm icon (>=100% 🚨 exceeded 红, >=80% ⚠️ warning 黄, <80% 无).
   Phase 8.27: WebSocket 断线 indicator — 顶部 ⚠️ banner + hasMounted 200ms gate
   (避免初次 mount flash 误报, 真断线 → 黄色 pulse animation).
+  Phase 8.28: soft warning 三态 — progress-bar-fill 颜色从二态 (ok/exceeded)
+  升级三态 (ok 绿 / warning 黄 80-100% / exceeded 红 >=100%), 跟 Phase 8.21
+  tier alarm 阈值对齐 (BUDGET_OK_PCT=80). 0 改 backend cost_budget_status 二态语义.
   0 改 Phase 8.12 cascade, 0 改 Phase 8.15 tier row layout, 0 改 budget 语义.
   注: tier budget 默认是 all-time (per-run), 7d cost vs all-time budget 是保守
   "如保持当前 rate 会超" 提示, 不是 strict 7d-budget 超支 (项目无 7d tier budget).
@@ -76,7 +79,7 @@
       <div
         class="progress-bar-fill"
         data-testid="progress-bar-fill"
-        :class="activeBudget.status === 'exceeded' ? 'exceeded' : 'ok'"
+        :class="activeBudgetStatus"
         :style="{ width: activePct + '%' }"
       ></div>
     </div>
@@ -109,7 +112,7 @@
         >
           <div
             class="progress-bar-fill"
-            :class="tier.status === 'exceeded' ? 'exceeded' : 'ok'"
+            :class="tierProgressClass(tier)"
             :style="{ width: tier.pct + '%' }"
           ></div>
         </div>
@@ -214,6 +217,22 @@ const activeBudgetText = computed(() =>
   activeBudget.value ? Number(activeBudget.value.budget_usd ?? 0).toFixed(4) : '0.0000'
 );
 const activePctText = computed(() => activePct.value.toFixed(1));
+
+// Phase 8.28: soft warning 三态 (ok <80% / warning 80-100% / exceeded >=100%)
+// 跟 Phase 8.21 tier alarm 阈值对齐 (TIER_ALARM_WARNING_PCT=80, EXCEEDED=100),
+// 0 改 backend cost_budget_status 二态语义, 单纯前端 UI 升级
+const BUDGET_OK_PCT = 80;  // <80% ok (绿), 80-100% warning (黄), >=100% exceeded (红)
+const budgetState = (pct) => {
+  if (pct >= 100) return 'exceeded';
+  if (pct >= BUDGET_OK_PCT) return 'warning';
+  return 'ok';
+};
+const activeBudgetStatus = computed(() =>
+  activeBudget.value ? budgetState(activePct.value) : 'ok'
+);
+
+// tier row 也用三态 (跟 activeBudget 视觉一致)
+const tierProgressClass = (tier) => budgetState(parseFloat(tier.pct ?? 0));
 
 // Phase 8.15 NEW: per-tier budget rows (haiku/sonnet/opus, 顺序 Enum 顺序)
 // 跟 Phase 8.12 activeBudget cascade 不冲突 — 加 row 不动 cascade
@@ -336,6 +355,10 @@ const tierAlarm = computed(() => {
 
 .progress-bar-fill.ok {
   background: var(--color-success);
+}
+
+.progress-bar-fill.warning {
+  background: #e6a23c;
 }
 
 .progress-bar-fill.exceeded {
