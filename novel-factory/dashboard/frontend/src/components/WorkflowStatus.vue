@@ -109,6 +109,7 @@ import { computed, ref } from 'vue';
 import ScoreRadarChart from './ScoreRadarChart.vue';
 import CostBarChart from './CostBarChart.vue';
 import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
+import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
 
 const props = defineProps({
   status: {
@@ -125,13 +126,6 @@ const costMode = ref('scenario');
 
 // Phase 8.16: time window composable (跟 SidebarCostBanner 共享 singleton)
 const { timeWindow, windowedCost, setTimeWindow } = useCostWindow();
-
-// 3 window options (跟 SidebarCostBanner 1:1 mirror, 2 处不抽 utilities.js YAGNI)
-const TIME_OPTIONS = [
-  { value: '7d', label: '7天' },
-  { value: '30d', label: '30天' },
-  { value: 'all', label: '全部' },
-];
 
 // Phase 8.16: cost display 优先用 windowedCost, fallback 到 status (WS 全量)
 const displayCostByScenario = computed(() =>

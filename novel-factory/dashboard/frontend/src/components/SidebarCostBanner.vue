@@ -94,6 +94,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
+import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
 
 const props = defineProps({
   status: {
@@ -104,12 +105,6 @@ const props = defineProps({
 
 // Phase 8.16: time window composable (跟 WorkflowStatus 共享 singleton)
 const { timeWindow, windowedCost, setTimeWindow } = useCostWindow();
-
-const TIME_OPTIONS = [
-  { value: '7d', label: '7天' },
-  { value: '30d', label: '30天' },
-  { value: 'all', label: '全部' },
-];
 
 // display* 模式同 WorkflowStatus
 const displayCostByScenario = computed(() =>
