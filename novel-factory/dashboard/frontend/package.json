@@ -17,7 +17,7 @@
   "dependencies": {
     "echarts": "^5.5.0",
     "mermaid": "^11.15.0",
-    "vue": "^3.4.0"
+    "vue": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
