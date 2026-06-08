@@ -1,8 +1,10 @@
 <!--
-  DecisionsPage.vue — 决策列表页面 (Phase 6.2 + 6.6.A)
+  DecisionsPage.vue — 决策列表页面 (Phase 6.2 + 6.6.A + 8.34)
   - 顶部 3 tabs: 待处理 / 已完成 (折叠) / 已取消-推迟 (折叠)
   - 卡片网格展示
   - resolve/defer/cancel 操作
+  - Phase 8.34 重构: pending 走 useWorkflowSocket (WS 权威源),
+    all + 4 mutations 走 useDecisionStore, error 合并 store + WS
 -->
 <template>
   <div class="decisions-page">
@@ -12,7 +14,7 @@
         <span class="count-badge">
           待处理: {{ pending.length }} / 总计: {{ all.length }}
         </span>
-        <button class="refresh-btn pixel-border" @click="refresh" :disabled="loading">
+        <button class="refresh-btn pixel-border" @click="store.refresh" :disabled="loading">
           {{ loading ? '加载中…' : '刷新' }}
         </button>
       </div>
@@ -82,22 +84,30 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import DecisionCard from '../components/DecisionCard.vue';
-import {
-  fetchPendingDecisions,
-  fetchAllDecisions,
-  resolveDecision,
-  deferDecision,
-  cancelDecision,
-} from '../api/index.js';
+import { useDecisionStore } from '../composables/useDecisionStore.js';
+import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 
-const loading = ref(false);
-const error = ref(null);
-const pending = ref([]);
-const all = ref([]);
-const activeTab = ref('pending');
+// Phase 8.34: 拆分为 module-level singleton stores
+//   useDecisionStore 管 all 历史 + 4 mutations (refresh/resolve/defer/cancel)
+//   useWorkflowSocket 管 pendingDecisions (WS 权威源) + lastError
+//   页面 UI state (activeTab / expanded) 仍 page-local
+const store = useDecisionStore();
+const ws = useWorkflowSocket();
+
+// pending 仍走 WS 权威源 (Phase 6.4+ 契约, per 主公 Phase 8.34 决策)
+// ws.pendingDecisions 是 array of decisions (status 任意), 过滤 pending 状态
+const pending = computed(() =>
+  ws.pendingDecisions.value.filter(d => d.status === 'pending')
+);
+const all = computed(() => store.all.value);
+const loading = computed(() => store.loading.value);
+// error 合并 store (REST 拉) + ws (WS 连) 错误源
+const error = computed(() => store.lastError.value || ws.lastError.value);
+
 // Phase 6.6.A: resolved / closed tab 默认折叠, 用户点 "▸ 展开" 切换
+const activeTab = ref('pending');
 const expanded = ref({ resolved: false, closed: false });
 
 // 已解决 (status === 'resolved') - 按 resolved_at 倒序, 最新在前
@@ -149,51 +159,31 @@ function toggleExpand(tabId) {
   }
 }
 
-async function refresh() {
-  loading.value = true;
-  error.value = null;
-  try {
-    const [p, a] = await Promise.all([
-      fetchPendingDecisions(),
-      fetchAllDecisions(),
-    ]);
-    pending.value = p;
-    all.value = a;
-  } catch (e) {
-    error.value = e?.message || String(e);
-  } finally {
-    loading.value = false;
-  }
-}
-
+// Phase 8.34: handleResolve/Defer/Cancel 改为 thin wrapper, 调 store.* mutation
+// store.* 内部已 set lastError 并 re-throw, wrapper 吸收 re-throw 防 unhandled rejection
 async function handleResolve({ decisionId, option }) {
   try {
-    await resolveDecision(decisionId, option);
-    await refresh();
-  } catch (e) {
-    error.value = `解决失败: ${e?.message || e}`;
+    await store.resolve(decisionId, option);
+  } catch {
+    /* lastError 已 set, 由 error computed 展示 */
   }
 }
 
 async function handleDefer({ decisionId, reason }) {
   try {
-    await deferDecision(decisionId, reason);
-    await refresh();
-  } catch (e) {
-    error.value = `推迟失败: ${e?.message || e}`;
+    await store.defer(decisionId, reason);
+  } catch {
+    /* lastError 已 set, 由 error computed 展示 */
   }
 }
 
 async function handleCancel({ decisionId, reason }) {
   try {
-    await cancelDecision(decisionId, reason);
-    await refresh();
-  } catch (e) {
-    error.value = `取消失败: ${e?.message || e}`;
+    await store.cancel(decisionId, reason);
+  } catch {
+    /* lastError 已 set, 由 error computed 展示 */
   }
 }
-
-onMounted(refresh);
 </script>
 
 <style scoped>
