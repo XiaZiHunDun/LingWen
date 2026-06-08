@@ -1,5 +1,5 @@
 <!--
-  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15 + 8.17 + 8.21)
+  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15 + 8.17 + 8.21 + 8.27)
   显示 total USD + budget line + progress bar。
   有 cost_by_scenario entry 才显示 (空状态隐藏避免占 vertical space)。
   跨 4 page (Overview / Decisions / Workflows / placeholders) 持续可见。
@@ -11,6 +11,8 @@
   Phase 8.17: hasCost OR scenario + tier (symmetric to Phase 8.14 WorkflowStatus fix).
   Phase 8.21: tier 维度 alarm — 7d/30d 选时, windowed tier cost vs tier budget
   ratio 触发 alarm icon (>=100% 🚨 exceeded 红, >=80% ⚠️ warning 黄, <80% 无).
+  Phase 8.27: WebSocket 断线 indicator — 顶部 ⚠️ banner + hasMounted 200ms gate
+  (避免初次 mount flash 误报, 真断线 → 黄色 pulse animation).
   0 改 Phase 8.12 cascade, 0 改 Phase 8.15 tier row layout, 0 改 budget 语义.
   注: tier budget 默认是 all-time (per-run), 7d cost vs all-time budget 是保守
   "如保持当前 rate 会超" 提示, 不是 strict 7d-budget 超支 (项目无 7d tier budget).
@@ -23,6 +25,16 @@
     role="region"
     aria-label="成本追踪"
   >
+    <!-- Phase 8.27: WebSocket 断线 indicator (避免初次 mount flash, hasMounted gate) -->
+    <div
+      v-if="isDisconnected"
+      class="ws-disconnected-banner"
+      data-testid="ws-disconnected-banner"
+      role="alert"
+      aria-live="assertive"
+    >
+      ⚠️ 实时同步已断开, 成本数据可能过期
+    </div>
     <!-- Phase 8.16 NEW: 顶部 segmented control (在 total 之前) -->
     <div class="time-window-tabs" role="tablist" aria-label="成本时间窗口">
       <button
@@ -107,8 +119,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
+import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';  // Phase 8.27
 import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
 
 const props = defineProps({
@@ -117,6 +130,16 @@ const props = defineProps({
     required: true,
   },
 });
+
+// Phase 8.27: WebSocket 断线 indicator
+// connected 默认 false (WS 还没建), 加 hasMounted gate 避免初次 mount flash
+// 200ms 后 hasMounted=true, 此时若 connected 仍 false → 真断线, 显示 ⚠️
+const { connected } = useWorkflowSocket();
+const hasMounted = ref(false);
+onMounted(() => {
+  setTimeout(() => { hasMounted.value = true; }, 200);
+});
+const isDisconnected = computed(() => hasMounted.value && !connected.value);
 
 // Phase 8.16: time window composable (跟 WorkflowStatus 共享 singleton)
 const { timeWindow, windowedCost, setTimeWindow } = useCostWindow();
@@ -279,6 +302,23 @@ const tierAlarm = computed(() => {
 .sidebar-cost-budget-text {
   flex: 1;
   color: var(--color-text-dim);
+}
+
+.ws-disconnected-banner {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  border-radius: 2px;
+  padding: 4px 6px;
+  font-size: 7px;
+  line-height: 1.4;
+  text-align: center;
+  animation: ws-disconnected-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ws-disconnected-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .progress-bar {
