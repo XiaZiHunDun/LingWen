@@ -41,28 +41,37 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+// Phase 8.34: 拆数据源到 module-level singleton store
+//   useOverviewStore (Phase 8.34 Task 3, 含 9a241f9 envelope 修正): 管 overview 概览
+//   + chapters 列表 (REST 拉, Promise.all 并行) + loading + lastError, 替换
+//   page-local 4 个 ref + loadData + onMounted + fetchOverview/fetchChapters import
+// 页面 UI state (chartData / statCards computed) 仍 page-local, 从 store.overview /
+//   store.chapters 派生 (store 已做 envelope 解包, chapters 是 bare array)
+import { computed } from 'vue'
 import StatCard from '../components/StatCard.vue'
 import HookTrendChart from '../components/HookTrendChart.vue'
 import CoolpointChart from '../components/CoolpointChart.vue'
 import ChapterTable from '../components/ChapterTable.vue'
-import { fetchOverview, fetchChapters } from '../api/index.js'
+import { useOverviewStore } from '../composables/useOverviewStore.js'
 
-const loading = ref(false)
-const error = ref(null)
-const overview = ref(null)
-const chapters = ref([])
+const store = useOverviewStore()
 
+// 模板 binding 通过 store 字段直接访问 (Vue 在 template context 自动 unwrap refs)
+// store.loading / store.lastError / store.chapters 均由 store 提供, 跟 page-local
+// 命名一致, template 一行不改也能 work
+
+// chartData 派生 chapters (按 hook_count / coolpoint_count 投影)
 const chartData = computed(() => {
-  return chapters.value.map(ch => ({
+  return store.chapters.value.map(ch => ({
     chapter: ch.chapter,
     hook_count: ch.hook_count,
     coolpoint_count: ch.coolpoint_count
   }))
 })
 
+// statCards 派生 overview (5 张 stat card 模板)
 const statCards = computed(() => {
-  const o = overview.value || {}
+  const o = store.overview.value || {}
   return [
     {
       label: '总章节数',
@@ -96,32 +105,11 @@ const statCards = computed(() => {
   ]
 })
 
-const loadData = async () => {
-  loading.value = true
-  error.value = null
-
-  try {
-    const [overviewData, chaptersData] = await Promise.all([
-      fetchOverview(),
-      fetchChapters('1-30')
-    ])
-
-    overview.value = overviewData
-    chapters.value = chaptersData.chapters || []
-  } catch (err) {
-    error.value = err.message || '加载数据失败'
-  } finally {
-    loading.value = false
-  }
+// refresh thin wrapper 委托给 store (template binding 名 refresh 保留, 跟
+// WorkflowsPage 同模式, 保模板 @click="refresh" 像素级不动)
+function refresh() {
+  return store.refresh()
 }
-
-const refresh = () => {
-  loadData()
-}
-
-onMounted(() => {
-  loadData()
-})
 </script>
 
 <style scoped>
