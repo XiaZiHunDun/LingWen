@@ -112,6 +112,7 @@
         >
           <div
             class="progress-bar-fill"
+            data-testid="progress-bar-fill"
             :class="tierProgressClass(tier)"
             :style="{ width: tier.pct + '%' }"
           ></div>
