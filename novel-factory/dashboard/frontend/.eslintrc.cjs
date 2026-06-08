@@ -12,7 +12,7 @@ module.exports = {
       parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
       plugins: ['eslint-plugin-local-rules'],
       rules: {
-        'local/no-class-selector-in-test': 'error',
+        'local-rules/no-class-selector-in-test': 'error',
       },
     },
   ],
