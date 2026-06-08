@@ -1,5 +1,5 @@
 <!--
-  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15)
+  SidebarCostBanner.vue — Sidebar 底部持续 cost banner (Phase 8.11 + 8.11 fixup + 8.12 + 8.15 + 8.17 + 8.21)
   显示 total USD + budget line + progress bar。
   有 cost_by_scenario entry 才显示 (空状态隐藏避免占 vertical space)。
   跨 4 page (Overview / Decisions / Workflows / placeholders) 持续可见。
@@ -8,6 +8,12 @@
   Phase 8.15: 加 3 个 per-tier budget row (haiku/sonnet/opus) 在 activeBudget 进度条下方
   (跟 Phase 8.12 cascade 不冲突, 4 块: total + active + 3 tier rows). 顺序 Enum
   顺序 (haiku → sonnet → opus, deterministic). 未设 tier 跳过 (filter entry 为空 dict).
+  Phase 8.17: hasCost OR scenario + tier (symmetric to Phase 8.14 WorkflowStatus fix).
+  Phase 8.21: tier 维度 alarm — 7d/30d 选时, windowed tier cost vs tier budget
+  ratio 触发 alarm icon (>=100% 🚨 exceeded 红, >=80% ⚠️ warning 黄, <80% 无).
+  0 改 Phase 8.12 cascade, 0 改 Phase 8.15 tier row layout, 0 改 budget 语义.
+  注: tier budget 默认是 all-time (per-run), 7d cost vs all-time budget 是保守
+  "如保持当前 rate 会超" 提示, 不是 strict 7d-budget 超支 (项目无 7d tier budget).
 -->
 <template>
   <div
@@ -70,6 +76,13 @@
         >
           <span class="sidebar-cost-tier-text">
             {{ tier.label }} 预算: ${{ tier.used }} / ${{ tier.budget }} ({{ tier.pct }}%)
+            <!-- Phase 8.21: tier 维度 alarm (7d/30d 选时, windowed cost vs budget 比例) -->
+            <span
+              v-if="tierAlarm[tier.name]"
+              :class="['tier-alarm', `tier-alarm-${tierAlarm[tier.name]}`]"
+              :data-testid="`sidebar-tier-alarm-${tier.name}`"
+              :aria-label="`${tier.label} 预算告警: ${tierAlarm[tier.name] === 'exceeded' ? '已超预算' : '接近预算上限'}`"
+            >{{ tierAlarm[tier.name] === 'exceeded' ? '🚨' : '⚠️' }}</span>
           </span>
         </div>
         <div
@@ -202,6 +215,32 @@ const tierBudgets = computed(() => {
   }
   return list;
 });
+
+// Phase 8.21 NEW: tier 维度 alarm (windowed cost vs all-time budget 比例)
+// timeWindow='all' → null (默认路径, 无 window 概念, 不触发 alarm)
+// timeWindow='7d'|'30d' → 算 windowed tier cost / tier budget pct
+//   >=100% → 'exceeded' (🚨 红), >=80% → 'warning' (⚠️ 黄), <80% → undefined (无 alarm)
+// 注: tier budget 是 all-time (per-run scope), 7d/30d cost vs all-time 是 "如保持
+// 当前 rate 会超" 保守提示. 严格 7d tier budget 不存在, 留 backend 后续扩展.
+const TIER_ALARM_WARNING_PCT = 80;
+const TIER_ALARM_EXCEEDED_PCT = 100;
+const tierAlarm = computed(() => {
+  if (timeWindow.value === 'all') return {};  // all-time: 无 window, 不触发
+  const windowed = windowedCost.value?.cost_by_tier || {};
+  const budget = props.status?.budget_by_tier || {};
+  const alarms = {};
+  for (const tierName of TIER_ORDER) {
+    const used = Number(windowed[tierName] ?? 0);
+    const b = budget[tierName];
+    if (!b || b.budget_usd == null) continue;
+    const budgetUsd = Number(b.budget_usd);
+    if (budgetUsd <= 0) continue;
+    const pct = (used / budgetUsd) * 100;
+    if (pct >= TIER_ALARM_EXCEEDED_PCT) alarms[tierName] = 'exceeded';
+    else if (pct >= TIER_ALARM_WARNING_PCT) alarms[tierName] = 'warning';
+  }
+  return alarms;
+});
 </script>
 
 <style scoped>
@@ -295,4 +334,15 @@ const tierBudgets = computed(() => {
   background: var(--color-accent);
   color: var(--bg-primary);
 }
+
+/* Phase 8.21 NEW: tier 维度 alarm icon (7d/30d 选时, 3 tier row 旁显 ⚠️/🚨)
+   复用 sidebar 8px font + Press Start 2P, 不破坏 pixel art 风格 (emoji 例外
+   跟 Phase 8.11 💰 icon 同 pattern). 颜色变量: 红 = exceeded, 橙 = warning. */
+.tier-alarm {
+  margin-left: 4px;
+  font-size: 10px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+}
+.tier-alarm-exceeded { color: #f56c6c; }
+.tier-alarm-warning { color: #ff9800; }
 </style>
