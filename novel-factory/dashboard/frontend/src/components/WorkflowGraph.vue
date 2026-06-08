@@ -16,7 +16,7 @@
     <div v-else-if="svg" class="graph-container pixel-card">
       <div class="graph-header">
         <span class="graph-title">{{ workflowName || '工作流图' }}</span>
-        <button class="reset-zoom-btn pixel-border" @click="resetZoom">⤢ 重置缩放</button>
+        <button class="reset-zoom-btn pixel-border" data-testid="reset-zoom-btn" @click="resetZoom">⤢ 重置缩放</button>
       </div>
       <div
         ref="containerRef"
@@ -31,9 +31,9 @@
     </div>
 
     <div v-if="svg" class="zoom-controls">
-      <button class="zoom-btn pixel-border" @click="zoomIn" :disabled="zoom >= 2">＋</button>
-      <span class="zoom-display">{{ (zoom * 100).toFixed(0) }}%</span>
-      <button class="zoom-btn pixel-border" @click="zoomOut" :disabled="zoom <= 0.4">－</button>
+      <button class="zoom-btn pixel-border" data-testid="zoom-in-btn" @click="zoomIn" :disabled="zoom >= 2">＋</button>
+      <span class="zoom-display" data-testid="zoom-display">{{ (zoom * 100).toFixed(0) }}%</span>
+      <button class="zoom-btn pixel-border" data-testid="zoom-out-btn" @click="zoomOut" :disabled="zoom <= 0.4">－</button>
     </div>
   </div>
 </template>
