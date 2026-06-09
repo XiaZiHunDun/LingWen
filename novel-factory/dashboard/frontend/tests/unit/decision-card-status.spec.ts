@@ -1,13 +1,12 @@
 // tests/unit/decision-card-status.spec.ts — Phase 8.45.1
 // DecisionCard 3 status testid: status-resolved / status-deferred / status-cancelled
-// 跟 Phase 8.38 kind testid `decision-kind-${kindClass}` 1:1 mirror pattern.
-// 跟 Phase 8.32 L16 generic `data-testid="status-badge"` 互不冲突 (specific +
-// generic 2 个 testid attribute 同 span).
+// 跟 Phase 8.38 kind testid `decision-kind-${kindClass}` 1:1 mirror pattern (dynamic
+// only, 走 kebab-case key).
 //
-// Phase 8.32 已加 generic status-badge + 6 inner testid. Phase 8.45.1 收尾 specific
-// 3 status testid (mirror 3 class names: status-resolved/-deferred/-cancelled), e2e
-// 找特定 status 节点得 `.find('.status-resolved')` 脆 selector, 改 byTestid 稳定
-// selector.
+// Phase 8.32 加的 generic `data-testid="status-badge"` 在 Phase 8.45.1 被 drop
+// (Vue 3 attribute merging 限制: static + dynamic 同 span 时前者被 silently dropped),
+// 改用 dynamic-only 模式 (mirror kindClass L106-108). e2e 找特定 status 节点得
+// `.find('.status-resolved')` 脆 selector, 改 byTestid 稳定 selector.
 
 import { describe, test, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
