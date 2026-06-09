@@ -122,5 +122,9 @@ infra/.state/cost_tracker.db-*
 infra/.state/workflow.db
 infra/.state/workflow.db-*
 
+# Phase 9.10: cross-volume ripple (Phase 10: data model + persistence)
+infra/.state/ripple.db
+infra/.state/ripple.db-*
+
 # Phase 8.40: husky 9 internal shim dir
 dashboard/frontend/.husky/_/
