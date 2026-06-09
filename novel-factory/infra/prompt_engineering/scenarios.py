@@ -106,7 +106,7 @@ _SCENARIO_METADATA: dict[str, dict[str, str]] = {
 #
 # NOTE: 引用 infra.ai_service.model_tiers.ModelTier; 延迟导入避免循环
 def _build_scenario_tier_map() -> dict:
-    """构造 SCENARIO_TIER_MAP (12 SCENARIOS → ModelTier)"""
+    """构造 SCENARIO_TIER_MAP (12 SCENARIOS + 2 CVG → ModelTier, Phase 9.12 additive)"""
     from infra.ai_service.model_tiers import ModelTier
     return {
         # --- 简单任务 → HAIKU ---
@@ -124,6 +124,9 @@ def _build_scenario_tier_map() -> dict:
         # --- 复杂任务 → OPUS ---
         "outline_review": ModelTier.OPUS,          # 整卷结构推理
         "subplot_suggest": ModelTier.OPUS,         # 创意支线开/关
+        # --- Phase 9.12 additive (CVG LLM scanner + edge inferrer) ---
+        "cvg_llm_scan": ModelTier.SONNET,          # 4-dim serial scan per chapter
+        "cvg_edge_inference": ModelTier.SONNET,    # 8-rel-type edge inference
     }
 
 

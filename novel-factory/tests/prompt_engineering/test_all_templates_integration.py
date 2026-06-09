@@ -220,7 +220,8 @@ class TestTemplateMetadataConsistency:
             )
 
     def test_model_tier_map_covers_all_scenarios(self):
-        assert set(SCENARIO_TIER_MAP.keys()) == set(SCENARIOS)
+        """SCENARIO_TIER_MAP 覆盖 12 SCENARIOS (Phase 9.12 允许额外 CVG entries)"""
+        assert set(SCENARIOS).issubset(set(SCENARIO_TIER_MAP.keys()))
 
     def test_model_tier_values_are_valid(self):
         for s in SCENARIOS:
