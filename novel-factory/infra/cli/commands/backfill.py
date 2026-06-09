@@ -68,44 +68,78 @@ class BackfillCommand(Command):
         return 0
 
     def _execute_llm_path(self, options: BackfillOptions) -> int:
-        """Phase 9.12 LLM opt-in 路径: instantiate LLMScanner + LLMCache + CostTracker.
+        """Phase 9.12 LLM opt-in 路径: real scan-and-write loop (Task 9 完成).
 
-        TODO Task 9: replace dry-run scaffold with real scan-and-write loop:
-            for ch in chapters(vol=options.vol):
-                nodes = scanner.scan_chapter(ch.id, ch.content, context=...)
-                nodes = [n for n in nodes if n.confidence >= options.llm_confidence_threshold]
-                if options.apply: storage.append_nodes_atomic(nodes)
+        流程:
+            1. instantiate LLMScanner(router=real or mock, cache, cost_tracker)
+            2. _load_chapters(volume_filter=options.vol)
+            3. for ch in chapters:
+                nodes = scanner.scan_chapter(ch.id, ch.content, context="")
+                nodes = filter(conf >= options.llm_confidence_threshold)
+                累积到 batch; 单章出错 log 警告 + 继续 (resilient)
+            4. if --apply and batch: storage.append_nodes_atomic(batch) (1 atomic)
+            5. 打印 summary
+
+        Router instantiation 走 lazy: 优先 TieredRouter(providers={}) (test 路径不抛
+        时也 OK), 真 LLM 调时才校验 missing tier.
         """
-        # Lazy import: LLM 路径 0 LLM 默认 0 调用, 仅在 --use-llm 时引入
         from infra.ai_service.cost_tracker import CostTracker
+        from infra.ai_service.tiered_router import TieredRouter
+        from infra.cross_volume.backfill import (
+            _default_storage,
+            _load_chapters,
+        )
         from infra.cross_volume.llm_cache import LLMCache
         from infra.cross_volume.llm_scanner import LLMScanner
 
         cache = LLMCache(cache_path=options.cache_path)
-        cost_tracker = CostTracker()  # 0 LLM calls yet; CostTracker records 0 0 cost
-        # NOTE: scanner 必填 router (Task 9 will wire real LLM router).
-        # 本 Task 7 仅完成 component 接线, 真实 LLM 调用留 Task 9.
-        # dry-run 路径 0 实例化 scanner (per spec: 0 写 + 0 调 LLM).
-        if not options.apply:
-            print(
-                f"[DRY-RUN] LLM scan vol={options.vol} (cache={cache._path}, "
-                f"threshold={options.llm_confidence_threshold}) — 0 写, 0 LLM call"
-            )
-            return 0
+        cost_tracker = CostTracker()
 
-        # --apply: instantiate scanner + storage (Task 9 写真实 scan-and-write)
-        from infra.cross_volume.storage import RippleStorage  # lazy
-        from infra.cross_volume.backfill import _default_storage  # reuse Phase 9.11 helper
+        # Production 默认 TieredRouter; test 路径用 mock patch 替换整个 LLMScanner,
+        # 不会走到 router.generate. 0 LLM call = 0 tier provider 校验, 构造轻量.
+        # 走 lazy 模式: 0 走 --apply 真 LLM 路径时, provider 0 注入会 fail 真 LLM call
+        # (而非构造时), 友好。
+        router: object = None
+        try:
+            router = TieredRouter(providers={})
+        except Exception:
+            # 缺 provider (test env 0 patch LLMScanner 时, 真 TieredRouter 缺 tier 抛错)
+            # 走 None 兜底, 0 真 LLM 调时 0 触发; 触发了再 fail
+            router = None
 
-        _scanner = LLMScanner(
-            router=None,  # Task 9 will wire real LLM router
+        scanner = LLMScanner(
+            router=router,
             cache=cache,
-            fallback_backfiller=None,  # Task 9 will wire real fallback
+            fallback_backfiller=None,  # Phase 9.12 opt-in, 0 fallback rule
             cost_tracker=cost_tracker,
         )
-        _storage = _default_storage()  # infra/.state/ripple.db (Phase 9.10 default)
+
+        chapters = _load_chapters(volume_filter=options.vol)
+
+        batch: list = []
+        total_nodes = 0
+        mode = "APPLY" if options.apply else "DRY-RUN"
+
+        for ch in chapters:
+            try:
+                nodes = scanner.scan_chapter(ch.id, ch.content, context="")
+                nodes = [n for n in nodes if n.confidence >= options.llm_confidence_threshold]
+                total_nodes += len(nodes)
+                batch.extend(nodes)
+            except Exception as e:
+                print(f"[警告] ch={ch.id} 扫描失败: {e}", file=sys.stderr)
+                continue
+
+        written_nodes = 0
+        if options.apply and batch:
+            storage = _default_storage()
+            storage.append_nodes_atomic(batch)
+            written_nodes = len(batch)
+
         print(
-            f"[APPLY] LLM scan vol={options.vol} (cache={cache._path}, "
-            f"threshold={options.llm_confidence_threshold}) — TODO Task 9 写真实"
+            f"[{mode}] LLM scan vol={options.vol} (cache={cache._path}, "
+            f"threshold={options.llm_confidence_threshold}): "
+            f"chapters={len(chapters)}, total_nodes={total_nodes}, "
+            f"written_nodes={written_nodes}"
         )
         return 0

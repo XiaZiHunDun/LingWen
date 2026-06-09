@@ -1,6 +1,9 @@
 """Phase 9.11: Backfiller — 编排 4 Extractor + 跨章聚合 + 1 atomic_batch 写库.
 
 复用 Phase 9.10 CrossVolumeReferenceGraph + RippleStorage.append_nodes_atomic (新增 additive).
+
+Phase 9.12 additive: 提供 _load_chapters 公共 helper (Task 9 e2e test patch 边界),
+返 List[ChapterContent] dataclass, 给 LLM path scanner.scan_chapter 喂 chapter_content.
 """
 import dataclasses
 import logging
@@ -23,6 +26,17 @@ from infra.cross_volume.reference_graph import (
     DimensionT,
     ReferenceNode,
 )
+
+
+@dataclass(frozen=True)
+class ChapterContent:
+    """Phase 9.12: LLM path 喂 scanner.scan_chapter 的最小 chapter DTO.
+
+    id: int chapter num (跟 Backfiller._parse_chapter_num 1:1)
+    content: str 整章正文 (.md or _大纲.md 都行)
+    """
+    id: int
+    content: str
 
 logger = logging.getLogger(__name__)
 
@@ -210,3 +224,41 @@ def _default_storage():
     """Phase 9.11: 默认 storage 走 infra/.state/ripple.db (跟 Phase 9.10 pattern)."""
     from infra.cross_volume.storage import RippleStorage
     return RippleStorage(db_path=Path("infra/.state/ripple.db"))
+
+
+# --- Phase 9.12 additive: chapter loader for LLM path -----------------
+
+_VOL_RANGES: dict[int, tuple[int, int]] = {
+    1: (1, 120),
+    2: (121, 240),
+    3: (241, 359),
+}
+
+
+def _load_chapters(
+    corpus_root: Path = Path("03_内容仓库/04_正文"),
+    volume_filter: int | None = None,
+) -> list[ChapterContent]:
+    """Phase 9.12: 返 ChapterContent list (LLM path scan-and-write 喂料).
+
+    复用 Backfiller._iter_chapters 的 vol 1-3 范围规则 + chapter 解析规则.
+    同一 chapter 出现 .md + _大纲.md 时, 用 .md 优先 (LLM 喂正文).
+    """
+    if not corpus_root.exists():
+        return []
+    if volume_filter is not None and volume_filter in _VOL_RANGES:
+        low, high = _VOL_RANGES[volume_filter]
+        chapter_nums = list(range(low, high + 1))
+    else:
+        chapter_nums = list(range(1, 360))
+
+    out: list[ChapterContent] = []
+    for n in chapter_nums:
+        stem = f"ch{n:03d}"
+        md_path = corpus_root / f"{stem}.md"
+        outline_path = corpus_root / f"{stem}_大纲.md"
+        if md_path.exists():
+            out.append(ChapterContent(id=n, content=md_path.read_text(encoding="utf-8")))
+        elif outline_path.exists():
+            out.append(ChapterContent(id=n, content=outline_path.read_text(encoding="utf-8")))
+    return out

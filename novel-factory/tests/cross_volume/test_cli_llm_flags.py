@@ -100,17 +100,27 @@ class TestCLINewFlags:
             assert mock_scanner.called
 
     def test_dry_run_default_no_write_in_llm_path(self, capsys):
-        """--use-llm (no --apply) → LLM dry-run, no storage write."""
+        """--use-llm (no --apply) → LLM dry-run, no storage write.
+
+        Phase 9.12 Task 9: dry-run 路径也走真实 scan loop (instanceate scanner
+        + scan_chapter 跑过), 唯一区别是不调 storage.append_nodes_atomic.
+        这跟 Task 7 时代 (dry-run 0 实例化 scanner) 的 stub 行为不同, 是 Task 9
+        写真实 scan 后的 additive 行为.
+        """
         with patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner, \
              patch("infra.cross_volume.llm_cache.LLMCache"), \
              patch("infra.ai_service.cost_tracker.CostTracker"), \
+             patch("infra.ai_service.tiered_router.TieredRouter"), \
+             patch("infra.cross_volume.backfill._load_chapters",
+                   return_value=[], create=True), \
              patch("infra.cross_volume.storage.RippleStorage") as mock_storage:
             options = make_options(use_llm=True, apply=False, vol=1)
             cmd = BackfillCommand()
             result = cmd.execute(options)
             assert result == 0
-            # dry-run: 0 实例化 scanner, 0 写 storage
-            assert mock_scanner.call_count == 0
+            # Task 9: dry-run 也实例化 scanner (real scan loop)
+            assert mock_scanner.call_count == 1
+            # dry-run: 0 写 storage
             assert mock_storage.call_count == 0
             captured = capsys.readouterr()
             # Hint visible (dry-run marker)
