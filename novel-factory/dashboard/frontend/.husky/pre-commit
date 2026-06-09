@@ -1,7 +1,22 @@
 #!/usr/bin/env sh
 # Phase 8.40: Pre-commit hook — run lint-staged on staged files (scoped to changes)
 # Phase 8.44.2: 改 lint-staged (Phase 8.40 跑 pnpm lint:all 全量太慢, 改 staged-only)
-# 8.44.3 在后续 task 加 backend pytest smoke 段
-. "$(dirname -- "$0")/_/h"
+# Phase 8.44.3: 加 backend pytest smoke (跨 frontend+backend 协同保, 跟 test.yml 同步
+# skip e2e + legacy, -x fail-fast, --timeout=30s 防 hang, 估 <30s)
+# Phase 8.44.3 fix: 替换 . "$(dirname -- "$0")/_/h" husky 4 shim (broken since
+# Phase 8.40, silent no-op) 走显式 PATH setup, 跟 shim 试图做的等价
 
+# Frontend: explicit PATH setup (husky 4 shim broken)
+export PATH="node_modules/.bin:$PATH"
+
+# Frontend: staged-only lint via lint-staged
 pnpm lint-staged
+
+# Backend: pytest smoke (skip e2e + legacy, fail-fast, 30s timeout)
+# 走 git rev-parse --show-toplevel 动态定位 root, 防 CWD 漂 (R9 缓解, +novel-factory
+# 因为 git root 在 LingWen/, pytest.ini 在 novel-factory/)
+cd "$(git rev-parse --show-toplevel)/novel-factory"
+pytest tests/ \
+  --ignore=tests/agent_system/test_e2e_workflow.py \
+  --ignore=tests/tools/test_enhancement_tools.py \
+  -x -q --timeout=30
