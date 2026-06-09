@@ -3,20 +3,20 @@
 TDD: 这些测试在 step 1 阶段会全部 FAIL (ImportError on Backfiller / 4 Extractor),
 在 Task 2 (Extractor impl) + Task 3 (Backfiller + storage.append_nodes_atomic) + Task 4 (CLI) + Task 5 (fixture) 后通过.
 """
-import yaml
-import pytest
 from pathlib import Path
 
+import pytest
+import yaml
+
 from infra.cross_volume import ReferenceNode
-from infra.cross_volume.storage import RippleStorage
 from infra.cross_volume.extractors import (
     CharacterExtractor,
     ForeshadowExtractor,
-    SettingExtractor,
     PlotPointExtractor,
+    SettingExtractor,
 )
 from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-
+from infra.cross_volume.storage import RippleStorage
 
 # ============ 4 Extractor unit tests (8 tests) ============
 
@@ -262,7 +262,9 @@ class TestBackfillE2E:
     def test_backfill_runs_on_10_chapter_fixture(self, tmp_path):
         """Phase 9.11 E2E: 走 10 章真实 fixture, 验证 4 维 N nodes 范围合理 0 crash."""
         # fixture dir 在 tests/cross_volume/fixtures/
-        from infra.cross_volume.backfill import Backfiller  # Phase 9.11: Task 6 cleanup (remove namespace hack)
+        from infra.cross_volume.backfill import (
+            Backfiller,  # Phase 9.11: Task 6 cleanup (remove namespace hack)
+        )
         from tests.cross_volume.fixtures.sample_corpus import SAMPLE_CORPUS_ROOT, SAMPLE_RULES_YAML
         rules_yaml = tmp_path / "rules.yaml"
         rules_yaml.write_text(SAMPLE_RULES_YAML, encoding="utf-8")
