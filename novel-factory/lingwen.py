@@ -14,6 +14,7 @@ Commands:
     polish     - 关键章节深度润色
     anti-trope - 生成反套路创意选项
     llm-analyze - LLM质检决策分析
+    backfill   - 跨卷涟漪 4 维规则回填 (Phase 9.11)
 """
 
 import argparse
@@ -25,6 +26,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.cli import (
     AntiTropeOptions,
+    BackfillOptions,
     CheckOptions,
     LLMAnalyzeOptions,
     PolishOptions,
@@ -101,6 +103,15 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             genre=args.genre,
             chapter=args.chapter,
             persist=args.persist,
+        )
+    elif command == "backfill":
+        return BackfillOptions(
+            range=[],
+            parallel=1,
+            verbose=args.verbose,
+            dry_run=args.dry_run,
+            vol=args.vol,
+            rules=args.rules,
         )
 
     chapter_range = parse_range(args.range, RangeParser())

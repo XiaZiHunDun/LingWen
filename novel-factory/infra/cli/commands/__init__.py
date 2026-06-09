@@ -16,10 +16,12 @@ File map:
   llm_analyze.py       - LLMAnalyzeCommand
   story_contract.py    - StoryContractCommand
   reading_power.py     - ReadingPowerCommand
+  backfill.py          - BackfillCommand (Phase 9.11)
 """
 from typing import List, Optional
 
 from .anti_trope import AntiTropeCommand
+from .backfill import BackfillCommand
 from .base import Command
 from .check import CheckCommand
 from .doctor import DoctorCommand
@@ -42,12 +44,13 @@ COMMANDS = {
     "llm-analyze": LLMAnalyzeCommand,
     "reading-power": ReadingPowerCommand,
     "story-contract": StoryContractCommand,
+    "backfill": BackfillCommand,
 }
 
 __all__ = [
     "Command", "CheckCommand", "RepairCommand", "VerifyCommand", "StatusCommand",
     "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
-    "ReadingPowerCommand", "StoryContractCommand",
+    "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
     "COMMANDS", "get_command", "list_commands",
 ]
 

@@ -1,5 +1,6 @@
 from infra.cli.options import (
     AntiTropeOptions,
+    BackfillOptions,
     CheckOptions,
     LLMAnalyzeOptions,
     PolishOptions,
@@ -20,4 +21,5 @@ __all__ = [
     "PolishOptions",
     "StoryContractOptions",
     "LLMAnalyzeOptions",
+    "BackfillOptions",
 ]

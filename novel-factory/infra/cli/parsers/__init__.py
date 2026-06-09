@@ -9,6 +9,7 @@ registers the subparser and its arguments.
 import argparse
 
 from .anti_trope import add_anti_trope_parser
+from .backfill import add_backfill_parser
 from .check import add_check_parser
 from .doctor import add_doctor_parser
 from .llm_analyze import add_llm_analyze_parser
@@ -38,6 +39,7 @@ Examples:
     lingwen.py verify 50-60 --repaired
     lingwen.py status 1-100 --summary
     lingwen.py doctor
+    lingwen.py backfill --vol 1
         """,
     )
 
@@ -53,5 +55,6 @@ Examples:
     add_anti_trope_parser(subparsers)
     add_llm_analyze_parser(subparsers)
     add_story_contract_parser(subparsers)
+    add_backfill_parser(subparsers)
 
     return parser
