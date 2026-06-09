@@ -71,7 +71,7 @@ describe('DecisionCard inner sub-element testid (Phase 8.32)', () => {
     expect(wrapper.findAll(byTestid('cancel-btn'))).toHaveLength(0)
     // resolved: status-badge 1 (含 status-resolved class) + readonly-hint 1
     // (走 v-else L59 + 三元 fallback 'resolved' ? '解决' : ...) + meta-info 1
-    const statusBadge = wrapper.find(byTestid('status-badge'))
+    const statusBadge = wrapper.find(byTestid('status-resolved'))
     expect(statusBadge.exists()).toBe(true)
     expect(statusBadge.classes()).toContain('status-resolved')
     const readonlyHint = wrapper.find(byTestid('readonly-hint'))
@@ -103,7 +103,7 @@ describe('DecisionCard inner sub-element testid (Phase 8.32)', () => {
     expect(wrapper.findAll(byTestid('cancel-btn'))).toHaveLength(0)
     // cancelled: status-badge 1 (含 status-cancelled class, cancelled 在 map L110)
     // + readonly-hint 1 (走 v-else L59 + 三元 fallback 'cancelled' ? '取消' : '推迟')
-    const statusBadge = wrapper.find(byTestid('status-badge'))
+    const statusBadge = wrapper.find(byTestid('status-cancelled'))
     expect(statusBadge.exists()).toBe(true)
     expect(statusBadge.classes()).toContain('status-cancelled')
     const readonlyHint = wrapper.find(byTestid('readonly-hint'))

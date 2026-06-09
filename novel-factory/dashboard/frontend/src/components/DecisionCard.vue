@@ -13,7 +13,7 @@
       <span
         v-if="statusBadge"
         class="status-badge"
-        data-testid="status-badge"
+        :data-testid="`status-${statusKey}`"
         :class="statusBadge.cls"
       >{{ statusBadge.label }}</span>
       <span class="node-id">{{ decision.node_id }}</span>
@@ -104,6 +104,13 @@ const kindLabel = computed(() => {
 
 const kindClass = computed(() => {
   return (props.decision.kind || 'unknown').replace(/_/g, '-');
+});
+
+// Phase 8.45.1: status testid kebab-case key (mirror Phase 8.38 kindClass pattern)
+// 实际 decision.status 已是 resolved/deferred/cancelled, 0 改 `_` chars, 但加
+// kebab-case 转换防御未来 `in_progress` 之类多 token status.
+const statusKey = computed(() => {
+  return (props.decision.status || '').replace(/_/g, '-');
 });
 
 // Phase 6.6.B: status badge (resolved/deferred/cancelled 才有, pending 不显示)
