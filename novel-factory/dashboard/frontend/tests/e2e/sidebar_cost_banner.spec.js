@@ -8,7 +8,9 @@ import { test, expect } from '@playwright/test'
  * 跟 dashboard_budget.spec.js (Phase 8.8) + dashboard_cost.spec.js (Phase 8.7) + dashboard_radar.spec.js (Phase 7.6) 同模式:
  * page.route mock + 断言 .sidebar-cost-banner visible
  *
- * 当前 Playwright runner 未装 (跟 Phase 7.6/8.7/8.8 一致),作为契约文档存在。
+ * Phase 8.45.3: Playwright runner 已装 (@playwright/test ^1.49.0, dev opt-in),
+ * 走 pnpm e2e:smoke 跑 (需 npx playwright install chromium 先装 browser, ~500MB).
+ * 0 CI integration (vitest 仍 primary gate, Playwright 留 manual + future Phase 8.46+).
  * 契约:
  *   - 当 cost_by_scenario 有 entry,渲染 .sidebar-cost-banner 块 (sidebar 底部)
  *   - 当 cost_by_scenario = {}, .sidebar-cost-banner NOT visible (v-if=hasCost 锁 false)

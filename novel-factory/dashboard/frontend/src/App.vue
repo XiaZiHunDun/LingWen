@@ -19,7 +19,7 @@
           <span class="nav-label">{{ item.label }}</span>
         </a>
       </nav>
-      <SidebarCostBanner :status="status" /> <!-- Phase 8.11 -->
+      <SidebarCostBanner :status="status" data-testid="ws-status" /> <!-- Phase 8.11 + 8.45.3 ws-status testid (Vue 3.5 inherit fallthrough) -->
     </aside>
 
     <!-- Main Content -->

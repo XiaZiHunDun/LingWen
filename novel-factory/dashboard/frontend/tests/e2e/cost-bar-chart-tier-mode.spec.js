@@ -12,7 +12,9 @@ import { test, expect } from '@playwright/test'
  * 跟 dashboard_cost.spec.js (Phase 8.7) + dashboard_budget.spec.js (Phase 8.8) +
  * sidebar_cost_banner.spec.js (Phase 8.11) 同模式: page.route mock + 断言 visible
  *
- * 当前 Playwright runner 未装 (跟 Phase 7.6/8.7/8.8/8.11 一致),作为契约文档存在。
+ * Phase 8.45.3: Playwright runner 已装 (@playwright/test ^1.49.0, dev opt-in),
+ * 走 pnpm e2e:smoke 跑 (需 npx playwright install chromium 先装 browser, ~500MB).
+ * 0 CI integration (vitest 仍 primary gate, Playwright 留 manual + future Phase 8.46+).
  * 契约:
  *   - 默认 mode='scenario' (向后兼容; 旧 caller 不传 mode 也走 scenario)
  *   - 渲染 2 tab button (data-testid="mode-tab-scenario" / "mode-tab-tier")

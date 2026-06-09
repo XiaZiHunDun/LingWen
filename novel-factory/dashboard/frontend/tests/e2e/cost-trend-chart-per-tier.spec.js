@@ -7,7 +7,11 @@ import { test, expect } from '@playwright/test'
  * 仍可用作 baseline 兜底.
  *
  * 跟 cost-trend-chart.spec.js (Phase 8.24) 同模式: page.route mock +
- * 断言 .cost-trend-chart visible. 当前 Playwright runner 未装, 作为契约文档.
+ * 断言 .cost-trend-chart visible.
+ *
+ * Phase 8.45.3: Playwright runner 已装 (@playwright/test ^1.49.0, dev opt-in),
+ * 走 pnpm e2e:smoke 跑 (需 npx playwright install chromium 先装 browser, ~500MB).
+ * 0 CI integration (vitest 仍 primary gate, Playwright 留 manual + future Phase 8.46+).
  *
  * 契约:
  *   - costByDayPerTier = null (default) → 单线 path (Phase 8.24 baseline)
