@@ -4,10 +4,11 @@
 TDD: 这些测试在 step 1 阶段会全部 FAIL (ImportError), 在 Task 3 (CVG impl) 后通过.
 """
 import pytest
+
 from infra.cross_volume import (
     CrossVolumeReferenceGraph,
-    ReferenceNode,
     ReferenceEdge,
+    ReferenceNode,
 )
 from infra.cross_volume.storage import RippleStorage
 

@@ -1,8 +1,10 @@
 # tests/cross_volume/test_storage.py
 """Phase 9.10: RippleStorage sqlite3 直写 tests."""
 import json
+
 import pytest
-from infra.cross_volume import ReferenceNode, ReferenceEdge, CrossVolumeRipple
+
+from infra.cross_volume import CrossVolumeRipple, ReferenceEdge, ReferenceNode
 from infra.cross_volume.storage import RippleStorage
 
 

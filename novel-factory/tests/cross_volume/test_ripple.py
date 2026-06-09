@@ -1,8 +1,10 @@
 # tests/cross_volume/test_ripple.py
 """Phase 9.10: CrossVolumeRipple + trigger_cascade stub tests."""
-import pytest
 from dataclasses import FrozenInstanceError
-from infra.cross_volume import CrossVolumeRipple, CrossVolumeReferenceGraph
+
+import pytest
+
+from infra.cross_volume import CrossVolumeReferenceGraph, CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 
 
