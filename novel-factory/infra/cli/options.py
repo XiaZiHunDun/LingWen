@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
 
 
@@ -69,9 +70,14 @@ class LLMAnalyzeOptions(UnifiedOptions):
 
 @dataclass
 class BackfillOptions(UnifiedOptions):
-    """backfill 命令选项 (Phase 9.11 CVG backfill)"""
+    """backfill 命令选项 (Phase 9.11 CVG backfill + Phase 9.12 LLM opt-in)"""
     # NOTE: 默认 dry_run=True, 跟 UnifiedOptions 默认 False 反过来.
     # Per 主公 Q4 decision: 默认 dry-run (0 写库, 仅 print 统计).
     dry_run: bool = True
     vol: Optional[int] = None
     rules: Optional[str] = None  # path to extraction_rules.yaml
+    # Phase 9.12 additive: LLM opt-in (默认 0 走, 走 Phase 9.11 rule path, 0 cost)
+    use_llm: bool = False
+    apply: bool = False  # --apply 强需 --use-llm (rule path 用 --execute)
+    cache_path: Optional[Path] = None  # LLMCache 路径 (None → ~/.cache/lingwen/llm_cache.json)
+    llm_confidence_threshold: int = 3  # 1-5, min confidence to write a node

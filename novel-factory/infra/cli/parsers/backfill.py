@@ -1,5 +1,6 @@
 """backfill subparser (Phase 9.11 CVG backfill CLI integration)."""
 import argparse
+from pathlib import Path
 
 
 def add_backfill_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:
@@ -41,4 +42,30 @@ def add_backfill_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
         help="Extraction rules YAML path (default: infra/cross_volume/extraction_rules.yaml)",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="详细输出")
+    # --- Phase 9.12 additive: LLM opt-in 4 flag -----------------------------
+    parser.add_argument(
+        "--use-llm",
+        action="store_true",
+        default=False,
+        help="Phase 9.12: enable LLM scanner (default: rule-based, 0 cost)",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        default=False,
+        help="Phase 9.12: [LLM path] 真正写入 RippleStorage (default: dry-run). 强需 --use-llm.",
+    )
+    parser.add_argument(
+        "--cache-path",
+        type=Path,
+        default=None,
+        help="Phase 9.12: LLM cache file path (default: ~/.cache/lingwen/llm_cache.json)",
+    )
+    parser.add_argument(
+        "--llm-confidence-threshold",
+        type=int,
+        default=3,
+        choices=[1, 2, 3, 4, 5],
+        help="Phase 9.12: min LLM confidence (1-5) to write a node (default 3)",
+    )
     return parser
