@@ -97,3 +97,48 @@ class TestRippleStorage:
         assert storage.load_all_nodes() == []
         assert storage.load_all_edges() == []
         assert storage.load_all_ripples() == []
+
+
+class TestAppendNodesAtomic:
+    def test_append_nodes_atomic_commits_all_on_success(self, tmp_path):
+        """Phase 9.11: append_nodes_atomic 写 N=100 nodes 1 call, 0 partial commit."""
+        from infra.cross_volume.reference_graph import ReferenceNode
+        storage = RippleStorage(db_path=tmp_path / "ripple.db")
+        nodes = [
+            ReferenceNode(
+                id=f"character:test_{i}", dimension="character", volume=1, chapter=1,
+                title=f"test_{i}", description="atomic test",
+                payload={"name": f"test_{i}", "role": "test"},
+            )
+            for i in range(100)
+        ]
+        storage.append_nodes_atomic(nodes)
+        loaded = storage.load_all_nodes()
+        assert len(loaded) == 100
+        loaded_ids = {n.id for n in loaded}
+        expected_ids = {f"character:test_{i}" for i in range(100)}
+        assert loaded_ids == expected_ids
+
+    def test_append_nodes_atomic_rollback_on_duplicate_id(self, tmp_path):
+        """Phase 9.11: append_nodes_atomic 异常时 0 partial commit (atomic_batch 兜底)."""
+        from infra.cross_volume.reference_graph import ReferenceNode
+        storage = RippleStorage(db_path=tmp_path / "ripple.db")
+        nodes = [
+            ReferenceNode(
+                id=f"character:test_{i}", dimension="character", volume=1, chapter=1,
+                title=f"test_{i}", description="",
+            )
+            for i in range(50)
+        ]
+        # 注入 1 重复 id 触发 IntegrityError → ValueError → rollback
+        nodes.append(
+            ReferenceNode(
+                id="character:test_25", dimension="character", volume=1, chapter=1,
+                title="dup", description="",
+            )
+        )
+        with pytest.raises(ValueError, match="storage integrity"):
+            storage.append_nodes_atomic(nodes)
+        # rollback → 0 node 写库
+        loaded = storage.load_all_nodes()
+        assert len(loaded) == 0
