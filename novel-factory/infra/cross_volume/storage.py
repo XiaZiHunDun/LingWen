@@ -156,6 +156,25 @@ class RippleStorage:
             except sqlite3.IntegrityError as e:
                 raise ValueError(f"storage integrity: {e}") from e
 
+    def append_nodes_atomic(self, nodes: list[ReferenceNode]) -> None:
+        """Phase 9.11: 1 atomic_batch wrap N inserts, 0 partial commit.
+
+        复用 Phase 9.10 atomic_batch context manager, 仅封装 N × INSERT.
+        IntegrityError → ValueError wrap (跟 Phase 9.10 append_node 1:1 模式).
+        """
+        with self.atomic_batch() as conn:
+            for node in nodes:
+                try:
+                    conn.execute(
+                        "INSERT INTO reference_nodes VALUES (?,?,?,?,?,?,?,?,?)",
+                        (node.id, node.dimension, node.volume, node.chapter,
+                         node.title, node.description,
+                         json.dumps(node.payload, ensure_ascii=False),
+                         node.created_at.isoformat(), node.created_by),
+                    )
+                except sqlite3.IntegrityError as e:
+                    raise ValueError(f"storage integrity: {e}") from e
+
     def load_all_nodes(self) -> list[ReferenceNode]:
         with self._connect() as conn:
             return [self._row_to_node(row) for row in conn.execute("SELECT * FROM reference_nodes")]
