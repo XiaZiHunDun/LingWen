@@ -41,14 +41,31 @@ jobs:
 
       - name: Run pytest
         # 跳过 e2e (需要外部服务) + enhancement_tools (legacy,本地有特殊依赖)
+        # --cov-report=xml:coverage.xml: Codecov action 标准 input format (Cobertura),
+        # 跟 frontend 那个 lcov.info 对偶. 2 flags 不同 format 隔离, Codecov 路由按 flag.
         run: |
           pytest tests/ \
             --ignore=tests/agent_system/test_e2e_workflow.py \
             --ignore=tests/tools/test_enhancement_tools.py \
             --cov=infra --cov=tools --cov=dashboard \
             --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
             --cov-fail-under=30 \
             -q
+
+      - name: Upload coverage to Codecov (backend flag)
+        # Phase 8.44.5: 跟 8.44.4 平行, backend flag 标 infra/tools/dashboard, 等
+        # frontend 那个 build 跑完 (after_n_builds: 2 in codecov.yml) 再 comment.
+        # fail_ci_if_error: false 防 token 缺失阻塞 CI.
+        # 矩阵下只 3.13 (最高版) upload 一次, 3.11/3.12 静默 skip (matrix 标 3 jobs,
+        # 3 次 upload 会触发 Codecov duplicate build warning).
+        if: matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+          verbose: false
 
       - name: Ruff (informational, non-blocking)
         if: matrix.python-version == '3.13'
