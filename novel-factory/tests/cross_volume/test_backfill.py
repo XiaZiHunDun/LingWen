@@ -9,7 +9,6 @@ from pathlib import Path
 
 from infra.cross_volume import ReferenceNode
 from infra.cross_volume.storage import RippleStorage
-from infra.cross_volume.backfill import Backfiller, BackfillStats
 from infra.cross_volume.extractors import (
     CharacterExtractor,
     ForeshadowExtractor,
@@ -191,6 +190,7 @@ plot_point:
 
     def test_backfill_dry_run_does_not_write(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --dry-run 0 写库, 仅 print 统计."""
+        from infra.cross_volume.backfill import Backfiller
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -202,6 +202,7 @@ plot_point:
 
     def test_backfill_execute_writes_via_append_nodes_atomic(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --execute 走 storage.append_nodes_atomic 1 commit."""
+        from infra.cross_volume.backfill import Backfiller
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -218,6 +219,7 @@ plot_point:
 
     def test_backfill_volume_filter_restricts_scan(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --vol 1 抽样式, 仅扫 vol 1 章."""
+        from infra.cross_volume.backfill import Backfiller
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -232,6 +234,7 @@ plot_point:
 class TestBackfillIntegration:
     def test_backfill_execute_commits_atomically(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: --execute 走 append_nodes_atomic, 0 partial write."""
+        from infra.cross_volume.backfill import Backfiller
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
         graph = CrossVolumeReferenceGraph(storage=storage)
         backfiller = Backfiller(rules_path=rules_yaml, corpus_root=corpus, graph=graph)
@@ -243,6 +246,7 @@ class TestBackfillIntegration:
 
     def test_backfill_dry_run_creates_no_db(self, rules_yaml, corpus, tmp_path):
         """Phase 9.11: dry-run 跑后, ripple.db 0 创建 / 0 创建后 0 nodes."""
+        from infra.cross_volume.backfill import Backfiller
         non_existent_db = tmp_path / "ripple_dry.db"
         storage = RippleStorage(db_path=non_existent_db)
         graph = CrossVolumeReferenceGraph(storage=storage)
