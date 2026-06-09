@@ -6,9 +6,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint:testid": "eslint tests/unit/**/*.spec.ts tests/fixtures/lint-testid/*.spec.ts --no-eslintrc -c .eslintrc.cjs --no-error-on-unmatched-pattern",
-    "lint:testid-sync": "eslint --no-error-on-unmatched-pattern --no-eslintrc -c .eslintrc-testid-sync.cjs --rule '{\"testid-class-sync\": \"warn\"}' --rulesdir eslint-rules --ext .vue src/",
-    "lint:vue": "eslint --no-error-on-unmatched-pattern --no-eslintrc -c .eslintrc-vue.cjs --ext .vue src/",
+    "lint:testid": "eslint --config eslint.config.js tests/unit/**/*.spec.ts tests/fixtures/lint-testid/*.spec.ts --no-error-on-unmatched-pattern",
+    "lint:testid-sync": "eslint --config eslint.config.js src/**/*.vue",
+    "lint:vue": "eslint --config eslint.config.js src/**/*.vue",
     "lint:all": "pnpm lint:testid; pnpm lint:testid-sync && pnpm lint:vue",
     "lint:staged": "pnpm lint:all",
     "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs",
@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-vue": "^5.1.0",
     "@vue/server-renderer": "^3.5.35",
     "@vue/test-utils": "^2.4.11",
@@ -33,5 +33,10 @@
     "vite": "^6.0.0",
     "vitest": "^4.1.8",
     "vue-eslint-parser": "^10.4.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "eslint-scope": "^9.0.0"
+    }
   }
 }

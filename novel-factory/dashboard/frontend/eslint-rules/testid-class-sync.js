@@ -63,7 +63,14 @@ module.exports = {
 
     // Build template body visitors. Returns scriptVisitor with Program:exit
     // that triggers the template body walk using our visitors.
-    const templateScriptVisitor = context.parserServices.defineTemplateBodyVisitor({
+    // Phase 8.43.6: ESLint 10 + flat config 走 context.sourceCode.parserServices
+    // (context.parserServices 在 10 的 flat config 下 undefined, vue-eslint-parser 10
+    // 跟 ESLint 10 集成要求 sourceCode 路径). 跟 line 30 fallback 一致.
+    const parserServices = context.parserServices || (context.sourceCode && context.sourceCode.parserServices)
+    if (!parserServices || typeof parserServices.defineTemplateBodyVisitor !== 'function') {
+      return {}  // parser not vue-eslint-parser (e.g., .ts path), rule N/A
+    }
+    const templateScriptVisitor = parserServices.defineTemplateBodyVisitor({
       "VAttribute[directive=false][key.name='data-testid']"(node) {
         const testid = node.value && node.value.value
         if (!testid) return
