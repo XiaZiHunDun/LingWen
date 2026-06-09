@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
-# Phase 8.40: Pre-commit hook — run all lint checks on staged files
-# Mirrors CI but scoped to staged changes only (Phase 8.41 will run full on CI)
+# Phase 8.40: Pre-commit hook — run lint-staged on staged files (scoped to changes)
+# Phase 8.44.2: 改 lint-staged (Phase 8.40 跑 pnpm lint:all 全量太慢, 改 staged-only)
+# 8.44.3 在后续 task 加 backend pytest smoke 段
 . "$(dirname -- "$0")/_/h"
 
-pnpm lint:all
+pnpm lint-staged

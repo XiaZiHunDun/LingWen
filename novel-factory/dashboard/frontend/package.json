@@ -10,7 +10,7 @@
     "lint:testid-sync": "eslint --config eslint.config.js src/**/*.vue",
     "lint:vue": "eslint --config eslint.config.js src/**/*.vue",
     "lint:all": "pnpm lint:testid; pnpm lint:testid-sync && pnpm lint:vue",
-    "lint:staged": "pnpm lint:all",
+    "lint:staged": "lint-staged",
     "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs",
     "prepare": "husky"
   },
@@ -30,6 +30,7 @@
     "eslint-plugin-vue": "^10.0.0",
     "husky": "9",
     "jsdom": "^29.1.1",
+    "lint-staged": "^15.0.0",
     "vite": "^6.0.0",
     "vitest": "^4.1.8",
     "@vitest/coverage-v8": "^4.1.8",
