@@ -258,7 +258,7 @@ class TestBackfillE2E:
     def test_backfill_runs_on_10_chapter_fixture(self, tmp_path):
         """Phase 9.11 E2E: 走 10 章真实 fixture, 验证 4 维 N nodes 范围合理 0 crash."""
         # fixture dir 在 tests/cross_volume/fixtures/
-        from tests.cross_volume.fixtures.sample_corpus import SAMPLE_CORPUS_ROOT
+        from tests.cross_volume.fixtures.sample_corpus import SAMPLE_CORPUS_ROOT, SAMPLE_RULES_YAML
         rules_yaml = tmp_path / "rules.yaml"
         rules_yaml.write_text(SAMPLE_RULES_YAML, encoding="utf-8")
         storage = RippleStorage(db_path=tmp_path / "ripple.db")
