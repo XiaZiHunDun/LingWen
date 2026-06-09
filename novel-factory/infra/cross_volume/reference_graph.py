@@ -28,6 +28,7 @@ class ReferenceNode:
     payload: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str = "manual"
+    confidence: int = 1  # Phase 9.12 additive (default 1, old tests unbroken)
 
     def __post_init__(self):
         if self.volume < 1:
@@ -48,6 +49,7 @@ class ReferenceEdge:
     payload: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str = "manual"
+    evidence: str = ""  # Phase 9.12 additive (default "", old tests unbroken)
 
     def __post_init__(self):
         if not self.from_node_id or not self.to_node_id:
