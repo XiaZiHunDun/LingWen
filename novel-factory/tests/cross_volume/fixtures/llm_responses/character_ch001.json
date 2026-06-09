@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    {
+      "dimension": "character",
+      "node_id": "char_林轩_ch001",
+      "name": "林轩",
+      "aliases": ["轩儿"],
+      "first_appearance_chapter": 1,
+      "traits": ["天才", "孤僻", "复仇心强"],
+      "confidence": 4
+    },
+    {
+      "dimension": "character",
+      "node_id": "char_林雨_ch001",
+      "name": "林雨",
+      "aliases": ["雨妹"],
+      "first_appearance_chapter": 1,
+      "traits": ["温柔", "坚强"],
+      "confidence": 5
+    }
+  ]
+}

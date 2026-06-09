@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    {
+      "dimension": "foreshadow",
+      "node_id": "foreshadow_九转玄功_ch001",
+      "keyword": "九转玄功",
+      "description": "林轩在第一章末尾提到九转玄功, 但未展开",
+      "planted_chapter": 1,
+      "expected_payoff_chapter": 50,
+      "confidence": 3
+    },
+    {
+      "dimension": "foreshadow",
+      "node_id": "foreshadow_神秘玉佩_ch001",
+      "keyword": "神秘玉佩",
+      "description": "林雨随身携带的古旧玉佩, 来源未明",
+      "planted_chapter": 1,
+      "expected_payoff_chapter": null,
+      "confidence": 4
+    }
+  ]
+}
