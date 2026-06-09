@@ -1,0 +1,144 @@
+# infra/cross_volume/reference_graph.py
+"""Phase 9.10: CrossVolumeReferenceGraph container + ReferenceNode + ReferenceEdge."""
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, Literal
+from uuid import uuid4
+
+from infra.cross_volume.ripple import CrossVolumeRipple
+
+logger = logging.getLogger(__name__)
+
+DimensionT = Literal["character", "foreshadow", "setting", "plot_point"]
+RelationshipT = Literal[
+    "mentions", "evolves", "foreshadows", "pays_off",
+    "appears_with", "causes", "conflicts_with", "supports",
+]
+
+
+@dataclass(frozen=True)
+class ReferenceNode:
+    id: str = field(default_factory=lambda: uuid4().hex)
+    dimension: DimensionT = "character"
+    volume: int = 1
+    chapter: int = 0
+    title: str = ""
+    description: str = ""
+    payload: dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by: str = "manual"
+
+    def __post_init__(self):
+        if self.volume < 1:
+            raise ValueError(f"volume must be >= 1, got {self.volume}")
+        if self.chapter < 0:
+            raise ValueError(f"chapter must be >= 0, got {self.chapter}")
+        if len(self.description) > 200:
+            raise ValueError(f"description max 200 chars, got {len(self.description)}")
+
+
+@dataclass(frozen=True)
+class ReferenceEdge:
+    id: str = field(default_factory=lambda: uuid4().hex)
+    from_node_id: str = ""
+    to_node_id: str = ""
+    relationship_type: RelationshipT = "mentions"
+    weight: float = 1.0
+    payload: dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by: str = "manual"
+
+    def __post_init__(self):
+        if not self.from_node_id or not self.to_node_id:
+            raise ValueError("from_node_id and to_node_id required")
+        if self.from_node_id == self.to_node_id:
+            raise ValueError("self-loop edge not allowed")
+        if not 0.0 <= self.weight <= 1.0:
+            raise ValueError(f"weight must be in [0.0, 1.0], got {self.weight}")
+
+
+class CrossVolumeReferenceGraph:
+    def __init__(self, storage) -> None:
+        self._storage = storage
+        self._nodes: dict[str, ReferenceNode] = {}
+        self._edges: dict[str, ReferenceEdge] = {}
+        self._ripples: dict[str, CrossVolumeRipple] = {}
+        self._index_by_volume: dict[int, set[str]] = {}
+        self._index_by_dimension: dict[DimensionT, set[str]] = {}
+        self._index_by_node_edges: dict[str, set[str]] = {}
+        self._load_from_storage()
+
+    def add_node(self, node: ReferenceNode) -> None:
+        if node.id in self._nodes:
+            raise ValueError(f"duplicate node id: {node.id}")
+        self._nodes[node.id] = node
+        self._index_by_volume.setdefault(node.volume, set()).add(node.id)
+        self._index_by_dimension.setdefault(node.dimension, set()).add(node.id)
+        self._storage.append_node(node)
+        logger.debug("add_node: id=%s dim=%s vol=%d", node.id, node.dimension, node.volume)
+
+    def get_node(self, node_id: str) -> ReferenceNode | None:
+        return self._nodes.get(node_id)
+
+    def get_nodes_by_volume(self, volume: int) -> list[ReferenceNode]:
+        return [self._nodes[nid] for nid in self._index_by_volume.get(volume, set())]
+
+    def get_nodes_by_dimension(self, dim: DimensionT) -> list[ReferenceNode]:
+        return [self._nodes[nid] for nid in self._index_by_dimension.get(dim, set())]
+
+    def add_edge(self, edge: ReferenceEdge) -> None:
+        if edge.id in self._edges:
+            raise ValueError(f"duplicate edge id: {edge.id}")
+        if edge.from_node_id not in self._nodes:
+            raise ValueError(f"from_node_id not found: {edge.from_node_id}")
+        if edge.to_node_id not in self._nodes:
+            raise ValueError(f"to_node_id not found: {edge.to_node_id}")
+        self._edges[edge.id] = edge
+        self._index_by_node_edges.setdefault(edge.from_node_id, set()).add(edge.id)
+        self._index_by_node_edges.setdefault(edge.to_node_id, set()).add(edge.id)
+        self._storage.append_edge(edge)
+        logger.debug("add_edge: id=%s %s->%s", edge.id, edge.from_node_id, edge.to_node_id)
+
+    def get_edge(self, edge_id: str) -> ReferenceEdge | None:
+        return self._edges.get(edge_id)
+
+    def get_neighbors(self, node_id: str) -> list[ReferenceNode]:
+        edge_ids = self._index_by_node_edges.get(node_id, set())
+        neighbors: list[ReferenceNode] = []
+        for eid in edge_ids:
+            e = self._edges[eid]
+            other = e.to_node_id if e.from_node_id == node_id else e.from_node_id
+            n = self._nodes.get(other)
+            if n is not None:
+                neighbors.append(n)
+        return neighbors
+
+    def record_ripple(self, ripple: CrossVolumeRipple) -> None:
+        if ripple.id in self._ripples:
+            raise ValueError(f"duplicate ripple id: {ripple.id}")
+        self._ripples[ripple.id] = ripple
+        self._storage.append_ripple(ripple)
+        logger.debug("record_ripple: id=%s status=%s", ripple.id, ripple.status)
+
+    def get_ripple(self, ripple_id: str) -> CrossVolumeRipple | None:
+        return self._ripples.get(ripple_id)
+
+    def trigger_cascade(self, ripple: CrossVolumeRipple) -> list[ReferenceNode]:
+        """Phase 10 stub returns []. Phase 14 real BFS cascade impl."""
+        return []
+
+    def _load_from_storage(self) -> None:
+        for n in self._storage.load_all_nodes():
+            self._nodes[n.id] = n
+            self._index_by_volume.setdefault(n.volume, set()).add(n.id)
+            self._index_by_dimension.setdefault(n.dimension, set()).add(n.id)
+        for e in self._storage.load_all_edges():
+            self._edges[e.id] = e
+            self._index_by_node_edges.setdefault(e.from_node_id, set()).add(e.id)
+            self._index_by_node_edges.setdefault(e.to_node_id, set()).add(e.id)
+        for r in self._storage.load_all_ripples():
+            self._ripples[r.id] = r
+
+    def __len__(self) -> int:
+        return len(self._nodes)
