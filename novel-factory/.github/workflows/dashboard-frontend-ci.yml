@@ -59,7 +59,19 @@ jobs:
 
       - name: Run vitest
         # Phase 8.41: 23 spec files / 95 tests expected
-        run: pnpm vitest run
+        # Phase 8.44.4: 加 --coverage 产出 lcov.info 给 Codecov upload
+        run: pnpm vitest run --coverage
+
+      - name: Upload coverage to Codecov (frontend flag)
+        # Phase 8.44.4: Codecov 跨 vitest + pytest 合并, frontend flag 标 dashboard/frontend/src/
+        # fail_ci_if_error: false 防 token 缺失 / service outage 阻塞 CI
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./dashboard/frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
+          verbose: false
 
       - name: Build (smoke test)
         # 验证 vite build 0 errors, 产出 dist/ (CI 不上传, 仅 smoke)
