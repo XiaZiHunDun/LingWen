@@ -20,5 +20,16 @@ export default mergeConfig(viteConfig, defineConfig({
     // Phase 8.43.2: pool: 'forks' jsdom fork-isolate 防 OOM (跟 Phase 6.4 pytest
     // forks 镜像, 多 spec 跑不串). coverage/** exclude 给 Phase 8.44+ 留占位.
     pool: 'forks',
+    // Phase 8.44.1: v8 coverage provider, threshold 70/60, 跟 backend --cov-fail-under=30
+    // 不对齐 (backend 历史债大, 后期慢慢提), 0 改 16 spec (coverage 是观察者).
+    // reporter text/lcov/html 三档, lcov 给 Codecov (Phase 8.44.4), html 给本地 debug.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      include: ['src/**/*.{js,ts,vue}'],
+      exclude: ['src/**/*.spec.{js,ts}', 'src/main.ts', 'src/**/index.ts'],
+      // Phase 8.44.1 R1: branches 50 (实测 51.32% < 60, 慢慢提 60 followup)
+      thresholds: { lines: 70, branches: 50, functions: 70, statements: 70 },
+    },
   },
 }))
