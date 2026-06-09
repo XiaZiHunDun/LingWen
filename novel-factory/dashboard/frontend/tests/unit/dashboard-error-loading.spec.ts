@@ -56,6 +56,9 @@ describe('OverviewPage e2e 加深 (Phase 8.45.2)', () => {
   })
 
   test('loading state: api slow → initial state (no error, refresh-btn disabled, 5 stat-card render with "0"/"-" fallback)', async () => {
+    // mock 永 not resolve → store.loading 持续 true (mountPage flushPromises 已 flush
+    // store 内部 microtask, 但实际 fetchOverview / fetchChapters 永 pending, store.loading
+    // 不会从 true 翻 false). refresh-btn disabled 一直 hold.
     mocks.fetchOverview.mockReturnValue(new Promise(() => {}))
     mocks.fetchChapters.mockReturnValue(new Promise(() => {}))
 
@@ -133,6 +136,7 @@ describe('OverviewPage e2e 加深 (Phase 8.45.2)', () => {
     // 改显 chapters-empty fallback. chapter-table / chapter-row 0 显.
     expect(wrapper.find(byTestid('chapters-empty')).exists()).toBe(true)
     expect(wrapper.find(byTestid('chapter-table')).exists()).toBe(false)
+    // 注: chapter-row testid Phase 8.31 加在 ChapterTable.vue, 0 改 ChapterTable 在 8.45.2
     expect(wrapper.findAll(byTestid('chapter-row'))).toHaveLength(0)
   })
 })

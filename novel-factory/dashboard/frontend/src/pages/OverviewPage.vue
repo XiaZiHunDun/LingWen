@@ -36,7 +36,7 @@
 
     <section class="table-section">
       <ChapterTable v-if="chapters.length > 0" :chapters="chapters" />
-      <p v-else class="chapters-empty empty-fallback" data-testid="chapters-empty">暂无章节</p>
+      <p v-else class="chapters-empty" data-testid="chapters-empty">暂无章节</p>
     </section>
   </div>
 </template>
@@ -57,8 +57,9 @@ import { useOverviewStore } from '../composables/useOverviewStore.js'
 
 const store = useOverviewStore()
 
-// Phase 8.45.2: 模板 binding 兼容 — 恢复 Phase 8.34 漏改的 4 个 template
-// binding (loading / error / chapters / refresh 引用 undefined 的 latent bug).
+// Phase 8.45.2: 模板 binding 兼容 — 恢复 Phase 8.34 漏改的 3 个 template
+// binding (loading / error / chapters 引用 undefined 的 latent bug).
+// refresh 走 thin pass-through wrapper 在本 commit 一并清理, 不算 latent bug.
 // 解构 store fields + error alias (lastError), 跟 Phase 8.34 之前 page-local
 // refs 同命名. Vue 3 在 template context 自动 unwrap top-level refs, destructured
 // refs 仍 reactive.
