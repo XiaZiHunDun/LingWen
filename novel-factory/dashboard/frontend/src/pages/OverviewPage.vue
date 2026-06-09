@@ -35,7 +35,8 @@
     </section>
 
     <section class="table-section">
-      <ChapterTable :chapters="chapters" />
+      <ChapterTable v-if="chapters.length > 0" :chapters="chapters" />
+      <p v-else class="chapters-empty empty-fallback" data-testid="chapters-empty">暂无章节</p>
     </section>
   </div>
 </template>
@@ -56,9 +57,13 @@ import { useOverviewStore } from '../composables/useOverviewStore.js'
 
 const store = useOverviewStore()
 
-// 模板 binding 通过 store 字段直接访问 (Vue 在 template context 自动 unwrap refs)
-// store.loading / store.lastError / store.chapters 均由 store 提供, 跟 page-local
-// 命名一致, template 一行不改也能 work
+// Phase 8.45.2: 模板 binding 兼容 — 恢复 Phase 8.34 漏改的 4 个 template
+// binding (loading / error / chapters / refresh 引用 undefined 的 latent bug).
+// 解构 store fields + error alias (lastError), 跟 Phase 8.34 之前 page-local
+// refs 同命名. Vue 3 在 template context 自动 unwrap top-level refs, destructured
+// refs 仍 reactive.
+const { loading, chapters, refresh } = store
+const error = store.lastError
 
 // chartData 派生 chapters (按 hook_count / coolpoint_count 投影)
 const chartData = computed(() => {
@@ -104,12 +109,6 @@ const statCards = computed(() => {
     }
   ]
 })
-
-// refresh thin wrapper 委托给 store (template binding 名 refresh 保留, 跟
-// WorkflowsPage 同模式, 保模板 @click="refresh" 像素级不动)
-function refresh() {
-  return store.refresh()
-}
 </script>
 
 <style scoped>
