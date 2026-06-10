@@ -274,3 +274,27 @@ export async function rejectRipple(rippleId, reason = '') {
 export async function fetchRippleStats() {
   return request('/cvg/ripples/stats');
 }
+
+// === Phase 9.14: ripple audit + rollback API methods ===
+
+/**
+ * Phase 9.14: 获取 ripple audit log (时间线)
+ * @param {string} rippleId
+ * @returns {Promise<Array<AuditEntryResponse>>}
+ */
+export async function fetchRippleAudit(rippleId) {
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/audit`);
+}
+
+/**
+ * Phase 9.14: rollback ripple (APPLIED → PENDING, 不可逆操作的唯一后悔药)
+ * @param {string} rippleId
+ * @param {string} reason - 操作原因 (审计用)
+ * @returns {Promise<RippleActionResponse>}
+ */
+export async function rollbackRipple(rippleId, reason) {
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/rollback`, {
+    method: 'POST',
+    body: { reason },
+  });
+}

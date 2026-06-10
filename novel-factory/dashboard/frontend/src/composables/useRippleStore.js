@@ -13,6 +13,8 @@ import {
   fetchRippleStats,
   applyRipple,
   rejectRipple,
+  fetchRippleAudit,
+  rollbackRipple,
 } from '../api/index.js'
 
 const ripples = ref([])
@@ -90,6 +92,49 @@ function applySocketUpdate(update) {
   }
 }
 
+async function fetchAudit(rippleId) {
+  lastError.value = null
+  try {
+    const data = await fetchRippleAudit(rippleId)
+    return data
+  } catch (e) {
+    lastError.value = e?.message || String(e)
+    throw e
+  }
+}
+
+async function rollback(rippleId, reason) {
+  // Optimistic: snapshot before mutate (跟 apply/reject 1:1 immutable update 模式)
+  const idx = ripples.value.findIndex((r) => r.ripple_id === rippleId)
+  if (idx < 0) {
+    throw new Error(`ripple ${rippleId} not in store`)
+  }
+  const snapshot = ripples.value[idx]
+  try {
+    const updated = await rollbackRipple(rippleId, reason)
+    // Apply server response (authoritative) — immutable spread 跟 apply/reject 1:1
+    if (idx >= 0) {
+      ripples.value = [
+        ...ripples.value.slice(0, idx),
+        { ...ripples.value[idx], ...updated },
+        ...ripples.value.slice(idx + 1),
+      ]
+    }
+    return updated
+  } catch (e) {
+    // Rollback optimistic mutation: 恢复 snapshot
+    if (idx >= 0) {
+      ripples.value = [
+        ...ripples.value.slice(0, idx),
+        snapshot,
+        ...ripples.value.slice(idx + 1),
+      ]
+    }
+    lastError.value = e?.message || String(e)
+    throw e
+  }
+}
+
 export function useRippleStore() {
   onMounted(() => {
     if (mountedCount === 0) {
@@ -101,5 +146,9 @@ export function useRippleStore() {
   onBeforeUnmount(() => {
     mountedCount = Math.max(0, mountedCount - 1)
   })
-  return { ripples, loading, lastError, stats, refresh, apply, reject, applySocketUpdate }
+  return {
+    ripples, loading, lastError, stats,
+    refresh, apply, reject, applySocketUpdate,  // 既有 0 改
+    fetchAudit, rollback,                        // Phase 9.14 新增
+  }
 }
