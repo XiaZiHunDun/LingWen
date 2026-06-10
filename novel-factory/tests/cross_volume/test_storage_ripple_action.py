@@ -111,7 +111,9 @@ class TestUpdateRippleStatus:
             def broadcast(self, event):
                 broadcast_called.append(event)
 
-        # Mock dashboard.cvg_ws (lazy import target)
+        # Patch sys.modules because dashboard.cvg_ws is lazy-imported inside
+        # _broadcast_ripple_event's try block; the import statement consults
+        # sys.modules before falling back to filesystem lookup.
         mock_module = type(sys)("dashboard.cvg_ws")
         mock_module.broadcast = _MockManager().broadcast
         sys.modules["dashboard.cvg_ws"] = mock_module
@@ -123,3 +125,48 @@ class TestUpdateRippleStatus:
         assert len(broadcast_called) == 1
         assert broadcast_called[0]["type"] == "ripple_status_changed"
         assert broadcast_called[0]["data"]["ripple_id"] == r.id
+
+
+class TestAppendNodesAtomicBroadcast:
+    def test_empty_nodes_does_not_broadcast(self, storage, monkeypatch):
+        """Phase 9.13: 空 nodes list 是合法 no-op, 不发 phantom WS event."""
+        broadcast_called = []
+
+        class _MockManager:
+            def broadcast(self, event):
+                broadcast_called.append(event)
+
+        mock_module = type(sys)("dashboard.cvg_ws")
+        mock_module.broadcast = _MockManager().broadcast
+        sys.modules["dashboard.cvg_ws"] = mock_module
+
+        storage.append_nodes_atomic([])
+
+        assert len(broadcast_called) == 0
+
+    def test_nonempty_nodes_broadcasts_ripple_created(self, storage, monkeypatch):
+        """Phase 9.13: append_nodes_atomic 末尾 broadcast ripple_created event."""
+        broadcast_called = []
+
+        class _MockManager:
+            def broadcast(self, event):
+                broadcast_called.append(event)
+
+        mock_module = type(sys)("dashboard.cvg_ws")
+        mock_module.broadcast = _MockManager().broadcast
+        sys.modules["dashboard.cvg_ws"] = mock_module
+
+        node = ReferenceNode(
+            id="node-1",
+            dimension="character",
+            volume=1,
+            chapter=1,
+            title="Test",
+            description="Test",
+            payload={},
+        )
+        storage.append_nodes_atomic([node])
+
+        assert len(broadcast_called) == 1
+        assert broadcast_called[0]["type"] == "ripple_created"
+        assert broadcast_called[0]["data"]["node_ids"] == ["node-1"]

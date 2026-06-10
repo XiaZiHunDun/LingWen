@@ -11,6 +11,7 @@ import json
 import logging
 import sqlite3
 from contextlib import contextmanager
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
@@ -175,10 +176,11 @@ class RippleStorage:
                 except sqlite3.IntegrityError as e:
                     raise ValueError(f"storage integrity: {e}") from e
         # Phase 9.13: 1-line defensive broadcast (per new ripple_created)
-        _broadcast_ripple_event(
-            "ripple_created",
-            {"node_ids": [n.id for n in nodes]},
-        )
+        if nodes:
+            _broadcast_ripple_event(
+                "ripple_created",
+                {"node_ids": [n.id for n in nodes]},
+            )
 
     def load_all_nodes(self) -> list[ReferenceNode]:
         with self._connect() as conn:
@@ -232,11 +234,25 @@ class RippleStorage:
         limit: int = 50,
         offset: int = 0,
     ) -> list[CrossVolumeRipple]:
-        """Filter ripples by status + volume (JOIN via trigger_volume).
+        """Filter ripples by status + volume (UI 3 filter dropdowns per spec 4.1.1).
 
-        dimension filter: 留 Phase 9.14 扩展 (目前 reference_ripples 表无 dimension 字段,
-        source/target 节点 dimension 需从 reference_nodes JOIN;Phase 9.13 UI 仅 3 filter)
+        Args:
+            status: Filter by ripple status (e.g. "pending", "applied").
+            dimension: 留 Phase 9.14 扩展 — currently raises NotImplementedError when
+                passed (reference_ripples 表无 dimension 字段, source/target 节点
+                dimension 需从 reference_nodes JOIN;UI dropdown 暂按 no-op 渲染)。
+            volume: Filter by trigger_volume.
+            limit: Max records to return (default 50).
+            offset: Pagination offset (default 0).
+
+        Returns:
+            list[CrossVolumeRipple] matching filters, ordered by insertion.
         """
+        if dimension is not None:
+            raise NotImplementedError(
+                "dimension filter pending Phase 9.14 (需 reference_nodes JOIN, "
+                "Phase 9.13 reference_ripples 表无 dimension 字段)"
+            )
         clauses, params = [], []
         if status is not None:
             clauses.append("status = ?")
@@ -265,6 +281,8 @@ class RippleStorage:
     ) -> CrossVolumeRipple:
         """Status change + applied_at + WS broadcast.
 
+        actor: 广播 only (Phase 9.13);持久化 (audit column) 留 Phase 9.14 audit log。
+
         Validation:
             - ripple_id 必须存在 (else raise KeyError, API 转 404)
             - new_status 必须 in (applied, rejected) (else raise ValueError)
@@ -291,11 +309,17 @@ class RippleStorage:
                 (new_status, now_iso, ripple_id),
             )
             conn.commit()
+        # Phase 9.13: avoid re-fetch race (return updated in-memory copy)
+        updated = replace(
+            current,
+            status=new_status,
+            applied_at=datetime.fromisoformat(now_iso),
+        )
         _broadcast_ripple_event(
             "ripple_status_changed",
             {"ripple_id": ripple_id, "new_status": new_status, "actor": actor, "applied_at": now_iso},
         )
-        return self.get_ripple_by_id(ripple_id)
+        return updated
 
 
 # Phase 9.13: additive — ConflictError exception + 3 module-level helpers
