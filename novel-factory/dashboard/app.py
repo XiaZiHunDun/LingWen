@@ -780,10 +780,11 @@ def create_app(
         )
 
     @app.post("/api/cvg/ripples/{ripple_id}/reject", response_model=RippleActionResponse)
-    def reject_ripple(
-        ripple_id: str, reason: Optional[str] = None
-    ) -> RippleActionResponse:
-        """Phase 9.13: 拒绝 ripple (PENDING → REJECTED)。"""
+    def reject_ripple(ripple_id: str) -> RippleActionResponse:
+        """Phase 9.13: 拒绝 ripple (PENDING → REJECTED)。
+
+        Phase 9.13: 0 reason param (YAGNI — persistence deferred to Phase 9.14 audit log)
+        """
         storage = _default_storage()
         try:
             ripple = storage.update_ripple_status(ripple_id, "rejected", actor="user")

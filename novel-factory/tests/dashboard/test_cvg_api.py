@@ -116,7 +116,7 @@ class TestApplyRipple:
 class TestRejectRipple:
     def test_reject_pending_returns_200(self, client, storage):
         ids = _seed(storage, count=1, status="pending")
-        resp = client.post(f"/api/cvg/ripples/{ids[0]}/reject?reason=test")
+        resp = client.post(f"/api/cvg/ripples/{ids[0]}/reject")
         assert resp.status_code == 200
         assert resp.json()["status"] == "rejected"
 
