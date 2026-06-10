@@ -11,7 +11,7 @@ import json
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
@@ -174,6 +174,11 @@ class RippleStorage:
                     )
                 except sqlite3.IntegrityError as e:
                     raise ValueError(f"storage integrity: {e}") from e
+        # Phase 9.13: 1-line defensive broadcast (per new ripple_created)
+        _broadcast_ripple_event(
+            "ripple_created",
+            {"node_ids": [n.id for n in nodes]},
+        )
 
     def load_all_nodes(self) -> list[ReferenceNode]:
         with self._connect() as conn:
@@ -218,3 +223,106 @@ class RippleStorage:
             applied_at=datetime.fromisoformat(row["applied_at"]) if row["applied_at"] else None,
             payload=json.loads(row["payload"]),
         )
+
+    def get_ripples(
+        self,
+        status: str | None = None,
+        dimension: str | None = None,
+        volume: int | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[CrossVolumeRipple]:
+        """Filter ripples by status + volume (JOIN via trigger_volume).
+
+        dimension filter: 留 Phase 9.14 扩展 (目前 reference_ripples 表无 dimension 字段,
+        source/target 节点 dimension 需从 reference_nodes JOIN;Phase 9.13 UI 仅 3 filter)
+        """
+        clauses, params = [], []
+        if status is not None:
+            clauses.append("status = ?")
+            params.append(status)
+        if volume is not None:
+            clauses.append("trigger_volume = ?")
+            params.append(volume)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        sql = f"SELECT * FROM reference_ripples {where} LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        with self._connect() as conn:
+            return [self._row_to_ripple(row) for row in conn.execute(sql, params)]
+
+    def get_ripple_by_id(self, ripple_id: str) -> CrossVolumeRipple | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
+            ).fetchone()
+            return self._row_to_ripple(row) if row else None
+
+    def update_ripple_status(
+        self,
+        ripple_id: str,
+        new_status: str,
+        actor: str = "user",
+    ) -> CrossVolumeRipple:
+        """Status change + applied_at + WS broadcast.
+
+        Validation:
+            - ripple_id 必须存在 (else raise KeyError, API 转 404)
+            - new_status 必须 in (applied, rejected) (else raise ValueError)
+            - 当前 status 不能是 terminal, 否则 raise ConflictError (API 转 409)
+        """
+        if new_status not in _VALID_TRANSITION_STATUSES:
+            raise ValueError(
+                f"new_status must be one of {_VALID_TRANSITION_STATUSES}, got {new_status!r}"
+            )
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"ripple {ripple_id} not found")
+            current = self._row_to_ripple(row)
+            if current.status in _TERMINAL_STATUSES:
+                raise ConflictError(
+                    f"ripple {ripple_id} already in terminal status {current.status!r}"
+                )
+            now_iso = datetime.now(timezone.utc).isoformat()
+            conn.execute(
+                "UPDATE reference_ripples SET status = ?, applied_at = ? WHERE id = ?",
+                (new_status, now_iso, ripple_id),
+            )
+            conn.commit()
+        _broadcast_ripple_event(
+            "ripple_status_changed",
+            {"ripple_id": ripple_id, "new_status": new_status, "actor": actor, "applied_at": now_iso},
+        )
+        return self.get_ripple_by_id(ripple_id)
+
+
+# Phase 9.13: additive — ConflictError exception + 3 module-level helpers
+
+
+class ConflictError(Exception):
+    """Raised when an operation conflicts with current ripple state.
+
+    Used by update_ripple_status() when the target ripple is already in
+    a terminal status (applied/rejected/failed) and cannot be transitioned.
+    API layer translates this to HTTP 409.
+    """
+
+
+_TERMINAL_STATUSES = ("applied", "rejected", "failed")
+_VALID_TRANSITION_STATUSES = ("applied", "rejected")
+
+
+def _broadcast_ripple_event(event_type: str, data: dict) -> None:
+    """Phase 9.13: defensive 1-line broadcast hook.
+
+    Lazy import dashboard.cvg_ws to avoid hard dashboard dependency in CLI
+    environment. Wrapped in try/except — broadcast failure never affects
+    main write path (跟 Phase 8.5 cost_tracker.record() 1:1 pattern).
+    """
+    try:
+        from dashboard.cvg_ws import broadcast as _cvg_broadcast
+        _cvg_broadcast({"type": event_type, "data": data})
+    except Exception:  # noqa: BLE001
+        logger.debug("cvg_ws broadcast skipped (dashboard not configured)")
