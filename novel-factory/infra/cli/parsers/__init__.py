@@ -15,6 +15,8 @@ from .doctor import add_doctor_parser
 from .llm_analyze import add_llm_analyze_parser
 from .polish import add_polish_parser
 from .repair import add_repair_parser
+from .ripple_audit import add_ripple_audit_parser
+from .ripple_rollback import add_ripple_rollback_parser
 from .status import add_status_parser
 from .story_contract import add_story_contract_parser
 from .verify import add_verify_parser
@@ -56,5 +58,8 @@ Examples:
     add_llm_analyze_parser(subparsers)
     add_story_contract_parser(subparsers)
     add_backfill_parser(subparsers)
+    # Phase 9.14 additive: 2 new subcommands (ripple-audit + ripple-rollback)
+    add_ripple_audit_parser(subparsers)
+    add_ripple_rollback_parser(subparsers)
 
     return parser

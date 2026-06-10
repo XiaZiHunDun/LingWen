@@ -29,6 +29,8 @@ from .llm_analyze import LLMAnalyzeCommand
 from .polish import PolishCommand
 from .reading_power import ReadingPowerCommand
 from .repair import RepairCommand
+from .ripple_audit import RippleAuditCommand
+from .ripple_rollback import RippleRollbackCommand
 from .status import StatusCommand
 from .story_contract import StoryContractCommand
 from .verify import VerifyCommand
@@ -45,12 +47,16 @@ COMMANDS = {
     "reading-power": ReadingPowerCommand,
     "story-contract": StoryContractCommand,
     "backfill": BackfillCommand,
+    # Phase 9.14 additive: 2 new top-level subcommands
+    "ripple-audit": RippleAuditCommand,
+    "ripple-rollback": RippleRollbackCommand,
 }
 
 __all__ = [
     "Command", "CheckCommand", "RepairCommand", "VerifyCommand", "StatusCommand",
     "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
     "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
+    "RippleAuditCommand", "RippleRollbackCommand",
     "COMMANDS", "get_command", "list_commands",
 ]
 

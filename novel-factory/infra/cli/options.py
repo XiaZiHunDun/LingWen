@@ -81,3 +81,25 @@ class BackfillOptions(UnifiedOptions):
     apply: bool = False  # --apply 强需 --use-llm (rule path 用 --execute)
     cache_path: Optional[Path] = None  # LLMCache 路径 (None → ~/.cache/lingwen/llm_cache.json)
     llm_confidence_threshold: int = 3  # 1-5, min confidence to write a node
+
+
+@dataclass
+class RippleAuditOptions(UnifiedOptions):
+    """ripple-audit 命令选项 (Phase 9.14).
+
+    Reads ripple_audit history for 1 ripple. 0 改 storage / 0 启动 dashboard。
+    """
+    ripple_id: str = ""
+    limit: int = 20  # max audit entries to print (newest first)
+
+
+@dataclass
+class RippleRollbackOptions(UnifiedOptions):
+    """ripple-rollback 命令选项 (Phase 9.14).
+
+    Soft-rollback applied/rejected ripple → pending + audit entry.
+    --reason 强需 (storage layer 也会 double-check 空字符串)。
+    """
+    ripple_id: str = ""
+    reason: str = ""  # required, non-empty
+    actor: str = "cli:lingwen-ripple"

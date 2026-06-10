@@ -15,6 +15,8 @@ Commands:
     anti-trope - 生成反套路创意选项
     llm-analyze - LLM质检决策分析
     backfill   - 跨卷涟漪 4 维规则回填 (Phase 9.11)
+    ripple-audit - 打印涟漪审计历史 (Phase 9.14)
+    ripple-rollback - 回滚已应用/已拒绝涟漪 (Phase 9.14)
 """
 
 import argparse
@@ -32,6 +34,8 @@ from infra.cli import (
     PolishOptions,
     RangeParser,
     RepairOptions,
+    RippleAuditOptions,
+    RippleRollbackOptions,
     StoryContractOptions,
     UnifiedOptions,
     VerifyOptions,
@@ -117,6 +121,26 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             apply=getattr(args, "apply", False),
             cache_path=getattr(args, "cache_path", None),
             llm_confidence_threshold=getattr(args, "llm_confidence_threshold", 3),
+        )
+    # Phase 9.14 additive: 2 new top-level subcommands (0 改 backfill 分支)
+    elif command == "ripple-audit":
+        return RippleAuditOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+            dry_run=False,
+            ripple_id=args.ripple_id,
+            limit=args.limit,
+        )
+    elif command == "ripple-rollback":
+        return RippleRollbackOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+            dry_run=False,
+            ripple_id=args.ripple_id,
+            reason=args.reason,
+            actor=getattr(args, "actor", "cli:lingwen-ripple"),
         )
 
     chapter_range = parse_range(args.range, RangeParser())

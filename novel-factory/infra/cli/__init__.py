@@ -5,6 +5,8 @@ from infra.cli.options import (
     LLMAnalyzeOptions,
     PolishOptions,
     RepairOptions,
+    RippleAuditOptions,
+    RippleRollbackOptions,
     StoryContractOptions,
     UnifiedOptions,
     VerifyOptions,
@@ -22,4 +24,6 @@ __all__ = [
     "StoryContractOptions",
     "LLMAnalyzeOptions",
     "BackfillOptions",
+    "RippleAuditOptions",
+    "RippleRollbackOptions",
 ]
