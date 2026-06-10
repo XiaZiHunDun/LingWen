@@ -108,3 +108,34 @@ class TestBackwardCompat:
         # Now apply without body
         resp = c.post(f"/api/cvg/ripples/{rid}/apply")
         assert resp.status_code == 200
+
+    def test_apply_with_body_flows_actor_origin_to_audit(self, client):
+        """POST /apply with body {actor, origin} → audit row records those values.
+
+        T2 fix (update_ripple_status now takes origin kwarg) + T3 work (apply_ripple
+        handler passes body.origin) plumb the override path end-to-end. This test
+        closes the coverage gap by verifying the chain.
+        """
+        c, rid = client
+        # Rollback to pending first (apply requires pending status)
+        c.post(
+            f"/api/cvg/ripples/{rid}/rollback",
+            json={"actor": "u", "origin": "ui", "reason": "r"},
+        )
+        # Apply with explicit actor/origin override
+        resp = c.post(
+            f"/api/cvg/ripples/{rid}/apply",
+            json={"actor": "alice", "origin": "cli"},
+        )
+        assert resp.status_code == 200
+        # Verify the audit row reflects the body values
+        audit_resp = c.get(f"/api/cvg/ripples/{rid}/audit")
+        assert audit_resp.status_code == 200
+        entries = audit_resp.json()
+        # Most recent entry should be the 'applied' from this test
+        applied_entries = [e for e in entries if e["action"] == "applied"]
+        assert len(applied_entries) >= 1
+        latest = applied_entries[0]
+        assert latest["actor"] == "alice"
+        assert latest["origin"] == "cli"
+        assert latest["new_status"] == "applied"
