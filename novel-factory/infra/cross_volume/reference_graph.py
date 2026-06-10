@@ -1,6 +1,7 @@
 # infra/cross_volume/reference_graph.py
 """Phase 9.10: CrossVolumeReferenceGraph container + ReferenceNode + ReferenceEdge."""
 import logging
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -58,6 +59,22 @@ class ReferenceEdge:
             raise ValueError("self-loop edge not allowed")
         if not 0.0 <= self.weight <= 1.0:
             raise ValueError(f"weight must be in [0.0, 1.0], got {self.weight}")
+
+
+@dataclass(frozen=True)
+class CascadedRipple:
+    """Phase 9.15: BFS-cascaded ripple from trigger_ripple_id.
+
+    Captures all downstream nodes/edges/actions reachable within depth 3.
+    Immutable, JSON-serializable (cascade_* use tuple, depth_reached int).
+    """
+    trigger_ripple_id: str
+    cascade_nodes: tuple[ReferenceNode, ...]
+    cascade_edges: tuple[ReferenceEdge, ...]
+    cascade_actions: tuple[dict, ...]
+    depth_reached: int  # 0-3, max depth BFS actually traversed
+    generated_at: str  # ISO 8601
+    bfs_algorithm_version: str = "v1"  # Phase 9.16 forward-compat
 
 
 class CrossVolumeReferenceGraph:
@@ -126,9 +143,55 @@ class CrossVolumeReferenceGraph:
     def get_ripple(self, ripple_id: str) -> CrossVolumeRipple | None:
         return self._ripples.get(ripple_id)
 
-    def trigger_cascade(self, ripple: CrossVolumeRipple) -> list[ReferenceNode]:
-        """Phase 10 stub returns []. Phase 14 real BFS cascade impl."""
-        return []
+    def trigger_cascade(self, ripple: CrossVolumeRipple, max_depth: int = 3) -> CascadedRipple:
+        """Phase 9.15: real BFS cascade (replaces Phase 9.10 stub returns []).
+
+        Depth limit `max_depth` (default 3) + visited set (防环).
+        Collects 1 proposed_action per hop.
+        """
+        visited: set[str] = set(ripple.affected_nodes)
+        queue: deque[tuple[str, int]] = deque(
+            (n, 1) for n in ripple.affected_nodes
+        )
+        collected_nodes: list[ReferenceNode] = []
+        collected_edges: list[ReferenceEdge] = []
+        collected_actions: list[dict] = []
+        reached_depth = 0
+        while queue:
+            node_id, depth = queue.popleft()
+            if depth > max_depth:
+                continue
+            reached_depth = max(reached_depth, depth)
+            for neighbor in self.get_neighbors(node_id):
+                if neighbor.id in visited:
+                    continue
+                visited.add(neighbor.id)
+                collected_nodes.append(neighbor)
+                # Collect edges for the hop (both source + target side)
+                edge_ids = self._index_by_node_edges.get(node_id, set())
+                for eid in edge_ids:
+                    e = self._edges[eid]
+                    if (e.from_node_id == node_id and e.to_node_id == neighbor.id) or \
+                       (e.to_node_id == node_id and e.from_node_id == neighbor.id):
+                        collected_edges.append(e)
+                # 1 proposed_action per hop
+                collected_actions.append({
+                    "action": "propagate",
+                    "from": node_id,
+                    "to": neighbor.id,
+                    "depth": depth,
+                    "weight": neighbor.payload.get("weight", 1.0),
+                })
+                if depth < max_depth:
+                    queue.append((neighbor.id, depth + 1))
+        return CascadedRipple(
+            trigger_ripple_id=ripple.id,
+            cascade_nodes=tuple(collected_nodes),
+            cascade_edges=tuple(collected_edges),
+            cascade_actions=tuple(collected_actions),
+            depth_reached=reached_depth,
+            generated_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     def _load_from_storage(self) -> None:
         for n in self._storage.load_all_nodes():
