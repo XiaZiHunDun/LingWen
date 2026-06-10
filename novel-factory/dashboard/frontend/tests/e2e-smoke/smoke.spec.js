@@ -15,7 +15,9 @@ import { test, expect } from '@playwright/test'
 test.describe('Dashboard smoke (Phase 8.45.3)', () => {
   test('page title contains "Dashboard"', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveTitle(/Dashboard/)
+    // Phase 9.17: index.html 真实 title 是 "灵文 · 阅读力仪表盘" (中文), regex
+    // 接受中英文 (1:1 跟 index.html:6 品牌 title 兼容, future-proof)
+    await expect(page).toHaveTitle(/灵文|LingWen|Dashboard/i)
   })
 
   test('navigate to /workflows via nav click', async ({ page }) => {

@@ -667,6 +667,7 @@ __all__ = [
     "CascadeEdgeResponse",
     "CascadeResponse",
     "CascadePreviewResponse",
+    "CascadeUpdatePayload",
 ]
 
 
@@ -752,3 +753,22 @@ class CascadePreviewResponse(BaseModel):
     cascade_node_count: int = 0
     cascade_edge_count: int = 0
     max_depth: int = 0
+
+
+# === Phase 9.17: cascade update WS payload schema ===
+
+class CascadeUpdatePayload(BaseModel):
+    """Phase 9.17: WS cascade.update payload schema (跟 RippleRollbackRequest 1:1 风格).
+
+    替换 Phase 9.16 dict literal {ripple_id, cascade_node_count, cascade_edge_count,
+    depth_reached, bfs_algorithm_version} — IDE 显式 types + Pydantic v2 runtime
+    ValidationError 提前 (negative count / typo bfs_algorithm_version 立刻 fail).
+
+    双路径: cascade_notifier.notify_cascade_update 既接受 typed CascadeUpdatePayload
+    instance, 也接受 dict (走 model_validate fallback 兜底, 0 改旧 caller).
+    """
+    ripple_id: str = Field(..., min_length=1)
+    cascade_node_count: int = Field(..., ge=0)
+    cascade_edge_count: int = Field(..., ge=0)
+    depth_reached: int = Field(..., ge=0)
+    bfs_algorithm_version: Literal["v1", "v2_weighted"]

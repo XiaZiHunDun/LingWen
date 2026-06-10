@@ -12,6 +12,11 @@
 import { test, expect } from '../_setup.js';
 
 test.describe('Phase 9.14: ripple audit timeline e2e', () => {
+  // Phase 9.17: 主公决策 2026-06-11 AskUserQuestion 选 A — 3 tests 需 live backend
+  // + Phase 9.13 backfill seed data (apply/rollback POST + audit timeline 验证),
+  // 0 backend 时必 fail. 留 test.skip 注明, 留给真 backend 用户跑 (Phase 9.13
+  // followup unskip 等 backfill completion).
+  test.skip(true, 'requires live backend with seed data; run after Phase 9.13 backfill on real data')
   test('page mount → drawer open → audit timeline visible', async ({ page }) => {
     await page.goto('/ripples');
     await page.waitForSelector('[data-testid="ripple-card"]', { timeout: 5000 });
@@ -24,6 +29,7 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
     await expect(timeline.or(empty)).toBeVisible();
   });
 
+  test.skip(true, 'requires live backend with seed data; run after Phase 9.13 backfill on real data')
   test('apply then rollback → audit timeline updates', async ({ page }) => {
     await page.goto('/ripples?status=pending');
     // Set up dialog handler IMMEDIATELY after goto (must catch any dialog from drawer mount)
@@ -53,6 +59,7 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
     await expect(page.locator('[data-testid="ripple-audit-list"]')).toContainText('rolled_back');
   });
 
+  test.skip(true, 'requires live backend with seed data; run after Phase 9.13 backfill on real data')
   test('empty audit shows "No history yet"', async ({ page }) => {
     // Filter to a ripple pre-Phase 9.14 (no audit history)
     await page.goto('/ripples?status=rejected');

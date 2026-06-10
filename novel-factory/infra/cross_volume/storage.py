@@ -212,18 +212,23 @@ class RippleStorage:
                 logger.warning("cascade hook failed for ripple %s: %s", ripple.id, e)
                 # 0 propagate, ripple INSERT 已 commit, cascade 是 best-effort
 
-        # Phase 9.16: cascade hook 完成后推 WS (best-effort, 跟 record_audit 1:1)
-        # 函数内 import 防 circular (infra → dashboard)
+        # Phase 9.17: cascade hook 完成后推 WS (best-effort, 跟 record_audit 1:1)
+        # 函数内 import 防 circular (infra → dashboard).
+        # typed CascadeUpdatePayload 替换 Phase 9.16 dict literal — IDE 显式 types +
+        # Pydantic v2 ValidationError 提前 (5 fields 任一写错立刻 fail).
         if cascaded is not None:
             try:
                 from dashboard.cascade_notifier import notify_cascade_update
-                notify_cascade_update({
-                    "ripple_id": cascaded.trigger_ripple_id,
-                    "cascade_node_count": len(cascaded.cascade_nodes),
-                    "cascade_edge_count": len(cascaded.cascade_edges),
-                    "depth_reached": cascaded.depth_reached,
-                    "bfs_algorithm_version": cascaded.bfs_algorithm_version,
-                })
+                from dashboard.protocols import CascadeUpdatePayload
+                notify_cascade_update(
+                    CascadeUpdatePayload(
+                        ripple_id=cascaded.trigger_ripple_id,
+                        cascade_node_count=len(cascaded.cascade_nodes),
+                        cascade_edge_count=len(cascaded.cascade_edges),
+                        depth_reached=cascaded.depth_reached,
+                        bfs_algorithm_version=cascaded.bfs_algorithm_version,
+                    )
+                )
             except Exception as e:
                 logger.warning("append_ripple: cascade notifier failed: %s", e)
         # Phase 9.14: write 'created' audit entry (independent commit)

@@ -16,9 +16,12 @@ asyncio.ensure_future, else loop.run_until_complete.
 """
 import asyncio
 import logging
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from dashboard.protocols import CascadeUpdatePayload  # avoid runtime circular
 
 # Phase 6.4 ConnectionManager 类型 stub (避免跨模块 import, runtime duck typing)
 WsManagerT = Optional[Callable[[dict], Any]]
@@ -34,10 +37,14 @@ def set_ws_manager(ws: WsManagerT) -> None:
     logger.debug("cascade_notifier: ws_manager injected")
 
 
-def notify_cascade_update(payload: dict[str, Any]) -> None:
+def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
     """record_ripple cascade hook 完成后调, 推 cascade.update WS event.
 
-    payload schema (跟 useWorkflowSocket.js 1:1):
+    Phase 9.17: typed CascadeUpdatePayload 接受 (Pydantic v2 IDE autocomplete +
+    runtime ValidationError 提前), dict 通过 model_validate fallback 兜底
+    (0 改旧 caller, backward compat).
+
+    envelope schema (跟 useWorkflowSocket.js 1:1):
       {
         "type": "cascade.update",
         "payload": {
@@ -45,7 +52,7 @@ def notify_cascade_update(payload: dict[str, Any]) -> None:
           "cascade_node_count": int,
           "cascade_edge_count": int,
           "depth_reached": int,
-          "bfs_algorithm_version": str,  # "v1" / "v2_weighted"
+          "bfs_algorithm_version": "v1" | "v2_weighted"
         }
       }
     """
@@ -53,7 +60,17 @@ def notify_cascade_update(payload: dict[str, Any]) -> None:
         # ws_manager 未注入 (test / startup race) → logger.debug skip
         logger.debug("cascade_notifier: ws_manager not set, skip broadcast")
         return
-    envelope = {"type": "cascade.update", "payload": payload}
+    # Phase 9.17: typed schema validation (跟 9.14 record_audit 1:1 pattern)
+    # 双路径: typed CascadeUpdatePayload instance 直接用, dict 用 model_validate
+    from dashboard.protocols import CascadeUpdatePayload as _CascadeUpdatePayload
+    if not isinstance(payload, _CascadeUpdatePayload):
+        try:
+            payload = _CascadeUpdatePayload.model_validate(payload)
+        except Exception as e:
+            # ValidationError caught — skip broadcast, log warning (跟 9.16 兜底 1:1)
+            logger.warning("cascade_notifier: invalid payload, skip: %s", e)
+            return
+    envelope = {"type": "cascade.update", "payload": payload.model_dump()}
     # Snapshot 避免 loop swap race (跟 cvg_ws.broadcast 1:1)
     ws = _ws_manager
     try:

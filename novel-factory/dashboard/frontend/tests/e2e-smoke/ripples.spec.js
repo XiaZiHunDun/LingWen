@@ -3,6 +3,19 @@
 import { test, expect } from '../_setup.js';
 
 test.describe('Ripples Page Smoke', () => {
+  // Phase 9.17: 0-backend test mode. mock /api/ripples → [] 让 2 tests 走 empty-state
+  // path 立刻 pass. test 3 既有 `if (card.count() > 0)` skip 保护保留 (0 业务代码改).
+  // 真 backend 集成测试留 Phase 9.18+ (跟 Phase 9.13 backfill completion 走).
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/ripples**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      })
+    )
+  });
+
   test('mount /ripples → page renders with filter + list + sidebar nav', async ({ page }) => {
     await page.goto('/ripples');
     await expect(page.getByTestId('nav-ripples')).toBeVisible();

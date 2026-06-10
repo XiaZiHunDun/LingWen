@@ -31,6 +31,9 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const WS_PATH = '/api/ws/workflows';
 const RECONNECT_DELAY_MS = 1000;
+// Phase 9.17: guard 防止 cascade handler 累积 leak (反复 mount/unmount / 脚本 bug)
+// 50 = 远超实际 (1-3 components), console.warn 留 diagnostic
+const MAX_HANDLERS = 50;
 
 // ---- Module-level singleton state (Phase 8.11) ----
 const status = ref(null);
@@ -172,7 +175,14 @@ export function useWorkflowSocket() {
 }
 
 // Phase 9.16: cascade handler 注册 API (Set 自动去重; onBeforeUnmount 自动 cleanup)
+// Phase 9.17: 加 MAX_HANDLERS=50 guard 防止 leak
 export function onCascadeUpdate(handler) {
+  if (registeredHandlers.cascade.size >= MAX_HANDLERS) {
+    console.warn(
+      `[useWorkflowSocket] MAX_HANDLERS=${MAX_HANDLERS} reached, refusing to register cascade handler`
+    );
+    return;
+  }
   registeredHandlers.cascade.add(handler);
   // Phase 9.16: dev-only test affordance — 暴露 __cascadeHandlers 给 e2e page.evaluate
   // 仅在 dev mode 注入, prod build 0 影响 (import.meta.env.DEV=false 时 stub 掉).
