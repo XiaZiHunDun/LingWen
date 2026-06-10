@@ -31,6 +31,7 @@
         <OverviewPage v-if="activeNav === 'overview'" />
         <DecisionsPage v-else-if="activeNav === 'decisions'" />
         <WorkflowsPage v-else-if="activeNav === 'workflows'" />
+        <RipplesPage v-else-if="activeNav === 'ripples'" /> <!-- Phase 9.13 -->
         <div v-else-if="activeNav === 'chapters'" class="placeholder-view">
           <p class="pixel-text">章节管理 - 开发中</p>
         </div>
@@ -50,6 +51,7 @@ import { ref } from 'vue'
 import OverviewPage from './pages/OverviewPage.vue'
 import DecisionsPage from './pages/DecisionsPage.vue'
 import WorkflowsPage from './pages/WorkflowsPage.vue'
+import RipplesPage from './pages/RipplesPage.vue' // Phase 9.13
 import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
 
@@ -62,6 +64,7 @@ const navItems = [
   { id: 'workflows', label: '工作流', icon: '🔀' },
   { id: 'chapters', label: '章节', icon: '📖' },
   { id: 'analytics', label: '分析', icon:'📈' },
+  { id: 'ripples', label: '涟漪', icon: '🌀' },
   { id: 'settings', label: '设置', icon: '⚙️' }
 ]
 </script>
