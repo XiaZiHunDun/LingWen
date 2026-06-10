@@ -123,6 +123,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRippleStore } from '../composables/useRippleStore.js';
+import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';  // Phase 9.16
 import CascadeGraph from './CascadeGraph.vue';
 import ApplyConfirmModal from './ApplyConfirmModal.vue';
 
@@ -202,6 +203,14 @@ onMounted(() => {
   loadAudit();
   // Eager-load cascade on mount (for "Show cascade" toggle, no flash of empty)
   loadCascadeAndPreview();
+  // Phase 9.16: 注册 cascade handler, 匹配当前打开 ripple 静默 re-fetch
+  onCascadeUpdate((payload) => {
+    if (payload && payload.ripple_id === props.ripple.ripple_id) {
+      store.loadCascade(props.ripple.ripple_id);
+      store.loadCascadePreview(props.ripple.ripple_id);
+    }
+    // 不匹配 ignore (next open 走 9.15 GET 返 fresh data)
+  });
 });
 watch(() => props.ripple && props.ripple.ripple_id, () => {
   loadAudit();

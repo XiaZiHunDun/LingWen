@@ -21,6 +21,7 @@ from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
+from dashboard.cascade_notifier import set_ws_manager  # Phase 9.16: cascade WS push injector
 from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
     CascadeEdgeResponse,
@@ -605,6 +606,8 @@ def create_app(
 
     # manager 是 closure-scoped,供 lifespan 和 endpoint 共享
     manager = ConnectionManager()
+    # Phase 9.16: cascade notifier 注入 ws_manager (service-locator 模式)
+    set_ws_manager(manager.broadcast)
 
     app = FastAPI(
         title="Reading Power Dashboard API",

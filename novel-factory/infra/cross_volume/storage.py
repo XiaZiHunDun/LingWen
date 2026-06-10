@@ -203,6 +203,7 @@ class RippleStorage:
                 raise ValueError(f"storage integrity: {e}") from e
         # Phase 9.15: cascade hook (BFS via reference_graph, then persist)
         # Pattern 1:1 跟 Phase 9.14 record_audit 1:1
+        cascaded = None
         if self._graph is not None:
             try:
                 cascaded = self._graph.trigger_cascade(ripple)  # uses ref_graph BFS
@@ -210,6 +211,21 @@ class RippleStorage:
             except Exception as e:
                 logger.warning("cascade hook failed for ripple %s: %s", ripple.id, e)
                 # 0 propagate, ripple INSERT 已 commit, cascade 是 best-effort
+
+        # Phase 9.16: cascade hook 完成后推 WS (best-effort, 跟 record_audit 1:1)
+        # 函数内 import 防 circular (infra → dashboard)
+        if cascaded is not None:
+            try:
+                from dashboard.cascade_notifier import notify_cascade_update
+                notify_cascade_update({
+                    "ripple_id": cascaded.trigger_ripple_id,
+                    "cascade_node_count": len(cascaded.cascade_nodes),
+                    "cascade_edge_count": len(cascaded.cascade_edges),
+                    "depth_reached": cascaded.depth_reached,
+                    "bfs_algorithm_version": cascaded.bfs_algorithm_version,
+                })
+            except Exception as e:
+                logger.warning("append_ripple: cascade notifier failed: %s", e)
         # Phase 9.14: write 'created' audit entry (independent commit)
         self.record_audit(
             ripple_id=ripple.id,
