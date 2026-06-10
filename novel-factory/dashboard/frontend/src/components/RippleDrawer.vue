@@ -32,6 +32,28 @@
           <summary>Edge payload</summary>
           <pre>{{ JSON.stringify(ripple.edge_payload, null, 2) }}</pre>
         </details>
+        <!-- Phase 9.14: audit timeline section (auditEntries latest 5) -->
+        <div class="ripple-audit-timeline ripple-audit-list" v-if="auditEntries.length > 0">
+          <h4>Audit History (latest {{ Math.min(5, auditEntries.length) }})</h4>
+          <ul class="ripple-audit-list" data-testid="ripple-audit-list">
+            <li
+              v-for="entry in auditEntries.slice(0, 5)"
+              :key="entry.id"
+              class="ripple-audit-entry"
+              data-testid="ripple-audit-entry"
+            >
+              <span class="audit-time ripple-audit-entry">{{ entry.created_at }}</span>
+              <span class="audit-action ripple-audit-entry">{{ entry.action }}</span>
+              <span class="audit-actor ripple-audit-entry">by {{ entry.actor }} ({{ entry.origin }})</span>
+              <span v-if="entry.reason" class="audit-reason ripple-audit-entry">"{{ entry.reason }}"</span>
+            </li>
+          </ul>
+        </div>
+        <div
+          v-else
+          class="ripple-audit-empty ripple-audit-list"
+          data-testid="ripple-audit-empty"
+        >No history yet</div>
       </section>
       <footer class="ripple-drawer__footer">
         <button
@@ -46,21 +68,56 @@
           :disabled="isTerminal"
           @click="$emit('reject', ripple)"
         >Reject</button>
+        <button
+          v-if="canRollback"
+          class="btn btn-warning ripple-rollback-btn"
+          data-testid="ripple-rollback-btn"
+          @click="onRollbackClick"
+        >Rollback</button>
       </footer>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRippleStore } from '../composables/useRippleStore.js';
 
 const props = defineProps({
   ripple: { type: Object, required: true },
   open: { type: Boolean, default: false },
 });
-defineEmits(['close', 'apply', 'reject']);
+const emit = defineEmits(['close', 'apply', 'reject']);
 
 const isTerminal = computed(() => ['applied', 'rejected', 'failed'].includes(props.ripple.status));
+
+// Phase 9.14: audit timeline + Rollback button (0 改既有 apply/reject logic)
+const store = useRippleStore();
+const auditEntries = ref([]);
+
+const canRollback = computed(() => {
+  if (!props.ripple) return false;
+  return props.ripple.status === 'applied' || props.ripple.status === 'rejected';
+});
+
+async function loadAudit() {
+  if (!props.ripple || !props.ripple.ripple_id) return;
+  try {
+    auditEntries.value = await store.fetchAudit(props.ripple.ripple_id);
+  } catch (e) {
+    auditEntries.value = [];
+  }
+}
+
+async function onRollbackClick() {
+  const reason = window.prompt('Reason for rollback? (required)');
+  if (!reason || !reason.trim()) return;  // cancel or empty → no-op (防误点)
+  await store.rollback(props.ripple.ripple_id, reason);
+  emit('close');
+}
+
+onMounted(loadAudit);
+watch(() => props.ripple && props.ripple.ripple_id, loadAudit);
 </script>
 
 <style scoped>
@@ -92,4 +149,10 @@ const isTerminal = computed(() => ['applied', 'rejected', 'failed'].includes(pro
 }
 .ripple-drawer__footer button:disabled { background: #999; cursor: not-allowed; }
 .ripple-drawer__footer button[data-testid="ripple-drawer-reject"] { background: #c0392b; }
+.ripple-drawer__footer button[data-testid="ripple-rollback-btn"] { background: #d97706; }
+.ripple-audit-timeline { margin-top: 16px; padding: 12px; background: #fafbfc; border-radius: 4px; }
+.ripple-audit-timeline h4 { margin: 0 0 8px 0; font-size: 0.95em; color: #444; }
+.ripple-audit-list { list-style: none; padding: 0; margin: 0; }
+.ripple-audit-entry { padding: 4px 0; font-size: 0.85em; color: #555; display: block; }
+.ripple-audit-empty { margin-top: 12px; padding: 8px; color: #888; font-style: italic; font-size: 0.85em; }
 </style>
