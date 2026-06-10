@@ -23,6 +23,10 @@ from pydantic import BaseModel, Field
 
 from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
+    CascadeEdgeResponse,
+    CascadeNodeResponse,
+    CascadePreviewResponse,
+    CascadeResponse,
     MasterControllerLike,
     RippleActionRequest,
     RippleActionResponse,
@@ -536,6 +540,36 @@ def _audit_to_response(entry: AuditEntry) -> RippleAuditEntryResponse:
     )
 
 
+# === Phase 9.15 T4: cascade BFS → response helpers (locality: kept near endpoints
+#  they serve; module-level so the create_app closure can reference them) ===
+
+def _node_to_dict_for_response(node: Any) -> dict:
+    """Phase 9.15 T4: ReferenceNode → dict for CascadeNodeResponse(**).
+
+    Converts the dataclass to dict (datetime → isoformat) so Pydantic v2
+    can bind the fields it knows and ignore extras (created_at / created_by
+    / confidence are 0 改 ReferenceNode 既有字段, schema 不需要它们).
+    """
+    from dataclasses import asdict, is_dataclass
+    if is_dataclass(node):
+        d = asdict(node)
+        if isinstance(d.get("created_at"), datetime):
+            d["created_at"] = d["created_at"].isoformat()
+        return d
+    return dict(node)
+
+
+def _edge_to_dict_for_response(edge: Any) -> dict:
+    """Phase 9.15 T4: ReferenceEdge → dict for CascadeEdgeResponse(**)."""
+    from dataclasses import asdict, is_dataclass
+    if is_dataclass(edge):
+        d = asdict(edge)
+        if isinstance(d.get("created_at"), datetime):
+            d["created_at"] = d["created_at"].isoformat()
+        return d
+    return dict(edge)
+
+
 def create_app(
     db_path: Optional[Path] = None,
     master_controller: Optional[MasterControllerLike] = None,
@@ -880,6 +914,82 @@ def create_app(
         except ValueError as e:
             raise HTTPException(422, str(e))
         return _ripple_to_detail(ripple)
+
+    # ==================== Phase 9.15: Cascade BFS endpoints (T4) ====================
+
+    @app.get(
+        "/api/cvg/ripples/{ripple_id}/cascade",
+        response_model=CascadeResponse,
+    )
+    def get_ripple_cascade(ripple_id: str) -> CascadeResponse:
+        """Phase 9.15: return the persisted cascade BFS result for a single ripple.
+
+        Read from ripple_cascade table populated by T1/T2
+        CrossVolumeReferenceGraph.trigger_cascade. Returns 404 if no cascade
+        has been computed for this ripple yet.
+        """
+        storage = _default_storage()
+        cascade = storage.get_cascade_by_ripple_id(ripple_id)
+        if cascade is None:
+            raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+        # ReferenceNode/Edge → dict via helper (Pydantic ignores extras like
+        # created_at / created_by / confidence / evidence not in schemas)
+        cascade_nodes = [
+            CascadeNodeResponse(**_node_to_dict_for_response(n))
+            for n in cascade.cascade_nodes
+        ]
+        cascade_edges = [
+            CascadeEdgeResponse(**_edge_to_dict_for_response(e))
+            for e in cascade.cascade_edges
+        ]
+        return CascadeResponse(
+            trigger_ripple_id=cascade.trigger_ripple_id,
+            cascade_nodes=cascade_nodes,
+            cascade_edges=cascade_edges,
+            cascade_actions=list(cascade.cascade_actions),
+            depth_reached=cascade.depth_reached,
+            generated_at=cascade.generated_at,
+            bfs_algorithm_version=cascade.bfs_algorithm_version,
+        )
+
+    @app.get(
+        "/api/cvg/ripples/{ripple_id}/cascade/preview",
+        response_model=CascadePreviewResponse,
+    )
+    def get_ripple_cascade_preview(ripple_id: str) -> CascadePreviewResponse:
+        """Phase 9.15: return a dry-run preview summary for the apply confirmation modal.
+
+        Computes aggregate counts (affected chapters/characters/settings, estimated
+        changes) from the persisted BFS result. No LLM calls — pure aggregation.
+        """
+        storage = _default_storage()
+        cascade = storage.get_cascade_by_ripple_id(ripple_id)
+        if cascade is None:
+            raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+        # ReferenceNode.dimension: "character" | "foreshadow" | "setting" | "plot_point"
+        # Map to modal chip categories: chapter = plot_point+foreshadow (per-chapter events),
+        # character = character, setting = setting.
+        affected_characters = sum(
+            1 for n in cascade.cascade_nodes if n.dimension == "character"
+        )
+        affected_settings = sum(
+            1 for n in cascade.cascade_nodes if n.dimension == "setting"
+        )
+        affected_chapters = sum(
+            1 for n in cascade.cascade_nodes
+            if n.dimension in ("plot_point", "foreshadow")
+        )
+        estimated_changes = len(cascade.cascade_actions)
+        return CascadePreviewResponse(
+            ripple_id=ripple_id,
+            affected_chapter_count=affected_chapters,
+            affected_character_count=affected_characters,
+            affected_setting_count=affected_settings,
+            estimated_change_count=estimated_changes,
+            cascade_node_count=len(cascade.cascade_nodes),
+            cascade_edge_count=len(cascade.cascade_edges),
+            max_depth=cascade.depth_reached,
+        )
 
     # ==================== Phase 6: Workflow Endpoints ====================
 

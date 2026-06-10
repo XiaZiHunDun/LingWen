@@ -39,7 +39,14 @@ describe('RippleDrawer', () => {
     const wrapper = mount(RippleDrawer, {
       props: { ripple: sample, open: true },
     });
+    // Phase 9.15 T4: apply button opens ApplyConfirmModal (二次确认);
+    // apply is only emitted after the modal's confirm button is clicked.
     await wrapper.find('[data-testid="ripple-drawer-apply"]').trigger('click');
+    // wait for the modal to appear + cascade preview load to resolve
+    await wrapper.vm.$nextTick();
+    await new Promise(r => setTimeout(r, 100));
+    expect(wrapper.emitted('apply')).toBeFalsy();  // no apply yet — modal not confirmed
+    await wrapper.find('[data-testid="apply-confirm-apply"]').trigger('click');
     expect(wrapper.emitted('apply')).toBeTruthy();
     await wrapper.find('[data-testid="ripple-drawer-reject"]').trigger('click');
     expect(wrapper.emitted('reject')).toBeTruthy();

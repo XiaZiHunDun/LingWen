@@ -54,14 +54,48 @@
           class="ripple-audit-empty ripple-audit-list"
           data-testid="ripple-audit-empty"
         >No history yet</div>
+
+        <!-- Phase 9.15 T4: dry-run section (cascade BFS preview before apply) -->
+        <section class="dryrun-section" data-testid="ripple-dryrun-section">
+          <header class="dryrun-header">
+            <h4>Dry-run preview</h4>
+            <button
+              type="button"
+              class="dryrun-toggle"
+              :aria-pressed="showDryRun"
+              data-testid="dry-run-toggle"
+              @click="onToggleDryRun"
+            >{{ showDryRun ? 'Hide' : 'Show' }} cascade</button>
+          </header>
+          <div v-if="showDryRun && preview" class="dryrun-content">
+            <div class="summary-chips" data-testid="ripple-summary-chips">
+              <span class="chip" data-testid="dry-run-tag">Depth: {{ preview.max_depth }}</span>
+              <span class="chip" data-testid="dry-run-affected-chapters">
+                {{ preview.affected_chapter_count }} chapter(s)
+              </span>
+              <span class="chip" data-testid="dry-run-affected-characters">
+                {{ preview.affected_character_count }} character(s)
+              </span>
+              <span class="chip" data-testid="dry-run-affected-settings">
+                {{ preview.affected_setting_count }} setting(s)
+              </span>
+            </div>
+            <CascadeGraph
+              v-if="cascade"
+              :cascade="cascade"
+              :dry-run="true"
+              data-testid="cascade-graph"
+            />
+          </div>
+        </section>
       </section>
       <footer class="ripple-drawer__footer">
         <button
           class="ripple-drawer-apply"
           data-testid="ripple-drawer-apply"
           :disabled="isTerminal"
-          @click="$emit('apply', ripple)"
-        >Apply</button>
+          @click="onApplyClick"
+        >Apply changes</button>
         <button
           class="ripple-drawer-reject"
           data-testid="ripple-drawer-reject"
@@ -76,12 +110,21 @@
         >Rollback</button>
       </footer>
     </div>
+    <!-- Phase 9.15 T4: apply confirmation modal (cancel = no-op, confirm = real apply) -->
+    <ApplyConfirmModal
+      :is-open="showApplyModal"
+      :totals="preview || {}"
+      @confirm="onConfirmApply"
+      @cancel="showApplyModal = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRippleStore } from '../composables/useRippleStore.js';
+import CascadeGraph from './CascadeGraph.vue';
+import ApplyConfirmModal from './ApplyConfirmModal.vue';
 
 const props = defineProps({
   ripple: { type: Object, required: true },
@@ -115,8 +158,55 @@ async function onRollbackClick() {
   emit('close');
 }
 
-onMounted(loadAudit);
-watch(() => props.ripple && props.ripple.ripple_id, loadAudit);
+// === Phase 9.15 T4: dry-run cascade BFS preview + apply confirmation modal ===
+
+const showDryRun = ref(false);
+const showApplyModal = ref(false);
+const cascade = ref(null);
+const preview = ref(null);
+
+async function loadCascadeAndPreview() {
+  if (!props.ripple || !props.ripple.ripple_id) return;
+  try {
+    const [c, p] = await Promise.all([
+      store.loadCascade(props.ripple.ripple_id),
+      store.loadCascadePreview(props.ripple.ripple_id),
+    ]);
+    cascade.value = c;
+    preview.value = p;
+  } catch (e) {
+    cascade.value = null;
+    preview.value = null;
+  }
+}
+
+function onToggleDryRun() {
+  showDryRun.value = !showDryRun.value;
+  if (showDryRun.value) {
+    loadCascadeAndPreview();
+  }
+}
+
+async function onApplyClick() {
+  // Pre-load preview (idempotent) so modal has totals
+  await loadCascadeAndPreview();
+  showApplyModal.value = true;
+}
+
+function onConfirmApply() {
+  showApplyModal.value = false;
+  emit('apply', props.ripple);
+}
+
+onMounted(() => {
+  loadAudit();
+  // Eager-load cascade on mount (for "Show cascade" toggle, no flash of empty)
+  loadCascadeAndPreview();
+});
+watch(() => props.ripple && props.ripple.ripple_id, () => {
+  loadAudit();
+  loadCascadeAndPreview();
+});
 </script>
 
 <style scoped>
@@ -154,4 +244,12 @@ watch(() => props.ripple && props.ripple.ripple_id, loadAudit);
 .ripple-audit-list { list-style: none; padding: 0; margin: 0; }
 .ripple-audit-entry { padding: 4px 0; font-size: 0.85em; color: #555; display: block; }
 .ripple-audit-empty { margin-top: 12px; padding: 8px; color: #888; font-style: italic; font-size: 0.85em; }
+.dryrun-section { margin-top: 16px; padding: 12px; background: #fafbfc; border-radius: 4px; }
+.dryrun-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.dryrun-header h4 { margin: 0; font-size: 0.95em; color: #444; }
+.dryrun-toggle { padding: 4px 12px; border: 1px solid #2c3e50; background: #fff; color: #2c3e50; border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+.dryrun-toggle:hover { background: #2c3e50; color: #fff; }
+.dryrun-content { margin-top: 8px; }
+.summary-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.chip { background: #e8f4f8; color: #155724; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; }
 </style>

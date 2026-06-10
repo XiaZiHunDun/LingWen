@@ -663,6 +663,10 @@ __all__ = [
     "RippleAuditEntryResponse",
     "RippleRollbackRequest",
     "RippleActionRequest",
+    "CascadeNodeResponse",
+    "CascadeEdgeResponse",
+    "CascadeResponse",
+    "CascadePreviewResponse",
 ]
 
 
@@ -696,3 +700,55 @@ class RippleActionRequest(BaseModel):
     actor: str | None = None
     origin: Literal["ui", "cli", "system"] | None = None
     reason: str | None = None
+
+
+# === Phase 9.15: cascade BFS + dry-run preview schemas (T4) ===
+
+class CascadeNodeResponse(BaseModel):
+    """Phase 9.15: ReferenceNode in cascade BFS result (1:1 mirror)."""
+    id: str
+    dimension: str
+    volume: int
+    chapter: int
+    title: str = ""
+    description: str = ""
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class CascadeEdgeResponse(BaseModel):
+    """Phase 9.15: ReferenceEdge in cascade BFS result (1:1 mirror)."""
+    id: str
+    from_node_id: str
+    to_node_id: str
+    relationship_type: str
+    weight: float
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class CascadeResponse(BaseModel):
+    """Phase 9.15: full cascade BFS result for a single ripple.
+
+    Mirrors CascadedRipple dataclass (infra/cross_volume/reference_graph.py).
+    """
+    trigger_ripple_id: str
+    cascade_nodes: list[CascadeNodeResponse]
+    cascade_edges: list[CascadeEdgeResponse]
+    cascade_actions: list[dict[str, Any]]
+    depth_reached: int
+    generated_at: str
+    bfs_algorithm_version: str = "v1"
+
+
+class CascadePreviewResponse(BaseModel):
+    """Phase 9.15: dry-run preview summary for apply confirmation modal.
+
+    Aggregate counts from the persisted BFS result; no LLM calls.
+    """
+    ripple_id: str
+    affected_chapter_count: int = 0
+    affected_character_count: int = 0
+    affected_setting_count: int = 0
+    estimated_change_count: int = 0
+    cascade_node_count: int = 0
+    cascade_edge_count: int = 0
+    max_depth: int = 0
