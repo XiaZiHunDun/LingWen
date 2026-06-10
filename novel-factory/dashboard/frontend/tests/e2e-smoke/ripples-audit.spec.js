@@ -10,13 +10,10 @@
 //   / ripple-audit-empty / ripple-rollback-btn).
 
 import { test, expect } from '../_setup.js';
+import { execSync } from 'node:child_process';
+import path from 'node:path';
 
 test.describe('Phase 9.14: ripple audit timeline e2e', () => {
-  // Phase 9.17: 主公决策 2026-06-11 AskUserQuestion 选 A — 3 tests 需 live backend
-  // + Phase 9.13 backfill seed data (apply/rollback POST + audit timeline 验证),
-  // 0 backend 时必 fail. 留 test.skip 注明, 留给真 backend 用户跑 (Phase 9.13
-  // followup unskip 等 backfill completion).
-  test.skip(true, 'requires live backend with seed data; run after Phase 9.13 backfill on real data')
   test('page mount → drawer open → audit timeline visible', async ({ page }) => {
     await page.goto('/ripples');
     await page.waitForSelector('[data-testid="ripple-card"]', { timeout: 5000 });
@@ -29,8 +26,20 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
     await expect(timeline.or(empty)).toBeVisible();
   });
 
-  test.skip(true, 'requires live backend with seed data; run after Phase 9.13 backfill on real data')
   test('apply then rollback → audit timeline updates', async ({ page }) => {
+    test.setTimeout(30_000);
+    // Phase 9.18: idempotency reset rip-pending-1 → pending before each run
+    // rip-pending-1 lives in novel-factory/infra/.state/ripple.db; lingwen.py is at
+    // novel-factory/lingwen.py (4 levels up from spec file: e2e-smoke → tests → frontend → dashboard → novel-factory).
+    const cliPath = path.resolve(__dirname, '../../../../lingwen.py');
+    try {
+      execSync(`python ${cliPath} ripple-reset rip-pending-1 --to-status pending`, {
+        stdio: 'pipe',
+        timeout: 10_000,
+      });
+    } catch (e) {
+      throw new Error(`ripple-reset CLI failed: ${e.message}`);
+    }
     await page.goto('/ripples?status=pending');
     // Set up dialog handler IMMEDIATELY after goto (must catch any dialog from drawer mount)
     page.on('dialog', dialog => dialog.accept('e2e test rollback'));
@@ -59,7 +68,6 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
     await expect(page.locator('[data-testid="ripple-audit-list"]')).toContainText('rolled_back');
   });
 
-  test.skip(true, 'requires live backend with seed data; run after Phase 9.13 backfill on real data')
   test('empty audit shows "No history yet"', async ({ page }) => {
     // Filter to a ripple pre-Phase 9.14 (no audit history)
     await page.goto('/ripples?status=rejected');
