@@ -28,12 +28,18 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
 
   test('apply then rollback → audit timeline updates', async ({ page }) => {
     test.setTimeout(30_000);
-    // Phase 9.18: idempotency reset rip-pending-1 → pending before each run
+    // Phase 9.18: idempotency reset rip-pending-1 → pending before each run.
     // rip-pending-1 lives in novel-factory/infra/.state/ripple.db; lingwen.py is at
     // novel-factory/lingwen.py (4 levels up from spec file: e2e-smoke → tests → frontend → dashboard → novel-factory).
-    const cliPath = path.resolve(__dirname, '../../../../lingwen.py');
+    // cwd=projectRoot so ripple-reset's CWD-relative `.state/ripple.db` resolves
+    // to the canonical novel-factory/.state/ripple.db. Without this, the CLI
+    // process inherits the spec dir as CWD and looks for `.state/ripple.db`
+    // relative to dashboard/frontend/tests/e2e-smoke/ (which doesn't exist).
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const cliPath = path.join(projectRoot, 'lingwen.py');
     try {
       execSync(`python ${cliPath} ripple-reset rip-pending-1 --to-status pending`, {
+        cwd: projectRoot,
         stdio: 'pipe',
         timeout: 10_000,
       });
