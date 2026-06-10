@@ -25,7 +25,7 @@
       </span>
     </div>
     <div class="ripple-card__footer">
-      <span class="ripple-card__confidence" data-testid="ripple-confidence">
+      <span class="ripple-card__confidence ripple-confidence" data-testid="ripple-confidence">
         confidence {{ ripple.confidence }}/5
       </span>
     </div>

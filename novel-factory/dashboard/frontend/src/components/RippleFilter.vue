@@ -5,6 +5,7 @@
       Status:
       <select
         :value="status"
+        class="ripple-filter-status"
         data-testid="ripple-filter-status"
         @change="$emit('update:status', $event.target.value)"
       >
@@ -20,6 +21,7 @@
       Dimension:
       <select
         :value="dimension"
+        class="ripple-filter-dimension"
         data-testid="ripple-filter-dimension"
         @change="$emit('update:dimension', $event.target.value)"
       >
@@ -34,6 +36,7 @@
       Volume:
       <select
         :value="volume"
+        class="ripple-filter-volume"
         data-testid="ripple-filter-volume"
         @change="$emit('update:volume', $event.target.value)"
       >

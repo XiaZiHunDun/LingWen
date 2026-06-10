@@ -1,10 +1,10 @@
 <!-- dashboard/frontend/src/components/RippleList.vue (NEW, Phase 9.13) -->
 <template>
   <div class="ripple-list">
-    <div v-if="loading" data-testid="ripple-list-loading" class="ripple-list__loading">
+    <div v-if="loading" data-testid="ripple-list-loading" class="ripple-list__loading ripple-list-loading">
       加载中...
     </div>
-    <div v-else-if="ripples.length === 0" data-testid="ripple-list-empty" class="ripple-list__empty">
+    <div v-else-if="ripples.length === 0" data-testid="ripple-list-empty" class="ripple-list__empty ripple-list-empty">
       No ripples match current filter.
     </div>
     <RippleCard
