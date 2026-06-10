@@ -9,7 +9,7 @@
 import sys
 from pathlib import Path
 
-from infra.cli.options import RippleRollbackOptions, UnifiedOptions
+from infra.cli.options import UnifiedOptions
 from infra.cross_volume.storage import RippleStorage
 
 from .base import Command
@@ -29,12 +29,9 @@ class RippleRollbackCommand(Command):
     description = "回滚已应用/已拒绝涟漪 (Phase 9.14)"
 
     def execute(self, options: UnifiedOptions) -> int:
-        rollback_options = options if isinstance(options, RippleRollbackOptions) else RippleRollbackOptions()
-        ripple_id = rollback_options.ripple_id
-        reason = rollback_options.reason
-        if not ripple_id:
-            print("Error: ripple_id is required", file=sys.stderr)
-            return 1
+        # lingwen.py:136 always passes RippleRollbackOptions — direct attr access.
+        ripple_id = options.ripple_id
+        reason = options.reason
         if not reason or not reason.strip():
             # argparse 应该已经拦截,这里兜底 (test 中绕过 parser)
             print("Error: --reason cannot be empty", file=sys.stderr)
@@ -43,7 +40,7 @@ class RippleRollbackCommand(Command):
         try:
             updated = storage.rollback_ripple(
                 ripple_id,
-                actor=rollback_options.actor,
+                actor=options.actor,
                 origin="cli",
                 reason=reason,
             )

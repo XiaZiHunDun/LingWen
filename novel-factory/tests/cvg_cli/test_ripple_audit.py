@@ -118,7 +118,7 @@ class TestRippleAuditCmd:
         assert "not found" in combined.lower()
 
     def test_audit_empty_message(self, storage_with_ripple, monkeypatch, capsys):
-        """limit=0 → empty list message (defensive case)."""
+        """limit=0 → validation error (Phase 9.14 T6 fix: reject <1, was: empty list path)."""
         monkeypatch.setattr(
             "infra.cli.commands.ripple_audit._get_storage",
             lambda: storage_with_ripple,
@@ -126,11 +126,10 @@ class TestRippleAuditCmd:
         options = make_audit_options(ripple_id="rip-applied-1", limit=0)
         cmd = RippleAuditCommand()
         result = cmd.execute(options)
-        assert result == 0
+        assert result == 1
         captured = capsys.readouterr()
-        # Either "No audit entries" or "0 entries" is acceptable
         combined = captured.out + captured.err
-        assert "0 entries" in combined or "no audit" in combined.lower()
+        assert "limit" in combined.lower() and ">= 1" in combined.lower()
 
 
 class TestRippleRollbackCmd:
@@ -175,4 +174,4 @@ class TestRippleRollbackCmd:
         assert result == 1
         captured = capsys.readouterr()
         combined = captured.out + captured.err
-        assert "can only rollback" in combined.lower() or "valueerror" in combined.lower()
+        assert "can only rollback" in combined.lower()
