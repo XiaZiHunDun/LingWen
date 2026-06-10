@@ -35,6 +35,7 @@ from infra.cli import (
     RangeParser,
     RepairOptions,
     RippleAuditOptions,
+    RippleResetOptions,
     RippleRollbackOptions,
     StoryContractOptions,
     UnifiedOptions,
@@ -141,6 +142,15 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             ripple_id=args.ripple_id,
             reason=args.reason,
             actor=getattr(args, "actor", "cli:lingwen-ripple"),
+        )
+    elif command == "ripple-reset":
+        return RippleResetOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+            dry_run=False,
+            ripple_id=args.ripple_id,
+            to_status=args.to_status,
         )
 
     chapter_range = parse_range(args.range, RangeParser())

@@ -30,6 +30,7 @@ from .polish import PolishCommand
 from .reading_power import ReadingPowerCommand
 from .repair import RepairCommand
 from .ripple_audit import RippleAuditCommand
+from .ripple_reset import RippleResetCommand
 from .ripple_rollback import RippleRollbackCommand
 from .status import StatusCommand
 from .story_contract import StoryContractCommand
@@ -50,13 +51,15 @@ COMMANDS = {
     # Phase 9.14 additive: 2 new top-level subcommands
     "ripple-audit": RippleAuditCommand,
     "ripple-rollback": RippleRollbackCommand,
+    # Phase 9.18 additive: ripple-reset (test/dev tool)
+    "ripple-reset": RippleResetCommand,
 }
 
 __all__ = [
     "Command", "CheckCommand", "RepairCommand", "VerifyCommand", "StatusCommand",
     "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
     "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
-    "RippleAuditCommand", "RippleRollbackCommand",
+    "RippleAuditCommand", "RippleRollbackCommand", "RippleResetCommand",
     "COMMANDS", "get_command", "list_commands",
 ]
 

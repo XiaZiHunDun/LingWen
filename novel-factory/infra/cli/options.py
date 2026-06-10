@@ -103,3 +103,14 @@ class RippleRollbackOptions(UnifiedOptions):
     ripple_id: str = ""
     reason: str = ""  # required, non-empty
     actor: str = "cli:lingwen-ripple"
+
+
+@dataclass
+class RippleResetOptions(UnifiedOptions):
+    """ripple-reset 命令选项 (Phase 9.18).
+
+    Idempotent reset ripple status (test/dev tool).
+    跟既 ripple-rollback 1:1 风格, 但 origin='system' (test tool, 0 user action)。
+    """
+    ripple_id: str = ""
+    to_status: str = ""  # required, one of 5 valid statuses

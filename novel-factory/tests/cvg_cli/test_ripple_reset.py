@@ -9,14 +9,38 @@ Pattern: 1:1 with test_ripple_audit.py:Phase 9.14 — parse_args + Command.execu
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 
+from infra.cli.commands.ripple_reset import RippleResetCommand
+from infra.cli.options import RippleResetOptions
+from infra.cli.parsers import create_parser
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 
 
+def parse_args(argv: list[str]):
+    """Helper: parse argv through the full lingwen.py parser."""
+    return create_parser().parse_args(argv)
+
+
+def make_reset_options(**overrides) -> RippleResetOptions:
+    defaults = dict(
+        range=[],
+        parallel=1,
+        verbose=False,
+        dry_run=False,
+        output=None,
+        ripple_id="",
+        to_status="",
+    )
+    defaults.update(overrides)
+    return RippleResetOptions(**defaults)
+
+
 @pytest.fixture
-def storage_with_ripple(tmp_path, monkeypatch):
+def storage_with_ripple(tmp_path):
     """Storage with 1 applied + 1 pending ripple, isolated tmp DB."""
     storage = RippleStorage(db_path=tmp_path / "cli_reset.db")
     applied = CrossVolumeRipple(
@@ -32,7 +56,6 @@ def storage_with_ripple(tmp_path, monkeypatch):
     storage.append_ripple(applied)
     storage.append_ripple(pending)
     # Manually set applied_at on the applied ripple for the reset test
-    from datetime import datetime, timezone
     with storage._connect() as conn:
         conn.execute(
             "UPDATE reference_ripples SET applied_at = ? WHERE id = ?",
@@ -102,3 +125,30 @@ class TestResetRippleForTestStorage:
         reset_rows = [e for e in history if e.action == "rolled_back"]
         assert len(reset_rows) >= 1
         assert reset_rows[0].new_status == "pending"
+
+
+class TestRippleResetCmd:
+    """Phase 9.18: lingwen.py ripple-reset CLI command tests."""
+
+    def test_reset_404_for_missing_ripple(self, storage_with_ripple, monkeypatch, capsys):
+        """Unknown ripple_id → exit 1 + 'not found' on stderr."""
+        monkeypatch.setattr(
+            "infra.cli.commands.ripple_reset._get_storage",
+            lambda: storage_with_ripple,
+        )
+        options = make_reset_options(ripple_id="rip-nonexistent", to_status="pending")
+        cmd = RippleResetCommand()
+        result = cmd.execute(options)
+        assert result == 1
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+        assert "not found" in combined.lower()
+
+    def test_reset_rejects_invalid_status_via_parser(self, capsys):
+        """--to-status foo → argparse exit 2 (invalid choice)."""
+        with pytest.raises(SystemExit) as exc_info:
+            parse_args(["ripple-reset", "rip-pending-1", "--to-status", "foo"])
+        assert exc_info.value.code == 2
+        captured = capsys.readouterr()
+        # argparse 错误走 stderr
+        assert "invalid choice" in captured.err.lower() or "foo" in captured.err.lower()
