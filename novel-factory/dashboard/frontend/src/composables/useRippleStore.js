@@ -98,6 +98,7 @@ async function fetchAudit(rippleId) {
     const data = await fetchRippleAudit(rippleId)
     return data
   } catch (e) {
+    // audit is read-only (no mutation risk), use raw error message unlike apply/reject wrap
     lastError.value = e?.message || String(e)
     throw e
   }
@@ -106,11 +107,11 @@ async function fetchAudit(rippleId) {
 async function rollback(rippleId, reason) {
   // Optimistic: snapshot before mutate (跟 apply/reject 1:1 immutable update 模式)
   const idx = ripples.value.findIndex((r) => r.ripple_id === rippleId)
-  if (idx < 0) {
-    throw new Error(`ripple ${rippleId} not in store`)
-  }
-  const snapshot = ripples.value[idx]
+  const snapshot = idx >= 0 ? ripples.value[idx] : null
   try {
+    if (idx < 0) {
+      throw new Error(`ripple ${rippleId} not in store`)
+    }
     const updated = await rollbackRipple(rippleId, reason)
     // Apply server response (authoritative) — immutable spread 跟 apply/reject 1:1
     if (idx >= 0) {
@@ -122,8 +123,8 @@ async function rollback(rippleId, reason) {
     }
     return updated
   } catch (e) {
-    // Rollback optimistic mutation: 恢复 snapshot
-    if (idx >= 0) {
+    // Rollback optimistic mutation: 恢复 snapshot (only if we had a valid snapshot)
+    if (idx >= 0 && snapshot) {
       ripples.value = [
         ...ripples.value.slice(0, idx),
         snapshot,

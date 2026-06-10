@@ -8,6 +8,10 @@
  * - request() helper 支持 method + body
  */
 
+/**
+ * @typedef {{id:number, action:string, actor:string, origin:string, reason:string|null, created_at:string}} AuditEntryResponse
+ */
+
 const BASE_URL = 'http://localhost:8765/api';
 
 /**
