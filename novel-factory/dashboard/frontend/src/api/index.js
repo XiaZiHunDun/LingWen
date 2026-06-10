@@ -221,3 +221,56 @@ export async function fetchWorkflowGraph(workflowName, opts = {}) {
   const qs = params.toString();
   return request(`/workflows/${encodeURIComponent(workflowName)}/mermaid${qs ? `?${qs}` : ''}`);
 }
+
+// === CVG Ripples (Phase 9.13) ===
+
+/**
+ * Phase 9.13: 列出 ripple (filter: status / volume + pagination)
+ * @param {URLSearchParams} [params] - 3-way filter
+ * @returns {Promise<Array<RippleListItemResponse>>}
+ */
+export async function fetchRipples(params = new URLSearchParams()) {
+  const qs = params.toString();
+  return request(`/cvg/ripples${qs ? `?${qs}` : ''}`);
+}
+
+/**
+ * Phase 9.13: 获取单个 ripple 详情
+ * @param {string} rippleId
+ * @returns {Promise<RippleDetailResponse>}
+ */
+export async function fetchRippleDetail(rippleId) {
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}`);
+}
+
+/**
+ * Phase 9.13: apply ripple (PENDING → APPLIED)
+ * @param {string} rippleId
+ * @returns {Promise<RippleActionResponse>}
+ */
+export async function applyRipple(rippleId) {
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/apply`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Phase 9.13: reject ripple (PENDING → REJECTED)
+ * @param {string} rippleId
+ * @param {string} [reason='']
+ * @returns {Promise<RippleActionResponse>}
+ */
+export async function rejectRipple(rippleId, reason = '') {
+  const params = reason ? `?reason=${encodeURIComponent(reason)}` : '';
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/reject${params}`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * Phase 9.13: 获取 ripple 统计
+ * @returns {Promise<RippleStatsResponse>}
+ */
+export async function fetchRippleStats() {
+  return request('/cvg/ripples/stats');
+}
