@@ -23,6 +23,10 @@ from pydantic import BaseModel, Field
 
 from dashboard.protocols import (
     MasterControllerLike,
+    RippleActionResponse,
+    RippleDetailResponse,
+    RippleListItemResponse,
+    RippleStatsResponse,
     _extract_cost_by_day,
     _extract_cost_by_scenario,
     _extract_cost_by_tier,
@@ -33,6 +37,8 @@ from dashboard.ws import (
     ConnectionManager,
     start_broadcast_task,
 )
+from infra.cross_volume.ripple import CrossVolumeRipple
+from infra.cross_volume.storage import ConflictError, RippleStorage
 
 # ==================== Pydantic Models ====================
 
@@ -450,6 +456,64 @@ def _decision_to_response(d: Any) -> DecisionResponse:
 # ==================== App Factory ====================
 
 
+# ==================== Phase 9.13: CVG Ripple Storage Singleton ====================
+# Module-level singleton (跟 _default_decision_queue 1:1 pattern);test fixture override
+# via monkeypatch.setattr(app_module, "_default_storage", ...)。
+
+_DEFAULT_CVG_DB_PATH = Path(__file__).parent.parent / ".state" / "cross_volume.db"
+_default_storage_instance: RippleStorage | None = None
+
+
+def _default_storage() -> RippleStorage:
+    """Phase 9.13: singleton RippleStorage for cvg endpoints.
+
+    Lazy init: first call creates RippleStorage, subsequent calls return cached.
+    跟 dashboard 内部 _default_decision_queue 1:1 pattern (但 decisions 是 queue,
+    CVG 是 SQLite-backed RippleStorage)。
+    """
+    global _default_storage_instance
+    if _default_storage_instance is None:
+        _default_storage_instance = RippleStorage(db_path=_DEFAULT_CVG_DB_PATH)
+    return _default_storage_instance
+
+
+def _ripple_to_list_item(r: CrossVolumeRipple) -> RippleListItemResponse:
+    """Phase 9.13: helper to convert CrossVolumeRipple → RippleListItemResponse.
+
+    dimension / relationship_type 暂用 placeholder (Phase 9.14 通过 JOIN reference_nodes
+    + reference_edges 填充); source_chapter / target_chapter 暂用 trigger_chapter 占位
+    (Phase 9.14 真实化 — 从 affected_nodes 第一个 node 的 chapter 提取)。
+    """
+    return RippleListItemResponse(
+        ripple_id=r.id,
+        dimension="unknown",  # TODO: Phase 9.14 JOIN reference_nodes
+        relationship_type="mentions",  # TODO: Phase 9.14 JOIN reference_edges
+        source_chapter=r.trigger_chapter,
+        target_chapter=r.trigger_chapter,
+        status=r.status,
+        confidence=r.payload.get("confidence", 1),
+        created_at=r.created_at,
+    )
+
+
+def _ripple_to_detail(r: CrossVolumeRipple) -> RippleDetailResponse:
+    """Phase 9.13: helper to convert CrossVolumeRipple → RippleDetailResponse."""
+    return RippleDetailResponse(
+        ripple_id=r.id,
+        dimension="unknown",
+        relationship_type="mentions",
+        source_chapter=r.trigger_chapter,
+        target_chapter=r.trigger_chapter,
+        status=r.status,
+        confidence=r.payload.get("confidence", 1),
+        created_at=r.created_at,
+        evidence=r.payload.get("evidence", ""),
+        source_payload=r.payload.get("source_payload", {}),
+        target_payload=r.payload.get("target_payload", {}),
+        edge_payload=r.payload.get("edge_payload", {}),
+    )
+
+
 def create_app(
     db_path: Optional[Path] = None,
     master_controller: Optional[MasterControllerLike] = None,
@@ -650,6 +714,93 @@ def create_app(
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
         return _decision_to_response(d)
+
+    # ==================== Phase 9.13: CVG Ripple Endpoints ====================
+
+    @app.get("/api/cvg/ripples", response_model=list[RippleListItemResponse])
+    def list_ripples(
+        status_filter: Optional[str] = Query(
+            None, alias="status", pattern="^(pending|confirmed|applied|rejected|failed)$"
+        ),
+        volume: Optional[int] = Query(None, ge=1, le=3),
+        limit: int = Query(50, ge=1, le=200),
+        offset: int = Query(0, ge=0),
+    ) -> list[RippleListItemResponse]:
+        """Phase 9.13: 列出 ripples (status/volume 过滤 + 分页)。"""
+        storage = _default_storage()
+        ripples = storage.get_ripples(
+            status=status_filter, volume=volume, limit=limit, offset=offset
+        )
+        return [_ripple_to_list_item(r) for r in ripples]
+
+    @app.get("/api/cvg/ripples/stats", response_model=RippleStatsResponse)
+    def get_ripple_stats() -> RippleStatsResponse:
+        """Phase 9.13: ripples 统计 (count by status + by volume)。"""
+        storage = _default_storage()
+        all_ripples = storage.get_ripples(limit=200)
+        by_status: dict[str, int] = {}
+        by_volume: dict[str, int] = {}
+        for r in all_ripples:
+            by_status[r.status] = by_status.get(r.status, 0) + 1
+            by_volume[str(r.trigger_volume)] = by_volume.get(str(r.trigger_volume), 0) + 1
+        return RippleStatsResponse(
+            total=len(all_ripples), by_status=by_status, by_volume=by_volume
+        )
+
+    @app.get("/api/cvg/ripples/{ripple_id}", response_model=RippleDetailResponse)
+    def get_ripple_detail(ripple_id: str) -> RippleDetailResponse:
+        """Phase 9.13: 单个 ripple 详情。"""
+        storage = _default_storage()
+        ripple = storage.get_ripple_by_id(ripple_id)
+        if ripple is None:
+            raise HTTPException(
+                status_code=404, detail=f"ripple {ripple_id} not found"
+            )
+        return _ripple_to_detail(ripple)
+
+    @app.post("/api/cvg/ripples/{ripple_id}/apply", response_model=RippleActionResponse)
+    def apply_ripple(ripple_id: str) -> RippleActionResponse:
+        """Phase 9.13: 应用 ripple (PENDING → APPLIED)。"""
+        storage = _default_storage()
+        try:
+            ripple = storage.update_ripple_status(ripple_id, "applied", actor="user")
+        except KeyError:
+            raise HTTPException(
+                status_code=404, detail=f"ripple {ripple_id} not found"
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        except ConflictError as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        return RippleActionResponse(
+            ripple_id=ripple_id,
+            status="applied",
+            actor="user",
+            applied_at=ripple.applied_at,
+        )
+
+    @app.post("/api/cvg/ripples/{ripple_id}/reject", response_model=RippleActionResponse)
+    def reject_ripple(
+        ripple_id: str, reason: Optional[str] = None
+    ) -> RippleActionResponse:
+        """Phase 9.13: 拒绝 ripple (PENDING → REJECTED)。"""
+        storage = _default_storage()
+        try:
+            ripple = storage.update_ripple_status(ripple_id, "rejected", actor="user")
+        except KeyError:
+            raise HTTPException(
+                status_code=404, detail=f"ripple {ripple_id} not found"
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        except ConflictError as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        return RippleActionResponse(
+            ripple_id=ripple_id,
+            status="rejected",
+            actor="user",
+            applied_at=ripple.applied_at,
+        )
 
     # ==================== Phase 6: Workflow Endpoints ====================
 

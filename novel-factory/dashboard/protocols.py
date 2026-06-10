@@ -24,6 +24,8 @@ import logging
 from datetime import datetime
 from typing import Any, Optional, Protocol, runtime_checkable
 
+from pydantic import BaseModel, Field
+
 from infra.agent_system.decision_queue import (
     HumanDecision,
     HumanDecisionQueue,
@@ -610,7 +612,52 @@ def _execution_to_dict(execution: Any) -> dict[str, Any]:
     }
 
 
+# ==================== Phase 9.13: CVG Pydantic Schemas ====================
+# Re-exported from dashboard.app for the 4 CVG REST endpoints (5 endpoints use these).
+# 跟 DecisionResponse / WorkflowListItem 1:1 mirror (但这些 Pydantic schemas 历史上在
+# app.py 内部,本次为了 additive 解耦,把 CVG 系列提到 protocols.py)。
+
+
+class RippleListItemResponse(BaseModel):
+    """Phase 9.13: ripple list item (跟 DecisionResponse 1:1 mirror)."""
+    ripple_id: str
+    dimension: str  # placeholder, real value via JOIN in future
+    relationship_type: str
+    source_chapter: int
+    target_chapter: int
+    status: str
+    confidence: int = 1  # Phase 9.12 additive
+    created_at: datetime
+
+
+class RippleDetailResponse(RippleListItemResponse):
+    """Phase 9.13: ripple detail (extends list item, 跟 DecisionDetailResponse 1:1)."""
+    evidence: str = ""
+    source_payload: dict[str, Any] = Field(default_factory=dict)
+    target_payload: dict[str, Any] = Field(default_factory=dict)
+    edge_payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class RippleActionResponse(BaseModel):
+    """Phase 9.13: apply/reject action response."""
+    ripple_id: str
+    status: str
+    actor: str
+    applied_at: Optional[datetime] = None
+
+
+class RippleStatsResponse(BaseModel):
+    """Phase 9.13: ripple stats (count by status + volume, 跟 DecisionStats 1:1)."""
+    total: int
+    by_status: dict[str, int]
+    by_volume: dict[str, int] = Field(default_factory=dict)
+
+
 __all__ = [
     "MasterControllerLike",
     "MasterControllerAdapter",
+    "RippleListItemResponse",
+    "RippleDetailResponse",
+    "RippleActionResponse",
+    "RippleStatsResponse",
 ]
