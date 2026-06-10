@@ -81,8 +81,27 @@ function disconnect() {
     ws.value = null;
   }
   connected.value = false;
+  reconnectAttempts.value = 0;
+  lastError.value = null;
 }
 
+/**
+ * Vue composable for CVG WebSocket subscription.
+ *
+ * @returns {{
+ *   ws: import('vue').Ref<WebSocket|null>,        // exposed for test introspection
+ *   connected: import('vue').Ref<boolean>,
+ *   lastError: import('vue').Ref<string|null>,
+ *   pendingUpdates: import('vue').Ref<Array<object>>,
+ *   reconnectAttempts: import('vue').Ref<number>,
+ *   connect: () => void,
+ *   disconnect: () => void,
+ * }}
+ *
+ * Note: `ws` is intentionally public (vs. useWorkflowSocket which hides it)
+ * to allow unit tests to fire onmessage/onclose events without a real socket.
+ * Production code should drive state through `connect()` / `disconnect()`.
+ */
 export function useRippleSocket() {
   onMounted(() => {
     if (mountedCount === 0) connect();
