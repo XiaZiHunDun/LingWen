@@ -9,7 +9,7 @@
 //   - rollback_button_shown_for_applied
 //   - rollback_click_prompts_and_calls_store_rollback
 //   - empty_audit_shows_no_history
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import RippleDrawer from '../../src/components/RippleDrawer.vue';
 
@@ -46,6 +46,12 @@ describe('RippleDrawer audit timeline', () => {
     const api = await import('../../src/api/index.js');
     api.fetchRipples.mockResolvedValue([]);
     api.fetchRippleStats.mockResolvedValue({ total: 0, by_status: {}, by_volume: {} });
+  });
+
+  afterEach(() => {
+    // 防止 test 5 (rollback_click_prompts_and_calls_store_rollback) 中
+    //   window.prompt = vi.fn(...) mock 泄漏到后续 test (e.g. 跨 describe 共享)
+    vi.restoreAllMocks();
   });
 
   it('drawer_calls_fetch_audit_on_mount', async () => {

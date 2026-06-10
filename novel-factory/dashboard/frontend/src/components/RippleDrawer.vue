@@ -95,10 +95,9 @@ const isTerminal = computed(() => ['applied', 'rejected', 'failed'].includes(pro
 const store = useRippleStore();
 const auditEntries = ref([]);
 
-const canRollback = computed(() => {
-  if (!props.ripple) return false;
-  return props.ripple.status === 'applied' || props.ripple.status === 'rejected';
-});
+const canRollback = computed(() =>
+  props.ripple.status === 'applied' || props.ripple.status === 'rejected'
+);
 
 async function loadAudit() {
   if (!props.ripple || !props.ripple.ripple_id) return;
