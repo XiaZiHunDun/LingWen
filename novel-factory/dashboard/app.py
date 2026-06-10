@@ -24,9 +24,12 @@ from pydantic import BaseModel, Field
 from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
     MasterControllerLike,
+    RippleActionRequest,
     RippleActionResponse,
+    RippleAuditEntryResponse,
     RippleDetailResponse,
     RippleListItemResponse,
+    RippleRollbackRequest,
     RippleStatsResponse,
     _extract_cost_by_day,
     _extract_cost_by_scenario,
@@ -39,7 +42,7 @@ from dashboard.ws import (
     start_broadcast_task,
 )
 from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import ConflictError, RippleStorage
+from infra.cross_volume.storage import AuditEntry, ConflictError, RippleStorage
 
 # ==================== Pydantic Models ====================
 
@@ -518,6 +521,21 @@ def _ripple_to_detail(r: CrossVolumeRipple) -> RippleDetailResponse:
     )
 
 
+def _audit_to_response(entry: AuditEntry) -> RippleAuditEntryResponse:
+    """Phase 9.14: AuditEntry → RippleAuditEntryResponse."""
+    return RippleAuditEntryResponse(
+        id=entry.id,
+        ripple_id=entry.ripple_id,
+        action=entry.action,
+        prev_status=entry.prev_status,
+        new_status=entry.new_status,
+        actor=entry.actor,
+        origin=entry.origin,
+        reason=entry.reason,
+        created_at=entry.created_at,
+    )
+
+
 def create_app(
     db_path: Optional[Path] = None,
     master_controller: Optional[MasterControllerLike] = None,
@@ -763,11 +781,20 @@ def create_app(
         return _ripple_to_detail(ripple)
 
     @app.post("/api/cvg/ripples/{ripple_id}/apply", response_model=RippleActionResponse)
-    def apply_ripple(ripple_id: str) -> RippleActionResponse:
-        """Phase 9.13: 应用 ripple (PENDING → APPLIED)。"""
+    def apply_ripple(
+        ripple_id: str,
+        body: RippleActionRequest | None = None,
+    ) -> RippleActionResponse:
+        """Phase 9.13: 应用 ripple (PENDING → APPLIED)。
+        Phase 9.14: 加 Optional body (RippleActionRequest), 不传 body 仍 work (backward compat)。
+        """
         storage = _default_storage()
+        actor = body.actor if body and body.actor else "user"
+        origin = body.origin if body and body.origin else "ui"
         try:
-            ripple = storage.update_ripple_status(ripple_id, "applied", actor="user")
+            ripple = storage.update_ripple_status(
+                ripple_id, "applied", actor=actor, origin=origin
+            )
         except KeyError:
             raise HTTPException(
                 status_code=404, detail=f"ripple {ripple_id} not found"
@@ -779,19 +806,25 @@ def create_app(
         return RippleActionResponse(
             ripple_id=ripple_id,
             status="applied",
-            actor="user",
+            actor=actor,
             applied_at=ripple.applied_at,
         )
 
     @app.post("/api/cvg/ripples/{ripple_id}/reject", response_model=RippleActionResponse)
-    def reject_ripple(ripple_id: str) -> RippleActionResponse:
+    def reject_ripple(
+        ripple_id: str,
+        body: RippleActionRequest | None = None,
+    ) -> RippleActionResponse:
         """Phase 9.13: 拒绝 ripple (PENDING → REJECTED)。
-
-        Phase 9.13: 0 reason param (YAGNI — persistence deferred to Phase 9.14 audit log)
+        Phase 9.14: 加 Optional body (RippleActionRequest), 不传 body 仍 work (backward compat)。
         """
         storage = _default_storage()
+        actor = body.actor if body and body.actor else "user"
+        origin = body.origin if body and body.origin else "ui"
         try:
-            ripple = storage.update_ripple_status(ripple_id, "rejected", actor="user")
+            ripple = storage.update_ripple_status(
+                ripple_id, "rejected", actor=actor, origin=origin
+            )
         except KeyError:
             raise HTTPException(
                 status_code=404, detail=f"ripple {ripple_id} not found"
@@ -803,9 +836,50 @@ def create_app(
         return RippleActionResponse(
             ripple_id=ripple_id,
             status="rejected",
-            actor="user",
+            actor=actor,
             applied_at=ripple.applied_at,
         )
+
+    # ==================== Phase 9.14: audit + rollback endpoints ====================
+
+    @app.get(
+        "/api/cvg/ripples/{ripple_id}/audit",
+        response_model=list[RippleAuditEntryResponse],
+    )
+    def get_ripple_audit(
+        ripple_id: str,
+        limit: int = Query(50, ge=1, le=200),
+        offset: int = Query(0, ge=0),
+    ) -> list[RippleAuditEntryResponse]:
+        """Phase 9.14: time-ordered audit history (newest first)."""
+        storage = _default_storage()
+        if storage.get_ripple_by_id(ripple_id) is None:
+            raise HTTPException(404, f"ripple {ripple_id} not found")
+        entries = storage.get_audit_history(ripple_id, limit=limit, offset=offset)
+        return [_audit_to_response(e) for e in entries]
+
+    @app.post(
+        "/api/cvg/ripples/{ripple_id}/rollback",
+        response_model=RippleDetailResponse,
+    )
+    def rollback_ripple(
+        ripple_id: str,
+        request: RippleRollbackRequest,
+    ) -> RippleDetailResponse:
+        """Phase 9.14: reverse an apply/reject (status → pending + audit)."""
+        storage = _default_storage()
+        try:
+            ripple = storage.rollback_ripple(
+                ripple_id,
+                actor=request.actor,
+                origin=request.origin,
+                reason=request.reason,
+            )
+        except KeyError:
+            raise HTTPException(404, f"ripple {ripple_id} not found")
+        except ValueError as e:
+            raise HTTPException(422, str(e))
+        return _ripple_to_detail(ripple)
 
     # ==================== Phase 6: Workflow Endpoints ====================
 

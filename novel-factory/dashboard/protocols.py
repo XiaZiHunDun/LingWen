@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Literal, Optional, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
@@ -660,4 +660,39 @@ __all__ = [
     "RippleDetailResponse",
     "RippleActionResponse",
     "RippleStatsResponse",
+    "RippleAuditEntryResponse",
+    "RippleRollbackRequest",
+    "RippleActionRequest",
 ]
+
+
+# === Phase 9.14: ripple audit + rollback schemas ===
+
+class RippleAuditEntryResponse(BaseModel):
+    """Phase 9.14: 1 row of ripple_audit table (newest first list item)."""
+    id: int
+    ripple_id: str
+    action: Literal["created", "applied", "rejected", "failed", "rolled_back"]
+    prev_status: str | None
+    new_status: str
+    actor: str
+    origin: Literal["ui", "cli", "system"]
+    reason: str | None
+    created_at: datetime
+
+
+class RippleRollbackRequest(BaseModel):
+    """Phase 9.14: POST /rollback body (reason required)."""
+    actor: str = "user"
+    origin: Literal["ui", "cli", "system"] = "ui"
+    reason: str = Field(..., min_length=1, max_length=500)
+
+
+class RippleActionRequest(BaseModel):
+    """Phase 9.14: Optional body for /apply and /reject (backward compat).
+
+    既有 Phase 9.13 既有的 /apply /reject 不传 body 仍 work (全 Optional 字段)。
+    """
+    actor: str | None = None
+    origin: Literal["ui", "cli", "system"] | None = None
+    reason: str | None = None

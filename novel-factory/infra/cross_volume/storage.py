@@ -320,10 +320,12 @@ class RippleStorage:
         ripple_id: str,
         new_status: str,
         actor: str = "user",
+        origin: str = "ui",  # Phase 9.14: additive kwarg, default 兜底 Phase 9.13 caller
     ) -> CrossVolumeRipple:
         """Status change + applied_at + WS broadcast.
 
         actor: 广播 only (Phase 9.13);持久化 (audit column) 留 Phase 9.14 audit log。
+        origin: Phase 9.14 additive (default 'ui', 0 改 Phase 9.13 caller behavior)。
 
         Validation:
             - ripple_id 必须存在 (else raise KeyError, API 转 404)
@@ -358,7 +360,7 @@ class RippleStorage:
             prev_status=current.status,
             new_status=new_status,
             actor=actor,
-            origin="ui",  # Phase 9.13 caller always 'ui'; T3 will let API override
+            origin=origin,  # Phase 9.14: use param (was hardcoded "ui" in T2)
             reason=None,  # apply/reject don't take reason (rolled_back does)
         )
         # Phase 9.13: avoid re-fetch race (return updated in-memory copy)
