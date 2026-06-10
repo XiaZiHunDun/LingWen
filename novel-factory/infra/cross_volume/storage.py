@@ -11,7 +11,7 @@ import json
 import logging
 import sqlite3
 from contextlib import contextmanager
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
@@ -20,6 +20,24 @@ from infra.cross_volume.reference_graph import ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class AuditEntry:
+    """Phase 9.14: 1 row of ripple_audit table.
+
+    Append-only history entry. Immutable after insert.
+    Fields mirror ripple_audit table columns (except id which is autoincrement PK).
+    """
+    id: int
+    ripple_id: str
+    action: str  # 'created' / 'applied' / 'rejected' / 'failed' / 'rolled_back'
+    prev_status: str | None
+    new_status: str
+    actor: str
+    origin: str  # 'ui' / 'cli' / 'system'
+    reason: str | None
+    created_at: datetime
 
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS reference_nodes (
@@ -170,6 +188,16 @@ class RippleStorage:
                 conn.commit()
             except sqlite3.IntegrityError as e:
                 raise ValueError(f"storage integrity: {e}") from e
+        # Phase 9.14: write 'created' audit entry (independent commit)
+        self.record_audit(
+            ripple_id=ripple.id,
+            action="created",
+            prev_status=None,
+            new_status=ripple.status,
+            actor=ripple.payload.get("created_by", "system") if isinstance(ripple.payload, dict) else "system",
+            origin="system",
+            reason=None,
+        )
 
     def append_nodes_atomic(self, nodes: list[ReferenceNode]) -> None:
         """Phase 9.11: 1 atomic_batch wrap N inserts, 0 partial commit.
@@ -323,6 +351,16 @@ class RippleStorage:
                 (new_status, now_iso, ripple_id),
             )
             conn.commit()
+        # Phase 9.14: write audit entry (independent commit, like cost_tracker.record)
+        self.record_audit(
+            ripple_id=ripple_id,
+            action="applied" if new_status == "applied" else "rejected",
+            prev_status=current.status,
+            new_status=new_status,
+            actor=actor,
+            origin="ui",  # Phase 9.13 caller always 'ui'; T3 will let API override
+            reason=None,  # apply/reject don't take reason (rolled_back does)
+        )
         # Phase 9.13: avoid re-fetch race (return updated in-memory copy)
         updated = replace(
             current,
@@ -334,6 +372,100 @@ class RippleStorage:
             {"ripple_id": ripple_id, "new_status": new_status, "actor": actor, "applied_at": now_iso},
         )
         return updated
+
+    def record_audit(
+        self,
+        ripple_id: str,
+        action: str,
+        prev_status: str | None,
+        new_status: str,
+        actor: str,
+        origin: str,
+        reason: str | None,
+    ) -> int:
+        """Append 1 row to ripple_audit (independent commit).
+
+        跟 cost_tracker.record() 1:1 pattern: 主 write path 失败不传播到这里。
+        """
+        with self._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO ripple_audit (ripple_id, action, prev_status, new_status, actor, origin, reason, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (ripple_id, action, prev_status, new_status, actor, origin, reason,
+                 datetime.now(timezone.utc).isoformat()),
+            )
+            conn.commit()
+            return cur.lastrowid
+
+    def get_audit_history(
+        self,
+        ripple_id: str,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[AuditEntry]:
+        """Time-ordered audit entries (newest first, default 50)."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM ripple_audit WHERE ripple_id = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+                (ripple_id, limit, offset),
+            ).fetchall()
+            return [self._row_to_audit(r) for r in rows]
+
+    def rollback_ripple(
+        self,
+        ripple_id: str,
+        actor: str,
+        origin: str,
+        reason: str,
+    ) -> CrossVolumeRipple:
+        """Soft rollback: applied/rejected → pending + applied_at NULL + audit.
+
+        Atomic via atomic_batch (BEGIN IMMEDIATE + 1 fsync on commit).
+        """
+        if not reason or not reason.strip():
+            raise ValueError("reason is required for rollback")
+        with self.atomic_batch() as conn:
+            row = conn.execute(
+                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"ripple {ripple_id} not found")
+            current = self._row_to_ripple(row)
+            if current.status not in ("applied", "rejected"):
+                raise ValueError(
+                    f"can only rollback applied/rejected ripples, current status: {current.status!r}"
+                )
+            now_iso = datetime.now(timezone.utc).isoformat()
+            conn.execute(
+                "UPDATE reference_ripples SET status = 'pending', applied_at = NULL WHERE id = ?",
+                (ripple_id,),
+            )
+            conn.execute(
+                "INSERT INTO ripple_audit (ripple_id, action, prev_status, new_status, actor, origin, reason, created_at)"
+                " VALUES (?, 'rolled_back', ?, 'pending', ?, ?, ?, ?)",
+                (ripple_id, current.status, actor, origin, reason, now_iso),
+            )
+        updated = self.get_ripple_by_id(ripple_id)
+        assert updated is not None
+        _broadcast_ripple_event(
+            "ripple_status_changed",
+            {"ripple_id": ripple_id, "new_status": "pending", "actor": actor,
+             "origin": origin, "reason": reason, "applied_at": None, "action": "rolled_back"},
+        )
+        return updated
+
+    def _row_to_audit(self, row: sqlite3.Row) -> AuditEntry:
+        return AuditEntry(
+            id=row["id"],
+            ripple_id=row["ripple_id"],
+            action=row["action"],
+            prev_status=row["prev_status"],
+            new_status=row["new_status"],
+            actor=row["actor"],
+            origin=row["origin"],
+            reason=row["reason"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+        )
 
 
 # Phase 9.13: additive — ConflictError exception + 3 module-level helpers
