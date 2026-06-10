@@ -26,21 +26,27 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
 
   test('apply then rollback → audit timeline updates', async ({ page }) => {
     await page.goto('/ripples?status=pending');
+    // Set up dialog handler IMMEDIATELY after goto (must catch any dialog from drawer mount)
+    page.on('dialog', dialog => dialog.accept('e2e test rollback'));
     await page.waitForSelector('[data-testid="ripple-card"]', { timeout: 5000 });
     // Find a pending ripple, apply it
     await page.locator('[data-testid="ripple-card"]').first().click();
     await page.waitForSelector('[data-testid="ripple-drawer"]');
-    // Set up dialog handler for rollback prompt
-    page.on('dialog', dialog => dialog.accept('e2e test rollback'));
     // Click apply (apply button testid: ripple-drawer-apply — 跟 plan 笔误 ripple-apply-btn 修正)
+    const applyResp = page.waitForResponse(
+      r => r.url().match(/\/apply/) && r.status() === 200
+    );
     await page.locator('[data-testid="ripple-drawer-apply"]').click();
-    await page.waitForTimeout(500);
+    await applyResp;
     // Reopen drawer
     await page.locator('[data-testid="ripple-card"]').first().click();
     await page.waitForSelector('[data-testid="ripple-drawer"]');
     // Click rollback
+    const rollbackResp = page.waitForResponse(
+      r => r.url().match(/\/rollback/) && r.status() === 200
+    );
     await page.locator('[data-testid="ripple-rollback-btn"]').click();
-    await page.waitForTimeout(500);
+    await rollbackResp;
     // Reopen drawer, check audit shows rolled_back entry
     await page.locator('[data-testid="ripple-card"]').first().click();
     await page.waitForSelector('[data-testid="ripple-drawer"]');
@@ -53,11 +59,13 @@ test.describe('Phase 9.14: ripple audit timeline e2e', () => {
     await page.waitForSelector('[data-testid="ripple-card"]', { timeout: 5000 });
     await page.locator('[data-testid="ripple-card"]').first().click();
     await page.waitForSelector('[data-testid="ripple-drawer"]');
-    // If ripple is pre-Phase 9.14, audit will be empty
+    // Some ripples have audit history, some don't — assert one or the other visible
     const empty = page.locator('[data-testid="ripple-audit-empty"]');
-    // Some may have audit, some may not — assert one or the other is visible
-    await expect(
-      page.locator('[data-testid="ripple-audit-list"]').or(empty)
-    ).toBeVisible();
+    const list = page.locator('[data-testid="ripple-audit-list"]');
+    await expect(list.or(empty)).toBeVisible();
+    // If empty state shown, verify literal "No history yet" text
+    if (await empty.isVisible().catch(() => false)) {
+      await expect(empty).toContainText('No history yet');
+    }
   });
 });
