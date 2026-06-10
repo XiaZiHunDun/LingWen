@@ -445,8 +445,10 @@ class RippleStorage:
                 " VALUES (?, 'rolled_back', ?, 'pending', ?, ?, ?, ?)",
                 (ripple_id, current.status, actor, origin, reason, now_iso),
             )
-        updated = self.get_ripple_by_id(ripple_id)
-        assert updated is not None
+        # Mirror update_ripple_status: build updated copy via replace() to avoid re-fetch race
+        # (no separate connection/transaction between commit and read — `current` is guaranteed
+        # valid since SELECT in atomic_batch above found the row).
+        updated = replace(current, status="pending", applied_at=None)
         _broadcast_ripple_event(
             "ripple_status_changed",
             {"ripple_id": ripple_id, "new_status": "pending", "actor": actor,
