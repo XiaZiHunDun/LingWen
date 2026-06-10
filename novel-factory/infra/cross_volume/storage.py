@@ -418,6 +418,61 @@ class RippleStorage:
         )
         return updated
 
+    def reset_ripple_for_test(
+        self,
+        ripple_id: str,
+        to_status: str,
+        actor: str = "cli:lingwen-ripple",
+        origin: str = "system",
+        reason: str = "test reset",
+    ) -> "CrossVolumeRipple":
+        """Phase 9.18: idempotent reset ripple status (test/dev tool).
+
+        Differs from update_ripple_status:
+        - Accepts ALL 5 statuses (pending/applied/rejected/failed/created)
+        - Sets applied_at=NULL (not NOW)
+        - Writes audit action='rolled_back' (not auto-derived)
+        - Bypasses terminal status check (test reset)
+        - Custom reason (e.g. "reset to pending")
+
+        Designed for e2e test idempotency (ripples-audit.spec.js Test 2
+        beforeEach calls lingwen.py ripple-reset → this method).
+
+        0 改既 12 public method signature; 0 改 update_ripple_status (Phase 9.13
+        production path apply_ripple / reject_ripple / rollback_ripple)。
+        """
+        valid = ("pending", "applied", "rejected", "failed", "created")
+        if to_status not in valid:
+            raise ValueError(
+                f"to_status must be one of {valid}, got {to_status!r}"
+            )
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM reference_ripples WHERE id = ?", (ripple_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"ripple {ripple_id} not found")
+            current = self._row_to_ripple(row)
+            prev_status = current.status
+            conn.execute(
+                "UPDATE reference_ripples SET status = ?, applied_at = NULL WHERE id = ?",
+                (to_status, ripple_id),
+            )
+            conn.commit()
+        # Write audit (independent commit, like cost_tracker.record)
+        self.record_audit(
+            ripple_id=ripple_id,
+            action="rolled_back",
+            prev_status=prev_status,
+            new_status=to_status,
+            actor=actor,
+            origin=origin,
+            reason=reason,
+        )
+        # In-memory return updated (avoids re-fetch race)
+        updated = replace(current, status=to_status, applied_at=None)
+        return updated
+
     def record_audit(
         self,
         ripple_id: str,
