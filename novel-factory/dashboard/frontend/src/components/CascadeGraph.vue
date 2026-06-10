@@ -69,7 +69,18 @@ async function initChart() {
   chart.setOption({
     title: { text: `Cascade (depth ${props.cascade.depth_reached})`, left: 'center' },
     tooltip: {},
-    series: [{ type: 'graph', layout: 'force', roam: true, data: nodes, edges, force: { repulsion: 100 } }],
+    series: [{
+      type: 'graph',
+      layout: 'force',
+      roam: true,
+      data: nodes,
+      edges,
+      force: { repulsion: 100 },
+      // Phase 9.16 T2: 节点 hover 渐入 (ECharts 5.5 emphasis API 1:1)
+      // 0 改既有 nodes / edges / tooltip / click emit / dryRun 配色
+      emphasis: { focus: 'self', itemStyle: { opacity: 1.0, borderColor: '#1e40af', borderWidth: 2 } },
+      select: { itemStyle: { opacity: 0.3 } },
+    }],
   });
   // node click: emit { nodeId, volume, chapter } 让 parent drawer 跳章节 (T4 接)
   chart.on('click', (params) => {

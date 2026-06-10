@@ -65,4 +65,31 @@ describe('CascadeGraph.vue', () => {
     await flushPromises();
     expect(wrapper.find('[data-testid="cascade-graph-empty"]').exists()).toBe(true);
   });
+
+  // Phase 9.16 T2: 节点 hover 渐入 (ECharts 5.5 emphasis + select)
+  // 0 改既有 5 tests, 0 改 defineProps / defineEmits / click emit
+  it('configures ECharts emphasis focus self and select dim opacity', async () => {
+    // 用 setOptionSpy 替代默认 stub, 精准断言 series.emphasis / series.select 字段
+    const setOptionSpy = vi.fn();
+    const echarts = await import('echarts/core');
+    vi.mocked(echarts.init).mockReturnValueOnce({
+      setOption: setOptionSpy,
+      on: vi.fn(),
+      resize: vi.fn(),
+      dispose: vi.fn(),
+    });
+    const wrapper = mount(CascadeGraph, { props: { cascade: stubCascade } });
+    await flushPromises();
+    // 拿到 series[0] 配置, 验证 ECharts 5.5 emphasis API
+    const option = setOptionSpy.mock.calls[0][0];
+    const series = option?.series?.[0];
+    // emphasis.focus: 'self' → hover 时其他节点 dim, 当前节点高亮
+    expect(series?.emphasis?.focus).toBe('self');
+    // emphasis.itemStyle.opacity: 1.0 (高亮当前节点)
+    expect(series?.emphasis?.itemStyle?.opacity).toBeGreaterThan(0.5);
+    // select.itemStyle.opacity: < 0.5 (dim 非选中节点, 0 业务逻辑)
+    expect(series?.select?.itemStyle?.opacity).toBeLessThan(0.5);
+    // cleanup: dispose chart 避免 onUnmounted 报错
+    wrapper.unmount();
+  });
 });
