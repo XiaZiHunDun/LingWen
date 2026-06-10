@@ -62,6 +62,20 @@ CREATE TABLE IF NOT EXISTS reference_ripples (
     applied_at TEXT,
     payload TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS ripple_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ripple_id TEXT NOT NULL REFERENCES reference_ripples(id),
+    action TEXT NOT NULL CHECK(action IN ('created', 'applied', 'rejected', 'failed', 'rolled_back')),
+    prev_status TEXT,
+    new_status TEXT NOT NULL,
+    actor TEXT NOT NULL,
+    origin TEXT NOT NULL CHECK(origin IN ('ui', 'cli', 'system')),
+    reason TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_audit_ripple ON ripple_audit(ripple_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON ripple_audit(actor, created_at DESC);
 """
 
 
