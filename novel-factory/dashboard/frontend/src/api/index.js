@@ -302,3 +302,27 @@ export async function rollbackRipple(rippleId, reason) {
     body: { reason },
   });
 }
+
+// === Phase 9.15: cascade BFS + dry-run preview API methods ===
+
+/**
+ * Phase 9.15: fetch cascaded ripple (nodes/edges/actions downstream of trigger).
+ * Returns CascadedRipple JSON { trigger_ripple_id, cascade_nodes, cascade_edges,
+ *   cascade_actions, depth_reached, generated_at, bfs_algorithm_version }.
+ * @param {string} rippleId
+ * @returns {Promise<object>}
+ */
+export async function fetchRippleCascade(rippleId) {
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/cascade`);
+}
+
+/**
+ * Phase 9.15: fetch dry-run preview summary (what apply would modify).
+ * Returns CascadePreviewResponse JSON { ripple_id, nodes_to_add, edges_to_add,
+ *   actions_to_apply, totals: { nodes, edges, actions } }.
+ * @param {string} rippleId
+ * @returns {Promise<object>}
+ */
+export async function fetchRipplePreview(rippleId) {
+  return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/cascade/preview`);
+}

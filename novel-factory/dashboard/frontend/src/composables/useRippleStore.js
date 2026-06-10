@@ -15,12 +15,16 @@ import {
   rejectRipple,
   fetchRippleAudit,
   rollbackRipple,
+  fetchRippleCascade,     // Phase 9.15
+  fetchRipplePreview,     // Phase 9.15
 } from '../api/index.js'
 
 const ripples = ref([])
 const loading = ref(false)
 const lastError = ref(null)
 const stats = ref({ total: 0, by_status: {}, by_volume: {} })
+const cascadeByRippleId = ref(new Map())  // Phase 9.15
+const previewByRippleId = ref(new Map())  // Phase 9.15
 let mountedCount = 0
 
 async function refresh(filters = {}) {
@@ -136,6 +140,32 @@ async function rollback(rippleId, reason) {
   }
 }
 
+// === Phase 9.15: cascade BFS + dry-run preview actions ===
+
+async function loadCascade(rippleId) {
+  lastError.value = null
+  try {
+    const data = await fetchRippleCascade(rippleId)
+    cascadeByRippleId.value.set(rippleId, data)
+    return data
+  } catch (e) {
+    lastError.value = e?.message || String(e)
+    throw e
+  }
+}
+
+async function loadCascadePreview(rippleId) {
+  lastError.value = null
+  try {
+    const data = await fetchRipplePreview(rippleId)
+    previewByRippleId.value.set(rippleId, data)
+    return data
+  } catch (e) {
+    lastError.value = e?.message || String(e)
+    throw e
+  }
+}
+
 export function useRippleStore() {
   onMounted(() => {
     if (mountedCount === 0) {
@@ -151,5 +181,7 @@ export function useRippleStore() {
     ripples, loading, lastError, stats,
     refresh, apply, reject, applySocketUpdate,  // 既有 0 改
     fetchAudit, rollback,                        // Phase 9.14 新增
+    loadCascade, loadCascadePreview,             // Phase 9.15 新增
+    cascadeByRippleId, previewByRippleId,        // Phase 9.15 新增
   }
 }

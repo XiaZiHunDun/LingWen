@@ -19,6 +19,8 @@ vi.mock('../../src/api/index.js', () => ({
   rejectRipple: vi.fn(),
   fetchRippleAudit: vi.fn(),
   rollbackRipple: vi.fn(),
+  fetchRippleCascade: vi.fn(),       // Phase 9.15
+  fetchRipplePreview: vi.fn(),       // Phase 9.15
 }));
 
 describe('useRippleStore audit actions', () => {
@@ -99,5 +101,45 @@ describe('useRippleStore audit actions', () => {
     const callArgs = mockFetch.mock.calls[0];
     const opts = callArgs[1];
     expect(JSON.parse(opts.body)).toEqual({ reason: 'reason text' });
+  });
+
+  // === Phase 9.15: cascade BFS + dry-run preview (cascade actions / preview) ===
+
+  it('loadCascade fetches and caches cascade', async () => {
+    const api = await import('../../src/api/index.js');
+    const data = {
+      trigger_ripple_id: 'rip-1',
+      cascade_nodes: [{ id: 'n2', volume: 2, chapter: 1, dimension: 'character' }],
+      cascade_edges: [],
+      cascade_actions: [{ action: 'propagate', from: 'n1', to: 'n2', depth: 1, weight: 1.0 }],
+      depth_reached: 1,
+      generated_at: '2026-06-10T10:00:00Z',
+      bfs_algorithm_version: 'v1',
+    };
+    api.fetchRippleCascade.mockResolvedValue(data);
+    const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
+    const store = useRippleStore();
+    const result = await store.loadCascade('rip-1');
+    expect(result).toEqual(data);
+    expect(api.fetchRippleCascade).toHaveBeenCalledWith('rip-1');
+    expect(store.cascadeByRippleId.value.get('rip-1').depth_reached).toBe(1);
+  });
+
+  it('loadCascadePreview fetches and caches preview', async () => {
+    const api = await import('../../src/api/index.js');
+    const data = {
+      ripple_id: 'rip-1',
+      nodes_to_add: [],
+      edges_to_add: [],
+      actions_to_apply: [],
+      totals: { nodes: 3, edges: 2, actions: 1 },
+    };
+    api.fetchRipplePreview.mockResolvedValue(data);
+    const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
+    const store = useRippleStore();
+    const result = await store.loadCascadePreview('rip-1');
+    expect(result.totals.nodes).toBe(3);
+    expect(api.fetchRipplePreview).toHaveBeenCalledWith('rip-1');
+    expect(store.previewByRippleId.value.get('rip-1').totals.edges).toBe(2);
   });
 });
