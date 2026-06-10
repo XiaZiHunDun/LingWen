@@ -1,5 +1,6 @@
 # infra/cross_volume/reference_graph.py
 """Phase 9.10: CrossVolumeReferenceGraph container + ReferenceNode + ReferenceEdge."""
+import heapq
 import logging
 from collections import deque
 from dataclasses import dataclass, field
@@ -143,47 +144,105 @@ class CrossVolumeReferenceGraph:
     def get_ripple(self, ripple_id: str) -> CrossVolumeRipple | None:
         return self._ripples.get(ripple_id)
 
-    def trigger_cascade(self, ripple: CrossVolumeRipple, max_depth: int = 3) -> CascadedRipple:
+    def trigger_cascade(
+        self, ripple: CrossVolumeRipple, max_depth: int = 3, weighted: bool = True,
+    ) -> CascadedRipple:
         """Phase 9.15: real BFS cascade (replaces Phase 9.10 stub returns []).
+        Phase 9.16: weighted BFS using heapq priority queue (high edge.weight first).
 
-        Depth limit `max_depth` (default 3) + visited set (防环).
-        Collects 1 proposed_action per hop.
+        Args:
+            ripple: Trigger ripple (起点节点集).
+            max_depth: BFS 深度上限 (default 3, Phase 9.15 既设).
+            weighted: True = v2_weighted (heapq, 高 weight 优先, ties node_id 字典序),
+                      False = v1 FIFO (deque, 跟 Phase 9.15 完全等价, backward compat).
+
+        Returns:
+            CascadedRipple with bfs_algorithm_version='v2_weighted' (weighted=True)
+            or 'v1' (weighted=False). 100-node cap enforced for defensive downstream
+            drawer/graph-viz budget (跟 Phase 9.15 cascade cap 一致).
         """
+        algorithm_version = "v2_weighted" if weighted else "v1"
+        max_nodes_cap = 100  # Phase 9.15/9.16 defensive cap (drawer graph-viz budget)
+
+        # Phase 9.16: priority queue entry = (neg_weight, node_id, node_obj, depth)
+        #   - -weight 让高 weight 优先 pop (heapq 默认 min-heap)
+        #   - node_id 作 tie-breaker 保稳定 (Python tuple 字典序比较)
+        # Phase 9.15: FIFO deque entry = (node_id, depth)
         visited: set[str] = set(ripple.affected_nodes)
-        queue: deque[tuple[str, int]] = deque(
-            (n, 1) for n in ripple.affected_nodes
-        )
+
+        if weighted:
+            pq: list[tuple[float, str, ReferenceNode, int]] = []
+            for n in ripple.affected_nodes:
+                node = self._nodes.get(n)
+                if node is None:
+                    continue
+                # 起点用 weight=1.0 (最高, 实际 visited 已防 revisit)
+                heapq.heappush(pq, (-1.0, n, node, 1))
+        else:
+            queue: deque[tuple[str, int]] = deque(
+                (n, 1) for n in ripple.affected_nodes if n in self._nodes
+            )
+
         collected_nodes: list[ReferenceNode] = []
         collected_edges: list[ReferenceEdge] = []
         collected_actions: list[dict] = []
         reached_depth = 0
-        while queue:
-            node_id, depth = queue.popleft()
+
+        while True:
+            if weighted:
+                if not pq:
+                    break
+                _, _, node, depth = heapq.heappop(pq)
+                current_id = node.id
+            else:
+                if not queue:
+                    break
+                current_id, depth = queue.popleft()
+                node = self._nodes.get(current_id)
+                if node is None:
+                    continue
+
             if depth > max_depth:
                 continue
             reached_depth = max(reached_depth, depth)
-            for neighbor in self.get_neighbors(node_id):
+
+            # BFS 邻居
+            for neighbor in self.get_neighbors(current_id):
                 if neighbor.id in visited:
                     continue
+                if len(collected_nodes) >= max_nodes_cap:
+                    break
                 visited.add(neighbor.id)
                 collected_nodes.append(neighbor)
                 # Collect edges for the hop (both source + target side)
-                edge_ids = self._index_by_node_edges.get(node_id, set())
+                edge_ids = self._index_by_node_edges.get(current_id, set())
+                edge_obj: ReferenceEdge | None = None
                 for eid in edge_ids:
                     e = self._edges[eid]
-                    if (e.from_node_id == node_id and e.to_node_id == neighbor.id) or \
-                       (e.to_node_id == node_id and e.from_node_id == neighbor.id):
+                    if (e.from_node_id == current_id and e.to_node_id == neighbor.id) or \
+                       (e.to_node_id == current_id and e.from_node_id == neighbor.id):
                         collected_edges.append(e)
+                        edge_obj = e
+                        break
+                # Phase 9.16: weight 走 edge.weight (优先) 而非 neighbor.payload
+                hop_weight = edge_obj.weight if edge_obj is not None else 0.5
                 # 1 proposed_action per hop
                 collected_actions.append({
                     "action": "propagate",
-                    "from": node_id,
+                    "from": current_id,
                     "to": neighbor.id,
                     "depth": depth,
-                    "weight": neighbor.payload.get("weight", 1.0),
+                    "weight": hop_weight,
                 })
                 if depth < max_depth:
-                    queue.append((neighbor.id, depth + 1))
+                    if weighted:
+                        heapq.heappush(pq, (-hop_weight, neighbor.id, neighbor, depth + 1))
+                    else:
+                        queue.append((neighbor.id, depth + 1))
+            # max_nodes_cap reached, also break outer
+            if len(collected_nodes) >= max_nodes_cap and not (weighted and pq):
+                break
+
         return CascadedRipple(
             trigger_ripple_id=ripple.id,
             cascade_nodes=tuple(collected_nodes),
@@ -191,6 +250,7 @@ class CrossVolumeReferenceGraph:
             cascade_actions=tuple(collected_actions),
             depth_reached=reached_depth,
             generated_at=datetime.now(timezone.utc).isoformat(),
+            bfs_algorithm_version=algorithm_version,
         )
 
     def _load_from_storage(self) -> None:

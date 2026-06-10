@@ -36,7 +36,8 @@ class TestRipple:
         assert ripple.affected_edges == ()
 
     def test_trigger_cascade_empty_ripple_returns_empty_cascaded(self, graph):
-        """Phase 9.15: empty ripple (no affected_nodes) → empty CascadedRipple."""
+        """Phase 9.15: empty ripple (no affected_nodes) → empty CascadedRipple.
+        Phase 9.16: default weighted=True → bfs_algorithm_version='v2_weighted'."""
         ripple = CrossVolumeRipple(trigger_volume=2, trigger_chapter=5)
         result = graph.trigger_cascade(ripple)
         assert isinstance(result, CascadedRipple)
@@ -44,4 +45,4 @@ class TestRipple:
         assert result.cascade_edges == ()
         assert result.cascade_actions == ()
         assert result.depth_reached == 0
-        assert result.bfs_algorithm_version == "v1"
+        assert result.bfs_algorithm_version == "v2_weighted"
