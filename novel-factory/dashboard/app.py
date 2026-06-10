@@ -21,6 +21,7 @@ from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
+from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
     MasterControllerLike,
     RippleActionResponse,
@@ -462,6 +463,9 @@ def _decision_to_response(d: Any) -> DecisionResponse:
 
 _DEFAULT_CVG_DB_PATH = Path(__file__).parent.parent / ".state" / "cross_volume.db"
 _default_storage_instance: RippleStorage | None = None
+
+# Phase 9.13: CVG WebSocket connection manager (跟 /api/ws/workflows ConnectionManager 1:1 模式)
+cvg_manager = CvgConnectionManager()
 
 
 def _default_storage() -> RippleStorage:
@@ -1039,6 +1043,26 @@ def create_app(
                     break
         finally:
             await manager.disconnect(ws)
+
+    # ==================== Phase 9.13: CVG WebSocket Endpoint ====================
+
+    @app.websocket("/api/ws/cvg")
+    async def ws_cvg(ws: WebSocket) -> None:
+        """实时推送 ripple 变化 (跟 /api/ws/workflows 1:1 被动模式).
+
+        事件类型 (Spec 4.2.3):
+        - ripple_created: 新 ripple 写入 (Phase 9.11/9.12 CLI trigger)
+        - ripple_status_changed: apply/reject 状态变化
+        - pong: heartbeat reply (client send ping → server reply pong)
+        """
+        await cvg_manager.connect(ws)
+        try:
+            while True:
+                msg = await ws.receive_json()
+                if msg.get("type") == "ping":
+                    await ws.send_json({"type": EVENT_PONG})
+        except WebSocketDisconnect:
+            await cvg_manager.disconnect(ws)
 
     # ==================== Phase 6.3: Mermaid Graph Endpoint ====================
 
