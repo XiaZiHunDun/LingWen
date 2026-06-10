@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
-from infra.cross_volume.reference_graph import ReferenceEdge, ReferenceNode
+from infra.cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
 
 logger = logging.getLogger(__name__)
@@ -94,6 +94,18 @@ CREATE TABLE IF NOT EXISTS ripple_audit (
 );
 CREATE INDEX IF NOT EXISTS idx_audit_ripple ON ripple_audit(ripple_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_actor ON ripple_audit(actor, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS ripple_cascade (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trigger_ripple_id TEXT NOT NULL,
+    cascade_nodes_json TEXT NOT NULL,
+    cascade_edges_json TEXT NOT NULL,
+    cascade_actions_json TEXT NOT NULL,
+    depth_reached INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (trigger_ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_ripple_cascade_trigger ON ripple_cascade(trigger_ripple_id);
 """
 
 
@@ -109,8 +121,9 @@ class RippleStorage:
       反序列化 (JSON payload + ISO 8601 datetime)
     """
 
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path, graph=None) -> None:
         self._db_path = db_path
+        self._graph = graph  # Phase 9.15: optional, for cascade hook in append_ripple
         db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.execute("PRAGMA synchronous=FULL")
@@ -188,6 +201,15 @@ class RippleStorage:
                 conn.commit()
             except sqlite3.IntegrityError as e:
                 raise ValueError(f"storage integrity: {e}") from e
+        # Phase 9.15: cascade hook (BFS via reference_graph, then persist)
+        # Pattern 1:1 跟 Phase 9.14 record_audit 1:1
+        if self._graph is not None:
+            try:
+                cascaded = self._graph.trigger_cascade(ripple)  # uses ref_graph BFS
+                self.record_cascade(cascaded)
+            except Exception as e:
+                logger.warning("cascade hook failed for ripple %s: %s", ripple.id, e)
+                # 0 propagate, ripple INSERT 已 commit, cascade 是 best-effort
         # Phase 9.14: write 'created' audit entry (independent commit)
         self.record_audit(
             ripple_id=ripple.id,
@@ -469,6 +491,84 @@ class RippleStorage:
             origin=row["origin"],
             reason=row["reason"],
             created_at=datetime.fromisoformat(row["created_at"]),
+        )
+
+    def record_cascade(self, cascaded: "CascadedRipple") -> int:
+        """Phase 9.15: append 1 row to ripple_cascade (independent commit).
+
+        跟 record_audit 1:1 pattern: 主 write path 失败不传播到这里。
+        """
+        with self._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO ripple_cascade (trigger_ripple_id, cascade_nodes_json, "
+                "cascade_edges_json, cascade_actions_json, depth_reached, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    cascaded.trigger_ripple_id,
+                    json.dumps([self._node_to_dict(n) for n in cascaded.cascade_nodes], ensure_ascii=False),
+                    json.dumps([self._edge_to_dict(e) for e in cascaded.cascade_edges], ensure_ascii=False),
+                    json.dumps(list(cascaded.cascade_actions), ensure_ascii=False),
+                    cascaded.depth_reached,
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            conn.commit()
+            return cur.lastrowid
+
+    def get_cascade_by_ripple_id(self, ripple_id: str) -> "CascadedRipple | None":
+        """Phase 9.15: latest cascade row for ripple_id, or None.
+
+        Returns latest by `id DESC` (monotonic PK 跟 created_at 同步)。
+        """
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM ripple_cascade WHERE trigger_ripple_id = ?"
+                " ORDER BY id DESC LIMIT 1",
+                (ripple_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            return CascadedRipple(
+                trigger_ripple_id=row["trigger_ripple_id"],
+                cascade_nodes=tuple(self._dict_to_node(n) for n in json.loads(row["cascade_nodes_json"])),
+                cascade_edges=tuple(self._dict_to_edge(e) for e in json.loads(row["cascade_edges_json"])),
+                cascade_actions=tuple(json.loads(row["cascade_actions_json"])),
+                depth_reached=row["depth_reached"],
+                generated_at=row["created_at"],
+            )
+
+    def _node_to_dict(self, n: "ReferenceNode") -> dict:
+        return {
+            "id": n.id, "dimension": n.dimension, "volume": n.volume,
+            "chapter": n.chapter, "title": n.title, "description": n.description,
+            "payload": n.payload, "created_at": n.created_at.isoformat(),
+            "created_by": n.created_by,
+        }
+
+    def _edge_to_dict(self, e: "ReferenceEdge") -> dict:
+        return {
+            "id": e.id, "from_node_id": e.from_node_id, "to_node_id": e.to_node_id,
+            "relationship_type": e.relationship_type, "weight": e.weight,
+            "payload": e.payload, "created_at": e.created_at.isoformat(),
+            "created_by": e.created_by,
+        }
+
+    def _dict_to_node(self, d: dict) -> "ReferenceNode":
+        return ReferenceNode(
+            id=d["id"], dimension=d["dimension"], volume=d["volume"],
+            chapter=d["chapter"], title=d["title"], description=d["description"],
+            payload=d["payload"],
+            created_at=datetime.fromisoformat(d["created_at"]) if isinstance(d["created_at"], str) else d["created_at"],
+            created_by=d["created_by"],
+        )
+
+    def _dict_to_edge(self, d: dict) -> "ReferenceEdge":
+        return ReferenceEdge(
+            id=d["id"], from_node_id=d["from_node_id"], to_node_id=d["to_node_id"],
+            relationship_type=d["relationship_type"], weight=d["weight"],
+            payload=d["payload"],
+            created_at=datetime.fromisoformat(d["created_at"]) if isinstance(d["created_at"], str) else d["created_at"],
+            created_by=d["created_by"],
         )
 
 
