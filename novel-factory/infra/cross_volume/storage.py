@@ -610,7 +610,7 @@ class RippleStorage:
                 cascade_edges=tuple(self._dict_to_edge(e) for e in json.loads(row["cascade_edges_json"])),
                 cascade_actions=tuple(json.loads(row["cascade_actions_json"])),
                 depth_reached=row["depth_reached"],
-                               generated_at=row["created_at"],
+                generated_at=row["created_at"],
             )
 
     def preview_cascade(self, ripple_id: str, max_depth: int) -> "CascadedRipple":
