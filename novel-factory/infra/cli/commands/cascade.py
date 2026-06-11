@@ -30,6 +30,11 @@ class CascadeCommand(Command):
         except KeyError:
             print(f"Error: ripple {ripple_id} not found", file=sys.stderr)
             return 1
+        if options.persist:  # Phase 9.20 NEW
+            run_id = storage.record_cascade_run(
+                options.ripple_id, cascaded, max_depth=options.max_depth,
+            )
+            print(f"persisted as cascade run id={run_id}")
         print(f"Cascade for {ripple_id} (max_depth={max_depth}):")
         print(f"  depth_reached: {cascaded.depth_reached}")
         print(f"  nodes: {len(cascaded.cascade_nodes)}")

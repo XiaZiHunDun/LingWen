@@ -26,4 +26,10 @@ def add_cascade_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
         choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         help="Max BFS depth 1..10 (default 3)",
     )
+    parser.add_argument(
+        "--persist",
+        action="store_true",
+        default=False,
+        help="Persist cascade run to cascade_runs table (off by default)",
+    )
     return parser

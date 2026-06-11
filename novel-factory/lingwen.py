@@ -163,6 +163,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             dry_run=False,
             ripple_id=args.ripple_id,
             max_depth=args.max_depth,
+            persist=args.persist,
         )
 
     chapter_range = parse_range(args.range, RangeParser())

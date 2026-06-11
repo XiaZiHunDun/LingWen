@@ -125,3 +125,4 @@ class CascadeOptions(UnifiedOptions):
     """
     ripple_id: str = ""
     max_depth: int = 3  # 1..10
+    persist: bool = False  # Phase 9.20 NEW: 持久化 cascade run 到 cascade_runs 表 (off by default)
