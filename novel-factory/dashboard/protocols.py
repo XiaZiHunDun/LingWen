@@ -670,6 +670,7 @@ __all__ = [
     "CascadeRunResponse",
     "CascadeUpdatePayload",
     "CascadeCancelPayload",
+    "CascadeCancelRequest",
 ]
 
 
@@ -866,4 +867,9 @@ class CascadeCancelPayload(BaseModel):
     run_id: int = Field(..., ge=1)
     ripple_id: str = Field(..., min_length=1)
     status: Literal["cancelled"] = "cancelled"
+    reason: str = ""
+
+
+class CascadeCancelRequest(BaseModel):
+    """Phase 9.21: POST cancel endpoint request body (optional reason)."""
     reason: str = ""

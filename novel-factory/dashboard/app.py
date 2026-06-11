@@ -21,9 +21,14 @@ from typing import Any, Optional
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
-from dashboard.cascade_notifier import set_ws_manager  # Phase 9.16: cascade WS push injector
+from dashboard.cascade_notifier import (
+    notify_cascade_cancel,  # Phase 9.21: cascade cancel WS push
+    set_ws_manager,  # Phase 9.16: cascade WS push injector
+)
 from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
+    CascadeCancelPayload,  # Phase 9.21
+    CascadeCancelRequest,  # Phase 9.21
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,
@@ -1139,6 +1144,36 @@ def create_app(
         storage = _default_storage()
         runs = storage.get_cascade_runs(ripple_id, limit=limit, offset=offset)
         return [CascadeRunResponse.from_dataclass(r) for r in runs]
+
+    @app.post(
+        "/api/ripples/cascade/{ripple_id}/runs/{run_id}/cancel",
+        response_model=CascadeRunResponse,
+    )
+    def post_ripple_cascade_run_cancel(
+        ripple_id: str,
+        run_id: int,
+        body: CascadeCancelRequest = CascadeCancelRequest(),
+    ) -> CascadeRunResponse:
+        """Phase 9.21: cancel a persisted cascade run.
+
+        Body: {"reason": str (optional)}
+        Returns: updated CascadeRunResponse (status='cancelled', completed_at = cancel time)
+        Raises: 404 if run_id not found
+        Side-effect: WS push 'cascade.cancel' event (best-effort, if flipped)
+        """
+        storage = _default_storage()
+        try:
+            flipped = storage.cancel_cascade_run(run_id, reason=body.reason)
+        except KeyError:
+            raise HTTPException(404, f"Cascade run {run_id} not found")
+        run = storage.get_cascade_run_by_id(run_id)
+        if flipped:
+            notify_cascade_cancel(CascadeCancelPayload(
+                run_id=run_id,
+                ripple_id=ripple_id,
+                reason=body.reason,
+            ))
+        return CascadeRunResponse.from_dataclass(run)
 
     # ==================== Phase 6: Workflow Endpoints ====================
 
