@@ -1132,10 +1132,10 @@ def create_app(
         ripple_id: str,
         limit: int = Query(default=50, ge=1, le=200),
         offset: int = Query(default=0, ge=0),
-        status: str | None = Query(default=None, regex="^(running|completed|cancelled|failed)$"),
+        status: str | None = Query(default=None, pattern="^(running|completed|cancelled|failed)$"),
         min_depth: int | None = Query(default=None, ge=1, le=10),
         max_depth: int | None = Query(default=None, ge=1, le=10),
-        algorithm: str | None = Query(default=None, regex="^(v1|v2_weighted)$"),
+        algorithm: str | None = Query(default=None, pattern="^(v1|v2_weighted)$"),
     ) -> list[CascadeRunResponse]:
         """Phase 9.20: list historical cascade runs for a ripple (latest first).
         Phase 9.23: add 4 query params (status, min_depth, max_depth, algorithm).
