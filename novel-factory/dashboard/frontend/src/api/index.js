@@ -326,3 +326,55 @@ export async function fetchRippleCascade(rippleId) {
 export async function fetchRipplePreview(rippleId) {
   return request(`/cvg/ripples/${encodeURIComponent(rippleId)}/cascade/preview`);
 }
+
+// === Phase 9.22: cascade_runs list + cancel + replay-readonly API methods ===
+
+/**
+ * Phase 9.22: fetch historical cascade_runs for a ripple (Phase 9.20 endpoint).
+ * Returns CascadeRun[] JSON array sorted by id DESC.
+ * @param {string} rippleId
+ * @param {object} [options] - { limit?: number, offset?: number, status?: string }
+ * @returns {Promise<Array<{id:number, ripple_id:string, started_at:string, completed_at:string|null,
+ *   max_depth:number, depth_reached:number, status:'running'|'completed'|'cancelled'|'failed',
+ *   algorithm_version:string, cascade_nodes:Array, cascade_edges:Array, cascade_actions:Array}>>}
+ */
+export async function fetchCascadeRuns(rippleId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.offset) params.set('offset', String(options.offset));
+  if (options.status) params.set('status', options.status);
+  const qs = params.toString();
+  return request(`/api/ripples/cascade/${encodeURIComponent(rippleId)}/runs${qs ? '?' + qs : ''}`);
+}
+
+/**
+ * Phase 9.22: cancel a running cascade run (Phase 9.21 endpoint).
+ * Idempotent — calling on already-cancelled run returns 200 with current state.
+ * @param {string} rippleId
+ * @param {number} runId
+ * @param {string} [reason] - audit reason (optional, default "")
+ * @returns {Promise<object>} Updated CascadeRunResponse
+ */
+export async function cancelCascadeRun(rippleId, runId, reason = '') {
+  return request(
+    `/api/ripples/cascade/${encodeURIComponent(rippleId)}/runs/${runId}/cancel`,
+    { method: 'POST', body: JSON.stringify({ reason }) }
+  );
+}
+
+/**
+ * Phase 9.22: Replay-readonly fetch with a given max_depth.
+ * Hits Phase 9.20 GET /api/ripples/cascade/{id}?max_depth=N&persist=false.
+ * persist=false avoids polluting cascade_runs table with replay reads.
+ * Returns Phase 9.19 CascadeResponse (same shape as fetchRippleCascade).
+ * @param {string} rippleId
+ * @param {number} maxDepth - 1..10
+ * @returns {Promise<{trigger_ripple_id:string, cascade_nodes:Array, cascade_edges:Array,
+ *   cascade_actions:Array, depth_reached:number, generated_at:string,
+ *   bfs_algorithm_version:string}>}
+ */
+export async function fetchCascadeWithDepth(rippleId, maxDepth) {
+  return request(
+    `/api/ripples/cascade/${encodeURIComponent(rippleId)}?max_depth=${encodeURIComponent(maxDepth)}&persist=false`
+  );
+}
