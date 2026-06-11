@@ -316,6 +316,52 @@ bash novel-factory/scripts/e2e-live-first-green-checklist.sh
 pytest tests/ci/test_e2e_live_f82_ci.py -q
 ```
 
+### 11.4 F90 — e2e-live 首绿 JSON 记录写入
+
+**目标**: 在 F82 checklist 基础上，用脚本把 stub 字段写入 `ci_records`（local parity manual gate）。
+
+**前置**: 本地 parity 已通过（`verify-e2e-live-ci.sh` exit 0）。
+
+**写入步骤**:
+
+| 步骤 | 动作 | 说明 |
+|------|------|------|
+| 1 | `bash novel-factory/scripts/verify-e2e-live-ci.sh` | 5/5 live-backend e2e |
+| 2 | **仅本地记录**（待远程 run 后更新 id/url） | `--local-only` |
+| 3 | **远程首绿后** | 填真实 `github_run_id` / `github_run_url` |
+| 4 | 校验 | `pytest tests/agent_system/test_ci_records.py -q` |
+
+**一键写入**（local parity 已绿，占位 run id）:
+
+```bash
+bash novel-factory/scripts/write-e2e-live-first-green-record.sh --local-only
+```
+
+**含 verify + 写入**:
+
+```bash
+bash novel-factory/scripts/write-e2e-live-first-green-record.sh --from-verify --local-only
+```
+
+**远程首绿后更新**:
+
+```bash
+bash novel-factory/scripts/write-e2e-live-first-green-record.sh \
+  --github-run-id 1234567890 \
+  --github-run-url 'https://github.com/XiaZiHunDun/LingWen/actions/runs/1234567890' \
+  --operator your-handle
+```
+
+**记录路径**（gitignored）: `infra/.state/ci_records/e2e-live-first-green.json`
+
+**模块**: `infra/agent_system/ci_records.py` · `validate_e2e_live_first_green_record()`
+
+**pytest 契约**:
+
+```bash
+pytest tests/ci/test_e2e_live_f90_ci.py tests/agent_system/test_ci_records.py -q
+```
+
 ---
 
 ## 12. 真实章节生产 pilot (F65)

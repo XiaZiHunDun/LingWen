@@ -15,5 +15,5 @@
   },
   "operator": "stub-example",
   "recorded_at": "2026-06-11T12:00:00Z",
-  "notes": "Stub — replace github_run_id/url after first green Actions run"
+  "notes": "Stub — use write-e2e-live-first-green-record.sh after verify (F90)"
 }

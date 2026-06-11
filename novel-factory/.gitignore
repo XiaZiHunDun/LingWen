@@ -110,6 +110,10 @@ venv.bak/
 .DS_Store
 Thumbs.dblogs/lingwen.json
 
+# Phase 9.98 F90: CI run records (gitignored JSON under infra/.state/ci_records/)
+infra/.state/ci_records/
+infra/.state/pilot_records/
+
 # Runtime artifacts (R2-012: 社交引擎)
 infra/agent_system/social_engine/relationship_network.db
 infra/agent_system/social_engine/relationship_network.db-*

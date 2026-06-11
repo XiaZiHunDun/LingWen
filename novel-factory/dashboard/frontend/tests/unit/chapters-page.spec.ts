@@ -7,6 +7,7 @@ import { byTestid } from '../helpers/by-testid'
 const mocks = vi.hoisted(() => ({
   fetchChapters: vi.fn(),
   fetchProductionRecords: vi.fn(),
+  fetchProductionRollup: vi.fn(),
   pendingDecisions: { value: [] as Array<Record<string, unknown>> },
   status: {
     value: {
@@ -21,6 +22,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../src/api/index.js', () => ({
   fetchChapters: mocks.fetchChapters,
   fetchProductionRecords: mocks.fetchProductionRecords,
+  fetchProductionRollup: mocks.fetchProductionRollup,
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
@@ -42,9 +44,10 @@ vi.mock('../../src/composables/useDashboardNav.js', () => ({
   }),
 }))
 
-describe('ChaptersPage (F63)', () => {
+describe('ChaptersPage (F63/F88)', () => {
   beforeEach(() => {
     mocks.fetchProductionRecords.mockResolvedValue({ records: [] })
+    mocks.fetchProductionRollup.mockResolvedValue({ batches: [] })
     mocks.fetchChapters.mockResolvedValue({
       chapters: [
         {
@@ -116,6 +119,25 @@ describe('ChaptersPage (F63)', () => {
     await wrapper.find(byTestid('chapter-range-select')).setValue('1-50')
     await flushPromises()
     expect(mocks.fetchChapters).toHaveBeenCalledWith('1-50')
+  })
+
+  test('shows latest batch badge from rollup', async () => {
+    mocks.fetchProductionRollup.mockResolvedValue({
+      batch_count: 1,
+      batches: [{
+        record_id: 'batch-361-363',
+        chapter_range: '361-363',
+        total_cost_usd: 0.083,
+        stopped_reason: 'completed',
+        recorded_at: '2026-06-11T01:00:00Z',
+      }],
+    })
+    const wrapper = mount(ChaptersPage)
+    await flushPromises()
+    const badge = wrapper.find(byTestid('latest-batch-badge'))
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toContain('ch361-363')
+    expect(badge.text()).toContain('completed')
   })
 
   test('shows production history table when records present', async () => {

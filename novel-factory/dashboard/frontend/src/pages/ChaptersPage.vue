@@ -24,16 +24,24 @@
           class="refresh-btn pixel-border"
           data-testid="refresh-btn"
           :disabled="loading"
-          @click="loadChapters"
+          @click="refreshAll"
         >
           {{ loading ? '加载中…' : '刷新' }}
         </button>
       </div>
     </header>
 
-    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
-      {{ error }}
+    <div v-if="error || rollupError" class="error-banner pixel-border" data-testid="error-banner">
+      {{ error || rollupError }}
     </div>
+
+    <p
+      v-if="latestBatchBadgeText"
+      class="latest-batch-badge pixel-border"
+      data-testid="latest-batch-badge"
+    >
+      最新 batch：{{ latestBatchBadgeText }}
+    </p>
 
     <section
       class="production-section pixel-card"
@@ -121,7 +129,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
-import { fetchChapters, fetchProductionRecords } from '../api/index.js';
+import { fetchChapters, fetchProductionRecords, fetchProductionRollup } from '../api/index.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 import {
@@ -138,12 +146,18 @@ import {
   chapterDecisionLinkEnabled,
   findPendingDecisionForChapter,
 } from '../utils/chapterDecisionLink.js';
+import {
+  formatLatestBatchBadge,
+  latestBatchFromRollup,
+} from '../utils/latestBatchBadge.js';
 
 const rangeOptions = ['1-30', '1-50', '31-60', '61-90'];
 const range = ref('1-30');
 const chapters = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const rollupError = ref(null);
+const productionRollup = ref(null);
 const productionRecords = ref([]);
 const recordsLoading = ref(false);
 const recordsError = ref(null);
@@ -169,6 +183,10 @@ const incrementalBackfillLabel = computed(() =>
 
 const historyRows = computed(() => formatProductionRecordRows(productionRecords.value));
 
+const latestBatchBadgeText = computed(() =>
+  formatLatestBatchBadge(latestBatchFromRollup(productionRollup.value)),
+);
+
 const productionByChapter = computed(() => indexRecordsByChapter(productionRecords.value));
 
 const decisionLinkChapters = computed(() => {
@@ -192,6 +210,16 @@ function onChapterDecisionLink(chapterNum) {
     chapter: chapterNum,
     decisionId: decision?.decision_id ?? null,
   });
+}
+
+async function loadProductionRollup() {
+  rollupError.value = null;
+  try {
+    productionRollup.value = await fetchProductionRollup({ limit: 100 });
+  } catch (err) {
+    rollupError.value = err instanceof Error ? err.message : String(err);
+    productionRollup.value = null;
+  }
 }
 
 async function loadProductionRecords() {
@@ -226,9 +254,18 @@ watch(range, () => {
   loadChapters();
 });
 
+async function refreshAll() {
+  await Promise.all([
+    loadChapters(),
+    loadProductionRecords(),
+    loadProductionRollup(),
+  ]);
+}
+
 onMounted(() => {
   loadChapters();
   loadProductionRecords();
+  loadProductionRollup();
 });
 </script>
 
@@ -296,6 +333,15 @@ onMounted(() => {
   padding: var(--space-md);
   font-size: 8px;
   font-family: 'Press Start 2P', monospace;
+}
+
+.latest-batch-badge {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  background: #e3f2fd;
+  color: var(--color-text);
 }
 
 .production-section {
