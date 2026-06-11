@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.84 (Phase 9.84 v7 全量交付 + v8 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F81 Analytics rollup + F82 e2e 首绿 checklist；v8 已全部完成。
+> **版本**: v9.90 (Phase 9.90 v8 全量交付 + v9 roadmap, 2026-06-11)
+> **更新 (2026-06-11)**: F84 batch ch364-366；v9 推荐 **F85**。
 
 ---
 

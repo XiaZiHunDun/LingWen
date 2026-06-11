@@ -1,0 +1,118 @@
+# Followup Roadmap v9 — Post Phase 9.90 (F82)
+
+> **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v8-post-9.84.md` (F77-F82 已于 Phase 9.85-9.90 全部完成, commit `5c988f1`). 本 doc 定义 **360+ 章规模化生产** + **Memory RAG live** + **运维可观测性** 主线, 重新编号 **F83+**.
+> **创建时间**: 2026-06-11 (v8 清空 + bookkeeping)
+> **状态**: v9 进行中; **推荐 F85** 10 章 wave runbook
+> **前置**: baseline **2845 pytest + 400 vitest** (post `5c988f1`); ch360 + batch 361-363 已跑通
+
+## 上下文 (Context)
+
+Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup**:
+
+| 交付 | 说明 |
+|------|------|
+| F78 | Settings 预算写入 UI |
+| F79 | batch ch361-363 (~$0.083) |
+| F80 | batch `--dry-run` + `batch_plan` |
+| F81 | Analytics production rollup |
+| F82 | Remote e2e-live 首绿 checklist |
+
+**v8 清空后缺口:** 364+ 章 **尚未续跑**; `LINGWEN_MEMORY_RAG=live` **未 pilot**; 10 章 wave 运维 runbook 未写; 远程 e2e 首绿 **记录** 仍 optional manual。
+
+本 v9 **不重复** F1-F82 已 done 项。详见 v8 doc + HANDOFF §6.
+
+## 当前 Baseline (2026-06-11, post F77-F82 `5c988f1`)
+
+| 项 | 值 |
+|----|-----|
+| **pytest** | 2845 collected |
+| **vitest** | 400 passed |
+| **Playwright** | 1 smoke + 5 live opt-in |
+| **git** | `5c988f1` on master |
+| **Pilot** | ch360 + batch 361-363 (gitignored records) |
+
+---
+
+## P0 Bookkeeping (v9-bk)
+
+### F83-bk. Roadmap v9 文档 + HANDOFF §6/§8 更新
+
+- **方案**: 本 doc + HANDOFF §6 指向 v9 + v8 顶部 superseded pointer
+- **Phase 映射**: 9.91-bookkeeping
+
+---
+
+## P1 主线 — 360+ 章规模化生产
+
+### F84. Phase 9.92 — Manual batch 续跑（364–366） ✅ **DONE**
+
+- **manual gate**: ch364–366 MiniMax M2.7 batch 成功 (`$0.081`, 3/3 emit, 2026-06-11)
+- **交付**: batch summary + per-chapter records · runbook §17
+- **env**: 同 F79；dry-run 校准自 `batch-361-363.json`
+
+### F85. Phase 9.93 — 10 章 wave runbook + dry-run 模板
+
+- **目标**: 文档化 364→373 wave（`--max-chapters 10`）预检与 budget 估算
+- **依赖**: F84 有真实记录后校准 cost
+- **estimated**: 2h
+
+### F86. Phase 9.94 — MEMORY_RAG=live 单章 pilot
+
+- **目标**: 1 章 pilot with `LINGWEN_MEMORY_RAG=live`（需 Qdrant env）
+- **manual gate**: Qdrant + API key
+- **estimated**: 3-5h
+
+---
+
+## P2 Dashboard / 可观测性
+
+| # | 主题 | 说明 | 估时 |
+|---|------|------|------|
+| F87 | Analytics 成本趋势 | production-records 按时间序列 mini chart | 3-4h |
+| F88 | ChaptersPage 最新 batch badge | 显示最近 batch 范围 | 2h |
+
+---
+
+## P3 测试 / CI 卫生
+
+| # | 主题 | 说明 | 估时 |
+|---|------|------|------|
+| F89 | e2e-live 首绿 JSON 记录 | 填 stub → ci_records（manual） | 30min |
+
+---
+
+## P4 明确不做 (沿袭 v5–v8)
+
+| 项 | 说明 |
+|----|------|
+| Real LLM in default CI | opt-in only |
+| 第二本书 workflow 变体 | 359+ 章同一 `novel_writing` 先跑通 |
+| Settings per-run budget UI | 仍随 workflow run 传参 |
+
+---
+
+## 决策矩阵
+
+| # | 主题 | 价值 | 紧急度 | 工作量 | 独立? |
+|---|------|------|--------|--------|-------|
+| F84 | Batch 364-366 | 高 | 🔴 高 | 2-4h | 需 API key |
+| F85 | 10 章 wave runbook | 中 | 🟡 中 | 2h | 需 F84 |
+| F86 | Memory RAG live | 高 | 🟡 中 | 3-5h | 需 Qdrant |
+| F87 | Analytics 趋势 | 中 | 🟢 低 | 3-4h | ✅ |
+| F88 | Chapters badge | 低 | 🟢 低 | 2h | ✅ |
+
+---
+
+## 推荐下一期 phase 顺序
+
+1. **F84** Batch 364-366 续跑
+2. F85 10 章 wave runbook · F86 live RAG pilot
+3. F87 Analytics 趋势
+
+---
+
+## 完成定义 (DoD) — Roadmap v9 本身
+
+- [x] 本 doc 创建
+- [ ] HANDOFF §6 指向 v9 + baseline 2845/400
+- [ ] v8 顶部 superseded pointer

@@ -1,9 +1,9 @@
 # Followup Roadmap v8 — Post Phase 9.84 (F76)
 
-> **Superseded by v9 planning (post 9.90):** v8 F77–F82 全部完成 (`pending commit`); 新 backlog 待 v9-bk.
+> **Superseded by v9 (post 9.90):** `2026-06-11-followup-roadmap-v9-post-9.90.md` — F77-F82 全部完成 (`5c988f1`); 新 backlog 见 F83+.
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v7-post-9.78.md` (F71-F76 已于 Phase 9.79-9.84 全部完成, commit `e746bdc`). 本 doc 定义 **批量正文执行** + **Dashboard 运维写入** + **生产可观测性** 主线, 重新编号 **F77+**.
 > **创建时间**: 2026-06-11 (v7 清空 + bookkeeping)
-> **状态**: **F77–F82 ✅ 全部完成** (2026-06-11); v8 已清空
+> **状态**: **F77-F82 ✅ 全部完成** (2026-06-11, `5c988f1`); superseded → v9
 > **前置**: baseline **2819 pytest + 384 vitest** (post `e746bdc`); ch360 pilot 已跑通; batch runner 脚手架就绪
 
 ## 上下文 (Context)

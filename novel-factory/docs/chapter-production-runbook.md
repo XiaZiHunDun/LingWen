@@ -567,3 +567,42 @@ pytest tests/agent_system/test_chapter_production_batch.py -q -k "dry_run or cal
 pytest tests/ci/test_chapter_production_batch_f80_ci.py -q
 ```
 
+---
+
+## 17. Batch 续跑 364–366 (F84)
+
+**前提**: F79 batch 361–363 已成功 · 建议先 `--dry-run`（§16）。
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1 LINGWEN_INCREMENTAL_BACKFILL=1 LINGWEN_MEMORY_RAG=stub
+export MINIMAX_API_KEY=...
+
+python -m infra.agent_system.chapter_production_batch \
+  --dry-run --start-chapter 364 --max-chapters 3 --budget-usd 0.15 \
+  --calibrate-from infra/.state/pilot_records/batch-361-363.json
+
+python -m infra.agent_system.chapter_production_batch \
+  --start-chapter 364 --max-chapters 3 --budget-usd 0.15 \
+  --save-summary infra/.state/pilot_records/batch-364-366.json \
+  --save-chapter-records-dir infra/.state/pilot_records/ \
+  --operator your-name
+```
+
+**2026-06-11 首跑参考** (MiniMax M2.7, stub memory):
+
+| 章 | cost (USD) | emit |
+|----|------------|------|
+| 364 | ~0.032 | ✅ |
+| 365 | ~0.025 | ✅ |
+| 366 | ~0.024 | ✅ |
+| **合计** | **~0.081** / budget 0.15 | 3/3 |
+
+**累计 (360–366)**: ch360 pilot + batch 361-363 + batch 364-366 ≈ **$0.19**（Analytics rollup 去重后可见）。
+
+### 17.1 pytest
+
+```bash
+pytest tests/ci/test_chapter_production_batch_f84_ci.py -q
+```
+
