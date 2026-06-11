@@ -5,6 +5,10 @@
   0 污染 cascade_runs 表. Cancel 走 Phase 9.21 既 endpoint (idempotent). -->
 <template>
   <div class="cascade-runs-panel" data-testid="cascade-runs-panel">
+    <CascadeRunsFilter
+      :model-value="filters"
+      @update:model-value="onFilterChange"
+    />
     <div v-if="loading" class="cascade-runs-loading" data-testid="cascade-runs-loading">
       Loading cascade runs...
     </div>
@@ -12,7 +16,7 @@
       {{ error }}
     </div>
     <div v-else-if="runs.length === 0" class="cascade-runs-empty" data-testid="cascade-runs-empty">
-      No cascade runs yet
+      {{ hasActiveFilter ? 'No cascade runs match these filters' : 'No cascade runs yet' }}
     </div>
     <table v-else class="cascade-runs-table" data-testid="cascade-runs-table">
       <thead>
@@ -70,7 +74,8 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   fetchCascadeRuns,
   cancelCascadeRun,
@@ -78,10 +83,50 @@ import {
 } from '../api/index.js';
 import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';
 import CascadeGraph from './CascadeGraph.vue';
+import CascadeRunsFilter from './CascadeRunsFilter.vue';
 
 const props = defineProps({
   rippleId: { type: String, required: true },
 });
+
+// Phase 9.23 T5: URL search params ↔ filter state sync.
+// queryToFilters: snake_case URL → camelCase JS (string numbers parsed).
+// filtersToQuery: camelCase JS → snake_case URL (nulls + 'all' omitted).
+const route = useRoute();
+const router = useRouter();
+
+const DEFAULT_FILTERS = Object.freeze({
+  status: 'all', minDepth: null, maxDepth: null, algorithm: 'all',
+});
+
+function queryToFilters(query) {
+  const minD = query.min_depth ? Number(query.min_depth) : null;
+  const maxD = query.max_depth ? Number(query.max_depth) : null;
+  return {
+    status: query.status || 'all',
+    minDepth: minD != null && Number.isFinite(minD) ? minD : null,
+    maxDepth: maxD != null && Number.isFinite(maxD) ? maxD : null,
+    algorithm: query.algorithm || 'all',
+  };
+}
+
+function filtersToQuery(filters) {
+  const q = {};
+  if (filters.status && filters.status !== 'all') q.status = filters.status;
+  if (filters.minDepth != null && filters.minDepth !== '') q.min_depth = String(filters.minDepth);
+  if (filters.maxDepth != null && filters.maxDepth !== '') q.max_depth = String(filters.maxDepth);
+  if (filters.algorithm && filters.algorithm !== 'all') q.algorithm = filters.algorithm;
+  return q;
+}
+
+const filters = ref(queryToFilters(route.query));
+
+const hasActiveFilter = computed(() =>
+  filters.value.status !== 'all' ||
+  filters.value.minDepth != null ||
+  filters.value.maxDepth != null ||
+  filters.value.algorithm !== 'all'
+);
 
 const runs = ref([]);
 const loading = ref(false);
@@ -97,7 +142,12 @@ async function loadRuns() {
   loading.value = true;
   error.value = null;
   try {
-    runs.value = await fetchCascadeRuns(props.rippleId);
+    const opts = {};
+    if (filters.value.status !== 'all') opts.status = filters.value.status;
+    if (filters.value.minDepth != null) opts.minDepth = filters.value.minDepth;
+    if (filters.value.maxDepth != null) opts.maxDepth = filters.value.maxDepth;
+    if (filters.value.algorithm !== 'all') opts.algorithm = filters.value.algorithm;
+    runs.value = await fetchCascadeRuns(props.rippleId, opts);
   } catch (e) {
     error.value = `Failed to load cascade runs: ${e?.message || e}`;
     runs.value = [];
@@ -105,6 +155,23 @@ async function loadRuns() {
     loading.value = false;
   }
 }
+
+// Phase 9.23 T5: filter → URL + refetch (CascadeRunsFilter emit handler).
+function onFilterChange(next) {
+  filters.value = next;
+  router.replace({ query: filtersToQuery(next) });
+  loadRuns();
+}
+
+// Phase 9.23 T5: URL → state (handles back/forward + deep links).
+// JSON.stringify diff avoids dead loop when we just wrote the query ourselves.
+watch(() => route.query, (q) => {
+  const next = queryToFilters(q);
+  if (JSON.stringify(next) !== JSON.stringify(filters.value)) {
+    filters.value = next;
+    loadRuns();
+  }
+});
 
 function formatRelative(iso) {
   if (!iso) return '';

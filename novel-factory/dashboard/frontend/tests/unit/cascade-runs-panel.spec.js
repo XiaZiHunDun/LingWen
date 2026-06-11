@@ -1,14 +1,30 @@
-// dashboard/frontend/tests/unit/cascade-runs-panel.spec.js — Phase 9.22 T2
+// dashboard/frontend/tests/unit/cascade-runs-panel.spec.js — Phase 9.22 T2 + Phase 9.23 T5
 // CascadeRunsPanel vitest: list historical cascade_runs + Replay + Cancel + WS handler
 // Mirror cascade-graph.spec.js pattern: vi.mock('../../src/api/index.js') + vi.mock
 //   useWorkflowSocket + globalThis.__cascadeHandlers for WS push injection.
-// 3 case:
+// 3 case (Phase 9.22 T2):
 //   - renders_table_with_status_badges_and_cancel_only_for_running
 //   - click_replay_fetches_cascade_with_same_max_depth_and_renders_graph
 //   - ws_cascade_cancel_event_updates_row_status_to_cancelled
+// 3 case (Phase 9.23 T5): filter URL sync
+//   - reads filter from route.query on mount and passes to fetchCascadeRuns
+//   - changing status filter updates URL via router.replace
+//   - watch on route.query reloads runs when query changes (browser back/forward)
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
+import { nextTick, reactive } from 'vue';
+
+// Phase 9.23 T5: vue-router mock (hoisted, so cascade-runs-panel.vue's
+// useRoute()/useRouter() return our local refs that tests can mutate).
+// mockRoute is reactive so watch(() => route.query) fires on inner-property mutation,
+// mirroring how vue-router exposes a reactive RouteLocationNormalized.
+const mockRoute = reactive({ query: {} });
+const mockRouter = { replace: vi.fn() };
+vi.mock('vue-router', () => ({
+  useRoute: () => mockRoute,
+  useRouter: () => mockRouter,
+}));
 
 // 注入式 mock: capture registered cascade handlers (mirror use-workflow-socket-cascade.spec.js)
 const registeredCascadeHandlers = new Set();
@@ -138,5 +154,63 @@ describe('CascadeRunsPanel.vue', () => {
     expect(rows[1].find('[data-testid="status-badge-cancelled"]').exists()).toBe(true);
     // Cancel button should be gone (no longer running)
     expect(rows[1].find('[data-testid="cancel-btn"]').exists()).toBe(false);
+  });
+});
+
+// Phase 9.23 T5: CascadeRunsPanel URL sync (vue-router mock + filter propagation)
+describe('Phase 9.23: CascadeRunsPanel filter URL sync', () => {
+  // Mocked fetchCascadeRuns in this describe uses 1-row FAKE_RUNS to keep
+  // assertions deterministic; existing top-level vi.mock('../../src/api/index.js')
+  // factory is shared with the Phase 9.22 suite, so we still reference
+  // mockFetchCascadeRuns via the same beforeEach dynamic-import pattern.
+
+  beforeEach(() => {
+    // Reset URL mock state per test
+    mockRoute.query = {};
+    mockRouter.replace.mockClear();
+    registeredCascadeHandlers.clear();
+  });
+
+  it('reads filter from route.query on mount and passes to fetchCascadeRuns', async () => {
+    mockRoute.query = { status: 'cancelled', min_depth: '2' };
+    const { default: Panel } = await import('../../src/components/CascadeRunsPanel.vue');
+    mount(Panel, { props: { rippleId: 'rip-1' } });
+    // onMounted → loadRuns is async; wait for fetchCascadeRuns to fire
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockFetchCascadeRuns).toHaveBeenCalledWith(
+      'rip-1',
+      expect.objectContaining({ status: 'cancelled', minDepth: 2 }),
+    );
+  });
+
+  it('changing status filter updates URL via router.replace', async () => {
+    const { default: Panel } = await import('../../src/components/CascadeRunsPanel.vue');
+    const wrapper = mount(Panel, { props: { rippleId: 'rip-1' } });
+    await new Promise((r) => setTimeout(r, 50));
+    // Simulate filter change by emitting update:modelValue on the child
+    const filter = wrapper.findComponent({ name: 'CascadeRunsFilter' });
+    expect(filter.exists()).toBe(true);
+    await filter.vm.$emit('update:modelValue', {
+      status: 'cancelled', minDepth: null, maxDepth: null, algorithm: 'all',
+    });
+    await nextTick();
+    expect(mockRouter.replace).toHaveBeenCalledWith({ query: { status: 'cancelled' } });
+  });
+
+  it('watch on route.query reloads runs when query changes (browser back/forward)', async () => {
+    // Reset query to empty (initial mount sees no filter → loads all runs)
+    mockRoute.query = {};
+    const { default: Panel } = await import('../../src/components/CascadeRunsPanel.vue');
+    mount(Panel, { props: { rippleId: 'rip-1' } });
+    await new Promise((r) => setTimeout(r, 50));
+    mockFetchCascadeRuns.mockClear();
+    // Simulate browser back/forward: vue-router reassigns the reactive route.query
+    // ref to a new object on URL change, mirroring real production behavior.
+    mockRoute.query = { status: 'running' };
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockFetchCascadeRuns.mock.calls.length).toBeGreaterThan(0);
+    const lastCall = mockFetchCascadeRuns.mock.calls[mockFetchCascadeRuns.mock.calls.length - 1];
+    expect(lastCall[1]).toEqual(expect.objectContaining({ status: 'running' }));
   });
 });
