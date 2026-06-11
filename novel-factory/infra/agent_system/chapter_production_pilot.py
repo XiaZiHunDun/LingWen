@@ -345,6 +345,117 @@ def describe_production_pilot() -> list[dict[str, str]]:
     return list(PRODUCTION_PILOT_BEHAVIOR)
 
 
+def build_pilot_record(
+    result: PilotResult,
+    *,
+    pilot_id: str | None = None,
+    operator: str = "operator",
+    human_review_notes: str | None = None,
+) -> dict[str, Any]:
+    """Build chapter-pilot-record JSON from a PilotResult (F72)."""
+    from datetime import datetime, timezone
+
+    if pilot_id is None:
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        pilot_id = f"{ts}-ch{result.chapter_num}-pilot"
+
+    env_block: dict[str, Any] = {
+        "LINGWEN_REAL_LLM": "1" if result.real_llm_gate else "0",
+        "LINGWEN_INCREMENTAL_BACKFILL": "1" if result.incremental_backfill_enabled else "0",
+        "LINGWEN_MEMORY_RAG": result.memory_rag_mode or "off",
+    }
+    if result.provider:
+        env_block["primary_provider"] = result.provider
+
+    record: dict[str, Any] = {
+        "pilot_id": pilot_id,
+        "chapter_num": result.chapter_num,
+        "workflow_name": result.workflow_name,
+        "env": env_block,
+        "preflight_ok": result.preflight_ok,
+        "run": {
+            "completed": result.completed,
+            "failed": result.failed,
+            "paused": result.paused,
+            "pending_count": result.pending_count,
+            "emit_chapter_completed": result.emit_chapter_completed,
+            "total_cost_usd": result.total_cost_usd,
+        },
+        "hooks": {
+            "memory_context_source": result.memory_context_source,
+            "incremental_backfill": result.incremental_backfill,
+        },
+        "human_review": {
+            "required": result.paused or result.pending_count > 0,
+            "notes": human_review_notes
+            or (
+                "novel_writing has no DECISION node; use chapter_golden for pause/resume smoke"
+                if not result.paused
+                else "workflow paused — resolve pending decisions before record is final"
+            ),
+        },
+        "operator": operator,
+        "recorded_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+    }
+    if result.error:
+        record["error"] = result.error
+    return record
+
+
+def validate_pilot_record(record: dict[str, Any]) -> list[str]:
+    """Return validation errors for a pilot record dict (empty = ok)."""
+    errors: list[str] = []
+    required_top = ("pilot_id", "chapter_num", "workflow_name", "env", "run", "operator")
+    for key in required_top:
+        if key not in record:
+            errors.append(f"missing key: {key}")
+    if errors:
+        return errors
+
+    if not isinstance(record["chapter_num"], int) or record["chapter_num"] < 1:
+        errors.append("chapter_num must be int >= 1")
+
+    run = record.get("run")
+    if not isinstance(run, dict):
+        errors.append("run must be object")
+    elif "emit_chapter_completed" not in run:
+        errors.append("run.emit_chapter_completed required")
+
+    env = record.get("env")
+    if not isinstance(env, dict):
+        errors.append("env must be object")
+
+    return errors
+
+
+def save_pilot_record(
+    result: PilotResult,
+    path: Path,
+    *,
+    pilot_id: str | None = None,
+    operator: str = "operator",
+    human_review_notes: str | None = None,
+) -> Path:
+    """Write pilot record JSON; validates schema before write."""
+    record = build_pilot_record(
+        result,
+        pilot_id=pilot_id,
+        operator=operator,
+        human_review_notes=human_review_notes,
+    )
+    errors = validate_pilot_record(record)
+    if errors:
+        raise ValueError(f"invalid pilot record: {'; '.join(errors)}")
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(record, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
@@ -359,6 +470,23 @@ def main(argv: list[str] | None = None) -> int:
         help="Run checklist only (no LLM, no gate required)",
     )
     parser.add_argument("--cost-budget-usd", type=float, default=None)
+    parser.add_argument(
+        "--save-record",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Write chapter-pilot-record JSON after run (F72)",
+    )
+    parser.add_argument(
+        "--operator",
+        default="operator",
+        help="Operator name for --save-record",
+    )
+    parser.add_argument(
+        "--pilot-id",
+        default=None,
+        help="Optional pilot_id for --save-record",
+    )
     args = parser.parse_args(argv)
 
     result = run_production_pilot(
@@ -367,7 +495,24 @@ def main(argv: list[str] | None = None) -> int:
         preflight_only=args.preflight_only,
         cost_budget_usd=args.cost_budget_usd,
     )
-    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+
+    if args.save_record is not None:
+        try:
+            saved = save_pilot_record(
+                result,
+                args.save_record,
+                pilot_id=args.pilot_id,
+                operator=args.operator,
+            )
+            result_dict = result.to_dict()
+            result_dict["record_path"] = str(saved)
+            print(json.dumps(result_dict, ensure_ascii=False, indent=2))
+        except ValueError as exc:
+            print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+            print(f"save-record failed: {exc}", flush=True)
+            return 3
+    else:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
 
     if args.preflight_only:
         return 0 if result.preflight_ok else 1

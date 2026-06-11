@@ -1,8 +1,9 @@
 # Followup Roadmap v6 — Post Phase 9.72 (F64)
 
+> **Superseded by v7 (post 9.78):** `2026-06-11-followup-roadmap-v7-post-9.78.md` — F65-F70 全部完成 (`6d5d899`); 新 backlog 见 F71+.
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v5-post-9.65.md` (F57-F64 已于 Phase 9.66-9.72 全部完成, commit `0983bd0`). 本 doc 定义 **真实正文生产** 主线 + Dashboard 余量 + 测试卫生。
 > **创建时间**: 2026-06-11 (v5 清空 + bookkeeping)
-> **状态**: v6 **P1–P3 全部完成** (F65–F70); 可选 bookkeeping / 新 roadmap
+> **状态**: **F65-F70 ✅ 全部完成** (2026-06-11, `6d5d899`); superseded → v7
 > **前置**: baseline **2742 pytest + 367 vitest** (post `0983bd0`); Playwright live 5/5; CI opt-in `e2e-live` / `e2e-smoke`
 
 ## 上下文 (Context)

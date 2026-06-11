@@ -313,3 +313,52 @@ export LINGWEN_REAL_LLM=1 ANTHROPIC_API_KEY=...
 pytest tests/agent_system/test_chapter_production_pilot.py::TestProductionPilotRealLlmOptIn -v
 ```
 
+---
+
+## 13. Manual pilot 执行与记录 (F72)
+
+**前提**: §12 preflight 全绿 + 主公人工审章。
+
+### 13.1 跑 pilot 并自动写记录
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1
+export LINGWEN_INCREMENTAL_BACKFILL=1
+export LINGWEN_MEMORY_RAG=stub
+export ANTHROPIC_API_KEY=sk-ant-...
+
+python -m infra.agent_system.chapter_production_pilot \
+  --chapter-num 360 \
+  --save-record infra/.state/pilot_records/ch360.json \
+  --operator your-name
+# exit 0 + record JSON 写入 PATH
+```
+
+`--save-record` 可在 preflight-only 模式下写入 checklist 快照（用于调试）:
+
+```bash
+python -m infra.agent_system.chapter_production_pilot \
+  --preflight-only \
+  --save-record /tmp/preflight-ch360.json
+```
+
+### 13.2 人工审章 checklist
+
+| 项 | 通过标准 |
+|----|----------|
+| `emit_chapter_completed` | `true` |
+| `total_cost_usd` | 在 per-run budget 内（Dashboard Settings 只读） |
+| `incremental_backfill` | 若开启： `nodes_written >= 1` 或 dry_run 符合预期 |
+| `memory_context_source` | `stub` 或 `live` 与 env 一致 |
+| 正文质量 | 人工读 emit 产出（不在 JSON 记录内） |
+
+脱敏示例: `docs/templates/chapter-pilot-record.stub.example.json`
+
+### 13.3 pytest
+
+```bash
+pytest tests/agent_system/test_chapter_production_pilot.py -q -k "PilotRecord"
+pytest tests/ci/test_chapter_production_pilot_f72_ci.py -q
+```
+

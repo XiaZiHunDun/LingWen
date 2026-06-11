@@ -1,6 +1,7 @@
 """Phase 9.73 F65: chapter production pilot (0 real LLM in default CI)."""
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -9,10 +10,13 @@ from infra.agent_system.chapter_production_pilot import (
     PilotResult,
     PreflightCheck,
     build_pilot_initial_inputs,
+    build_pilot_record,
     preflight_checklist,
     preflight_ok,
     real_llm_enabled,
     run_production_pilot,
+    save_pilot_record,
+    validate_pilot_record,
 )
 
 
@@ -95,6 +99,55 @@ class TestRunProductionPilotStubbed:
             ["--preflight-only", "--state-dir", str(tmp_path), "--chapter-num", "2"],
         )
         assert code in (0, 1)
+
+
+class TestPilotRecordF72:
+    def test_build_pilot_record_from_preflight_result(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
+        result = run_production_pilot(
+            chapter_num=360,
+            state_dir=tmp_path,
+            preflight_only=True,
+        )
+        record = build_pilot_record(result, operator="tester")
+        assert record["chapter_num"] == 360
+        assert record["workflow_name"] == "novel_writing"
+        assert record["operator"] == "tester"
+        assert validate_pilot_record(record) == []
+
+    def test_validate_pilot_record_rejects_missing_keys(self):
+        errors = validate_pilot_record({"chapter_num": 1})
+        assert any("pilot_id" in e for e in errors)
+
+    def test_save_pilot_record_writes_json(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
+        result = run_production_pilot(
+            chapter_num=7,
+            state_dir=tmp_path,
+            preflight_only=True,
+        )
+        out = tmp_path / "records" / "ch007.json"
+        saved = save_pilot_record(result, out, operator="ci")
+        assert saved.is_file()
+        assert validate_pilot_record(json.loads(saved.read_text(encoding="utf-8"))) == []
+
+    def test_cli_save_record_preflight_only(self, tmp_path, monkeypatch):
+        import json as json_mod
+        from infra.agent_system import chapter_production_pilot as mod
+
+        monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
+        out = tmp_path / "preflight.json"
+        code = mod.main([
+            "--preflight-only",
+            "--chapter-num", "360",
+            "--state-dir", str(tmp_path),
+            "--save-record", str(out),
+            "--operator", "cli-test",
+        ])
+        assert code in (0, 1)
+        assert out.is_file()
+        record = json_mod.loads(out.read_text(encoding="utf-8"))
+        assert validate_pilot_record(record) == []
 
 
 _REQUIRES_REAL_LLM = pytest.mark.skipif(
