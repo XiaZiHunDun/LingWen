@@ -55,8 +55,12 @@ class BackfillCommand(Command):
         from infra.cross_volume.backfill import Backfiller  # lazy import
 
         rules_path = Path(options.rules) if options.rules else DEFAULT_RULES_PATH
+        corpus_root = Path(options.corpus_root) if options.corpus_root else None
         try:
-            backfiller = Backfiller(rules_path=rules_path)
+            backfiller = Backfiller(
+                rules_path=rules_path,
+                corpus_root=corpus_root or Path("03_内容仓库/04_正文"),
+            )
         except (FileNotFoundError, ValueError) as e:
             print(f"[错误] Backfiller 初始化失败: {e}")
             return 1
@@ -64,7 +68,9 @@ class BackfillCommand(Command):
         stats = backfiller.run(dry_run=options.dry_run, volume_filter=options.vol)
         print(stats.summary())
         if options.dry_run:
-            print("(hint: 加 --execute 走真写)")
+            print("(hint: 加 --execute 写入 ripple.db; 已存在 node 自动跳过)")
+        elif stats.nodes_written == 0 and stats.nodes_skipped > 0:
+            print("(hint: 全部 node 已存在, 幂等 re-run 0 新写入)")
         return 0
 
     def _execute_llm_path(self, options: BackfillOptions) -> int:

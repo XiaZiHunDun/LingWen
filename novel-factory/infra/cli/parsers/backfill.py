@@ -36,6 +36,12 @@ def add_backfill_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
         help="Volume filter: 1/2/3 抽样式, 缺省全 359 章",
     )
     parser.add_argument(
+        "--corpus-root",
+        type=str,
+        default=None,
+        help="Chapter corpus root (default: 03_内容仓库/04_正文)",
+    )
+    parser.add_argument(
         "--rules",
         type=str,
         default=None,

@@ -120,6 +120,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             dry_run=args.dry_run,
             vol=args.vol,
             rules=args.rules,
+            corpus_root=getattr(args, "corpus_root", None),
             # Phase 9.12 additive: LLM opt-in 4 flag (getattr 容错, 0 改 Phase 9.11 tests)
             use_llm=getattr(args, "use_llm", False),
             apply=getattr(args, "apply", False),

@@ -83,9 +83,13 @@ class BackfillStats:
     total_count: int
     elapsed_s: float
     dry_run: bool
+    nodes_written: int = 0
+    nodes_skipped: int = 0
+    pre_node_count: int | None = None
+    post_node_count: int | None = None
 
     def summary(self) -> str:
-        return (
+        base = (
             f"[{'DRY-RUN' if self.dry_run else 'EXECUTED'}] "
             f"character={self.character_count} "
             f"foreshadow={self.foreshadow_count} "
@@ -94,6 +98,12 @@ class BackfillStats:
             f"total={self.total_count} "
             f"elapsed={self.elapsed_s:.2f}s"
         )
+        if not self.dry_run:
+            base += (
+                f" written={self.nodes_written} skipped={self.nodes_skipped}"
+                f" pre_nodes={self.pre_node_count} post_nodes={self.post_node_count}"
+            )
+        return base
 
     @classmethod
     def from_nodes(
@@ -101,6 +111,11 @@ class BackfillStats:
         all_nodes: dict[DimensionT, dict[str, ReferenceNode]],
         dry_run: bool,
         elapsed_s: float = 0.0,
+        *,
+        nodes_written: int = 0,
+        nodes_skipped: int = 0,
+        pre_node_count: int | None = None,
+        post_node_count: int | None = None,
     ) -> "BackfillStats":
         return cls(
             character_count=len(all_nodes["character"]),
@@ -110,6 +125,10 @@ class BackfillStats:
             total_count=sum(len(b) for b in all_nodes.values()),
             elapsed_s=elapsed_s,
             dry_run=dry_run,
+            nodes_written=nodes_written,
+            nodes_skipped=nodes_skipped,
+            pre_node_count=pre_node_count,
+            post_node_count=post_node_count,
         )
 
 
@@ -160,13 +179,31 @@ class Backfiller:
         if dry_run:
             return BackfillStats.from_nodes(all_nodes, dry_run=True, elapsed_s=elapsed)
 
-        # --execute: 1 atomic_batch wrap 全部 N inserts (additive append_nodes_atomic)
+        # --execute: skip existing node ids (idempotent re-run), then atomic_batch
         all_node_list = [
             n for dim_nodes in all_nodes.values() for n in dim_nodes.values()
         ]
-        self._graph._storage.append_nodes_atomic(all_node_list)
-        logger.info("backfill done: %s", BackfillStats.from_nodes(all_nodes, dry_run=False, elapsed_s=elapsed).summary())
-        return BackfillStats.from_nodes(all_nodes, dry_run=False, elapsed_s=elapsed)
+        storage = self._graph._storage
+        existing = storage.load_all_nodes()
+        pre_node_count = len(existing)
+        existing_ids = {n.id for n in existing}
+        to_write = [n for n in all_node_list if n.id not in existing_ids]
+        nodes_written = len(to_write)
+        nodes_skipped = len(all_node_list) - nodes_written
+        if to_write:
+            storage.append_nodes_atomic(to_write)
+        post_node_count = len(storage.load_all_nodes())
+        stats = BackfillStats.from_nodes(
+            all_nodes,
+            dry_run=False,
+            elapsed_s=elapsed,
+            nodes_written=nodes_written,
+            nodes_skipped=nodes_skipped,
+            pre_node_count=pre_node_count,
+            post_node_count=post_node_count,
+        )
+        logger.info("backfill done: %s", stats.summary())
+        return stats
 
     def _iter_chapters(self, volume_filter: int | None) -> Iterator[Path]:
         # 扫 ch{001..359}.md + ch{001..359}_大纲.md

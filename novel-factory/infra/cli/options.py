@@ -76,6 +76,7 @@ class BackfillOptions(UnifiedOptions):
     dry_run: bool = True
     vol: Optional[int] = None
     rules: Optional[str] = None  # path to extraction_rules.yaml
+    corpus_root: Optional[str] = None  # Phase 9.33: override chapter corpus path
     # Phase 9.12 additive: LLM opt-in (默认 0 走, 走 Phase 9.11 rule path, 0 cost)
     use_llm: bool = False
     apply: bool = False  # --apply 强需 --use-llm (rule path 用 --execute)

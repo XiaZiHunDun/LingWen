@@ -52,7 +52,7 @@ Phase 9.10-9.32 完成了 CVG 数据层 + dashboard cascade 全链路 (持久化
 
 承接 Phase 9 blueprint「Phase 10-14」中 **尚未 production 化** 的部分. 跟 dashboard cascade UI (9.20-9.23) 互补: 本 track 填 **数据** + **观测**, 不是 UI.
 
-### F18. Phase 9.33 — 359 章历史 backfill 正式跑
+### F18. Phase 9.33 — 359 章历史 backfill 正式跑 ✅ **DONE Phase 9.33**
 
 - **承接**: Phase 9.11 `extraction_rules.yaml` 4 维 rule-based extractor + Backfiller CLI, **仅 dry-run, 0 跑全量**
 - **目标**: 对《星陨纪元》359 章跑 1 次 production backfill, 写入 ripple.db / reference graph
