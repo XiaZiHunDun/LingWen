@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.90 (Phase 9.90 v8 全量交付 + v9 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: ch350–360 Qdrant embed；live RAG `related_segments` 已验证（ch367 → 5 hits）。
+> **更新 (2026-06-11)**: F87 Analytics 生产成本趋势 chart；ch350–360 Qdrant embed；live RAG `related_segments` 已验证。
 
 ---
 
@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `dd6645f` — fix(qdrant) query_points + ch367 live 文档 |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F87** Analytics 成本趋势 — 见 §6 + v9 roadmap |
+| **下一期推荐** | **F88** ChaptersPage 最新 batch badge — 见 §6 + v9 roadmap |
 
 ---
 
@@ -295,9 +295,10 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | **F85** | 10 章 wave runbook | 9.93 | 2h | P1 | ✅ |
 | **F86** | MEMORY_RAG=live pilot | 9.94 | 3-5h | P1 | ✅ ch367 live manual ~$0.022 |
 | **F89** | Embedding Provider 解耦 | 9.95 | 1-2d | P1 | ✅ MiniMax embo-01 beta |
-| F87 | Analytics 成本趋势 | 9.96 | 3-4h | P2 | 🔴 推荐下一项 |
+| F87 | Analytics 成本趋势 | 9.96 | 3-4h | P2 | ✅ |
+| F88 | ChaptersPage batch badge | 9.97 | 2h | P2 | 🔴 推荐下一项 |
 
-**推荐下一项**: **F87** Analytics 成本趋势（production-records mini chart）
+**推荐下一项**: **F88** ChaptersPage 最新 batch badge
 
 ---
 

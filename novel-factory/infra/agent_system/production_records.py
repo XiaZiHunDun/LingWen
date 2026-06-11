@@ -273,3 +273,58 @@ def rollup_production_records(
         "latest_recorded_at": latest_at,
         "batches": batches,
     }
+
+
+def _record_label(rec: ProductionRecordItem) -> str:
+    if rec.record_type == "batch" and rec.chapter_range:
+        return f"ch{rec.chapter_range}"
+    if rec.chapter_num is not None:
+        return f"ch{rec.chapter_num}"
+    return rec.record_id
+
+
+def production_cost_trend(
+    records_dir: Path | None = None,
+    *,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Time-ordered production cost series for Analytics chart (F87)."""
+    root = Path(records_dir or default_pilot_records_dir())
+    records = list_production_records(root, limit=limit)
+    ordered = sorted(
+        records,
+        key=lambda rec: (rec.recorded_at or "", rec.source_file),
+    )
+
+    batch_covered: set[int] = set()
+    cumulative = 0.0
+    points: list[dict[str, Any]] = []
+
+    for rec in ordered:
+        incremental = 0.0
+        if rec.total_cost_usd is not None:
+            if rec.record_type == "batch":
+                incremental = float(rec.total_cost_usd)
+                batch_covered |= chapters_covered_by_record(rec)
+            elif rec.record_type == "pilot":
+                ch = rec.chapter_num
+                if ch is None or ch not in batch_covered:
+                    incremental = float(rec.total_cost_usd)
+
+        cumulative += incremental
+        points.append({
+            "recorded_at": rec.recorded_at,
+            "record_id": rec.record_id,
+            "record_type": rec.record_type,
+            "label": _record_label(rec),
+            "cost_usd": rec.total_cost_usd,
+            "incremental_cost_usd": round(incremental, 6),
+            "cumulative_cost_usd": round(cumulative, 6),
+        })
+
+    return {
+        "records_dir": str(root),
+        "point_count": len(points),
+        "total_cost_usd": round(cumulative, 6),
+        "points": points,
+    }

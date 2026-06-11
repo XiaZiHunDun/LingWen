@@ -6,6 +6,7 @@ import { byTestid } from '../helpers/by-testid'
 
 const mocks = vi.hoisted(() => ({
   fetchProductionRollup: vi.fn(),
+  fetchProductionCostTrend: vi.fn(),
   overview: {
     overview: { value: { total_chapters: 10 } },
     chapters: {
@@ -43,6 +44,7 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   return {
     ...(actual as object),
     fetchProductionRollup: mocks.fetchProductionRollup,
+    fetchProductionCostTrend: mocks.fetchProductionCostTrend,
   }
 })
 
@@ -71,10 +73,32 @@ vi.mock('echarts', () => ({
   use: vi.fn(),
 }))
 
-describe('AnalyticsPage (F67/F81)', () => {
+describe('AnalyticsPage (F67/F81/F87)', () => {
   beforeEach(() => {
     mocks.overview.lastError.value = null
     mocks.ripple.lastError.value = null
+    mocks.fetchProductionCostTrend.mockResolvedValue({
+      point_count: 2,
+      total_cost_usd: 0.108,
+      points: [
+        {
+          recorded_at: '2026-06-11T00:00:00Z',
+          record_id: 'ch360',
+          record_type: 'pilot',
+          label: 'ch360',
+          incremental_cost_usd: 0.025,
+          cumulative_cost_usd: 0.025,
+        },
+        {
+          recorded_at: '2026-06-11T01:00:00Z',
+          record_id: 'batch-361-363',
+          record_type: 'batch',
+          label: 'ch361-363',
+          incremental_cost_usd: 0.083,
+          cumulative_cost_usd: 0.108,
+        },
+      ],
+    })
     mocks.fetchProductionRollup.mockResolvedValue({
       record_count: 5,
       pilot_count: 4,
@@ -99,6 +123,8 @@ describe('AnalyticsPage (F67/F81)', () => {
     expect(wrapper.find(byTestid('page-title')).text()).toBe('数据分析')
     expect(wrapper.find(byTestid('production-kpi')).exists()).toBe(true)
     expect(wrapper.find(byTestid('production-rollup-kpi')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('production-cost-trend-kpi')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('production-cost-trend-chart')).exists()).toBe(true)
     expect(wrapper.find(byTestid('ripple-kpi')).exists()).toBe(true)
     expect(wrapper.text()).toContain('novel_writing')
     expect(wrapper.text()).toContain('章节 #12')
@@ -106,15 +132,17 @@ describe('AnalyticsPage (F67/F81)', () => {
     expect(wrapper.text()).toContain('0.1080')
   })
 
-  test('refresh calls overview, ripple, and rollup', async () => {
+  test('refresh calls overview, ripple, rollup, and trend', async () => {
     const wrapper = mount(AnalyticsPage)
     await flushPromises()
     mocks.overview.refresh.mockClear()
     mocks.fetchProductionRollup.mockClear()
+    mocks.fetchProductionCostTrend.mockClear()
     await wrapper.find(byTestid('refresh-btn')).trigger('click')
     await flushPromises()
     expect(mocks.overview.refresh).toHaveBeenCalled()
     expect(mocks.ripple.refresh).toHaveBeenCalled()
     expect(mocks.fetchProductionRollup).toHaveBeenCalled()
+    expect(mocks.fetchProductionCostTrend).toHaveBeenCalled()
   })
 })

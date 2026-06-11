@@ -148,6 +148,27 @@ class ProductionRollupResponse(BaseModel):
     batches: list[ProductionBatchRollupResponse]
 
 
+class ProductionCostTrendPointResponse(BaseModel):
+    """Phase 9.96 F87: one point on production cost timeline."""
+
+    recorded_at: Optional[str] = None
+    record_id: str
+    record_type: str
+    label: str
+    cost_usd: Optional[float] = None
+    incremental_cost_usd: float
+    cumulative_cost_usd: float
+
+
+class ProductionCostTrendResponse(BaseModel):
+    """Phase 9.96 F87: time-ordered cost series for Analytics chart."""
+
+    records_dir: str
+    point_count: int
+    total_cost_usd: float
+    points: list[ProductionCostTrendPointResponse]
+
+
 # === Phase 6: Decision/Workflow models ===
 
 class DecisionResponse(BaseModel):
@@ -900,6 +921,26 @@ def create_app(
                 **data,
                 "batches": [
                     ProductionBatchRollupResponse(**row) for row in data["batches"]
+                ],
+            }
+        )
+
+    @app.get("/api/production-records/trend", response_model=ProductionCostTrendResponse)
+    def get_production_records_trend(
+        limit: int = Query(default=100, ge=1, le=200),
+    ) -> ProductionCostTrendResponse:
+        """Phase 9.96 F87: time-ordered cost trend for Analytics mini chart."""
+        from infra.agent_system.production_records import (
+            default_pilot_records_dir,
+            production_cost_trend,
+        )
+
+        data = production_cost_trend(default_pilot_records_dir(), limit=limit)
+        return ProductionCostTrendResponse(
+            **{
+                **data,
+                "points": [
+                    ProductionCostTrendPointResponse(**row) for row in data["points"]
                 ],
             }
         )

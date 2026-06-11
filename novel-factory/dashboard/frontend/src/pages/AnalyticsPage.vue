@@ -85,6 +85,24 @@
       </p>
     </section>
 
+    <section class="kpi-section" data-testid="production-cost-trend-kpi">
+      <h2 class="section-title">生产成本趋势</h2>
+      <ul
+        v-if="productionCostTrendLines.length"
+        class="production-summary"
+        data-testid="analytics-production-cost-trend-summary"
+      >
+        <li v-for="(line, idx) in productionCostTrendLines" :key="idx">{{ line }}</li>
+      </ul>
+      <ProductionCostTrendChart
+        v-if="hasProductionCostTrend"
+        :trend="productionCostTrend"
+      />
+      <p v-else class="empty-hint" data-testid="analytics-production-cost-trend-empty">
+        暂无带时间的生产记录（写入 pilot/batch JSON 后按 recorded_at 展示）
+      </p>
+    </section>
+
     <section class="kpi-section" data-testid="ripple-kpi">
       <h2 class="section-title">涟漪 KPI</h2>
       <div class="stats-row">
@@ -113,7 +131,8 @@ import { computed, onMounted, ref } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import HookTrendChart from '../components/HookTrendChart.vue';
 import CoolpointChart from '../components/CoolpointChart.vue';
-import { fetchProductionRollup } from '../api/index.js';
+import ProductionCostTrendChart from '../components/ProductionCostTrendChart.vue';
+import { fetchProductionCostTrend, fetchProductionRollup } from '../api/index.js';
 import { useOverviewStore } from '../composables/useOverviewStore.js';
 import { useRippleStore } from '../composables/useRippleStore.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
@@ -127,6 +146,10 @@ import {
   productionRollupSummaryLines,
 } from '../utils/analyticsProductionRollup.js';
 import {
+  hasCostTrendData,
+  productionCostTrendSummaryLines,
+} from '../utils/analyticsProductionCostTrend.js';
+import {
   productionSummaryLines,
   resolveProductionSummary,
 } from '../utils/productionSummary.js';
@@ -137,10 +160,13 @@ const { status } = useWorkflowSocket();
 
 const refreshing = ref(false);
 const rollupError = ref(null);
+const trendError = ref(null);
 const productionRollup = ref(null);
+const productionCostTrend = ref(null);
 
 const errorMessage = computed(() =>
   rollupError.value
+  || trendError.value
   || overviewStore.lastError.value
   || rippleStore.lastError.value
   || null,
@@ -166,6 +192,10 @@ const productionRollupLines = computed(() =>
   productionRollupSummaryLines(productionRollup.value),
 );
 const batchRollupRows = computed(() => formatBatchRollupRows(productionRollup.value));
+const hasProductionCostTrend = computed(() => hasCostTrendData(productionCostTrend.value));
+const productionCostTrendLines = computed(() =>
+  productionCostTrendSummaryLines(productionCostTrend.value),
+);
 
 async function loadProductionRollup() {
   rollupError.value = null;
@@ -176,6 +206,15 @@ async function loadProductionRollup() {
   }
 }
 
+async function loadProductionCostTrend() {
+  trendError.value = null;
+  try {
+    productionCostTrend.value = await fetchProductionCostTrend({ limit: 100 });
+  } catch (e) {
+    trendError.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
 async function refreshAll() {
   refreshing.value = true;
   try {
@@ -183,6 +222,7 @@ async function refreshAll() {
       overviewStore.refresh(),
       rippleStore.refresh(),
       loadProductionRollup(),
+      loadProductionCostTrend(),
     ]);
   } finally {
     refreshing.value = false;
@@ -191,6 +231,7 @@ async function refreshAll() {
 
 onMounted(() => {
   loadProductionRollup();
+  loadProductionCostTrend();
 });
 </script>
 

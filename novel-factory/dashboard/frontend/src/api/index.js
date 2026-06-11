@@ -92,6 +92,17 @@ export async function fetchProductionRollup(opts = {}) {
 }
 
 /**
+ * Phase 9.96 F87: time-ordered production cost trend for Analytics chart.
+ * @param {{ limit?: number }} [opts]
+ */
+export async function fetchProductionCostTrend(opts = {}) {
+  const params = new URLSearchParams();
+  if (opts.limit != null) params.set('limit', String(opts.limit));
+  const q = params.toString();
+  return request(`/production-records/trend${q ? `?${q}` : ''}`);
+}
+
+/**
  * Fetch health status from the API
  * @returns {Promise<HealthResponse>} Health data
  */

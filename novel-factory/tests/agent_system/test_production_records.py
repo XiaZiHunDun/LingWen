@@ -9,6 +9,7 @@ from infra.agent_system.production_records import (
     compute_deduplicated_cost_usd,
     list_production_records,
     parse_record_file,
+    production_cost_trend,
     rollup_production_records,
 )
 
@@ -104,3 +105,43 @@ class TestProductionRecords:
         assert rollup["chapters_with_records"] == 4
         assert rollup["batch_count"] == 1
         assert len(rollup["batches"]) == 1
+
+    def test_production_cost_trend_time_order_and_dedup(self, tmp_path):
+        (tmp_path / "ch360.json").write_text(
+            json.dumps({
+                "pilot_id": "p360",
+                "chapter_num": 360,
+                "run": {"total_cost_usd": 0.025},
+                "recorded_at": "2026-06-11T00:00:00Z",
+            }),
+            encoding="utf-8",
+        )
+        (tmp_path / "batch-361-363.json").write_text(
+            json.dumps({
+                "batch_id": "b1",
+                "start_chapter": 361,
+                "chapters_attempted": 3,
+                "total_cost_usd": 0.083,
+                "stopped_reason": "completed",
+                "recorded_at": "2026-06-11T01:00:00Z",
+            }),
+            encoding="utf-8",
+        )
+        (tmp_path / "ch361.json").write_text(
+            json.dumps({
+                "pilot_id": "p361",
+                "chapter_num": 361,
+                "run": {"total_cost_usd": 0.025},
+                "recorded_at": "2026-06-11T02:00:00Z",
+            }),
+            encoding="utf-8",
+        )
+        trend = production_cost_trend(tmp_path, limit=10)
+        assert trend["point_count"] == 3
+        assert trend["total_cost_usd"] == pytest.approx(0.108)
+        labels = [p["label"] for p in trend["points"]]
+        assert labels == ["ch360", "ch361-363", "ch361"]
+        assert trend["points"][0]["incremental_cost_usd"] == pytest.approx(0.025)
+        assert trend["points"][1]["incremental_cost_usd"] == pytest.approx(0.083)
+        assert trend["points"][2]["incremental_cost_usd"] == pytest.approx(0.0)
+        assert trend["points"][2]["cumulative_cost_usd"] == pytest.approx(0.108)

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v8-post-9.84.md` (F77-F82 已于 Phase 9.85-9.90 全部完成, commit `5c988f1`). 本 doc 定义 **360+ 章规模化生产** + **Memory RAG live** + **运维可观测性** 主线, 重新编号 **F83+**.
 > **创建时间**: 2026-06-11 (v8 清空 + bookkeeping)
-> **状态**: v9 进行中; **推荐 F87** Analytics 成本趋势
+> **状态**: v9 进行中; **推荐 F88** ChaptersPage batch badge
 > **前置**: baseline **2845 pytest + 400 vitest** (post `5c988f1`); ch360 + batch 361-363 已跑通
 
 ## 上下文 (Context)
@@ -114,8 +114,8 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 ## 推荐下一期 phase 顺序
 
-1. **F87** Analytics 成本趋势
-2. F88 ChaptersPage 最新 batch badge
+1. **F88** ChaptersPage 最新 batch badge
+2. F89 后续（如有）或 v9 收尾
 
 ---
 
@@ -130,3 +130,4 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - [x] F86 manual ch367 live RAG pilot（MiniMax-only · record gitignored）
 - [x] Qdrant `query_points` 兼容 fix（client 1.18+）
 - [x] ch350–360 embed → live `related_segments` 验证（ch367 语义检索 5 hits）
+- [x] F87 Analytics 生产成本趋势 mini chart（`/api/production-records/trend`）
