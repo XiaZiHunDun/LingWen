@@ -124,6 +124,30 @@ class ProductionRecordsResponse(BaseModel):
     records: list[ProductionRecordResponse]
 
 
+class ProductionBatchRollupResponse(BaseModel):
+    """Phase 9.89 F81: batch row in production rollup."""
+
+    record_id: str
+    chapter_range: Optional[str] = None
+    total_cost_usd: Optional[float] = None
+    stopped_reason: Optional[str] = None
+    recorded_at: Optional[str] = None
+    source_file: str
+
+
+class ProductionRollupResponse(BaseModel):
+    """Phase 9.89 F81: aggregated pilot/batch stats for Analytics."""
+
+    records_dir: str
+    record_count: int
+    pilot_count: int
+    batch_count: int
+    total_cost_usd: float
+    chapters_with_records: int
+    latest_recorded_at: Optional[str] = None
+    batches: list[ProductionBatchRollupResponse]
+
+
 # === Phase 6: Decision/Workflow models ===
 
 class DecisionResponse(BaseModel):
@@ -858,6 +882,26 @@ def create_app(
             records=[
                 ProductionRecordResponse(**item.to_dict()) for item in items
             ],
+        )
+
+    @app.get("/api/production-records/rollup", response_model=ProductionRollupResponse)
+    def get_production_records_rollup(
+        limit: int = Query(default=100, ge=1, le=200),
+    ) -> ProductionRollupResponse:
+        """Phase 9.89 F81: deduplicated cost + batch list for Analytics."""
+        from infra.agent_system.production_records import (
+            default_pilot_records_dir,
+            rollup_production_records,
+        )
+
+        data = rollup_production_records(default_pilot_records_dir(), limit=limit)
+        return ProductionRollupResponse(
+            **{
+                **data,
+                "batches": [
+                    ProductionBatchRollupResponse(**row) for row in data["batches"]
+                ],
+            }
         )
 
     # ==================== Phase 6: Decision Endpoints ====================

@@ -175,3 +175,101 @@ def latest_record_by_chapter(
                 if rec.chapter_num is not None:
                     by_chapter.setdefault(rec.chapter_num, rec)
     return by_chapter
+
+
+def chapters_covered_by_record(rec: ProductionRecordItem) -> set[int]:
+    """Chapter numbers referenced by one pilot or batch record."""
+    covered: set[int] = set()
+    if rec.record_type == "pilot" and rec.chapter_num is not None:
+        covered.add(rec.chapter_num)
+    elif rec.record_type == "batch" and rec.chapter_range:
+        parts = rec.chapter_range.split("-")
+        try:
+            lo, hi = int(parts[0]), int(parts[-1])
+            covered.update(range(lo, hi + 1))
+        except (ValueError, IndexError):
+            if rec.chapter_num is not None:
+                covered.add(rec.chapter_num)
+    return covered
+
+
+def chapters_covered_by_batches(records: list[ProductionRecordItem]) -> set[int]:
+    """Union of chapters included in any batch record."""
+    covered: set[int] = set()
+    for rec in records:
+        if rec.record_type == "batch":
+            covered |= chapters_covered_by_record(rec)
+    return covered
+
+
+def compute_deduplicated_cost_usd(records: list[ProductionRecordItem]) -> float:
+    """Sum batch totals + pilot-only chapters (skip pilots inside batch ranges)."""
+    in_batch = chapters_covered_by_batches(records)
+    total = 0.0
+    for rec in records:
+        if rec.total_cost_usd is None:
+            continue
+        if rec.record_type == "batch":
+            total += float(rec.total_cost_usd)
+        elif rec.record_type == "pilot":
+            ch = rec.chapter_num
+            if ch is not None and ch not in in_batch:
+                total += float(rec.total_cost_usd)
+    return total
+
+
+@dataclass(frozen=True)
+class ProductionBatchRollupItem:
+    record_id: str
+    chapter_range: str | None
+    total_cost_usd: float | None
+    stopped_reason: str | None
+    recorded_at: str | None
+    source_file: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def rollup_production_records(
+    records_dir: Path | None = None,
+    *,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Aggregate pilot/batch records for Analytics (F81)."""
+    root = Path(records_dir or default_pilot_records_dir())
+    records = list_production_records(root, limit=limit)
+    pilot_count = sum(1 for r in records if r.record_type == "pilot")
+    batch_count = sum(1 for r in records if r.record_type == "batch")
+    chapters: set[int] = set()
+    for rec in records:
+        chapters |= chapters_covered_by_record(rec)
+
+    latest_at: str | None = None
+    for rec in records:
+        if rec.recorded_at and (latest_at is None or rec.recorded_at > latest_at):
+            latest_at = rec.recorded_at
+
+    batches: list[dict[str, Any]] = []
+    for rec in records:
+        if rec.record_type != "batch":
+            continue
+        batches.append(ProductionBatchRollupItem(
+            record_id=rec.record_id,
+            chapter_range=rec.chapter_range,
+            total_cost_usd=rec.total_cost_usd,
+            stopped_reason=rec.stopped_reason,
+            recorded_at=rec.recorded_at,
+            source_file=rec.source_file,
+        ).to_dict())
+
+    return {
+        "records_dir": str(root),
+        "record_count": len(records),
+        "pilot_count": pilot_count,
+        "batch_count": batch_count,
+        "total_cost_usd": round(compute_deduplicated_cost_usd(records), 6),
+        "chapters_with_records": len(chapters),
+        "latest_recorded_at": latest_at,
+        "batches": batches,
+    }

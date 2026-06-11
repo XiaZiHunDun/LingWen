@@ -6,8 +6,10 @@ import json
 import pytest
 
 from infra.agent_system.production_records import (
+    compute_deduplicated_cost_usd,
     list_production_records,
     parse_record_file,
+    rollup_production_records,
 )
 
 
@@ -66,3 +68,39 @@ class TestProductionRecords:
         items = list_production_records(tmp_path, chapter_num=360, limit=10)
         assert len(items) == 1
         assert items[0].chapter_num == 360
+
+    def test_rollup_deduplicates_batch_and_pilot_cost(self, tmp_path):
+        (tmp_path / "ch360.json").write_text(
+            json.dumps({
+                "pilot_id": "p360",
+                "chapter_num": 360,
+                "run": {"total_cost_usd": 0.025},
+            }),
+            encoding="utf-8",
+        )
+        (tmp_path / "batch-361-363.json").write_text(
+            json.dumps({
+                "batch_id": "b1",
+                "start_chapter": 361,
+                "chapters_attempted": 3,
+                "total_cost_usd": 0.083,
+                "stopped_reason": "completed",
+                "recorded_at": "2026-06-11T02:00:00Z",
+            }),
+            encoding="utf-8",
+        )
+        (tmp_path / "ch361.json").write_text(
+            json.dumps({
+                "pilot_id": "p361",
+                "chapter_num": 361,
+                "run": {"total_cost_usd": 0.025},
+            }),
+            encoding="utf-8",
+        )
+        records = list_production_records(tmp_path, limit=10)
+        assert compute_deduplicated_cost_usd(records) == pytest.approx(0.108)
+        rollup = rollup_production_records(tmp_path, limit=10)
+        assert rollup["total_cost_usd"] == pytest.approx(0.108)
+        assert rollup["chapters_with_records"] == 4
+        assert rollup["batch_count"] == 1
+        assert len(rollup["batches"]) == 1
