@@ -66,7 +66,7 @@ Phase 9.10-9.32 完成了 CVG 数据层 + dashboard cascade 全链路 (持久化
 - **caveat**: CI **0 真 LLM**; production run 走主公本地 opt-in. CI 只测 CLI + 小 fixture (≤10 章)
 - **scope boundary**: 0 改 extractor 规则逻辑 unless backfill 暴露 bug; 0 改 dashboard
 
-### F19. Phase 9.34 — LLM scanner confidence 校准
+### F19. Phase 9.34 — LLM scanner confidence 校准 ✅ **DONE Phase 9.34**
 
 - **承接**: Phase 9.12 LLM scanner opt-in + Phase 9.17 out of scope「4 维 confidence 校准 + 阈值 adjust after real LLM run」
 - **目标**: 基于真实 LLM 跑样本 (≥20 章) 调 `llm_scanner.py` / `edge_inferrer.py` 阈值, 降 false positive
@@ -176,7 +176,7 @@ Phase 8.35-8.42 super-phase 留 followup, 跟 CVG 功能独立, 可穿插做.
 |---|------|------|--------|--------|-------|-------|
 | F17 | roadmap v2 文档同步 | 中 | 🔴 高 | 0.5h | 9.33-bk | ✅ |
 | F18 | 359 章 backfill 正式跑 | 高 | 🟡 中 | 2-3h | 9.33 | ✅ |
-| F19 | LLM scanner 校准 | 高 | 🟡 中 | 2-3h | 9.34 | △ F18 建议先 |
+| F19 | LLM scanner 校准 | 高 | 🟡 中 | 2-3h | 9.34 | ✅ |
 | F20 | cascade 实时拓扑刷新 | 中 | 🟢 低 | 2h | 9.35 | ✅ |
 | F21 | v1→v2 cascade 迁移 | 低 | 🟢 低 | 1.5h | 9.36 | △ F4 |
 | F22 | CI pytest | 高 | 🟡 中 | 1.5h | 9.37 | ✅ |

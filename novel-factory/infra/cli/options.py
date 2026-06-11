@@ -81,7 +81,8 @@ class BackfillOptions(UnifiedOptions):
     use_llm: bool = False
     apply: bool = False  # --apply 强需 --use-llm (rule path 用 --execute)
     cache_path: Optional[Path] = None  # LLMCache 路径 (None → ~/.cache/lingwen/llm_cache.json)
-    llm_confidence_threshold: int = 3  # 1-5, min confidence to write a node
+    llm_confidence_threshold: Optional[int] = None  # None → scanner_calibration.yaml
+    calibration_path: Optional[str] = None  # Phase 9.34: override calibration yaml
 
 
 @dataclass
@@ -133,3 +134,13 @@ class CascadeOptions(UnifiedOptions):
     action: str = "run"      # 'run' | 'cancel'
     run_id: int = 0          # for cancel action
     reason: str = ""         # for cancel action (logged + WS payload, not persisted)
+
+
+@dataclass
+class RippleScanOptions(UnifiedOptions):
+    """ripple-scan 命令选项 (Phase 9.34 F19 calibration)."""
+    calibrate: bool = False
+    gold_path: Optional[Path] = None
+    fixture_dir: Optional[Path] = None
+    calibration: Optional[Path] = None
+    chapter: int = 1

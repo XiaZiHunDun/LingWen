@@ -97,6 +97,14 @@ class BackfillCommand(Command):
         )
         from infra.cross_volume.llm_cache import LLMCache
         from infra.cross_volume.llm_scanner import LLMScanner
+        from infra.cross_volume.scanner_calibration import load_scanner_calibration
+
+        cal = load_scanner_calibration(getattr(options, "calibration_path", None))
+        write_threshold = (
+            options.llm_confidence_threshold
+            if options.llm_confidence_threshold is not None
+            else cal.node_write_threshold
+        )
 
         cache = LLMCache(cache_path=options.cache_path)
         cost_tracker = CostTracker()
@@ -129,7 +137,7 @@ class BackfillCommand(Command):
         for ch in chapters:
             try:
                 nodes = scanner.scan_chapter(ch.id, ch.content, context="")
-                nodes = [n for n in nodes if n.confidence >= options.llm_confidence_threshold]
+                nodes = [n for n in nodes if n.confidence >= write_threshold]
                 total_nodes += len(nodes)
                 batch.extend(nodes)
             except Exception as e:
@@ -144,7 +152,7 @@ class BackfillCommand(Command):
 
         print(
             f"[{mode}] LLM scan vol={options.vol} (cache={cache._path}, "
-            f"threshold={options.llm_confidence_threshold}): "
+            f"threshold={write_threshold}): "
             f"chapters={len(chapters)}, total_nodes={total_nodes}, "
             f"written_nodes={written_nodes}"
         )

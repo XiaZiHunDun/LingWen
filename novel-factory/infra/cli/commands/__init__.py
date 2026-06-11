@@ -33,6 +33,7 @@ from .repair import RepairCommand
 from .ripple_audit import RippleAuditCommand
 from .ripple_reset import RippleResetCommand
 from .ripple_rollback import RippleRollbackCommand
+from .ripple_scan import RippleScanCommand
 from .status import StatusCommand
 from .story_contract import StoryContractCommand
 from .verify import VerifyCommand
@@ -56,6 +57,7 @@ COMMANDS = {
     "ripple-reset": RippleResetCommand,
     # Phase 9.19 additive: cascade (re-run BFS, 1:1 with ripple-audit)
     "cascade": CascadeCommand,
+    "ripple-scan": RippleScanCommand,
 }
 
 __all__ = [
@@ -63,7 +65,7 @@ __all__ = [
     "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
     "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
     "RippleAuditCommand", "RippleRollbackCommand", "RippleResetCommand",
-    "CascadeCommand",
+    "CascadeCommand", "RippleScanCommand",
     "COMMANDS", "get_command", "list_commands",
 ]
 

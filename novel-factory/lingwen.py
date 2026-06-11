@@ -40,6 +40,7 @@ from infra.cli import (
     RippleAuditOptions,
     RippleResetOptions,
     RippleRollbackOptions,
+    RippleScanOptions,
     StoryContractOptions,
     UnifiedOptions,
     VerifyOptions,
@@ -125,7 +126,20 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             use_llm=getattr(args, "use_llm", False),
             apply=getattr(args, "apply", False),
             cache_path=getattr(args, "cache_path", None),
-            llm_confidence_threshold=getattr(args, "llm_confidence_threshold", 3),
+            llm_confidence_threshold=getattr(args, "llm_confidence_threshold", None),
+            calibration_path=getattr(args, "calibration_path", None),
+        )
+    elif command == "ripple-scan":
+        return RippleScanOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+            dry_run=False,
+            calibrate=getattr(args, "calibrate", False),
+            gold_path=getattr(args, "gold_path", None),
+            fixture_dir=getattr(args, "fixture_dir", None),
+            calibration=getattr(args, "calibration", None),
+            chapter=getattr(args, "chapter", 1),
         )
     # Phase 9.14 additive: 2 new top-level subcommands (0 改 backfill 分支)
     elif command == "ripple-audit":

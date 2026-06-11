@@ -19,6 +19,7 @@ from .repair import add_repair_parser
 from .ripple_audit import add_ripple_audit_parser
 from .ripple_reset import add_ripple_reset_parser
 from .ripple_rollback import add_ripple_rollback_parser
+from .ripple_scan import add_ripple_scan_parser
 from .status import add_status_parser
 from .story_contract import add_story_contract_parser
 from .verify import add_verify_parser
@@ -67,5 +68,6 @@ Examples:
     add_ripple_reset_parser(subparsers)
     # Phase 9.19 additive: cascade (re-run BFS, 1:1 with ripple-audit)
     add_cascade_parser(subparsers)
+    add_ripple_scan_parser(subparsers)
 
     return parser

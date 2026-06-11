@@ -26,6 +26,7 @@ from infra.ai_service.cost_tracker import CostTracker
 from infra.ai_service.model_tiers import ModelTier
 from infra.cross_volume.llm_cache import LLMCache
 from infra.cross_volume.reference_graph import ReferenceEdge, ReferenceNode
+from infra.cross_volume.scanner_calibration import load_scanner_calibration
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +74,10 @@ class EdgeInferrer:
         cache: LLMCache,
         cost_tracker: CostTracker,
         model_tier: ModelTier = ModelTier.SONNET,
-        confidence_threshold: int = 3,
+        confidence_threshold: int | None = None,
     ) -> None:
+        if confidence_threshold is None:
+            confidence_threshold = load_scanner_calibration().edge_infer_threshold
         self.router = router
         self.cache = cache
         self.cost_tracker = cost_tracker

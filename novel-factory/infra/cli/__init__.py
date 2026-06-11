@@ -9,6 +9,7 @@ from infra.cli.options import (
     RippleAuditOptions,
     RippleResetOptions,
     RippleRollbackOptions,
+    RippleScanOptions,
     StoryContractOptions,
     UnifiedOptions,
     VerifyOptions,
@@ -29,5 +30,6 @@ __all__ = [
     "RippleAuditOptions",
     "RippleRollbackOptions",
     "RippleResetOptions",
+    "RippleScanOptions",
     "CascadeOptions",
 ]

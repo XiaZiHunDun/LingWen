@@ -70,8 +70,14 @@ def add_backfill_parser(subparsers: argparse._SubParsersAction) -> argparse.Argu
     parser.add_argument(
         "--llm-confidence-threshold",
         type=int,
-        default=3,
+        default=None,
         choices=[1, 2, 3, 4, 5],
-        help="Phase 9.12: min LLM confidence (1-5) to write a node (default 3)",
+        help="Phase 9.12/9.34: min LLM confidence to write a node (default: scanner_calibration.yaml)",
+    )
+    parser.add_argument(
+        "--calibration-path",
+        type=str,
+        default=None,
+        help="Phase 9.34: override scanner_calibration.yaml path",
     )
     return parser
