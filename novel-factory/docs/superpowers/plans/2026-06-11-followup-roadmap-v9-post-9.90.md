@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v8-post-9.84.md` (F77-F82 已于 Phase 9.85-9.90 全部完成, commit `5c988f1`). 本 doc 定义 **360+ 章规模化生产** + **Memory RAG live** + **运维可观测性** 主线, 重新编号 **F83+**.
 > **创建时间**: 2026-06-11 (v8 清空 + bookkeeping)
-> **状态**: v9 **收尾** — F90 e2e-live 记录 tooling 完成
+> **状态**: v9 **已完成** (2026-06-11) · baseline 2902 pytest / 409 vitest
 > **前置**: baseline **2845 pytest + 400 vitest** (post `5c988f1`); ch360 + batch 361-363 已跑通
 
 ## 上下文 (Context)
@@ -114,8 +114,9 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 ## 推荐下一期 phase 顺序
 
-1. v9 HANDOFF 定稿 / baseline 更新
+1. v9 HANDOFF 定稿 / baseline 更新 ✅
 2. （可选）GitHub Actions 远程 e2e-live 首绿 → 更新 ci_records run id
+3. **正文 wave 367–376**（runbook §18）或 v10 roadmap
 
 ---
 
@@ -133,3 +134,4 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - [x] F87 Analytics 生产成本趋势 mini chart（`/api/production-records/trend`）
 - [x] F88 ChaptersPage 最新 batch badge（rollup → `latest-batch-badge`）
 - [x] F90 e2e-live 首绿 JSON 记录（`ci_records.py` + write script + runbook §11.4）
+- [x] v9 HANDOFF 定稿（baseline 2902/409 · HEAD fe45027）

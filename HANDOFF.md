@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.90 (Phase 9.90 v8 全量交付 + v9 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F90 e2e-live 首绿 JSON 写入 tooling；F88 batch badge；F87 成本趋势。
+> **版本**: v9.98 (Phase 9.98 v9 全量交付, 2026-06-11)
+> **更新 (2026-06-11)**: v9 收尾定稿 — baseline 2902 pytest / 409 vitest · HEAD `fe45027`
 
 ---
 
@@ -15,13 +15,13 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2845** collected |
-| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **400** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
-| **总测试** | **~3272** (2845 pytest + 400 vitest + skips) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2902** collected |
+| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **409** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
+| **总测试** | **~3311** (2902 pytest + 409 vitest + skips) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `dd6645f` — fix(qdrant) query_points + ch367 live 文档 |
+| **当前 commit** | `fe45027` — feat(F88,F90) batch badge + e2e-live ci_records |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | v9 收尾 — baseline 更新 / 可选远程 e2e-live 首绿 |
+| **下一期推荐** | **正文生产** wave 367–376（runbook §18）或 v10 roadmap 规划 |
 
 ---
 
@@ -248,25 +248,13 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] test(dashboard): phase 9.39 F24 — ESLint 9+ flat config contract
-d838557 ci: phase 9.37 F22 — pytest gate at repo root
-3c2020f feat(cvg): phase 9.33 F18 — production backfill execute idempotent
-7790864 test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
-364b0b1 feat(dashboard): phase 9.30 F14 — page data-testid convention unify
-41d7129 feat(dashboard): phase 9.29 F13 — cost cumulative trend line
-743838d docs(handoff): v9.28 F12 完成 — HANDOFF 补全
-9223222 feat(dashboard): phase 9.28 F12 — per-tier cost trend lines
-463046c feat(dashboard): phase 9.27 F11 — tier budget alert log sidebar
-61803aa feat(dashboard): phase 9.26 F10 — global sidebar WS disconnect banner
-9928a08 refactor(storage): phase 9.25 F9 — DRY ripple status SQL helper
-355825e docs(handoff): v9.24 切换开发工具 — 项目进展 + 后续规划整理
-572ef0e docs(followup): phase 9.24 F8 ✅ RESOLVED — CI filter 收紧 不做
-4c9ddbe chore(memory): phase 9.24 P0 bookkeeping — delete legacy memory/MEMORY.md
-edae8a8 feat(dashboard): phase 9.23 T6 — cascade-runs-filter e2e (2 tests)
-e07fc12 feat(dashboard): phase 9.23 T5b — CascadeRunsPanel URL sync via window.history
-18c8868 Revert "feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest"
-e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
-[earlier phase 9.22 cascade UI panel commits]
+fe45027 feat(F88,F90): ChaptersPage batch badge + e2e-live ci_records
+e6ec561 feat(F87): Analytics 生产成本趋势 mini chart
+34a4c1c fix(memory): numeric Qdrant point IDs + semantic related_segments
+dd6645f fix(qdrant): query_points 兼容 client 1.18+ · ch367 live 文档
+26c0a41 feat(F89): pluggable embedding providers + MiniMax embo-01 beta
+b96a669 feat(F86): live RAG preflight gate + runbook §19
+[earlier v8/v9 commits]
 ```
 
 ---
@@ -298,9 +286,13 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F87 | Analytics 成本趋势 | 9.96 | 3-4h | P2 | ✅ |
 | F88 | ChaptersPage batch badge | 9.97 | 2h | P2 | ✅ |
 | F90 | e2e-live 首绿记录 | 9.98 | 30min | P3 | ✅ |
-| — | v9 收尾 | — | — | — | 🟡 baseline / 远程首绿 optional |
+| — | v9 收尾 | 9.98-bk | 30min | P0 | ✅ baseline 2902/409 · HEAD fe45027 |
 
-**推荐下一项**: v9 定稿；可选 GitHub Actions 远程 e2e-live 首绿后更新 `ci_records`
+**v9 已全部完成。** 推荐下一项:
+
+1. **正文 wave 367–376** — `docs/chapter-production-runbook.md` §18（需 `MINIMAX_API_KEY`）
+2. （可选）GitHub Actions 远程 e2e-live 首绿 → 更新 `ci_records`
+3. （可选）v10 roadmap — 新 dashboard/infra phase
 
 ---
 
@@ -314,6 +306,7 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 - **均非 primary merge gate**
 - `pnpm e2e:smoke` — vite only，1 test
 - `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
+- **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；远程 CI 或修 flake 后再 honest 5/5
 
 ### 7.2 MEMORY.md 路径歧义
 
@@ -339,13 +332,13 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (F83+, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (v9 已完成, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
-- [ ] 跑 `pytest -q` 验证 baseline ~2781 collected (~2min)
-- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **384** passed (~8s)
-- [ ] 跑 `git log --oneline -5` 确认 HEAD=`6d5d899` 或更新
+- [ ] 跑 `cd novel-factory && pytest -q` 验证 baseline **2902** collected (~2min)
+- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
+- [ ] 跑 `git log --oneline -5` 确认 HEAD=`fe45027` 或更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v7 item (推荐 **F72** manual pilot; 需 API key)
+- [ ] 选下一工作: **wave 367–376 batch**（runbook §18）或 v10 规划
 
 ---
 
@@ -353,10 +346,10 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # ~2781 collected, ~2min
+cd novel-factory && pytest -q                                    # 2902 collected, ~2min
 # 增量 backfill (workflow 完成后 opt-in):
 # LINGWEN_INCREMENTAL_BACKFILL=1 · LINGWEN_MEMORY_RAG=stub|live
-cd novel-factory/dashboard/frontend && pnpm vitest run             # 384 vitest, ~8s
+cd novel-factory/dashboard/frontend && pnpm vitest run             # 409 vitest, ~8s
 cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
 cd novel-factory/dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list       # 1 smoke test
@@ -422,5 +415,5 @@ cd novel-factory && python -m infra.agent_system.chapter_golden_path  # stub gol
 
 ---
 
-> **版本**: v9.72 (2026-06-11)
-> **下次更新**: 启动 F65+ 后, append entry 到 `phases-8-dashboard-c.md` + 更新本 HANDOFF.md §6
+> **版本**: v9.98 (2026-06-11) — v9 roadmap 全量完成
+> **下次更新**: 启动 v10 / wave 367–376 生产后, append §6 或新建 v10 roadmap doc
