@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.90 (Phase 9.90 v8 全量交付 + v9 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: ch367 live RAG pilot 完成；Qdrant `query_points` 修复；v9 推荐 **F87**。
+> **更新 (2026-06-11)**: ch350–360 Qdrant embed；live RAG `related_segments` 已验证（ch367 → 5 hits）。
 
 ---
 

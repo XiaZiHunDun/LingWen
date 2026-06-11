@@ -161,10 +161,11 @@ class PushEngine:
         query = f"第{chapter_num}章 相关内容"
 
         try:
-            # 执行混合搜索
+            # Semantic search across embedded corpus (exact chapter filter omitted:
+            # pilot chapters like 367 may not be embedded yet; prior ch350-360 still useful).
             results = self.query_engine.hybrid_search(
                 query=query,
-                filters={"chapter": chapter_num},
+                filters=None,
                 top_k=5,
             )
             return results

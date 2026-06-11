@@ -28,6 +28,11 @@ COLLECTION_NAME = "chapters_seg"
 MAX_SEGMENT_CHARS = 500
 
 
+def make_point_id(chapter_num: int, segment_index: int) -> int:
+    """Stable numeric Qdrant point ID (server requires uint or UUID)."""
+    return chapter_num * 1000 + segment_index
+
+
 def parse_chapter_number(filename: str) -> int | None:
     """从文件名提取章节编号
 
@@ -131,7 +136,7 @@ def load_chapters(start: int | None = None, end: int | None = None) -> list[tupl
     return sorted(chapters, key=lambda x: x[0])
 
 
-def get_existing_point_ids(qdrant: QdrantClientWrapper, collection_name: str) -> set[str]:
+def get_existing_point_ids(qdrant: QdrantClientWrapper, collection_name: str) -> set[int]:
     """获取集合中已存在的所有 point_id
 
     Args:
@@ -246,7 +251,7 @@ def embed_chapters(
         # 断点续传：检查本章是否已处理（通过 segment 0 判断）
         chapter_processed = True
         for j in range(len(segments)):
-            point_id = f"ch{chapter_num:03d}_seg{j:03d}"
+            point_id = make_point_id(chapter_num, j)
             if point_id not in existing_point_ids:
                 chapter_processed = False
                 break
@@ -271,7 +276,7 @@ def embed_chapters(
 
                     for j, (segment, embedding) in enumerate(zip(batch, embeddings)):
                         seg_index = i + j
-                        point_id = f"ch{chapter_num:03d}_seg{seg_index:03d}"
+                        point_id = make_point_id(chapter_num, seg_index)
 
                         # 断点续传：跳过已存在的点
                         if resume and point_id in existing_point_ids:

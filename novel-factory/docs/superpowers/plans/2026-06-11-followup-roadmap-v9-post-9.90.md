@@ -129,3 +129,4 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - [x] F89 Embedding Provider 解耦 + MiniMax embo-01 beta
 - [x] F86 manual ch367 live RAG pilot（MiniMax-only · record gitignored）
 - [x] Qdrant `query_points` 兼容 fix（client 1.18+）
+- [x] ch350–360 embed → live `related_segments` 验证（ch367 语义检索 5 hits）

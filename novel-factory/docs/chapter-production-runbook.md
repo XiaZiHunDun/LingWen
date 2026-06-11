@@ -756,6 +756,24 @@ pytest tests/ci/test_chapter_memory_rag_live_f86_ci.py -q
 
 ```bash
 python -m infra.memory_system.scripts.init_memory
-# 然后 embed 章节（见 memory_system/scripts/embed_chapters.py）
+python -m infra.memory_system.scripts.embed_chapters \
+  --start 350 --end 360 \
+  --create-collection \
+  --resume
+export LINGWEN_EMBEDDING_PROVIDER=minimax   # 或 openai
+```
+
+**注意**：361–367 正文若尚未落盘到 `03_内容仓库/04_正文/`，只能 embed 已有章节（2026-06-11 为 ch350–360）；ch367 live pilot 的 `related_segments` 会语义检索邻近已 embed 章节。
+
+**验证**（post embed 2026-06-11）：
+
+```bash
+python - <<'PY'
+import infra.memory_service as ms
+ms._memory_gateway = None
+from infra.memory_service import get_memory_gateway
+ctx = get_memory_gateway().auto_push_context(367)
+print(len(ctx.get("related_segments", [])))  # 期望 >0
+PY
 ```
 
