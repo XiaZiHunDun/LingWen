@@ -220,3 +220,96 @@ Opt-in GitHub Actions workflow `.github/workflows/dashboard-e2e-live.yml`：
 - 触发：`workflow_dispatch` 或 PR label `e2e-live`
 - 命令：`LINGWEN_E2E_LIVE=1 pnpm e2e:live`（vite + `dashboard/e2e_entry.py`）
 - **非** primary merge gate（primary 仍是 vitest CI）
+
+### 11.1 F70 — e2e-live CI 首跑验证
+
+**目标**: GitHub Actions `dashboard-e2e-live.yml` 与本地 CI 模拟一致、可绿。
+
+**本地 CI 模拟**（与 workflow 同 env）:
+
+```bash
+cd novel-factory/dashboard/frontend
+CI=true LINGWEN_E2E_LIVE=1 pnpm e2e:live
+# 期望: 5 passed (decisions-resolve ×2 + ripples-audit ×3)
+```
+
+**一键脚本**（含 pip/pnpm/playwright install）:
+
+```bash
+bash novel-factory/scripts/verify-e2e-live-ci.sh
+```
+
+**GitHub 触发**:
+
+1. Actions → **Dashboard E2E Live (opt-in)** → **Run workflow**（`workflow_dispatch`）
+2. 或 PR 打 label **`e2e-live`**
+
+**验收**: workflow 绿 + 5 tests passed；失败时 artifact `playwright-live-trace` 可下载。
+
+**pytest 契约**:
+
+```bash
+pytest tests/ci/test_e2e_live_ci_f64.py tests/ci/test_e2e_live_f70_ci.py -q
+```
+
+---
+
+## 12. 真实章节生产 pilot (F65)
+
+**Gate**: `LINGWEN_REAL_LLM=1`（默认 off；CI 永不设置）
+
+**推荐 env 组合**（生产 1 章 pilot）:
+
+```bash
+export LINGWEN_REAL_LLM=1
+export LINGWEN_INCREMENTAL_BACKFILL=1
+export LINGWEN_MEMORY_RAG=stub   # 首次 pilot 可用 stub；有 Qdrant 时改 live
+export ANTHROPIC_API_KEY=sk-ant-...   # 或 MINIMAX / OPENAI
+```
+
+### 12.1 生产环境 checklist
+
+| 检查项 | 要求 |
+|--------|------|
+| `LINGWEN_REAL_LLM=1` | 显式 opt-in（`real_llm_enabled()`） |
+| API key | `MINIMAX_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 至少一个 |
+| state 目录 | `infra/.state/` 或 `--state-dir` 可写 |
+| workflow | `infra/got/workflows/novel_writing.yaml` 存在 |
+| Memory RAG | `stub`（0 Qdrant）或 `live`（需 Qdrant 环境） |
+| Backfill | 可选 `LINGWEN_INCREMENTAL_BACKFILL=1` |
+
+一键 preflight（**0 LLM**，不强制 REAL_LLM gate）:
+
+```bash
+cd novel-factory
+python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter-num 360
+```
+
+### 12.2 跑 1 章 pilot
+
+```bash
+cd novel-factory
+python -m infra.agent_system.chapter_production_pilot --chapter-num 360
+# exit 0 + JSON: emit_chapter_completed=true, total_cost_usd, incremental_backfill, ...
+```
+
+**说明**: `novel_writing` **无 DECISION 节点**，workflow 一次性跑至 `emit_chapter`（`paused=false`）。人审 pause/resume 仍用 §3 `chapter_golden` stub 验收。
+
+### 12.3 pilot 记录模板
+
+复制 `docs/templates/chapter-pilot-record.example.json`，填入实际 `total_cost_usd`、provider、backfill / memory 结果。
+
+### 12.4 pytest（默认 0 真实 LLM）
+
+```bash
+pytest tests/agent_system/test_chapter_production_pilot.py -q
+pytest tests/ci/test_chapter_production_pilot_f65_ci.py -q
+```
+
+Opt-in 真实 LLM preflight:
+
+```bash
+export LINGWEN_REAL_LLM=1 ANTHROPIC_API_KEY=...
+pytest tests/agent_system/test_chapter_production_pilot.py::TestProductionPilotRealLlmOptIn -v
+```
+

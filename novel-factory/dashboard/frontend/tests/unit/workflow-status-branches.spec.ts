@@ -116,7 +116,33 @@ describe('WorkflowStatus branches (F48)', () => {
     expect(wrapper.find(byTestid('cost-section')).exists()).toBe(true)
   })
 
-  test('incremental backfill badge when stats present', () => {
+  test('production summary badge when production_summary present', () => {
+    const wrapper = mount(WorkflowStatus, {
+      props: {
+        status: {
+          ...baseStatus,
+          production_summary: {
+            chapter_num: 360,
+            memory_context_source: 'live',
+            emit_chapter_completed: true,
+            incremental_backfill: {
+              nodes_written: 3,
+              total_count: 3,
+            },
+          },
+          incremental_backfill: {
+            nodes_written: 3,
+            total_count: 3,
+          },
+        },
+      },
+    })
+    expect(wrapper.find('[data-testid="production-summary-badge"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('章节 #360')
+    expect(wrapper.text()).toContain('Memory: live')
+  })
+
+  test('incremental backfill only shows summary section via fallback', () => {
     const wrapper = mount(WorkflowStatus, {
       props: {
         status: {
@@ -130,7 +156,7 @@ describe('WorkflowStatus branches (F48)', () => {
         },
       },
     })
-    expect(wrapper.find(byTestid('incremental-backfill-badge')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('production-summary-badge')).exists()).toBe(true)
     expect(wrapper.text()).toContain('写入 3 节点')
     expect(wrapper.text()).toContain('跳过 1')
   })

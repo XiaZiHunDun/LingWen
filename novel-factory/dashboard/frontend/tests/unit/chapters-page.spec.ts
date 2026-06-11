@@ -67,6 +67,17 @@ describe('ChaptersPage (F63)', () => {
       is_active: true,
       workflow_name: 'novel_writing',
       paused: false,
+      production_summary: {
+        chapter_num: 360,
+        memory_context_source: 'stub',
+        emit_chapter_completed: true,
+        incremental_backfill: {
+          nodes_written: 2,
+          nodes_skipped: 0,
+          total_count: 2,
+          elapsed_s: 0.1,
+        },
+      },
       incremental_backfill: {
         nodes_written: 2,
         nodes_skipped: 0,
@@ -76,7 +87,9 @@ describe('ChaptersPage (F63)', () => {
     }
     const wrapper = mount(ChaptersPage)
     await flushPromises()
-    expect(wrapper.find(byTestid('chapter-backfill-badge')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('chapter-production-summary')).exists()).toBe(true)
+    expect(wrapper.text()).toContain('章节 #360')
+    expect(wrapper.text()).toContain('Memory: stub')
     expect(wrapper.text()).toContain('写入 2 节点')
   })
 

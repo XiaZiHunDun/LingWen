@@ -183,6 +183,8 @@ class MasterController:
         self._last_workflow_name: Optional[str] = None
         self._last_start_nodes: List[str] = []
         self._last_initial_inputs: Dict[str, Any] = {}
+        self._last_incremental_backfill: Any = None
+        self._last_memory_context: Optional[Dict[str, Any]] = None
 
     def get_router(self) -> AIRouter:
         """获取AIRouter实例
@@ -376,6 +378,8 @@ class MasterController:
                 executions=executions,
                 summary=summary,
             )
+            self._last_incremental_backfill = incremental_backfill
+            self._last_memory_context = memory_context
 
             return {
                 "summary": summary,
@@ -509,6 +513,7 @@ class MasterController:
             executions=executions,
             summary=summary,
         )
+        self._last_incremental_backfill = incremental_backfill
 
         return {
             "summary": summary,
@@ -517,6 +522,7 @@ class MasterController:
             "pending_decisions": pending_decisions,
             "resolved_decision": resolved,
             "incremental_backfill": incremental_backfill,
+            "memory_context": getattr(self, "_last_memory_context", None),
         }
 
     def list_pending_decisions(self) -> list[dict[str, Any]]:

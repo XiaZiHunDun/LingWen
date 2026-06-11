@@ -86,6 +86,7 @@ class WorkflowDB:
         """
         lock_file = open(self._lock_path, 'w')
         fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        conn = None
         try:
             conn = sqlite3.connect(str(self.db_path))
             conn.row_factory = sqlite3.Row
@@ -94,10 +95,12 @@ class WorkflowDB:
             yield conn
             conn.commit()
         except Exception:
-            conn.rollback()
+            if conn is not None:
+                conn.rollback()
             raise
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
 

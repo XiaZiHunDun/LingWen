@@ -40,17 +40,34 @@ def db(tmp_path):
             pass
 
 
-def _worker_write(db_path_str: str, key: str, value: str, barrier: multiprocessing.Barrier):
-    """Subprocess: acquire lock, write key, release. Use barrier to align start."""
+def _mp_probe_and_write(
+    db_path_str: str,
+    key: str,
+    value: str,
+    barrier: multiprocessing.Barrier,
+    peak_array,
+    slot: int,
+) -> None:
+    """Subprocess: probe flock peak, then write workflow_state row."""
+    barrier.wait(timeout=5)
+    peak_array[slot] = _probe_flock_peak(db_path_str, hold_s=0.08)
     inst = WorkflowDB(db_path_str)
-    barrier.wait()  # align all workers
     with inst.transaction() as conn:
         conn.execute(
             "INSERT OR REPLACE INTO workflow_state (key, value) VALUES (?, ?)",
             (key, value),
         )
-        # Hold lock briefly so we observe serialization, not interleaving
-        time.sleep(0.3)
+
+
+def _crashing_worker(db_path_str: str) -> None:
+    """Subprocess: exit while transaction context releases flock."""
+    inst = WorkflowDB(db_path_str)
+    with inst.transaction() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO workflow_state (key, value) VALUES (?, ?)",
+            ("crash", "1"),
+        )
+    os._exit(0)
 
 
 class TestFlockBasics:
@@ -69,53 +86,62 @@ class TestFlockBasics:
         assert inst._lock_path.suffix == ".lock"
 
 
+def _probe_flock_peak(db_path_str: str, hold_s: float = 0.05) -> int:
+    """Return peak concurrent holders observed inside transaction() (expect 1)."""
+    inst = WorkflowDB(db_path_str)
+    with inst.transaction() as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS flock_probe (k TEXT PRIMARY KEY, v INTEGER NOT NULL DEFAULT 0)"
+        )
+        conn.execute("INSERT OR IGNORE INTO flock_probe (k, v) VALUES ('active', 0)")
+        conn.execute("INSERT OR IGNORE INTO flock_probe (k, v) VALUES ('peak', 0)")
+        active = conn.execute(
+            "SELECT v FROM flock_probe WHERE k = 'active'"
+        ).fetchone()[0] + 1
+        conn.execute(
+            "UPDATE flock_probe SET v = ? WHERE k = 'active'", (active,)
+        )
+        peak = conn.execute(
+            "SELECT v FROM flock_probe WHERE k = 'peak'"
+        ).fetchone()[0]
+        if active > peak:
+            conn.execute(
+                "UPDATE flock_probe SET v = ? WHERE k = 'peak'", (active,)
+            )
+        time.sleep(hold_s)
+        conn.execute(
+            "UPDATE flock_probe SET v = v - 1 WHERE k = 'active'"
+        )
+    with inst._get_conn() as conn:
+        return conn.execute(
+            "SELECT v FROM flock_probe WHERE k = 'peak'"
+        ).fetchone()[0]
+
+
 class TestTransactionFlock:
     """transaction() actually uses flock"""
 
-    def test_concurrent_transactions_serialize(self, tmp_path):
-        """两个并发 transaction() 必须串行化(总耗时 ≥ 2×单事务)"""
+    def test_concurrent_transactions_no_overlap(self, tmp_path):
+        """Parallel transaction() calls must not overlap (flock_probe peak == 1)."""
         db_path = tmp_path / "wf.db"
-        inst = WorkflowDB(str(db_path))
+        WorkflowDB(str(db_path))
 
-        # Baseline: a single transaction with 200ms hold
-        start = time.monotonic()
-        with inst.transaction() as conn:
-            conn.execute(
-                "INSERT OR REPLACE INTO workflow_state (key, value) VALUES (?, ?)",
-                ("a", "1"),
-            )
-            time.sleep(0.2)
-        single = time.monotonic() - start
+        def worker():
+            _probe_flock_peak(str(db_path), hold_s=0.05)
 
-        # Two parallel transactions each holding 200ms — if they ran truly parallel
-        # total ≈ 200ms; with flock they should serialize → ≈ 400ms
-        results = []
-
-        def worker(tag):
-            with inst.transaction() as conn:
-                conn.execute(
-                    "INSERT OR REPLACE INTO workflow_state (key, value) VALUES (?, ?)",
-                    (tag, "x"),
-                )
-                time.sleep(0.2)
-            results.append(tag)
-
-        threads = [threading.Thread(target=worker, args=(t,)) for t in ("b", "c")]
-        start = time.monotonic()
+        threads = [threading.Thread(target=worker) for _ in range(4)]
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
-        total = time.monotonic() - start
+            t.join(timeout=10)
 
-        # 串行化断言:总耗时 ≥ 1.6 × 单事务(允许 busy_timeout 重试等小抖动)
-        assert total >= 1.5 * single, (
-            f"flock 未生效:total={total:.3f}s single={single:.3f}s (应 ≥ 1.5×)"
-        )
-        # 写入了两条
+        inst = WorkflowDB(str(db_path))
         with inst._get_conn() as conn:
-            keys = {row["key"] for row in conn.execute("SELECT key FROM workflow_state").fetchall()}
-        assert {"a", "b", "c"}.issubset(keys)
+            row = conn.execute(
+                "SELECT v FROM flock_probe WHERE k = 'peak'"
+            ).fetchone()
+        assert row is not None, "flock_probe table missing"
+        assert row[0] == 1, f"flock overlap detected: peak={row[0]}"
 
     def test_lock_released_on_exception(self, tmp_path):
         """事务内异常应释放 flock,后续 transaction() 不应被永久阻塞"""
@@ -163,18 +189,18 @@ class TestMultiprocessFlock:
     """真正的多进程:验证 fcntl.flock 跨进程生效(本进程锁 ≠ 跨进程锁)"""
 
     def test_multiprocess_writers_serialize(self, tmp_path):
-        """N 个子进程并发写,每个持有 200ms。flock 应确保总耗时 ≥ N × 0.3s - 抖动"""
+        """N subprocess writers: flock_probe peak must stay 1 (no overlap)."""
         db_path = str(tmp_path / "wf.db")
-
-        # Pre-create DB schema (parent process)
         WorkflowDB(db_path)
 
         n = 3
         barrier = multiprocessing.Barrier(n)
+        peak_array = multiprocessing.Array("i", n)
+
         procs = [
             multiprocessing.Process(
-                target=_worker_write,
-                args=(db_path, f"key{i}", f"v{i}", barrier),
+                target=_mp_probe_and_write,
+                args=(db_path, f"key{i}", f"v{i}", barrier, peak_array, i),
             )
             for i in range(n)
         ]
@@ -182,18 +208,13 @@ class TestMultiprocessFlock:
         for p in procs:
             p.start()
         for p in procs:
-            p.join(timeout=5)
+            p.join(timeout=10)
             assert not p.is_alive(), "worker hung — flock deadlock?"
         total = time.monotonic() - start
 
-        # 串行化预期: ≈ n × 0.3s (允许 5% 抖动,实测 0.95s ≈ 3×0.3 = 0.9)
-        # 若 flock 失效,3 个子进程并发运行,总耗时应 ≈ 0.3s(远低于 0.9)
-        min_expected = n * 0.3 * 0.9
-        assert total >= min_expected, (
-            f"multiprocess flock 未生效:total={total:.3f}s expected≥{min_expected:.2f}s"
-        )
+        assert max(peak_array) == 1, f"multiprocess flock overlap: peaks={list(peak_array)}"
+        assert total >= n * 0.05, f"workers finished suspiciously fast: {total:.3f}s"
 
-        # 验证所有 key 都写入了
         inst = WorkflowDB(db_path)
         with inst._get_conn() as conn:
             keys = {row["key"] for row in conn.execute("SELECT key FROM workflow_state").fetchall()}
@@ -205,18 +226,7 @@ class TestMultiprocessFlock:
         db_path = str(tmp_path / "wf.db")
         WorkflowDB(db_path)  # init schema
 
-        def crashing_worker(db_path_str: str):
-            inst = WorkflowDB(db_path_str)
-            with inst.transaction() as conn:
-                conn.execute(
-                    "INSERT OR REPLACE INTO workflow_state (key, value) VALUES (?, ?)",
-                    ("crash", "1"),
-                )
-                # exit abruptly while holding flock
-            # The 'with' block should release the lock
-            os._exit(0)
-
-        p = multiprocessing.Process(target=crashing_worker, args=(db_path,))
+        p = multiprocessing.Process(target=_crashing_worker, args=(db_path,))
         p.start()
         p.join(timeout=5)
         assert p.exitcode == 0

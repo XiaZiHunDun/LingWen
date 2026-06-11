@@ -205,6 +205,7 @@ export async function resumeWorkflow(decisionId, option, resolvedBy = 'human') {
  * @property {Object<string, number>} cost_by_scenario - Cost breakdown by scenario — Phase 8.7
  * @property {BudgetStatus} cost_budget_status - Phase 8.8: budget alarm state (empty {} if no budget)
  * @property {Object|null} [incremental_backfill] - Phase 9.68 F60: CVG incremental backfill stats
+ * @property {Object|null} [production_summary] - Phase 9.74 F66: chapter_num + memory source + backfill
  */
 
 /**
@@ -423,4 +424,20 @@ export async function fetchCascadeWithDepth(rippleId, maxDepth) {
   return request(
     `/ripples/cascade/${encodeURIComponent(rippleId)}?max_depth=${encodeURIComponent(maxDepth)}&persist=false`
   );
+}
+
+// === Budgets (Phase 8.12 / 8.15 — Settings read-only, F68) ===
+
+/**
+ * @returns {Promise<{ per_run: object, per_day: object, per_week: object }>}
+ */
+export async function fetchBudgets() {
+  return request('/budgets');
+}
+
+/**
+ * @returns {Promise<Record<string, { usd: number, set_at: string }|null>>}
+ */
+export async function fetchBudgetsByTier() {
+  return request('/budgets/by-tier');
 }

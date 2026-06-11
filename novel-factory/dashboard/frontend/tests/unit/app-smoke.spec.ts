@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   fetchChapters: vi.fn(),
   fetchAllDecisions: vi.fn(),
   fetchWorkflows: vi.fn(),
+  fetchBudgets: vi.fn(),
+  fetchBudgetsByTier: vi.fn(),
   connected: { value: true },
   status: {
     value: {
@@ -35,6 +37,8 @@ vi.mock('../../src/api/index.js', () => ({
   resumeWorkflow: vi.fn(),
   fetchRipples: vi.fn().mockResolvedValue([]),
   fetchRippleStats: vi.fn().mockResolvedValue({ total: 0, by_status: {}, by_volume: {} }),
+  fetchBudgets: mocks.fetchBudgets,
+  fetchBudgetsByTier: mocks.fetchBudgetsByTier,
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
@@ -75,6 +79,12 @@ describe('App smoke (Phase 9.31 F15)', () => {
     mocks.fetchChapters.mockResolvedValue({ chapters: [] })
     mocks.fetchAllDecisions.mockResolvedValue([])
     mocks.fetchWorkflows.mockResolvedValue([])
+    mocks.fetchBudgets.mockResolvedValue({
+      per_run: { budget_usd: 1, used_usd: 0, used_pct: 0, status: 'ok' },
+      per_day: {},
+      per_week: {},
+    })
+    mocks.fetchBudgetsByTier.mockResolvedValue({ haiku: null, sonnet: null, opus: null })
   })
 
   test('app-root renders overview by default', async () => {
@@ -102,6 +112,28 @@ describe('App smoke (Phase 9.31 F15)', () => {
     await nav!.trigger('click')
     await flushPromises()
     expect(wrapper.find(byTestid('page-title')).text()).toBe('章节管理')
+  })
+
+  test('click 分析 nav shows AnalyticsPage', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    const nav = wrapper.findAll('.nav-item').find((n) => n.text().includes('分析'))
+    expect(nav).toBeTruthy()
+    await nav!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('数据分析')
+    expect(wrapper.find(byTestid('production-kpi')).exists()).toBe(true)
+  })
+
+  test('click 设置 nav shows SettingsPage', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    const nav = wrapper.findAll('.nav-item').find((n) => n.text().includes('设置'))
+    expect(nav).toBeTruthy()
+    await nav!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('系统设置')
+    expect(wrapper.find(byTestid('budget-panel')).exists()).toBe(true)
   })
 
   test('WS connected hides disconnected banner (realtime indicator ok)', async () => {

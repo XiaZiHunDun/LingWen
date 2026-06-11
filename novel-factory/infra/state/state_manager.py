@@ -52,6 +52,7 @@ class StateManager:
         # Acquire file lock first
         lock_file = open(self._lock_path, 'w')
         fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        conn = None
         try:
             conn = sqlite3.connect(str(self.db_path))
             conn.row_factory = sqlite3.Row
@@ -59,12 +60,27 @@ class StateManager:
             yield conn
             conn.commit()
         except Exception:
-            conn.rollback()
+            if conn is not None:
+                conn.rollback()
             raise
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
+
+    def _fetch_current_step_from_conn(self, conn) -> dict:
+        """Read workflow step keys from an open connection (must be under flock)."""
+        rows = conn.execute(
+            "SELECT key, value FROM workflow_state WHERE key IN "
+            "('current_step', 'current_phase', 'version')"
+        ).fetchall()
+        result = {row['key']: row['value'] for row in rows}
+        return {
+            'current_step': result.get('current_step', 'STEP_00'),
+            'phase': result.get('current_phase', 'PHASE_0_INIT'),
+            'version': result.get('version', 'v8.2'),
+        }
 
     def get_current_step(self) -> dict:
         """Get current workflow step and phase"""
@@ -86,7 +102,7 @@ class StateManager:
     def advance_step(self, step: str, phase: Optional[str] = None) -> dict:
         """Atomically advance to a new step"""
         with self._transaction() as conn:
-            old = self.get_current_step()
+            old = self._fetch_current_step_from_conn(conn)
 
             if phase is None:
                 phase = old.get('phase', 'PHASE_UNKNOWN')

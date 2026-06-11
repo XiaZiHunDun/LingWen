@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.72 (Phase 9.72 v5 全量交付 + v6 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F57-F64 全部完成 (`0983bd0`); baseline **2742 pytest + 367 vitest**; v6 开启 — 推荐 **F65** 真实章节 pilot。
+> **更新 (2026-06-11)**: F65–F68 完成; v6 roadmap **全部交付**。
 
 ---
 
@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `0983bd0` — feat(F57-F64) v5 正文生产 pipeline |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F65** 真实 1 章 pilot — 见 §6 + v6 roadmap |
+| **下一期推荐** | v6 已清空 — 可选 manual F65 pilot 或新 roadmap |
 
 ---
 
@@ -292,14 +292,13 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 | # | 主题 | 估时 | 说明 |
 |---|------|------|------|
-| **F65** | 真实 1 章 pilot | 4-8h | 🔴 推荐下一项 |
-| F66 | 生产 observability 加深 | 2-4h | 需 F65 样本 |
-| F67 | Analytics 页 MVP | 3-5h | 按需 |
-| F68 | Settings 页 MVP | 2-3h | 按需 |
-| F69 | state 并发 pytest 稳定 | 1-2h | 卫生 |
-| F70 | e2e-live CI 首跑验证 | 1h | 卫生 |
+| **F66** | 生产 observability 加深 | 9.74 | 2-4h | P1 | ✅ |
+| **F69** | state 并发 pytest 稳定 | 1-2h | ✅ |
+| F70 | e2e-live CI 首跑验证 | 9.76 | 1h | P3 | ✅ |
+| F67 | Analytics 页 MVP | 9.77 | 3-5h | P2 | ✅ |
+| **F68** | Settings 页 MVP | 9.78 | 2-3h | P2 | ✅ |
 
-**推荐下一项**: **F65** 真实章节生产 pilot（`LINGWEN_REAL_LLM=1` opt-in）
+**v6 已全部完成。** 可选后续：manual F65 真实 1 章 pilot · v6 bookkeeping commit · 新 roadmap。
 
 ---
 

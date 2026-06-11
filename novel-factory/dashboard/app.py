@@ -201,6 +201,8 @@ class WorkflowStatusResponse(BaseModel):
     budget_by_tier: dict[str, dict[str, Any] | None] = Field(default_factory=dict)
     # Phase 9.68 F60: incremental CVG backfill stats after novel_writing (null = skipped/disabled)
     incremental_backfill: dict[str, Any] | None = None
+    # Phase 9.74 F66: per-run chapter production summary (chapter_num + memory + backfill)
+    production_summary: dict[str, Any] | None = None
 
 
 class WorkflowMermaidResponse(BaseModel):
@@ -1805,6 +1807,7 @@ def _workflow_result_to_response(
         total_cost_usd=total_cost_usd,  # Phase 8.7: 修 Phase 8.5 gap
         budget_by_tier=budget_by_tier or {},  # Phase 8.15 T5 (Pydantic 暂 ignore, T6 补 model Field)
         incremental_backfill=result.get("incremental_backfill"),  # Phase 9.68 F60
+        production_summary=result.get("production_summary"),  # Phase 9.74 F66
     )
 
 

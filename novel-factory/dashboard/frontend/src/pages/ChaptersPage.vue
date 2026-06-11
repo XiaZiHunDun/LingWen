@@ -48,8 +48,15 @@
             {{ paused ? '已暂停' : '运行中' }}
           </span>
         </p>
+        <ul
+          v-if="productionLines.length"
+          class="production-summary-list"
+          data-testid="chapter-production-summary"
+        >
+          <li v-for="(line, idx) in productionLines" :key="idx">{{ line }}</li>
+        </ul>
         <p
-          v-if="hasIncrementalBackfill"
+          v-else-if="hasIncrementalBackfill"
           class="backfill-line"
           data-testid="chapter-backfill-badge"
         >
@@ -72,6 +79,11 @@ import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
 import { fetchChapters } from '../api/index.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import {
+  formatIncrementalBackfill,
+  productionSummaryLines,
+  resolveProductionSummary,
+} from '../utils/productionSummary.js';
 
 const rangeOptions = ['1-30', '1-50', '31-60', '61-90'];
 const range = ref('1-30');
@@ -89,16 +101,13 @@ const hasIncrementalBackfill = computed(() => {
   return bf != null && typeof bf === 'object';
 });
 
-const incrementalBackfillLabel = computed(() => {
-  const bf = status.value?.incremental_backfill;
-  if (!bf) return '';
-  const parts = [];
-  if (bf.nodes_written != null) parts.push(`写入 ${bf.nodes_written} 节点`);
-  if (bf.nodes_skipped != null) parts.push(`跳过 ${bf.nodes_skipped}`);
-  if (bf.total_count != null) parts.push(`抽取 ${bf.total_count}`);
-  if (bf.elapsed_s != null) parts.push(`${Number(bf.elapsed_s).toFixed(2)}s`);
-  return parts.length ? parts.join(' · ') : JSON.stringify(bf);
-});
+const productionLines = computed(() =>
+  productionSummaryLines(resolveProductionSummary(status.value)),
+);
+
+const incrementalBackfillLabel = computed(() =>
+  formatIncrementalBackfill(status.value?.incremental_backfill),
+);
 
 async function loadChapters() {
   loading.value = true;
@@ -237,6 +246,14 @@ onMounted(() => {
   font-size: 10px;
   font-family: monospace;
   margin: var(--space-xs) 0 0;
+}
+
+.production-summary-list {
+  margin: var(--space-xs) 0 0;
+  padding-left: 1.2em;
+  font-size: 10px;
+  font-family: monospace;
+  line-height: 1.5;
 }
 
 .chapters-empty {

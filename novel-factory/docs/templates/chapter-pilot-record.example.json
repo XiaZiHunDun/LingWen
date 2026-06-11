@@ -1,0 +1,34 @@
+{
+  "pilot_id": "2026-06-11-ch360-pilot-001",
+  "chapter_num": 360,
+  "workflow_name": "novel_writing",
+  "env": {
+    "LINGWEN_REAL_LLM": "1",
+    "LINGWEN_INCREMENTAL_BACKFILL": "1",
+    "LINGWEN_MEMORY_RAG": "stub",
+    "primary_provider": "anthropic"
+  },
+  "preflight_ok": true,
+  "run": {
+    "completed": 7,
+    "failed": 0,
+    "paused": false,
+    "pending_count": 0,
+    "emit_chapter_completed": true,
+    "total_cost_usd": 0.012
+  },
+  "hooks": {
+    "memory_context_source": "stub",
+    "incremental_backfill": {
+      "total_count": 1,
+      "nodes_written": 1,
+      "dry_run": false
+    }
+  },
+  "human_review": {
+    "required": false,
+    "notes": "novel_writing has no DECISION node; use chapter_golden for pause/resume smoke"
+  },
+  "operator": "fill-your-name",
+  "recorded_at": "2026-06-11T12:00:00Z"
+}

@@ -206,7 +206,15 @@ class MasterControllerAdapter:
         **kwargs: Any,
     ) -> dict[str, Any]:
         result = self._controller.run_workflow(workflow_name, **kwargs)
-        return _workflow_result_to_dict(result)
+        d = _workflow_result_to_dict(result)
+        d["workflow_name"] = workflow_name
+        d["memory_context"] = result.get("memory_context")
+        d["production_summary"] = _build_production_summary_for_result(
+            workflow_name=workflow_name,
+            result=result,
+            initial_inputs=kwargs.get("initial_inputs"),
+        )
+        return d
 
     def resume_workflow(
         self,
@@ -223,6 +231,13 @@ class MasterControllerAdapter:
             resolved = result["resolved_decision"]
             if hasattr(resolved, "to_dict"):
                 d["resolved_decision"] = resolved.to_dict()
+        d["workflow_name"] = getattr(self._controller, "_last_workflow_name", None)
+        d["memory_context"] = result.get("memory_context")
+        d["production_summary"] = _build_production_summary_for_result(
+            workflow_name=d["workflow_name"],
+            result=result,
+            initial_inputs=getattr(self._controller, "_last_initial_inputs", None),
+        )
         return d
 
     def get_active_workflow_status(
@@ -285,6 +300,16 @@ class MasterControllerAdapter:
                     "fallback": output.get("fallback"),
                 }
 
+        from infra.agent_system.production_summary import (
+            build_production_summary_from_controller,
+        )
+        from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
+
+        production_summary = build_production_summary_from_controller(self._controller)
+        incremental_backfill = backfill_stats_to_dict(
+            getattr(self._controller, "_last_incremental_backfill", None)
+        )
+
         return {
             "is_active": True,
             "workflow_name": workflow_name,
@@ -312,6 +337,9 @@ class MasterControllerAdapter:
             "budget_by_tier": _extract_budget_by_tier(self._controller),  # 0 改
             # Phase 8.5: pull total cost from master's cost_tracker (0.0 if not wired)
             "total_cost_usd": _extract_total_cost(self._controller, since=since),  # Phase 8.16
+            # Phase 9.74 F66: per-run chapter production observability
+            "incremental_backfill": incremental_backfill,
+            "production_summary": production_summary,
         }
 
 
@@ -582,7 +610,25 @@ def _workflow_result_to_dict(result: dict[str, Any]) -> dict[str, Any]:
         "incremental_backfill": backfill_stats_to_dict(
             result.get("incremental_backfill")
         ),
+        "production_summary": result.get("production_summary"),
     }
+
+
+def _build_production_summary_for_result(
+    *,
+    workflow_name: str | None,
+    result: dict[str, Any],
+    initial_inputs: Any,
+) -> dict[str, Any] | None:
+    from infra.agent_system.production_summary import build_production_summary
+
+    return build_production_summary(
+        workflow_name=workflow_name,
+        initial_inputs=initial_inputs,
+        executions=result.get("executions"),
+        incremental_backfill=result.get("incremental_backfill"),
+        memory_context=result.get("memory_context"),
+    )
 
 
 def _summary_to_dict(summary: Any) -> dict[str, Any]:

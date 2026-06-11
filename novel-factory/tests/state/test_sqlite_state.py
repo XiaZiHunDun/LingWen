@@ -56,6 +56,14 @@ class TestStateManagerBasic:
         assert 'PHASE' in state['phase']
         assert state['version'] == 'v8.2'
 
+    def test_advance_step_sees_prior_write_in_transaction(self, temp_db):
+        """advance_step reads old state from the same transaction connection."""
+        sm, _ = temp_db
+        sm.advance_step('STEP_01', 'PHASE_1')
+        result = sm.advance_step('STEP_02', 'PHASE_2')
+        assert result['old']['current_step'] == 'STEP_01'
+        assert result['new']['current_step'] == 'STEP_02'
+
     def test_advance_step_atomic(self, temp_db):
         """Test advancing step is atomic"""
         sm, db_path = temp_db
@@ -156,11 +164,12 @@ class TestStateManagerConcurrency:
     """Concurrency and flock protection tests"""
 
     def test_concurrent_updates_serialized(self, temp_db):
-        """Test that concurrent updates are properly serialized with flock"""
+        """Concurrent advance_step calls serialize via flock; final step is last writer."""
         sm, db_path = temp_db
 
         errors = []
         results = []
+        expected_steps = {f'STEP_{i:02d}' for i in range(1, 11)}
 
         def advance_many(step_num):
             try:
@@ -169,19 +178,20 @@ class TestStateManagerConcurrency:
             except Exception as e:
                 errors.append(e)
 
-        # Run concurrent advances
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(advance_many, i) for i in range(1, 11)]
             for f in futures:
                 f.result()
 
-        # All should succeed (flock serializes them)
         assert len(errors) == 0
         assert len(results) == 10
 
-        # Final state should be the last step
         state = sm.get_current_step()
-        assert state['current_step'] == 'STEP_10'
+        assert state['current_step'] in expected_steps
+
+        logs = sm.get_audit_log(limit=20)
+        advance_logs = [entry for entry in logs if entry['action'] == 'advance_step']
+        assert len(advance_logs) == 10
 
     def test_concurrent_task_writes(self, temp_db):
         """Test concurrent task creation"""

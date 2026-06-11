@@ -66,7 +66,18 @@
     </div>
 
     <div
-      v-if="hasIncrementalBackfill"
+      v-if="productionLines.length"
+      class="production-section"
+      data-testid="production-summary-badge"
+    >
+      <h4 class="section-title">📝 本章生产摘要</h4>
+      <ul class="production-summary-list">
+        <li v-for="(line, idx) in productionLines" :key="idx">{{ line }}</li>
+      </ul>
+    </div>
+
+    <div
+      v-if="hasIncrementalBackfill && !productionLines.length"
       class="backfill-section"
       data-testid="incremental-backfill-badge"
     >
@@ -125,6 +136,11 @@ import CostBarChart from './CostBarChart.vue';
 import CostTrendChart from './CostTrendChart.vue';  // Phase 8.24
 import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
 import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
+import {
+  formatIncrementalBackfill,
+  productionSummaryLines,
+  resolveProductionSummary,
+} from '../utils/productionSummary.js';
 
 const props = defineProps({
   status: {
@@ -184,16 +200,13 @@ const hasIncrementalBackfill = computed(() => {
   return bf != null && typeof bf === 'object';
 });
 
-const incrementalBackfillLabel = computed(() => {
-  const bf = props.status?.incremental_backfill;
-  if (!bf) return '';
-  const parts = [];
-  if (bf.nodes_written != null) parts.push(`写入 ${bf.nodes_written} 节点`);
-  if (bf.nodes_skipped != null) parts.push(`跳过 ${bf.nodes_skipped}`);
-  if (bf.total_count != null) parts.push(`抽取 ${bf.total_count}`);
-  if (bf.elapsed_s != null) parts.push(`${Number(bf.elapsed_s).toFixed(2)}s`);
-  return parts.length ? parts.join(' · ') : JSON.stringify(bf);
-});
+const productionLines = computed(() =>
+  productionSummaryLines(resolveProductionSummary(props.status)),
+);
+
+const incrementalBackfillLabel = computed(() =>
+  formatIncrementalBackfill(props.status?.incremental_backfill),
+);
 
 // Phase 8.14: hasCost OR check costByTier, 防 tier-only 数据时整 cost section 隐藏
 // Phase 8.16: 改用 display* 走 windowedCost 路径 (windowedCost 优先, fallback status)
@@ -400,6 +413,20 @@ function onResume(decision, option) {
   font-family: monospace;
   margin: 0;
   line-height: 1.4;
+}
+
+.production-section {
+  padding: var(--space-sm);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+}
+
+.production-summary-list {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 10px;
+  font-family: monospace;
+  line-height: 1.5;
 }
 
 /* Phase 8.16 NEW: .time-window-tabs 跟 .time-window-tab (跟 sidebar 同 pattern) */

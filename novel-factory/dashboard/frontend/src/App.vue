@@ -36,12 +36,8 @@
         <RipplesPage v-else-if="activeNav === 'ripples'" /> <!-- Phase 9.13 -->
         <CascadeRunsPage v-else-if="activeNav === 'cascade-runs'" /> <!-- Phase 9.46 F35 -->
         <ChaptersPage v-else-if="activeNav === 'chapters'" /> <!-- Phase 9.71 F63 -->
-        <div v-else-if="activeNav === 'analytics'" class="placeholder-view">
-          <p class="pixel-text">数据分析 - 开发中</p>
-        </div>
-        <div v-else-if="activeNav === 'settings'" class="placeholder-view">
-          <p class="pixel-text">系统设置 - 开发中</p>
-        </div>
+        <AnalyticsPage v-else-if="activeNav === 'analytics'" /> <!-- Phase 9.77 F67 -->
+        <SettingsPage v-else-if="activeNav === 'settings'" /> <!-- Phase 9.78 F68 -->
       </main>
     </div>
   </div>
@@ -55,6 +51,8 @@ import WorkflowsPage from './pages/WorkflowsPage.vue'
 import RipplesPage from './pages/RipplesPage.vue' // Phase 9.13
 import CascadeRunsPage from './pages/CascadeRunsPage.vue' // Phase 9.46 F35
 import ChaptersPage from './pages/ChaptersPage.vue' // Phase 9.71 F63
+import AnalyticsPage from './pages/AnalyticsPage.vue' // Phase 9.77 F67
+import SettingsPage from './pages/SettingsPage.vue' // Phase 9.78 F68
 import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
 import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue' // Phase 9.26 F10
 import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue' // Phase 9.27 F11
