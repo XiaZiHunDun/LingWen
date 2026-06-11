@@ -2,8 +2,8 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43 已于 Phase 9.41-9.54 全部完成). 本 doc 汇总 v3 清空后各 phase entry「out of scope」散落项 + Phase 8.44/9.14/9.18/9.19 遗留, 重新编号 **F44+** 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v4 roadmap」)
-> **状态**: F47-F52 ✅ (2026-06-11); 待主公决策 F53/F54 下一期
-> **前置**: baseline **2648 pytest + 355 vitest** (post F49/F52)
+> **状态**: F47-F54 ✅ (2026-06-11); 待主公决策 F53/F55 下一期
+> **前置**: baseline **2657 pytest + 355 vitest** (post F54)
 
 ## 上下文 (Context)
 
@@ -31,7 +31,7 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 | 项 | 值 |
 |----|-----|
-| **pytest** | 2648 passed, 27 skipped |
+| **pytest** | 2657 passed, 27 skipped |
 | **vitest** | 355 passed (68 files) |
 | **coverage (frontend)** | lines 94.37% / statements 92% / functions 91.23% / branches 80.02% |
 | **Playwright** | 1 smoke spec opt-in (`app-root.spec.js`); vitest primary gate |
@@ -116,14 +116,9 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 - **estimated**: 2h
 - **dependency**: 9.14/9.16 WS 基础设施
 
-### F54. Phase 9.63 — backfill 增量 (workflow hook)
+### F54. Phase 9.63 — backfill 增量 (workflow hook) ✅ **DONE**
 
-- **承接**: Phase 9.11 out of scope「章节完成时增量扫新章」
-- **目标**: workflow 节点完成 → trigger incremental `ripple-scan` on new chapter range
-- **方案**: hook in MasterController / workflow callback; 0 改 359 章 batch 逻辑
-- **tests**: 5-7 pytest (mock workflow event → scan invoked)
-- **estimated**: 3-4h
-- **dependency**: F18 backfill execute 已就位
+- **完成 (2026-06-11)**: `Backfiller.run_chapters` + `incremental_backfill.py` + MC hook; opt-in `LINGWEN_INCREMENTAL_BACKFILL=1`
 
 ---
 

@@ -182,6 +182,7 @@ class MasterController:
         self._last_graph: Optional[Any] = None
         self._last_workflow_name: Optional[str] = None
         self._last_start_nodes: List[str] = []
+        self._last_initial_inputs: Dict[str, Any] = {}
 
     def get_router(self) -> AIRouter:
         """获取AIRouter实例
@@ -361,12 +362,21 @@ class MasterController:
             self._last_graph = graph
             self._last_workflow_name = workflow_name
             self._last_start_nodes = list(start_nodes)
+            self._last_initial_inputs = dict(initial_inputs or {})
+
+            incremental_backfill = self._maybe_incremental_backfill(
+                workflow_name=workflow_name,
+                initial_inputs=initial_inputs,
+                executions=executions,
+                summary=summary,
+            )
 
             return {
                 "summary": summary,
                 "graph": graph,
                 "executions": executions,
                 "pending_decisions": pending_decisions,
+                "incremental_backfill": incremental_backfill,
             }
         finally:
             # Phase 8.8: reset for next run, even on exception
@@ -486,12 +496,20 @@ class MasterController:
             if graph.has_execution(nid):
                 executions[nid] = graph.get_execution(nid)
 
+        incremental_backfill = self._maybe_incremental_backfill(
+            workflow_name=getattr(self, "_last_workflow_name", "") or "",
+            initial_inputs=getattr(self, "_last_initial_inputs", None),
+            executions=executions,
+            summary=summary,
+        )
+
         return {
             "summary": summary,
             "graph": graph,
             "executions": executions,
             "pending_decisions": pending_decisions,
             "resolved_decision": resolved,
+            "incremental_backfill": incremental_backfill,
         }
 
     def list_pending_decisions(self) -> list[dict[str, Any]]:
@@ -511,6 +529,25 @@ class MasterController:
         if queue is None:
             raise RuntimeError("decision queue not initialized")
         return queue
+
+    def _maybe_incremental_backfill(
+        self,
+        workflow_name: str,
+        initial_inputs: Optional[Dict[str, Any]],
+        executions: Dict[str, Any],
+        summary: Any,
+    ) -> Any:
+        """Phase 9.63 F54: optional incremental CVG backfill after emit_chapter."""
+        from infra.cross_volume.incremental_backfill import maybe_after_workflow
+
+        enabled = getattr(self, "_incremental_backfill_enabled", None)
+        return maybe_after_workflow(
+            workflow_name,
+            initial_inputs,
+            executions,
+            summary,
+            enabled=enabled,
+        )
 
     def _harvest_decision_specs(self, graph: Any) -> list[dict[str, Any]]:
         """扫描图中的 DECISION 节点 → 创建 HumanDecision → 返回序列化列表

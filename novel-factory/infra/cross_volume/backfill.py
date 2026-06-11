@@ -205,6 +205,72 @@ class Backfiller:
         logger.info("backfill done: %s", stats.summary())
         return stats
 
+    def run_chapters(
+        self,
+        chapter_nums: list[int],
+        *,
+        dry_run: bool = False,
+    ) -> BackfillStats:
+        """Phase 9.63 F54: incremental backfill for explicit chapter numbers only."""
+        start = time.perf_counter()
+        all_nodes: dict[DimensionT, dict[str, ReferenceNode]] = {
+            "character": {},
+            "foreshadow": {},
+            "setting": {},
+            "plot_point": {},
+        }
+        for chapter_path in self._paths_for_chapters(chapter_nums):
+            chapter_num = self._parse_chapter_num(chapter_path)
+            for dim, extractor in self._extractors.items():
+                for node in extractor.extract(chapter_path):
+                    self._merge_node(all_nodes[dim], node, chapter_num)
+        elapsed = time.perf_counter() - start
+
+        if dry_run:
+            return BackfillStats.from_nodes(all_nodes, dry_run=True, elapsed_s=elapsed)
+
+        all_node_list = [
+            n for dim_nodes in all_nodes.values() for n in dim_nodes.values()
+        ]
+        storage = self._graph._storage
+        existing = storage.load_all_nodes()
+        pre_node_count = len(existing)
+        existing_ids = {n.id for n in existing}
+        to_write = [n for n in all_node_list if n.id not in existing_ids]
+        nodes_written = len(to_write)
+        nodes_skipped = len(all_node_list) - nodes_written
+        if to_write:
+            storage.append_nodes_atomic(to_write)
+        post_node_count = len(storage.load_all_nodes())
+        stats = BackfillStats.from_nodes(
+            all_nodes,
+            dry_run=False,
+            elapsed_s=elapsed,
+            nodes_written=nodes_written,
+            nodes_skipped=nodes_skipped,
+            pre_node_count=pre_node_count,
+            post_node_count=post_node_count,
+        )
+        logger.info("incremental backfill done: %s", stats.summary())
+        return stats
+
+    def _paths_for_chapters(self, chapter_nums: list[int]) -> Iterator[Path]:
+        """Yield corpus paths for explicit chapter numbers (.md preferred over _大纲)."""
+        if not self._corpus_root.exists():
+            return iter([])
+        seen: set[int] = set()
+        for n in chapter_nums:
+            if n in seen or n < 1:
+                continue
+            seen.add(n)
+            stem = f"ch{n:03d}"
+            md_path = self._corpus_root / f"{stem}.md"
+            outline_path = self._corpus_root / f"{stem}_大纲.md"
+            if md_path.exists():
+                yield md_path
+            elif outline_path.exists():
+                yield outline_path
+
     def _iter_chapters(self, volume_filter: int | None) -> Iterator[Path]:
         # 扫 ch{001..359}.md + ch{001..359}_大纲.md
         if not self._corpus_root.exists():
