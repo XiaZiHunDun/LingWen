@@ -344,7 +344,7 @@ export async function fetchCascadeRuns(rippleId, options = {}) {
   if (options.offset) params.set('offset', String(options.offset));
   if (options.status) params.set('status', options.status);
   const qs = params.toString();
-  return request(`/api/ripples/cascade/${encodeURIComponent(rippleId)}/runs${qs ? '?' + qs : ''}`);
+  return request(`/ripples/cascade/${encodeURIComponent(rippleId)}/runs${qs ? '?' + qs : ''}`);
 }
 
 /**
@@ -357,7 +357,7 @@ export async function fetchCascadeRuns(rippleId, options = {}) {
  */
 export async function cancelCascadeRun(rippleId, runId, reason = '') {
   return request(
-    `/api/ripples/cascade/${encodeURIComponent(rippleId)}/runs/${runId}/cancel`,
+    `/ripples/cascade/${encodeURIComponent(rippleId)}/runs/${runId}/cancel`,
     { method: 'POST', body: JSON.stringify({ reason }) }
   );
 }
@@ -375,6 +375,6 @@ export async function cancelCascadeRun(rippleId, runId, reason = '') {
  */
 export async function fetchCascadeWithDepth(rippleId, maxDepth) {
   return request(
-    `/api/ripples/cascade/${encodeURIComponent(rippleId)}?max_depth=${encodeURIComponent(maxDepth)}&persist=false`
+    `/ripples/cascade/${encodeURIComponent(rippleId)}?max_depth=${encodeURIComponent(maxDepth)}&persist=false`
   );
 }

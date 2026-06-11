@@ -82,17 +82,18 @@ async function installApiMocks(page) {
     return route.continue();
   });
   // Mock Phase 9.20 cascade_runs endpoints
-  // NOTE: BASE_URL is http://localhost:8765/api and fetchCascadeRuns path
-  // starts with `/api/ripples/...`, so actual request URL has double `/api`
-  // prefix: http://localhost:8765/api/api/ripples/cascade/rip-1/runs
+  // BASE_URL is http://localhost:8765/api and Phase 9.22 api methods use
+  // relative paths `/ripples/cascade/...` (no leading /api), so the actual
+  // request URLs are http://localhost:8765/api/ripples/cascade/rip-1/runs
+  // (single /api prefix), which matches the backend FastAPI routes.
   await page.route('**/api/ripples/cascade/**', async (route, request) => {
     const url = new URL(request.url());
     const path = url.pathname;
-    if (path === '/api/api/ripples/cascade/rip-1/runs') {
+    if (path === '/api/ripples/cascade/rip-1/runs') {
       return route.fulfill({ status: 200, contentType: 'application/json',
         body: JSON.stringify(FAKE_RUNS) });
     }
-    if (path === '/api/api/ripples/cascade/rip-1') {
+    if (path === '/api/ripples/cascade/rip-1') {
       return route.fulfill({ status: 200, contentType: 'application/json',
         body: JSON.stringify(FAKE_REPLAY_CASCADE) });
     }
