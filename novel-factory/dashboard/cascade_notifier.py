@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from dashboard.protocols import CascadeUpdatePayload  # avoid runtime circular
+    from dashboard.protocols import CascadeCancelPayload, CascadeUpdatePayload  # avoid runtime circular
 
 # Phase 6.4 ConnectionManager 类型 stub (避免跨模块 import, runtime duck typing)
 WsManagerT = Optional[Callable[[dict], Any]]
@@ -91,3 +91,44 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
     except Exception as e:
         # Best-effort: broadcast 失败不 propagate (跟 9.14 record_audit 1:1)
         logger.warning("cascade_notifier: broadcast failed: %s", e)
+
+
+def notify_cascade_cancel(payload: "CascadeCancelPayload") -> None:
+    """Phase 9.21: 推 cascade.cancel WS event (跟 cascade.update 1:1).
+
+    envelope schema (跟 useWorkflowSocket.js 1:1, type discriminator):
+      {
+        "type": "cascade.cancel",
+        "payload": {
+          "run_id": int,
+          "ripple_id": str,
+          "status": "cancelled",
+          "reason": str (optional, may be "")
+        }
+      }
+    """
+    if _ws_manager is None:
+        logger.debug("cascade_notifier: ws_manager not set, skip cancel broadcast")
+        return
+    from dashboard.protocols import CascadeCancelPayload as _CascadeCancelPayload
+    if not isinstance(payload, _CascadeCancelPayload):
+        try:
+            payload = _CascadeCancelPayload.model_validate(payload)
+        except Exception as e:
+            logger.warning("cascade_notifier: invalid cancel payload, skip: %s", e)
+            return
+    envelope = {"type": "cascade.cancel", "payload": payload.model_dump()}
+    ws = _ws_manager
+    try:
+        result = ws(envelope)
+        if asyncio.iscoroutine(result):
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.ensure_future(result)
+                else:
+                    loop.run_until_complete(result)
+            except RuntimeError:
+                asyncio.ensure_future(result)
+    except Exception as e:
+        logger.warning("cascade_notifier: cancel broadcast failed: %s", e)

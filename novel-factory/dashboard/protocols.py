@@ -669,6 +669,7 @@ __all__ = [
     "CascadePreviewResponse",
     "CascadeRunResponse",
     "CascadeUpdatePayload",
+    "CascadeCancelPayload",
 ]
 
 
@@ -853,3 +854,16 @@ class CascadeUpdatePayload(BaseModel):
     cascade_edge_count: int = Field(..., ge=0)
     depth_reached: int = Field(..., ge=0)
     bfs_algorithm_version: Literal["v1", "v2_weighted"]
+
+
+class CascadeCancelPayload(BaseModel):
+    """Phase 9.21: WS cascade.cancel payload schema.
+
+    跟 CascadeUpdatePayload 1:1 风格 (Pydantic v2 typed schema + Field 约束).
+    cascade_notifier.notify_cascade_cancel 双路径: typed instance 直接用, dict
+    走 model_validate fallback 兜底 (0 改旧 caller, backward compat).
+    """
+    run_id: int = Field(..., ge=1)
+    ripple_id: str = Field(..., min_length=1)
+    status: Literal["cancelled"] = "cancelled"
+    reason: str = ""

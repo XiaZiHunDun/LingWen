@@ -704,6 +704,41 @@ class RippleStorage:
             conn.commit()
             return cur.lastrowid
 
+    def cancel_cascade_run(self, run_id: int, reason: str = "") -> bool:
+        """Phase 9.21: mark cascade run as cancelled (idempotent).
+
+        Permissive transition: running/completed/failed → cancelled 都允许 (YAGNI
+        状态机校验). 已 cancelled → no-op return False. 不存在 → raise KeyError.
+
+        Reuses completed_at column for cancel timestamp (0 加 cancelled_at 列,
+        跟 Phase 9.20 YAGNI 决策一致). reason 仅 INFO log, 不持久化.
+
+        Args:
+            run_id: cascade_runs.id PK
+            reason: optional cancel reason (logged + WS payload, not persisted)
+
+        Returns:
+            True if status flipped (running/completed/failed → cancelled)
+            False if already cancelled (idempotent no-op)
+        """
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT status FROM cascade_runs WHERE id = ?", (run_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"Cascade run {run_id} not found")
+            if row["status"] == "cancelled":
+                return False
+            if reason:
+                logger.info("cascade run %d cancelled (reason: %s)", run_id, reason)
+            conn.execute(
+                "UPDATE cascade_runs SET status = 'cancelled', completed_at = ? WHERE id = ?",
+                (now_iso, run_id),
+            )
+            conn.commit()
+            return True
+
     def get_cascade_runs(
         self,
         ripple_id: str,
