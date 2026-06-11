@@ -308,6 +308,12 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 - `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
 - **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；远程 CI 或修 flake 后再 honest 5/5
 
+### 7.5 pytest baseline 与环境变量
+
+- **默认 CI 期望**: `pytest -q` → **2893 passed**, 9 skipped（2026-06-11 本机验证）
+- **`LINGWEN_MEMORY_RAG=live`** 在 shell 中 export 时，batch 单元测试需 `stub`（已在 `test_chapter_production_batch` autouse 隔离）
+- **real LLM opt-in** (`MINIMAX_API_KEY` 等): `test_novel_writing_real_llm.py` 仅在有 key 时跑；Markdown fenced JSON 已由 `AgentBase.parse_response` 剥离
+
 ### 7.2 MEMORY.md 路径歧义
 
 本项目有 2 套 memory:
@@ -334,7 +340,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (v9 已完成, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
-- [ ] 跑 `cd novel-factory && pytest -q` 验证 baseline **2902** collected (~2min)
+- [ ] 跑 `cd novel-factory && pytest -q` 验证 **2893 passed**, 9 skipped (~9min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
 - [ ] 跑 `git log --oneline -5` 确认 HEAD=`d8685b2` 或更新
 - [ ] 跑 `git status` 确认 working tree 干净
@@ -346,7 +352,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2902 collected, ~2min
+cd novel-factory && pytest -q                                    # 2893 passed, 9 skipped, ~9min
 # 增量 backfill (workflow 完成后 opt-in):
 # LINGWEN_INCREMENTAL_BACKFILL=1 · LINGWEN_MEMORY_RAG=stub|live
 cd novel-factory/dashboard/frontend && pnpm vitest run             # 409 vitest, ~8s
