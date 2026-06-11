@@ -17,6 +17,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import * as echarts from 'echarts'
 import CostBarChart from '../../src/components/CostBarChart.vue'
 import { byTestid } from '../helpers/by-testid'
+import { createMockEChartsInstance } from '../helpers/echarts-mock'
 import { TIER_COLORS } from '../../src/utils/costTrendChartUtils.js'
 
 // ECharts 内部 canvas 渲染走 zrender.Painter, jsdom 无 HTMLCanvasElement.getContext('2d')
@@ -47,8 +48,8 @@ describe('CostBarChart tier-mode toggle (Phase 8.30 pilot)', () => {
     const scenarioTab = wrapper.get(byTestid('mode-tab-scenario'))
     const tierTab = wrapper.get(byTestid('mode-tab-tier'))
 
-    expect(scenarioTab.exists()).toBe(true)
-    expect(tierTab.exists()).toBe(true)
+    expect(scenarioTab).toBeTruthy()
+    expect(tierTab).toBeTruthy()
   })
 
   test('default mode is scenario, scenario tab .active', async () => {
@@ -71,7 +72,7 @@ describe('CostBarChart tier-mode toggle (Phase 8.30 pilot)', () => {
         costByScenario: scenarioData,
         costByTier: tierData,
         mode: 'scenario',
-        'onUpdate:mode': (val) => wrapper.setProps({ mode: val }),
+        'onUpdate:mode': (_val: 'scenario' | 'tier') => {},
       },
     })
     await flushPromises()
@@ -122,14 +123,7 @@ describe('CostBarChart UI polish (F26)', () => {
 
   test('tier mode setOption applies per-tier bar colors from TIER_COLORS', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     mount(CostBarChart, {
       props: {
@@ -154,14 +148,7 @@ describe('CostBarChart UI polish (F26)', () => {
 
   test('scenario mode setOption uses single default bar color', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     mount(CostBarChart, {
       props: {

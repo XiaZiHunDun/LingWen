@@ -135,7 +135,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     expect(opusRow).toBeTruthy()
 
     // opus fill class 含 "exceeded"
-    const fill = opusRow.find(byTestid('progress-bar-fill'))
+    const fill = opusRow!.find(byTestid('progress-bar-fill'))
     expect(fill.classes()).toContain('exceeded')
     // width style clip 100% (120% → clipped)
     expect(fill.attributes('style')).toContain('width: 100%')
@@ -163,7 +163,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     expect(sonnetRow).toBeTruthy()
 
     // sonnet fill class 含 "ok" + width 10%
-    const fill = sonnetRow.find(byTestid('progress-bar-fill'))
+    const fill = sonnetRow!.find(byTestid('progress-bar-fill'))
     expect(fill.classes()).toContain('ok')
     expect(fill.attributes('style')).toContain('width: 10%')
   })

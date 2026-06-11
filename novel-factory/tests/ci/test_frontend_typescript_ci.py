@@ -1,4 +1,4 @@
-"""Phase 9.40 F25: TypeScript strict pilot contract tests."""
+"""Phase 9.49 F38: TypeScript strict full rollout contract tests."""
 from __future__ import annotations
 
 import json
@@ -6,20 +6,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_DIR = REPO_ROOT / "novel-factory" / "dashboard" / "frontend"
-PILOT_TS_SPECS = [
-    "ripple-card.spec.ts",
-    "ripple-filter.spec.ts",
-    "cascade-graph.spec.ts",
-    "useWorkflowSocket.spec.ts",
-    "use-tier-budget-alerts.spec.ts",
-]
+CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
 
 
 class TestFrontendTypescriptStrict:
     def test_tsconfig_strict_allow_js(self):
-        import json as json_mod
-
-        cfg = json_mod.loads((FRONTEND_DIR / "tsconfig.json").read_text(encoding="utf-8"))
+        cfg = json.loads((FRONTEND_DIR / "tsconfig.json").read_text(encoding="utf-8"))
         opts = cfg["compilerOptions"]
         assert opts["strict"] is True
         assert opts["allowJs"] is True
@@ -30,11 +22,18 @@ class TestFrontendTypescriptStrict:
         assert pkg["scripts"]["typecheck"] == "tsc -p tsconfig.json --noEmit"
         assert "typescript" in pkg.get("devDependencies", {})
 
-    def test_pilot_specs_migrated_to_ts(self):
-        unit = FRONTEND_DIR / "tests" / "unit"
-        for name in PILOT_TS_SPECS:
-            assert (unit / name).is_file(), name
-            assert not (unit / name.replace(".ts", ".js")).exists(), name
+    def test_tsconfig_includes_all_unit_specs(self):
+        cfg = json.loads((FRONTEND_DIR / "tsconfig.json").read_text(encoding="utf-8"))
+        includes = cfg.get("include", [])
+        assert "tests/unit/**/*.ts" in includes
+        excludes = " ".join(cfg.get("exclude", []))
+        assert "fixtures" in excludes
 
-    def test_pilot_spec_count_at_least_five(self):
-        assert len(PILOT_TS_SPECS) >= 5
+    def test_unit_spec_ts_files_at_least_thirty(self):
+        unit = FRONTEND_DIR / "tests" / "unit"
+        ts_specs = list(unit.glob("*.spec.ts"))
+        assert len(ts_specs) >= 30
+
+    def test_ci_workflow_runs_typecheck(self):
+        text = CI_WORKFLOW.read_text(encoding="utf-8")
+        assert "pnpm typecheck" in text

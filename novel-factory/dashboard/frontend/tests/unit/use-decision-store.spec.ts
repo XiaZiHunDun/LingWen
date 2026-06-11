@@ -20,14 +20,14 @@ let api: typeof import('../../src/api/index.js')
 beforeEach(async () => {
   vi.resetModules()
   api = await import('../../src/api/index.js')
-  api.fetchAllDecisions.mockReset()
-  api.resolveDecision.mockReset()
-  api.deferDecision.mockReset()
-  api.cancelDecision.mockReset()
-  api.fetchAllDecisions.mockResolvedValue([])
-  api.resolveDecision.mockResolvedValue({})
-  api.deferDecision.mockResolvedValue({})
-  api.cancelDecision.mockResolvedValue({})
+  vi.mocked(api.fetchAllDecisions).mockReset()
+  vi.mocked(api.resolveDecision).mockReset()
+  vi.mocked(api.deferDecision).mockReset()
+  vi.mocked(api.cancelDecision).mockReset()
+  vi.mocked(api.fetchAllDecisions).mockResolvedValue([])
+  vi.mocked(api.resolveDecision).mockResolvedValue({})
+  vi.mocked(api.deferDecision).mockResolvedValue({})
+  vi.mocked(api.cancelDecision).mockResolvedValue({})
   const mod = await import('../../src/composables/useDecisionStore.js')
   useDecisionStore = mod.useDecisionStore
 })
@@ -54,7 +54,7 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('refresh populates all from fetchAllDecisions', async () => {
-    api.fetchAllDecisions.mockResolvedValue([
+    vi.mocked(api.fetchAllDecisions).mockResolvedValue([
       { decision_id: 'd1', status: 'pending' },
       { decision_id: 'd2', status: 'resolved' },
     ])
@@ -68,8 +68,8 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
 
   test('resolve calls API + refreshes all', async () => {
     const updated = [{ decision_id: 'd1', status: 'resolved' }]
-    api.resolveDecision.mockResolvedValue({ decision_id: 'd1' })
-    api.fetchAllDecisions
+    vi.mocked(api.resolveDecision).mockResolvedValue({ decision_id: 'd1' })
+    vi.mocked(api.fetchAllDecisions)
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(updated)
     const wrapper = mountStore()
@@ -86,8 +86,8 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
 
   test('defer calls API + refreshes all', async () => {
     const updated = [{ decision_id: 'd1', status: 'deferred' }]
-    api.deferDecision.mockResolvedValue({ decision_id: 'd1' })
-    api.fetchAllDecisions
+    vi.mocked(api.deferDecision).mockResolvedValue({ decision_id: 'd1' })
+    vi.mocked(api.fetchAllDecisions)
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(updated)
     const wrapper = mountStore()
@@ -103,8 +103,8 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
 
   test('cancel calls API + refreshes all', async () => {
     const updated = [{ decision_id: 'd1', status: 'cancelled' }]
-    api.cancelDecision.mockResolvedValue({ decision_id: 'd1' })
-    api.fetchAllDecisions
+    vi.mocked(api.cancelDecision).mockResolvedValue({ decision_id: 'd1' })
+    vi.mocked(api.fetchAllDecisions)
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(updated)
     const wrapper = mountStore()
@@ -119,7 +119,7 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('lastError set on fetch failure (refresh)', async () => {
-    api.fetchAllDecisions.mockRejectedValue(new Error('network down'))
+    vi.mocked(api.fetchAllDecisions).mockRejectedValue(new Error('network down'))
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as {

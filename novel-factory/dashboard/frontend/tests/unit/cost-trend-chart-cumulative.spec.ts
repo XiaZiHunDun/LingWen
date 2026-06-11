@@ -5,6 +5,7 @@ import * as echarts from 'echarts'
 import CostTrendChart from '../../src/components/CostTrendChart.vue'
 import { computeCumulativeSeries } from '../../src/utils/costTrendChartUtils.js'
 import { byTestid } from '../helpers/by-testid'
+import { createMockEChartsInstance } from '../helpers/echarts-mock'
 
 const dayData = {
   '2026-06-01': 0.010,
@@ -31,14 +32,7 @@ describe('CostTrendChart cumulative line (Phase 9.29 F13)', () => {
 
   test('single-line path renders daily + cumulative series with legend', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     const wrapper = mount(CostTrendChart, {
       props: { costByDay: dayData, costByDayPerTier: null },
@@ -46,7 +40,10 @@ describe('CostTrendChart cumulative line (Phase 9.29 F13)', () => {
     await flushPromises()
 
     expect(setOptionSpy).toHaveBeenCalled()
-    const option = setOptionSpy.mock.calls[0][0]
+    const option = setOptionSpy.mock.calls[0]![0] as {
+      series: Array<{ name: string; data?: unknown }>
+      legend: { data: string[] }
+    }
     expect(option.series).toHaveLength(2)
     expect(option.series.map((s) => s.name)).toEqual(['每日', '累计'])
     expect(option.series[1].data).toEqual([0.01, 0.015, 0.03])
@@ -56,14 +53,7 @@ describe('CostTrendChart cumulative line (Phase 9.29 F13)', () => {
 
   test('per-tier path unchanged (no cumulative series mixed in)', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     mount(CostTrendChart, {
       props: {
@@ -77,7 +67,10 @@ describe('CostTrendChart cumulative line (Phase 9.29 F13)', () => {
     })
     await flushPromises()
 
-    const option = setOptionSpy.mock.calls[0][0]
+    const option = setOptionSpy.mock.calls[0]![0] as {
+      series: Array<{ name: string }>
+      legend: { data: string[] }
+    }
     expect(option.series).toHaveLength(2)
     expect(option.series.every((s) => ['haiku', 'sonnet'].includes(s.name))).toBe(true)
     expect(option.legend.data).not.toContain('累计')

@@ -38,7 +38,7 @@ describe('WorkflowStatus hasCost gate (Phase 8.14 scenario + tier OR)', () => {
     await flushPromises()
 
     // Phase 8.14 fix: tier-only 数据时 cost section 必须 visible
-    expect(wrapper.get(byTestid('cost-section')).exists()).toBe(true)
+    expect(wrapper.get(byTestid('cost-section'))).toBeTruthy()
     // Wrapper 也可见
     expect(wrapper.find(byTestid('cost-section')).isVisible()).toBe(true)
   })
@@ -65,6 +65,6 @@ describe('WorkflowStatus hasCost gate (Phase 8.14 scenario + tier OR)', () => {
     await flushPromises()
 
     // Sanity: 双方有值 → visible (Phase 8.13 path 不破)
-    expect(wrapper.get(byTestid('cost-section')).exists()).toBe(true)
+    expect(wrapper.get(byTestid('cost-section'))).toBeTruthy()
   })
 })

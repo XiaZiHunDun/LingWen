@@ -92,8 +92,8 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     // 重新加载模块 + 重设 api mock, 让 useWorkflowListStore 内部 refresh() 走 reject
     vi.resetModules()
     const api = await import('../../src/api/index.js')
-    api.fetchWorkflows.mockReset()
-    api.fetchWorkflows.mockRejectedValue(new Error('fetch fail'))
+    vi.mocked(api.fetchWorkflows).mockReset()
+    vi.mocked(api.fetchWorkflows).mockRejectedValue(new Error('fetch fail'))
 
     // 重新 import WorkflowsPage (走新的 module graph + 新的 store)
     const { default: FreshWorkflowsPage } = await import('../../src/pages/WorkflowsPage.vue')

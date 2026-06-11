@@ -48,6 +48,9 @@ jobs:
       - name: Run lint suite (testid / testid-sync / vue)
         run: pnpm lint:all
 
+      - name: Typecheck (strict tests/**/*.ts)
+        run: pnpm typecheck
+
       - name: Run vitest
         run: pnpm vitest run --coverage
 

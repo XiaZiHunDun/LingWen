@@ -21,8 +21,8 @@ let api: typeof import('../../src/api/index.js')
 beforeEach(async () => {
   vi.resetModules()
   api = await import('../../src/api/index.js')
-  api.fetchWorkflows.mockReset()
-  api.fetchWorkflows.mockResolvedValue([])
+  vi.mocked(api.fetchWorkflows).mockReset()
+  vi.mocked(api.fetchWorkflows).mockResolvedValue([])
   const mod = await import('../../src/composables/useWorkflowListStore.js')
   useWorkflowListStore = mod.useWorkflowListStore
 })
@@ -49,7 +49,7 @@ describe('useWorkflowListStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('refresh populates workflows from fetchWorkflows', async () => {
-    api.fetchWorkflows.mockResolvedValue([
+    vi.mocked(api.fetchWorkflows).mockResolvedValue([
       { id: 'w1', name: 'novel_writing' },
       { id: 'w2', name: 'character_design' },
     ])
@@ -64,7 +64,7 @@ describe('useWorkflowListStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('lastError set on fetch failure (refresh)', async () => {
-    api.fetchWorkflows.mockRejectedValue(new Error('500 internal'))
+    vi.mocked(api.fetchWorkflows).mockRejectedValue(new Error('500 internal'))
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as {

@@ -74,8 +74,8 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
     // (module-level singleton: 顶层 vi.mock 是 default, 这里需要重置 mock 后重新 import)
     vi.resetModules()
     const api = await import('../../src/api/index.js')
-    api.fetchAllDecisions.mockReset()
-    api.fetchAllDecisions.mockRejectedValue(new Error('fetch fail'))
+    vi.mocked(api.fetchAllDecisions).mockReset()
+    vi.mocked(api.fetchAllDecisions).mockRejectedValue(new Error('fetch fail'))
 
     // 重新 import DecisionsPage (走新的 module graph + 新的 store)
     const { default: FreshDecisionsPage } = await import('../../src/pages/DecisionsPage.vue')

@@ -14,11 +14,13 @@
   },
   "include": [
     "tests/env.d.ts",
-    "tests/unit/ripple-card.spec.ts",
-    "tests/unit/ripple-filter.spec.ts",
-    "tests/unit/cascade-graph.spec.ts",
-    "tests/unit/useWorkflowSocket.spec.ts",
-    "tests/unit/use-tier-budget-alerts.spec.ts"
+    "tests/unit/**/*.ts",
+    "tests/helpers/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", "coverage"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "tests/fixtures/**"
+  ]
 }

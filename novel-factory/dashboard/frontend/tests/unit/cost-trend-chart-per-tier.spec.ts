@@ -14,6 +14,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import * as echarts from 'echarts'
 import CostTrendChart from '../../src/components/CostTrendChart.vue'
 import { byTestid } from '../helpers/by-testid'
+import { createMockEChartsInstance } from '../helpers/echarts-mock'
 
 const dayData = {
   '2026-06-01': 0.020,
@@ -75,14 +76,7 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
 
   test('renders multi-series with 3 lines when costByDayPerTier has non-zero data', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     const wrapper = mount(CostTrendChart, {
       props: { costByDay: dayData, costByDayPerTier: dayDataPerTier },
@@ -90,7 +84,10 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
     await flushPromises()
 
     expect(setOptionSpy).toHaveBeenCalled()
-    const option = setOptionSpy.mock.calls[0][0]
+    const option = setOptionSpy.mock.calls[0]![0] as {
+      series: Array<{ name: string }>
+      legend: { data: string[] }
+    }
     // Phase 8.29: per-tier 多线 path → series 数组 length=3 (haiku/sonnet/opus)
     expect(option.series.length).toBe(3)
     // legend data 应包含 3 tier name
@@ -117,14 +114,7 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
 
   test('uses single-line baseline when costByDayPerTier is empty dict', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     const wrapper = mount(CostTrendChart, {
       props: { costByDay: dayData, costByDayPerTier: {} },
@@ -140,14 +130,7 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
 
   test('uses single-line baseline when costByDayPerTier all-zero', async () => {
     const setOptionSpy = vi.fn()
-    vi.mocked(echarts.init).mockReturnValueOnce({
-      setOption: setOptionSpy,
-      clear: vi.fn(),
-      dispose: vi.fn(),
-      resize: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-    })
+    vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     const wrapper = mount(CostTrendChart, {
       props: { costByDay: dayData, costByDayPerTier: dayDataAllZero },

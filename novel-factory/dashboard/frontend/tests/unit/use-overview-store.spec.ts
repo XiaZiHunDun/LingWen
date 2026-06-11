@@ -24,10 +24,10 @@ let api: typeof import('../../src/api/index.js')
 beforeEach(async () => {
   vi.resetModules()
   api = await import('../../src/api/index.js')
-  api.fetchOverview.mockReset()
-  api.fetchChapters.mockReset()
-  api.fetchOverview.mockResolvedValue({})
-  api.fetchChapters.mockResolvedValue([])
+  vi.mocked(api.fetchOverview).mockReset()
+  vi.mocked(api.fetchChapters).mockReset()
+  vi.mocked(api.fetchOverview).mockResolvedValue({})
+  vi.mocked(api.fetchChapters).mockResolvedValue([])
   const mod = await import('../../src/composables/useOverviewStore.js')
   useOverviewStore = mod.useOverviewStore
 })
@@ -56,9 +56,9 @@ describe('useOverviewStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('refresh fetches overview + chapters in parallel via Promise.all', async () => {
-    api.fetchOverview.mockResolvedValue({ total_chapters: 359, total_words: 1234567 })
+    vi.mocked(api.fetchOverview).mockResolvedValue({ total_chapters: 359, total_words: 1234567 })
     // fetchChapters 实际返回 envelope { chapters: [...] } (mirror OverviewPage 原 L110)
-    api.fetchChapters.mockResolvedValue({
+    vi.mocked(api.fetchChapters).mockResolvedValue({
       chapters: [
         { chapter_num: 1, title: 'ch1' },
         { chapter_num: 2, title: 'ch2' },
@@ -77,7 +77,7 @@ describe('useOverviewStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('lastError set on fetch failure (refresh)', async () => {
-    api.fetchOverview.mockRejectedValue(new Error('overview 503'))
+    vi.mocked(api.fetchOverview).mockRejectedValue(new Error('overview 503'))
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as {
