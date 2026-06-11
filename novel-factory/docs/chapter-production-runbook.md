@@ -497,3 +497,44 @@ pytest tests/ci/test_chapter_production_batch_f73_ci.py -q
 pytest tests/ci/test_chapter_production_batch_f79_ci.py -q
 ```
 
+---
+
+## 16. Batch dry-run 与成本预估 (F80)
+
+**目标**: 真实 LLM 开跑前，输出章节范围 + 预估成本上限（基于 F79 校准或历史 batch JSON）。
+
+### 16.1 `--dry-run`
+
+需 `LINGWEN_REAL_LLM=1`（与真实 batch 同 gate），**0 LLM**。
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1 LINGWEN_INCREMENTAL_BACKFILL=1 LINGWEN_MEMORY_RAG=stub
+export MINIMAX_API_KEY=...
+
+python -m infra.agent_system.chapter_production_batch \
+  --dry-run --start-chapter 364 --max-chapters 3 --budget-usd 0.15 \
+  --calibrate-from infra/.state/pilot_records/batch-361-363.json
+# stopped_reason=dry_run · batch_plan 含 chapter_range / estimated_total_cost_usd
+```
+
+| `batch_plan` 字段 | 说明 |
+|-----------------|------|
+| `chapter_range` | 如 `364-366` |
+| `cost_per_chapter_usd` | 默认 F79 均值 (~0.0276)；可被 env / calibrate 覆盖 |
+| `estimated_total_cost_usd` | `cost_per_chapter × max_chapters` |
+| `estimated_chapters_within_budget` | budget 内预计可跑满章数 |
+| `budget_headroom_usd` | budget − 预估总成本 |
+| `calibration_source` | `default:F79-ch361-363` / `calibrated:…` / `env:…` |
+
+**校准优先级**: `LINGWEN_BATCH_COST_ESTIMATE_USD` env → `--calibrate-from` batch JSON → F79 默认。
+
+`--preflight-only` 同样附带 `batch_plan`（不要求 REAL_LLM gate）。
+
+### 16.2 pytest
+
+```bash
+pytest tests/agent_system/test_chapter_production_batch.py -q -k "dry_run or calibrate or batch_plan"
+pytest tests/ci/test_chapter_production_batch_f80_ci.py -q
+```
+

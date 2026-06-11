@@ -5,6 +5,9 @@ Stop-on-fail + optional cumulative --budget-usd hard stop.
 
 CLI:
   python -m infra.agent_system.chapter_production_batch --preflight-only
+  python -m infra.agent_system.chapter_production_batch --dry-run \\
+    --start-chapter 364 --max-chapters 3 --budget-usd 0.15 \\
+    --calibrate-from infra/.state/pilot_records/batch-361-363.json
   python -m infra.agent_system.chapter_production_batch \\
     --start-chapter 361 --max-chapters 3 --budget-usd 0.15 \\
     --save-summary infra/.state/pilot_records/batch-361-363.json
@@ -12,12 +15,14 @@ CLI:
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
 from infra.agent_system.chapter_production_pilot import (
     PilotResult,
+    PreflightCheck,
     _json_safe,
     preflight_checklist,
     preflight_ok,
@@ -38,9 +43,19 @@ BATCH_BEHAVIOR: tuple[dict[str, str], ...] = (
         "trigger": "max-chapters",
         "behavior": "default cap 10; --max-chapters 1..10",
     },
+    {
+        "trigger": "dry-run",
+        "behavior": "preflight + batch_plan cost estimate; 0 LLM (F80)",
+    },
+    {
+        "trigger": "calibrate-from",
+        "behavior": "per-chapter USD from prior batch JSON or LINGWEN_BATCH_COST_ESTIMATE_USD",
+    },
 )
 
 MAX_BATCH_CHAPTERS = 10
+# F79 ch361-363: $0.082694 / 3 chapters
+DEFAULT_COST_PER_CHAPTER_USD = 0.027565
 
 
 @dataclass
@@ -54,9 +69,114 @@ class BatchResult:
     chapters_succeeded: int
     chapter_results: list[dict[str, Any]] = field(default_factory=list)
     preflight_only: bool = False
+    dry_run: bool = False
+    batch_plan: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def chapter_range_label(start_chapter: int, max_chapters: int) -> str:
+    if max_chapters <= 1:
+        return str(start_chapter)
+    end = start_chapter + max_chapters - 1
+    return f"{start_chapter}-{end}"
+
+
+def load_calibration_from_batch(path: Path) -> tuple[float, str] | None:
+    """Derive per-chapter USD from a prior batch summary JSON."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    attempted = data.get("chapters_attempted") or data.get("chapters_succeeded")
+    total = data.get("total_cost_usd")
+    if not isinstance(attempted, int) or attempted < 1:
+        return None
+    try:
+        cost = float(total)
+    except (TypeError, ValueError):
+        return None
+    return cost / attempted, f"calibrated:{path.name}"
+
+
+def resolve_cost_per_chapter_usd(
+    *,
+    calibrate_from: Path | None = None,
+) -> tuple[float, str]:
+    """Resolve estimate for batch_plan (env > calibrate file > F79 default)."""
+    env = os.environ.get("LINGWEN_BATCH_COST_ESTIMATE_USD", "").strip()
+    if env:
+        try:
+            return float(env), "env:LINGWEN_BATCH_COST_ESTIMATE_USD"
+        except ValueError:
+            pass
+    if calibrate_from is not None:
+        loaded = load_calibration_from_batch(Path(calibrate_from))
+        if loaded is not None:
+            return loaded
+    return DEFAULT_COST_PER_CHAPTER_USD, "default:F79-ch361-363"
+
+
+def build_batch_plan(
+    *,
+    start_chapter: int,
+    max_chapters: int,
+    budget_usd: float | None,
+    checks: list[PreflightCheck],
+    cost_per_chapter_usd: float,
+    calibration_source: str,
+) -> dict[str, Any]:
+    """Dry-run / preflight plan: chapter range + cost ceiling estimate."""
+    chapters = list(range(start_chapter, start_chapter + max_chapters))
+    estimated_total = cost_per_chapter_usd * max_chapters
+    within_budget = max_chapters
+    if budget_usd is not None and cost_per_chapter_usd > 0:
+        within_budget = min(max_chapters, int(budget_usd // cost_per_chapter_usd))
+    headroom = None
+    if budget_usd is not None:
+        headroom = round(budget_usd - estimated_total, 6)
+    return {
+        "chapter_range": chapter_range_label(start_chapter, max_chapters),
+        "chapters": chapters,
+        "max_chapters": max_chapters,
+        "cost_per_chapter_usd": round(cost_per_chapter_usd, 6),
+        "estimated_total_cost_usd": round(estimated_total, 6),
+        "budget_usd": budget_usd,
+        "estimated_chapters_within_budget": within_budget,
+        "budget_headroom_usd": headroom,
+        "calibration_source": calibration_source,
+        "preflight_ok": preflight_ok(checks),
+        "preflight_checks": [c.to_dict() for c in checks],
+    }
+
+
+def _batch_result_shell(
+    *,
+    start_chapter: int,
+    max_chapters: int,
+    budget_usd: float | None,
+    stopped_reason: str,
+    batch_plan: dict[str, Any] | None,
+    preflight_only: bool = False,
+    dry_run: bool = False,
+    chapter_results: list[dict[str, Any]] | None = None,
+) -> BatchResult:
+    return BatchResult(
+        start_chapter=start_chapter,
+        max_chapters=max_chapters,
+        budget_usd=budget_usd,
+        stopped_reason=stopped_reason,
+        total_cost_usd=0.0,
+        chapters_attempted=0,
+        chapters_succeeded=0,
+        chapter_results=chapter_results or [],
+        preflight_only=preflight_only,
+        dry_run=dry_run,
+        batch_plan=batch_plan,
+    )
 
 
 def _chapter_success(result: PilotResult) -> bool:
@@ -82,6 +202,8 @@ def run_production_batch(
     state_dir: Path | None = None,
     budget_usd: float | None = None,
     preflight_only: bool = False,
+    dry_run: bool = False,
+    calibrate_from: Path | None = None,
     stop_on_fail: bool = True,
     operator: str = "operator",
     save_chapter_records_dir: Path | None = None,
@@ -94,11 +216,22 @@ def run_production_batch(
         raise ValueError(f"start_chapter must be >= 1, got {start_chapter}")
 
     runner = pilot_runner or run_production_pilot
+    require_gate = not preflight_only
     checks = preflight_checklist(
         state_dir=state_dir,
         chapter_num=start_chapter,
-        require_real_llm_gate=not preflight_only,
+        require_real_llm_gate=require_gate,
     )
+    cost_per_chapter, cal_source = resolve_cost_per_chapter_usd(calibrate_from=calibrate_from)
+    batch_plan = build_batch_plan(
+        start_chapter=start_chapter,
+        max_chapters=max_chapters,
+        budget_usd=budget_usd,
+        checks=checks,
+        cost_per_chapter_usd=cost_per_chapter,
+        calibration_source=cal_source,
+    )
+
     if not preflight_ok(checks):
         empty = PilotResult(
             chapter_num=start_chapter,
@@ -106,31 +239,38 @@ def run_production_batch(
             provider=None,
             preflight_ok=False,
             preflight_checks=checks,
-            preflight_only=preflight_only,
+            preflight_only=preflight_only or dry_run,
             error="batch preflight failed",
         )
-        return BatchResult(
+        return _batch_result_shell(
             start_chapter=start_chapter,
             max_chapters=max_chapters,
             budget_usd=budget_usd,
             stopped_reason="preflight_failed",
-            total_cost_usd=0.0,
-            chapters_attempted=0,
-            chapters_succeeded=0,
-            chapter_results=[empty.to_dict()],
+            batch_plan=batch_plan,
             preflight_only=preflight_only,
+            dry_run=dry_run,
+            chapter_results=[empty.to_dict()],
         )
 
     if preflight_only:
-        return BatchResult(
+        return _batch_result_shell(
             start_chapter=start_chapter,
             max_chapters=max_chapters,
             budget_usd=budget_usd,
             stopped_reason="preflight_only",
-            total_cost_usd=0.0,
-            chapters_attempted=0,
-            chapters_succeeded=0,
+            batch_plan=batch_plan,
             preflight_only=True,
+        )
+
+    if dry_run:
+        return _batch_result_shell(
+            start_chapter=start_chapter,
+            max_chapters=max_chapters,
+            budget_usd=budget_usd,
+            stopped_reason="dry_run",
+            batch_plan=batch_plan,
+            dry_run=True,
         )
 
     outcomes: list[PilotResult] = []
@@ -228,6 +368,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--budget-usd", type=float, default=None)
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preflight + batch_plan cost estimate; 0 LLM (requires LINGWEN_REAL_LLM=1)",
+    )
+    parser.add_argument(
+        "--calibrate-from",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Prior batch JSON for per-chapter cost estimate (F80)",
+    )
+    parser.add_argument(
         "--save-summary",
         type=Path,
         default=None,
@@ -250,7 +402,9 @@ def main(argv: list[str] | None = None) -> int:
             max_chapters=args.max_chapters,
             state_dir=args.state_dir,
             budget_usd=args.budget_usd,
-            preflight_only=args.preflight_only,
+            preflight_only=args.preflight_only and not args.dry_run,
+            dry_run=args.dry_run,
+            calibrate_from=args.calibrate_from,
             operator=args.operator,
             save_chapter_records_dir=args.save_chapter_records_dir,
         )
@@ -266,8 +420,10 @@ def main(argv: list[str] | None = None) -> int:
         payload["summary_path"] = str(args.save_summary)
     print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
-    if args.preflight_only:
+    if args.preflight_only and not args.dry_run:
         return 0 if batch.stopped_reason != "preflight_failed" else 1
+    if args.dry_run:
+        return 0 if batch.stopped_reason == "dry_run" else 1
     if batch.stopped_reason == "preflight_failed":
         return 1
     if batch.stopped_reason == "chapter_failed":

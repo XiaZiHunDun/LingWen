@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `f429533` — feat(F77-bk,F78) v8 Settings 预算写入 |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F80** Batch dry-run 增强 — 见 §6 + v8 roadmap |
+| **下一期推荐** | **F81** Analytics batch rollup — 见 §6 + v8 roadmap |
 
 ---
 
@@ -293,8 +293,8 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F77-bk | v8 roadmap + HANDOFF | 9.85-bk | 30min | P0 | ✅ |
 | **F78** | Settings 预算写入 UI | 9.86 | 2-3h | P2 | ✅ |
 | **F79** | Manual batch 3 章 pilot | 9.87 | 2-4h | P1 | ✅ |
-| **F80** | Batch dry-run 增强 | 9.88 | 2-3h | P1 | 🔴 推荐下一项 |
-| F81 | Analytics batch rollup | 9.89 | 3-4h | P2 | 待 F79 ✅ |
+| **F80** | Batch dry-run 增强 | 9.88 | 2-3h | P1 | ✅ |
+| **F81** | Analytics batch rollup | 9.89 | 3-4h | P2 | 🔴 推荐下一项 |
 
 **推荐下一项**: **F79** Manual batch 3 章 pilot（F78 代码交付后）
 
