@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.66 (Phase 9.66 v5 roadmap + F56 e2e fix, 2026-06-11)
-> **更新 (2026-06-11)**: v5 roadmap 开启 (F57+ 正文生产 pipeline); F56 live e2e 全绿 (`895c6bd`); baseline **2670 pytest + 361 vitest**.
+> **版本**: v9.72 (Phase 9.72 v5 全量交付 + v6 roadmap, 2026-06-11)
+> **更新 (2026-06-11)**: F57-F64 全部完成 (`0983bd0`); baseline **2742 pytest + 367 vitest**; v6 开启 — 推荐 **F65** 真实章节 pilot。
 
 ---
 
@@ -15,14 +15,13 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2674 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 361 passed · coverage 四维 ≥80% · Playwright 1 smoke + 5 live opt-in · TS strict (`typecheck` tests + `typecheck:app` src/) |
-| **总测试** | **3035+** (2674 pytest + 361 vitest + 27 pytest skip) |
-| **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2742** collected |
+| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **367** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
+| **总测试** | **~3116** (2742 pytest + 367 vitest + 27 pytest skip) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | 见 `git log -1` (master head) |
-| **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest coverage → Codecov) + `dashboard-frontend-coverage-pages.yml` (HTML report → GH Pages) |
-| **下一期推荐** | **F60** workflow hook 产品化 — 见 §6 |
+| **当前 commit** | `0983bd0` — feat(F57-F64) v5 正文生产 pipeline |
+| **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
+| **下一期推荐** | **F65** 真实 1 章 pilot — 见 §6 + v6 roadmap |
 
 ---
 
@@ -272,26 +271,35 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ---
 
-## 6. 后续 followup (v5, post 9.65)
+## 6. 后续 followup (v6, post 9.72)
 
-**汇总 (v5)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v5-post-9.65.md`
+**汇总 (v6)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v6-post-9.72.md`
 
-**v4 (F44-F56) 已全部完成.** 见 v4 doc: `2026-06-11-followup-roadmap-v4-post-9.54.md`
+**v5 (F57-F64) 已全部完成** (`0983bd0`). 见 v5 doc: `2026-06-11-followup-roadmap-v5-post-9.65.md`
 
-| # | 主题 | Phase | 估时 | Track | 独立? |
-|---|------|-------|------|-------|-------|
-| F57-bk | v5 roadmap + HANDOFF §6/§8 | 9.66-bk | 30min | P0 | ✅ done |
-| F58-bk | cascade_notifier 跨线程 broadcast | 9.66-hygiene | 45min | P0 | ✅ done |
-| F59 | chapter runbook + golden path | 9.67 | 2-3h | P1 Pipeline | ✅ done |
-| F60 | workflow 章节完成 hook 产品化 | 9.68 | 3-4h | P1 Pipeline | 需 F59 |
-| F61 | 人审闭环 smoke (resolve→resume) | 9.69 | 2-3h | P1 Pipeline | 需 F59 |
-| F62 | MemoryGateway 最小 RAG hook | — | 4-6h | P2 | 按需 |
-| F63 | Dashboard 章节页 MVP | — | 3-5h | P2 | 需 F60 |
-| F64 | live e2e CI workflow | — | 1-2h | P3 | 按需 |
+| # | 主题 | Phase | 估时 | Track | 状态 |
+|---|------|-------|------|-------|------|
+| F57-bk | v5 roadmap + HANDOFF | 9.66-bk | 30min | P0 | ✅ |
+| F58-bk | cascade_notifier 跨线程 | 9.66-hygiene | 45min | P0 | ✅ |
+| F59 | chapter runbook + golden path | 9.67 | 2-3h | P1 | ✅ |
+| F60 | incremental_backfill 产品化 | 9.68 | 3-4h | P1 | ✅ |
+| F61 | 人审闭环 smoke | 9.69 | 2-3h | P1 | ✅ |
+| F62 | MemoryGateway RAG hook | 9.70 | 4-6h | P2 | ✅ |
+| F63 | ChaptersPage MVP | 9.71 | 3-5h | P2 | ✅ |
+| F64 | live e2e CI workflow | 9.72 | 1-2h | P2 | ✅ |
 
-**v4 已完成 (F44-F56)**: 全部 ✅ (含 F56 live e2e fix `895c6bd`)
+**v6 待启动 (推荐顺序):**
 
-**推荐下一项**: **F60** workflow 章节完成 hook 产品化
+| # | 主题 | 估时 | 说明 |
+|---|------|------|------|
+| **F65** | 真实 1 章 pilot | 4-8h | 🔴 推荐下一项 |
+| F66 | 生产 observability 加深 | 2-4h | 需 F65 样本 |
+| F67 | Analytics 页 MVP | 3-5h | 按需 |
+| F68 | Settings 页 MVP | 2-3h | 按需 |
+| F69 | state 并发 pytest 稳定 | 1-2h | 卫生 |
+| F70 | e2e-live CI 首跑验证 | 1h | 卫生 |
+
+**推荐下一项**: **F65** 真实章节生产 pilot（`LINGWEN_REAL_LLM=1` opt-in）
 
 ---
 
@@ -299,7 +307,10 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ### 7.1 Playwright e2e (Phase 9.31 F15 后)
 
-Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec (`app-root.spec.js`); Phase 9.65 F56 新增 **2** live-backend spec（`ripples-audit` / `decisions-resolve`，默认 skip，需 `LINGWEN_E2E_LIVE=1`）。CI 走 `.github/workflows/dashboard-e2e-smoke.yml`（`workflow_dispatch` 或 PR label `e2e-smoke`），**非 primary gate**。本地:
+Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec; Phase 9.65 F56 新增 **2** live-backend spec; Phase 9.72 F64 新增 **`dashboard-e2e-live.yml`**（label `e2e-live` / workflow_dispatch）。CI:
+- `dashboard-e2e-smoke.yml` — label `e2e-smoke`, 1 test
+- `dashboard-e2e-live.yml` — label `e2e-live`, 5 tests
+- **均非 primary merge gate**
 - `pnpm e2e:smoke` — vite only，1 test
 - `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
 
@@ -327,13 +338,13 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v5-post-9.65.md` (F57+, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v6-post-9.72.md` (F65+, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
-- [ ] 跑 `pytest -q` 验证 baseline 2670 passed (~2min)
-- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 361 passed (~8s)
-- [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
+- [ ] 跑 `pytest -q` 验证 baseline ~2742 collected (~2min)
+- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **367** passed (~8s)
+- [ ] 跑 `git log --oneline -5` 确认 HEAD=`0983bd0` 或更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v5 item (推荐 **F59** runbook) 或继续 F57-bk/F58-bk
+- [ ] 选 1 个 v6 item (推荐 **F65** 真实 pilot)
 
 ---
 
@@ -341,10 +352,10 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2674 tests, ~2min
+cd novel-factory && pytest -q                                    # ~2742 collected, ~2min
 # 增量 backfill (workflow 完成后 opt-in):
-# LINGWEN_INCREMENTAL_BACKFILL=1 python -c "from infra.agent_system.master_controller import MasterController; ..."
-cd novel-factory/dashboard/frontend && pnpm vitest run             # 361 vitest, ~8s
+# LINGWEN_INCREMENTAL_BACKFILL=1 · LINGWEN_MEMORY_RAG=stub|live
+cd novel-factory/dashboard/frontend && pnpm vitest run             # 367 vitest, ~8s
 cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
 cd novel-factory/dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list       # 1 smoke test
@@ -410,5 +421,5 @@ cd novel-factory && python -m infra.agent_system.chapter_golden_path  # stub gol
 
 ---
 
-> **版本**: v9.39 (2026-06-11)
-> **下次更新**: 启动 F30+ 后, append entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §6 表格
+> **版本**: v9.72 (2026-06-11)
+> **下次更新**: 启动 F65+ 后, append entry 到 `phases-8-dashboard-c.md` + 更新本 HANDOFF.md §6

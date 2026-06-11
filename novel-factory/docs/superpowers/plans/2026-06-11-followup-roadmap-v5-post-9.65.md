@@ -1,9 +1,10 @@
 # Followup Roadmap v5 — Post Phase 9.65 (F56)
 
+> **Superseded by v6 (post 9.72):** `2026-06-11-followup-roadmap-v6-post-9.72.md` — F57-F64 全部完成 (`0983bd0`); 新 backlog 见 F65+.
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v4-post-9.54.md` (F44-F56 已于 Phase 9.55-9.65 全部完成). 本 doc 定义 **正文生产 pipeline** 主线 + 顺路 hygiene, 重新编号 **F57+**.
 > **创建时间**: 2026-06-11 (主公认同 v5 方向)
-> **状态**: F57-bk ✅ · F58-bk ✅ · **F59 ✅**; F60 待启动
-> **前置**: baseline **2670 pytest + 361 vitest**; Playwright live 5/5 (`LINGWEN_E2E_LIVE=1 pnpm e2e:live`)
+> **状态**: **F57-F64 ✅ 全部完成** (2026-06-11, `0983bd0`)
+> **前置**: baseline **2742 pytest + 367 vitest** (post F57-F64)
 
 ## 上下文 (Context)
 
@@ -17,15 +18,15 @@ Phase 9.55-9.65 (v4) 完成了 Dashboard / CVG / Cascade / DevInfra 收尾:
 
 本 v5 **不重复** F1-F56 已 done 项. 详见 v4 doc + HANDOFF §6.
 
-## 当前 Baseline (2026-06-11, post F56 fix)
+## 当前 Baseline (2026-06-11, post F57-F64 `0983bd0`)
 
 | 项 | 值 |
 |----|-----|
-| **pytest** | 2670 passed, 27 skipped |
-| **vitest** | 361 passed (70 files) |
-| **Playwright** | 1 smoke + 5 live opt-in (全绿 post `895c6bd`) |
-| **git** | `895c6bd` on master |
-| **已有 hook** | `LINGWEN_INCREMENTAL_BACKFILL=1` + MC `_maybe_incremental_backfill` (F54) |
+| **pytest** | 2742 collected, 27 skipped |
+| **vitest** | 367 passed (71 files) |
+| **Playwright** | 1 smoke + 5 live opt-in |
+| **git** | `0983bd0` on master |
+| **Hooks** | backfill · memory RAG stub/live · chapter golden path |
 
 ---
 
@@ -139,7 +140,4 @@ Dashboard 占位页 (章节/分析) **不在此 track** — 等 F60 有明确数
 
 ## 后续
 
-v5 清空后下一版 (v6) 触发条件:
-
-- F59-F61 pipeline track 全 done, 或
-- 主公开 **新书 / 续卷正文生产蓝图** (359+ 章 / 第二本书)
+**v5 已全部完成 (F57-F64, `0983bd0`).** 下一版 → **`2026-06-11-followup-roadmap-v6-post-9.72.md`**（推荐 **F65** 真实 1 章 pilot）。
