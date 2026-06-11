@@ -182,11 +182,13 @@ class QdrantClientWrapper:
         self.collections = collections_config["collections"]
 
         # 初始化 Qdrant 客户端
+        check_compatibility = qdrant_config.get("check_compatibility", False)
         self._client = QdrantClient(
             host=self.host,
             port=self.port,
             grpc_port=self.grpc_port,
             timeout=self.timeout,  # 单次请求超时
+            check_compatibility=check_compatibility,
         )
 
         # 缓存配置
@@ -215,6 +217,50 @@ class QdrantClientWrapper:
             raise ValueError(f"Collection '{collection_name}' not found. Available: {list(self.collections.keys())}")
 
         return self.collections[collection_name]
+
+    def _convert_search_hits(self, hits: list[Any]) -> list[dict]:
+        """Normalize ScoredPoint / dict hits to wrapper result rows."""
+        return [
+            {
+                "id": hit.id if hasattr(hit, "id") else hit["id"],
+                "score": hit.score if hasattr(hit, "score") else hit["score"],
+                "payload": hit.payload if hasattr(hit, "payload") else hit.get("payload", {}),
+            }
+            for hit in hits
+        ]
+
+    def _uses_query_points_api(self) -> bool:
+        """True when the installed qdrant-client exposes query_points instead of search."""
+        return not hasattr(type(self._client), "search")
+
+    def _raw_vector_search(
+        self,
+        collection_name: str,
+        query_vector: list[float],
+        *,
+        limit: int,
+        query_filter: Optional[Filter] = None,
+    ) -> list[Any]:
+        """Call Qdrant vector search (query_points on 1.7+ client, legacy search otherwise)."""
+        if self._uses_query_points_api():
+            kwargs: dict[str, Any] = {
+                "collection_name": collection_name,
+                "query": query_vector,
+                "limit": limit,
+            }
+            if query_filter is not None:
+                kwargs["query_filter"] = query_filter
+            response = self._client.query_points(**kwargs)
+            return list(response.points)
+
+        search_params: dict[str, Any] = {"limit": limit}
+        if query_filter is not None:
+            search_params["query_filter"] = query_filter
+        return self._client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            **search_params,
+        )
 
     def _validate_collection(self, collection_name: str) -> None:
         """验证集合是否存在
@@ -349,25 +395,15 @@ class QdrantClientWrapper:
         if cached_result is not None:
             return cached_result
 
-        search_params = {"limit": top_k}
-        if query_filter is not None:
-            search_params["query_filter"] = query_filter
-
-        results = self._client.search(
-            collection_name=collection_name,
-            query_vector=query_vector,
-            **search_params,
+        results = self._raw_vector_search(
+            collection_name,
+            query_vector,
+            limit=top_k,
+            query_filter=query_filter,
         )
 
         # 转换结果
-        converted_results = [
-            {
-                "id": hit.id if hasattr(hit, "id") else hit["id"],
-                "score": hit.score if hasattr(hit, "score") else hit["score"],
-                "payload": hit.payload if hasattr(hit, "payload") else hit.get("payload", {}),
-            }
-            for hit in results
-        ]
+        converted_results = self._convert_search_hits(results)
 
         # 存入缓存
         self._search_cache.put(cache_key, converted_results)
@@ -418,25 +454,15 @@ class QdrantClientWrapper:
                 results.append(cached_result)
                 continue
 
-            search_params = {"limit": top_k}
-            if query_filter is not None:
-                search_params["query_filter"] = query_filter
-
-            search_results = self._client.search(
-                collection_name=collection_name,
-                query_vector=query_vector,
-                **search_params,
+            search_results = self._raw_vector_search(
+                collection_name,
+                query_vector,
+                limit=top_k,
+                query_filter=query_filter,
             )
 
             # 转换结果
-            converted_results = [
-                {
-                    "id": hit.id if hasattr(hit, "id") else hit["id"],
-                    "score": hit.score if hasattr(hit, "score") else hit["score"],
-                    "payload": hit.payload if hasattr(hit, "payload") else hit.get("payload", {}),
-                }
-                for hit in search_results
-            ]
+            converted_results = self._convert_search_hits(search_results)
 
             # 存入缓存
             self._search_cache.put(cache_key, converted_results)

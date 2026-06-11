@@ -2,6 +2,7 @@ qdrant:
   host: "localhost"
   port: 6333
   grpc_port: 6334
+  check_compatibility: false
 
 embedding:
   provider: auto

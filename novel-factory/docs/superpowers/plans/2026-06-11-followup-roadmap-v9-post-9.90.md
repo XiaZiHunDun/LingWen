@@ -60,14 +60,14 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 - **目标**: 1 章 pilot with `LINGWEN_MEMORY_RAG=live`（需 Qdrant + Embedder）
 - **产物**: runbook §19 · `memory-rag-live-preflight.sh` · preflight gate · live stub 模板 · CI 契约
-- **manual gate**: 真实 ch367 live pilot（F89 后可用 MiniMax-only embedding 路径）
+- **manual gate（已完成 2026-06-11）**: ch367 · MiniMax-only embedding · `memory_context_source=live` · ~$0.022 · record `ch367-live-rag.json`（gitignored）
 - **estimated**: 3-5h
 
 ### F89. Phase 9.95 — Embedding Provider 解耦（MiniMax embo-01 beta） ✅
 
 - **目标**: `embedding.provider: auto` — OpenAI 默认；仅 `MINIMAX_API_KEY` 时走 MiniMax embedding
 - **产物**: `embeddings/{factory,openai,minimax}_provider` · `Embedder` facade · `embedding_provider_keys` preflight · runbook §19 更新 · CI 契约
-- **manual gate**: MiniMax `/v1/embeddings` API 可用性（官方 beta；失败可显式 `LINGWEN_EMBEDDING_PROVIDER=openai`）
+- **manual gate**: MiniMax `/v1/embeddings` API 可用性（官方 beta；本机 ch367 已验证 embo-01 OK）
 - **estimated**: 1-2d
 
 ---
@@ -127,3 +127,5 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - [x] F85 10 章 wave runbook + dry-run script
 - [x] F86 MEMORY_RAG=live preflight gate + runbook §19（live pilot manual gate）
 - [x] F89 Embedding Provider 解耦 + MiniMax embo-01 beta
+- [x] F86 manual ch367 live RAG pilot（MiniMax-only · record gitignored）
+- [x] Qdrant `query_points` 兼容 fix（client 1.18+）

@@ -734,3 +734,28 @@ pytest tests/agent_system/test_chapter_memory_hook.py -q -k gateway_check
 pytest tests/ci/test_chapter_memory_rag_live_f86_ci.py -q
 ```
 
+### 19.5 ch367 live pilot 结果（manual · 2026-06-11）
+
+| 项 | 值 |
+|----|-----|
+| pilot_id | `2026-06-11-ch367-live-rag-001` |
+| embedding | MiniMax embo-01（无 OPENAI key） |
+| LLM | MiniMax M2.7 |
+| 节点 | 7/7 · `emit_chapter_completed=true` |
+| hooks | `memory_context_source=live` |
+| 成本 | ~$0.022 |
+| 记录 | `infra/.state/pilot_records/ch367-live-rag.json`（gitignored） |
+
+**已知**：当时 Qdrant client 1.18 仍调用已废弃的 `.search()`，日志出现检索重试失败；`related_segments` 可能为空。已在后续修复为 `query_points`（见 §19.6）。
+
+### 19.6 Qdrant client 1.18+ 检索（post ch367 fix）
+
+- `QdrantClientWrapper` 优先 `query_points`，旧 client 仍走 `.search()`
+- `memory_config.yaml` → `qdrant.check_compatibility: false` 抑制版本告警
+- **向量库需有数据**：先 `python -m infra.memory_system.scripts.init_memory` 创建 `chapters_seg` 等集合，再 `embed_chapters` 写入向量；空库时 live hook 仍成功但 `related_segments=[]`
+
+```bash
+python -m infra.memory_system.scripts.init_memory
+# 然后 embed 章节（见 memory_system/scripts/embed_chapters.py）
+```
+

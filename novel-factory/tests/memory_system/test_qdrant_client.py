@@ -103,27 +103,42 @@ class TestQdrantClientWrapper:
             wrapper.upsert("invalid", [{"id": "1", "vector": [0.1] * 1536, "payload": {}}])
 
     def test_search(self, wrapper):
-        """测试向量搜索"""
+        """测试向量搜索（query_points API）"""
         mock_qdrant_client = wrapper._mock_client
         collection_name = "entities"
         query_vector = [0.5] * 1536
         top_k = 3
 
-        # Mock search results
-        mock_results = [
-            {"id": "entity_1", "score": 0.95, "payload": {"name": "李白", "type": "character"}},
-            {"id": "entity_2", "score": 0.88, "payload": {"name": "杜甫", "type": "character"}},
-        ]
-        mock_qdrant_client.search.return_value = mock_results
+        mock_hit_1 = Mock(id="entity_1", score=0.95, payload={"name": "李白", "type": "character"})
+        mock_hit_2 = Mock(id="entity_2", score=0.88, payload={"name": "杜甫", "type": "character"})
+        mock_qdrant_client.query_points.return_value = Mock(points=[mock_hit_1, mock_hit_2])
 
         results = wrapper.search(collection_name, query_vector, top_k=top_k)
 
-        mock_qdrant_client.search.assert_called_once_with(
-            collection_name=collection_name, query_vector=query_vector, limit=top_k
+        mock_qdrant_client.query_points.assert_called_once_with(
+            collection_name=collection_name,
+            query=query_vector,
+            limit=top_k,
         )
         assert len(results) == 2
         assert results[0]["id"] == "entity_1"
         assert results[0]["score"] == 0.95
+
+    def test_search_legacy_api(self, wrapper):
+        """测试旧版 client.search 路径"""
+        mock_qdrant_client = wrapper._mock_client
+        type(mock_qdrant_client).search = Mock(
+            return_value=[
+                {"id": "entity_1", "score": 0.95, "payload": {"name": "李白"}},
+            ]
+        )
+        mock_qdrant_client.query_points = Mock()
+
+        results = wrapper.search("entities", [0.5] * 1536, top_k=1)
+
+        type(mock_qdrant_client).search.assert_called_once()
+        mock_qdrant_client.query_points.assert_not_called()
+        assert results[0]["id"] == "entity_1"
 
     def test_search_invalid_collection(self, wrapper):
         """测试在不存在集合中搜索"""
@@ -184,18 +199,16 @@ class TestQdrantClientWrapper:
         query_vector = [0.3] * 1536
 
         # Mock results with filter
-        mock_results = [
-            {"id": "seg_1", "score": 0.92, "payload": {"chapter_id": "ch001", "segment_index": 0}},
-        ]
-        mock_qdrant_client.search.return_value = mock_results
+        mock_hit = Mock(id="seg_1", score=0.92, payload={"chapter_id": "ch001", "segment_index": 0})
+        mock_qdrant_client.query_points.return_value = Mock(points=[mock_hit])
 
         # 使用默认 top_k
         wrapper.search_with_filter(collection_name, query_vector, must={"chapter_id": "ch001"})
 
-        mock_qdrant_client.search.assert_called_once()
-        call_args = mock_qdrant_client.search.call_args
+        mock_qdrant_client.query_points.assert_called_once()
+        call_args = mock_qdrant_client.query_points.call_args
         assert call_args[1]["collection_name"] == collection_name
-        assert call_args[1]["query_vector"] == query_vector
+        assert call_args[1]["query"] == query_vector
         assert "query_filter" in call_args[1]
 
     def test_close(self, wrapper):
@@ -248,7 +261,7 @@ class TestQdrantClientWrapperEdgeCases:
     def test_empty_search_results(self, wrapper_with_mocked_config):
         """测试空搜索结果"""
         wrapper, mock_client = wrapper_with_mocked_config
-        mock_client.search.return_value = []
+        mock_client.query_points.return_value = Mock(points=[])
 
         results = wrapper.search("chapters_seg", [0.1] * 1536)
         assert results == []
