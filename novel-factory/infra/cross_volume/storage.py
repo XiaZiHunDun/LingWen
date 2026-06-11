@@ -455,6 +455,24 @@ class RippleStorage:
         )
         return updated
 
+    def _update_ripple_status_internal(
+        self,
+        conn: sqlite3.Connection,
+        ripple_id: str,
+        new_status: str,
+        applied_at: str | None,
+    ) -> None:
+        """DRY helper: UPDATE reference_ripples.status + applied_at (Phase 9.25 F9).
+
+        Shared by reset_ripple_for_test and rollback_ripple. Caller owns
+        transaction lifecycle (commit/atomic_batch); this method only executes
+        the UPDATE within the provided connection.
+        """
+        conn.execute(
+            "UPDATE reference_ripples SET status = ?, applied_at = ? WHERE id = ?",
+            (new_status, applied_at, ripple_id),
+        )
+
     def reset_ripple_for_test(
         self,
         ripple_id: str,
@@ -491,9 +509,8 @@ class RippleStorage:
                 raise KeyError(f"ripple {ripple_id} not found")
             current = self._row_to_ripple(row)
             prev_status = current.status
-            conn.execute(
-                "UPDATE reference_ripples SET status = ?, applied_at = NULL WHERE id = ?",
-                (to_status, ripple_id),
+            self._update_ripple_status_internal(
+                conn, ripple_id, to_status, None
             )
             conn.commit()
         # Write audit (independent commit, like cost_tracker.record)
@@ -573,9 +590,8 @@ class RippleStorage:
                     f"can only rollback applied/rejected ripples, current status: {current.status!r}"
                 )
             now_iso = datetime.now(timezone.utc).isoformat()
-            conn.execute(
-                "UPDATE reference_ripples SET status = 'pending', applied_at = NULL WHERE id = ?",
-                (ripple_id,),
+            self._update_ripple_status_internal(
+                conn, ripple_id, "pending", None
             )
             conn.execute(
                 "INSERT INTO ripple_audit (ripple_id, action, prev_status, new_status, actor, origin, reason, created_at)"
