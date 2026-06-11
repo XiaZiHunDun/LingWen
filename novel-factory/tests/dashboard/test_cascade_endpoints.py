@@ -71,3 +71,24 @@ class TestCascadeEndpointMaxDepth:
         """max_depth<0 → 400."""
         resp = client.get("/api/cvg/ripples/rip-1/cascade?max_depth=-1")
         assert resp.status_code == 400
+
+
+class TestCascadePreviewEndpointMaxDepth:
+    def test_preview_max_depth_0_returns_persisted(self, client):
+        """max_depth=0 → returns persisted cascade."""
+        resp = client.get("/api/cvg/ripples/rip-1/cascade/preview?max_depth=0")
+        assert resp.status_code == 200
+        assert resp.json()["max_depth"] == 3  # persisted depth
+
+    def test_preview_max_depth_2_returns_2_hop(self, client):
+        """max_depth=2 → re-run BFS, returns 2-hop preview."""
+        resp = client.get("/api/cvg/ripples/rip-1/cascade/preview?max_depth=2")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["max_depth"] == 2
+        assert data["cascade_node_count"] == 2
+
+    def test_preview_max_depth_11_rejected(self, client):
+        """max_depth>10 → 400."""
+        resp = client.get("/api/cvg/ripples/rip-1/cascade/preview?max_depth=11")
+        assert resp.status_code == 400

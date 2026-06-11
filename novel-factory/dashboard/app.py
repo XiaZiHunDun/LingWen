@@ -920,6 +920,17 @@ def create_app(
 
     # ==================== Phase 9.15: Cascade BFS endpoints (T4) ====================
 
+    def _validate_max_depth(max_depth: int | None) -> int | None:
+        """Phase 9.19: validate max_depth. Returns depth int if live BFS needed, None if persisted.
+
+        Raises HTTPException 400 if max_depth is out of range.
+        """
+        if max_depth is not None and max_depth != 0:
+            if max_depth < 0 or max_depth > 10:
+                raise HTTPException(400, "max_depth must be 0 (persisted) or 1..10")
+            return max_depth
+        return None  # use persisted path
+
     @app.get(
         "/api/cvg/ripples/{ripple_id}/cascade",
         response_model=CascadeResponse,
@@ -937,11 +948,10 @@ def create_app(
         storage = _default_storage()
 
         # Phase 9.19: validate max_depth if provided
-        if max_depth is not None and max_depth != 0:
-            if max_depth < 0 or max_depth > 10:
-                raise HTTPException(400, "max_depth must be 0 (persisted) or 1..10")
+        live_depth = _validate_max_depth(max_depth)
+        if live_depth is not None:
             # Re-run BFS live — returns CascadedRipple (not persisted)
-            cascade = storage.preview_cascade(ripple_id, max_depth=max_depth)
+            cascade = storage.preview_cascade(ripple_id, max_depth=live_depth)
         else:
             # Backward compat: use persisted cascade
             cascade = storage.get_cascade_by_ripple_id(ripple_id)
@@ -986,10 +996,9 @@ def create_app(
         storage = _default_storage()
 
         # Phase 9.19: validate max_depth if provided
-        if max_depth is not None and max_depth != 0:
-            if max_depth < 0 or max_depth > 10:
-                raise HTTPException(400, "max_depth must be 0 (persisted) or 1..10")
-            cascade = storage.preview_cascade(ripple_id, max_depth=max_depth)
+        live_depth = _validate_max_depth(max_depth)
+        if live_depth is not None:
+            cascade = storage.preview_cascade(ripple_id, max_depth=live_depth)
         else:
             cascade = storage.get_cascade_by_ripple_id(ripple_id)
             if cascade is None:
