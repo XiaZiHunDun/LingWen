@@ -19,7 +19,7 @@
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **409** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
 | **总测试** | **~3311** (2902 pytest + 409 vitest + skips) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `11014d3` — docs(handoff) v9.98 定稿（功能 HEAD `fe45027`） |
+| **当前 commit** | `d8685b2` — docs(handoff) v9.98 定稿（功能 `fe45027`） |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
 | **下一期推荐** | **正文生产** wave 367–376（runbook §18）或 v10 roadmap 规划 |
 
