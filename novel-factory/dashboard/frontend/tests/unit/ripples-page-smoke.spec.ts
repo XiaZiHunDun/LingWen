@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   fetchRippleStats: vi.fn(),
   fetchRippleDetail: vi.fn(),
   fetchReferenceGraph: vi.fn(),
+  applyRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'applied' }),
 }))
 
 vi.mock('../../src/api/index.js', () => ({
@@ -18,8 +19,8 @@ vi.mock('../../src/api/index.js', () => ({
   fetchRippleDetail: mocks.fetchRippleDetail,
   fetchReferenceGraph: mocks.fetchReferenceGraph,
   fetchRippleAudit: vi.fn().mockResolvedValue([]),
-  applyRipple: vi.fn(),
-  rejectRipple: vi.fn(),
+  applyRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'applied' }),
+  rejectRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'rejected' }),
   rollbackRipple: vi.fn(),
   fetchRippleCascade: vi.fn().mockResolvedValue({ cascade_nodes: [], cascade_edges: [] }),
   fetchRipplePreview: vi.fn().mockResolvedValue({ affected_chapter_count: 0 }),
@@ -106,5 +107,14 @@ describe('RipplesPage smoke (Phase 9.31 F15)', () => {
     await wrapper.find(byTestid('ripple-drawer-close')).trigger('click')
     await flushPromises()
     expect(wrapper.find(byTestid('ripple-drawer-content')).exists()).toBe(false)
+  })
+
+  test('impact score sort filter triggers fetch with sort_by', async () => {
+    const wrapper = mount(RipplesPage)
+    await flushPromises()
+    await wrapper.find(byTestid('ripple-filter-sort')).setValue('impact_score')
+    await flushPromises()
+    const lastCall = mocks.fetchRipples.mock.calls.at(-1)?.[0] as URLSearchParams
+    expect(lastCall.toString()).toContain('sort_by=impact_score')
   })
 })

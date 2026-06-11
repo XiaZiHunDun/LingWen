@@ -11,6 +11,7 @@ Phase 6 新增:
 """
 
 import asyncio
+import json
 import os
 import sqlite3
 from contextlib import asynccontextmanager, contextmanager
@@ -56,6 +57,7 @@ from dashboard.ws import (
     start_broadcast_task,
 )
 from infra.cross_volume.ripple import CrossVolumeRipple
+from infra.cross_volume.scoring import compute_impact_score
 from infra.cross_volume.storage import AuditEntry, ConflictError, RippleStorage
 
 # ==================== Pydantic Models ====================
@@ -501,7 +503,13 @@ def _default_storage() -> RippleStorage:
     return _default_storage_instance
 
 
-def _ripple_to_list_item(r: CrossVolumeRipple) -> RippleListItemResponse:
+def _ripple_impact_score(storage: RippleStorage, r: CrossVolumeRipple) -> float:
+    """Phase 9.59 F50: score from direct + persisted cascade (no live BFS)."""
+    cascade = storage.get_cascade_by_ripple_id(r.id)
+    return compute_impact_score(r, cascade)
+
+
+def _ripple_to_list_item(r: CrossVolumeRipple, storage: RippleStorage) -> RippleListItemResponse:
     """Phase 9.13: helper to convert CrossVolumeRipple → RippleListItemResponse.
 
     dimension / relationship_type 暂用 placeholder (Phase 9.14 通过 JOIN reference_nodes
@@ -517,10 +525,11 @@ def _ripple_to_list_item(r: CrossVolumeRipple) -> RippleListItemResponse:
         status=r.status,
         confidence=r.payload.get("confidence", 1),
         created_at=r.created_at,
+        impact_score=_ripple_impact_score(storage, r),
     )
 
 
-def _ripple_to_detail(r: CrossVolumeRipple) -> RippleDetailResponse:
+def _ripple_to_detail(r: CrossVolumeRipple, storage: RippleStorage) -> RippleDetailResponse:
     """Phase 9.13: helper to convert CrossVolumeRipple → RippleDetailResponse."""
     return RippleDetailResponse(
         ripple_id=r.id,
@@ -531,6 +540,7 @@ def _ripple_to_detail(r: CrossVolumeRipple) -> RippleDetailResponse:
         status=r.status,
         confidence=r.payload.get("confidence", 1),
         created_at=r.created_at,
+        impact_score=_ripple_impact_score(storage, r),
         evidence=r.payload.get("evidence", ""),
         source_payload=r.payload.get("source_payload", {}),
         target_payload=r.payload.get("target_payload", {}),
@@ -863,15 +873,30 @@ def create_app(
             None, alias="status", pattern="^(pending|confirmed|applied|rejected|failed)$"
         ),
         volume: Optional[int] = Query(None, ge=1, le=3),
+        sort_by: Optional[str] = Query(
+            None,
+            pattern="^(created_at|impact_score)$",
+            description="Phase 9.59 F50: sort order (default created_at desc via storage)",
+        ),
+        min_score: Optional[float] = Query(
+            None, ge=0.0, description="Phase 9.59 F50: minimum impact_score filter"
+        ),
         limit: int = Query(50, ge=1, le=200),
         offset: int = Query(0, ge=0),
     ) -> list[RippleListItemResponse]:
-        """Phase 9.13: 列出 ripples (status/volume 过滤 + 分页)。"""
+        """Phase 9.13: 列出 ripples (status/volume 过滤 + 分页)。
+        Phase 9.59 F50: optional sort_by impact_score + min_score filter.
+        """
         storage = _default_storage()
         ripples = storage.get_ripples(
             status=status_filter, volume=volume, limit=limit, offset=offset
         )
-        return [_ripple_to_list_item(r) for r in ripples]
+        items = [_ripple_to_list_item(r, storage) for r in ripples]
+        if min_score is not None:
+            items = [i for i in items if i.impact_score >= min_score]
+        if sort_by == "impact_score":
+            items.sort(key=lambda i: i.impact_score, reverse=True)
+        return items
 
     @app.get("/api/cvg/ripples/stats", response_model=RippleStatsResponse)
     def get_ripple_stats() -> RippleStatsResponse:
@@ -914,7 +939,7 @@ def create_app(
             raise HTTPException(
                 status_code=404, detail=f"ripple {ripple_id} not found"
             )
-        return _ripple_to_detail(ripple)
+        return _ripple_to_detail(ripple, storage)
 
     @app.post("/api/cvg/ripples/{ripple_id}/apply", response_model=RippleActionResponse)
     def apply_ripple(
@@ -1015,7 +1040,7 @@ def create_app(
             raise HTTPException(404, f"ripple {ripple_id} not found")
         except ValueError as e:
             raise HTTPException(422, str(e))
-        return _ripple_to_detail(ripple)
+        return _ripple_to_detail(ripple, storage)
 
     # ==================== Phase 9.15: Cascade BFS endpoints (T4) ====================
 

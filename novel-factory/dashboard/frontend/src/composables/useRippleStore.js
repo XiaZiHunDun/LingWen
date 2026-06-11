@@ -34,6 +34,8 @@ async function refresh(filters = {}) {
     const params = new URLSearchParams()
     if (filters.status) params.set('status', filters.status)
     if (filters.volume) params.set('volume', String(filters.volume))
+    if (filters.sort_by) params.set('sort_by', filters.sort_by)
+    if (filters.min_score != null) params.set('min_score', String(filters.min_score))
     ripples.value = await fetchRipples(params)
     stats.value = await fetchRippleStats()
   } catch (e) {

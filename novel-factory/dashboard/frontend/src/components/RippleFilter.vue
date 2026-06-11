@@ -33,6 +33,30 @@
       </select>
     </label>
     <label>
+      Sort:
+      <select
+        :value="sortBy"
+        class="ripple-filter-sort"
+        data-testid="ripple-filter-sort"
+        @change="$emit('update:sortBy', $event.target.value)"
+      >
+        <option value="created_at">newest</option>
+        <option value="impact_score">impact score</option>
+      </select>
+    </label>
+    <label>
+      Min score:
+      <input
+        type="number"
+        min="0"
+        step="0.1"
+        :value="minScore"
+        class="ripple-filter-min-score"
+        data-testid="ripple-filter-min-score"
+        @input="$emit('update:minScore', $event.target.value)"
+      />
+    </label>
+    <label>
       Volume:
       <select
         :value="volume"
@@ -54,12 +78,14 @@ defineProps({
   status: { type: String, default: 'all' },
   dimension: { type: String, default: 'all' },
   volume: { type: String, default: 'all' },
+  sortBy: { type: String, default: 'created_at' },
+  minScore: { type: String, default: '' },
 });
-defineEmits(['update:status', 'update:dimension', 'update:volume']);
+defineEmits(['update:status', 'update:dimension', 'update:volume', 'update:sortBy', 'update:minScore']);
 </script>
 
 <style scoped>
-.ripple-filter { display: flex; gap: 16px; margin-bottom: 16px; }
+.ripple-filter { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
 .ripple-filter label { display: flex; align-items: center; gap: 6px; font-size: 0.9em; }
-.ripple-filter select { padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; }
+.ripple-filter select, .ripple-filter input { padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; }
 </style>

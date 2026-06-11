@@ -11,6 +11,8 @@
       v-model:status="filter.status"
       v-model:dimension="filter.dimension"
       v-model:volume="filter.volume"
+      v-model:sort-by="filter.sortBy"
+      v-model:min-score="filter.minScore"
     />
     <RippleList
       :ripples="store.ripples.value"
@@ -40,7 +42,7 @@ import { fetchRippleDetail, fetchReferenceGraph } from '../api/index.js';
 const store = useRippleStore();
 const socket = useRippleSocket();
 
-const filter = ref({ status: 'all', dimension: 'all', volume: 'all' });
+const filter = ref({ status: 'all', dimension: 'all', volume: 'all', sortBy: 'created_at', minScore: '' });
 const selectedRipple = ref(null);
 const drawerOpen = ref(false);
 const referenceGraph = ref(null);
@@ -80,6 +82,11 @@ function filterToFilters(f) {
   const out = {};
   if (f.status !== 'all') out.status = f.status;
   if (f.volume !== 'all') out.volume = Number(f.volume);
+  if (f.sortBy && f.sortBy !== 'created_at') out.sort_by = f.sortBy;
+  if (f.minScore !== '' && f.minScore != null) {
+    const n = Number(f.minScore);
+    if (!Number.isNaN(n)) out.min_score = n;
+  }
   return out;
 }
 

@@ -25,6 +25,13 @@
       </span>
     </div>
     <div class="ripple-card__footer">
+      <span
+        v-if="ripple.impact_score != null"
+        class="ripple-card__score ripple-impact-score"
+        data-testid="ripple-impact-score"
+      >
+        impact {{ ripple.impact_score }}
+      </span>
       <span class="ripple-card__confidence ripple-confidence" data-testid="ripple-confidence">
         confidence {{ ripple.confidence }}/5
       </span>

@@ -82,4 +82,36 @@ describe('useRippleStore', () => {
     expect(store.lastError.value).toBe('network error');
     expect(store.loading.value).toBe(false);
   });
+
+  it('refresh passes sort_by and min_score filters', async () => {
+    const api = await import('../../src/api/index.js');
+    api.fetchRipples.mockResolvedValue([]);
+    api.fetchRippleStats.mockResolvedValue({ total: 0, by_status: {}, by_volume: {} });
+    const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
+    const store = useRippleStore();
+    await store.refresh({ sort_by: 'impact_score', min_score: 3, status: 'pending', volume: 2 });
+    const params = api.fetchRipples.mock.calls[0][0];
+    expect(params.get('sort_by')).toBe('impact_score');
+    expect(params.get('min_score')).toBe('3');
+    expect(params.get('status')).toBe('pending');
+    expect(params.get('volume')).toBe('2');
+  });
+
+  it('apply failure sets lastError', async () => {
+    const api = await import('../../src/api/index.js');
+    api.applyRipple.mockRejectedValue(new Error('apply fail'));
+    const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
+    const store = useRippleStore();
+    await expect(store.apply('r1')).rejects.toThrow('apply fail');
+    expect(store.lastError.value).toContain('apply 失败');
+  });
+
+  it('reject failure sets lastError', async () => {
+    const api = await import('../../src/api/index.js');
+    api.rejectRipple.mockRejectedValue(new Error('reject fail'));
+    const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
+    const store = useRippleStore();
+    await expect(store.reject('r1')).rejects.toThrow('reject fail');
+    expect(store.lastError.value).toContain('reject 失败');
+  });
 });

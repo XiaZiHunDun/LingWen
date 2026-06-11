@@ -653,6 +653,7 @@ class RippleListItemResponse(BaseModel):
     status: str
     confidence: int = 1  # Phase 9.12 additive
     created_at: datetime
+    impact_score: float = 0.0  # Phase 9.59 F50
 
 
 class RippleDetailResponse(RippleListItemResponse):
