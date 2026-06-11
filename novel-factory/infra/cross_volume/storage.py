@@ -241,10 +241,14 @@ class RippleStorage:
         # Phase 9.15: cascade hook (BFS via reference_graph, then persist)
         # Pattern 1:1 跟 Phase 9.14 record_audit 1:1
         cascaded = None
+        cascade_latency_ms = None
         if self._graph is not None:
             try:
+                import time
+                _cascade_started = time.perf_counter()
                 cascaded = self._graph.trigger_cascade(ripple)  # uses ref_graph BFS
                 self.record_cascade(cascaded)
+                cascade_latency_ms = int((time.perf_counter() - _cascade_started) * 1000)
             except Exception as e:
                 logger.warning("cascade hook failed for ripple %s: %s", ripple.id, e)
                 # 0 propagate, ripple INSERT 已 commit, cascade 是 best-effort
@@ -264,6 +268,7 @@ class RippleStorage:
                         cascade_edge_count=len(cascaded.cascade_edges),
                         depth_reached=cascaded.depth_reached,
                         bfs_algorithm_version=cascaded.bfs_algorithm_version,
+                        latency_ms=cascade_latency_ms,
                     )
                 )
             except Exception as e:

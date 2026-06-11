@@ -880,6 +880,7 @@ class CascadeUpdatePayload(BaseModel):
     cascade_edge_count: int = Field(..., ge=0)
     depth_reached: int = Field(..., ge=0)
     bfs_algorithm_version: Literal["v1", "v2_weighted"]
+    latency_ms: Optional[int] = Field(default=None, ge=0)
 
 
 class CascadeCancelPayload(BaseModel):

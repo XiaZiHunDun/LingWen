@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRippleStore } from '../composables/useRippleStore.js';
 import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';  // Phase 9.16
 import CascadeGraph from './CascadeGraph.vue';
@@ -190,6 +190,18 @@ const showApplyModal = ref(false);
 const cascade = ref(null);
 const preview = ref(null);
 
+// Phase 9.35: debounced cascade refresh — coalesce rapid WS events + update local refs
+const CASCADE_REFRESH_DEBOUNCE_MS = 300;
+let cascadeRefreshTimer = null;
+
+function scheduleCascadeRefresh() {
+  if (cascadeRefreshTimer) clearTimeout(cascadeRefreshTimer);
+  cascadeRefreshTimer = setTimeout(() => {
+    cascadeRefreshTimer = null;
+    loadCascadeAndPreview();
+  }, CASCADE_REFRESH_DEBOUNCE_MS);
+}
+
 async function loadCascadeAndPreview() {
   if (!props.ripple || !props.ripple.ripple_id) return;
   try {
@@ -227,14 +239,16 @@ onMounted(() => {
   loadAudit();
   // Eager-load cascade on mount (for "Show cascade" toggle, no flash of empty)
   loadCascadeAndPreview();
-  // Phase 9.16: 注册 cascade handler, 匹配当前打开 ripple 静默 re-fetch
+  // Phase 9.16/9.35: 匹配当前 ripple → debounced 静默 re-fetch (更新 cascade/preview refs)
   onCascadeUpdate((payload) => {
     if (payload && payload.ripple_id === props.ripple.ripple_id) {
-      store.loadCascade(props.ripple.ripple_id);
-      store.loadCascadePreview(props.ripple.ripple_id);
+      scheduleCascadeRefresh();
     }
     // 不匹配 ignore (next open 走 9.15 GET 返 fresh data)
   });
+});
+onBeforeUnmount(() => {
+  if (cascadeRefreshTimer) clearTimeout(cascadeRefreshTimer);
 });
 watch(() => props.ripple && props.ripple.ripple_id, () => {
   loadAudit();

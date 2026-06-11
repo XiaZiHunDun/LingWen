@@ -85,6 +85,7 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
   });
 
   it('matching_ripple_id_triggers_silent_refetch', async () => {
+    vi.useFakeTimers();
     const RippleDrawer = (await import('../../src/components/RippleDrawer.vue')).default;
     const api = await import('../../src/api/index.js');
 
@@ -98,20 +99,45 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
     expect(cascadeCallsAfterMount).toBeGreaterThanOrEqual(1);
     expect(previewCallsAfterMount).toBeGreaterThanOrEqual(1);
 
-    // simulate cascade.update with matching ripple_id
+    // simulate cascade.update with matching ripple_id (Phase 9.35 debounced)
     for (const h of registeredCascadeHandlers) {
-      h({ ripple_id: 'rip-1', cascade_node_count: 3 });
+      h({ ripple_id: 'rip-1', cascade_node_count: 3, latency_ms: 12 });
     }
+    await vi.advanceTimersByTimeAsync(300);
     await flushPromises();
 
-    // 应比 mount 后多 1 次 (匹配 → 静默 re-fetch)
+    // 应比 mount 后多 1 次 (匹配 → debounced 静默 re-fetch)
     expect(api.fetchRippleCascade).toHaveBeenCalledTimes(cascadeCallsAfterMount + 1);
     expect(api.fetchRippleCascade).toHaveBeenLastCalledWith('rip-1');
     expect(api.fetchRipplePreview).toHaveBeenCalledTimes(previewCallsAfterMount + 1);
     expect(api.fetchRipplePreview).toHaveBeenLastCalledWith('rip-1');
+    vi.useRealTimers();
+  });
+
+  it('debounced_cascade_updates_coalesce_to_single_refetch', async () => {
+    vi.useFakeTimers();
+    const RippleDrawer = (await import('../../src/components/RippleDrawer.vue')).default;
+    const api = await import('../../src/api/index.js');
+
+    mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
+    await flushPromises();
+
+    const cascadeCallsAfterMount = api.fetchRippleCascade.mock.calls.length;
+
+    for (let i = 0; i < 3; i += 1) {
+      for (const h of registeredCascadeHandlers) {
+        h({ ripple_id: 'rip-1', cascade_node_count: i + 1 });
+      }
+    }
+    await vi.advanceTimersByTimeAsync(300);
+    await flushPromises();
+
+    expect(api.fetchRippleCascade).toHaveBeenCalledTimes(cascadeCallsAfterMount + 1);
+    vi.useRealTimers();
   });
 
   it('non_matching_ripple_id_ignored_no_refetch', async () => {
+    vi.useFakeTimers();
     const RippleDrawer = (await import('../../src/components/RippleDrawer.vue')).default;
     const api = await import('../../src/api/index.js');
 
@@ -125,10 +151,12 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
     for (const h of registeredCascadeHandlers) {
       h({ ripple_id: 'rip-other', cascade_node_count: 5 });
     }
+    await vi.advanceTimersByTimeAsync(300);
     await flushPromises();
 
     // 应仍是 mount 时的次数 (不匹配 → 不 re-fetch)
     expect(api.fetchRippleCascade).toHaveBeenCalledTimes(cascadeCallsAfterMount);
     expect(api.fetchRipplePreview).toHaveBeenCalledTimes(previewCallsAfterMount);
+    vi.useRealTimers();
   });
 });

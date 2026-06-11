@@ -79,7 +79,7 @@ Phase 9.10-9.32 完成了 CVG 数据层 + dashboard cascade 全链路 (持久化
 - **dependency**: F18 建议先 (有真实 graph 数据校准更有意义); 可独立 if 主公只想调阈值
 - **caveat**: 0 真 LLM in default pytest; skipif opt-in 跟 Phase 9.12 1:1
 
-### F20. Phase 9.35 — cascade 广播 latency 监控 + dashboard 拓扑实时刷新
+### F20. Phase 9.35 — cascade 广播 latency 监控 + dashboard 拓扑实时刷新 ✅ **DONE Phase 9.35**
 
 - **承接**: Phase 9.17 out of scope「CascadeUpdatePayload 广播 latency 监控 + dashboard 拓扑实时刷新 (跟 Phase 8.21 idx_timestamp 镜像)」
 - **目标**: append_ripple 触发 cascade WS 广播时记录 latency_ms; dashboard CascadeGraph 收到 `onCascadeUpdate` 后 auto-refresh (0 手动 reload)

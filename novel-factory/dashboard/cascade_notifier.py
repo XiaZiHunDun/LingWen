@@ -52,7 +52,8 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
           "cascade_node_count": int,
           "cascade_edge_count": int,
           "depth_reached": int,
-          "bfs_algorithm_version": "v1" | "v2_weighted"
+          "bfs_algorithm_version": "v1" | "v2_weighted",
+          "latency_ms": int (optional, Phase 9.35 broadcast latency)
         }
       }
     """
@@ -70,6 +71,13 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
             # ValidationError caught — skip broadcast, log warning (跟 9.16 兜底 1:1)
             logger.warning("cascade_notifier: invalid payload, skip: %s", e)
             return
+    if payload.latency_ms is not None:
+        logger.info(
+            "cascade_notifier: broadcast ripple_id=%s latency_ms=%s nodes=%s",
+            payload.ripple_id,
+            payload.latency_ms,
+            payload.cascade_node_count,
+        )
     envelope = {"type": "cascade.update", "payload": payload.model_dump()}
     # Snapshot 避免 loop swap race (跟 cvg_ws.broadcast 1:1)
     ws = _ws_manager
