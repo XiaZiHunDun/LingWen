@@ -745,14 +745,21 @@ class RippleStorage:
         limit: int = 50,
         offset: int = 0,
         status: str | None = None,
+        min_depth: int | None = None,
+        max_depth: int | None = None,
+        algorithm: str | None = None,
     ) -> list[CascadeRun]:
         """Phase 9.20: list cascade runs for ripple_id (latest first).
+        Phase 9.23: add 3 filter params (min_depth, max_depth, algorithm).
 
         Args:
             ripple_id: filter by ripple
             limit: max rows (default 50)
             offset: pagination offset
             status: optional filter ('running'/'completed'/'cancelled'/'failed')
+            min_depth: optional min max_depth filter (inclusive, Phase 9.23)
+            max_depth: optional max max_depth filter (inclusive, Phase 9.23)
+            algorithm: optional algorithm filter (Phase 9.23, exact match on `algorithm` column)
 
         Returns:
             list of CascadeRun, ordered by id DESC
@@ -761,6 +768,15 @@ class RippleStorage:
         if status is not None:
             clauses.append("status = ?")
             params.append(status)
+        if min_depth is not None:
+            clauses.append("max_depth >= ?")
+            params.append(min_depth)
+        if max_depth is not None:
+            clauses.append("max_depth <= ?")
+            params.append(max_depth)
+        if algorithm is not None:
+            clauses.append("algorithm = ?")
+            params.append(algorithm)
         where = f"WHERE {' AND '.join(clauses)}"
         sql = f"SELECT * FROM cascade_runs {where} ORDER BY id DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
