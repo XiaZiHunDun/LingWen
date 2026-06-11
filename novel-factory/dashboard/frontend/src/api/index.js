@@ -331,18 +331,27 @@ export async function fetchRipplePreview(rippleId) {
 
 /**
  * Phase 9.22: fetch historical cascade_runs for a ripple (Phase 9.20 endpoint).
+ * Phase 9.23: options extended with minDepth, maxDepth, algorithm (all optional).
  * Returns CascadeRun[] JSON array sorted by id DESC.
  * @param {string} rippleId
- * @param {object} [options] - { limit?: number, offset?: number, status?: string }
+ * @param {object} [options] - {
+ *   limit?: number, offset?: number,
+ *   status?: 'running'|'completed'|'cancelled'|'failed',
+ *   minDepth?: number, maxDepth?: number,    // Phase 9.23
+ *   algorithm?: 'v1'|'v2_weighted',            // Phase 9.23
+ * }
  * @returns {Promise<Array<{id:number, ripple_id:string, started_at:string, completed_at:string|null,
  *   max_depth:number, depth_reached:number, status:'running'|'completed'|'cancelled'|'failed',
- *   algorithm_version:string, cascade_nodes:Array, cascade_edges:Array, cascade_actions:Array}>>}
+ *   algorithm:string, cascade_nodes:Array, cascade_edges:Array, cascade_actions:Array}>>}
  */
 export async function fetchCascadeRuns(rippleId, options = {}) {
   const params = new URLSearchParams();
   if (options.limit) params.set('limit', String(options.limit));
   if (options.offset) params.set('offset', String(options.offset));
   if (options.status) params.set('status', options.status);
+  if (options.minDepth) params.set('min_depth', String(options.minDepth));
+  if (options.maxDepth) params.set('max_depth', String(options.maxDepth));
+  if (options.algorithm) params.set('algorithm', options.algorithm);
   const qs = params.toString();
   return request(`/ripples/cascade/${encodeURIComponent(rippleId)}/runs${qs ? '?' + qs : ''}`);
 }
