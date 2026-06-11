@@ -1,4 +1,4 @@
-// eslint.config.js — Phase 8.43.4
+// eslint.config.js — Phase 8.43.4 + Phase 9.39 F24 (ESLint 9+ flat config 正式化)
 // 1 file 3 blocks: Block 1 spec dir (Phase 8.33) + Block 2 .vue testid-class-sync
 // (Phase 8.36) + Block 3 .vue vue plugin (Phase 8.42). Replaces 3 .eslintrc.cjs
 // + 走 ESLint 10 flat config native (0 走 dual mode).

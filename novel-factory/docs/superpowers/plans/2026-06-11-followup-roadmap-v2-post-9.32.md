@@ -123,7 +123,7 @@ Phase 8.35-8.42 super-phase 留 followup, 跟 CVG 功能独立, 可穿插做.
 - **estimated**: 1h
 - **dependency**: 无
 
-### F24. Phase 9.39 — ESLint 8 → 9 升级
+### F24. Phase 9.39 — ESLint 8 → 9 升级 ✅ **DONE Phase 9.39**
 
 - **承接**: Phase 8.43
 - **方案**: eslint 9 + flat config migration (跟 vue/eslint 生态对齐)

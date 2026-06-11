@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.38 (Phase 9.38 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.38 F23 Vitest coverage 报告 ✅; `pnpm test:coverage` + CI Codecov 契约测试; pytest 2539→2545 (+6); vitest 193 (不变); 推荐 **F24 ESLint 9**.
+> **版本**: v9.39 (Phase 9.39 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.39 F24 ESLint 9+ flat config 正式化 ✅; `pnpm lint` + CI 契约测试 (Phase 8.43 补全); pytest 2545→2552 (+7); vitest 193 (不变); 推荐 **F25 TS strict**.
 
 ---
 
@@ -106,7 +106,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **TDD RED → GREEN → commit** — 写 test 先 (RED), 写实现 (GREEN), 重构, commit
 - **2 reviewers per task** — 1 spec compliance + 1 code quality (subagent-driven-development skill)
 - **80%+ 覆盖率** — `pytest --cov` + `vitest --coverage` (已 CI 化)
-- **测试 entry**: pytest `pytest -q` (~90s), vitest `pnpm test` (~5s), coverage `pnpm test:coverage`, e2e `pnpm e2e:smoke`
+- **测试 entry**: pytest `pytest -q` (~90s), vitest `pnpm test` (~5s), coverage `pnpm test:coverage`, lint `pnpm lint`, e2e `pnpm e2e:smoke`
 - **0 ceremonial e2e** — Playwright spec 已 Phase 9.31 F15 全删, 契约走 vitest jsdom (Phase 8.30b pattern)
 - **0 改 baseline 0 测试代码** — 2512 pytest + 192 vitest 全部不动, 只加新
 
@@ -198,7 +198,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.38)
+## 5. 最近工作 (Phase 8.16 → 9.39)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -230,10 +230,11 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.35 F20 cascade realtime | 2026-06-11 | `CascadeUpdatePayload.latency_ms` + RippleDrawer debounced graph refresh | 2528/193 |
 | 9.36 F21 cascade migrate | 2026-06-11 | `cascade migrate --execute` v1→v2_weighted 重写 cascade_runs JSON | 2539/193 |
 | 9.38 F23 vitest coverage | 2026-06-11 | `pnpm test:coverage` + CI Codecov 契约测试 (Phase 8.44 补全) | 2545/193 |
+| 9.39 F24 eslint flat | 2026-06-11 | `pnpm lint` + ESLint 9+ flat config 契约测试 (Phase 8.43 补全) | 2552/193 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] test(dashboard): phase 9.38 F23 — vitest coverage scripts + CI contract
+[本 commit] test(dashboard): phase 9.39 F24 — ESLint 9+ flat config contract
 d838557 ci: phase 9.37 F22 — pytest gate at repo root
 3c2020f feat(cvg): phase 9.33 F18 — production backfill execute idempotent
 7790864 test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
@@ -271,7 +272,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F21 | v1→v2 cascade 数据迁移 (optional) | 9.36 | 1.5h | P1 CVG | ✅ done |
 | F22 | CI pytest gate | 9.37 | 1.5h | P2 DevInfra | ✅ done |
 | F23 | Vitest coverage 报告 | 9.38 | 1h | P2 DevInfra | ✅ done |
-| F24 | ESLint 8→9 | 9.39 | 2h | P2 DevInfra | ✅ |
+| F24 | ESLint 8→9 | 9.39 | 2h | P2 DevInfra | ✅ done |
 | F25 | TypeScript strict pilot | 9.40 | 2h | P2 DevInfra | ✅ |
 | F26 | Cost 柱状图 UI (Phase 8.7) | — | 1.5h | P3 | ✅ |
 | F27 | `*_with_usage` cost variant | — | 2h | P3 | ✅ |
@@ -281,7 +282,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 - F1-F3: P0 bookkeeping ✅ | F4-F7: P1 cascade 持久化路线 ✅ | F8: RESOLVED ✅
 - F9-F16: P2 dashboard/DevInfra ✅ (含 9.32 F16 max_nodes_cap)
 
-**推荐下一项**: **F24** (ESLint 9, Phase 9.39) 或 **F25** (TS strict pilot, Phase 9.40).
+**推荐下一项**: **F25** (TS strict pilot, Phase 9.40) 或 **F26** (Cost 柱状图 UI, P3).
 
 ---
 
