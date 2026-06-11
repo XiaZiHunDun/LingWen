@@ -66,8 +66,19 @@
       }}</span>
     </div>
 
-    <div v-if="metaInfo" class="meta-info" data-testid="meta-info">
-      {{ metaInfo }}
+    <div v-if="showMetaInfo" class="meta-info" data-testid="meta-info">
+      <span v-if="decision.resolved_by" class="meta-field" data-testid="meta-resolved-by">
+        解决人: {{ decision.resolved_by }}
+      </span>
+      <span v-if="decision.resolution" class="meta-field" data-testid="meta-resolution">
+        选项: {{ decision.resolution }}
+      </span>
+      <span v-if="formattedResolvedAt" class="meta-field" data-testid="meta-resolved-at">
+        时间: {{ formattedResolvedAt }}
+      </span>
+      <span v-if="decision.reason" class="meta-field" data-testid="meta-reason">
+        {{ reasonLabel }}: {{ decision.reason }}
+      </span>
     </div>
 
     <div v-if="error" class="error-text">{{ error }}</div>
@@ -123,22 +134,22 @@ const statusBadge = computed(() => {
   return map[props.decision.status] || null;
 });
 
-// Phase 6.6.B: meta info (解决人/选项/时间/原因)
-const metaInfo = computed(() => {
+// Phase 6.6.B: meta info (解决人/选项/时间/原因) — F41: 4 sub-element testid
+const showMetaInfo = computed(() => {
   const d = props.decision;
-  if (d.status === 'pending') return null;
-  const parts = [];
-  if (d.resolved_by) parts.push(`解决人: ${d.resolved_by}`);
-  if (d.resolution) parts.push(`选项: ${d.resolution}`);
-  if (d.resolved_at) {
-    const dt = new Date(d.resolved_at);
-    parts.push(`时间: ${dt.toLocaleString('zh-CN', { hour12: false })}`);
-  }
-  if (d.reason) {
-    const verb = d.status === 'cancelled' ? '取消' : '推迟';
-    parts.push(`${verb}原因: ${d.reason}`);
-  }
-  return parts.join(' · ');
+  if (d.status === 'pending') return false;
+  return Boolean(d.resolved_by || d.resolution || d.resolved_at || d.reason);
+});
+
+const formattedResolvedAt = computed(() => {
+  const raw = props.decision.resolved_at;
+  if (!raw) return null;
+  const dt = new Date(raw);
+  return dt.toLocaleString('zh-CN', { hour12: false });
+});
+
+const reasonLabel = computed(() => {
+  return props.decision.status === 'cancelled' ? '取消原因' : '推迟原因';
 });
 
 async function onResolve(option) {
@@ -334,6 +345,13 @@ async function onCancel() {
   padding: var(--space-xs) var(--space-sm);
   margin-top: var(--space-sm);
   word-break: break-all;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-field {
+  display: block;
 }
 
 .actions-readonly {

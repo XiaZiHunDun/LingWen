@@ -184,6 +184,7 @@ v2 触发条件已满足. 剩余工作分散在:
 
 - **承接**: Phase 8.45 out of scope (8.45.1 做了 status badge; meta-info 4 fields + WorkflowGraph 4 status 未做)
 - **estimated**: 1-2h + vitest
+- **完成 (2026-06-11)**: meta-info 4 testid + WorkflowGraph loading/error/graph/empty 4 state testid; vitest 216→224 (+8); pytest 2615→2617 (+2)
 
 ### F42. Coverage 阈值 70→80 + Codecov badge + GH Pages HTML report
 

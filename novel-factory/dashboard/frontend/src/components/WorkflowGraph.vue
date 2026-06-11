@@ -4,16 +4,16 @@
 -->
 <template>
   <div class="workflow-graph" data-testid="workflow-graph">
-    <div v-if="loading" class="loading-state pixel-card">
+    <div v-if="loading" class="loading-state pixel-card" data-testid="workflow-graph-loading">
       <p class="pixel-text">渲染图中…</p>
     </div>
 
-    <div v-else-if="error" class="error-state pixel-card">
+    <div v-else-if="error" class="error-state pixel-card" data-testid="workflow-graph-error">
       <p class="error-title">⚠ 渲染失败</p>
       <pre class="error-detail">{{ error }}</pre>
     </div>
 
-    <div v-else-if="svg" class="graph-container pixel-card">
+    <div v-else-if="svg" class="graph-container pixel-card" data-testid="workflow-graph-graph">
       <div class="graph-header">
         <span class="graph-title">{{ workflowName || '工作流图' }}</span>
         <button class="reset-zoom-btn pixel-border" data-testid="reset-zoom-btn" @click="resetZoom">⤢ 重置缩放</button>
@@ -26,7 +26,7 @@
       />
     </div>
 
-    <div v-else class="empty-state pixel-card">
+    <div v-else class="empty-state pixel-card" data-testid="workflow-graph-empty">
       <p class="pixel-text">未提供 mermaid 字符串</p>
     </div>
 
