@@ -128,4 +128,34 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
     expect(s.lastError).toContain('network down')
     expect(s.loading).toBe(false)
   })
+
+  test('resolve failure sets lastError', async () => {
+    vi.mocked(api.resolveDecision).mockRejectedValue(new Error('resolve fail'))
+    const wrapper = mountStore()
+    await flushPromises()
+    await expect((wrapper.vm as unknown as {
+      resolve: (id: string, opt: string) => Promise<void>
+    }).resolve('d1', 'x')).rejects.toThrow('resolve fail')
+    expect((wrapper.vm as unknown as { lastError: string | null }).lastError).toContain('resolve fail')
+  })
+
+  test('defer failure sets lastError', async () => {
+    vi.mocked(api.deferDecision).mockRejectedValue(new Error('defer fail'))
+    const wrapper = mountStore()
+    await flushPromises()
+    await expect((wrapper.vm as unknown as {
+      defer: (id: string, reason: string) => Promise<void>
+    }).defer('d1', 'r')).rejects.toThrow('defer fail')
+    expect((wrapper.vm as unknown as { lastError: string | null }).lastError).toContain('defer fail')
+  })
+
+  test('cancel failure sets lastError', async () => {
+    vi.mocked(api.cancelDecision).mockRejectedValue(new Error('cancel fail'))
+    const wrapper = mountStore()
+    await flushPromises()
+    await expect((wrapper.vm as unknown as {
+      cancel: (id: string, reason: string) => Promise<void>
+    }).cancel('d1', 'r')).rejects.toThrow('cancel fail')
+    expect((wrapper.vm as unknown as { lastError: string | null }).lastError).toContain('cancel fail')
+  })
 })

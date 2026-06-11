@@ -93,4 +93,32 @@ describe('useRippleSocket', () => {
     socket.disconnect();
     expect(ws.readyState).toBe(3);
   });
+
+  it('onerror sets lastError', async () => {
+    const { useRippleSocket } = await import('../../src/composables/useRippleSocket.js');
+    const socket = useRippleSocket();
+    socket.connect();
+    socket.ws.value.onerror({});
+    expect(socket.lastError.value).toBe('WebSocket error');
+  });
+
+  it('invalid JSON sets parse error', async () => {
+    const { useRippleSocket } = await import('../../src/composables/useRippleSocket.js');
+    const socket = useRippleSocket();
+    socket.connect();
+    socket.ws.value.onmessage({ data: '{bad' });
+    expect(socket.lastError.value).toContain('parse error');
+  });
+
+  it('connect failure schedules reconnect', async () => {
+    const Original = global.WebSocket;
+    global.WebSocket = class {
+      constructor() { throw new Error('ws fail'); }
+    };
+    const { useRippleSocket } = await import('../../src/composables/useRippleSocket.js');
+    const socket = useRippleSocket();
+    socket.connect();
+    expect(socket.lastError.value).toBe('ws fail');
+    global.WebSocket = Original;
+  });
 });

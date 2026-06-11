@@ -105,4 +105,56 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     expect(banner.exists()).toBe(true)
     expect(banner.text()).toContain('fetch fail')
   })
+
+  test('refresh button triggers list reload', async () => {
+    const wrapper = mount(WorkflowsPage)
+    await flushPromises()
+    const api = await import('../../src/api/index.js')
+    vi.mocked(api.fetchWorkflows).mockClear()
+    await wrapper.find(byTestid('refresh-btn')).trigger('click')
+    await flushPromises()
+    expect(api.fetchWorkflows).toHaveBeenCalled()
+  })
+
+  test('run form submits runWorkflow on valid JSON', async () => {
+    const wrapper = mount(WorkflowsPage)
+    await flushPromises()
+    await wrapper.findAll(byTestid('wf-item'))[0].trigger('click')
+    await flushPromises()
+    const api = await import('../../src/api/index.js')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+    expect(api.runWorkflow).toHaveBeenCalled()
+  })
+
+  test('run form shows error on invalid JSON', async () => {
+    vi.resetModules()
+    const api = await import('../../src/api/index.js')
+    vi.mocked(api.fetchWorkflows).mockResolvedValue([
+      { name: 'novel_writing', node_count: 7, path: 'wf/novel_writing.yaml', has_decision_nodes: true },
+    ])
+    const { default: FreshWorkflowsPage } = await import('../../src/pages/WorkflowsPage.vue')
+    const wrapper = mount(FreshWorkflowsPage)
+    await flushPromises()
+    await wrapper.findAll(byTestid('wf-item'))[0].trigger('click')
+    await flushPromises()
+    const textarea = wrapper.find('textarea')
+    await textarea.setValue('{bad json')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+    expect(wrapper.find(byTestid('error-banner')).text()).toContain('JSON')
+  })
+
+  test('toggle graph loads workflow graph', async () => {
+    const wrapper = mount(WorkflowsPage)
+    await flushPromises()
+    await wrapper.findAll(byTestid('wf-item'))[0].trigger('click')
+    await flushPromises()
+    const btn = wrapper.find('.view-graph-btn')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    await flushPromises()
+    const api = await import('../../src/api/index.js')
+    expect(api.fetchWorkflowGraph).toHaveBeenCalled()
+  })
 })

@@ -86,4 +86,33 @@ describe('Phase 9.23: CascadeRunsFilter', () => {
       sinceDays: null,
     });
   });
+
+  it('globalMode shows ripple + sinceDays filters and reset on sinceDays', async () => {
+    const { default: CascadeRunsFilter } = await import('../../src/components/CascadeRunsFilter.vue');
+    wrapper = mount(CascadeRunsFilter, {
+      props: {
+        globalMode: true,
+        modelValue: { ...DEFAULT, rippleId: '', sinceDays: null },
+      },
+      attachTo: document.body,
+    });
+    expect(wrapper.find('[data-testid="filter-ripple-id"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="filter-since-days"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="filter-since-days"]').setValue('7');
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+    await wrapper.setProps({
+      modelValue: { ...DEFAULT, rippleId: 'r1', sinceDays: 7 },
+    });
+    await nextTick();
+    expect(wrapper.find('[data-testid="filter-reset"]').exists()).toBe(true);
+  });
+
+  it('clearing depth input emits null', async () => {
+    await wrapper.setProps({ modelValue: { ...DEFAULT, minDepth: 2 } });
+    await nextTick();
+    const input = wrapper.find('[data-testid="filter-min-depth"]');
+    await input.setValue('');
+    const events = wrapper.emitted('update:modelValue');
+    expect(events[events.length - 1][0].minDepth).toBeNull();
+  });
 });

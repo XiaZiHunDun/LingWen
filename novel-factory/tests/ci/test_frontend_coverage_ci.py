@@ -30,9 +30,9 @@ class TestFrontendCoverageVitestConfig:
         assert "reporter: ['text', 'lcov', 'html']" in text
         assert "thresholds:" in text
         assert "lines: 80" in text
-        assert "statements: 78" in text
-        assert "functions: 76" in text
-        assert "branches: 64" in text
+        assert "statements: 80" in text
+        assert "functions: 80" in text
+        assert "branches: 80" in text
 
 
 class TestFrontendCoverageCI:

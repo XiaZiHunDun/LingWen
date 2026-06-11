@@ -127,4 +127,61 @@ describe('SidebarCostBanner: per-tier budget rows (Phase 8.15)', () => {
     const tierRows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(tierRows.length).toBe(2)
   })
+
+  test('tier-only cost shows banner without scenario entries', async () => {
+    const wrapper = mount(SidebarCostBanner, {
+      props: {
+        status: baseStatus({
+          cost_by_scenario: {},
+          cost_by_tier: { haiku: 0.01 },
+        }),
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find(byTestid('sidebar-cost-banner')).exists()).toBe(true)
+  })
+
+  test('per-day exceeded budget wins cascade over per-run ok', async () => {
+    const wrapper = mount(SidebarCostBanner, {
+      props: {
+        status: baseStatus({
+          cost_budget_status: { status: 'ok', budget_usd: 1, used_usd: 0.2, used_pct: 20 },
+          budget_per_day: { status: 'exceeded', budget_usd: 1, used_usd: 1.2, used_pct: 120 },
+        }),
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find(byTestid('sidebar-cost-budget-text')).text()).toContain('今日')
+  })
+
+  test('empty cost hides entire banner', async () => {
+    const wrapper = mount(SidebarCostBanner, {
+      props: {
+        status: baseStatus({ cost_by_scenario: {}, cost_by_tier: {} }),
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find(byTestid('sidebar-cost-banner')).exists()).toBe(false)
+  })
+
+  test('time window tab click invokes setTimeWindow', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ total_cost_usd: 0.01, cost_by_tier: { sonnet: 0.01 } }),
+    }))
+    const wrapper = mount(SidebarCostBanner, {
+      props: {
+        status: baseStatus({
+          budget_by_tier: {
+            sonnet: { budget_usd: 0.05, used_usd: 0.01, status: 'ok' },
+          },
+        }),
+      },
+    })
+    await flushPromises()
+    await wrapper.find(byTestid('sidebar-time-window-7d')).trigger('click')
+    await flushPromises()
+    expect(global.fetch).toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
 })

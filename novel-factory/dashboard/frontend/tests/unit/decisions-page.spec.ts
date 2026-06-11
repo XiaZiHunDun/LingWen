@@ -121,4 +121,68 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
     expect(badge.exists()).toBe(true)
     expect(badge.text()).toContain('待处理: 1')
   })
+
+  test('resolved tab shows empty state then expand', async () => {
+    const wrapper = mount(DecisionsPage)
+    await flushPromises()
+    const tabs = wrapper.findAll('.tab-btn')
+    await tabs[1].trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('暂无已解决决策')
+    const expandBtn = wrapper.find('.expand-toggle')
+    await expandBtn.trigger('click')
+    await flushPromises()
+    expect(expandBtn.text()).toContain('折叠')
+  })
+
+  test('decision cards render from store data', async () => {
+    vi.resetModules()
+    const api = await import('../../src/api/index.js')
+    vi.mocked(api.fetchAllDecisions).mockResolvedValue([
+      {
+        decision_id: 'd1',
+        status: 'resolved',
+        kind: 'outline-judgment',
+        priority: 1,
+        title: 'Done',
+        resolved_at: '2026-06-11T00:00:00Z',
+        created_at: '2026-06-10T00:00:00Z',
+      },
+    ])
+    const { default: FreshDecisionsPage } = await import('../../src/pages/DecisionsPage.vue')
+    const wrapper = mount(FreshDecisionsPage)
+    await flushPromises()
+    await wrapper.findAll('.tab-btn')[1].trigger('click')
+    await flushPromises()
+    await wrapper.find('.expand-toggle').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="decision-card"]').exists()).toBe(true)
+  })
+
+  test('closed tab expand shows cancelled decisions', async () => {
+    vi.resetModules()
+    const api = await import('../../src/api/index.js')
+    vi.mocked(api.fetchAllDecisions).mockResolvedValue([
+      {
+        decision_id: 'd-c',
+        status: 'cancelled',
+        kind: 'outline-judgment',
+        priority: 2,
+        title: 'Cancelled',
+        created_at: '2026-06-10T00:00:00Z',
+        reason: 'no',
+        node_id: 'n2',
+        prompt: 'P',
+        options: [],
+      },
+    ])
+    const { default: FreshDecisionsPage } = await import('../../src/pages/DecisionsPage.vue')
+    const wrapper = mount(FreshDecisionsPage)
+    await flushPromises()
+    await wrapper.findAll('.tab-btn')[2].trigger('click')
+    await flushPromises()
+    await wrapper.find('.expand-toggle').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="decision-card"]').exists()).toBe(true)
+  })
 })
