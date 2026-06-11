@@ -92,7 +92,7 @@ Phase 9.10-9.32 完成了 CVG 数据层 + dashboard cascade 全链路 (持久化
 - **dependency**: 无 (F4-F7 cascade 持久化已就位)
 - **scope boundary**: 0 改 BFS 算法 / 0 改 cascade_runs schema
 
-### F21. Phase 9.36 — v1→v2 cascade 数据迁移 (optional)
+### F21. Phase 9.36 — v1→v2 cascade 数据迁移 (optional) ✅ **DONE Phase 9.36**
 
 - **承接**: 多处 out of scope「0 cascade data migration (旧 v1 cascade 仍可读)」
 - **目标**: 提供 opt-in migration CLI, 把历史 v1 BFS 结果重算为 v2_weighted (0 强制)
@@ -178,7 +178,7 @@ Phase 8.35-8.42 super-phase 留 followup, 跟 CVG 功能独立, 可穿插做.
 | F18 | 359 章 backfill 正式跑 | 高 | 🟡 中 | 2-3h | 9.33 | ✅ |
 | F19 | LLM scanner 校准 | 高 | 🟡 中 | 2-3h | 9.34 | ✅ |
 | F20 | cascade 实时拓扑刷新 | 中 | 🟢 低 | 2h | 9.35 | ✅ |
-| F21 | v1→v2 cascade 迁移 | 低 | 🟢 低 | 1.5h | 9.36 | △ F4 |
+| F21 | v1→v2 cascade 迁移 | 低 | 🟢 低 | 1.5h | 9.36 | ✅ |
 | F22 | CI pytest | 高 | 🟡 中 | 1.5h | 9.37 | ✅ |
 | F23 | Vitest coverage | 中 | 🟢 低 | 1h | 9.38 | ✅ |
 | F24 | ESLint 9 | 低 | 🟢 低 | 2h | 9.39 | ✅ |

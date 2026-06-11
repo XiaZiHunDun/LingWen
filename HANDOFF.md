@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.35 (Phase 9.35 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.35 F20 cascade 广播 latency + 拓扑 debounced 实时刷新 ✅; pytest 2522→2528 (+6); vitest 192→193 (+1); 推荐 **F21 迁移** 或 **F23 coverage**.
+> **版本**: v9.36 (Phase 9.36 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.36 F21 v1→v2 cascade 迁移 CLI ✅; `cascade migrate --dry-run|--execute`; pytest 2528→2539 (+11); vitest 193 (不变); 推荐 **F23 coverage**.
 
 ---
 
@@ -13,14 +13,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2528 passed |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2539 passed |
 | **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 193 passed · Playwright 0 (dev opt-in) |
-| **总测试** | **2726+** (2528 pytest + 193 vitest + 27 pytest skip) |
+| **总测试** | **2737+** (2539 pytest + 193 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/test.yml` — push/PR master 跑 pytest |
-| **下一期推荐** | **F21** (v1→v2 cascade 迁移, optional) 或 **F23** (Vitest coverage) |
+| **下一期推荐** | **F23** (Vitest coverage) 或 **F24** (ESLint 9) |
 
 ---
 
@@ -197,7 +197,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.35)
+## 5. 最近工作 (Phase 8.16 → 9.36)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -227,10 +227,11 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.37 F22 CI pytest | 2026-06-11 | repo root `.github/workflows/` + `--timeout=120` + 5 ci tests | 2512/192 |
 | 9.34 F19 LLM calibrate | 2026-06-11 | `scanner_calibration.yaml` + `ripple-scan --calibrate` + edge/backfill 阈值外置 | 2522/192 |
 | 9.35 F20 cascade realtime | 2026-06-11 | `CascadeUpdatePayload.latency_ms` + RippleDrawer debounced graph refresh | 2528/193 |
+| 9.36 F21 cascade migrate | 2026-06-11 | `cascade migrate --execute` v1→v2_weighted 重写 cascade_runs JSON | 2539/193 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] feat(cvg): phase 9.35 F20 — cascade broadcast latency + realtime graph refresh
+[本 commit] feat(cvg): phase 9.36 F21 — v1→v2 cascade_runs migration CLI
 d838557 ci: phase 9.37 F22 — pytest gate at repo root
 3c2020f feat(cvg): phase 9.33 F18 — production backfill execute idempotent
 7790864 test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
@@ -265,7 +266,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F18 | 359 章历史 backfill 正式跑 | 9.33 | 2-3h | P1 CVG | ✅ done |
 | F19 | LLM scanner confidence 校准 | 9.34 | 2-3h | P1 CVG | ✅ done |
 | F20 | cascade 广播 latency + 拓扑实时刷新 | 9.35 | 2h | P1 CVG | ✅ done |
-| F21 | v1→v2 cascade 数据迁移 (optional) | 9.36 | 1.5h | P1 CVG | 🟢 低 |
+| F21 | v1→v2 cascade 数据迁移 (optional) | 9.36 | 1.5h | P1 CVG | ✅ done |
 | F22 | CI pytest gate | 9.37 | 1.5h | P2 DevInfra | ✅ done |
 | F23 | Vitest coverage 报告 | 9.38 | 1h | P2 DevInfra | ✅ |
 | F24 | ESLint 8→9 | 9.39 | 2h | P2 DevInfra | ✅ |
@@ -278,7 +279,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 - F1-F3: P0 bookkeeping ✅ | F4-F7: P1 cascade 持久化路线 ✅ | F8: RESOLVED ✅
 - F9-F16: P2 dashboard/DevInfra ✅ (含 9.32 F16 max_nodes_cap)
 
-**推荐下一项**: **F21** (v1→v2 cascade 迁移, optional, Phase 9.36) 或 **F23** (Vitest coverage, Phase 9.38).
+**推荐下一项**: **F23** (Vitest coverage, Phase 9.38) 或 **F24** (ESLint 9, Phase 9.39).
 
 ---
 
@@ -390,5 +391,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.35 (2026-06-11)
-> **下次更新**: 启动 F21/F23 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格
+> **版本**: v9.36 (2026-06-11)
+> **下次更新**: 启动 F23/F24 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格

@@ -50,4 +50,23 @@ def add_cascade_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
         "--reason", type=str, default="",
         help="Optional cancel reason (logged + WS payload, not persisted)",
     )
+
+    migrate_p = cascade_subs.add_parser(
+        "migrate",
+        help="Migrate v1 cascade_runs rows to v2_weighted (Phase 9.36 F21)",
+        description="Opt-in recompute: rewrite algorithm + nodes/edges JSON (default dry-run).",
+    )
+    migrate_p.add_argument(
+        "--execute",
+        action="store_true",
+        default=False,
+        help="Apply migration (default: dry-run only)",
+    )
+    migrate_p.add_argument(
+        "--ripple-id",
+        type=str,
+        default=None,
+        dest="migrate_ripple_id",
+        help="Optional: migrate only runs for this ripple id",
+    )
     return cascade_parent

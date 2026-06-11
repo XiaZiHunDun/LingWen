@@ -185,6 +185,8 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             action=action,
             run_id=getattr(args, "run_id", 0) or 0,
             reason=getattr(args, "reason", "") or "",
+            execute=getattr(args, "execute", False),
+            migrate_ripple_id=getattr(args, "migrate_ripple_id", None),
         )
 
     chapter_range = parse_range(args.range, RangeParser())

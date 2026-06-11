@@ -825,6 +825,48 @@ class RippleStorage:
             ).fetchone()
             return self._row_to_cascade_run(row) if row else None
 
+    def list_cascade_runs_v1(self, ripple_id: str | None = None) -> list[CascadeRun]:
+        """Phase 9.36: list cascade_runs rows with algorithm='v1' (migration source)."""
+        clauses, params = ["algorithm = 'v1'"], []
+        if ripple_id is not None:
+            clauses.append("ripple_id = ?")
+            params.append(ripple_id)
+        where = f"WHERE {' AND '.join(clauses)}"
+        sql = f"SELECT * FROM cascade_runs {where} ORDER BY id ASC"
+        with self._connect() as conn:
+            return [self._row_to_cascade_run(row) for row in conn.execute(sql, params)]
+
+    def update_cascade_run_v2(self, run_id: int, cascaded: "CascadedRipple") -> bool:
+        """Phase 9.36: rewrite v1 cascade_runs row with v2_weighted BFS result.
+
+        Returns:
+            True if row updated (was v1)
+            False if already v2_weighted (idempotent no-op)
+        """
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT algorithm FROM cascade_runs WHERE id = ?", (run_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"Cascade run {run_id} not found")
+            if row["algorithm"] == "v2_weighted":
+                return False
+            cur = conn.execute(
+                "UPDATE cascade_runs SET algorithm = ?, depth_reached = ?,"
+                " nodes_json = ?, edges_json = ?, actions_json = ?"
+                " WHERE id = ? AND algorithm = 'v1'",
+                (
+                    "v2_weighted",
+                    cascaded.depth_reached,
+                    json.dumps([self._node_to_dict(n) for n in cascaded.cascade_nodes], ensure_ascii=False),
+                    json.dumps([self._edge_to_dict(e) for e in cascaded.cascade_edges], ensure_ascii=False),
+                    json.dumps(list(cascaded.cascade_actions), ensure_ascii=False),
+                    run_id,
+                ),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+
     def _row_to_cascade_run(self, row: sqlite3.Row) -> CascadeRun:
         return CascadeRun(
             id=row["id"],

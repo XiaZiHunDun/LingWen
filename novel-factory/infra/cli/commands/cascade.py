@@ -20,7 +20,34 @@ class CascadeCommand(Command):
     def execute(self, options: CascadeOptions) -> int:
         if options.action == "cancel":
             return self._execute_cancel(options)
+        if options.action == "migrate":
+            return self._execute_migrate(options)
         return self._execute_run(options)
+
+    def _execute_migrate(self, options: CascadeOptions) -> int:
+        """Phase 9.36 F21: v1 → v2_weighted cascade_runs migration (opt-in)."""
+        from infra.cross_volume.cascade_migration import migrate_v1_cascade_runs
+
+        storage = _get_storage()
+        if storage._graph is None:
+            print("Error: reference graph not loaded (cannot recompute BFS)", file=__import__("sys").stderr)
+            return 1
+        mode = "execute" if options.execute else "dry-run"
+        print(f"[MIGRATE] mode={mode} ripple_filter={options.migrate_ripple_id or '*'}")
+        stats = migrate_v1_cascade_runs(
+            storage,
+            execute=options.execute,
+            ripple_id=options.migrate_ripple_id,
+        )
+        print(
+            f"  scanned={stats.scanned} migrated={stats.migrated}"
+            f" skipped={stats.skipped} failed={stats.failed}"
+        )
+        for err in stats.errors:
+            print(f"  error: {err}")
+        if stats.failed and not options.execute:
+            pass
+        return 1 if stats.failed else 0
 
     def _execute_run(self, options: CascadeOptions) -> int:
         """Phase 9.19+9.20: re-run cascade BFS (原 body, 0 改)."""
