@@ -1,4 +1,4 @@
-"""cascade command - Phase 9.19. 1:1 with ripple_audit."""
+"""cascade command - Phase 9.19 (run) + 9.20 (--persist) + 9.21 (cancel subcommand)."""
 from pathlib import Path
 
 from infra.cli.options import CascadeOptions
@@ -15,9 +15,15 @@ def _get_storage() -> RippleStorage:
 
 class CascadeCommand(Command):
     name = "cascade"
-    description = "重新运行涟漪扩散 BFS (Phase 9.19)"
+    description = "Re-run cascade BFS / cancel persisted run (Phase 9.19+9.20+9.21)"
 
     def execute(self, options: CascadeOptions) -> int:
+        if options.action == "cancel":
+            return self._execute_cancel(options)
+        return self._execute_run(options)
+
+    def _execute_run(self, options: CascadeOptions) -> int:
+        """Phase 9.19+9.20: re-run cascade BFS (原 body, 0 改)."""
         import sys
         ripple_id = options.ripple_id
         max_depth = options.max_depth
@@ -41,4 +47,19 @@ class CascadeCommand(Command):
         print(f"  edges: {len(cascaded.cascade_edges)}")
         print(f"  actions: {len(cascaded.cascade_actions)}")
         print(f"  algorithm: {cascaded.bfs_algorithm_version}")
+        return 0
+
+    def _execute_cancel(self, options: CascadeOptions) -> int:
+        """Phase 9.21: cancel persisted cascade run by id."""
+        import sys
+        storage = _get_storage()
+        try:
+            flipped = storage.cancel_cascade_run(options.run_id, reason=options.reason)
+        except KeyError:
+            print(f"Error: cascade run {options.run_id} not found", file=sys.stderr)
+            return 1
+        if flipped:
+            print(f"cancelled cascade run id={options.run_id}")
+        else:
+            print(f"cascade run id={options.run_id} already cancelled (no-op)")
         return 0

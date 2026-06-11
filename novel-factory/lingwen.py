@@ -156,14 +156,19 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             to_status=args.to_status,
         )
     elif command == "cascade":
+        action = getattr(args, "cascade_action", None) or "run"
         return CascadeOptions(
             range=[],
             parallel=1,
             verbose=False,
             dry_run=False,
-            ripple_id=args.ripple_id,
-            max_depth=args.max_depth,
+            ripple_id=getattr(args, "ripple_id", "") or "",
+            max_depth=getattr(args, "max_depth", 3) or 3,
             persist=args.persist,
+            # Phase 9.21 NEW
+            action=action,
+            run_id=getattr(args, "run_id", 0) or 0,
+            reason=getattr(args, "reason", "") or "",
         )
 
     chapter_range = parse_range(args.range, RangeParser())

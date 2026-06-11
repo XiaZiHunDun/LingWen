@@ -118,11 +118,16 @@ class RippleResetOptions(UnifiedOptions):
 
 @dataclass
 class CascadeOptions(UnifiedOptions):
-    """cascade 命令选项 (Phase 9.19).
+    """cascade 命令选项 (Phase 9.19 + 9.20 + 9.21).
 
-    Re-run cascade BFS with caller-specified max_depth (not persisted).
+    Re-run cascade BFS with caller-specified max_depth (not persisted by default).
+    Phase 9.21 NEW: action dispatch ('run' | 'cancel') + cancel-specific fields.
     1:1 with ripple-audit pattern.
     """
     ripple_id: str = ""
     max_depth: int = 3  # 1..10
     persist: bool = False  # Phase 9.20 NEW: 持久化 cascade run 到 cascade_runs 表 (off by default)
+    # Phase 9.21 NEW: subparser group dispatch
+    action: str = "run"      # 'run' | 'cancel'
+    run_id: int = 0          # for cancel action
+    reason: str = ""         # for cancel action (logged + WS payload, not persisted)
