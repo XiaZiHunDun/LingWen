@@ -1,6 +1,7 @@
 from infra.cli.options import (
     AntiTropeOptions,
     BackfillOptions,
+    CascadeOptions,
     CheckOptions,
     LLMAnalyzeOptions,
     PolishOptions,
@@ -28,4 +29,5 @@ __all__ = [
     "RippleAuditOptions",
     "RippleRollbackOptions",
     "RippleResetOptions",
+    "CascadeOptions",
 ]

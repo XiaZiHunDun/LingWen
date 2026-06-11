@@ -23,6 +23,7 @@ from typing import List, Optional
 from .anti_trope import AntiTropeCommand
 from .backfill import BackfillCommand
 from .base import Command
+from .cascade import CascadeCommand
 from .check import CheckCommand
 from .doctor import DoctorCommand
 from .llm_analyze import LLMAnalyzeCommand
@@ -53,6 +54,8 @@ COMMANDS = {
     "ripple-rollback": RippleRollbackCommand,
     # Phase 9.18 additive: ripple-reset (test/dev tool)
     "ripple-reset": RippleResetCommand,
+    # Phase 9.19 additive: cascade (re-run BFS, 1:1 with ripple-audit)
+    "cascade": CascadeCommand,
 }
 
 __all__ = [
@@ -60,6 +63,7 @@ __all__ = [
     "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
     "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
     "RippleAuditCommand", "RippleRollbackCommand", "RippleResetCommand",
+    "CascadeCommand",
     "COMMANDS", "get_command", "list_commands",
 ]
 

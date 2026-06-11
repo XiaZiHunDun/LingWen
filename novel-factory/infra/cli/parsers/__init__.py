@@ -10,6 +10,7 @@ import argparse
 
 from .anti_trope import add_anti_trope_parser
 from .backfill import add_backfill_parser
+from .cascade import add_cascade_parser
 from .check import add_check_parser
 from .doctor import add_doctor_parser
 from .llm_analyze import add_llm_analyze_parser
@@ -64,5 +65,7 @@ Examples:
     add_ripple_rollback_parser(subparsers)
     # Phase 9.18 additive: ripple-reset (test/dev tool, 1:1 with ripple-rollback)
     add_ripple_reset_parser(subparsers)
+    # Phase 9.19 additive: cascade (re-run BFS, 1:1 with ripple-audit)
+    add_cascade_parser(subparsers)
 
     return parser

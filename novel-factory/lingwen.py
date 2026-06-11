@@ -17,6 +17,8 @@ Commands:
     backfill   - 跨卷涟漪 4 维规则回填 (Phase 9.11)
     ripple-audit - 打印涟漪审计历史 (Phase 9.14)
     ripple-rollback - 回滚已应用/已拒绝涟漪 (Phase 9.14)
+    ripple-reset - 重置涟漪状态 (Phase 9.18)
+    cascade    - 重新运行涟漪扩散 BFS (Phase 9.19)
 """
 
 import argparse
@@ -29,6 +31,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from infra.cli import (
     AntiTropeOptions,
     BackfillOptions,
+    CascadeOptions,
     CheckOptions,
     LLMAnalyzeOptions,
     PolishOptions,
@@ -151,6 +154,15 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             dry_run=False,
             ripple_id=args.ripple_id,
             to_status=args.to_status,
+        )
+    elif command == "cascade":
+        return CascadeOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+            dry_run=False,
+            ripple_id=args.ripple_id,
+            max_depth=args.max_depth,
         )
 
     chapter_range = parse_range(args.range, RangeParser())

@@ -114,3 +114,14 @@ class RippleResetOptions(UnifiedOptions):
     """
     ripple_id: str = ""
     to_status: str = ""  # required, one of 5 valid statuses
+
+
+@dataclass
+class CascadeOptions(UnifiedOptions):
+    """cascade 命令选项 (Phase 9.19).
+
+    Re-run cascade BFS with caller-specified max_depth (not persisted).
+    1:1 with ripple-audit pattern.
+    """
+    ripple_id: str = ""
+    max_depth: int = 3  # 1..10
