@@ -19,6 +19,7 @@
           <span class="nav-label">{{ item.label }}</span>
         </a>
       </nav>
+      <SidebarWsDisconnectedBanner />
       <SidebarCostBanner :status="status" data-testid="ws-status" /> <!-- Phase 8.11 + 8.45.3 ws-status testid (Vue 3.5 inherit fallthrough) -->
     </aside>
 
@@ -53,6 +54,7 @@ import DecisionsPage from './pages/DecisionsPage.vue'
 import WorkflowsPage from './pages/WorkflowsPage.vue'
 import RipplesPage from './pages/RipplesPage.vue' // Phase 9.13
 import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
+import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue' // Phase 9.26 F10
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
 
 const activeNav = ref('overview')
