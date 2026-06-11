@@ -1,6 +1,7 @@
-// playwright.config.js — Phase 8.45.3
-// Playwright config (0 browser download, 0 CI integration).
-// dev opt-in: npx playwright install chromium 装 browser 后跑 pnpm e2e:smoke
+// playwright.config.js — Phase 8.45.3 / Phase 9.31 F15
+// Playwright config (0 browser download, 0 CI integration, 0 ceremonial specs).
+// Phase 9.31 F15: tests/e2e-smoke/*.spec.js 已 vitest 化并删除; 契约见 tests/unit/.
+// dev opt-in: npx playwright install chromium 后可加新 browser e2e (非 primary gate).
 // vitest 走 dashboard-frontend-ci.yml 仍 vitest primary gate, Playwright 留
 // manual + future CI integration (Phase 8.46+ followup).
 

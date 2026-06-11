@@ -14,8 +14,7 @@ export default mergeConfig(viteConfig, defineConfig({
     // Phase 8.30: tests/unit/setup.ts 集中 stub echarts 等 jsdom-incompatible 模块
     setupFiles: ['./tests/unit/setup.ts'],
     include: ['src/**/*.spec.{js,ts}', 'tests/unit/**/*.spec.{js,ts}'],
-    // Phase 8.30: ceremonial Playwright specs (.spec.js) 仍保留作契约文档,
-    // 但走 vitest 跑的是 tests/unit/ + src/ 下的真 e2e tests
+    // Phase 9.31 F15: ceremonial Playwright specs 已删, 契约全走 tests/unit/
     exclude: ['node_modules', 'dist', 'tests/e2e/**', 'tests/e2e-smoke/**', 'coverage/**'],
     // Phase 8.43.2: pool: 'forks' jsdom fork-isolate 防 OOM (跟 Phase 6.4 pytest
     // forks 镜像, 多 spec 跑不串). coverage/** exclude 给 Phase 8.44+ 留占位.

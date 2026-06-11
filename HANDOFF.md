@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.30 (Phase 9.30 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.30 F14 data-testid 统一 ✅; pytest 2495 (不变); vitest 180→182 (+2); 推荐 F15。
+> **版本**: v9.31 (Phase 9.31 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.31 F15 Playwright → vitest ✅; pytest 2495 (不变); vitest 182→192 (+10); Playwright 0 listed; 推荐 F16。
 
 ---
 
@@ -14,12 +14,12 @@
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
 | **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2495 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 182 passed + Playwright 14 e2e |
-| **总测试** | **2672+** (2495 pytest + 182 vitest + 14 e2e + 27 pytest skip) |
+| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 192 passed · Playwright 0 (dev opt-in) |
+| **总测试** | **2687+** (2495 pytest + 192 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **下一期推荐** | P2 F15 (11 ceremonial Playwright → vitest, ~4h) |
+| **下一期推荐** | P2 F16 (cascade BFS max_nodes_cap 可配置, ~1h) |
 
 ---
 
@@ -55,8 +55,8 @@ LingWen/                                    # 本目录 (项目根, git root)
 │   │   │   │   ├── composables/            # useWorkflowSocket / useCostWindow / useRippleStore
 │   │   │   │   └── api/
 │   │   │   ├── tests/
-│   │   │   │   ├── unit/                   # 43 vitest spec (182 tests)
-│   │   │   │   └── e2e-smoke/              # 10 Playwright spec (14 e2e)
+│   │   │   │   ├── unit/                   # 46 vitest spec (192 tests)
+│   │   │   │   └── e2e-smoke/              # (空) Phase 9.31 F15 Playwright 已 vitest 化
 │   │   │   └── package.json + vite.config.js + vitest.config.js + playwright.config.js
 │   │   └── ...
 │   ├── tests/                              # 2484 pytest
@@ -106,8 +106,8 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **2 reviewers per task** — 1 spec compliance + 1 code quality (subagent-driven-development skill)
 - **80%+ 覆盖率** — `pytest --cov` + `vitest --coverage` (已 CI 化)
 - **测试 entry 不动**: pytest `pytest -q` (~90s), vitest `pnpm test`, e2e `pnpm e2e:smoke`
-- **0 ceremonial e2e** — 不留 Playwright spec 当契约文档, 走 vitest jsdom 真 e2e 化 (Phase 8.30b pattern)
-- **0 改 baseline 0 测试代码** — 2495 pytest + 182 vitest + 14 e2e 全部不动, 只加新
+- **0 ceremonial e2e** — Playwright spec 已 Phase 9.31 F15 全删, 契约走 vitest jsdom (Phase 8.30b pattern)
+- **0 改 baseline 0 测试代码** — 2495 pytest + 192 vitest 全部不动, 只加新
 
 ### 2.4 文档规则
 
@@ -140,7 +140,7 @@ cd dashboard/frontend && pnpm install && cd ../..
 
 # 2. 验证 baseline (sanity check, 跟 Handoff 同步时的测试数比对)
 pytest -q                          # 期望: 2495 passed, 27 skipped, ~90s
-cd dashboard/frontend && pnpm exec vitest run && cd ../..  # 期望: 182 passed, ~5s
+cd dashboard/frontend && pnpm exec vitest run && cd ../..  # 期望: 192 passed, ~5s
 # (e2e 14 tests, 部分 baseline fail 不是回归, 是 Phase 9.18 已知)
 
 # 3. 启动 dashboard (optional, 看 UI)
@@ -151,7 +151,7 @@ cd novel-factory/dashboard/frontend && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
 ```
 
-如果 baseline 不匹配 (2495 + 182), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
+如果 baseline 不匹配 (2495 + 192), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
 
 ---
 
@@ -195,7 +195,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.30)
+## 5. 最近工作 (Phase 8.16 → 9.31)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -218,10 +218,12 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.28 F12 per-tier trend | 2026-06-11 | `cost_by_day_per_tier` 后端聚合 + CostTrendChart multi-series 接通 | 2495/176 vitest |
 | 9.29 F13 cumulative line | 2026-06-11 | 单线模式「每日+累计」双 series + `computeCumulativeSeries` helper | 2495/180 vitest |
 | 9.30 F14 testid unify | 2026-06-11 | DecisionsPage/WorkflowsPage testid + 2 page spec 0 class selector | 2495/182 vitest |
+| 9.31 F15 playwright vitest | 2026-06-11 | 删 10 ceremonial Playwright + 3 vitest page spec (+10) | 2495/192 vitest |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] feat(dashboard): phase 9.30 F14 — page data-testid convention unify
+[本 commit] test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
+364b0b1 feat(dashboard): phase 9.30 F14 — page data-testid convention unify
 41d7129 feat(dashboard): phase 9.29 F13 — cost cumulative trend line
 743838d docs(handoff): v9.28 F12 完成 — HANDOFF 补全
 9223222 feat(dashboard): phase 9.28 F12 — per-tier cost trend lines
@@ -246,7 +248,6 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 | # | 主题 | Phase 起点 | 估时 | 独立? |
 |---|------|------------|------|-------|
-| F15 | 11 ceremonial Playwright vitest 化 (跟 8.30b 模式) | 8.30 | 4h | ✅ |
 | F16 | Phase 14 cascade BFS cap config (max_nodes_cap=100 hardcoded) | 9.16 | 1h | ✅ |
 
 **已完成 (从 roadmap 拿掉)**:
@@ -259,22 +260,17 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 - F12: Per-tier 趋势线 (Phase 9.28 ✅, `cost_by_day_per_tier` + 11 pytest + 1 vitest)
 - F13: Cost cumulative 折线 (Phase 9.29 ✅, `computeCumulativeSeries` + 单线双 series + 4 vitest)
 - F14: data-testid 统一 (Phase 9.30 ✅, DecisionsPage/WorkflowsPage 7 testid + 2 page spec byTestid + 2 vitest)
+- F15: Playwright vitest 化 (Phase 9.31 ✅, 删 10 ceremonial Playwright + app/ripples/dryrun vitest +10)
 
-**推荐下一项**: F15 (11 ceremonial Playwright → vitest, ~4h) — 走 Phase 8.30b 模式批量转换。
+**推荐下一项**: F16 (cascade BFS max_nodes_cap 可配置, ~1h) — Phase 9.16 留 followup。
 
 ---
 
 ## 7. 已知 issues / 不破 baseline 区域
 
-### 7.1 Pre-existing e2e 失败 (不是回归, 是已知)
+### 7.1 Playwright e2e (Phase 9.31 F15 后)
 
-- `tests/e2e-smoke/cascade-realtime.spec.js` — 2/3 fail (Phase 9.18 已知)
-- `tests/e2e-smoke/ripple-dryrun.spec.js` — 1 fail
-- `tests/e2e-smoke/ripples-audit.spec.js` — 3/3 fail (本机无 backend)
-- `tests/e2e-smoke/ripples.spec.js` — 2/2 fail
-- `tests/e2e-smoke/smoke.spec.js` — 3/3 fail
-
-总计 11 pre-existing e2e fail, 跟 Phase 9.23 cascade run filter 不破 baseline 直接相关 (跑 pnpm e2e:smoke --list 看 14 tests, 实际 PASS=3)。**新工具不要试图修这些**, 是已 followup。
+Phase 9.31 F15 已删全部 ceremonial Playwright spec (`tests/e2e-smoke/` 7 文件 + `tests/e2e/` 3 文件). 契约全走 vitest (`tests/unit/`, 192 tests). `pnpm e2e:smoke --list` → 0 tests. Playwright runner 仍 devDep 留 opt-in 未来真 browser e2e, **非 primary gate**。
 
 ### 7.2 MEMORY.md 路径歧义
 
@@ -304,10 +300,10 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 auto-memory `~/.claude/projects/.../memory/MEMORY.md` (项目记忆索引, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 4 phase 详细, 10 分钟) — 如果要做 P2 任意 item
 - [ ] 跑 `pytest -q` 验证 baseline 2495 passed (~90s)
-- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 182 passed (~5s)
+- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 192 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 P2 item (推荐 F15) → brainstorming → writing-plans → subagent-driven-development
+- [ ] 选 1 个 P2 item (推荐 F16) → brainstorming → writing-plans → subagent-driven-development
 
 ---
 
@@ -316,9 +312,8 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 ```bash
 # === Tests ===
 cd novel-factory && pytest -q                                    # 2495 tests, ~90s
-cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 182 vitest, ~5s
-cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 14 e2e listed
-cd novel-factory/dashboard/frontend && pnpm e2e:smoke cascade-realtime  # 3 PASS
+cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 192 vitest, ~5s
+cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 0 tests (Phase 9.31 F15)
 cd novel-factory && ruff check .                                 # 0 issues
 cd novel-factory/dashboard/frontend && pnpm lint:all             # 0 errors
 cd novel-factory/dashboard/frontend && pnpm build                # 0 errors
@@ -379,5 +374,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.30 (2026-06-11)
-> **下次更新**: 启动 F15 (Playwright vitest 化) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item
+> **版本**: v9.31 (2026-06-11)
+> **下次更新**: 启动 F16 (cascade BFS cap config) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item
