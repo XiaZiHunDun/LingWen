@@ -33,6 +33,11 @@
       </button>
     </nav>
 
+    <div v-if="focusChapter != null" class="focus-banner pixel-border" data-testid="decision-focus-banner">
+      来自章节 #{{ focusChapter }} 的跳转
+      <span v-if="highlightedDecisionId"> · 决策 {{ highlightedDecisionId }}</span>
+    </div>
+
     <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
     </div>
@@ -75,6 +80,7 @@
         v-for="d in displayList"
         :key="d.decision_id"
         :decision="d"
+        :class="{ 'decision-card--focused': d.decision_id === highlightedDecisionId }"
         @resolve="handleResolve"
         @defer="handleDefer"
         @cancel="handleCancel"
@@ -84,10 +90,12 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch, nextTick } from 'vue';
 import DecisionCard from '../components/DecisionCard.vue';
 import { useDecisionStore } from '../composables/useDecisionStore.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { resolveFocusedDecisionId } from '../utils/chapterDecisionLink.js';
 
 // Phase 8.34: 拆分为 module-level singleton stores
 //   useDecisionStore 管 all 历史 + 4 mutations (refresh/resolve/defer/cancel)
@@ -95,6 +103,7 @@ import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 //   页面 UI state (activeTab / expanded) 仍 page-local
 const store = useDecisionStore();
 const ws = useWorkflowSocket();
+const { focusChapter, focusDecisionId } = useDashboardNav();
 
 // pending 仍走 WS 权威源 (Phase 6.4+ 契约, per 主公 Phase 8.34 决策)
 // ws.pendingDecisions 是 array of decisions (status 任意), 过滤 pending 状态
@@ -109,6 +118,7 @@ const error = computed(() => store.lastError.value || ws.lastError.value);
 // Phase 6.6.A: resolved / closed tab 默认折叠, 用户点 "▸ 展开" 切换
 const activeTab = ref('pending');
 const expanded = ref({ resolved: false, closed: false });
+const highlightedDecisionId = ref(null);
 
 // 已解决 (status === 'resolved') - 按 resolved_at 倒序, 最新在前
 const resolved = computed(() =>
@@ -184,6 +194,28 @@ async function handleCancel({ decisionId, reason }) {
     /* lastError 已 set, 由 error computed 展示 */
   }
 }
+
+function applyDecisionFocus() {
+  if (focusChapter.value == null && !focusDecisionId.value) {
+    highlightedDecisionId.value = null;
+    return;
+  }
+  activeTab.value = 'pending';
+  highlightedDecisionId.value = resolveFocusedDecisionId(
+    focusChapter.value,
+    focusDecisionId.value,
+    pending.value,
+  );
+  if (!highlightedDecisionId.value) return;
+  nextTick(() => {
+    const el = document.querySelector(
+      `[data-decision-id="${highlightedDecisionId.value}"]`,
+    );
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+}
+
+watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate: true });
 </script>
 
 <style scoped>
@@ -292,5 +324,18 @@ async function handleCancel({ decisionId, reason }) {
 
 .tab-btn[data-tab="closed"] {
   border-bottom: 2px solid var(--color-warning);
+}
+
+.focus-banner {
+  font-size: 9px;
+  font-family: 'Press Start 2P', monospace;
+  padding: var(--space-sm);
+  background: #fff9c4;
+  border: 2px solid var(--border-color);
+}
+
+:deep(.decision-card--focused) {
+  outline: 3px solid var(--color-accent);
+  box-shadow: 4px 4px 0 var(--border-color);
 }
 </style>

@@ -4,7 +4,7 @@
   Phase 6.6.B: + status badge (✅⏸❌) + meta info (解决人/选项/时间/原因) + resolve 守卫
 -->
 <template>
-  <div class="decision-card pixel-card" data-testid="decision-card">
+  <div class="decision-card pixel-card" :data-decision-id="decision.decision_id" data-testid="decision-card">
     <div class="card-header">
       <span class="kind-badge" :class="`kind-${kindClass}`" :data-testid="`decision-kind-${kindClass}`">{{ kindLabel }}</span>
       <span class="priority-badge" v-if="decision.priority !== undefined">

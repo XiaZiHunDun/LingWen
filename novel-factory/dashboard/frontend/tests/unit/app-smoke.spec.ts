@@ -147,6 +147,7 @@ describe('App smoke (Phase 9.31 F15)', () => {
   })
 
   test('overview error banner on API failure', async () => {
+    window.history.replaceState(null, '', '/')
     vi.resetModules()
     mocks.fetchOverview.mockRejectedValue(new Error('api down'))
     mocks.fetchChapters.mockRejectedValue(new Error('api down'))

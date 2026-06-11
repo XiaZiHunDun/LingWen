@@ -352,7 +352,9 @@ class MasterController:
             initial_inputs = seed_inputs
 
             # 扫描 DECISION 节点 → 创建 HumanDecision (Phase 4.3)
-            pending_decisions = self._harvest_decision_specs(graph)
+            pending_decisions = self._harvest_decision_specs(
+                graph, initial_inputs=initial_inputs or {},
+            )
 
             summary = scheduler.run(
                 start_nodes=start_nodes,
@@ -489,7 +491,9 @@ class MasterController:
         )
 
         # 5. 扫描新 DECISION 节点 (下游可能有)
-        pending_decisions = self._harvest_decision_specs(graph)
+        pending_decisions = self._harvest_decision_specs(
+            graph, initial_inputs=getattr(self, "_last_initial_inputs", None) or {},
+        )
 
         # 6. 继续执行 — 用上次缓存的 start_nodes
         start_nodes = self._last_start_nodes
@@ -577,7 +581,12 @@ class MasterController:
             mode=mode,
         )
 
-    def _harvest_decision_specs(self, graph: Any) -> list[dict[str, Any]]:
+    def _harvest_decision_specs(
+        self,
+        graph: Any,
+        *,
+        initial_inputs: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """扫描图中的 DECISION 节点 → 创建 HumanDecision → 返回序列化列表
 
         Phase 4.3: run_workflow 自动从工作流图中识别 DECISION 类型节点,
@@ -604,12 +613,20 @@ class MasterController:
             elif nid in pending_node_ids:
                 continue
             kind = _infer_decision_kind(nid)
+            ctx: dict[str, Any] = {}
+            seed = initial_inputs if initial_inputs is not None else getattr(
+                self, "_last_initial_inputs", None,
+            ) or {}
+            chapter_num = seed.get("chapter_num")
+            if chapter_num is not None:
+                ctx["chapter_num"] = chapter_num
             decision = create_decision(
                 decision_kind=kind,
                 node_id=nid,
                 prompt=node.description or f"决策点: {node.name or nid}",
                 options=_default_options_for(kind),
                 priority=_default_priority_for(kind),
+                context=ctx,
             )
             # Phase 6.5: with_lock() 让 add 也是原子的
             with queue.with_lock():

@@ -14,7 +14,7 @@
           href="#"
           class="nav-item"
           :class="{ 'nav-item--active': activeNav === item.id }"
-          @click.prevent="activeNav = item.id"
+          @click.prevent="onNavClick(item.id)"
         >
           <span class="nav-icon">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
@@ -44,7 +44,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import OverviewPage from './pages/OverviewPage.vue'
 import DecisionsPage from './pages/DecisionsPage.vue'
 import WorkflowsPage from './pages/WorkflowsPage.vue'
@@ -57,9 +56,14 @@ import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
 import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue' // Phase 9.26 F10
 import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue' // Phase 9.27 F11
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
+import { useDashboardNav } from './composables/useDashboardNav.js' // Phase 9.83 F75
 
-const activeNav = ref('overview')
+const { activeNav, navigateTo } = useDashboardNav()
 const { status } = useWorkflowSocket() // Phase 8.11
+
+function onNavClick(itemId) {
+  navigateTo(itemId, { clearFocus: true })
+}
 
 const navItems = [
   { id: 'overview', label: '总览', icon: '📊' },

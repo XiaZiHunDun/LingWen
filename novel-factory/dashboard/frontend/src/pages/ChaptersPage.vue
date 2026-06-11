@@ -108,6 +108,8 @@
         v-if="chapters.length > 0"
         :chapters="chapters"
         :production-by-chapter="productionByChapter"
+        :decision-link-chapters="decisionLinkChapters"
+        @decision-link="onChapterDecisionLink"
       />
       <p v-else-if="!loading" class="chapters-empty" data-testid="chapters-empty">
         暂无章节数据
@@ -121,6 +123,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
 import { fetchChapters, fetchProductionRecords } from '../api/index.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import { useDashboardNav } from '../composables/useDashboardNav.js';
 import {
   formatIncrementalBackfill,
   productionSummaryLines,
@@ -131,6 +134,10 @@ import {
   formatProductionRecordRows,
   indexRecordsByChapter,
 } from '../utils/productionRecords.js';
+import {
+  chapterDecisionLinkEnabled,
+  findPendingDecisionForChapter,
+} from '../utils/chapterDecisionLink.js';
 
 const rangeOptions = ['1-30', '1-50', '31-60', '61-90'];
 const range = ref('1-30');
@@ -141,7 +148,8 @@ const productionRecords = ref([]);
 const recordsLoading = ref(false);
 const recordsError = ref(null);
 
-const { status } = useWorkflowSocket();
+const { status, pendingDecisions } = useWorkflowSocket();
+const { navigateTo } = useDashboardNav();
 
 const workflowActive = computed(() => Boolean(status.value?.is_active));
 const paused = computed(() => Boolean(status.value?.paused));
@@ -162,6 +170,29 @@ const incrementalBackfillLabel = computed(() =>
 const historyRows = computed(() => formatProductionRecordRows(productionRecords.value));
 
 const productionByChapter = computed(() => indexRecordsByChapter(productionRecords.value));
+
+const decisionLinkChapters = computed(() => {
+  const map = {};
+  for (const ch of chapters.value) {
+    const num = ch.chapter;
+    if (chapterDecisionLinkEnabled(num, pendingDecisions.value, status.value)) {
+      map[num] = true;
+    }
+  }
+  return map;
+});
+
+function onChapterDecisionLink(chapterNum) {
+  const decision = findPendingDecisionForChapter(
+    chapterNum,
+    pendingDecisions.value,
+    status.value,
+  );
+  navigateTo('decisions', {
+    chapter: chapterNum,
+    decisionId: decision?.decision_id ?? null,
+  });
+}
 
 async function loadProductionRecords() {
   recordsLoading.value = true;

@@ -28,6 +28,15 @@
           <td>{{ chapter.coolpoint_count }}</td>
           <td>{{ formatPercent(chapter.coolpoint_density) }}</td>
           <td>
+            <button
+              v-if="showDecisionLink(chapter.chapter)"
+              type="button"
+              class="decision-link-btn pixel-border"
+              data-testid="chapter-decision-link"
+              @click.stop="emitDecisionLink(chapter.chapter)"
+            >
+              决策
+            </button>
             <span
               v-if="productionBadge(chapter.chapter)"
               class="production-badge"
@@ -35,7 +44,10 @@
             >
               {{ productionBadge(chapter.chapter) }}
             </span>
-            <span v-else class="production-badge-empty">-</span>
+            <span
+              v-if="!showDecisionLink(chapter.chapter) && !productionBadge(chapter.chapter)"
+              class="production-badge-empty"
+            >-</span>
           </td>
         </tr>
       </tbody>
@@ -58,8 +70,14 @@ const props = defineProps({
   productionByChapter: {
     type: Object,
     default: () => ({})
+  },
+  decisionLinkChapters: {
+    type: Object,
+    default: () => ({})
   }
 })
+
+const emit = defineEmits(['decision-link'])
 
 const columns = [
   { key: 'chapter', label: '章节' },
@@ -67,7 +85,7 @@ const columns = [
   { key: 'hook_strength_avg', label: '钩子强度' },
   { key: 'coolpoint_count', label: '爽点数' },
   { key: 'coolpoint_density', label: '爽点密度' },
-  { key: 'production', label: '生产' }
+  { key: 'production', label: '生产/决策' }
 ]
 
 const sortKey = ref('chapter')
@@ -108,6 +126,12 @@ const formatPercent = (value) => {
 
 const productionBadge = (chapterNum) =>
   chapterProductionBadge(chapterNum, props.productionByChapter)
+
+const showDecisionLink = (chapterNum) => Boolean(props.decisionLinkChapters[chapterNum])
+
+const emitDecisionLink = (chapterNum) => {
+  emit('decision-link', chapterNum)
+}
 </script>
 
 <style scoped>
@@ -188,6 +212,15 @@ const productionBadge = (chapterNum) =>
 
 .production-badge-empty {
   opacity: 0.5;
+}
+
+.decision-link-btn {
+  font-size: 7px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 2px 4px;
+  margin-right: 4px;
+  cursor: pointer;
+  background: #fff59d;
 }
 
 .empty-state {

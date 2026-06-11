@@ -7,6 +7,7 @@ import { byTestid } from '../helpers/by-testid'
 const mocks = vi.hoisted(() => ({
   fetchChapters: vi.fn(),
   fetchProductionRecords: vi.fn(),
+  pendingDecisions: { value: [] as Array<Record<string, unknown>> },
   status: {
     value: {
       is_active: false,
@@ -25,8 +26,19 @@ vi.mock('../../src/api/index.js', () => ({
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   useWorkflowSocket: () => ({
     status: mocks.status,
+    pendingDecisions: mocks.pendingDecisions,
     connected: { value: true },
     lastError: { value: null },
+  }),
+}))
+
+const navMocks = vi.hoisted(() => ({
+  navigateTo: vi.fn(),
+}))
+
+vi.mock('../../src/composables/useDashboardNav.js', () => ({
+  useDashboardNav: () => ({
+    navigateTo: navMocks.navigateTo,
   }),
 }))
 
@@ -44,6 +56,7 @@ describe('ChaptersPage (F63)', () => {
         },
       ],
     })
+    mocks.pendingDecisions.value = []
     mocks.status.value = {
       is_active: false,
       workflow_name: null,
@@ -129,5 +142,24 @@ describe('ChaptersPage (F63)', () => {
     expect(wrapper.find(byTestid('production-history-table')).exists()).toBe(true)
     expect(wrapper.text()).toContain('minimax')
     expect(wrapper.text()).toContain('#360')
+  })
+
+  test('chapter decision link navigates to decisions', async () => {
+    mocks.fetchChapters.mockResolvedValue({
+      chapters: [{ chapter: 5, hook_count: 1, hook_strength_avg: 0.5, coolpoint_count: 0, coolpoint_density: 0.1 }],
+    })
+    mocks.pendingDecisions.value = [
+      { decision_id: 'd5', status: 'pending', context: { chapter_num: 5 } },
+    ]
+    mocks.status.value = { is_active: true, paused: true, production_summary: { chapter_num: 5 } }
+    const wrapper = mount(ChaptersPage)
+    await flushPromises()
+    const link = wrapper.find('[data-testid="chapter-decision-link"]')
+    expect(link.exists()).toBe(true)
+    await link.trigger('click')
+    expect(navMocks.navigateTo).toHaveBeenCalledWith('decisions', {
+      chapter: 5,
+      decisionId: 'd5',
+    })
   })
 })
