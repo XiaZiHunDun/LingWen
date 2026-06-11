@@ -11,10 +11,11 @@
   非空时切换 multi-series (3 lines: haiku/sonnet/opus) + ECharts legend.
   配色: haiku #67c23a (绿, 便宜) / sonnet #ff6b6b (红, 主力) / opus #9b59b6 (紫, 贵)
   backend 提供 cost_by_day_per_tier 聚合 (Phase 9.28 F12); prop default null 时走单线 path.
+  Phase 9.29 F13: 单线 path 加累计折线 (跟每日线互补, ECharts legend 每日/累计).
 -->
 <template>
   <div class="cost-trend-chart-wrapper pixel-border" data-testid="cost-trend-chart-wrapper">
-    <h5 class="cost-trend-chart-title">📈 每日成本 trend</h5>
+    <h5 class="cost-trend-chart-title" data-testid="cost-trend-chart-title">📈 每日 / 累计成本 trend</h5>
     <div ref="chartRef" class="cost-trend-chart" data-testid="cost-trend-chart" :style="{ width: '100%', height: '220px' }"></div>
     <p v-if="!hasData" class="cost-trend-chart-empty" data-testid="cost-trend-chart-empty">暂无 trend 数据</p>
   </div>
@@ -23,6 +24,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { computeCumulativeSeries } from '../utils/costTrendChartUtils.js'
 
 const props = defineProps({
   // Phase 8.24: costByDay from backend cost_by_day (Phase 8.23)
@@ -34,8 +36,6 @@ const props = defineProps({
   // Phase 8.29: per-day-per-tier breakdown (additive, default null)
   // shape: { "2026-06-01": { haiku: 0.005, sonnet: 0.015, opus: 0.020 }, ... }
   // 当非空时, render multi-series (3 lines) + ECharts legend, 覆盖单线 baseline
-  // backend 暂未提供 (Phase 8.31 实施 cross-dim aggregation), 当前 prop 接受
-  // 但 default null → 走原单线 path, 0 破 baseline
   costByDayPerTier: {
     type: Object,
     default: null,
@@ -159,16 +159,26 @@ function renderPerTier() {
   })
 }
 
-// Phase 8.24 原 single-line path (per-day total, 跟 baseline 兼容)
+// Phase 8.24 + F13: single-line path — daily + cumulative series
 function renderTotal() {
-  // Phase 8.24: sort by date asc (后端 ORDER BY day 已升序, 防御性再排一次)
   const entries = Object.entries(props.costByDay || {})
     .sort(([a], [b]) => a.localeCompare(b))
   const dates = entries.map(([k]) => k)
   const costs = entries.map(([, v]) => v)
+  const cumulative = computeCumulativeSeries(costs)
 
   chartInstance.setOption({
-    grid: { top: 20, right: 20, bottom: 50, left: 70 },
+    grid: { top: 50, right: 20, bottom: 50, left: 70 },
+    legend: {
+      data: ['每日', '累计'],
+      top: 10,
+      right: 10,
+      textStyle: {
+        fontFamily: 'Press Start 2P',
+        fontSize: 8,
+        color: '#2a220f',
+      },
+    },
     tooltip: {
       trigger: 'axis',
       backgroundColor: '#2a220f',
@@ -180,8 +190,10 @@ function renderTotal() {
         color: '#fff7e8',
       },
       formatter: (params) => {
-        const p = params[0]
-        return `${p.name}<br/>成本: $${Number(p.value).toFixed(4)}`
+        const lines = params.map(
+          (p) => `${p.seriesName}: $${Number(p.value).toFixed(4)}`,
+        )
+        return `${params[0]?.name ?? ''}<br/>${lines.join('<br/>')}`
       },
     },
     xAxis: {
@@ -221,6 +233,7 @@ function renderTotal() {
     },
     series: [
       {
+        name: '每日',
         type: 'line',
         data: costs,
         symbol: 'rect',
@@ -236,6 +249,24 @@ function renderTotal() {
         },
         areaStyle: {
           color: 'rgba(255, 107, 107, 0.2)',
+        },
+        smooth: false,
+      },
+      {
+        name: '累计',
+        type: 'line',
+        data: cumulative,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: {
+          color: '#409eff',
+          width: 2,
+          type: 'dashed',
+        },
+        itemStyle: {
+          color: '#409eff',
+          borderColor: '#2a220f',
+          borderWidth: 2,
         },
         smooth: false,
       },

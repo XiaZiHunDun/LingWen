@@ -133,8 +133,9 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
 
     expect(setOptionSpy).toHaveBeenCalled()
     const option = setOptionSpy.mock.calls[0][0]
-    // Phase 8.29: empty dict → hasMultiSeries=false → 单线 path
-    expect(option.series.length).toBe(1)
+    // Phase 9.29 F13: empty dict → hasMultiSeries=false → 单线 path (每日+累计 2 series)
+    expect(option.series.length).toBe(2)
+    expect(option.legend.data).toEqual(['每日', '累计'])
   })
 
   test('uses single-line baseline when costByDayPerTier all-zero', async () => {
@@ -155,7 +156,7 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
 
     expect(setOptionSpy).toHaveBeenCalled()
     const option = setOptionSpy.mock.calls[0][0]
-    // Phase 8.29: 全 0 → hasMultiSeries=false (some > 0 检查失败) → 单线
-    expect(option.series.length).toBe(1)
+    // Phase 8.29: 全 0 → hasMultiSeries=false → 单线 path (Phase 9.29 F13: 2 series)
+    expect(option.series.length).toBe(2)
   })
 })
