@@ -15,6 +15,13 @@ vi.mock('echarts/components', () => ({ TitleComponent: vi.fn(), TooltipComponent
 vi.mock('echarts/renderers', () => ({ CanvasRenderer: vi.fn() }));
 
 import CascadeGraph from '../../src/components/CascadeGraph.vue';
+import {
+  CASCADE_VIEW_MODES,
+  buildCascadeChartOption,
+  computeNodeDepthMap,
+  computeNodeActionMap,
+  depthLayerColor,
+} from '../../src/utils/cascadeGraphUtils.js';
 
 interface CascadeNode {
   id: string;
@@ -88,7 +95,7 @@ describe('CascadeGraph.vue', () => {
     } as unknown as ReturnType<typeof echarts.init>);
     const wrapper = mount(CascadeGraph, { props: { cascade: stubCascade } });
     await flushPromises();
-    const option = setOptionSpy.mock.calls[0]![0] as {
+    const option = setOptionSpy.mock.calls.at(-1)![0] as {
       series?: Array<{ emphasis?: { focus?: string; itemStyle?: { opacity?: number } }; select?: { itemStyle?: { opacity?: number } } }>;
     };
     const series = option?.series?.[0];
@@ -96,5 +103,40 @@ describe('CascadeGraph.vue', () => {
     expect(series?.emphasis?.itemStyle?.opacity).toBeGreaterThan(0.5);
     expect(series?.select?.itemStyle?.opacity).toBeLessThan(0.5);
     wrapper.unmount();
+  });
+
+  it('renders view mode toggle with 3 options (Phase 9.51 F40)', async () => {
+    const wrapper = mount(CascadeGraph, { props: { cascade: stubCascade } });
+    await flushPromises();
+    expect(wrapper.get('[data-testid="cascade-view-toggle"]')).toBeTruthy();
+    for (const mode of CASCADE_VIEW_MODES) {
+      expect(wrapper.get(`[data-testid="cascade-view-${mode}"]`)).toBeTruthy();
+    }
+  });
+
+  it('switching to depth-layer updates data-view-mode attribute', async () => {
+    const wrapper = mount(CascadeGraph, { props: { cascade: stubCascade } });
+    await flushPromises();
+    await wrapper.get('[data-testid="cascade-view-depth-layer"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.get('[data-testid="cascade-graph"]').attributes('data-view-mode')).toBe('depth-layer');
+  });
+
+  it('depth-layer chart option uses fixed layout and depth colors', () => {
+    const option = buildCascadeChartOption(stubCascade, 'depth-layer', false);
+    expect(option.series[0].layout).toBe('none');
+    const depthMap = computeNodeDepthMap(stubCascade.cascade_nodes, stubCascade.cascade_actions);
+    expect(depthMap.n2).toBe(1);
+    const nodeColors = option.series[0].data.map((n: { itemStyle: { color: string } }) => n.itemStyle.color);
+    expect(nodeColors).toContain(depthLayerColor(depthMap.n2));
+  });
+
+  it('action-cluster chart groups nodes by action type', () => {
+    const actionMap = computeNodeActionMap(stubCascade.cascade_actions);
+    expect(actionMap.n1).toBe('trigger');
+    expect(actionMap.n2).toBe('propagate');
+    const option = buildCascadeChartOption(stubCascade, 'action-cluster', false);
+    expect(option.series[0].layout).toBe('none');
+    expect(option.title.text).toContain('Action');
   });
 });

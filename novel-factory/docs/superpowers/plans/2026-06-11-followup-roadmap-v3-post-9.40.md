@@ -172,6 +172,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **tests**: 3-4 vitest + 2 pytest
 - **estimated**: 2-3h
 - **dependency**: 9.15/9.16 CascadeGraph
+- **完成 (2026-06-11)**: `cascadeGraphUtils.js` + CascadeGraph 三视图 toggle (force / depth-layer / action-cluster); vitest 212→216 (+4); pytest 2613→2615 (+2)
 
 ---
 
