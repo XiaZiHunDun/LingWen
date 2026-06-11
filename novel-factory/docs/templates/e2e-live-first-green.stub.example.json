@@ -1,0 +1,19 @@
+{
+  "record_id": "e2e-live-first-green-stub",
+  "workflow": "dashboard-e2e-live.yml",
+  "trigger": "workflow_dispatch",
+  "branch": "master",
+  "github_run_id": "0000000000",
+  "github_run_url": "https://github.com/XiaZiHunDun/LingWen/actions/runs/0000000000",
+  "job_name": "Playwright live-backend",
+  "tests_passed": 5,
+  "summary_phrase": "Dashboard E2E Live — passed",
+  "local_parity": {
+    "script": "novel-factory/scripts/verify-e2e-live-ci.sh",
+    "passed": true,
+    "verified_at": "2026-06-11T12:00:00Z"
+  },
+  "operator": "stub-example",
+  "recorded_at": "2026-06-11T12:00:00Z",
+  "notes": "Stub — replace github_run_id/url after first green Actions run"
+}

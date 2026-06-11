@@ -287,6 +287,35 @@ bash novel-factory/scripts/e2e-live-remote-checklist.sh
 pytest tests/ci/test_e2e_live_f76_ci.py -q
 ```
 
+### 11.3 F82 — Remote e2e-live 首绿确认记录
+
+**目标**: 在 F76 checklist 基础上，**记录** GitHub Actions 首次全绿 run（manual gate）。
+
+**前置**: 本地 parity 已通过（步骤 1）。
+
+**确认步骤**:
+
+| 步骤 | 动作 | 记录字段 |
+|------|------|----------|
+| 1 | `bash novel-factory/scripts/verify-e2e-live-ci.sh` | `local_parity.passed=true` |
+| 2 | Actions → **Run workflow**（master） | `github_run_id` / `github_run_url` |
+| 3 | Job 绿 + Summary 含 **Dashboard E2E Live — passed** | `summary_phrase` |
+| 4 | （可选）复制 stub 填真实 run | `docs/templates/e2e-live-first-green.stub.example.json` |
+
+**记录存放**（gitignored，可选）: `infra/.state/ci_records/e2e-live-first-green.json`
+
+**一键打印 F82 确认清单**（0 网络）:
+
+```bash
+bash novel-factory/scripts/e2e-live-first-green-checklist.sh
+```
+
+**pytest 契约**:
+
+```bash
+pytest tests/ci/test_e2e_live_f82_ci.py -q
+```
+
 ---
 
 ## 12. 真实章节生产 pilot (F65)
