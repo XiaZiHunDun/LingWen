@@ -302,7 +302,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 176 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 P2 item (推荐 F12) → brainstorming → writing-plans → subagent-driven-development
+- [ ] 选 1 个 P2 item (推荐 F13) → brainstorming → writing-plans → subagent-driven-development
 
 ---
 
@@ -310,8 +310,8 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2484 tests, ~90s
-cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 175 vitest, ~5s
+cd novel-factory && pytest -q                                    # 2495 tests, ~90s
+cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 176 vitest, ~5s
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 14 e2e listed
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke cascade-realtime  # 3 PASS
 cd novel-factory && ruff check .                                 # 0 issues
@@ -374,5 +374,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.27 (2026-06-11)
-> **下次更新**: 启动 F12 (Per-tier 趋势线) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item
+> **版本**: v9.28 (2026-06-11)
+> **下次更新**: 启动 F13 (Cost cumulative 折线) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item
