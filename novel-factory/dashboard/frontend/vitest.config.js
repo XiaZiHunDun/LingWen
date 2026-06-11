@@ -27,8 +27,8 @@ export default mergeConfig(viteConfig, defineConfig({
       reporter: ['text', 'lcov', 'html'],
       include: ['src/**/*.{js,ts,vue}'],
       exclude: ['src/**/*.spec.{js,ts}', 'src/main.ts', 'src/**/index.ts'],
-      // Phase 8.44.1 R1: branches 50 (实测 51.32% < 60, 慢慢提 60 followup)
-      thresholds: { lines: 70, branches: 50, functions: 70, statements: 70 },
+      // Phase 9.53 F42: lines/statements/functions 70→80; branches 50→65 (incremental)
+      thresholds: { lines: 80, branches: 64, functions: 76, statements: 78 },
     },
   },
 }))

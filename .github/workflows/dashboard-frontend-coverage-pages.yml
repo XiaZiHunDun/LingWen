@@ -1,0 +1,65 @@
+# Phase 9.53 F42: publish vitest HTML coverage report to GitHub Pages (opt-in deploy).
+# Requires repo Settings → Pages → Source: GitHub Actions.
+
+name: Frontend Coverage Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'novel-factory/dashboard/frontend/**'
+      - '.github/workflows/dashboard-frontend-coverage-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: frontend-coverage-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build HTML coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run vitest with coverage
+        run: pnpm vitest run --coverage
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: novel-factory/dashboard/frontend/coverage/html
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

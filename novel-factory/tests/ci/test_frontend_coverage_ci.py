@@ -1,8 +1,4 @@
-"""Phase 9.38 F23: Vitest coverage pipeline contract tests.
-
-Phase 8.44 已装 @vitest/coverage-v8 + vitest.config.js coverage block + CI Codecov.
-F23 补: npm test:coverage script + 契约测试防 regression.
-"""
+"""Phase 9.53 F42: Vitest coverage pipeline contract tests (thresholds 80%)."""
 from __future__ import annotations
 
 import json
@@ -33,7 +29,10 @@ class TestFrontendCoverageVitestConfig:
         assert "provider: 'v8'" in text
         assert "reporter: ['text', 'lcov', 'html']" in text
         assert "thresholds:" in text
-        assert "lines: 70" in text
+        assert "lines: 80" in text
+        assert "statements: 78" in text
+        assert "functions: 76" in text
+        assert "branches: 64" in text
 
 
 class TestFrontendCoverageCI:
@@ -52,3 +51,18 @@ class TestFrontendCoverageCI:
         assert "frontend" in data["flags"]
         paths = data["flags"]["frontend"]["paths"]
         assert any("dashboard/frontend/src" in p for p in paths)
+
+
+class TestFrontendCoveragePages:
+    def test_coverage_pages_workflow_exists(self):
+        wf = WORKFLOWS_DIR / "dashboard-frontend-coverage-pages.yml"
+        assert wf.is_file()
+        text = wf.read_text(encoding="utf-8")
+        assert "upload-pages-artifact" in text
+        assert "coverage/html" in text
+        assert "deploy-pages" in text
+
+    def test_handoff_has_codecov_badge(self):
+        text = (REPO_ROOT / "HANDOFF.md").read_text(encoding="utf-8")
+        assert "codecov.io/gh/XiaZiHunDun/LingWen" in text
+        assert "flag=frontend" in text
