@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.26 (Phase 9.26 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.26 F10 WS 断线 indicator 全局 sidebar ✅; vitest 167→166 (移 2 重复 + 增 1 无 cost gate); 推荐 F11。
+> **版本**: v9.27 (Phase 9.27 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.27 F11 Tier budget alert 日志 ✅; vitest 166→175 (+9); 推荐 F12。
 
 ---
 
@@ -14,12 +14,12 @@
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
 | **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2484 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 166 passed + Playwright 14 e2e |
-| **总测试** | **2645+** (2484 pytest + 166 vitest + 14 e2e + 27 pytest skip) |
+| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 175 passed + Playwright 14 e2e |
+| **总测试** | **2654+** (2484 pytest + 175 vitest + 14 e2e + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **下一期推荐** | P2 F11 (Tier budget alert 日志, 2h) |
+| **下一期推荐** | P2 F12 (Per-tier 趋势线, 2h) |
 
 ---
 
@@ -55,7 +55,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 │   │   │   │   ├── composables/            # useWorkflowSocket / useCostWindow / useRippleStore
 │   │   │   │   └── api/
 │   │   │   ├── tests/
-│   │   │   │   ├── unit/                   # 39 vitest spec (166 tests)
+│   │   │   │   ├── unit/                   # 41 vitest spec (175 tests)
 │   │   │   │   └── e2e-smoke/              # 10 Playwright spec (14 e2e)
 │   │   │   └── package.json + vite.config.js + vitest.config.js + playwright.config.js
 │   │   └── ...
@@ -107,7 +107,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **80%+ 覆盖率** — `pytest --cov` + `vitest --coverage` (已 CI 化)
 - **测试 entry 不动**: pytest `pytest -q` (~90s), vitest `pnpm test`, e2e `pnpm e2e:smoke`
 - **0 ceremonial e2e** — 不留 Playwright spec 当契约文档, 走 vitest jsdom 真 e2e 化 (Phase 8.30b pattern)
-- **0 改 baseline 0 测试代码** — 2484 pytest + 166 vitest + 14 e2e 全部不动, 只加新
+- **0 改 baseline 0 测试代码** — 2484 pytest + 175 vitest + 14 e2e 全部不动, 只加新
 
 ### 2.4 文档规则
 
@@ -140,7 +140,7 @@ cd dashboard/frontend && pnpm install && cd ../..
 
 # 2. 验证 baseline (sanity check, 跟 Handoff 同步时的测试数比对)
 pytest -q                          # 期望: 2484 passed, 27 skipped, ~90s
-cd dashboard/frontend && pnpm exec vitest run && cd ../..  # 期望: 166 passed, ~5s
+cd dashboard/frontend && pnpm exec vitest run && cd ../..  # 期望: 175 passed, ~5s
 # (e2e 14 tests, 部分 baseline fail 不是回归, 是 Phase 9.18 已知)
 
 # 3. 启动 dashboard (optional, 看 UI)
@@ -151,7 +151,7 @@ cd novel-factory/dashboard/frontend && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
 ```
 
-如果 baseline 不匹配 (2484 + 166), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
+如果 baseline 不匹配 (2484 + 175), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
 
 ---
 
@@ -195,7 +195,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.26)
+## 5. 最近工作 (Phase 8.16 → 9.27)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -214,10 +214,12 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.24 P0 bookkeeping | 2026-06-11 | F1 (auto-memory 拆) + F2 (typo) + F3 (legacy memory 删) + F8 RESOLVED | 2478 |
 | 9.25 F9 DRY SQL | 2026-06-11 | `_update_ripple_status_internal` 抽 helper, reset+rollback 复用 | 2484 |
 | 9.26 F10 WS indicator | 2026-06-11 | `SidebarWsDisconnectedBanner` 全局 sidebar, 不依赖 hasCost | 2484/166 vitest |
+| 9.27 F11 tier alert | 2026-06-11 | `SidebarTierBudgetAlerts` + `useTierBudgetAlerts` 告警日志 | 2484/175 vitest |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] feat(dashboard): phase 9.26 F10 — global sidebar WS disconnect banner
+[本 commit] feat(dashboard): phase 9.27 F11 — tier budget alert log sidebar
+61803aa feat(dashboard): phase 9.26 F10 — global sidebar WS disconnect banner
 9928a08 refactor(storage): phase 9.25 F9 — DRY ripple status SQL helper
 355825e docs(handoff): v9.24 切换开发工具 — 项目进展 + 后续规划整理
 572ef0e docs(followup): phase 9.24 F8 ✅ RESOLVED — CI filter 收紧 不做
@@ -237,7 +239,6 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 | # | 主题 | Phase 起点 | 估时 | 独立? |
 |---|------|------------|------|-------|
-| F11 | Tier budget alert 日志 (dashboard alert 列表) | 8.15 | 2h | ✅ |
 | F12 | Per-tier 趋势线 (cost_by_day × cost_by_tier cross) | 8.x | 2h | ✅ |
 | F13 | Cost cumulative 折线 (跟 daily 互补) | 8.x | 1.5h | ✅ |
 | F14 | data-testid convention 统一 (11 旧 specs 仍用 class selector) | 8.13 | 2h | ✅ |
@@ -250,8 +251,9 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 - F8: CI filter 收紧 (Phase 9.24 RESOLVED ✅, skipif + mock SDK 双保险已就位)
 - F9: DRY reset+rollback SQL (Phase 9.25 ✅, `_update_ripple_status_internal` + 6 pytest)
 - F10: WebSocket 断线 indicator (Phase 9.26 ✅, `SidebarWsDisconnectedBanner` 全局 sidebar)
+- F11: Tier budget alert 日志 (Phase 9.27 ✅, `useTierBudgetAlerts` + 9 vitest)
 
-**推荐下一项**: F11 (Tier budget alert 日志, 2h) — 独立, UX 提升。
+**推荐下一项**: F12 (Per-tier 趋势线, 2h) — 独立, 数据洞察。
 
 ---
 
@@ -295,10 +297,10 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 auto-memory `~/.claude/projects/.../memory/MEMORY.md` (项目记忆索引, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 4 phase 详细, 10 分钟) — 如果要做 P2 任意 item
 - [ ] 跑 `pytest -q` 验证 baseline 2484 passed (~90s)
-- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 166 passed (~5s)
+- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 175 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 P2 item (推荐 F11) → brainstorming → writing-plans → subagent-driven-development
+- [ ] 选 1 个 P2 item (推荐 F12) → brainstorming → writing-plans → subagent-driven-development
 
 ---
 
@@ -307,7 +309,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 ```bash
 # === Tests ===
 cd novel-factory && pytest -q                                    # 2484 tests, ~90s
-cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 166 vitest, ~5s
+cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 175 vitest, ~5s
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 14 e2e listed
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke cascade-realtime  # 3 PASS
 cd novel-factory && ruff check .                                 # 0 issues
@@ -370,5 +372,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.26 (2026-06-11)
-> **下次更新**: 启动 F11 (Tier budget alert) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item
+> **版本**: v9.27 (2026-06-11)
+> **下次更新**: 启动 F12 (Per-tier 趋势线) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item

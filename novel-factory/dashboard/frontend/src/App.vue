@@ -6,6 +6,7 @@
         <h2 class="sidebar-title">追读力</h2>
         <span class="sidebar-subtitle">Dashboard</span>
       </div>
+      <SidebarTierBudgetAlerts :status="status" />
       <nav class="nav-menu">
         <a
           v-for="item in navItems"
@@ -55,6 +56,7 @@ import WorkflowsPage from './pages/WorkflowsPage.vue'
 import RipplesPage from './pages/RipplesPage.vue' // Phase 9.13
 import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
 import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue' // Phase 9.26 F10
+import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue' // Phase 9.27 F11
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
 
 const activeNav = ref('overview')
