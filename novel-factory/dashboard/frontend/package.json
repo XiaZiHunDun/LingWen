@@ -20,7 +20,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "echarts": "^5.5.0",
+    "echarts": "^6.1.0",
     "mermaid": "^11.15.0",
     "vue": "^3.5.0"
   },

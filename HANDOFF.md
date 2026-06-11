@@ -1,8 +1,10 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
+[![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
+
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.52 (Phase 9.52 F41 DecisionCard meta-info + WorkflowGraph testid 完成, 2026-06-11)
-> **更新 (2026-06-11)**: F41 DecisionCard 4 meta-info testid + WorkflowGraph 4 UI state testid ✅; pytest 2615→2617 (+2); vitest 216→224 (+8); 推荐 **F42**.
+> **版本**: v9.54 (Phase 9.54 F43 ECharts 6.x 完成; v3 roadmap F29-F43 全部 ✅, 2026-06-11)
+> **更新 (2026-06-11)**: F42 coverage 80% 阈值 + Codecov badge + GH Pages ✅; F43 ECharts 6.1.0 ✅; pytest 2617→2622 (+5); vitest 224→227 (+3); **v3 backlog 已清空**.
 
 ---
 
@@ -13,14 +15,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2617 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 224 passed · Playwright 1 smoke (opt-in CI) · TS strict typecheck CI |
-| **总测试** | **2841+** (2617 pytest + 224 vitest + 27 pytest skip) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2622 passed |
+| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 227 passed · coverage lines ≥80% · Playwright 1 smoke (opt-in CI) · TS strict typecheck CI |
+| **总测试** | **2849+** (2622 pytest + 227 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest + coverage → Codecov) |
-| **下一期推荐** | **F42** (Coverage 80% + Codecov badge, P3) |
+| **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest coverage → Codecov) + `dashboard-frontend-coverage-pages.yml` (HTML report → GH Pages) |
+| **下一期推荐** | **v3 roadmap 已完结** — 新需求请开 v4 backlog 或主公点名 |
 
 ---
 
@@ -291,12 +293,12 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F39 | Ripple 6-state lifecycle timeline | 9.50 | 2h | P2 Dashboard | ✅ done |
 | F40 | Cascade graph 第 3 视图 | 9.51 | 2-3h | P2 Dashboard | ✅ done |
 | F41 | DecisionCard meta-info + WFGraph testid | — | 1-2h | P3 | ✅ done |
-| F42 | coverage 80% + Codecov badge | — | 2h | P3 | ✅ |
-| F43 | ECharts 5.5→6.x | — | 1.5h | P3 | ✅ |
+| F42 | coverage 80% + badge | — | 2h | P3 | ✅ done |
+| F43 | ECharts 6.x | — | 1.5h | P3 | ✅ done |
 
 **已完成 (v2 roadmap, 9.33-9.40)**: F17-F28 全部 ✅ (见上表 v2 doc)
 
-**推荐下一项**: **F41** (DecisionCard meta-info + WorkflowGraph testid, P3 按需).
+**推荐下一项**: **v3 roadmap (F29-F43) 已全部完成** — 后续工作请新建 backlog。
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v2-post-9.32.md` (F17-F28 已于 Phase 9.33-9.40 全部完成). 本 doc 汇总 Phase 9.33-9.40 后各 entry「out of scope」散落项 + Phase 8.45+ / CVG blueprint Phase 14-16 遗留, 重新编号 F29+ 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v3 roadmap」)
-> **状态**: F29 ✅ (Phase 9.41-bk, 2026-06-11); F30-F43 deferred, 待主公决策
+> **状态**: F29-F43 ✅ 全部完成 (2026-06-11); v3 backlog 已清空
 > **前置**: Phase 9.40 F25-F28 ✅ (`7122002`), baseline **2564 pytest + 196 vitest**
 
 ## 上下文 (Context)
@@ -190,11 +190,13 @@ v2 触发条件已满足. 剩余工作分散在:
 
 - **承接**: Phase 8.44 / F23 partial (coverage 已跑, 阈值/badge 未 tighten)
 - **estimated**: 1.5-2h
+- **完成 (2026-06-11)**: lines 80 / statements 78 / functions 76 / branches 64 阈值; HANDOFF Codecov badge; `dashboard-frontend-coverage-pages.yml`; pytest +2
 
 ### F43. ECharts 5.5 → 6.x 升级
 
 - **承接**: Phase 9.16 defer (security patch)
 - **estimated**: 1.5h + vitest smoke
+- **完成 (2026-06-11)**: echarts 6.1.0 + modular import smoke spec; pytest +3; vitest 224→227 (+3)
 
 ### 明确不做 / RESOLVED
 

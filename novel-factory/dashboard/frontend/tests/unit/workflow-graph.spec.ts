@@ -23,7 +23,7 @@ import { byTestid } from '../helpers/by-testid'
 vi.mock('mermaid', () => ({
   default: {
     initialize: vi.fn(),
-    render: vi.fn().mockResolvedValue({ svg: '<svg>fake</svg>' }),
+    render: vi.fn().mockResolvedValue({ svg: '<svg>fake</svg>', diagramType: 'flowchart-v2' }),
   },
 }))
 

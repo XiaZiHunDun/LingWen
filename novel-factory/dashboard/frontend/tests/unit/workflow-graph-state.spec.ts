@@ -6,6 +6,8 @@ import { mount, flushPromises } from '@vue/test-utils'
 import WorkflowGraph from '../../src/components/WorkflowGraph.vue'
 import { byTestid } from '../helpers/by-testid'
 
+const fakeMermaidResult = { svg: '<svg>fake</svg>', diagramType: 'flowchart-v2' as const }
+
 vi.mock('mermaid', () => ({
   default: {
     initialize: vi.fn(),
@@ -17,7 +19,7 @@ describe('WorkflowGraph 4 UI state testid (Phase 9.52 F41)', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     const mermaid = await import('mermaid')
-    vi.mocked(mermaid.default.render).mockResolvedValue({ svg: '<svg>fake</svg>' })
+    vi.mocked(mermaid.default.render).mockResolvedValue(fakeMermaidResult)
   })
 
   test('workflow-graph-loading visible while mermaid render is pending', async () => {
