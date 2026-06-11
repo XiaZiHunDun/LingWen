@@ -24,7 +24,11 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
-import { computeCumulativeSeries } from '../utils/costTrendChartUtils.js'
+import {
+  computeCumulativeSeries,
+  TIER_COLORS,
+  TIER_ORDER,
+} from '../utils/costTrendChartUtils.js'
 
 const props = defineProps({
   // Phase 8.24: costByDay from backend cost_by_day (Phase 8.23)
@@ -41,14 +45,6 @@ const props = defineProps({
     default: null,
   },
 })
-
-// Phase 8.29: tier 配色 (haiku 便宜 / sonnet 主力 / opus 贵)
-const TIER_COLORS = {
-  haiku: '#67c23a',
-  sonnet: '#ff6b6b',
-  opus: '#9b59b6',
-}
-const TIER_ORDER = ['haiku', 'sonnet', 'opus']
 
 // Phase 8.29: per-tier mode gate (costByDayPerTier 非空且有非零 value → multi-series)
 const hasMultiSeries = computed(() => {

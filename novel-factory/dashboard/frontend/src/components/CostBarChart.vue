@@ -1,14 +1,14 @@
 <!--
-  CostBarChart.vue — Phase 8.7 + Phase 8.13
+  CostBarChart.vue — Phase 8.7 + Phase 8.13 + F26
   Token 成本柱状图 (ECharts bar, by-scenario | by-tier)
   跟 CoolpointChart 同模式: dispose + re-init on watch, Press Start 2P 像素风
   color #ff6b6b 跟 Coolpoint 一致, 边框 #2a220f 像素风
   Phase 8.13: 加 mode toggle (scenario | tier) + costByTier 数据源
-  displayData computed 根据 mode 选 costByScenario / costByTier;
-  watch(displayData) 一份 watch 覆盖 3 trigger (scenario 变 / tier 变 / mode 切)
+  F26: title + tier 配色/legend 跟 CostTrendChart 9.29 对齐
 -->
 <template>
-  <div class="cost-bar-chart-wrapper pixel-border">
+  <div class="cost-bar-chart-wrapper pixel-border" data-testid="cost-bar-chart-wrapper">
+    <h5 class="cost-bar-chart-title" data-testid="cost-bar-chart-title">📊 场景 / Tier 成本分布</h5>
     <div class="mode-tabs" role="tablist" aria-label="成本分类模式">
       <button
         type="button"
@@ -35,6 +35,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { TIER_COLORS, TIER_ORDER, tierColor } from '../utils/costTrendChartUtils.js'
 
 const props = defineProps({
   costByScenario: {
@@ -72,6 +73,8 @@ const hasData = computed(() => {
   return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0)
 })
 
+const isTierMode = computed(() => props.mode === 'tier')
+
 // Phase 8.13: 切 mode 触发 update:mode (让 parent v-model:mode 接)
 function switchMode(next) {
   if (next !== 'scenario' && next !== 'tier') return
@@ -81,6 +84,38 @@ function switchMode(next) {
 
 const TOP_N = 12
 
+const PIXEL_TOOLTIP = {
+  trigger: 'axis',
+  backgroundColor: '#2a220f',
+  borderColor: '#2a220f',
+  borderWidth: 2,
+  textStyle: {
+    fontFamily: 'Press Start 2P',
+    fontSize: 8,
+    color: '#fff7e8',
+  },
+}
+
+function buildBarData(labels, costs) {
+  const defaultColor = '#ff6b6b'
+  return costs.map((value, index) => {
+    const label = labels[index]
+    const color = isTierMode.value ? tierColor(label) : defaultColor
+    return {
+      value,
+      itemStyle: {
+        color,
+        borderColor: '#2a220f',
+        borderWidth: 2,
+      },
+    }
+  })
+}
+
+function tierLegendData(labels) {
+  return TIER_ORDER.filter((tier) => labels.includes(tier))
+}
+
 function render() {
   if (!chartInstance) return
   if (!hasData.value) {
@@ -88,28 +123,34 @@ function render() {
     return
   }
   // sort by cost desc, top N
-  // Phase 8.13: displayData 替代 props.costByScenario, 让 mode=tier 走 costByTier
   const entries = Object.entries(displayData.value || {})
     .sort(([, a], [, b]) => b - a)
     .slice(0, TOP_N)
   const scenarios = entries.map(([k]) => k)
   const costs = entries.map(([, v]) => v)
+  const barData = buildBarData(scenarios, costs)
+  const legendData = isTierMode.value ? tierLegendData(scenarios) : []
 
   chartInstance.setOption({
-    grid: { top: 30, right: 20, bottom: 70, left: 70 },
+    grid: { top: isTierMode.value ? 50 : 30, right: 20, bottom: 70, left: 70 },
+    legend: isTierMode.value
+      ? {
+          data: legendData,
+          top: 10,
+          right: 10,
+          textStyle: {
+            fontFamily: 'Press Start 2P',
+            fontSize: 8,
+            color: '#2a220f',
+          },
+        }
+      : undefined,
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#2a220f',
-      borderColor: '#2a220f',
-      borderWidth: 2,
-      textStyle: {
-        fontFamily: 'Press Start 2P',
-        fontSize: 8,
-        color: '#fff7e8',
-      },
+      ...PIXEL_TOOLTIP,
       formatter: (params) => {
         const p = params[0]
-        return `${p.name}<br/>成本: $${Number(p.value).toFixed(4)}`
+        const tierLabel = isTierMode.value ? ` (${p.name})` : ''
+        return `${p.name}${tierLabel}<br/>成本: $${Number(p.value).toFixed(4)}`
       },
     },
     xAxis: {
@@ -150,12 +191,14 @@ function render() {
     series: [
       {
         type: 'bar',
-        data: costs,
+        data: barData,
         barWidth: '60%',
-        itemStyle: {
-          color: '#ff6b6b',
-          borderColor: '#2a220f',
-          borderWidth: 2,
+        emphasis: {
+          focus: 'self',
+          itemStyle: {
+            opacity: 1,
+            borderWidth: 3,
+          },
         },
         label: {
           show: true,
@@ -186,6 +229,7 @@ onUnmounted(() => {
 
 // Phase 8.13: watch displayData 覆盖 3 trigger (costByScenario 变 / costByTier 变 / mode 切)
 watch(displayData, render, { deep: true })
+watch(() => props.mode, render)
 </script>
 
 <style scoped>
@@ -195,6 +239,13 @@ watch(displayData, render, { deep: true })
   padding: var(--space-md);
   width: 100%;
   min-height: 280px;
+}
+
+.cost-bar-chart-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--color-accent, #26a8ff);
+  margin: 0 0 var(--space-sm) 0;
 }
 
 /* Phase 8.13: 模式切换 tabs (scenario | tier) */
