@@ -33,6 +33,10 @@ def add_cascade_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
         help="Max BFS depth 1..10 (default 3)",
     )
     run_p.add_argument(
+        "--max-nodes-cap", type=int, default=100,
+        help="Max BFS nodes collected 1..1000 (default 100, Phase 9.32 F16)",
+    )
+    run_p.add_argument(
         "--persist", action="store_true", default=False,
         help="Persist cascade run to cascade_runs table (off by default)",
     )

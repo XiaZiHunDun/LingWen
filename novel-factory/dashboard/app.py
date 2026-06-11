@@ -598,6 +598,21 @@ def _validate_max_depth_v9_20(max_depth: int | None) -> int:
     return max_depth
 
 
+def _validate_max_nodes_cap(max_nodes_cap: int | None) -> int:
+    """Phase 9.32 F16: validate max_nodes_cap for live BFS paths. Returns validated int.
+
+    None → DEFAULT_MAX_NODES_CAP (100, backward compat).
+    Raises HTTPException 400 if out of range.
+    """
+    from infra.cross_volume.reference_graph import DEFAULT_MAX_NODES_CAP, MAX_NODES_CAP_UPPER
+
+    if max_nodes_cap is None:
+        return DEFAULT_MAX_NODES_CAP
+    if max_nodes_cap < 1 or max_nodes_cap > MAX_NODES_CAP_UPPER:
+        raise HTTPException(400, f"max_nodes_cap must be 1..{MAX_NODES_CAP_UPPER}")
+    return max_nodes_cap
+
+
 def create_app(
     db_path: Optional[Path] = None,
     master_controller: Optional[MasterControllerLike] = None,
@@ -965,20 +980,28 @@ def create_app(
     def get_ripple_cascade(
         ripple_id: str,
         max_depth: int | None = Query(default=None),
+        max_nodes_cap: int | None = Query(default=None),
     ) -> CascadeResponse:
         """Phase 9.15: return the persisted cascade BFS result for a single ripple.
 
         Phase 9.19: optional max_depth query param (1..10) re-runs BFS live
         without persisting. max_depth=0 or absent returns persisted cascade
         (backward compat).
+        Phase 9.32 F16: optional max_nodes_cap (1..1000, default 100) on live BFS.
         """
         storage = _default_storage()
+        nodes_cap = _validate_max_nodes_cap(max_nodes_cap)
 
         # Phase 9.19: validate max_depth if provided
         live_depth = _validate_max_depth(max_depth)
         if live_depth is not None:
             # Re-run BFS live — returns CascadedRipple (not persisted)
-            cascade = storage.preview_cascade(ripple_id, max_depth=live_depth)
+            try:
+                cascade = storage.preview_cascade(
+                    ripple_id, max_depth=live_depth, max_nodes_cap=nodes_cap,
+                )
+            except ValueError as e:
+                raise HTTPException(400, str(e))
         else:
             # Backward compat: use persisted cascade
             cascade = storage.get_cascade_by_ripple_id(ripple_id)
@@ -1012,20 +1035,28 @@ def create_app(
     def get_ripple_cascade_preview(
         ripple_id: str,
         max_depth: int | None = Query(default=None),
+        max_nodes_cap: int | None = Query(default=None),
     ) -> CascadePreviewResponse:
         """Phase 9.15: return a dry-run preview summary for the apply confirmation modal.
 
         Phase 9.19: optional max_depth query param (1..10) re-runs BFS live without
         persisting. max_depth=0 or absent returns persisted cascade (backward compat).
+        Phase 9.32 F16: optional max_nodes_cap on live BFS.
         Computes aggregate counts (affected chapters/characters/settings, estimated
         changes) from the BFS result. No LLM calls — pure aggregation.
         """
         storage = _default_storage()
+        nodes_cap = _validate_max_nodes_cap(max_nodes_cap)
 
         # Phase 9.19: validate max_depth if provided
         live_depth = _validate_max_depth(max_depth)
         if live_depth is not None:
-            cascade = storage.preview_cascade(ripple_id, max_depth=live_depth)
+            try:
+                cascade = storage.preview_cascade(
+                    ripple_id, max_depth=live_depth, max_nodes_cap=nodes_cap,
+                )
+            except ValueError as e:
+                raise HTTPException(400, str(e))
         else:
             cascade = storage.get_cascade_by_ripple_id(ripple_id)
             if cascade is None:
@@ -1070,6 +1101,7 @@ def create_app(
     def get_ripple_cascade_v9_20(
         ripple_id: str,
         max_depth: int | None = Query(default=None),
+        max_nodes_cap: int | None = Query(default=None),
         persist: bool = Query(default=False),
     ):
         """Phase 9.20: get cascade with optional persist to cascade_runs.
@@ -1087,15 +1119,20 @@ def create_app(
                  accepts 1..10 for live BFS or None/0 for persisted)
         """
         storage = _default_storage()
+        nodes_cap = _validate_max_nodes_cap(max_nodes_cap)
 
         if persist:
             # Phase 9.20: live BFS + record + return CascadeRunResponse.
             # persist path requires explicit max_depth (no persisted-cascade fallback).
             validated_depth = _validate_max_depth_v9_20(max_depth)
             try:
-                cascaded = storage.preview_cascade(ripple_id, max_depth=validated_depth)
+                cascaded = storage.preview_cascade(
+                    ripple_id, max_depth=validated_depth, max_nodes_cap=nodes_cap,
+                )
             except KeyError:
                 raise HTTPException(404, f"Ripple {ripple_id} not found")
+            except ValueError as e:
+                raise HTTPException(400, str(e))
             run_id = storage.record_cascade_run(
                 ripple_id, cascaded, max_depth=validated_depth
             )
@@ -1105,7 +1142,12 @@ def create_app(
         # Phase 9.19 path (mirror get_ripple_cascade exactly for backward compat).
         live_depth = _validate_max_depth(max_depth)
         if live_depth is not None:
-            cascade = storage.preview_cascade(ripple_id, max_depth=live_depth)
+            try:
+                cascade = storage.preview_cascade(
+                    ripple_id, max_depth=live_depth, max_nodes_cap=nodes_cap,
+                )
+            except ValueError as e:
+                raise HTTPException(400, str(e))
         else:
             cascade = storage.get_cascade_by_ripple_id(ripple_id)
             if cascade is None:

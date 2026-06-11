@@ -666,23 +666,36 @@ class RippleStorage:
                 generated_at=row["created_at"],
             )
 
-    def preview_cascade(self, ripple_id: str, max_depth: int) -> "CascadedRipple":
+    def preview_cascade(
+        self,
+        ripple_id: str,
+        max_depth: int,
+        max_nodes_cap: int | None = None,
+    ) -> "CascadedRipple":
         """Phase 9.19: re-run BFS without persisting.
+        Phase 9.32 F16: optional max_nodes_cap (default DEFAULT_MAX_NODES_CAP).
 
         Args:
             ripple_id: ripple to trace
             max_depth: 1..10 BFS depth cap (must be ≥1, caller validates)
+            max_nodes_cap: 1..1000 node collection cap (None → default 100)
 
         Returns:
-            CascadedRipple from trigger_cascade(max_depth=max_depth)
+            CascadedRipple from trigger_cascade(max_depth=max_depth, max_nodes_cap=...)
 
         Raises:
             KeyError: ripple not found
+            ValueError: max_nodes_cap out of range
         """
+        from infra.cross_volume.reference_graph import DEFAULT_MAX_NODES_CAP
+
         ripple = self.get_ripple_by_id(ripple_id)
         if ripple is None:
             raise KeyError(f"Ripple {ripple_id} not found")
-        return self._graph.trigger_cascade(ripple, max_depth=max_depth, weighted=True)
+        cap = DEFAULT_MAX_NODES_CAP if max_nodes_cap is None else max_nodes_cap
+        return self._graph.trigger_cascade(
+            ripple, max_depth=max_depth, weighted=True, max_nodes_cap=cap,
+        )
 
     def record_cascade_run(
         self,

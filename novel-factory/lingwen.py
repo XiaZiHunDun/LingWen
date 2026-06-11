@@ -164,6 +164,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             dry_run=False,
             ripple_id=getattr(args, "ripple_id", "") or "",
             max_depth=getattr(args, "max_depth", 3) or 3,
+            max_nodes_cap=getattr(args, "max_nodes_cap", 100) or 100,
             persist=args.persist,
             # Phase 9.21 NEW
             action=action,

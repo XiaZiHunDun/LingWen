@@ -3,7 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from dashboard.app import create_app
-from infra.cross_volume.reference_graph import ReferenceEdge, ReferenceNode
+from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 
@@ -91,4 +91,43 @@ class TestCascadePreviewEndpointMaxDepth:
     def test_preview_max_depth_11_rejected(self, client):
         """max_depth>10 → 400."""
         resp = client.get("/api/cvg/ripples/rip-1/cascade/preview?max_depth=11")
+        assert resp.status_code == 400
+
+
+class TestCascadeEndpointMaxNodesCap:
+    @pytest.fixture
+    def star_client(self, tmp_path, monkeypatch):
+        """Client with star topology (150 neighbors) for cap tests."""
+        storage = RippleStorage(db_path=tmp_path / "star.db")
+        g = CrossVolumeReferenceGraph(storage)
+        g.add_node(ReferenceNode(id="trigger", volume=1, chapter=1, dimension="character"))
+        for i in range(150):
+            nid = f"n_{i:03d}"
+            g.add_node(ReferenceNode(id=nid, volume=2, chapter=1, dimension="character"))
+            g.add_edge(
+                ReferenceEdge(id=f"e_{i:03d}", from_node_id="trigger", to_node_id=nid, weight=0.5)
+            )
+        storage._graph = g
+        storage.append_ripple(
+            CrossVolumeRipple(
+                id="rip-star", trigger_volume=1, trigger_chapter=1,
+                affected_nodes=("trigger",), affected_edges=(), proposed_actions=(),
+                status="pending",
+            )
+        )
+        from dashboard import app as app_module
+        monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
+        return TestClient(create_app())
+
+    def test_max_nodes_cap_200_returns_all_neighbors(self, star_client):
+        resp = star_client.get(
+            "/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=200"
+        )
+        assert resp.status_code == 200
+        assert len(resp.json()["cascade_nodes"]) == 150
+
+    def test_max_nodes_cap_1001_rejected(self, star_client):
+        resp = star_client.get(
+            "/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=1001"
+        )
         assert resp.status_code == 400

@@ -27,21 +27,30 @@ class CascadeCommand(Command):
         import sys
         ripple_id = options.ripple_id
         max_depth = options.max_depth
+        max_nodes_cap = options.max_nodes_cap
         if not ripple_id:
             print("Error: ripple_id is required", file=sys.stderr)
             return 1
+        if max_nodes_cap < 1 or max_nodes_cap > 1000:
+            print("Error: max_nodes_cap must be 1..1000", file=sys.stderr)
+            return 1
         storage = _get_storage()
         try:
-            cascaded = storage.preview_cascade(ripple_id, max_depth=max_depth)
+            cascaded = storage.preview_cascade(
+                ripple_id, max_depth=max_depth, max_nodes_cap=max_nodes_cap,
+            )
         except KeyError:
             print(f"Error: ripple {ripple_id} not found", file=sys.stderr)
+            return 1
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
             return 1
         if options.persist:  # Phase 9.20 NEW
             run_id = storage.record_cascade_run(
                 options.ripple_id, cascaded, max_depth=options.max_depth,
             )
             print(f"persisted as cascade run id={run_id}")
-        print(f"Cascade for {ripple_id} (max_depth={max_depth}):")
+        print(f"Cascade for {ripple_id} (max_depth={max_depth}, max_nodes_cap={max_nodes_cap}):")
         print(f"  depth_reached: {cascaded.depth_reached}")
         print(f"  nodes: {len(cascaded.cascade_nodes)}")
         print(f"  edges: {len(cascaded.cascade_edges)}")

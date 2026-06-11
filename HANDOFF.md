@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.31 (Phase 9.31 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.31 F15 Playwright → vitest ✅; pytest 2495 (不变); vitest 182→192 (+10); Playwright 0 listed; 推荐 F16。
+> **版本**: v9.32 (Phase 9.32 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.32 F16 cascade BFS max_nodes_cap 可配置 ✅; pytest 2495→2501 (+6); vitest 192 (不变); **P2 roadmap F1-F16 全部完成**。
 
 ---
 
@@ -13,13 +13,13 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2495 passed |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2501 passed |
 | **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 192 passed · Playwright 0 (dev opt-in) |
-| **总测试** | **2687+** (2495 pytest + 192 vitest + 27 pytest skip) |
+| **总测试** | **2698+** (2501 pytest + 192 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **下一期推荐** | P2 F16 (cascade BFS max_nodes_cap 可配置, ~1h) |
+| **下一期推荐** | 新 phase 规划 (P2 F1-F16 已全部完成) |
 
 ---
 
@@ -107,7 +107,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **80%+ 覆盖率** — `pytest --cov` + `vitest --coverage` (已 CI 化)
 - **测试 entry 不动**: pytest `pytest -q` (~90s), vitest `pnpm test`, e2e `pnpm e2e:smoke`
 - **0 ceremonial e2e** — Playwright spec 已 Phase 9.31 F15 全删, 契约走 vitest jsdom (Phase 8.30b pattern)
-- **0 改 baseline 0 测试代码** — 2495 pytest + 192 vitest 全部不动, 只加新
+- **0 改 baseline 0 测试代码** — 2501 pytest + 192 vitest 全部不动, 只加新
 
 ### 2.4 文档规则
 
@@ -141,6 +141,7 @@ cd dashboard/frontend && pnpm install && cd ../..
 # 2. 验证 baseline (sanity check, 跟 Handoff 同步时的测试数比对)
 pytest -q                          # 期望: 2495 passed, 27 skipped, ~90s
 cd dashboard/frontend && pnpm exec vitest run && cd ../..  # 期望: 192 passed, ~5s
+cd novel-factory && pytest -q                          # 期望: 2501 passed, ~90s
 # (e2e 14 tests, 部分 baseline fail 不是回归, 是 Phase 9.18 已知)
 
 # 3. 启动 dashboard (optional, 看 UI)
@@ -151,7 +152,7 @@ cd novel-factory/dashboard/frontend && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
 ```
 
-如果 baseline 不匹配 (2495 + 192), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
+如果 baseline 不匹配 (2501 + 192), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
 
 ---
 
@@ -195,7 +196,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.31)
+## 5. 最近工作 (Phase 8.16 → 9.32)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -219,10 +220,12 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.29 F13 cumulative line | 2026-06-11 | 单线模式「每日+累计」双 series + `computeCumulativeSeries` helper | 2495/180 vitest |
 | 9.30 F14 testid unify | 2026-06-11 | DecisionsPage/WorkflowsPage testid + 2 page spec 0 class selector | 2495/182 vitest |
 | 9.31 F15 playwright vitest | 2026-06-11 | 删 10 ceremonial Playwright + 3 vitest page spec (+10) | 2495/192 vitest |
+| 9.32 F16 BFS cap config | 2026-06-11 | `max_nodes_cap` 可配置 (default 100, 1..1000) + API/CLI 透传 | 2501/192 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
+[本 commit] feat(cascade): phase 9.32 F16 — configurable max_nodes_cap
+7790864 test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
 364b0b1 feat(dashboard): phase 9.30 F14 — page data-testid convention unify
 41d7129 feat(dashboard): phase 9.29 F13 — cost cumulative trend line
 743838d docs(handoff): v9.28 F12 完成 — HANDOFF 补全
@@ -246,9 +249,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 **汇总**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap.md`
 
-| # | 主题 | Phase 起点 | 估时 | 独立? |
-|---|------|------------|------|-------|
-| F16 | Phase 14 cascade BFS cap config (max_nodes_cap=100 hardcoded) | 9.16 | 1h | ✅ |
+**P2 roadmap F1-F16 已于 Phase 9.24-9.32 全部完成。** 下一期需主公选新主线 (见 roadmap 外 followup 或新业务 phase)。
 
 **已完成 (从 roadmap 拿掉)**:
 - F1-F3: P0 bookkeeping (Phase 9.24 ✅)
@@ -261,8 +262,9 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 - F13: Cost cumulative 折线 (Phase 9.29 ✅, `computeCumulativeSeries` + 单线双 series + 4 vitest)
 - F14: data-testid 统一 (Phase 9.30 ✅, DecisionsPage/WorkflowsPage 7 testid + 2 page spec byTestid + 2 vitest)
 - F15: Playwright vitest 化 (Phase 9.31 ✅, 删 10 ceremonial Playwright + app/ripples/dryrun vitest +10)
+- F16: cascade BFS max_nodes_cap 可配置 (Phase 9.32 ✅, `DEFAULT_MAX_NODES_CAP` + API/CLI `--max-nodes-cap` + 6 pytest)
 
-**推荐下一项**: F16 (cascade BFS max_nodes_cap 可配置, ~1h) — Phase 9.16 留 followup。
+**推荐下一项**: 新 phase 规划 — P2 followup roadmap 已清空, 待主公决策下一主线。
 
 ---
 
@@ -299,11 +301,11 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap.md` (后续规划, 5 分钟)
 - [ ] 读 auto-memory `~/.claude/projects/.../memory/MEMORY.md` (项目记忆索引, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 4 phase 详细, 10 分钟) — 如果要做 P2 任意 item
-- [ ] 跑 `pytest -q` 验证 baseline 2495 passed (~90s)
+- [ ] 跑 `pytest -q` 验证 baseline 2501 passed (~90s)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 192 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 P2 item (推荐 F16) → brainstorming → writing-plans → subagent-driven-development
+- [ ] 选下一期主线 (P2 F1-F16 已全部完成) → brainstorming → writing-plans
 
 ---
 
@@ -311,7 +313,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2495 tests, ~90s
+cd novel-factory && pytest -q                                    # 2501 tests, ~90s
 cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 192 vitest, ~5s
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 0 tests (Phase 9.31 F15)
 cd novel-factory && ruff check .                                 # 0 issues
@@ -374,5 +376,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.31 (2026-06-11)
-> **下次更新**: 启动 F16 (cascade BFS cap config) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格 + §6 拿掉已 done item
+> **版本**: v9.32 (2026-06-11)
+> **下次更新**: 启动新 phase 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格

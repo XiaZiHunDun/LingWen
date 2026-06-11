@@ -12,6 +12,10 @@ from infra.cross_volume.ripple import CrossVolumeRipple
 
 logger = logging.getLogger(__name__)
 
+# Phase 9.32 F16: configurable BFS node collection cap (was hardcoded 100 in trigger_cascade)
+DEFAULT_MAX_NODES_CAP = 100
+MAX_NODES_CAP_UPPER = 1000
+
 DimensionT = Literal["character", "foreshadow", "setting", "plot_point"]
 RelationshipT = Literal[
     "mentions", "evolves", "foreshadows", "pays_off",
@@ -145,24 +149,35 @@ class CrossVolumeReferenceGraph:
         return self._ripples.get(ripple_id)
 
     def trigger_cascade(
-        self, ripple: CrossVolumeRipple, max_depth: int = 3, weighted: bool = True,
+        self,
+        ripple: CrossVolumeRipple,
+        max_depth: int = 3,
+        weighted: bool = True,
+        max_nodes_cap: int = DEFAULT_MAX_NODES_CAP,
     ) -> CascadedRipple:
         """Phase 9.15: real BFS cascade (replaces Phase 9.10 stub returns []).
         Phase 9.16: weighted BFS using heapq priority queue (high edge.weight first).
+        Phase 9.32 F16: max_nodes_cap configurable (default DEFAULT_MAX_NODES_CAP).
 
         Args:
             ripple: Trigger ripple (起点节点集).
             max_depth: BFS 深度上限 (default 3, Phase 9.15 既设).
             weighted: True = v2_weighted (heapq, 高 weight 优先, ties node_id 字典序),
                       False = v1 FIFO (deque, 跟 Phase 9.15 完全等价, backward compat).
+            max_nodes_cap: 最多收集 downstream 节点数 (default 100, Phase 9.32 F16 可配置).
 
         Returns:
             CascadedRipple with bfs_algorithm_version='v2_weighted' (weighted=True)
-            or 'v1' (weighted=False). 100-node cap enforced for defensive downstream
-            drawer/graph-viz budget (跟 Phase 9.15 cascade cap 一致).
+            or 'v1' (weighted=False). max_nodes_cap enforced for drawer/graph-viz budget.
+
+        Raises:
+            ValueError: max_nodes_cap out of range (1..MAX_NODES_CAP_UPPER).
         """
+        if max_nodes_cap < 1 or max_nodes_cap > MAX_NODES_CAP_UPPER:
+            raise ValueError(
+                f"max_nodes_cap must be 1..{MAX_NODES_CAP_UPPER}, got {max_nodes_cap}"
+            )
         algorithm_version = "v2_weighted" if weighted else "v1"
-        max_nodes_cap = 100  # Phase 9.15/9.16 defensive cap (drawer graph-viz budget)
 
         # Phase 9.16: priority queue entry = (neg_weight, node_id, node_obj, depth)
         #   - -weight 让高 weight 优先 pop (heapq 默认 min-heap)
