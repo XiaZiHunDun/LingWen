@@ -911,3 +911,23 @@ class CascadeCancelPayload(BaseModel):
 class CascadeCancelRequest(BaseModel):
     """Phase 9.21: POST cancel endpoint request body (optional reason)."""
     reason: str = ""
+
+
+# === Phase 9.44 F33: cascade broadcast log persistence ===
+
+class CascadeBroadcastLogResponse(BaseModel):
+    """cascade_broadcast_log table row → API response."""
+
+    id: int = Field(..., ge=1)
+    ripple_id: str = Field(..., min_length=1)
+    latency_ms: int = Field(..., ge=0)
+    created_at: str
+
+    @classmethod
+    def from_dataclass(cls, entry: Any) -> "CascadeBroadcastLogResponse":
+        return cls(
+            id=entry.id,
+            ripple_id=entry.ripple_id,
+            latency_ms=entry.latency_ms,
+            created_at=entry.created_at.isoformat(),
+        )

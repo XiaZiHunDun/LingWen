@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.42 (Phase 9.42 F31 query_impact cache 完成, 2026-06-11)
-> **更新 (2026-06-11)**: F31 CVG query_impact LRU+TTL cache + lazy per-volume load ✅; pytest 2569→2578 (+9); 推荐 **F32** prompt 调优 或 **F33** broadcast log.
+> **版本**: v9.44 (Phase 9.44 F33 cascade broadcast log 完成, 2026-06-11)
+> **更新 (2026-06-11)**: F32 calibrate per-dim + yaml example ✅; F33 cascade_broadcast_log SQLite + API ✅; pytest 2578→2592 (+14); 推荐 **F34** retention CLI.
 
 ---
 
@@ -13,14 +13,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2578 passed |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2592 passed |
 | **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 202 passed · Playwright 0 (dev opt-in) |
-| **总测试** | **2780+** (2578 pytest + 202 vitest + 27 pytest skip) |
+| **总测试** | **2794+** (2592 pytest + 202 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (vitest + coverage → Codecov) |
-| **下一期推荐** | **F32** (LLM prompt 调优闭环, Phase 9.43) 或 **F33** (cascade broadcast log) |
+| **下一期推荐** | **F34** (cascade_runs retention CLI, Phase 9.45) 或 **F35** (Global CascadeRunsPage) |
 
 ---
 
@@ -238,6 +238,8 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.41-bk F29 roadmap v3 | 2026-06-11 | followup roadmap v3 (F29-F43) + HANDOFF §6 | 2564/196 |
 | 9.41 F30 impact graph | 2026-06-11 | GET /api/cvg/reference-graph + ImpactGraph + RipplesPage | 2569/202 |
 | 9.42 F31 query_impact cache | 2026-06-11 | QueryImpactCache + lazy volume load + storage volume filter | 2578/202 |
+| 9.43 F32 calibrate feedback | 2026-06-11 | per-dim precision/recall + --yaml-example | 2584/202 |
+| 9.44 F33 broadcast log | 2026-06-11 | cascade_broadcast_log + GET broadcast-log API | 2592/202 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
@@ -275,8 +277,8 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F29 | roadmap v3 文档同步 + HANDOFF §6/§8 | 9.41-bk | 30min | P0 | ✅ done |
 | F30 | CVG impact graph ECharts 可视化 | 9.41 | 3-4h | P1 CVG | ✅ done |
 | F31 | query_impact LRU cache + lazy load | 9.42 | 2-3h | P1 CVG | ✅ done |
-| F32 | LLM prompt 调优反馈闭环 | 9.43 | 2-3h | P1 CVG | ✅ |
-| F33 | cascade_broadcast_log SQLite | 9.44 | 1.5h | P2 Ops | ✅ |
+| F32 | LLM prompt 调优反馈闭环 | 9.43 | 2-3h | P1 CVG | ✅ done |
+| F33 | cascade_broadcast_log SQLite | 9.44 | 1.5h | P2 Ops | ✅ done |
 | F34 | cascade_runs retention CLI | 9.45 | 1.5h | P2 Ops | ✅ |
 | F35 | Global CascadeRunsPage | 9.46 | 2h | P2 Dashboard | ✅ |
 | F36 | v1/v2 cascade algorithm badge | 9.47 | 1h | P2 Dashboard | ✅ |
@@ -290,7 +292,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 **已完成 (v2 roadmap, 9.33-9.40)**: F17-F28 全部 ✅ (见上表 v2 doc)
 
-**推荐下一项**: **F32** (LLM prompt 调优闭环, Phase 9.43) 或 **F33** (cascade_broadcast_log).
+**推荐下一项**: **F34** (cascade_runs retention CLI, Phase 9.45) 或 **F35** (Global CascadeRunsPage).
 
 ---
 

@@ -59,6 +59,16 @@ class CascadeRun:
     cascade_edges: tuple["ReferenceEdge", ...]
     cascade_actions: tuple[str, ...]
 
+
+@dataclass(frozen=True)
+class CascadeBroadcastLogEntry:
+    """Phase 9.44 F33: WS cascade.update broadcast latency history row."""
+
+    id: int
+    ripple_id: str
+    latency_ms: int
+    created_at: datetime
+
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS reference_nodes (
     id TEXT PRIMARY KEY,
@@ -143,6 +153,15 @@ CREATE TABLE IF NOT EXISTS cascade_runs (
 );
 CREATE INDEX IF NOT EXISTS idx_cascade_runs_ripple ON cascade_runs(ripple_id, id DESC);
 CREATE INDEX IF NOT EXISTS idx_cascade_runs_status ON cascade_runs(status) WHERE status != 'completed';
+
+CREATE TABLE IF NOT EXISTS cascade_broadcast_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ripple_id TEXT NOT NULL,
+    latency_ms INTEGER NOT NULL CHECK(latency_ms >= 0),
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_cascade_broadcast_ripple ON cascade_broadcast_log(ripple_id, id DESC);
 """
 
 
@@ -258,6 +277,16 @@ class RippleStorage:
         # typed CascadeUpdatePayload 替换 Phase 9.16 dict literal — IDE 显式 types +
         # Pydantic v2 ValidationError 提前 (5 fields 任一写错立刻 fail).
         if cascaded is not None:
+            if cascade_latency_ms is not None:
+                try:
+                    self.append_cascade_broadcast_log(
+                        ripple_id=cascaded.trigger_ripple_id,
+                        latency_ms=cascade_latency_ms,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "append_ripple: cascade broadcast log failed: %s", e
+                    )
             try:
                 from dashboard.cascade_notifier import notify_cascade_update
                 from dashboard.protocols import CascadeUpdatePayload
@@ -860,6 +889,42 @@ class RippleStorage:
             ).fetchone()
             return self._row_to_cascade_run(row) if row else None
 
+    def append_cascade_broadcast_log(self, ripple_id: str, latency_ms: int) -> int:
+        """Phase 9.44 F33: persist cascade WS broadcast latency (append-only)."""
+        if latency_ms < 0:
+            raise ValueError(f"latency_ms must be >= 0, got {latency_ms}")
+        created_at = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO cascade_broadcast_log (ripple_id, latency_ms, created_at)"
+                " VALUES (?, ?, ?)",
+                (ripple_id, latency_ms, created_at),
+            )
+            conn.commit()
+            row_id = int(cur.lastrowid)
+        logger.debug(
+            "append_cascade_broadcast_log ripple_id=%s latency_ms=%s id=%s",
+            ripple_id,
+            latency_ms,
+            row_id,
+        )
+        return row_id
+
+    def get_cascade_broadcast_logs(
+        self,
+        ripple_id: str,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[CascadeBroadcastLogEntry]:
+        """Phase 9.44 F33: list broadcast latency rows for ripple (newest first)."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM cascade_broadcast_log WHERE ripple_id = ?"
+                " ORDER BY id DESC LIMIT ? OFFSET ?",
+                (ripple_id, limit, offset),
+            ).fetchall()
+            return [self._row_to_cascade_broadcast_log(row) for row in rows]
+
     def list_cascade_runs_v1(self, ripple_id: str | None = None) -> list[CascadeRun]:
         """Phase 9.36: list cascade_runs rows with algorithm='v1' (migration source)."""
         clauses, params = ["algorithm = 'v1'"], []
@@ -915,6 +980,14 @@ class RippleStorage:
             cascade_nodes=tuple(self._dict_to_node(n) for n in json.loads(row["nodes_json"])),
             cascade_edges=tuple(self._dict_to_edge(e) for e in json.loads(row["edges_json"])),
             cascade_actions=tuple(json.loads(row["actions_json"])),
+        )
+
+    def _row_to_cascade_broadcast_log(self, row: sqlite3.Row) -> CascadeBroadcastLogEntry:
+        return CascadeBroadcastLogEntry(
+            id=row["id"],
+            ripple_id=row["ripple_id"],
+            latency_ms=row["latency_ms"],
+            created_at=datetime.fromisoformat(row["created_at"]),
         )
 
     def _node_to_dict(self, n: "ReferenceNode") -> dict:

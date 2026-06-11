@@ -85,7 +85,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **dependency**: 无 (跟 F30 正交, 可先做)
 - **完成 (2026-06-11)**: `QueryImpactCache` (100 entries / 60s TTL); `perf.load_volume_slice`; `CrossVolumeReferenceGraph.query_impact` + `lazy=True`; storage `load_nodes_by_volume` / `load_edges_for_nodes`; pytest 2569→2578 (+9)
 
-### F32. Phase 9.43 — LLM scanner prompt 调优反馈闭环
+### F32. Phase 9.43 — LLM scanner prompt 调优反馈闭环 ✅ done
 
 - **承接**: Blueprint Phase 11→12 defer「prompt hit-rate tuning after UI feedback」; F19 已外置阈值但未闭环
 - **目标**: `--calibrate` 输出 + dashboard/CLI 摘要 → 建议阈值调整 (human-in-the-loop, 0 自动写 yaml)
@@ -96,14 +96,9 @@ v2 触发条件已满足. 剩余工作分散在:
 - **estimated**: 2-3h
 - **dependency**: F19 已就位; F18 建议有数据
 - **caveat**: 0 真 LLM in default pytest
+- **完成 (2026-06-11)**: `build_calibration_feedback` + per-dim section + `--yaml-example`; pytest 2578→2584 (+6)
 
----
-
-## P2 Dashboard / 运维 / 工程化 (Phase 9.44-9.51)
-
-跟 CVG 功能独立, 可穿插做.
-
-### F33. Phase 9.44 — `cascade_broadcast_log` SQLite 持久化
+### F33. Phase 9.44 — `cascade_broadcast_log` SQLite 持久化 ✅ done
 
 - **承接**: F20 out of scope「YAGNI: 先内存+log, 表留 followup」
 - **目标**: append_ripple WS 广播 latency 持久化, 供 dashboard 历史查询 / debug
@@ -111,6 +106,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **tests**: 5-7 pytest
 - **estimated**: 1.5h
 - **dependency**: F20
+- **完成 (2026-06-11)**: `append_cascade_broadcast_log` + `GET /api/ripples/cascade/{id}/broadcast-log`; pytest 2584→2592 (+8)
 
 ### F34. Phase 9.45 — `cascade_runs` retention cleanup CLI
 
@@ -236,11 +232,11 @@ v2 触发条件已满足. 剩余工作分散在:
 1. **Phase 9.41-bk (F29)** — v3 文档同步 (~30min, 必做顺路) ✅
 2. **Phase 9.41 (F30)** — impact graph 可视化 — **产品价值最高**, dashboard 可看见 CVG 拓扑
 3. **Phase 9.42 (F31)** — query_impact cache — 大图性能兜底 ✅
-4. **Phase 9.43 (F32)** — LLM prompt 调优闭环 — 跟 F19 配套
+4. **Phase 9.43 (F32)** — LLM prompt 调优闭环 — 跟 F19 配套 ✅
 
 ### Track B — Cascade 运维 + Dashboard (可穿插)
 
-1. **Phase 9.44 (F33)** — broadcast log 持久化
+1. **Phase 9.44 (F33)** — broadcast log 持久化 ✅
 2. **Phase 9.45 (F34)** — cascade_runs retention CLI
 3. **Phase 9.46 (F35)** — Global CascadeRunsPage
 4. **Phase 9.47 (F36)** — algorithm badge

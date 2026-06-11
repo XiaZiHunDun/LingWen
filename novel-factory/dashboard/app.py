@@ -29,6 +29,7 @@ from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
     CascadeCancelPayload,  # Phase 9.21
     CascadeCancelRequest,  # Phase 9.21
+    CascadeBroadcastLogResponse,  # Phase 9.44 F33
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,
@@ -1288,6 +1289,22 @@ def create_app(
                 reason=body.reason,
             ))
         return CascadeRunResponse.from_dataclass(run)
+
+    @app.get(
+        "/api/ripples/cascade/{ripple_id}/broadcast-log",
+        response_model=list[CascadeBroadcastLogResponse],
+    )
+    def get_ripple_cascade_broadcast_log(
+        ripple_id: str,
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+    ) -> list[CascadeBroadcastLogResponse]:
+        """Phase 9.44 F33: list persisted cascade WS broadcast latency history."""
+        storage = _default_storage()
+        rows = storage.get_cascade_broadcast_logs(
+            ripple_id, limit=limit, offset=offset
+        )
+        return [CascadeBroadcastLogResponse.from_dataclass(r) for r in rows]
 
     # ==================== Phase 6: Workflow Endpoints ====================
 
