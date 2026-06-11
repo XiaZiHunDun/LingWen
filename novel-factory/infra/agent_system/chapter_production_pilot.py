@@ -246,6 +246,19 @@ def preflight_ok(checks: list[PreflightCheck]) -> bool:
     return all(c.passed for c in checks if c.required)
 
 
+def _json_safe(value: Any) -> Any:
+    """Coerce pilot record fields to JSON-serializable values."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    if hasattr(value, "__dataclass_fields__"):
+        return {k: _json_safe(v) for k, v in asdict(value).items()}
+    return str(value)
+
+
 def configure_pilot_hooks(master: Any) -> None:
     """Apply env-driven hooks on MasterController before run_workflow."""
     mem_mode = resolve_memory_rag_mode()
@@ -383,7 +396,7 @@ def build_pilot_record(
         },
         "hooks": {
             "memory_context_source": result.memory_context_source,
-            "incremental_backfill": result.incremental_backfill,
+            "incremental_backfill": _json_safe(result.incremental_backfill),
         },
         "human_review": {
             "required": result.paused or result.pending_count > 0,

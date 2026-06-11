@@ -6,6 +6,7 @@ import os
 
 import pytest
 
+from infra.cross_volume.backfill import BackfillStats
 from infra.agent_system.chapter_production_pilot import (
     PilotResult,
     PreflightCheck,
@@ -113,6 +114,31 @@ class TestPilotRecordF72:
         assert record["chapter_num"] == 360
         assert record["workflow_name"] == "novel_writing"
         assert record["operator"] == "tester"
+        assert validate_pilot_record(record) == []
+
+    def test_build_pilot_record_serializes_backfill_stats(self):
+        stats = BackfillStats(
+            character_count=1,
+            foreshadow_count=0,
+            setting_count=0,
+            plot_point_count=0,
+            total_count=1,
+            elapsed_s=0.1,
+            dry_run=False,
+            nodes_written=1,
+        )
+        result = PilotResult(
+            chapter_num=360,
+            workflow_name="novel_writing",
+            provider="minimax",
+            preflight_ok=True,
+            incremental_backfill=stats,
+            emit_chapter_completed=True,
+            completed=7,
+            real_llm_gate=True,
+        )
+        record = build_pilot_record(result, operator="tester")
+        assert record["hooks"]["incremental_backfill"]["nodes_written"] == 1
         assert validate_pilot_record(record) == []
 
     def test_validate_pilot_record_rejects_missing_keys(self):

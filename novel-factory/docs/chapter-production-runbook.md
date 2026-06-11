@@ -362,3 +362,51 @@ pytest tests/agent_system/test_chapter_production_pilot.py -q -k "PilotRecord"
 pytest tests/ci/test_chapter_production_pilot_f72_ci.py -q
 ```
 
+---
+
+## 14. 批量章节生产 (F73)
+
+**Gate**: 同 §12 `LINGWEN_REAL_LLM=1` · 顺序跑 **1–10 章** · stop-on-fail · 可选累计 `--budget-usd`
+
+### 14.1 CLI
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1 LINGWEN_INCREMENTAL_BACKFILL=1 LINGWEN_MEMORY_RAG=stub
+export MINIMAX_API_KEY=...
+
+# preflight（0 LLM）
+python -m infra.agent_system.chapter_production_batch \
+  --preflight-only --start-chapter 361 --max-chapters 3
+
+# 跑 3 章 + 写 batch summary
+python -m infra.agent_system.chapter_production_batch \
+  --start-chapter 361 --max-chapters 3 --budget-usd 0.15 \
+  --save-summary infra/.state/pilot_records/batch-361-363.json \
+  --save-chapter-records-dir infra/.state/pilot_records/
+```
+
+| 参数 | 说明 |
+|------|------|
+| `--start-chapter` | 起始章号 |
+| `--max-chapters` | 1–10，默认 3 |
+| `--budget-usd` | 累计成本硬停（跑完一章后检查，超限不再开下一章） |
+| `--save-summary` | batch JSON（含每章 PilotResult） |
+| `--save-chapter-records-dir` | 每章 `chNNN.json` pilot 记录 |
+
+### 14.2 stopped_reason
+
+| 值 | 含义 |
+|----|------|
+| `completed` | 计划章数全部成功 |
+| `chapter_failed` | 某一章 emit 失败 / error，后续不再跑 |
+| `budget_exceeded` | 累计 cost ≥ budget，停止 |
+| `preflight_failed` | checklist 未通过 |
+
+### 14.3 pytest
+
+```bash
+pytest tests/agent_system/test_chapter_production_batch.py -q
+pytest tests/ci/test_chapter_production_batch_f73_ci.py -q
+```
+

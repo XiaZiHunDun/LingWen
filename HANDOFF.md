@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.78 (Phase 9.78 v6 全量交付 + v7 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F65–F70 完成 (`6d5d899`); v7 推荐 **F72** Manual 1 章 pilot。
+> **更新 (2026-06-11)**: F72 manual gate + F73 batch runner; v7 推荐 **F74**。
 
 ---
 
@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `6d5d899` — feat(F65-F70) v6 真实生产 pilot + Dashboard MVP |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F72** Manual 1 章 pilot — 见 §6 + v7 roadmap |
+| **下一期推荐** | **F74** ChaptersPage 生产历史 — 见 §6 + v7 roadmap |
 
 ---
 
