@@ -9,12 +9,14 @@ const mocks = vi.hoisted(() => ({
   fetchRipples: vi.fn(),
   fetchRippleStats: vi.fn(),
   fetchRippleDetail: vi.fn(),
+  fetchReferenceGraph: vi.fn(),
 }))
 
 vi.mock('../../src/api/index.js', () => ({
   fetchRipples: mocks.fetchRipples,
   fetchRippleStats: mocks.fetchRippleStats,
   fetchRippleDetail: mocks.fetchRippleDetail,
+  fetchReferenceGraph: mocks.fetchReferenceGraph,
   fetchRippleAudit: vi.fn().mockResolvedValue([]),
   applyRipple: vi.fn(),
   rejectRipple: vi.fn(),
@@ -65,13 +67,22 @@ describe('RipplesPage smoke (Phase 9.31 F15)', () => {
     mocks.fetchRipples.mockResolvedValue([sampleRipple])
     mocks.fetchRippleStats.mockResolvedValue({ total: 1, by_status: { pending: 1 }, by_volume: { 1: 1 } })
     mocks.fetchRippleDetail.mockResolvedValue(sampleRipple)
+    mocks.fetchReferenceGraph.mockResolvedValue({
+      nodes: [],
+      edges: [],
+      total_node_count: 0,
+      total_edge_count: 0,
+      truncated: false,
+    })
   })
 
-  test('mount renders filter + ripple list', async () => {
+  test('mount renders impact graph section + filter + ripple list', async () => {
     const wrapper = mount(RipplesPage)
     await flushPromises()
+    expect(wrapper.find(byTestid('ripples-page-impact-graph')).exists()).toBe(true)
     expect(wrapper.find(byTestid('ripple-filter-status')).exists()).toBe(true)
     expect(wrapper.find(byTestid('ripple-card')).exists()).toBe(true)
+    expect(mocks.fetchReferenceGraph).toHaveBeenCalled()
   })
 
   test('pending filter shows list or empty/loading state', async () => {

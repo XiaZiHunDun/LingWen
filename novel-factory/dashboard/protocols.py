@@ -783,6 +783,18 @@ class CascadePreviewResponse(BaseModel):
     max_depth: int = 0
 
 
+# === Phase 9.41 F30: CVG reference graph (ImpactGraph) ===
+
+class ReferenceGraphResponse(BaseModel):
+    """Phase 9.41: persisted reference_nodes + reference_edges snapshot for dashboard."""
+
+    nodes: list[CascadeNodeResponse]
+    edges: list[CascadeEdgeResponse]
+    total_node_count: int
+    total_edge_count: int
+    truncated: bool = False
+
+
 # === Phase 9.20: cascade_runs table row response ===
 
 class CascadeRunResponse(BaseModel):

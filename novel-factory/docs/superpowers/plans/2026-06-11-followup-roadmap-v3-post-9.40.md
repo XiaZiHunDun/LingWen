@@ -59,7 +59,7 @@ v2 触发条件已满足. 剩余工作分散在:
 
 承接 Phase 9 cross-volume blueprint **Phase 14-16** 中 dashboard 可感知部分. 跟 9.33-9.36 数据/观测 track 互补: 本 track 填 **可视化** + **查询性能**.
 
-### F30. Phase 9.41 — 跨卷 impact graph ECharts 可视化
+### F30. Phase 9.41 — 跨卷 impact graph ECharts 可视化 ✅ **DONE Phase 9.41**
 
 - **承接**: Blueprint Phase 16「Cross-volume impact graph visualization in dashboard」
 - **目标**: RipplesPage / CVG 区域渲染 reference graph 拓扑 (节点/边/维度配色), 跟 CascadeGraph 模式对齐

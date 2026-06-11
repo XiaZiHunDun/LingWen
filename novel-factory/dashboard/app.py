@@ -42,6 +42,7 @@ from dashboard.protocols import (
     RippleListItemResponse,
     RippleRollbackRequest,
     RippleStatsResponse,
+    ReferenceGraphResponse,
     _extract_cost_by_day,
     _extract_cost_by_day_per_tier,
     _extract_cost_by_scenario,
@@ -581,6 +582,43 @@ def _edge_to_dict_for_response(edge: Any) -> dict:
     return dict(edge)
 
 
+def _build_reference_graph_response(
+    storage: RippleStorage,
+    *,
+    volume: int | None = None,
+    dimension: str | None = None,
+    limit: int = 200,
+) -> ReferenceGraphResponse:
+    """Phase 9.41 F30: load persisted CVG graph for ImpactGraph.vue."""
+    nodes = storage.load_all_nodes()
+    edges = storage.load_all_edges()
+    if volume is not None:
+        nodes = [n for n in nodes if n.volume == volume]
+    if dimension is not None:
+        nodes = [n for n in nodes if n.dimension == dimension]
+    total_node_count = len(nodes)
+    total_edge_count = len(edges)
+    truncated = total_node_count > limit
+    if truncated:
+        nodes = nodes[:limit]
+    node_ids = {n.id for n in nodes}
+    visible_edges = [
+        e for e in edges
+        if e.from_node_id in node_ids and e.to_node_id in node_ids
+    ]
+    return ReferenceGraphResponse(
+        nodes=[
+            CascadeNodeResponse(**_node_to_dict_for_response(n)) for n in nodes
+        ],
+        edges=[
+            CascadeEdgeResponse(**_edge_to_dict_for_response(e)) for e in visible_edges
+        ],
+        total_node_count=total_node_count,
+        total_edge_count=total_edge_count,
+        truncated=truncated,
+    )
+
+
 def _validate_max_depth_v9_20(max_depth: int | None) -> int:
     """Phase 9.20: validate max_depth for persist=true path. Returns validated int.
 
@@ -846,6 +884,24 @@ def create_app(
             by_volume[str(r.trigger_volume)] = by_volume.get(str(r.trigger_volume), 0) + 1
         return RippleStatsResponse(
             total=len(all_ripples), by_status=by_status, by_volume=by_volume
+        )
+
+    @app.get("/api/cvg/reference-graph", response_model=ReferenceGraphResponse)
+    def get_reference_graph(
+        volume: Optional[int] = Query(None, ge=1, le=99),
+        dimension: Optional[str] = Query(
+            None,
+            pattern="^(character|foreshadow|setting|plot_point)$",
+        ),
+        limit: int = Query(200, ge=1, le=500),
+    ) -> ReferenceGraphResponse:
+        """Phase 9.41 F30: persisted reference graph for dashboard ImpactGraph."""
+        storage = _default_storage()
+        return _build_reference_graph_response(
+            storage,
+            volume=volume,
+            dimension=dimension,
+            limit=limit,
         )
 
     @app.get("/api/cvg/ripples/{ripple_id}", response_model=RippleDetailResponse)

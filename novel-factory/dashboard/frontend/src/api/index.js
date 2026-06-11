@@ -279,6 +279,20 @@ export async function fetchRippleStats() {
   return request('/cvg/ripples/stats');
 }
 
+/**
+ * Phase 9.41 F30: persisted CVG reference graph for ImpactGraph.vue
+ * @param {object} [options] - { volume?: number, dimension?: string, limit?: number }
+ * @returns {Promise<{nodes:Array, edges:Array, total_node_count:number, total_edge_count:number, truncated:boolean}>}
+ */
+export async function fetchReferenceGraph(options = {}) {
+  const params = new URLSearchParams();
+  if (options.volume != null) params.set('volume', String(options.volume));
+  if (options.dimension) params.set('dimension', options.dimension);
+  if (options.limit != null) params.set('limit', String(options.limit));
+  const qs = params.toString();
+  return request(`/cvg/reference-graph${qs ? `?${qs}` : ''}`);
+}
+
 // === Phase 9.14: ripple audit + rollback API methods ===
 
 /**
