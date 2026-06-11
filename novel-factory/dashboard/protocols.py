@@ -667,6 +667,7 @@ __all__ = [
     "CascadeEdgeResponse",
     "CascadeResponse",
     "CascadePreviewResponse",
+    "CascadeRunResponse",
     "CascadeUpdatePayload",
 ]
 
@@ -753,6 +754,86 @@ class CascadePreviewResponse(BaseModel):
     cascade_node_count: int = 0
     cascade_edge_count: int = 0
     max_depth: int = 0
+
+
+# === Phase 9.20: cascade_runs table row response ===
+
+class CascadeRunResponse(BaseModel):
+    """Phase 9.20: cascade_runs table row → API response.
+
+    Mirrors CascadeRun dataclass (infra/cross_volume/storage.py). 11 fields:
+    autoincrement id, ripple_id, BFS inputs (max_depth/depth_reached/algorithm),
+    timestamps (started_at/completed_at), status, and the BFS output payload
+    (cascade_nodes/cascade_edges/cascade_actions).
+
+    Reuses CascadeNodeResponse / CascadeEdgeResponse for node/edge payload
+    serialization (1:1 with Phase 9.15 CascadeResponse).
+    """
+    id: int
+    ripple_id: str
+    max_depth: int
+    depth_reached: int
+    algorithm: str
+    started_at: datetime
+    completed_at: datetime
+    status: str
+    cascade_nodes: list[CascadeNodeResponse]
+    cascade_edges: list[CascadeEdgeResponse]
+    cascade_actions: list[dict[str, Any]]
+
+    @classmethod
+    def from_dataclass(cls, run: Any) -> "CascadeRunResponse":
+        """Map CascadeRun dataclass → response (handles tuple fields).
+
+        cascade_nodes / cascade_edges are tuples of ReferenceNode / ReferenceEdge
+        dataclass instances. cascade_actions is a tuple[str, ...]. We materialize
+        to list for Pydantic JSON serialization.
+        """
+        return cls(
+            id=run.id,
+            ripple_id=run.ripple_id,
+            max_depth=run.max_depth,
+            depth_reached=run.depth_reached,
+            algorithm=run.algorithm,
+            started_at=run.started_at,
+            completed_at=run.completed_at,
+            status=run.status,
+            cascade_nodes=[CascadeNodeResponse(**_cvg_node_to_dict(n)) for n in run.cascade_nodes],
+            cascade_edges=[CascadeEdgeResponse(**_cvg_edge_to_dict(e)) for e in run.cascade_edges],
+            cascade_actions=list(run.cascade_actions),
+        )
+
+
+def _cvg_node_to_dict(node: Any) -> dict:
+    """Phase 9.20: ReferenceNode → dict for CascadeNodeResponse(**).
+
+    Local copy of dashboard.app._node_to_dict_for_response (kept here to avoid
+    circular import: dashboard.app imports CascadeRunResponse from protocols).
+    Converts dataclass → dict (datetime → isoformat) so Pydantic v2 can bind
+    fields it knows and ignore extras (created_at / created_by / confidence).
+    """
+    from dataclasses import asdict, is_dataclass
+    if is_dataclass(node):
+        d = asdict(node)
+        if isinstance(d.get("created_at"), datetime):
+            d["created_at"] = d["created_at"].isoformat()
+        return d
+    return dict(node)
+
+
+def _cvg_edge_to_dict(edge: Any) -> dict:
+    """Phase 9.20: ReferenceEdge → dict for CascadeEdgeResponse(**).
+
+    Local copy of dashboard.app._edge_to_dict_for_response (see _cvg_node_to_dict
+    for circular-import rationale).
+    """
+    from dataclasses import asdict, is_dataclass
+    if is_dataclass(edge):
+        d = asdict(edge)
+        if isinstance(d.get("created_at"), datetime):
+            d["created_at"] = d["created_at"].isoformat()
+        return d
+    return dict(edge)
 
 
 # === Phase 9.17: cascade update WS payload schema ===

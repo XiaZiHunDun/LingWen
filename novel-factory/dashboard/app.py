@@ -28,6 +28,7 @@ from dashboard.protocols import (
     CascadeNodeResponse,
     CascadePreviewResponse,
     CascadeResponse,
+    CascadeRunResponse,
     MasterControllerLike,
     RippleActionRequest,
     RippleActionResponse,
@@ -571,6 +572,23 @@ def _edge_to_dict_for_response(edge: Any) -> dict:
     return dict(edge)
 
 
+def _validate_max_depth_v9_20(max_depth: int | None) -> int:
+    """Phase 9.20: validate max_depth for persist=true path. Returns validated int.
+
+    persist path requires explicit max_depth (1..10). None or 0/negative/>10 → 400.
+    Mirrors Phase 9.19 _validate_max_depth contract but requires a non-None return
+    (no persisted-cascade fallback — persist always runs live BFS).
+
+    Raises:
+        HTTPException 400 if max_depth is None or out of range.
+    """
+    if max_depth is None:
+        raise HTTPException(400, "max_depth is required for persist=true (1..10)")
+    if max_depth < 1 or max_depth > 10:
+        raise HTTPException(400, "max_depth must be 1..10")
+    return max_depth
+
+
 def create_app(
     db_path: Optional[Path] = None,
     master_controller: Optional[MasterControllerLike] = None,
@@ -1028,6 +1046,99 @@ def create_app(
             cascade_edge_count=len(cascade.cascade_edges),
             max_depth=cascade.depth_reached,
         )
+
+    # ==================== Phase 9.20: Cascade Runs Endpoints (T2) ====================
+    # Additive: new /api/ripples/cascade/{ripple_id}[/runs] namespace. The existing
+    # /api/cvg/ripples/{ripple_id}/cascade endpoint stays Phase 9.19 (0 改) — see
+    # the regression test_cascade_endpoints.py suite. persist=false (default) on
+    # the new endpoint preserves Phase 9.19 response shape (CascadeResponse with
+    # trigger_ripple_id, no 'id' / 'ripple_id' / 'status' keys).
+
+    @app.get(
+        "/api/ripples/cascade/{ripple_id}",
+        response_model=None,  # branch: CascadeResponse (default) | CascadeRunResponse (persist=true)
+    )
+    def get_ripple_cascade_v9_20(
+        ripple_id: str,
+        max_depth: int | None = Query(default=None),
+        persist: bool = Query(default=False),
+    ):
+        """Phase 9.20: get cascade with optional persist to cascade_runs.
+
+        persist=False (default): return Phase 9.19 CascadeResponse (trigger_ripple_id,
+            no 'id' / 'ripple_id' / 'status' keys). Computes live BFS when max_depth
+            is provided (1..10), else returns persisted cascade from ripple_cascade.
+        persist=True: re-run BFS live, persist run to cascade_runs table, return
+            CascadeRunResponse with id/ripple_id/max_depth/depth_reached/algorithm/
+            started_at/completed_at/status/cascade_nodes/cascade_edges/cascade_actions.
+
+        Raises:
+            404: ripple not found (persist path) or no persisted cascade (default path)
+            400: max_depth out of range (persist path requires 1..10; default path
+                 accepts 1..10 for live BFS or None/0 for persisted)
+        """
+        storage = _default_storage()
+
+        if persist:
+            # Phase 9.20: live BFS + record + return CascadeRunResponse.
+            # persist path requires explicit max_depth (no persisted-cascade fallback).
+            validated_depth = _validate_max_depth_v9_20(max_depth)
+            try:
+                cascaded = storage.preview_cascade(ripple_id, max_depth=validated_depth)
+            except KeyError:
+                raise HTTPException(404, f"Ripple {ripple_id} not found")
+            run_id = storage.record_cascade_run(
+                ripple_id, cascaded, max_depth=validated_depth
+            )
+            run = storage.get_cascade_run_by_id(run_id)
+            return CascadeRunResponse.from_dataclass(run).model_dump(mode="json")
+
+        # Phase 9.19 path (mirror get_ripple_cascade exactly for backward compat).
+        live_depth = _validate_max_depth(max_depth)
+        if live_depth is not None:
+            cascade = storage.preview_cascade(ripple_id, max_depth=live_depth)
+        else:
+            cascade = storage.get_cascade_by_ripple_id(ripple_id)
+            if cascade is None:
+                raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+        cascade_nodes = [
+            CascadeNodeResponse(**_node_to_dict_for_response(n))
+            for n in cascade.cascade_nodes
+        ]
+        cascade_edges = [
+            CascadeEdgeResponse(**_edge_to_dict_for_response(e))
+            for e in cascade.cascade_edges
+        ]
+        return CascadeResponse(
+            trigger_ripple_id=cascade.trigger_ripple_id,
+            cascade_nodes=cascade_nodes,
+            cascade_edges=cascade_edges,
+            cascade_actions=list(cascade.cascade_actions),
+            depth_reached=cascade.depth_reached,
+            generated_at=cascade.generated_at,
+            bfs_algorithm_version=cascade.bfs_algorithm_version,
+        )
+
+    @app.get(
+        "/api/ripples/cascade/{ripple_id}/runs",
+        response_model=list[CascadeRunResponse],
+    )
+    def get_ripple_cascade_runs(
+        ripple_id: str,
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+    ) -> list[CascadeRunResponse]:
+        """Phase 9.20: list historical cascade runs for a ripple (latest first).
+
+        limit: max rows (1..200, default 50).
+        offset: pagination offset (≥0, default 0).
+
+        Returns:
+            list of CascadeRunResponse, ordered by id DESC (newest first).
+        """
+        storage = _default_storage()
+        runs = storage.get_cascade_runs(ripple_id, limit=limit, offset=offset)
+        return [CascadeRunResponse.from_dataclass(r) for r in runs]
 
     # ==================== Phase 6: Workflow Endpoints ====================
 
