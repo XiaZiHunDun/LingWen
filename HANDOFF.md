@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.40 (Phase 9.40 F25 + F26 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.40 F25 TS strict pilot ✅ + F26 CostBarChart UI polish ✅; pytest 2552→2556 (+4); vitest 193→196 (+3); 推荐 **F27** `*_with_usage`.
+> **版本**: v9.40-d (Phase 9.40 F27 + F28 完成, 2026-06-11)
+> **更新 (2026-06-11)**: F27 polish_merge `_with_usage` CI 契约 ✅ + F28 spec 编号标注 ✅; pytest 2556→2564 (+8); vitest 196 (不变); **v2 roadmap F17-F28 全部完成**.
 
 ---
 
@@ -13,14 +13,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2556 passed |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2564 passed |
 | **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 196 passed · Playwright 0 (dev opt-in) |
-| **总测试** | **2752+** (2556 pytest + 196 vitest + 27 pytest skip) |
+| **总测试** | **2760+** (2564 pytest + 196 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (vitest + coverage → Codecov) |
-| **下一期推荐** | **F27** (`*_with_usage` cost variant) 或 **F28** (spec 编号标注) |
+| **下一期推荐** | v2 roadmap (F17-F28) 已全部完成 — 待主公开 v3 或点名新项 |
 
 ---
 
@@ -275,14 +275,14 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F24 | ESLint 8→9 | 9.39 | 2h | P2 DevInfra | ✅ done |
 | F25 | TypeScript strict pilot | 9.40 | 2h | P2 DevInfra | ✅ done |
 | F26 | Cost 柱状图 UI (Phase 8.7) | — | 1.5h | P3 | ✅ done |
-| F27 | `*_with_usage` cost variant | — | 2h | P3 | ✅ |
-| F28 | spec 编号错位标注 (doc-only) | — | 15m | P3 | ✅ |
+| F27 | `*_with_usage` cost variant | — | 2h | P3 | ✅ done |
+| F28 | spec 编号错位标注 (doc-only) | — | 15m | P3 | ✅ done |
 
 **已完成 (v1 roadmap, 9.24-9.32)**:
 - F1-F3: P0 bookkeeping ✅ | F4-F7: P1 cascade 持久化路线 ✅ | F8: RESOLVED ✅
 - F9-F16: P2 dashboard/DevInfra ✅ (含 9.32 F16 max_nodes_cap)
 
-**推荐下一项**: **F27** (`*_with_usage` cost variant) 或 **F28** (spec 编号标注, doc-only).
+**推荐下一项**: v2 roadmap **F17-F28 全部完成** — 待主公开 v3 roadmap 或点名新 phase.
 
 ---
 
@@ -395,4 +395,4 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 ---
 
 > **版本**: v9.39 (2026-06-11)
-> **下次更新**: 启动 F27/F28 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格
+> **下次更新**: 主公开 v3 roadmap 或新 phase 启动后, append entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §6 表格
