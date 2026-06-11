@@ -1,8 +1,9 @@
 # Followup Roadmap v2 — Post Phase 9.32
 
+> **Superseded by v3 (post 9.40):** `2026-06-11-followup-roadmap-v3-post-9.40.md` — F17-F28 全部完成, 新 backlog 见 F29-F43.
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap.md` (F1-F16 已于 Phase 9.24-9.32 全部完成). 本 doc 汇总 Phase 9.10-9.32 各 entry「out of scope」散落项 + Phase 8.x 工程化遗留, 重新编号 F17+ 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「重新开 roadmap」)
-> **状态**: F17 ✅ (Phase 9.33-bk, 2026-06-11); F18-F28 deferred, 待主公决策
+> **状态**: F17-F28 ✅ 全部完成 (Phase 9.33-9.40, 2026-06-11)
 > **前置**: Phase 9.32 F16 ✅ (`1a23bbe`), baseline **2501 pytest + 192 vitest**
 
 ## 上下文 (Context)
