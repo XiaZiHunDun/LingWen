@@ -6,6 +6,7 @@ import { byTestid } from '../helpers/by-testid'
 
 const mocks = vi.hoisted(() => ({
   fetchChapters: vi.fn(),
+  fetchProductionRecords: vi.fn(),
   status: {
     value: {
       is_active: false,
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../src/api/index.js', () => ({
   fetchChapters: mocks.fetchChapters,
+  fetchProductionRecords: mocks.fetchProductionRecords,
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
@@ -30,6 +32,7 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
 
 describe('ChaptersPage (F63)', () => {
   beforeEach(() => {
+    mocks.fetchProductionRecords.mockResolvedValue({ records: [] })
     mocks.fetchChapters.mockResolvedValue({
       chapters: [
         {
@@ -100,5 +103,31 @@ describe('ChaptersPage (F63)', () => {
     await wrapper.find(byTestid('chapter-range-select')).setValue('1-50')
     await flushPromises()
     expect(mocks.fetchChapters).toHaveBeenCalledWith('1-50')
+  })
+
+  test('shows production history table when records present', async () => {
+    mocks.fetchProductionRecords.mockResolvedValue({
+      records: [
+        {
+          record_id: 'p360',
+          record_type: 'pilot',
+          chapter_num: 360,
+          chapter_range: null,
+          operator: 'op',
+          recorded_at: '2026-06-11T00:00:00Z',
+          provider: 'minimax',
+          total_cost_usd: 0.025,
+          emit_chapter_completed: true,
+          memory_context_source: 'stub',
+          stopped_reason: null,
+          source_file: 'ch360.json',
+        },
+      ],
+    })
+    const wrapper = mount(ChaptersPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('production-history-table')).exists()).toBe(true)
+    expect(wrapper.text()).toContain('minimax')
+    expect(wrapper.text()).toContain('#360')
   })
 })

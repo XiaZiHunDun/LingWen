@@ -65,8 +65,50 @@
       </template>
     </section>
 
+    <section
+      class="production-history pixel-card"
+      data-testid="production-history-panel"
+    >
+      <h2 class="section-title">最近生产记录 (只读)</h2>
+      <p v-if="recordsLoading" class="history-hint">加载记录…</p>
+      <p v-else-if="recordsError" class="history-error">{{ recordsError }}</p>
+      <p v-else-if="!historyRows.length" class="history-hint" data-testid="production-history-empty">
+        暂无 pilot/batch 记录（CLI --save-record 写入 infra/.state/pilot_records/）
+      </p>
+      <table v-else class="history-table" data-testid="production-history-table">
+        <thead>
+          <tr>
+            <th>章节</th>
+            <th>类型</th>
+            <th>成本</th>
+            <th>Provider</th>
+            <th>Memory</th>
+            <th>状态</th>
+            <th>操作者</th>
+            <th>时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in historyRows" :key="row.key">
+            <td>{{ row.chapter }}</td>
+            <td>{{ row.type }}</td>
+            <td>{{ row.cost }}</td>
+            <td>{{ row.provider }}</td>
+            <td>{{ row.memory }}</td>
+            <td>{{ row.status }}</td>
+            <td>{{ row.operator }}</td>
+            <td>{{ row.at }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <section class="table-section">
-      <ChapterTable v-if="chapters.length > 0" :chapters="chapters" />
+      <ChapterTable
+        v-if="chapters.length > 0"
+        :chapters="chapters"
+        :production-by-chapter="productionByChapter"
+      />
       <p v-else-if="!loading" class="chapters-empty" data-testid="chapters-empty">
         暂无章节数据
       </p>
@@ -77,19 +119,27 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
-import { fetchChapters } from '../api/index.js';
+import { fetchChapters, fetchProductionRecords } from '../api/index.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import {
   formatIncrementalBackfill,
   productionSummaryLines,
   resolveProductionSummary,
 } from '../utils/productionSummary.js';
+import {
+  chapterProductionBadge,
+  formatProductionRecordRows,
+  indexRecordsByChapter,
+} from '../utils/productionRecords.js';
 
 const rangeOptions = ['1-30', '1-50', '31-60', '61-90'];
 const range = ref('1-30');
 const chapters = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const productionRecords = ref([]);
+const recordsLoading = ref(false);
+const recordsError = ref(null);
 
 const { status } = useWorkflowSocket();
 
@@ -108,6 +158,24 @@ const productionLines = computed(() =>
 const incrementalBackfillLabel = computed(() =>
   formatIncrementalBackfill(status.value?.incremental_backfill),
 );
+
+const historyRows = computed(() => formatProductionRecordRows(productionRecords.value));
+
+const productionByChapter = computed(() => indexRecordsByChapter(productionRecords.value));
+
+async function loadProductionRecords() {
+  recordsLoading.value = true;
+  recordsError.value = null;
+  try {
+    const resp = await fetchProductionRecords({ limit: 30 });
+    productionRecords.value = resp.records || [];
+  } catch (err) {
+    recordsError.value = err instanceof Error ? err.message : String(err);
+    productionRecords.value = [];
+  } finally {
+    recordsLoading.value = false;
+  }
+}
 
 async function loadChapters() {
   loading.value = true;
@@ -129,6 +197,7 @@ watch(range, () => {
 
 onMounted(() => {
   loadChapters();
+  loadProductionRecords();
 });
 </script>
 
@@ -254,6 +323,41 @@ onMounted(() => {
   font-size: 10px;
   font-family: monospace;
   line-height: 1.5;
+}
+
+.production-history {
+  padding: var(--space-md);
+  border: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.history-hint {
+  font-size: 10px;
+  font-family: monospace;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.history-error {
+  font-size: 10px;
+  font-family: monospace;
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8px;
+  font-family: monospace;
+  margin-top: var(--space-xs);
+}
+
+.history-table th,
+.history-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
 }
 
 .chapters-empty {

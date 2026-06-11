@@ -100,6 +100,30 @@ class ChaptersResponse(BaseModel):
     chapters: list[ChapterData]
 
 
+class ProductionRecordResponse(BaseModel):
+    """Phase 9.82 F74: pilot/batch record summary (read-only)."""
+
+    record_id: str
+    record_type: str
+    chapter_num: Optional[int] = None
+    chapter_range: Optional[str] = None
+    operator: Optional[str] = None
+    recorded_at: Optional[str] = None
+    provider: Optional[str] = None
+    total_cost_usd: Optional[float] = None
+    emit_chapter_completed: Optional[bool] = None
+    memory_context_source: Optional[str] = None
+    stopped_reason: Optional[str] = None
+    source_file: str
+
+
+class ProductionRecordsResponse(BaseModel):
+    """List of production records from pilot_records dir."""
+
+    records_dir: str
+    records: list[ProductionRecordResponse]
+
+
 # === Phase 6: Decision/Workflow models ===
 
 class DecisionResponse(BaseModel):
@@ -814,6 +838,26 @@ def create_app(
                 )
                 for ch in chapters
             ]
+        )
+
+    @app.get("/api/production-records", response_model=ProductionRecordsResponse)
+    def get_production_records(
+        chapter_num: Optional[int] = Query(default=None, ge=1),
+        limit: int = Query(default=30, ge=1, le=100),
+    ) -> ProductionRecordsResponse:
+        """Phase 9.82 F74: read pilot/batch JSON from infra/.state/pilot_records."""
+        from infra.agent_system.production_records import (
+            default_pilot_records_dir,
+            list_production_records,
+        )
+
+        root = default_pilot_records_dir()
+        items = list_production_records(root, chapter_num=chapter_num, limit=limit)
+        return ProductionRecordsResponse(
+            records_dir=str(root),
+            records=[
+                ProductionRecordResponse(**item.to_dict()) for item in items
+            ],
         )
 
     # ==================== Phase 6: Decision Endpoints ====================

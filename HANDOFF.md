@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `6d5d899` — feat(F65-F70) v6 真实生产 pilot + Dashboard MVP |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F74** ChaptersPage 生产历史 — 见 §6 + v7 roadmap |
+| **下一期推荐** | **F75** 决策 deep link — 见 §6 + v7 roadmap |
 
 ---
 
@@ -291,13 +291,13 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | # | 主题 | Phase | 估时 | Track | 状态 |
 |---|------|-------|------|-------|------|
 | F71-bk | v7 roadmap + HANDOFF | 9.79-bk | 30min | P0 | ✅ |
-| **F72** | Manual 1 章 pilot 执行 | 9.80 | 2-4h | P1 | 🟡 脚手架 done; manual gate 待 API key |
-| F73 | 批量 3–10 章 runner | 9.81 | 4-6h | P1 | 待做 |
-| F74 | ChaptersPage 生产历史 | 9.82 | 3-4h | P2 | 待做 |
-| F75 | 决策中心 deep link | 9.83 | 2-3h | P2 | 待做 |
+| **F72** | Manual 1 章 pilot 执行 | 9.80 | 2-4h | P1 | ✅ |
+| **F73** | 批量 3–10 章 runner | 9.81 | 4-6h | P1 | ✅ |
+| **F74** | ChaptersPage 生产历史 | 9.82 | 3-4h | P2 | ✅ |
+| **F75** | 决策中心 deep link | 9.83 | 2-3h | P2 | 🔴 推荐下一项 |
 | F76 | Remote e2e-live 首绿 | 9.84 | 1h | P3 | 待做 |
 
-**推荐下一项**: **F72** Manual 1 章 pilot（需 API key; `python -m infra.agent_system.chapter_production_pilot --preflight-only` 预检）
+**推荐下一项**: **F75** 决策中心 ↔ 章节 deep link
 
 ---
 

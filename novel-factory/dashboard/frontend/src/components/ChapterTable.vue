@@ -27,6 +27,16 @@
           <td>{{ formatPercent(chapter.hook_strength_avg) }}</td>
           <td>{{ chapter.coolpoint_count }}</td>
           <td>{{ formatPercent(chapter.coolpoint_density) }}</td>
+          <td>
+            <span
+              v-if="productionBadge(chapter.chapter)"
+              class="production-badge"
+              data-testid="chapter-production-badge"
+            >
+              {{ productionBadge(chapter.chapter) }}
+            </span>
+            <span v-else class="production-badge-empty">-</span>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -38,11 +48,16 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { chapterProductionBadge } from '../utils/productionRecords.js'
 
 const props = defineProps({
   chapters: {
     type: Array,
     default: () => []
+  },
+  productionByChapter: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -51,7 +66,8 @@ const columns = [
   { key: 'hook_count', label: '钩子数' },
   { key: 'hook_strength_avg', label: '钩子强度' },
   { key: 'coolpoint_count', label: '爽点数' },
-  { key: 'coolpoint_density', label: '爽点密度' }
+  { key: 'coolpoint_density', label: '爽点密度' },
+  { key: 'production', label: '生产' }
 ]
 
 const sortKey = ref('chapter')
@@ -89,6 +105,9 @@ const formatPercent = (value) => {
   if (value === undefined || value === null) return '-'
   return (value * 100).toFixed(1) + '%'
 }
+
+const productionBadge = (chapterNum) =>
+  chapterProductionBadge(chapterNum, props.productionByChapter)
 </script>
 
 <style scoped>
@@ -158,6 +177,17 @@ const formatPercent = (value) => {
 
 .chapter-table td {
   color: var(--color-text);
+}
+
+.production-badge {
+  font-size: 7px;
+  padding: 2px 4px;
+  background: #c8e6c9;
+  border: 1px solid var(--border-color);
+}
+
+.production-badge-empty {
+  opacity: 0.5;
 }
 
 .empty-state {

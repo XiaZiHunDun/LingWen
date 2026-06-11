@@ -69,6 +69,18 @@ export async function fetchChapters(range) {
 }
 
 /**
+ * Phase 9.82 F74: pilot/batch production records (read-only).
+ * @param {{ chapterNum?: number, limit?: number }} [opts]
+ */
+export async function fetchProductionRecords(opts = {}) {
+  const params = new URLSearchParams();
+  if (opts.chapterNum != null) params.set('chapter_num', String(opts.chapterNum));
+  if (opts.limit != null) params.set('limit', String(opts.limit));
+  const q = params.toString();
+  return request(`/production-records${q ? `?${q}` : ''}`);
+}
+
+/**
  * Fetch health status from the API
  * @returns {Promise<HealthResponse>} Health data
  */
