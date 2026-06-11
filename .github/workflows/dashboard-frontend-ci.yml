@@ -51,6 +51,9 @@ jobs:
       - name: Typecheck (strict tests/**/*.ts)
         run: pnpm typecheck
 
+      - name: Typecheck app (vue-tsc src/**/*.vue)
+        run: pnpm typecheck:app
+
       - name: Run vitest
         run: pnpm vitest run --coverage
 

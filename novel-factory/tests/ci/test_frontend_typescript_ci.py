@@ -37,3 +37,18 @@ class TestFrontendTypescriptStrict:
     def test_ci_workflow_runs_typecheck(self):
         text = CI_WORKFLOW.read_text(encoding="utf-8")
         assert "pnpm typecheck" in text
+
+    def test_package_has_typecheck_app_script_and_vue_tsc(self):
+        pkg = json.loads((FRONTEND_DIR / "package.json").read_text(encoding="utf-8"))
+        assert pkg["scripts"]["typecheck:app"] == "vue-tsc -p tsconfig.app.json --noEmit"
+        assert "vue-tsc" in pkg.get("devDependencies", {})
+
+    def test_tsconfig_app_includes_src_vue(self):
+        cfg = json.loads((FRONTEND_DIR / "tsconfig.app.json").read_text(encoding="utf-8"))
+        includes = cfg.get("include", [])
+        assert any("src/**/*.vue" in p for p in includes)
+        assert cfg["compilerOptions"]["strict"] is True
+
+    def test_ci_workflow_runs_typecheck_app(self):
+        text = CI_WORKFLOW.read_text(encoding="utf-8")
+        assert "pnpm typecheck:app" in text
