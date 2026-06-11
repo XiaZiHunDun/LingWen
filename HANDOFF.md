@@ -19,7 +19,7 @@
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **400** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
 | **总测试** | **~3272** (2845 pytest + 400 vitest + skips) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `f6b3bdd` — feat(F83-bk,F84) v9 batch 364-366 |
+| **当前 commit** | `b96a669` — feat(F86) MEMORY_RAG=live preflight gate |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
 | **下一期推荐** | **F87** Analytics 成本趋势 — 见 §6 + v9 roadmap |
 
