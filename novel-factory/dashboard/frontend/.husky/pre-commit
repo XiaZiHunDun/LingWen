@@ -1,10 +1,8 @@
 #!/usr/bin/env sh
 # Phase 8.40: Pre-commit hook — run lint-staged on staged files (scoped to changes)
 # Phase 8.44.2: 改 lint-staged (Phase 8.40 跑 pnpm lint:all 全量太慢, 改 staged-only)
-# Phase 8.44.3: 加 backend pytest smoke (跨 frontend+backend 协同保, 跟 test.yml 同步
-# skip e2e + legacy, -x fail-fast, --timeout=30s 防 hang, 估 <30s)
-# Phase 8.44.3 fix: 替换 . "$(dirname -- "$0")/_/h" husky 4 shim (broken since
-# Phase 8.40, silent no-op) 走显式 PATH setup, 跟 shim 试图做的等价
+# Phase 9.58 F49: backend pytest smoke opt-in (LINGWEN_PRECOMMIT_PYTEST=1|last-failed)
+#   subset: tests/ci/ + 1 dashboard integration (~2s); 0 阻塞默认 commit
 
 # Frontend: explicit PATH setup (husky 4 shim broken)
 export PATH="node_modules/.bin:$PATH"
@@ -12,11 +10,17 @@ export PATH="node_modules/.bin:$PATH"
 # Frontend: staged-only lint via lint-staged
 pnpm lint-staged
 
-# Backend: pytest smoke (skip e2e + legacy, fail-fast, 30s timeout)
-# 走 git rev-parse --show-toplevel 动态定位 root, 防 CWD 漂 (R9 缓解, +novel-factory
-# 因为 git root 在 LingWen/, pytest.ini 在 novel-factory/)
-cd "$(git rev-parse --show-toplevel)/novel-factory"
-pytest tests/ \
-  --ignore=tests/agent_system/test_e2e_workflow.py \
-  --ignore=tests/tools/test_enhancement_tools.py \
-  -x -q --timeout=30
+# Backend: opt-in pytest smoke (default off — full suite ~2min, CI 兜底)
+case "${LINGWEN_PRECOMMIT_PYTEST:-}" in
+  1|true|yes)
+    cd "$(git rev-parse --show-toplevel)/novel-factory"
+    pytest tests/ci/ \
+      --ignore=tests/ci/test_precommit_pytest_smoke.py \
+      tests/dashboard/test_api.py::TestHealthEndpoint \
+      -q --timeout=30
+    ;;
+  last-failed)
+    cd "$(git rev-parse --show-toplevel)/novel-factory"
+    pytest --last-failed -q --timeout=30
+    ;;
+esac
