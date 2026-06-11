@@ -116,7 +116,7 @@ Phase 8.35-8.42 super-phase 留 followup, 跟 CVG 功能独立, 可穿插做.
 - **dependency**: 无
 - **caveat**: 90s CI 预算; 可先用 `-k "not slow"` 若存在 slow marker (当前 0 slow marker → 全跑)
 
-### F23. Phase 9.38 — Vitest coverage 报告
+### F23. Phase 9.38 — Vitest coverage 报告 ✅ **DONE Phase 9.38**
 
 - **承接**: Phase 8.46「0 装 @vitest/coverage-v8」
 - **方案**: devDep `@vitest/coverage-v8` + `vitest.config.js` coverage block + CI upload (Codecov 已就位 Phase 8.41)

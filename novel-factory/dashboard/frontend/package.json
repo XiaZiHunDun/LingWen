@@ -12,6 +12,8 @@
     "lint:vue": "eslint --config eslint.config.js src/**/*.vue",
     "lint:all": "pnpm lint:testid; pnpm lint:testid-sync && pnpm lint:vue",
     "lint:staged": "lint-staged",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs",
     "prepare": "husky"
   },
