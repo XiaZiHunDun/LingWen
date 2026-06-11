@@ -154,6 +154,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **tests**: 0 新 vitest; 扩 CI contract + typecheck green
 - **estimated**: 4-6h (incremental)
 - **dependency**: F25
+- **完成 (2026-06-11)**: `tsconfig.json` include 全量 `tests/unit/**/*.ts`; 修 53 type errors; CI 加 `pnpm typecheck`; pytest 2612→2613 (+1)
 
 ### F39. Phase 9.50 — Ripple 6-state 生命周期 timeline viz
 
@@ -162,6 +163,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **tests**: 3-4 vitest
 - **estimated**: 2h
 - **dependency**: 9.14 audit log 已就位
+- **完成 (2026-06-11)**: `RippleLifecycleTimeline.vue` + `rippleLifecycleUtils.js` 集成 RippleDrawer Summary; vitest 207→212 (+5)
 
 ### F40. Phase 9.51 — Cascade graph 第 3 视图
 

@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.48 (Phase 9.48 F37 Playwright CI opt-in 完成, 2026-06-11)
-> **更新 (2026-06-11)**: F36 cascade algorithm badge ✅; F37 Playwright opt-in workflow + smoke spec ✅; pytest 2605→2612 (+7); vitest 205→207 (+2); 推荐 **F38** TS strict 全量.
+> **版本**: v9.50 (Phase 9.50 F39 Ripple lifecycle timeline 完成, 2026-06-11)
+> **更新 (2026-06-11)**: F38 TS strict 全量 rollout ✅; F39 Ripple 6-state lifecycle timeline ✅; pytest 2612→2613 (+1); vitest 207→212 (+5); 推荐 **F40** Cascade graph 第 3 视图.
 
 ---
 
@@ -13,14 +13,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2612 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 207 passed · Playwright 1 smoke (opt-in CI) |
-| **总测试** | **2819+** (2612 pytest + 207 vitest + 27 pytest skip) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2613 passed |
+| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 212 passed · Playwright 1 smoke (opt-in CI) · TS strict typecheck CI |
+| **总测试** | **2825+** (2613 pytest + 212 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (vitest + coverage → Codecov) |
-| **下一期推荐** | **F38** (TS strict 全量 rollout, Phase 9.49) 或 **F39** (Ripple lifecycle timeline) |
+| **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest + coverage → Codecov) |
+| **下一期推荐** | **F40** (Cascade graph 第 3 视图, Phase 9.51) |
 
 ---
 
@@ -287,8 +287,8 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F35 | Global CascadeRunsPage | 9.46 | 2h | P2 Dashboard | ✅ done |
 | F36 | v1/v2 cascade algorithm badge | 9.47 | 1h | P2 Dashboard | ✅ done |
 | F37 | Playwright CI opt-in | 9.48 | 3-4h | P2 DevInfra | ✅ done |
-| F38 | TS strict 全量 rollout | 9.49 | 4-6h | P2 DevInfra | ✅ |
-| F39 | Ripple 6-state lifecycle timeline | 9.50 | 2h | P2 Dashboard | ✅ |
+| F38 | TS strict 全量 rollout | 9.49 | 4-6h | P2 DevInfra | ✅ done |
+| F39 | Ripple 6-state lifecycle timeline | 9.50 | 2h | P2 Dashboard | ✅ done |
 | F40 | Cascade graph 第 3 视图 | 9.51 | 2-3h | P2 Dashboard | ✅ |
 | F41 | DecisionCard meta-info + WFGraph testid | — | 1-2h | P3 | ✅ |
 | F42 | coverage 80% + Codecov badge | — | 2h | P3 | ✅ |
@@ -296,7 +296,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 **已完成 (v2 roadmap, 9.33-9.40)**: F17-F28 全部 ✅ (见上表 v2 doc)
 
-**推荐下一项**: **F38** (TS strict 全量 rollout, Phase 9.49) 或 **F39** (Ripple lifecycle timeline).
+**推荐下一项**: **F40** (Cascade graph 第 3 视图, Phase 9.51).
 
 ---
 

@@ -46,6 +46,11 @@
             <summary>Edge payload</summary>
             <pre>{{ JSON.stringify(ripple.edge_payload, null, 2) }}</pre>
           </details>
+          <!-- Phase 9.50 F39: 6-state lifecycle timeline -->
+          <RippleLifecycleTimeline
+            :status="ripple.status"
+            :audit-entries="auditEntries"
+          />
           <!-- Phase 9.14: audit timeline section (auditEntries latest 5) -->
           <div class="ripple-audit-timeline ripple-audit-list" v-if="auditEntries.length > 0">
             <h4>Audit History (latest {{ Math.min(5, auditEntries.length) }})</h4>
@@ -149,6 +154,7 @@ import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';  // Phase
 import CascadeGraph from './CascadeGraph.vue';
 import ApplyConfirmModal from './ApplyConfirmModal.vue';
 import CascadeRunsPanel from './CascadeRunsPanel.vue';  // Phase 9.22 T3
+import RippleLifecycleTimeline from './RippleLifecycleTimeline.vue';  // Phase 9.50 F39
 
 const props = defineProps({
   ripple: { type: Object, required: true },
