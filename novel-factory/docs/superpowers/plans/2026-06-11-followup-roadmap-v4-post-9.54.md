@@ -90,10 +90,6 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 - **完成 (2026-06-11)**: opt-in `LINGWEN_PRECOMMIT_PYTEST=1|last-failed`; smoke subset tests/ci/ + health (~2s)
 
-### F52. Phase 9.61 — ripple audit retention policy ✅ **DONE**
-
-- **完成 (2026-06-11)**: `lingwen.py ripple-audit purge --older-than Nd [--execute]` + audit_retention.py
-
 ---
 
 ## P1 主线 — CVG 产品增强 (Phase 9.59-9.62)
