@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.65 (Phase 9.65 F56 live e2e + F46 auto-memory split, 2026-06-11)
-> **更新 (2026-06-11)**: F56 Playwright live e2e opt-in ✅ + F46 phases-8-dashboard-c 拆分 ✅; baseline **2670 pytest + 361 vitest**; v4 roadmap **已清空**.
+> **版本**: v9.66 (Phase 9.66 v5 roadmap + F56 e2e fix, 2026-06-11)
+> **更新 (2026-06-11)**: v5 roadmap 开启 (F57+ 正文生产 pipeline); F56 live e2e 全绿 (`895c6bd`); baseline **2670 pytest + 361 vitest**.
 
 ---
 
@@ -15,14 +15,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2670 passed |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2674 passed |
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 361 passed · coverage 四维 ≥80% · Playwright 1 smoke + 5 live opt-in · TS strict (`typecheck` tests + `typecheck:app` src/) |
-| **总测试** | **3031+** (2670 pytest + 361 vitest + 27 pytest skip) |
+| **总测试** | **3035+** (2674 pytest + 361 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest coverage → Codecov) + `dashboard-frontend-coverage-pages.yml` (HTML report → GH Pages) |
-| **下一期推荐** | v4 已清空 — 主公决策是否开 v5 roadmap |
+| **下一期推荐** | **F60** workflow hook 产品化 — 见 §6 |
 
 ---
 
@@ -272,31 +272,26 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ---
 
-## 6. 后续 followup (v4, post 9.54)
+## 6. 后续 followup (v5, post 9.65)
 
-**汇总 (v4)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v4-post-9.54.md`
+**汇总 (v5)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v5-post-9.65.md`
 
-**v3 (F29-F43) 已全部完成.** 见 v3 doc: `2026-06-11-followup-roadmap-v3-post-9.40.md`
+**v4 (F44-F56) 已全部完成.** 见 v4 doc: `2026-06-11-followup-roadmap-v4-post-9.54.md`
 
 | # | 主题 | Phase | 估时 | Track | 独立? |
 |---|------|-------|------|-------|-------|
-| F44 | roadmap v4 文档 + HANDOFF §6/§8 | 9.55-bk | 30min | P0 | ✅ done |
-| F45 | HANDOFF §9 baseline 字符串 sync | 9.55-bk | 20min | P0 | ✅ done |
-| F46 | auto-memory phases 拆分 (可选) | — | 45min | P0 | ✅ done |
-| F47 | vue-tsc 对 src/ + CI | 9.56 | 3-5h | P1 DevInfra | ✅ done (`5b8a543`) |
-| F48 | coverage 四维 → 80% | 9.57 | 3-4h | P1 DevInfra | ✅ done (`aa1d29b`) |
-| F49 | pre-commit pytest smoke | 9.58 | 1.5-2h | P1 DevInfra | ✅ done |
-| F50 | cross-volume impact scoring | 9.59 | 2-3h | P1 CVG | ✅ done (`ab4423f`) |
-| F51 | ripple audit export CSV/JSON | 9.60 | 1.5-2h | P1 CVG | ✅ done (`c9d0ae2`) |
-| F52 | ripple audit retention CLI | 9.61 | 1.5h | P1 CVG | ✅ done |
-| F53 | audit entry WS push | 9.62 | 2h | P1 CVG | ✅ done |
-| F54 | backfill 增量 workflow hook | 9.63 | 3-4h | P1 CVG | ✅ done |
-| F55 | 链式 cascade depth ≥ 2 (epic) | 9.64+ | 8-12h | P2 | ✅ done |
-| F56 | Playwright e2e 加深 (opt-in) | — | 3-4h | P3 | ✅ done |
+| F57-bk | v5 roadmap + HANDOFF §6/§8 | 9.66-bk | 30min | P0 | ✅ done |
+| F58-bk | cascade_notifier 跨线程 broadcast | 9.66-hygiene | 45min | P0 | ✅ done |
+| F59 | chapter runbook + golden path | 9.67 | 2-3h | P1 Pipeline | ✅ done |
+| F60 | workflow 章节完成 hook 产品化 | 9.68 | 3-4h | P1 Pipeline | 需 F59 |
+| F61 | 人审闭环 smoke (resolve→resume) | 9.69 | 2-3h | P1 Pipeline | 需 F59 |
+| F62 | MemoryGateway 最小 RAG hook | — | 4-6h | P2 | 按需 |
+| F63 | Dashboard 章节页 MVP | — | 3-5h | P2 | 需 F60 |
+| F64 | live e2e CI workflow | — | 1-2h | P3 | 按需 |
 
-**已完成 (v4, F44-F56)**: 全部 ✅
+**v4 已完成 (F44-F56)**: 全部 ✅ (含 F56 live e2e fix `895c6bd`)
 
-**推荐下一项**: v4 已清空 — 主公决策是否开 v5 roadmap.
+**推荐下一项**: **F60** workflow 章节完成 hook 产品化
 
 ---
 
@@ -332,13 +327,13 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v4-post-9.54.md` (F44-F56, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v5-post-9.65.md` (F57+, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
 - [ ] 跑 `pytest -q` 验证 baseline 2670 passed (~2min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 361 passed (~8s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v5 item (v4 已清空) 或开新 roadmap
+- [ ] 选 1 个 v5 item (推荐 **F59** runbook) 或继续 F57-bk/F58-bk
 
 ---
 
@@ -346,7 +341,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2670 tests, ~2min
+cd novel-factory && pytest -q                                    # 2674 tests, ~2min
 # 增量 backfill (workflow 完成后 opt-in):
 # LINGWEN_INCREMENTAL_BACKFILL=1 python -c "from infra.agent_system.master_controller import MasterController; ..."
 cd novel-factory/dashboard/frontend && pnpm vitest run             # 361 vitest, ~8s
@@ -377,7 +372,7 @@ cd novel-factory/dashboard/frontend && pnpm dev --port 5173 --strictPort &  # po
 cd novel-factory && python lingwen.py --help                        # 列出所有 subcommand
 cd novel-factory && python lingwen.py status                        # workflow status
 cd novel-factory && python lingwen.py cascade <ripple_id>          # cascade preview
-cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit history
+cd novel-factory && python -m infra.agent_system.chapter_golden_path  # stub golden path (F59)
 ```
 
 ---
@@ -401,7 +396,8 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 ├── phases-6-to-7.md            # Phase 6-7 dashboard backend (64 lines)
 ├── phases-8-cost.md            # Phase 8.0-8.15 cost tracking (80 lines)
 ├── phases-8-dashboard-a.md     # Phase 8.16-9.15 dashboard polish (106 lines)
-├── phases-8-dashboard-b.md     # Phase 9.16-9.23 cascade + Closing (135 lines)
+├── phases-8-dashboard-b.md     # Phase 9.16-9.40 dashboard polish (135 lines)
+├── phases-8-dashboard-c.md     # Phase 9.41+ v3/v4/v5 roadmap (9.41+)
 ├── architecture.md             # 5 核心 Agent + 22 步 (123 lines)
 ├── history.md                  # v7.0-v9.10 修复史 (111 lines)
 ├── patterns.md                 # 6 会话并行测试法 + 检测器设计 (170 lines)

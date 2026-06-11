@@ -573,10 +573,15 @@ def _workflow_result_to_dict(result: dict[str, Any]) -> dict[str, Any]:
     executions_dict = {
         nid: _execution_to_dict(ex) for nid, ex in executions.items()
     }
+    from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
+
     return {
         "summary": summary_dict,
         "executions": executions_dict,
         "pending_decisions": result.get("pending_decisions", []),
+        "incremental_backfill": backfill_stats_to_dict(
+            result.get("incremental_backfill")
+        ),
     }
 
 

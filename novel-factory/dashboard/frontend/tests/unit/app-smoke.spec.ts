@@ -94,6 +94,16 @@ describe('App smoke (Phase 9.31 F15)', () => {
     expect(wrapper.find(byTestid('page-title')).text()).toBe('工作流')
   })
 
+  test('click 章节 nav shows ChaptersPage', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    const nav = wrapper.findAll('.nav-item').find((n) => n.text().includes('章节'))
+    expect(nav).toBeTruthy()
+    await nav!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('章节管理')
+  })
+
   test('WS connected hides disconnected banner (realtime indicator ok)', async () => {
     vi.useFakeTimers()
     const wrapper = mount(App)

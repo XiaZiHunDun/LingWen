@@ -115,4 +115,23 @@ describe('WorkflowStatus branches (F48)', () => {
     await flushPromises()
     expect(wrapper.find(byTestid('cost-section')).exists()).toBe(true)
   })
+
+  test('incremental backfill badge when stats present', () => {
+    const wrapper = mount(WorkflowStatus, {
+      props: {
+        status: {
+          ...baseStatus,
+          incremental_backfill: {
+            nodes_written: 3,
+            nodes_skipped: 1,
+            total_count: 4,
+            elapsed_s: 0.25,
+          },
+        },
+      },
+    })
+    expect(wrapper.find(byTestid('incremental-backfill-badge')).exists()).toBe(true)
+    expect(wrapper.text()).toContain('写入 3 节点')
+    expect(wrapper.text()).toContain('跳过 1')
+  })
 })

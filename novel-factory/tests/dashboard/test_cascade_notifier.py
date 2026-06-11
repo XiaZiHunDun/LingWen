@@ -23,8 +23,10 @@ from dashboard import cascade_notifier
 def _reset_ws_manager():
     """Each test starts with a clean module-level singleton."""
     cascade_notifier.set_ws_manager(None)
+    cascade_notifier.set_main_event_loop(None)
     yield
     cascade_notifier.set_ws_manager(None)
+    cascade_notifier.set_main_event_loop(None)
 
 
 def _make_async_mock_ws() -> AsyncMock:
@@ -111,3 +113,42 @@ class TestCascadeNotifierAsyncBroadcast:
         assert captured[0]["type"] == "cascade.update"
         assert captured[0]["payload"]["ripple_id"] == "r42"
         assert captured[0]["payload"]["bfs_algorithm_version"] == "v2_weighted"
+
+    def test_broadcast_from_worker_thread_uses_main_event_loop(self):
+        """Sync worker thread (e.g. AnyIO) schedules on injected main loop."""
+        import threading
+
+        loop = asyncio.new_event_loop()
+        captured: list[dict] = []
+        done = threading.Event()
+
+        async def _broadcast(envelope: dict) -> None:
+            captured.append(envelope)
+            done.set()
+
+        bg = threading.Thread(target=loop.run_forever, daemon=True)
+        bg.start()
+        cascade_notifier.set_main_event_loop(loop)
+        cascade_notifier.set_ws_manager(_broadcast)
+
+        def worker():
+            cascade_notifier.notify_cascade_update(
+                {
+                    "ripple_id": "r-thread",
+                    "cascade_node_count": 1,
+                    "cascade_edge_count": 0,
+                    "depth_reached": 1,
+                    "bfs_algorithm_version": "v1",
+                }
+            )
+
+        w = threading.Thread(target=worker)
+        w.start()
+        w.join(timeout=2)
+        assert done.wait(timeout=2), "broadcast never ran on main loop from worker thread"
+        assert len(captured) == 1
+        assert captured[0]["payload"]["ripple_id"] == "r-thread"
+
+        loop.call_soon_threadsafe(loop.stop)
+        bg.join(timeout=2)
+        cascade_notifier.set_main_event_loop(None)

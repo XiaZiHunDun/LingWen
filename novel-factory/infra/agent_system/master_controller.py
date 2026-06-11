@@ -343,6 +343,12 @@ class MasterController:
                     if not graph.get_node(nid).depends_on
                 ]
 
+            seed_inputs = dict(initial_inputs or {})
+            memory_context = self._maybe_memory_context(workflow_name, seed_inputs)
+            if memory_context is not None:
+                seed_inputs.setdefault("memory_context", memory_context)
+            initial_inputs = seed_inputs
+
             # 扫描 DECISION 节点 → 创建 HumanDecision (Phase 4.3)
             pending_decisions = self._harvest_decision_specs(graph)
 
@@ -377,6 +383,7 @@ class MasterController:
                 "executions": executions,
                 "pending_decisions": pending_decisions,
                 "incremental_backfill": incremental_backfill,
+                "memory_context": memory_context,
             }
         finally:
             # Phase 8.8: reset for next run, even on exception
@@ -549,23 +556,46 @@ class MasterController:
             enabled=enabled,
         )
 
+    def _maybe_memory_context(
+        self,
+        workflow_name: str,
+        initial_inputs: Optional[Dict[str, Any]],
+    ) -> Any:
+        """Phase 9.70 F62: optional MemoryGateway RAG context for chapter workflows."""
+        from infra.agent_system.chapter_memory_hook import maybe_attach_memory_context
+
+        mode = getattr(self, "_memory_rag_mode", None)
+        return maybe_attach_memory_context(
+            workflow_name,
+            initial_inputs,
+            mode=mode,
+        )
+
     def _harvest_decision_specs(self, graph: Any) -> list[dict[str, Any]]:
         """扫描图中的 DECISION 节点 → 创建 HumanDecision → 返回序列化列表
 
         Phase 4.3: run_workflow 自动从工作流图中识别 DECISION 类型节点,
         包装为 HumanDecision 放入决策队列,供人工介入。
+        Phase 9.69 F61: skip 已有 execution 且非 WAITING 的节点 (resume 后不重复 harvest).
         """
-        from infra.got.data_structures import NodeType
+        from infra.got.data_structures import NodeStatus, NodeType
 
         # 防御:__new__ 构造的测试 stub 可能没有 _decision_queue
         queue = getattr(self, "_decision_queue", None)
         if queue is None:
             return []
 
+        pending_node_ids = {d.node_id for d in queue.pending()}
         harvested: list[dict[str, Any]] = []
         for nid in graph.node_ids():
             node = graph.get_node(nid)
             if node.type != NodeType.DECISION:
+                continue
+            if graph.has_execution(nid):
+                status = graph.get_execution(nid).status
+                if status != NodeStatus.WAITING:
+                    continue
+            elif nid in pending_node_ids:
                 continue
             kind = _infer_decision_kind(nid)
             decision = create_decision(

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 WsManagerT = Optional[Callable[[dict], Any]]
 
 _ws_manager: WsManagerT = None
+_main_loop: asyncio.AbstractEventLoop | None = None
 
 
 def set_ws_manager(ws: WsManagerT) -> None:
@@ -37,6 +38,33 @@ def set_ws_manager(ws: WsManagerT) -> None:
     global _ws_manager
     _ws_manager = ws
     logger.debug("cascade_notifier: ws_manager injected")
+
+
+def set_main_event_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """FastAPI lifespan 调, 供 sync/worker 线程 schedule async broadcast."""
+    global _main_loop
+    _main_loop = loop
+
+
+def _schedule_coro(coro) -> None:
+    """Schedule coroutine from sync context (main loop or worker thread)."""
+    try:
+        running = asyncio.get_running_loop()
+        running.create_task(coro)
+        return
+    except RuntimeError:
+        pass
+    if _main_loop is not None and _main_loop.is_running():
+        asyncio.run_coroutine_threadsafe(coro, _main_loop)
+        return
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.ensure_future(coro)
+        else:
+            loop.run_until_complete(coro)
+    except RuntimeError:
+        asyncio.run(coro)
 
 
 def _broadcast_envelope(envelope: dict[str, Any]) -> None:
@@ -48,13 +76,9 @@ def _broadcast_envelope(envelope: dict[str, Any]) -> None:
         result = ws(envelope)
         if asyncio.iscoroutine(result):
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.ensure_future(result)
-                else:
-                    loop.run_until_complete(result)
-            except RuntimeError:
-                asyncio.ensure_future(result)
+                _schedule_coro(result)
+            except RuntimeError as e:
+                logger.warning("cascade_notifier: broadcast failed: %s", e)
     except Exception as e:
         logger.warning("cascade_notifier: broadcast failed: %s", e)
 

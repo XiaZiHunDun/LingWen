@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field
 
 from dashboard.cascade_notifier import (
     notify_cascade_cancel,  # Phase 9.21: cascade cancel WS push
+    set_main_event_loop,  # Phase 9.66: worker-thread WS schedule
     set_ws_manager,  # Phase 9.16: cascade WS push injector
 )
 from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
@@ -198,6 +199,8 @@ class WorkflowStatusResponse(BaseModel):
     budget_per_week: dict[str, Any] = Field(default_factory=dict)
     # Phase 8.15 T6 NEW: per-tier budget status (haiku/sonnet/opus, 跟 run/day/week 完全 orthogonal)
     budget_by_tier: dict[str, dict[str, Any] | None] = Field(default_factory=dict)
+    # Phase 9.68 F60: incremental CVG backfill stats after novel_writing (null = skipped/disabled)
+    incremental_backfill: dict[str, Any] | None = None
 
 
 class WorkflowMermaidResponse(BaseModel):
@@ -690,6 +693,7 @@ def create_app(
     async def lifespan(app: FastAPI):
         """Phase 6.4: 启动/停止 WS broadcast 任务"""
         task: Optional[asyncio.Task] = None
+        set_main_event_loop(asyncio.get_running_loop())
         if master_controller is not None:
             task = await start_broadcast_task(manager, master_controller)
         try:
@@ -1800,6 +1804,7 @@ def _workflow_result_to_response(
         cost_by_day_per_tier=cost_by_day_per_tier or {},  # Phase 9.28 F12
         total_cost_usd=total_cost_usd,  # Phase 8.7: 修 Phase 8.5 gap
         budget_by_tier=budget_by_tier or {},  # Phase 8.15 T5 (Pydantic 暂 ignore, T6 补 model Field)
+        incremental_backfill=result.get("incremental_backfill"),  # Phase 9.68 F60
     )
 
 

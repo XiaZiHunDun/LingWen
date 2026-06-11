@@ -10,12 +10,16 @@ from infra.agent_system.master_controller import MasterController
 from infra.cross_volume.backfill import Backfiller
 from infra.cross_volume.incremental_backfill import (
     EMIT_CHAPTER_NODE,
+    backfill_stats_to_dict,
+    describe_incremental_backfill_hook,
+    explain_incremental_backfill_skip,
     extract_chapter_num,
     incremental_backfill_enabled,
     maybe_after_workflow,
     run_incremental_backfill,
     should_run_incremental_backfill,
 )
+from infra.cross_volume.backfill import BackfillStats
 from infra.got.data_structures import NodeExecution, NodeStatus
 from infra.got.scheduler import ExecutionSummary
 
@@ -103,6 +107,67 @@ class TestIncrementalBackfillHelpers:
         assert not incremental_backfill_enabled()
         monkeypatch.setenv("LINGWEN_INCREMENTAL_BACKFILL", "1")
         assert incremental_backfill_enabled()
+
+    def test_backfill_stats_to_dict_serializes_dataclass(self):
+        stats = BackfillStats(
+            character_count=1,
+            foreshadow_count=0,
+            setting_count=1,
+            plot_point_count=0,
+            total_count=2,
+            elapsed_s=0.42,
+            dry_run=False,
+            nodes_written=2,
+            nodes_skipped=1,
+        )
+        payload = backfill_stats_to_dict(stats)
+        assert payload == {
+            "character_count": 1,
+            "foreshadow_count": 0,
+            "setting_count": 1,
+            "plot_point_count": 0,
+            "total_count": 2,
+            "elapsed_s": 0.42,
+            "dry_run": False,
+            "nodes_written": 2,
+            "nodes_skipped": 1,
+            "pre_node_count": None,
+            "post_node_count": None,
+        }
+
+    def test_backfill_stats_to_dict_none(self):
+        assert backfill_stats_to_dict(None) is None
+
+    def test_describe_incremental_backfill_hook(self):
+        rows = describe_incremental_backfill_hook()
+        assert len(rows) >= 4
+        triggers = {row["trigger"] for row in rows}
+        assert "env LINGWEN_INCREMENTAL_BACKFILL" in triggers
+        assert EMIT_CHAPTER_NODE in triggers
+
+    def test_explain_skip_when_disabled(self):
+        executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}
+        reason = explain_incremental_backfill_skip(
+            "novel_writing", {"chapter_num": 5}, executions, _summary_ok(), enabled=False
+        )
+        assert reason == "disabled: set LINGWEN_INCREMENTAL_BACKFILL=1"
+
+    def test_explain_skip_when_paused(self):
+        executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}
+        summary = ExecutionSummary(completed=6, failed=0, paused=True)
+        reason = explain_incremental_backfill_skip(
+            "novel_writing", {"chapter_num": 5}, executions, summary, enabled=True
+        )
+        assert reason == "workflow_paused"
+
+    def test_explain_skip_none_when_would_run(self):
+        executions = {EMIT_CHAPTER_NODE: _completed_emit_execution()}
+        assert (
+            explain_incremental_backfill_skip(
+                "novel_writing", {"chapter_num": 5}, executions, _summary_ok(), enabled=True
+            )
+            is None
+        )
 
 
 class TestIncrementalBackfillRunChapters:

@@ -1,5 +1,6 @@
 # Followup Roadmap v4 — Post Phase 9.54 (F43)
 
+> **Superseded by v5 (post 9.65):** `2026-06-11-followup-roadmap-v5-post-9.65.md` — F44-F56 全部完成; 新 backlog 见 F57+ (正文生产 pipeline).
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43 已于 Phase 9.41-9.54 全部完成). 本 doc 汇总 v3 清空后各 phase entry「out of scope」散落项 + Phase 8.44/9.14/9.18/9.19 遗留, 重新编号 **F44+** 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v4 roadmap」)
 > **状态**: F44-F56 ✅ (2026-06-11); v4 roadmap 已清空

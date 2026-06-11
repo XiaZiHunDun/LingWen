@@ -1,0 +1,76 @@
+# Phase 9.72 F64: opt-in Playwright live-backend e2e (NOT primary merge gate).
+# Trigger: manual workflow_dispatch OR PR label `e2e-live`.
+# Runs vite + dashboard/e2e_entry.py with LINGWEN_E2E_LIVE=1 (5 specs).
+
+name: Dashboard E2E Live (opt-in)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: dashboard-e2e-live-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-live:
+    name: Playwright live-backend
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'e2e-live')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: novel-factory
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: novel-factory/pyproject.toml
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install frontend dependencies
+        working-directory: novel-factory/dashboard/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        working-directory: novel-factory/dashboard/frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run live-backend e2e
+        working-directory: novel-factory/dashboard/frontend
+        run: pnpm e2e:live
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-live-trace
+          path: novel-factory/dashboard/frontend/test-results/
+          if-no-files-found: ignore

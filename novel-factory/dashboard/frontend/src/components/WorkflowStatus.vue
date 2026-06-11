@@ -65,6 +65,15 @@
       </ul>
     </div>
 
+    <div
+      v-if="hasIncrementalBackfill"
+      class="backfill-section"
+      data-testid="incremental-backfill-badge"
+    >
+      <h4 class="section-title">📚 CVG 增量 Backfill</h4>
+      <p class="backfill-summary">{{ incrementalBackfillLabel }}</p>
+    </div>
+
     <ScoreRadarChart
       v-if="hasScores && firstScore"
       :scores-a="firstScore.scores_a || {}"
@@ -169,6 +178,22 @@ const scoreEntries = computed(() => {
 });
 const firstScore = computed(() => scoreEntries.value[0]?.[1] || null);
 const hasScores = computed(() => scoreEntries.value.length > 0);
+
+const hasIncrementalBackfill = computed(() => {
+  const bf = props.status?.incremental_backfill;
+  return bf != null && typeof bf === 'object';
+});
+
+const incrementalBackfillLabel = computed(() => {
+  const bf = props.status?.incremental_backfill;
+  if (!bf) return '';
+  const parts = [];
+  if (bf.nodes_written != null) parts.push(`写入 ${bf.nodes_written} 节点`);
+  if (bf.nodes_skipped != null) parts.push(`跳过 ${bf.nodes_skipped}`);
+  if (bf.total_count != null) parts.push(`抽取 ${bf.total_count}`);
+  if (bf.elapsed_s != null) parts.push(`${Number(bf.elapsed_s).toFixed(2)}s`);
+  return parts.length ? parts.join(' · ') : JSON.stringify(bf);
+});
 
 // Phase 8.14: hasCost OR check costByTier, 防 tier-only 数据时整 cost section 隐藏
 // Phase 8.16: 改用 display* 走 windowedCost 路径 (windowedCost 优先, fallback status)
@@ -362,6 +387,19 @@ function onResume(decision, option) {
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
   margin: 0;
+}
+
+.backfill-section {
+  padding: var(--space-sm);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+}
+
+.backfill-summary {
+  font-size: 10px;
+  font-family: monospace;
+  margin: 0;
+  line-height: 1.4;
 }
 
 /* Phase 8.16 NEW: .time-window-tabs 跟 .time-window-tab (跟 sidebar 同 pattern) */
