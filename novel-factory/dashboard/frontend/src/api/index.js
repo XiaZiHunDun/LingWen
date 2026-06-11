@@ -371,6 +371,27 @@ export async function fetchCascadeRuns(rippleId, options = {}) {
 }
 
 /**
+ * Phase 9.46 F35: fetch cascade_runs across all ripples.
+ * @param {object} [options] - {
+ *   limit?, offset?, status?, minDepth?, maxDepth?, algorithm?,
+ *   rippleId?, sinceDays?,
+ * }
+ */
+export async function fetchAllCascadeRuns(options = {}) {
+  const params = new URLSearchParams();
+  if (options.limit) params.set('limit', String(options.limit));
+  if (options.offset) params.set('offset', String(options.offset));
+  if (options.status) params.set('status', options.status);
+  if (options.minDepth) params.set('min_depth', String(options.minDepth));
+  if (options.maxDepth) params.set('max_depth', String(options.maxDepth));
+  if (options.algorithm) params.set('algorithm', options.algorithm);
+  if (options.rippleId) params.set('ripple_id', options.rippleId);
+  if (options.sinceDays) params.set('since_days', String(options.sinceDays));
+  const qs = params.toString();
+  return request(`/cascade/runs${qs ? '?' + qs : ''}`);
+}
+
+/**
  * Phase 9.22: cancel a running cascade run (Phase 9.21 endpoint).
  * Idempotent — calling on already-cancelled run returns 200 with current state.
  * @param {string} rippleId

@@ -82,6 +82,8 @@ describe('Phase 9.23: CascadeRunsFilter', () => {
       minDepth: null,
       maxDepth: null,
       algorithm: 'all',
+      rippleId: '',
+      sinceDays: null,
     });
   });
 });

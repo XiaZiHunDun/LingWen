@@ -7,6 +7,7 @@
   <div class="cascade-runs-panel" data-testid="cascade-runs-panel">
     <CascadeRunsFilter
       :model-value="filters"
+      :global-mode="globalMode"
       @update:model-value="onFilterChange"
     />
     <div v-if="loading" class="cascade-runs-loading" data-testid="cascade-runs-loading">
@@ -21,6 +22,7 @@
     <table v-else class="cascade-runs-table" data-testid="cascade-runs-table">
       <thead>
         <tr>
+          <th v-if="globalMode">Ripple</th>
           <th>ID</th><th>Status</th><th>Depth</th><th>Created</th><th>Actions</th>
         </tr>
       </thead>
@@ -34,6 +36,7 @@
           :data-status="run.status"
           data-testid="cascade-run-row"
         >
+          <td v-if="globalMode" data-testid="cascade-run-ripple">{{ run.ripple_id }}</td>
           <td>{{ run.id }}</td>
           <td>
             <span
@@ -77,6 +80,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import {
   fetchCascadeRuns,
+  fetchAllCascadeRuns,
   cancelCascadeRun,
   fetchCascadeWithDepth,
 } from '../api/index.js';
@@ -85,29 +89,32 @@ import CascadeGraph from './CascadeGraph.vue';
 import CascadeRunsFilter from './CascadeRunsFilter.vue';
 
 const props = defineProps({
-  rippleId: { type: String, required: true },
+  rippleId: { type: String, default: null },
+  globalMode: { type: Boolean, default: false },
 });
 
-// === Phase 9.23 T5b: URL search params ↔ filter state (window.history, 0 vue-router) ===
-// Reason: dashboard 是 single-page ref-based nav (main.js 0 调 app.use(router)),
-//   useRoute/useRouter 装上但无 router plugin → 抛 'No router instance provided'.
-//   用 vanilla history API 跟 single-page 架构天然合拍, 0 dep, 0 改 main.js.
-// Pattern mirror useCostWindow.js (Phase 8.18): _initFromUrl 读 + _writeToUrl 写,
-//   扩展为双向 sync: popstate event 监听 back/forward + 深链 refresh 保留选择.
-
 const DEFAULT_FILTERS = Object.freeze({
-  status: 'all', minDepth: null, maxDepth: null, algorithm: 'all',
+  status: 'all',
+  minDepth: null,
+  maxDepth: null,
+  algorithm: 'all',
+  rippleId: '',
+  sinceDays: null,
 });
 
 function queryToFilters(search) {
   const params = new URLSearchParams(search || '');
   const minD = params.get('min_depth') ? Number(params.get('min_depth')) : null;
   const maxD = params.get('max_depth') ? Number(params.get('max_depth')) : null;
+  const sinceRaw = params.get('since_days');
+  const sinceDays = sinceRaw ? Number(sinceRaw) : null;
   return {
     status: params.get('status') || 'all',
     minDepth: minD != null && Number.isFinite(minD) ? minD : null,
     maxDepth: maxD != null && Number.isFinite(maxD) ? maxD : null,
     algorithm: params.get('algorithm') || 'all',
+    rippleId: params.get('ripple_id') || '',
+    sinceDays: sinceDays != null && Number.isFinite(sinceDays) ? sinceDays : null,
   };
 }
 
@@ -117,6 +124,8 @@ function filtersToSearch(filters) {
   if (filters.minDepth != null && filters.minDepth !== '') params.set('min_depth', String(filters.minDepth));
   if (filters.maxDepth != null && filters.maxDepth !== '') params.set('max_depth', String(filters.maxDepth));
   if (filters.algorithm && filters.algorithm !== 'all') params.set('algorithm', filters.algorithm);
+  if (filters.rippleId) params.set('ripple_id', filters.rippleId);
+  if (filters.sinceDays != null && filters.sinceDays !== '') params.set('since_days', String(filters.sinceDays));
   return params.toString();
 }
 
@@ -126,7 +135,9 @@ const hasActiveFilter = computed(() =>
   filters.value.status !== 'all' ||
   filters.value.minDepth != null ||
   filters.value.maxDepth != null ||
-  filters.value.algorithm !== 'all'
+  filters.value.algorithm !== 'all' ||
+  (props.globalMode && filters.value.rippleId) ||
+  (props.globalMode && filters.value.sinceDays != null)
 );
 
 function writeUrl(next) {
@@ -156,7 +167,13 @@ async function loadRuns() {
     if (filters.value.minDepth != null) opts.minDepth = filters.value.minDepth;
     if (filters.value.maxDepth != null) opts.maxDepth = filters.value.maxDepth;
     if (filters.value.algorithm !== 'all') opts.algorithm = filters.value.algorithm;
-    runs.value = await fetchCascadeRuns(props.rippleId, opts);
+    if (props.globalMode) {
+      if (filters.value.rippleId) opts.rippleId = filters.value.rippleId;
+      if (filters.value.sinceDays != null) opts.sinceDays = filters.value.sinceDays;
+      runs.value = await fetchAllCascadeRuns(opts);
+    } else {
+      runs.value = await fetchCascadeRuns(props.rippleId, opts);
+    }
   } catch (e) {
     error.value = `Failed to load cascade runs: ${e?.message || e}`;
     runs.value = [];
@@ -196,8 +213,9 @@ function formatRelative(iso) {
 async function replay(run) {
   if (replaying.value) return;
   replaying.value = run.id;
+  const rippleId = props.globalMode ? run.ripple_id : props.rippleId;
   try {
-    const data = await fetchCascadeWithDepth(props.rippleId, run.max_depth);
+    const data = await fetchCascadeWithDepth(rippleId, run.max_depth);
     replayedData.value = data;
     replayedFromId.value = run.id;
     replayedFromStartedAt.value = run.started_at;
@@ -212,11 +230,12 @@ async function replay(run) {
 async function cancel(run) {
   if (cancelling.value) return;
   cancelling.value = run.id;
+  const rippleId = props.globalMode ? run.ripple_id : props.rippleId;
   const prevStatus = run.status;
   // Optimistic update
   run.status = 'cancelled';
   try {
-    await cancelCascadeRun(props.rippleId, run.id, '');
+    await cancelCascadeRun(rippleId, run.id, '');
     // WS cascade.cancel event will arrive shortly and re-confirm (idempotent)
   } catch (e) {
     // Revert on failure
@@ -238,7 +257,8 @@ onMounted(async () => {
   window.addEventListener('popstate', onPopState);
   unsubscribeCascade = onCascadeUpdate((event) => {
     const data = event?.payload && typeof event.payload === 'object' ? event.payload : event;
-    if (!data || data.ripple_id !== props.rippleId) return;
+    if (!data) return;
+    if (!props.globalMode && data.ripple_id !== props.rippleId) return;
     if (data.status === 'cancelled' && data.run_id != null) {
       // Phase 9.21 cascade.cancel event: update specific row
       const existing = runs.value.find((r) => r.id === data.run_id);

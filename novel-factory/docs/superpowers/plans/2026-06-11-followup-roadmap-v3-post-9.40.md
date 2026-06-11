@@ -108,21 +108,23 @@ v2 触发条件已满足. 剩余工作分散在:
 - **dependency**: F20
 - **完成 (2026-06-11)**: `append_cascade_broadcast_log` + `GET /api/ripples/cascade/{id}/broadcast-log`; pytest 2584→2592 (+8)
 
-### F34. Phase 9.45 — `cascade_runs` retention cleanup CLI
+### F34. Phase 9.45 — `cascade_runs` retention cleanup CLI ✅ done
 
 - **承接**: Phase 9.20 design out of scope「retention policy / purge old runs」
 - **目标**: `lingwen.py cascade purge --older-than 90d --dry-run|--execute`
 - **tests**: 4-5 pytest (dry-run count / execute / idempotent)
 - **estimated**: 1-1.5h
 - **dependency**: F4 cascade_runs 表
+- **完成 (2026-06-11)**: `cascade_retention.py` + `cascade purge` subcommand; pytest 2592→2599 (+7)
 
-### F35. Phase 9.46 — Global CascadeRunsPage
+### F35. Phase 9.46 — Global CascadeRunsPage ✅ done
 
 - **承接**: Phase 9.22 design「global cross-ripple runs view deferred; drawer tab only」
 - **目标**: 新 page 或 Overview 区块: 全 ripple cascade runs 列表 + filter (status/date/algorithm)
 - **tests**: 4-5 vitest + 3 pytest (API list endpoint if new)
 - **estimated**: 2h
 - **dependency**: 9.22 CascadeRunsPanel 组件可复用
+- **完成 (2026-06-11)**: `CascadeRunsPage` + `GET /api/cascade/runs` + panel globalMode; pytest +6 vitest +3 → 2605/205
 
 ### F36. Phase 9.47 — v1/v2 cascade algorithm badge
 
@@ -237,8 +239,8 @@ v2 触发条件已满足. 剩余工作分散在:
 ### Track B — Cascade 运维 + Dashboard (可穿插)
 
 1. **Phase 9.44 (F33)** — broadcast log 持久化 ✅
-2. **Phase 9.45 (F34)** — cascade_runs retention CLI
-3. **Phase 9.46 (F35)** — Global CascadeRunsPage
+2. **Phase 9.45 (F34)** — cascade_runs retention CLI ✅
+3. **Phase 9.46 (F35)** — Global CascadeRunsPage ✅
 4. **Phase 9.47 (F36)** — algorithm badge
 
 ### Track C — 工程化 (可穿插)

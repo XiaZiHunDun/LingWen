@@ -56,6 +56,30 @@
       </select>
     </label>
 
+    <label v-if="globalMode" class="cascade-runs-filter-label filter-ripple-label">
+      Ripple:
+      <input
+        type="text"
+        :value="modelValue.rippleId ?? ''"
+        placeholder="ripple id"
+        data-testid="filter-ripple-id"
+        class="filter-ripple-id"
+        @input="emitChange('rippleId', $event.target.value)"
+      />
+    </label>
+
+    <label v-if="globalMode" class="cascade-runs-filter-label filter-since-label">
+      Since (days):
+      <input
+        type="number" min="1" max="3650"
+        :value="modelValue.sinceDays ?? ''"
+        placeholder="all"
+        data-testid="filter-since-days"
+        class="filter-since-days"
+        @input="emitSinceDays($event.target.value)"
+      />
+    </label>
+
     <button
       v-if="hasActiveFilter"
       type="button"
@@ -70,6 +94,7 @@
 import { computed } from 'vue';
 
 const props = defineProps({
+  globalMode: { type: Boolean, default: false },
   modelValue: {
     type: Object,
     required: true,
@@ -79,14 +104,23 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 function defaultFilters() {
-  return { status: 'all', minDepth: null, maxDepth: null, algorithm: 'all' };
+  return {
+    status: 'all',
+    minDepth: null,
+    maxDepth: null,
+    algorithm: 'all',
+    rippleId: '',
+    sinceDays: null,
+  };
 }
 
 const hasActiveFilter = computed(() =>
   props.modelValue.status !== 'all' ||
   props.modelValue.minDepth != null ||
   props.modelValue.maxDepth != null ||
-  props.modelValue.algorithm !== 'all'
+  props.modelValue.algorithm !== 'all' ||
+  (props.globalMode && props.modelValue.rippleId) ||
+  (props.globalMode && props.modelValue.sinceDays != null)
 );
 
 function emitChange(key, value) {
@@ -98,6 +132,12 @@ function emitNumber(key, raw) {
   // Defensive: ignore NaN / out-of-range (parent's debounce + URL parser handle too)
   if (n !== null && (!Number.isFinite(n) || n < 1 || n > 10)) return;
   emit('update:modelValue', { ...props.modelValue, [key]: n });
+}
+
+function emitSinceDays(raw) {
+  const n = raw === '' ? null : Number(raw);
+  if (n !== null && (!Number.isFinite(n) || n < 1 || n > 3650)) return;
+  emit('update:modelValue', { ...props.modelValue, sinceDays: n });
 }
 </script>
 
@@ -111,6 +151,7 @@ function emitNumber(key, raw) {
   padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;
 }
 .cascade-runs-filter input[type="number"] { width: 60px; }
+.cascade-runs-filter input[type="text"] { width: 120px; }
 .filter-depth-sep { color: #666; }
 .filter-reset {
   padding: 4px 10px; border: 1px solid #c0392b; background: #fff; color: #c0392b;
