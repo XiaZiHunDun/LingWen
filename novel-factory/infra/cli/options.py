@@ -143,6 +143,7 @@ class CascadeOptions(UnifiedOptions):
 class RippleScanOptions(UnifiedOptions):
     """ripple-scan 命令选项 (Phase 9.34 F19 calibration)."""
     calibrate: bool = False
+    yaml_example: bool = False  # Phase 9.43 F32: print suggested yaml snippet
     gold_path: Optional[Path] = None
     fixture_dir: Optional[Path] = None
     calibration: Optional[Path] = None

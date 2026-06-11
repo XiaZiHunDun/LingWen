@@ -15,6 +15,11 @@ def add_ripple_scan_parser(subparsers: argparse._SubParsersAction) -> argparse.A
         help="Run threshold sweep + precision/recall report (default fixture, 0 真 LLM)",
     )
     parser.add_argument(
+        "--yaml-example",
+        action="store_true",
+        help="After --calibrate report, print suggested scanner_calibration.yaml snippet (0 auto-apply)",
+    )
+    parser.add_argument(
         "--gold-path",
         type=Path,
         default=None,

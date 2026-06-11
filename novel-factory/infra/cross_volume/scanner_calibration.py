@@ -1,16 +1,23 @@
-"""Phase 9.34 F19: externalized LLM scanner confidence thresholds + calibration metrics."""
+"""Phase 9.34 F19 + Phase 9.43 F32: externalized LLM scanner thresholds + calibration feedback."""
 from __future__ import annotations
 
-import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Literal
 
 import yaml
 
 from infra.cross_volume.reference_graph import ReferenceNode
 
 DEFAULT_CALIBRATION_PATH = Path(__file__).parent / "scanner_calibration.yaml"
+
+DimensionT = Literal["character", "foreshadow", "setting", "plot_point"]
+CALIBRATION_DIMENSIONS: tuple[DimensionT, ...] = (
+    "character",
+    "foreshadow",
+    "setting",
+    "plot_point",
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +50,29 @@ class ThresholdMetrics:
     predicted: int
     gold: int
     true_positive: int
+
+
+@dataclass(frozen=True)
+class DimensionThresholdReport:
+    """Phase 9.43 F32: per-dimension threshold sweep summary."""
+
+    dimension: DimensionT
+    gold_count: int
+    node_count: int
+    metrics: tuple[ThresholdMetrics, ...]
+    recommended: ThresholdMetrics
+    delta: int  # recommended.threshold - current node_write_threshold
+
+
+@dataclass(frozen=True)
+class CalibrationFeedback:
+    """Structured output for ripple-scan --calibrate (F32 feedback loop)."""
+
+    global_metrics: tuple[ThresholdMetrics, ...]
+    global_recommended: ThresholdMetrics
+    global_delta: int
+    dimension_reports: tuple[DimensionThresholdReport, ...]
+    current: ScannerCalibration
 
 
 def load_scanner_calibration(path: Path | str | None = None) -> ScannerCalibration:
@@ -114,12 +144,124 @@ def recommend_threshold(metrics: list[ThresholdMetrics]) -> ThresholdMetrics:
     return max(metrics, key=lambda m: (m.f1, m.threshold))
 
 
-def format_calibration_report(
-    metrics: list[ThresholdMetrics],
-    *,
-    recommended: ThresholdMetrics,
+def threshold_delta(current: int, recommended: ThresholdMetrics) -> int:
+    return recommended.threshold - current
+
+
+def gold_keys_for_dimension(gold_keys: set[str], dimension: str) -> set[str]:
+    prefix = f"{dimension}:"
+    return {k for k in gold_keys if k.startswith(prefix)}
+
+
+def nodes_for_dimension(nodes: Iterable[ReferenceNode], dimension: str) -> list[ReferenceNode]:
+    return [n for n in nodes if n.dimension == dimension]
+
+
+def build_dimension_reports(
+    nodes: Iterable[ReferenceNode],
+    gold_keys: set[str],
     current: ScannerCalibration,
+    *,
+    min_threshold: int | None = None,
+    max_threshold: int | None = None,
+) -> list[DimensionThresholdReport]:
+    """Per-dimension threshold sweep; skip dims with zero gold labels."""
+    lo = min_threshold if min_threshold is not None else current.calibrate_threshold_min
+    hi = max_threshold if max_threshold is not None else current.calibrate_threshold_max
+    reports: list[DimensionThresholdReport] = []
+    for dim in CALIBRATION_DIMENSIONS:
+        dim_gold = gold_keys_for_dimension(gold_keys, dim)
+        if not dim_gold:
+            continue
+        dim_nodes = nodes_for_dimension(nodes, dim)
+        metrics = sweep_thresholds(dim_nodes, dim_gold, min_threshold=lo, max_threshold=hi)
+        recommended = recommend_threshold(metrics)
+        reports.append(
+            DimensionThresholdReport(
+                dimension=dim,
+                gold_count=len(dim_gold),
+                node_count=len(dim_nodes),
+                metrics=tuple(metrics),
+                recommended=recommended,
+                delta=threshold_delta(current.node_write_threshold, recommended),
+            )
+        )
+    return reports
+
+
+def build_calibration_feedback(
+    nodes: Iterable[ReferenceNode],
+    gold_keys: set[str],
+    current: ScannerCalibration,
+) -> CalibrationFeedback:
+    global_metrics = sweep_thresholds(
+        nodes,
+        gold_keys,
+        min_threshold=current.calibrate_threshold_min,
+        max_threshold=current.calibrate_threshold_max,
+    )
+    global_recommended = recommend_threshold(global_metrics)
+    return CalibrationFeedback(
+        global_metrics=tuple(global_metrics),
+        global_recommended=global_recommended,
+        global_delta=threshold_delta(current.node_write_threshold, global_recommended),
+        dimension_reports=tuple(
+            build_dimension_reports(nodes, gold_keys, current)
+        ),
+        current=current,
+    )
+
+
+def format_per_dimension_section(reports: Iterable[DimensionThresholdReport]) -> str:
+    lines = [
+        "",
+        "  [per-dimension] precision / recall @ recommended threshold",
+        "  dimension      gold  nodes  T*  precision  recall     f1  delta",
+    ]
+    for report in reports:
+        m = report.recommended
+        delta_s = f"{report.delta:+d}" if report.delta else "0"
+        lines.append(
+            f"  {report.dimension:13s}  {report.gold_count:4d}  {report.node_count:5d}  "
+            f"{m.threshold:2d}  {m.precision:8.3f}  {m.recall:6.3f}  "
+            f"{m.f1:6.3f}  {delta_s}"
+        )
+    return "\n".join(lines)
+
+
+def format_calibration_yaml_example(feedback: CalibrationFeedback) -> str:
+    """Human-in-the-loop YAML snippet (0 auto-apply)."""
+    rec = feedback.global_recommended
+    cur = feedback.current
+    delta = feedback.global_delta
+    delta_note = "unchanged" if delta == 0 else f"delta {delta:+d} (F1={rec.f1:.3f})"
+    weak_dims = [
+        r.dimension
+        for r in feedback.dimension_reports
+        if r.recommended.recall < 0.999 and r.delta > 0
+    ]
+    weak_note = (
+        f"review dims: {', '.join(weak_dims)}"
+        if weak_dims
+        else "all dims OK at recommended threshold"
+    )
+    return "\n".join(
+        [
+            "# Suggested edit — copy into scanner_calibration.yaml manually (F32, 0 auto-apply)",
+            f"node_write_threshold: {rec.threshold}  # was {cur.node_write_threshold}, {delta_note}",
+            f"edge_infer_threshold: {cur.edge_infer_threshold}  # unchanged; {weak_note}",
+            "calibrate_threshold_min: 1",
+            "calibrate_threshold_max: 5",
+        ]
+    )
+
+
+def format_calibration_report(
+    feedback: CalibrationFeedback,
 ) -> str:
+    metrics = list(feedback.global_metrics)
+    recommended = feedback.global_recommended
+    current = feedback.current
     lines = [
         "[CALIBRATE] threshold sweep (fixture gold labels)",
         f"  current node_write_threshold={current.node_write_threshold} "
@@ -133,15 +275,18 @@ def format_calibration_report(
             f"  {m.threshold}  {m.precision:8.3f}  {m.recall:6.3f}  "
             f"{m.f1:6.3f}  {m.predicted:4d}  {m.gold:4d}  {m.true_positive:3d}{star}"
         )
+    delta_s = f"{feedback.global_delta:+d}" if feedback.global_delta else "0"
     lines.extend(
         [
             "",
             f"  recommended node_write_threshold={recommended.threshold} "
             f"(F1={recommended.f1:.3f}, precision={recommended.precision:.3f}, "
-            f"recall={recommended.recall:.3f})",
+            f"recall={recommended.recall:.3f}, delta={delta_s})",
             "  (update infra/cross_volume/scanner_calibration.yaml to apply)",
         ]
     )
+    if feedback.dimension_reports:
+        lines.append(format_per_dimension_section(feedback.dimension_reports))
     return "\n".join(lines)
 
 

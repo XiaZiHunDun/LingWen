@@ -9,11 +9,11 @@ from infra.cli.options import RippleScanOptions
 from infra.cross_volume.llm_cache import LLMCache
 from infra.cross_volume.llm_scanner import LLMScanner
 from infra.cross_volume.scanner_calibration import (
+    build_calibration_feedback,
     format_calibration_report,
+    format_calibration_yaml_example,
     load_gold_labels,
     load_scanner_calibration,
-    recommend_threshold,
-    sweep_thresholds,
 )
 
 from .base import Command
@@ -60,16 +60,11 @@ class RippleScanCommand(Command):
 
         nodes = self._scan_chapter_from_fixtures(fixture_dir, options.chapter)
         cal = load_scanner_calibration(options.calibration)
-        metrics = sweep_thresholds(
-            nodes,
-            gold_keys,
-            min_threshold=cal.calibrate_threshold_min,
-            max_threshold=cal.calibrate_threshold_max,
-        )
-        recommended = recommend_threshold(metrics)
-        print(
-            format_calibration_report(metrics, recommended=recommended, current=cal)
-        )
+        feedback = build_calibration_feedback(nodes, gold_keys, cal)
+        print(format_calibration_report(feedback))
+        if options.yaml_example:
+            print("")
+            print(format_calibration_yaml_example(feedback))
         return 0
 
     @staticmethod

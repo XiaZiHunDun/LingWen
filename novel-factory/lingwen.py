@@ -136,6 +136,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             verbose=False,
             dry_run=False,
             calibrate=getattr(args, "calibrate", False),
+            yaml_example=getattr(args, "yaml_example", False),
             gold_path=getattr(args, "gold_path", None),
             fixture_dir=getattr(args, "fixture_dir", None),
             calibration=getattr(args, "calibration", None),

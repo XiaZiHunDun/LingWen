@@ -107,6 +107,7 @@ class TestRippleScanCalibrateCLI:
         assert "[CALIBRATE]" in out
         assert "recommended node_write_threshold=" in out
         assert "precision" in out
+        assert "delta=" in out
 
     def test_load_gold_labels_fixture(self):
         gold = load_gold_labels(Path("tests/cross_volume/fixtures/scanner_calibration_gold.yaml"))
