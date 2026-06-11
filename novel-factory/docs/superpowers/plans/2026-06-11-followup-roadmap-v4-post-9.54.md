@@ -2,8 +2,8 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43 已于 Phase 9.41-9.54 全部完成). 本 doc 汇总 v3 清空后各 phase entry「out of scope」散落项 + Phase 8.44/9.14/9.18/9.19 遗留, 重新编号 **F44+** 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v4 roadmap」)
-> **状态**: F44 deferred, 待主公决策每期 phase 启动时机
-> **前置**: Phase 9.54 F43 ✅ (`337fd8a`), baseline **2622 pytest + 227 vitest**
+> **状态**: F47-F51 ✅ (2026-06-11); 待主公决策 F49/F52/F54 下一期
+> **前置**: Phase 9.54 F43 ✅ (`337fd8a`), baseline **2640 pytest + 355 vitest** (post F47-F51)
 
 ## 上下文 (Context)
 
@@ -27,18 +27,18 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 本 v4 roadmap **不重复** F1-F43 已 done 项. 详见 v3 doc 决策矩阵 + HANDOFF §6.
 
-## 当前 Baseline (2026-06-11, post 9.54)
+## 当前 Baseline (2026-06-11, post 9.60)
 
 | 项 | 值 |
 |----|-----|
-| **pytest** | 2622 passed, 27 skipped |
-| **vitest** | 227 passed (52 files) |
-| **coverage (frontend)** | lines 80.87% / statements 78.21% / functions 76.87% / branches 64.91% |
+| **pytest** | 2640 passed, 27 skipped |
+| **vitest** | 355 passed (68 files) |
+| **coverage (frontend)** | lines 94.37% / statements 92% / functions 91.23% / branches 80.02% |
 | **Playwright** | 1 smoke spec opt-in (`app-root.spec.js`); vitest primary gate |
-| **git** | `337fd8a` on origin/master |
+| **git** | `aa1d29b` on master (F47-F51 4 commits) |
 | **ECharts** | 6.1.0 |
-| **TS** | strict tests/** + `pnpm typecheck` CI |
-| **CVG** | backfill + calibrate + impact graph + cascade 全链路 + broadcast log 就位 |
+| **TS** | strict tests/** + `pnpm typecheck:app` src/** CI |
+| **CVG** | backfill + calibrate + impact graph + impact scoring + audit export |
 
 ---
 
@@ -78,23 +78,13 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 承接 F38/F42 partial; 跟功能正交, 可穿插.
 
-### F47. Phase 9.56 — `vue-tsc` 对 `src/` + CI 契约
+### F47. Phase 9.56 — `vue-tsc` 对 `src/` + CI 契约 ✅ **DONE**
 
-- **承接**: F38 followup「vue-tsc 可选」; 当前仅 `tests/**/*.ts` strict
-- **目标**: `pnpm typecheck:app` (或扩现有 script) 覆盖 `src/**/*.{vue,ts,js}`; CI 非阻塞或 blocking 由主公定
-- **方案**: devDep `vue-tsc`; 新/扩 `tsconfig.app.json`; 修 type errors 分批或 1 super-phase
-- **tests**: 2-4 pytest CI contract (script exists / workflow step)
-- **estimated**: 3-5h
-- **dependency**: F38
+- **完成 (2026-06-11)**: `5b8a543` — tsconfig.app.json + `pnpm typecheck:app` + CI step + 3 pytest 契约
 
-### F48. Phase 9.57 — Coverage 四维 → 80% (statements / functions / branches)
+### F48. Phase 9.57 — Coverage 四维 → 80% (statements / functions / branches) ✅ **DONE**
 
-- **承接**: F42 lines 80 已就位; statements 78.21 / functions 76.87 / branches 64.91
-- **目标**: vitest thresholds 全 80; 补 targeted vitest 覆盖 pages/composables 低覆盖区
-- **方案**: 优先 `WorkflowsPage` / `DecisionsPage` / `useCostWindow` smoke specs; 阈值最后提
-- **tests**: +8-15 vitest (估), 0 改 production behavior
-- **estimated**: 3-4h
-- **dependency**: F42
+- **完成 (2026-06-11)**: `aa1d29b` — vitest thresholds 全 80; branches 80.02% 达标; +120 vitest
 
 ### F49. Phase 9.58 — pre-commit pytest smoke (backend)
 
@@ -111,22 +101,13 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
-### F50. Phase 9.59 — cross-volume impact scoring 排名
+### F50. Phase 9.59 — cross-volume impact scoring 排名 ✅ **DONE**
 
-- **承接**: Phase 9.16/9.18 defer「1 ripple cascade 影响分数 dashboard 排名」
-- **目标**: 计算 ripple → affected node/edge 加权分; RipplesPage 列表 sort/filter by score
-- **方案**: `infra/cross_volume/scoring.py` + API field `impact_score`; 0 改 BFS 核心
-- **tests**: 6-8 pytest (math/fixtures) + 3-4 vitest (badge/sort UI)
-- **estimated**: 2-3h
-- **dependency**: F30 impact graph 建议先 (UI 容器已就位)
+- **完成 (2026-06-11)**: `ab4423f` — scoring.py + API sort_by/min_score + RipplesPage badge/sort UI
 
-### F51. Phase 9.60 — ripple audit log export (CSV/JSON)
+### F51. Phase 9.60 — ripple audit log export (CSV/JSON) ✅ **DONE**
 
-- **承接**: Phase 9.14 out of scope「Audit log export」
-- **目标**: `GET /api/ripples/{id}/audit/export?format=csv|json` 或 CLI `ripple-audit export`
-- **tests**: 4-5 pytest
-- **estimated**: 1.5-2h
-- **dependency**: 9.14 audit 表
+- **完成 (2026-06-11)**: `GET /api/cvg/ripples/{id}/audit/export?format=csv|json` + 5 pytest
 
 ### F52. Phase 9.61 — ripple audit retention policy
 
@@ -218,15 +199,16 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
 ### Track A — DevInfra 收尾 (推荐默认, 低风险)
 
-1. **Phase 9.55-bk (F44+F45)** — v4 文档 + HANDOFF sync (~30min, **必做顺路**)
-2. **Phase 9.56 (F47)** — vue-tsc src/ — 补 F38 最后一里
-3. **Phase 9.57 (F48)** — coverage 四维 80% — 补 F42 最后一里
+1. ~~**Phase 9.56 (F47)** — vue-tsc src/~~ ✅
+2. ~~**Phase 9.57 (F48)** — coverage 四维 80%~~ ✅
+3. **Phase 9.58 (F49)** — pre-commit pytest smoke — **下一项推荐**
 
 ### Track B — CVG 产品 (穿插, 价值导向)
 
-1. **Phase 9.59 (F50)** — impact scoring — **RipplesPage 可排序**, 用户可感知
-2. **Phase 9.60 (F51)** — audit export — 运维/调试友好
-3. **Phase 9.63 (F54)** — backfill 增量 — 359 章后新书 pipeline 前置
+1. ~~**Phase 9.59 (F50)** — impact scoring~~ ✅
+2. ~~**Phase 9.60 (F51)** — audit export~~ ✅
+3. **Phase 9.61 (F52)** — audit retention — **下一项推荐**
+4. **Phase 9.63 (F54)** — backfill 增量 — 359 章后新书 pipeline 前置
 
 ### Track C — 大项 (需主公 explicit 批准)
 
@@ -235,10 +217,10 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 ### 默认推荐 (主公未指定时)
 
 ```
-F44 (bookkeeping) → F47 (vue-tsc) → F50 (impact scoring) → F48 (coverage 80) → F51 (audit export)
+F49 (pre-commit pytest) → F52 (audit retention) → F54 (backfill 增量)
 ```
 
-理由: bookkeeping 解锁 v4 跟踪; vue-tsc 跟 TS strict 自然延伸; impact scoring 产品价值最高且独立; coverage/audit 可穿插.
+F47/F48/F50/F51 已于 2026-06-11 完成 (Track A→B 默认序列).
 
 ---
 

@@ -11,6 +11,8 @@ Phase 6 新增:
 """
 
 import asyncio
+import csv
+import io
 import json
 import os
 import sqlite3
@@ -20,6 +22,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from dashboard.cascade_notifier import (
@@ -1018,6 +1021,37 @@ def create_app(
             raise HTTPException(404, f"ripple {ripple_id} not found")
         entries = storage.get_audit_history(ripple_id, limit=limit, offset=offset)
         return [_audit_to_response(e) for e in entries]
+
+    @app.get("/api/cvg/ripples/{ripple_id}/audit/export")
+    def export_ripple_audit(
+        ripple_id: str,
+        export_format: str = Query(
+            "json",
+            alias="format",
+            pattern="^(json|csv)$",
+        ),
+        limit: int = Query(500, ge=1, le=2000),
+        offset: int = Query(0, ge=0),
+    ) -> Response:
+        """Phase 9.60 F51: export ripple audit log as JSON or CSV."""
+        storage = _default_storage()
+        if storage.get_ripple_by_id(ripple_id) is None:
+            raise HTTPException(404, f"ripple {ripple_id} not found")
+        entries = storage.get_audit_history(ripple_id, limit=limit, offset=offset)
+        rows = [_audit_to_response(e).model_dump(mode="json") for e in entries]
+        if export_format == "json":
+            body = json.dumps(rows, ensure_ascii=False, indent=2)
+            return Response(content=body, media_type="application/json")
+        output = io.StringIO()
+        fieldnames = [
+            "id", "ripple_id", "action", "prev_status", "new_status",
+            "actor", "origin", "reason", "created_at",
+        ]
+        writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+        return Response(content=output.getvalue(), media_type="text/csv")
 
     @app.post(
         "/api/cvg/ripples/{ripple_id}/rollback",
