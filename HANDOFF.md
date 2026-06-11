@@ -224,12 +224,13 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.32 F16 BFS cap config | 2026-06-11 | `max_nodes_cap` 可配置 (default 100, 1..1000) + API/CLI 透传 | 2501/192 |
 | 9.33-bk F17 roadmap v2 | 2026-06-11 | followup roadmap v2 (F17-F28) + HANDOFF §6 + v1 superseded pointer | 2501/192 |
 | 9.33 F18 backfill execute | 2026-06-11 | `--execute` 幂等 skip + pre/post counts + `--corpus-root` | 2507/192 |
+| 9.37 F22 CI pytest | 2026-06-11 | repo root `.github/workflows/` + `--timeout=120` + 5 ci tests | 2512/192 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] feat(cvg): phase 9.33 F18 — production backfill execute idempotent
-43a309f docs(superpowers): phase 9.33-bk F17 — followup roadmap v2 sync
-1a23bbe feat(cascade): phase 9.32 F16 — configurable max_nodes_cap
+[本 commit] ci: phase 9.37 F22 — pytest gate at repo root
+d838557 ci: phase 9.37 F22 — pytest gate at repo root
+3c2020f feat(cvg): phase 9.33 F18 — production backfill execute idempotent
 7790864 test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
 364b0b1 feat(dashboard): phase 9.30 F14 — page data-testid convention unify
 41d7129 feat(dashboard): phase 9.29 F13 — cost cumulative trend line
