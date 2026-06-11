@@ -39,6 +39,26 @@ class AuditEntry:
     reason: str | None
     created_at: datetime
 
+
+@dataclass(frozen=True)
+class CascadeRun:
+    """Phase 9.20: 1 row of cascade_runs table.
+
+    Immutable after insert. Fields mirror cascade_runs table columns (except
+    autoincrement id which is exposed for caller reference).
+    """
+    id: int
+    ripple_id: str
+    max_depth: int
+    depth_reached: int
+    algorithm: str
+    started_at: datetime
+    completed_at: datetime
+    status: str  # 'running'/'completed'/'cancelled'/'failed'
+    cascade_nodes: tuple["ReferenceNode", ...]
+    cascade_edges: tuple["ReferenceEdge", ...]
+    cascade_actions: tuple[str, ...]
+
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS reference_nodes (
     id TEXT PRIMARY KEY,
@@ -106,6 +126,23 @@ CREATE TABLE IF NOT EXISTS ripple_cascade (
     FOREIGN KEY (trigger_ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_ripple_cascade_trigger ON ripple_cascade(trigger_ripple_id);
+
+CREATE TABLE IF NOT EXISTS cascade_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ripple_id TEXT NOT NULL,
+    max_depth INTEGER NOT NULL,
+    depth_reached INTEGER NOT NULL,
+    algorithm TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    completed_at TEXT NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('running', 'completed', 'cancelled', 'failed')),
+    nodes_json TEXT NOT NULL,
+    edges_json TEXT NOT NULL,
+    actions_json TEXT NOT NULL,
+    FOREIGN KEY (ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_cascade_runs_ripple ON cascade_runs(ripple_id, id DESC);
+CREATE INDEX IF NOT EXISTS idx_cascade_runs_status ON cascade_runs(status) WHERE status != 'completed';
 """
 
 
@@ -630,6 +667,93 @@ class RippleStorage:
         if ripple is None:
             raise KeyError(f"Ripple {ripple_id} not found")
         return self._graph.trigger_cascade(ripple, max_depth=max_depth, weighted=True)
+
+    def record_cascade_run(
+        self,
+        ripple_id: str,
+        cascaded: "CascadedRipple",
+        max_depth: int,
+        status: str = "completed",
+    ) -> int:
+        """Phase 9.20: append 1 row to cascade_runs (independent commit).
+
+        跟 record_audit / record_cascade 1:1 pattern: 主 write path 失败不传播到这里.
+
+        Returns:
+            cascade_run_id (autoincrement PK)
+        """
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO cascade_runs (ripple_id, max_depth, depth_reached, algorithm,"
+                " started_at, completed_at, status, nodes_json, edges_json, actions_json)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    ripple_id,
+                    max_depth,
+                    cascaded.depth_reached,
+                    getattr(cascaded, "bfs_algorithm_version", "v2_weighted") or "v2_weighted",
+                    now_iso,
+                    now_iso,
+                    status,
+                    json.dumps([self._node_to_dict(n) for n in cascaded.cascade_nodes], ensure_ascii=False),
+                    json.dumps([self._edge_to_dict(e) for e in cascaded.cascade_edges], ensure_ascii=False),
+                    json.dumps(list(cascaded.cascade_actions), ensure_ascii=False),
+                ),
+            )
+            conn.commit()
+            return cur.lastrowid
+
+    def get_cascade_runs(
+        self,
+        ripple_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        status: str | None = None,
+    ) -> list[CascadeRun]:
+        """Phase 9.20: list cascade runs for ripple_id (latest first).
+
+        Args:
+            ripple_id: filter by ripple
+            limit: max rows (default 50)
+            offset: pagination offset
+            status: optional filter ('running'/'completed'/'cancelled'/'failed')
+
+        Returns:
+            list of CascadeRun, ordered by id DESC
+        """
+        clauses, params = ["ripple_id = ?"], [ripple_id]
+        if status is not None:
+            clauses.append("status = ?")
+            params.append(status)
+        where = f"WHERE {' AND '.join(clauses)}"
+        sql = f"SELECT * FROM cascade_runs {where} ORDER BY id DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        with self._connect() as conn:
+            return [self._row_to_cascade_run(row) for row in conn.execute(sql, params)]
+
+    def get_cascade_run_by_id(self, run_id: int) -> CascadeRun | None:
+        """Phase 9.20: fetch single cascade run by PK, or None."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM cascade_runs WHERE id = ?", (run_id,)
+            ).fetchone()
+            return self._row_to_cascade_run(row) if row else None
+
+    def _row_to_cascade_run(self, row: sqlite3.Row) -> CascadeRun:
+        return CascadeRun(
+            id=row["id"],
+            ripple_id=row["ripple_id"],
+            max_depth=row["max_depth"],
+            depth_reached=row["depth_reached"],
+            algorithm=row["algorithm"],
+            started_at=datetime.fromisoformat(row["started_at"]),
+            completed_at=datetime.fromisoformat(row["completed_at"]),
+            status=row["status"],
+            cascade_nodes=tuple(self._dict_to_node(n) for n in json.loads(row["nodes_json"])),
+            cascade_edges=tuple(self._dict_to_edge(e) for e in json.loads(row["edges_json"])),
+            cascade_actions=tuple(json.loads(row["actions_json"])),
+        )
 
     def _node_to_dict(self, n: "ReferenceNode") -> dict:
         return {
