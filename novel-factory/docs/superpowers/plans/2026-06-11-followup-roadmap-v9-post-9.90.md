@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v8-post-9.84.md` (F77-F82 已于 Phase 9.85-9.90 全部完成, commit `5c988f1`). 本 doc 定义 **360+ 章规模化生产** + **Memory RAG live** + **运维可观测性** 主线, 重新编号 **F83+**.
 > **创建时间**: 2026-06-11 (v8 清空 + bookkeeping)
-> **状态**: v9 进行中; **推荐 F85** 10 章 wave runbook
+> **状态**: v9 进行中; **推荐 F86** MEMORY_RAG=live pilot
 > **前置**: baseline **2845 pytest + 400 vitest** (post `5c988f1`); ch360 + batch 361-363 已跑通
 
 ## 上下文 (Context)
@@ -50,11 +50,11 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - **交付**: batch summary + per-chapter records · runbook §17
 - **env**: 同 F79；dry-run 校准自 `batch-361-363.json`
 
-### F85. Phase 9.93 — 10 章 wave runbook + dry-run 模板
+### F85. Phase 9.93 — 10 章 wave runbook + dry-run 模板 ✅ **DONE**
 
-- **目标**: 文档化 364→373 wave（`--max-chapters 10`）预检与 budget 估算
-- **依赖**: F84 有真实记录后校准 cost
-- **estimated**: 2h
+- **产物**: runbook §18 · `batch-wave-dry-run.sh` · wave stub 模板 · CI 契约
+- **wave**: ch367–376 · 默认 budget $0.30 · 校准 batch-364-366（fallback 361-363）
+- **Out of scope**: F85 不默认跑真实 10 章 LLM（manual gate 另开）
 
 ### F86. Phase 9.94 — MEMORY_RAG=live 单章 pilot
 
@@ -105,14 +105,14 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 ## 推荐下一期 phase 顺序
 
-1. **F84** Batch 364-366 续跑
-2. F85 10 章 wave runbook · F86 live RAG pilot
-3. F87 Analytics 趋势
+1. **F86** MEMORY_RAG=live 单章 pilot
+2. F87 Analytics 成本趋势
 
 ---
 
 ## 完成定义 (DoD) — Roadmap v9 本身
 
 - [x] 本 doc 创建
-- [ ] HANDOFF §6 指向 v9 + baseline 2845/400
-- [ ] v8 顶部 superseded pointer
+- [x] HANDOFF §6 指向 v9 + baseline 2845/400
+- [x] v8 顶部 superseded pointer
+- [x] F85 10 章 wave runbook + dry-run script

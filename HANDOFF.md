@@ -15,13 +15,13 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2781** collected |
-| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **384** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
-| **总测试** | **~3192** (2781 pytest + 384 vitest + 27 pytest skip) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2845** collected |
+| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **400** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
+| **总测试** | **~3272** (2845 pytest + 400 vitest + skips) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `8e43514` — feat(F81) Analytics 生产 rollup |
+| **当前 commit** | `f6b3bdd` — feat(F83-bk,F84) v9 batch 364-366 |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | v8 已清空 — 可选 Actions e2e-live 首绿记录 / 规划 v9 |
+| **下一期推荐** | **F86** MEMORY_RAG=live pilot — 见 §6 + v9 roadmap |
 
 ---
 
@@ -271,35 +271,32 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ---
 
-## 6. 后续 followup (v8, post 9.84)
+## 6. 后续 followup (v9, post 9.90)
 
-**汇总 (v8)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v8-post-9.84.md`
+**汇总 (v9)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md`
 
-**v7 (F71-F76) 已全部完成** (`e746bdc`). 见 v7 doc: `2026-06-11-followup-roadmap-v7-post-9.78.md`
-
-| # | 主题 | Phase | 估时 | Track | 状态 |
-|---|------|-------|------|-------|------|
-| F71-bk | v7 roadmap | 9.79-bk | 30min | P0 | ✅ |
-| F72 | Manual 1 章 pilot | 9.80 | 2-4h | P1 | ✅ |
-| F73 | 批量 runner | 9.81 | 4-6h | P1 | ✅ |
-| F74 | ChaptersPage 生产历史 | 9.82 | 3-4h | P2 | ✅ |
-| F75 | 决策 deep link | 9.83 | 2-3h | P2 | ✅ |
-| F76 | Remote e2e-live | 9.84 | 1h | P3 | ✅ |
-
-**v8 待启动 (推荐顺序):**
+**v8 (F77-F82) 已全部完成** (`5c988f1`). 见 v8 doc: `2026-06-11-followup-roadmap-v8-post-9.84.md`
 
 | # | 主题 | Phase | 估时 | Track | 状态 |
 |---|------|-------|------|-------|------|
-| F77-bk | v8 roadmap + HANDOFF | 9.85-bk | 30min | P0 | ✅ |
-| **F78** | Settings 预算写入 UI | 9.86 | 2-3h | P2 | ✅ |
-| **F79** | Manual batch 3 章 pilot | 9.87 | 2-4h | P1 | ✅ |
-| **F80** | Batch dry-run 增强 | 9.88 | 2-3h | P1 | ✅ |
-| **F81** | Analytics batch rollup | 9.89 | 3-4h | P2 | ✅ |
-| **F82** | Remote e2e 确认 | 9.90 | 30min | P3 | ✅ |
+| F77-bk | v8 roadmap | 9.85-bk | 30min | P0 | ✅ |
+| F78 | Settings 预算写入 | 9.86 | 2-3h | P2 | ✅ |
+| F79 | Batch 361-363 | 9.87 | 2-4h | P1 | ✅ |
+| F80 | Batch dry-run | 9.88 | 2-3h | P1 | ✅ |
+| F81 | Analytics rollup | 9.89 | 3-4h | P2 | ✅ |
+| F82 | Remote e2e 确认 | 9.90 | 30min | P3 | ✅ |
 
-**v8 已全部完成。** 可选：Actions 首绿记录 · 新 v9 roadmap。
+**v9 待启动 (推荐顺序):**
 
-**推荐下一项**: **F79** Manual batch 3 章 pilot（F78 代码交付后）
+| # | 主题 | Phase | 估时 | Track | 状态 |
+|---|------|-------|------|-------|------|
+| F83-bk | v9 roadmap + HANDOFF | 9.91-bk | 30min | P0 | ✅ |
+| **F84** | Batch 364-366 续跑 | 9.92 | 2-4h | P1 | ✅ |
+| **F85** | 10 章 wave runbook | 9.93 | 2h | P1 | ✅ |
+| **F86** | MEMORY_RAG=live pilot | 9.94 | 3-5h | P1 | 🔴 推荐下一项 |
+| F87 | Analytics 成本趋势 | 9.95 | 3-4h | P2 | 待 F84 ✅ |
+
+**推荐下一项**: **F86** MEMORY_RAG=live 单章 pilot（需 Qdrant env）
 
 ---
 
@@ -338,7 +335,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v8-post-9.84.md` (F77+, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (F83+, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
 - [ ] 跑 `pytest -q` 验证 baseline ~2781 collected (~2min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **384** passed (~8s)

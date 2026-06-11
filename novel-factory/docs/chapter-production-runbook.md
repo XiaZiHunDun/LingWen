@@ -606,3 +606,63 @@ python -m infra.agent_system.chapter_production_batch \
 pytest tests/ci/test_chapter_production_batch_f84_ci.py -q
 ```
 
+---
+
+## 18. 10 章 wave 预检（367–376, F85）
+
+**目标**: 在首次 `--max-chapters 10` 真实 LLM 跑批前，固定 wave  playbook + dry-run 预算。
+
+**Wave 定义**: 起始 **367**，连续 **10 章** → `367-376`（`MAX_BATCH_CHAPTERS=10`）。
+
+### 18.1 一键 dry-run
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1 LINGWEN_INCREMENTAL_BACKFILL=1 LINGWEN_MEMORY_RAG=stub
+export MINIMAX_API_KEY=...
+
+# 默认: start=367 max=10 budget=0.30；校准 batch-364-366.json（fallback 361-363）
+bash novel-factory/scripts/batch-wave-dry-run.sh
+# 或显式: bash novel-factory/scripts/batch-wave-dry-run.sh 367 10 0.35
+```
+
+**推荐 budget 档位**（基于 F84 校准 ~$0.027/章）:
+
+| `--budget-usd` | 说明 |
+|---------------|------|
+| **0.28** | 紧预算（约 10 章预估，少 headroom） |
+| **0.30** | **默认**（~10 章 + 小幅余量） |
+| **0.35** | 宽松（含 polish JSON fallback 波动） |
+
+**2026-06-11 dry-run 参考**（calibrate `batch-364-366.json`）:
+
+| 项 | 值 |
+|----|-----|
+| `chapter_range` | 367-376 |
+| `estimated_total_cost_usd` | ~$0.269 |
+| `estimated_chapters_within_budget` | 10 @ $0.30 |
+| `budget_headroom_usd` | ~$0.031 @ $0.30 |
+
+### 18.2 真实 wave 执行（manual gate，非 F85 默认跑）
+
+确认 dry-run 后：
+
+```bash
+python -m infra.agent_system.chapter_production_batch \
+  --start-chapter 367 --max-chapters 10 --budget-usd 0.30 \
+  --save-summary infra/.state/pilot_records/batch-367-376.json \
+  --save-chapter-records-dir infra/.state/pilot_records/ \
+  --operator your-name
+```
+
+**运维注意**:
+- stop-on-fail：任一章失败则停止，需人工审后再开下一 wave
+- 建议 wave 间留 **人工审章** 窗口，不要连续无人值守 10 章
+- 脱敏 wave 计划: `docs/templates/chapter-batch-wave.stub.example.json`
+
+### 18.3 pytest
+
+```bash
+pytest tests/ci/test_chapter_production_batch_f85_ci.py -q
+```
+
