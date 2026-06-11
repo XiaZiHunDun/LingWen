@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.32 (Phase 9.32 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.32 F16 cascade BFS max_nodes_cap 可配置 ✅; pytest 2495→2501 (+6); vitest 192 (不变); **P2 roadmap F1-F16 全部完成**。
+> **版本**: v9.33-bk (Phase 9.33-bk 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.33-bk F17 followup roadmap v2 文档同步 ✅; pytest 2501 (不变); vitest 192 (不变); 推荐 **F18 backfill**.
 
 ---
 
@@ -19,7 +19,7 @@
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **下一期推荐** | 新 phase 规划 (P2 F1-F16 已全部完成) |
+| **下一期推荐** | **F18** (359 章 backfill 正式跑, Phase 9.33) |
 
 ---
 
@@ -196,7 +196,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.32)
+## 5. 最近工作 (Phase 8.16 → 9.33-bk)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -221,10 +221,12 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.30 F14 testid unify | 2026-06-11 | DecisionsPage/WorkflowsPage testid + 2 page spec 0 class selector | 2495/182 vitest |
 | 9.31 F15 playwright vitest | 2026-06-11 | 删 10 ceremonial Playwright + 3 vitest page spec (+10) | 2495/192 vitest |
 | 9.32 F16 BFS cap config | 2026-06-11 | `max_nodes_cap` 可配置 (default 100, 1..1000) + API/CLI 透传 | 2501/192 |
+| 9.33-bk F17 roadmap v2 | 2026-06-11 | followup roadmap v2 (F17-F28) + HANDOFF §6 + v1 superseded pointer | 2501/192 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
-[本 commit] feat(cascade): phase 9.32 F16 — configurable max_nodes_cap
+[本 commit] docs(superpowers): phase 9.33-bk F17 — followup roadmap v2 sync
+1a23bbe feat(cascade): phase 9.32 F16 — configurable max_nodes_cap
 7790864 test(dashboard): phase 9.31 F15 — ceremonial Playwright vitest migration
 364b0b1 feat(dashboard): phase 9.30 F14 — page data-testid convention unify
 41d7129 feat(dashboard): phase 9.29 F13 — cost cumulative trend line
@@ -247,24 +249,30 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ## 6. 后续 followup (P2 待做, 按优先级)
 
-**汇总**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap.md`
+**汇总 (v2, post 9.32)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v2-post-9.32.md`
 
-**P2 roadmap F1-F16 已于 Phase 9.24-9.32 全部完成。** 下一期需主公选新主线 (见 roadmap 外 followup 或新业务 phase)。
+**v1 (F1-F16) 已于 Phase 9.24-9.32 全部完成.** 见 v1 doc: `2026-06-11-followup-roadmap.md`
 
-**已完成 (从 roadmap 拿掉)**:
-- F1-F3: P0 bookkeeping (Phase 9.24 ✅)
-- F4-F7: P1 主线 (Phase 9.20-9.23 ✅)
-- F8: CI filter 收紧 (Phase 9.24 RESOLVED ✅, skipif + mock SDK 双保险已就位)
-- F9: DRY reset+rollback SQL (Phase 9.25 ✅, `_update_ripple_status_internal` + 6 pytest)
-- F10: WebSocket 断线 indicator (Phase 9.26 ✅, `SidebarWsDisconnectedBanner` 全局 sidebar)
-- F11: Tier budget alert 日志 (Phase 9.27 ✅, `useTierBudgetAlerts` + 9 vitest)
-- F12: Per-tier 趋势线 (Phase 9.28 ✅, `cost_by_day_per_tier` + 11 pytest + 1 vitest)
-- F13: Cost cumulative 折线 (Phase 9.29 ✅, `computeCumulativeSeries` + 单线双 series + 4 vitest)
-- F14: data-testid 统一 (Phase 9.30 ✅, DecisionsPage/WorkflowsPage 7 testid + 2 page spec byTestid + 2 vitest)
-- F15: Playwright vitest 化 (Phase 9.31 ✅, 删 10 ceremonial Playwright + app/ripples/dryrun vitest +10)
-- F16: cascade BFS max_nodes_cap 可配置 (Phase 9.32 ✅, `DEFAULT_MAX_NODES_CAP` + API/CLI `--max-nodes-cap` + 6 pytest)
+| # | 主题 | Phase | 估时 | Track | 独立? |
+|---|------|-------|------|-------|-------|
+| F17 | roadmap v2 文档同步 + 索引 stale 修复 | 9.33-bk | 30min | P0 | ✅ done |
+| F18 | 359 章历史 backfill 正式跑 | 9.33 | 2-3h | P1 CVG | ✅ |
+| F19 | LLM scanner confidence 校准 | 9.34 | 2-3h | P1 CVG | △ F18 建议先 |
+| F20 | cascade 广播 latency + 拓扑实时刷新 | 9.35 | 2h | P1 CVG | ✅ |
+| F21 | v1→v2 cascade 数据迁移 (optional) | 9.36 | 1.5h | P1 CVG | 🟢 低 |
+| F22 | CI pytest gate | 9.37 | 1.5h | P2 DevInfra | ✅ |
+| F23 | Vitest coverage 报告 | 9.38 | 1h | P2 DevInfra | ✅ |
+| F24 | ESLint 8→9 | 9.39 | 2h | P2 DevInfra | ✅ |
+| F25 | TypeScript strict pilot | 9.40 | 2h | P2 DevInfra | ✅ |
+| F26 | Cost 柱状图 UI (Phase 8.7) | — | 1.5h | P3 | ✅ |
+| F27 | `*_with_usage` cost variant | — | 2h | P3 | ✅ |
+| F28 | spec 编号错位标注 (doc-only) | — | 15m | P3 | ✅ |
 
-**推荐下一项**: 新 phase 规划 — P2 followup roadmap 已清空, 待主公决策下一主线。
+**已完成 (v1 roadmap, 9.24-9.32)**:
+- F1-F3: P0 bookkeeping ✅ | F4-F7: P1 cascade 持久化路线 ✅ | F8: RESOLVED ✅
+- F9-F16: P2 dashboard/DevInfra ✅ (含 9.32 F16 max_nodes_cap)
+
+**推荐下一项**: **F18** (359 章 backfill 正式跑, Phase 9.33) — 见 v2 doc 决策矩阵.
 
 ---
 
@@ -298,14 +306,14 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap.md` (后续规划, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v2-post-9.32.md` (F17-F28, 5 分钟)
 - [ ] 读 auto-memory `~/.claude/projects/.../memory/MEMORY.md` (项目记忆索引, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 4 phase 详细, 10 分钟) — 如果要做 P2 任意 item
 - [ ] 跑 `pytest -q` 验证 baseline 2501 passed (~90s)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 192 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一期主线 (P2 F1-F16 已全部完成) → brainstorming → writing-plans
+- [ ] 选 1 个 v2 item (推荐 **F18 backfill**) → brainstorming → writing-plans
 
 ---
 
@@ -376,5 +384,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.32 (2026-06-11)
-> **下次更新**: 启动新 phase 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格
+> **版本**: v9.33-bk (2026-06-11)
+> **下次更新**: 启动 F18 (backfill) 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格

@@ -1,5 +1,6 @@
 # Followup Roadmap — Post Phase 9.19
 
+> **Superseded by v2 (post 9.32):** `2026-06-11-followup-roadmap-v2-post-9.32.md` — F1-F16 全部完成, 新 backlog 见 F17-F28.
 > **For agentic workers:** Bookkeeping 计划 — 整理 Phase 9.19 之后所有 deferred followup, 按 P0/P1/P2 分级 + dependencies 排序。
 > **创建时间**: 2026-06-11 (主公要求 "重新整理后续计划")
 > **状态**: 全部 deferred, 待主公决策每期 phase 启动时机
