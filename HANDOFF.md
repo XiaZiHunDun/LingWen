@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.78 (Phase 9.78 v6 全量交付 + v7 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F72 manual gate + F73 batch runner; v7 推荐 **F74**。
+> **版本**: v9.84 (Phase 9.84 v7 全量交付 + v8 roadmap, 2026-06-11)
+> **更新 (2026-06-11)**: F76 remote e2e checklist; v8 推荐 **F78** Settings 预算写入。
 
 ---
 
@@ -19,9 +19,9 @@
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **384** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
 | **总测试** | **~3192** (2781 pytest + 384 vitest + 27 pytest skip) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `6d5d899` — feat(F65-F70) v6 真实生产 pilot + Dashboard MVP |
+| **当前 commit** | `e746bdc` — feat(F76) v7 remote e2e-live checklist |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | v7 已清空 — 可选 Actions e2e-live 首跑 / 新 roadmap |
+| **下一期推荐** | **F79** Manual batch 3 章 pilot — 见 §6 + v8 roadmap |
 
 ---
 
@@ -271,33 +271,32 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ---
 
-## 6. 后续 followup (v7, post 9.78)
+## 6. 后续 followup (v8, post 9.84)
 
-**汇总 (v7)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v7-post-9.78.md`
+**汇总 (v8)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v8-post-9.84.md`
 
-**v6 (F65-F70) 已全部完成** (`6d5d899`). 见 v6 doc: `2026-06-11-followup-roadmap-v6-post-9.72.md`
-
-| # | 主题 | Phase | 估时 | Track | 状态 |
-|---|------|-------|------|-------|------|
-| F65 | 真实 pilot 脚手架 | 9.73 | 4-8h | P1 | ✅ |
-| F66 | 生产 observability | 9.74 | 2-4h | P1 | ✅ |
-| F69 | state 并发 pytest | 9.75 | 1-2h | P3 | ✅ |
-| F70 | e2e-live local CI | 9.76 | 1h | P3 | ✅ |
-| F67 | Analytics MVP | 9.77 | 3-5h | P2 | ✅ |
-| F68 | Settings MVP | 9.78 | 2-3h | P2 | ✅ |
-
-**v7 待启动 (推荐顺序):**
+**v7 (F71-F76) 已全部完成** (`e746bdc`). 见 v7 doc: `2026-06-11-followup-roadmap-v7-post-9.78.md`
 
 | # | 主题 | Phase | 估时 | Track | 状态 |
 |---|------|-------|------|-------|------|
-| F71-bk | v7 roadmap + HANDOFF | 9.79-bk | 30min | P0 | ✅ |
-| **F72** | Manual 1 章 pilot 执行 | 9.80 | 2-4h | P1 | ✅ |
-| **F73** | 批量 3–10 章 runner | 9.81 | 4-6h | P1 | ✅ |
-| **F74** | ChaptersPage 生产历史 | 9.82 | 3-4h | P2 | ✅ |
-| **F75** | 决策中心 deep link | 9.83 | 2-3h | P2 | ✅ |
-| **F76** | Remote e2e-live 首绿 | 9.84 | 1h | P3 | ✅ |
+| F71-bk | v7 roadmap | 9.79-bk | 30min | P0 | ✅ |
+| F72 | Manual 1 章 pilot | 9.80 | 2-4h | P1 | ✅ |
+| F73 | 批量 runner | 9.81 | 4-6h | P1 | ✅ |
+| F74 | ChaptersPage 生产历史 | 9.82 | 3-4h | P2 | ✅ |
+| F75 | 决策 deep link | 9.83 | 2-3h | P2 | ✅ |
+| F76 | Remote e2e-live | 9.84 | 1h | P3 | ✅ |
 
-**v7 已全部完成。** 可选：Actions 手动 Run workflow · 新 roadmap（批量 360+ 章等）。
+**v8 待启动 (推荐顺序):**
+
+| # | 主题 | Phase | 估时 | Track | 状态 |
+|---|------|-------|------|-------|------|
+| F77-bk | v8 roadmap + HANDOFF | 9.85-bk | 30min | P0 | ✅ |
+| **F78** | Settings 预算写入 UI | 9.86 | 2-3h | P2 | ✅ |
+| **F79** | Manual batch 3 章 pilot | 9.87 | 2-4h | P1 | 🔴 推荐下一项 |
+| F80 | Batch dry-run 增强 | 9.88 | 2-3h | P1 | 待 F79 |
+| F81 | Analytics batch rollup | 9.89 | 3-4h | P2 | 待 F79 |
+
+**推荐下一项**: **F79** Manual batch 3 章 pilot（F78 代码交付后）
 
 ---
 
@@ -336,7 +335,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v7-post-9.78.md` (F71+, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v8-post-9.84.md` (F77+, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
 - [ ] 跑 `pytest -q` 验证 baseline ~2781 collected (~2min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **384** passed (~8s)

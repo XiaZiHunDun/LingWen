@@ -438,7 +438,7 @@ export async function fetchCascadeWithDepth(rippleId, maxDepth) {
   );
 }
 
-// === Budgets (Phase 8.12 / 8.15 — Settings read-only, F68) ===
+// === Budgets (Phase 8.12 / 8.15 — Settings read-only F68, write F78) ===
 
 /**
  * @returns {Promise<{ per_run: object, per_day: object, per_week: object }>}
@@ -452,4 +452,30 @@ export async function fetchBudgets() {
  */
 export async function fetchBudgetsByTier() {
   return request('/budgets/by-tier');
+}
+
+/**
+ * Set day/week budget (per-run not exposed via this endpoint).
+ * @param {'day'|'week'} scope
+ * @param {number} usd
+ * @returns {Promise<{ ok: boolean, scope: string, usd: number }>}
+ */
+export async function setBudget(scope, usd) {
+  return request(`/budgets/${encodeURIComponent(scope)}`, {
+    method: 'PUT',
+    body: { usd },
+  });
+}
+
+/**
+ * Set model tier budget.
+ * @param {'haiku'|'sonnet'|'opus'} tier
+ * @param {number} usd
+ * @returns {Promise<{ ok: boolean, tier: string, usd: number }>}
+ */
+export async function setBudgetByTier(tier, usd) {
+  return request(`/budgets/by-tier/${encodeURIComponent(tier)}`, {
+    method: 'PUT',
+    body: { usd },
+  });
 }

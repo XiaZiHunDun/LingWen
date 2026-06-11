@@ -1,7 +1,7 @@
 <!--
-  SettingsPage.vue — Phase 9.78 F68: 系统设置 MVP (read-only)
-  - Budget 只读面板 (GET /api/budgets + WS snapshot)
-  - 生产环境变量说明
+  SettingsPage.vue — Phase 9.78 F68 read-only + Phase 9.86 F78 budget write
+  - Budget 面板 (GET + PUT day/week/tier)
+  - 生产环境变量说明 (只读)
 -->
 <template>
   <div class="settings-page">
@@ -20,11 +20,14 @@
     <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
     </div>
+    <div v-if="saveMessage" class="success-banner pixel-border" data-testid="save-banner">
+      {{ saveMessage }}
+    </div>
 
     <section class="settings-section pixel-card" data-testid="budget-panel">
-      <h2 class="section-title">Token 预算 (只读)</h2>
+      <h2 class="section-title">Token 预算</h2>
       <p v-if="!windowRows.length && !tierRows.length" class="empty-hint">
-        未配置预算阈值（可在 API 或 workflow run 时设置 per-run budget）
+        未配置预算阈值（per-run 仍随 workflow run 传参）
       </p>
       <table v-if="windowRows.length" class="settings-table" data-testid="window-budget-table">
         <thead>
@@ -67,7 +70,46 @@
           </tr>
         </tbody>
       </table>
-      <p class="readonly-note">只读面板 — 修改预算请使用 API `PUT /api/budgets/{scope}`</p>
+      <p class="readonly-note">per-run 预算在启动 workflow 时设置，此处不可编辑</p>
+    </section>
+
+    <section class="settings-section pixel-card" data-testid="budget-edit-panel">
+      <h2 class="section-title">修改预算</h2>
+      <form class="budget-edit-form" @submit.prevent="submitBudgetEdit">
+        <label class="field-label" for="budget-target">目标</label>
+        <select
+          id="budget-target"
+          v-model="editTargetId"
+          class="budget-select pixel-border"
+          data-testid="budget-target-select"
+          @change="syncEditInputFromLoaded"
+        >
+          <option v-for="t in editTargets" :key="t.id" :value="t.id">
+            {{ t.label }}
+          </option>
+        </select>
+        <label class="field-label" for="budget-usd">预算 (USD)</label>
+        <input
+          id="budget-usd"
+          v-model="editUsd"
+          type="number"
+          min="0"
+          max="10000"
+          step="0.01"
+          class="budget-input pixel-border"
+          data-testid="budget-usd-input"
+          placeholder="例如 0.50"
+        />
+        <button
+          type="submit"
+          class="save-btn pixel-border"
+          data-testid="budget-save-btn"
+          :disabled="saving"
+        >
+          {{ saving ? '保存中…' : '保存' }}
+        </button>
+      </form>
+      <p v-if="editError" class="edit-error" data-testid="budget-edit-error">{{ editError }}</p>
     </section>
 
     <section class="settings-section pixel-card" data-testid="env-panel">
@@ -114,8 +156,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { fetchBudgets, fetchBudgetsByTier } from '../api/index.js';
+import { computed, onMounted, ref, watch } from 'vue';
+import {
+  fetchBudgets,
+  fetchBudgetsByTier,
+  setBudget,
+  setBudgetByTier,
+} from '../api/index.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import { PRODUCTION_ENV_VARS, API_KEY_ENV_VARS } from '../utils/settingsEnv.js';
 import {
@@ -123,16 +170,27 @@ import {
   formatTierBudgetRows,
   formatWsBudgetFallback,
 } from '../utils/settingsBudget.js';
+import {
+  BUDGET_EDIT_TARGETS,
+  currentBudgetUsdForTarget,
+  parseBudgetUsdInput,
+} from '../utils/settingsBudgetEdit.js';
 
 const { status } = useWorkflowSocket();
 
 const loading = ref(false);
+const saving = ref(false);
 const error = ref(null);
+const saveMessage = ref(null);
+const editError = ref(null);
 const budgetWindows = ref(null);
 const tierLimits = ref(null);
+const editTargetId = ref('day');
+const editUsd = ref('');
 
 const productionEnvVars = PRODUCTION_ENV_VARS;
 const apiKeyEnvVars = API_KEY_ENV_VARS;
+const editTargets = BUDGET_EDIT_TARGETS;
 
 const windowRows = computed(() => {
   const fromApi = formatWindowBudgetRows(budgetWindows.value || {});
@@ -144,6 +202,21 @@ const tierRows = computed(() =>
   formatTierBudgetRows(tierLimits.value, status.value?.budget_by_tier),
 );
 
+const selectedTarget = computed(() =>
+  editTargets.find((t) => t.id === editTargetId.value) || editTargets[0],
+);
+
+function syncEditInputFromLoaded() {
+  const target = selectedTarget.value;
+  if (!target) return;
+  const current = currentBudgetUsdForTarget(
+    target,
+    budgetWindows.value,
+    tierLimits.value,
+  );
+  editUsd.value = current === '' ? '' : String(current);
+}
+
 async function loadBudgets() {
   loading.value = true;
   error.value = null;
@@ -154,12 +227,41 @@ async function loadBudgets() {
     ]);
     budgetWindows.value = windows;
     tierLimits.value = tiers;
+    syncEditInputFromLoaded();
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     loading.value = false;
   }
 }
+
+async function submitBudgetEdit() {
+  editError.value = null;
+  saveMessage.value = null;
+  const parsed = parseBudgetUsdInput(editUsd.value);
+  if (!parsed.ok) {
+    editError.value = parsed.message;
+    return;
+  }
+  const target = selectedTarget.value;
+  saving.value = true;
+  try {
+    if (target.kind === 'window') {
+      await setBudget(target.apiScope, parsed.usd);
+    } else {
+      await setBudgetByTier(target.apiScope, parsed.usd);
+    }
+    saveMessage.value = `已保存 ${target.label}: $${parsed.usd.toFixed(2)}`;
+    await loadBudgets();
+  } catch (e) {
+    editError.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    saving.value = false;
+  }
+}
+
+watch(budgetWindows, () => syncEditInputFromLoaded());
+watch(tierLimits, () => syncEditInputFromLoaded());
 
 onMounted(() => {
   loadBudgets();
@@ -186,7 +288,8 @@ onMounted(() => {
   font-family: 'Press Start 2P', monospace;
 }
 
-.refresh-btn {
+.refresh-btn,
+.save-btn {
   font-size: 8px;
   font-family: 'Press Start 2P', monospace;
   padding: var(--space-sm) var(--space-md);
@@ -194,13 +297,22 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.refresh-btn:disabled {
+.refresh-btn:disabled,
+.save-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 .error-banner {
   background: var(--color-danger);
+  color: white;
+  padding: var(--space-md);
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.success-banner {
+  background: var(--color-success);
   color: white;
   padding: var(--space-md);
   font-size: 8px;
@@ -260,6 +372,36 @@ onMounted(() => {
   font-size: 10px;
   font-family: monospace;
   opacity: 0.8;
+  margin: var(--space-xs) 0 0;
+}
+
+.budget-edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: flex-end;
+  margin-top: var(--space-sm);
+}
+
+.field-label {
+  font-size: 8px;
+  font-family: 'Press Start 2P', monospace;
+  width: 100%;
+}
+
+.budget-select,
+.budget-input {
+  font-size: 10px;
+  font-family: monospace;
+  padding: 6px 8px;
+  background: var(--bg-primary);
+  min-width: 160px;
+}
+
+.edit-error {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--color-danger);
   margin: var(--space-xs) 0 0;
 }
 

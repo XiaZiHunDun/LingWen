@@ -1,8 +1,9 @@
 # Followup Roadmap v7 — Post Phase 9.78 (F70)
 
+> **Superseded by v8 (post 9.84):** `2026-06-11-followup-roadmap-v8-post-9.84.md` — F71-F76 全部完成 (`e746bdc`); 新 backlog 见 F77+.
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v6-post-9.72.md` (F65-F70 已于 Phase 9.73-9.78 全部完成, commit `6d5d899`). 本 doc 定义 **真实正文执行** 主线 + 生产运维 + 顺路 CI 卫生, 重新编号 **F71+**.
 > **创建时间**: 2026-06-11 (v6 清空 + bookkeeping)
-> **状态**: v7 **全部完成** (F71–F76, commit pending); 可选新 roadmap
+> **状态**: **F71-F76 ✅ 全部完成** (2026-06-11, `e746bdc`); superseded → v8
 > **前置**: baseline **2781 pytest + 384 vitest** (post `6d5d899`); Playwright live 5/5; pilot scaffold ready
 
 ## 上下文 (Context)

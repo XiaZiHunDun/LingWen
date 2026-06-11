@@ -15,7 +15,7 @@ class TestSettingsPageF68:
         text = page.read_text(encoding="utf-8")
         assert "budget-panel" in text
         assert "env-panel" in text
-        assert "只读" in text
+        assert "budget-edit-panel" in text
 
     def test_settings_utils_exist(self):
         assert (FRONTEND / "src" / "utils" / "settingsEnv.js").is_file()
