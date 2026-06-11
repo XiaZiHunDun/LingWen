@@ -50,13 +50,13 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
 
 const FAKE_RUNS = [
   { id: 1, ripple_id: 'rip-1', started_at: '2026-06-11T10:00:00Z', completed_at: '2026-06-11T10:00:05Z',
-    max_depth: 3, depth_reached: 2, status: 'completed', algorithm_version: 'v2_weighted',
+    max_depth: 3, depth_reached: 2, status: 'completed', algorithm: 'v2_weighted',
     cascade_nodes: [], cascade_edges: [], cascade_actions: [] },
   { id: 2, ripple_id: 'rip-1', started_at: '2026-06-11T11:00:00Z', completed_at: null,
-    max_depth: 5, depth_reached: 0, status: 'running', algorithm_version: 'v2_weighted',
+    max_depth: 5, depth_reached: 0, status: 'running', algorithm: 'v2_weighted',
     cascade_nodes: [], cascade_edges: [], cascade_actions: [] },
   { id: 3, ripple_id: 'rip-1', started_at: '2026-06-11T09:00:00Z', completed_at: '2026-06-11T09:00:02Z',
-    max_depth: 2, depth_reached: 1, status: 'cancelled', algorithm_version: 'v2_weighted',
+    max_depth: 2, depth_reached: 1, status: 'cancelled', algorithm: 'v1',
     cascade_nodes: [], cascade_edges: [], cascade_actions: [] },
 ];
 
@@ -125,6 +125,24 @@ describe('CascadeRunsPanel.vue', () => {
     expect(rows[0].find('[data-testid="status-badge-completed"]').exists()).toBe(true);
     expect(rows[1].find('[data-testid="status-badge-running"]').exists()).toBe(true);
     expect(rows[2].find('[data-testid="status-badge-cancelled"]').exists()).toBe(true);
+  });
+
+  it('renders_algorithm_badges_with_data_testid', async () => {
+    const wrapper = mount(CascadeRunsPanel, { props: { rippleId: 'rip-1' } });
+    await flushPromises();
+    expect(wrapper.find('[data-testid="algorithm-badge-v2_weighted"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="algorithm-badge-v1"]').exists()).toBe(true);
+    const v2Badges = wrapper.findAll('[data-testid="algorithm-badge-v2_weighted"]');
+    expect(v2Badges).toHaveLength(2);
+  });
+
+  it('algorithm_badges_use_distinct_css_classes', async () => {
+    const wrapper = mount(CascadeRunsPanel, { props: { rippleId: 'rip-1' } });
+    await flushPromises();
+    const v1 = wrapper.find('[data-testid="algorithm-badge-v1"]');
+    const v2 = wrapper.find('[data-testid="algorithm-badge-v2_weighted"]');
+    expect(v1.classes()).toContain('algorithm-v1');
+    expect(v2.classes()).toContain('algorithm-v2-weighted');
   });
 
   it('click_replay_fetches_cascade_with_same_max_depth_and_renders_graph', async () => {

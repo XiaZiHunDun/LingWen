@@ -23,7 +23,7 @@
       <thead>
         <tr>
           <th v-if="globalMode">Ripple</th>
-          <th>ID</th><th>Status</th><th>Depth</th><th>Created</th><th>Actions</th>
+          <th>ID</th><th>Status</th><th>Algorithm</th><th>Depth</th><th>Created</th><th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -43,6 +43,12 @@
               :class="`status-badge status-${run.status}`"
               :data-testid="`status-badge-${run.status}`"
             >{{ run.status }}</span>
+          </td>
+          <td>
+            <span
+              :class="['algorithm-badge', algorithmBadgeClass(run.algorithm)]"
+              :data-testid="`algorithm-badge-${run.algorithm}`"
+            >{{ run.algorithm }}</span>
           </td>
           <td>{{ run.max_depth }}</td>
           <td :title="run.started_at">{{ formatRelative(run.started_at) }}</td>
@@ -210,6 +216,12 @@ function formatRelative(iso) {
   return `${Math.round(diffSec / 86400)}d ago`;
 }
 
+function algorithmBadgeClass(algorithm) {
+  if (algorithm === 'v1') return 'algorithm-v1';
+  if (algorithm === 'v2_weighted') return 'algorithm-v2-weighted';
+  return 'algorithm-other';
+}
+
 async function replay(run) {
   if (replaying.value) return;
   replaying.value = run.id;
@@ -303,6 +315,13 @@ onBeforeUnmount(() => {
 .status-completed { background: #dcfce7; color: #14532d; }
 .status-cancelled { background: #f3f4f6; color: #6b7280; text-decoration: line-through; }
 .status-failed { background: #fee2e2; color: #991b1b; }
+.algorithm-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;
+  font-weight: 500; font-family: ui-monospace, monospace;
+}
+.algorithm-v1 { background: #fef3c7; color: #92400e; }
+.algorithm-v2-weighted { background: #ede9fe; color: #5b21b6; }
+.algorithm-other { background: #f3f4f6; color: #374151; }
 @keyframes cascade-runs-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
