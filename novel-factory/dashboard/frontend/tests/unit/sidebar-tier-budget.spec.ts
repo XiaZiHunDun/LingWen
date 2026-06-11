@@ -109,7 +109,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     const rows = wrapper.findAll(byTestid('sidebar-cost-tier-row'))
     expect(rows.length).toBe(1)
     // 验证 sonnet tier text 包含 "sonnet"
-    const tierText = rows[0].find('[data-testid="sidebar-cost-tier-text"]')
+    const tierText = rows[0].find(byTestid('sidebar-cost-tier-text'))
     expect(tierText.text()).toContain('sonnet')
   })
 
@@ -135,7 +135,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     expect(opusRow).toBeTruthy()
 
     // opus fill class 含 "exceeded"
-    const fill = opusRow.find('[data-testid="progress-bar-fill"]')
+    const fill = opusRow.find(byTestid('progress-bar-fill'))
     expect(fill.classes()).toContain('exceeded')
     // width style clip 100% (120% → clipped)
     expect(fill.attributes('style')).toContain('width: 100%')
@@ -163,7 +163,7 @@ describe('SidebarCostBanner per-tier budget rows (Phase 8.15)', () => {
     expect(sonnetRow).toBeTruthy()
 
     // sonnet fill class 含 "ok" + width 10%
-    const fill = sonnetRow.find('[data-testid="progress-bar-fill"]')
+    const fill = sonnetRow.find(byTestid('progress-bar-fill'))
     expect(fill.classes()).toContain('ok')
     expect(fill.attributes('style')).toContain('width: 10%')
   })

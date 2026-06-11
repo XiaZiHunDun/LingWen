@@ -11,10 +11,10 @@
     <header class="page-header">
       <h1 class="page-title" data-testid="page-title">决策中心</h1>
       <div class="header-actions">
-        <span class="count-badge">
+        <span class="count-badge" data-testid="count-badge">
           待处理: {{ pending.length }} / 总计: {{ all.length }}
         </span>
-        <button class="refresh-btn pixel-border" @click="store.refresh" :disabled="loading">
+        <button class="refresh-btn pixel-border" data-testid="refresh-btn" @click="store.refresh" :disabled="loading">
           {{ loading ? '加载中…' : '刷新' }}
         </button>
       </div>
@@ -33,7 +33,7 @@
       </button>
     </nav>
 
-    <div v-if="error" class="error-banner pixel-border">
+    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
     </div>
 

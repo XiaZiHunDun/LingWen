@@ -7,8 +7,7 @@
 //   4. error-banner 在 store.lastError 出现时显示 (mock fetchWorkflows reject)
 //
 // 契约约束:
-//   - 0 改 src/ (.vue 源码), 0 加 data-testid. 沿用现有 .refresh-btn / .error-banner
-//     class selector. (WorkflowsPage 唯一 testid 是 page-title, 跟 Phase 8.34+ 现状一致)
+//   - Phase 9.30 F14: page 元素走 data-testid + byTestid (跟 OverviewPage 对齐)
 //   - mock api/index.js + useWorkflowSocket 走 module mock 跟 dashboard.spec.ts
 //     同 pattern (vi.mock at top + vi.resetModules in error tests)
 //
@@ -67,7 +66,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     const wrapper = mount(WorkflowsPage)
     await flushPromises()
     // 2 个 workflow 在 .wf-list → .wf-item 各 1 个
-    const items = wrapper.findAll('.wf-item')
+    const items = wrapper.findAll(byTestid('wf-item'))
     expect(items.length).toBe(2)
     // 第 1 个 workflow 名字 + node_count
     expect(items[0].text()).toContain('novel_writing')
@@ -77,14 +76,14 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
   test('workflow 行点击触发 selected (走 vm.selected ref check)', async () => {
     const wrapper = mount(WorkflowsPage)
     await flushPromises()
-    const items = wrapper.findAll('.wf-item')
+    const items = wrapper.findAll(byTestid('wf-item'))
     expect(items.length).toBe(2)
 
     // 第 1 个 workflow 点击 → selected.value 设为该 wf
     await items[0].trigger('click')
     await flushPromises()
     // selected 设为后, .run-form (启动表单) 出现, 含 "运行: <name>"
-    const runForm = wrapper.find('.run-form')
+    const runForm = wrapper.find(byTestid('run-form'))
     expect(runForm.exists()).toBe(true)
     expect(runForm.text()).toContain('运行: novel_writing')
   })
@@ -102,7 +101,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     await flushPromises()
     // store.refresh 内部 fetchWorkflows reject → lastError = "fetch fail" →
     // error computed 走 truthy → v-if="error" 显 .error-banner
-    const banner = wrapper.find('.error-banner')
+    const banner = wrapper.find(byTestid('error-banner'))
     expect(banner.exists()).toBe(true)
     expect(banner.text()).toContain('fetch fail')
   })

@@ -7,8 +7,7 @@
 //   4. pending tab badge 渲染 WS pendingDecisions (mock WS 推 1 pending)
 //
 // 契约约束:
-//   - 0 改 src/ (.vue 源码), 0 加 data-testid. 沿用现有 .refresh-btn / .error-banner
-//     class selector. (DecisionsPage 唯一 testid 是 page-title, 跟 Phase 8.34+ 现状一致)
+//   - Phase 9.30 F14: page 元素走 data-testid + byTestid (跟 OverviewPage 对齐)
 //   - mock api/index.js + useWorkflowSocket 走 module mock 跟 use-decision-store.spec.ts
 //     同 pattern (vi.mock at top + vi.resetModules in error/WS tests)
 //
@@ -59,7 +58,7 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
     const wrapper = mount(DecisionsPage)
     await flushPromises()
     // refresh-btn 0 data-testid, 沿用 .refresh-btn class selector
-    const btn = wrapper.find('.refresh-btn')
+    const btn = wrapper.find(byTestid('refresh-btn'))
     expect(btn.exists()).toBe(true)
     expect(btn.text()).toContain('刷新')
 
@@ -67,7 +66,7 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
     await btn.trigger('click')
     await flushPromises()
     // 不抛错 + 仍渲染 (happy path 断言)
-    expect(wrapper.find('.refresh-btn').exists()).toBe(true)
+    expect(wrapper.find(byTestid('refresh-btn')).exists()).toBe(true)
   })
 
   test('error-banner 在 store.lastError 出现时显示 (mock fetchAllDecisions reject)', async () => {
@@ -84,7 +83,7 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
     await flushPromises()
     // store.refresh 内部 fetchAllDecisions reject → lastError = "fetch fail" →
     // error computed 走 truthy → v-if="error" 显 .error-banner
-    const banner = wrapper.find('.error-banner')
+    const banner = wrapper.find(byTestid('error-banner'))
     expect(banner.exists()).toBe(true)
     expect(banner.text()).toContain('fetch fail')
   })
@@ -118,7 +117,7 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
     const wrapper = mount(FreshDecisionsPage)
     await flushPromises()
     // pending count 在 .count-badge 显示 "待处理: 1 / 总计: 0"
-    const badge = wrapper.find('.count-badge')
+    const badge = wrapper.find(byTestid('count-badge'))
     expect(badge.exists()).toBe(true)
     expect(badge.text()).toContain('待处理: 1')
   })

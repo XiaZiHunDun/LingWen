@@ -17,13 +17,13 @@
         >
           {{ wsConnected ? '● 实时' : '○ 离线' }}
         </span>
-        <button class="refresh-btn pixel-border" @click="refresh" :disabled="loading">
+        <button class="refresh-btn pixel-border" data-testid="refresh-btn" @click="refresh" :disabled="loading">
           {{ loading ? '加载中…' : '刷新' }}
         </button>
       </div>
     </header>
 
-    <div v-if="error" class="error-banner pixel-border">{{ error }}</div>
+    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">{{ error }}</div>
 
     <div class="workflows-layout">
       <!-- Left: workflow list -->
@@ -35,6 +35,7 @@
             v-for="wf in workflows"
             :key="wf.name"
             class="wf-item"
+            data-testid="wf-item"
             :class="{ 'wf-item--selected': selected?.name === wf.name }"
             @click="select(wf)"
           >
@@ -65,7 +66,7 @@
 
       <!-- Right: run form + status -->
       <section class="wf-run-section">
-        <div v-if="selected" class="run-form pixel-card">
+        <div v-if="selected" class="run-form pixel-card" data-testid="run-form">
           <h2 class="section-title">运行: {{ selected.name }}</h2>
           <form @submit.prevent="runIt">
             <div class="form-group">
