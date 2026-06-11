@@ -47,6 +47,7 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
     reconnect: vi.fn(),
   }),
   onCascadeUpdate: vi.fn(),
+  onAuditCreated: vi.fn(() => () => {}),
 }))
 
 vi.mock('../../src/api/index.js', () => ({

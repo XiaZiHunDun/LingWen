@@ -21,12 +21,14 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from dashboard.protocols import CascadeCancelPayload, CascadeUpdatePayload  # avoid runtime circular
+    from dashboard.protocols import (
+        AuditCreatedPayload,
+        CascadeCancelPayload,
+        CascadeUpdatePayload,
+    )
 
-# Phase 6.4 ConnectionManager 类型 stub (避免跨模块 import, runtime duck typing)
 WsManagerT = Optional[Callable[[dict], Any]]
 
-# Module-level singleton (service-locator 模式)
 _ws_manager: WsManagerT = None
 
 
@@ -37,38 +39,33 @@ def set_ws_manager(ws: WsManagerT) -> None:
     logger.debug("cascade_notifier: ws_manager injected")
 
 
-def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
-    """record_ripple cascade hook 完成后调, 推 cascade.update WS event.
-
-    Phase 9.17: typed CascadeUpdatePayload 接受 (Pydantic v2 IDE autocomplete +
-    runtime ValidationError 提前), dict 通过 model_validate fallback 兜底
-    (0 改旧 caller, backward compat).
-
-    envelope schema (跟 useWorkflowSocket.js 1:1):
-      {
-        "type": "cascade.update",
-        "payload": {
-          "ripple_id": str,
-          "cascade_node_count": int,
-          "cascade_edge_count": int,
-          "depth_reached": int,
-          "bfs_algorithm_version": "v1" | "v2_weighted",
-          "latency_ms": int (optional, Phase 9.35 broadcast latency)
-        }
-      }
-    """
+def _broadcast_envelope(envelope: dict[str, Any]) -> None:
     if _ws_manager is None:
-        # ws_manager 未注入 (test / startup race) → logger.debug skip
         logger.debug("cascade_notifier: ws_manager not set, skip broadcast")
         return
-    # Phase 9.17: typed schema validation (跟 9.14 record_audit 1:1 pattern)
-    # 双路径: typed CascadeUpdatePayload instance 直接用, dict 用 model_validate
+    ws = _ws_manager
+    try:
+        result = ws(envelope)
+        if asyncio.iscoroutine(result):
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.ensure_future(result)
+                else:
+                    loop.run_until_complete(result)
+            except RuntimeError:
+                asyncio.ensure_future(result)
+    except Exception as e:
+        logger.warning("cascade_notifier: broadcast failed: %s", e)
+
+
+def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
+    """record_ripple cascade hook 完成后调, 推 cascade.update WS event."""
     from dashboard.protocols import CascadeUpdatePayload as _CascadeUpdatePayload
     if not isinstance(payload, _CascadeUpdatePayload):
         try:
             payload = _CascadeUpdatePayload.model_validate(payload)
         except Exception as e:
-            # ValidationError caught — skip broadcast, log warning (跟 9.16 兜底 1:1)
             logger.warning("cascade_notifier: invalid payload, skip: %s", e)
             return
     if payload.latency_ms is not None:
@@ -78,46 +75,25 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
             payload.latency_ms,
             payload.cascade_node_count,
         )
-    envelope = {"type": "cascade.update", "payload": payload.model_dump()}
-    # Snapshot 避免 loop swap race (跟 cvg_ws.broadcast 1:1)
-    ws = _ws_manager
-    try:
-        result = ws(envelope)
-        if asyncio.iscoroutine(result):
-            # async broadcast — schedule on running loop, else run inline
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.ensure_future(result)
-                else:
-                    loop.run_until_complete(result)
-            except RuntimeError:
-                # No event loop in current thread — fall back to ensure_future
-                # (Phase 9.16: storage.append_ripple is called from FastAPI async
-                # context, so a loop should always be available; this is defensive.)
-                asyncio.ensure_future(result)
-    except Exception as e:
-        # Best-effort: broadcast 失败不 propagate (跟 9.14 record_audit 1:1)
-        logger.warning("cascade_notifier: broadcast failed: %s", e)
+    _broadcast_envelope({"type": "cascade.update", "payload": payload.model_dump()})
+
+
+def notify_audit_created(payload: "AuditCreatedPayload") -> None:
+    """Phase 9.62 F53: record_audit 完成后推 audit.created WS event."""
+    from dashboard.protocols import AuditCreatedPayload as _AuditCreatedPayload
+    if not isinstance(payload, _AuditCreatedPayload):
+        try:
+            payload = _AuditCreatedPayload.model_validate(payload)
+        except Exception as e:
+            logger.warning("cascade_notifier: invalid audit payload, skip: %s", e)
+            return
+    _broadcast_envelope(
+        {"type": "audit.created", "payload": payload.model_dump(mode="json")}
+    )
 
 
 def notify_cascade_cancel(payload: "CascadeCancelPayload") -> None:
-    """Phase 9.21: 推 cascade.cancel WS event (跟 cascade.update 1:1).
-
-    envelope schema (跟 useWorkflowSocket.js 1:1, type discriminator):
-      {
-        "type": "cascade.cancel",
-        "payload": {
-          "run_id": int,
-          "ripple_id": str,
-          "status": "cancelled",
-          "reason": str (optional, may be "")
-        }
-      }
-    """
-    if _ws_manager is None:
-        logger.debug("cascade_notifier: ws_manager not set, skip cancel broadcast")
-        return
+    """Phase 9.21: 推 cascade.cancel WS event (跟 cascade.update 1:1)."""
     from dashboard.protocols import CascadeCancelPayload as _CascadeCancelPayload
     if not isinstance(payload, _CascadeCancelPayload):
         try:
@@ -125,18 +101,4 @@ def notify_cascade_cancel(payload: "CascadeCancelPayload") -> None:
         except Exception as e:
             logger.warning("cascade_notifier: invalid cancel payload, skip: %s", e)
             return
-    envelope = {"type": "cascade.cancel", "payload": payload.model_dump()}
-    ws = _ws_manager
-    try:
-        result = ws(envelope)
-        if asyncio.iscoroutine(result):
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.ensure_future(result)
-                else:
-                    loop.run_until_complete(result)
-            except RuntimeError:
-                asyncio.ensure_future(result)
-    except Exception as e:
-        logger.warning("cascade_notifier: cancel broadcast failed: %s", e)
+    _broadcast_envelope({"type": "cascade.cancel", "payload": payload.model_dump()})

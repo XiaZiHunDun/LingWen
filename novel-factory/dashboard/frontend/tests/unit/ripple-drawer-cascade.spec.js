@@ -32,6 +32,7 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   onCascadeUpdate: vi.fn((handler) => {
     registeredCascadeHandlers.add(handler);
   }),
+  onAuditCreated: vi.fn(() => () => {}),
 }));
 
 vi.mock('../../src/api/index.js', () => ({

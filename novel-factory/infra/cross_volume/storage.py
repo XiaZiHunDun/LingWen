@@ -108,7 +108,8 @@ CREATE TABLE IF NOT EXISTS reference_ripples (
     created_at TEXT NOT NULL,
     confirmed_at TEXT,
     applied_at TEXT,
-    payload TEXT NOT NULL
+    payload TEXT NOT NULL,
+    parent_ripple_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS ripple_audit (
@@ -186,8 +187,23 @@ class RippleStorage:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA foreign_keys=ON")
             conn.executescript(_SCHEMA_SQL)
+            self._apply_schema_migrations(conn)
             conn.commit()
         logger.info("ripple.db initialized at %s", db_path)
+
+    def _apply_schema_migrations(self, conn: sqlite3.Connection) -> None:
+        """Phase 9.64 F55: additive column migrations for existing ripple.db."""
+        cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(reference_ripples)")
+        }
+        if "parent_ripple_id" not in cols:
+            conn.execute(
+                "ALTER TABLE reference_ripples ADD COLUMN parent_ripple_id TEXT"
+            )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_ripples_parent "
+            "ON reference_ripples(parent_ripple_id)"
+        )
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -244,7 +260,7 @@ class RippleStorage:
         with self._connect() as conn:
             try:
                 conn.execute(
-                    "INSERT INTO reference_ripples VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO reference_ripples VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                     (ripple.id, ripple.trigger_volume, ripple.trigger_chapter,
                      json.dumps(list(ripple.affected_nodes), ensure_ascii=False),
                      json.dumps(list(ripple.affected_edges), ensure_ascii=False),
@@ -252,7 +268,8 @@ class RippleStorage:
                      ripple.status, ripple.created_at.isoformat(),
                      ripple.confirmed_at.isoformat() if ripple.confirmed_at else None,
                      ripple.applied_at.isoformat() if ripple.applied_at else None,
-                     json.dumps(ripple.payload, ensure_ascii=False)),
+                     json.dumps(ripple.payload, ensure_ascii=False),
+                     ripple.parent_ripple_id),
                 )
                 conn.commit()
             except sqlite3.IntegrityError as e:
@@ -302,6 +319,13 @@ class RippleStorage:
                 )
             except Exception as e:
                 logger.warning("append_ripple: cascade notifier failed: %s", e)
+        # Phase 9.64 F55: depth ≥ 2 → spawn child ripples (top-level only)
+        if cascaded is not None and ripple.parent_ripple_id is None:
+            try:
+                from infra.cross_volume.chained_cascade import spawn_child_ripples
+                spawn_child_ripples(self, self._graph, ripple, cascaded)
+            except Exception as e:
+                logger.warning("append_ripple: chained cascade spawn failed: %s", e)
         # Phase 9.14: write 'created' audit entry (independent commit)
         self.record_audit(
             ripple_id=ripple.id,
@@ -404,6 +428,8 @@ class RippleStorage:
         )
 
     def _row_to_ripple(self, row: sqlite3.Row) -> CrossVolumeRipple:
+        keys = row.keys()
+        parent_id = row["parent_ripple_id"] if "parent_ripple_id" in keys else None
         return CrossVolumeRipple(
             id=row["id"], trigger_volume=row["trigger_volume"],
             trigger_chapter=row["trigger_chapter"],
@@ -415,7 +441,26 @@ class RippleStorage:
             confirmed_at=datetime.fromisoformat(row["confirmed_at"]) if row["confirmed_at"] else None,
             applied_at=datetime.fromisoformat(row["applied_at"]) if row["applied_at"] else None,
             payload=json.loads(row["payload"]),
+            parent_ripple_id=parent_id,
         )
+
+    def count_child_ripples(self, parent_ripple_id: str) -> int:
+        """Phase 9.64 F55: count direct child ripples."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS n FROM reference_ripples WHERE parent_ripple_id = ?",
+                (parent_ripple_id,),
+            ).fetchone()
+            return int(row["n"]) if row else 0
+
+    def get_child_ripples(self, parent_ripple_id: str) -> list[CrossVolumeRipple]:
+        """Phase 9.64 F55: list direct child ripples."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM reference_ripples WHERE parent_ripple_id = ? ORDER BY created_at",
+                (parent_ripple_id,),
+            ).fetchall()
+            return [self._row_to_ripple(row) for row in rows]
 
     def get_ripples(
         self,
@@ -610,15 +655,36 @@ class RippleStorage:
 
         跟 cost_tracker.record() 1:1 pattern: 主 write path 失败不传播到这里。
         """
+        created_at = datetime.now(timezone.utc)
+        created_iso = created_at.isoformat()
         with self._connect() as conn:
             cur = conn.execute(
                 "INSERT INTO ripple_audit (ripple_id, action, prev_status, new_status, actor, origin, reason, created_at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (ripple_id, action, prev_status, new_status, actor, origin, reason,
-                 datetime.now(timezone.utc).isoformat()),
+                 created_iso),
             )
             conn.commit()
-            return cur.lastrowid
+            entry_id = int(cur.lastrowid)
+        try:
+            from dashboard.cascade_notifier import notify_audit_created
+            from dashboard.protocols import AuditCreatedPayload
+            notify_audit_created(
+                AuditCreatedPayload(
+                    id=entry_id,
+                    ripple_id=ripple_id,
+                    action=action,
+                    prev_status=prev_status,
+                    new_status=new_status,
+                    actor=actor,
+                    origin=origin,
+                    reason=reason,
+                    created_at=created_at,
+                )
+            )
+        except Exception as e:
+            logger.warning("record_audit: audit WS notify failed: %s", e)
+        return entry_id
 
     def get_audit_history(
         self,

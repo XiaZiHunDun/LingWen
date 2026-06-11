@@ -25,8 +25,13 @@
             <span class="ripple-drawer__label">Status:</span>
             <span :class="`ripple-drawer__status--${ripple.status} ripple-drawer-status`">{{ ripple.status }}</span>
           </div>
-          <div class="ripple-drawer__row">
-            <span class="ripple-drawer__label">Source chapter:</span> {{ ripple.source_chapter }}
+          <div class="ripple-drawer__row" v-if="ripple.parent_ripple_id">
+            <span class="ripple-drawer__label">Parent ripple:</span>
+            <span data-testid="ripple-parent-id">{{ ripple.parent_ripple_id }}</span>
+          </div>
+          <div class="ripple-drawer__row" v-if="ripple.child_count > 0">
+            <span class="ripple-drawer__label">Child ripples:</span>
+            <span data-testid="ripple-child-count">{{ ripple.child_count }}</span>
           </div>
           <div class="ripple-drawer__row">
             <span class="ripple-drawer__label">Target chapter:</span> {{ ripple.target_chapter }}
@@ -150,7 +155,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRippleStore } from '../composables/useRippleStore.js';
-import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';  // Phase 9.16
+import { onCascadeUpdate, onAuditCreated } from '../composables/useWorkflowSocket.js';  // Phase 9.16 / 9.62 F53
 import CascadeGraph from './CascadeGraph.vue';
 import ApplyConfirmModal from './ApplyConfirmModal.vue';
 import CascadeRunsPanel from './CascadeRunsPanel.vue';  // Phase 9.22 T3
@@ -250,7 +255,12 @@ onMounted(() => {
     if (payload && payload.ripple_id === props.ripple.ripple_id) {
       scheduleCascadeRefresh();
     }
-    // 不匹配 ignore (next open 走 9.15 GET 返 fresh data)
+  });
+  // Phase 9.62 F53: audit.created → 静默 refresh audit list
+  onAuditCreated((payload) => {
+    if (payload && payload.ripple_id === props.ripple.ripple_id) {
+      loadAudit();
+    }
   });
 });
 onBeforeUnmount(() => {

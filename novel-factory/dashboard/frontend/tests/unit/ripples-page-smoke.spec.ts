@@ -43,6 +43,7 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
     reconnect: vi.fn(),
   }),
   onCascadeUpdate: vi.fn(),
+  onAuditCreated: vi.fn(() => () => {}),
 }))
 
 const sampleRipple = {

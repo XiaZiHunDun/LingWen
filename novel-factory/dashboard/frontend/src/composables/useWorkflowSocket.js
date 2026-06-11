@@ -18,6 +18,7 @@
  * - decision.snapshot: { type, payload: <pending list> }
  * - cascade.update (Phase 9.16): { type, payload: { ripple_id, cascade_node_count,
  *     cascade_edge_count, depth_reached, bfs_algorithm_version } }
+ * - audit.created (Phase 9.62 F53): { type, payload: RippleAuditEntry fields }
  *
  * Phase 8.11: 重构为 module-level singleton state — App.vue 和 WorkflowsPage.vue
  * 同时调用此 composable 时,共享同一 WebSocket 连接和同一组 status/connected/
@@ -52,6 +53,7 @@ let mountedCount = 0;
 // 供 onCascadeUpdate 等 API 注册 callback, 0 改 module-level 既有 status/pendingDecisions
 const registeredHandlers = {
   cascade: new Set(),
+  audit: new Set(),
 };
 
 function buildWsUrl() {
@@ -92,6 +94,10 @@ function connect() {
         // Phase 9.16: append + slice -10 防内存累积 + 通知 cascade handlers
         latestCascadeUpdates.value = [...latestCascadeUpdates.value, data.payload].slice(-10);
         registeredHandlers.cascade.forEach((h) => {
+          try { h(data.payload); } catch (_) { /* best-effort */ }
+        });
+      } else if (data.type === 'audit.created' && data.payload) {
+        registeredHandlers.audit.forEach((h) => {
           try { h(data.payload); } catch (_) { /* best-effort */ }
         });
       }
@@ -196,5 +202,18 @@ export function onCascadeUpdate(handler) {
       const i = window.__cascadeHandlers.indexOf(handler);
       if (i >= 0) window.__cascadeHandlers.splice(i, 1);
     }
+  });
+}
+
+export function onAuditCreated(handler) {
+  if (registeredHandlers.audit.size >= MAX_HANDLERS) {
+    console.warn(
+      `[useWorkflowSocket] MAX_HANDLERS=${MAX_HANDLERS} reached, refusing to register audit handler`
+    );
+    return;
+  }
+  registeredHandlers.audit.add(handler);
+  onBeforeUnmount(() => {
+    registeredHandlers.audit.delete(handler);
   });
 }

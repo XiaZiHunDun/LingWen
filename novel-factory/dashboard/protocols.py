@@ -654,6 +654,8 @@ class RippleListItemResponse(BaseModel):
     confidence: int = 1  # Phase 9.12 additive
     created_at: datetime
     impact_score: float = 0.0  # Phase 9.59 F50
+    parent_ripple_id: str | None = None  # Phase 9.64 F55
+    child_count: int = 0  # Phase 9.64 F55
 
 
 class RippleDetailResponse(RippleListItemResponse):
@@ -912,6 +914,19 @@ class CascadeCancelPayload(BaseModel):
 class CascadeCancelRequest(BaseModel):
     """Phase 9.21: POST cancel endpoint request body (optional reason)."""
     reason: str = ""
+
+
+class AuditCreatedPayload(BaseModel):
+    """Phase 9.62 F53: WS audit.created payload (1:1 RippleAuditEntryResponse)."""
+    id: int
+    ripple_id: str
+    action: Literal["created", "applied", "rejected", "failed", "rolled_back"]
+    prev_status: str | None
+    new_status: str
+    actor: str
+    origin: Literal["ui", "cli", "system"]
+    reason: str | None
+    created_at: datetime
 
 
 # === Phase 9.44 F33: cascade broadcast log persistence ===
