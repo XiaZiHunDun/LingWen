@@ -1,4 +1,4 @@
-// tests/unit/use-tier-budget-alerts.spec.js — Phase 9.27 F11
+// tests/unit/use-tier-budget-alerts.spec.ts — Phase 9.27 + 9.40 F25 TS strict pilot
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
   computeTierBudgetState,
@@ -8,6 +8,21 @@ import {
   timeWindowLabel,
   useTierBudgetAlerts,
 } from '../../src/composables/useTierBudgetAlerts.js';
+
+interface TierBudgetState {
+  level: 'ok' | 'warning' | 'exceeded';
+  pct: number;
+}
+
+type TierBudgetStates = Partial<Record<'haiku' | 'sonnet' | 'opus', TierBudgetState>>;
+
+interface TierBudgetAlert {
+  tier: string;
+  level: 'warning' | 'exceeded';
+  pct: number;
+  timeWindow: string;
+  timestamp: string;
+}
 
 describe('useTierBudgetAlerts (Phase 9.27 F11)', () => {
   beforeEach(() => {
@@ -21,7 +36,7 @@ describe('useTierBudgetAlerts (Phase 9.27 F11)', () => {
         haiku: { budget_usd: 0.1, used_usd: 0.05, used_pct: 50.0 },
       },
       timeWindow: 'all',
-    });
+    }) as TierBudgetStates;
     expect(states.opus).toEqual({ level: 'exceeded', pct: 120 });
     expect(states.haiku).toEqual({ level: 'ok', pct: 50 });
   });
@@ -33,7 +48,7 @@ describe('useTierBudgetAlerts (Phase 9.27 F11)', () => {
       },
       timeWindow: '7d',
       windowedCostByTier: { sonnet: 0.45 },
-    });
+    } as Parameters<typeof computeTierBudgetState>[0]) as TierBudgetStates;
     expect(states.sonnet).toEqual({ level: 'warning', pct: 90 });
   });
 
@@ -78,9 +93,10 @@ describe('useTierBudgetAlerts (Phase 9.27 F11)', () => {
     );
 
     const { alerts } = useTierBudgetAlerts();
-    expect(alerts.value).toHaveLength(2);
-    expect(alerts.value[0].level).toBe('exceeded');
-    expect(alerts.value[1].level).toBe('warning');
+    const alertList = alerts.value as TierBudgetAlert[];
+    expect(alertList).toHaveLength(2);
+    expect(alertList[0]!.level).toBe('exceeded');
+    expect(alertList[1]!.level).toBe('warning');
   });
 
   test('formatAlertTime and timeWindowLabel helpers', () => {

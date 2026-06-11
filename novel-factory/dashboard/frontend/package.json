@@ -15,6 +15,7 @@
     "lint:staged": "lint-staged",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs",
     "prepare": "husky"
   },
@@ -36,6 +37,7 @@
     "husky": "9",
     "jsdom": "^29.1.1",
     "lint-staged": "^15.0.0",
+    "typescript": "^5.8.3",
     "vite": "^6.0.0",
     "vitest": "^4.1.8",
     "@vitest/coverage-v8": "^4.1.8",

@@ -1,9 +1,20 @@
-// dashboard/frontend/tests/unit/ripple-card.spec.js
+// tests/unit/ripple-card.spec.ts — Phase 9.40 F25 TS strict pilot
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import RippleCard from '../../src/components/RippleCard.vue';
 
-const sample = {
+interface RippleSample {
+  ripple_id: string;
+  dimension: string;
+  relationship_type: string;
+  source_chapter: number;
+  target_chapter: number;
+  status: string;
+  confidence: number;
+  created_at: string;
+}
+
+const sample: RippleSample = {
   ripple_id: 'r1',
   dimension: 'character',
   relationship_type: 'mentions',
@@ -36,7 +47,8 @@ describe('RippleCard', () => {
   it('emits select event on click', async () => {
     const wrapper = mount(RippleCard, { props: { ripple: sample } });
     await wrapper.find('[data-testid="ripple-card"]').trigger('click');
-    expect(wrapper.emitted('select')).toBeTruthy();
-    expect(wrapper.emitted('select')[0][0]).toEqual(sample);
+    const emitted = wrapper.emitted('select');
+    expect(emitted).toBeTruthy();
+    expect(emitted![0]![0]).toEqual(sample);
   });
 });

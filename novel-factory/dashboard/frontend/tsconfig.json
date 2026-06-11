@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": [
+    "tests/env.d.ts",
+    "tests/unit/ripple-card.spec.ts",
+    "tests/unit/ripple-filter.spec.ts",
+    "tests/unit/cascade-graph.spec.ts",
+    "tests/unit/useWorkflowSocket.spec.ts",
+    "tests/unit/use-tier-budget-alerts.spec.ts"
+  ],
+  "exclude": ["node_modules", "dist", "coverage"]
+}
