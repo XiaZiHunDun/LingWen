@@ -1,5 +1,6 @@
 # Followup Roadmap v3 — Post Phase 9.40
 
+> **Superseded by v4 (post 9.54):** `2026-06-11-followup-roadmap-v4-post-9.54.md` — F29-F43 全部完成, 新 backlog 见 F44-F56.
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v2-post-9.32.md` (F17-F28 已于 Phase 9.33-9.40 全部完成). 本 doc 汇总 Phase 9.33-9.40 后各 entry「out of scope」散落项 + Phase 8.45+ / CVG blueprint Phase 14-16 遗留, 重新编号 F29+ 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v3 roadmap」)
 > **状态**: F29-F43 ✅ 全部完成 (2026-06-11); v3 backlog 已清空

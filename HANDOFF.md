@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.54 (Phase 9.54 F43 ECharts 6.x 完成; v3 roadmap F29-F43 全部 ✅, 2026-06-11)
-> **更新 (2026-06-11)**: F42 coverage 80% 阈值 + Codecov badge + GH Pages ✅; F43 ECharts 6.1.0 ✅; pytest 2617→2622 (+5); vitest 224→227 (+3); **v3 backlog 已清空**.
+> **版本**: v9.55 (Phase 9.55-bk F44 v4 roadmap 文档, 2026-06-11)
+> **更新 (2026-06-11)**: F44/F45 v4 roadmap + HANDOFF sync ✅; baseline **2622 pytest + 227 vitest**; 推荐 **F47** 或 **F50**.
 
 ---
 
@@ -22,7 +22,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest coverage → Codecov) + `dashboard-frontend-coverage-pages.yml` (HTML report → GH Pages) |
-| **下一期推荐** | **v3 roadmap 已完结** — 新需求请开 v4 backlog 或主公点名 |
+| **下一期推荐** | **F47** (vue-tsc src/) 或 **F50** (impact scoring) — 见 v4 roadmap |
 
 ---
 
@@ -272,33 +272,31 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ---
 
-## 6. 后续 followup (P2 待做, 按优先级)
+## 6. 后续 followup (v4, post 9.54)
 
-**汇总 (v3, post 9.40)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v3-post-9.40.md`
+**汇总 (v4)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v4-post-9.54.md`
 
-**v2 (F17-F28) 已于 Phase 9.33-9.40 全部完成.** 见 v2 doc: `2026-06-11-followup-roadmap-v2-post-9.32.md`
+**v3 (F29-F43) 已全部完成.** 见 v3 doc: `2026-06-11-followup-roadmap-v3-post-9.40.md`
 
 | # | 主题 | Phase | 估时 | Track | 独立? |
 |---|------|-------|------|-------|-------|
-| F29 | roadmap v3 文档同步 + HANDOFF §6/§8 | 9.41-bk | 30min | P0 | ✅ done |
-| F30 | CVG impact graph ECharts 可视化 | 9.41 | 3-4h | P1 CVG | ✅ done |
-| F31 | query_impact LRU cache + lazy load | 9.42 | 2-3h | P1 CVG | ✅ done |
-| F32 | LLM prompt 调优反馈闭环 | 9.43 | 2-3h | P1 CVG | ✅ done |
-| F33 | cascade_broadcast_log SQLite | 9.44 | 1.5h | P2 Ops | ✅ done |
-| F34 | cascade_runs retention CLI | 9.45 | 1.5h | P2 Ops | ✅ done |
-| F35 | Global CascadeRunsPage | 9.46 | 2h | P2 Dashboard | ✅ done |
-| F36 | v1/v2 cascade algorithm badge | 9.47 | 1h | P2 Dashboard | ✅ done |
-| F37 | Playwright CI opt-in | 9.48 | 3-4h | P2 DevInfra | ✅ done |
-| F38 | TS strict 全量 rollout | 9.49 | 4-6h | P2 DevInfra | ✅ done |
-| F39 | Ripple 6-state lifecycle timeline | 9.50 | 2h | P2 Dashboard | ✅ done |
-| F40 | Cascade graph 第 3 视图 | 9.51 | 2-3h | P2 Dashboard | ✅ done |
-| F41 | DecisionCard meta-info + WFGraph testid | — | 1-2h | P3 | ✅ done |
-| F42 | coverage 80% + badge | — | 2h | P3 | ✅ done |
-| F43 | ECharts 6.x | — | 1.5h | P3 | ✅ done |
+| F44 | roadmap v4 文档 + HANDOFF §6/§8 | 9.55-bk | 30min | P0 | ✅ done |
+| F45 | HANDOFF §9 baseline 字符串 sync | 9.55-bk | 20min | P0 | ✅ done |
+| F46 | auto-memory phases 拆分 (可选) | — | 45min | P0 | ⬜ |
+| F47 | vue-tsc 对 src/ + CI | 9.56 | 3-5h | P1 DevInfra | ⬜ |
+| F48 | coverage 四维 → 80% | 9.57 | 3-4h | P1 DevInfra | ⬜ |
+| F49 | pre-commit pytest smoke | 9.58 | 1.5-2h | P1 DevInfra | ⬜ |
+| F50 | cross-volume impact scoring | 9.59 | 2-3h | P1 CVG | ⬜ |
+| F51 | ripple audit export CSV/JSON | 9.60 | 1.5-2h | P1 CVG | ⬜ |
+| F52 | ripple audit retention CLI | 9.61 | 1.5h | P1 CVG | ⬜ |
+| F53 | audit entry WS push | 9.62 | 2h | P1 CVG | ⬜ |
+| F54 | backfill 增量 workflow hook | 9.63 | 3-4h | P1 CVG | ⬜ |
+| F55 | 链式 cascade depth ≥ 2 (epic) | 9.64+ | 8-12h | P2 | ❌ |
+| F56 | Playwright e2e 加深 (opt-in) | — | 3-4h | P3 | ⬜ |
 
-**已完成 (v2 roadmap, 9.33-9.40)**: F17-F28 全部 ✅ (见上表 v2 doc)
+**已完成 (v3, 9.41-9.54)**: F29-F43 全部 ✅ (见上表 v3 doc / §6 历史表)
 
-**推荐下一项**: **v3 roadmap (F29-F43) 已全部完成** — 后续工作请新建 backlog。
+**推荐下一项**: **F47** (vue-tsc src/) 或 **F50** (impact scoring) — 默认 Track A→B 见 v4 doc.
 
 ---
 
@@ -332,13 +330,13 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
-- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43, 5 分钟)
+- [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v4-post-9.54.md` (F44-F56, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 phase 详细, 10 分钟) — 如果要做 P1/P2 任意 item
-- [ ] 跑 `pytest -q` 验证 baseline 2564 passed (~2min)
-- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 196 passed (~5s)
+- [ ] 跑 `pytest -q` 验证 baseline 2622 passed (~2min)
+- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 227 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v3 item (推荐 **F30 impact graph** 或 **F33 cascade broadcast log**) → brainstorming → writing-plans
+- [ ] 选 1 个 v4 item (推荐 **F47 vue-tsc** 或 **F50 impact scoring**) → brainstorming → writing-plans
 
 ---
 
@@ -346,9 +344,9 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2564 tests, ~2min
-cd novel-factory/dashboard/frontend && pnpm vitest run             # 196 vitest, ~5s
-cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict pilot (5 spec)
+cd novel-factory && pytest -q                                    # 2622 tests, ~2min
+cd novel-factory/dashboard/frontend && pnpm vitest run             # 227 vitest, ~5s
+cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 0 tests (Phase 9.31 F15)
 cd novel-factory && ruff check .                                 # 0 issues
 cd novel-factory/dashboard/frontend && pnpm lint:all             # 0 errors
