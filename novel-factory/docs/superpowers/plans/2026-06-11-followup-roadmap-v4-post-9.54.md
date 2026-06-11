@@ -2,8 +2,8 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43 已于 Phase 9.41-9.54 全部完成). 本 doc 汇总 v3 清空后各 phase entry「out of scope」散落项 + Phase 8.44/9.14/9.18/9.19 遗留, 重新编号 **F44+** 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v4 roadmap」)
-> **状态**: F47-F55 ✅ (2026-06-11); 待主公决策 F56 下一期
-> **前置**: baseline **2665 pytest + 361 vitest** (post F55)
+> **状态**: F44-F56 ✅ (2026-06-11); v4 roadmap 已清空
+> **前置**: baseline **2670 pytest + 361 vitest** (post F56)
 
 ## 上下文 (Context)
 
@@ -27,11 +27,11 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 本 v4 roadmap **不重复** F1-F43 已 done 项. 详见 v3 doc 决策矩阵 + HANDOFF §6.
 
-## 当前 Baseline (2026-06-11, post 9.64)
+## 当前 Baseline (2026-06-11, post F56)
 
 | 项 | 值 |
 |----|-----|
-| **pytest** | 2665 passed, 27 skipped |
+| **pytest** | 2670 passed, 27 skipped |
 | **vitest** | 361 passed (70 files) |
 | **coverage (frontend)** | lines 94.37% / statements 92% / functions 91.23% / branches 80.02% |
 | **Playwright** | 1 smoke spec opt-in (`app-root.spec.js`); vitest primary gate |
@@ -64,13 +64,9 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 - **承接**: F44 顺路
 - **完成 (2026-06-11)**: §9 pytest/vitest/typecheck 注释更新至 2622/227
 
-### F46. auto-memory `phases-8-dashboard-b.md` 拆分 / index sync (可选)
+### F46. auto-memory `phases-8-dashboard-b.md` 拆分 / index sync ✅ **DONE**
 
-- **承接**: v1 F1 long-deferred; `phases-8-dashboard-b.md` 随 9.41-9.54 持续增长
-- **方案**: 拆 `phases-8-dashboard-c.md` (9.41+) 或按 era 归档; 更新 `phases.md` index
-- **estimated**: 30-45min
-- **dependency**: 无 (用户级 auto-memory, 0 进 git 除非 copy 到 `docs/HANDOFF-HISTORY/`)
-- **caveat**: 仅当主公使用 Claude auto-memory 时高价值; Cursor-only 可 skip
+- **完成 (2026-06-11)**: `phases-8-dashboard-c.md` (9.41+) + phases.md / MEMORY.md index sync
 
 ---
 
@@ -128,13 +124,9 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
 ## P3 低优先 / 按需 (F56+)
 
-### F56. Playwright e2e 加深 (ripples-audit / decisions resolve)
+### F56. Playwright e2e 加深 (ripples-audit / decisions resolve) ✅ **DONE**
 
-- **承接**: Phase 9.18 ripples-audit unskip 部分仍 opt-in; F37 仅 app-root smoke
-- **目标**: 2-3 opt-in e2e specs 走真 backend + `ripple-reset` fixture; **非 primary gate**
-- **tests**: 2-3 playwright + 2 CI contract pytest
-- **estimated**: 3-4h
-- **dependency**: F37, live backend 或 testcontainer 决策
+- **完成 (2026-06-11)**: `ripples-audit.spec.js` (3) + `decisions-resolve.spec.js` (2) + `e2e_seed.py` + `e2e:live` script; +5 pytest
 
 ### 明确不做 / RESOLVED (继承 v3)
 
@@ -164,41 +156,13 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 | F53 | audit WS push | 低 | 🟢 低 | 2h | 9.62 | ✅ |
 | F54 | backfill 增量 | 中 | 🟡 中 | 3-4h | 9.63 | ✅ |
 | F55 | 链式 cascade ≥2 | 高 | 🟢 低 | 8-12h | 9.64+ | ✅ |
-| F56 | Playwright 加深 | 低 | 🟢 低 | 3-4h | — | ✅ |
+| F56 | Playwright 加深 | 低 | 🟢 低 | 3-4h | 9.65 | ✅ |
 
 ---
 
 ## 推荐下一期 phase 顺序
 
-主公决策 (1 phase = 1 commit 节奏):
-
-### Track A — DevInfra 收尾 (推荐默认, 低风险)
-
-1. ~~**Phase 9.56 (F47)** — vue-tsc src/~~ ✅
-2. ~~**Phase 9.57 (F48)** — coverage 四维 80%~~ ✅
-3. ~~**Phase 9.58 (F49)** — pre-commit pytest smoke~~ ✅
-4. ~~**Phase 9.63 (F54)** — backfill 增量~~ ✅
-5. ~~**Phase 9.62 (F53)** — audit WS push~~ ✅
-6. **Phase 9.64 (F55)** — 链式 cascade — ✅
-
-### Track B — CVG 产品 (穿插, 价值导向)
-
-1. ~~**Phase 9.59 (F50)** — impact scoring~~ ✅
-2. ~~**Phase 9.60 (F51)** — audit export~~ ✅
-3. ~~**Phase 9.61 (F52)** — audit retention~~ ✅
-4. ~~**Phase 9.62 (F53)** — audit WS push~~ ✅
-
-### Track C — 大项 (需主公 explicit 批准)
-
-1. ~~**Phase 9.64+ (F55)** — 链式 cascade~~ ✅
-
-### 默认推荐 (主公未指定时)
-
-```
-F56 (Playwright e2e 加深) 或 F46 (auto-memory 拆分)
-```
-
-F47-F55 已于 2026-06-11 完成.
+**v4 (F44-F56) 已于 2026-06-11 全部完成.** 主公决策是否开 v5 roadmap.
 
 ---
 

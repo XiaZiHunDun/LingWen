@@ -41,6 +41,17 @@ class TestDashboardE2ESmokeSpec:
         assert spec.is_file()
         assert "app-root" in spec.read_text(encoding="utf-8")
 
+    def test_live_e2e_specs_exist(self):
+        for name in ("ripples-audit.spec.js", "decisions-resolve.spec.js"):
+            spec = FRONTEND_DIR / "tests" / "e2e-smoke" / name
+            assert spec.is_file(), name
+            text = spec.read_text(encoding="utf-8")
+            assert "LINGWEN_E2E_LIVE" in text or "skipUnlessLive" in text
+
+    def test_e2e_seed_module_exists(self):
+        seed = REPO_ROOT / "novel-factory" / "infra" / "cross_volume" / "e2e_seed.py"
+        assert seed.is_file()
+
     def test_playwright_config_has_webserver(self):
         text = (FRONTEND_DIR / "playwright.config.js").read_text(encoding="utf-8")
         assert "webServer:" in text
@@ -48,4 +59,6 @@ class TestDashboardE2ESmokeSpec:
 
     def test_package_has_e2e_smoke_script(self):
         pkg = json.loads((FRONTEND_DIR / "package.json").read_text(encoding="utf-8"))
-        assert pkg["scripts"].get("e2e:smoke") == "playwright test"
+        assert pkg["scripts"].get("e2e:smoke") == "playwright test --project=smoke"
+        assert "e2e:live" in pkg["scripts"]
+        assert "LINGWEN_E2E_LIVE=1" in pkg["scripts"]["e2e:live"]

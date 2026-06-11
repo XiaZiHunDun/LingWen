@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.64 (Phase 9.64 F55 chained cascade + F53 audit WS, 2026-06-11)
-> **更新 (2026-06-11)**: F53 audit WS push ✅ + F55 链式 cascade parent_ripple_id ✅; baseline **2665 pytest + 361 vitest**; 推荐 **F56** 或 **F46**.
+> **版本**: v9.65 (Phase 9.65 F56 live e2e + F46 auto-memory split, 2026-06-11)
+> **更新 (2026-06-11)**: F56 Playwright live e2e opt-in ✅ + F46 phases-8-dashboard-c 拆分 ✅; baseline **2670 pytest + 361 vitest**; v4 roadmap **已清空**.
 
 ---
 
@@ -15,14 +15,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2665 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 361 passed · coverage 四维 ≥80% · Playwright 1 smoke (opt-in CI) · TS strict (`typecheck` tests + `typecheck:app` src/) |
-| **总测试** | **3026+** (2665 pytest + 361 vitest + 27 pytest skip) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2670 passed |
+| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 361 passed · coverage 四维 ≥80% · Playwright 1 smoke + 5 live opt-in · TS strict (`typecheck` tests + `typecheck:app` src/) |
+| **总测试** | **3031+** (2670 pytest + 361 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest coverage → Codecov) + `dashboard-frontend-coverage-pages.yml` (HTML report → GH Pages) |
-| **下一期推荐** | **F56** (Playwright e2e 加深) 或 **F46** (auto-memory 拆分) — 见 v4 roadmap |
+| **下一期推荐** | v4 已清空 — 主公决策是否开 v5 roadmap |
 
 ---
 
@@ -282,7 +282,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 |---|------|-------|------|-------|-------|
 | F44 | roadmap v4 文档 + HANDOFF §6/§8 | 9.55-bk | 30min | P0 | ✅ done |
 | F45 | HANDOFF §9 baseline 字符串 sync | 9.55-bk | 20min | P0 | ✅ done |
-| F46 | auto-memory phases 拆分 (可选) | — | 45min | P0 | ⬜ |
+| F46 | auto-memory phases 拆分 (可选) | — | 45min | P0 | ✅ done |
 | F47 | vue-tsc 对 src/ + CI | 9.56 | 3-5h | P1 DevInfra | ✅ done (`5b8a543`) |
 | F48 | coverage 四维 → 80% | 9.57 | 3-4h | P1 DevInfra | ✅ done (`aa1d29b`) |
 | F49 | pre-commit pytest smoke | 9.58 | 1.5-2h | P1 DevInfra | ✅ done |
@@ -292,11 +292,11 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F53 | audit entry WS push | 9.62 | 2h | P1 CVG | ✅ done |
 | F54 | backfill 增量 workflow hook | 9.63 | 3-4h | P1 CVG | ✅ done |
 | F55 | 链式 cascade depth ≥ 2 (epic) | 9.64+ | 8-12h | P2 | ✅ done |
-| F56 | Playwright e2e 加深 (opt-in) | — | 3-4h | P3 | ⬜ |
+| F56 | Playwright e2e 加深 (opt-in) | — | 3-4h | P3 | ✅ done |
 
-**已完成 (v3, 9.41-9.54)**: F29-F43 全部 ✅ (见上表 v3 doc / §6 历史表)
+**已完成 (v4, F44-F56)**: 全部 ✅
 
-**推荐下一项**: **F56** (Playwright e2e 加深) 或 **F46** (auto-memory 拆分) — 见 v4 doc.
+**推荐下一项**: v4 已清空 — 主公决策是否开 v5 roadmap.
 
 ---
 
@@ -304,12 +304,14 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ### 7.1 Playwright e2e (Phase 9.31 F15 后)
 
-Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec (`tests/e2e-smoke/app-root.spec.js`); CI 走 `.github/workflows/dashboard-e2e-smoke.yml`（`workflow_dispatch` 或 PR label `e2e-smoke`），**非 primary gate**。本地: `pnpm e2e:smoke`（自动启 vite :5173）。
+Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec (`app-root.spec.js`); Phase 9.65 F56 新增 **2** live-backend spec（`ripples-audit` / `decisions-resolve`，默认 skip，需 `LINGWEN_E2E_LIVE=1`）。CI 走 `.github/workflows/dashboard-e2e-smoke.yml`（`workflow_dispatch` 或 PR label `e2e-smoke`），**非 primary gate**。本地:
+- `pnpm e2e:smoke` — vite only，1 test
+- `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
 
 ### 7.2 MEMORY.md 路径歧义
 
 本项目有 2 套 memory:
-- **auto-memory** (用户级, `~/.claude/projects/-home-ailearn-projects-AI-Incursion-domains-IP---projects-LingWen/memory/`): 索引 + 详细 phase 历史 (phases-1-to-5.md / phases-6-to-7.md / phases-8-cost.md / phases-8-dashboard-a.md / phases-8-dashboard-b.md / phases.md / MEMORY.md / etc.)。**active path**, 切换工具会丢失上下文 (除非用同样 auto-memory 的工具)。
+- **auto-memory** (用户级, `~/.claude/projects/.../memory/`): 索引 + 详细 phase 历史 (phases-1-to-5.md / phases-6-to-7.md / phases-8-cost.md / phases-8-dashboard-a.md / **phases-8-dashboard-b.md (9.16–9.40)** / **phases-8-dashboard-c.md (9.41+)** / phases.md / MEMORY.md / etc.)。
 - **legacy project memory** (`./memory/MEMORY.md`): 已删除 (Phase 9.24 F3), 0 reference。
 
 切换工具时如果新工具不读 auto-memory, 把 phases-8-dashboard-a.md / phases-8-dashboard-b.md 复制一份到 `docs/HANDOFF-HISTORY/` 即可, 但不推荐 (会 drift)。
@@ -331,12 +333,12 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读本 HANDOFF.md (3 分钟)
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v4-post-9.54.md` (F44-F56, 5 分钟)
-- [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 phase 详细, 10 分钟) — 如果要做 P1/P2 任意 item
-- [ ] 跑 `pytest -q` 验证 baseline 2665 passed (~2min)
+- [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
+- [ ] 跑 `pytest -q` 验证 baseline 2670 passed (~2min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 361 passed (~8s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v4 item (推荐 **F56 Playwright e2e** 或 **F46 auto-memory**) → brainstorming → writing-plans
+- [ ] 选 1 个 v5 item (v4 已清空) 或开新 roadmap
 
 ---
 
@@ -344,13 +346,14 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2665 tests, ~2min
+cd novel-factory && pytest -q                                    # 2670 tests, ~2min
 # 增量 backfill (workflow 完成后 opt-in):
 # LINGWEN_INCREMENTAL_BACKFILL=1 python -c "from infra.agent_system.master_controller import MasterController; ..."
 cd novel-factory/dashboard/frontend && pnpm vitest run             # 361 vitest, ~8s
 cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
 cd novel-factory/dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
-cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 0 tests (Phase 9.31 F15)
+cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list       # 1 smoke test
+cd novel-factory/dashboard/frontend && LINGWEN_E2E_LIVE=1 pnpm e2e:live --list  # 5 live tests (opt-in)
 cd novel-factory && ruff check .                                 # 0 issues
 cd novel-factory/dashboard/frontend && pnpm lint:all             # 0 errors
 cd novel-factory/dashboard/frontend && pnpm build                # 0 errors
