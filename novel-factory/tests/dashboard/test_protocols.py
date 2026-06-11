@@ -22,6 +22,7 @@ import pytest
 from dashboard.protocols import (
     _extract_budget_by_tier,
     _extract_cost_by_day,
+    _extract_cost_by_day_per_tier,
     _extract_cost_by_scenario,
     _extract_cost_by_tier,
     _extract_total_cost,
@@ -264,3 +265,33 @@ class TestExtractCostByDay:
         controller = MagicMock()
         controller.cost_tracker = tracker
         assert _extract_cost_by_day(controller) == {}
+
+
+class TestExtractCostByDayPerTier:
+    """Phase 9.28 F12: _extract_cost_by_day_per_tier helper mirror _extract_cost_by_day."""
+
+    def test_no_cost_tracker_returns_empty_dict(self) -> None:
+        controller = MagicMock(spec=[])
+        assert _extract_cost_by_day_per_tier(controller) == {}
+
+    def test_happy_path_returns_nested_dict_from_tracker(self) -> None:
+        tracker = MagicMock()
+        tracker.cost_by_day_per_tier.return_value = {
+            "2026-06-01": {"haiku": 0.00035, "sonnet": 0.0105},
+            "2026-06-02": {"sonnet": 0.00525},
+        }
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        result = _extract_cost_by_day_per_tier(controller)
+        assert result == {
+            "2026-06-01": {"haiku": 0.00035, "sonnet": 0.0105},
+            "2026-06-02": {"sonnet": 0.00525},
+        }
+        tracker.cost_by_day_per_tier.assert_called_once_with(since=None)
+
+    def test_exception_silently_returns_empty_dict(self) -> None:
+        tracker = MagicMock()
+        tracker.cost_by_day_per_tier.side_effect = RuntimeError("boom")
+        controller = MagicMock()
+        controller.cost_tracker = tracker
+        assert _extract_cost_by_day_per_tier(controller) == {}

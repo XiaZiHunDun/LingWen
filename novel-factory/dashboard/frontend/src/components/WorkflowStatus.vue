@@ -101,7 +101,10 @@
         v-model:mode="costMode"
       />
       <!-- Phase 8.24 NEW: cost by day trend chart (after CostBarChart, 跟 time-window-tabs 同步) -->
-      <CostTrendChart :cost-by-day="displayCostByDay" />
+      <CostTrendChart
+        :cost-by-day="displayCostByDay"
+        :cost-by-day-per-tier="displayCostByDayPerTier"
+      />
     </div>
   </div>
 </template>
@@ -140,6 +143,9 @@ const displayCostByTier = computed(() =>
 );
 const displayCostByDay = computed(() =>
   windowedCost.value?.cost_by_day ?? props.status?.cost_by_day ?? {}
+);
+const displayCostByDayPerTier = computed(() =>
+  windowedCost.value?.cost_by_day_per_tier ?? props.status?.cost_by_day_per_tier ?? null
 );
 const displayTotalCost = computed(() =>
   windowedCost.value?.total_cost_usd ?? props.status?.total_cost_usd ?? 0.0

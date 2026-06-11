@@ -243,3 +243,56 @@ class TestWorkflowStatusResponseCostByDay:
         body = response.json()
         assert isinstance(body["cost_by_day"], dict)
         assert len(body["cost_by_day"]) >= 1
+
+
+class TestWorkflowStatusResponseCostByDayPerTier:
+    """Phase 9.28 F12: GET /api/workflows/active 暴露 cost_by_day_per_tier 字段."""
+
+    def _make_master_with_cost_tracker(self, tmp_path: Path):
+        from dashboard.protocols import MasterControllerAdapter
+        from infra.agent_system import master_controller as mc_mod
+        from infra.ai_service.cost_tracker import CostTracker
+        from infra.ai_service.model_tiers import ModelTier
+
+        master = mc_mod.MasterController.__new__(mc_mod.MasterController)
+        cost_tracker = CostTracker()
+        cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
+        cost_tracker.record("hook_extraction", ModelTier.HAIKU, 100, 50)
+        master.cost_tracker = cost_tracker
+
+        class _StubGraph:
+            def node_ids(self): return []
+            def has_execution(self, nid): return False
+            def get_execution(self, nid): return None
+            def get_node(self, nid): return None
+        class _StubSummary:
+            steps = 0
+        class _StubScheduler:
+            _summary = _StubSummary()
+        master._last_scheduler = _StubScheduler()
+        master._last_graph = _StubGraph()
+        master._last_workflow_name = "novel_writing"
+
+        adapter = MasterControllerAdapter(master)
+        app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
+        return TestClient(app)
+
+    def test_active_workflow_returns_cost_by_day_per_tier(self, tmp_path: Path) -> None:
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active?time_window=all")
+        assert response.status_code == 200
+        body = response.json()
+        per_tier = body["cost_by_day_per_tier"]
+        assert isinstance(per_tier, dict)
+        assert len(per_tier) >= 1
+        first_day = next(iter(per_tier.values()))
+        assert isinstance(first_day, dict)
+        assert any(v > 0 for v in first_day.values())
+
+    def test_time_window_7d_returns_cost_by_day_per_tier(self, tmp_path: Path) -> None:
+        client = self._make_master_with_cost_tracker(tmp_path)
+        response = client.get("/api/workflows/active?time_window=7d")
+        assert response.status_code == 200
+        body = response.json()
+        assert isinstance(body["cost_by_day_per_tier"], dict)
+        assert len(body["cost_by_day_per_tier"]) >= 1

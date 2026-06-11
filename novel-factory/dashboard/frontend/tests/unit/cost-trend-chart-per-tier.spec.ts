@@ -104,10 +104,15 @@ describe('CostTrendChart: per-tier multi-series (Phase 8.29)', () => {
       props: { costByDay: {}, costByDayPerTier: {} },
     })
     await flushPromises()
-    // NOTE: 已知 hasData 当前只检查 costByDay, 不检查 costByDayPerTier.
-    // 当 costByDay={} 时, 即使 costByDayPerTier 有数据, empty state 仍会显示.
-    // 这是 Phase 8.29 已知 contract (未改 baseline), render() 内部仍走 multi-series path.
     expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(true)
+  })
+
+  test('hides empty state when only costByDayPerTier has data (Phase 9.28 F12)', async () => {
+    const wrapper = mount(CostTrendChart, {
+      props: { costByDay: {}, costByDayPerTier: dayDataPerTier },
+    })
+    await flushPromises()
+    expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(false)
   })
 
   test('uses single-line baseline when costByDayPerTier is empty dict', async () => {

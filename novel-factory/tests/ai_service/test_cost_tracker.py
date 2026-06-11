@@ -328,3 +328,55 @@ class TestCostTrackerCostByDay:
         tracker = CostTracker()
         assert tracker.cost_by_day() == {}
         assert tracker.cost_by_day(since=None) == {}
+
+
+class TestCostTrackerCostByDayPerTier:
+    """Phase 9.28 F12: cost_by_day_per_tier() day × tier cross-dim aggregation."""
+
+    def test_cost_by_day_per_tier_groups_by_day_and_tier(self) -> None:
+        from datetime import datetime, timezone
+
+        from infra.ai_service.cost_tracker import CostRecord
+
+        tracker = CostTracker()
+        day1 = datetime(2026, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
+        day2 = datetime(2026, 6, 2, 14, 0, 0, tzinfo=timezone.utc)
+        tracker._records.extend([
+            CostRecord(
+                scenario="chapter_writing", tier=ModelTier.SONNET,
+                input_tokens=1000, output_tokens=500, cost_usd=0.0105,
+                timestamp=day1,
+            ),
+            CostRecord(
+                scenario="hook_extraction", tier=ModelTier.HAIKU,
+                input_tokens=100, output_tokens=50, cost_usd=0.00035,
+                timestamp=day1,
+            ),
+            CostRecord(
+                scenario="chapter_review", tier=ModelTier.SONNET,
+                input_tokens=500, output_tokens=250, cost_usd=0.00525,
+                timestamp=day2,
+            ),
+        ])
+        by_day_tier = tracker.cost_by_day_per_tier()
+        assert by_day_tier == {
+            "2026-06-01": {
+                "sonnet": pytest.approx(0.0105, abs=1e-9),
+                "haiku": pytest.approx(0.00035, abs=1e-9),
+            },
+            "2026-06-02": {
+                "sonnet": pytest.approx(0.00525, abs=1e-9),
+            },
+        }
+
+    def test_cost_by_day_per_tier_with_since_filters_old_records(self) -> None:
+        from datetime import datetime, timedelta, timezone
+
+        tracker = CostTracker()
+        tracker.record("chapter_writing", ModelTier.SONNET, 1000, 500)
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert tracker.cost_by_day_per_tier(since=future) == {}
+
+    def test_cost_by_day_per_tier_empty_tracker_returns_empty_dict(self) -> None:
+        tracker = CostTracker()
+        assert tracker.cost_by_day_per_tier() == {}

@@ -74,6 +74,8 @@ async function fetchCost() {
     windowedCost.value = {
       cost_by_scenario: data.cost_by_scenario || {},
       cost_by_tier: data.cost_by_tier || {},
+      cost_by_day: data.cost_by_day || {},
+      cost_by_day_per_tier: data.cost_by_day_per_tier || null,
       total_cost_usd: data.total_cost_usd || 0.0,
     };
   } catch (e) {

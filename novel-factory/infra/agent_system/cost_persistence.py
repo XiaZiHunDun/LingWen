@@ -219,5 +219,36 @@ class CostTrackerDB:
                 ).fetchall()
         return {r["day"]: float(r["total"]) for r in rows}
 
+    def cost_by_day_per_tier(
+        self, since: Optional[datetime] = None
+    ) -> dict[str, dict[str, float]]:
+        """Phase 9.28 F12: cross-dim day × tier aggregation for per-tier trend chart.
+
+        Returns nested dict: { 'YYYY-MM-DD': { 'haiku': usd, 'sonnet': usd, ... }, ... }
+        ORDER BY day, tier (date keys ascending).
+        """
+        self.init_db()
+        with self._connect() as conn:
+            if since is None:
+                rows = conn.execute(
+                    """SELECT DATE(timestamp) as day, tier, SUM(cost_usd) as total
+                       FROM cost_records GROUP BY day, tier ORDER BY day, tier"""
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """SELECT DATE(timestamp) as day, tier, SUM(cost_usd) as total
+                       FROM cost_records WHERE timestamp >= ?
+                       GROUP BY day, tier ORDER BY day, tier""",
+                    (since.isoformat(),),
+                ).fetchall()
+        result: dict[str, dict[str, float]] = {}
+        for row in rows:
+            day = row["day"]
+            tier = row["tier"]
+            if day not in result:
+                result[day] = {}
+            result[day][tier] = float(row["total"])
+        return result
+
 
 __all__ = ["CostTrackerDB"]

@@ -242,3 +242,41 @@ class TestCostTrackerDBCostByDay:
         db.init_db()
         assert db.cost_by_day() == {}
         assert db.cost_by_day(since=None) == {}
+
+
+class TestCostTrackerDBCostByDayPerTier:
+    """Phase 9.28 F12: cost_by_day_per_tier day × tier cross-dim aggregation."""
+
+    def test_cost_by_day_per_tier_groups_by_day_and_tier(self, tmp_path: Path) -> None:
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        with db._connect() as conn:
+            conn.executemany(
+                """INSERT INTO cost_records
+                   (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                [
+                    ("chapter_writing", "sonnet", 1000, 500, 0.0105, "2026-06-01T10:00:00+00:00"),
+                    ("hook_extraction", "haiku",  100,  50,  0.00035, "2026-06-01T14:00:00+00:00"),
+                    ("chapter_review",  "sonnet", 500,  250, 0.00525, "2026-06-02T09:00:00+00:00"),
+                ],
+            )
+        by_day_tier = db.cost_by_day_per_tier()
+        assert list(by_day_tier.keys()) == ["2026-06-01", "2026-06-02"]
+        assert by_day_tier["2026-06-01"]["sonnet"] == pytest.approx(0.0105, abs=1e-9)
+        assert by_day_tier["2026-06-01"]["haiku"] == pytest.approx(0.00035, abs=1e-9)
+        assert by_day_tier["2026-06-02"]["sonnet"] == pytest.approx(0.00525, abs=1e-9)
+
+    def test_cost_by_day_per_tier_with_since_filters_old_records(self, tmp_path: Path) -> None:
+        from datetime import datetime, timedelta, timezone
+
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        db.record("chapter_writing", ModelTier.SONNET, 1000, 500)
+        future = datetime.now(timezone.utc) + timedelta(seconds=1)
+        assert db.cost_by_day_per_tier(since=future) == {}
+
+    def test_cost_by_day_per_tier_empty_db_returns_empty_dict(self, tmp_path: Path) -> None:
+        db = CostTrackerDB(db_path=tmp_path / "test.db")
+        db.init_db()
+        assert db.cost_by_day_per_tier() == {}

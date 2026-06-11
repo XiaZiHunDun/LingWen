@@ -10,8 +10,7 @@
   shape: { "2026-06-01": { haiku: 0.005, sonnet: 0.015, opus: 0.020 }, ... }
   非空时切换 multi-series (3 lines: haiku/sonnet/opus) + ECharts legend.
   配色: haiku #67c23a (绿, 便宜) / sonnet #ff6b6b (红, 主力) / opus #9b59b6 (紫, 贵)
-  backend 暂未提供 per-day-per-tier 聚合, 留 Phase 8.31 实施 cross-dim aggregation.
-  当前 additive prop 接受, render path 完整, 数据从空 → 单线 path 不破 baseline.
+  backend 提供 cost_by_day_per_tier 聚合 (Phase 9.28 F12); prop default null 时走单线 path.
 -->
 <template>
   <div class="cost-trend-chart-wrapper pixel-border" data-testid="cost-trend-chart-wrapper">
@@ -64,8 +63,9 @@ const hasMultiSeries = computed(() => {
 const chartRef = ref(null)
 let chartInstance = null
 
-// Phase 8.24: hasData 走 CostBarChart 同样 pattern (Object.keys + some > 0)
+// Phase 8.24: hasData 走 CostBarChart 同样 pattern; Phase 9.28 F12: OR hasMultiSeries
 const hasData = computed(() => {
+  if (hasMultiSeries.value) return true
   const data = props.costByDay || {}
   return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0)
 })

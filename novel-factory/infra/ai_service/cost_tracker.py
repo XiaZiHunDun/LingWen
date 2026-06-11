@@ -184,6 +184,22 @@ class CostTracker:
             result[day] = result.get(day, 0.0) + r.cost_usd
         return result
 
+    def cost_by_day_per_tier(
+        self, since: Optional[datetime] = None
+    ) -> dict[str, dict[str, float]]:
+        """Phase 9.28 F12: cross-dim day × tier aggregation (YYYY-MM-DD → tier → USD)."""
+        records = self._records if since is None else [
+            r for r in self._records if r.timestamp >= since
+        ]
+        result: dict[str, dict[str, float]] = {}
+        for r in records:
+            day = r.timestamp.date().isoformat()
+            tier_key = r.tier.value if hasattr(r.tier, "value") else str(r.tier)
+            if day not in result:
+                result[day] = {}
+            result[day][tier_key] = result[day].get(tier_key, 0.0) + r.cost_usd
+        return result
+
     def count_by_scenario(self) -> dict[str, int]:
         """按 scenario 计数"""
         result: dict[str, int] = {}

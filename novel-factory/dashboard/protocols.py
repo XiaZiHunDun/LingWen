@@ -303,6 +303,9 @@ class MasterControllerAdapter:
             "cost_by_scenario": _extract_cost_by_scenario(self._controller, since=since),  # Phase 8.16
             "cost_by_tier": _extract_cost_by_tier(self._controller, since=since),  # Phase 8.16
             "cost_by_day": _extract_cost_by_day(self._controller, since=since),  # Phase 8.23
+            "cost_by_day_per_tier": _extract_cost_by_day_per_tier(  # Phase 9.28 F12
+                self._controller, since=since
+            ),
             "cost_budget_status": _extract_budget_status(self._controller),  # 0 改 (走 since=None)
             "budget_per_day": _extract_budget_per_window(self._controller, "day"),  # 0 改
             "budget_per_week": _extract_budget_per_window(self._controller, "week"),  # 0 改
@@ -406,6 +409,28 @@ def _extract_cost_by_day(
         return dict(cost_tracker.cost_by_day(since=since))
     except Exception as exc:  # noqa: BLE001 — silent degrade by design
         logger.warning("cost_tracker.cost_by_day() failed: %s", exc)
+        return {}
+
+
+def _extract_cost_by_day_per_tier(
+    controller: Any, since: Optional[datetime] = None
+) -> dict[str, dict[str, float]]:
+    """Phase 9.28 F12: day × tier cross-dim aggregation for per-tier trend chart.
+
+    Mirrors _extract_cost_by_day silent-degrade pattern. Keys are 'YYYY-MM-DD'
+    date strings; inner dict keys are tier names (haiku/sonnet/opus).
+    """
+    cost_tracker = getattr(controller, "cost_tracker", None)
+    if cost_tracker is None:
+        return {}
+    try:
+        raw = cost_tracker.cost_by_day_per_tier(since=since)
+        return {
+            day: {str(tier): float(amt) for tier, amt in tiers.items()}
+            for day, tiers in raw.items()
+        }
+    except Exception as exc:  # noqa: BLE001 — silent degrade by design
+        logger.warning("cost_tracker.cost_by_day_per_tier() failed: %s", exc)
         return {}
 
 
