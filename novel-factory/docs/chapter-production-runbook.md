@@ -252,6 +252,41 @@ bash novel-factory/scripts/verify-e2e-live-ci.sh
 pytest tests/ci/test_e2e_live_ci_f64.py tests/ci/test_e2e_live_f70_ci.py -q
 ```
 
+### 11.2 F76 — Remote e2e-live 首绿 checklist
+
+**目标**: GitHub Actions 远程首跑可重复、可诊断（本地 F70 parity 已通过）。
+
+**Workflow 页面**: `https://github.com/XiaZiHunDun/LingWen/actions/workflows/dashboard-e2e-live.yml`
+
+**一键打印 checklist**（0 网络）:
+
+```bash
+bash novel-factory/scripts/e2e-live-remote-checklist.sh
+```
+
+**推荐首跑顺序**:
+
+| 步骤 | 动作 | 通过标准 |
+|------|------|----------|
+| 1 | 本地 `verify-e2e-live-ci.sh` | exit 0 · 5 passed |
+| 2 | Actions → **Run workflow**（master） | job 绿 |
+| 3 | 打开 run **Summary** | 见 “Dashboard E2E Live — passed” |
+| 4 | （可选）开 PR + label `e2e-live` | 同 job 绿 |
+
+**失败排查**:
+
+1. 下载 artifact `playwright-live-trace`
+2. 本地复现: `bash novel-factory/scripts/verify-e2e-live-ci.sh`
+3. 常见: pnpm lock 漂移 · Playwright browser 未装 · port 8765/5173 占用（仅本地）
+
+**Badge**（可选 README）: opt-in workflow，**不**并入 primary merge gate。
+
+**pytest 契约**:
+
+```bash
+pytest tests/ci/test_e2e_live_f76_ci.py -q
+```
+
 ---
 
 ## 12. 真实章节生产 pilot (F65)

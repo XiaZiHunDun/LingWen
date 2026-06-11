@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `6d5d899` — feat(F65-F70) v6 真实生产 pilot + Dashboard MVP |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F76** Remote e2e-live 首绿 — 见 §6 + v7 roadmap |
+| **下一期推荐** | v7 已清空 — 可选 Actions e2e-live 首跑 / 新 roadmap |
 
 ---
 
@@ -295,9 +295,9 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | **F73** | 批量 3–10 章 runner | 9.81 | 4-6h | P1 | ✅ |
 | **F74** | ChaptersPage 生产历史 | 9.82 | 3-4h | P2 | ✅ |
 | **F75** | 决策中心 deep link | 9.83 | 2-3h | P2 | ✅ |
-| **F76** | Remote e2e-live 首绿 | 9.84 | 1h | P3 | 🔴 推荐下一项 |
+| **F76** | Remote e2e-live 首绿 | 9.84 | 1h | P3 | ✅ |
 
-**推荐下一项**: **F76** Remote e2e-live GitHub Actions 首绿 checklist
+**v7 已全部完成。** 可选：Actions 手动 Run workflow · 新 roadmap（批量 360+ 章等）。
 
 ---
 
