@@ -1,4 +1,5 @@
-<!-- dashboard/frontend/src/components/RippleDrawer.vue (NEW, Phase 9.13) -->
+<!-- dashboard/frontend/src/components/RippleDrawer.vue (Phase 9.13 + 9.22 T3) -->
+<!-- Per-ripple drawer: 3 tabs (Summary / Cascade / Runs) wrapping existing body content. -->
 <template>
   <div v-if="open" class="ripple-drawer ripple-drawer" data-testid="ripple-drawer" @click.self="$emit('close')">
     <div class="ripple-drawer__panel ripple-drawer-content" data-testid="ripple-drawer-content">
@@ -6,88 +7,109 @@
         <h2>{{ ripple.dimension }} — {{ ripple.relationship_type }}</h2>
         <button class="ripple-drawer-close" data-testid="ripple-drawer-close" @click="$emit('close')">×</button>
       </header>
+      <nav class="ripple-drawer__tabs" data-testid="ripple-drawer-tabs">
+        <button :class="['tab', { active: activeTab === 'summary' }]"
+                data-testid="tab-summary"
+                @click="activeTab = 'summary'">Summary</button>
+        <button :class="['tab', { active: activeTab === 'cascade' }]"
+                data-testid="tab-cascade"
+                @click="activeTab = 'cascade'">Cascade</button>
+        <button :class="['tab', { active: activeTab === 'runs' }]"
+                data-testid="tab-cascade-runs"
+                @click="activeTab = 'runs'">Cascade runs</button>
+      </nav>
       <section class="ripple-drawer__body">
-        <div class="ripple-drawer__row">
-          <span class="ripple-drawer__label">Status:</span>
-          <span :class="`ripple-drawer__status--${ripple.status} ripple-drawer-status`">{{ ripple.status }}</span>
-        </div>
-        <div class="ripple-drawer__row">
-          <span class="ripple-drawer__label">Source chapter:</span> {{ ripple.source_chapter }}
-        </div>
-        <div class="ripple-drawer__row">
-          <span class="ripple-drawer__label">Target chapter:</span> {{ ripple.target_chapter }}
-        </div>
-        <div class="ripple-drawer__row">
-          <span class="ripple-drawer__label">Confidence:</span> {{ ripple.confidence }}/5
-        </div>
-        <details class="ripple-drawer__evidence">
-          <summary>Evidence</summary>
-          <pre>{{ ripple.evidence }}</pre>
-        </details>
-        <details class="ripple-drawer__payload">
-          <summary>Source payload</summary>
-          <pre>{{ JSON.stringify(ripple.source_payload, null, 2) }}</pre>
-        </details>
-        <details class="ripple-drawer__payload">
-          <summary>Edge payload</summary>
-          <pre>{{ JSON.stringify(ripple.edge_payload, null, 2) }}</pre>
-        </details>
-        <!-- Phase 9.14: audit timeline section (auditEntries latest 5) -->
-        <div class="ripple-audit-timeline ripple-audit-list" v-if="auditEntries.length > 0">
-          <h4>Audit History (latest {{ Math.min(5, auditEntries.length) }})</h4>
-          <ul class="ripple-audit-list" data-testid="ripple-audit-list">
-            <li
-              v-for="entry in auditEntries.slice(0, 5)"
-              :key="entry.id"
-              class="ripple-audit-entry"
-              data-testid="ripple-audit-entry"
-            >
-              <span class="audit-time ripple-audit-entry">{{ entry.created_at }}</span>
-              <span class="audit-action ripple-audit-entry">{{ entry.action }}</span>
-              <span class="audit-actor ripple-audit-entry">by {{ entry.actor }} ({{ entry.origin }})</span>
-              <span v-if="entry.reason" class="audit-reason ripple-audit-entry">"{{ entry.reason }}"</span>
-            </li>
-          </ul>
-        </div>
-        <div
-          v-else
-          class="ripple-audit-empty ripple-audit-list"
-          data-testid="ripple-audit-empty"
-        >No history yet</div>
-
-        <!-- Phase 9.15 T4: dry-run section (cascade BFS preview before apply) -->
-        <section class="dryrun-section" data-testid="ripple-dryrun-section">
-          <header class="dryrun-header">
-            <h4>Dry-run preview</h4>
-            <button
-              type="button"
-              class="dryrun-toggle"
-              :aria-pressed="showDryRun"
-              data-testid="dry-run-toggle"
-              @click="onToggleDryRun"
-            >{{ showDryRun ? 'Hide' : 'Show' }} cascade</button>
-          </header>
-          <div v-if="showDryRun && preview" class="dryrun-content">
-            <div class="summary-chips" data-testid="ripple-summary-chips">
-              <span class="chip" data-testid="dry-run-tag">Depth: {{ preview.max_depth }}</span>
-              <span class="chip" data-testid="dry-run-affected-chapters">
-                {{ preview.affected_chapter_count }} chapter(s)
-              </span>
-              <span class="chip" data-testid="dry-run-affected-characters">
-                {{ preview.affected_character_count }} character(s)
-              </span>
-              <span class="chip" data-testid="dry-run-affected-settings">
-                {{ preview.affected_setting_count }} setting(s)
-              </span>
-            </div>
-            <CascadeGraph
-              v-if="cascade"
-              :cascade="cascade"
-              :dry-run="true"
-              data-testid="cascade-graph"
-            />
+        <!-- Summary tab (existing status rows + evidence + payload, Phase 9.13/9.14) -->
+        <div v-if="activeTab === 'summary'" class="drawer-section" data-testid="drawer-summary-section">
+          <div class="ripple-drawer__row">
+            <span class="ripple-drawer__label">Status:</span>
+            <span :class="`ripple-drawer__status--${ripple.status} ripple-drawer-status`">{{ ripple.status }}</span>
           </div>
-        </section>
+          <div class="ripple-drawer__row">
+            <span class="ripple-drawer__label">Source chapter:</span> {{ ripple.source_chapter }}
+          </div>
+          <div class="ripple-drawer__row">
+            <span class="ripple-drawer__label">Target chapter:</span> {{ ripple.target_chapter }}
+          </div>
+          <div class="ripple-drawer__row">
+            <span class="ripple-drawer__label">Confidence:</span> {{ ripple.confidence }}/5
+          </div>
+          <details class="ripple-drawer__evidence">
+            <summary>Evidence</summary>
+            <pre>{{ ripple.evidence }}</pre>
+          </details>
+          <details class="ripple-drawer__payload">
+            <summary>Source payload</summary>
+            <pre>{{ JSON.stringify(ripple.source_payload, null, 2) }}</pre>
+          </details>
+          <details class="ripple-drawer__payload">
+            <summary>Edge payload</summary>
+            <pre>{{ JSON.stringify(ripple.edge_payload, null, 2) }}</pre>
+          </details>
+          <!-- Phase 9.14: audit timeline section (auditEntries latest 5) -->
+          <div class="ripple-audit-timeline ripple-audit-list" v-if="auditEntries.length > 0">
+            <h4>Audit History (latest {{ Math.min(5, auditEntries.length) }})</h4>
+            <ul class="ripple-audit-list" data-testid="ripple-audit-list">
+              <li
+                v-for="entry in auditEntries.slice(0, 5)"
+                :key="entry.id"
+                class="ripple-audit-entry"
+                data-testid="ripple-audit-entry"
+              >
+                <span class="audit-time ripple-audit-entry">{{ entry.created_at }}</span>
+                <span class="audit-action ripple-audit-entry">{{ entry.action }}</span>
+                <span class="audit-actor ripple-audit-entry">by {{ entry.actor }} ({{ entry.origin }})</span>
+                <span v-if="entry.reason" class="audit-reason ripple-audit-entry">"{{ entry.reason }}"</span>
+              </li>
+            </ul>
+          </div>
+          <div
+            v-else
+            class="ripple-audit-empty ripple-audit-list"
+            data-testid="ripple-audit-empty"
+          >No history yet</div>
+        </div>
+
+        <!-- Cascade tab (existing dry-run preview, Phase 9.15) -->
+        <div v-else-if="activeTab === 'cascade'" class="drawer-section" data-testid="drawer-cascade-section">
+          <section class="dryrun-section" data-testid="ripple-dryrun-section">
+            <header class="dryrun-header">
+              <h4>Dry-run preview</h4>
+              <button
+                type="button"
+                class="dryrun-toggle"
+                :aria-pressed="showDryRun"
+                data-testid="dry-run-toggle"
+                @click="onToggleDryRun"
+              >{{ showDryRun ? 'Hide' : 'Show' }} cascade</button>
+            </header>
+            <div v-if="showDryRun && preview" class="dryrun-content">
+              <div class="summary-chips" data-testid="ripple-summary-chips">
+                <span class="chip" data-testid="dry-run-tag">Depth: {{ preview.max_depth }}</span>
+                <span class="chip" data-testid="dry-run-affected-chapters">
+                  {{ preview.affected_chapter_count }} chapter(s)
+                </span>
+                <span class="chip" data-testid="dry-run-affected-characters">
+                  {{ preview.affected_character_count }} character(s)
+                </span>
+                <span class="chip" data-testid="dry-run-affected-settings">
+                  {{ preview.affected_setting_count }} setting(s)
+                </span>
+              </div>
+              <CascadeGraph
+                v-if="cascade"
+                :cascade="cascade"
+                :dry-run="true"
+                data-testid="cascade-graph"
+              />
+            </div>
+          </section>
+        </div>
+
+        <!-- Cascade runs tab (Phase 9.22: historical cascade_runs list + Replay + Cancel) -->
+        <div v-else-if="activeTab === 'runs'" class="drawer-section" data-testid="cascade-runs-section">
+          <CascadeRunsPanel :ripple-id="ripple.ripple_id" />
+        </div>
       </section>
       <footer class="ripple-drawer__footer">
         <button
@@ -126,6 +148,7 @@ import { useRippleStore } from '../composables/useRippleStore.js';
 import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';  // Phase 9.16
 import CascadeGraph from './CascadeGraph.vue';
 import ApplyConfirmModal from './ApplyConfirmModal.vue';
+import CascadeRunsPanel from './CascadeRunsPanel.vue';  // Phase 9.22 T3
 
 const props = defineProps({
   ripple: { type: Object, required: true },
@@ -134,6 +157,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'apply', 'reject']);
 
 const isTerminal = computed(() => ['applied', 'rejected', 'failed'].includes(props.ripple.status));
+const activeTab = ref('summary');  // Phase 9.22 T3: tab state (Summary / Cascade / Runs)
 
 // Phase 9.14: audit timeline + Rollback button (0 改既有 apply/reject logic)
 const store = useRippleStore();
@@ -261,4 +285,17 @@ watch(() => props.ripple && props.ripple.ripple_id, () => {
 .dryrun-content { margin-top: 8px; }
 .summary-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .chip { background: #e8f4f8; color: #155724; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; }
+.ripple-drawer__tabs {
+  display: flex; gap: 0; border-bottom: 1px solid #eee;
+  padding: 0 24px; background: #fafbfc;
+}
+.ripple-drawer__tabs .tab {
+  padding: 10px 16px; border: none; background: transparent; cursor: pointer;
+  font-size: 0.9em; color: #555; border-bottom: 2px solid transparent;
+}
+.ripple-drawer__tabs .tab:hover { color: #2c3e50; }
+.ripple-drawer__tabs .tab.active {
+  color: #2c3e50; border-bottom-color: #2c3e50; font-weight: 500;
+}
+.drawer-section { padding: 0; }
 </style>
