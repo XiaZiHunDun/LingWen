@@ -2,8 +2,8 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43 已于 Phase 9.41-9.54 全部完成). 本 doc 汇总 v3 清空后各 phase entry「out of scope」散落项 + Phase 8.44/9.14/9.18/9.19 遗留, 重新编号 **F44+** 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v4 roadmap」)
-> **状态**: F47-F54 ✅ (2026-06-11); 待主公决策 F53/F55 下一期
-> **前置**: baseline **2657 pytest + 355 vitest** (post F54)
+> **状态**: F47-F55 ✅ (2026-06-11); 待主公决策 F56 下一期
+> **前置**: baseline **2665 pytest + 361 vitest** (post F55)
 
 ## 上下文 (Context)
 
@@ -27,12 +27,12 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 本 v4 roadmap **不重复** F1-F43 已 done 项. 详见 v3 doc 决策矩阵 + HANDOFF §6.
 
-## 当前 Baseline (2026-06-11, post 9.60)
+## 当前 Baseline (2026-06-11, post 9.64)
 
 | 项 | 值 |
 |----|-----|
-| **pytest** | 2657 passed, 27 skipped |
-| **vitest** | 355 passed (68 files) |
+| **pytest** | 2665 passed, 27 skipped |
+| **vitest** | 361 passed (70 files) |
 | **coverage (frontend)** | lines 94.37% / statements 92% / functions 91.23% / branches 80.02% |
 | **Playwright** | 1 smoke spec opt-in (`app-root.spec.js`); vitest primary gate |
 | **git** | `aa1d29b` on master (F47-F51 4 commits) |
@@ -108,13 +108,9 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
 - **完成 (2026-06-11)**: audit_retention.py + storage purge helpers + ripple-audit purge subcommand
 
-### F53. Phase 9.62 — audit entry WS push (optional)
+### F53. Phase 9.62 — audit entry WS push (optional) ✅ **DONE**
 
-- **承接**: Phase 9.14「audit 新增不主动 WS push, 客户端 fetch」
-- **目标**: `useWorkflowSocket` 新 event `audit_created` → RippleDrawer 静默 refresh audit list
-- **tests**: 3-4 vitest + 2 pytest (payload shape)
-- **estimated**: 2h
-- **dependency**: 9.14/9.16 WS 基础设施
+- **完成 (2026-06-11)**: `audit.created` WS event + `notify_audit_created` + RippleDrawer 静默 refresh; +3 pytest +3 vitest
 
 ### F54. Phase 9.63 — backfill 增量 (workflow hook) ✅ **DONE**
 
@@ -124,15 +120,9 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
 ## P2 大项 — 链式 Cascade (Phase 9.64+, 可拆多 commit)
 
-### F55. Phase 9.64 — cross-volume cascade depth ≥ 2 / 链式 ripple
+### F55. Phase 9.64 — cross-volume cascade depth ≥ 2 / 链式 ripple ✅ **DONE**
 
-- **承接**: Phase 9.18/9.19 defer「cascade 触发新 cascade, depth ≥ 2, parent_ripple_id」
-- **目标**: `reference_ripples.parent_ripple_id`; BFS 链式 apply; dashboard 显示 parent/child 关系
-- **方案**: 拆 sub-phase: (1) schema + storage (2) BFS hook (3) UI tree/badge
-- **tests**: 10-15 pytest + 4-6 vitest (估, 按 sub-phase)
-- **estimated**: 8-12h (3-4 phases)
-- **dependency**: F40 cascade graph 3-view 已就位
-- **caveat**: 最大 scope 项; 主公需确认是否开 multi-phase epic
+- **完成 (2026-06-11)**: `parent_ripple_id` schema + `spawn_child_ripples` + RippleCard/Drawer parent-child badge; +5 pytest +3 vitest
 
 ---
 
@@ -173,7 +163,7 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 | F52 | audit retention | 低 | 🟢 低 | 1.5h | 9.61 | ✅ |
 | F53 | audit WS push | 低 | 🟢 低 | 2h | 9.62 | ✅ |
 | F54 | backfill 增量 | 中 | 🟡 中 | 3-4h | 9.63 | ✅ |
-| F55 | 链式 cascade ≥2 | 高 | 🟢 低 | 8-12h | 9.64+ | ❌ epic |
+| F55 | 链式 cascade ≥2 | 高 | 🟢 低 | 8-12h | 9.64+ | ✅ |
 | F56 | Playwright 加深 | 低 | 🟢 低 | 3-4h | — | ✅ |
 
 ---
@@ -187,26 +177,28 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 1. ~~**Phase 9.56 (F47)** — vue-tsc src/~~ ✅
 2. ~~**Phase 9.57 (F48)** — coverage 四维 80%~~ ✅
 3. ~~**Phase 9.58 (F49)** — pre-commit pytest smoke~~ ✅
-4. **Phase 9.63 (F54)** — backfill 增量 — **下一项推荐**
+4. ~~**Phase 9.63 (F54)** — backfill 增量~~ ✅
+5. ~~**Phase 9.62 (F53)** — audit WS push~~ ✅
+6. **Phase 9.64 (F55)** — 链式 cascade — ✅
 
 ### Track B — CVG 产品 (穿插, 价值导向)
 
 1. ~~**Phase 9.59 (F50)** — impact scoring~~ ✅
 2. ~~**Phase 9.60 (F51)** — audit export~~ ✅
 3. ~~**Phase 9.61 (F52)** — audit retention~~ ✅
-4. **Phase 9.62 (F53)** — audit WS push (optional)
+4. ~~**Phase 9.62 (F53)** — audit WS push~~ ✅
 
 ### Track C — 大项 (需主公 explicit 批准)
 
-1. **Phase 9.64+ (F55)** — 链式 cascade — 拆 3-4 sub-phases, 单独 epic
+1. ~~**Phase 9.64+ (F55)** — 链式 cascade~~ ✅
 
 ### 默认推荐 (主公未指定时)
 
 ```
-F54 (backfill 增量) → F53 (audit WS push, optional)
+F56 (Playwright e2e 加深) 或 F46 (auto-memory 拆分)
 ```
 
-F47-F52 已于 2026-06-11 完成.
+F47-F55 已于 2026-06-11 完成.
 
 ---
 

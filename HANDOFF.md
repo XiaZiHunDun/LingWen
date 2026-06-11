@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.63 (Phase 9.63 F54 incremental backfill, 2026-06-11)
-> **更新 (2026-06-11)**: F54 backfill 增量 workflow hook ✅; baseline **2657 pytest + 355 vitest**; 推荐 **F53** 或 **F55**.
+> **版本**: v9.64 (Phase 9.64 F55 chained cascade + F53 audit WS, 2026-06-11)
+> **更新 (2026-06-11)**: F53 audit WS push ✅ + F55 链式 cascade parent_ripple_id ✅; baseline **2665 pytest + 361 vitest**; 推荐 **F56** 或 **F46**.
 
 ---
 
@@ -15,14 +15,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2657 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 355 passed · coverage 四维 ≥80% · Playwright 1 smoke (opt-in CI) · TS strict (`typecheck` tests + `typecheck:app` src/) |
-| **总测试** | **3012+** (2657 pytest + 355 vitest + 27 pytest skip) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2665 passed |
+| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Pinia-style composable · Vitest 361 passed · coverage 四维 ≥80% · Playwright 1 smoke (opt-in CI) · TS strict (`typecheck` tests + `typecheck:app` src/) |
+| **总测试** | **3026+** (2665 pytest + 361 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (lint + typecheck + vitest coverage → Codecov) + `dashboard-frontend-coverage-pages.yml` (HTML report → GH Pages) |
-| **下一期推荐** | **F53** (audit WS push) 或 **F55** (链式 cascade epic) — 见 v4 roadmap |
+| **下一期推荐** | **F56** (Playwright e2e 加深) 或 **F46** (auto-memory 拆分) — 见 v4 roadmap |
 
 ---
 
@@ -289,14 +289,14 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F50 | cross-volume impact scoring | 9.59 | 2-3h | P1 CVG | ✅ done (`ab4423f`) |
 | F51 | ripple audit export CSV/JSON | 9.60 | 1.5-2h | P1 CVG | ✅ done (`c9d0ae2`) |
 | F52 | ripple audit retention CLI | 9.61 | 1.5h | P1 CVG | ✅ done |
-| F53 | audit entry WS push | 9.62 | 2h | P1 CVG | ⬜ |
+| F53 | audit entry WS push | 9.62 | 2h | P1 CVG | ✅ done |
 | F54 | backfill 增量 workflow hook | 9.63 | 3-4h | P1 CVG | ✅ done |
-| F55 | 链式 cascade depth ≥ 2 (epic) | 9.64+ | 8-12h | P2 | ❌ |
+| F55 | 链式 cascade depth ≥ 2 (epic) | 9.64+ | 8-12h | P2 | ✅ done |
 | F56 | Playwright e2e 加深 (opt-in) | — | 3-4h | P3 | ⬜ |
 
 **已完成 (v3, 9.41-9.54)**: F29-F43 全部 ✅ (见上表 v3 doc / §6 历史表)
 
-**推荐下一项**: **F53** (audit WS push) 或 **F55** (链式 cascade epic，需主公批准) — 见 v4 doc.
+**推荐下一项**: **F56** (Playwright e2e 加深) 或 **F46** (auto-memory 拆分) — 见 v4 doc.
 
 ---
 
@@ -332,11 +332,11 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v4-post-9.54.md` (F44-F56, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 phase 详细, 10 分钟) — 如果要做 P1/P2 任意 item
-- [ ] 跑 `pytest -q` 验证 baseline 2657 passed (~2min)
-- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 355 passed (~8s)
+- [ ] 跑 `pytest -q` 验证 baseline 2665 passed (~2min)
+- [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest 361 passed (~8s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v4 item (推荐 **F53 audit WS push** 或 **F55 链式 cascade**) → brainstorming → writing-plans
+- [ ] 选 1 个 v4 item (推荐 **F56 Playwright e2e** 或 **F46 auto-memory**) → brainstorming → writing-plans
 
 ---
 
@@ -344,10 +344,10 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2657 tests, ~2min
+cd novel-factory && pytest -q                                    # 2665 tests, ~2min
 # 增量 backfill (workflow 完成后 opt-in):
 # LINGWEN_INCREMENTAL_BACKFILL=1 python -c "from infra.agent_system.master_controller import MasterController; ..."
-cd novel-factory/dashboard/frontend && pnpm vitest run             # 355 vitest, ~8s
+cd novel-factory/dashboard/frontend && pnpm vitest run             # 361 vitest, ~8s
 cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
 cd novel-factory/dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 0 tests (Phase 9.31 F15)

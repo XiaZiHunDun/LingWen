@@ -32,6 +32,20 @@
       >
         impact {{ ripple.impact_score }}
       </span>
+      <span
+        v-if="ripple.parent_ripple_id"
+        class="ripple-card__parent"
+        data-testid="ripple-parent-badge"
+      >
+        child of {{ ripple.parent_ripple_id.slice(0, 8) }}
+      </span>
+      <span
+        v-if="ripple.child_count > 0"
+        class="ripple-card__children"
+        data-testid="ripple-child-count"
+      >
+        {{ ripple.child_count }} child{{ ripple.child_count === 1 ? '' : 'ren' }}
+      </span>
       <span class="ripple-card__confidence ripple-confidence" data-testid="ripple-confidence">
         confidence {{ ripple.confidence }}/5
       </span>

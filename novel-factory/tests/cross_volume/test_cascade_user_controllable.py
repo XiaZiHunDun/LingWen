@@ -47,6 +47,8 @@ class TestPreviewCascade:
         import sqlite3
         cvg_storage.preview_cascade("rip-1", max_depth=1)
         with cvg_storage._connect() as conn:
-            rows = conn.execute("SELECT COUNT(*) FROM ripple_cascade").fetchone()[0]
-        # append_ripple wrote 1 cascade row (depth=3 default); preview must NOT add more
+            rows = conn.execute(
+                "SELECT COUNT(*) FROM ripple_cascade WHERE trigger_ripple_id = 'rip-1'"
+            ).fetchone()[0]
+        # append_ripple wrote 1 cascade row for rip-1; preview must NOT add more
         assert rows == 1

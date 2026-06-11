@@ -21,6 +21,7 @@ class CrossVolumeRipple:
     confirmed_at: datetime | None = None
     applied_at: datetime | None = None
     payload: dict[str, Any] = field(default_factory=dict)
+    parent_ripple_id: str | None = None  # Phase 9.64 F55 chained cascade
 
     def __post_init__(self):
         if self.trigger_volume < 1:

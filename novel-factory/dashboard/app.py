@@ -529,6 +529,8 @@ def _ripple_to_list_item(r: CrossVolumeRipple, storage: RippleStorage) -> Ripple
         confidence=r.payload.get("confidence", 1),
         created_at=r.created_at,
         impact_score=_ripple_impact_score(storage, r),
+        parent_ripple_id=r.parent_ripple_id,
+        child_count=storage.count_child_ripples(r.id),
     )
 
 
@@ -544,6 +546,8 @@ def _ripple_to_detail(r: CrossVolumeRipple, storage: RippleStorage) -> RippleDet
         confidence=r.payload.get("confidence", 1),
         created_at=r.created_at,
         impact_score=_ripple_impact_score(storage, r),
+        parent_ripple_id=r.parent_ripple_id,
+        child_count=storage.count_child_ripples(r.id),
         evidence=r.payload.get("evidence", ""),
         source_payload=r.payload.get("source_payload", {}),
         target_payload=r.payload.get("target_payload", {}),
