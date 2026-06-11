@@ -116,3 +116,18 @@ def maybe_attach_memory_context(
 def describe_memory_rag_hook() -> list[dict[str, str]]:
     """Return hook behavior rows for runbook / CLI docs."""
     return [dict(row) for row in MEMORY_RAG_HOOK_BEHAVIOR]
+
+
+def memory_rag_live_gateway_check() -> tuple[bool, str]:
+    """Return (ok, message) for live MemoryGateway (Qdrant + Embedder)."""
+    from infra.memory_service import (
+        get_initialization_error,
+        get_memory_gateway,
+        is_memory_gateway_available,
+    )
+
+    get_memory_gateway()
+    if is_memory_gateway_available():
+        return True, "MemoryGateway live ready (Qdrant + Embedder)"
+    err = get_initialization_error() or "MemoryGateway unavailable"
+    return False, f"MemoryGateway NoOp: {err}"

@@ -19,7 +19,10 @@ from pathlib import Path
 from typing import Any
 
 from infra.agent_system.agent_config import DEFAULT_STATE_DIR, load_default_config
-from infra.agent_system.chapter_memory_hook import resolve_memory_rag_mode
+from infra.agent_system.chapter_memory_hook import (
+    memory_rag_live_gateway_check,
+    resolve_memory_rag_mode,
+)
 from infra.cross_volume.incremental_backfill import incremental_backfill_enabled
 
 PILOT_WORKFLOW_NAME = "novel_writing"
@@ -201,16 +204,12 @@ def preflight_checklist(
 
     mem_mode = resolve_memory_rag_mode()
     if mem_mode == "live":
-        qdrant_hint = os.environ.get("QDRANT_URL") or os.environ.get("QDRANT_HOST")
+        live_ok, live_msg = memory_rag_live_gateway_check()
         checks.append(PreflightCheck(
-            name="memory_rag_live",
-            passed=True,
-            message=(
-                "LINGWEN_MEMORY_RAG=live; Qdrant env detected"
-                if qdrant_hint
-                else "LINGWEN_MEMORY_RAG=live; QDRANT_URL unset — may fall back or fail at runtime"
-            ),
-            required=False,
+            name="memory_rag_live_gateway",
+            passed=live_ok,
+            message=live_msg,
+            required=True,
         ))
     else:
         checks.append(PreflightCheck(

@@ -11,6 +11,7 @@ from infra.agent_system.chapter_memory_hook import (
     WORKFLOWS_WITH_MEMORY,
     describe_memory_rag_hook,
     maybe_attach_memory_context,
+    memory_rag_live_gateway_check,
     resolve_memory_rag_mode,
     stub_chapter_memory_context,
 )
@@ -95,6 +96,23 @@ class TestChapterMemoryHookHelpers:
         assert ctx is not None
         assert ctx["source"] == "live"
         gateway.auto_push_context.assert_called_once_with(5)
+
+    def test_memory_rag_live_gateway_check(self, monkeypatch):
+        monkeypatch.setattr(
+            "infra.memory_service.get_memory_gateway",
+            lambda: MagicMock(is_noop=False),
+        )
+        monkeypatch.setattr(
+            "infra.memory_service.is_memory_gateway_available",
+            lambda: True,
+        )
+        monkeypatch.setattr(
+            "infra.memory_service.get_initialization_error",
+            lambda: None,
+        )
+        ok, msg = memory_rag_live_gateway_check()
+        assert ok is True
+        assert "live ready" in msg
 
 
 class TestChapterMemoryHookGoldenPath:

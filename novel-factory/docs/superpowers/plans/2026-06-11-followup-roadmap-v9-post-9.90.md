@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v8-post-9.84.md` (F77-F82 已于 Phase 9.85-9.90 全部完成, commit `5c988f1`). 本 doc 定义 **360+ 章规模化生产** + **Memory RAG live** + **运维可观测性** 主线, 重新编号 **F83+**.
 > **创建时间**: 2026-06-11 (v8 清空 + bookkeeping)
-> **状态**: v9 进行中; **推荐 F86** MEMORY_RAG=live pilot
+> **状态**: v9 进行中; **推荐 F87** Analytics 成本趋势
 > **前置**: baseline **2845 pytest + 400 vitest** (post `5c988f1`); ch360 + batch 361-363 已跑通
 
 ## 上下文 (Context)
@@ -56,10 +56,11 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - **wave**: ch367–376 · 默认 budget $0.30 · 校准 batch-364-366（fallback 361-363）
 - **Out of scope**: F85 不默认跑真实 10 章 LLM（manual gate 另开）
 
-### F86. Phase 9.94 — MEMORY_RAG=live 单章 pilot
+### F86. Phase 9.94 — MEMORY_RAG=live 单章 pilot ✅
 
-- **目标**: 1 章 pilot with `LINGWEN_MEMORY_RAG=live`（需 Qdrant env）
-- **manual gate**: Qdrant + API key
+- **目标**: 1 章 pilot with `LINGWEN_MEMORY_RAG=live`（需 Qdrant + OPENAI Embedder）
+- **产物**: runbook §19 · `memory-rag-live-preflight.sh` · `memory_rag_live_gateway` required preflight · live stub 模板 · CI 契约
+- **manual gate**: 真实 ch367 live pilot 需 `OPENAI_API_KEY` + Qdrant + LLM key（本环境 preflight step 2 预期 FAIL 无 OPENAI）
 - **estimated**: 3-5h
 
 ---
@@ -105,8 +106,8 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 ## 推荐下一期 phase 顺序
 
-1. **F86** MEMORY_RAG=live 单章 pilot
-2. F87 Analytics 成本趋势
+1. **F87** Analytics 成本趋势
+2. F88 ChaptersPage 最新 batch badge
 
 ---
 
@@ -116,3 +117,4 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - [x] HANDOFF §6 指向 v9 + baseline 2845/400
 - [x] v8 顶部 superseded pointer
 - [x] F85 10 章 wave runbook + dry-run script
+- [x] F86 MEMORY_RAG=live preflight gate + runbook §19（live pilot manual gate）

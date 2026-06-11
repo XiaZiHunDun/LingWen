@@ -63,6 +63,20 @@ class TestPreflightChecklist:
         checks = preflight_checklist(state_dir=tmp_path)
         assert preflight_ok(checks) is True
 
+    def test_live_memory_rag_requires_gateway(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
+        monkeypatch.setenv("LINGWEN_MEMORY_RAG", "live")
+        monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
+        monkeypatch.setattr(
+            "infra.agent_system.chapter_production_pilot.memory_rag_live_gateway_check",
+            lambda: (False, "MemoryGateway NoOp: test"),
+        )
+        checks = preflight_checklist(state_dir=tmp_path)
+        gate = next(c for c in checks if c.name == "memory_rag_live_gateway")
+        assert gate.passed is False
+        assert gate.required is True
+        assert preflight_ok(checks) is False
+
 
 class TestBuildPilotInitialInputs:
     def test_use_llm_true(self):

@@ -666,3 +666,53 @@ python -m infra.agent_system.chapter_production_batch \
 pytest tests/ci/test_chapter_production_batch_f85_ci.py -q
 ```
 
+---
+
+## 19. MEMORY_RAG=live 单章 pilot (F86)
+
+**目标**: 首次用 **真实 MemoryGateway**（Qdrant + OpenAI Embedder）跑 1 章 pilot，验证 `memory_context_source=live`。
+
+### 19.1 前置条件
+
+| 项 | 要求 |
+|----|------|
+| Qdrant | 默认 `http://127.0.0.1:6333` 可访问 |
+| `OPENAI_API_KEY` | **必需** — Embedder 嵌入（`memory_config.yaml`） |
+| `MINIMAX_API_KEY`（或 Anthropic） | novel_writing LLM |
+| `LINGWEN_MEMORY_RAG=live` | 显式开启 live hook |
+| Preflight | `memory_rag_live_gateway` **required** — NoOp 则 preflight 失败 |
+
+### 19.2 一键 preflight
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1
+export LINGWEN_MEMORY_RAG=live
+export OPENAI_API_KEY=sk-...
+export MINIMAX_API_KEY=...
+
+bash novel-factory/scripts/memory-rag-live-preflight.sh 367
+```
+
+### 19.3 跑 live pilot 并写记录
+
+```bash
+python -m infra.agent_system.chapter_production_pilot \
+  --chapter-num 367 \
+  --save-record infra/.state/pilot_records/ch367-live-rag.json \
+  --operator your-name \
+  --pilot-id 2026-06-11-ch367-live-rag-001
+# 验收: memory_context_source=live · emit_chapter_completed=true
+```
+
+脱敏示例: `docs/templates/chapter-pilot-live-rag.stub.example.json`
+
+**与 stub 对比**: F72/F84 用 `LINGWEN_MEMORY_RAG=stub`；F86 必须 Gateway **非 NoOp** 且 record 中 `hooks.memory_context_source=live`。
+
+### 19.4 pytest
+
+```bash
+pytest tests/agent_system/test_chapter_memory_hook.py -q -k live_gateway
+pytest tests/ci/test_chapter_memory_rag_live_f86_ci.py -q
+```
+

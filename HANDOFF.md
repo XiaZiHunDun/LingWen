@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.90 (Phase 9.90 v8 全量交付 + v9 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F84 batch ch364-366；v9 推荐 **F85**。
+> **更新 (2026-06-11)**: F86 MEMORY_RAG=live preflight gate + runbook §19；v9 推荐 **F87**。
 
 ---
 
@@ -21,7 +21,7 @@
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | `f6b3bdd` — feat(F83-bk,F84) v9 batch 364-366 |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F86** MEMORY_RAG=live pilot — 见 §6 + v9 roadmap |
+| **下一期推荐** | **F87** Analytics 成本趋势 — 见 §6 + v9 roadmap |
 
 ---
 
@@ -293,10 +293,10 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F83-bk | v9 roadmap + HANDOFF | 9.91-bk | 30min | P0 | ✅ |
 | **F84** | Batch 364-366 续跑 | 9.92 | 2-4h | P1 | ✅ |
 | **F85** | 10 章 wave runbook | 9.93 | 2h | P1 | ✅ |
-| **F86** | MEMORY_RAG=live pilot | 9.94 | 3-5h | P1 | 🔴 推荐下一项 |
-| F87 | Analytics 成本趋势 | 9.95 | 3-4h | P2 | 待 F84 ✅ |
+| **F86** | MEMORY_RAG=live pilot | 9.94 | 3-5h | P1 | ✅ preflight gate + runbook §19 |
+| F87 | Analytics 成本趋势 | 9.95 | 3-4h | P2 | 🔴 推荐下一项 |
 
-**推荐下一项**: **F86** MEMORY_RAG=live 单章 pilot（需 Qdrant env）
+**推荐下一项**: **F87** Analytics 成本趋势（production-records mini chart）
 
 ---
 
