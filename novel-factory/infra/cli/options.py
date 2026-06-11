@@ -131,12 +131,14 @@ class CascadeOptions(UnifiedOptions):
     max_nodes_cap: int = 100  # Phase 9.32 F16: 1..1000 BFS node cap
     persist: bool = False  # Phase 9.20 NEW: 持久化 cascade run 到 cascade_runs 表 (off by default)
     # Phase 9.21 NEW: subparser group dispatch
-    action: str = "run"      # 'run' | 'cancel' | 'migrate'
+    action: str = "run"      # 'run' | 'cancel' | 'migrate' | 'purge'
     run_id: int = 0          # for cancel action
     reason: str = ""         # for cancel action (logged + WS payload, not persisted)
     # Phase 9.36 F21: migrate action
     execute: bool = False    # migrate --execute (default dry-run)
     migrate_ripple_id: str | None = None  # optional filter
+    # Phase 9.45 F34: purge action
+    older_than: str = "90d"   # e.g. 90d, 12h
 
 
 @dataclass

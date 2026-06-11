@@ -22,7 +22,38 @@ class CascadeCommand(Command):
             return self._execute_cancel(options)
         if options.action == "migrate":
             return self._execute_migrate(options)
+        if options.action == "purge":
+            return self._execute_purge(options)
         return self._execute_run(options)
+
+    def _execute_purge(self, options: CascadeOptions) -> int:
+        """Phase 9.45 F34: retention cleanup for cascade_runs."""
+        import sys
+
+        from infra.cross_volume.cascade_retention import (
+            parse_older_than,
+            purge_cascade_runs_older_than,
+        )
+
+        try:
+            delta = parse_older_than(options.older_than)
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+        storage = _get_storage()
+        mode = "execute" if options.execute else "dry-run"
+        result = purge_cascade_runs_older_than(
+            storage, delta, execute=options.execute
+        )
+        print(
+            f"[PURGE] mode={mode} older_than={options.older_than}"
+            f" cutoff={result.cutoff_iso}"
+        )
+        print(f"  matched={result.matched} deleted={result.deleted}")
+        if not options.execute and result.matched:
+            print("  (re-run with --execute to delete)")
+        return 0
 
     def _execute_migrate(self, options: CascadeOptions) -> int:
         """Phase 9.36 F21: v1 → v2_weighted cascade_runs migration (opt-in)."""

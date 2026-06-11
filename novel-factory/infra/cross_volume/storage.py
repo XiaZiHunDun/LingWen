@@ -12,7 +12,7 @@ import logging
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterator
 
@@ -837,6 +837,42 @@ class RippleStorage:
             conn.commit()
             return True
 
+    @staticmethod
+    def _cascade_runs_filter_clauses(
+        *,
+        ripple_id: str | None = None,
+        status: str | None = None,
+        min_depth: int | None = None,
+        max_depth: int | None = None,
+        algorithm: str | None = None,
+        started_before: str | None = None,
+        started_after: str | None = None,
+    ) -> tuple[list[str], list]:
+        clauses: list[str] = []
+        params: list = []
+        if ripple_id is not None:
+            clauses.append("ripple_id = ?")
+            params.append(ripple_id)
+        if status is not None:
+            clauses.append("status = ?")
+            params.append(status)
+        if min_depth is not None:
+            clauses.append("max_depth >= ?")
+            params.append(min_depth)
+        if max_depth is not None:
+            clauses.append("max_depth <= ?")
+            params.append(max_depth)
+        if algorithm is not None:
+            clauses.append("algorithm = ?")
+            params.append(algorithm)
+        if started_before is not None:
+            clauses.append("started_at < ?")
+            params.append(started_before)
+        if started_after is not None:
+            clauses.append("started_at >= ?")
+            params.append(started_after)
+        return clauses, params
+
     def get_cascade_runs(
         self,
         ripple_id: str,
@@ -862,24 +898,65 @@ class RippleStorage:
         Returns:
             list of CascadeRun, ordered by id DESC
         """
-        clauses, params = ["ripple_id = ?"], [ripple_id]
-        if status is not None:
-            clauses.append("status = ?")
-            params.append(status)
-        if min_depth is not None:
-            clauses.append("max_depth >= ?")
-            params.append(min_depth)
-        if max_depth is not None:
-            clauses.append("max_depth <= ?")
-            params.append(max_depth)
-        if algorithm is not None:
-            clauses.append("algorithm = ?")
-            params.append(algorithm)
-        where = f"WHERE {' AND '.join(clauses)}"
+        return self.list_all_cascade_runs(
+            limit=limit,
+            offset=offset,
+            status=status,
+            min_depth=min_depth,
+            max_depth=max_depth,
+            algorithm=algorithm,
+            ripple_id=ripple_id,
+        )
+
+    def list_all_cascade_runs(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        status: str | None = None,
+        min_depth: int | None = None,
+        max_depth: int | None = None,
+        algorithm: str | None = None,
+        ripple_id: str | None = None,
+        since_days: int | None = None,
+    ) -> list[CascadeRun]:
+        """Phase 9.46 F35: cross-ripple cascade_runs list (latest first)."""
+        started_after = None
+        if since_days is not None and since_days > 0:
+            started_after = (
+                datetime.now(timezone.utc) - timedelta(days=since_days)
+            ).isoformat()
+        clauses, params = self._cascade_runs_filter_clauses(
+            ripple_id=ripple_id,
+            status=status,
+            min_depth=min_depth,
+            max_depth=max_depth,
+            algorithm=algorithm,
+            started_after=started_after,
+        )
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         sql = f"SELECT * FROM cascade_runs {where} ORDER BY id DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         with self._connect() as conn:
             return [self._row_to_cascade_run(row) for row in conn.execute(sql, params)]
+
+    def count_cascade_runs_started_before(self, cutoff_iso: str) -> int:
+        """Phase 9.45 F34: count rows with started_at strictly before cutoff."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS n FROM cascade_runs WHERE started_at < ?",
+                (cutoff_iso,),
+            ).fetchone()
+            return int(row["n"]) if row else 0
+
+    def delete_cascade_runs_started_before(self, cutoff_iso: str) -> int:
+        """Phase 9.45 F34: delete rows with started_at strictly before cutoff."""
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM cascade_runs WHERE started_at < ?",
+                (cutoff_iso,),
+            )
+            conn.commit()
+            return int(cur.rowcount)
 
     def get_cascade_run_by_id(self, run_id: int) -> CascadeRun | None:
         """Phase 9.20: fetch single cascade run by PK, or None."""

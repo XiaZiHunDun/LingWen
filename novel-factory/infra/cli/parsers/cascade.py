@@ -69,4 +69,22 @@ def add_cascade_parser(subparsers: argparse._SubParsersAction) -> argparse.Argum
         dest="migrate_ripple_id",
         help="Optional: migrate only runs for this ripple id",
     )
+
+    purge_p = cascade_subs.add_parser(
+        "purge",
+        help="Purge old cascade_runs rows (Phase 9.45 F34, default dry-run)",
+        description="Delete cascade_runs older than --older-than (default dry-run).",
+    )
+    purge_p.add_argument(
+        "--older-than",
+        type=str,
+        default="90d",
+        help="Retention window to keep (delete older), e.g. 90d, 30d, 12h (default 90d)",
+    )
+    purge_p.add_argument(
+        "--execute",
+        action="store_true",
+        default=False,
+        help="Apply deletion (default: dry-run count only)",
+    )
     return cascade_parent
