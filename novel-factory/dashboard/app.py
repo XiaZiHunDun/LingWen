@@ -924,17 +924,30 @@ def create_app(
         "/api/cvg/ripples/{ripple_id}/cascade",
         response_model=CascadeResponse,
     )
-    def get_ripple_cascade(ripple_id: str) -> CascadeResponse:
+    def get_ripple_cascade(
+        ripple_id: str,
+        max_depth: int | None = Query(default=None),
+    ) -> CascadeResponse:
         """Phase 9.15: return the persisted cascade BFS result for a single ripple.
 
-        Read from ripple_cascade table populated by T1/T2
-        CrossVolumeReferenceGraph.trigger_cascade. Returns 404 if no cascade
-        has been computed for this ripple yet.
+        Phase 9.19: optional max_depth query param (1..10) re-runs BFS live
+        without persisting. max_depth=0 or absent returns persisted cascade
+        (backward compat).
         """
         storage = _default_storage()
-        cascade = storage.get_cascade_by_ripple_id(ripple_id)
-        if cascade is None:
-            raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+
+        # Phase 9.19: validate max_depth if provided
+        if max_depth is not None and max_depth != 0:
+            if max_depth < 0 or max_depth > 10:
+                raise HTTPException(400, "max_depth must be 0 (persisted) or 1..10")
+            # Re-run BFS live — returns CascadedRipple (not persisted)
+            cascade = storage.preview_cascade(ripple_id, max_depth=max_depth)
+        else:
+            # Backward compat: use persisted cascade
+            cascade = storage.get_cascade_by_ripple_id(ripple_id)
+            if cascade is None:
+                raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+
         # ReferenceNode/Edge → dict via helper (Pydantic ignores extras like
         # created_at / created_by / confidence / evidence not in schemas)
         cascade_nodes = [
@@ -959,16 +972,29 @@ def create_app(
         "/api/cvg/ripples/{ripple_id}/cascade/preview",
         response_model=CascadePreviewResponse,
     )
-    def get_ripple_cascade_preview(ripple_id: str) -> CascadePreviewResponse:
+    def get_ripple_cascade_preview(
+        ripple_id: str,
+        max_depth: int | None = Query(default=None),
+    ) -> CascadePreviewResponse:
         """Phase 9.15: return a dry-run preview summary for the apply confirmation modal.
 
+        Phase 9.19: optional max_depth query param (1..10) re-runs BFS live without
+        persisting. max_depth=0 or absent returns persisted cascade (backward compat).
         Computes aggregate counts (affected chapters/characters/settings, estimated
-        changes) from the persisted BFS result. No LLM calls — pure aggregation.
+        changes) from the BFS result. No LLM calls — pure aggregation.
         """
         storage = _default_storage()
-        cascade = storage.get_cascade_by_ripple_id(ripple_id)
-        if cascade is None:
-            raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+
+        # Phase 9.19: validate max_depth if provided
+        if max_depth is not None and max_depth != 0:
+            if max_depth < 0 or max_depth > 10:
+                raise HTTPException(400, "max_depth must be 0 (persisted) or 1..10")
+            cascade = storage.preview_cascade(ripple_id, max_depth=max_depth)
+        else:
+            cascade = storage.get_cascade_by_ripple_id(ripple_id)
+            if cascade is None:
+                raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
+
         # ReferenceNode.dimension: "character" | "foreshadow" | "setting" | "plot_point"
         # Map to modal chip categories: chapter = plot_point+foreshadow (per-chapter events),
         # character = character, setting = setting.
