@@ -144,13 +144,17 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
         )
     # Phase 9.14 additive: 2 new top-level subcommands (0 改 backfill 分支)
     elif command == "ripple-audit":
+        action = getattr(args, "audit_action", None) or "show"
         return RippleAuditOptions(
             range=[],
             parallel=1,
             verbose=False,
             dry_run=False,
-            ripple_id=args.ripple_id,
+            ripple_id=args.ripple_id or "",
             limit=args.limit,
+            action=action,
+            older_than=getattr(args, "older_than", "90d") or "90d",
+            execute=getattr(args, "execute", False),
         )
     elif command == "ripple-rollback":
         return RippleRollbackOptions(

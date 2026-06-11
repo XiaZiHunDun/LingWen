@@ -2,8 +2,8 @@
 
 > **For agentic workers:** 承接 `2026-06-11-followup-roadmap-v3-post-9.40.md` (F29-F43 已于 Phase 9.41-9.54 全部完成). 本 doc 汇总 v3 清空后各 phase entry「out of scope」散落项 + Phase 8.44/9.14/9.18/9.19 遗留, 重新编号 **F44+** 并按 P0/P1/P2/P3 分级.
 > **创建时间**: 2026-06-11 (主公选「开 v4 roadmap」)
-> **状态**: F47-F51 ✅ (2026-06-11); 待主公决策 F49/F52/F54 下一期
-> **前置**: Phase 9.54 F43 ✅ (`337fd8a`), baseline **2640 pytest + 355 vitest** (post F47-F51)
+> **状态**: F47-F52 ✅ (2026-06-11); 待主公决策 F53/F54 下一期
+> **前置**: baseline **2648 pytest + 355 vitest** (post F49/F52)
 
 ## 上下文 (Context)
 
@@ -31,7 +31,7 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 | 项 | 值 |
 |----|-----|
-| **pytest** | 2640 passed, 27 skipped |
+| **pytest** | 2648 passed, 27 skipped |
 | **vitest** | 355 passed (68 files) |
 | **coverage (frontend)** | lines 94.37% / statements 92% / functions 91.23% / branches 80.02% |
 | **Playwright** | 1 smoke spec opt-in (`app-root.spec.js`); vitest primary gate |
@@ -86,14 +86,13 @@ v3 触发条件已满足 (F30-F32 done + F29-F43 全清). 剩余工作分散在:
 
 - **完成 (2026-06-11)**: `aa1d29b` — vitest thresholds 全 80; branches 80.02% 达标; +120 vitest
 
-### F49. Phase 9.58 — pre-commit pytest smoke (backend)
+### F49. Phase 9.58 — pre-commit pytest smoke (backend) ✅ **DONE**
 
-- **承接**: Phase 8.44 out of scope「pre-commit backend pytest smoke」
-- **目标**: husky hook 跑 ~30s smoke subset (`tests/ci/` + 1 integration) 或 `--last-failed` 模式
-- **tests**: 2 pytest 契约 (hook 存在 / 子集 green)
-- **estimated**: 1.5-2h
-- **dependency**: 无
-- **caveat**: 0 阻塞 vitest hook (已有 lint-staged); 慢则 opt-in env `LINGWEN_PRECOMMIT_PYTEST=1`
+- **完成 (2026-06-11)**: opt-in `LINGWEN_PRECOMMIT_PYTEST=1|last-failed`; smoke subset tests/ci/ + health (~2s)
+
+### F52. Phase 9.61 — ripple audit retention policy ✅ **DONE**
+
+- **完成 (2026-06-11)**: `lingwen.py ripple-audit purge --older-than Nd [--execute]` + audit_retention.py
 
 ---
 
@@ -109,13 +108,9 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
 - **完成 (2026-06-11)**: `GET /api/cvg/ripples/{id}/audit/export?format=csv|json` + 5 pytest
 
-### F52. Phase 9.61 — ripple audit retention policy
+### F52. Phase 9.61 — ripple audit retention policy ✅ **DONE**
 
-- **承接**: Phase 9.14 out of scope「Audit retention policy」
-- **目标**: `lingwen.py ripple-audit purge --older-than Nd` (dry-run/execute), 跟 F34 cascade purge 模式 1:1
-- **tests**: 4-5 pytest
-- **estimated**: 1.5h
-- **dependency**: F51 可选
+- **完成 (2026-06-11)**: audit_retention.py + storage purge helpers + ripple-audit purge subcommand
 
 ### F53. Phase 9.62 — audit entry WS push (optional)
 
@@ -184,7 +179,6 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 | F48 | coverage 四维 80% | 中 | 🟡 中 | 3-4h | 9.57 | ✅ |
 | F49 | pre-commit pytest smoke | 低 | 🟢 低 | 1.5-2h | 9.58 | ✅ |
 | F50 | impact scoring | 高 | 🟡 中 | 2-3h | 9.59 | ✅ |
-| F51 | audit export | 中 | 🟢 低 | 1.5-2h | 9.60 | ✅ |
 | F52 | audit retention | 低 | 🟢 低 | 1.5h | 9.61 | ✅ |
 | F53 | audit WS push | 低 | 🟢 低 | 2h | 9.62 | ✅ |
 | F54 | backfill 增量 | 中 | 🟡 中 | 3-4h | 9.63 | ✅ |
@@ -201,14 +195,15 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 
 1. ~~**Phase 9.56 (F47)** — vue-tsc src/~~ ✅
 2. ~~**Phase 9.57 (F48)** — coverage 四维 80%~~ ✅
-3. **Phase 9.58 (F49)** — pre-commit pytest smoke — **下一项推荐**
+3. ~~**Phase 9.58 (F49)** — pre-commit pytest smoke~~ ✅
+4. **Phase 9.63 (F54)** — backfill 增量 — **下一项推荐**
 
 ### Track B — CVG 产品 (穿插, 价值导向)
 
 1. ~~**Phase 9.59 (F50)** — impact scoring~~ ✅
 2. ~~**Phase 9.60 (F51)** — audit export~~ ✅
-3. **Phase 9.61 (F52)** — audit retention — **下一项推荐**
-4. **Phase 9.63 (F54)** — backfill 增量 — 359 章后新书 pipeline 前置
+3. ~~**Phase 9.61 (F52)** — audit retention~~ ✅
+4. **Phase 9.62 (F53)** — audit WS push (optional)
 
 ### Track C — 大项 (需主公 explicit 批准)
 
@@ -217,10 +212,10 @@ Dashboard 可感知价值; 跟 9.33-9.54 数据层互补.
 ### 默认推荐 (主公未指定时)
 
 ```
-F49 (pre-commit pytest) → F52 (audit retention) → F54 (backfill 增量)
+F54 (backfill 增量) → F53 (audit WS push, optional)
 ```
 
-F47/F48/F50/F51 已于 2026-06-11 完成 (Track A→B 默认序列).
+F47-F52 已于 2026-06-11 完成.
 
 ---
 

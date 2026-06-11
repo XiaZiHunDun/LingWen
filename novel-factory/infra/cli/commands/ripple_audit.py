@@ -38,6 +38,39 @@ class RippleAuditCommand(Command):
     description = "打印涟漪审计历史 (Phase 9.14)"
 
     def execute(self, options: UnifiedOptions) -> int:
+        action = getattr(options, "action", "show") or "show"
+        if action == "purge":
+            return self._execute_purge(options)
+        return self._execute_show(options)
+
+    def _execute_purge(self, options: UnifiedOptions) -> int:
+        """Phase 9.61 F52: retention cleanup for ripple_audit."""
+        from infra.cross_volume.audit_retention import (
+            parse_older_than,
+            purge_audit_entries_older_than,
+        )
+
+        try:
+            delta = parse_older_than(options.older_than)
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+        storage = _get_storage()
+        mode = "execute" if options.execute else "dry-run"
+        result = purge_audit_entries_older_than(
+            storage, delta, execute=options.execute
+        )
+        print(
+            f"[PURGE] mode={mode} older_than={options.older_than}"
+            f" cutoff={result.cutoff_iso}"
+        )
+        print(f"  matched={result.matched} deleted={result.deleted}")
+        if not options.execute and result.matched:
+            print("  (re-run with --execute to delete)")
+        return 0
+
+    def _execute_show(self, options: UnifiedOptions) -> int:
         # lingwen.py:127 always passes RippleAuditOptions — direct attr access.
         ripple_id = options.ripple_id
         limit = options.limit

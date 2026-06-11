@@ -93,6 +93,9 @@ class RippleAuditOptions(UnifiedOptions):
     """
     ripple_id: str = ""
     limit: int = 20  # max audit entries to print (newest first)
+    action: str = "show"  # 'show' | 'purge' (Phase 9.61 F52)
+    older_than: str = "90d"
+    execute: bool = False
 
 
 @dataclass

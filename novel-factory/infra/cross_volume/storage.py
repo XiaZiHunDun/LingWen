@@ -634,6 +634,25 @@ class RippleStorage:
             ).fetchall()
             return [self._row_to_audit(r) for r in rows]
 
+    def count_audit_entries_created_before(self, cutoff_iso: str) -> int:
+        """Phase 9.61 F52: count ripple_audit rows with created_at strictly before cutoff."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS n FROM ripple_audit WHERE created_at < ?",
+                (cutoff_iso,),
+            ).fetchone()
+            return int(row["n"]) if row else 0
+
+    def delete_audit_entries_created_before(self, cutoff_iso: str) -> int:
+        """Phase 9.61 F52: delete ripple_audit rows with created_at strictly before cutoff."""
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM ripple_audit WHERE created_at < ?",
+                (cutoff_iso,),
+            )
+            conn.commit()
+            return int(cur.rowcount)
+
     def rollback_ripple(
         self,
         ripple_id: str,
