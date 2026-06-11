@@ -2,6 +2,7 @@
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { expect } from '@playwright/test';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../../../../../..');
@@ -31,4 +32,32 @@ export function resetE2eDecision() {
 
 export async function clickNav(page, label) {
   await page.getByRole('link', { name: label }).click();
+}
+
+/** Wait until ripple list finished initial fetch (loading hidden). */
+export async function waitForRippleListReady(page, timeout = 20_000) {
+  const loading = page.getByTestId('ripple-list-loading');
+  if (await loading.isVisible().catch(() => false)) {
+    await loading.waitFor({ state: 'hidden', timeout });
+  }
+  await page
+    .getByTestId('ripple-card')
+    .first()
+    .or(page.getByTestId('ripple-list-empty'))
+    .waitFor({ timeout });
+}
+
+/** Open first ripple drawer after list + detail fetch complete. */
+export async function openFirstRippleDrawer(page) {
+  await waitForRippleListReady(page);
+  const detailResponse = page.waitForResponse(
+    (resp) =>
+      resp.url().includes('/api/cvg/ripples/') &&
+      resp.request().method() === 'GET' &&
+      resp.status() === 200,
+    { timeout: 20_000 },
+  );
+  await page.getByTestId('ripple-card').first().click();
+  await detailResponse;
+  await expect(page.getByTestId('ripple-drawer')).toBeVisible({ timeout: 10_000 });
 }

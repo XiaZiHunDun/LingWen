@@ -12,7 +12,8 @@
  * @typedef {{id:number, action:string, actor:string, origin:string, reason:string|null, created_at:string}} AuditEntryResponse
  */
 
-const BASE_URL = 'http://localhost:8765/api';
+// Dev (vite :5173): same-origin /api via proxy. Prod / direct backend: explicit host.
+const BASE_URL = import.meta.env.DEV ? '/api' : 'http://127.0.0.1:8765/api';
 
 /**
  * Make a request to the API with error handling

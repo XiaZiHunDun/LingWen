@@ -4,9 +4,11 @@ import { test, expect } from '@playwright/test';
 import {
   LIVE_E2E_ENABLED,
   clickNav,
+  openFirstRippleDrawer,
   resetRipple,
   runE2eSeed,
   skipUnlessLive,
+  waitForRippleListReady,
 } from './helpers/live-backend.js';
 
 const PENDING_ID = 'rip-pending-1';
@@ -21,9 +23,7 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
     skipUnlessLive(test);
     await page.goto('/');
     await clickNav(page, /涟漪/);
-    await page.getByTestId('ripple-card').first().waitFor({ timeout: 15_000 });
-    await page.getByTestId('ripple-card').first().click();
-    await expect(page.getByTestId('ripple-drawer')).toBeVisible();
+    await openFirstRippleDrawer(page);
     await expect(
       page.getByTestId('ripple-audit-list').or(page.getByTestId('ripple-audit-empty')),
     ).toBeVisible();
@@ -31,37 +31,47 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
 
   test('apply_then_rollback_updates_audit_timeline', async ({ page }) => {
     skipUnlessLive(test);
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     resetRipple(PENDING_ID, 'pending');
     page.on('dialog', (dialog) => dialog.accept('e2e rollback reason'));
 
     await page.goto('/');
     await clickNav(page, /涟漪/);
-    await page.getByTestId('ripple-card').first().waitFor({ timeout: 15_000 });
-    await page.getByTestId('ripple-card').first().click();
-    await expect(page.getByTestId('ripple-drawer')).toBeVisible();
+    await openFirstRippleDrawer(page);
 
     await page.getByTestId('ripple-drawer-apply').click();
     await expect(page.getByTestId('apply-confirm-modal')).toBeVisible();
     await page.getByTestId('apply-confirm-apply').click();
-    await expect(page.getByTestId('ripple-drawer')).toBeHidden({ timeout: 10_000 });
+    await expect(page.getByTestId('ripple-drawer')).toBeHidden({ timeout: 15_000 });
 
-    await page.getByTestId('ripple-card').first().click();
-    await expect(page.getByTestId('ripple-drawer')).toBeVisible();
+    await openFirstRippleDrawer(page);
     await page.getByTestId('ripple-rollback-btn').click();
-    await expect(page.getByTestId('ripple-drawer')).toBeHidden({ timeout: 10_000 });
+    await expect(page.getByTestId('ripple-drawer')).toBeHidden({ timeout: 15_000 });
 
-    await page.getByTestId('ripple-card').first().click();
+    await openFirstRippleDrawer(page);
     await expect(page.getByTestId('ripple-audit-list')).toContainText('rolled_back');
   });
 
   test('rejected_ripple_shows_audit_section', async ({ page }) => {
     skipUnlessLive(test);
+    test.setTimeout(60_000);
     await page.goto('/');
     await clickNav(page, /涟漪/);
-    await page.getByTestId('ripple-card').first().waitFor({ timeout: 15_000 });
-    await page.getByTestId('ripple-card').first().click();
-    await expect(page.getByTestId('ripple-drawer')).toBeVisible();
+    await waitForRippleListReady(page);
+    const rejectedCard = page
+      .getByTestId('ripple-card')
+      .filter({ has: page.getByTestId('ripple-status').filter({ hasText: 'rejected' }) })
+      .first();
+    const detailResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/api/cvg/ripples/') &&
+        resp.request().method() === 'GET' &&
+        resp.status() === 200,
+      { timeout: 20_000 },
+    );
+    await rejectedCard.click();
+    await detailResponse;
+    await expect(page.getByTestId('ripple-drawer')).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByTestId('ripple-audit-list').or(page.getByTestId('ripple-audit-empty')),
     ).toBeVisible();

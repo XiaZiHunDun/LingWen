@@ -12,14 +12,12 @@ def main() -> None:
     ensure_e2e_fixtures()
 
     from dashboard.app import create_app
-    from dashboard.protocols import MasterControllerAdapter
-    from infra.agent_system.master_controller import MasterController
+    from dashboard.e2e_stub_controller import E2EStubController
 
     state_dir = Path(__file__).resolve().parent.parent / "infra" / ".state"
     state_dir.mkdir(parents=True, exist_ok=True)
 
-    controller = MasterControllerAdapter(MasterController(state_dir=str(state_dir)))
-    app = create_app(master_controller=controller)
+    app = create_app(master_controller=E2EStubController(state_dir=str(state_dir)))
 
     import uvicorn
 

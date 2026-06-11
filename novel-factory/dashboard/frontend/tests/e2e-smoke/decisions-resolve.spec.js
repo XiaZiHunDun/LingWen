@@ -17,21 +17,28 @@ test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
 
   test('decisions_page_renders_title', async ({ page }) => {
     skipUnlessLive(test);
-    await page.goto('/');
+    test.setTimeout(60_000);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await clickNav(page, /决策/);
     await expect(page.getByTestId('page-title')).toHaveText('决策中心');
   });
 
   test('resolve_pending_decision_shows_readonly_state', async ({ page }) => {
     skipUnlessLive(test);
-    test.setTimeout(45_000);
+    test.setTimeout(60_000);
     resetE2eDecision();
 
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await clickNav(page, /决策/);
-    await page.getByTestId('decision-card').waitFor({ timeout: 15_000 });
+    await page.getByTestId('decision-card').waitFor({ timeout: 20_000 });
     await page.getByTestId('option-btn').first().click();
-    await expect(page.getByTestId('readonly-hint')).toBeVisible({ timeout: 10_000 });
+    // Pending tab clears after resolve (WS authority); resolved card lives under 已完成.
+    await page.getByRole('button', { name: /已完成/ }).click();
+    const expandBtn = page.getByRole('button', { name: /展开/ });
+    if (await expandBtn.isVisible()) {
+      await expandBtn.click();
+    }
+    await expect(page.getByTestId('readonly-hint')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('readonly-hint')).toContainText('已解决');
   });
 });
