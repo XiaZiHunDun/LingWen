@@ -19,7 +19,7 @@
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **409** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
 | **总测试** | **~3311** (2902 pytest + 409 vitest + skips) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `fe45027` — feat(F88,F90) batch badge + e2e-live ci_records |
+| **当前 commit** | `11014d3` — docs(handoff) v9.98 定稿（功能 HEAD `fe45027`） |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
 | **下一期推荐** | **正文生产** wave 367–376（runbook §18）或 v10 roadmap 规划 |
 
@@ -336,7 +336,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
 - [ ] 跑 `cd novel-factory && pytest -q` 验证 baseline **2902** collected (~2min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
-- [ ] 跑 `git log --oneline -5` 确认 HEAD=`fe45027` 或更新
+- [ ] 跑 `git log --oneline -5` 确认 HEAD=`11014d3` 或更新
 - [ ] 跑 `git status` 确认 working tree 干净
 - [ ] 选下一工作: **wave 367–376 batch**（runbook §18）或 v10 规划
 
