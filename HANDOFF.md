@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.84 (Phase 9.84 v7 全量交付 + v8 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F76 remote e2e checklist; v8 推荐 **F78** Settings 预算写入。
+> **更新 (2026-06-11)**: F79 batch ch361-363 真实 LLM 3/3; v8 推荐 **F80** dry-run。
 
 ---
 
@@ -19,9 +19,9 @@
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **384** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
 | **总测试** | **~3192** (2781 pytest + 384 vitest + 27 pytest skip) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `e746bdc` — feat(F76) v7 remote e2e-live checklist |
+| **当前 commit** | `f429533` — feat(F77-bk,F78) v8 Settings 预算写入 |
 | **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **F79** Manual batch 3 章 pilot — 见 §6 + v8 roadmap |
+| **下一期推荐** | **F80** Batch dry-run 增强 — 见 §6 + v8 roadmap |
 
 ---
 
@@ -292,9 +292,9 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 |---|------|-------|------|-------|------|
 | F77-bk | v8 roadmap + HANDOFF | 9.85-bk | 30min | P0 | ✅ |
 | **F78** | Settings 预算写入 UI | 9.86 | 2-3h | P2 | ✅ |
-| **F79** | Manual batch 3 章 pilot | 9.87 | 2-4h | P1 | 🔴 推荐下一项 |
-| F80 | Batch dry-run 增强 | 9.88 | 2-3h | P1 | 待 F79 |
-| F81 | Analytics batch rollup | 9.89 | 3-4h | P2 | 待 F79 |
+| **F79** | Manual batch 3 章 pilot | 9.87 | 2-4h | P1 | ✅ |
+| **F80** | Batch dry-run 增强 | 9.88 | 2-3h | P1 | 🔴 推荐下一项 |
+| F81 | Analytics batch rollup | 9.89 | 3-4h | P2 | 待 F79 ✅ |
 
 **推荐下一项**: **F79** Manual batch 3 章 pilot（F78 代码交付后）
 

@@ -445,3 +445,55 @@ pytest tests/agent_system/test_chapter_production_batch.py -q
 pytest tests/ci/test_chapter_production_batch_f73_ci.py -q
 ```
 
+---
+
+## 15. Manual batch pilot 执行与记录 (F79)
+
+**前提**: §14 preflight 全绿 · 已有 §13 单章 pilot 经验（推荐先跑 1 章）。
+
+### 15.1 跑 3 章 batch 并写记录
+
+```bash
+cd novel-factory
+export LINGWEN_REAL_LLM=1
+export LINGWEN_INCREMENTAL_BACKFILL=1
+export LINGWEN_MEMORY_RAG=stub
+export MINIMAX_API_KEY=...
+
+python -m infra.agent_system.chapter_production_batch \
+  --start-chapter 361 --max-chapters 3 --budget-usd 0.15 \
+  --save-summary infra/.state/pilot_records/batch-361-363.json \
+  --save-chapter-records-dir infra/.state/pilot_records/ \
+  --operator your-name
+# exit 0 · stopped_reason=completed · chapters_succeeded=3
+```
+
+### 15.2 验收 checklist
+
+| 项 | 通过标准 |
+|----|----------|
+| `stopped_reason` | `completed`（非 `chapter_failed` / `budget_exceeded`） |
+| `chapters_succeeded` | 等于 `chapters_attempted` |
+| `total_cost_usd` | ≤ `--budget-usd`（若设置） |
+| 每章 `emit_chapter_completed` | 全部为 `true` |
+| per-chapter JSON | `--save-chapter-records-dir` 下 `chNNN.json` 与 summary 一致 |
+| 正文质量 | 人工审 361–363 emit 产出 |
+
+**2026-06-11 首跑参考** (MiniMax M2.7, stub memory):
+
+| 章 | cost (USD) | emit |
+|----|------------|------|
+| 361 | ~0.025 | ✅ |
+| 362 | ~0.027 | ✅ |
+| 363 | ~0.030 | ✅ |
+| **合计** | **~0.083** / budget 0.15 | 3/3 |
+
+脱敏 batch 示例: `docs/templates/chapter-batch-record.stub.example.json`
+
+### 15.3 pytest
+
+```bash
+pytest tests/ci/test_chapter_production_batch_f73_ci.py -q
+pytest tests/ci/test_chapter_production_batch_f79_ci.py -q
+```
+
