@@ -45,6 +45,11 @@ def _fail(chapter_num: int) -> PilotResult:
 
 
 class TestRunProductionBatch:
+    @pytest.fixture(autouse=True)
+    def _isolate_memory_rag_for_batch(self, monkeypatch):
+        """Batch unit tests use fake API keys; avoid live RAG gateway probe (F86)."""
+        monkeypatch.setenv("LINGWEN_MEMORY_RAG", "stub")
+
     def test_runs_sequential_success(self, tmp_path, monkeypatch):
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")

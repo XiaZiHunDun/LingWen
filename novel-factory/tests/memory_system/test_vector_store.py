@@ -71,15 +71,21 @@ class TestQdrantClientWrapper:
         query_vector = [0.5] * 1536
         top_k = 3
 
-        mock_results = [
-            {"id": "ch_001", "score": 0.95, "payload": {"content": "测试内容1", "chapter_id": "ch_001"}},
-            {"id": "ch_002", "score": 0.88, "payload": {"content": "测试内容2", "chapter_id": "ch_002"}},
+        mock_hits = [
+            Mock(id="ch_001", score=0.95, payload={"content": "测试内容1", "chapter_id": "ch_001"}),
+            Mock(id="ch_002", score=0.88, payload={"content": "测试内容2", "chapter_id": "ch_002"}),
         ]
-        mock_qdrant_client.search.return_value = mock_results
+        if wrapper._uses_query_points_api():
+            mock_qdrant_client.query_points.return_value = Mock(points=mock_hits)
+        else:
+            mock_qdrant_client.search.return_value = mock_hits
 
         results = wrapper.search(collection_name, query_vector, top_k=top_k)
 
-        mock_qdrant_client.search.assert_called_once()
+        if wrapper._uses_query_points_api():
+            mock_qdrant_client.query_points.assert_called_once()
+        else:
+            mock_qdrant_client.search.assert_called_once()
         assert len(results) == 2
         assert results[0]["id"] == "ch_001"
         assert results[0]["score"] == 0.95
@@ -90,14 +96,20 @@ class TestQdrantClientWrapper:
         collection_name = "chapters_seg"
         query_vector = [0.3] * 1536
 
-        mock_results = [
-            {"id": "ch_001", "score": 0.92, "payload": {"chapter_id": "ch_001"}},
+        mock_hits = [
+            Mock(id="ch_001", score=0.92, payload={"chapter_id": "ch_001"}),
         ]
-        mock_qdrant_client.search.return_value = mock_results
+        if wrapper._uses_query_points_api():
+            mock_qdrant_client.query_points.return_value = Mock(points=mock_hits)
+        else:
+            mock_qdrant_client.search.return_value = mock_hits
 
         wrapper.search_with_filter(collection_name, query_vector, must={"chapter_id": "ch_001"})
 
-        mock_qdrant_client.search.assert_called_once()
+        if wrapper._uses_query_points_api():
+            mock_qdrant_client.query_points.assert_called_once()
+        else:
+            mock_qdrant_client.search.assert_called_once()
 
 
 class TestBatchEmbedder:

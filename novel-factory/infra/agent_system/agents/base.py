@@ -221,8 +221,11 @@ class AgentBase:
             return {"content": response, "word_count": len(response)}
         elif format_type == "json":
             import json
+
+            from infra.prompt_engineering.extraction import _extract_json_block
+
             try:
-                return json.loads(response)
+                return json.loads(_extract_json_block(response))
             except json.JSONDecodeError:
                 return {"raw": response}
         else:

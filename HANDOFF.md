@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.98 (Phase 9.98 v9 全量交付, 2026-06-11)
-> **更新 (2026-06-11)**: v9 收尾定稿 — baseline 2902 pytest / 409 vitest · HEAD `fe45027`
+> **更新 (2026-06-11)**: baseline 全绿验证 — pytest 2893 passed / vitest 409 passed
 
 ---
 
@@ -15,7 +15,7 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2902** collected |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2902** collected (**2893** passed, 9 skipped) |
 | **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **409** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
 | **总测试** | **~3311** (2902 pytest + 409 vitest + skips) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
@@ -286,7 +286,7 @@ b96a669 feat(F86): live RAG preflight gate + runbook §19
 | F87 | Analytics 成本趋势 | 9.96 | 3-4h | P2 | ✅ |
 | F88 | ChaptersPage batch badge | 9.97 | 2h | P2 | ✅ |
 | F90 | e2e-live 首绿记录 | 9.98 | 30min | P3 | ✅ |
-| — | v9 收尾 | 9.98-bk | 30min | P0 | ✅ baseline 2902/409 · HEAD fe45027 |
+| — | v9 收尾 | 9.98-bk | 30min | P0 | ✅ pytest 2893/2902 · vitest 409 |
 
 **v9 已全部完成。** 推荐下一项:
 
@@ -336,7 +336,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
 - [ ] 跑 `cd novel-factory && pytest -q` 验证 baseline **2902** collected (~2min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
-- [ ] 跑 `git log --oneline -5` 确认 HEAD=`11014d3` 或更新
+- [ ] 跑 `git log --oneline -5` 确认 HEAD=`d8685b2` 或更新
 - [ ] 跑 `git status` 确认 working tree 干净
 - [ ] 选下一工作: **wave 367–376 batch**（runbook §18）或 v10 规划
 

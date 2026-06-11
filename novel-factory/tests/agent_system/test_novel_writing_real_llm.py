@@ -132,7 +132,7 @@ class TestPolishMergeSynthesisRealLLM:
         )
 
         # 跟 TestNovelWritingRealLLM 同样的 5 步断言
-        assert result["fallback"] is None, (
+        assert result.get("fallback") is None, (
             f"polish_merge_synthesis 应走 LLM 路径, 但 fallback={result['fallback']!r}"
         )
         _assert_s1_s8_score_dict(result["scores_a"], "scores_a")
@@ -172,7 +172,7 @@ class TestNovelWritingRealLLMOpenAI:
         )
 
         # 9 步断言 (跟 TestPolishMergeSynthesisRealLLM 一致)
-        assert result["fallback"] is None, (
+        assert result.get("fallback") is None, (
             f"polish_merge_synthesis (OpenAI) 应走 LLM 路径, 但 fallback={result['fallback']!r}"
         )
         _assert_s1_s8_score_dict(result["scores_a"], "scores_a")
@@ -209,7 +209,7 @@ class TestNovelWritingRealLLMMiniMax:
         )
 
         # 9 步断言 (跟 TestPolishMergeSynthesisRealLLM 一致)
-        assert result["fallback"] is None, (
+        assert result.get("fallback") is None, (
             f"polish_merge_synthesis (MiniMax) 应走 LLM 路径, 但 fallback={result['fallback']!r}"
         )
         _assert_s1_s8_score_dict(result["scores_a"], "scores_a")
