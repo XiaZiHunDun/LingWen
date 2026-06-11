@@ -1,11 +1,19 @@
-// dashboard/frontend/tests/unit/cascade-runs-panel.spec.js — Phase 9.22 T2
+// dashboard/frontend/tests/unit/cascade-runs-panel.spec.js — Phase 9.22 T2 + Phase 9.23 T5b
 // CascadeRunsPanel vitest: list historical cascade_runs + Replay + Cancel + WS handler
 // Mirror cascade-graph.spec.js pattern: vi.mock('../../src/api/index.js') + vi.mock
 //   useWorkflowSocket + globalThis.__cascadeHandlers for WS push injection.
-// 3 case:
-//   - renders_table_with_status_badges_and_cancel_only_for_running
-//   - click_replay_fetches_cascade_with_same_max_depth_and_renders_graph
-//   - ws_cascade_cancel_event_updates_row_status_to_cancelled
+// Phase 9.23 T5b: URL ?status=...&min_depth=... sync via window.history.replaceState
+//   + popstate (no vue-router — dashboard 是 single-page ref-based nav, 0 router dep).
+//
+// Cases (6 total):
+//   Phase 9.22 (3):
+//     - renders_table_with_status_badges_and_cancel_only_for_running
+//     - click_replay_fetches_cascade_with_same_max_depth_and_renders_graph
+//     - ws_cascade_cancel_event_updates_row_status_to_cancelled
+//   Phase 9.23 T5b (3):
+//     - reads_filter_from_window_location_search_on_mount_and_passes_to_fetchCascadeRuns
+//     - changing_status_filter_updates_URL_via_history_replaceState
+//     - popstate_event_reloads_runs_when_URL_changes
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
@@ -67,6 +75,13 @@ let mockCancelCascadeRun;
 let mockFetchCascadeWithDepth;
 let CascadeRunsPanel;
 
+// jsdom: window.location.search 读-only; 用 history.replaceState 改 URL search
+// 跟 production 一致 (CascadeRunsPanel 也用 replaceState, 0 push)
+function setWindowQuery(search) {
+  const url = `${window.location.pathname}${search || ''}${window.location.hash}`;
+  window.history.replaceState(window.history.state, '', url);
+}
+
 beforeEach(async () => {
   // 动态 import 获取已 mock 的模块引用 (镜像 ripple-drawer-cascade.spec.js 模式)
   const api = await import('../../src/api/index.js');
@@ -85,10 +100,13 @@ beforeEach(async () => {
   mockFetchCascadeRuns.mockResolvedValue(FAKE_RUNS);
   mockCancelCascadeRun.mockResolvedValue({ ...FAKE_RUNS[1], status: 'cancelled', completed_at: '2026-06-11T11:30:00Z' });
   mockFetchCascadeWithDepth.mockResolvedValue(FAKE_REPLAY_CASCADE);
+  // Phase 9.23 T5b: reset URL search 让每 test 独立 (避免上一个 test ?status=... 泄漏)
+  setWindowQuery('');
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  setWindowQuery('');  // 0 污染 sibling test file 的 window.location.search
 });
 
 describe('CascadeRunsPanel.vue', () => {
@@ -138,5 +156,67 @@ describe('CascadeRunsPanel.vue', () => {
     expect(rows[1].find('[data-testid="status-badge-cancelled"]').exists()).toBe(true);
     // Cancel button should be gone (no longer running)
     expect(rows[1].find('[data-testid="cancel-btn"]').exists()).toBe(false);
+  });
+});
+
+// === Phase 9.23 T5b: URL search params ↔ filters 双向同步 (window.history) ===
+describe('Phase 9.23: CascadeRunsPanel filter URL sync', () => {
+  it('reads_filter_from_window_location_search_on_mount_and_passes_to_fetchCascadeRuns', async () => {
+    // Deep link: URL 带 ?status=cancelled&min_depth=2 → mount 时直接拿此 filter fetch
+    setWindowQuery('?status=cancelled&min_depth=2');
+    const wrapper = mount(CascadeRunsPanel, { props: { rippleId: 'rip-1' } });
+    await flushPromises();
+    // fetchCascadeRuns 应拿到 filter { status: 'cancelled', minDepth: 2 }
+    expect(mockFetchCascadeRuns).toHaveBeenCalledWith(
+      'rip-1',
+      expect.objectContaining({ status: 'cancelled', minDepth: 2 })
+    );
+    // Filter UI 应显示当前值
+    const filterSelect = wrapper.find('[data-testid="filter-status"]');
+    expect(filterSelect.element.value).toBe('cancelled');
+    const minInput = wrapper.find('[data-testid="filter-min-depth"]');
+    expect(minInput.element.value).toBe('2');
+  });
+
+  it('changing_status_filter_updates_URL_via_history_replaceState', async () => {
+    // 空 URL mount
+    setWindowQuery('');
+    const wrapper = mount(CascadeRunsPanel, { props: { rippleId: 'rip-1' } });
+    await flushPromises();
+    expect(window.location.search).toBe('');
+    // 找 CascadeRunsFilter 子组件, 触发 update:modelValue emit (模仿用户改 status dropdown)
+    const filter = wrapper.findComponent({ name: 'CascadeRunsFilter' });
+    expect(filter.exists()).toBe(true);
+    await filter.vm.$emit('update:modelValue', {
+      status: 'cancelled', minDepth: null, maxDepth: null, algorithm: 'all',
+    });
+    await flushPromises();
+    // URL 应被 replaceState 更新 (含 status=cancelled)
+    expect(window.location.search).toContain('status=cancelled');
+    // fetchCascadeRuns 应被新 filter 重新调用
+    const lastCall = mockFetchCascadeRuns.mock.calls[mockFetchCascadeRuns.mock.calls.length - 1];
+    expect(lastCall[1]).toEqual(expect.objectContaining({ status: 'cancelled' }));
+  });
+
+  it('popstate_event_reloads_runs_when_URL_changes', async () => {
+    // mount with empty URL
+    setWindowQuery('');
+    const wrapper = mount(CascadeRunsPanel, { props: { rippleId: 'rip-1' } });
+    await flushPromises();
+    const initialCalls = mockFetchCascadeRuns.mock.calls.length;
+    // 模拟浏览器 back/forward: URL 改 + 触发 popstate
+    // (popstate 通常由 history.back/forward/go 触发, 但 popstate 不会因 replaceState 触发,
+    //  所以在 test 里手动 dispatch)
+    setWindowQuery('?status=running');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    await flushPromises();
+    // 应该有额外的 fetchCascadeRuns 调用
+    expect(mockFetchCascadeRuns.mock.calls.length).toBeGreaterThan(initialCalls);
+    // 最后一次调用应包含 status: 'running'
+    const lastCall = mockFetchCascadeRuns.mock.calls[mockFetchCascadeRuns.mock.calls.length - 1];
+    expect(lastCall[1]).toEqual(expect.objectContaining({ status: 'running' }));
+    // Filter UI 应反映 URL
+    const filterSelect = wrapper.find('[data-testid="filter-status"]');
+    expect(filterSelect.element.value).toBe('running');
   });
 });
