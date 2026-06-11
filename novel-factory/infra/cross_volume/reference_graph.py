@@ -9,6 +9,7 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from infra.cross_volume.ripple import CrossVolumeRipple
+from infra.cross_volume.cache import QueryImpactCache
 
 logger = logging.getLogger(__name__)
 
@@ -83,15 +84,105 @@ class CascadedRipple:
 
 
 class CrossVolumeReferenceGraph:
-    def __init__(self, storage) -> None:
+    def __init__(self, storage, *, lazy: bool = False) -> None:
         self._storage = storage
+        self._lazy = lazy
         self._nodes: dict[str, ReferenceNode] = {}
         self._edges: dict[str, ReferenceEdge] = {}
         self._ripples: dict[str, CrossVolumeRipple] = {}
         self._index_by_volume: dict[int, set[str]] = {}
         self._index_by_dimension: dict[DimensionT, set[str]] = {}
         self._index_by_node_edges: dict[str, set[str]] = {}
-        self._load_from_storage()
+        self._impact_cache = QueryImpactCache()
+        self._loaded_volumes: set[int] = set()
+        if lazy:
+            logger.debug("CrossVolumeReferenceGraph lazy mode (no startup full load)")
+        else:
+            self._load_from_storage()
+
+    @property
+    def storage(self):
+        return self._storage
+
+    @property
+    def lazy(self) -> bool:
+        return self._lazy
+
+    @property
+    def loaded_volumes(self) -> set[int]:
+        return self._loaded_volumes
+
+    @property
+    def impact_cache(self) -> QueryImpactCache:
+        return self._impact_cache
+
+    @property
+    def node_ids(self) -> set[str]:
+        return set(self._nodes.keys())
+
+    @property
+    def edge_ids(self) -> set[str]:
+        return set(self._edges.keys())
+
+    def ensure_volume_loaded(self, volume: int) -> None:
+        """Phase 9.42 F31: hydrate one volume slice when lazy=True."""
+        from infra.cross_volume.perf import ensure_volume_loaded
+
+        ensure_volume_loaded(self, volume)
+
+    def ingest_node(self, node: ReferenceNode) -> None:
+        """In-memory node insert without storage write (lazy load path)."""
+        if node.id in self._nodes:
+            return
+        self._nodes[node.id] = node
+        self._index_by_volume.setdefault(node.volume, set()).add(node.id)
+        self._index_by_dimension.setdefault(node.dimension, set()).add(node.id)
+
+    def ingest_edge(self, edge: ReferenceEdge) -> None:
+        """In-memory edge insert without storage write (lazy load path)."""
+        if edge.id in self._edges:
+            return
+        if edge.from_node_id not in self._nodes or edge.to_node_id not in self._nodes:
+            return
+        self._edges[edge.id] = edge
+        self._index_by_node_edges.setdefault(edge.from_node_id, set()).add(edge.id)
+        self._index_by_node_edges.setdefault(edge.to_node_id, set()).add(edge.id)
+
+    def query_impact(self, node_id: str, from_volume: int) -> list[ReferenceEdge]:
+        """Edges incident to node_id whose opposite endpoint is in volume < from_volume."""
+        if self._lazy:
+            anchor = self._nodes.get(node_id)
+            if anchor is not None:
+                self.ensure_volume_loaded(anchor.volume)
+
+        key = QueryImpactCache.make_key(node_id, from_volume)
+        cached = self._impact_cache.get(key)
+        if cached is not None:
+            return [self._edges[eid] for eid in cached if eid in self._edges]
+
+        result = self._compute_query_impact(node_id, from_volume)
+        self._impact_cache.set(key, tuple(e.id for e in result))
+        logger.debug(
+            "query_impact node=%s from_vol=%d edges=%d cache=%s",
+            node_id,
+            from_volume,
+            len(result),
+            self._impact_cache.stats(),
+        )
+        return result
+
+    def _compute_query_impact(self, node_id: str, from_volume: int) -> list[ReferenceEdge]:
+        if node_id not in self._nodes:
+            return []
+        edge_ids = self._index_by_node_edges.get(node_id, set())
+        result: list[ReferenceEdge] = []
+        for eid in edge_ids:
+            edge = self._edges[eid]
+            other_id = edge.to_node_id if edge.from_node_id == node_id else edge.from_node_id
+            other = self._nodes.get(other_id)
+            if other is not None and other.volume < from_volume:
+                result.append(edge)
+        return result
 
     def add_node(self, node: ReferenceNode) -> None:
         if node.id in self._nodes:
@@ -100,6 +191,7 @@ class CrossVolumeReferenceGraph:
         self._index_by_volume.setdefault(node.volume, set()).add(node.id)
         self._index_by_dimension.setdefault(node.dimension, set()).add(node.id)
         self._storage.append_node(node)
+        self._impact_cache.invalidate()
         logger.debug("add_node: id=%s dim=%s vol=%d", node.id, node.dimension, node.volume)
 
     def get_node(self, node_id: str) -> ReferenceNode | None:
@@ -122,6 +214,7 @@ class CrossVolumeReferenceGraph:
         self._index_by_node_edges.setdefault(edge.from_node_id, set()).add(edge.id)
         self._index_by_node_edges.setdefault(edge.to_node_id, set()).add(edge.id)
         self._storage.append_edge(edge)
+        self._impact_cache.invalidate()
         logger.debug("add_edge: id=%s %s->%s", edge.id, edge.from_node_id, edge.to_node_id)
 
     def get_edge(self, edge_id: str) -> ReferenceEdge | None:
@@ -270,15 +363,14 @@ class CrossVolumeReferenceGraph:
 
     def _load_from_storage(self) -> None:
         for n in self._storage.load_all_nodes():
-            self._nodes[n.id] = n
-            self._index_by_volume.setdefault(n.volume, set()).add(n.id)
-            self._index_by_dimension.setdefault(n.dimension, set()).add(n.id)
+            self.ingest_node(n)
         for e in self._storage.load_all_edges():
-            self._edges[e.id] = e
-            self._index_by_node_edges.setdefault(e.from_node_id, set()).add(e.id)
-            self._index_by_node_edges.setdefault(e.to_node_id, set()).add(e.id)
+            self.ingest_edge(e)
         for r in self._storage.load_all_ripples():
             self._ripples[r.id] = r
+        if not self._lazy:
+            for vol in self._index_by_volume:
+                self._loaded_volumes.add(vol)
 
     def __len__(self) -> int:
         return len(self._nodes)

@@ -17,6 +17,7 @@ from infra.cross_volume.edge_inferrer import EdgeInferrer
 # Phase 9.12 additive (LLM scanner + edge inferrer):
 from infra.cross_volume.llm_cache import LLMCache
 from infra.cross_volume.llm_scanner import LLMScanner
+from infra.cross_volume.cache import QueryImpactCache
 from infra.cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
@@ -30,6 +31,7 @@ __all__ = [
     "ReferenceNode",
     "ReferenceEdge",
     "CrossVolumeRipple",
+    "QueryImpactCache",
     # Phase 9.12 additive:
     "LLMCache",
     "LLMScanner",

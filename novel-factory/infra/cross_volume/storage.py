@@ -313,6 +313,41 @@ class RippleStorage:
         with self._connect() as conn:
             return [self._row_to_node(row) for row in conn.execute("SELECT * FROM reference_nodes")]
 
+    def load_nodes_by_volume(self, volume: int) -> list[ReferenceNode]:
+        """Phase 9.42 F31: volume-scoped node load for lazy graph hydration."""
+        with self._connect() as conn:
+            return [
+                self._row_to_node(row)
+                for row in conn.execute(
+                    "SELECT * FROM reference_nodes WHERE volume = ? ORDER BY chapter",
+                    (volume,),
+                )
+            ]
+
+    def load_node_by_id(self, node_id: str) -> ReferenceNode | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM reference_nodes WHERE id = ?",
+                (node_id,),
+            ).fetchone()
+            return self._row_to_node(row) if row else None
+
+    def load_edges_for_nodes(self, node_ids: list[str]) -> list[ReferenceEdge]:
+        """Phase 9.42 F31: edges incident to any of node_ids (both directions)."""
+        if not node_ids:
+            return []
+        placeholders = ",".join("?" for _ in node_ids)
+        sql = f"""
+            SELECT * FROM reference_edges
+            WHERE from_node_id IN ({placeholders}) OR to_node_id IN ({placeholders})
+        """
+        params = [*node_ids, *node_ids]
+        with self._connect() as conn:
+            return [
+                self._row_to_edge(row)
+                for row in conn.execute(sql, params)
+            ]
+
     def load_all_edges(self) -> list[ReferenceEdge]:
         with self._connect() as conn:
             return [self._row_to_edge(row) for row in conn.execute("SELECT * FROM reference_edges")]

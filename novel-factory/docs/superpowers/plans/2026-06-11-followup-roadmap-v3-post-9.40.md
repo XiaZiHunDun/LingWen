@@ -72,7 +72,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **dependency**: F18 backfill 建议先 (有真实 node/edge 数据); 可 fixture-only if 主公只想 UI skeleton
 - **scope boundary**: 0 改 BFS / 0 改 cascade_runs schema
 
-### F31. Phase 9.42 — CVG Phase 14 perf: query_impact LRU + lazy load
+### F31. Phase 9.42 — CVG Phase 14 perf: query_impact LRU + lazy load ✅ done
 
 - **承接**: Blueprint Phase 14 (`cache.py`, `perf.py`); 当前 `infra/cross_volume/` 仅有 `llm_cache.py`
 - **目标**: `query_impact()` 热路径加 LRU cache; 大 volume graph lazy per-volume load
@@ -83,6 +83,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **tests**: 6-8 pytest (cache hit/miss / invalidation / lazy load boundary)
 - **estimated**: 2-3h
 - **dependency**: 无 (跟 F30 正交, 可先做)
+- **完成 (2026-06-11)**: `QueryImpactCache` (100 entries / 60s TTL); `perf.load_volume_slice`; `CrossVolumeReferenceGraph.query_impact` + `lazy=True`; storage `load_nodes_by_volume` / `load_edges_for_nodes`; pytest 2569→2578 (+9)
 
 ### F32. Phase 9.43 — LLM scanner prompt 调优反馈闭环
 
@@ -234,7 +235,7 @@ v2 触发条件已满足. 剩余工作分散在:
 
 1. **Phase 9.41-bk (F29)** — v3 文档同步 (~30min, 必做顺路) ✅
 2. **Phase 9.41 (F30)** — impact graph 可视化 — **产品价值最高**, dashboard 可看见 CVG 拓扑
-3. **Phase 9.42 (F31)** — query_impact cache — 大图性能兜底
+3. **Phase 9.42 (F31)** — query_impact cache — 大图性能兜底 ✅
 4. **Phase 9.43 (F32)** — LLM prompt 调优闭环 — 跟 F19 配套
 
 ### Track B — Cascade 运维 + Dashboard (可穿插)
