@@ -126,15 +126,16 @@ v2 触发条件已满足. 剩余工作分散在:
 - **dependency**: 9.22 CascadeRunsPanel 组件可复用
 - **完成 (2026-06-11)**: `CascadeRunsPage` + `GET /api/cascade/runs` + panel globalMode; pytest +6 vitest +3 → 2605/205
 
-### F36. Phase 9.47 — v1/v2 cascade algorithm badge
+### F36. Phase 9.47 — v1/v2 cascade algorithm badge ✅ done
 
 - **承接**: Phase 9.16 defer「UI badge for bfs_algorithm_version」
 - **目标**: CascadeRunsPanel / run row 显示 `v1` / `v2_weighted` badge + data-testid
 - **tests**: 2-3 vitest
 - **estimated**: 1h
 - **dependency**: F21 migrate 可选 (有 v2 数据时 badge 更有意义)
+- **完成 (2026-06-11)**: Algorithm 列 + `algorithm-badge-{v1|v2_weighted}`; vitest 205→207 (+2)
 
-### F37. Phase 9.48 — Playwright CI opt-in workflow
+### F37. Phase 9.48 — Playwright CI opt-in workflow ✅ done
 
 - **承接**: Phase 8.45 out of scope「0 Playwright test in dashboard-frontend-ci.yml」; HANDOFF §7.1 runner devDep only
 - **目标**: GH Actions optional job `e2e-smoke` (manual dispatch / label trigger), 1 smoke spec 真 browser
@@ -143,6 +144,7 @@ v2 触发条件已满足. 剩余工作分散在:
 - **estimated**: 3-4h
 - **dependency**: 无
 - **caveat**: 跟 vitest primary gate 并存, 0 阻塞 merge
+- **完成 (2026-06-11)**: `.github/workflows/dashboard-e2e-smoke.yml` + `app-root.spec.js`; pytest 2605→2612 (+7)
 
 ### F38. Phase 9.49 — TypeScript strict 全量 rollout
 
@@ -241,11 +243,11 @@ v2 触发条件已满足. 剩余工作分散在:
 1. **Phase 9.44 (F33)** — broadcast log 持久化 ✅
 2. **Phase 9.45 (F34)** — cascade_runs retention CLI ✅
 3. **Phase 9.46 (F35)** — Global CascadeRunsPage ✅
-4. **Phase 9.47 (F36)** — algorithm badge
+4. **Phase 9.47 (F36)** — algorithm badge ✅
 
 ### Track C — 工程化 (可穿插)
 
-1. **Phase 9.48 (F37)** — Playwright CI opt-in
+1. **Phase 9.48 (F37)** — Playwright CI opt-in ✅
 2. **Phase 9.49 (F38)** — TS strict 全量
 
 ### 默认推荐 (主公未指定时)

@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.46 (Phase 9.46 F35 Global CascadeRunsPage 完成, 2026-06-11)
-> **更新 (2026-06-11)**: F34 cascade purge CLI ✅; F35 全局 CascadeRunsPage + GET /api/cascade/runs ✅; pytest 2592→2605 (+13); vitest 202→205 (+3); 推荐 **F36** algorithm badge.
+> **版本**: v9.48 (Phase 9.48 F37 Playwright CI opt-in 完成, 2026-06-11)
+> **更新 (2026-06-11)**: F36 cascade algorithm badge ✅; F37 Playwright opt-in workflow + smoke spec ✅; pytest 2605→2612 (+7); vitest 205→207 (+2); 推荐 **F38** TS strict 全量.
 
 ---
 
@@ -13,14 +13,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2605 passed |
-| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 205 passed · Playwright 0 (dev opt-in) |
-| **总测试** | **2810+** (2605 pytest + 205 vitest + 27 pytest skip) |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2612 passed |
+| **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 207 passed · Playwright 1 smoke (opt-in CI) |
+| **总测试** | **2819+** (2612 pytest + 207 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
 | **CI** | repo root `.github/workflows/` — `test.yml` (pytest) + `dashboard-frontend-ci.yml` (vitest + coverage → Codecov) |
-| **下一期推荐** | **F36** (v1/v2 cascade algorithm badge, Phase 9.47) 或 **F37** (Playwright CI opt-in) |
+| **下一期推荐** | **F38** (TS strict 全量 rollout, Phase 9.49) 或 **F39** (Ripple lifecycle timeline) |
 
 ---
 
@@ -242,6 +242,8 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 | 9.44 F33 broadcast log | 2026-06-11 | cascade_broadcast_log + GET broadcast-log API | 2592/202 |
 | 9.45 F34 cascade purge | 2026-06-11 | cascade purge --older-than + retention helpers | 2599/202 |
 | 9.46 F35 global runs page | 2026-06-11 | CascadeRunsPage + GET /api/cascade/runs | 2605/205 |
+| 9.47 F36 algorithm badge | 2026-06-11 | CascadeRunsPanel v1/v2_weighted badge | 2605/207 |
+| 9.48 F37 playwright opt-in | 2026-06-11 | dashboard-e2e-smoke.yml + app-root smoke | 2612/207 |
 
 **最近 7 commit** (跟 handoff 同步时校对):
 ```
@@ -283,8 +285,8 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F33 | cascade_broadcast_log SQLite | 9.44 | 1.5h | P2 Ops | ✅ done |
 | F34 | cascade_runs retention CLI | 9.45 | 1.5h | P2 Ops | ✅ done |
 | F35 | Global CascadeRunsPage | 9.46 | 2h | P2 Dashboard | ✅ done |
-| F36 | v1/v2 cascade algorithm badge | 9.47 | 1h | P2 Dashboard | ✅ |
-| F37 | Playwright CI opt-in | 9.48 | 3-4h | P2 DevInfra | ✅ |
+| F36 | v1/v2 cascade algorithm badge | 9.47 | 1h | P2 Dashboard | ✅ done |
+| F37 | Playwright CI opt-in | 9.48 | 3-4h | P2 DevInfra | ✅ done |
 | F38 | TS strict 全量 rollout | 9.49 | 4-6h | P2 DevInfra | ✅ |
 | F39 | Ripple 6-state lifecycle timeline | 9.50 | 2h | P2 Dashboard | ✅ |
 | F40 | Cascade graph 第 3 视图 | 9.51 | 2-3h | P2 Dashboard | ✅ |
@@ -294,7 +296,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 **已完成 (v2 roadmap, 9.33-9.40)**: F17-F28 全部 ✅ (见上表 v2 doc)
 
-**推荐下一项**: **F36** (v1/v2 cascade algorithm badge, Phase 9.47) 或 **F37** (Playwright CI opt-in).
+**推荐下一项**: **F38** (TS strict 全量 rollout, Phase 9.49) 或 **F39** (Ripple lifecycle timeline).
 
 ---
 
@@ -302,7 +304,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 
 ### 7.1 Playwright e2e (Phase 9.31 F15 后)
 
-Phase 9.31 F15 已删全部 ceremonial Playwright spec (`tests/e2e-smoke/` 7 文件 + `tests/e2e/` 3 文件). 契约全走 vitest (`tests/unit/`, 192 tests). `pnpm e2e:smoke --list` → 0 tests. Playwright runner 仍 devDep 留 opt-in 未来真 browser e2e, **非 primary gate**。
+Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec (`tests/e2e-smoke/app-root.spec.js`); CI 走 `.github/workflows/dashboard-e2e-smoke.yml`（`workflow_dispatch` 或 PR label `e2e-smoke`），**非 primary gate**。本地: `pnpm e2e:smoke`（自动启 vite :5173）。
 
 ### 7.2 MEMORY.md 路径歧义
 
