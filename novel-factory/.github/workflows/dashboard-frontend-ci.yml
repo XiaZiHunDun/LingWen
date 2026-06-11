@@ -1,8 +1,5 @@
 # Phase 8.41: Dashboard Frontend CI
-# 跑 dashboard/frontend 的 lint (testid / testid-sync / vue) + vitest + build smoke.
-# 跟 Phase 8.40 husky pre-commit 共用 pnpm lint:all 聚合入口.
-# 触发: push master / PR master, 仅在 dashboard/frontend/** 变更时跑 (paths filter).
-# 维护: 改 trigger 路径 / 改 lint 步骤 / 加 build step 在此文件.
+# DEPRECATED (Phase 9.37 F22): canonical workflow at repo root .github/workflows/dashboard-frontend-ci.yml
 
 name: Dashboard Frontend CI
 

@@ -1,8 +1,8 @@
 # 灵文 · LingWen 项目 Handoff 文档
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.33 (Phase 9.33 完成, 2026-06-11)
-> **更新 (2026-06-11)**: Phase 9.33 F18 359 章 backfill production execute ✅; pytest 2501→2507 (+6); vitest 192 (不变); 推荐 **F22 CI pytest**.
+> **版本**: v9.37 (Phase 9.37 完成, 2026-06-11)
+> **更新 (2026-06-11)**: Phase 9.37 F22 CI pytest gate ✅; workflow 迁至 repo root `.github/workflows/`; pytest 2507→2512 (+5); vitest 192 (不变); 推荐 **F19 LLM 校准**.
 
 ---
 
@@ -13,13 +13,14 @@
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
 | **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
 | **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2507 passed |
+| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest 2512 passed |
 | **前端** | Vue 3 SFC · Vite · ECharts 5.5 · Pinia-style composable · Vitest 192 passed · Playwright 0 (dev opt-in) |
-| **总测试** | **2704+** (2507 pytest + 192 vitest + 27 pytest skip) |
+| **总测试** | **2709+** (2512 pytest + 192 vitest + 27 pytest skip) |
 | **总代码** | ~80k 行 (后端 ~55k + 前端 ~25k) |
 | **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
 | **当前 commit** | 见 `git log -1` (master head) |
-| **下一期推荐** | **F22** (CI pytest gate, Phase 9.37) 或 **F19** (LLM 校准) |
+| **CI** | repo root `.github/workflows/test.yml` — push/PR master 跑 pytest |
+| **下一期推荐** | **F19** (LLM scanner 校准) 或 **F20** (cascade 实时拓扑) |
 
 ---
 
@@ -107,7 +108,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **80%+ 覆盖率** — `pytest --cov` + `vitest --coverage` (已 CI 化)
 - **测试 entry 不动**: pytest `pytest -q` (~90s), vitest `pnpm test`, e2e `pnpm e2e:smoke`
 - **0 ceremonial e2e** — Playwright spec 已 Phase 9.31 F15 全删, 契约走 vitest jsdom (Phase 8.30b pattern)
-- **0 改 baseline 0 测试代码** — 2507 pytest + 192 vitest 全部不动, 只加新
+- **0 改 baseline 0 测试代码** — 2512 pytest + 192 vitest 全部不动, 只加新
 
 ### 2.4 文档规则
 
@@ -141,7 +142,7 @@ cd dashboard/frontend && pnpm install && cd ../..
 # 2. 验证 baseline (sanity check, 跟 Handoff 同步时的测试数比对)
 pytest -q                          # 期望: 2495 passed, 27 skipped, ~90s
 cd dashboard/frontend && pnpm exec vitest run && cd ../..  # 期望: 192 passed, ~5s
-cd novel-factory && pytest -q                          # 期望: 2507 passed, ~90s
+cd novel-factory && pytest -q                          # 期望: 2512 passed, ~90s
 # (e2e 14 tests, 部分 baseline fail 不是回归, 是 Phase 9.18 已知)
 
 # 3. 启动 dashboard (optional, 看 UI)
@@ -152,7 +153,7 @@ cd novel-factory/dashboard/frontend && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
 ```
 
-如果 baseline 不匹配 (2507 + 192), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
+如果 baseline 不匹配 (2512 + 192), 跑 `git log --oneline -20` 跟 git log 校对, 跟 origin/master 比对 (本机 + origin 同步 check: `git rev-parse HEAD origin/master` 应 2 行同 SHA)。
 
 ---
 
@@ -196,7 +197,7 @@ Phase 9.10-9.19 建立的"跨卷涟漪下游级联"机制, 关键概念:
 
 ---
 
-## 5. 最近工作 (Phase 8.16 → 9.33)
+## 5. 最近工作 (Phase 8.16 → 9.37)
 
 详细条目在 `~/.claude/projects/.../memory/phases-8-dashboard-a.md` (8.16-9.15) + `phases-8-dashboard-b.md` (9.16-9.23+Closing)。简要:
 
@@ -262,7 +263,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | F19 | LLM scanner confidence 校准 | 9.34 | 2-3h | P1 CVG | △ F18 建议先 |
 | F20 | cascade 广播 latency + 拓扑实时刷新 | 9.35 | 2h | P1 CVG | ✅ |
 | F21 | v1→v2 cascade 数据迁移 (optional) | 9.36 | 1.5h | P1 CVG | 🟢 低 |
-| F22 | CI pytest gate | 9.37 | 1.5h | P2 DevInfra | ✅ |
+| F22 | CI pytest gate | 9.37 | 1.5h | P2 DevInfra | ✅ done |
 | F23 | Vitest coverage 报告 | 9.38 | 1h | P2 DevInfra | ✅ |
 | F24 | ESLint 8→9 | 9.39 | 2h | P2 DevInfra | ✅ |
 | F25 | TypeScript strict pilot | 9.40 | 2h | P2 DevInfra | ✅ |
@@ -274,7 +275,7 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 - F1-F3: P0 bookkeeping ✅ | F4-F7: P1 cascade 持久化路线 ✅ | F8: RESOLVED ✅
 - F9-F16: P2 dashboard/DevInfra ✅ (含 9.32 F16 max_nodes_cap)
 
-**推荐下一项**: **F22** (CI pytest, Phase 9.37) 或 **F19** (LLM scanner 校准, Phase 9.34).
+**推荐下一项**: **F19** (LLM scanner 校准, Phase 9.34) 或 **F20** (cascade 拓扑实时刷新, Phase 9.35).
 
 ---
 
@@ -311,11 +312,11 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v2-post-9.32.md` (F17-F28, 5 分钟)
 - [ ] 读 auto-memory `~/.claude/projects/.../memory/MEMORY.md` (项目记忆索引, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-b.md` (最近 4 phase 详细, 10 分钟) — 如果要做 P2 任意 item
-- [ ] 跑 `pytest -q` 验证 baseline 2507 passed (~90s)
+- [ ] 跑 `pytest -q` 验证 baseline 2512 passed (~90s)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm exec vitest run` 验证 vitest 192 passed (~5s)
 - [ ] 跑 `git log --oneline -20` 跟 §5 校对 (确保本地同步 origin/master)
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选 1 个 v2 item (推荐 **F22 CI pytest** 或 **F19 LLM 校准**) → brainstorming → writing-plans
+- [ ] 选 1 个 v2 item (推荐 **F19 LLM 校准** 或 **F20 cascade 实时拓扑**) → brainstorming → writing-plans
 
 ---
 
@@ -323,7 +324,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests ===
-cd novel-factory && pytest -q                                    # 2507 tests, ~90s
+cd novel-factory && pytest -q                                    # 2512 tests, ~90s
 cd novel-factory/dashboard/frontend && pnpm exec vitest run           # 192 vitest, ~5s
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list     # 0 tests (Phase 9.31 F15)
 cd novel-factory && ruff check .                                 # 0 issues
@@ -386,5 +387,5 @@ cd novel-factory && python lingwen.py ripple-audit <ripple_id>     # audit histo
 
 ---
 
-> **版本**: v9.33 (2026-06-11)
-> **下次更新**: 启动 F22/F19 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格
+> **版本**: v9.37 (2026-06-11)
+> **下次更新**: 启动 F19/F20 后, append 1 entry 到 `phases-8-dashboard-b.md` + 更新本 HANDOFF.md §5 表格

@@ -4,7 +4,7 @@
 
 ## 概述
 
-- **Workflow**: `.github/workflows/real-llm-tests.yml`
+- **Workflow**: `.github/workflows/real-llm-tests.yml` (repo root; `working-directory: novel-factory`)
 - **Trigger**: 每天 UTC 02:00 (北京时间 10:00) + 手动 workflow_dispatch
 - **Provider**: Anthropic only (Phase 8 HAIKU, ~$0.025/run)
 - **月成本估算**: $0.75 (30 daily runs)

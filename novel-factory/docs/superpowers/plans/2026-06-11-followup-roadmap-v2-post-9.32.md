@@ -108,7 +108,7 @@ Phase 9.10-9.32 完成了 CVG 数据层 + dashboard cascade 全链路 (持久化
 
 Phase 8.35-8.42 super-phase 留 followup, 跟 CVG 功能独立, 可穿插做.
 
-### F22. Phase 9.37 — CI pytest gate
+### F22. Phase 9.37 — CI pytest gate ✅ **DONE Phase 9.37**
 
 - **承接**: Phase 8.52「CI 测 pytest (45s 慢, 留 followup)」
 - **方案**: GitHub Actions 加 `pytest -q` job (或 `-x --timeout=120` 防 hang); 跟 vitest job 并行
