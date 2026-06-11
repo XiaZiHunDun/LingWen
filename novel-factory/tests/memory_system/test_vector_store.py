@@ -294,6 +294,7 @@ class TestFindSimilarChapters:
         """创建 Mock Embedder"""
         embedder = Mock()
         embedder.embed_texts.return_value = [[0.5] * 1536]
+        embedder.embed_query.return_value = [0.5] * 1536
         return embedder
 
     @pytest.fixture
@@ -317,7 +318,7 @@ class TestFindSimilarChapters:
         )
 
         assert len(results) == 2
-        mock_embedder.embed_texts.assert_called_once_with(["查找相似的内容"])
+        mock_embedder.embed_query.assert_called_once_with("查找相似的内容")
         mock_qdrant.search.assert_called_once()
 
     def test_find_similar_chapters_with_filters(self, mock_embedder, mock_qdrant):
@@ -343,11 +344,11 @@ class TestFindSimilarChapters:
         )
 
         assert results == []
-        mock_embedder.embed_texts.assert_not_called()
+        mock_embedder.embed_query.assert_not_called()
 
     def test_find_similar_chapters_embed_failed(self, mock_embedder, mock_qdrant):
         """测试嵌入失败处理"""
-        mock_embedder.embed_texts.return_value = []
+        mock_embedder.embed_query.return_value = []
 
         results = find_similar_chapters(
             qdrant_wrapper=mock_qdrant,

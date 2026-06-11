@@ -289,7 +289,7 @@ class CachedEmbedder:
         Returns:
             嵌入向量
         """
-        vectors = self.embed_texts([query], **kwargs)
+        vectors = self.embed_texts([query], purpose="query")
         return vectors[0] if vectors else []
 
     @property

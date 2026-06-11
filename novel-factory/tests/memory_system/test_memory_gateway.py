@@ -55,6 +55,7 @@ class TestMemoryGateway:
         """模拟 Embedder"""
         embedder = MagicMock()
         embedder.embed_texts = MagicMock(return_value=[[0.1] * 1536])
+        embedder.embed_query = MagicMock(return_value=[0.1] * 1536)
         return embedder
 
     @pytest.fixture
@@ -369,6 +370,7 @@ class TestMemoryGatewayEdgeCases:
         """模拟 Embedder"""
         embedder = MagicMock()
         embedder.embed_texts = MagicMock(return_value=[[0.1] * 1536])
+        embedder.embed_query = MagicMock(return_value=[0.1] * 1536)
         return embedder
 
     @pytest.fixture

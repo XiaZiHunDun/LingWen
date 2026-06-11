@@ -252,11 +252,9 @@ def find_similar_chapters(
         return []
 
     # 向量化查询文本
-    query_vectors = embedder.embed_texts([query_text])
-    if not query_vectors:
+    query_vector = embedder.embed_query(query_text)
+    if not query_vector:
         return []
-
-    query_vector = query_vectors[0]
 
     # 构建过滤器
     query_filter = None

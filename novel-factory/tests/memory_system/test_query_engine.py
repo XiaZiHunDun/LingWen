@@ -42,6 +42,7 @@ class TestQueryEngine:
         """模拟 Embedder"""
         embedder = MagicMock()
         embedder.embed_texts = MagicMock(return_value=[[0.1] * 1536])
+        embedder.embed_query = MagicMock(return_value=[0.1] * 1536)
         return embedder
 
     @pytest.fixture
@@ -159,7 +160,7 @@ class TestQueryEngine:
         assert len(results) == 2
         assert results[0]["id"] == "seg_001"
         assert results[0]["score"] == 0.95
-        mock_embedder.embed_texts.assert_called_once_with(["测试查询"])
+        mock_embedder.embed_query.assert_called_once_with("测试查询")
 
     def test_hybrid_search_with_top_k(self, query_engine, mock_qdrant_wrapper, mock_embedder):
         """测试指定返回数量"""

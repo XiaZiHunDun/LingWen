@@ -58,10 +58,17 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 ### F86. Phase 9.94 — MEMORY_RAG=live 单章 pilot ✅
 
-- **目标**: 1 章 pilot with `LINGWEN_MEMORY_RAG=live`（需 Qdrant + OPENAI Embedder）
-- **产物**: runbook §19 · `memory-rag-live-preflight.sh` · `memory_rag_live_gateway` required preflight · live stub 模板 · CI 契约
-- **manual gate**: 真实 ch367 live pilot 需 `OPENAI_API_KEY` + Qdrant + LLM key（本环境 preflight step 2 预期 FAIL 无 OPENAI）
+- **目标**: 1 章 pilot with `LINGWEN_MEMORY_RAG=live`（需 Qdrant + Embedder）
+- **产物**: runbook §19 · `memory-rag-live-preflight.sh` · preflight gate · live stub 模板 · CI 契约
+- **manual gate**: 真实 ch367 live pilot（F89 后可用 MiniMax-only embedding 路径）
 - **estimated**: 3-5h
+
+### F89. Phase 9.95 — Embedding Provider 解耦（MiniMax embo-01 beta） ✅
+
+- **目标**: `embedding.provider: auto` — OpenAI 默认；仅 `MINIMAX_API_KEY` 时走 MiniMax embedding
+- **产物**: `embeddings/{factory,openai,minimax}_provider` · `Embedder` facade · `embedding_provider_keys` preflight · runbook §19 更新 · CI 契约
+- **manual gate**: MiniMax `/v1/embeddings` API 可用性（官方 beta；失败可显式 `LINGWEN_EMBEDDING_PROVIDER=openai`）
+- **estimated**: 1-2d
 
 ---
 
@@ -78,7 +85,7 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 
 | # | 主题 | 说明 | 估时 |
 |---|------|------|------|
-| F89 | e2e-live 首绿 JSON 记录 | 填 stub → ci_records（manual） | 30min |
+| F90 | e2e-live 首绿 JSON 记录 | 填 stub → ci_records（manual） | 30min |
 
 ---
 
@@ -99,6 +106,7 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 | F84 | Batch 364-366 | 高 | 🔴 高 | 2-4h | 需 API key |
 | F85 | 10 章 wave runbook | 中 | 🟡 中 | 2h | 需 F84 |
 | F86 | Memory RAG live | 高 | 🟡 中 | 3-5h | 需 Qdrant |
+| F89 | Embedding 解耦 | 高 | 🟡 中 | 1-2d | ✅ |
 | F87 | Analytics 趋势 | 中 | 🟢 低 | 3-4h | ✅ |
 | F88 | Chapters badge | 低 | 🟢 低 | 2h | ✅ |
 
@@ -118,3 +126,4 @@ Phase 9.85-9.90 (v8) 完成 **批量 pilot + Dashboard 运维 + Analytics rollup
 - [x] v8 顶部 superseded pointer
 - [x] F85 10 章 wave runbook + dry-run script
 - [x] F86 MEMORY_RAG=live preflight gate + runbook §19（live pilot manual gate）
+- [x] F89 Embedding Provider 解耦 + MiniMax embo-01 beta

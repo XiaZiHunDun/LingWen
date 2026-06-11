@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v9.90 (Phase 9.90 v8 全量交付 + v9 roadmap, 2026-06-11)
-> **更新 (2026-06-11)**: F86 MEMORY_RAG=live preflight gate + runbook §19；v9 推荐 **F87**。
+> **更新 (2026-06-11)**: F89 Embedding Provider 解耦（MiniMax embo-01 beta）；v9 推荐 **F87**。
 
 ---
 
@@ -294,7 +294,8 @@ e584dc1 feat(dashboard): phase 9.23 T5 — CascadeRunsPanel URL sync + 3 vitest
 | **F84** | Batch 364-366 续跑 | 9.92 | 2-4h | P1 | ✅ |
 | **F85** | 10 章 wave runbook | 9.93 | 2h | P1 | ✅ |
 | **F86** | MEMORY_RAG=live pilot | 9.94 | 3-5h | P1 | ✅ preflight gate + runbook §19 |
-| F87 | Analytics 成本趋势 | 9.95 | 3-4h | P2 | 🔴 推荐下一项 |
+| **F89** | Embedding Provider 解耦 | 9.95 | 1-2d | P1 | ✅ MiniMax embo-01 beta |
+| F87 | Analytics 成本趋势 | 9.96 | 3-4h | P2 | 🔴 推荐下一项 |
 
 **推荐下一项**: **F87** Analytics 成本趋势（production-records mini chart）
 

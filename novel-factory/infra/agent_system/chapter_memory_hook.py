@@ -119,7 +119,7 @@ def describe_memory_rag_hook() -> list[dict[str, str]]:
 
 
 def memory_rag_live_gateway_check() -> tuple[bool, str]:
-    """Return (ok, message) for live MemoryGateway (Qdrant + Embedder)."""
+    """Return (ok, message) for live MemoryGateway (Qdrant + embedding provider)."""
     from infra.memory_service import (
         get_initialization_error,
         get_memory_gateway,
@@ -128,6 +128,17 @@ def memory_rag_live_gateway_check() -> tuple[bool, str]:
 
     get_memory_gateway()
     if is_memory_gateway_available():
+        gateway = get_memory_gateway()
+        embedder = getattr(gateway, "embedder", None)
+        if embedder is not None:
+            ok, probe = embedder.health_check()
+            detail = (
+                f"provider={embedder.provider_name}, model={embedder.model}, "
+                f"dim={embedder.dimension}, probe={probe}"
+            )
+            if ok:
+                return True, f"MemoryGateway live ready ({detail})"
+            return False, f"MemoryGateway embedder probe failed: {detail}"
         return True, "MemoryGateway live ready (Qdrant + Embedder)"
     err = get_initialization_error() or "MemoryGateway unavailable"
     return False, f"MemoryGateway NoOp: {err}"

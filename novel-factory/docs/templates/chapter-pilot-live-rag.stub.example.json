@@ -26,7 +26,7 @@
   },
   "human_review": {
     "required": false,
-    "notes": "Stub — requires OPENAI_API_KEY (Embedder) + Qdrant; memory_context_source must be live not stub"
+    "notes": "Stub — embedding via OPENAI or MiniMax (F89); Qdrant required; memory_context_source must be live not stub"
   },
   "operator": "stub-example",
   "recorded_at": "2026-06-11T12:00:00Z"

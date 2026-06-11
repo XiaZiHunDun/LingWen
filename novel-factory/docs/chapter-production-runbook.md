@@ -668,19 +668,24 @@ pytest tests/ci/test_chapter_production_batch_f85_ci.py -q
 
 ---
 
-## 19. MEMORY_RAG=live 单章 pilot (F86)
+## 19. MEMORY_RAG=live 单章 pilot (F86 + F89 Embedding Provider)
 
-**目标**: 首次用 **真实 MemoryGateway**（Qdrant + OpenAI Embedder）跑 1 章 pilot，验证 `memory_context_source=live`。
+**目标**: 用 **真实 MemoryGateway**（Qdrant + 可插拔 Embedder）跑 1 章 pilot，验证 `memory_context_source=live`。
 
 ### 19.1 前置条件
 
 | 项 | 要求 |
 |----|------|
 | Qdrant | 默认 `http://127.0.0.1:6333` 可访问 |
-| `OPENAI_API_KEY` | **必需** — Embedder 嵌入（`memory_config.yaml`） |
-| `MINIMAX_API_KEY`（或 Anthropic） | novel_writing LLM |
+| **Embedding** | `memory_config.yaml` → `embedding.provider: auto`（F89） |
+| | **auto**：有 `OPENAI_API_KEY` → OpenAI；**仅** `MINIMAX_API_KEY` → MiniMax embo-01（beta） |
+| | 显式覆盖：`LINGWEN_EMBEDDING_PROVIDER=openai\|minimax` |
+| | 国内 MiniMax embedding 建议 `MINIMAX_GROUP_ID` |
+| `MINIMAX_API_KEY`（或 Anthropic） | novel_writing **LLM**（与 embedding 可共用 MiniMax key） |
 | `LINGWEN_MEMORY_RAG=live` | 显式开启 live hook |
-| Preflight | `memory_rag_live_gateway` **required** — NoOp 则 preflight 失败 |
+| Preflight | `embedding_provider_keys` + `memory_rag_live_gateway` **required** |
+
+> **F89 变更**：live RAG **不再硬绑** `OPENAI_API_KEY`；仅 MiniMax key 时可走 `provider=minimax`（API 可用性需 manual 验证）。
 
 ### 19.2 一键 preflight
 
@@ -688,10 +693,20 @@ pytest tests/ci/test_chapter_production_batch_f85_ci.py -q
 cd novel-factory
 export LINGWEN_REAL_LLM=1
 export LINGWEN_MEMORY_RAG=live
-export OPENAI_API_KEY=sk-...
+export LINGWEN_EMBEDDING_PROVIDER=minimax   # 仅 MiniMax key 时建议显式指定
 export MINIMAX_API_KEY=...
+export MINIMAX_GROUP_ID=...                 # 国内 endpoint 常需
 
-bash novel-factory/scripts/memory-rag-live-preflight.sh 367
+bash scripts/memory-rag-live-preflight.sh 367
+```
+
+OpenAI embedding 路径（与 F86 前兼容）：
+
+```bash
+export LINGWEN_EMBEDDING_PROVIDER=openai
+export OPENAI_API_KEY=sk-...
+export MINIMAX_API_KEY=...    # LLM
+bash scripts/memory-rag-live-preflight.sh 367
 ```
 
 ### 19.3 跑 live pilot 并写记录
@@ -707,12 +722,15 @@ python -m infra.agent_system.chapter_production_pilot \
 
 脱敏示例: `docs/templates/chapter-pilot-live-rag.stub.example.json`
 
-**与 stub 对比**: F72/F84 用 `LINGWEN_MEMORY_RAG=stub`；F86 必须 Gateway **非 NoOp** 且 record 中 `hooks.memory_context_source=live`。
+**与 stub 对比**: F72/F84 用 `LINGWEN_MEMORY_RAG=stub`；live 必须 Gateway **非 NoOp** 且 embedder probe 通过。
 
 ### 19.4 pytest
 
 ```bash
-pytest tests/agent_system/test_chapter_memory_hook.py -q -k live_gateway
+pytest tests/memory_system/test_embedding_factory.py -q
+pytest tests/memory_system/test_minimax_embedding_provider.py -q
+pytest tests/ci/test_embedding_provider_f89_ci.py -q
+pytest tests/agent_system/test_chapter_memory_hook.py -q -k gateway_check
 pytest tests/ci/test_chapter_memory_rag_live_f86_ci.py -q
 ```
 

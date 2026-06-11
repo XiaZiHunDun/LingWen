@@ -4,8 +4,14 @@ qdrant:
   grpc_port: 6334
 
 embedding:
+  provider: auto
   model: "text-embedding-3-small"
   dimension: 1536
+  openai:
+    model: "text-embedding-3-small"
+  minimax:
+    model: "embo-01"
+    base_url: "https://api.minimaxi.com"
 
 storage:
   state_file: "state/state_tracker.json"

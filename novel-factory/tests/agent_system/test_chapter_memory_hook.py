@@ -98,9 +98,17 @@ class TestChapterMemoryHookHelpers:
         gateway.auto_push_context.assert_called_once_with(5)
 
     def test_memory_rag_live_gateway_check(self, monkeypatch):
+        mock_embedder = MagicMock()
+        mock_embedder.provider_name = "openai"
+        mock_embedder.model = "text-embedding-3-small"
+        mock_embedder.dimension = 1536
+        mock_embedder.health_check.return_value = (True, "openai/text-embedding-3-small ok")
+
+        mock_gateway = MagicMock(is_noop=False, embedder=mock_embedder)
+
         monkeypatch.setattr(
             "infra.memory_service.get_memory_gateway",
-            lambda: MagicMock(is_noop=False),
+            lambda: mock_gateway,
         )
         monkeypatch.setattr(
             "infra.memory_service.is_memory_gateway_available",
@@ -112,7 +120,7 @@ class TestChapterMemoryHookHelpers:
         )
         ok, msg = memory_rag_live_gateway_check()
         assert ok is True
-        assert "live ready" in msg
+        assert "provider=openai" in msg
 
 
 class TestChapterMemoryHookGoldenPath:

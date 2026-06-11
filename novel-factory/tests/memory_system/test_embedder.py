@@ -1,29 +1,38 @@
 """Embedder 测试 (TDD 模式)"""
-from unittest.mock import MagicMock, Mock, patch
+import os
+from unittest.mock import Mock, patch
 
 import pytest
 
 from infra.memory_system.vector.embedder import Embedder
 
+_EMBEDDING_CONFIG = {
+    "embedding": {
+        "provider": "openai",
+        "model": "text-embedding-3-small",
+        "dimension": 1536,
+        "openai": {"model": "text-embedding-3-small"},
+    }
+}
+
 
 @pytest.fixture
 def embedder():
-    """创建 Embedder 实例 (mock OpenAI)"""
-    with patch("infra.memory_system.vector.embedder.OpenAI") as mock_openai_class:
+    """创建 Embedder 实例 (mock OpenAI provider)"""
+    with patch("infra.memory_system.embeddings.openai_provider.OpenAI") as mock_openai_class:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        with patch("infra.memory_system.vector.embedder.load_yaml") as mock_load_yaml:
-            # Mock memory_config.yaml
-            mock_load_yaml.return_value = {
-                "embedding": {
-                    "model": "text-embedding-3-small",
-                    "dimension": 1536,
-                }
-            }
-            embedder = Embedder()
-            embedder._mock_client = mock_client
-            yield embedder
+        with patch("infra.memory_system.embeddings.factory.load_yaml") as mock_load_yaml:
+            mock_load_yaml.return_value = _EMBEDDING_CONFIG
+            with patch.dict(
+                os.environ,
+                {"OPENAI_API_KEY": "sk-test", "LINGWEN_EMBEDDING_PROVIDER": "openai"},
+                clear=False,
+            ):
+                instance = Embedder()
+                instance._mock_client = mock_client
+                yield instance
 
 
 class TestEmbedder:
@@ -33,12 +42,12 @@ class TestEmbedder:
         """测试初始化 - 验证配置加载"""
         assert embedder.model == "text-embedding-3-small"
         assert embedder.dimension == 1536
+        assert embedder.provider_name == "openai"
 
     def test_embed_single_text(self, embedder):
         """测试单个文本嵌入"""
         mock_client = embedder._mock_client
 
-        # Mock response object with .data attribute
         mock_response = Mock()
         mock_response.data = [
             Mock(embedding=[0.1] * 1536, index=0)
@@ -58,7 +67,6 @@ class TestEmbedder:
         """测试批量文本嵌入"""
         mock_client = embedder._mock_client
 
-        # Mock response with multiple embeddings
         mock_response = Mock()
         mock_response.data = [
             Mock(embedding=[0.1] * 1536, index=0),
@@ -72,7 +80,6 @@ class TestEmbedder:
 
         assert len(result) == 3
         assert all(len(vec) == 1536 for vec in result)
-        # 验证顺序保持一致
         assert result[0] == [0.1] * 1536
         assert result[1] == [0.2] * 1536
         assert result[2] == [0.3] * 1536
@@ -81,6 +88,16 @@ class TestEmbedder:
         """测试空列表输入"""
         result = embedder.embed_texts([])
         assert result == []
+
+    def test_embed_query(self, embedder):
+        mock_client = embedder._mock_client
+        mock_response = Mock()
+        mock_response.data = [Mock(embedding=[0.4] * 1536, index=0)]
+        mock_client.embeddings.create.return_value = mock_response
+
+        vector = embedder.embed_query("search me")
+        assert len(vector) == 1536
+        mock_client.embeddings.create.assert_called_once()
 
     def test_embed_texts_returns_floats(self, embedder):
         """测试嵌入向量返回浮点数列表"""
@@ -100,7 +117,6 @@ class TestEmbedder:
         """测试大批量嵌入 (模拟分批处理)"""
         mock_client = embedder._mock_client
 
-        # 模拟分批返回
         mock_response = Mock()
         mock_response.data = [
             Mock(embedding=[0.1] * 1536, index=i) for i in range(5)
@@ -126,26 +142,24 @@ class TestEmbedderEdgeCases:
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
-        with patch("infra.memory_system.vector.embedder.OpenAI"):
-            with patch("infra.memory_system.vector.embedder.load_yaml", side_effect=RuntimeError("Config not found")):
-                with pytest.raises(RuntimeError, match="Failed to initialize Embedder"):
-                    Embedder()
+        with patch("infra.memory_system.embeddings.factory.load_yaml", side_effect=RuntimeError("Config not found")):
+            with pytest.raises(RuntimeError, match="Failed to initialize Embedder"):
+                Embedder()
 
     def test_openai_api_error(self):
         """测试 OpenAI API 错误处理"""
-        with patch("infra.memory_system.vector.embedder.OpenAI") as mock_openai_class:
+        with patch("infra.memory_system.embeddings.openai_provider.OpenAI") as mock_openai_class:
             mock_client = Mock()
             mock_openai_class.return_value = mock_client
             mock_client.embeddings.create.side_effect = Exception("API Error")
 
-            with patch("infra.memory_system.vector.embedder.load_yaml") as mock_load_yaml:
-                mock_load_yaml.return_value = {
-                    "embedding": {"model": "text-embedding-3-small", "dimension": 1536}
-                }
-                embedder = Embedder()
+            with patch("infra.memory_system.embeddings.factory.load_yaml") as mock_load_yaml:
+                mock_load_yaml.return_value = _EMBEDDING_CONFIG
+                with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test", "LINGWEN_EMBEDDING_PROVIDER": "openai"}):
+                    instance = Embedder()
 
-                with pytest.raises(Exception):
-                    embedder.embed_texts(["hello"])
+                    with pytest.raises(Exception):
+                        instance.embed_texts(["hello"])
 
     def test_empty_string_input(self, embedder):
         """测试空字符串输入"""
@@ -159,7 +173,6 @@ class TestEmbedderEdgeCases:
 
         result = embedder.embed_texts([""])
 
-        # 空字符串也应该能处理
         assert len(result) == 1
 
     def test_unicode_input(self, embedder):

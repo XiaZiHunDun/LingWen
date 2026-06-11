@@ -60,6 +60,7 @@ class TestPreflightChecklist:
     def test_preflight_passes_with_key_and_gate(self, tmp_path, monkeypatch):
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+        monkeypatch.delenv("LINGWEN_MEMORY_RAG", raising=False)
         checks = preflight_checklist(state_dir=tmp_path)
         assert preflight_ok(checks) is True
 
@@ -67,11 +68,14 @@ class TestPreflightChecklist:
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.setenv("LINGWEN_MEMORY_RAG", "live")
         monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
+        monkeypatch.setenv("LINGWEN_EMBEDDING_PROVIDER", "minimax")
         monkeypatch.setattr(
             "infra.agent_system.chapter_production_pilot.memory_rag_live_gateway_check",
             lambda: (False, "MemoryGateway NoOp: test"),
         )
         checks = preflight_checklist(state_dir=tmp_path)
+        embed = next(c for c in checks if c.name == "embedding_provider_keys")
+        assert embed.passed is True
         gate = next(c for c in checks if c.name == "memory_rag_live_gateway")
         assert gate.passed is False
         assert gate.required is True
@@ -203,7 +207,8 @@ _REQUIRES_REAL_LLM = pytest.mark.skipif(
 
 @_REQUIRES_REAL_LLM
 class TestProductionPilotRealLlmOptIn:
-    def test_preflight_only_with_gate(self, tmp_path):
+    def test_preflight_only_with_gate(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("LINGWEN_MEMORY_RAG", raising=False)
         result = run_production_pilot(
             chapter_num=1,
             state_dir=tmp_path,

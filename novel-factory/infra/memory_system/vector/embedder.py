@@ -1,71 +1,69 @@
-"""嵌入模型管理
+"""嵌入模型管理 — facade over pluggable embedding providers (F89)."""
+from __future__ import annotations
 
-管理文本嵌入模型，提供 embed_texts() 方法生成向量。
-支持批量嵌入，从 memory_config.yaml 读取配置。
-"""
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from openai import OpenAI
+from infra.memory_system.embeddings.base import EmbeddingPurpose, EmbeddingProvider
+from infra.memory_system.embeddings.factory import create_embedding_provider
 
-from infra.memory_system.config import load_yaml
+if TYPE_CHECKING:
+    from openai import OpenAI
 
 
 class Embedder:
     """嵌入模型管理类
 
-    管理文本嵌入模型，提供向量生成接口。
-    配置从 memory_config.yaml 的 embedding 部分读取。
+    配置从 memory_config.yaml 的 embedding 部分读取；
+    具体 backend 由 ``create_embedding_provider()`` 解析。
     """
 
     MEMORY_CONFIG_PATH = "config/memory_config.yaml"
 
-    def __init__(self):
+    def __init__(self, provider: EmbeddingProvider | None = None):
         """初始化嵌入模型
 
-        从 memory_config.yaml 加载 embedding.model 和 embedding.dimension 配置。
+        Args:
+            provider: 可选注入（测试 / CI）；默认从 config + env 创建。
 
         Raises:
-            RuntimeError: 配置文件不存在或解析失败
+            RuntimeError: 配置或 provider 初始化失败
         """
         try:
-            config = load_yaml(self.MEMORY_CONFIG_PATH)
-            embedding_config = config["embedding"]
+            self._provider: EmbeddingProvider = provider or create_embedding_provider()
+        except Exception as exc:
+            raise RuntimeError(f"Failed to initialize Embedder: {exc}") from exc
 
-            self.model = embedding_config["model"]
-            self.dimension = embedding_config["dimension"]
-
-            self._client = OpenAI()
-
-        except KeyError as e:
-            raise RuntimeError(f"Missing required config key in {self.MEMORY_CONFIG_PATH}: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Failed to initialize Embedder: {e}")
+        self.model = self._provider.model
+        self.dimension = self._provider.dimension
 
     @property
-    def client(self):
-        """获取 OpenAI 客户端实例"""
-        return self._client
+    def provider_name(self) -> str:
+        return self._provider.provider_name
 
-    def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        """将文本列表转换为嵌入向量列表
-
-        Args:
-            texts: 文本列表
-
-        Returns:
-            嵌入向量列表，每个向量为 dimension 维浮点数列表
-
-        Raises:
-            Exception: API 调用失败时抛出异常
-        """
-        if not texts:
-            return []
-
-        response = self._client.embeddings.create(
-            input=texts,
-            model=self.model,
+    @property
+    def client(self) -> OpenAI:
+        """OpenAI 客户端（仅 provider=openai 时可用，兼容旧测试）。"""
+        if hasattr(self._provider, "client"):
+            return self._provider.client  # type: ignore[no-any-return]
+        raise AttributeError(
+            f"Embedder.client unavailable for provider={self.provider_name}"
         )
 
-        # 按 index 排序确保顺序一致
-        embeddings = sorted(response.data, key=lambda x: x.index)
-        return [embedding.embedding for embedding in embeddings]
+    def health_check(self) -> tuple[bool, str]:
+        return self._provider.health_check()
+
+    def embed_texts(
+        self,
+        texts: list[str],
+        *,
+        purpose: EmbeddingPurpose = "document",
+    ) -> list[list[float]]:
+        """将文本列表转换为嵌入向量列表"""
+        if not texts:
+            return []
+        return self._provider.embed_texts(texts, purpose=purpose)
+
+    def embed_query(self, query: str) -> list[float]:
+        """单条检索 query 嵌入（MiniMax 使用 type=query）。"""
+        vectors = self.embed_texts([query], purpose="query")
+        return vectors[0] if vectors else []

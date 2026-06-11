@@ -141,14 +141,13 @@ class QueryEngine:
 
         # 生成查询向量（带性能监控）
         start_time = time.perf_counter()
-        query_vectors = self.embedder.embed_texts([query])
+        query_vector = self.embedder.embed_query(query)
         embedding_time = (time.perf_counter() - start_time) * 1000
         self._profiler.record_embedding(embedding_time)
 
-        if not query_vectors:
+        if not query_vector:
             return []
 
-        query_vector = query_vectors[0]
 
         # 执行向量搜索（带性能监控）
         start_time = time.perf_counter()
@@ -231,11 +230,10 @@ class QueryEngine:
             return []
 
         # 生成角色名称的向量
-        query_vectors = self.embedder.embed_texts([character])
-        if not query_vectors:
+        query_vector = self.embedder.embed_query(character)
+        if not query_vector:
             return []
 
-        query_vector = query_vectors[0]
 
         # 在 relationships 集合中搜索
         search_results = self.qdrant_wrapper.search(
@@ -563,14 +561,12 @@ class QueryEngine:
         # 语义搜索：使用嵌入向量匹配
         try:
             query_start = time.perf_counter()
-            query_vectors = self.embedder.embed_texts([query])
+            query_vector = self.embedder.embed_query(query)
             query_time = (time.perf_counter() - query_start) * 1000
             self._profiler.record_embedding(query_time)
 
-            if not query_vectors:
+            if not query_vector:
                 return list(all_foreshadows.values())[:top_k]
-
-            query_vector = query_vectors[0]
 
             # 对每个伏笔计算相似度
             scored_results = []
@@ -578,18 +574,19 @@ class QueryEngine:
                 # 构建伏笔文本用于嵌入
                 fp_text = self._build_foreshadow_text(fp_data)
                 fp_start = time.perf_counter()
-                fp_vectors = self.embedder.embed_texts([fp_text])
+                fp_vector = self.embedder.embed_query(fp_text)
                 fp_time = (time.perf_counter() - fp_start) * 1000
                 self._profiler.record_embedding(fp_time)
 
-                if fp_vectors:
-                    # 计算余弦相似度
-                    similarity = self._cosine_similarity(query_vector, fp_vectors[0])
-                    scored_results.append({
-                        "fp_id": fp_id,
-                        "similarity": similarity,
-                        **fp_data
-                    })
+                if not fp_vector:
+                    continue
+
+                similarity = self._cosine_similarity(query_vector, fp_vector)
+                scored_results.append({
+                    "fp_id": fp_id,
+                    "similarity": similarity,
+                    **fp_data
+                })
 
             # 按相似度降序排列
             scored_results.sort(key=lambda x: x.get("similarity", 0), reverse=True)

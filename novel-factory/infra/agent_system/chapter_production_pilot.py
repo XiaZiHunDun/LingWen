@@ -24,6 +24,7 @@ from infra.agent_system.chapter_memory_hook import (
     resolve_memory_rag_mode,
 )
 from infra.cross_volume.incremental_backfill import incremental_backfill_enabled
+from infra.memory_system.embeddings.factory import describe_embedding_requirements
 
 PILOT_WORKFLOW_NAME = "novel_writing"
 _PROVIDER_ENV_KEYS: tuple[tuple[str, str], ...] = (
@@ -204,6 +205,13 @@ def preflight_checklist(
 
     mem_mode = resolve_memory_rag_mode()
     if mem_mode == "live":
+        embed_ok, embed_msg = describe_embedding_requirements()
+        checks.append(PreflightCheck(
+            name="embedding_provider_keys",
+            passed=embed_ok,
+            message=embed_msg,
+            required=True,
+        ))
         live_ok, live_msg = memory_rag_live_gateway_check()
         checks.append(PreflightCheck(
             name="memory_rag_live_gateway",

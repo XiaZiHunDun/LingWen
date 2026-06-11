@@ -185,11 +185,9 @@ class HybridSearch:
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         # 生成查询向量
-        query_vectors = self.embedder.embed_texts([query])
-        if not query_vectors:
+        query_vector = self.embedder.embed_query(query)
+        if not query_vector:
             return []
-
-        query_vector = query_vectors[0]
 
         # 构建过滤器
         conditions = []
