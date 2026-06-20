@@ -9,6 +9,13 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      run_llm_golden_set:
+        description: "Also run optional llm-golden-set (jinghai single book)"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -132,7 +139,7 @@ jobs:
     name: LLM golden-set (optional, needs MINIMAX_API_KEY)
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_llm_golden_set == true) ||
       (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'llm-check'))
     defaults:
       run:

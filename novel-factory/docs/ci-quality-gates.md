@@ -20,12 +20,13 @@ Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1
 
 仓库 Secret：**`MINIMAX_API_KEY`**（主修 CI 必配，否则 `llm-golden-primary` fail）
 
-> 配置路径：GitHub → Settings → Secrets and variables → Actions → New repository secret
+> 配置路径：GitHub → Settings → Secrets and variables → Actions → New repository secret  
+> 手动重跑：Actions → **test** → **Run workflow**（或某次 run 页 **Re-run all jobs**）
 
 | 触发 | Job | 行为 |
 |------|-----|------|
-| 每次 push/PR | **`llm-golden-primary`** | 五样章各跑 Golden `--llm --fail-severity P0` |
-| `workflow_dispatch` / label `llm-check` | `llm-golden-set` | 可选 · 静海单书 |
+| 每次 push/PR / **Actions → test → Run workflow** | **`llm-golden-primary`** | 五样章各跑 Golden `--llm --fail-severity P0` |
+| `workflow_dispatch`（勾选 run_llm_golden_set）/ label `llm-check` | `llm-golden-set` | 可选 · 静海单书 |
 
 ### 本地主修验收
 
