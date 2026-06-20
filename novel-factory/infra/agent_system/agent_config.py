@@ -26,6 +26,27 @@ from .social_engine.relationship_tracker import DEFAULT_STATE_FILE
 # (R2-012: 默认后端 .db — 旧版 .json 仍可显式指定)
 DEFAULT_STATE_DIR = str(Path(DEFAULT_STATE_FILE).parent.parent)
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_project_env(env_path: Path | None = None) -> None:
+    """Load novel-factory/.env into os.environ (existing env vars win)."""
+    path = env_path or (_PROJECT_ROOT / ".env")
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_project_env()
+
 
 @dataclass(frozen=True)
 class MasterControllerConfig:

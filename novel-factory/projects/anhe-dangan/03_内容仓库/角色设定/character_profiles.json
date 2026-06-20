@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "description": "《暗河档案》角色表",
+  "characters": [
+    {
+      "name": "沈渡",
+      "role": "主角",
+      "personality_tags": ["克制", "细节控", "怕回声"],
+      "speech_style": "短句，习惯报水位和坐标",
+      "abilities": ["读溶缝图", "潜水基础"],
+      "knowledge": ["丰水期规则", "旧营地布局", "水位计操作"],
+      "forbids": ["无厘头搞笑", "超自然能力"],
+      "description": "水文地质员，因林湄失联退出一线；三年后带旧录音重返溶洞。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "林湄",
+      "role": "失踪搭档",
+      "personality_tags": ["冷静", "记录狂"],
+      "speech_style": "录音里多为工作口述",
+      "abilities": ["水位计维护", "溶缝测绘"],
+      "knowledge": ["频道 3 备用频率", "竖井勘探规程"],
+      "forbids": ["以幽灵现身吓人"],
+      "description": "三年前丰水期失联；真相通过录音与竖井遗迹浮现。",
+      "first_appearance": "ch001（录音/遗物）"
+    },
+    {
+      "name": "老覃",
+      "role": "洞口值守",
+      "personality_tags": ["世故", "嘴硬心软"],
+      "speech_style": "西南口音，爱说「别往里潜」",
+      "abilities": [],
+      "knowledge": ["丰水期禁忌", "旧勘探队档案位置"],
+      "forbids": [],
+      "description": "溶缝口补给点唯一常年值守者，认得沈渡。",
+      "first_appearance": "ch001"
+    }
+  ]
+}

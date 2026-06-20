@@ -5,7 +5,7 @@ import os
 
 from openai import OpenAI
 
-from infra.memory_system.embeddings.base import EmbeddingPurpose, EmbeddingProviderError
+from infra.memory_system.embeddings.base import EmbeddingProviderError, EmbeddingPurpose
 
 
 class OpenAIEmbeddingProvider:

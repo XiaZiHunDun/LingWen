@@ -1,4 +1,5 @@
 """pytest 配置"""
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,20 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _restore_lingwen_project_root():
+    """activate_project() sets os.environ directly; restore after each test."""
+    from infra.paths import ProjectPaths
+
+    saved = os.environ.get("LINGWEN_PROJECT_ROOT")
+    yield
+    if saved is None:
+        os.environ.pop("LINGWEN_PROJECT_ROOT", None)
+    else:
+        os.environ["LINGWEN_PROJECT_ROOT"] = saved
+    ProjectPaths.reset()
 
 
 @pytest.fixture

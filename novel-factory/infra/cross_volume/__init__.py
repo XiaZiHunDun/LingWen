@@ -12,12 +12,12 @@
 - ModelTier: HAIKU/SONNET/OPUS tier enum (re-exported from infra.ai_service) (Phase 9.12)
 """
 from infra.ai_service.model_tiers import ModelTier  # re-export for convenience
+from infra.cross_volume.cache import QueryImpactCache
 from infra.cross_volume.edge_inferrer import EdgeInferrer
 
 # Phase 9.12 additive (LLM scanner + edge inferrer):
 from infra.cross_volume.llm_cache import LLMCache
 from infra.cross_volume.llm_scanner import LLMScanner
-from infra.cross_volume.cache import QueryImpactCache
 from infra.cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,

@@ -1,0 +1,42 @@
+{
+  "pilot_id": "2026-06-18-ch2-pilot",
+  "chapter_num": 2,
+  "workflow_name": "novel_writing",
+  "env": {
+    "LINGWEN_REAL_LLM": "1",
+    "LINGWEN_INCREMENTAL_BACKFILL": "1",
+    "LINGWEN_MEMORY_RAG": "stub",
+    "primary_provider": "minimax"
+  },
+  "preflight_ok": true,
+  "run": {
+    "completed": 7,
+    "failed": 0,
+    "paused": false,
+    "pending_count": 0,
+    "emit_chapter_completed": true,
+    "total_cost_usd": 0.06641
+  },
+  "hooks": {
+    "memory_context_source": "stub",
+    "incremental_backfill": {
+      "character_count": 1003,
+      "foreshadow_count": 1,
+      "setting_count": 0,
+      "plot_point_count": 0,
+      "total_count": 1004,
+      "elapsed_s": 0.031762560829520226,
+      "dry_run": false,
+      "nodes_written": 0,
+      "nodes_skipped": 1004,
+      "pre_node_count": 220532,
+      "post_node_count": 220532
+    }
+  },
+  "human_review": {
+    "required": false,
+    "notes": "novel_writing has no DECISION node; use chapter_golden for pause/resume smoke"
+  },
+  "operator": "cursor-agent",
+  "recorded_at": "2026-06-18T08:55:59+00:00"
+}

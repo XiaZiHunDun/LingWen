@@ -23,8 +23,13 @@ from infra.agent_system.chapter_memory_hook import (
     memory_rag_live_gateway_check,
     resolve_memory_rag_mode,
 )
+from infra.agent_system.chapter_production_outline import (
+    production_mode,
+    resolve_production_initial_inputs,
+)
 from infra.cross_volume.incremental_backfill import incremental_backfill_enabled
 from infra.memory_system.embeddings.factory import describe_embedding_requirements
+from infra.project_config import ProjectConfig
 
 PILOT_WORKFLOW_NAME = "novel_writing"
 _PROVIDER_ENV_KEYS: tuple[tuple[str, str], ...] = (
@@ -57,10 +62,17 @@ PRODUCTION_PILOT_BEHAVIOR: tuple[dict[str, str], ...] = (
 
 
 def real_llm_enabled(explicit: bool | None = None) -> bool:
-    """Opt-in gate for real LLM pilot runs (default off)."""
+    """Opt-in gate for real LLM pilot runs (default off; auto when LINGWEN_PILOT_LLM=auto + API key)."""
     if explicit is not None:
         return explicit
-    return os.environ.get("LINGWEN_REAL_LLM", "").lower() in ("1", "true", "yes")
+    raw = os.environ.get("LINGWEN_REAL_LLM", "").lower()
+    if raw in ("1", "true", "yes"):
+        return True
+    if raw in ("0", "false", "no"):
+        return False
+    if os.environ.get("LINGWEN_PILOT_LLM", "").lower() == "auto":
+        return detect_available_provider() is not None
+    return False
 
 
 def detect_available_provider() -> str | None:
@@ -246,6 +258,28 @@ def preflight_checklist(
             message=f"chapter_num must be >= 1, got {chapter_num}",
         ))
 
+    mode = production_mode()
+    if mode == "canon" or require_real_llm_gate:
+        try:
+            project = ProjectConfig.load()
+            gate_ok, gate_msg = project.validate_production(
+                chapter_num,
+                mode=mode,
+            )
+            checks.append(PreflightCheck(
+                name="project_production_gate",
+                passed=gate_ok,
+                message=gate_msg,
+                required=mode == "canon",
+            ))
+        except Exception as exc:  # noqa: BLE001 — preflight must surface config errors
+            checks.append(PreflightCheck(
+                name="project_production_gate",
+                passed=False,
+                message=f"project config error: {exc}",
+                required=mode == "canon",
+            ))
+
     return checks
 
 
@@ -327,7 +361,7 @@ def run_production_pilot(
     try:
         run_out = master.run_workflow(
             workflow_name=PILOT_WORKFLOW_NAME,
-            initial_inputs=build_pilot_initial_inputs(chapter_num),
+            initial_inputs=resolve_production_initial_inputs(chapter_num),
             cost_budget_usd=cost_budget_usd,
             max_backtracks=max_backtracks,
         )

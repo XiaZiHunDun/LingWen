@@ -27,9 +27,13 @@
     <!-- Main Content -->
     <div class="main-wrapper">
       <header class="main-header pixel-card">
-        <h1 class="header-title">追读力 Dashboard</h1>
+        <div class="header-row">
+          <h1 class="header-title">追读力 Dashboard</h1>
+          <ProjectSwitcher />
+        </div>
       </header>
       <main class="main-content">
+        <StudioPage v-if="activeNav === 'studio'" />
         <OverviewPage v-if="activeNav === 'overview'" />
         <DecisionsPage v-else-if="activeNav === 'decisions'" />
         <WorkflowsPage v-else-if="activeNav === 'workflows'" />
@@ -45,6 +49,7 @@
 
 <script setup>
 import OverviewPage from './pages/OverviewPage.vue'
+import StudioPage from './pages/StudioPage.vue'
 import DecisionsPage from './pages/DecisionsPage.vue'
 import WorkflowsPage from './pages/WorkflowsPage.vue'
 import RipplesPage from './pages/RipplesPage.vue' // Phase 9.13
@@ -55,6 +60,7 @@ import SettingsPage from './pages/SettingsPage.vue' // Phase 9.78 F68
 import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
 import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue' // Phase 9.26 F10
 import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue' // Phase 9.27 F11
+import ProjectSwitcher from './components/ProjectSwitcher.vue' // Phase 10.04
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
 import { useDashboardNav } from './composables/useDashboardNav.js' // Phase 9.83 F75
 
@@ -66,6 +72,7 @@ function onNavClick(itemId) {
 }
 
 const navItems = [
+  { id: 'studio', label: '工作室', icon: '🏭' },
   { id: 'overview', label: '总览', icon: '📊' },
   { id: 'decisions', label: '决策', icon: '⚡' },
   { id: 'workflows', label: '工作流', icon: '🔀' },
@@ -170,6 +177,14 @@ const navItems = [
   font-size: 14px;
   color: var(--color-accent);
   font-family: 'Press Start 2P', monospace;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
 }
 
 .main-content {

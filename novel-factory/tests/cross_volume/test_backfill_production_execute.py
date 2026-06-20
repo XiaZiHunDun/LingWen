@@ -11,7 +11,6 @@ from infra.cross_volume.backfill import Backfiller
 from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
 from infra.cross_volume.storage import RippleStorage
 
-
 RULES_YAML = """
 character:
   name_pattern: "[李青云林凡]{2,3}"

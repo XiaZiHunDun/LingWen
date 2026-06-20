@@ -1,0 +1,21 @@
+[
+  {
+    "decision_id": "e2e-dec1",
+    "decision_kind": "outline_judgment",
+    "node_id": "e2e-node",
+    "prompt": "E2E: approve outline?",
+    "options": [
+      "approve",
+      "reject"
+    ],
+    "context": {},
+    "priority": 9,
+    "due_at": null,
+    "created_at": "2026-06-20T16:36:44.538212",
+    "status": "resolved",
+    "resolution": "approve",
+    "resolved_at": "2026-06-20T16:36:45.953215",
+    "resolved_by": "human",
+    "reason": null
+  }
+]

@@ -84,12 +84,32 @@ class CharacterAgencyChecker(BaseChecker):
         "质问",
         "追问",
         "要求",
-        "拒绝",
-        "接受",
+        "核对",
+        "翻看",
+        "摊开",
+        "收起",
+        "敲",
+        "拨",
+        "喊",
+        "问",
+        "答",
+        "打开",
+        "关上",
+        "推",
+        "拉",
+        "跑",
+        "跳",
+        "爬",
+        "写",
+        "记",
+        "查",
+        "找",
     ]
 
     # 能动性比率阈值
     AGENCY_RATIO_THRESHOLD = 0.3
+    # 至少 N 次被动命中才评估，避免短章/偶发词误报（Phase 11.23）
+    MIN_REACTIVE_HITS = 3
 
     def __init__(self):
         super().__init__(self._checker_type)
@@ -114,14 +134,25 @@ class CharacterAgencyChecker(BaseChecker):
         issues = []
         context = context or {}
 
-        # 获取目标角色列表
-        target_characters = context.get("target_characters", ["林夜", "苏琳", "星月"])
+        if "target_characters" not in context:
+            from infra.paths import ProjectPaths
+            from infra.project_characters import load_agency_target_characters
+
+            target_characters = load_agency_target_characters(
+                ProjectPaths.get(),
+                chapter_content=chapter_content,
+            )
+        else:
+            target_characters = context["target_characters"]
 
         for character in target_characters:
             active_count = self._count_patterns(chapter_content, character, self.ACTIVE_PATTERNS)
             reactive_count = self._count_patterns(chapter_content, character, self.REACTIVE_PATTERNS)
 
             if reactive_count == 0:
+                continue
+
+            if reactive_count < self.MIN_REACTIVE_HITS:
                 continue
 
             ratio = active_count / reactive_count if reactive_count > 0 else 0

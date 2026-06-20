@@ -158,3 +158,16 @@ def test_master_controller_config_is_frozen():
 
     with pytest.raises(Exception):  # FrozenInstanceError
         config.primary_provider = "anthropic"  # type: ignore[misc]
+
+
+def test_load_project_env_from_file(tmp_path, monkeypatch):
+    from infra.agent_system.agent_config import load_project_env
+
+    monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text("MINIMAX_API_KEY=from-dotenv\n", encoding="utf-8")
+
+    load_project_env(env_file)
+
+    assert os.environ.get("MINIMAX_API_KEY") == "from-dotenv"
+

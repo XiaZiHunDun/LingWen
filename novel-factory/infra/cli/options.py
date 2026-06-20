@@ -14,12 +14,24 @@ class UnifiedOptions:
 
 
 @dataclass
+class InitProjectOptions(UnifiedOptions):
+    """init-project 命令选项"""
+    slug: str = ""
+    title: str = ""
+    protagonist: str = "沈柯"
+    genre: str = "科幻悬疑"
+    out: Optional[str] = None
+    overwrite: bool = False
+
+
+@dataclass
 class CheckOptions(UnifiedOptions):
     """check 命令选项"""
     quick: bool = False
     full: bool = False
     llm: bool = False
     limit: int = 20
+    fail_severity: Optional[str] = None  # P0|P1|P2|P3 — exit 1 if any issue at or above severity
 
 
 @dataclass

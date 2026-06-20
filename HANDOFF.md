@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.98 (Phase 9.98 v9 全量交付, 2026-06-11)
-> **更新 (2026-06-11)**: baseline 全绿验证 — pytest 2893 passed / vitest 409 passed
+> **版本**: v10.49 (Phase 11.14 LLM Golden 稳定化 + 工程门收尾, 2026-06-20)  
+> **更新 (2026-06-20)**: LLM 因果检测统一 P1 · 雪线 ch010 时间线 · 五书 golden ALL PASS
 
 ---
 
@@ -13,15 +13,15 @@
 | 项目 | 内容 |
 |------|------|
 | **项目名** | 灵文 (LingWen) · 工业化小说生产系统 |
-| **当前小说** | 《星陨纪元》359 章 (v9.10 已发布, v9.11/v9.12/v9.24 未触发正文变更) |
-| **核心架构** | 5 核心 Agent + 角色池 (content_writer/auditor/polisher × 作家/审核员/读者池) |
-| **后端** | Python 3.13 · FastAPI · SQLite (`.state/*.db`) · Pydantic v2 · pytest **2902** collected (**2893** passed, 9 skipped) |
-| **前端** | Vue 3 SFC · Vite · ECharts **6.1** · Vitest **409** passed · Playwright 1 smoke + 5 live opt-in · TS strict |
-| **总测试** | **~3311** (2902 pytest + 409 vitest + skips) |
-| **GitHub** | `git@github.com:XiaZiHunDun/LingWen.git` (master 单分支) |
-| **当前 commit** | `d8685b2` — docs(handoff) v9.98 定稿（功能 `fe45027`） |
-| **CI** | `test.yml` · `dashboard-frontend-ci.yml` · `dashboard-e2e-smoke.yml` · **`dashboard-e2e-live.yml`** (opt-in) |
-| **下一期推荐** | **正文生产** wave 367–376（runbook §18）或 v10 roadmap 规划 |
+| **产品目标** | **灵文工作室** — 可复用的小说生产平台（非无止尽写星陨） |
+| **试验田** | 《星陨纪元》ch001–ch360 正史；ch361–ch996 = stress test（见 `03_内容仓库/experimental/`） |
+| **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
+| **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
+| **CI** | golden-set matrix（八书）· onboarding-smoke |
+| **下一期推荐** | **五样章 zip 对外** · 或黄沙/暗河第六主修 |
+| **主修 slug** | 五样章均已 dist · 封存：黄沙 / 暗河 |
+| **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
+| **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
 
 ---
 
@@ -259,42 +259,464 @@ b96a669 feat(F86): live RAG preflight gate + runbook §19
 
 ---
 
-## 6. 后续 followup (v9, post 9.90)
+## 6. 后续 followup (v10, post 9.98)
 
-**汇总 (v9)**: `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md`
+**战略 (2026-06-16)**: 星陨纪元 = 试验田；主目标是 **灵文工作室** 产品化。
 
-**v8 (F77-F82) 已全部完成** (`5c988f1`). 见 v8 doc: `2026-06-11-followup-roadmap-v8-post-9.84.md`
+**v10 roadmap**: `novel-factory/docs/superpowers/plans/2026-06-16-roadmap-v10-studio.md`
 
-| # | 主题 | Phase | 估时 | Track | 状态 |
-|---|------|-------|------|-------|------|
-| F77-bk | v8 roadmap | 9.85-bk | 30min | P0 | ✅ |
-| F78 | Settings 预算写入 | 9.86 | 2-3h | P2 | ✅ |
-| F79 | Batch 361-363 | 9.87 | 2-4h | P1 | ✅ |
-| F80 | Batch dry-run | 9.88 | 2-3h | P1 | ✅ |
-| F81 | Analytics rollup | 9.89 | 3-4h | P2 | ✅ |
-| F82 | Remote e2e 确认 | 9.90 | 30min | P3 | ✅ |
+**v9 (F77-F90) 已全部完成** — 见 `2026-06-11-followup-roadmap-v9-post-9.90.md`
 
-**v9 待启动 (推荐顺序):**
+### Phase 10.01 止血 ✅
 
-| # | 主题 | Phase | 估时 | Track | 状态 |
-|---|------|-------|------|-------|------|
-| F83-bk | v9 roadmap + HANDOFF | 9.91-bk | 30min | P0 | ✅ |
-| **F84** | Batch 364-366 续跑 | 9.92 | 2-4h | P1 | ✅ |
-| **F85** | 10 章 wave runbook | 9.93 | 2h | P1 | ✅ |
-| **F86** | MEMORY_RAG=live pilot | 9.94 | 3-5h | P1 | ✅ ch367 live manual ~$0.022 |
-| **F89** | Embedding Provider 解耦 | 9.95 | 1-2d | P1 | ✅ MiniMax embo-01 beta |
-| F87 | Analytics 成本趋势 | 9.96 | 3-4h | P2 | ✅ |
-| F88 | ChaptersPage batch badge | 9.97 | 2h | P2 | ✅ |
-| F90 | e2e-live 首绿记录 | 9.98 | 30min | P3 | ✅ |
-| — | v9 收尾 | 9.98-bk | 30min | P0 | ✅ pytest 2893/2902 · vitest 409 |
+| 交付 | 说明 |
+|------|------|
+| `config/project.yaml` | 项目名、role=testbed、max_chapter=360 |
+| `infra/project_config.py` | 生产硬门 + env 覆盖 |
+| preflight `project_production_gate` | canon 超 ch360 默认拒绝 |
+| `run-canon-waves.sh` | 脚本层 max chapter 检查 |
+| `03_内容仓库/experimental/README.md` | ch361–996 标为 stress test |
 
-**v9 已全部完成。** 推荐下一项:
+**Stress test 续跑**（非默认）: `LINGWEN_ALLOW_STRESS_TEST=1`
 
-1. **正文 wave 367–376** — `docs/chapter-production-runbook.md` §18（需 `MINIMAX_API_KEY`）
-2. （可选）GitHub Actions 远程 e2e-live 首绿 → 更新 `ci_records`
-3. （可选）v10 roadmap — 新 dashboard/infra phase
+### Phase 10.03 — 第二本书 pilot ✅
 
----
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.03a | 10 章大纲 + 支柱 | ✅ |
+| 10.03b | 生产 10 章 + 人审修稿 | ✅ ch009 截断已补全；死因/信标口径统一 |
+| 10.03c | Golden Set + CI | ✅ `scripts/verify-golden-set.sh` in `test.yml` |
+
+**第二本书** (`projects/anye-xinbiao`): 质检报告 `docs/full-check-report.md`；Golden Set ch001/005/010。
+
+### Phase 10.04 — 工作室产品化 ✅
+
+见 `docs/superpowers/plans/2026-06-16-roadmap-v10-studio.md`（Dashboard Studio 页、多项目、后台 Batch）。
+
+### Phase 10.05 — onboarding 可复制性 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.05a | 第三本书脚手架 `huiyu-dangan` | ✅ init + pillars + golden-set stub |
+| 10.05b | Preflight canon ch001 | ✅ |
+| 10.05c | batch 末章 failed 根因修复 | ✅ `resolve_chapter_cost_budget` + auto-calibrate |
+| 10.05d | Dashboard batch 安全门 | ✅ `LINGWEN_ALLOW_DASHBOARD_BATCH=1` |
+| 10.05e | 3 章正文 pilot | ✅ |
+| 10.05f | 试读包 + CI matrix + ch004–010 | ✅ |
+
+**CI**：`.github/workflows/test.yml` golden-set matrix 含 `huiyu-dangan`。
+
+### Phase 10.06 — 发布候选 + 工程收尾 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.06a | 两本书试读/全书发布包 | ✅ `build-trial-read.sh` |
+| 10.06b | 项目级角色表（agency 误报） | ✅ `infra/project_characters.py` |
+| 10.06c | onboarding 验收脚本 + CI | ✅ `verify-onboarding.sh` |
+| 10.06d | `init-project` 路径修复 | ✅ 不再嵌套到当前 `LINGWEN_PROJECT_ROOT` |
+
+**发布物**：
+
+| 书 | 试读 | 全书 |
+|----|------|------|
+| 灰域档案 | `projects/huiyu-dangan/docs/trial-read-ch001-003.md` | `trial-read-ch001-010.md` |
+| 暗夜信标 | `projects/anye-xinbiao/docs/trial-read-ch001-003.md` | `trial-read-ch001-010.md` |
+
+### 推荐下一项
+
+1. **《黄沙档案》pilot** — `export LINGWEN_PROJECT_ROOT=.../huangsha-dangan` → `./scripts/run-project-batch.sh 1 3 3 0.25`
+2. Dashboard Studio 选 **黄沙档案** → Preflight → 复制 Batch 命令
+
+### Phase 10.26 — 通读改稿阶段 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.26a | 七书质检巡检（P0=0 · Golden Set 全通过） | ✅ |
+| 10.26b | [`docs/eight-books-reading-guide.md`](novel-factory/docs/eight-books-reading-guide.md) 通读索引 | ✅ |
+| 10.26c | 黄沙 ch004 因果修（录音时长 vs 未返回） | ✅ P1 14→13 |
+| 10.27a | 试读改稿三轮：黄沙 ch002 / 灰域 ch001–003 / 雪线 ch003 | ✅ P0=0 保持 |
+
+**10.27 改稿摘要**：黄沙 ch002 / 灰域 ch001–003 / 雪线 ch003
+
+| 10.28a | 铁道 ch003 竖井：路签/里程/频道5，去模板「咚」 | ✅ |
+| 10.28b | 铁道 ch004 重写：去黄沙误粘贴，天窗录音线 | ✅ |
+| 10.28c | 静海 ch005：删 ch004 重复衔接，收「雾里有眼睛」套话 | ✅ |
+
+| 10.29a | 铁道 ch005–006：工务/轨检/道床空腔，去勘探模板 | ✅ |
+| 10.29b | 灰域 ch001–010：呼吸/瞳孔套话，ch006 移交单口径统一 | ✅ |
+
+| 10.30a | 静海 ch006–008：心跳/瞳孔套话轻润 | ✅ |
+| 10.30b | 七书 Golden Set 同步（manifest 章 → `golden-set/chapters/`） | ✅ |
+| 10.30c | 新增 `scripts/sync-golden-set.sh` | ✅ |
+
+### Phase 10.31 — 主修书定稿 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.31a | 主修书选定：**《静海日志》** `jinghai-rizhi` | ✅ |
+| 10.31b | [`docs/primary-revision-book.md`](novel-factory/docs/primary-revision-book.md) 通读 + 改稿流程 | ✅ |
+
+**策略**：其余六书封存（P0=0）；精力只打磨静海至「样章级」。
+
+### Phase 10.32 — 静海通读改稿 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.32a | ch007 改档：正式章名、铁门逃脱、容器写实化 | ✅ |
+| 10.32b | ch008 删重复档案室段，从通气道接水密舱线 | ✅ |
+| 10.32c | 时间线统一「五年」；ch006 灯塔口误；ch002 压对话 | ✅ |
+| 10.32d | ch001–005 心跳套话清理；Golden Set + 试读包重建 | ✅ |
+
+### Phase 10.33 — 静海后半收束 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.33a | ch005–006：删黑船重复、统一听潮站方位 | ✅ |
+| 10.33b | ch009–010：老周雾灯线统一；删「脑子烧坏」矛盾 | ✅ |
+| 10.33c | ch007 补沈雁再下水密舱；ch010 压缩对讲 exposition | ✅ |
+| 10.33d | 试读包 + Golden Set 重建 | ✅ |
+
+### Phase 10.34 — 静海 P2 抛光 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.34a | ch9–10：雾灯 = 灯塔西坡，口径统一 | ✅ |
+| 10.34b | ch5 黑影台词；ch6 删重复「她在三楼」 | ✅ |
+| 10.34c | Golden Set ch005 同步 | ✅ |
+
+### Phase 10.35 — 工程文档收口 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.35a | `README.md` 重写为 Studio v10 入口 | ✅ |
+| 10.35b | `studio-demo` / `trial-read-index` / demo-checklist 对齐八书 + 静海主打 | ✅ |
+| 10.35c | 新增 `scripts/verify-studio-release.sh` 一键 smoke | ✅ |
+
+### Phase 10.36 — 对外分发就绪 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.36a | 静海试读 3/10 章 + full-check 重建 | ✅ |
+| 10.36b | [`jinghai-external-release.md`](novel-factory/docs/jinghai-external-release.md) 对外一包 | ✅ |
+| 10.36c | [`studio-demo-record-ready.md`](novel-factory/docs/studio-demo-record-ready.md) 录屏清单 | ✅ |
+| 10.36d | `verify-studio-release.sh` 复验 PASS | ✅ |
+
+### Phase 10.37 — 静海对外打包 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.37a | `投稿摘要.txt` + `邮件正文.txt` 纯文本 | ✅ |
+| 10.37b | `prepare-jinghai-distribution.sh` → `dist/` | ✅ |
+| 10.37c | Studio Demo 录屏 | ⏭ 不做 |
+
+
+**本期策略**：对外发静海（用户本地发送）· 八书封存
+
+### Phase 10.38 — v11 三类真工程 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.38a | Golden Set **P0 硬门**（`check --fail-severity P0`） | ✅ |
+| 10.38b | Ruff 清债 + CI blocking | ✅ |
+| 10.38c | 可选 LLM CI job + [`ci-quality-gates.md`](novel-factory/docs/ci-quality-gates.md) | ✅ |
+| 10.38d | `run-primary-revision-verify.sh` + agency 规则扩充 | ✅ |
+| 10.38e | `sync-handoff-baseline.sh` · E2E 超时 30s | ✅ |
+| 10.38f | [`roadmap-v11-engineering.md`](novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md) | ✅ |
+
+**v11 backlog**：Dashboard prose diff UI（v12）· 黄沙/暗河第六主修
+
+### Phase 11.14 — LLM Golden 主修 blocking ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.14a | `resolve_llm_post_check` · 五样章默认 blocking | ✅ |
+| 11.14b | `run-llm-golden-check.sh` / `run-llm-golden-primary.sh` | ✅ |
+| 11.14c | CI job `llm-golden-primary` matrix ×5 | ✅ |
+| 11.14d | `docs/ci-quality-gates.md` 更新 | ✅ |
+| 11.14e | LLM 因果检测统一 **P1** + JSON 解析重试 + 雪线 ch010 时间线 | ✅ |
+
+```bash
+export MINIMAX_API_KEY=...
+bash scripts/run-primary-revision-verify.sh tiedao-dangan
+bash scripts/run-llm-golden-primary.sh
+# 本地无 key：LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh <slug>
+```
+
+### Phase 11.05 — Prose diff harness ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.05a | `infra/prose_snapshot.py` 快照 + diff | ✅ |
+| 11.05b | `scripts/run-prose-diff.sh`（diff / --save / --init / --save-all） | ✅ |
+| 11.05c | 五样章 `docs/prose-snapshot.json` 基线 | ✅ |
+| 11.05d | 接入 `run-primary-revision-verify.sh`（informational） | ✅ |
+
+```bash
+bash scripts/run-prose-diff.sh tiedao-dangan           # 改稿后对比
+bash scripts/run-prose-diff.sh tiedao-dangan --save    # 定稿后更新快照
+LINGWEN_PROSE_DIFF_FAIL=1 bash scripts/run-prose-diff.sh <slug>  # 回归则 exit 1
+```
+
+### Phase 11.13 — Playwright live 5/5 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.13a | 根因：`uvicorn` 缺 WS → 决策页 pending 空 | ✅ `uvicorn[standard]` |
+| 11.13b | `live-backend.js` 路径修正 + `waitForPendingDecisionCard` | ✅ |
+| 11.13c | `verify-e2e-live-ci.sh` playwright 无 sudo 回退 | ✅ |
+| 11.13d | CI 契约 `test_e2e_live_11_13_ci.py` | ✅ |
+
+```bash
+bash scripts/verify-e2e-live-ci.sh          # 5 passed
+# GitHub: workflow_dispatch 或 PR label e2e-live → dashboard-e2e-live.yml
+```
+
+### Phase 11.11 — 覆盖率 40% + 分模块门槛 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.11a | CI `--cov-fail-under=40` + `--cov-config=pyproject.toml` | ✅ |
+| 11.11b | `config/coverage_modules.yaml` + `verify-coverage-modules.sh` | ✅ |
+| 11.11c | legacy tools omit + `problem_classifier` / `coverage_gate` 测试 | ✅ |
+| 11.11d | Dashboard API `prose_heatmap` Pydantic 字段修复 | ✅ |
+
+```bash
+bash scripts/verify-coverage-modules.sh   # infra/dashboard ≥40%, tools ≥30% (omit 后 ≈41%)
+```
+
+### Phase 11.06 — 雪线第五样章 + 五册 zip ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.06a | ch002–004 轻量改稿（保 ch003 黑匣子） | ✅ |
+| 11.06b | `prepare-xuexian-distribution.sh` | ✅ |
+| 11.06c | zip 升级为 **五样章** | ✅ |
+
+### Phase 11.05 — 暗夜第四样章 + zip ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.05a | ch001–004 prose 改稿 | ✅ |
+| 11.05b | `prepare-anye-distribution.sh` | ✅ |
+| 11.05c | `prepare-studio-samples-zip.sh` | ✅ |
+| 11.05d | `trial-read-index` 四样章 | ✅ |
+
+### Phase 11.03 — 铁道第三样章 dist ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.03a | ch002–010 prose 改稿 + 后五章扩写 | ✅ |
+| 11.03b | `prepare-tiedao-distribution.sh` → `dist/` | ✅ |
+| 11.03c | 投稿摘要 / 通读报告 / external-release | ✅ |
+| 11.03d | `trial-read-index` 三样章表 | ✅ |
+
+### Phase 11.22 — 顶级工作室 prose 路线 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.22a | [`prose-rubric-v1.md`](novel-factory/docs/prose-rubric-v1.md) | ✅ |
+| 11.22b | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) KPI | ✅ |
+| 11.23 | `run-prose-calibration.sh` + agency 降噪 | ✅ |
+| 11.24 | Dashboard Prose 热力图 | ✅ |
+| 11.04 | 主修验收 LLM auto | ✅ |
+
+### Phase 10.40 — 灰域对外 dist ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.40a | `prepare-huiyu-distribution.sh` | ✅ |
+| 10.40b | `huiyu-external-release.md` + 投稿/邮件纯文本 | ✅ |
+| 10.40c | `trial-read-index` 双样章表 | ✅ |
+| 10.40d | dist 复验 PASS | ✅ |
+
+### Phase 10.39 — 11.12 flake + 11.02 灰域 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.39a | pytest 7 flake 修复 | ✅ **2928 passed** |
+| 10.39b | E2E ripples-audit 重试 | ✅ |
+| 10.39c | 灰域 `run-primary-revision-verify.sh` | ✅ |
+| 10.39d | [`second-primary-revision-huiyu.md`](novel-factory/docs/second-primary-revision-huiyu.md) | ✅ |
+
+### Phase 10.25 — 第八本全书 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.25a | `init-project tiedao-dangan` + 铁路悬疑支柱/大纲 | ✅ |
+| 10.25b | pilot ch001–003 + 写实 ch004–010 | ✅ |
+| 10.25c | full-check **P0=0** + Golden Set + CI | ✅ |
+
+**路径**：`projects/tiedao-dangan/` · 纪川 / 方晓 · K47 / 频道 5
+
+### Phase 10.24 — 第七本全书 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.24a | `init-project anhe-dangan` + 喀斯特悬疑支柱/10 章大纲 | ✅ |
+| 10.24b | Preflight ch001 | ✅ |
+| 10.24c | 正文 pilot ch001–003 | ✅ |
+| 10.24d | batch ch004–010 + 写实修订 | ✅ P0=0 |
+| 10.24e | Golden Set + CI matrix | ✅ |
+
+**路径**：`projects/anhe-dangan/` · 沈渡 / 林湄 · 丰水期 / 频道 3
+
+### Phase 10.23 — 黄沙写实线 + Golden Set ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.23a | 重写 ch005–010 写实线（去超自然） | ✅ |
+| 10.23b | full-check **P0=0** | ✅ |
+| 10.23c | Golden Set + CI matrix | ✅ `huangsha-dangan` |
+
+### Phase 10.22 — 黄沙全书 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.22a | batch ch004–010 | ✅ ~17min |
+| 10.22b | 截断补全 ch002–010 | ✅ 人审 |
+| 10.22c | full-check 报告 + 全书试读 | ✅ |
+
+### Phase 10.21 — 第六本脚手架 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.21a | `init-project huangsha-dangan` + 沙漠悬疑支柱/10 章大纲 | ✅ |
+| 10.21b | Preflight ch001 + dry-run batch 1–3 | ✅ |
+| 10.21c | 清理盲测 `blind-book-*` | ✅ |
+| 10.21d | 正文 pilot ch001–003 | ✅ quick check OK · ~8min |
+
+**路径**：`projects/huangsha-dangan/` · 主角陆沉 · 风蚀日 / 频道 7
+
+### Phase 10.20 — Demo 录屏就绪 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.20a | 8765 单端口 Dashboard（`LINGWEN_SERVE_UI=1`） | ✅ Linux 本机 + Cursor SSH 验收 |
+| 10.20b | 分镜稿 / studio-demo 同步单端口 + Cursor 访问说明 | ✅ recording-v2 |
+| 10.20c | Demo 清单人工项（Studio 切换 + full-check 面板） | ✅ 2026-06-18 |
+
+**远程访问备忘**：Ports 转发 **8765**（勿用 3000 Docker）；Windows 先在 Cursor 点链接再开浏览器；mihomo 用户直连 `127.0.0.1`。
+
+### Phase 10.19 — Demo 录屏分镜稿 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.19a | `studio-demo-recording-script.md` | ✅ 时间轴 + 话术 + 镜头 |
+| 10.19b | `studio-demo.md` 同步五书 | ✅ 链至分镜稿 |
+
+### Phase 10.18 — 雪线 Golden Set ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.18a | `golden-set/` ch001/005/010 | ✅ |
+| 10.18b | CI matrix + verify | ✅ `xuexian-dangan` |
+
+### Phase 10.17 — 雪线全书 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.17a | ch004–010 batch（续跑 7–10） | ✅ 中断后恢复 |
+| 10.17b | 人审修稿 | ✅ ch005/007–010 截断补全 |
+| 10.17c | 全书试读 + full-check | ✅ P0=0 · ~27k 字 |
+
+### Phase 10.16 — 第五本 pilot ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.16a | `xuexian-dangan` 脚手架 + 支柱/大纲 | ✅ 高山悬疑 |
+| 10.16b | batch ch001–003 | ✅ ~$0.19 · ~12min |
+| 10.16c | quick + 试读 | ✅ P0=0 · `trial-read-ch001-003.md` |
+
+**路径**：`projects/xuexian-dangan/`
+
+### Phase 10.15 — Demo 清单 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.15a | doctor / blind / golden-set | ✅ 见 `demo-checklist-report.md` |
+| 10.15b | Studio pytest smoke | ✅ 9 passed |
+| 10.15c | Demo 脚本更新 | ✅ 四书 + 检查清单 |
+
+### Phase 10.14 — 静海发布候选 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.14a | ch006 P0 修稿（黑船/退潮潜流） | ✅ |
+| 10.14b | full-check 1–10 | ✅ P0=0 · 29 问题 |
+| 10.14c | 试读包刷新 | ✅ `trial-read-ch001-010.md` |
+
+### Phase 10.13 — 静海全书 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.13a | ch004–010 大纲 + batch | ✅ ~$0.06 · 30min |
+| 10.13b | 人审修稿 | ✅ 截断补全 · 沈雁人称 · P0 因果链 |
+| 10.13d | Golden Set + CI | ✅ ch001/005/010 · matrix |
+| 10.13c | 全书试读 | ✅ `trial-read-ch001-010.md` (~27k 字) |
+
+### Phase 10.12 — 第四本 LLM pilot ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.12a | `jinghai-rizhi` 脚手架 + 支柱/大纲 | ✅ 沿海悬疑 |
+| 10.12b | batch ch001–003 | ✅ ~$0.06 · 14min |
+| 10.12c | 人审修稿 | ✅ 灯塔线衔接 · ch003 补全 |
+| 10.12d | 试读 + full-check | ✅ `trial-read-ch001-003.md` |
+
+**路径**：`projects/jinghai-rizhi/`
+
+### Phase 10.11 — Demo + 第四本盲测 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.11a | `docs/studio-demo.md` | ✅ 15/30 分钟脚本 |
+| 10.11b | `verify-onboarding-blind.sh` | ✅ 随机 slug + 报告 |
+| 10.11c | 盲测 + batch dry-run 修复 | ✅ `require_gate` 不含 dry-run |
+| 10.11d | 盲测执行 | ✅ PASS + CLEANUP |
+
+### Phase 10.10 — 试读分发包 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.10a | 统一 `resolve-project.sh` | ✅ build / verify-golden-set |
+| 10.10b | `build-all-trial-reads.sh` | ✅ 三书一键重建 |
+| 10.10c | 分发索引 | ✅ `docs/trial-read-index.md` |
+| 10.10d | 星陨试读 ch001–003 | ✅ `docs/trial-read-ch001-003.md` |
+
+**对外分发入口**：`novel-factory/docs/trial-read-index.md`
+
+### Phase 10.07 — Full-check 仪表盘 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.07a | ch009 反相发射口径修稿 | ✅ P0 消除 |
+| 10.07b | `generate-full-check-report.sh` | ✅ 两书报告刷新 |
+| 10.07c | Studio `/api/studio/quality-report` | ✅ 按章折叠展示 |
+
+**质检（规则引擎，2026-06-18）**：
+
+| 书 | 合计 | P0 |
+|----|------|-----|
+| 灰域档案 | 31 | 0（agency 误报已消） |
+| 暗夜信标 | 26 | 0 |
+
+### Phase 10.08 — 星陨 testbed 补章 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.08a | ch045 正文 + 大纲 | ✅ 噩梦/试炼过渡，衔接 ch046 |
+| 10.08b | testbed Golden Set | ✅ ch001 / ch050 / ch360 |
+| 10.08c | `verify-golden-set.sh` 根项目解析 | ✅ xingyun-jiyuan |
+| 10.08d | CI golden-set matrix | ✅ 含 xingyun-jiyuan |
+
+### Phase 10.09 — ch041 正文修复 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 10.09a | 清除 ch041 LLM 审核元文本 | ✅ 还原「废墟星空」叙事 |
+| 10.09b | 与 ch042 篝火 / ch043–045 线衔接 | ✅ 观星后下山回营地 |
+
+~~正文 wave 367–376~~ — **已 superseded**
 
 ## 7. 已知 issues / 不破 baseline 区域
 
@@ -306,11 +728,11 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 - **均非 primary merge gate**
 - `pnpm e2e:smoke` — vite only，1 test
 - `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
-- **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；远程 CI 或修 flake 后再 honest 5/5
+- **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；Phase 10.38 已将 list/detail 超时提至 30s
 
 ### 7.5 pytest baseline 与环境变量
 
-- **默认 CI 期望**: `pytest -q` → **2893 passed**, 9 skipped（2026-06-11 本机验证）
+- **默认 CI 期望**: `pytest -q` → **2923 passed**, 11 skipped（2026-06-19；含 10.38 +3 tests；本机全量偶发 8 fail 见 §7.1）
 - **`LINGWEN_MEMORY_RAG=live`** 在 shell 中 export 时，batch 单元测试需 `stub`（已在 `test_chapter_production_batch` autouse 隔离）
 - **real LLM opt-in** (`MINIMAX_API_KEY` 等): `test_novel_writing_real_llm.py` 仅在有 key 时跑；Markdown fenced JSON 已由 `AgentBase.parse_response` 剥离
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -30,7 +31,7 @@ class TestPrecommitPytestSmokeContract:
 
     def test_smoke_subset_passes(self):
         result = subprocess.run(
-            ["pytest", *SMOKE_PYTEST_ARGS],
+            [sys.executable, "-m", "pytest", *SMOKE_PYTEST_ARGS],
             cwd=NOVEL_FACTORY,
             capture_output=True,
             text=True,

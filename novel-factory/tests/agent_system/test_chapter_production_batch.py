@@ -10,6 +10,7 @@ from infra.agent_system.chapter_production_batch import (
     BatchResult,
     build_batch_plan,
     load_calibration_from_batch,
+    resolve_chapter_cost_budget,
     resolve_cost_per_chapter_usd,
     run_production_batch,
     save_batch_summary,
@@ -88,6 +89,47 @@ class TestRunProductionBatch:
         assert batch.chapters_attempted == 2
         assert batch.chapters_succeeded == 1
         assert batch.stopped_reason == "chapter_failed"
+
+    def test_skips_last_chapter_when_budget_too_thin(self, tmp_path, monkeypatch):
+        """Avoid partial last-chapter runs (root cause of emit_chapter failures)."""
+        monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
+        monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
+        calls: list[int] = []
+
+        def runner(*, chapter_num, state_dir=None, cost_budget_usd=None, **kwargs):
+            calls.append(chapter_num)
+            return _ok(chapter_num, cost=0.05)
+
+        batch = run_production_batch(
+            start_chapter=1,
+            max_chapters=3,
+            state_dir=tmp_path,
+            budget_usd=0.12,
+            pilot_runner=runner,
+        )
+        assert calls == [1, 2]
+        assert batch.stopped_reason == "budget_exceeded"
+        assert batch.chapters_attempted == 2
+
+    def test_resolve_chapter_cost_budget_last_chapter_gets_pool(self):
+        budget, stop = resolve_chapter_cost_budget(
+            budget_usd=0.18,
+            cumulative_cost=0.12,
+            cost_per_chapter_usd=0.06,
+            chapters_remaining=1,
+        )
+        assert stop is None
+        assert budget == pytest.approx(0.06)
+
+    def test_resolve_chapter_cost_budget_rejects_thin_headroom(self):
+        budget, stop = resolve_chapter_cost_budget(
+            budget_usd=0.18,
+            cumulative_cost=0.15,
+            cost_per_chapter_usd=0.06,
+            chapters_remaining=1,
+        )
+        assert budget is None
+        assert stop == "budget_exceeded"
 
     def test_budget_hard_stop(self, tmp_path, monkeypatch):
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
@@ -172,6 +214,19 @@ class TestRunProductionBatch:
         assert plan["chapter_range"] == "361-363"
         assert plan["estimated_total_cost_usd"] == pytest.approx(0.082695, rel=1e-3)
         assert plan["budget_headroom_usd"] == pytest.approx(0.067305, rel=1e-3)
+
+    def test_dry_run_without_real_llm_gate(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
+        monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
+        batch = run_production_batch(
+            start_chapter=1,
+            max_chapters=3,
+            state_dir=tmp_path,
+            budget_usd=0.25,
+            dry_run=True,
+        )
+        assert batch.stopped_reason == "dry_run"
+        assert batch.batch_plan["preflight_ok"] is True
 
     def test_cli_dry_run(self, tmp_path, monkeypatch):
         from infra.agent_system import chapter_production_batch as mod

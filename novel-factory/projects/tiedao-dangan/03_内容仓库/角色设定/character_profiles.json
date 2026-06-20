@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "description": "《铁道档案》角色表",
+  "characters": [
+    {
+      "name": "纪川",
+      "role": "主角",
+      "personality_tags": ["克制", "细节控", "怕长隧道"],
+      "speech_style": "短句，习惯报里程和轨温",
+      "abilities": ["读桥隧图", "轨旁作业基础"],
+      "knowledge": ["天窗点规则", "K47 旧线布局", "轨旁电台操作"],
+      "forbids": ["无厘头搞笑", "超自然能力"],
+      "description": "桥隧工务员，因方晓失联转岗；两年后带旧录音重返弃线。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "方晓",
+      "role": "失踪搭档",
+      "personality_tags": ["冷静", "记录狂"],
+      "speech_style": "录音里多为工作口述",
+      "abilities": ["轨旁电台维护", "涵洞测绘"],
+      "knowledge": ["频道 5 备用频率", "竖井检修规程"],
+      "forbids": ["以幽灵现身吓人"],
+      "description": "两年前天窗点失联；真相通过录音与竖井遗迹浮现。",
+      "first_appearance": "ch001（录音/遗物）"
+    },
+    {
+      "name": "老贺",
+      "role": "道口值守",
+      "personality_tags": ["世故", "嘴硬心软"],
+      "speech_style": "北方口音，爱说「别进隧道」",
+      "abilities": [],
+      "knowledge": ["天窗点禁忌", "旧工务档案位置"],
+      "forbids": [],
+      "description": "K47 道口唯一常年值守者，认得纪川。",
+      "first_appearance": "ch001"
+    }
+  ]
+}

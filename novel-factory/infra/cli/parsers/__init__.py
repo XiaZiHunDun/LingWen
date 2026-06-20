@@ -13,6 +13,7 @@ from .backfill import add_backfill_parser
 from .cascade import add_cascade_parser
 from .check import add_check_parser
 from .doctor import add_doctor_parser
+from .init_project import add_init_project_parser, register_init_project_args
 from .llm_analyze import add_llm_analyze_parser
 from .polish import add_polish_parser
 from .repair import add_repair_parser
@@ -69,5 +70,7 @@ Examples:
     # Phase 9.19 additive: cascade (re-run BFS, 1:1 with ripple-audit)
     add_cascade_parser(subparsers)
     add_ripple_scan_parser(subparsers)
+    init_parser = add_init_project_parser(subparsers)
+    register_init_project_args(init_parser)
 
     return parser

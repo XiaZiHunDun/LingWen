@@ -6,7 +6,6 @@ import os
 
 import pytest
 
-from infra.cross_volume.backfill import BackfillStats
 from infra.agent_system.chapter_production_pilot import (
     PilotResult,
     PreflightCheck,
@@ -19,6 +18,7 @@ from infra.agent_system.chapter_production_pilot import (
     save_pilot_record,
     validate_pilot_record,
 )
+from infra.cross_volume.backfill import BackfillStats
 
 
 class TestRealLlmGate:
@@ -29,6 +29,20 @@ class TestRealLlmGate:
     def test_enabled_with_one(self, monkeypatch):
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         assert real_llm_enabled() is True
+
+    def test_pilot_llm_auto_with_key(self, monkeypatch):
+        monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
+        monkeypatch.setenv("LINGWEN_PILOT_LLM", "auto")
+        monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
+        assert real_llm_enabled() is True
+
+    def test_pilot_llm_auto_without_key(self, monkeypatch):
+        monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
+        monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setenv("LINGWEN_PILOT_LLM", "auto")
+        assert real_llm_enabled() is False
 
 
 class TestPreflightChecklist:
@@ -177,6 +191,7 @@ class TestPilotRecordF72:
 
     def test_cli_save_record_preflight_only(self, tmp_path, monkeypatch):
         import json as json_mod
+
         from infra.agent_system import chapter_production_pilot as mod
 
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)

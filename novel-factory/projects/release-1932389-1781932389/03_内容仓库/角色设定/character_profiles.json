@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "description": "minimal-short 模板角色（主角 测试主角）",
+  "characters": [
+    {
+      "name": "测试主角",
+      "role": "主角",
+      "personality_tags": [
+        "警觉",
+        "执拗",
+        "克制"
+      ],
+      "speech_style": "短句，少废话",
+      "abilities": [],
+      "knowledge": [],
+      "forbids": [
+        "无厘头搞笑"
+      ],
+      "description": "普通人被迫卷入异常事件的观察者兼参与者。",
+      "first_appearance": "ch001"
+    }
+  ]
+}

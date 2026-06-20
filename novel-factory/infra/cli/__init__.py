@@ -3,6 +3,7 @@ from infra.cli.options import (
     BackfillOptions,
     CascadeOptions,
     CheckOptions,
+    InitProjectOptions,
     LLMAnalyzeOptions,
     PolishOptions,
     RepairOptions,
@@ -18,6 +19,7 @@ from infra.cli.range_parser import RangeParser
 
 __all__ = [
     "RangeParser",
+    "InitProjectOptions",
     "UnifiedOptions",
     "AntiTropeOptions",
     "CheckOptions",

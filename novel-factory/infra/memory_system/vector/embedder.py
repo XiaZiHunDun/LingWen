@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from infra.memory_system.embeddings.base import EmbeddingPurpose, EmbeddingProvider
+from infra.memory_system.embeddings.base import EmbeddingProvider, EmbeddingPurpose
 from infra.memory_system.embeddings.factory import create_embedding_provider
 
 if TYPE_CHECKING:

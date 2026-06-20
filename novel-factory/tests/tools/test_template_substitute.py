@@ -145,6 +145,28 @@ class TestSubstituteCLI:
         assert result.returncode == 0, result.stderr
         assert "R&D 项目" in f.read_text(encoding="utf-8")
 
+    def test_cli_missing_set_exits_nonzero(self, tmp_path):
+        f = tmp_path / "file.yaml"
+        f.write_text("name: {X}\n", encoding="utf-8")
+        result = subprocess.run(
+            [sys.executable, "tools/template_substitute.py", str(f)],
+            capture_output=True, text=True, cwd=project_root,
+        )
+        assert result.returncode == 1
+        assert "至少需要一个 --set" in result.stderr
+
+    def test_cli_invalid_set_format(self, tmp_path):
+        f = tmp_path / "file.yaml"
+        f.write_text("name: {X}\n", encoding="utf-8")
+        result = subprocess.run(
+            [
+                sys.executable, "tools/template_substitute.py", str(f),
+                "--set", "badformat",
+            ],
+            capture_output=True, text=True, cwd=project_root,
+        )
+        assert result.returncode != 0
+
 
 class TestRunInitShIntegration:
     """run_init.sh 本身引用了 template_substitute.py — 验证语法与子进程调用链"""

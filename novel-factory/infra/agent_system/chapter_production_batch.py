@@ -56,6 +56,33 @@ BATCH_BEHAVIOR: tuple[dict[str, str], ...] = (
 MAX_BATCH_CHAPTERS = 10
 # F79 ch361-363: $0.082694 / 3 chapters
 DEFAULT_COST_PER_CHAPTER_USD = 0.027565
+# Do not start a chapter if remaining batch budget is below this fraction of estimate
+# (prevents last-chapter partial runs that fail emit mid-workflow).
+MIN_CHAPTER_BUDGET_FRACTION = 0.75
+
+
+def resolve_chapter_cost_budget(
+    *,
+    budget_usd: float | None,
+    cumulative_cost: float,
+    cost_per_chapter_usd: float,
+    chapters_remaining: int,
+    min_fraction: float = MIN_CHAPTER_BUDGET_FRACTION,
+) -> tuple[float | None, str | None]:
+    """Allocate per-chapter pilot budget; skip chapter if headroom is too thin."""
+    if budget_usd is None:
+        return None, None
+    remaining_pool = budget_usd - cumulative_cost
+    if remaining_pool <= 0 or chapters_remaining <= 0:
+        return None, "budget_exceeded"
+    if chapters_remaining == 1:
+        chapter_budget = remaining_pool
+    else:
+        chapter_budget = min(cost_per_chapter_usd, remaining_pool)
+    floor = cost_per_chapter_usd * min_fraction
+    if chapter_budget < floor:
+        return None, "budget_exceeded"
+    return chapter_budget, None
 
 
 @dataclass
@@ -216,7 +243,7 @@ def run_production_batch(
         raise ValueError(f"start_chapter must be >= 1, got {start_chapter}")
 
     runner = pilot_runner or run_production_pilot
-    require_gate = not preflight_only
+    require_gate = not preflight_only and not dry_run
     checks = preflight_checklist(
         state_dir=state_dir,
         chapter_num=start_chapter,
@@ -279,21 +306,21 @@ def run_production_batch(
     for offset in range(max_chapters):
         chapter_num = start_chapter + offset
         cumulative = _sum_cost(outcomes)
-        if budget_usd is not None and cumulative >= budget_usd:
-            stopped_reason = "budget_exceeded"
+        chapters_remaining = max_chapters - offset
+        chapter_budget, budget_stop = resolve_chapter_cost_budget(
+            budget_usd=budget_usd,
+            cumulative_cost=cumulative,
+            cost_per_chapter_usd=cost_per_chapter,
+            chapters_remaining=chapters_remaining,
+        )
+        if budget_stop:
+            stopped_reason = budget_stop
             break
-
-        remaining = None
-        if budget_usd is not None:
-            remaining = max(budget_usd - cumulative, 0.0)
-            if remaining <= 0:
-                stopped_reason = "budget_exceeded"
-                break
 
         result = runner(
             chapter_num=chapter_num,
             state_dir=state_dir,
-            cost_budget_usd=remaining,
+            cost_budget_usd=chapter_budget,
         )
         outcomes.append(result)
 

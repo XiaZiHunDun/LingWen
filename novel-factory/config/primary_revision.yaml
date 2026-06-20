@@ -1,0 +1,17 @@
+# Primary revision books — LLM Golden blocking list (dist_ready slugs).
+# Source of truth for: run-primary-revision-verify.sh · llm-golden-primary CI job
+#
+# Duplicated from prose_calibration golden_baselines.dist_ready for documentation;
+# runtime uses infra.prose_calibration.list_primary_revision_slugs().
+
+primary_revision_slugs:
+  - jinghai-rizhi
+  - huiyu-dangan
+  - tiedao-dangan
+  - anye-xinbiao
+  - xuexian-dangan
+
+llm_post_check:
+  default_primary: blocking   # fail without API key
+  default_other: auto         # skip without key
+  env_override: LINGWEN_POST_CHECK_LLM  # 0 | auto | blocking | 1

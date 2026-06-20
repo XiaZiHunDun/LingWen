@@ -1,6 +1,7 @@
 """Phase 9.65 F56: e2e fixture seed/reset tests."""
 from __future__ import annotations
 
+from infra.agent_system.decision_queue import HumanDecisionQueue
 from infra.cross_volume.e2e_seed import (
     E2E_DECISION_ID,
     E2E_PENDING_RIPPLE_ID,
@@ -9,7 +10,6 @@ from infra.cross_volume.e2e_seed import (
     reset_e2e_decision,
     reset_e2e_ripple,
 )
-from infra.agent_system.decision_queue import HumanDecisionQueue
 
 
 class TestE2ERippleSeed:

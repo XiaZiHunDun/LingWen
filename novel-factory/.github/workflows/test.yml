@@ -54,7 +54,7 @@ jobs:
             --cov=infra --cov=tools --cov=dashboard \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=30 \
+            --cov-fail-under=40 \
             -q
 
       - name: Upload coverage to Codecov (backend flag)

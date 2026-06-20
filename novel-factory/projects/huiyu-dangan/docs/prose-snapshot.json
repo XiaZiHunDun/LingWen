@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "slug": "huiyu-dangan",
+  "captured_at": "2026-06-20 08:39 UTC",
+  "source": "full-check-report",
+  "totals": {
+    "p0": 0,
+    "p1": 15,
+    "p2": 6,
+    "p3": 2,
+    "total": 23,
+    "prose_p1": 8,
+    "prose_total": 10
+  },
+  "chapters": [
+    {
+      "chapter": 1,
+      "issue_count": 2,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 2,
+      "issue_count": 3,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 3,
+      "issue_count": 2,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 4,
+      "issue_count": 3,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 5,
+      "issue_count": 3,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 6,
+      "issue_count": 2,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 7,
+      "issue_count": 2,
+      "prose_p1": 0,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 8,
+      "issue_count": 2,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 9,
+      "issue_count": 2,
+      "prose_p1": 0,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    },
+    {
+      "chapter": 10,
+      "issue_count": 2,
+      "prose_p1": 1,
+      "prose_total": 1,
+      "prose_issue_types": [
+        "sentence_diversity_low"
+      ]
+    }
+  ]
+}

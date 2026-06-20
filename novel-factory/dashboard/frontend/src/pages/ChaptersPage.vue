@@ -81,7 +81,7 @@
       <p v-if="recordsLoading" class="history-hint">加载记录…</p>
       <p v-else-if="recordsError" class="history-error">{{ recordsError }}</p>
       <p v-else-if="!historyRows.length" class="history-hint" data-testid="production-history-empty">
-        暂无 pilot/batch 记录（CLI --save-record 写入 infra/.state/pilot_records/）
+        暂无 pilot/batch 记录（切换顶栏项目后自动加载对应 pilot_records）
       </p>
       <table v-else class="history-table" data-testid="production-history-table">
         <thead>
@@ -130,6 +130,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
 import { fetchChapters, fetchProductionRecords, fetchProductionRollup } from '../api/index.js';
+import { useStudioProject } from '../composables/useStudioProject.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 import {
@@ -163,6 +164,7 @@ const recordsLoading = ref(false);
 const recordsError = ref(null);
 
 const { status, pendingDecisions } = useWorkflowSocket();
+const { projectRevision } = useStudioProject();
 const { navigateTo } = useDashboardNav();
 
 const workflowActive = computed(() => Boolean(status.value?.is_active));
@@ -264,6 +266,11 @@ async function refreshAll() {
 
 onMounted(() => {
   loadChapters();
+  loadProductionRecords();
+  loadProductionRollup();
+});
+
+watch(projectRevision, () => {
   loadProductionRecords();
   loadProductionRollup();
 });

@@ -12,8 +12,8 @@
  * @typedef {{id:number, action:string, actor:string, origin:string, reason:string|null, created_at:string}} AuditEntryResponse
  */
 
-// Dev (vite :5173): same-origin /api via proxy. Prod / direct backend: explicit host.
-const BASE_URL = import.meta.env.DEV ? '/api' : 'http://127.0.0.1:8765/api';
+// Same-origin when UI is served by FastAPI (LINGWEN_SERVE_UI=1) or via Vite proxy.
+const BASE_URL = import.meta.env.VITE_API_BASE || '/api';
 
 /**
  * Make a request to the API with error handling
@@ -500,4 +500,71 @@ export async function setBudgetByTier(tier, usd) {
     method: 'PUT',
     body: { usd },
   });
+}
+
+// === Studio (Phase 10.04) ===
+
+export async function fetchStudioProjects() {
+  return request('/studio/projects');
+}
+
+export async function fetchStudioActive() {
+  return request('/studio/active');
+}
+
+export async function setStudioActive(slug) {
+  return request('/studio/active', { method: 'PUT', body: { slug } });
+}
+
+export async function fetchStudioSummary() {
+  return request('/studio/summary');
+}
+
+export async function fetchStudioQuality() {
+  return request('/studio/quality');
+}
+
+export async function fetchStudioQualityReport() {
+  return request('/studio/quality-report');
+}
+
+/**
+ * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
+ */
+export async function studioProductionPreflight(req) {
+  const params = new URLSearchParams();
+  if (req.budget_usd != null) params.set('budget_usd', String(req.budget_usd));
+  const q = params.toString();
+  return request(`/studio/production/preflight${q ? `?${q}` : ''}`, {
+    method: 'POST',
+    body: {
+      start_chapter: req.start_chapter,
+      end_chapter: req.end_chapter,
+      mode: req.mode || 'canon',
+    },
+  });
+}
+
+/**
+ * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number, skip_preflight?: boolean }} req
+ */
+export async function studioProductionRun(req) {
+  return request('/studio/production/run', {
+    method: 'POST',
+    body: {
+      start_chapter: req.start_chapter,
+      end_chapter: req.end_chapter,
+      mode: req.mode || 'canon',
+      budget_usd: req.budget_usd ?? 0.15,
+      skip_preflight: Boolean(req.skip_preflight),
+    },
+  });
+}
+
+export async function fetchStudioActiveBatchJob() {
+  return request('/studio/production/jobs/active');
+}
+
+export async function fetchStudioBatchJob(jobId) {
+  return request(`/studio/production/jobs/${encodeURIComponent(jobId)}`);
 }

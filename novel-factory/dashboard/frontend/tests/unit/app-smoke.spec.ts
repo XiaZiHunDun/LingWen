@@ -13,6 +13,10 @@ const mocks = vi.hoisted(() => ({
   fetchWorkflows: vi.fn(),
   fetchBudgets: vi.fn(),
   fetchBudgetsByTier: vi.fn(),
+  fetchStudioProjects: vi.fn().mockResolvedValue({
+    projects: [{ slug: 'anye-xinbiao', name: '暗夜信标', role: 'production' }],
+    active_slug: 'anye-xinbiao',
+  }),
   connected: { value: true },
   status: {
     value: {
@@ -39,6 +43,8 @@ vi.mock('../../src/api/index.js', () => ({
   fetchRippleStats: vi.fn().mockResolvedValue({ total: 0, by_status: {}, by_volume: {} }),
   fetchBudgets: mocks.fetchBudgets,
   fetchBudgetsByTier: mocks.fetchBudgetsByTier,
+  fetchStudioProjects: mocks.fetchStudioProjects,
+  setStudioActive: vi.fn(),
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({

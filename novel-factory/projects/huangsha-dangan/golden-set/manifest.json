@@ -1,0 +1,35 @@
+{
+  "project_slug": "huangsha-dangan",
+  "title": "黄沙档案",
+  "purpose": "灵文工作室第六本书 Golden Set 回归基线",
+  "frozen_at": "2026-06-19",
+  "review_status": "human_review_pass_v1+sync_v10.30",
+  "chapters": [
+    {
+      "num": 1,
+      "role": "opening_hook",
+      "file": "chapters/ch001.md",
+      "char_count": 2352,
+      "full_check_issues_baseline": 3
+    },
+    {
+      "num": 5,
+      "role": "midpoint_turn",
+      "file": "chapters/ch005.md",
+      "char_count": 2437,
+      "full_check_issues_baseline": 2
+    },
+    {
+      "num": 10,
+      "role": "finale",
+      "file": "chapters/ch010.md",
+      "char_count": 384,
+      "full_check_issues_baseline": 2
+    }
+  ],
+  "regression": {
+    "ci": "scripts/verify-golden-set.sh huangsha-dangan",
+    "llm": "scripts/run-golden-set-check.sh huangsha-dangan",
+    "pass_criteria": "结构校验通过；full check 无 crash；LLM quick issue ≤ baseline+2"
+  }
+}

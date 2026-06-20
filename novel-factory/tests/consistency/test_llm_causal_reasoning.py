@@ -5,6 +5,7 @@ LLM因果推理检测器测试
 测试LLM辅助的复杂因果推理检测器
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -143,7 +144,26 @@ def test_llm_causal_reasoning_checker_causal_chain():
     assert isinstance(issues, list)
 
 
-def test_llm_causal_reasoning_checker_no_false_positive():
+def test_extract_json_text_strips_thinking_blocks():
+    """测试：剥离 reasoning 块后仍能解析 JSON"""
+    checker = LLMCausalReasoningChecker()
+    wrapped = (
+        "<think>internal reasoning</think>\n"
+        '{"contradictions": [{"type": "causal_chain", "description": "x"}]}'
+    )
+    assert json.loads(checker._extract_json_text(wrapped))["contradictions"]
+
+
+def test_llm_issue_severity_is_p1():
+    """LLM 检测项最高 P1，避免 golden P0 门误拦"""
+    checker = LLMCausalReasoningChecker()
+    issue = checker._create_issue(
+        {"type": "world_rule_violation", "description": "test", "severity": "P0"},
+        chapter_num=10,
+    )
+    assert issue.severity.value == "P1"
+
+
     """测试：不应该产生误报的情况"""
     checker = LLMCausalReasoningChecker()
 

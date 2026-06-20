@@ -198,8 +198,41 @@ class NarrativePerspectiveChecker(BaseChecker):
 
         直接检查传入的章节内容
         """
-        issues = self.check_content(chapter_content, chapter_num)
-        return self.generate_issues_for_chapter(chapter_num, issues)
+        raw = self.check_content(chapter_content, chapter_num)
+        return self._perspective_issues_to_engine_issues(chapter_num, raw)
+
+    def _perspective_issues_to_engine_issues(
+        self,
+        chapter_num: int,
+        issues: List[PerspectiveIssue],
+    ) -> List[Issue]:
+        """Convert PerspectiveIssue list to ConsistencyEngine Issue list."""
+        result: List[Issue] = []
+        suggestions_map = {
+            'viewpoint_shift': '删除视角跳脱段落，改为限知视角所见所闻',
+            'other_char_inner': '删除其他角色内心描写，通过主角观察呈现',
+            'omniscient': '删除全知陈述，改为限知视角',
+        }
+        for issue in issues:
+            if issue.severity not in ('HIGH', 'MEDIUM'):
+                continue
+            result.append(Issue(
+                id=f"NP_{chapter_num:03d}_{issue.issue_type}",
+                severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
+                checker_type=CheckerType.NARRATIVE_PERSPECTIVE,
+                issue_type="narrative_perspective",
+                title=f"叙事视角问题: {issue.issue_type}",
+                description=issue.description,
+                location=IssueLocation(chapter=chapter_num),
+                evidence=issue.line_match,
+                suggestion=suggestions_map.get(issue.issue_type, '改为限知视角'),
+            ))
+        return result
+
+    def generate_issues_for_chapter(self, chapter_num: int) -> List[Issue]:
+        """生成符合一致性引擎格式的Issue列表"""
+        issues = self.check_chapter(chapter_num)
+        return self._perspective_issues_to_engine_issues(chapter_num, issues)
 
     def check_chapter(self, chapter_num: int) -> List[PerspectiveIssue]:
         ch_file = self.chapters_dir / f'ch{chapter_num:03d}.md'
@@ -246,33 +279,6 @@ class NarrativePerspectiveChecker(BaseChecker):
                 issues.extend(ch_issues)
 
         return issues
-
-    def generate_issues_for_chapter(self, chapter_num: int) -> List[Issue]:
-        """生成符合一致性引擎格式的Issue列表"""
-        issues = self.check_chapter(chapter_num)
-        result = []
-
-        for issue in issues:
-            if issue.severity in ('HIGH', 'MEDIUM'):
-                suggestions_map = {
-                    'viewpoint_shift': '删除视角跳脱段落，改为林夜所见所闻',
-                    'other_char_inner': '删除其他角色内心描写，通过林夜观察呈现',
-                    'omniscient': '删除全知陈述，改为限知视角',
-                }
-
-                result.append(Issue(
-                    id=f"NP_{chapter_num:03d}_{issue.issue_type}",
-                    severity=IssueSeverity.P1 if issue.severity == 'HIGH' else IssueSeverity.P2,
-                    checker_type=CheckerType.NARRATIVE_PERSPECTIVE,
-                    issue_type="narrative_perspective",
-                    title=f"叙事视角问题: {issue.issue_type}",
-                    description=issue.description,
-                    location=IssueLocation(chapter=chapter_num),
-                    evidence=issue.line_match,
-                    suggestion=suggestions_map.get(issue.issue_type, '改为林夜限知视角')
-                ))
-
-        return result
 
     def generate_report(self, issues: List[PerspectiveIssue]) -> str:
         if not issues:

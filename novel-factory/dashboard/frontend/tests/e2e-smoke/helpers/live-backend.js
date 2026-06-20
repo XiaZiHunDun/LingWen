@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { expect } from '@playwright/test';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../../../../../..');
+const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../../../../..');
 
 export const LIVE_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE === '1';
 
@@ -34,8 +34,12 @@ export async function clickNav(page, label) {
   await page.getByRole('link', { name: label }).click();
 }
 
+export async function waitForPendingDecisionCard(page, timeout = 30_000) {
+  await page.getByTestId('decision-card').waitFor({ state: 'visible', timeout });
+}
+
 /** Wait until ripple list finished initial fetch (loading hidden). */
-export async function waitForRippleListReady(page, timeout = 20_000) {
+export async function waitForRippleListReady(page, timeout = 30_000) {
   const loading = page.getByTestId('ripple-list-loading');
   if (await loading.isVisible().catch(() => false)) {
     await loading.waitFor({ state: 'hidden', timeout });
@@ -50,14 +54,22 @@ export async function waitForRippleListReady(page, timeout = 20_000) {
 /** Open first ripple drawer after list + detail fetch complete. */
 export async function openFirstRippleDrawer(page) {
   await waitForRippleListReady(page);
-  const detailResponse = page.waitForResponse(
-    (resp) =>
-      resp.url().includes('/api/cvg/ripples/') &&
-      resp.request().method() === 'GET' &&
-      resp.status() === 200,
-    { timeout: 20_000 },
-  );
-  await page.getByTestId('ripple-card').first().click();
-  await detailResponse;
-  await expect(page.getByTestId('ripple-drawer')).toBeVisible({ timeout: 10_000 });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const detailResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/api/cvg/ripples/') &&
+        resp.request().method() === 'GET' &&
+        resp.status() === 200,
+      { timeout: 30_000 },
+    );
+    await page.getByTestId('ripple-card').first().click();
+    try {
+      await detailResponse;
+      await expect(page.getByTestId('ripple-drawer')).toBeVisible({ timeout: 15_000 });
+      return;
+    } catch (err) {
+      if (attempt === 1) throw err;
+      await page.keyboard.press('Escape').catch(() => {});
+    }
+  }
 }

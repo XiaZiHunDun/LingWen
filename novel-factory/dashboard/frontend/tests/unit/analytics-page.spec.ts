@@ -64,6 +64,13 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   }),
 }))
 
+vi.mock('../../src/composables/useStudioProject.js', () => ({
+  useStudioProject: () => ({
+    activeSlug: { value: 'anye-xinbiao' },
+    projectRevision: { value: 0 },
+  }),
+}))
+
 vi.mock('echarts', () => ({
   init: vi.fn(() => ({
     setOption: vi.fn(),
@@ -100,6 +107,7 @@ describe('AnalyticsPage (F67/F81/F87)', () => {
       ],
     })
     mocks.fetchProductionRollup.mockResolvedValue({
+      records_dir: '/tmp/projects/anye-xinbiao/.state/pilot_records',
       record_count: 5,
       pilot_count: 4,
       batch_count: 1,
@@ -130,6 +138,9 @@ describe('AnalyticsPage (F67/F81/F87)', () => {
     expect(wrapper.text()).toContain('章节 #12')
     expect(wrapper.text()).toContain('ch361-363')
     expect(wrapper.text()).toContain('0.1080')
+    expect(wrapper.find(byTestid('production-records-dir')).text()).toContain(
+      'anye-xinbiao/.state/pilot_records',
+    )
   })
 
   test('refresh calls overview, ripple, rollup, and trend', async () => {

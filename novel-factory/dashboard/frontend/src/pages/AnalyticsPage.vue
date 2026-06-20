@@ -7,7 +7,12 @@
 <template>
   <div class="analytics-page">
     <header class="page-header">
-      <h1 class="page-title" data-testid="page-title">数据分析</h1>
+      <div>
+        <h1 class="page-title" data-testid="page-title">数据分析</h1>
+        <p v-if="activeSlug" class="project-hint" data-testid="active-project-hint">
+          当前项目：{{ activeSlug }}
+        </p>
+      </div>
       <button
         class="refresh-btn pixel-border"
         data-testid="refresh-btn"
@@ -43,6 +48,13 @@
 
     <section class="kpi-section" data-testid="production-rollup-kpi">
       <h2 class="section-title">生产记录汇总</h2>
+      <p
+        v-if="productionRecordsDir"
+        class="records-dir-hint"
+        data-testid="production-records-dir"
+      >
+        数据来源：<code>{{ productionRecordsDir }}</code>
+      </p>
       <div class="stats-row">
         <StatCard
           v-for="card in productionRollupKpiCards"
@@ -81,7 +93,7 @@
         </tbody>
       </table>
       <p v-else class="empty-hint" data-testid="analytics-batch-rollup-empty">
-        暂无 batch 记录（pilot/batch JSON 写入 infra/.state/pilot_records/）
+        暂无 batch 记录（切换顶栏项目后自动加载对应 pilot_records）
       </p>
     </section>
 
@@ -127,7 +139,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import HookTrendChart from '../components/HookTrendChart.vue';
 import CoolpointChart from '../components/CoolpointChart.vue';
@@ -135,6 +147,7 @@ import ProductionCostTrendChart from '../components/ProductionCostTrendChart.vue
 import { fetchProductionCostTrend, fetchProductionRollup } from '../api/index.js';
 import { useOverviewStore } from '../composables/useOverviewStore.js';
 import { useRippleStore } from '../composables/useRippleStore.js';
+import { useStudioProject } from '../composables/useStudioProject.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import {
   buildProductionKpiCards,
@@ -157,6 +170,7 @@ import {
 const overviewStore = useOverviewStore();
 const rippleStore = useRippleStore();
 const { status } = useWorkflowSocket();
+const { activeSlug, projectRevision } = useStudioProject();
 
 const refreshing = ref(false);
 const rollupError = ref(null);
@@ -192,6 +206,11 @@ const productionRollupLines = computed(() =>
   productionRollupSummaryLines(productionRollup.value),
 );
 const batchRollupRows = computed(() => formatBatchRollupRows(productionRollup.value));
+const productionRecordsDir = computed(
+  () => productionRollup.value?.records_dir
+    || productionCostTrend.value?.records_dir
+    || null,
+);
 const hasProductionCostTrend = computed(() => hasCostTrendData(productionCostTrend.value));
 const productionCostTrendLines = computed(() =>
   productionCostTrendSummaryLines(productionCostTrend.value),
@@ -233,6 +252,11 @@ onMounted(() => {
   loadProductionRollup();
   loadProductionCostTrend();
 });
+
+watch(projectRevision, () => {
+  loadProductionRollup();
+  loadProductionCostTrend();
+});
 </script>
 
 <style scoped>
@@ -254,6 +278,25 @@ onMounted(() => {
   font-weight: bold;
   color: var(--color-text);
   font-family: 'Press Start 2P', monospace;
+}
+
+.project-hint {
+  font-size: 10px;
+  font-family: monospace;
+  margin: var(--space-xs) 0 0;
+  opacity: 0.85;
+}
+
+.records-dir-hint {
+  font-size: 10px;
+  font-family: monospace;
+  margin: 0 0 var(--space-sm);
+  opacity: 0.9;
+  word-break: break-all;
+}
+
+.records-dir-hint code {
+  font-size: 9px;
 }
 
 .refresh-btn {

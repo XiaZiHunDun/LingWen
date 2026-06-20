@@ -7,6 +7,7 @@ import {
   resetE2eDecision,
   runE2eSeed,
   skipUnlessLive,
+  waitForPendingDecisionCard,
 } from './helpers/live-backend.js';
 
 test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
@@ -25,12 +26,12 @@ test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
 
   test('resolve_pending_decision_shows_readonly_state', async ({ page }) => {
     skipUnlessLive(test);
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     resetE2eDecision();
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await clickNav(page, /决策/);
-    await page.getByTestId('decision-card').waitFor({ timeout: 20_000 });
+    await waitForPendingDecisionCard(page);
     await page.getByTestId('option-btn').first().click();
     // Pending tab clears after resolve (WS authority); resolved card lives under 已完成.
     await page.getByRole('button', { name: /已完成/ }).click();

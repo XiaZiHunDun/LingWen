@@ -26,6 +26,7 @@ from .base import Command
 from .cascade import CascadeCommand
 from .check import CheckCommand
 from .doctor import DoctorCommand
+from .init_project import InitProjectCommand
 from .llm_analyze import LLMAnalyzeCommand
 from .polish import PolishCommand
 from .reading_power import ReadingPowerCommand
@@ -58,6 +59,7 @@ COMMANDS = {
     # Phase 9.19 additive: cascade (re-run BFS, 1:1 with ripple-audit)
     "cascade": CascadeCommand,
     "ripple-scan": RippleScanCommand,
+    "init-project": InitProjectCommand,
 }
 
 __all__ = [
@@ -65,7 +67,7 @@ __all__ = [
     "DoctorCommand", "PolishCommand", "AntiTropeCommand", "LLMAnalyzeCommand",
     "ReadingPowerCommand", "StoryContractCommand", "BackfillCommand",
     "RippleAuditCommand", "RippleRollbackCommand", "RippleResetCommand",
-    "CascadeCommand", "RippleScanCommand",
+    "CascadeCommand", "RippleScanCommand", "InitProjectCommand",
     "COMMANDS", "get_command", "list_commands",
 ]
 

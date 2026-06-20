@@ -22,7 +22,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from dashboard.cascade_notifier import (
@@ -32,15 +33,16 @@ from dashboard.cascade_notifier import (
 )
 from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
 from dashboard.protocols import (
+    CascadeBroadcastLogResponse,  # Phase 9.44 F33
     CascadeCancelPayload,  # Phase 9.21
     CascadeCancelRequest,  # Phase 9.21
-    CascadeBroadcastLogResponse,  # Phase 9.44 F33
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,
     CascadeResponse,
     CascadeRunResponse,
     MasterControllerLike,
+    ReferenceGraphResponse,
     RippleActionRequest,
     RippleActionResponse,
     RippleAuditEntryResponse,
@@ -48,7 +50,6 @@ from dashboard.protocols import (
     RippleListItemResponse,
     RippleRollbackRequest,
     RippleStatsResponse,
-    ReferenceGraphResponse,
     _extract_cost_by_day,
     _extract_cost_by_day_per_tier,
     _extract_cost_by_scenario,
@@ -167,6 +168,158 @@ class ProductionCostTrendResponse(BaseModel):
     point_count: int
     total_cost_usd: float
     points: list[ProductionCostTrendPointResponse]
+
+
+# === Phase 10.04: Studio multi-project models ===
+
+
+class StudioProjectItem(BaseModel):
+    slug: str
+    name: str
+    role: str
+    root: str
+    location: str
+
+
+class StudioProjectsResponse(BaseModel):
+    projects: list[StudioProjectItem]
+    active_slug: Optional[str] = None
+
+
+class StudioActiveResponse(BaseModel):
+    slug: str
+    name: str
+    root: str
+    role: str
+
+
+class StudioSetActiveRequest(BaseModel):
+    slug: str
+
+
+class StudioSummaryResponse(BaseModel):
+    slug: str
+    name: str
+    role: str
+    root: str
+    location: str
+    max_chapter: int
+    genre: str
+    chapter_count: int
+    latest_chapter: int
+    outline_count: int
+    golden_chapters: list[int]
+    has_golden_set: bool
+    pilot_records_dir: str
+    pilot_record_count: int
+    pillars_ok: bool
+    pillars_path: str
+
+
+class StudioQualityResponse(BaseModel):
+    slug: str
+    pillars_ok: bool
+    pillars_path: str
+    require_chapter_outline: bool
+    max_chapter: int
+    chapters_written: int
+    outlines_present: int
+    coverage_pct: float
+    missing_outlines: list[int]
+    missing_bodies: list[int]
+    golden_set_status: str
+    golden_regression_cmd: str
+
+
+class StudioQualityReportIssue(BaseModel):
+    severity: str
+    issue_type: str
+    chapter: int
+    description: str
+
+
+class StudioQualityReportChapter(BaseModel):
+    chapter: int
+    word_count: int
+    issue_count: int
+    issues: list[StudioQualityReportIssue]
+
+
+class StudioProseHeatmapChapter(BaseModel):
+    chapter: int
+    issue_count: int
+    prose_p1: int
+    prose_total: int
+    structural_total: int
+    heat: float
+
+
+class StudioProseHeatmap(BaseModel):
+    chapters: list[StudioProseHeatmapChapter]
+    max_prose_per_chapter: int = 0
+    total_prose_issues: int = 0
+    total_prose_p1: int = 0
+
+
+class StudioQualityReportResponse(BaseModel):
+    slug: str
+    available: bool
+    path: str
+    total: int
+    p0: int
+    p1: int
+    p2: int
+    p3: int
+    generated_at: Optional[str] = None
+    chapters: list[StudioQualityReportChapter]
+    prose_heatmap: StudioProseHeatmap
+
+
+class StudioPreflightChapter(BaseModel):
+    chapter: int
+    ok: bool
+    message: str
+
+
+class StudioPreflightRequest(BaseModel):
+    start_chapter: int = Field(ge=1)
+    end_chapter: int = Field(ge=1)
+    mode: str = "canon"
+
+
+class StudioPreflightResponse(BaseModel):
+    slug: str
+    mode: str
+    start_chapter: int
+    end_chapter: int
+    all_ok: bool
+    chapters: list[StudioPreflightChapter]
+    batch_command: str
+
+
+class StudioBatchRunRequest(BaseModel):
+    start_chapter: int = Field(ge=1)
+    end_chapter: int = Field(ge=1)
+    mode: str = "canon"
+    budget_usd: float = Field(default=0.15, ge=0, le=100)
+    skip_preflight: bool = False
+
+
+class StudioBatchJobResponse(BaseModel):
+    job_id: str
+    slug: str
+    start_chapter: int
+    end_chapter: int
+    budget_usd: float
+    mode: str
+    status: str
+    pid: Optional[int] = None
+    log_path: str
+    started_at: str
+    finished_at: Optional[str] = None
+    exit_code: Optional[int] = None
+    error: Optional[str] = None
+    log_tail: Optional[str] = None
 
 
 # === Phase 6: Decision/Workflow models ===
@@ -743,6 +896,23 @@ def _validate_max_nodes_cap(max_nodes_cap: int | None) -> int:
     return max_nodes_cap
 
 
+def _maybe_mount_dashboard_ui(app: FastAPI) -> None:
+    """Serve built Vue UI from FastAPI (single port for SSH remote / Cursor forward)."""
+    flag = os.environ.get("LINGWEN_SERVE_UI", "").strip().lower()
+    if flag not in ("1", "true", "yes"):
+        return
+    dist = Path(__file__).resolve().parent / "frontend" / "dist"
+    if not dist.is_dir():
+        return
+    assets_dir = dist / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="dashboard-assets")
+
+    @app.get("/", include_in_schema=False)
+    async def dashboard_index() -> FileResponse:
+        return FileResponse(dist / "index.html")
+
+
 def create_app(
     db_path: Optional[Path] = None,
     master_controller: Optional[MasterControllerLike] = None,
@@ -791,6 +961,20 @@ def create_app(
 
     # Use init_if_missing=False to avoid trying to create directories for non-existent paths
     db = ReadingPowerDB(db_path, init_if_missing=False)
+
+    def _production_records_root() -> Path:
+        """Env override, then active project pilot_records, else legacy infra/.state."""
+        from infra.agent_system.production_records import default_pilot_records_dir
+        from infra.studio_registry import active_project, pilot_records_dir_for
+
+        env = os.environ.get("LINGWEN_PILOT_RECORDS_DIR", "").strip()
+        if env:
+            return Path(env)
+
+        project = active_project()
+        if project is not None:
+            return pilot_records_dir_for(project)
+        return default_pilot_records_dir()
 
     def _require_controller() -> MasterControllerLike:
         """Require master_controller,否则 503"""
@@ -892,11 +1076,10 @@ def create_app(
     ) -> ProductionRecordsResponse:
         """Phase 9.82 F74: read pilot/batch JSON from infra/.state/pilot_records."""
         from infra.agent_system.production_records import (
-            default_pilot_records_dir,
             list_production_records,
         )
 
-        root = default_pilot_records_dir()
+        root = _production_records_root()
         items = list_production_records(root, chapter_num=chapter_num, limit=limit)
         return ProductionRecordsResponse(
             records_dir=str(root),
@@ -911,11 +1094,10 @@ def create_app(
     ) -> ProductionRollupResponse:
         """Phase 9.89 F81: deduplicated cost + batch list for Analytics."""
         from infra.agent_system.production_records import (
-            default_pilot_records_dir,
             rollup_production_records,
         )
 
-        data = rollup_production_records(default_pilot_records_dir(), limit=limit)
+        data = rollup_production_records(_production_records_root(), limit=limit)
         return ProductionRollupResponse(
             **{
                 **data,
@@ -931,11 +1113,10 @@ def create_app(
     ) -> ProductionCostTrendResponse:
         """Phase 9.96 F87: time-ordered cost trend for Analytics mini chart."""
         from infra.agent_system.production_records import (
-            default_pilot_records_dir,
             production_cost_trend,
         )
 
-        data = production_cost_trend(default_pilot_records_dir(), limit=limit)
+        data = production_cost_trend(_production_records_root(), limit=limit)
         return ProductionCostTrendResponse(
             **{
                 **data,
@@ -1735,6 +1916,184 @@ def create_app(
         service.set_by_tier(tier_enum, req.usd)
         return {"ok": True, "tier": tier, "usd": req.usd}
 
+    # ==================== Phase 10.04: Studio multi-project ====================
+
+    @app.get("/api/studio/projects", response_model=StudioProjectsResponse)
+    def studio_list_projects() -> StudioProjectsResponse:
+        from infra.studio_registry import active_project, list_projects
+
+        projects = list_projects()
+        active = active_project()
+        return StudioProjectsResponse(
+            projects=[
+                StudioProjectItem(
+                    slug=p.slug,
+                    name=p.name,
+                    role=p.role,
+                    root=str(p.root),
+                    location=p.location,
+                )
+                for p in projects
+            ],
+            active_slug=active.slug if active else None,
+        )
+
+    @app.get("/api/studio/active", response_model=StudioActiveResponse)
+    def studio_get_active() -> StudioActiveResponse:
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no studio projects configured")
+        return StudioActiveResponse(
+            slug=project.slug,
+            name=project.name,
+            root=str(project.root),
+            role=project.role,
+        )
+
+    @app.put("/api/studio/active", response_model=StudioActiveResponse)
+    def studio_set_active(req: StudioSetActiveRequest) -> StudioActiveResponse:
+        from infra.studio_registry import activate_project, get_project_by_slug
+
+        if get_project_by_slug(req.slug) is None:
+            raise HTTPException(404, f"unknown project slug: {req.slug!r}")
+        try:
+            project = activate_project(req.slug)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return StudioActiveResponse(
+            slug=project.slug,
+            name=project.name,
+            root=str(project.root),
+            role=project.role,
+        )
+
+    @app.get("/api/studio/summary", response_model=StudioSummaryResponse)
+    def studio_project_summary() -> StudioSummaryResponse:
+        from infra.studio_registry import active_project, project_summary
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        return StudioSummaryResponse(**project_summary(project))
+
+    @app.get("/api/studio/quality", response_model=StudioQualityResponse)
+    def studio_quality_dashboard() -> StudioQualityResponse:
+        from infra.studio_registry import active_project, quality_summary
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        return StudioQualityResponse(**quality_summary(project))
+
+    @app.get("/api/studio/quality-report", response_model=StudioQualityReportResponse)
+    def studio_quality_report() -> StudioQualityReportResponse:
+        from infra.studio_registry import active_project, quality_report_summary
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        data = quality_report_summary(project)
+        return StudioQualityReportResponse(slug=project.slug, **data)
+
+    @app.post("/api/studio/production/preflight", response_model=StudioPreflightResponse)
+    def studio_production_preflight(
+        req: StudioPreflightRequest,
+        budget_usd: float = Query(default=0.15, ge=0, le=100),
+    ) -> StudioPreflightResponse:
+        from infra.studio_registry import (
+            active_project,
+            batch_command,
+            production_preflight,
+        )
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        if req.end_chapter < req.start_chapter:
+            raise HTTPException(400, "end_chapter must be >= start_chapter")
+
+        try:
+            result = production_preflight(
+                project,
+                start_chapter=req.start_chapter,
+                end_chapter=req.end_chapter,
+                mode=req.mode,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+        cmd = batch_command(
+            project,
+            start_chapter=req.start_chapter,
+            end_chapter=req.end_chapter,
+            budget_usd=budget_usd,
+        )
+        return StudioPreflightResponse(
+            slug=result["slug"],
+            mode=result["mode"],
+            start_chapter=result["start_chapter"],
+            end_chapter=result["end_chapter"],
+            all_ok=result["all_ok"],
+            chapters=[StudioPreflightChapter(**row) for row in result["chapters"]],
+            batch_command=cmd,
+        )
+
+    @app.post("/api/studio/production/run", response_model=StudioBatchJobResponse)
+    def studio_production_run(req: StudioBatchRunRequest) -> StudioBatchJobResponse:
+        from infra.studio_batch_runner import (
+            BatchAlreadyRunningError,
+            BatchNotAllowedError,
+            BatchPreflightError,
+            start_batch_job,
+        )
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        if req.end_chapter < req.start_chapter:
+            raise HTTPException(400, "end_chapter must be >= start_chapter")
+
+        try:
+            job = start_batch_job(
+                project,
+                start_chapter=req.start_chapter,
+                end_chapter=req.end_chapter,
+                budget_usd=req.budget_usd,
+                mode=req.mode,
+                skip_preflight=req.skip_preflight,
+            )
+        except BatchAlreadyRunningError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        except BatchNotAllowedError as exc:
+            raise HTTPException(403, str(exc)) from exc
+        except BatchPreflightError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+        return StudioBatchJobResponse(**job.to_dict())
+
+    @app.get("/api/studio/production/jobs/active", response_model=Optional[StudioBatchJobResponse])
+    def studio_production_active_job() -> Optional[StudioBatchJobResponse]:
+        from infra.studio_batch_runner import active_batch_job_for_project
+
+        payload = active_batch_job_for_project()
+        if payload is None:
+            return None
+        return StudioBatchJobResponse(**payload)
+
+    @app.get("/api/studio/production/jobs/{job_id}", response_model=StudioBatchJobResponse)
+    def studio_production_job_status(job_id: str) -> StudioBatchJobResponse:
+        from infra.studio_batch_runner import get_batch_job
+
+        payload = get_batch_job(job_id)
+        if payload is None:
+            raise HTTPException(404, f"unknown batch job: {job_id!r}")
+        return StudioBatchJobResponse(**payload)
+
     # ==================== Phase 6.4: WebSocket Endpoint ====================
 
     @app.websocket("/api/ws/workflows")
@@ -1875,6 +2234,7 @@ def create_app(
             node_statuses=node_statuses,
         )
 
+    _maybe_mount_dashboard_ui(app)
     return app
 
 

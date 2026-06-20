@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from infra.agent_system.master_controller import MasterController
-from infra.cross_volume.backfill import Backfiller
+from infra.cross_volume.backfill import Backfiller, BackfillStats
 from infra.cross_volume.incremental_backfill import (
     EMIT_CHAPTER_NODE,
     backfill_stats_to_dict,
@@ -19,10 +19,8 @@ from infra.cross_volume.incremental_backfill import (
     run_incremental_backfill,
     should_run_incremental_backfill,
 )
-from infra.cross_volume.backfill import BackfillStats
 from infra.got.data_structures import NodeExecution, NodeStatus
 from infra.got.scheduler import ExecutionSummary
-
 
 RULES_YAML = """
 character:

@@ -26,7 +26,10 @@ from infra.got.data_structures import ThoughtNode
 from infra.got.scheduler import ComputeResult
 from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP, SCENARIOS
 
+from .chapter_emit import emit_chapter_enabled, emit_chapter_to_repo
 from .master_controller import MasterController
+
+EMIT_CHAPTER_NODE_ID = "emit_chapter"
 
 if TYPE_CHECKING:
     from .budget_persistence import BudgetService  # noqa: F401  (Phase 8.12)
@@ -263,14 +266,54 @@ class AgentComputeFn:
         self._budget_service = budget_service
         self._budget_service_by_tier = budget_service_by_tier  # NEW Phase 8.15
 
+    def _emit_chapter(self, inputs: dict[str, Any]) -> ComputeResult:
+        """emit_chapter output node: persist polish_merge content to content_repo."""
+        content = _resolve_field(inputs, "content", "")
+        if not content:
+            return ComputeResult(
+                fail=True,
+                error="emit_chapter: content is required (from polish_merge upstream)",
+            )
+
+        chapter_num = int(_resolve_field(inputs, "chapter_num", 0) or 0)
+        if not chapter_num:
+            last_inputs = getattr(self._master, "_last_initial_inputs", None) or {}
+            chapter_num = int(last_inputs.get("chapter_num") or 0)
+        if not chapter_num:
+            return ComputeResult(
+                fail=True,
+                error="emit_chapter: chapter_num is required (initial_inputs or upstream)",
+            )
+
+        output: dict[str, Any] = {
+            "chapter_num": chapter_num,
+            "content": content,
+        }
+        if emit_chapter_enabled():
+            try:
+                output.update(
+                    emit_chapter_to_repo(chapter_num=chapter_num, content=content),
+                )
+            except Exception as exc:
+                return ComputeResult(
+                    fail=True,
+                    error=f"emit_chapter write failed: {exc}",
+                )
+        else:
+            output["written"] = False
+            output["skipped"] = "emit disabled (set LINGWEN_EMIT_CHAPTER=1 or LINGWEN_REAL_LLM=1)"
+
+        return ComputeResult(output=output, cost_tokens=0, fail=False)
+
     def __call__(self, node: ThoughtNode, inputs: dict[str, Any]) -> ComputeResult:
         scenario = node.prompt_scenario
 
         # 无 prompt_scenario → 旁路节点 (input/output/落盘)
-        # 视为成功,output = inputs 自身 (供下游节点作为 inputs[key] 取字段)
-        # 理由: workflow YAML 的 read_snapshot / emit_chapter 等节点
-        # 标记 type=input/output,无 LLM 调度需求
+        # read_snapshot: passthrough inputs
+        # emit_chapter: write polish_merge content to 03_内容仓库/04_正文/
         if not scenario:
+            if node.node_id == EMIT_CHAPTER_NODE_ID:
+                return self._emit_chapter(inputs)
             return ComputeResult(output=dict(inputs), cost_tokens=0, fail=False)
 
         handler = SCENARIO_HANDLERS.get(scenario)

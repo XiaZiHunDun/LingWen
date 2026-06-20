@@ -7,7 +7,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-
 RecordType = Literal["pilot", "batch"]
 
 
@@ -31,10 +30,17 @@ class ProductionRecordItem:
 
 
 def default_pilot_records_dir() -> Path:
-    """Default: novel-factory/infra/.state/pilot_records (override via env)."""
+    """Default pilot records dir: project .state, env override, or infra/.state."""
     env = os.environ.get("LINGWEN_PILOT_RECORDS_DIR", "").strip()
     if env:
         return Path(env).expanduser().resolve()
+
+    project_root = os.environ.get("LINGWEN_PROJECT_ROOT", "").strip()
+    if project_root:
+        candidate = Path(project_root) / ".state" / "pilot_records"
+        if candidate.is_dir():
+            return candidate.resolve()
+
     return Path(__file__).resolve().parents[1] / ".state" / "pilot_records"
 
 

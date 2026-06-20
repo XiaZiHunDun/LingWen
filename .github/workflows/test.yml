@@ -50,11 +50,16 @@ jobs:
             --ignore=tests/agent_system/test_e2e_workflow.py \
             --ignore=tests/tools/test_enhancement_tools.py \
             --cov=infra --cov=tools --cov=dashboard \
+            --cov-config=pyproject.toml \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=30 \
+            --cov-fail-under=40 \
             --timeout=120 \
             -q
+
+      - name: Verify per-module coverage gate (Phase 11.11)
+        if: matrix.python-version == '3.13'
+        run: bash scripts/verify-coverage-modules.sh
 
       - name: Upload coverage to Codecov (backend flag)
         if: matrix.python-version == '3.13'
@@ -65,11 +70,11 @@ jobs:
           fail_ci_if_error: false
           verbose: false
 
-      - name: Ruff (informational, non-blocking)
+      - name: Ruff (blocking gate, Phase 10.38)
         if: matrix.python-version == '3.13'
         run: |
           pip install ruff
-          ruff check . --statistics || echo "::warning::Ruff found issues (informational only)"
+          ruff check .
 
       - name: Upload coverage artifact
         if: matrix.python-version == '3.13'
@@ -78,3 +83,121 @@ jobs:
           name: coverage-report
           path: novel-factory/.coverage
           retention-days: 7
+
+  golden-set:
+    name: golden-set smoke (${{ matrix.slug }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: [anye-xinbiao, huiyu-dangan, xingyun-jiyuan, jinghai-rizhi, xuexian-dangan, huangsha-dangan, anhe-dangan, tiedao-dangan]
+    defaults:
+      run:
+        working-directory: novel-factory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: novel-factory/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Verify golden set structure + rule check
+        run: bash scripts/verify-golden-set.sh ${{ matrix.slug }}
+
+  onboarding-smoke:
+    name: onboarding smoke (init → preflight → dry-run)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: novel-factory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: novel-factory/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Verify onboarding pipeline
+        run: bash scripts/verify-onboarding.sh ci-smoke
+
+  llm-golden-set:
+    name: LLM golden-set (optional, needs MINIMAX_API_KEY)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'llm-check'))
+    defaults:
+      run:
+        working-directory: novel-factory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: novel-factory/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Check secret present
+        id: secret
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          if [[ -z "${MINIMAX_API_KEY}" ]]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "SKIP: MINIMAX_API_KEY not configured"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: LLM golden-set (jinghai-rizhi)
+        if: steps.secret.outputs.present == 'true'
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          export LINGWEN_PROJECT_ROOT="$(pwd)/projects/jinghai-rizhi"
+          bash scripts/run-golden-set-check.sh jinghai-rizhi
+          python lingwen.py check 1,5,10 --llm --limit 3
+
+  llm-golden-primary:
+    name: LLM golden primary (${{ matrix.slug }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: [jinghai-rizhi, huiyu-dangan, tiedao-dangan, anye-xinbiao, xuexian-dangan]
+    defaults:
+      run:
+        working-directory: novel-factory
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: novel-factory/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Require MINIMAX_API_KEY (primary revision blocking gate)
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          if [[ -z "${MINIMAX_API_KEY}" ]]; then
+            echo "::error::MINIMAX_API_KEY required for llm-golden-primary (五样章 blocking gate)"
+            exit 1
+          fi
+      - name: LLM Golden check (blocking P0)
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: bash scripts/run-llm-golden-check.sh ${{ matrix.slug }}

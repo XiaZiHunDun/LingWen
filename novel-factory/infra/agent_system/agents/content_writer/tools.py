@@ -165,8 +165,27 @@ class ContentWriterTools(AgentBase):
             f"基调：{tone}",
             f"对话比例：{dialogue_ratio}",
             f"动作强度：{action_intensity}",
+        ])
+        if style.get("continuity_rules"):
+            prompt_parts.extend([
+                "",
+                "## 连贯性约束",
+                style["continuity_rules"],
+            ])
+        if style.get("continuity_excerpt"):
+            prompt_parts.extend([
+                "",
+                "## 上一章结尾（必须承接）",
+                style["continuity_excerpt"],
+            ])
+        if style.get("avoid"):
+            prompt_parts.extend([
+                "",
+                f"避免：{style['avoid']}",
+            ])
+        prompt_parts.extend([
             "",
-            "请开始创作："
+            "请开始创作：",
         ])
 
         return "\n".join(prompt_parts)

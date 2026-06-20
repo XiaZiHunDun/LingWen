@@ -1,230 +1,139 @@
-# 灵文 · 工业化小说生产系统
+# 灵文 · LingWen Studio
 
-> **版本**: v8.3 (一致性检测与整改版，2026-05-21)
-> **测试覆盖**: 657 passed, 2 skipped
+> **产品版本**: Studio v10.34 · 2026-06-20  
+> **定位**: 可复用的工业化小说生产系统（**灵文工作室**）  
+> **试验田**: 《星陨纪元》ch001–360 正史 · ch361+ stress test  
+> **CI**: pytest + golden-set ×8 + onboarding-smoke · 见仓库根 `.github/workflows/test.yml`
 
-工业化小说生产多智能体系统。
-
----
-
-## 项目信息
-
-| 属性 | 值 |
-|------|-----|
-| 项目名称 | 星陨纪元 |
-| 总章节数 | 360章（三卷） |
-| 当前阶段 | ✅ 已完成（PHASE_7_CLOSE归档闭环） |
-| 情感质量 | S级 |
-| 框架版本 | v1.3 |
+切换工具 / 新同事入门：**先读** [`../HANDOFF.md`](../HANDOFF.md)（TL;DR + Phase 历史）。
 
 ---
 
-## 核心架构
+## 30 秒速览
 
-### 5核心Agent体系
+| 项 | 内容 |
+|----|------|
+| **产品** | init → preflight → batch → full-check → 试读包 |
+| **Studio 新书** | **八项目** 各 10 章 · P0=0 · Golden Set CI |
+| **对外样章** | **五样章** dist + `灵文工作室-五样章.zip` |
+| **星陨** | testbed；默认 `max_chapter=360`，禁止 canon 无限续跑 |
+| **Dashboard** | `bash scripts/run-dashboard-single-port.sh` → `http://127.0.0.1:8765/?nav=studio` |
 
+---
+
+## 快速开始
+
+```bash
+cd novel-factory
+cp .env.example .env              # 真实 pilot 需 MINIMAX_API_KEY
+python lingwen.py doctor
+
+# 一键验收 + 双样章打包
+bash scripts/verify-studio-release.sh
+bash scripts/prepare-jinghai-distribution.sh   # → projects/jinghai-rizhi/dist/
+bash scripts/prepare-huiyu-distribution.sh     # → projects/huiyu-dangan/dist/
+bash scripts/prepare-tiedao-distribution.sh      # → projects/tiedao-dangan/dist/
+bash scripts/prepare-anye-distribution.sh        # → projects/anye-xinbiao/dist/
+bash scripts/prepare-xuexian-distribution.sh     # → projects/xuexian-dangan/dist/
+bash scripts/prepare-studio-samples-zip.sh       # → dist/灵文工作室-五样章.zip
+
+# 30 分钟跑通第一本短篇
+# 见 docs/studio-onboarding.md
+python lingwen.py init-project my-book --title "书名" --protagonist 主角
+export LINGWEN_PROJECT_ROOT="$(pwd)/projects/my-book"
+python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter-num 1
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     5 核心Agent                              │
-├─────────────────────────────────────────────────────────────┤
-│  outline_master    │ 大纲设计专家                            │
-│  character_designer │ 角色设计师                              │
-│  content_writer    │ 正文写手                                │
-│  auditor           │ 质量审核官                              │
-│  polisher          │ 润色优化师                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-| 核心Agent | 角色池 | 说明 |
-|-----------|--------|------|
-| outline_master | — | 大纲生成、结构设计 |
-| character_designer | — | 角色卡生成、人物弧光 |
-| content_writer | 作家A-J（10个） | 正文写作 |
-| auditor | 审核员A-K（11个） | S1-S8质量审核 |
-| polisher | 读者A-T（20个） | 润色优化 |
-
-### 驱动机制
-
-- **SQLite状态机** + 三条铁律强制
-- **角色池机制**：同一Agent根据配置扮演不同角色
-- **人工重大决策**：大纲审核/卷定稿/死锁仲裁
 
 ---
 
-## 目录结构
+## 文档入口
+
+| 文档 | 用途 |
+|------|------|
+| [`docs/trial-read-index.md`](docs/trial-read-index.md) | **对外试读分发**（八书 + 星陨） |
+| [`docs/studio-demo.md`](docs/studio-demo.md) | 15/30 分钟产品 Demo |
+| [`docs/studio-onboarding.md`](docs/studio-onboarding.md) | 第一本短篇 onboarding |
+| [`docs/eight-books-reading-guide.md`](docs/eight-books-reading-guide.md) | 七书 Studio 通读索引 |
+| [`docs/primary-revision-book.md`](docs/primary-revision-book.md) | 主修书矩阵（静海/灰域/铁道） |
+| [`docs/prose-rubric-v1.md`](docs/prose-rubric-v1.md) | **Prose 标准**（11.22） |
+| [`docs/top-tier-studio-gap-v1.md`](docs/top-tier-studio-gap-v1.md) | 顶级工作室 KPI |
+| [`docs/jinghai-external-release.md`](docs/jinghai-external-release.md) | **静海对外分发**（简介 + 邮件模板） |
+| [`docs/studio-demo-record-ready.md`](docs/studio-demo-record-ready.md) | Demo 录屏清单（**本期不做**，备查） |
+| [`docs/chapter-production-runbook.md`](docs/chapter-production-runbook.md) | 生产 runbook |
+
+---
+
+## 目录结构（Studio）
 
 ```
 novel-factory/
-├── .skills/                 # Agent角色池配置（YAML，44个角色）
-├── infra/                   # 核心基础设施
-│   ├── agent_system/        # 5核心Agent实现
-│   │   └── agents/          # outline_master, character_designer,
-│   │                        # content_writer, auditor, polisher
-│   ├── ai_service/          # AI Provider抽象层（OpenAI/Anthropic）
-│   ├── consistency/         # 一致性检查引擎（12检测器）
-│   │   └── checkers/        # AI痕迹/句式多样性/伏笔/角色/时间线等
-│   ├── hooks/               # 事件钩子系统（YAML配置）
-│   ├── memory_system/       # 记忆系统（RAG/Qdrant）
-│   ├── quality_tools/       # 质量工具（QualityGate）
-│   └── state/               # 状态管理（SQLite + workflow_validator）
-├── tools/                   # 工作流工具（paragraph_ref.py等）
-├── config/                  # 配置文件
-├── docs/                    # 设计文档
-├── 03_内容仓库/             # 四层结构
-│   ├── 01_全文总体大纲/
-│   ├── 02_卷大纲/
-│   ├── 03_阶段大纲/
-│   ├── 04_正文/             # 360章正文
-│   └── 角色设定/             # 角色档案JSON
-├── 06_意见仓库/             # 六类审核/评论记录
-├── 07_汇总仓库/             # 阶段/卷/全文汇总
-├── 08_已发布/               # 最终成品
-│   └── 星陨纪元_v8.3_20260521/  # v8.3发布包
-├── 09_叙事设计/             # MDA分析、情节循环、角色模板
-├── 10_规范文档/             # 文档结构标准、架构决策
-└── 11_方法论/               # 创作方法论（PART0-6）
+├── lingwen.py                 # CLI 入口
+├── projects/                  # Studio 新书（每 slug 独立根）
+│   ├── jinghai-rizhi/         # 主打样章 · 沿海悬疑
+│   ├── huiyu-dangan/          # 灰域档案
+│   └── …                      # 共八书 + 见 trial-read-index
+├── scripts/
+│   ├── verify-studio-release.sh   # 发布前一键 smoke
+│   ├── verify-onboarding.sh
+│   ├── verify-golden-set.sh
+│   ├── build-trial-read.sh
+│   └── run-dashboard-single-port.sh
+├── infra/                     # Agent · 质检 · project_config
+├── dashboard/                 # FastAPI + Vue Studio 页
+├── tests/                     # pytest
+└── 03_内容仓库/               # 星陨 testbed 正文（根项目）
 ```
 
 ---
 
-## 内容仓库（03_内容仓库/）
+## 常用命令
 
-| 目录 | 内容 |
-|------|------|
-| 01_全文总体大纲/ | 小说整体大纲 |
-| 02_卷大纲/ | 卷1/卷2/卷3大纲 |
-| 03_阶段大纲/ | 19个阶段大纲 |
-| 04_正文/ | 360章正文（ch001-ch360） |
-| 角色设定/ | character_profiles.json（9个角色） |
+```bash
+# 质检 + 试读包（单书）
+bash scripts/generate-full-check-report.sh jinghai-rizhi 1 10
+bash scripts/build-trial-read.sh jinghai-rizhi 1 10
+bash scripts/sync-golden-set.sh jinghai-rizhi
 
----
-
-## 输出仓库
-
-### 06_意见仓库/
-
-| 目录 | 内容 |
-|------|------|
-| 01_全文大纲_审核/ | 大纲审核记录 |
-| 02_卷大纲_审核/ | 卷大纲审核记录 |
-| 03_阶段大纲_审核/ | 阶段审核记录 |
-| 04_作家修改/ | 修改记录 |
-| 04_正文_审核/ | 正文S1-S8审核 |
-| 05_读者评论/ | 读者反馈 |
-| 06_汇总_审核/ | 汇总审核 |
-| 07_一致性检查/ | 一致性检测报告 |
-
-### 07_汇总仓库/
-
-| 目录 | 内容 |
-|------|------|
-| 全文正文/ | 全文正文v8.3 |
-| 卷正文/ | 卷1/卷2/卷3正文v8.3 |
-| 阶段正文/ | 19个阶段正文v8.3 |
-| 汇总主笔/ | 汇总文档 |
-| 汇总报告/ | 审核报告 |
-| 归档/ | 历史归档 |
-
-### 08_已发布/
-
-| 目录 | 内容 |
-|------|------|
-| 星陨纪元_v8.3_20260521/ | v8.3发布包（46个文件） |
-| 归档/ | 历史版本归档 |
+# 测试
+pytest -q                       # 需 pip install -e ".[dev]"
+cd dashboard/frontend && pnpm vitest run
+```
 
 ---
 
-## 核心文件
+## 核心架构（5 Agent）
 
-| 文件 | 说明 |
-|------|------|
-| CLAUDE.md | 系统人设（5核心Agent+角色池模式） |
-| workflow_state.json | 状态机文件（当前版本v8.3） |
-| hooks.yaml | 事件触发配置 |
-| infra/state/workflow_validator.py | 状态转换校验（三条铁律） |
-| .skills/ | 44个Agent角色池配置 |
+```
+outline_master · character_designer · content_writer · auditor · polisher
+```
 
----
-
-## 质量评估标准
-
-| 等级 | 完整度 | 处理方式 |
-|------|--------|---------|
-| S级 | >90% | 直接进入下一环节 |
-| A级 | 70%-90% | 小幅调整 |
-| B级 | 50%-70% | 返回重做 |
-| 不合格 | <50% | 打回重做 |
-
-### S1-S8质量维度
-
-| 维度 | 说明 |
-|------|------|
-| S1 | 剧情完整性 |
-| S2 | 逻辑自洽 |
-| S3 | 文笔风格（句式多样性） |
-| S4 | 情感共鸣 |
-| S5 | 节奏控制 |
-| S6 | 可读性 |
-| S7 | 主角魅力 |
-| S8 | 人物弧光 |
+驱动：SQLite 状态机 · 角色池 · 人工重大决策（大纲 / 发布）。  
+细节见 [`CLAUDE.md`](CLAUDE.md) 与 `docs/superpowers/`。
 
 ---
 
-## 三条铁律
+## 星陨纪元（试验田 · 历史）
 
-1. **禁止跳过**：审核完成后必须进入修改主持流程
-2. **验证闭环**：Agent返回后必须TaskOutput验证
-3. **禁止自改**：主控不得"自己改文件"，必须通过Agent执行
+根目录 `03_内容仓库/` 为《星陨纪元》360 章正史；`experimental/` 为 ch361+ stress test。
 
----
+| 属性 | 值 |
+|------|-----|
+| 正史 | ch001–ch360 |
+| 默认硬门 | `config/project.yaml` → `max_chapter: 360` |
+| Stress test | `LINGWEN_ALLOW_STRESS_TEST=1` 显式开启 |
 
-## 启动指南（新项目）
-
-1. **克隆本仓库**
-2. **更新项目信息**：修改 `workflow_state.json` 中的 `project_info`（项目名、章节数）
-3. **初始化灵感部门**：更新 `01_灵感库/模板库/` 或创建新项目文件夹
-4. **启动工作流**：`./run_workflow.sh status` 确认状态
-5. **进入立项阶段**：更新 `workflow_state.json` 将 `current_phase` 设为 `PHASE_1_LAUNCH`
+v8.3 一致性整改与发布包见 `08_已发布/星陨纪元_v8.3_*`。完整历史指标见下方版本表。
 
 ---
 
-## 设计文档
+## 版本历史（摘要）
 
-详细设计文档位于以下目录：
-
-| 目录 | 内容 |
-|------|------|
-| docs/superpowers/ | 整体架构设计、部门细化、实施计划 |
-| 09_叙事设计/ | MDA分析、情节循环、角色模板、设定库 |
-| 10_规范文档/ | 文档结构标准、架构决策（ADR） |
-| 11_方法论/ | 创作方法论（PART0-6） |
-
-> **完整目录指南**：详见 `DIRECTORY_GUIDE.md`，包含所有目录的详细说明和快速导航。
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| **Studio v10** | 2026-06 | 工作室化 · 八书 10 章 · Dashboard · Golden Set CI |
+| v8.3 | 2026-05 | 星陨 360 章一致性检测与整改 |
+| v1.0 | 2026-05 | 初始多 Agent 架构 |
 
 ---
 
-## v8.3 核心成果
-
-| 指标 | 数值 |
-|------|------|
-| AI痕迹减少 | 78%（139→<30个P3） |
-| 句式多样性 | 100%通过（25→145模式） |
-| 伏笔回收率 | 55.4% |
-| 角色档案 | 9个主要角色 |
-| P0/P1/P2问题 | 全部清零 |
-| S/A级通过率 | 100% |
-
----
-
-## 版本历史
-
-| 版本 | 日期 | 主要变更 |
-|------|------|---------|
-| v1.0 | 2026-05-15 | 初始发布 |
-| v4.0 | 2026-05-18 | 苏琳牺牲描述更新 |
-| v5.0 | 2026-05-18 | 新增3个检测器 |
-| v8.3 | 2026-05-21 | 360章一致性检测与整改 |
-
----
-
-**《星陨纪元》v8.3 发布完成** ✅
+**对外分发** → [`docs/trial-read-index.md`](docs/trial-read-index.md) · **工程切换** → [`../HANDOFF.md`](../HANDOFF.md)

@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
-from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.cache import QueryImpactCache
+from infra.cross_volume.ripple import CrossVolumeRipple
 
 logger = logging.getLogger(__name__)
 

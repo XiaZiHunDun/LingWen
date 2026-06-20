@@ -34,7 +34,7 @@ classifiers = [
 # Runtime deps — 实际 import 出来的第三方包,只列需要的
 dependencies = [
     "fastapi>=0.110",
-    "uvicorn>=0.27",
+    "uvicorn[standard]>=0.27",
     "httpx>=0.27",  # minimax_provider 自定义 http client (X-Api-Key)
     "pydantic>=2.5",
     "pydantic-settings>=2.1",
@@ -107,3 +107,22 @@ ignore = [
 "tests/**" = ["F401", "F811"]
 # 集成脚本容许多 import (脚本式工具)
 "tools/**" = ["F401"]
+
+[tool.coverage.run]
+source = ["infra", "tools", "dashboard"]
+# Phase 11.11: legacy / API-key-only CLIs — excluded from tools module gate denominator
+omit = [
+    "tools/anti_trope_enhancer.py",
+    "tools/claude_key_chapter_polisher.py",
+    "tools/llm_emotional_resonance_checker.py",
+    "tools/llm_foreshadow_analyzer.py",
+    "tools/llm_pacing_analyzer.py",
+    "tools/llm_quality_analyzer.py",
+    "tools/logic_audit.py",
+    "tools/merge_chapters.py",
+    "tools/quick_check.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true

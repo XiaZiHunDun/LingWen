@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "description": "《黄沙档案》角色表",
+  "characters": [
+    {
+      "name": "陆沉",
+      "role": "主角",
+      "personality_tags": ["克制", "执拗", "细节控"],
+      "speech_style": "短句，少情绪词，习惯用坐标和风向说话",
+      "abilities": ["地质读图", "野外生存基础"],
+      "knowledge": ["风蚀日规则", "旧营地布局", "地震仪操作"],
+      "forbids": ["无厘头搞笑", "突然获得超自然能力"],
+      "description": "前勘探员，因顾遥失联退出一线；两年后带旧录音重返沙漠。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "顾遥",
+      "role": "失踪搭档",
+      "personality_tags": ["冷静", "记录狂"],
+      "speech_style": "录音里多为工作口述，极少抒情",
+      "abilities": ["地震仪维护", "沙丘测绘"],
+      "knowledge": ["频道 7 备用频率", "竖井勘探规程"],
+      "forbids": ["以幽灵现身吓人"],
+      "description": "两年前风蚀日失联；真相通过录音与竖井遗迹浮现。",
+      "first_appearance": "ch001（录音/遗物）"
+    },
+    {
+      "name": "老邢",
+      "role": "补给站值班",
+      "personality_tags": ["世故", "嘴硬心软"],
+      "speech_style": "西北口音，爱说「别往里走」",
+      "abilities": [],
+      "knowledge": ["当地风蚀日禁忌", "旧勘探队档案位置"],
+      "forbids": [],
+      "description": "边陲补给站唯一常年值守者，认得陆沉。",
+      "first_appearance": "ch001"
+    }
+  ]
+}

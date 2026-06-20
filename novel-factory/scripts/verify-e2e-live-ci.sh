@@ -17,7 +17,8 @@ if ! command -v pnpm >/dev/null 2>&1; then
   npm install -g pnpm@9
 fi
 pnpm install --frozen-lockfile
-pnpm exec playwright install --with-deps chromium
+pnpm exec playwright install --with-deps chromium 2>/dev/null \
+  || pnpm exec playwright install chromium
 
 CI=true LINGWEN_E2E_LIVE=1 pnpm e2e:live
 

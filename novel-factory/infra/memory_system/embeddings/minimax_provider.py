@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from infra.memory_system.embeddings.base import EmbeddingPurpose, EmbeddingProviderError
+from infra.memory_system.embeddings.base import EmbeddingProviderError, EmbeddingPurpose
 
 
 class MiniMaxEmbeddingProvider:

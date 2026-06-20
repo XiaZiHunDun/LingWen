@@ -2,11 +2,28 @@
 
 Mirrors lines 78-210 of the original infra/cli/commands.py.
 """
-from typing import List
+from typing import List, Optional
 
 from infra.cli.options import UnifiedOptions
 
 from .base import Command
+
+_SEVERITY_RANK = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+
+
+def _issues_meet_fail_threshold(issues, fail_severity: Optional[str]) -> bool:
+    """Return True when exit code should be non-zero."""
+    if not issues:
+        return False
+    if not fail_severity:
+        return True
+    threshold = _SEVERITY_RANK.get(fail_severity.upper())
+    if threshold is None:
+        return True
+    return any(
+        _SEVERITY_RANK.get(issue.severity.value, 99) <= threshold
+        for issue in issues
+    )
 
 
 class CheckCommand(Command):
@@ -118,7 +135,13 @@ class CheckCommand(Command):
             if count > 0:
                 print(f"  {sev}: {count}")
 
-        return 0 if len(issues) == 0 else 1
+        if _issues_meet_fail_threshold(issues, options.fail_severity):
+            if options.fail_severity:
+                print(f"\n[FAIL] 存在 {options.fail_severity} 及以上问题")
+            return 1
+        if issues and options.fail_severity:
+            print(f"\n[OK] 无 {options.fail_severity} 及以上问题（共 {len(issues)} 条低优先级）")
+        return 0
 
     def _check_llm(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run LLM-based quality check"""

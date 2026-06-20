@@ -4,8 +4,17 @@
 所有工具和模块应使用此模块获取项目路径
 """
 
+import os
 from pathlib import Path
 from typing import Optional
+
+
+def resolve_project_root() -> Path:
+    """Project content root: LINGWEN_PROJECT_ROOT or novel-factory/."""
+    env = os.environ.get("LINGWEN_PROJECT_ROOT", "").strip()
+    if env:
+        return Path(env).resolve()
+    return Path(__file__).parent.parent
 
 
 class ProjectPaths:
@@ -29,10 +38,9 @@ class ProjectPaths:
                       默认以本文件位置推算（infra/paths.py → novel-factory/）
         """
         if base_dir is None:
-            # 自动推算：infra/paths.py → novel-factory/
-            self.root = Path(__file__).parent.parent
+            self.root = resolve_project_root()
         else:
-            self.root = base_dir
+            self.root = Path(base_dir).resolve()
 
         # 核心目录
         self.chapters = self.root / "03_内容仓库" / "04_正文"
@@ -59,6 +67,11 @@ class ProjectPaths:
             raise RuntimeError(f"角色档案不存在: {self.character_profiles}")
 
     @classmethod
+    def reset(cls) -> None:
+        """Clear singleton (tests / project switch)."""
+        cls._instance = None
+
+    @classmethod
     def get(cls, base_dir: Optional[Path] = None) -> "ProjectPaths":
         """
         获取单例实例
@@ -69,8 +82,11 @@ class ProjectPaths:
         Returns:
             ProjectPaths单例
         """
+        resolved = Path(base_dir).resolve() if base_dir is not None else None
         if cls._instance is None:
-            cls._instance = cls(base_dir)
+            cls._instance = cls(resolved)
+        elif resolved is not None and cls._instance.root != resolved:
+            cls._instance = cls(resolved)
         return cls._instance
 
     def get_chapter_path(self, chapter_num: int) -> Path:

@@ -4,6 +4,7 @@
 import { ref } from 'vue';
 
 const VALID_NAV = [
+  'studio',
   'overview',
   'decisions',
   'workflows',

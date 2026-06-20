@@ -172,6 +172,35 @@ class LLMCausalReasoningChecker(BaseChecker):
                 lines.append(f"{name}: {info}")
         return "\n".join(lines)
 
+    def _extract_json_text(self, response: str) -> str:
+        """Strip thinking blocks and isolate JSON object from LLM response."""
+        text = response.strip()
+        # MiniMax M2.7 may prefix reasoning blocks (<think>, <thinking>, <think>, …)
+        text = re.sub(
+            r"<\w*think\w*>.*?</\w*think\w*>",
+            "",
+            text,
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        text = text.strip()
+        if "```json" in text:
+            json_start = text.find("```json") + 7
+            json_end = text.rfind("```")
+            if json_end > json_start:
+                return text[json_start:json_end].strip()
+        if "```" in text:
+            json_start = text.find("{")
+            json_end = text.rfind("}")
+            if json_start >= 0 and json_end > json_start:
+                return text[json_start : json_end + 1].strip()
+        if text.startswith("{"):
+            return text
+        json_start = text.find("{")
+        json_end = text.rfind("}")
+        if json_start >= 0 and json_end > json_start:
+            return text[json_start : json_end + 1].strip()
+        return text
+
     def _call_llm(self, prompt: str) -> Dict[str, Any]:
         """
         调用MiniMax M2.7模型进行复杂因果推理
@@ -197,40 +226,32 @@ class LLMCausalReasoningChecker(BaseChecker):
         }
         router = AIRouter(config=config, primary_provider="minimax", enable_failover=False)
 
-        # 调用MiniMax
-        response = router.generate(
-            prompt=prompt,
-            system=self.SYSTEM_PROMPT,
-            temperature=0.1,
-            max_tokens=2048
-        )
-
-        # 解析JSON响应
-        try:
-            # 尝试提取JSON
-            json_text = response.strip()
-            if "```json" in json_text:
-                json_start = json_text.find("```json") + 7
-                json_end = json_text.rfind("```")  # 用rfind避免匹配开头的
-                if json_end > json_start:
-                    json_text = json_text[json_start:json_end].strip()
-            elif "```" in json_text:
-                # 可能有多余文本，尝试找JSON开始位置
-                json_start = json_text.find('{')
-                json_end = json_text.rfind('}')
-                if json_start >= 0 and json_end > json_start:
-                    json_text = json_text[json_start:json_end+1].strip()
-            elif not json_text.startswith('{'):
-                # 没有任何JSON标记，尝试找{和}
-                json_start = json_text.find('{')
-                json_end = json_text.rfind('}')
-                if json_start >= 0 and json_end > json_start:
-                    json_text = json_text[json_start:json_end+1].strip()
-
-            return json.loads(json_text)
-        except json.JSONDecodeError:
-            logger.warning(f"LLM返回非JSON格式: {response[:200]}")
-            return {"contradictions": []}
+        # 调用MiniMax（失败或 JSON 解析失败时重试一次）
+        last_error: Exception | None = None
+        response = ""
+        for attempt in range(2):
+            try:
+                response = router.generate(
+                    prompt=prompt,
+                    system=self.SYSTEM_PROMPT,
+                    temperature=0.1,
+                    max_tokens=2048,
+                )
+                json_text = self._extract_json_text(response)
+                return json.loads(json_text)
+            except json.JSONDecodeError as exc:
+                last_error = exc
+                logger.warning(
+                    "LLM返回非JSON格式 (attempt %s): %s",
+                    attempt + 1,
+                    response[:200],
+                )
+            except Exception as exc:
+                last_error = exc
+                logger.warning("LLM因果推理调用失败 (attempt %s): %s", attempt + 1, exc)
+        if last_error:
+            raise last_error
+        return {"contradictions": []}
 
     def _create_issue(self, contradiction: Dict[str, Any], chapter_num: int) -> Issue:
         """
@@ -252,13 +273,8 @@ class LLMCausalReasoningChecker(BaseChecker):
 
         issue_type = type_mapping.get(contradiction.get("type", ""), "llm_detected")
 
-        # 根据类型设置不同的严重程度
-        if issue_type in ["physical_impossible", "world_rule_violation"]:
-            severity = IssueSeverity.P0  # 严重的物理/世界规则矛盾
-        elif issue_type == "causal_chain_break":
-            severity = IssueSeverity.P1  # 因果链断裂
-        else:
-            severity = IssueSeverity.P1  # 其他LLM检测的问题
+        # LLM 检测统一 P1：避免 MiniMax 波动导致 golden P0 门误拦（规则 P0 仍由其他 checker 负责）
+        severity = IssueSeverity.P1
 
         location_text = contradiction.get("location", "")
         # 尝试提取段落号

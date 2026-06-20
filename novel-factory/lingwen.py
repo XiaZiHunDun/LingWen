@@ -18,7 +18,7 @@ Commands:
     ripple-audit - 打印涟漪审计历史 (Phase 9.14)
     ripple-rollback - 回滚已应用/已拒绝涟漪 (Phase 9.14)
     ripple-reset - 重置涟漪状态 (Phase 9.18)
-    cascade    - 重新运行涟漪扩散 BFS (Phase 9.19)
+    init-project - 新建 minimal-short 项目脚手架
 """
 
 import argparse
@@ -33,6 +33,7 @@ from infra.cli import (
     BackfillOptions,
     CascadeOptions,
     CheckOptions,
+    InitProjectOptions,
     LLMAnalyzeOptions,
     PolishOptions,
     RangeParser,
@@ -42,10 +43,10 @@ from infra.cli import (
     RippleRollbackOptions,
     RippleScanOptions,
     StoryContractOptions,
-    UnifiedOptions,
     VerifyOptions,
 )
 from infra.cli.commands import get_command, list_commands
+from infra.cli.options import UnifiedOptions
 from infra.cli.parsers import create_parser
 
 
@@ -85,6 +86,18 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             range=[],
             parallel=1,
             verbose=False,
+        )
+    elif command == "init-project":
+        return InitProjectOptions(
+            range=[],
+            parallel=1,
+            verbose=False,
+            slug=args.slug,
+            title=args.title,
+            protagonist=getattr(args, "protagonist", "沈柯"),
+            genre=getattr(args, "genre", "科幻悬疑"),
+            out=getattr(args, "out", None),
+            overwrite=getattr(args, "overwrite", False),
         )
     elif command == "anti-trope":
         return AntiTropeOptions(
@@ -208,6 +221,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             full=args.full,
             llm=args.llm,
             limit=args.limit,
+            fail_severity=getattr(args, "fail_severity", None),
         )
     elif command == "repair":
         return RepairOptions(

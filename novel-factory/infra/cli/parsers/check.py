@@ -29,4 +29,10 @@ def add_check_parser(subparsers: argparse._SubParsersAction) -> argparse.Argumen
     parser.add_argument("--dry-run", action="store_true", help="干跑模式 (不实际修改)")
     parser.add_argument("-o", "--output", help="输出文件路径")
     parser.add_argument("--limit", type=int, default=20, help="最大处理章节数 (默认: 20)")
+    parser.add_argument(
+        "--fail-severity",
+        choices=["P0", "P1", "P2", "P3"],
+        default=None,
+        help="仅当存在该严重度及以上问题时 exit 1（用于 golden-set P0 门）",
+    )
     return parser

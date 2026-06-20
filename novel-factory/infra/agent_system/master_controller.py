@@ -356,6 +356,11 @@ class MasterController:
                 graph, initial_inputs=initial_inputs or {},
             )
 
+            # emit_chapter 等节点在 scheduler.run 期间读 chapter_num — 须先于 run 写入
+            self._last_initial_inputs = dict(initial_inputs or {})
+            self._last_workflow_name = workflow_name
+            self._last_start_nodes = list(start_nodes)
+
             summary = scheduler.run(
                 start_nodes=start_nodes,
                 initial_inputs=initial_inputs or {},
@@ -370,9 +375,6 @@ class MasterController:
             # 缓存活跃工作流状态 (Phase 5) — resume_workflow() 用它
             self._last_scheduler = scheduler
             self._last_graph = graph
-            self._last_workflow_name = workflow_name
-            self._last_start_nodes = list(start_nodes)
-            self._last_initial_inputs = dict(initial_inputs or {})
 
             incremental_backfill = self._maybe_incremental_backfill(
                 workflow_name=workflow_name,
