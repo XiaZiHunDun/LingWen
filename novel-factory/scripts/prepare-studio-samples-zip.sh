@@ -1,21 +1,42 @@
 #!/usr/bin/env bash
-# Zip all Studio sample dist folders (五样章).
-# Output: novel-factory/dist/灵文工作室-五样章.zip
+# Zip Studio dist folders: 五样章 (default) or 七样章 (+ 黄沙/暗河).
+# Usage:
+#   bash scripts/prepare-studio-samples-zip.sh           # 五样章
+#   STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-SLUGS=(jinghai-rizhi huiyu-dangan tiedao-dangan anye-xinbiao xuexian-dangan)
-PREPARE=(
-  prepare-jinghai-distribution.sh
-  prepare-huiyu-distribution.sh
-  prepare-tiedao-distribution.sh
-  prepare-anye-distribution.sh
-  prepare-xuexian-distribution.sh
-)
+STUDIO_SAMPLES="${STUDIO_SAMPLES:-5}"
 
-echo "=== Prepare Studio samples zip (5 books) ==="
+if [[ "$STUDIO_SAMPLES" == "7" ]]; then
+  SLUGS=(jinghai-rizhi huiyu-dangan tiedao-dangan anye-xinbiao xuexian-dangan huangsha-dangan anhe-dangan)
+  PREPARE=(
+    prepare-jinghai-distribution.sh
+    prepare-huiyu-distribution.sh
+    prepare-tiedao-distribution.sh
+    prepare-anye-distribution.sh
+    prepare-xuexian-distribution.sh
+    prepare-huangsha-distribution.sh
+    prepare-anhe-distribution.sh
+  )
+  LABELS=(01-静海日志 02-灰域档案 03-铁道档案 04-暗夜信标 05-雪线档案 06-黄沙档案 07-暗河档案)
+  ZIP_NAME="灵文工作室-七样章.zip"
+  echo "=== Prepare Studio samples zip (7 books) ==="
+else
+  SLUGS=(jinghai-rizhi huiyu-dangan tiedao-dangan anye-xinbiao xuexian-dangan)
+  PREPARE=(
+    prepare-jinghai-distribution.sh
+    prepare-huiyu-distribution.sh
+    prepare-tiedao-distribution.sh
+    prepare-anye-distribution.sh
+    prepare-xuexian-distribution.sh
+  )
+  LABELS=(01-静海日志 02-灰域档案 03-铁道档案 04-暗夜信标 05-雪线档案)
+  ZIP_NAME="灵文工作室-五样章.zip"
+  echo "=== Prepare Studio samples zip (5 books) ==="
+fi
 
 for i in "${!SLUGS[@]}"; do
   if [[ ! -d "${ROOT}/projects/${SLUGS[$i]}/dist" ]] || [[ -z "$(ls -A "${ROOT}/projects/${SLUGS[$i]}/dist" 2>/dev/null || true)" ]]; then
@@ -28,16 +49,14 @@ done
 
 OUT_DIR="${ROOT}/dist"
 STAGE="${OUT_DIR}/studio-samples-stage"
-ZIP="${OUT_DIR}/灵文工作室-五样章.zip"
+ZIP="${OUT_DIR}/${ZIP_NAME}"
 
 rm -rf "${STAGE}"
 mkdir -p "${STAGE}"
 
-cp -a "${ROOT}/projects/jinghai-rizhi/dist" "${STAGE}/01-静海日志"
-cp -a "${ROOT}/projects/huiyu-dangan/dist" "${STAGE}/02-灰域档案"
-cp -a "${ROOT}/projects/tiedao-dangan/dist" "${STAGE}/03-铁道档案"
-cp -a "${ROOT}/projects/anye-xinbiao/dist" "${STAGE}/04-暗夜信标"
-cp -a "${ROOT}/projects/xuexian-dangan/dist" "${STAGE}/05-雪线档案"
+for i in "${!SLUGS[@]}"; do
+  cp -a "${ROOT}/projects/${SLUGS[$i]}/dist" "${STAGE}/${LABELS[$i]}"
+done
 cp "${ROOT}/docs/trial-read-index.md" "${STAGE}/trial-read-index.md"
 
 rm -f "${ZIP}" "${OUT_DIR}/灵文工作室-四样章.zip"

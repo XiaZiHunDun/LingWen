@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.50 (五样章 zip 对外 + doctor/CI 稳定, 2026-06-20)  
-> **更新 (2026-06-20)**: `dist/灵文工作室-五样章.zip` · doctor 适配 Studio max_chapter · pytest 2972+
+> **版本**: v10.51 (七样章 dist · 黄沙/暗河第六七主修, 2026-06-20)  
+> **更新 (2026-06-20)**: prepare-huangsha/anhe · 七样章 zip · dist_ready ×7
 
 ---
 
@@ -18,8 +18,8 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | golden-set matrix（八书）· onboarding-smoke |
-| **下一期推荐** | **黄沙/暗河第六主修** · 或 v12 Dashboard prose diff UI |
-| **主修 slug** | 五样章均已 dist · 封存：黄沙 / 暗河 |
+| **下一期推荐** | **v12 Dashboard prose diff UI** · 八书 prose 快照基线 |
+| **主修 slug** | **七样章**均已 dist（含黄沙/暗河）· 五样章 LLM CI blocking |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
 
@@ -447,6 +447,20 @@ b96a669 feat(F86): live RAG preflight gate + runbook §19
 cd novel-factory
 bash scripts/prepare-studio-samples-zip.sh
 # → dist/灵文工作室-五样章.zip
+```
+
+### Phase 11.16–11.17 — 黄沙 / 暗河第六七主修 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.16 | 《黄沙档案》dist + `prepare-huangsha-distribution.sh` | ✅ |
+| 11.17 | 《暗河档案》dist + `prepare-anhe-distribution.sh` | ✅ |
+| 11.17b | `STUDIO_SAMPLES=7` → `灵文工作室-七样章.zip` | ✅ |
+
+```bash
+bash scripts/prepare-huangsha-distribution.sh
+bash scripts/prepare-anhe-distribution.sh
+STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh
 ```
 
 ```bash

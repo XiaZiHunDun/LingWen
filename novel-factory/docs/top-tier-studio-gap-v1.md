@@ -19,7 +19,7 @@
 
 | KPI | 当前 | v11.1 目标 | v12 顶级目标 | 度量方式 |
 |-----|------|------------|--------------|----------|
-| dist 样章数 | **5** | **5** ✅ | 8 书全覆盖 | zip 204K |
+| dist 样章数 | **7** | **7** ✅ | 8 书全覆盖 | zip |
 | 主修书 prose P1 | 静海/灰域/铁道 ≈8 | ≤12 | 八书均≤12 | `run-prose-calibration.sh` |
 | Prose rubric 文档 | ✅ v1 | ✅ | v2+LLM judge | 本文档族 |
 | Golden prose 校准 | ✅ 五书基线 | ✅ | 八书基线 | `run-prose-calibration.sh` |

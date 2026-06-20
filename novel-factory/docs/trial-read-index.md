@@ -1,6 +1,6 @@
 # 灵文工作室 · 试读分发索引
 
-> **版本**：distribution-v6 · 2026-06-20 · **五样章 dist + zip**  
+> **版本**：distribution-v7 · 2026-06-20 · **七样章 dist + zip**  
 > **用途**：对外分发时，直接发送下方「单文件试读」链接或附件。
 
 ---
@@ -17,21 +17,27 @@
 
 **五册 zip**：`bash scripts/prepare-studio-samples-zip.sh` → [`dist/灵文工作室-五样章.zip`](../dist/灵文工作室-五样章.zip)
 
-说明：[`jinghai-external-release.md`](jinghai-external-release.md) · [`huiyu-external-release.md`](huiyu-external-release.md) · [`tiedao-external-release.md`](tiedao-external-release.md) · [`anye-external-release.md`](anye-external-release.md) · [`xuexian-external-release.md`](xuexian-external-release.md)
+**七册 zip**（含黄沙/暗河）：`STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh` → `dist/灵文工作室-七样章.zip`
+
+说明：[`jinghai-external-release.md`](jinghai-external-release.md) · … · [`xuexian-external-release.md`](xuexian-external-release.md)
 
 ---
 
-## 封存候选（其余两书 · P0=0）
+## 扩展样章（第六 / 七 · dist 就绪）
 
-| 书 | 体裁 | 试读 3 章 | 全书 10 章 |
-|----|------|-----------|------------|
-| 《黄沙档案》 | 沙漠悬疑 | [`trial-read-ch001-003.md`](projects/huangsha-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/huangsha-dangan/docs/trial-read-ch001-010.md) |
-| 《暗河档案》 | 喀斯特悬疑 | [`trial-read-ch001-003.md`](projects/anhe-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/anhe-dangan/docs/trial-read-ch001-010.md) |
+| 书 | 角色 | 试读 3 章 | 全书 10 章 | 打包 |
+|----|------|-----------|------------|------|
+| **《黄沙档案》** | 第六样章 · 沙漠 | [`trial-read-ch001-003.md`](projects/huangsha-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/huangsha-dangan/docs/trial-read-ch001-010.md) | `prepare-huangsha-distribution.sh` |
+| **《暗河档案》** | 第七样章 · 喀斯特 | [`trial-read-ch001-003.md`](projects/anhe-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/anhe-dangan/docs/trial-read-ch001-010.md) | `prepare-anhe-distribution.sh` |
 
-索引页（七书 + 工程）：
+说明：[`huangsha-external-release.md`](huangsha-external-release.md) · [`anhe-external-release.md`](anhe-external-release.md)
 
-- [`docs/eight-books-reading-guide.md`](eight-books-reading-guide.md) — 通读顺序 · 改稿备忘
-- `bash scripts/verify-studio-release.sh` — 发布前工程 smoke（doctor + onboarding + golden-set ×8）
+---
+
+## 八书工程
+
+- [`docs/eight-books-reading-guide.md`](eight-books-reading-guide.md) — 通读顺序 · 改稿备忘  
+- `bash scripts/verify-studio-release.sh` — golden-set ×8 · doctor · onboarding
 
 ---
 
