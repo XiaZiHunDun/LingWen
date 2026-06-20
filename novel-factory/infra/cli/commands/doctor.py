@@ -108,6 +108,8 @@ class DoctorCommand(Command):
 
     def _check_chapters(self) -> bool:
         """Check chapter files"""
+        from infra.project_config import ProjectConfig
+
         print("  检查章节文件...")
 
         chapters_dir = self.paths.chapters
@@ -118,8 +120,8 @@ class DoctorCommand(Command):
         chapter_files = list(chapters_dir.glob("ch*.md"))
         print(f"    ✓ 章节文件数量: {len(chapter_files)}")
 
-        # Check a few chapters
-        sample_chapters = [1, 50, 100, 200, 360]
+        config = ProjectConfig.load(self.paths)
+        sample_chapters = self._chapter_sample_nums(config.max_chapter)
         all_ok = True
         for ch in sample_chapters:
             path = chapters_dir / f"ch{ch:03d}.md"
@@ -131,6 +133,17 @@ class DoctorCommand(Command):
                 all_ok = False
 
         return all_ok
+
+    @staticmethod
+    def _chapter_sample_nums(max_chapter: int) -> list[int]:
+        """Pick milestone chapters within project max_chapter (Studio 10 vs 星陨 360)."""
+        if max_chapter <= 0:
+            return []
+        if max_chapter <= 10:
+            mid = max(1, max_chapter // 2)
+            return sorted({1, mid, max_chapter})
+        milestones = [1, 50, 100, 200, 360, max_chapter]
+        return sorted({ch for ch in milestones if 1 <= ch <= max_chapter})
 
     def _check_recent_fixes(self) -> bool:
         """Check recent fix records"""

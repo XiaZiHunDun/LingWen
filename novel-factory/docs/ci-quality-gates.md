@@ -20,6 +20,8 @@ Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1
 
 仓库 Secret：**`MINIMAX_API_KEY`**（主修 CI 必配，否则 `llm-golden-primary` fail）
 
+> 配置路径：GitHub → Settings → Secrets and variables → Actions → New repository secret
+
 | 触发 | Job | 行为 |
 |------|-----|------|
 | 每次 push/PR | **`llm-golden-primary`** | 五样章各跑 Golden `--llm --fail-severity P0` |

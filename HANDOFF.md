@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.49 (Phase 11.14 LLM Golden 稳定化 + 工程门收尾, 2026-06-20)  
-> **更新 (2026-06-20)**: LLM 因果检测统一 P1 · 雪线 ch010 时间线 · 五书 golden ALL PASS
+> **版本**: v10.50 (五样章 zip 对外 + doctor/CI 稳定, 2026-06-20)  
+> **更新 (2026-06-20)**: `dist/灵文工作室-五样章.zip` · doctor 适配 Studio max_chapter · pytest 2972+
 
 ---
 
@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | golden-set matrix（八书）· onboarding-smoke |
-| **下一期推荐** | **五样章 zip 对外** · 或黄沙/暗河第六主修 |
+| **下一期推荐** | **黄沙/暗河第六主修** · 或 v12 Dashboard prose diff UI |
 | **主修 slug** | 五样章均已 dist · 封存：黄沙 / 暗河 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
@@ -435,6 +435,20 @@ b96a669 feat(F86): live RAG preflight gate + runbook §19
 | 11.14d | `docs/ci-quality-gates.md` 更新 | ✅ |
 | 11.14e | LLM 因果检测统一 **P1** + JSON 解析重试 + 雪线 ch010 时间线 | ✅ |
 
+### Phase 11.15 — 五样章 zip 对外 ✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 11.15a | `prepare-studio-samples-zip.sh` → **204K** 五册 | ✅ |
+| 11.15b | 灰域 P0 复跑确认（P0=0） | ✅ |
+| 11.15c | `doctor` 适配 Studio `max_chapter` + CLI 测试隔离 | ✅ |
+
+```bash
+cd novel-factory
+bash scripts/prepare-studio-samples-zip.sh
+# → dist/灵文工作室-五样章.zip
+```
+
 ```bash
 export MINIMAX_API_KEY=...
 bash scripts/run-primary-revision-verify.sh tiedao-dangan
@@ -732,7 +746,7 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 
 ### 7.5 pytest baseline 与环境变量
 
-- **默认 CI 期望**: `pytest -q` → **2923 passed**, 11 skipped（2026-06-19；含 10.38 +3 tests；本机全量偶发 8 fail 见 §7.1）
+- **默认 CI 期望**: `pytest -q` → **2972 passed**, 11 skipped（2026-06-20；含 doctor Studio 适配 + test_auditor 语义断言）
 - **`LINGWEN_MEMORY_RAG=live`** 在 shell 中 export 时，batch 单元测试需 `stub`（已在 `test_chapter_production_batch` autouse 隔离）
 - **real LLM opt-in** (`MINIMAX_API_KEY` 等): `test_novel_writing_real_llm.py` 仅在有 key 时跑；Markdown fenced JSON 已由 `AgentBase.parse_response` 剥离
 
@@ -762,11 +776,11 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (v9 已完成, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
-- [ ] 跑 `cd novel-factory && pytest -q` 验证 **2893 passed**, 9 skipped (~9min)
+- [ ] 跑 `cd novel-factory && pytest -q` 验证 **2972 passed**, 11 skipped (~7min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
-- [ ] 跑 `git log --oneline -5` 确认 HEAD=`d8685b2` 或更新
+- [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一工作: **wave 367–376 batch**（runbook §18）或 v10 规划
+- [ ] 选下一工作: **黄沙/暗河第六主修** 或 v12 Dashboard prose diff UI
 
 ---
 

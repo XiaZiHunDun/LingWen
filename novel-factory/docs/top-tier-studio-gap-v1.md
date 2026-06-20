@@ -25,7 +25,7 @@
 | Golden prose 校准 | ✅ 五书基线 | ✅ | 八书基线 | `run-prose-calibration.sh` |
 | 主修验收 LLM | **blocking（五样章）** | ✅ | blocking P0 | `run-primary-revision-verify.sh` |
 | Dashboard prose 视图 | ✅ 热力图 | ✅ | diff 对比 | Studio 页 |
-| pytest | 2928 | 2928+ | 3000+ | CI |
+| pytest | **2972+** | 2972+ | 3000+ | CI |
 | 覆盖率 | ≥30% | **40%** ✅ | 50% | pytest-cov + `verify-coverage-modules.sh` |
 | Playwright live | **5/5 本地绿** | **5/5 label CI** | 默认 CI | `verify-e2e-live-ci.sh` |
 | LLM CI | **llm-golden-primary ×5** | blocking | 主修 blocking | `llm-golden-primary` job |
@@ -42,7 +42,7 @@
 | G2 | 仅 2 本 dist 级样章 | 第三本主修《铁道档案》 | 11.03 | ✅ |
 | G3 | P1 误报多、难指导改稿 | golden 基线 + 校准脚本 + agency 降噪 | 11.23 | ✅ |
 | G4 | 改稿靠会话、不可批量 | 主修 playbook 写入 rubric §4 | 11.22 | ✅ |
-| G5 | 六书仍是「合格稿」 | 五样章 dist 完成；黄沙/暗河封存 | 11.03+ | 🔄 |
+| G5 | 六书仍是「合格稿」 | 五样章 dist + zip 对外 | 11.15 | ✅ |
 
 ### P1 — 产品
 
@@ -59,7 +59,7 @@
 |---|------|------|-------|------|
 | G10 | 覆盖率 30% | 分模块提到 40% | 11.11 | ✅ |
 | G11 | E2E live 5/5 | label CI 稳定绿 | 11.13 | ✅ |
-| G12 | 文档滞后 | primary-revision / HANDOFF 同步 | 11.22 | 🔄 |
+| G12 | 文档滞后 | primary-revision / HANDOFF 同步 | 11.22 | ✅ |
 
 ---
 
@@ -67,10 +67,11 @@
 
 ```
 11.22  Prose Rubric v1 + 差距清单          ✅
-11.23  P1 校准（YAML + 脚本 + agency）     🔄
-11.24  Dashboard prose 热力图              🔄
-11.03  第三本主修（铁道）+ dist              📋
-11.04  主修 LLM auto + pilot LLM auto      🔄
+11.23  P1 校准（YAML + 脚本 + agency）     ✅
+11.24  Dashboard prose 热力图              ✅
+11.03  第三本主修（铁道）+ dist              ✅
+11.04  主修 LLM auto + pilot LLM auto      ✅
+11.15  五样章 zip 对外                      ✅
 11.05  改稿 diff / prose harness           ✅
 11.11  覆盖率 40%                          ✅
 11.13  Playwright live 5/5                 ✅
