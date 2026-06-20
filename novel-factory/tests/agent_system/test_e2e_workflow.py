@@ -416,8 +416,16 @@ class TestCompleteWorkflow:
             characters=characters,
             timeline=timeline
         )
-        # 应该能检测出问题
-        assert len(audit_result_2["issues"]) >= len(audit_result["issues"])
+        # LLM 产出条数/严重度会波动，断言语义而非数量对比
+        assert len(audit_result_2["issues"]) >= 1
+        issue_blob = " ".join(
+            f"{i.get('type', '')} {i.get('issue', '')}"
+            for i in audit_result_2["issues"]
+        )
+        assert any(
+            kw in issue_blob
+            for kw in ("时间线", "逻辑", "矛盾", "第一章", "第三章")
+        )
 
     def test_polisher_dialogue_optimization(self):
         """测试润色器对话优化"""
