@@ -275,6 +275,41 @@ class StudioQualityReportResponse(BaseModel):
     prose_heatmap: StudioProseHeatmap
 
 
+class StudioProseDiffTotals(BaseModel):
+    p0: int = 0
+    p1: int = 0
+    total: int = 0
+    prose_p1: int = 0
+    prose_total: int = 0
+
+
+class StudioProseDiffChapter(BaseModel):
+    chapter: int
+    before_prose_p1: int
+    after_prose_p1: int
+    delta_prose_p1: int
+    before_prose_total: int
+    after_prose_total: int
+    delta_prose_total: int
+
+
+class StudioProseDiffResponse(BaseModel):
+    slug: str
+    available: bool
+    reason: Optional[str] = None
+    snapshot_path: str = ""
+    report_path: Optional[str] = None
+    save_command: Optional[str] = None
+    before_captured_at: Optional[str] = None
+    after_captured_at: Optional[str] = None
+    total_delta: Optional[StudioProseDiffTotals] = None
+    chapters: list[StudioProseDiffChapter] = Field(default_factory=list)
+    improved_count: int = 0
+    regressed_count: int = 0
+    has_regression: bool = False
+    net_prose_p1_delta: int = 0
+
+
 class StudioPreflightChapter(BaseModel):
     chapter: int
     ok: bool
@@ -1996,6 +2031,33 @@ def create_app(
             raise HTTPException(404, "no active studio project")
         data = quality_report_summary(project)
         return StudioQualityReportResponse(slug=project.slug, **data)
+
+    @app.get("/api/studio/prose-diff", response_model=StudioProseDiffResponse)
+    def studio_prose_diff() -> StudioProseDiffResponse:
+        from infra.studio_registry import active_project, prose_diff_summary
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        data = prose_diff_summary(project)
+        total_delta = data.get("total_delta")
+        chapters = [StudioProseDiffChapter(**row) for row in data.get("chapters") or []]
+        return StudioProseDiffResponse(
+            slug=data["slug"],
+            available=data["available"],
+            reason=data.get("reason"),
+            snapshot_path=data.get("snapshot_path") or "",
+            report_path=data.get("report_path"),
+            save_command=data.get("save_command"),
+            before_captured_at=data.get("before_captured_at"),
+            after_captured_at=data.get("after_captured_at"),
+            total_delta=StudioProseDiffTotals(**total_delta) if total_delta else None,
+            chapters=chapters,
+            improved_count=int(data.get("improved_count") or 0),
+            regressed_count=int(data.get("regressed_count") or 0),
+            has_regression=bool(data.get("has_regression")),
+            net_prose_p1_delta=int(data.get("net_prose_p1_delta") or 0),
+        )
 
     @app.post("/api/studio/production/preflight", response_model=StudioPreflightResponse)
     def studio_production_preflight(

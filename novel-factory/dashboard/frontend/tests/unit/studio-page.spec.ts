@@ -9,6 +9,7 @@ const studioMocks = vi.hoisted(() => ({
   fetchStudioSummary: vi.fn(),
   fetchStudioQuality: vi.fn(),
   fetchStudioQualityReport: vi.fn(),
+  fetchStudioProseDiff: vi.fn(),
   studioProductionPreflight: vi.fn(),
   studioProductionRun: vi.fn(),
   fetchStudioBatchJob: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
     fetchStudioSummary: studioMocks.fetchStudioSummary,
   fetchStudioQuality: studioMocks.fetchStudioQuality,
   fetchStudioQualityReport: studioMocks.fetchStudioQualityReport,
+  fetchStudioProseDiff: studioMocks.fetchStudioProseDiff,
   studioProductionPreflight: studioMocks.studioProductionPreflight,
     studioProductionRun: studioMocks.studioProductionRun,
     fetchStudioBatchJob: studioMocks.fetchStudioBatchJob,
@@ -68,11 +70,38 @@ describe('StudioPage (Phase 10.04)', () => {
       p2: 1,
       p3: 1,
       generated_at: '2026-06-18',
+      prose_heatmap: {
+        chapters: [{ chapter: 1, issue_count: 2, prose_p1: 1, prose_total: 1, structural_total: 1, heat: 0.5 }],
+        total_prose_p1: 1,
+        total_prose_issues: 1,
+      },
       chapters: [
         { chapter: 1, word_count: 1800, issue_count: 2, issues: [
           { severity: 'P1', issue_type: 'sentence_diversity_low', chapter: 1, description: 'test' },
         ]},
       ],
+    });
+    studioMocks.fetchStudioProseDiff.mockResolvedValue({
+      slug: 'anye-xinbiao',
+      available: true,
+      before_captured_at: '2026-06-19',
+      after_captured_at: '2026-06-20',
+      total_delta: { prose_p1: -1, prose_total: -1, total: -2, p0: 0, p1: 0 },
+      chapters: [
+        {
+          chapter: 1,
+          before_prose_p1: 2,
+          after_prose_p1: 1,
+          delta_prose_p1: -1,
+          before_prose_total: 2,
+          after_prose_total: 1,
+          delta_prose_total: -1,
+        },
+      ],
+      improved_count: 1,
+      regressed_count: 0,
+      has_regression: false,
+      net_prose_p1_delta: -1,
     });
     studioMocks.studioProductionPreflight.mockResolvedValue({
       all_ok: true,
@@ -94,6 +123,22 @@ describe('StudioPage (Phase 10.04)', () => {
     expect(wrapper.find(byTestid('project-summary')).exists()).toBe(true);
     expect(wrapper.find(byTestid('quality-panel')).exists()).toBe(true);
     expect(wrapper.find(byTestid('quality-report-panel')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('prose-diff-panel')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('prose-diff-status')).text()).toContain('无 prose 回归');
+  });
+
+  test('无基线时 prose diff 空态', async () => {
+    studioMocks.fetchStudioProseDiff.mockResolvedValue({
+      slug: 'huangsha-dangan',
+      available: false,
+      reason: 'no_baseline',
+      save_command: 'bash scripts/run-prose-diff.sh huangsha-dangan --save',
+    });
+    const wrapper = mount(StudioPage);
+    await flushPromises();
+    const panel = wrapper.find(byTestid('prose-diff-panel'));
+    expect(panel.text()).toContain('尚无 prose 基线快照');
+    expect(panel.text()).toContain('--save');
   });
 
   test('preflight 按钮触发 API', async () => {

@@ -67,6 +67,28 @@ class TestStudioEndpoints:
         assert "prose_heatmap" in data
         assert "chapters" in data["prose_heatmap"]
 
+    def test_prose_diff_available(self, client: TestClient) -> None:
+        resp = client.get("/api/studio/prose-diff")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "anye-xinbiao"
+        assert data["available"] is True
+        assert "total_delta" in data
+        assert "chapters" in data
+        assert "has_regression" in data
+        assert isinstance(data["net_prose_p1_delta"], int)
+
+    def test_prose_diff_no_baseline(self, client: TestClient) -> None:
+        resp = client.put("/api/studio/active", json={"slug": "huangsha-dangan"})
+        assert resp.status_code == 200
+        resp = client.get("/api/studio/prose-diff")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "huangsha-dangan"
+        assert data["available"] is False
+        assert data["reason"] == "no_baseline"
+        assert "run-prose-diff.sh" in (data.get("save_command") or "")
+
     def test_preflight(self, client: TestClient) -> None:
         resp = client.post(
             "/api/studio/production/preflight?budget_usd=0.12",

@@ -528,6 +528,10 @@ export async function fetchStudioQualityReport() {
   return request('/studio/quality-report');
 }
 
+export async function fetchStudioProseDiff() {
+  return request('/studio/prose-diff');
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */

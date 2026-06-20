@@ -109,6 +109,65 @@
           <p v-else class="meta-line">（无）</p>
         </details>
       </template>
+      <div
+        v-if="proseDiff"
+        class="prose-diff"
+        data-testid="prose-diff-panel"
+      >
+        <h3 class="subsection-title">Prose 改稿对比</h3>
+        <div v-if="!proseDiff.available" class="report-empty">
+          <template v-if="proseDiff.reason === 'no_baseline'">
+            尚无 prose 基线快照。定稿后执行：
+            <code>{{ proseDiff.save_command || `bash scripts/run-prose-diff.sh ${activeSlug || 'slug'} --save` }}</code>
+          </template>
+          <template v-else-if="proseDiff.reason === 'no_report'">
+            有基线（{{ proseDiff.before_captured_at }}）但缺少 full-check 报告。生成：
+            <code>{{ proseDiff.save_command }}</code>
+          </template>
+          <template v-else>
+            暂无法对比 prose 快照。
+          </template>
+        </div>
+        <template v-else>
+          <p class="meta-line">
+            基线 {{ proseDiff.before_captured_at }}
+            → 当前 {{ proseDiff.after_captured_at }}
+          </p>
+          <div
+            class="diff-status"
+            :class="proseDiff.has_regression ? 'diff-regressed' : 'diff-ok'"
+            data-testid="prose-diff-status"
+          >
+            {{ proseDiff.has_regression ? '⚠ 检测到 prose 回归' : '✓ 无 prose 回归' }}
+            · prose P1 Δ {{ formatDelta(proseDiff.net_prose_p1_delta) }}
+            · 改善 {{ proseDiff.improved_count }} 章 · 回归 {{ proseDiff.regressed_count }} 章
+          </div>
+          <div v-if="proseDiff.total_delta" class="diff-totals">
+            <span
+              v-for="key in ['prose_p1', 'prose_total', 'total', 'p0']"
+              :key="key"
+              class="diff-total-chip"
+              :class="deltaChipClass(proseDiff.total_delta[key])"
+            >
+              {{ key }} {{ formatDelta(proseDiff.total_delta[key]) }}
+            </span>
+          </div>
+          <ul v-if="proseDiffChapters.length" class="diff-chapters">
+            <li
+              v-for="row in proseDiffChapters"
+              :key="row.chapter"
+              class="diff-chapter-row"
+              :class="chapterDiffClass(row)"
+            >
+              ch{{ String(row.chapter).padStart(2, '0') }}
+              · P1 {{ row.before_prose_p1 }}→{{ row.after_prose_p1 }}
+              ({{ formatDelta(row.delta_prose_p1) }})
+              · prose {{ row.before_prose_total }}→{{ row.after_prose_total }}
+            </li>
+          </ul>
+          <p v-else class="meta-line">（无章级变化）</p>
+        </template>
+      </div>
     </section>
 
     <section class="studio-section pixel-card" data-testid="production-console">
@@ -214,7 +273,34 @@ import {
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
 
-const { summary, quality, qualityReport, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
+const { summary, quality, qualityReport, proseDiff, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
+
+const proseDiffChapters = computed(() => {
+  const rows = proseDiff.value?.chapters || [];
+  return [...rows].sort((a, b) => a.chapter - b.chapter);
+});
+
+function formatDelta(n) {
+  const v = Number(n) || 0;
+  return v > 0 ? `+${v}` : String(v);
+}
+
+function chapterDiffClass(row) {
+  if (row.delta_prose_p1 < 0 || (row.delta_prose_p1 === 0 && row.delta_prose_total < 0)) {
+    return 'diff-improved';
+  }
+  if (row.delta_prose_p1 > 0 || (row.delta_prose_p1 === 0 && row.delta_prose_total > 0)) {
+    return 'diff-regressed';
+  }
+  return 'diff-neutral';
+}
+
+function deltaChipClass(delta) {
+  const v = Number(delta) || 0;
+  if (v < 0) return 'diff-improved';
+  if (v > 0) return 'diff-regressed';
+  return 'diff-neutral';
+}
 
 const startChapter = ref(1);
 const endChapter = ref(3);
@@ -597,6 +683,65 @@ onUnmounted(() => {
   font-size: 8px;
   font-family: monospace;
   margin-top: 2px;
+}
+
+.prose-diff {
+  margin: var(--space-sm) 0 var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--border-color);
+}
+
+.diff-status {
+  font-size: 10px;
+  font-family: monospace;
+  margin: var(--space-xs) 0;
+}
+
+.diff-status.diff-ok {
+  color: var(--color-success);
+}
+
+.diff-status.diff-regressed {
+  color: var(--color-danger);
+}
+
+.diff-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--space-xs) 0 var(--space-sm);
+}
+
+.diff-total-chip {
+  font-size: 9px;
+  font-family: monospace;
+  padding: 2px 6px;
+  border: 1px solid var(--border-color);
+}
+
+.diff-chapters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 10px;
+  font-family: monospace;
+}
+
+.diff-chapter-row {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.diff-improved {
+  color: var(--color-success);
+}
+
+.diff-regressed {
+  color: var(--color-danger);
+}
+
+.diff-neutral {
+  opacity: 0.75;
 }
 
 code {

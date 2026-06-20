@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | golden-set matrix（八书）· onboarding-smoke |
-| **下一期推荐** | **v12 Dashboard prose diff UI** · 八书 prose 快照基线 |
+| **下一期推荐** | **八书 prose 快照基线**（`run-prose-diff.sh --save-all`） |
 | **主修 slug** | **七样章**均已 dist（含黄沙/暗河）· 五样章 LLM CI blocking |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
@@ -423,7 +423,7 @@ b96a669 feat(F86): live RAG preflight gate + runbook §19
 | 10.38e | `sync-handoff-baseline.sh` · E2E 超时 30s | ✅ |
 | 10.38f | [`roadmap-v11-engineering.md`](novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md) | ✅ |
 
-**v11 backlog**：Dashboard prose diff UI（v12）· 黄沙/暗河第六主修
+**v11 backlog**：~~Dashboard prose diff UI（v12）~~ ✅ · ~~黄沙/暗河第六主修~~ ✅
 
 ### Phase 11.14 — LLM Golden 主修 blocking ✅
 
