@@ -4,8 +4,8 @@ from __future__ import annotations
 from infra.prose_calibration import (
     build_prose_heatmap,
     evaluate_against_baseline,
-    is_prose_issue,
     is_primary_revision_slug,
+    is_prose_issue,
     list_primary_revision_slugs,
     resolve_llm_post_check,
 )

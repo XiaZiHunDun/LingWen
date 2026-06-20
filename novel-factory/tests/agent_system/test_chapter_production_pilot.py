@@ -51,6 +51,8 @@ class TestPreflightChecklist:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
+        monkeypatch.delenv("LINGWEN_PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("LINGWEN_PRODUCTION_MODE", raising=False)
         checks = preflight_checklist(
             state_dir=tmp_path,
             require_real_llm_gate=False,
@@ -60,12 +62,19 @@ class TestPreflightChecklist:
         assert "workflow_yaml" in names
         gate = next(c for c in checks if c.name == "real_llm_gate")
         assert gate.passed is True
+        api = next(c for c in checks if c.name == "api_key")
+        assert api.required is False
+        mc = next(c for c in checks if c.name == "master_controller_config")
+        assert mc.required is False
+        assert preflight_ok(checks) is True
 
     def test_preflight_requires_api_key(self, tmp_path, monkeypatch):
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
+        monkeypatch.delenv("LINGWEN_PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("LINGWEN_PRODUCTION_MODE", raising=False)
         checks = preflight_checklist(state_dir=tmp_path)
         api = next(c for c in checks if c.name == "api_key")
         assert api.passed is False
@@ -75,6 +84,8 @@ class TestPreflightChecklist:
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
         monkeypatch.delenv("LINGWEN_MEMORY_RAG", raising=False)
+        monkeypatch.delenv("LINGWEN_PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("LINGWEN_PRODUCTION_MODE", raising=False)
         checks = preflight_checklist(state_dir=tmp_path)
         assert preflight_ok(checks) is True
 

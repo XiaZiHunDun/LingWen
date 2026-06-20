@@ -12,6 +12,11 @@ PREFIX="${1:-onboarding-smoke}"
 SLUG="${PREFIX}-$(date +%s)"
 PROJECT="${ROOT}/projects/${SLUG}"
 
+cleanup() {
+  rm -rf "${PROJECT}" 2>/dev/null || true
+}
+trap cleanup EXIT
+
 echo "=== Onboarding verify: ${SLUG} ==="
 
 unset LINGWEN_PROJECT_ROOT
@@ -57,4 +62,3 @@ if [[ "${LINGWEN_ONBOARDING_PILOT:-0}" == "1" && -n "${MINIMAX_API_KEY:-}" ]]; t
 fi
 
 echo "=== Onboarding verify passed: ${SLUG} ==="
-echo "Cleanup: rm -rf ${PROJECT}"

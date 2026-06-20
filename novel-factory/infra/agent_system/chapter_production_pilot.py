@@ -178,6 +178,7 @@ def preflight_checklist(
             if provider
             else "set MINIMAX_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY"
         ),
+        required=require_real_llm_gate,
     ))
 
     resolved_dir = Path(state_dir or DEFAULT_STATE_DIR)
@@ -213,6 +214,7 @@ def preflight_checklist(
         name="master_controller_config",
         passed=config_ok,
         message=config_msg,
+        required=require_real_llm_gate,
     ))
 
     mem_mode = resolve_memory_rag_mode()
