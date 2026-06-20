@@ -71,7 +71,7 @@
 ```bash
 cd novel-factory
 bash scripts/run-primary-revision-verify.sh <slug>   # 含 prose 门 + LLM Golden blocking
-bash scripts/run-llm-golden-primary.sh               # 五样章 LLM 一次验收
+bash scripts/run-llm-golden-primary.sh               # 七样章 LLM 一次验收
 bash scripts/run-prose-calibration.sh <slug>        # 对照 golden 基线
 bash scripts/run-prose-diff.sh <slug>                 # 改稿前后 prose 快照 diff
 bash scripts/run-prose-diff.sh <slug> --save          # 定稿后写入快照
@@ -89,7 +89,9 @@ bash scripts/prepare-<slug>-distribution.sh         # 定稿后 dist（若有脚
 | 铁道档案 | tiedao-dangan | 📋 11.03 | 12 | 第三本主修 |
 | 暗夜信标 | anye-xinbiao | ✅ | 12 | 第四样章 |
 | 雪线档案 | xuexian-dangan | ✅ | 12 | 第五样章 · ch003 录音 |
-| 其余五书 | — | — | 20 | 封存，未主修 |
+| 黄沙档案 | huangsha-dangan | ✅ | 12 | 第六样章 |
+| 暗河档案 | anhe-dangan | ✅ | 12 | 第七样章 |
+| 星陨等 | xingyun-jiyuan 等 | — | 20 | testbed / 封存 |
 
 校准脚本：`bash scripts/run-prose-calibration.sh`（无参 = 扫全部 golden）
 
@@ -101,7 +103,7 @@ bash scripts/prepare-<slug>-distribution.sh         # 定稿后 dist（若有脚
 |------|------|------|
 | v1 | 本文档 + YAML 基线 + 热力图 | ✅ 11.22 |
 | v1.1 | `ProseVitalityScorer` 接入 full-check 报告 | 📋 11.03 |
-| v2 | LLM prose judge（Golden 三章）默认进主修验收 | 🔄 11.04 |
+| v2 | LLM prose judge（Golden 三章）+ 误报抽检 | 🔄 12.02 草案见 [`prose-rubric-v2.md`](prose-rubric-v2.md) |
 
 **原则**：先 **规则 + 人工 rubric** 校准，再 **LLM judge**；避免 LLM 单独定义「好 prose」。
 

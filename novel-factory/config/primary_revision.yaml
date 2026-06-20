@@ -10,6 +10,8 @@ primary_revision_slugs:
   - tiedao-dangan
   - anye-xinbiao
   - xuexian-dangan
+  - huangsha-dangan
+  - anhe-dangan
 
 llm_post_check:
   default_primary: blocking   # fail without API key

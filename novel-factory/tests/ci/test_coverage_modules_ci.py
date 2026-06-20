@@ -14,10 +14,10 @@ class TestCoverageModulesPolicy:
         path = NOVEL_FACTORY / "config" / "coverage_modules.yaml"
         assert path.is_file()
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
-        assert data["global_min_percent"] == 40
-        assert data["modules"]["infra"]["min_percent"] == 40
-        assert data["modules"]["dashboard"]["min_percent"] == 40
-        assert data["modules"]["tools"]["min_percent"] == 30
+        assert data["global_min_percent"] == 50
+        assert data["modules"]["infra"]["min_percent"] == 50
+        assert data["modules"]["dashboard"]["min_percent"] == 50
+        assert data["modules"]["tools"]["min_percent"] == 40
 
     def test_pyproject_coverage_omit_legacy_tools(self):
         text = (NOVEL_FACTORY / "pyproject.toml").read_text(encoding="utf-8")
@@ -25,9 +25,9 @@ class TestCoverageModulesPolicy:
         assert "tools/quick_check.py" in text
         assert "tools/llm_quality_analyzer.py" in text
 
-    def test_ci_cov_fail_under_40(self):
+    def test_ci_cov_fail_under_50(self):
         wf = (REPO_ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
-        assert "--cov-fail-under=40" in wf
+        assert "--cov-fail-under=50" in wf
         assert "verify-coverage-modules.sh" in wf
 
     def test_ci_cov_config_pyproject(self):

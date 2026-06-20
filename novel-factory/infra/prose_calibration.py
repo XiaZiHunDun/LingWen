@@ -155,7 +155,7 @@ def format_calibration_report(results: list[dict[str, Any]]) -> str:
 
 
 def list_primary_revision_slugs(config: dict[str, Any] | None = None) -> list[str]:
-    """Slugs with dist_ready in golden_baselines (五样章主修书)."""
+    """Slugs with dist_ready in golden_baselines (七样章主修书)."""
     cfg = config or load_prose_config()
     baselines: dict[str, Any] = cfg.get("golden_baselines") or {}
     return sorted(slug for slug, spec in baselines.items() if spec.get("dist_ready"))

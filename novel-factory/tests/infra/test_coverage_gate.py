@@ -14,7 +14,7 @@ from infra.coverage_gate import (
 class TestCoverageGateHelpers:
     def test_load_coverage_policy(self) -> None:
         policy = load_coverage_policy()
-        assert policy["global_min_percent"] == 40
+        assert policy["global_min_percent"] == 50
         assert "infra" in policy["modules"]
 
     def test_format_module_gate_report(self) -> None:

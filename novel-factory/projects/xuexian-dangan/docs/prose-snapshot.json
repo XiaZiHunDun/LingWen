@@ -1,14 +1,14 @@
 {
   "version": 1,
   "slug": "xuexian-dangan",
-  "captured_at": "2026-06-20 11:05 UTC",
+  "captured_at": "2026-06-20 16:29 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 12,
+    "p1": 9,
     "p2": 12,
     "p3": 4,
-    "total": 28,
+    "total": 25,
     "prose_p1": 8,
     "prose_total": 10
   },
@@ -42,7 +42,7 @@
     },
     {
       "chapter": 4,
-      "issue_count": 4,
+      "issue_count": 2,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -69,7 +69,7 @@
     },
     {
       "chapter": 7,
-      "issue_count": 4,
+      "issue_count": 3,
       "prose_p1": 0,
       "prose_total": 1,
       "prose_issue_types": [

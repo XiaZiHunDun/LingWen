@@ -72,7 +72,9 @@ class TestPrimaryRevisionLlmGate:
         slugs = list_primary_revision_slugs()
         assert "jinghai-rizhi" in slugs
         assert "xuexian-dangan" in slugs
-        assert len(slugs) == 5
+        assert "huangsha-dangan" in slugs
+        assert "anhe-dangan" in slugs
+        assert len(slugs) == 7
 
     def test_blocking_without_key_for_primary(self) -> None:
         assert resolve_llm_post_check("jinghai-rizhi", mode=None, has_api_key=False) == "fail_no_key"

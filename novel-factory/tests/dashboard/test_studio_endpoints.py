@@ -78,13 +78,15 @@ class TestStudioEndpoints:
         assert "has_regression" in data
         assert isinstance(data["net_prose_p1_delta"], int)
 
-    def test_prose_diff_no_baseline(self, client: TestClient) -> None:
-        resp = client.put("/api/studio/active", json={"slug": "huangsha-dangan"})
-        assert resp.status_code == 200
+    def test_prose_diff_no_baseline(self, client: TestClient, monkeypatch) -> None:
+        monkeypatch.setattr(
+            "infra.prose_snapshot.load_snapshot",
+            lambda _root: None,
+        )
         resp = client.get("/api/studio/prose-diff")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["slug"] == "huangsha-dangan"
+        assert data["slug"] == "anye-xinbiao"
         assert data["available"] is False
         assert data["reason"] == "no_baseline"
         assert "run-prose-diff.sh" in (data.get("save_command") or "")

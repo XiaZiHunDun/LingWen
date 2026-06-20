@@ -26,9 +26,9 @@
 | 主修验收 LLM | **blocking（五样章）** | ✅ | blocking P0 | `run-primary-revision-verify.sh` |
 | Dashboard prose 视图 | ✅ 热力图+diff | ✅ | diff 对比 | Studio 页 |
 | pytest | **2972+** | 2972+ | 3000+ | CI |
-| 覆盖率 | ≥30% | **40%** ✅ | 50% | pytest-cov + `verify-coverage-modules.sh` |
+| 覆盖率 | **50%** ✅ | **40%** ✅ | 50% | pytest-cov + `verify-coverage-modules.sh` |
 | Playwright live | **5/5 本地绿** | **5/5 label CI** | 默认 CI | `verify-e2e-live-ci.sh` |
-| LLM CI | **llm-golden-primary ×5** | blocking | 主修 blocking | `llm-golden-primary` job |
+| LLM CI | **llm-golden-primary ×7** | blocking | 主修 blocking | `llm-golden-primary` job |
 
 ---
 
@@ -57,7 +57,7 @@
 
 | # | 差距 | 行动 | Phase | 状态 |
 |---|------|------|-------|------|
-| G10 | 覆盖率 30% | 分模块提到 40% | 11.11 | ✅ |
+| G10 | 覆盖率 30% | 分模块提到 **50%** | 12.02 | ✅ |
 | G11 | E2E live 5/5 | label CI 稳定绿 | 11.13 | ✅ |
 | G12 | 文档滞后 | primary-revision / HANDOFF 同步 | 11.22 | ✅ |
 
@@ -70,6 +70,7 @@
 11.23  P1 校准（YAML + 脚本 + agency）     ✅
 11.24  Dashboard prose 热力图              ✅
 12.01  Dashboard prose diff UI             ✅
+12.02  七书 prose 快照 + LLM×7 + 覆盖率 50%  ✅
 11.03  第三本主修（铁道）+ dist              ✅
 11.04  主修 LLM auto + pilot LLM auto      ✅
 11.15  五样章 zip 对外                      ✅

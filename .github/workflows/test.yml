@@ -60,7 +60,7 @@ jobs:
             --cov-config=pyproject.toml \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=40 \
+            --cov-fail-under=50 \
             --timeout=120 \
             -q
 
@@ -181,7 +181,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        slug: [jinghai-rizhi, huiyu-dangan, tiedao-dangan, anye-xinbiao, xuexian-dangan]
+        slug: [jinghai-rizhi, huiyu-dangan, tiedao-dangan, anye-xinbiao, xuexian-dangan, huangsha-dangan, anhe-dangan]
     defaults:
       run:
         working-directory: novel-factory
@@ -201,7 +201,7 @@ jobs:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           if [[ -z "${MINIMAX_API_KEY}" ]]; then
-            echo "::error::MINIMAX_API_KEY required for llm-golden-primary (五样章 blocking gate)"
+            echo "::error::MINIMAX_API_KEY required for llm-golden-primary (七样章 blocking gate)"
             exit 1
           fi
       - name: LLM Golden check (blocking P0)
