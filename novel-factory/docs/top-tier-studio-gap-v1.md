@@ -99,13 +99,13 @@
 
 | # | 条件 | 状态 | 证据 |
 |---|------|------|------|
-| 1 | ≥4 本 prose **4.0** + dist | ✅ | LLM judge avg≥4.0：**五书** — 暗夜 4.22 · 灰域 4.33 · 铁道 4.22 · 雪线 4.28 · **黄沙 4.06** |
+| 1 | ≥4 本 prose **4.0** + dist | ✅ | LLM judge avg≥4.0：**六书** — 暗夜 · 灰域 · 铁道 · 雪线 · 黄沙 · **静海** |
 | 2 | 误报率 <20% | ✅ | 抽检 **4.8%**（21 条） |
 | 3 | 主修验收一条命令 | ✅ | `run-primary-revision-verify.sh` |
 | 4 | Dashboard 热力 + 分类 | ✅ | Studio prose 热力 / diff / judge |
 | 5 | CI 50% + golden×8 + e2e | ✅ | `test` @ `2b941a7` success |
 
-**未达标（可选 polish）**：暗河 3.89 · 静海 3.89 — LLM judge 六维 avg 未达 4.0，dist 已就绪。
+**未达标（可选 polish）**：暗河 3.89 — LLM judge 六维 avg 未达 4.0，dist 已就绪。
 
 ---
 

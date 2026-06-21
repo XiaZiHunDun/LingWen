@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **test @ `2b941a7` 全绿**（golden×8 · llm×7 · e2e-live · ruff · cov 50%） |
-| **下一期推荐** | polish **静海/暗河**至 LLM avg≥4.0（黄沙 ✅ 4.06） |
+| **下一期推荐** | polish **暗河**至 LLM avg≥4.0（静海 ✅ 4.06 · 六书达标） |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
