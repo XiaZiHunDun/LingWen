@@ -8,8 +8,10 @@ import pytest
 
 from infra.prose_judge import (
     build_offline_judge_report,
+    compute_misreport_stats,
     cross_reference_signals,
     derive_offline_chapter_ratings,
+    fill_calibration_samples,
     format_calibration_sample_markdown,
     load_judge_report,
     report_path_for,
@@ -99,9 +101,25 @@ class TestProseJudgeOffline:
         assert samples[0]["issue_type"] == "sentence_diversity_low"
 
     def test_format_calibration_markdown(self) -> None:
-        text = format_calibration_sample_markdown("jinghai-rizhi", [{"chapter": 1, "issue_type": "x", "description": "d"}])
+        text = format_calibration_sample_markdown(
+            "jinghai-rizhi",
+            [{"chapter": 1, "issue_type": "x", "description": "d", "verdict": "留", "note": "n"}],
+        )
         assert "jinghai-rizhi" in text
         assert "ch001" in text
+        assert "| 留 |" in text
+
+    def test_fill_calibration_and_kpi(self) -> None:
+        samples = [
+            {"chapter": 1, "issue_type": "sentence_diversity_low", "description": "54%"},
+            {"chapter": 3, "issue_type": "sentence_diversity_low", "description": "60%超过40%"},
+        ]
+        signals = {"false_positive_candidates": [], "high_priority": []}
+        filled = fill_calibration_samples(samples, signals)
+        stats = compute_misreport_stats(filled)
+        assert filled[1]["verdict"] == "疑"
+        assert filled[0]["verdict"] == "留"
+        assert stats["misreport_rate_pct"] == 50.0
 
 
 class TestProseJudgeProjectIntegration:

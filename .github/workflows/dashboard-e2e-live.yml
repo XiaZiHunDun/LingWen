@@ -1,8 +1,8 @@
-# Phase 9.72 F64: opt-in Playwright live-backend e2e (NOT primary merge gate).
-# Trigger: manual workflow_dispatch OR PR label `e2e-live`.
-# Runs vite + dashboard/e2e_entry.py with LINGWEN_E2E_LIVE=1 (5 specs).
+# Phase 9.72 F64 · Phase 12.04: Playwright live-backend e2e.
+# Primary gate: `.github/workflows/test.yml` job `e2e-live` (push/PR master).
+# This workflow remains for manual workflow_dispatch OR PR label `e2e-live` (parity/debug).
 
-name: Dashboard E2E Live (opt-in)
+name: Dashboard E2E Live (label / manual)
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   e2e-live:
-    name: Playwright live-backend
+    name: Playwright live-backend (opt-in duplicate)
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.label.name == 'e2e-live')

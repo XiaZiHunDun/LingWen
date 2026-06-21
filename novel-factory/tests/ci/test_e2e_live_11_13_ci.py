@@ -32,6 +32,12 @@ class TestE2eLive1113:
         assert "e2e-live" in wf
         assert "LINGWEN_E2E_LIVE: '1'" in wf
 
+    def test_primary_test_workflow_includes_e2e_live(self):
+        wf = (REPO_ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
+        assert "e2e-live:" in wf
+        assert "pnpm e2e:live" in wf
+        assert "LINGWEN_E2E_LIVE: \"1\"" in wf or "LINGWEN_E2E_LIVE: '1'" in wf
+
     def test_live_backend_helper_novel_factory_root(self):
         helper = (
             NOVEL_FACTORY

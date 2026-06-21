@@ -11,6 +11,7 @@
 | onboarding | `verify-onboarding.sh ci-smoke` | init → preflight → dry-run |
 | ruff | `ruff check .` | **blocking** |
 | **llm-golden-primary** | `run-llm-golden-check.sh <slug>` ×**7** | **blocking** · 需 `MINIMAX_API_KEY` |
+| **e2e-live** | `pnpm e2e:live` (5 specs) | **blocking** · push/PR master |
 
 Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1/P2 仍打印但不 fail。
 
