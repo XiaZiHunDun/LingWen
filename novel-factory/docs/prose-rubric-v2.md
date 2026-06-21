@@ -108,7 +108,8 @@ bash scripts/verify-coverage-modules.sh              # 50% global / 分模块
 - [x] LLM judge JSON schema 固化 + Dashboard 展示 — [`config/prose_judge_schema.json`](../config/prose_judge_schema.json) · `GET /api/studio/prose-judge`
 - [x] [`prose-calibration-log.md`](prose-calibration-log.md) 抽检记录模板
 - [ ] 第八书 dist / golden（星陨 testbed 边界待定）
-- [ ] 人工抽检填表 · 误报率 <20% KPI 实测
+- [x] 人工抽检填表 · 误报率 **4.8%**（21 条 · `run-prose-calibration-fill.sh`）
+- [ ] LLM judge `--llm` 七书刷新（需 `MINIMAX_API_KEY`）
 
 ---
 
