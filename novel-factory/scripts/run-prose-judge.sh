@@ -5,6 +5,7 @@
 #   bash scripts/run-prose-judge.sh <slug> --offline    # rule-derived only
 #   bash scripts/run-prose-judge.sh <slug> --llm        # require LLM
 #   bash scripts/run-prose-judge.sh --save-all            # offline reports for all primary slugs
+#   bash scripts/run-prose-judge.sh --save-all --llm      # LLM reports for all (needs API key)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -23,9 +24,13 @@ from infra.full_check_report import load_report_summary, generate_report
 root = Path(os.getcwd())
 mode = os.environ.get("PROSE_JUDGE_MODE", "auto")
 slug_arg = os.environ.get("PROSE_JUDGE_SLUG", "").strip()
+save_all = os.environ.get("PROSE_JUDGE_SAVE_ALL", "0") == "1"
 
-if mode == "save-all":
+if save_all:
     slugs = list_primary_revision_slugs()
+elif mode == "save-all":
+    slugs = list_primary_revision_slugs()
+    mode = "offline"
 else:
     if not slug_arg:
         print("ERROR: slug required (or use --save-all)", file=sys.stderr)
@@ -66,7 +71,24 @@ PY
 }
 
 if [[ "${1:-}" == "--save-all" ]]; then
-  export PROSE_JUDGE_MODE="save-all"
+  shift || true
+  MODE="offline"
+  for arg in "$@"; do
+    case "$arg" in
+      --llm) MODE="llm" ;;
+      --offline) MODE="offline" ;;
+      *)
+        echo "ERROR: unknown flag after --save-all: $arg" >&2
+        exit 2
+        ;;
+    esac
+  done
+  if [[ "$MODE" == "llm" ]] && [[ -z "${MINIMAX_API_KEY:-}${ANTHROPIC_API_KEY:-}${OPENAI_API_KEY:-}" ]]; then
+    echo "ERROR: --save-all --llm requires MINIMAX_API_KEY (or ANTHROPIC/OPENAI)" >&2
+    exit 1
+  fi
+  export PROSE_JUDGE_MODE="$MODE"
+  export PROSE_JUDGE_SAVE_ALL=1
   export PROSE_JUDGE_SLUG=""
   run_python
   exit $?

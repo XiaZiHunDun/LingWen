@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.54 (抽检 KPI 4.8% · e2e-live 默认 CI, 2026-06-20)  
-> **更新 (2026-06-20)**: calibration-fill · test.yml e2e-live job
+> **版本**: v10.55 (Prose Judge LLM workflow, 2026-06-20)  
+> **更新 (2026-06-20)**: prose-judge-llm.yml workflow_dispatch · run-prose-judge-llm-primary.sh
 
 ---
 
@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | golden-set matrix（八书）· onboarding-smoke |
-| **下一期推荐** | **LLM prose judge 刷新**（需 MINIMAX_API_KEY）· 第八书 dist 边界 |
+| **下一期推荐** | **第八书 dist 边界** · Actions 跑 Prose Judge LLM 后合并 artifact |
 | **主修 slug** | **七样章** dist + prose 快照 + offline judge 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |

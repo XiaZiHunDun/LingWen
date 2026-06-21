@@ -94,10 +94,12 @@ Dashboard diff：`GET /api/studio/prose-diff`
 ```bash
 cd novel-factory
 bash scripts/run-prose-diff.sh --save-all          # 定稿后更新基线
+bash scripts/run-prose-judge-llm-primary.sh        # 七书 LLM judge（需 key · 或 Actions workflow）
+bash scripts/run-prose-calibration-fill.sh         # 抽检表 + 误报率
 bash scripts/run-prose-calibration.sh              # 七书 prose 门
-bash scripts/run-primary-revision-verify.sh <slug>   # P0 + prose + LLM
-bash scripts/run-llm-golden-primary.sh               # 七书 LLM 一次跑齐
-bash scripts/verify-coverage-modules.sh              # 50% global / 分模块
+bash scripts/run-primary-revision-verify.sh <slug>   # P0 + prose + LLM Golden
+bash scripts/run-llm-golden-primary.sh             # 七书 LLM Golden
+bash scripts/verify-coverage-modules.sh            # 50% global / 分模块
 ```
 
 ---
@@ -109,7 +111,7 @@ bash scripts/verify-coverage-modules.sh              # 50% global / 分模块
 - [x] [`prose-calibration-log.md`](prose-calibration-log.md) 抽检记录模板
 - [ ] 第八书 dist / golden（星陨 testbed 边界待定）
 - [x] 人工抽检填表 · 误报率 **4.8%**（21 条 · `run-prose-calibration-fill.sh`）
-- [ ] LLM judge `--llm` 七书刷新（需 `MINIMAX_API_KEY`）
+- [x] LLM judge 七书刷新 — [`prose-judge-llm.yml`](../../.github/workflows/prose-judge-llm.yml) · `run-prose-judge-llm-primary.sh`
 
 ---
 

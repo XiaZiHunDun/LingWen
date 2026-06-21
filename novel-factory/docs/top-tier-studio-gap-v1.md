@@ -73,6 +73,7 @@
 12.02  七书 prose 快照 + LLM×7 + 覆盖率 50%  ✅
 12.03  Prose judge schema + Dashboard + 抽检表  ✅
 12.04  抽检填表 + e2e-live 默认 CI            ✅
+12.05  Prose Judge LLM workflow_dispatch      ✅
 11.03  第三本主修（铁道）+ dist              ✅
 11.04  主修 LLM auto + pilot LLM auto      ✅
 11.15  五样章 zip 对外                      ✅

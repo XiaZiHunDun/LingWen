@@ -1,0 +1,107 @@
+# Phase 12.05: opt-in LLM prose judge refresh for 七样章 (Golden × 六维).
+# Primary gate remains offline judge in repo; run this when MINIMAX_API_KEY is configured.
+# Artifacts: prose-judge-report.json per book + optional prose-calibration-log.md
+
+name: Prose Judge LLM (七样章)
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Single project slug (leave empty for all 7 primary books)"
+        required: false
+        type: string
+        default: ""
+      refresh_calibration_log:
+        description: "Regenerate docs/prose-calibration-log.md after judge"
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: prose-judge-llm-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: novel-factory
+
+jobs:
+  prose-judge-llm:
+    name: LLM prose judge
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: novel-factory/pyproject.toml
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Require MINIMAX_API_KEY
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          if [[ -z "${MINIMAX_API_KEY}" ]]; then
+            echo "::error::MINIMAX_API_KEY required for LLM prose judge workflow"
+            exit 1
+          fi
+
+      - name: LLM prose judge
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          SLUG="${{ github.event.inputs.slug }}"
+          if [[ -n "${SLUG}" ]]; then
+            echo "=== Single book: ${SLUG} ==="
+            bash scripts/run-prose-judge.sh "${SLUG}" --llm
+          else
+            echo "=== All primary revision books ==="
+            bash scripts/run-prose-judge-llm-primary.sh
+          fi
+
+      - name: Refresh calibration log
+        if: github.event.inputs.refresh_calibration_log == 'true'
+        run: bash scripts/run-prose-calibration-fill.sh
+
+      - name: Upload prose judge reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: prose-judge-reports-${{ github.run_id }}
+          path: |
+            novel-factory/projects/*/docs/prose-judge-report.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload calibration log
+        if: github.event.inputs.refresh_calibration_log == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prose-calibration-log-${{ github.run_id }}
+          path: novel-factory/docs/prose-calibration-log.md
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "### Prose Judge LLM — ${{ job.status }}"
+            echo ""
+            echo "- Slug: \`${{ github.event.inputs.slug || 'all primary (×7)' }}\`"
+            echo "- Calibration log refresh: \`${{ github.event.inputs.refresh_calibration_log }}\`"
+            echo ""
+            echo "Download artifacts **prose-judge-reports-${{ github.run_id }}** and merge into \`projects/<slug>/docs/\` locally, then commit."
+            echo ""
+            echo "Local parity:"
+            echo "\`bash scripts/run-prose-judge-llm-primary.sh\`"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -28,6 +28,24 @@ Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1
 |------|-----|------|
 | 每次 push/PR / **Actions → test → Run workflow** | **`llm-golden-primary`** | **七样章**各跑 Golden `--llm --fail-severity P0` |
 | `workflow_dispatch`（勾选 run_llm_golden_set）/ label `llm-check` | `llm-golden-set` | 可选 · 静海单书 |
+| **Actions → Prose Judge LLM** | `prose-judge-llm.yml` | 可选 · 七样章 `--llm` + artifact |
+
+### LLM Prose Judge（v2 · 非 blocking）
+
+仓库 Secret：**`MINIMAX_API_KEY`**
+
+| 触发 | 行为 |
+|------|------|
+| **Actions → Prose Judge LLM (七样章) → Run workflow** | 单书或七书 LLM judge + 可选 calibration-log |
+| 本地 | `bash scripts/run-prose-judge-llm-primary.sh` |
+
+产物为 **artifact**（需下载合并进 `projects/<slug>/docs/prose-judge-report.json` 后 commit）。日常 CI 仍用 offline judge。
+
+```bash
+bash scripts/run-prose-judge.sh tiedao-dangan --llm
+bash scripts/run-prose-judge.sh --save-all --llm   # 七书（需 key）
+bash scripts/run-prose-calibration-fill.sh
+```
 
 ### 本地主修验收
 
