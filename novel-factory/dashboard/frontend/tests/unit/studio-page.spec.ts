@@ -10,6 +10,7 @@ const studioMocks = vi.hoisted(() => ({
   fetchStudioQuality: vi.fn(),
   fetchStudioQualityReport: vi.fn(),
   fetchStudioProseDiff: vi.fn(),
+  fetchStudioProseJudge: vi.fn(),
   studioProductionPreflight: vi.fn(),
   studioProductionRun: vi.fn(),
   fetchStudioBatchJob: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   fetchStudioQuality: studioMocks.fetchStudioQuality,
   fetchStudioQualityReport: studioMocks.fetchStudioQualityReport,
   fetchStudioProseDiff: studioMocks.fetchStudioProseDiff,
+  fetchStudioProseJudge: studioMocks.fetchStudioProseJudge,
   studioProductionPreflight: studioMocks.studioProductionPreflight,
     studioProductionRun: studioMocks.studioProductionRun,
     fetchStudioBatchJob: studioMocks.fetchStudioBatchJob,
@@ -103,6 +105,27 @@ describe('StudioPage (Phase 10.04)', () => {
       has_regression: false,
       net_prose_p1_delta: -1,
     });
+    studioMocks.fetchStudioProseJudge.mockResolvedValue({
+      slug: 'anye-xinbiao',
+      available: true,
+      source: 'offline',
+      judged_at: '2026-06-20',
+      golden_chapters: [1, 5, 10],
+      weighted_avg: 3.83,
+      chapters: [
+        {
+          chapter: 1,
+          avg_score: 3.83,
+          ratings: [
+            { dimension: 'vitality', score: 3, evidence: 'test', action: 'trim' },
+          ],
+        },
+      ],
+      high_priority_count: 0,
+      false_positive_candidate_count: 1,
+      review_needed_count: 0,
+      generate_command: 'bash scripts/run-prose-judge.sh anye-xinbiao --llm',
+    });
     studioMocks.studioProductionPreflight.mockResolvedValue({
       all_ok: true,
       chapters: [{ chapter: 1, ok: true, message: 'ok' }],
@@ -125,6 +148,8 @@ describe('StudioPage (Phase 10.04)', () => {
     expect(wrapper.find(byTestid('quality-report-panel')).exists()).toBe(true);
     expect(wrapper.find(byTestid('prose-diff-panel')).exists()).toBe(true);
     expect(wrapper.find(byTestid('prose-diff-status')).text()).toContain('无 prose 回归');
+    expect(wrapper.find(byTestid('prose-judge-panel')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('prose-judge-signals')).text()).toContain('误报候选');
   });
 
   test('无基线时 prose diff 空态', async () => {

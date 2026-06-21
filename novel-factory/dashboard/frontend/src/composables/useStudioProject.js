@@ -10,6 +10,7 @@ import {
   fetchStudioQuality,
   fetchStudioQualityReport,
   fetchStudioProseDiff,
+  fetchStudioProseJudge,
 } from '../api/index.js';
 
 const projects = ref([]);
@@ -18,6 +19,7 @@ const summary = ref(null);
 const quality = ref(null);
 const qualityReport = ref(null);
 const proseDiff = ref(null);
+const proseJudge = ref(null);
 const loading = ref(false);
 const error = ref(null);
 /** Increments on project switch or batch completion — pages reload production data. */
@@ -47,16 +49,18 @@ async function refresh() {
   error.value = null;
   try {
     await loadProjects();
-    const [sum, qual, report, diff] = await Promise.all([
+    const [sum, qual, report, diff, judge] = await Promise.all([
       fetchStudioSummary(),
       fetchStudioQuality(),
       fetchStudioQualityReport(),
       fetchStudioProseDiff(),
+      fetchStudioProseJudge(),
     ]);
     summary.value = sum;
     quality.value = qual;
     qualityReport.value = report;
     proseDiff.value = diff;
+    proseJudge.value = judge;
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -72,6 +76,7 @@ export function useStudioProject() {
     quality,
     qualityReport,
     proseDiff,
+    proseJudge,
     loading,
     error,
     projectRevision,

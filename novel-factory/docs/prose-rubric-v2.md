@@ -105,9 +105,10 @@ bash scripts/verify-coverage-modules.sh              # 50% global / 分模块
 ## 6. 未完成（v2.1）
 
 - [ ] `ProseVitalityScorer` 接入 full-check 报告（v1.1 遗留）
-- [ ] LLM judge JSON schema 固化 + Dashboard 展示
-- [ ] `prose-calibration-log.md` 抽检记录模板
+- [x] LLM judge JSON schema 固化 + Dashboard 展示 — [`config/prose_judge_schema.json`](../config/prose_judge_schema.json) · `GET /api/studio/prose-judge`
+- [x] [`prose-calibration-log.md`](prose-calibration-log.md) 抽检记录模板
 - [ ] 第八书 dist / golden（星陨 testbed 边界待定）
+- [ ] 人工抽检填表 · 误报率 <20% KPI 实测
 
 ---
 

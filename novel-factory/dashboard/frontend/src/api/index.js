@@ -532,6 +532,10 @@ export async function fetchStudioProseDiff() {
   return request('/studio/prose-diff');
 }
 
+export async function fetchStudioProseJudge() {
+  return request('/studio/prose-judge');
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */

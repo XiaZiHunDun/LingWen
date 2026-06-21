@@ -310,6 +310,47 @@ class StudioProseDiffResponse(BaseModel):
     net_prose_p1_delta: int = 0
 
 
+class StudioProseJudgeRating(BaseModel):
+    dimension: str
+    score: int
+    evidence: str
+    action: str
+
+
+class StudioProseJudgeChapter(BaseModel):
+    chapter: int
+    avg_score: float
+    ratings: list[StudioProseJudgeRating]
+
+
+class StudioProseJudgeSignal(BaseModel):
+    chapter: int
+    issue_type: Optional[str] = None
+    dimension: Optional[str] = None
+    judge_score: int
+    description: Optional[str] = None
+    evidence: Optional[str] = None
+
+
+class StudioProseJudgeResponse(BaseModel):
+    slug: str
+    available: bool
+    reason: Optional[str] = None
+    report_path: str = ""
+    generate_command: Optional[str] = None
+    source: Optional[str] = None
+    judged_at: Optional[str] = None
+    golden_chapters: list[int] = Field(default_factory=list)
+    weighted_avg: float = 0.0
+    chapters: list[StudioProseJudgeChapter] = Field(default_factory=list)
+    high_priority_count: int = 0
+    false_positive_candidate_count: int = 0
+    review_needed_count: int = 0
+    high_priority: list[StudioProseJudgeSignal] = Field(default_factory=list)
+    false_positive_candidates: list[StudioProseJudgeSignal] = Field(default_factory=list)
+    review_needed: list[StudioProseJudgeSignal] = Field(default_factory=list)
+
+
 class StudioPreflightChapter(BaseModel):
     chapter: int
     ok: bool
@@ -2057,6 +2098,53 @@ def create_app(
             regressed_count=int(data.get("regressed_count") or 0),
             has_regression=bool(data.get("has_regression")),
             net_prose_p1_delta=int(data.get("net_prose_p1_delta") or 0),
+        )
+
+    @app.get("/api/studio/prose-judge", response_model=StudioProseJudgeResponse)
+    def studio_prose_judge() -> StudioProseJudgeResponse:
+        from infra.studio_registry import active_project, prose_judge_summary
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active studio project")
+        data = prose_judge_summary(project)
+        if not data.get("available"):
+            return StudioProseJudgeResponse(
+                slug=data["slug"],
+                available=False,
+                reason=data.get("reason"),
+                report_path=data.get("report_path") or "",
+                generate_command=data.get("generate_command"),
+            )
+
+        chapters = [
+            StudioProseJudgeChapter(
+                chapter=int(row["chapter"]),
+                avg_score=float(row["avg_score"]),
+                ratings=[StudioProseJudgeRating(**r) for r in row.get("ratings") or []],
+            )
+            for row in data.get("chapters") or []
+        ]
+
+        def _signals(key: str) -> list[StudioProseJudgeSignal]:
+            return [StudioProseJudgeSignal(**row) for row in data.get(key) or []]
+
+        return StudioProseJudgeResponse(
+            slug=data["slug"],
+            available=True,
+            report_path=data.get("report_path") or "",
+            generate_command=data.get("generate_command"),
+            source=data.get("source"),
+            judged_at=data.get("judged_at"),
+            golden_chapters=[int(n) for n in data.get("golden_chapters") or []],
+            weighted_avg=float(data.get("weighted_avg") or 0),
+            chapters=chapters,
+            high_priority_count=int(data.get("high_priority_count") or 0),
+            false_positive_candidate_count=int(data.get("false_positive_candidate_count") or 0),
+            review_needed_count=int(data.get("review_needed_count") or 0),
+            high_priority=_signals("high_priority"),
+            false_positive_candidates=_signals("false_positive_candidates"),
+            review_needed=_signals("review_needed"),
         )
 
     @app.post("/api/studio/production/preflight", response_model=StudioPreflightResponse)

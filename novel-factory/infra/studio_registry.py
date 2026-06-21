@@ -387,3 +387,32 @@ def prose_diff_summary(project: StudioProject) -> dict[str, Any]:
         "has_regression": bool(diff.get("has_regression")),
         "net_prose_p1_delta": int(diff.get("net_prose_p1_delta") or 0),
     }
+
+
+def prose_judge_summary(project: StudioProject) -> dict[str, Any]:
+    """Prose rubric v2 judge report for Studio dashboard (Phase 12.03)."""
+    from infra.full_check_report import load_report_summary
+    from infra.prose_judge import (
+        load_judge_report,
+        report_path_for,
+        summarize_judge_report,
+    )
+
+    path = report_path_for(project.root)
+    judge = load_judge_report(project.root)
+    slug = project.slug
+
+    if judge is None:
+        return {
+            "slug": slug,
+            "available": False,
+            "reason": "no_report",
+            "report_path": str(path),
+            "generate_command": f"bash scripts/run-prose-judge.sh {slug}",
+        }
+
+    full_check = load_report_summary(project.root)
+    summary = summarize_judge_report(judge, full_check if full_check.get("available") else None)
+    summary["report_path"] = str(path)
+    summary["generate_command"] = f"bash scripts/run-prose-judge.sh {slug} --llm"
+    return summary

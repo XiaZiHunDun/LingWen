@@ -91,6 +91,16 @@ class TestStudioEndpoints:
         assert data["reason"] == "no_baseline"
         assert "run-prose-diff.sh" in (data.get("save_command") or "")
 
+    def test_prose_judge_available(self, client: TestClient) -> None:
+        resp = client.get("/api/studio/prose-judge")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "anye-xinbiao"
+        assert "available" in data
+        if data["available"]:
+            assert "weighted_avg" in data
+            assert "chapters" in data
+
     def test_preflight(self, client: TestClient) -> None:
         resp = client.post(
             "/api/studio/production/preflight?budget_usd=0.12",

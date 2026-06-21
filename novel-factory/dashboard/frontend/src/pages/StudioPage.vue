@@ -168,6 +168,47 @@
           <p v-else class="meta-line">（无章级变化）</p>
         </template>
       </div>
+      <div
+        v-if="proseJudge"
+        class="prose-judge"
+        data-testid="prose-judge-panel"
+      >
+        <h3 class="subsection-title">Prose Judge（v2）</h3>
+        <div v-if="!proseJudge.available" class="report-empty">
+          尚无 judge 报告。生成：
+          <code>{{ proseJudge.generate_command || `bash scripts/run-prose-judge.sh ${activeSlug || 'slug'}` }}</code>
+        </div>
+        <template v-else>
+          <p class="meta-line">
+            来源 {{ proseJudge.source }} · {{ proseJudge.judged_at }}
+            · Golden ch{{ (proseJudge.golden_chapters || []).join(',') }}
+            · 均分 {{ proseJudge.weighted_avg }}
+          </p>
+          <div class="judge-signals meta-line" data-testid="prose-judge-signals">
+            高优先级 {{ proseJudge.high_priority_count }}
+            · 误报候选 {{ proseJudge.false_positive_candidate_count }}
+            · 待复核 {{ proseJudge.review_needed_count }}
+          </div>
+          <ul v-if="proseJudge.chapters?.length" class="judge-chapters">
+            <li v-for="ch in proseJudge.chapters" :key="ch.chapter" class="judge-chapter-row">
+              ch{{ String(ch.chapter).padStart(2, '0') }} · 均分 {{ ch.avg_score }}
+              <span
+                v-for="r in ch.ratings"
+                :key="r.dimension"
+                class="judge-dim-chip"
+                :class="judgeScoreClass(r.score)"
+                :title="r.evidence"
+              >
+                {{ r.dimension }} {{ r.score }}
+              </span>
+            </li>
+          </ul>
+          <p class="meta-line">
+            LLM 刷新：<code>{{ proseJudge.generate_command }}</code>
+            · 抽检导出：<code>bash scripts/run-prose-calibration-sample.sh {{ activeSlug || 'slug' }}</code>
+          </p>
+        </template>
+      </div>
     </section>
 
     <section class="studio-section pixel-card" data-testid="production-console">
@@ -273,12 +314,19 @@ import {
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
 
-const { summary, quality, qualityReport, proseDiff, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
+const { summary, quality, qualityReport, proseDiff, proseJudge, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
 
 const proseDiffChapters = computed(() => {
   const rows = proseDiff.value?.chapters || [];
   return [...rows].sort((a, b) => a.chapter - b.chapter);
 });
+
+function judgeScoreClass(score) {
+  const v = Number(score) || 0;
+  if (v >= 4) return 'diff-improved';
+  if (v <= 2) return 'diff-regressed';
+  return 'diff-neutral';
+}
 
 function formatDelta(n) {
   const v = Number(n) || 0;
@@ -742,6 +790,39 @@ onUnmounted(() => {
 
 .diff-neutral {
   opacity: 0.75;
+}
+
+.prose-judge {
+  margin: var(--space-sm) 0 0;
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--border-color);
+}
+
+.judge-chapters {
+  list-style: none;
+  margin: var(--space-xs) 0;
+  padding: 0;
+  font-size: 10px;
+  font-family: monospace;
+}
+
+.judge-chapter-row {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.judge-dim-chip {
+  font-size: 8px;
+  padding: 2px 4px;
+  border: 1px solid var(--border-color);
+}
+
+.judge-signals {
+  margin: var(--space-xs) 0;
 }
 
 code {

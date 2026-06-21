@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "slug": "anhe-dangan",
+  "source": "offline",
+  "judged_at": "2026-06-21 02:06 UTC",
+  "golden_chapters": [
+    1,
+    5,
+    10
+  ],
+  "chapters": [
+    {
+      "chapter": 1,
+      "ratings": [
+        {
+          "dimension": "imagery",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "hook",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "agency",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "vitality",
+          "score": 3,
+          "evidence": "规则 P1: sentence_diversity_low",
+          "action": "trim"
+        },
+        {
+          "dimension": "dialogue",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "genre",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "ratings": [
+        {
+          "dimension": "imagery",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "hook",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "agency",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "vitality",
+          "score": 3,
+          "evidence": "规则 P1: sentence_diversity_low",
+          "action": "trim"
+        },
+        {
+          "dimension": "dialogue",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "genre",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "ratings": [
+        {
+          "dimension": "imagery",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "hook",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "agency",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "vitality",
+          "score": 3,
+          "evidence": "规则 P1: sentence_diversity_low",
+          "action": "trim"
+        },
+        {
+          "dimension": "dialogue",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        },
+        {
+          "dimension": "genre",
+          "score": 4,
+          "evidence": "无对应 prose P1 规则项",
+          "action": "keep"
+        }
+      ]
+    }
+  ]
+}

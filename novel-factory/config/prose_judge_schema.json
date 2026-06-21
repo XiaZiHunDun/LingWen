@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingwen.local/schemas/prose-judge-report.v1.json",
+  "title": "ProseJudgeReport",
+  "description": "LLM / offline prose judge output for Golden Set chapters (prose-rubric v2)",
+  "type": "object",
+  "required": ["version", "slug", "source", "judged_at", "chapters"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "slug": { "type": "string", "minLength": 1 },
+    "source": { "type": "string", "enum": ["llm", "offline"] },
+    "judged_at": { "type": "string" },
+    "golden_chapters": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "chapters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/chapterBlock" }
+    }
+  },
+  "$defs": {
+    "dimension": {
+      "type": "string",
+      "enum": ["imagery", "hook", "agency", "vitality", "dialogue", "genre"]
+    },
+    "action": {
+      "type": "string",
+      "enum": ["keep", "trim", "rewrite"]
+    },
+    "rating": {
+      "type": "object",
+      "required": ["dimension", "score", "evidence", "action"],
+      "properties": {
+        "dimension": { "$ref": "#/$defs/dimension" },
+        "score": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "evidence": { "type": "string" },
+        "action": { "$ref": "#/$defs/action" }
+      },
+      "additionalProperties": false
+    },
+    "chapterBlock": {
+      "type": "object",
+      "required": ["chapter", "ratings"],
+      "properties": {
+        "chapter": { "type": "integer", "minimum": 1 },
+        "ratings": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": { "$ref": "#/$defs/rating" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.52 (v12 七书快照 · LLM×7 · 覆盖率 50%, 2026-06-20)  
-> **更新 (2026-06-20)**: prose snapshot ×7 · llm-golden-primary ×7 · cov 50% · prose-rubric-v2 草案
+> **版本**: v10.53 (prose judge v2 · 抽检表, 2026-06-20)  
+> **更新 (2026-06-20)**: prose-judge schema/API/Dashboard · calibration-log · 七书 offline judge
 
 ---
 
@@ -18,8 +18,8 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | golden-set matrix（八书）· onboarding-smoke |
-| **下一期推荐** | **Prose rubric v2 落地**（LLM judge schema · 误报抽检表）· Playwright 默认 CI |
-| **主修 slug** | **七样章**均已 dist + prose 快照 · LLM CI blocking ×7 |
+| **下一期推荐** | **人工 prose 抽检填表**（误报率 KPI）· Playwright 默认 CI |
+| **主修 slug** | **七样章** dist + prose 快照 + offline judge 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
 
