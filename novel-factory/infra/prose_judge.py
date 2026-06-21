@@ -611,6 +611,16 @@ def render_calibration_log_document(
     agg_rate = round(100.0 * total_mis / total_samples, 1) if total_samples else 0.0
     agg_pass = agg_rate < 20.0 if total_samples else True
 
+    sources = {str(r.get("judge_source") or "") for r in rounds if r.get("judge_source")}
+    if sources == {"llm"}:
+        judge_source_label = "llm（七书）"
+    elif sources == {"offline"}:
+        judge_source_label = "offline（七书基线）"
+    elif sources:
+        judge_source_label = "mixed (" + ", ".join(sorted(sources)) + ")"
+    else:
+        judge_source_label = "offline（七书基线）"
+
     lines = [
         "# Prose 校准抽检日志",
         "",
@@ -628,7 +638,7 @@ def render_calibration_log_document(
         f"| 抽检 P1 条数 | {total_samples} |",
         f"| 删+疑 合计 | {total_mis} |",
         f"| **加权误报率** | **{agg_rate}%** {'✅' if agg_pass else '⚠'} |",
-        "| Judge 来源 | offline（七书基线） |",
+        f"| Judge 来源 | {judge_source_label} |",
         "",
     ]
     if llm_note:

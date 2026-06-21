@@ -14,9 +14,9 @@
 | 抽检 P1 条数 | 21 |
 | 删+疑 合计 | 1 |
 | **加权误报率** | **4.8%** ✅ |
-| Judge 来源 | offline（七书基线） |
+| Judge 来源 | llm（七书） |
 
-> **LLM judge**：API key 已配置，可 `bash scripts/run-prose-judge.sh --save-all` 前先 `--llm` 单书试跑。
+> **LLM judge**：七书 `prose-judge-report.json` 已为 **source=llm**；verdict 仍由规则交叉信号辅助，可人工覆写。
 
 ---
 

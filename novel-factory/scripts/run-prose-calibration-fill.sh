@@ -25,8 +25,13 @@ llm_note = (
     "> **LLM judge**：本地未配置 `MINIMAX_API_KEY` 时跳过 `--llm` 刷新；"
     "CI Secret 可用时在 Actions 跑 `run-prose-judge.sh <slug> --llm`。"
 )
-if os.environ.get("MINIMAX_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"):
-    llm_note = "> **LLM judge**：API key 已配置，可 `bash scripts/run-prose-judge.sh --save-all` 前先 `--llm` 单书试跑。"
+if all(r.get("judge_source") == "llm" for r in rounds):
+    llm_note = (
+        "> **LLM judge**：七书 `prose-judge-report.json` 已为 **source=llm**；"
+        "verdict 仍由规则交叉信号辅助，可人工覆写。"
+    )
+elif os.environ.get("MINIMAX_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"):
+    llm_note = "> **LLM judge**：API key 已配置，可 `bash scripts/run-prose-judge.sh --save-all --llm` 刷新。"
 
 doc = render_calibration_log_document(
     rounds,
