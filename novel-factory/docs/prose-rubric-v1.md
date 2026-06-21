@@ -102,7 +102,7 @@ bash scripts/prepare-<slug>-distribution.sh         # 定稿后 dist（若有脚
 | 阶段 | 内容 | 状态 |
 |------|------|------|
 | v1 | 本文档 + YAML 基线 + 热力图 | ✅ 11.22 |
-| v1.1 | `ProseVitalityScorer` 接入 full-check 报告 | 📋 11.03 |
+| v1.1 | `ProseVitalityScorer` 接入 full-check 报告 | ✅ 12.06 |
 | v2 | LLM prose judge（Golden 三章）+ 误报抽检 | 🔄 12.02 草案见 [`prose-rubric-v2.md`](prose-rubric-v2.md) |
 
 **原则**：先 **规则 + 人工 rubric** 校准，再 **LLM judge**；避免 LLM 单独定义「好 prose」。

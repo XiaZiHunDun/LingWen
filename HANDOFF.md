@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.55 (Prose Judge LLM workflow, 2026-06-20)  
-> **更新 (2026-06-20)**: prose-judge-llm.yml workflow_dispatch · run-prose-judge-llm-primary.sh
+> **版本**: v10.56 (ProseVitalityScorer + LLM judge 入库, 2026-06-21)  
+> **更新 (2026-06-21)**: full-check 散文活力 · merge-prose-judge-artifacts · 第八书边界（7 dist + 星陨 testbed）
 
 ---
 
@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | golden-set matrix（八书）· onboarding-smoke |
-| **下一期推荐** | **第八书 dist 边界** · Actions 跑 Prose Judge LLM 后合并 artifact |
+| **下一期推荐** | 确认 **test CI 全绿**（ruff + e2e-live）· 人工覆写抽检 verdict |
 | **主修 slug** | **七样章** dist + prose 快照 + offline judge 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
@@ -794,7 +794,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
 - [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一工作: **Prose rubric v2**（LLM judge + 误报抽检）或 Playwright 默认 CI
+- [ ] 选下一工作: **v12 顶级完成定义**（≥4 书 prose 4.0+dist）或 pytest 3000+
 
 ---
 

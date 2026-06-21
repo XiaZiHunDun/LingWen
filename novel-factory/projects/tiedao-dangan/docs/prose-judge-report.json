@@ -1,8 +1,8 @@
 {
   "version": 1,
   "slug": "tiedao-dangan",
-  "source": "offline",
-  "judged_at": "2026-06-21 02:06 UTC",
+  "source": "llm",
+  "judged_at": "2026-06-21 05:10 UTC",
   "golden_chapters": [
     1,
     5,
@@ -14,38 +14,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "月光被云切成薄片/道砟颗粒嵌入纸张/白漆字迹褪色等细节高度凝练且具触感，画面感极强",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇'真正原因不在文件里'、空白笔记本压痕、频道5的呼吸声、白色袖子每段一钩，密度极高",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "纪川主动揭告示、搜抽屉、读压痕、试探涵洞，每一节都有明确行动推进",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "P1检测单一句式占比54%超40%，大量'他+动词'短句堆叠，节奏单一",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "老贺与纪川对话极简且有性格（'梦见岔尖响了'），符合人物与场景真实感",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "铁路悬疑+密室/失踪类型元素齐备：弃线道口、天窗、神秘代号、空白笔记本、异常电台",
           "action": "keep"
         }
       ]
@@ -55,38 +55,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "舌根黏在上颚、接缝胶合剂被挤开一条细缝、自动锤两秒一下敲击基座等细节具象可触，竖井困境的体感、嗅感、听觉层次完整",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇渴醒即钩，悬念层层叠加——水袋漏、信号断、坑道封死、'下一个查的人已经出事'、方晓录音循环播放，多条未解钩子持续咬合",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "纪川反复拨号、试挖、关停自动锤、回收数据卡，行为决策链清晰；唯一稍弱处是末段'得靠自己'偏向陈述",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "短句堆叠严重，连续出现'他……他……他……'的同构单句，'他把……试着……带着……凉得……'一段几乎一句一动词，节奏机械单调，符合P1句式多样性低的问题",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "方晓'你不需要理由'、'上一个查的人已经出了事'短句冷硬，人物关系与潜台词精准，'谁的'省略主语符合口语真实感",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "竖井探险+工业悬疑类型元素齐备：旧线带禁区、循环录音、失踪的前任调查者、天窗日禁令，类型氛围达标；'带外不会有搜救队'一句略带说理",
           "action": "keep"
         }
       ]
@@ -96,38 +96,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "「涵洞方向的黑洞已被落砟填平」「搪瓷缸里的水还是凉的」「像整片道床在缓慢呼吸」——克制细节与意象高度凝练，画面感极强。",
           "action": "keep"
         },
         {
           "dimension": "hook",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "开头「天窗解除的第七天，纪川把复制好的录音交给方晓家属」与频道5静默、+250测绘图折痕硌肋骨等收束钩子扎实，但章中段交代信息略显平铺。",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "纪川主动交付录音、归还对讲机、拒绝再进隧道并做出「记录送到了」的闭环决定，主角行动明确有后果。",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "P1检测单一句式占比56%超40%，实际阅读亦感短句、断行重复过多（大量「。」单行收束），节奏单一缺少长句与变化。",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "「他在井里等了你两年？」「疼吗？」「不进。」「记录送到了。」——极简、留白、口语化且信息错位，对话极真实克制。",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "铁路工程悬念+伤痕悬疑+禁入测绘的硬核行业设定完整落地，里程标、频道5、竖井掩埋等类型元素高度自洽，章末情感余韵到位。",
           "action": "keep"
         }
       ]

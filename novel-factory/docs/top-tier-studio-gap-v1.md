@@ -19,11 +19,11 @@
 
 | KPI | 当前 | v11.1 目标 | v12 顶级目标 | 度量方式 |
 |-----|------|------------|--------------|----------|
-| dist 样章数 | **7** | **7** ✅ | 8 书全覆盖 | zip |
+| dist 样章数 | **7** | **7** ✅ | 7 dist + testbed | zip（Studio 七书） |
 | 主修书 prose P1 | 静海/灰域/铁道 ≈8 | ≤12 | 八书均≤12 | `run-prose-calibration.sh` |
 | Prose rubric 文档 | ✅ v1 | ✅ | v2+LLM judge | 本文档族 |
 | Golden prose 校准 | ✅ 五书基线 | ✅ | 八书基线 | `run-prose-calibration.sh` |
-| 主修验收 LLM | **blocking（五样章）** | ✅ | blocking P0 | `run-primary-revision-verify.sh` |
+| 主修验收 LLM | **blocking（七样章）** | ✅ | blocking P0 | `run-primary-revision-verify.sh` |
 | Dashboard prose 视图 | ✅ 热力图+diff | ✅ | diff 对比 | Studio 页 |
 | pytest | **2972+** | 2972+ | 3000+ | CI |
 | 覆盖率 | **50%** ✅ | **40%** ✅ | 50% | pytest-cov + `verify-coverage-modules.sh` |
@@ -74,6 +74,7 @@
 12.03  Prose judge schema + Dashboard + 抽检表  ✅
 12.04  抽检填表 + e2e-live 默认 CI            ✅
 12.05  Prose Judge LLM workflow_dispatch      ✅
+12.06  ProseVitalityScorer full-check + merge artifact + CI ruff  ✅
 11.03  第三本主修（铁道）+ dist              ✅
 11.04  主修 LLM auto + pilot LLM auto      ✅
 11.15  五样章 zip 对外                      ✅
@@ -92,7 +93,7 @@
 2. **Prose P1** 校准后，主修书误报率 <20%（人工抽检）  
 3. **主修验收** 一条命令：P0 门 + prose 门 + LLM Golden（有 key）  
 4. **Dashboard** 可展示章级 prose 热力 + 问题分类  
-5. **CI** 覆盖率 40% + golden ×8 + E2E live label 绿  
+5. **CI** 覆盖率 **50%** + golden **×8**（七 Studio + 星陨 testbed）+ **E2E live 默认 CI** 绿  
 
 ---
 

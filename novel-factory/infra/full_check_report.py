@@ -15,6 +15,10 @@ _TOTAL_RE = re.compile(
     r"\*\*合计\*\*:\s*(\d+)\s*问题\s*\|\s*P0=(\d+)\s*P1=(\d+)\s*P2=(\d+)\s*P3=(\d+)",
 )
 _CHAPTER_RE = re.compile(r"^##\s*ch(\d+)\s*\((\d+)\s*字,\s*(\d+)\s*问题\)", re.MULTILINE)
+_VITALITY_RE = re.compile(
+    r"^- \*\*散文活力\*\*:\s*(\d+)/100\s*—\s*(.+)$",
+    re.MULTILINE,
+)
 _ISSUE_RE = re.compile(
     r"^- \*\*\[(P[0-3])\]\*\* `([^`]+)` @ ch(\d+): (.+)$",
     re.MULTILINE,
@@ -27,6 +31,27 @@ def report_path_for(root: Path) -> Path:
 
 def _char_count(text: str) -> int:
     return len(re.sub(r"\s+", "", text))
+
+
+def collect_prose_vitality_scores(
+    paths: ProjectPaths,
+    chapters: list[int],
+) -> dict[int, dict[str, Any]]:
+    """Rule-based ProseVitalityScorer per chapter (v1.1)."""
+    from infra.quality.llm.scorers.prose_vitality import ProseVitalityScorer
+
+    scorer = ProseVitalityScorer()
+    scores: dict[int, dict[str, Any]] = {}
+    for chapter_num in chapters:
+        content = paths.read_chapter(chapter_num)
+        if not content:
+            continue
+        result = scorer.score(content, {"chapter": chapter_num})
+        scores[chapter_num] = {
+            "score": result.score,
+            "reason": result.reason,
+        }
+    return scores
 
 
 def collect_full_check_issues(
@@ -80,6 +105,7 @@ def format_report_markdown(
     issues: list[Issue],
     chapters: list[int],
     note: str = "",
+    vitality_scores: dict[int, dict[str, Any]] | None = None,
 ) -> str:
     by_chapter: dict[int, list[Issue]] = defaultdict(list)
     for issue in issues:
@@ -111,6 +137,11 @@ def format_report_markdown(
         else:
             word_count = 0
         lines.append(f"## ch{chapter_num:03d} ({word_count} 字, {len(ch_issues)} 问题)")
+        vitality = (vitality_scores or {}).get(chapter_num)
+        if vitality is not None:
+            lines.append(
+                f"- **散文活力**: {vitality['score']}/100 — {vitality['reason']}",
+            )
         if not ch_issues:
             lines.append("- （无）")
             lines.append("")
@@ -145,13 +176,16 @@ def generate_report(
 
     max_ch = end_chapter or config.max_chapter
     chapters = list(range(start_chapter, max_ch + 1))
+    selected = chapters[:limit]
     issues = collect_full_check_issues(paths, chapters, limit=limit)
+    vitality_scores = collect_prose_vitality_scores(paths, selected)
     markdown = format_report_markdown(
         title=f"《{config.name}》",
         project_root=project_root,
         issues=issues,
-        chapters=chapters[:limit],
+        chapters=selected,
         note=note,
+        vitality_scores=vitality_scores,
     )
     out = report_path_for(project_root)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -179,6 +213,13 @@ def parse_report_markdown(text: str) -> dict[str, Any]:
         word_count = int(header.group(2))
         issue_count = int(header.group(3))
         issues: list[dict[str, str]] = []
+        vitality_match = _VITALITY_RE.search(block)
+        vitality = None
+        if vitality_match:
+            vitality = {
+                "score": int(vitality_match.group(1)),
+                "reason": vitality_match.group(2).strip(),
+            }
         for match in _ISSUE_RE.finditer(block):
             issues.append(
                 {
@@ -194,6 +235,7 @@ def parse_report_markdown(text: str) -> dict[str, Any]:
                 "word_count": word_count,
                 "issue_count": issue_count,
                 "issues": issues,
+                "prose_vitality": vitality,
             },
         )
 
@@ -223,14 +265,26 @@ def load_report_summary(project_root: Path) -> dict[str, Any]:
             "chapters": [],
             "generated_at": None,
             "prose_heatmap": {"chapters": [], "total_prose_p1": 0, "total_prose_issues": 0},
+            "prose_vitality_avg": None,
         }
     parsed = parse_report_markdown(path.read_text(encoding="utf-8"))
     from infra.prose_calibration import build_prose_heatmap
 
     heatmap = build_prose_heatmap(parsed.get("chapters") or [])
+    vitality_chapters = [
+        ch for ch in (parsed.get("chapters") or []) if ch.get("prose_vitality")
+    ]
+    avg_vitality = None
+    if vitality_chapters:
+        avg_vitality = round(
+            sum(ch["prose_vitality"]["score"] for ch in vitality_chapters)
+            / len(vitality_chapters),
+            1,
+        )
     return {
         "available": True,
         "path": str(path),
         **parsed,
         "prose_heatmap": heatmap,
+        "prose_vitality_avg": avg_vitality,
     }

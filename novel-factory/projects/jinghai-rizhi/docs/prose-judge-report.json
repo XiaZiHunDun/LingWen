@@ -1,8 +1,8 @@
 {
   "version": 1,
   "slug": "jinghai-rizhi",
-  "source": "offline",
-  "judged_at": "2026-06-21 02:06 UTC",
+  "source": "llm",
+  "judged_at": "2026-06-21 04:59 UTC",
   "golden_chapters": [
     1,
     5,
@@ -14,38 +14,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "盐霜析出的指纹、海绵氧化成黄褐色、浮标以非海浪节奏摇晃等细节密集，视觉嗅觉触觉层次分明。",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "禁航日—老头的三字拒答—频道十七—对讲机里那声呼吸—红色信号灯，每两三段即埋一个新悬念或反转。",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "沈舟主动登船、翻找日志本、调频呼叫、推动对话与离开港口，主导情节走向。",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
+          "evidence": "短句单句式占比较高（系统检测约54%），节奏沉稳但句式略显单调，段尾收束多为陈述句。",
           "action": "trim"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "对话极少却句句有戏——'禁航日。''会亮的。''你妹妹小时候也问过这句话。'符合人物，留白充足。",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "禁航民俗+失踪悬疑+超自然信号，类型元素齐备且自然融合，开篇即建立规则与诡异氛围。",
           "action": "keep"
         }
       ]
@@ -55,38 +55,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
-          "action": "keep"
+          "score": 3,
+          "evidence": "雾中孤舟、锈蚀舢板、灯语等意象有氛围，但整体偏白描，'白色的虚空'、'孤零零的叶子'等比喻单薄且重复，缺少层次感与感官通感。",
+          "action": "trim"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
-          "action": "keep"
+          "score": 3,
+          "evidence": "开篇钥匙悬念、磁带伏笔、灯语短长长短长反复回响制造了持续悬念，但中段老周问答以同质短句堆砌，钩子节拍拖慢，临近章末才出现无灯船黑影与坐标录音，密度后置。",
+          "action": "trim"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "沈舟主动追问、拒绝'别去'、独闯雾区、调频对讲机、记坐标继续划桨，能动性贯穿始终，未被NPC牵引。",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "触发P1句式警示：短句'沈舟没说话'、'沈舟沉默'、问句'为什么？''什么意思？''谁带走的？'高频复用，几乎通篇问答推进，节奏机械、变化匮乏。",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
-          "action": "keep"
+          "score": 3,
+          "evidence": "老周语气贴合码头老江湖身份，'因为我老了'有性格；但沈舟对白几乎全为'什么''为什么''式单字追问，缺乏个人腔调与潜台词，与妹妹录音带中'如果你看到这里不要来找我'的反差未在当面对话中体现。",
+          "action": "trim"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "迷雾民俗+克苏鲁式未知呼唤+灯语密码+失踪档案，类型元素齐备；禁航日、海事处、频道十七构成可信世界观，章末无灯船黑影与坐标录音兑现了悬疑升级预期。",
           "action": "keep"
         }
       ]
@@ -97,37 +97,37 @@
         {
           "dimension": "imagery",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "雾灯、雨声、白色阳光与'急诊室灯亮一夜'等画面交替推进，关键场景具象",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇对讲机急变、'沈雁的事不是意外'、老周死前留证、遗言悬念层层叠加，几乎每3段一个钩子",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "沈舟主动送医、提交录音笔、揭露改档、推动立案，行动链完整且不断升级",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "短句占绝大多数（'没了？''嗯？''我会调查'），句式高度雷同，节奏虽紧但单调，P1已标出句式多样性56%",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "对讲机、医院、派出所三场对话贴合身份，老周留遗言式的压制感与林警官的程序化询问形成真实对比",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "悬疑+社会派类型要素齐：悬念铺设、证据链递进、真相浮出与'静海'主题呼应，结尾有余韵",
           "action": "keep"
         }
       ]

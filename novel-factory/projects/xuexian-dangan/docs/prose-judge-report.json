@@ -1,8 +1,8 @@
 {
   "version": 1,
   "slug": "xuexian-dangan",
-  "source": "offline",
-  "judged_at": "2026-06-21 02:06 UTC",
+  "source": "llm",
+  "judged_at": "2026-06-21 05:21 UTC",
   "golden_chapters": [
     1,
     5,
@@ -14,38 +14,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "铆钉松动的铁皮告示牌、键盘空格键上的指纹、墙角的拖拽划痕等细节极具触觉质感，冰晶指印与温差悬念的画面层次丰富。",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇太阳穴一跳、背面铅笔字\"记得关窗\"、空白GPS坐标、冰晶指纹、-30.2℃温差、结尾\"别关窗\"回环呼应，几乎每300字设置一个强钩子。",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "方朔主动撬锁、短接电线、翻开观测本、用温度计测书、与对讲机对话并保持发射状态，能动性贯穿全章，结尾选择等待而非下山是主动抉择。",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
+          "evidence": "短句占主导且多有节奏感，但P1检测指出单一句式占比54%超过40%，句式结构（多为\"X。Y。\"式陈述）过于单调，影响阅读韵律。",
           "action": "trim"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "对白极简且贴合人物——老韩的柴油味皱纹、老护林工的寡言、方朔与对讲机\"林遥\"的反复呼叫形成仪式感，但对话数量偏少，少量独白略显刻意。",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "高海拔封山、失踪案、超自然电台信号、温度异常、雪地压痕，类型元素（雪山悬疑+民俗恐怖+伪纪录片档案）完成度极高，气氛与节奏高度统一。",
           "action": "keep"
         }
       ]
@@ -55,38 +55,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "斜光切雪坡、冻蓝冰壁如'冻住的舌头'、海拔数字跳动的眩晕感，画面高度凝练且有层次",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "几乎每段都以短句独立成行的悬念收束（'鞋尖朝里''是第三组''GPS在骗他''别信——海拔'），钩子密度极高",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "方朔全程主动决策——选路、下镐、记坐标、撤返，每一步由其意志驱动",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "P1触发：短句独段占比极高，海拔/数字/对话大量堆叠成'电报体'，节奏虽紧但句式单一（短陈述句+单行加粗），需打散重排以破单调",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
-          "action": "keep"
+          "score": 3,
+          "evidence": "对讲机呼叫与预录语音有功能性，但仅两段对白且高度模板化（重复呼叫+神秘录音），真实人物对话几乎为零",
+          "action": "trim"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "高海拔悬疑/探险类型要素齐备：冻土、裂缝、失踪观测员、神秘录音、第三组脚印，类型氛围完成度高",
           "action": "keep"
         }
       ]
@@ -96,38 +96,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "炉火映气压表、救援服空袖管在风里晃、风雪打在脸上像刀割等画面克制而精确，每一句都在读者眼前成像。",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇对讲机钩子→老周'别开灯'→'它看见光了会找过来'→档案销毁→暴风雪人影，几乎每300字一个悬念落点。",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "方朔一夜之间主动串联老韩、林遥、王干事三线，挖暗格、追黑匣子、直面老周，能动性极强，决策推动情节而非被动等待。",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "短句占比畸高，'对不对/咋/啥'等单句反复堆叠，节奏虽紧却句式单一，P1检测短句占比56%超阈值，长短交错明显不足。",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "'睡觉''下山吧''下去就再没上来过？上来过'，方言对白高度个性化，每句都有潜台词，符合山站人物身份。",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "完美兑现雪域怪谈+档案悬疑类型：被销毁的七天记录、冰舌下心跳录音、贴窗的脸、地心圆点，氛围与伏笔密度皆为样章级。",
           "action": "keep"
         }
       ]

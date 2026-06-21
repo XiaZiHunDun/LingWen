@@ -16,7 +16,7 @@
 | **加权误报率** | **4.8%** ✅ |
 | Judge 来源 | offline（七书基线） |
 
-> **LLM judge**：本地未配置 `MINIMAX_API_KEY` 时跳过 `--llm` 刷新；CI Secret 可用时在 Actions 跑 `run-prose-judge.sh <slug> --llm`。
+> **LLM judge**：API key 已配置，可 `bash scripts/run-prose-judge.sh --save-all` 前先 `--llm` 单书试跑。
 
 ---
 
@@ -30,7 +30,7 @@
 |----|------------|----------|------|
 | ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
 | ch005 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch010 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 
 **本书误报率**：0/3 = 0.0%
 
@@ -38,8 +38,8 @@
 
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
-| ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch005 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch001 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch005 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 | ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
 
 **本书误报率**：0/3 = 0.0%
@@ -48,9 +48,9 @@
 
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
-| ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch005 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch001 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch005 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch010 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 
 **本书误报率**：0/3 = 0.0%
 
@@ -58,7 +58,7 @@
 
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
-| ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch001 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 | ch003 | `sentence_diversity_low` | 疑 | dominant 句式 ≥60%，边界误报 |
 | ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
 
@@ -69,8 +69,8 @@
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
 | ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch005 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch005 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch010 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 
 **本书误报率**：0/3 = 0.0%
 
@@ -78,9 +78,9 @@
 
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
-| ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch005 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch001 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch005 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch010 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 
 **本书误报率**：0/3 = 0.0%
 
@@ -89,8 +89,8 @@
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
 | ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch005 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
-| ch010 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
+| ch005 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch010 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 
 **本书误报率**：0/3 = 0.0%
 

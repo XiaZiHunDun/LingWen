@@ -42,6 +42,8 @@ Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1
 产物为 **artifact**（需下载合并进 `projects/<slug>/docs/prose-judge-report.json` 后 commit）。日常 CI 仍用 offline judge。
 
 ```bash
+bash scripts/merge-prose-judge-artifacts.sh ~/Downloads/prose-judge-reports-<run_id>.zip
+bash scripts/merge-prose-judge-artifacts.sh ./artifacts --calibration-log ./prose-calibration-log.md
 bash scripts/run-prose-judge.sh tiedao-dangan --llm
 bash scripts/run-prose-judge.sh --save-all --llm   # 七书（需 key）
 bash scripts/run-prose-calibration-fill.sh

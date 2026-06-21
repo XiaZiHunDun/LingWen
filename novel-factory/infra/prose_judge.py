@@ -621,14 +621,14 @@ def render_calibration_log_document(
         "",
         "## 本轮摘要",
         "",
-        f"| 项 | 值 |",
-        f"|----|-----|",
+        "| 项 | 值 |",
+        "|----|-----|",
         f"| 操作者 | {operator} |",
-        f"| 范围 | 七样章 Golden ch |",
+        "| 范围 | 七样章 Golden ch |",
         f"| 抽检 P1 条数 | {total_samples} |",
         f"| 删+疑 合计 | {total_mis} |",
         f"| **加权误报率** | **{agg_rate}%** {'✅' if agg_pass else '⚠'} |",
-        f"| Judge 来源 | offline（七书基线） |",
+        "| Judge 来源 | offline（七书基线） |",
         "",
     ]
     if llm_note:

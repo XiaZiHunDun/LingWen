@@ -32,3 +32,10 @@ class TestProseJudgeLlmWorkflow:
         text = (NOVEL_FACTORY / "scripts" / "run-prose-judge.sh").read_text(encoding="utf-8")
         assert "--save-all --llm" in text
         assert "PROSE_JUDGE_SAVE_ALL" in text
+
+    def test_merge_artifacts_script_exists(self):
+        script = NOVEL_FACTORY / "scripts" / "merge-prose-judge-artifacts.sh"
+        assert script.is_file()
+        text = script.read_text(encoding="utf-8")
+        assert "prose-judge-report.json" in text
+        assert "--calibration-log" in text

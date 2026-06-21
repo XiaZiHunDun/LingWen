@@ -13,7 +13,7 @@
 | 评分来源 | 规则 P1 + 人工六维 | + **LLM prose judge**（Golden 三章） |
 | 误报治理 | YAML 基线 + 校准脚本 | + **人工抽检表**（目标误报 <20%） |
 | Dashboard | 热力图 + diff | + diff 基线七书全覆盖 |
-| CI LLM | 五样章 blocking | **七样章** blocking |
+| CI LLM | 七样章 blocking | **七样章** blocking ✅ |
 | 覆盖率 | 40% | **50%** global |
 
 **原则不变**：规则 + rubric 定标准，LLM **辅助**而非单独定义「好 prose」。
@@ -104,12 +104,12 @@ bash scripts/verify-coverage-modules.sh            # 50% global / 分模块
 
 ---
 
-## 6. 未完成（v2.1）
+## 6. v2.1 状态（Phase 12.06）
 
-- [ ] `ProseVitalityScorer` 接入 full-check 报告（v1.1 遗留）
+- [x] `ProseVitalityScorer` 接入 full-check 报告（v1.1 遗留）
 - [x] LLM judge JSON schema 固化 + Dashboard 展示 — [`config/prose_judge_schema.json`](../config/prose_judge_schema.json) · `GET /api/studio/prose-judge`
 - [x] [`prose-calibration-log.md`](prose-calibration-log.md) 抽检记录模板
-- [ ] 第八书 dist / golden（星陨 testbed 边界待定）
+- [x] 第八书 dist / golden 边界 — **七 dist 样章**（Studio 主修）+ **第八项目** `xingyun-jiyuan`（testbed · Golden ×8 · 无 dist zip / 不进 prose-judge-primary）
 - [x] 人工抽检填表 · 误报率 **4.8%**（21 条 · `run-prose-calibration-fill.sh`）
 - [x] LLM judge 七书刷新 — [`prose-judge-llm.yml`](../../.github/workflows/prose-judge-llm.yml) · `run-prose-judge-llm-primary.sh`
 

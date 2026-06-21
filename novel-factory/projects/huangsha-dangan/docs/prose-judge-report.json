@@ -1,8 +1,8 @@
 {
   "version": 1,
   "slug": "huangsha-dangan",
-  "source": "offline",
-  "judged_at": "2026-06-21 02:06 UTC",
+  "source": "llm",
+  "judged_at": "2026-06-21 04:28 UTC",
   "golden_chapters": [
     1,
     5,
@@ -15,37 +15,37 @@
         {
           "dimension": "imagery",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "风蚀对金属、帐篷、人脸的磨损描写有质感，煤油灯下空白本子的压痕细节具象",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "差一分钟→差一条人命、空白观测本、风蚀压痕角度、十秒一次的呼吸、GPS六秒延迟，几乎每300字一个悬念钩子",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "陆沉连续主动操作：翻本、凑灯、开机地震仪、调增益、定位、追问老邢，每一步推进都源自主角决策",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "规则已检测单句式占比54%，文中大量'他+动词'+'陆沉+动词'的零碎短句连发，节奏机械单调",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "老邢与陆沉对话口语自然，'陆工'称呼与搓手犹豫贴合边陲站老职工身份，信息密度高",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "边陲科考+未知信号+失踪同事悬念+风蚀环境压迫，科考悬疑类型要素齐备，结尾坐标逼近完成闭环",
           "action": "keep"
         }
       ]
@@ -55,38 +55,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "舌根黏上颚、沙堆簌簌漏沙、管头撞混凝土成摆锤——触觉、听觉、视觉多感官细节密集且精准",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇'被渴醒'即建立生存悬念，'水袋漏了'接续，每隔几段叠加新威胁（水/信号/温度/录音），钩子几乎段段有",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "陆沉始终在做判断与行动（拨电话、停止挖沙、关掉自动锤取卡），主动决策链清晰，但受困于环境，主动性受限于求生反应",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "P1检测单一句式占比58%，短句堆叠造成节奏机械，虽配合紧张感有效，但句式变化确实不足",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "'你不需要。''我需要。'——对话极简、潜台词饱满，顾遥的冷淡与陆沉的执拗立体，闪回段对话可信度极高",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "沙漠求生+悬疑揭秘双类型要素齐备：脱水、信号失联、温度骤降、神秘录音、'上一个查的人'——但录音悬念兑现还需后续章节",
           "action": "keep"
         }
       ]
@@ -97,37 +97,37 @@
         {
           "dimension": "imagery",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "「移动沙丘在远处缓慢推移，像整片沙漠在呼吸」将戈壁动态具象化，结尾留白画面完整",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
-          "action": "keep"
+          "score": 3,
+          "evidence": "开头录音交接与禁忌公告构成信息钩，但章中段对话推进平稳，缺少第二层悬念",
+          "action": "trim"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "陆沉主动交付录音、归还对讲机、拦车回城，行为链清晰且贯穿情感决断",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "全章以短句+对话+叙述句堆叠，单一句式占比近56%，节奏机械，缺少长句与变奏",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "「疼吗？」「伤口不深，能处理」式对白克制有留白，符合硬汉/生存题材语境",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "测绘遗物、禁入通告、频道静默等元素完整兑现生存/荒野悬疑类型期待",
           "action": "keep"
         }
       ]

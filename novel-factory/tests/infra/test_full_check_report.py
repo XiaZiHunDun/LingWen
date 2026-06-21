@@ -50,6 +50,18 @@ class TestFullCheckReportMarkdown:
         assert len(parsed["chapters"]) == 1
         assert parsed["chapters"][0]["issue_count"] == 2
 
+    def test_format_includes_prose_vitality_and_parses(self, tmp_path: Path) -> None:
+        md = format_report_markdown(
+            title="《测试》",
+            project_root=tmp_path,
+            issues=[],
+            chapters=[1],
+            vitality_scores={1: {"score": 72, "reason": "词汇多样性高"}},
+        )
+        assert "**散文活力**: 72/100" in md
+        parsed = parse_report_markdown(md)
+        assert parsed["chapters"][0]["prose_vitality"]["score"] == 72
+
     def test_generate_for_anye_project(self) -> None:
         root = Path(__file__).resolve().parents[1] / "projects" / "anye-xinbiao"
         if not root.is_dir():
@@ -59,3 +71,5 @@ class TestFullCheckReportMarkdown:
         summary = load_report_summary(root)
         assert summary["available"] is True
         assert summary["total"] >= 0
+        if summary.get("chapters"):
+            assert "prose_vitality" in summary["chapters"][0] or summary["prose_vitality_avg"] is None

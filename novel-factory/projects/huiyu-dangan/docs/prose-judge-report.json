@@ -1,8 +1,8 @@
 {
   "version": 1,
   "slug": "huiyu-dangan",
-  "source": "offline",
-  "judged_at": "2026-06-21 02:06 UTC",
+  "source": "llm",
+  "judged_at": "2026-06-21 04:39 UTC",
   "golden_chapters": [
     1,
     3,
@@ -15,37 +15,37 @@
         {
           "dimension": "imagery",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "干燥纸角与湿润巷子对比、雨珠溅花、手电筒光打在墙上等细节具体可感，'裂纹像闭合的眼睛''影子在墙上跳了跳'有画面锚点",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "32天观察裂纹→裂纹方向反转、供电局编号缺一组、干燥纸角、红色编号消失、新告示'你看到了'，几乎每300字一个钩子，结尾断在最尖锐处",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "林栀主动蹲下核对编号、绕回后巷、打电话试探母亲、揭下告示并翻面查看，每一步行动都推进认知而非被动等待",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "规则检测已标出单一句式占比54%，文本中大量'她……'短句与'她没……她……'排比连用，节奏趋同，长短交替不足",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "李芬台词口语利落（'树有什么可看的'）、林栀用工作话题掩护真实问题有层次，但母亲只有一条微信，对话张力偏弱",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "都市异常/克苏鲁式日常侵入的类型要素齐全：日常场景、微小异常逐步升级、主角认知解锁、监视者暗示，结尾悬停到位",
           "action": "keep"
         }
       ]
@@ -55,38 +55,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "灰巷子、发黄纸条、逆光瘦小轮廓、热水冲肩、便签如温炭贴肤，视觉与触觉交织，场景层次分明，样章级画面",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇梦魇纸条、'记录和记忆已经不一样宽'、#0421双重对照、空白推送、公交站撕开的'别——'，几乎每300字埋一个新钩",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "林栀主动约周姐、追问2010旧档、收下违规调阅码、临门刹住不上公交，主动决策链清晰；稍缺对障碍的实质反制",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
+          "evidence": "短句+独行段占主体，节奏稳但句式偏单一，'她……她……她'领头的短段连用过多，长句与对话穿插明显不足，触发P1 sentence_diversity_low",
           "action": "trim"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "周姐'你欠我的不止一顿饭'、'记录会比你记得更清楚'、林栀的克制短句与周姐的实务腔形成真实张力，信息推进与人物关系同时完成",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "都市悬疑+都市怪谈完成度极高：编号对称、档案封锁、异常推送、目击者悖论层层咬合，类型钩子与谜面铺设教科书级别",
           "action": "keep"
         }
       ]
@@ -96,38 +96,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "街灯逐盏熄灭、底片负像、黑暗中暗红棉袄轮廓，声控灯一瞬照亮黄脆启事——视觉层次与光影调度极具电影感",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇'街灯灭了一盏又灭一盏'即设悬念；'上车的人''下车了''她要找的是她自己'层层反转，钩子密集且每次升级",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "林栀从被动失忆到'一直知道答案'再到主动跟出去'不会装作没看见'，主体性弧线清晰，但全章以对话/顿悟推进，主动行动略少",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
+          "evidence": "短句独句占比高确有氛围感，但'林栀没说话''林栀站在原地'类重复结构过多，P1检测单一句式56%已超阈值，节奏略显单调",
           "action": "trim"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "对话极简克制、留白充分，'二十六年''你下车了'等短句自带重量，口吻符合中年女性与失忆者身份，真实自然",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "悬疑+年代+身份谜题三层叠加，底片、寻人启事、1998时间锚点等元素均到位，时间循环/自我追寻母题完成度极高",
           "action": "keep"
         }
       ]
