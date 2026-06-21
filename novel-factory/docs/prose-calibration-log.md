@@ -48,7 +48,7 @@
 
 | 章 | issue_type | 留/删/疑 | 备注 |
 |----|------------|----------|------|
-| ch001 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
+| ch001 | `sentence_diversity_low` | 留 | dist-ready 基线保留 |
 | ch005 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 | ch010 | `sentence_diversity_low` | 留 | judge≤2 vs 规则 P1 |
 

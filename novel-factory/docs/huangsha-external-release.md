@@ -1,7 +1,7 @@
 # 《黄沙档案》· 对外分发包
 
 > **版本**：release-v1 · 2026-06-20  
-> **状态**：**第六样章 · 可对外发送**  
+> **状态**：**第六样章 · 可对外发送** · LLM judge avg **4.06**（2026-06-21 polish）  
 > **体裁**：沙漠悬疑 · 10 章短篇
 
 ---
@@ -40,7 +40,7 @@ bash scripts/prepare-huangsha-distribution.sh
 ```
 
 - [x] Golden Set P0=0  
-- [x] prose 校准 PASS（prose_p1=8）  
-- [ ] 可选：有 key 时 `bash scripts/run-llm-golden-check.sh huangsha-dangan`
+- [x] prose 校准 PASS（prose_p1≤12）  
+- [x] LLM Golden：`llm-golden-primary` job（七样章 blocking · 需 `MINIMAX_API_KEY`）
 
 相关：[`sixth-primary-revision-huangsha.md`](sixth-primary-revision-huangsha.md)

@@ -40,7 +40,7 @@ bash scripts/prepare-anhe-distribution.sh
 ```
 
 - [x] Golden Set P0=0  
-- [x] prose 校准 PASS（prose_p1=8）  
-- [ ] 可选 LLM Golden（非 CI blocking 五样章门）
+- [x] prose 校准 PASS（prose_p1≤12）  
+- [x] LLM Golden：`llm-golden-primary` job（七样章 blocking · 需 `MINIMAX_API_KEY`）
 
 相关：[`seventh-primary-revision-anhe.md`](seventh-primary-revision-anhe.md)

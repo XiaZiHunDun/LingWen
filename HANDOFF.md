@@ -18,8 +18,8 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **test @ `2b941a7` 全绿**（golden×8 · llm×7 · e2e-live · ruff · cov 50%） |
-| **下一期推荐** | **v12 候选已齐** — 可选 polish 静海/暗河/黄沙至 LLM avg≥4.0 |
-| **主修 slug** | **七样章** dist + prose 快照 + offline judge 报告 |
+| **下一期推荐** | polish **静海/暗河**至 LLM avg≥4.0（黄沙 ✅ 4.06） |
+| **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
 
@@ -760,7 +760,7 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 
 ### 7.5 pytest baseline 与环境变量
 
-- **默认 CI 期望**: `pytest -q` → **2972 passed**, 11 skipped（2026-06-20；含 doctor Studio 适配 + test_auditor 语义断言）
+- **默认 CI 期望**: `pytest -q` → **2983+ passed**, skipped 见 CI（2026-06-21）
 - **`LINGWEN_MEMORY_RAG=live`** 在 shell 中 export 时，batch 单元测试需 `stub`（已在 `test_chapter_production_batch` autouse 隔离）
 - **real LLM opt-in** (`MINIMAX_API_KEY` 等): `test_novel_writing_real_llm.py` 仅在有 key 时跑；Markdown fenced JSON 已由 `AgentBase.parse_response` 剥离
 
@@ -790,7 +790,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (v9 已完成, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
-- [ ] 跑 `cd novel-factory && pytest -q` 验证 **2972 passed**, 11 skipped (~7min)
+- [ ] 跑 `cd novel-factory && pytest -q` 验证 **2983+ passed** (~7min)
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
 - [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净

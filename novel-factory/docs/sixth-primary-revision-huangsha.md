@@ -9,8 +9,8 @@ bash scripts/run-primary-revision-verify.sh huangsha-dangan
 bash scripts/prepare-huangsha-distribution.sh
 ```
 
-- P0=0 · prose_p1=8 · Golden Set PASS  
-- LLM Golden：**auto**（非五样章 CI blocking；有 key 可选手动跑）
+- P0=0 · prose_p1≤12 · Golden Set PASS  
+- LLM Golden：**七样章 CI blocking**（`llm-golden-primary` · 需 Secret）
 
 ## dist
 
