@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.61 (文档对齐 + frontend 主门 + 生产 DoD, 2026-06-22)  
-> **更新 (2026-06-22)**: pytest **3011+** · 七样章默认 zip · test 含 lint+build · 见 [`studio-production-dod.md`](novel-factory/docs/studio-production-dod.md)
+> **版本**: v10.62 (DoD C pilot + LLM 路径降频, 2026-06-22)  
+> **更新 (2026-06-22)**: `--real-llm` pilot 绿 · llm×7 仅 LLM 相关路径 / label `llm-check`
 
 ---
 

@@ -61,7 +61,7 @@
 | G10 | 覆盖率 30% | 分模块提到 **50%** | 12.02 | ✅ |
 | G11 | E2E live 5/5 | label CI 稳定绿 | **默认 CI** | 12.04 | ✅ |
 | G12 | 文档滞后 | primary-revision / HANDOFF 同步 | 11.22 | ✅ |
-| G13 | 新书真实生产未定义 DoD | [`studio-production-dod.md`](studio-production-dod.md) + verify 脚本 | 12.09 | ✅ 文档 · C 段待 pilot |
+| G13 | 新书真实生产未定义 DoD | [`studio-production-dod.md`](studio-production-dod.md) + `--real-llm` | 12.09 | ✅ 本地 pilot 绿 · ~$0.036/ch |
 
 ---
 

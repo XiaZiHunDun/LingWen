@@ -104,7 +104,10 @@ bash scripts/verify-coverage-modules.sh            # 50% global / 分模块
 
 ---
 
-## 6. v2.1 状态（Phase 12.06）
+## 6. v2.1 状态（Phase 12.10）
+
+- [x] 本地 **DoD C** pilot（`verify-studio-production-dod.sh --real-llm` · 7/7 节点 · ~$0.036 · record 在 `infra/.state/pilot_records/`）
+- [x] CI **llm×7 路径降频**（方案 D + label `llm-check`）
 
 - [x] `ProseVitalityScorer` 接入 full-check 报告（v1.1 遗留）
 - [x] LLM judge JSON schema 固化 + Dashboard 展示 — [`config/prose_judge_schema.json`](../config/prose_judge_schema.json) · `GET /api/studio/prose-judge`

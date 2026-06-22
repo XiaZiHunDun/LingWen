@@ -63,11 +63,12 @@ pytest tests/agent_system/test_novel_writing_real_llm.py -k MiniMax -v
 
 ```bash
 cd novel-factory
-bash scripts/verify-studio-production-dod.sh          # A+B+E（无 API 消耗）
-bash scripts/verify-studio-production-dod.sh --from-verify   # 含 verify-e2e-live-ci（耗时）
+bash scripts/verify-studio-production-dod.sh                 # A+B+E（无 API）
+bash scripts/verify-studio-production-dod.sh --real-llm      # 含 DoD C（MiniMax · 临时项目 · 自动清理）
+bash scripts/verify-studio-production-dod.sh --from-verify   # 含 e2e-live 本地模拟
 ```
 
-**C 段（真实 LLM 单章）** 需 API key，脚本仅打印命令，不自动扣费。
+**DoD C** 会在 `projects/studio-dod-<timestamp>/` 跑 1 章真实 pilot，记录写入 `infra/.state/pilot_records/studio-dod-*.json`（gitignored），项目目录退出时删除。
 
 ---
 

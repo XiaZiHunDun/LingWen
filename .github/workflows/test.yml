@@ -16,6 +16,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_llm_golden_primary:
+        description: "Force llm-golden-primary ×7 (overrides path filter)"
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -26,6 +31,27 @@ defaults:
     working-directory: novel-factory
 
 jobs:
+  llm-paths:
+    name: Detect LLM-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      llm: ${{ steps.filter.outputs.llm }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            llm:
+              - 'novel-factory/projects/**'
+              - 'novel-factory/infra/**'
+              - 'novel-factory/scripts/run-llm-golden*.sh'
+              - 'novel-factory/scripts/run-golden-set*.sh'
+              - 'novel-factory/scripts/verify-golden-set.sh'
+              - 'novel-factory/lingwen.py'
+              - 'novel-factory/config/**'
+              - '.github/workflows/test.yml'
+
   test:
     name: pytest (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -202,6 +228,11 @@ jobs:
 
   llm-golden-primary:
     name: LLM golden primary (${{ matrix.slug }})
+    needs: llm-paths
+    if: |
+      needs.llm-paths.outputs.llm == 'true' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'llm-check')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_llm_golden_primary == true)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

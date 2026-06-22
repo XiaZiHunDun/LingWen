@@ -19,3 +19,4 @@ class TestStudioProductionDod1209:
         text = script.read_text(encoding="utf-8")
         assert "verify-onboarding.sh ci-smoke" in text
         assert "preflight-only" in text
+        assert "--real-llm" in text

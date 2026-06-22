@@ -6,7 +6,7 @@
 
 | # | Workflow 文件 | 显示名 | 触发 | blocking? | 用途 |
 |---|---------------|--------|------|-----------|------|
-| 1 | **`test.yml`** | test | 每次 push/PR master | **是** | 主门：pytest · vitest · **lint · build** · golden · llm×7 · e2e-live · ruff |
+| 1 | **`test.yml`** | test | 每次 push/PR master | **是** | 主门；**llm×7 路径过滤**（见 §MiniMax 成本） |
 | 2 | `dashboard-frontend-ci.yml` | Dashboard Frontend CI | `dashboard/frontend/**` 变更 | 否* | lint · typecheck · vitest+coverage · build · Codecov |
 | 3 | `dashboard-frontend-coverage-pages.yml` | Frontend Coverage Pages | **仅手动** | 否 | vitest HTML → GitHub Pages |
 | 4 | `dashboard-e2e-smoke.yml` | Dashboard E2E Smoke | 手动 / label `e2e-smoke` | 否 | 1 spec 调试 |
@@ -30,7 +30,7 @@
 | golden-set | `verify-golden-set.sh <slug>` ×8 | 结构 + **P0 规则门** |
 | onboarding | `verify-onboarding.sh ci-smoke` | init → preflight → dry-run |
 | ruff | `ruff check .` | **blocking** |
-| **llm-golden-primary** | `run-llm-golden-check.sh <slug>` ×**7** | **blocking** · 需 `MINIMAX_API_KEY` |
+| **llm-golden-primary** | `run-llm-golden-check.sh <slug>` ×**7** | **路径过滤** · label `llm-check` 强制 · 需 `MINIMAX_API_KEY` |
 | **e2e-live** | `pnpm e2e:live` (5 specs) | **blocking** · 本地 `verify-e2e-live-ci.sh` |
 
 Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1/P2 仍打印但不 fail。
@@ -125,16 +125,25 @@ MINIMAX_API_KEY=... pytest tests/agent_system/test_novel_writing_real_llm.py -k 
 
 | Job / Workflow | 触发 | 约 API 调用 | 说明 |
 |----------------|------|-------------|------|
-| **llm-golden-primary** ×7 | **每次 push/PR** | 七书 × Golden `--llm` | **主要持续成本** · blocking |
+| **llm-golden-primary** ×7 | **路径过滤**（见下） | 七书 × Golden `--llm` · PR label `llm-check` 强制 |
 | prose-judge-llm | 手动 | 七书 × 三章 judge | ~90min · 定稿前跑 |
 | real-llm-tests | 手动 | 3 tests（pilot + budget） | agent 链路验证 |
 | llm-golden-set | manual / label `llm-check` | 静海单书 | 可选 |
 
 **粗估**：每次 push 若七书 LLM Golden 全跑，费用取决于 MiniMax 定价与章节/check 长度；高频 push 会线性放大。建议在 MiniMax 控制台设 **余额告警**。
 
-### 可选降频方案（未启用 · 需团队决策）
+### 当前策略（12.10 已启用 · 方案 D）
 
-当前 **保持 blocking**（质量优先）。若账单偏高，可考虑：
+| 触发 | llm-golden-primary ×7 |
+|------|-------------------------|
+| push/PR 且变更命中 **LLM 路径** | ✅ 跑 |
+| push/PR 仅 docs / 无关前端等 | ⏭ **跳过**（省 API） |
+| PR label **`llm-check`** | ✅ 强制跑 |
+| Actions → test → Run workflow（默认勾选 primary） | ✅ 强制跑 |
+
+**LLM 路径**：`projects/**` · `infra/**` · golden/llm 脚本 · `lingwen.py` · `config/**` · `test.yml`
+
+### 其他可选方案（未启用）
 
 | 方案 | 改法 |  trade-off |
 |------|------|------------|
