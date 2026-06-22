@@ -97,7 +97,7 @@
 4. **Dashboard** 可展示章级 prose 热力 + 问题分类  
 5. **CI** 覆盖率 **50%** + golden **×8**（七 Studio + 星陨 testbed）+ **E2E live 默认 CI** 绿  
 
-### v12 候选状态（2026-06-21 · CI run `27894630776` ✅）
+### v12 候选状态（2026-06-22 · CI run [`27928469270`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928469270) ✅）
 
 | # | 条件 | 状态 | 证据 |
 |---|------|------|------|
@@ -105,7 +105,7 @@
 | 2 | 误报率 <20% | ✅ | 抽检 **4.8%**（21 条） |
 | 3 | 主修验收一条命令 | ✅ | `run-primary-revision-verify.sh` |
 | 4 | Dashboard 热力 + 分类 | ✅ | Studio prose 热力 / diff / judge |
-| 5 | CI 50% + golden×8 + e2e | ✅ | `test` @ `e6d70a4` success |
+| 5 | CI 50% + golden×8 + e2e | ✅ | `test` @ **`67c8ad8`** · e2e run `27928203388` |
 
 **七 dist 齐平（2026-06-22）**：暗夜 · 灰域 · 铁道 · 雪线 · 黄沙 · 静海 · **暗河** — LLM judge avg 均 ≥4.0。
 

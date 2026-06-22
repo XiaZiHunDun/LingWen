@@ -1,6 +1,7 @@
 # Studio 真实生产 · 完成定义（DoD）
 
-> **版本**：production-dod-v2 · 2026-06-22  
+> **版本**：production-dod-v2.1 · 2026-06-22  
+> **状态**：A–E 已绿（本地 DoD + CI `67c8ad8`）
 > **用途**：验证「灵文工作室」在 **临时新书** 上能跑通真实 MiniMax 生产（单章 + 三章 batch）。
 
 ---
@@ -17,10 +18,10 @@
 
 ## DoD 清单
 
-### A–B. 环境 + 脚手架（无 API）
+### A–B. 环境 + 脚手架（无 API）✅
 
-- [ ] `python lingwen.py doctor`
-- [ ] preflight-only + `verify-onboarding.sh ci-smoke`
+- [x] `python lingwen.py doctor`（`verify-studio-production-dod.sh` 无 API 路径）
+- [x] preflight-only + `verify-onboarding.sh ci-smoke`
 
 ### C. 真实 LLM **单章** ✅（2026-06-22 本地绿 · ~$0.036）
 
@@ -39,10 +40,10 @@ bash scripts/verify-studio-production-dod.sh --real-llm-batch
 - [x] `chapters_succeeded == 3` · batch summary 在 `pilot_records/`
 - [x] `lingwen.py check 1-3 --full --fail-severity P0` 无 P0
 
-### E. CI 对齐
+### E. CI 对齐 ✅（2026-06-22）
 
-- [ ] GitHub **test** workflow 全绿
-- [ ] 改样章/infra 时 llm×7 绿；纯文档 push 可跳过 llm（路径过滤）
+- [x] GitHub **test** workflow 全绿 — run [`27928469270`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928469270) · `67c8ad8`
+- [x] llm×7 **路径过滤**（纯文档 push 跳过；改样章/infra 或 label `llm-check` 时跑）
 
 ---
 

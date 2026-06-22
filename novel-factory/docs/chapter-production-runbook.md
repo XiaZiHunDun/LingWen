@@ -354,7 +354,12 @@ bash novel-factory/scripts/write-e2e-live-first-green-record.sh \
 
 **记录路径**（gitignored）: `infra/.state/ci_records/e2e-live-first-green.json`
 
-**首绿参考**（2026-06-22）: run [`27928203388`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928203388) · commit `9132168` · job `Playwright live-backend (5 specs)` success。
+**首绿参考**（2026-06-22）:
+
+| commit | run | job |
+|--------|-----|-----|
+| `9132168` | [`27928203388`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928203388) | Playwright live-backend 5/5 |
+| `67c8ad8` | [`27928469270`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928469270) | 维护对齐 · test 全绿 |
 
 **模块**: `infra/agent_system/ci_records.py` · `validate_e2e_live_first_green_record()`
 

@@ -108,6 +108,7 @@ bash scripts/verify-coverage-modules.sh            # 50% global / 分模块
 
 - [x] 本地 **DoD C** pilot（`--real-llm` · ~$0.036/ch）
 - [x] 本地 **DoD D** batch 3章（`--real-llm-batch` · 3/3 · ~$0.19 · 无 cap 默认）
+- [x] CI / e2e 对齐 — `test` @ `67c8ad8` · e2e 首绿 run `27928203388`
 
 - [x] `ProseVitalityScorer` 接入 full-check 报告（v1.1 遗留）
 - [x] LLM judge JSON schema 固化 + Dashboard 展示 — [`config/prose_judge_schema.json`](../config/prose_judge_schema.json) · `GET /api/studio/prose-judge`

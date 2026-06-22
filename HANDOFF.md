@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.64 (budget 校准 + live RAG + e2e record, 2026-06-22)  
-> **更新 (2026-06-22)**: e2e-live 远程首绿 run **27928203388** · DoD batch calibrate · wave 367–376 · Memory RAG live
+> **版本**: v10.65 (维护对齐 · v12 KPI 收尾, 2026-06-22)  
+> **更新 (2026-06-22)**: CI `67c8ad8` 全绿 · DoD/E2E/gap 文档同步 · **维护模式**
 
 ---
 
@@ -18,7 +18,8 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
-| **下一期推荐** | v11 工程债（见 roadmap-v11）· GitHub Actions 远程 e2e run id 回填 |
+| **下一期推荐** | **维护模式**：prose polish 按需 · `prose-judge-llm` 刷新 · 样章改动后重打 zip |
+| **最新 CI** | `test` @ **`67c8ad8`** · run [`27928469270`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928469270) success |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -32,7 +33,7 @@
 LingWen/                                    # 本目录 (项目根, git root)
 ├── HANDOFF.md                              # 本文件 (新工具先读这里)
 ├── novel-factory/                          # 主项目目录 (~95% 代码)
-│   ├── README.md                           # 主 README (项目对外介绍, v8.3 stale)
+│   ├── README.md                           # 主 README (Studio v12 · 2026-06-22)
 │   ├── pyproject.toml + pytest.ini         # pytest 配置
 │   ├── CLAUDE.md                           # 项目级 CLAUDE.md (主控 agent prompt 模板)
 │   ├── docs/
@@ -800,7 +801,13 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [x] DoD D batch 3章（`--real-llm-batch` · 2026-06-22）
 - [x] 星陨 wave 367–376（2026-06-12 · 10/10 · ~$0.28 · `batch-367-376.json`）
 - [x] Memory RAG live pilot（2026-06-22 · `memory_context_source=live` · ~$0.032 · emit=0 不落盘）
-- [x] e2e-live 首绿 record（本地 + 远程 run **27928203388** · `9132168` · 5/5）
+- [x] e2e-live 首绿 record（run **27928203388** · 维护 push **27928469270** @ `67c8ad8`）
+
+**维护模式（v12 后默认）**：
+
+- [ ] 样章正文改动 → `prepare-studio-samples-zip.sh` + 必要时 `prose-judge-llm` workflow
+- [ ] 改 Python/frontend → 本地最小验证（见 `ci-quality-gates.md` §本地最小验证）
+- [ ] push 后扫 **GitHub Actions → test**（纯文档可跳过 llm×7）
 
 ---
 
