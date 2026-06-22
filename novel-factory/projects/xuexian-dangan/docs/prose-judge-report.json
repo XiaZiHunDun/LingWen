@@ -2,7 +2,7 @@
   "version": 1,
   "slug": "xuexian-dangan",
   "source": "llm",
-  "judged_at": "2026-06-22 09:51 UTC",
+  "judged_at": "2026-06-22 11:08 UTC",
   "golden_chapters": [
     1,
     5,
@@ -14,38 +14,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "「铆钉松了两颗，红漆剥落得像干裂的嘴唇」「鼠标线还保持着林遥放下的弧度」「冰晶的纹路是一个完整的指印」等细节密集且质感独特，画面冷冽可触。",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "开篇即抛悬念（吐血/林遥走），中段对讲机呼吸、温度数字-30.2℃、信号满格反常、备用电源消失拖拽痕层层递进，结尾「别关窗」与开篇铅笔字呼应，钩子密集且不散。",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "方朔全程主动行动——撬锁、翻观测本、测温度、调频道、蹲门槛观察压痕，每一步推动情节且符合护林员专业身份。",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
+          "evidence": "短句为主营造节奏感，但[P1]检测单一句式占比54%超阈值，长短句交替与句式变化不足，整体略显单调重复。",
           "action": "trim"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "对话极少而精，「就我一个。你算第二个」「林遥」独白式呼叫与对讲机传来的「别关窗」真实有张力，符合孤寂场景。",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "悬疑+寒带异常类型要素齐全：封山封闭空间、失踪谜案、超自然通讯信号、温差异常，结尾反转有力，类型完成度极高。",
           "action": "keep"
         }
       ]
@@ -56,37 +56,37 @@
         {
           "dimension": "imagery",
           "score": 5,
-          "evidence": "斜光切雪坡、冰壁蓝光随深度递变、冰舌状裂缝与气泡裂纹等视觉层次密集，'像一条冻住的舌头''冰的那种蓝'等通感准确。",
+          "evidence": "冰壁蓝光、薄霜折射、海拔表读数跳动、像耳鸣一样的嗡鸣等感官细节密集，画面感极强",
           "action": "keep"
         },
         {
           "dimension": "hook",
           "score": 5,
-          "evidence": "每节末尾几乎都有断点钩子：鞋尖朝里、第三组脚印、'别往裂缝里看'、预录音'坐标4731,7'、'别信——海拔——'，悬念密度极高。",
+          "evidence": "几乎每段都有悬念钩子：林遥脚印、第三组脚印、预录音'坐标4731''别信海拔'、冰壁抓痕，密度极高",
           "action": "keep"
         },
         {
           "dimension": "agency",
-          "score": 5,
-          "evidence": "方朔全程主动决策：抽冰镐、打锚点、拨频段、记坐标回撤，每一步行动都推进情节且符合专业设定。",
+          "score": 4,
+          "evidence": "方朔全程主动探查——下冰壁、打锚点、呼叫护林队、记坐标回撤，决策链清晰可感",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 2,
-          "evidence": "短句堆砌严重，'他下到了裂缝里头。''就是这道裂缝的位置。'等单句成段大量重复，节奏单调，违反句式多样性原则(P1)。",
+          "evidence": "短句+独立成段占绝对主导（P1检出58%单一短句式），节奏机械单调，句式变化匮乏",
           "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 3,
-          "evidence": "对讲机呼叫与预录音真实有效，但人物对话仅方朔独白式呼喊，缺乏双向交互与性格化语言。",
+          "evidence": "对讲机呼叫真实，但全部为单向呼叫+底噪，无人物对答，缺少交锋性对话",
           "action": "trim"
         },
         {
           "dimension": "genre",
-          "score": 5,
-          "evidence": "高海拔探险+悬疑类型元素齐备：气象站、冰舌裂缝、失踪观测员、神秘预录坐标、海拔数据异常，完全满足类型预期。",
+          "score": 4,
+          "evidence": "悬疑/探险类型要素齐备——旧案遗迹、可疑第三组脚印、加密频段预录音、冰壁抓痕，氛围到位",
           "action": "keep"
         }
       ]
@@ -97,37 +97,37 @@
         {
           "dimension": "imagery",
           "score": 4,
-          "evidence": "画面扎实且有层次感：开篇对讲机'拨弄老旧铁丝'、老周'颧骨高高突起嘴唇冻得发紫'、气象站炉火映气压表等细节构建出强烈的冰川高海拔氛围。",
+          "evidence": "冰川暴风雪、灰白脸庞、橘红火光映气压表等视觉细节有效，'窗框外面贴过一张脸'具冲击力",
           "action": "keep"
         },
         {
           "dimension": "hook",
-          "score": 4,
-          "evidence": "钩子密度高：老周'别开灯它看见光会找过来'、'它看见光了'、'知道的人都下去了'、'昨晚他上来过'层层递进，几乎每段都埋悬念。",
+          "score": 5,
+          "evidence": "开篇'别开灯/它看见光了会找过来'、血纸条'地心'、档案销毁、黑匣子记录员是林遥、窗上贴脸等钩子密集且层层递进",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "方朔主动性强：连夜查访林遥、追问王干事、直闯气象站私开暗格、不顾暴风雪冲出值班室，行为驱动叙事。",
+          "evidence": "方朔主动追查老周下落、夜探气象站、质问王干事与老韩，主导性行动清晰",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 2,
-          "evidence": "句式单调雷同，全文以'X说'式对话短句、'没有''咋''对'一两个字回答堆叠，虽有节奏但阅读疲劳严重，触发P1句式多样性低规则。",
+          "evidence": "短句'啥？''对''没有'构成大量一问一答单行对话段，对话体单一句式占比远超40%，节奏机械重复",
           "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "对话真实有方言质感，'啥''咋''呢'等口语契合人物身份，王干事'你今年多大还年轻下山吧'与老韩'知道的人都下去了'各具性格。",
-          "action": "keep"
+          "score": 3,
+          "evidence": "王干事、林遥口吻有差异化（公文腔与克制），但老韩与方朔多轮'啥/对/没有'过密，略显样板化",
+          "action": "trim"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "类型完成度高：雪域+档案+黑匣子+冰下未知存在+官方封存，悬疑恐怖氛围贯穿，气口留白到位，符合'雪线档案'系列调性。",
+          "evidence": "高海拔悬疑+克苏鲁暗示（地心、贴脸、不该进档案的东西）类型元素齐备，封山档案世界观到位",
           "action": "keep"
         }
       ]
