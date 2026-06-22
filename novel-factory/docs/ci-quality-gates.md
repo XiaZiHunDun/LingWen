@@ -64,7 +64,7 @@ LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh tiedao-dang
 | **Prose Judge LLM** | 仅手动 | 七书 `--llm` + artifact |
 | **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec |
 | **e2e-live 副本** | 手动 / label `e2e-live` | 调试副本（主门已在 `test`） |
-| **real-llm-tests** | **仅手动** | Anthropic 真 API · **已取消每日 cron** |
+| **real-llm-tests** | **仅手动** | MiniMax 真 API · 共用 `MINIMAX_API_KEY` · **已取消每日 cron** |
 
 ---
 
@@ -89,12 +89,12 @@ bash scripts/run-prose-judge.sh tiedao-dangan --llm   # 单书试跑
 bash scripts/run-prose-calibration-fill.sh
 ```
 
-### 真 LLM 测试（Anthropic · 仅手动）
+### 真 LLM 测试（MiniMax · 仅手动）
 
 ```bash
-# 仅在需要验证真实写作链路时，在 Actions 手动触发 real-llm-tests
+# Actions → real-llm-tests → Run workflow（需已配置 MINIMAX_API_KEY，与 llm-golden-primary 相同）
 # 或本地：
-ANTHROPIC_API_KEY=... pytest tests/agent_system/test_novel_writing_real_llm.py -k real_llm -v
+MINIMAX_API_KEY=... pytest tests/agent_system/test_novel_writing_real_llm.py -k MiniMax -v
 ```
 
 `LINGWEN_POST_CHECK_LLM`：`0` 跳过 · `auto` 有 key 才跑 · `blocking`/`1` 强制 · **未设置时七样章=blocking**

@@ -97,7 +97,7 @@ LingWen/                                    # 本目录 (项目根, git root)
 - **0 改 historical spec/plan doc `:NNN` 行号** — 8+ 历史 spec/plan docs 的行号引用, 改反误导, 永不做
 - **0 改 CLAUDE.md / pyproject.toml / pytest.ini / vite.config.js / vitest.config.js / playwright.config.js** — 除非该 phase 显式声明改 (跟项目约定)
 - **0 改 production behavior 除非显式声明** — additive only, 不破旧契约
-- **0 真实 LLM 调用 in tests** — `test_novel_writing_real_llm.py` 走 skipif, 默认 SKIP, opt-in 走 `ANTHROPIC_API_KEY=xxx pytest -k real_llm`
+- **0 真实 LLM 调用 in tests** — `test_novel_writing_real_llm.py` 走 skipif, 默认 SKIP; opt-in 用 `MINIMAX_API_KEY`（CI real-llm-tests）或本地 `-k MiniMax`
 - **0 .env 改 / 0 API key 泄漏** — 任何 .env 改动走 user 审批
 - **0 改 infra/.state/*.db** (gitignored)
 - **0 提交 灵文心流.txt / 01-11_目录** (git-tracked, 0 改即可)

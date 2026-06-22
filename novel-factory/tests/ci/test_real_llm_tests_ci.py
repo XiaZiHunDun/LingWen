@@ -1,4 +1,4 @@
-"""Phase 12.07: real-llm-tests workflow — manual only, no scheduled API spend."""
+"""Phase 12.07: real-llm-tests workflow — MiniMax manual only, no scheduled API spend."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,9 +16,12 @@ class TestRealLlmTestsCi:
         assert "workflow_dispatch" in triggers
         assert "schedule" not in triggers
 
-    def test_workflow_requires_anthropic_key(self):
+    def test_workflow_requires_minimax_key_and_minimax_tests(self):
         text = (REPO_ROOT / ".github" / "workflows" / "real-llm-tests.yml").read_text(
             encoding="utf-8",
         )
-        assert "ANTHROPIC_API_KEY" in text
+        assert "MINIMAX_API_KEY" in text
+        assert "TestNovelWritingRealLLMMiniMax" in text
+        assert "TestNovelWritingBudgetRealLLMMiniMax" in text
         assert "test_novel_writing_real_llm.py" in text
+        assert "secrets.ANTHROPIC_API_KEY" not in text

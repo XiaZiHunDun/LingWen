@@ -1,14 +1,17 @@
 """Phase 8: Real LLM E2E — 验证 polish_merge S1-S8 评分在生产路径下产出真实分数.
 
-默认 SKIP (无 ANTHROPIC_API_KEY), opt-in 跑:
-    export ANTHROPIC_API_KEY=sk-ant-...
+默认 SKIP (无对应 provider API key), opt-in 跑:
+    export MINIMAX_API_KEY=...   # 仓库 CI real-llm-tests 使用 MiniMax
+    pytest tests/agent_system/test_novel_writing_real_llm.py -k MiniMax -v
+
+    export ANTHROPIC_API_KEY=sk-ant-...  # 本地可选 Anthropic 矩阵
     pytest tests/agent_system/test_novel_writing_real_llm.py -v
 
-成本: HAIKU × 6 LLM calls ≈ $0.005-0.020 per test.
+成本: 视 provider 与用例数而定 (MiniMax polish_merge 单测 ~1 call).
 
 跟 tests/agent_system/test_master_controller_stub_router_e2e.py 区别:
 - test_master_controller_stub_router_e2e.py: 用 StubProvider 注入 mock router 跑生产路径
-- test_novel_writing_real_llm.py (本文件): 真实 Anthropic API 调用
+- test_novel_writing_real_llm.py (本文件): 真实 LLM API 调用 (MiniMax / Anthropic / OpenAI)
 """
 
 from __future__ import annotations

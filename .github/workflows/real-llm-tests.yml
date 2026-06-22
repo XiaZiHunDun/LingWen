@@ -1,5 +1,5 @@
 # Phase 9.37 F22: moved to repo root — GitHub Actions reads /.github/workflows/ only.
-# Real Anthropic API tests — manual only (no schedule; avoid surprise API bills).
+# Real MiniMax API tests — manual only (no schedule; avoid surprise API bills).
 
 name: real-llm-tests
 
@@ -16,7 +16,7 @@ defaults:
 
 jobs:
   real-llm-tests:
-    name: Real LLM tests (Anthropic, Python 3.13)
+    name: Real LLM tests (MiniMax, Python 3.13)
     runs-on: ubuntu-latest
 
     strategy:
@@ -28,10 +28,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check ANTHROPIC_API_KEY secret
+      - name: Check MINIMAX_API_KEY secret
         run: |
-          if [ -z "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
-            echo "::error::ANTHROPIC_API_KEY secret is not set in repo Settings → Secrets → Actions"
+          if [ -z "${{ secrets.MINIMAX_API_KEY }}" ]; then
+            echo "::error::MINIMAX_API_KEY secret is not set in repo Settings → Secrets → Actions"
             exit 1
           fi
 
@@ -47,12 +47,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run real LLM tests (Anthropic only)
+      - name: Run real LLM tests (MiniMax only)
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           pytest tests/agent_system/test_novel_writing_real_llm.py \
-            -k "TestNovelWritingRealLLM or TestPolishMergeSynthesisRealLLM or TestNovelWritingBudgetRealLLM" \
+            -k "TestNovelWritingRealLLMMiniMax or TestNovelWritingBudgetRealLLMMiniMax" \
             --tb=short -v
 
       - name: Ruff (informational, non-blocking)
