@@ -2,7 +2,7 @@
 
 > **版本**：prose-rubric-v1 · 2026-06-20  
 > **用途**：定义「灵文级可读」——主修书验收、P1 校准、Dashboard prose 热力图的共同标准  
-> **关联**：[`top-tier-studio-gap-v1.md`](top-tier-studio-gap-v1.md) · [`ci-quality-gates.md`](ci-quality-gates.md)
+> **关联**：[`prose-rubric-v2.md`](prose-rubric-v2.md)（**正式验收**）· [`top-tier-studio-gap-v1.md`](top-tier-studio-gap-v1.md) · [`ci-quality-gates.md`](ci-quality-gates.md)
 
 ---
 

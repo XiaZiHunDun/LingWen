@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.60 (CI workflow 整理 7→6, 2026-06-22)  
-> **更新 (2026-06-22)**: 删 e2e-live 副本 · Coverage Pages 仅手动 · 见 [`ci-quality-gates.md`](novel-factory/docs/ci-quality-gates.md) §Workflow 地图
+> **版本**: v10.61 (文档对齐 + frontend 主门 + 生产 DoD, 2026-06-22)  
+> **更新 (2026-06-22)**: pytest **3011+** · 七样章默认 zip · test 含 lint+build · 见 [`studio-production-dod.md`](novel-factory/docs/studio-production-dod.md)
 
 ---
 
@@ -17,8 +17,8 @@
 | **试验田** | 《星陨纪元》ch001–ch360 正史；ch361–ch996 = stress test（见 `03_内容仓库/experimental/`） |
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
-| **CI** | **`test` 主门**：pytest×3 · **vitest** · golden×8 · llm×7 · e2e-live · ruff · cov 50% |
-| **下一期推荐** | **七 dist 齐平** — pytest 3000+ · Studio 录屏 · v2 正式版 |
+| **CI** | **`test` 主门**：pytest×3 · vitest · **lint+build** · golden×8 · llm×7 · e2e-live · ruff · cov 50% |
+| **下一期推荐** | **Studio 生产 DoD 真实 1 章 pilot** · Demo 录屏（可选）· LLM 降频（按需） |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
@@ -760,7 +760,7 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 
 ### 7.5 pytest baseline 与环境变量
 
-- **默认 CI 期望**: `pytest -q` → **2983+ passed**, skipped 见 CI（2026-06-21）
+- **默认 CI 期望**: `pytest -q` → **3011+ collected**（2026-06-22）
 - **`LINGWEN_MEMORY_RAG=live`** 在 shell 中 export 时，batch 单元测试需 `stub`（已在 `test_chapter_production_batch` autouse 隔离）
 - **real LLM opt-in** (`MINIMAX_API_KEY` 等): `test_novel_writing_real_llm.py` 仅在有 key 时跑；Markdown fenced JSON 已由 `AgentBase.parse_response` 剥离
 
@@ -790,12 +790,13 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 读 `novel-factory/CLAUDE.md` (主控 agent prompt 模板, 5 分钟)
 - [ ] 读 `novel-factory/docs/superpowers/plans/2026-06-11-followup-roadmap-v9-post-9.90.md` (v9 已完成, 5 分钟)
 - [ ] 读 auto-memory `phases-8-dashboard-c.md` (最近 phase 详细, 10 分钟)
-- [ ] 读 [`ci-quality-gates.md`](novel-factory/docs/ci-quality-gates.md) §本地最小验证（**不必**每次 push 前全量 pytest）
+- [ ] 读 [`studio-production-dod.md`](novel-factory/docs/studio-production-dod.md)（真实 1 章 pilot 标准）
+- [ ] 读 [`ci-quality-gates.md`](novel-factory/docs/ci-quality-gates.md) §本地最小验证 + §MiniMax API 成本
 - [ ] push 后确认 **GitHub Actions → test** 全绿（含 vitest job）
 - [ ] （可选）改 Python 时 `pytest tests/<相关> -q`；改前端时 `pnpm vitest run`（~8s）
 - [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一工作: **pytest 3000+** · Studio 录屏 · prose rubric v2 正式版
+- [ ] 选下一工作: **Studio 生产 DoD C 段（真实 LLM 1 章）** · LLM 降频决策 · Demo 录屏（可选）
 
 ---
 
@@ -803,8 +804,9 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 ```bash
 # === Tests（全量以 GitHub Actions test workflow 为准；本地见 ci-quality-gates §本地最小验证）===
-cd novel-factory && pytest -q                                    # 可选 · 2983+ passed, ~7–9min
-cd novel-factory/dashboard/frontend && pnpm vitest run             # 改前端时 · ~8s · CI 每次 push 也跑
+cd novel-factory && pytest -q                                    # 3011+ collected · 全量见 CI
+cd novel-factory/dashboard/frontend && pnpm vitest run             # 改前端时 · ~8s
+cd novel-factory/dashboard/frontend && pnpm lint:all && pnpm build # 与 test 主门对齐
 cd novel-factory/dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
 cd novel-factory/dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
 cd novel-factory/dashboard/frontend && pnpm e2e:smoke --list       # 1 smoke test

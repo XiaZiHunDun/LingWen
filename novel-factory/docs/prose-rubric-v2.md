@@ -1,20 +1,20 @@
-# 灵文 Prose Rubric v2（草案 · 12.02）
+# 灵文 Prose Rubric v2（正式版 · 12.08）
 
-> **版本**：prose-rubric-v2-draft · 2026-06-20  
-> **状态**：草案 — v1 仍为验收主标准；v2 定义 LLM judge 与人工抽检闭环  
+> **版本**：prose-rubric-v2 · 2026-06-22  
+> **状态**：**正式版** — 与 v1 规则门并用；LLM judge + 抽检为 v2 增量  
 > **前置**：[`prose-rubric-v1.md`](prose-rubric-v1.md) · [`top-tier-studio-gap-v1.md`](top-tier-studio-gap-v1.md)
 
 ---
 
 ## 1. v2 相对 v1 的增量
 
-| 项 | v1 | v2（草案） |
-|----|----|------------|
+| 项 | v1 | v2 |
+|----|----|-----|
 | 评分来源 | 规则 P1 + 人工六维 | + **LLM prose judge**（Golden 三章） |
-| 误报治理 | YAML 基线 + 校准脚本 | + **人工抽检表**（目标误报 <20%） |
+| 误报治理 | YAML 基线 + 校准脚本 | + **人工抽检表**（目标误报 <20% · 当前 4.8%） |
 | Dashboard | 热力图 + diff | + diff 基线七书全覆盖 |
 | CI LLM | 七样章 blocking | **七样章** blocking ✅ |
-| 覆盖率 | 40% | **50%** global |
+| 覆盖率 | 40% → 50% | **50%** global ✅ |
 
 **原则不变**：规则 + rubric 定标准，LLM **辅助**而非单独定义「好 prose」。
 

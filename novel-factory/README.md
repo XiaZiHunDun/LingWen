@@ -1,9 +1,9 @@
 # 灵文 · LingWen Studio
 
-> **产品版本**: Studio v10.34 · 2026-06-20  
+> **产品版本**: Studio v12 · 2026-06-22  
 > **定位**: 可复用的工业化小说生产系统（**灵文工作室**）  
 > **试验田**: 《星陨纪元》ch001–360 正史 · ch361+ stress test  
-> **CI**: pytest + golden-set ×8 + onboarding-smoke · 见仓库根 `.github/workflows/test.yml`
+> **CI**: [`test` workflow](../.github/workflows/test.yml) — pytest×3 · vitest · lint · build · golden×8 · llm×7 · e2e-live · ruff · cov 50%
 
 切换工具 / 新同事入门：**先读** [`../HANDOFF.md`](../HANDOFF.md)（TL;DR + Phase 历史）。
 
@@ -15,7 +15,7 @@
 |----|------|
 | **产品** | init → preflight → batch → full-check → 试读包 |
 | **Studio 新书** | **八项目** 各 10 章 · P0=0 · Golden Set CI |
-| **对外样章** | **五样章** dist + `灵文工作室-五样章.zip` |
+| **对外样章** | **七样章** dist + `灵文工作室-七样章.zip`（五册 zip 仍可用） |
 | **星陨** | testbed；默认 `max_chapter=360`，禁止 canon 无限续跑 |
 | **Dashboard** | `bash scripts/run-dashboard-single-port.sh` → `http://127.0.0.1:8765/?nav=studio` |
 
@@ -28,17 +28,15 @@ cd novel-factory
 cp .env.example .env              # 真实 pilot 需 MINIMAX_API_KEY
 python lingwen.py doctor
 
-# 一键验收 + 双样章打包
+# 一键验收 + 七样章打包
 bash scripts/verify-studio-release.sh
-bash scripts/prepare-jinghai-distribution.sh   # → projects/jinghai-rizhi/dist/
-bash scripts/prepare-huiyu-distribution.sh     # → projects/huiyu-dangan/dist/
-bash scripts/prepare-tiedao-distribution.sh      # → projects/tiedao-dangan/dist/
-bash scripts/prepare-anye-distribution.sh        # → projects/anye-xinbiao/dist/
-bash scripts/prepare-xuexian-distribution.sh     # → projects/xuexian-dangan/dist/
-bash scripts/prepare-studio-samples-zip.sh       # → dist/灵文工作室-五样章.zip
+STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh   # → dist/灵文工作室-七样章.zip
 
-# 30 分钟跑通第一本短篇
-# 见 docs/studio-onboarding.md
+# 单书 dist（任选）
+bash scripts/prepare-jinghai-distribution.sh   # → projects/jinghai-rizhi/dist/
+bash scripts/prepare-anhe-distribution.sh      # → projects/anhe-dangan/dist/
+
+# 30 分钟跑通第一本短篇 → docs/studio-onboarding.md
 python lingwen.py init-project my-book --title "书名" --protagonist 主角
 export LINGWEN_PROJECT_ROOT="$(pwd)/projects/my-book"
 python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter-num 1
@@ -50,15 +48,14 @@ python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter
 
 | 文档 | 用途 |
 |------|------|
-| [`docs/trial-read-index.md`](docs/trial-read-index.md) | **对外试读分发**（八书 + 星陨） |
-| [`docs/studio-demo.md`](docs/studio-demo.md) | 15/30 分钟产品 Demo |
+| [`docs/trial-read-index.md`](docs/trial-read-index.md) | **对外试读分发**（七样章 + 星陨） |
+| [`docs/ci-quality-gates.md`](docs/ci-quality-gates.md) | CI 主门 + 本地最小验证 + LLM 成本 |
+| [`docs/studio-production-dod.md`](docs/studio-production-dod.md) | **Studio 真实生产完成定义** |
+| [`docs/studio-demo.md`](docs/studio-demo.md) | 15/30 分钟产品 Demo（脚本；录屏本期不做） |
 | [`docs/studio-onboarding.md`](docs/studio-onboarding.md) | 第一本短篇 onboarding |
-| [`docs/eight-books-reading-guide.md`](docs/eight-books-reading-guide.md) | 七书 Studio 通读索引 |
-| [`docs/primary-revision-book.md`](docs/primary-revision-book.md) | 主修书矩阵（静海/灰域/铁道） |
-| [`docs/prose-rubric-v1.md`](docs/prose-rubric-v1.md) | **Prose 标准**（11.22） |
+| [`docs/prose-rubric-v2.md`](docs/prose-rubric-v2.md) | **Prose 验收标准**（v2 正式版） |
+| [`docs/prose-rubric-v1.md`](docs/prose-rubric-v1.md) | Prose 规则基线（v1） |
 | [`docs/top-tier-studio-gap-v1.md`](docs/top-tier-studio-gap-v1.md) | 顶级工作室 KPI |
-| [`docs/jinghai-external-release.md`](docs/jinghai-external-release.md) | **静海对外分发**（简介 + 邮件模板） |
-| [`docs/studio-demo-record-ready.md`](docs/studio-demo-record-ready.md) | Demo 录屏清单（**本期不做**，备查） |
 | [`docs/chapter-production-runbook.md`](docs/chapter-production-runbook.md) | 生产 runbook |
 
 ---
@@ -69,19 +66,16 @@ python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter
 novel-factory/
 ├── lingwen.py                 # CLI 入口
 ├── projects/                  # Studio 新书（每 slug 独立根）
-│   ├── jinghai-rizhi/         # 主打样章 · 沿海悬疑
-│   ├── huiyu-dangan/          # 灰域档案
-│   └── …                      # 共八书 + 见 trial-read-index
+│   ├── jinghai-rizhi/         # 第一样章 · 沿海悬疑
+│   ├── anhe-dangan/           # 第七样章 · 喀斯特
+│   └── …                      # 共八书 · 见 trial-read-index
 ├── scripts/
-│   ├── verify-studio-release.sh   # 发布前一键 smoke
-│   ├── verify-onboarding.sh
-│   ├── verify-golden-set.sh
-│   ├── build-trial-read.sh
+│   ├── verify-studio-release.sh
+│   ├── verify-studio-production-dod.sh
 │   └── run-dashboard-single-port.sh
 ├── infra/                     # Agent · 质检 · project_config
 ├── dashboard/                 # FastAPI + Vue Studio 页
-├── tests/                     # pytest
-└── 03_内容仓库/               # 星陨 testbed 正文（根项目）
+└── tests/                     # pytest 3000+
 ```
 
 ---
@@ -92,11 +86,10 @@ novel-factory/
 # 质检 + 试读包（单书）
 bash scripts/generate-full-check-report.sh jinghai-rizhi 1 10
 bash scripts/build-trial-read.sh jinghai-rizhi 1 10
-bash scripts/sync-golden-set.sh jinghai-rizhi
 
-# 测试
-pytest -q                       # 需 pip install -e ".[dev]"
-cd dashboard/frontend && pnpm vitest run
+# 测试（全量以 GitHub Actions test workflow 为准）
+pytest -q                       # 3011+ collected
+cd dashboard/frontend && pnpm vitest run && pnpm lint:all && pnpm build
 ```
 
 ---
@@ -112,7 +105,7 @@ outline_master · character_designer · content_writer · auditor · polisher
 
 ---
 
-## 星陨纪元（试验田 · 历史）
+## 星陨纪元（试验田）
 
 根目录 `03_内容仓库/` 为《星陨纪元》360 章正史；`experimental/` 为 ch361+ stress test。
 
@@ -122,17 +115,15 @@ outline_master · character_designer · content_writer · auditor · polisher
 | 默认硬门 | `config/project.yaml` → `max_chapter: 360` |
 | Stress test | `LINGWEN_ALLOW_STRESS_TEST=1` 显式开启 |
 
-v8.3 一致性整改与发布包见 `08_已发布/星陨纪元_v8.3_*`。完整历史指标见下方版本表。
-
 ---
 
 ## 版本历史（摘要）
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
-| **Studio v10** | 2026-06 | 工作室化 · 八书 10 章 · Dashboard · Golden Set CI |
-| v8.3 | 2026-05 | 星陨 360 章一致性检测与整改 |
-| v1.0 | 2026-05 | 初始多 Agent 架构 |
+| **Studio v12** | 2026-06 | 七样章齐平 · CI 6 workflow · prose rubric v2 |
+| Studio v10 | 2026-06 | 工作室化 · Dashboard · Golden Set CI |
+| v8.3 | 2026-05 | 星陨 360 章一致性检测 |
 
 ---
 

@@ -1,11 +1,13 @@
 # 灵文工作室 · 试读分发索引
 
-> **版本**：distribution-v7 · 2026-06-20 · **七样章 dist + zip**  
+> **版本**：distribution-v8 · 2026-06-22 · **七样章 dist + zip（默认）**  
 > **用途**：对外分发时，直接发送下方「单文件试读」链接或附件。
 
 ---
 
-## 五样章（对外优先）
+## 七样章（对外默认）
+
+打包：`STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh` → `dist/灵文工作室-七样章.zip`
 
 | 书 | 角色 | 试读 3 章 | 全书 10 章 | 打包 |
 |----|------|-----------|------------|------|
@@ -14,23 +16,33 @@
 | **《铁道档案》** | 第三样章 · 铁路 | [`trial-read-ch001-003.md`](projects/tiedao-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/tiedao-dangan/docs/trial-read-ch001-010.md) | `prepare-tiedao-distribution.sh` |
 | **《暗夜信标》** | 第四样章 · 科幻 | [`trial-read-ch001-003.md`](projects/anye-xinbiao/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/anye-xinbiao/docs/trial-read-ch001-010.md) | `prepare-anye-distribution.sh` |
 | **《雪线档案》** | 第五样章 · 高山 | [`trial-read-ch001-003.md`](projects/xuexian-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/xuexian-dangan/docs/trial-read-ch001-010.md) | `prepare-xuexian-distribution.sh` |
-
-**五册 zip**：`bash scripts/prepare-studio-samples-zip.sh` → [`dist/灵文工作室-五样章.zip`](../dist/灵文工作室-五样章.zip)
-
-**七册 zip**（含黄沙/暗河）：`STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh` → `dist/灵文工作室-七样章.zip`
-
-说明：[`jinghai-external-release.md`](jinghai-external-release.md) · … · [`xuexian-external-release.md`](xuexian-external-release.md)
-
----
-
-## 扩展样章（第六 / 七 · dist 就绪）
-
-| 书 | 角色 | 试读 3 章 | 全书 10 章 | 打包 |
-|----|------|-----------|------------|------|
 | **《黄沙档案》** | 第六样章 · 沙漠 | [`trial-read-ch001-003.md`](projects/huangsha-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/huangsha-dangan/docs/trial-read-ch001-010.md) | `prepare-huangsha-distribution.sh` |
 | **《暗河档案》** | 第七样章 · 喀斯特 | [`trial-read-ch001-003.md`](projects/anhe-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/anhe-dangan/docs/trial-read-ch001-010.md) | `prepare-anhe-distribution.sh` |
 
-说明：[`huangsha-external-release.md`](huangsha-external-release.md) · [`anhe-external-release.md`](anhe-external-release.md)
+**精简五册 zip**（可选）：`bash scripts/prepare-studio-samples-zip.sh` → [`dist/灵文工作室-五样章.zip`](../dist/灵文工作室-五样章.zip)
+
+说明：[`jinghai-external-release.md`](jinghai-external-release.md) · … · [`anhe-external-release.md`](anhe-external-release.md)
+
+---
+
+## 历史：五样章优先（v10）
+
+以下为 v10 对外叙事；**v12 默认七册**，上表为准。
+
+<details>
+<summary>展开五样章表（归档）</summary>
+
+| 书 | 角色 |
+|----|------|
+| 静海 · 灰域 · 铁道 · 暗夜 · 雪线 | 前五样章 |
+
+</details>
+
+---
+
+## ~~扩展样章~~（已并入上表）
+
+~~第六 / 七~~ 已合并至 **七样章（对外默认）**。
 
 ---
 

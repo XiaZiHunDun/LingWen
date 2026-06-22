@@ -9,9 +9,9 @@
 
 | 象限 | 今日 | 顶级目标 | 差距 |
 |------|------|----------|------|
-| 工程化 | ★★★★☆ (0.82) | 0.85 | pytest 3000+ |
-| Prose 成品 | ★★★★☆ (0.72) | 0.88 | 三书 LLM avg<4.0 |
-| **综合** | **★★★☆☆** | **★★★★★** | **主要在 prose 闭环** |
+| 工程化 | ★★★★☆ (0.85) | 0.85 | pytest **3011+** ✅ |
+| Prose 成品 | ★★★★☆ (0.80) | 0.88 | 七书 LLM avg≥4.0 ✅ · 持续 polish |
+| **综合** | **★★★★☆** | **★★★★★** | **对外叙事 + 规模化生产** |
 
 ---
 
@@ -25,7 +25,7 @@
 | Golden prose 校准 | ✅ 五书基线 | ✅ | 八书基线 | `run-prose-calibration.sh` |
 | 主修验收 LLM | **blocking（七样章）** | ✅ | blocking P0 | `run-primary-revision-verify.sh` |
 | Dashboard prose 视图 | ✅ 热力图+diff | ✅ | diff 对比 | Studio 页 |
-| pytest | **2972+** | 2972+ | 3000+ | CI |
+| pytest | **3011+** | 3011+ ✅ | 3000+ | CI |
 | 覆盖率 | **50%** ✅ | **40%** ✅ | 50% | pytest-cov + `verify-coverage-modules.sh` |
 | Playwright live | **5/5 默认 CI** (`test`) | —（副本已删） | 默认 CI | `verify-e2e-live-ci.sh` |
 | Vitest | **每次 push CI** | — | — | `pnpm vitest run` |
@@ -61,6 +61,7 @@
 | G10 | 覆盖率 30% | 分模块提到 **50%** | 12.02 | ✅ |
 | G11 | E2E live 5/5 | label CI 稳定绿 | **默认 CI** | 12.04 | ✅ |
 | G12 | 文档滞后 | primary-revision / HANDOFF 同步 | 11.22 | ✅ |
+| G13 | 新书真实生产未定义 DoD | [`studio-production-dod.md`](studio-production-dod.md) + verify 脚本 | 12.09 | ✅ 文档 · C 段待 pilot |
 
 ---
 

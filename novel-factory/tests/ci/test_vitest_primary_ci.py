@@ -12,6 +12,8 @@ class TestVitestPrimaryCi:
         wf = (REPO_ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
         assert "vitest:" in wf
         assert "pnpm vitest run" in wf
+        assert "pnpm lint:all" in wf
+        assert "pnpm build" in wf
         assert "pnpm/action-setup@v4" in wf
 
     def test_vitest_script_unchanged(self):

@@ -1,19 +1,21 @@
 # CI 质量门说明（v12）
 
-> Phase 12.08 · workflow 整理 · vitest 入主门 · real-llm 仅 MiniMax 手动
+> Phase 12.09 · 文档对齐 · frontend lint+build 主门 · LLM 成本说明
 
 ## Workflow 地图（GitHub Actions 共 6 个）
 
 | # | Workflow 文件 | 显示名 | 触发 | blocking? | 用途 |
 |---|---------------|--------|------|-----------|------|
-| 1 | **`test.yml`** | test | 每次 push/PR master | **是** | 主门：pytest · vitest · golden · llm×7 · e2e-live · ruff |
+| 1 | **`test.yml`** | test | 每次 push/PR master | **是** | 主门：pytest · vitest · **lint · build** · golden · llm×7 · e2e-live · ruff |
 | 2 | `dashboard-frontend-ci.yml` | Dashboard Frontend CI | `dashboard/frontend/**` 变更 | 否* | lint · typecheck · vitest+coverage · build · Codecov |
 | 3 | `dashboard-frontend-coverage-pages.yml` | Frontend Coverage Pages | **仅手动** | 否 | vitest HTML → GitHub Pages |
 | 4 | `dashboard-e2e-smoke.yml` | Dashboard E2E Smoke | 手动 / label `e2e-smoke` | 否 | 1 spec 调试 |
 | 5 | `prose-judge-llm.yml` | Prose Judge LLM | **仅手动** | 否 | 七书六维 judge + artifact |
 | 6 | `real-llm-tests.yml` | real-llm-tests | **仅手动** | 否 | MiniMax agent 写作链路 |
 
-\* Frontend CI 不挡 merge，但改前端时应绿；主门 `test` 已含 vitest + e2e-live。
+\* 主门已含 vitest + lint + build；Frontend CI 额外提供 typecheck + **coverage 80%** + Codecov。
+
+**覆盖率叙事**：pytest **50%** global 为 CI 硬门；frontend `vitest --coverage` **80%** 阈值在 `dashboard-frontend-ci.yml`（改 frontend 时）与本地 `pnpm test:coverage`。
 
 **已删除（12.08）**：`dashboard-e2e-live.yml`（与 `test` 内 `e2e-live` 重复）、`novel-factory/.github/workflows/*.yml` 废弃副本。
 
@@ -23,8 +25,8 @@
 
 | 门 | 命令 | 说明 |
 |----|------|------|
-| pytest | `pytest tests/` | 3.11–3.13，覆盖率 **≥50%** + 分模块 |
-| **vitest** | `pnpm vitest run` | **blocking** · 每次 push/PR |
+| pytest | `pytest tests/` | 3.11–3.13，覆盖率 **≥50%** + 分模块（**3011+** tests） |
+| **vitest + lint + build** | `pnpm vitest run` · `lint:all` · `build` | **blocking** · 每次 push/PR |
 | golden-set | `verify-golden-set.sh <slug>` ×8 | 结构 + **P0 规则门** |
 | onboarding | `verify-onboarding.sh ci-smoke` | init → preflight → dry-run |
 | ruff | `ruff check .` | **blocking** |
@@ -114,6 +116,40 @@ MINIMAX_API_KEY=... pytest tests/agent_system/test_novel_writing_real_llm.py -k 
 ```
 
 `LINGWEN_POST_CHECK_LLM`：`0` 跳过 · `auto` 有 key 才跑 · `blocking`/`1` 强制 · **未设置时七样章=blocking**
+
+---
+
+## MiniMax API 成本（当前策略）
+
+**Secret**：仅 `MINIMAX_API_KEY`（与本地 `.env` 同一 key）。
+
+| Job / Workflow | 触发 | 约 API 调用 | 说明 |
+|----------------|------|-------------|------|
+| **llm-golden-primary** ×7 | **每次 push/PR** | 七书 × Golden `--llm` | **主要持续成本** · blocking |
+| prose-judge-llm | 手动 | 七书 × 三章 judge | ~90min · 定稿前跑 |
+| real-llm-tests | 手动 | 3 tests（pilot + budget） | agent 链路验证 |
+| llm-golden-set | manual / label `llm-check` | 静海单书 | 可选 |
+
+**粗估**：每次 push 若七书 LLM Golden 全跑，费用取决于 MiniMax 定价与章节/check 长度；高频 push 会线性放大。建议在 MiniMax 控制台设 **余额告警**。
+
+### 可选降频方案（未启用 · 需团队决策）
+
+当前 **保持 blocking**（质量优先）。若账单偏高，可考虑：
+
+| 方案 | 改法 |  trade-off |
+|------|------|------------|
+| **A. PR label** | push 不跑 llm×7；PR 加 label `llm-check` 才跑 | 主分支 push 可能无 LLM 覆盖 |
+| **B. 轮换** | matrix 每次只跑 2 slug，7 次 push 轮完七书 | 单次 push 覆盖面下降 |
+| **C. nightly** | llm×7 改 cron 或 nightly workflow；push 只跑 offline golden | 回归发现延迟 ≤24h |
+| **D. 路径过滤** | 仅 `projects/**` 或 `infra/**` 变更时跑 llm | 改 workflow 时不跑 |
+
+启用任一方案前：更新 `test.yml` + [`ci-quality-gates.md`](ci-quality-gates.md) + 团队确认可接受的回归窗口。
+
+---
+
+## Studio 生产 DoD
+
+新书真实 1 章 pilot 见 [`studio-production-dod.md`](studio-production-dod.md) · 本地 `bash scripts/verify-studio-production-dod.sh`。
 
 ---
 
