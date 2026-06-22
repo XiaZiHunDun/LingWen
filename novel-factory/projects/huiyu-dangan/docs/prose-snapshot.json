@@ -1,14 +1,14 @@
 {
   "version": 1,
   "slug": "huiyu-dangan",
-  "captured_at": "2026-06-22 09:41 UTC",
+  "captured_at": "2026-06-22 12:08 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 15,
+    "p1": 18,
     "p2": 6,
     "p3": 2,
-    "total": 23,
+    "total": 26,
     "prose_p1": 8,
     "prose_total": 10
   },
@@ -51,7 +51,7 @@
     },
     {
       "chapter": 5,
-      "issue_count": 3,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -96,7 +96,7 @@
     },
     {
       "chapter": 10,
-      "issue_count": 2,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [

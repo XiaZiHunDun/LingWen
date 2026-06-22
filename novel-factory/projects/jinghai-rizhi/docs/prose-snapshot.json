@@ -1,21 +1,21 @@
 {
   "version": 1,
   "slug": "jinghai-rizhi",
-  "captured_at": "2026-06-22 09:41 UTC",
+  "captured_at": "2026-06-22 11:55 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 9,
+    "p1": 21,
     "p2": 7,
     "p3": 7,
-    "total": 23,
+    "total": 35,
     "prose_p1": 8,
     "prose_total": 10
   },
   "chapters": [
     {
       "chapter": 1,
-      "issue_count": 5,
+      "issue_count": 7,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -33,7 +33,7 @@
     },
     {
       "chapter": 3,
-      "issue_count": 4,
+      "issue_count": 6,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -42,7 +42,7 @@
     },
     {
       "chapter": 4,
-      "issue_count": 1,
+      "issue_count": 2,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -51,7 +51,7 @@
     },
     {
       "chapter": 5,
-      "issue_count": 2,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -60,7 +60,7 @@
     },
     {
       "chapter": 6,
-      "issue_count": 2,
+      "issue_count": 3,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -69,7 +69,7 @@
     },
     {
       "chapter": 7,
-      "issue_count": 2,
+      "issue_count": 5,
       "prose_p1": 0,
       "prose_total": 1,
       "prose_issue_types": [
@@ -78,7 +78,7 @@
     },
     {
       "chapter": 8,
-      "issue_count": 1,
+      "issue_count": 2,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [

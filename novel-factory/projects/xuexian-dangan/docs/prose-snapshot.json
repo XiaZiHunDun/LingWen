@@ -1,14 +1,14 @@
 {
   "version": 1,
   "slug": "xuexian-dangan",
-  "captured_at": "2026-06-22 09:41 UTC",
+  "captured_at": "2026-06-22 12:40 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 9,
+    "p1": 25,
     "p2": 12,
     "p3": 4,
-    "total": 25,
+    "total": 41,
     "prose_p1": 8,
     "prose_total": 10
   },
@@ -24,7 +24,7 @@
     },
     {
       "chapter": 2,
-      "issue_count": 3,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -42,7 +42,7 @@
     },
     {
       "chapter": 4,
-      "issue_count": 2,
+      "issue_count": 5,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -51,7 +51,7 @@
     },
     {
       "chapter": 5,
-      "issue_count": 3,
+      "issue_count": 5,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -60,7 +60,7 @@
     },
     {
       "chapter": 6,
-      "issue_count": 2,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -78,7 +78,7 @@
     },
     {
       "chapter": 8,
-      "issue_count": 1,
+      "issue_count": 5,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -87,7 +87,7 @@
     },
     {
       "chapter": 9,
-      "issue_count": 3,
+      "issue_count": 4,
       "prose_p1": 0,
       "prose_total": 1,
       "prose_issue_types": [
@@ -96,7 +96,7 @@
     },
     {
       "chapter": 10,
-      "issue_count": 3,
+      "issue_count": 6,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
