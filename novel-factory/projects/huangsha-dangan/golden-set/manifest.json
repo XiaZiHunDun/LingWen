@@ -9,21 +9,21 @@
       "num": 1,
       "role": "opening_hook",
       "file": "chapters/ch001.md",
-      "char_count": 2200,
+      "char_count": 2068,
       "full_check_issues_baseline": 3
     },
     {
       "num": 5,
       "role": "midpoint_turn",
       "file": "chapters/ch005.md",
-      "char_count": 1937,
+      "char_count": 1782,
       "full_check_issues_baseline": 2
     },
     {
       "num": 10,
       "role": "finale",
       "file": "chapters/ch010.md",
-      "char_count": 476,
+      "char_count": 497,
       "full_check_issues_baseline": 2
     }
   ],
