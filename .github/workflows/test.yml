@@ -135,6 +135,27 @@ jobs:
       - name: Verify onboarding pipeline
         run: bash scripts/verify-onboarding.sh ci-smoke
 
+  vitest:
+    name: Vitest (frontend unit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run vitest
+        run: pnpm vitest run
+
   llm-golden-set:
     name: LLM golden-set (optional, needs MINIMAX_API_KEY)
     runs-on: ubuntu-latest

@@ -1,13 +1,13 @@
-# CI Setup Guide (Phase 8.3)
+# CI Setup Guide (Phase 8.3 · 12.07 更新)
 
-> **目的**: Real LLM tests 在 GitHub Actions 定时跑, 抓 production 路径 regression 24h 内.
+> **目的**: Real LLM tests 在需要时手动跑 Anthropic 真 API，验证 production 写作链路；**无每日 cron**（防账单超标）。
 
 ## 概述
 
 - **Workflow**: `.github/workflows/real-llm-tests.yml` (repo root; `working-directory: novel-factory`)
-- **Trigger**: 每天 UTC 02:00 (北京时间 10:00) + 手动 workflow_dispatch
+- **Trigger**: **仅** `workflow_dispatch`（手动）
 - **Provider**: Anthropic only (Phase 8 HAIKU, ~$0.025/run)
-- **月成本估算**: $0.75 (30 daily runs)
+- **月成本**: 按手动次数计（不再自动每日 ~$0.75/月）
 
 ## 步骤 1: 添加 `ANTHROPIC_API_KEY` secret
 
@@ -41,13 +41,7 @@ tests/agent_system/test_novel_writing_real_llm.py::TestPolishMergeSynthesisRealL
 
 (2 skipped 是 OpenAI/MiniMax 测试, 无 key 默认 SKIP, 符合预期)
 
-## 步骤 3: 验证 cron 触发 (24h 后)
-
-1. 打开 https://github.com/XiaZiHunDun/LingWen/actions
-2. 找到带 **scheduled** 标签的 run
-3. 期望: 跟 manual dispatch 一样 pass
-
-## 步骤 4: 验证 secret 不泄漏 (sanity check)
+## 验证 secret 不泄漏 (sanity check)
 
 1. 打开任一 workflow run → 点 job → 查看 log
 2. 搜 "ANTHROPIC" → 应该看到 `***` (GitHub 自动 redact)
@@ -65,29 +59,14 @@ tests/agent_system/test_novel_writing_real_llm.py::TestPolishMergeSynthesisRealL
 
 ## 禁用 workflow
 
-**临时禁用** (推荐):
-
-GitHub UI → Actions → Real LLM Tests → ... → **Disable workflow**
-
-**永久禁用** (改 cron 注释):
-
-```bash
-# 编辑 .github/workflows/real-llm-tests.yml, 改:
-#   schedule:
-#     - cron: '0 2 * * *'
-# 为:
-#   # schedule:  # disabled YYYY-MM-DD
-#   #   - cron: '0 2 * * *'
-git add .github/workflows/real-llm-tests.yml
-git commit -m "ci: disable real-llm-tests cron (reason)"
-```
+**永久禁用**: GitHub UI → Actions → Real LLM Tests → **Disable workflow**（或删除 workflow 文件；当前已无 schedule，仅手动触发时产生费用）
 
 ## 成本监控
 
 - GitHub billing: https://github.com/settings/billing (看 Actions minutes)
 - Anthropic usage: https://console.anthropic.com/settings/usage
 - 单 run 估算: ~$0.025 (HAIKU 6 calls + Sonnet 1 call)
-- 每天 1 次: ~$0.75/月
+- 仅手动触发时计费
 - 手动 dispatch × N: 叠加
 
 ## 安全注意
