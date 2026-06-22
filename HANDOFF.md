@@ -4,7 +4,7 @@
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
 > **版本**: v10.64 (budget 校准 + live RAG + e2e record, 2026-06-22)  
-> **更新 (2026-06-22)**: DoD batch `--calibrate-from` · wave 367–376 已绿 · Memory RAG live · 本地 e2e 首绿 record
+> **更新 (2026-06-22)**: e2e-live 远程首绿 run **27928203388** · DoD batch calibrate · wave 367–376 · Memory RAG live
 
 ---
 
@@ -800,7 +800,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [x] DoD D batch 3章（`--real-llm-batch` · 2026-06-22）
 - [x] 星陨 wave 367–376（2026-06-12 · 10/10 · ~$0.28 · `batch-367-376.json`）
 - [x] Memory RAG live pilot（2026-06-22 · `memory_context_source=live` · ~$0.032 · emit=0 不落盘）
-- [x] 本地 e2e-live 首绿 record（`ci_records/e2e-live-first-green.json` · 5/5 · 远程 run id 待填）
+- [x] e2e-live 首绿 record（本地 + 远程 run **27928203388** · `9132168` · 5/5）
 
 ---
 
