@@ -1,7 +1,7 @@
 # Studio 真实生产 · 完成定义（DoD）
 
-> **版本**：production-dod-v1 · 2026-06-22  
-> **用途**：判断「灵文工作室」是否能在 **新书** 上完成 **1 章真实 MiniMax 生产**，而非仅依赖已修定的七样章 dist。
+> **版本**：production-dod-v2 · 2026-06-22  
+> **用途**：验证「灵文工作室」在 **临时新书** 上能跑通真实 MiniMax 生产（单章 + 三章 batch）。
 
 ---
 
@@ -9,83 +9,69 @@
 
 | 包含 | 不包含 |
 |------|--------|
-| 新书或 test 项目 1 章 **真实 LLM** pilot | 七样章 prose polish（见 [`prose-rubric-v2.md`](prose-rubric-v2.md)） |
-| preflight → pilot/batch → emit → full-check | 星陨 364+ 批量续跑（见 runbook §17–18） |
-| Dashboard / 生产记录可核对 | SaaS 部署 |
+| 临时项目 **1 章** / **3 章 batch** 真实 LLM | 七样章 prose polish |
+| preflight → pilot/batch → emit → full-check | 星陨 wave 367–376（runbook §18） |
+| 记录写入 `infra/.state/pilot_records/` | SaaS 部署 |
 
 ---
 
-## DoD 清单（全部 ✅ = 生产链路可用）
+## DoD 清单
 
-### A. 环境与密钥
+### A–B. 环境 + 脚手架（无 API）
 
-- [ ] `python lingwen.py doctor` 通过
-- [ ] `MINIMAX_API_KEY` 已配置（本地 `.env` 或 CI Secret）
-- [ ] `LINGWEN_PROJECT_ROOT` 指向目标 `projects/<slug>`
+- [ ] `python lingwen.py doctor`
+- [ ] preflight-only + `verify-onboarding.sh ci-smoke`
 
-### B. 脚手架（无 LLM）
-
-- [ ] `python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter-num 1` 通过
-- [ ] `bash scripts/verify-onboarding.sh ci-smoke` 通过（可选 · 与 CI 对齐）
-
-### C. 真实 LLM 单章（核心）
-
-- [ ] 跑通 **1 章** 真实写作（任选其一）：
+### C. 真实 LLM **单章** ✅（2026-06-22 本地绿 · ~$0.036）
 
 ```bash
-export LINGWEN_PROJECT_ROOT="$(pwd)/projects/<slug>"
-export MINIMAX_API_KEY=...
-
-# 方式 1：pilot 单章（需 LINGWEN_REAL_LLM=1）
-export LINGWEN_REAL_LLM=1
-python -m infra.agent_system.chapter_production_pilot --chapter-num 1
-
-# 方式 2：workflow 单章（与 agent E2E 同路径）
-pytest tests/agent_system/test_novel_writing_real_llm.py -k MiniMax -v
+bash scripts/verify-studio-production-dod.sh --real-llm
 ```
 
-- [ ] 产出章节文件写入 `03_内容仓库/`（或项目约定路径）
-- [ ] `python lingwen.py check 1 --full --fail-severity P0` 通过（或等价 full-check）
+### D. 真实 LLM **batch 三章** ✅（2026-06-22 · 3/3 emit · ~$0.19 · 无 P0）
 
-### D. 可观测性
+```bash
+bash scripts/verify-studio-production-dod.sh --real-llm-batch
+# 可选：--batch-budget 0.50（默认无 cap；F79 按章 $0.028 估算易触顶导致 emit 失败）
+```
 
-- [ ] Dashboard 可看到该次 run / 决策 / 成本（若启用 dashboard）
-- [ ] 或本地 `production_summary` / batch record 可核对（见 runbook）
+- [x] `chapters_succeeded == 3` · batch summary 在 `pilot_records/`
+- [x] `lingwen.py check 1-3 --full --fail-severity P0` 无 P0
 
-### E. CI 对齐（工程侧）
+### E. CI 对齐
 
-- [ ] GitHub **`test` workflow** 全绿（含 llm-golden · e2e-live）
-- [ ] 可选：Actions → **real-llm-tests** 手动绿（MiniMax agent 3 tests）
+- [ ] GitHub **test** workflow 全绿
+- [ ] 改样章/infra 时 llm×7 绿；纯文档 push 可跳过 llm（路径过滤）
 
 ---
 
-## 一键自检（本地）
+## 一键命令
 
 ```bash
 cd novel-factory
-bash scripts/verify-studio-production-dod.sh                 # A+B+E（无 API）
-bash scripts/verify-studio-production-dod.sh --real-llm      # 含 DoD C（MiniMax · 临时项目 · 自动清理）
-bash scripts/verify-studio-production-dod.sh --from-verify   # 含 e2e-live 本地模拟
+bash scripts/verify-studio-production-dod.sh              # A+B（无 API）
+bash scripts/verify-studio-production-dod.sh --real-llm     # + C
+bash scripts/verify-studio-production-dod.sh --real-llm-batch  # + D
 ```
 
-**DoD C** 会在 `projects/studio-dod-<timestamp>/` 跑 1 章真实 pilot，记录写入 `infra/.state/pilot_records/studio-dod-*.json`（gitignored），项目目录退出时删除。
+临时项目 `projects/studio-dod-*` 退出时删除；记录保留在 gitignored `pilot_records/`。
 
 ---
 
-## 与七样章 dist 的关系
+## 对外 dist
 
-| 维度 | 七样章 dist | Studio 生产 DoD |
-|------|-------------|-----------------|
-| 目的 | 对外样章 · prose 4.0+ | 验证 **可复制生产** |
-| 验收 | `run-primary-revision-verify.sh` | 本文 + pilot 1 章 |
-| CI | llm-golden-primary ×7 blocking | real-llm-tests 手动 |
+七样章默认 zip：
 
-七样章齐平 **不替代** 新书 pilot；发新书前仍建议跑通 DoD C 段。
+```bash
+bash scripts/prepare-studio-samples-zip.sh
+# → dist/灵文工作室-七样章.zip
+```
+
+索引：[`trial-read-index.md`](trial-read-index.md)
 
 ---
 
 ## 文档索引
 
-- 生产细节：[`chapter-production-runbook.md`](chapter-production-runbook.md)
-- Onboarding：[`studio-onboarding.md`](studio-onboarding.md)
-- CI：[`ci-quality-gates.md`](ci-quality-gates.md)
+- [`chapter-production-runbook.md`](chapter-production-runbook.md)
+- [`ci-quality-gates.md`](ci-quality-gates.md)

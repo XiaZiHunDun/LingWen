@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Zip Studio dist folders: 五样章 (default) or 七样章 (+ 黄沙/暗河).
+# Zip Studio dist folders: 七样章 (default) or 五样章 (legacy subset).
 # Usage:
-#   bash scripts/prepare-studio-samples-zip.sh           # 五样章
-#   STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh
+#   bash scripts/prepare-studio-samples-zip.sh           # 七样章（默认）
+#   STUDIO_SAMPLES=5 bash scripts/prepare-studio-samples-zip.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-STUDIO_SAMPLES="${STUDIO_SAMPLES:-5}"
+STUDIO_SAMPLES="${STUDIO_SAMPLES:-7}"
 
 if [[ "$STUDIO_SAMPLES" == "7" ]]; then
   SLUGS=(jinghai-rizhi huiyu-dangan tiedao-dangan anye-xinbiao xuexian-dangan huangsha-dangan anhe-dangan)

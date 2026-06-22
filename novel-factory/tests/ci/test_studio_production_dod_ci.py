@@ -10,8 +10,8 @@ class TestStudioProductionDod1209:
     def test_doc_exists(self):
         doc = NOVEL_FACTORY / "docs" / "studio-production-dod.md"
         text = doc.read_text(encoding="utf-8")
-        assert "LINGWEN_REAL_LLM=1" in text
-        assert "MINIMAX_API_KEY" in text
+        assert "--real-llm-batch" in text
+        assert "prepare-studio-samples-zip.sh" in text
 
     def test_verify_script_exists(self):
         script = NOVEL_FACTORY / "scripts" / "verify-studio-production-dod.sh"
@@ -19,4 +19,4 @@ class TestStudioProductionDod1209:
         text = script.read_text(encoding="utf-8")
         assert "verify-onboarding.sh ci-smoke" in text
         assert "preflight-only" in text
-        assert "--real-llm" in text
+        assert "--real-llm-batch" in text

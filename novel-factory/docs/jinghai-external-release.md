@@ -30,6 +30,13 @@ bash scripts/prepare-jinghai-distribution.sh
 | `邮件正文.txt` | 邮件正文复制 |
 | `README.txt` | 发送说明 |
 
+**七样章合集**（Studio 默认对外包）：
+
+```bash
+bash scripts/prepare-studio-samples-zip.sh
+# → dist/灵文工作室-七样章.zip（含本册 dist/）
+```
+
 ---
 
 ## 一句话

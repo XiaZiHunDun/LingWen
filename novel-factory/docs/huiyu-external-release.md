@@ -12,7 +12,7 @@
 |------|------|------|
 | **编辑 / 平台投稿** | 试读 **3 章**（推荐） | [`trial-read-ch001-003.md`](../projects/huiyu-dangan/docs/trial-read-ch001-003.md) |
 | **内测 / 完整试读** | 全书 **10 章** | [`trial-read-ch001-010.md`](../projects/huiyu-dangan/docs/trial-read-ch001-010.md) |
-| **产品侧（附带）** | 双样章索引 | [`trial-read-index.md`](trial-read-index.md) |
+| **产品侧（附带）** | 七样章索引 | [`trial-read-index.md`](trial-read-index.md) |
 
 **一键打包目录**（推荐）：
 
@@ -30,6 +30,8 @@ bash scripts/prepare-huiyu-distribution.sh
 | `通读报告.md` | AI/编辑参考 |
 | `质检报告.md` | P0/P1 机器报告 |
 | `README.txt` | 发送说明 |
+
+**七样章合集**：`bash scripts/prepare-studio-samples-zip.sh` → `dist/灵文工作室-七样章.zip`
 
 ---
 

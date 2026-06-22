@@ -13,12 +13,14 @@ bash scripts/prepare-anye-distribution.sh
 # → projects/anye-xinbiao/dist/
 ```
 
-四样章 zip：
+七样章 zip（默认）：
 
 ```bash
 bash scripts/prepare-studio-samples-zip.sh
-# → novel-factory/dist/灵文工作室-四样章.zip
+# → novel-factory/dist/灵文工作室-七样章.zip
 ```
+
+精简五册：`STUDIO_SAMPLES=5 bash scripts/prepare-studio-samples-zip.sh`
 
 ---
 

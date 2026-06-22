@@ -7,7 +7,7 @@
 
 ## 七样章（对外默认）
 
-打包：`STUDIO_SAMPLES=7 bash scripts/prepare-studio-samples-zip.sh` → `dist/灵文工作室-七样章.zip`
+打包：`bash scripts/prepare-studio-samples-zip.sh` → `dist/灵文工作室-七样章.zip`
 
 | 书 | 角色 | 试读 3 章 | 全书 10 章 | 打包 |
 |----|------|-----------|------------|------|
@@ -19,7 +19,7 @@
 | **《黄沙档案》** | 第六样章 · 沙漠 | [`trial-read-ch001-003.md`](projects/huangsha-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/huangsha-dangan/docs/trial-read-ch001-010.md) | `prepare-huangsha-distribution.sh` |
 | **《暗河档案》** | 第七样章 · 喀斯特 | [`trial-read-ch001-003.md`](projects/anhe-dangan/docs/trial-read-ch001-003.md) | [`trial-read-ch001-010.md`](projects/anhe-dangan/docs/trial-read-ch001-010.md) | `prepare-anhe-distribution.sh` |
 
-**精简五册 zip**（可选）：`bash scripts/prepare-studio-samples-zip.sh` → [`dist/灵文工作室-五样章.zip`](../dist/灵文工作室-五样章.zip)
+**精简五册 zip**（可选）：`STUDIO_SAMPLES=5 bash scripts/prepare-studio-samples-zip.sh` → [`dist/灵文工作室-五样章.zip`](../dist/灵文工作室-五样章.zip)
 
 说明：[`jinghai-external-release.md`](jinghai-external-release.md) · … · [`anhe-external-release.md`](anhe-external-release.md)
 

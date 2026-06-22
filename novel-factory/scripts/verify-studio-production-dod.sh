@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 12.09 · 12.10: Studio production DoD — local checks; --real-llm runs 1-chapter MiniMax pilot.
+# Phase 12.09 · 12.10 · 12.11: Studio production DoD — local checks; real MiniMax pilot/batch.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -7,22 +7,31 @@ cd "$ROOT"
 
 RUN_E2E=0
 REAL_LLM=0
+REAL_LLM_BATCH=0
+BATCH_MAX=3
+BATCH_BUDGET=""
 SLUG=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --from-verify) RUN_E2E=1; shift ;;
     --real-llm) REAL_LLM=1; shift ;;
+    --real-llm-batch) REAL_LLM=1; REAL_LLM_BATCH=1; shift ;;
+    --batch-max) BATCH_MAX="$2"; shift 2 ;;
+    --batch-budget) BATCH_BUDGET="$2"; shift 2 ;;
     --slug) SLUG="$2"; shift 2 ;;
     -h|--help)
       cat <<'EOF'
 Usage: verify-studio-production-dod.sh [options]
 
-  --real-llm     DoD C: init temp project + 1-chapter real MiniMax pilot (API cost)
-  --from-verify  Also run verify-e2e-live-ci.sh
-  --slug SLUG    Preflight target (default: ephemeral studio-dod-* when --real-llm)
+  --real-llm        DoD C: temp project + 1-chapter real MiniMax pilot
+  --real-llm-batch  DoD D: temp project + batch ch1..N (default N=3, no budget cap)
+  --batch-max N     Chapters for --real-llm-batch (default 3)
+  --batch-budget USD  Optional batch budget cap (omit by default; F79 estimate can be tight)
+  --from-verify     Also run verify-e2e-live-ci.sh
+  --slug SLUG       Preflight target (default: ephemeral studio-dod-* when --real-llm*)
 
-Requires: MINIMAX_API_KEY in env or .env (for --real-llm)
+Requires: MINIMAX_API_KEY in env or .env (for --real-llm*)
 EOF
       exit 0
       ;;
@@ -44,7 +53,7 @@ if [ "$REAL_LLM" -eq 1 ]; then
   PROJECT="$ROOT/projects/$SLUG"
   cleanup() { rm -rf "$PROJECT" 2>/dev/null || true; }
   trap cleanup EXIT
-  echo "=== DoD C: ephemeral project $SLUG ==="
+  echo "=== DoD ephemeral project $SLUG ==="
   unset LINGWEN_PROJECT_ROOT
   python lingwen.py init-project "$SLUG" \
     --title "DoD验收短篇" \
@@ -77,27 +86,51 @@ fi
 
 if [ "$REAL_LLM" -eq 1 ]; then
   if [ -z "${MINIMAX_API_KEY:-}" ]; then
-    echo "ERROR: --real-llm requires MINIMAX_API_KEY" >&2
+    echo "ERROR: --real-llm* requires MINIMAX_API_KEY" >&2
     exit 1
   fi
   RECORD_DIR="$ROOT/infra/.state/pilot_records"
   mkdir -p "$RECORD_DIR"
-  RECORD="$RECORD_DIR/studio-dod-${SLUG}.json"
-  echo "[C] real LLM pilot chapter 1 → $RECORD"
   export LINGWEN_REAL_LLM=1
   export LINGWEN_EMIT_CHAPTER=1
   export LINGWEN_MEMORY_RAG=stub
-  python -m infra.agent_system.chapter_production_pilot \
-    --chapter-num 1 \
-    --save-record "$RECORD" \
-    --operator studio-dod
-  echo "[C] full-check P0 ch1"
-  python lingwen.py check 1 --full --fail-severity P0
-  echo "=== DoD C passed · record: $RECORD ==="
+
+  if [ "$REAL_LLM_BATCH" -eq 1 ]; then
+    END=$((BATCH_MAX))
+    SUMMARY="$RECORD_DIR/studio-dod-batch-${SLUG}.json"
+    CH_DIR="$RECORD_DIR/studio-dod-batch-${SLUG}-chapters"
+    mkdir -p "$CH_DIR"
+    echo "[D] real LLM batch ch1-${END} → $SUMMARY"
+    BATCH_CMD=(python -m infra.agent_system.chapter_production_batch
+      --start-chapter 1
+      --max-chapters "$BATCH_MAX"
+      --save-summary "$SUMMARY"
+      --save-chapter-records-dir "$CH_DIR"
+      --operator studio-dod)
+    if [ -n "$BATCH_BUDGET" ]; then
+      echo "[D] batch budget cap: ${BATCH_BUDGET} USD"
+      BATCH_CMD+=(--budget-usd "$BATCH_BUDGET")
+    fi
+    "${BATCH_CMD[@]}"
+    echo "[D] full-check P0 ch1-${END}"
+    python lingwen.py check "1-${END}" --full --fail-severity P0
+    echo "=== DoD D passed · summary: $SUMMARY ==="
+  else
+    RECORD="$RECORD_DIR/studio-dod-${SLUG}.json"
+    echo "[C] real LLM pilot chapter 1 → $RECORD"
+    python -m infra.agent_system.chapter_production_pilot \
+      --chapter-num 1 \
+      --save-record "$RECORD" \
+      --operator studio-dod
+    echo "[C] full-check P0 ch1"
+    python lingwen.py check 1 --full --fail-severity P0
+    echo "=== DoD C passed · record: $RECORD ==="
+  fi
 else
   echo ""
-  echo "=== DoD C: real LLM (pass --real-llm · consumes API) ==="
+  echo "=== DoD C/D: real LLM (consumes API) ==="
   echo "  bash scripts/verify-studio-production-dod.sh --real-llm"
+  echo "  bash scripts/verify-studio-production-dod.sh --real-llm-batch"
   echo ""
   echo "See docs/studio-production-dod.md"
 fi

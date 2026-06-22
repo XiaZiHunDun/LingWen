@@ -4,7 +4,7 @@
 
 ```bash
 bash scripts/prepare-xuexian-distribution.sh
-bash scripts/prepare-studio-samples-zip.sh   # → dist/灵文工作室-五样章.zip
+bash scripts/prepare-studio-samples-zip.sh   # → dist/灵文工作室-七样章.zip（默认七册）
 ```
 
 详见 [`fifth-primary-revision-xuexian.md`](fifth-primary-revision-xuexian.md)

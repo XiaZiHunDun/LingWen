@@ -18,6 +18,7 @@
 ```bash
 bash scripts/prepare-huangsha-distribution.sh
 # → projects/huangsha-dangan/dist/
+bash scripts/prepare-studio-samples-zip.sh   # → dist/灵文工作室-七样章.zip
 ```
 
 ---

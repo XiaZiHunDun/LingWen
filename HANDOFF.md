@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.62 (DoD C pilot + LLM 路径降频, 2026-06-22)  
-> **更新 (2026-06-22)**: `--real-llm` pilot 绿 · llm×7 仅 LLM 相关路径 / label `llm-check`
+> **版本**: v10.63 (七样章默认 zip + batch DoD, 2026-06-22)  
+> **更新 (2026-06-22)**: `prepare-studio-samples-zip` 默认七册 · `--real-llm-batch` DoD D
 
 ---
 
@@ -17,8 +17,9 @@
 | **试验田** | 《星陨纪元》ch001–ch360 正史；ch361–ch996 = stress test（见 `03_内容仓库/experimental/`） |
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
-| **CI** | **`test` 主门**：pytest×3 · vitest · **lint+build** · golden×8 · llm×7 · e2e-live · ruff · cov 50% |
-| **下一期推荐** | **Studio 生产 DoD 真实 1 章 pilot** · Demo 录屏（可选）· LLM 降频（按需） |
+| **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
+| **下一期推荐** | 星陨 wave 367–376（可选）· Memory RAG live（按需） |
+| **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
@@ -796,7 +797,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] （可选）改 Python 时 `pytest tests/<相关> -q`；改前端时 `pnpm vitest run`（~8s）
 - [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一工作: **Studio 生产 DoD C 段（真实 LLM 1 章）** · LLM 降频决策 · Demo 录屏（可选）
+- [ ] 选下一工作: **batch DoD D**（`--real-llm-batch`）· 星陨 wave 367–376 · Memory RAG live
 
 ---
 
