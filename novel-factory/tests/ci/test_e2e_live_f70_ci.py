@@ -17,12 +17,11 @@ class TestE2eLiveF70:
         assert "playwright install" in text
 
     def test_workflow_matches_local_verify_env(self):
-        wf = REPO_ROOT / ".github" / "workflows" / "dashboard-e2e-live.yml"
+        wf = REPO_ROOT / ".github" / "workflows" / "test.yml"
         text = wf.read_text(encoding="utf-8")
-        assert "python-version: '3.13'" in text
-        assert "node-version: '20'" in text
-        assert "CI: 'true'" in text
-        assert "LINGWEN_E2E_LIVE: '1'" in text
+        assert "python-version: \"3.13\"" in text or "python-version: '3.13'" in text
+        assert "node-version: \"20\"" in text or "node-version: '20'" in text
+        assert "LINGWEN_E2E_LIVE" in text
         assert "playwright install --with-deps chromium" in text
         assert "upload-artifact" in text
         assert "timeout-minutes: 25" in text

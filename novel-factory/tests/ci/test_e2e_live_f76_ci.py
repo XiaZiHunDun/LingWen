@@ -21,8 +21,8 @@ class TestE2eLiveRemoteF76:
         assert "## 11.2" in text
         assert "e2e-live-remote-checklist.sh" in text
 
-    def test_workflow_job_summary_step(self):
-        wf = REPO_ROOT / ".github" / "workflows" / "dashboard-e2e-live.yml"
+    def test_primary_test_workflow_has_job_summary(self):
+        wf = REPO_ROOT / ".github" / "workflows" / "test.yml"
         text = wf.read_text(encoding="utf-8")
         assert "GITHUB_STEP_SUMMARY" in text
         assert "Write job summary" in text

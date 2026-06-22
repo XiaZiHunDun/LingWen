@@ -54,7 +54,7 @@ fi
 
 if [ "$LOCAL_ONLY" -eq 1 ]; then
   GITHUB_RUN_ID="${GITHUB_RUN_ID:-local-parity-pending-remote}"
-  GITHUB_RUN_URL="${GITHUB_RUN_URL:-https://github.com/XiaZiHunDun/LingWen/actions/workflows/dashboard-e2e-live.yml}"
+  GITHUB_RUN_URL="${GITHUB_RUN_URL:-https://github.com/XiaZiHunDun/LingWen/actions/workflows/test.yml}"
   NOTES="${NOTES:-Local parity verified; replace github_run_id/url after first green Actions run}"
 elif [ -z "$GITHUB_RUN_ID" ] || [ -z "$GITHUB_RUN_URL" ]; then
   echo "Error: --github-run-id and --github-run-url required (or use --local-only)" >&2

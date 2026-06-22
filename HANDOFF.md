@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.59 (CI vitest 主门 + 本地最小验证, 2026-06-22)  
-> **更新 (2026-06-22)**: `test` 每次 push 含 vitest · real-llm-tests 取消 cron · 见 [`ci-quality-gates.md`](novel-factory/docs/ci-quality-gates.md) §本地最小验证
+> **版本**: v10.60 (CI workflow 整理 7→6, 2026-06-22)  
+> **更新 (2026-06-22)**: 删 e2e-live 副本 · Coverage Pages 仅手动 · 见 [`ci-quality-gates.md`](novel-factory/docs/ci-quality-gates.md) §Workflow 地图
 
 ---
 
@@ -496,7 +496,7 @@ LINGWEN_PROSE_DIFF_FAIL=1 bash scripts/run-prose-diff.sh <slug>  # 回归则 exi
 
 ```bash
 bash scripts/verify-e2e-live-ci.sh          # 5 passed
-# GitHub: workflow_dispatch 或 PR label e2e-live → dashboard-e2e-live.yml
+# GitHub: test.yml job e2e-live（每次 push blocking）
 ```
 
 ### Phase 11.11 — 覆盖率 40% + 分模块门槛 ✅
@@ -750,10 +750,10 @@ bash scripts/verify-coverage-modules.sh   # infra/dashboard ≥40%, tools ≥30%
 
 ### 7.1 Playwright e2e (Phase 9.31 F15 后)
 
-Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec; Phase 9.65 F56 新增 **2** live-backend spec; Phase 9.72 F64 新增 **`dashboard-e2e-live.yml`**（label `e2e-live` / workflow_dispatch）。CI:
-- `dashboard-e2e-smoke.yml` — label `e2e-smoke`, 1 test
-- `dashboard-e2e-live.yml` — label `e2e-live`, 5 tests
-- **均非 primary merge gate**
+Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`tests/unit/`). Phase 9.48 F37 新增 **1** opt-in smoke spec; Phase 9.65/9.72 新增 live-backend **5** spec。CI（12.08 整理后）:
+- **`test.yml` `e2e-live`** — 每次 push/PR **blocking**, 5 tests
+- `dashboard-e2e-smoke.yml` — label `e2e-smoke` / manual, 1 test（调试）
+- ~~`dashboard-e2e-live.yml`~~ 已删（与 test 重复）
 - `pnpm e2e:smoke` — vite only，1 test
 - `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
 - **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；Phase 10.38 已将 list/detail 超时提至 30s

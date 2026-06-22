@@ -1,14 +1,10 @@
-# Phase 9.53 F42: publish vitest HTML coverage report to GitHub Pages (opt-in deploy).
+# Phase 9.53 F42: publish vitest HTML coverage report to GitHub Pages (manual only).
 # Requires repo Settings → Pages → Source: GitHub Actions.
+# Coverage on frontend path changes is already run by dashboard-frontend-ci.yml + Codecov.
 
 name: Frontend Coverage Pages
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'novel-factory/dashboard/frontend/**'
-      - '.github/workflows/dashboard-frontend-coverage-pages.yml'
   workflow_dispatch:
 
 permissions:

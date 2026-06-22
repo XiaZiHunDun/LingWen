@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 9.76 F70: local parity check for .github/workflows/dashboard-e2e-live.yml
+# Phase 9.76 F70: local parity check for test.yml job `e2e-live`
 # Mirrors GitHub Actions steps (Python 3.13 + Node 20 + pnpm e2e:live).
 set -euo pipefail
 

@@ -27,7 +27,7 @@
 | Dashboard prose 视图 | ✅ 热力图+diff | ✅ | diff 对比 | Studio 页 |
 | pytest | **2972+** | 2972+ | 3000+ | CI |
 | 覆盖率 | **50%** ✅ | **40%** ✅ | 50% | pytest-cov + `verify-coverage-modules.sh` |
-| Playwright live | **5/5 默认 CI** | **5/5 label CI** | 默认 CI | `verify-e2e-live-ci.sh` |
+| Playwright live | **5/5 默认 CI** (`test`) | —（副本已删） | 默认 CI | `verify-e2e-live-ci.sh` |
 | Vitest | **每次 push CI** | — | — | `pnpm vitest run` |
 | LLM CI | **llm-golden-primary ×7** | blocking | 主修 blocking | `llm-golden-primary` job |
 

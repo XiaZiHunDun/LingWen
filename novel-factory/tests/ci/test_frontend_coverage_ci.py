@@ -54,6 +54,12 @@ class TestFrontendCoverageCI:
 
 
 class TestFrontendCoveragePages:
+    def test_coverage_pages_manual_only(self):
+        data = yaml.safe_load((WORKFLOWS_DIR / "dashboard-frontend-coverage-pages.yml").read_text(encoding="utf-8"))
+        triggers = data.get("on") or data.get(True) or {}
+        assert "workflow_dispatch" in triggers
+        assert "push" not in triggers
+
     def test_coverage_pages_workflow_exists(self):
         wf = WORKFLOWS_DIR / "dashboard-frontend-coverage-pages.yml"
         assert wf.is_file()

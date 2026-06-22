@@ -25,12 +25,8 @@ class TestE2eLive1113:
         text = script.read_text(encoding="utf-8")
         assert "playwright install chromium" in text
 
-    def test_workflow_label_trigger(self):
-        wf = (REPO_ROOT / ".github" / "workflows" / "dashboard-e2e-live.yml").read_text(
-            encoding="utf-8",
-        )
-        assert "e2e-live" in wf
-        assert "LINGWEN_E2E_LIVE: '1'" in wf
+    def test_duplicate_e2e_live_workflow_removed(self):
+        assert not (REPO_ROOT / ".github" / "workflows" / "dashboard-e2e-live.yml").exists()
 
     def test_primary_test_workflow_includes_e2e_live(self):
         wf = (REPO_ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")

@@ -277,3 +277,15 @@ jobs:
           name: playwright-live-trace
           path: novel-factory/dashboard/frontend/test-results/
           if-no-files-found: ignore
+      - name: Write job summary
+        if: always()
+        working-directory: novel-factory
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### Playwright live-backend — passed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Playwright **live-backend** project (5 tests)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Local parity: \`bash scripts/verify-e2e-live-ci.sh\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Playwright live-backend — failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Download artifact **playwright-live-trace** (if present)." >> "$GITHUB_STEP_SUMMARY"
+          fi

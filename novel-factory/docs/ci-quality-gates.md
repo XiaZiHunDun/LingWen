@@ -1,8 +1,25 @@
 # CI 质量门说明（v12）
 
-> Phase 12.07 · vitest 入主门 · 本地最小验证 · real-llm 仅手动
+> Phase 12.08 · workflow 整理 · vitest 入主门 · real-llm 仅 MiniMax 手动
 
-## 主门（每次 push/PR）
+## Workflow 地图（GitHub Actions 共 6 个）
+
+| # | Workflow 文件 | 显示名 | 触发 | blocking? | 用途 |
+|---|---------------|--------|------|-----------|------|
+| 1 | **`test.yml`** | test | 每次 push/PR master | **是** | 主门：pytest · vitest · golden · llm×7 · e2e-live · ruff |
+| 2 | `dashboard-frontend-ci.yml` | Dashboard Frontend CI | `dashboard/frontend/**` 变更 | 否* | lint · typecheck · vitest+coverage · build · Codecov |
+| 3 | `dashboard-frontend-coverage-pages.yml` | Frontend Coverage Pages | **仅手动** | 否 | vitest HTML → GitHub Pages |
+| 4 | `dashboard-e2e-smoke.yml` | Dashboard E2E Smoke | 手动 / label `e2e-smoke` | 否 | 1 spec 调试 |
+| 5 | `prose-judge-llm.yml` | Prose Judge LLM | **仅手动** | 否 | 七书六维 judge + artifact |
+| 6 | `real-llm-tests.yml` | real-llm-tests | **仅手动** | 否 | MiniMax agent 写作链路 |
+
+\* Frontend CI 不挡 merge，但改前端时应绿；主门 `test` 已含 vitest + e2e-live。
+
+**已删除（12.08）**：`dashboard-e2e-live.yml`（与 `test` 内 `e2e-live` 重复）、`novel-factory/.github/workflows/*.yml` 废弃副本。
+
+---
+
+## 主门（`test` · 每次 push/PR）
 
 | 门 | 命令 | 说明 |
 |----|------|------|
@@ -12,7 +29,7 @@
 | onboarding | `verify-onboarding.sh ci-smoke` | init → preflight → dry-run |
 | ruff | `ruff check .` | **blocking** |
 | **llm-golden-primary** | `run-llm-golden-check.sh <slug>` ×**7** | **blocking** · 需 `MINIMAX_API_KEY` |
-| **e2e-live** | `pnpm e2e:live` (5 specs) | **blocking** · push/PR master |
+| **e2e-live** | `pnpm e2e:live` (5 specs) | **blocking** · 本地 `verify-e2e-live-ci.sh` |
 
 Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1/P2 仍打印但不 fail。
 
@@ -55,16 +72,15 @@ LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh tiedao-dang
 
 ---
 
-## 旁路 workflow（非每次 push blocking）
+## 旁路 workflow（非主门 blocking）
 
 | Workflow | 触发 | 说明 |
 |----------|------|------|
 | **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build（比主门 vitest 更深） |
-| **Frontend Coverage Pages** | 同上 / 手动 | GitHub Pages HTML 报告 |
+| **Frontend Coverage Pages** | **仅手动** | GitHub Pages HTML 报告（Codecov 仍由 Frontend CI 上传） |
 | **Prose Judge LLM** | 仅手动 | 七书 `--llm` + artifact |
-| **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec |
-| **e2e-live 副本** | 手动 / label `e2e-live` | 调试副本（主门已在 `test`） |
-| **real-llm-tests** | **仅手动** | MiniMax 真 API · 共用 `MINIMAX_API_KEY` · **已取消每日 cron** |
+| **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec 轻量调试 |
+| **real-llm-tests** | **仅手动** | MiniMax 真 API · 共用 `MINIMAX_API_KEY` |
 
 ---
 
@@ -108,6 +124,7 @@ cd novel-factory
 bash scripts/verify-studio-release.sh          # doctor + golden×8（与 CI 重叠）
 bash scripts/run-primary-revision-verify.sh <slug>
 bash scripts/sync-handoff-baseline.sh        # 全绿后更新 HANDOFF 数字
+bash scripts/verify-e2e-live-ci.sh           # 对齐 test.yml e2e-live job
 ```
 
 主修书改稿：[`primary-revision-book.md`](primary-revision-book.md) · [`prose-rubric-v1.md`](prose-rubric-v1.md) · [`prose-rubric-v2.md`](prose-rubric-v2.md)

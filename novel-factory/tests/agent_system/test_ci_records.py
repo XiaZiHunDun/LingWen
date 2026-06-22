@@ -32,7 +32,7 @@ class TestCiRecordsF90:
     def test_write_record_to_tmp_path(self, tmp_path):
         record = build_e2e_live_first_green_record(
             github_run_id="local-parity-pending-remote",
-            github_run_url="https://github.com/XiaZiHunDun/LingWen/actions/workflows/dashboard-e2e-live.yml",
+            github_run_url="https://github.com/XiaZiHunDun/LingWen/actions/workflows/test.yml",
             operator="pytest",
         )
         path = tmp_path / "e2e-live-first-green.json"
@@ -51,14 +51,14 @@ class TestCiRecordsF90:
         stub.write_text(
             json.dumps({
                 "record_id": "e2e-live-first-green-stub",
-                "workflow": "dashboard-e2e-live.yml",
-                "trigger": "workflow_dispatch",
+                "workflow": "test.yml",
+                "trigger": "push",
                 "branch": "master",
                 "github_run_id": "0000000000",
                 "github_run_url": "https://github.com/XiaZiHunDun/LingWen/actions/runs/0000000000",
-                "job_name": "Playwright live-backend",
+                "job_name": "Playwright live-backend (5 specs)",
                 "tests_passed": 5,
-                "summary_phrase": "Dashboard E2E Live — passed",
+                "summary_phrase": "Playwright live-backend — passed",
                 "local_parity": {
                     "script": "novel-factory/scripts/verify-e2e-live-ci.sh",
                     "passed": True,

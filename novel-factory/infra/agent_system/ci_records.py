@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Any
 
 E2E_LIVE_FIRST_GREEN_FILENAME = "e2e-live-first-green.json"
-E2E_LIVE_WORKFLOW = "dashboard-e2e-live.yml"
-E2E_LIVE_JOB_NAME = "Playwright live-backend"
-E2E_LIVE_SUMMARY_PHRASE = "Dashboard E2E Live — passed"
+E2E_LIVE_WORKFLOW = "test.yml"
+E2E_LIVE_JOB_NAME = "Playwright live-backend (5 specs)"
+E2E_LIVE_SUMMARY_PHRASE = "Playwright live-backend — passed"
 E2E_LIVE_TESTS_PASSED = 5
 E2E_LIVE_VERIFY_SCRIPT = "novel-factory/scripts/verify-e2e-live-ci.sh"
 

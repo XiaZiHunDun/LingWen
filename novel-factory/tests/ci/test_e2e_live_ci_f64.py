@@ -1,4 +1,4 @@
-"""Phase 9.72 F64: CI contract — live-backend e2e workflow."""
+"""Phase 9.72 F64: CI contract — live-backend e2e in primary test workflow."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,12 +7,11 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class TestE2eLiveF64Contract:
-    def test_live_e2e_workflow_exists(self):
-        wf = REPO_ROOT / ".github" / "workflows" / "dashboard-e2e-live.yml"
-        assert wf.is_file()
+    def test_primary_test_workflow_runs_live_e2e(self):
+        wf = REPO_ROOT / ".github" / "workflows" / "test.yml"
         text = wf.read_text(encoding="utf-8")
         assert "LINGWEN_E2E_LIVE" in text
-        assert "e2e-live" in text
+        assert "e2e-live:" in text
         assert "e2e:live" in text
 
     def test_playwright_live_project_configured(self):
