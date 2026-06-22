@@ -32,7 +32,8 @@ bash scripts/verify-studio-production-dod.sh --real-llm
 
 ```bash
 bash scripts/verify-studio-production-dod.sh --real-llm-batch
-# 可选：--batch-budget 0.50（默认无 cap；F79 按章 $0.028 估算易触顶导致 emit 失败）
+# 可选：--batch-budget 0.50（须配合 --calibrate-from 或自动选最新 studio-dod-batch*.json）
+# F79 默认 ~$0.028/章 · Studio MiniMax 实测 ~$0.063/章；无 cap 时默认不设 budget
 ```
 
 - [x] `chapters_succeeded == 3` · batch summary 在 `pilot_records/`

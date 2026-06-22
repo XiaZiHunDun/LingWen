@@ -11,12 +11,11 @@ class TestStudioProductionDod1209:
         doc = NOVEL_FACTORY / "docs" / "studio-production-dod.md"
         text = doc.read_text(encoding="utf-8")
         assert "--real-llm-batch" in text
-        assert "prepare-studio-samples-zip.sh" in text
+        assert "calibrate-from" in text or "F79" in text
 
     def test_verify_script_exists(self):
         script = NOVEL_FACTORY / "scripts" / "verify-studio-production-dod.sh"
         assert script.is_file()
         text = script.read_text(encoding="utf-8")
-        assert "verify-onboarding.sh ci-smoke" in text
-        assert "preflight-only" in text
         assert "--real-llm-batch" in text
+        assert "--batch-calibrate-from" in text

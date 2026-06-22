@@ -45,7 +45,7 @@ export LINGWEN_MEMORY_RAG=stub
 ./scripts/run-project-batch.sh 1 3 3 0.25
 ```
 
-> **预算**：Studio 会按项目历史 batch 自动校准并加 15% 余量。手动跑时若末章 emit 失败，多半是总预算不足——见 batch 修复（`resolve_chapter_cost_budget`）。  
+> **预算**：Studio batch 默认无 cap。若设 `--budget-usd`，须 `--calibrate-from` 真实 pilot JSON（Studio ~$0.063/章；F79 默认 ~$0.028 易触顶）。见 runbook §16.3。
 > **Dashboard Batch**：服务端需 `LINGWEN_ALLOW_DASHBOARD_BATCH=1`。
 
 batch 末章若 failed，脚本会自动 pilot 补跑。

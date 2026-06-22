@@ -604,6 +604,18 @@ python -m infra.agent_system.chapter_production_batch \
 
 **校准优先级**: `LINGWEN_BATCH_COST_ESTIMATE_USD` env → `--calibrate-from` batch JSON → F79 默认。
 
+### 16.3 Studio DoD · budget cap 与校准（12.12）
+
+Studio batch（`verify-studio-production-dod.sh --real-llm-batch`）**默认不设** `--budget-usd`（DoD D 3/3 · ~$0.19）。
+
+带 cap 时须 `--calibrate-from` 或脚本自动选最新 `studio-dod-batch*.json`；F79 默认 (~$0.028/章) 低于 Studio MiniMax 实测 (~**$0.063**/章)，易触发 `budget_exceeded`。
+
+| 来源 | ~$/章 | 适用 |
+|------|-------|------|
+| F79 默认 | 0.028 | 星陨 stub batch |
+| studio-dod-batch JSON | 0.063 | Studio 新书 |
+| `batch-367-376.json` | 0.028 | 星陨 10 章 wave |
+
 `--preflight-only` 同样附带 `batch_plan`（不要求 REAL_LLM gate）。
 
 ### 16.2 pytest
@@ -691,7 +703,9 @@ bash novel-factory/scripts/batch-wave-dry-run.sh
 
 ### 18.2 真实 wave 执行（manual gate，非 F85 默认跑）
 
-确认 dry-run 后：
+**2026-06-12 首跑 ✅**：`batch-367-376.json` · **10/10** · ~**$0.283** · stub memory · 正文已落盘 `ch367–376.md`。
+
+确认 dry-run 后（续跑 / 重跑）：
 
 ```bash
 python -m infra.agent_system.chapter_production_batch \
@@ -780,19 +794,16 @@ pytest tests/agent_system/test_chapter_memory_hook.py -q -k gateway_check
 pytest tests/ci/test_chapter_memory_rag_live_f86_ci.py -q
 ```
 
-### 19.5 ch367 live pilot 结果（manual · 2026-06-11）
+### 19.5 ch367 live pilot 结果
 
-| 项 | 值 |
-|----|-----|
-| pilot_id | `2026-06-11-ch367-live-rag-001` |
-| embedding | MiniMax embo-01（无 OPENAI key） |
-| LLM | MiniMax M2.7 |
-| 节点 | 7/7 · `emit_chapter_completed=true` |
-| hooks | `memory_context_source=live` |
-| 成本 | ~$0.022 |
-| 记录 | `infra/.state/pilot_records/ch367-live-rag.json`（gitignored） |
+| 日期 | pilot_id | memory | 节点 | 成本 | emit 落盘 |
+|------|----------|--------|------|------|-----------|
+| 2026-06-11 | `2026-06-11-ch367-live-rag-001` | live · MiniMax embo-01 | 7/7 | ~$0.022 | ✅ |
+| **2026-06-22** | `2026-06-22-ch367-live-rag-001` | live · Qdrant OK | 7/7 | ~$0.032 | **`LINGWEN_EMIT_CHAPTER=0`**（仅验 live hook，不改 ch367 正文） |
 
-**已知**：当时 Qdrant client 1.18 仍调用已废弃的 `.search()`，日志出现检索重试失败；`related_segments` 可能为空。已在后续修复为 `query_points`（见 §19.6）。
+记录：`infra/.state/pilot_records/ch367-live-rag.json`（gitignored，后跑覆盖前跑）。
+
+**2026-06-11 已知**：当时 Qdrant client 1.18 仍调用已废弃的 `.search()`；已在后续修复为 `query_points`（见 §19.6）。
 
 ### 19.6 Qdrant client 1.18+ 检索（post ch367 fix）
 

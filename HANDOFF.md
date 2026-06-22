@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.63 (七样章默认 zip + batch DoD, 2026-06-22)  
-> **更新 (2026-06-22)**: `prepare-studio-samples-zip` 默认七册 · `--real-llm-batch` DoD D
+> **版本**: v10.64 (budget 校准 + live RAG + e2e record, 2026-06-22)  
+> **更新 (2026-06-22)**: DoD batch `--calibrate-from` · wave 367–376 已绿 · Memory RAG live · 本地 e2e 首绿 record
 
 ---
 
@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
-| **下一期推荐** | 星陨 wave 367–376（可选）· Memory RAG live（按需） |
+| **下一期推荐** | v11 工程债（见 roadmap-v11）· GitHub Actions 远程 e2e run id 回填 |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -797,7 +797,10 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] （可选）改 Python 时 `pytest tests/<相关> -q`；改前端时 `pnpm vitest run`（~8s）
 - [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一工作: **batch DoD D**（`--real-llm-batch`）· 星陨 wave 367–376 · Memory RAG live
+- [x] DoD D batch 3章（`--real-llm-batch` · 2026-06-22）
+- [x] 星陨 wave 367–376（2026-06-12 · 10/10 · ~$0.28 · `batch-367-376.json`）
+- [x] Memory RAG live pilot（2026-06-22 · `memory_context_source=live` · ~$0.032 · emit=0 不落盘）
+- [x] 本地 e2e-live 首绿 record（`ci_records/e2e-live-first-green.json` · 5/5 · 远程 run id 待填）
 
 ---
 

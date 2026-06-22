@@ -10,6 +10,7 @@ REAL_LLM=0
 REAL_LLM_BATCH=0
 BATCH_MAX=3
 BATCH_BUDGET=""
+BATCH_CALIBRATE=""
 SLUG=""
 
 while [ $# -gt 0 ]; do
@@ -19,6 +20,7 @@ while [ $# -gt 0 ]; do
     --real-llm-batch) REAL_LLM=1; REAL_LLM_BATCH=1; shift ;;
     --batch-max) BATCH_MAX="$2"; shift 2 ;;
     --batch-budget) BATCH_BUDGET="$2"; shift 2 ;;
+    --batch-calibrate-from) BATCH_CALIBRATE="$2"; shift 2 ;;
     --slug) SLUG="$2"; shift 2 ;;
     -h|--help)
       cat <<'EOF'
@@ -28,6 +30,7 @@ Usage: verify-studio-production-dod.sh [options]
   --real-llm-batch  DoD D: temp project + batch ch1..N (default N=3, no budget cap)
   --batch-max N     Chapters for --real-llm-batch (default 3)
   --batch-budget USD  Optional batch budget cap (omit by default; F79 estimate can be tight)
+  --batch-calibrate-from PATH  Per-chapter estimate when using --batch-budget (auto-picks latest studio-dod-batch*.json)
   --from-verify     Also run verify-e2e-live-ci.sh
   --slug SLUG       Preflight target (default: ephemeral studio-dod-* when --real-llm*)
 
@@ -110,6 +113,16 @@ if [ "$REAL_LLM" -eq 1 ]; then
     if [ -n "$BATCH_BUDGET" ]; then
       echo "[D] batch budget cap: ${BATCH_BUDGET} USD"
       BATCH_CMD+=(--budget-usd "$BATCH_BUDGET")
+      CAL="${BATCH_CALIBRATE:-}"
+      if [ -z "$CAL" ]; then
+        CAL="$(ls -t "$RECORD_DIR"/studio-dod-batch-*.json 2>/dev/null | head -1 || true)"
+      fi
+      if [ -n "$CAL" ] && [ -f "$CAL" ]; then
+        echo "[D] calibrate-from: $CAL"
+        BATCH_CMD+=(--calibrate-from "$CAL")
+      elif [ -n "$BATCH_BUDGET" ]; then
+        echo "[D] WARN: no calibrate-from; F79 ~\$0.028/ch may be tight for Studio MiniMax (~\$0.063/ch)" >&2
+      fi
     fi
     "${BATCH_CMD[@]}"
     echo "[D] full-check P0 ch1-${END}"
