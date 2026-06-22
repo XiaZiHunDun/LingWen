@@ -2,7 +2,7 @@
   "version": 1,
   "slug": "anhe-dangan",
   "source": "llm",
-  "judged_at": "2026-06-21 04:07 UTC",
+  "judged_at": "2026-06-22 01:56 UTC",
   "golden_chapters": [
     1,
     5,
@@ -15,37 +15,37 @@
         {
           "dimension": "imagery",
           "score": 5,
-          "evidence": "开篇波形数据与节律描写（'四个波峰，间隔均匀'）、松脂气味、钟乳水渍的微凉触感、洞口木牌红底白字剥落细节，多重感官落地且克制精准，样章级画面感。",
+          "evidence": "松脂湿泥气味、收音机咿呀越剧、钟乳水渍的微凉触感、排气管闷响拟翻身，感官层次丰富且克制",
           "action": "keep"
         },
         {
           "dimension": "hook",
           "score": 5,
-          "evidence": "首句即异常信号、'这不是水'反转、空白观测本与涂黑剖面图层层埋伏、章末'屏住呼吸，等着他'收束回扣开头，钩子密度极高且与悬念推进咬合。",
+          "evidence": "波形抖动→不是水→观测本→素描涂黑块→节律变化→屏住呼吸等候，每三百字一个小钩且全章收束于强悬念",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "沈渡主动熄火不急于下车、调增益旋钮、翻观测本、追问老覃、最终关头灯离开，主导动作清晰，但后半程更多是被动接收信号，主动决策偏少。",
+          "evidence": "沈渡主动推柜取本、追问老覃、关灯上车，决策链清晰但本章以观察为主，行动强度略低",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "整章以单句短句为主，长句穿插不足，节奏虽稳但句式变化被规则标为54%单一句式占比超阈，需修剪同质化短句。",
-          "action": "trim"
+          "score": 2,
+          "evidence": "系统已检测到P1单一句式占比54%超阈值，大量\"他+动词\"长句连缀节奏单调",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "老覃与沈渡的对话简短、职业化且带地方口吻（'看看水尺'、'噢了一声'），情感热线背景音作为环境声有效补充，符合巡护场景真实感。",
+          "score": 5,
+          "evidence": "老覃越剧收尾、女主持情感热线背景音穿插，对话极简却有生活质感，潜台词饱满",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 5,
-          "evidence": "暗河观测、职业巡护、设备数据、废弃支脉汊-07、林湄悬念与类呼吸节律，类型元素（克系/地质悬疑）齐备且氛围成型，类型完成度高。",
+          "evidence": "暗河探秘+被除名支脉+呼吸节律+涂黑剖面图，类型元素齐备且氛围到位",
           "action": "keep"
         }
       ]
@@ -55,38 +55,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "舌根黏在上颚、袋口拧紧挤出的塑料味、铁锈味与渗水的咸、测风铃管两秒一摆——通感调动精准且克制，留白充分",
           "action": "keep"
         },
         {
           "dimension": "hook",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "开篇'被渴醒'、水袋漏光、信号全无、回忆中林湄'上一个查的人已经出了事'、末尾自动锤敲击与循环旧录音，多层钩子叠加，仅在回忆转场处略有松弛",
           "action": "keep"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "evidence": "沈渡连续做出关闭自动锤、关播放、收数据卡、估算搜救窗口等决策，主动性极强；扣分点在于中段回忆由'记忆自己停下'呈现，主导感略有让渡",
           "action": "keep"
         },
         {
           "dimension": "vitality",
-          "score": 3,
-          "evidence": "规则 P1: sentence_diversity_low",
-          "action": "trim"
+          "score": 2,
+          "evidence": "全章以'他+动词'短句堆叠为主，'他摸了一下''他抬手看了一眼''他拨了号'等相同骨架反复出现，节奏单调；P1检测亦显示单一句式占比58%",
+          "action": "rewrite"
         },
         {
           "dimension": "dialogue",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "'我让你走，是因为你再往下查，会出事'与'你不需要理由'对白有性格重量，气口和打断节奏贴合人物关系，无废语",
           "action": "keep"
         },
         {
           "dimension": "genre",
-          "score": 4,
-          "evidence": "无对应 prose P1 规则项",
+          "score": 5,
+          "evidence": "坑道孤绝求生+克制冷对话+悬念旧录音，类型元素全部落地且互为咬合，'上一个查的人'与自动锤留扣，类型完成度极高",
           "action": "keep"
         }
       ]
@@ -96,38 +96,38 @@
       "ratings": [
         {
           "dimension": "imagery",
-          "score": 4,
-          "evidence": "'喀斯特谷的地下风还在'、'暗河在深处缓慢改道，像整片含水层在呼吸'，通感与地质意象兼具，画面感扎实。",
+          "score": 5,
+          "evidence": "「暗河在深处缓慢改道，像整片含水层在呼吸」比喻克制有力，画面感极强；井口GPS偏移、喀斯特谷底噪等细节具象",
           "action": "keep"
         },
         {
           "dimension": "hook",
           "score": 3,
-          "evidence": "开头用旧录音悬念和'疼吗'设钩，但中段禁入公告与对讲机归还节奏偏平，缺少持续钩子牵引。",
+          "evidence": "开头录音交付与结尾班车离去有收束感，但缺乏新悬念或反转钩子，整章偏闭合叙事，钩子密度稀薄",
           "action": "trim"
         },
         {
           "dimension": "agency",
           "score": 4,
-          "evidence": "沈渡主动送录音、归还对讲机、拒绝再进暗河、搭车回城，闭环行动清晰。",
+          "evidence": "沈渡主动交付录音、归还对讲机、拒绝再进暗河、拦车离去，行动链清晰且体现人物主动收束",
           "action": "keep"
         },
         {
           "dimension": "vitality",
           "score": 2,
-          "evidence": "短句占比过高且多为主谓结构（'沈渡把…''老人没哭''沈渡想起…'），句式单调，P1检测单一句式56%已印证。",
+          "evidence": "检测提示单一句式占比56%超40%，正文大量短句堆叠节奏单一（尤其对话段），句式变化不足",
           "action": "rewrite"
         },
         {
           "dimension": "dialogue",
           "score": 4,
-          "evidence": "'疼吗？''他在井里把坐标留下来了'口语节制有留白，符合哀悼场景真实感。",
+          "evidence": "「疼吗？」「他在井里等了你两年？」问句克制、潜台词饱满，符合哀悼场景的留白真实感",
           "action": "keep"
         },
         {
           "dimension": "genre",
           "score": 4,
-          "evidence": "悬疑+地质纪实元素（频道3、GPS偏移、暗河改道）齐备，类型氛围与信息解密推进到位。",
+          "evidence": "探险/测绘悬疑类型要素齐备：暗河、坐标、竖井、频道底噪、禁入通告，类型氛围完整",
           "action": "keep"
         }
       ]

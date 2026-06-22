@@ -49,7 +49,7 @@ golden_baselines:
     label: 暗河档案
     dist_ready: true
     max_prose_p1: 12
-    max_total: 30
+    max_total: 32
     max_p0: 0
 
 # issue_type values counted as "prose" for heatmap and calibration

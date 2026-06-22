@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.57 (v12 候选 · CI 全绿, 2026-06-21)  
-> **更新 (2026-06-21)**: test CI @ `2b941a7` success · 四书 LLM avg≥4.0 · 抽检 judge=llm
+> **版本**: v10.58 (七书 LLM avg≥4.0 · CI 全绿, 2026-06-22)  
+> **更新 (2026-06-22)**: test CI @ `e6d70a4` success · **七 dist 齐平** · 暗河 polish 4.06
 
 ---
 
@@ -17,8 +17,8 @@
 | **试验田** | 《星陨纪元》ch001–ch360 正史；ch361–ch996 = stress test（见 `03_内容仓库/experimental/`） |
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
-| **CI** | **test @ `2b941a7` 全绿**（golden×8 · llm×7 · e2e-live · ruff · cov 50%） |
-| **下一期推荐** | polish **暗河**至 LLM avg≥4.0（静海 ✅ 4.06 · 六书达标） |
+| **CI** | **test @ `e6d70a4` 全绿**（golden×8 · llm×7 · e2e-live · ruff · cov 50%） |
+| **下一期推荐** | **七 dist 齐平** — pytest 3000+ · Studio 录屏 · v2 正式版 |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
@@ -794,7 +794,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 - [ ] 跑 `cd novel-factory/dashboard/frontend && pnpm vitest run` 验证 vitest **409** passed (~8s)
 - [ ] 跑 `git log --oneline -5` 确认 HEAD 已更新
 - [ ] 跑 `git status` 确认 working tree 干净
-- [ ] 选下一工作: **三书 prose polish**（静海/暗河/黄沙 → LLM avg≥4.0）或 pytest 3000+
+- [ ] 选下一工作: **pytest 3000+** · Studio 录屏 · prose rubric v2 正式版
 
 ---
 
