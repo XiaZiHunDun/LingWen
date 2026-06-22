@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.65 (维护对齐 · v12 KPI 收尾, 2026-06-22)  
-> **更新 (2026-06-22)**: CI `67c8ad8` 全绿 · DoD/E2E/gap 文档同步 · **维护模式**
+> **版本**: v10.66 (会话交接, 2026-06-22)  
+> **更新 (2026-06-22)**: CI **`82f0313`** 全绿 · v12 KPI 收尾 · **维护模式**（无 blocking 工程项）
 
 ---
 
@@ -19,11 +19,93 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **维护模式**：prose polish 按需 · `prose-judge-llm` 刷新 · 样章改动后重打 zip |
-| **最新 CI** | `test` @ **`67c8ad8`** · run [`27928469270`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27928469270) success |
+| **最新 CI** | `test` @ **`82f0313`** · run [`27933708936`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27933708936) success |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
 | **v11 规划** | `novel-factory/docs/superpowers/plans/2026-06-19-roadmap-v11-engineering.md` |
+
+---
+
+## 0.1 新会话交接（2026-06-22 · 必读）
+
+> **给下一个 AI / 开发者**：读完本节即可接手；细节查下文 Phase 表与链接文档。
+
+### 项目定位
+
+- **产品**：灵文工作室 — 可复用的小说生产 pipeline（init → preflight → batch → full-check → 试读包）
+- **非目标**：无止尽续写《星陨纪元》（星陨 = testbed，正史 ch001–360）
+- **仓库根**：`/home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen`（git root）
+- **主代码**：`novel-factory/`（~95%）
+
+### 当前阶段：**维护模式**（v12 顶级 KPI 已达标）
+
+**无 blocking 工程项。** 不要主动开第九本书、星陨 wave、SaaS、录屏、或恢复 llm×7 每次 push 全跑。
+
+### 本会话已完成（按时间倒序）
+
+| 主题 | 状态 | 证据 / commit |
+|------|------|----------------|
+| 维护对齐（HANDOFF/DoD/gap/rubric） | ✅ | `82f0313` · CI [`27933708936`](https://github.com/XiaZiHunDun/LingWen/actions/runs/27933708936) |
+| e2e 远程首绿 record 回填 | ✅ | run `27928203388` · `67c8ad8` |
+| budget `--calibrate-from` + wave 367–376 文档 + live RAG | ✅ | `9132168` |
+| 七样章 zip 默认 + DoD batch 3章 | ✅ | `8eff83a` |
+| LLM 路径降频 + DoD C pilot | ✅ | `dcadb65` |
+| vitest 入主门 · workflow 6 个 · MiniMax 统一 | ✅ | `ffdb479` 起 |
+
+### 关键本地记录（gitignored，在 `novel-factory/infra/.state/`）
+
+| 路径 | 用途 |
+|------|------|
+| `pilot_records/studio-dod-batch-studio-dod-1782098216.json` | DoD D：3/3 章 · ~$0.19 |
+| `pilot_records/ch367-live-rag.json` | Memory RAG live · `memory_context_source=live` |
+| `pilot_records/batch-367-376.json` | 星陨 wave 10/10 · ~$0.28 |
+| `ci_records/e2e-live-first-green.json` | e2e 首绿 · run `27928203388` |
+
+### CI 现状（6 workflows · 主门 `test.yml`）
+
+| Job 要点 | 说明 |
+|----------|------|
+| pytest×3 · vitest · lint · build | 每次 push blocking |
+| golden×8 | 七 Studio + 星陨 testbed |
+| **llm×7** | **路径过滤**；改 `projects/**`/`infra/**` 或 PR label `llm-check` 才跑 |
+| e2e-live | Playwright 5/5 blocking |
+| 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
+
+文档地图：`novel-factory/docs/ci-quality-gates.md`
+
+### 常用命令
+
+```bash
+cd novel-factory
+bash scripts/verify-studio-production-dod.sh              # DoD A+B（无 API）
+bash scripts/verify-studio-production-dod.sh --real-llm   # DoD C（耗 API ~$0.04）
+bash scripts/prepare-studio-samples-zip.sh                # 七样章 zip → dist/
+bash scripts/verify-e2e-live-ci.sh                        # 本地 e2e parity
+python -m pytest tests/ci/ -q -o addopts=                 # CI 契约测（快）
+```
+
+### 后续可选（按价值排序，**非必须**）
+
+1. **样章 prose polish** — gap 综合 prose 0.80→0.88；改完后 zip + `prose-judge-llm` workflow
+2. **Studio batch 默认 calibrate** — 代码层自动读项目 pilot JSON（DoD 脚本已部分实现）
+3. **Memory RAG live 进 Studio 生产默认** — 需 Qdrant；runbook §19
+4. **装 `gh` CLI** — 本机无 `gh`，目前用 GitHub API curl 查 CI
+
+### 已知陷阱
+
+- **`resolve_chapter_cost_budget`**：F79 默认 ~$0.028/章 < Studio MiniMax 实测 ~$0.063/章；带 `--budget-usd` 必须 `--calibrate-from` 或让 DoD 脚本自动选 `studio-dod-batch*.json`
+- **DoD batch 默认无 budget cap**（避免 emit 失败）
+- **星陨 ch361+** = stress test；canon 超 360 需 `LINGWEN_ALLOW_STRESS_TEST=1`
+- **不要 commit** `infra/.state/`、`dist/`、`.env`
+
+### 文档入口（新会话优先读）
+
+1. 本文件 `HANDOFF.md` §0 TL;DR + §0.1（本节）
+2. `novel-factory/docs/top-tier-studio-gap-v1.md` — KPI 全 ✅
+3. `novel-factory/docs/studio-production-dod.md` — 真实生产 DoD
+4. `novel-factory/docs/ci-quality-gates.md` — CI 地图 + 本地最小验证
+5. `novel-factory/docs/chapter-production-runbook.md` — batch/wave/RAG/e2e 运维
 
 ---
 
