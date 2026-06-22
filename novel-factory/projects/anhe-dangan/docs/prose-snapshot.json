@@ -1,14 +1,14 @@
 {
   "version": 1,
   "slug": "anhe-dangan",
-  "captured_at": "2026-06-20 16:29 UTC",
+  "captured_at": "2026-06-22 09:41 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 12,
+    "p1": 13,
     "p2": 11,
-    "p3": 6,
-    "total": 29,
+    "p3": 7,
+    "total": 31,
     "prose_p1": 8,
     "prose_total": 10
   },
@@ -96,7 +96,7 @@
     },
     {
       "chapter": 10,
-      "issue_count": 2,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [

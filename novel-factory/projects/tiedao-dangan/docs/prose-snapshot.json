@@ -1,12 +1,12 @@
 {
   "version": 1,
   "slug": "tiedao-dangan",
-  "captured_at": "2026-06-20 16:29 UTC",
+  "captured_at": "2026-06-22 09:41 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 13,
-    "p2": 7,
+    "p1": 12,
+    "p2": 8,
     "p3": 2,
     "total": 22,
     "prose_p1": 8,

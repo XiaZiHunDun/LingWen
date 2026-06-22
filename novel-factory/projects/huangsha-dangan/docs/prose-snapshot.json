@@ -1,14 +1,14 @@
 {
   "version": 1,
   "slug": "huangsha-dangan",
-  "captured_at": "2026-06-20 16:29 UTC",
+  "captured_at": "2026-06-22 09:41 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
-    "p1": 11,
+    "p1": 12,
     "p2": 8,
-    "p3": 4,
-    "total": 23,
+    "p3": 5,
+    "total": 25,
     "prose_p1": 8,
     "prose_total": 10
   },
@@ -96,7 +96,7 @@
     },
     {
       "chapter": 10,
-      "issue_count": 2,
+      "issue_count": 4,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [

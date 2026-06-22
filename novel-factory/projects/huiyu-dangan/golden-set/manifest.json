@@ -2,14 +2,14 @@
   "project_slug": "huiyu-dangan",
   "title": "灰域档案",
   "purpose": "第三本书 onboarding Golden Set 基线",
-  "frozen_at": "2026-06-20",
+  "frozen_at": "2026-06-22",
   "review_status": "human_review_pass_v1+sync",
   "chapters": [
     {
       "num": 1,
       "role": "opening_hook",
       "file": "chapters/ch001.md",
-      "char_count": 2424,
+      "char_count": 2372,
       "full_check_issues_baseline": 5
     },
     {

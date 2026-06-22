@@ -1,21 +1,21 @@
 {
   "version": 1,
   "slug": "anye-xinbiao",
-  "captured_at": "2026-06-20 16:29 UTC",
+  "captured_at": "2026-06-22 09:41 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
     "p1": 10,
-    "p2": 10,
+    "p2": 9,
     "p3": 3,
-    "total": 23,
+    "total": 22,
     "prose_p1": 8,
     "prose_total": 10
   },
   "chapters": [
     {
       "chapter": 1,
-      "issue_count": 2,
+      "issue_count": 1,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [

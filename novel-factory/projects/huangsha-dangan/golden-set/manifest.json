@@ -2,28 +2,28 @@
   "project_slug": "huangsha-dangan",
   "title": "黄沙档案",
   "purpose": "灵文工作室第六本书 Golden Set 回归基线",
-  "frozen_at": "2026-06-20",
+  "frozen_at": "2026-06-22",
   "review_status": "human_review_pass_v1+sync",
   "chapters": [
     {
       "num": 1,
       "role": "opening_hook",
       "file": "chapters/ch001.md",
-      "char_count": 2352,
+      "char_count": 2200,
       "full_check_issues_baseline": 3
     },
     {
       "num": 5,
       "role": "midpoint_turn",
       "file": "chapters/ch005.md",
-      "char_count": 2437,
+      "char_count": 1937,
       "full_check_issues_baseline": 2
     },
     {
       "num": 10,
       "role": "finale",
       "file": "chapters/ch010.md",
-      "char_count": 384,
+      "char_count": 532,
       "full_check_issues_baseline": 2
     }
   ],

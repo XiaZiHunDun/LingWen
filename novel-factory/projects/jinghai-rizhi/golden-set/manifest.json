@@ -2,28 +2,28 @@
   "project_slug": "jinghai-rizhi",
   "title": "静海日志",
   "purpose": "灵文工作室第四本书 Golden Set 回归基线",
-  "frozen_at": "2026-06-20",
+  "frozen_at": "2026-06-22",
   "review_status": "human_review_pass_v1+sync",
   "chapters": [
     {
       "num": 1,
       "role": "opening_hook",
       "file": "chapters/ch001.md",
-      "char_count": 2641,
+      "char_count": 2590,
       "full_check_issues_baseline": 5
     },
     {
       "num": 5,
       "role": "midpoint_turn",
       "file": "chapters/ch005.md",
-      "char_count": 2198,
+      "char_count": 1025,
       "full_check_issues_baseline": 3
     },
     {
       "num": 10,
       "role": "finale",
       "file": "chapters/ch010.md",
-      "char_count": 1692,
+      "char_count": 1088,
       "full_check_issues_baseline": 3
     }
   ],

@@ -1,14 +1,14 @@
 {
   "version": 1,
   "slug": "jinghai-rizhi",
-  "captured_at": "2026-06-20 16:29 UTC",
+  "captured_at": "2026-06-22 09:41 UTC",
   "source": "full-check-report",
   "totals": {
     "p0": 0,
     "p1": 9,
-    "p2": 8,
-    "p3": 8,
-    "total": 25,
+    "p2": 7,
+    "p3": 7,
+    "total": 23,
     "prose_p1": 8,
     "prose_total": 10
   },
@@ -51,7 +51,7 @@
     },
     {
       "chapter": 5,
-      "issue_count": 3,
+      "issue_count": 2,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
@@ -96,7 +96,7 @@
     },
     {
       "chapter": 10,
-      "issue_count": 2,
+      "issue_count": 1,
       "prose_p1": 1,
       "prose_total": 1,
       "prose_issue_types": [
