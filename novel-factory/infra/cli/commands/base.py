@@ -9,6 +9,7 @@ from typing import List
 
 from infra.cli.options import UnifiedOptions
 from infra.cli.output import OutputFormatter
+from infra.cli.project_range import project_max_chapter
 from infra.cli.range_parser import RangeParser
 from infra.paths import ProjectPaths
 
@@ -21,7 +22,8 @@ class Command(ABC):
 
     def __init__(self):
         self.paths = ProjectPaths.get()
-        self.range_parser = RangeParser()
+        max_ch = project_max_chapter(self.paths)
+        self.range_parser = RangeParser(all_chapters=max_ch)
         self.formatter = OutputFormatter()
 
     @abstractmethod
@@ -50,9 +52,9 @@ class Command(ABC):
             # Parse from string list
             range_str = ",".join(str(r) for r in options.range)
             return self.range_parser.parse(range_str)
-        else:
-            # Default to all chapters
-            return list(range(1, 361))
+
+        max_ch = project_max_chapter(self.paths)
+        return list(range(1, max_ch + 1))
 
     def format_chapter_summary(self, chapters: List[int]) -> str:
         """Format chapter range summary"""

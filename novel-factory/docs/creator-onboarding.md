@@ -62,6 +62,12 @@ docs/volume-summary-ch001-010.md
 
 4. 有疑点再 `run-companion-check.sh`
 
+### Dashboard（`?nav=creator`）
+
+- **写**：点击章节行 → 只读预览大纲/正文
+- **脉络**：编辑卷纲 → 锁定 → 保存；偏离列表含缺章、越界、**关键词不匹配**
+- companion/advance 项目打开 Dashboard 默认进创作页
+
 ## 4. 和工作室线的关系
 
 - **七样章 / CI / judge≥4.0** = Studio 工厂，继续维护，不是创作者默认路径

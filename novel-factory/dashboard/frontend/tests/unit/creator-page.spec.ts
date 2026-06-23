@@ -6,12 +6,14 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOverview: vi.fn(),
   fetchCreatorVolumePlan: vi.fn(),
   saveCreatorVolumePlan: vi.fn(),
+  fetchCreatorChapterPreview: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOverview: creatorMocks.fetchCreatorOverview,
   fetchCreatorVolumePlan: creatorMocks.fetchCreatorVolumePlan,
   saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
+  fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
@@ -71,6 +73,16 @@ describe('CreatorPage', () => {
       deviations: overviewFixture.deviations,
     });
     creatorMocks.saveCreatorVolumePlan.mockResolvedValue({});
+    creatorMocks.fetchCreatorChapterPreview.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 2000,
+      body_preview: '第一章正文预览',
+      outline_preview: '大纲预览',
+      body_truncated: false,
+      outline_truncated: false,
+    });
   });
 
   it('renders three columns, volume plan, and deviation badge', async () => {
@@ -92,5 +104,17 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(creatorMocks.saveCreatorVolumePlan).toHaveBeenCalled();
+  });
+
+  it('shows chapter preview when row clicked', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1);
+    expect(wrapper.find('[data-testid="chapter-preview-panel"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('第一章正文预览');
   });
 });

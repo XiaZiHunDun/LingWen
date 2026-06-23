@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.70 (创作者 v1.2 — 卷纲锁定 + 偏离 diff, 2026-06-22)  
-> **更新 (2026-06-22)**: Dashboard 卷纲编辑/锁定 · 偏离高亮 · companion 默认导航
+> **版本**: v10.71 (创作者 v1.3 — check 范围 + 章预览 + 语义偏离, 2026-06-22)  
+> **更新 (2026-06-22)**: `max_chapter` 守门范围 · 创作页章预览 · 卷纲关键词偏离
 
 ---
 
@@ -101,7 +101,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v1.2 已落地**：卷纲 `PUT /api/creator/volume-plan` · 偏离 diff · companion/advance 打开 Dashboard 默认进创作页
 
-**v1.3 待做**：语义级纲章偏离 · Dashboard 正文预览
+**v1.3 已落地**：check/`all` 尊重 `max_chapter` · 章预览 `GET /api/creator/chapters/{n}` · 语义偏离（卷纲关键词 vs 分章大纲）
+
+**v1.4 待做**：卷纲重叠检测 · Dashboard 一键 batch · 设定在线编辑
 
 ### 常用命令
 

@@ -81,3 +81,12 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["locked_volume_count"] == 1
         assert "deviations" in data
+
+    def test_chapter_preview(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/chapters/1")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["chapter"] == 1
+        assert "body_preview" in data
+        assert "outline_preview" in data
+        assert data["has_body"] is True

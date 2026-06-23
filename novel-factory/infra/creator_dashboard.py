@@ -97,3 +97,34 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         "alert_count": sum(1 for d in deviations if d["severity"] == "alert"),
         "deviations": deviations[:30],
     }
+
+
+def creator_chapter_preview(
+    project: StudioProject,
+    chapter_num: int,
+    *,
+    body_limit: int = 4000,
+    outline_limit: int = 2500,
+) -> dict[str, Any]:
+    root = project.root if isinstance(project.root, Path) else Path(project.root)
+    paths = ProjectPaths.get(root)
+    config = ProjectConfig.load(paths)
+    if chapter_num < 1 or chapter_num > config.max_chapter:
+        raise ValueError(f"chapter {chapter_num} out of range 1–{config.max_chapter}")
+
+    body = paths.read_chapter(chapter_num) or ""
+    outline_path = config.chapter_outline_path(chapter_num, paths)
+    outline = ""
+    if outline_path.is_file():
+        outline = outline_path.read_text(encoding="utf-8")
+
+    return {
+        "chapter": chapter_num,
+        "has_body": bool(body.strip()),
+        "has_outline": outline_path.is_file(),
+        "word_count": len(re.sub(r"\s+", "", body)),
+        "body_preview": body[:body_limit],
+        "outline_preview": outline[:outline_limit],
+        "body_truncated": len(body) > body_limit,
+        "outline_truncated": len(outline) > outline_limit,
+    }

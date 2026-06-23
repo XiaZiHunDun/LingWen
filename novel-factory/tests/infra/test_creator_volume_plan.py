@@ -80,6 +80,41 @@ def test_save_and_deviation_diff(factory_tmp):
     ProjectPaths.reset()
 
 
+def test_semantic_drift_when_outline_keywords_mismatch(factory_tmp):
+    result = init_minimal_short_project(
+        slug="semantic-drift",
+        title="语义偏离",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=5,
+    )
+    ProjectPaths.reset()
+    root = result.root
+    chapters = root / "03_内容仓库" / "04_正文"
+
+    save_volume_plan(
+        root,
+        [
+            {
+                "label": "一",
+                "start_chapter": 1,
+                "end_chapter": 2,
+                "core_conflict": "追查信标",
+                "locked": True,
+            },
+        ],
+    )
+    (chapters / "ch001_大纲.md").write_text("# 第1章\n\n本章讲做饭。", encoding="utf-8")
+    (chapters / "ch002_大纲.md").write_text("# 第2章\n\n继续追查信标。", encoding="utf-8")
+
+    volumes = load_volume_plan(root)
+    deviations = compute_volume_deviations(root, volumes)
+    semantic = [d for d in deviations if d["type"] == "semantic_drift"]
+    assert len(semantic) == 1
+    assert semantic[0]["chapter"] == 1
+    ProjectPaths.reset()
+
+
 @pytest.fixture
 def factory_tmp(tmp_path):
     ProjectPaths.reset()

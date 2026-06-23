@@ -551,6 +551,10 @@ export async function saveCreatorVolumePlan(volumes) {
   });
 }
 
+export async function fetchCreatorChapterPreview(chapterNum) {
+  return request(`/creator/chapters/${chapterNum}`);
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */

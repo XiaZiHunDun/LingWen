@@ -48,6 +48,7 @@ from infra.cli import (
 from infra.cli.commands import get_command, list_commands
 from infra.cli.options import UnifiedOptions
 from infra.cli.parsers import create_parser
+from infra.cli.project_range import project_max_chapter
 
 
 def parse_range(range_str: str, range_parser: RangeParser) -> list:
@@ -210,7 +211,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             older_than=getattr(args, "older_than", "90d") or "90d",
         )
 
-    chapter_range = parse_range(args.range, RangeParser())
+    chapter_range = parse_range(args.range, RangeParser(all_chapters=project_max_chapter()))
 
     if command == "check":
         return CheckOptions(

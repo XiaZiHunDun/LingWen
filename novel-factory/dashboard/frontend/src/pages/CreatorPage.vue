@@ -44,7 +44,12 @@
             v-for="ch in visibleChapters"
             :key="ch.chapter"
             class="chapter-row"
-            :class="chapterRowClass(ch.chapter)"
+            :class="[chapterRowClass(ch.chapter), { 'chapter-row--selected': selectedChapter === ch.chapter }]"
+            role="button"
+            tabindex="0"
+            :data-testid="`chapter-row-${ch.chapter}`"
+            @click="selectChapter(ch.chapter)"
+            @keydown.enter="selectChapter(ch.chapter)"
           >
             <span class="ch-label">ch{{ String(ch.chapter).padStart(3, '0') }}</span>
             <span class="ch-status">
@@ -52,6 +57,31 @@
             </span>
           </li>
         </ul>
+        <div
+          v-if="chapterPreview"
+          class="chapter-preview pixel-border"
+          data-testid="chapter-preview-panel"
+        >
+          <h3 class="subsection-title">
+            ch{{ String(chapterPreview.chapter).padStart(3, '0') }} 预览
+            <span v-if="chapterPreview.word_count">（{{ chapterPreview.word_count }} 字）</span>
+          </h3>
+          <p v-if="previewLoading" class="meta-line">加载中…</p>
+          <template v-else>
+            <details v-if="chapterPreview.has_outline" open>
+              <summary>分章大纲</summary>
+              <pre class="preview-text">{{ chapterPreview.outline_preview || '（空）' }}</pre>
+            </details>
+            <details v-if="chapterPreview.has_body" :open="!chapterPreview.has_outline">
+              <summary>正文</summary>
+              <pre class="preview-text">{{ chapterPreview.body_preview || '（空）' }}</pre>
+              <p v-if="chapterPreview.body_truncated" class="meta-line">正文已截断 · 完整内容请在编辑器查看</p>
+            </details>
+            <p v-if="!chapterPreview.has_body && !chapterPreview.has_outline" class="meta-line">
+              本章尚无大纲与正文
+            </p>
+          </template>
+        </div>
         <p v-if="overview.chapters.length > 15" class="meta-line">
           显示前 15 章 · 共 {{ overview.max_chapter }} 章上限
         </p>
@@ -184,6 +214,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import {
   fetchCreatorOverview,
   fetchCreatorVolumePlan,
+  fetchCreatorChapterPreview,
   saveCreatorVolumePlan,
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
@@ -191,6 +222,9 @@ import { useStudioProject } from '../composables/useStudioProject.js';
 const { projectRevision } = useStudioProject();
 const overview = ref(null);
 const editableVolumes = ref([]);
+const selectedChapter = ref(null);
+const chapterPreview = ref(null);
+const previewLoading = ref(false);
 const loading = ref(false);
 const saving = ref(false);
 const error = ref(null);
@@ -228,6 +262,19 @@ function chapterRowClass(chapter) {
   const ch = overview.value?.chapters?.find((c) => c.chapter === chapter);
   if (ch?.has_body) return 'chapter-row--done';
   return '';
+}
+
+async function selectChapter(chapter) {
+  selectedChapter.value = chapter;
+  previewLoading.value = true;
+  chapterPreview.value = null;
+  try {
+    chapterPreview.value = await fetchCreatorChapterPreview(chapter);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    previewLoading.value = false;
+  }
 }
 
 function addVolume() {
@@ -378,6 +425,27 @@ watch(projectRevision, () => {
 
 .chapter-row--done {
   background: rgba(100, 200, 100, 0.08);
+}
+
+.chapter-row {
+  cursor: pointer;
+}
+
+.chapter-row--selected {
+  outline: 2px solid var(--color-accent);
+}
+
+.chapter-preview {
+  margin-top: var(--space-md);
+  padding: var(--space-sm);
+  max-height: 320px;
+  overflow: auto;
+}
+
+.preview-text {
+  font-size: 8px;
+  white-space: pre-wrap;
+  margin: var(--space-xs) 0;
 }
 
 .chapter-row--warn {

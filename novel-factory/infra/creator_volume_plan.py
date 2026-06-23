@@ -238,6 +238,26 @@ def save_volume_plan(
     return normalized
 
 
+_PLACEHOLDER_CONFLICTS = frozenset({"（待填）", "待填", "...", "—", "-", "（", "）"})
+
+
+def _conflict_terms(conflict: str) -> list[str]:
+    text = conflict.strip()
+    if not text or text in _PLACEHOLDER_CONFLICTS:
+        return []
+    parts = re.split(r"[，,、；;。．/\s]+", text)
+    return [part for part in parts if len(part) >= 2]
+
+
+def _outline_matches_conflict(outline_text: str, terms: list[str]) -> bool:
+    if not terms:
+        return True
+    for term in terms:
+        if term in outline_text:
+            return True
+    return False
+
+
 def _chapter_in_locked_range(chapter: int, volumes: list[VolumeEntry]) -> bool:
     for vol in volumes:
         if vol.locked and vol.start_chapter <= chapter <= vol.end_chapter:
@@ -288,6 +308,27 @@ def compute_volume_deviations(
                         "message": f"卷「{vol.label}」ch{num:03d} 尚无正文",
                     },
                 )
+
+        terms = _conflict_terms(vol.core_conflict)
+        if terms:
+            for num in range(vol.start_chapter, vol.end_chapter + 1):
+                outline = config.chapter_outline_path(num, resolved_paths)
+                if not outline.is_file():
+                    continue
+                outline_text = outline.read_text(encoding="utf-8")
+                if not _outline_matches_conflict(outline_text, terms):
+                    deviations.append(
+                        {
+                            "type": "semantic_drift",
+                            "severity": "warn",
+                            "chapter": num,
+                            "volume_label": vol.label,
+                            "message": (
+                                f"卷「{vol.label}」ch{num:03d} 分章大纲与核心冲突"
+                                f"「{vol.core_conflict}」关键词不匹配"
+                            ),
+                        },
+                    )
 
     for num in written:
         if not _chapter_in_locked_range(num, volumes):

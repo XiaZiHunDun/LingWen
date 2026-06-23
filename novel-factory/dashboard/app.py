@@ -290,6 +290,17 @@ class CreatorVolumePlanSaveRequest(BaseModel):
     volumes: list[CreatorVolumePlanEntry]
 
 
+class CreatorChapterPreviewResponse(BaseModel):
+    chapter: int
+    has_body: bool
+    has_outline: bool
+    word_count: int
+    body_preview: str
+    outline_preview: str
+    body_truncated: bool
+    outline_truncated: bool
+
+
 class StudioQualityResponse(BaseModel):
     slug: str
     pillars_ok: bool
@@ -2161,6 +2172,24 @@ def create_app(
             [v.model_dump() for v in req.volumes],
         )
         return CreatorVolumePlanResponse(**volume_plan_payload(project.root))
+
+    @app.get(
+        "/api/creator/chapters/{chapter_num}",
+        response_model=CreatorChapterPreviewResponse,
+    )
+    def creator_chapter_preview_endpoint(chapter_num: int) -> CreatorChapterPreviewResponse:
+        from infra.creator_dashboard import creator_chapter_preview
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            return CreatorChapterPreviewResponse(
+                **creator_chapter_preview(project, chapter_num),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
 
     @app.get("/api/studio/quality", response_model=StudioQualityResponse)
     def studio_quality_dashboard() -> StudioQualityResponse:

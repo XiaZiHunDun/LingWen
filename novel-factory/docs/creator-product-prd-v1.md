@@ -112,5 +112,12 @@ project:
 
 ## 10. 后续（v1.3+）
 
-- 卷纲与分章大纲关键词偏离（语义级）
-- Dashboard 内嵌正文只读预览
+- 卷纲与分章大纲关键词偏离（语义级） — ✅ v1.3
+- Dashboard 内嵌正文只读预览 — ✅ v1.3
+- `lingwen check` / `all` 尊重 `max_chapter` — ✅ v1.3
+
+## 11. 后续（v1.4+）
+
+- 卷纲拖拽/合并与范围重叠检测
+- Dashboard 一键 advance batch
+- 设定栏轻量在线编辑
