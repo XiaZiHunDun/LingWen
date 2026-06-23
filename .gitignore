@@ -55,6 +55,7 @@ novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/避坑指南/
 
 # 运行时/测试产物（不进入版本控制）
 novel-factory/.locks/
+novel-factory/projects/**/.state/volume_plan.json
 # State DBs are runtime artifacts — except the canonical workflow.db
 novel-factory/.state/*.db
 !novel-factory/.state/workflow.db
