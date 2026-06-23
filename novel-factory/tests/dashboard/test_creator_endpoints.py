@@ -284,3 +284,76 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["has_history"] is True
         assert data["disk_vs_history"] is not None
+
+    def test_onboarding_wizard(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/onboarding")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "anye-xinbiao"
+        assert data["creation_mode"]
+        assert len(data["steps"]) >= 4
+        assert data["onboarding_doc"] == "docs/creator-onboarding-wizard.md"
+
+    def test_volume_plan_save_custom_template(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/volume-plan",
+            json={
+                "volumes": [
+                    {
+                        "label": "自定义A",
+                        "start_chapter": 1,
+                        "end_chapter": 5,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+            },
+        )
+        resp = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "测试模板",
+                "volumes": [
+                    {
+                        "label": "自定义A",
+                        "start_chapter": 1,
+                        "end_chapter": 5,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+                "max_chapter": 10,
+            },
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["id"].startswith("custom_")
+        listed = client.get("/api/creator/volume-plan/templates").json()
+        assert any(t["id"] == body["id"] and not t["builtin"] for t in listed["templates"])
+
+    def test_settings_merge_save(self, client: TestClient) -> None:
+        current = client.get("/api/creator/settings-docs").json()
+        client.put(
+            "/api/creator/settings-docs",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# disk-only\n",
+                "global_outline_text": current["global_outline_text"],
+                "expected_pillars_revision": current["pillars_revision"],
+                "expected_global_outline_revision": current["global_outline_revision"],
+            },
+        )
+        refreshed = client.get("/api/creator/settings-docs").json()
+        saved = client.put(
+            "/api/creator/settings-docs",
+            json={
+                "pillars_text": refreshed["pillars_text"] + "\n# editor-extra\n",
+                "global_outline_text": refreshed["global_outline_text"],
+                "expected_pillars_revision": refreshed["pillars_revision"],
+                "expected_global_outline_revision": refreshed["global_outline_revision"],
+                "pillars_merge_source": "disk",
+            },
+        )
+        assert saved.status_code == 200
+        after = client.get("/api/creator/settings-docs").json()
+        assert "# disk-only" in after["pillars_text"]
+        assert "# editor-extra" not in after["pillars_text"]

@@ -12,6 +12,8 @@ from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
 
+MERGE_SOURCES = frozenset({"editor", "disk", "history"})
+
 
 def text_diff_summary(before: str, after: str) -> dict[str, Any]:
     """Line-level diff summary for settings preview."""
@@ -163,6 +165,38 @@ def assert_settings_revisions(
         )
 
 
+def resolve_merged_settings(
+    project: StudioProject,
+    *,
+    pillars_source: str,
+    outline_source: str,
+    editor_pillars: str,
+    editor_outline: str,
+    snapshot_id: str | None = None,
+) -> tuple[str, str]:
+    from infra.creator_settings_history import load_snapshot_raw
+
+    disk = creator_settings_docs_payload(project)
+
+    def pick(source: str, field: str, editor_value: str) -> str:
+        if source not in MERGE_SOURCES:
+            raise ValueError(f"invalid merge source: {source!r}")
+        if source == "editor":
+            return editor_value
+        if source == "disk":
+            key = "pillars_text" if field == "pillars" else "global_outline_text"
+            return disk[key]
+        if not snapshot_id:
+            raise ValueError("history merge requires snapshot_id")
+        snap = load_snapshot_raw(project, snapshot_id)
+        key = "pillars_text" if field == "pillars" else "global_outline_text"
+        return str(snap[key])
+
+    pillars = pick(pillars_source, "pillars", editor_pillars)
+    outline = pick(outline_source, "outline", editor_outline)
+    return pillars, outline
+
+
 def save_creator_settings_docs(
     project: StudioProject,
     *,
@@ -170,29 +204,46 @@ def save_creator_settings_docs(
     global_outline_text: str | None = None,
     expected_pillars_revision: str | None = None,
     expected_global_outline_revision: str | None = None,
+    pillars_merge_source: str | None = None,
+    global_outline_merge_source: str | None = None,
+    merge_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
-    if pillars_text is not None or global_outline_text is not None:
+    resolved_pillars = pillars_text
+    resolved_outline = global_outline_text
+    if pillars_merge_source or global_outline_merge_source:
+        if pillars_text is None or global_outline_text is None:
+            raise ValueError("merge save requires pillars_text and global_outline_text")
+        resolved_pillars, resolved_outline = resolve_merged_settings(
+            project,
+            pillars_source=pillars_merge_source or "editor",
+            outline_source=global_outline_merge_source or "editor",
+            editor_pillars=pillars_text,
+            editor_outline=global_outline_text,
+            snapshot_id=merge_snapshot_id,
+        )
+
+    if resolved_pillars is not None or resolved_outline is not None:
         assert_settings_revisions(
             project,
             expected_pillars_revision=expected_pillars_revision
-            if pillars_text is not None
+            if resolved_pillars is not None
             else None,
             expected_global_outline_revision=expected_global_outline_revision
-            if global_outline_text is not None
+            if resolved_outline is not None
             else None,
         )
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)
 
     current = creator_settings_docs_payload(project)
-    if pillars_text is not None and pillars_text != current["pillars_text"]:
+    if resolved_pillars is not None and resolved_pillars != current["pillars_text"]:
         append_settings_snapshot(
             project,
             pillars_text=current["pillars_text"],
             global_outline_text=current["global_outline_text"],
             label="before-save",
         )
-    elif global_outline_text is not None and global_outline_text != current["global_outline_text"]:
+    elif resolved_outline is not None and resolved_outline != current["global_outline_text"]:
         append_settings_snapshot(
             project,
             pillars_text=current["pillars_text"],
@@ -200,14 +251,14 @@ def save_creator_settings_docs(
             label="before-save",
         )
 
-    if pillars_text is not None:
+    if resolved_pillars is not None:
         path = config.pillars_path
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(pillars_text.rstrip() + "\n", encoding="utf-8")
+        path.write_text(resolved_pillars.rstrip() + "\n", encoding="utf-8")
 
-    if global_outline_text is not None:
+    if resolved_outline is not None:
         path = global_outline_path(project.root)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(global_outline_text.rstrip() + "\n", encoding="utf-8")
+        path.write_text(resolved_outline.rstrip() + "\n", encoding="utf-8")
 
     return creator_settings_docs_payload(project)

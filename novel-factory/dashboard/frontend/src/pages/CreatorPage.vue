@@ -40,6 +40,27 @@
       {{ saveMessage }}
     </div>
 
+    <details
+      v-if="onboardingWizard"
+      class="onboarding-wizard pixel-border"
+      data-testid="onboarding-wizard-panel"
+      open
+    >
+      <summary>
+        入门向导 · {{ onboardingWizard.mode_label }}（{{ onboardingWizard.max_chapter }} 章上限）
+      </summary>
+      <ol class="wizard-steps">
+        <li v-for="step in onboardingWizard.steps" :key="step.id" class="wizard-step">
+          <strong>{{ step.title }}</strong>
+          <span class="meta-line">{{ step.detail }}</span>
+        </li>
+      </ol>
+      <p class="meta-line">
+        清单：<code>{{ onboardingWizard.checklist_doc }}</code> ·
+        冒烟：<code>{{ onboardingWizard.smoke_command }}</code>
+      </p>
+    </details>
+
     <div v-if="overview" class="creator-grid" data-testid="creator-grid">
       <!-- 写 -->
       <section class="creator-column pixel-card" data-testid="column-write">
@@ -144,6 +165,23 @@
               </button>
             </div>
             <p v-if="selectedTemplateHint" class="meta-line">{{ selectedTemplateHint }}</p>
+            <div v-if="editableVolumes.length" class="merge-range">
+              <input
+                v-model="customTemplateName"
+                class="vol-input vol-conflict"
+                data-testid="save-template-name-input"
+                placeholder="自定义模板名"
+              />
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="save-template-btn"
+                :disabled="templateSaving || !customTemplateName.trim()"
+                @click="saveCustomVolumeTemplate"
+              >
+                {{ templateSaving ? '保存中…' : '存为模板' }}
+              </button>
+            </div>
           </div>
           <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」或套用模板。</div>
           <div
@@ -458,6 +496,29 @@
                 / -{{ settingsDiffPreview.editor_vs_history.pillars.lines_removed }}
               </p>
             </template>
+            <div
+              v-if="showMergeStrategy"
+              class="merge-strategy-panel"
+              data-testid="merge-strategy-panel"
+            >
+              <p class="diff-line">合并策略（三路冲突时选择保留来源）</p>
+              <label class="meta-line">
+                支柱
+                <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source">
+                  <option value="editor">编辑器</option>
+                  <option value="disk">磁盘</option>
+                  <option value="history">历史快照</option>
+                </select>
+              </label>
+              <label class="meta-line">
+                全局大纲
+                <select v-model="outlineMergeSource" class="vol-input" data-testid="outline-merge-source">
+                  <option value="editor">编辑器</option>
+                  <option value="disk">磁盘</option>
+                  <option value="history">历史快照</option>
+                </select>
+              </label>
+            </div>
           </template>
           <div class="batch-actions">
             <button
@@ -529,6 +590,8 @@ import {
   splitCreatorVolumePlan,
   fetchCreatorVolumeTemplates,
   applyCreatorVolumeTemplate,
+  saveCreatorVolumeTemplate,
+  fetchCreatorOnboarding,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -573,7 +636,12 @@ const settingsRestoring = ref(false);
 const volumeTemplates = ref([]);
 const selectedTemplateId = ref('three_act');
 const templateApplying = ref(false);
+const customTemplateName = ref('');
+const templateSaving = ref(false);
+const onboardingWizard = ref(null);
 const compareSnapshotId = ref('');
+const pillarsMergeSource = ref('editor');
+const outlineMergeSource = ref('editor');
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -630,6 +698,19 @@ const settingsDiffSnippet = computed(() => {
 const selectedTemplateHint = computed(() => {
   const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
   return row?.description || '';
+});
+
+const showMergeStrategy = computed(() => {
+  const preview = settingsDiffPreview.value;
+  if (!preview?.has_history) return false;
+  const diskHist = preview.disk_vs_history;
+  const editorHist = preview.editor_vs_history;
+  return Boolean(
+    diskHist?.pillars?.changed
+    || diskHist?.global_outline?.changed
+    || editorHist?.pillars?.changed
+    || editorHist?.global_outline?.changed,
+  );
 });
 
 function formatHistoryTime(iso) {
@@ -743,6 +824,35 @@ async function loadVolumePlan() {
   splitPreview.value = null;
   syncSplitChapterFromVolume();
   syncBatchRangeFromVolumes();
+}
+
+async function loadOnboardingWizard() {
+  try {
+    onboardingWizard.value = await fetchCreatorOnboarding();
+  } catch {
+    onboardingWizard.value = null;
+  }
+}
+
+async function saveCustomVolumeTemplate() {
+  if (!customTemplateName.value.trim() || !editableVolumes.value.length) return;
+  templateSaving.value = true;
+  error.value = null;
+  try {
+    const saved = await saveCreatorVolumeTemplate({
+      name: customTemplateName.value.trim(),
+      volumes: editableVolumes.value,
+      max_chapter: overview.value?.max_chapter,
+    });
+    saveMessage.value = `已保存模板「${saved.name}」`;
+    customTemplateName.value = '';
+    await loadVolumeTemplates();
+    selectedTemplateId.value = saved.id;
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateSaving.value = false;
+  }
 }
 
 async function loadVolumeTemplates() {
@@ -936,12 +1046,18 @@ async function confirmSaveSettings() {
   saveMessage.value = '';
   error.value = null;
   try {
-    await saveCreatorSettingsDocs({
+    const body = {
       pillars_text: pillarsText.value,
       global_outline_text: globalOutlineText.value,
       expected_pillars_revision: settingsRevisions.value.pillars,
       expected_global_outline_revision: settingsRevisions.value.outline,
-    });
+    };
+    if (showMergeStrategy.value) {
+      body.pillars_merge_source = pillarsMergeSource.value;
+      body.global_outline_merge_source = outlineMergeSource.value;
+      body.merge_snapshot_id = compareSnapshotId.value || undefined;
+    }
+    await saveCreatorSettingsDocs(body);
     saveMessage.value = '设定已保存';
     conflictMessage.value = '';
     showSettingsDiff.value = false;
@@ -1059,6 +1175,7 @@ async function refresh() {
       loadSettingsDocs(),
       loadSettingsHistory(),
       loadVolumeTemplates(),
+      loadOnboardingWizard(),
       pollBatchJob(),
     ]);
     overview.value = ov;
@@ -1391,6 +1508,27 @@ watch(projectRevision, () => {
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+}
+
+.merge-strategy-panel {
+  margin-top: var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.onboarding-wizard {
+  padding: var(--space-sm);
+  font-size: 8px;
+}
+
+.wizard-steps {
+  margin: var(--space-xs) 0 0;
+  padding-left: 1.2em;
+}
+
+.wizard-step {
+  margin-bottom: 4px;
 }
 
 .volume-template-panel {

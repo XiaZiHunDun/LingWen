@@ -578,6 +578,17 @@ export async function applyCreatorVolumeTemplate(body) {
   });
 }
 
+export async function saveCreatorVolumeTemplate(body) {
+  return request('/creator/volume-plan/templates/save', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function fetchCreatorOnboarding() {
+  return request('/creator/onboarding');
+}
+
 export async function fetchCreatorChapterPreview(chapterNum) {
   return request(`/creator/chapters/${chapterNum}`);
 }

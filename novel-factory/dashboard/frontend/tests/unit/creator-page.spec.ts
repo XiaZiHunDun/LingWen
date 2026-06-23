@@ -10,6 +10,8 @@ const creatorMocks = vi.hoisted(() => ({
   splitCreatorVolumePlan: vi.fn(),
   fetchCreatorVolumeTemplates: vi.fn(),
   applyCreatorVolumeTemplate: vi.fn(),
+  saveCreatorVolumeTemplate: vi.fn(),
+  fetchCreatorOnboarding: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
@@ -30,6 +32,8 @@ vi.mock('../../src/api/index.js', () => ({
   splitCreatorVolumePlan: creatorMocks.splitCreatorVolumePlan,
   fetchCreatorVolumeTemplates: creatorMocks.fetchCreatorVolumeTemplates,
   applyCreatorVolumeTemplate: creatorMocks.applyCreatorVolumeTemplate,
+  saveCreatorVolumeTemplate: creatorMocks.saveCreatorVolumeTemplate,
+  fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
@@ -162,6 +166,25 @@ describe('CreatorPage', () => {
         { label: '第二幕', start_chapter: 4, end_chapter: 9, core_conflict: '对抗', locked: false },
         { label: '第三幕', start_chapter: 10, end_chapter: 12, core_conflict: '结局', locked: false },
       ],
+    });
+    creatorMocks.saveCreatorVolumeTemplate.mockResolvedValue({
+      id: 'custom_test',
+      name: '我的结构',
+      description: '',
+    });
+    creatorMocks.fetchCreatorOnboarding.mockResolvedValue({
+      slug: 'demo-book',
+      creation_mode: 'advance',
+      mode_label: '推进',
+      max_chapter: 12,
+      steps: [
+        { id: 'init', title: '新建', detail: 'init-project' },
+        { id: 'pillars', title: '支柱', detail: '编辑设定' },
+        { id: 'volume', title: '卷纲', detail: '锁定卷纲' },
+      ],
+      checklist_doc: 'docs/advance-walkthrough-checklist.md',
+      smoke_command: 'bash scripts/verify-advance-walkthrough.sh',
+      onboarding_doc: 'docs/creator-onboarding-wizard.md',
     });
     creatorMocks.fetchCreatorSettingsHistory.mockResolvedValue({
       snapshots: [
@@ -340,5 +363,43 @@ describe('CreatorPage', () => {
 
     expect(creatorMocks.applyCreatorVolumeTemplate).toHaveBeenCalled();
     expect(wrapper.text()).toContain('三幕式');
+  });
+
+  it('shows onboarding wizard panel', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(creatorMocks.fetchCreatorOnboarding).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="onboarding-wizard-panel"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('入门向导');
+    expect(wrapper.text()).toContain('advance-walkthrough-checklist');
+  });
+
+  it('saves custom volume template', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="save-template-name-input"]').setValue('我的结构');
+    await wrapper.find('[data-testid="save-template-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.saveCreatorVolumeTemplate).toHaveBeenCalled();
+  });
+
+  it('shows merge strategy when three-way conflict', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="merge-strategy-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="pillars-merge-source"]').setValue('disk');
+    await wrapper.find('[data-testid="confirm-settings-btn"]').trigger('click');
+    await flushPromises();
+
+    const call = creatorMocks.saveCreatorSettingsDocs.mock.calls.at(-1)?.[0];
+    expect(call?.pillars_merge_source).toBe('disk');
   });
 });

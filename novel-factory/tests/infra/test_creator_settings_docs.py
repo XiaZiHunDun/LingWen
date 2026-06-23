@@ -8,6 +8,7 @@ from infra.creator_settings_docs import (
     creator_settings_docs_payload,
     preview_settings_docs_diff,
     preview_settings_three_way,
+    resolve_merged_settings,
     save_creator_settings_docs,
     text_diff_summary,
 )
@@ -151,3 +152,69 @@ def test_three_way_preview(factory_tmp):
     )
     assert preview["has_history"] is True
     assert preview["editor_vs_history"]["pillars"]["changed"] is True
+
+
+def test_resolve_merged_settings_from_history(factory_tmp):
+    result = init_minimal_short_project(
+        slug="merge-history",
+        title="合并历史",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    ProjectPaths.reset()
+    project = StudioProject(
+        slug=result.slug,
+        name=result.title,
+        role="production",
+        root=result.root,
+        location="projects",
+    )
+    save_creator_settings_docs(project, pillars_text="# 磁盘\n", global_outline_text="# 大纲\n")
+    from infra.creator_settings_history import append_settings_snapshot
+
+    snap = append_settings_snapshot(
+        project,
+        pillars_text="# 历史支柱\n",
+        global_outline_text="# 历史大纲\n",
+        label="merge-seed",
+    )
+    pillars, outline = resolve_merged_settings(
+        project,
+        pillars_source="history",
+        outline_source="disk",
+        editor_pillars="# 编辑器\n",
+        editor_outline="# 编辑器大纲\n",
+        snapshot_id=snap["id"],
+    )
+    assert pillars == "# 历史支柱\n"
+    assert outline == "# 大纲\n"
+
+
+def test_save_with_merge_sources(factory_tmp):
+    result = init_minimal_short_project(
+        slug="merge-save",
+        title="合并保存",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    ProjectPaths.reset()
+    project = StudioProject(
+        slug=result.slug,
+        name=result.title,
+        role="production",
+        root=result.root,
+        location="projects",
+    )
+    current = creator_settings_docs_payload(project)
+    save_creator_settings_docs(
+        project,
+        pillars_text="# 编辑器\n",
+        global_outline_text=current["global_outline_text"],
+        expected_pillars_revision=current["pillars_revision"],
+        expected_global_outline_revision=current["global_outline_revision"],
+        pillars_merge_source="disk",
+    )
+    reloaded = creator_settings_docs_payload(project)
+    assert reloaded["pillars_text"] == current["pillars_text"]

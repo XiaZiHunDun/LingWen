@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.76 (创作者 v1.8, 2026-06-22)  
-> **更新 (2026-06-22)**: 卷纲模板库 · 设定三路 diff · studio hybrid 走通
+> **版本**: v10.77 (创作者 v1.9, 2026-06-22)  
+> **更新 (2026-06-22)**: 卷纲自定义模板 · 设定合并策略 · 创作者入门向导
 
 ---
 
@@ -113,7 +113,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v1.8 已落地**：卷纲模板库（三幕/五卷/陪伴短篇）· 设定三路 diff · [`studio-creator-hybrid-checklist.md`](novel-factory/docs/studio-creator-hybrid-checklist.md)
 
-**v1.9 待做**：卷纲模板自定义保存 · 设定合并策略 UI · 创作者 onboarding 合一页向导
+**v1.9 已落地**：卷纲模板自定义保存 · 设定合并策略 UI（editor/disk/history）· 创作者入门向导 · [`creator-onboarding-wizard.md`](novel-factory/docs/creator-onboarding-wizard.md) + `verify-creator-onboarding-wizard.sh`
+
+**v2.0 候选**：模板删除 · 合并策略可视化 diff · 向导 deep-link `?nav=creator&wizard=1`
 
 ### 常用命令
 

@@ -3,7 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_volume_templates import build_volume_template, list_volume_templates
+from infra.paths import ProjectPaths
+from infra.creator_volume_templates import (
+    build_volume_template,
+    list_volume_templates,
+    save_custom_volume_template,
+)
 
 
 def test_list_volume_templates():
@@ -29,3 +34,38 @@ def test_build_companion_short():
 def test_unknown_template():
     with pytest.raises(ValueError):
         build_volume_template("nope", 10)
+
+
+def test_custom_template_save_and_apply(factory_tmp):
+    from infra.project_init import init_minimal_short_project
+    from infra.paths import ProjectPaths
+
+    ProjectPaths.reset()
+    result = init_minimal_short_project(
+        slug="custom-tpl",
+        title="自定义模板",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=20,
+    )
+    root = result.root
+    volumes = [
+        {"label": "A", "start_chapter": 1, "end_chapter": 10, "core_conflict": "x", "locked": False},
+        {"label": "B", "start_chapter": 11, "end_chapter": 20, "core_conflict": "y", "locked": False},
+    ]
+    saved = save_custom_volume_template(root, name="我的结构", volumes=volumes, max_chapter=20)
+    rows = list_volume_templates(root)
+    assert any(row["id"] == saved["id"] and not row["builtin"] for row in rows)
+    built = build_volume_template(saved["id"], 40, root)
+    assert built[-1]["end_chapter"] == 40
+    ProjectPaths.reset()
+
+
+@pytest.fixture
+def factory_tmp(tmp_path):
+    ProjectPaths.reset()
+    factory = tmp_path / "factory"
+    factory.mkdir()
+    (factory / "infra").mkdir()
+    yield factory
+    ProjectPaths.reset()

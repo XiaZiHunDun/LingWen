@@ -326,6 +326,20 @@ class CreatorVolumeTemplateInfo(BaseModel):
     id: str
     name: str
     description: str
+    builtin: bool = True
+
+
+class CreatorVolumeSaveTemplateRequest(BaseModel):
+    name: str
+    volumes: list[CreatorVolumePlanEntry]
+    max_chapter: Optional[int] = None
+    description: Optional[str] = None
+
+
+class CreatorVolumeSaveTemplateResponse(BaseModel):
+    id: str
+    name: str
+    description: str
 
 
 class CreatorVolumeTemplateListResponse(BaseModel):
@@ -369,6 +383,26 @@ class CreatorSettingsDocsSaveRequest(BaseModel):
     global_outline_text: Optional[str] = None
     expected_pillars_revision: Optional[str] = None
     expected_global_outline_revision: Optional[str] = None
+    pillars_merge_source: Optional[str] = None
+    global_outline_merge_source: Optional[str] = None
+    merge_snapshot_id: Optional[str] = None
+
+
+class CreatorOnboardingStep(BaseModel):
+    id: str
+    title: str
+    detail: str
+
+
+class CreatorOnboardingResponse(BaseModel):
+    slug: str
+    creation_mode: str
+    mode_label: str
+    max_chapter: int
+    steps: list[CreatorOnboardingStep]
+    checklist_doc: str
+    smoke_command: str
+    onboarding_doc: str
 
 
 class CreatorSettingsDiffPart(BaseModel):
@@ -2273,6 +2307,16 @@ def create_app(
             raise HTTPException(404, "no active project")
         return CreatorOverviewResponse(**creator_overview(project))
 
+    @app.get("/api/creator/onboarding", response_model=CreatorOnboardingResponse)
+    def creator_onboarding_endpoint() -> CreatorOnboardingResponse:
+        from infra.creator_onboarding import onboarding_wizard_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOnboardingResponse(**onboarding_wizard_payload(project))
+
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
         from infra.creator_volume_plan import volume_plan_payload
@@ -2289,19 +2333,26 @@ def create_app(
     )
     def creator_volume_plan_templates() -> CreatorVolumeTemplateListResponse:
         from infra.creator_volume_templates import list_volume_templates
+        from infra.studio_registry import active_project
 
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
         return CreatorVolumeTemplateListResponse(
-            templates=[CreatorVolumeTemplateInfo(**row) for row in list_volume_templates()],
+            templates=[
+                CreatorVolumeTemplateInfo(**row)
+                for row in list_volume_templates(project.root)
+            ],
         )
 
     @app.post(
-        "/api/creator/volume-plan/apply-template",
-        response_model=CreatorVolumeApplyTemplateResponse,
+        "/api/creator/volume-plan/templates/save",
+        response_model=CreatorVolumeSaveTemplateResponse,
     )
-    def creator_volume_plan_apply_template(
-        req: CreatorVolumeApplyTemplateRequest,
-    ) -> CreatorVolumeApplyTemplateResponse:
-        from infra.creator_volume_templates import build_volume_template, list_volume_templates
+    def creator_volume_plan_save_template(
+        req: CreatorVolumeSaveTemplateRequest,
+    ) -> CreatorVolumeSaveTemplateResponse:
+        from infra.creator_volume_templates import save_custom_volume_template
         from infra.paths import ProjectPaths
         from infra.project_config import ProjectConfig
         from infra.studio_registry import active_project
@@ -2313,11 +2364,45 @@ def create_app(
         config = ProjectConfig.load(paths)
         max_chapter = req.max_chapter or config.max_chapter
         try:
-            built = build_volume_template(req.template_id, max_chapter)
+            saved = save_custom_volume_template(
+                project.root,
+                name=req.name,
+                volumes=[v.model_dump() for v in req.volumes],
+                max_chapter=max_chapter,
+                description=req.description,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeSaveTemplateResponse(
+            id=saved["id"],
+            name=saved["name"],
+            description=saved.get("description", ""),
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/apply-template",
+        response_model=CreatorVolumeApplyTemplateResponse,
+    )
+    def creator_volume_plan_apply_template(
+        req: CreatorVolumeApplyTemplateRequest,
+    ) -> CreatorVolumeApplyTemplateResponse:
+        from infra.creator_volume_templates import build_volume_template, template_meta
+        from infra.paths import ProjectPaths
+        from infra.project_config import ProjectConfig
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        paths = ProjectPaths.get(project.root)
+        config = ProjectConfig.load(paths)
+        max_chapter = req.max_chapter or config.max_chapter
+        try:
+            built = build_volume_template(req.template_id, max_chapter, project.root)
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         tid = req.template_id.strip().lower()
-        meta = next(row for row in list_volume_templates() if row["id"] == tid)
+        meta = template_meta(tid, project.root)
         return CreatorVolumeApplyTemplateResponse(
             template_id=tid,
             template_name=meta["name"],
@@ -2443,10 +2528,15 @@ def create_app(
                     global_outline_text=req.global_outline_text,
                     expected_pillars_revision=req.expected_pillars_revision,
                     expected_global_outline_revision=req.expected_global_outline_revision,
+                    pillars_merge_source=req.pillars_merge_source,
+                    global_outline_merge_source=req.global_outline_merge_source,
+                    merge_snapshot_id=req.merge_snapshot_id,
                 ),
             )
         except CreatorDocConflictError as exc:
             raise HTTPException(409, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
 
     @app.post("/api/creator/settings-docs/preview", response_model=CreatorSettingsDiffResponse)
     def creator_settings_docs_preview(
