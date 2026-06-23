@@ -170,6 +170,23 @@ if exported_pkgs.get("count"):
     publish_merge_preset_to_factory(root, pkg_id)
     assert len(list_factory_merge_preset_packages()) >= 1
 
+from infra.creator_onboarding_email import save_email_config, load_email_config
+
+save_email_config(
+    root,
+    enabled=False,
+    to_addresses=["writer@example.com"],
+    smtp_host="smtp.example.com",
+    from_address="writer@example.com",
+)
+assert load_email_config(root)["to_addresses"] == ["writer@example.com"]
+
+from infra.creator_volume_templates import rollback_template_version
+
+if changelog:
+    rolled = rollback_template_version(root, saved["id"], version_label=changelog[0].get("version_label"))
+    assert rolled.get("rolled_back_to")
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

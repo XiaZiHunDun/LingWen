@@ -122,6 +122,33 @@
             保存 Webhook
           </button>
         </div>
+        <div class="wizard-email-panel" data-testid="wizard-email-panel">
+          <p class="meta-line">通知邮件</p>
+          <label class="meta-line">
+            <input v-model="wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" />
+            启用
+          </label>
+          <input
+            v-model="wizardEmailTo"
+            class="vol-input"
+            data-testid="wizard-email-to"
+            placeholder="user@example.com"
+          />
+          <input
+            v-model="wizardEmailSmtpHost"
+            class="vol-input"
+            data-testid="wizard-email-smtp-host"
+            placeholder="smtp.example.com"
+          />
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="save-wizard-email-btn"
+            @click="saveWizardEmail"
+          >
+            保存邮件
+          </button>
+        </div>
       </div>
       <ol class="wizard-steps">
         <li
@@ -375,6 +402,16 @@
                     @click="toggleChangelogVisual(idx)"
                   >
                     {{ expandedChangelogVisual === idx ? '收起对比' : '可视化对比' }}
+                  </button>
+                  <button
+                    v-if="entry.can_rollback"
+                    type="button"
+                    class="mini-btn pixel-border"
+                    data-testid="template-changelog-rollback-btn"
+                    :disabled="templateRollbackSaving"
+                    @click="rollbackTemplateVersion(entry, idx)"
+                  >
+                    {{ templateRollbackSaving ? '回滚中…' : '回滚到此版本' }}
                   </button>
                   <pre
                     v-if="expandedChangelogVisual === idx && entry.visual_diff?.lines?.length"
@@ -847,7 +884,7 @@
                     :key="pkg.id"
                     :value="pkg.id"
                   >
-                    {{ pkg.name }}
+                    {{ formatMergePresetOption(pkg) }}
                   </option>
                 </select>
               </label>
@@ -1091,10 +1128,13 @@ import {
   saveCreatorOnboardingNotes,
   setCreatorVolumeTemplateVersion,
   fetchCreatorVolumeTemplateChangelog,
+  rollbackCreatorVolumeTemplate,
   fetchCreatorOnboardingNotifications,
   ackCreatorOnboardingNotifications,
   fetchCreatorOnboardingWebhook,
   saveCreatorOnboardingWebhook,
+  fetchCreatorOnboardingEmail,
+  saveCreatorOnboardingEmail,
   fetchCreatorMergePresetPackages,
   fetchCreatorFactoryMergePresetPackages,
   exportCreatorMergePresetPackages,
@@ -1184,6 +1224,10 @@ const mergePresetPackagesImporting = ref(false);
 const expandedChangelogVisual = ref(null);
 const wizardWebhookUrl = ref('');
 const wizardWebhookEnabled = ref(false);
+const wizardEmailTo = ref('');
+const wizardEmailSmtpHost = ref('');
+const wizardEmailEnabled = ref(false);
+const templateRollbackSaving = ref(false);
 const mergePresetFactoryPublishing = ref(false);
 const mergePresetFactoryPulling = ref(false);
 const factoryMergePresetPackages = ref([]);
@@ -1302,6 +1346,14 @@ function formatTemplateOption(template) {
     return `${prefix}[${template.version_label}] ${template.name}`;
   }
   return template.name;
+}
+
+function formatMergePresetOption(pkg) {
+  if (pkg.version_label) {
+    const prefix = pkg.version_semver_valid === false ? '!' : '';
+    return `${prefix}[${pkg.version_label}] ${pkg.name}`;
+  }
+  return pkg.name;
 }
 
 function isSemverVersionLabel(label) {
@@ -1631,6 +1683,7 @@ async function loadWizardNotifications() {
     wizardNotificationHandles.value = data.handles || [];
     wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
     await loadWizardWebhook();
+    await loadWizardEmail();
   } catch {
     wizardNotifications.value = [];
     wizardNotificationHandles.value = [];
@@ -1659,6 +1712,59 @@ async function saveWizardWebhook() {
     saveMessage.value = '已保存通知 Webhook';
   } catch (e) {
     handleSaveError(e);
+  }
+}
+
+async function loadWizardEmail() {
+  try {
+    const data = await fetchCreatorOnboardingEmail();
+    wizardEmailTo.value = (data.to_addresses || []).join(', ');
+    wizardEmailSmtpHost.value = data.smtp_host || '';
+    wizardEmailEnabled.value = Boolean(data.enabled);
+  } catch {
+    wizardEmailTo.value = '';
+    wizardEmailSmtpHost.value = '';
+    wizardEmailEnabled.value = false;
+  }
+}
+
+async function saveWizardEmail() {
+  try {
+    const toAddresses = wizardEmailTo.value
+      .split(',')
+      .map((addr) => addr.trim())
+      .filter(Boolean);
+    await saveCreatorOnboardingEmail({
+      enabled: wizardEmailEnabled.value,
+      to_addresses: toAddresses,
+      mention_handles: wizardNotificationHandles.value,
+      smtp_host: wizardEmailSmtpHost.value.trim(),
+      smtp_port: 587,
+      smtp_use_tls: true,
+      from_address: toAddresses[0] || '',
+    });
+    saveMessage.value = '已保存通知邮件';
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function rollbackTemplateVersion(entry, changelogIndex) {
+  if (!selectedTemplateId.value) return;
+  templateRollbackSaving.value = true;
+  error.value = null;
+  try {
+    await rollbackCreatorVolumeTemplate(selectedTemplateId.value, {
+      version_label: entry.version_label || undefined,
+      changelog_index: changelogIndex,
+    });
+    saveMessage.value = `已回滚到 ${entry.version_label || '选定版本'}`;
+    await loadVolumeTemplates();
+    await loadTemplateVersionChangelog();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateRollbackSaving.value = false;
   }
 }
 
@@ -2813,6 +2919,12 @@ watch(projectRevision, () => {
 }
 
 .wizard-webhook-panel {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed rgba(127, 127, 127, 0.35);
+}
+
+.wizard-email-panel {
   margin-top: var(--space-sm);
   padding-top: var(--space-sm);
   border-top: 1px dashed rgba(127, 127, 127, 0.35);

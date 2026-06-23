@@ -682,6 +682,13 @@ export async function fetchCreatorVolumeTemplateChangelog(templateId) {
   );
 }
 
+export async function rollbackCreatorVolumeTemplate(templateId, body) {
+  return request(
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-rollback`,
+    { method: 'POST', body },
+  );
+}
+
 export async function fetchCreatorOnboardingNotifications(handle) {
   const params = handle ? `?handle=${encodeURIComponent(handle)}` : '';
   return request(`/creator/onboarding/notifications${params}`);
@@ -700,6 +707,17 @@ export async function fetchCreatorOnboardingWebhook() {
 
 export async function saveCreatorOnboardingWebhook(body) {
   return request('/creator/onboarding/webhook', {
+    method: 'PUT',
+    body,
+  });
+}
+
+export async function fetchCreatorOnboardingEmail() {
+  return request('/creator/onboarding/email');
+}
+
+export async function saveCreatorOnboardingEmail(body) {
+  return request('/creator/onboarding/email', {
     method: 'PUT',
     body,
   });

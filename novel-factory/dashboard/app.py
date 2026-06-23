@@ -357,11 +357,23 @@ class CreatorVolumeTemplateChangelogEntry(BaseModel):
     changed_at: Optional[str] = None
     diff_summary: Optional[CreatorVolumeTemplateChangelogDiffSummary] = None
     visual_diff: Optional[CreatorVolumeTemplateChangelogVisualDiff] = None
+    can_rollback: bool = False
 
 
 class CreatorVolumeTemplateChangelogResponse(BaseModel):
     template_id: str
     entries: list[CreatorVolumeTemplateChangelogEntry]
+
+
+class CreatorVolumeTemplateRollbackRequest(BaseModel):
+    version_label: Optional[str] = None
+    changelog_index: Optional[int] = None
+
+
+class CreatorVolumeTemplateRollbackResponse(BaseModel):
+    id: str
+    version_label: Optional[str] = None
+    rolled_back_to: Optional[str] = None
 
 
 class CreatorVolumeTemplateVersionRequest(BaseModel):
@@ -585,12 +597,37 @@ class CreatorOnboardingWebhookDispatchResponse(BaseModel):
     error: Optional[str] = None
 
 
+class CreatorOnboardingEmailConfig(BaseModel):
+    enabled: bool = False
+    to_addresses: list[str] = []
+    mention_handles: list[str] = []
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_use_tls: bool = True
+    from_address: str = ""
+
+
+class CreatorOnboardingEmailSaveRequest(BaseModel):
+    enabled: bool = True
+    to_addresses: list[str] = []
+    mention_handles: list[str] = []
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: Optional[str] = None
+    smtp_use_tls: bool = True
+    from_address: str = ""
+
+
 class CreatorMergePresetPackage(BaseModel):
     id: str
     name: str
     description: str = ""
     builtin: bool = True
     scope: str = "builtin"
+    version_label: Optional[str] = None
+    version_semver_valid: bool = True
     pillars_merge_source: str
     global_outline_merge_source: str
 
@@ -2763,6 +2800,49 @@ def create_app(
             raise HTTPException(400, str(exc)) from exc
         return CreatorOnboardingWebhookConfig(**saved)
 
+    @app.get(
+        "/api/creator/onboarding/email",
+        response_model=CreatorOnboardingEmailConfig,
+    )
+    def creator_onboarding_email_get() -> CreatorOnboardingEmailConfig:
+        from infra.creator_onboarding_email import load_email_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOnboardingEmailConfig(**load_email_config(project.root))
+
+    @app.put(
+        "/api/creator/onboarding/email",
+        response_model=CreatorOnboardingEmailConfig,
+    )
+    def creator_onboarding_email_put(
+        req: CreatorOnboardingEmailSaveRequest,
+    ) -> CreatorOnboardingEmailConfig:
+        from infra.creator_onboarding_email import save_email_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            saved = save_email_config(
+                project.root,
+                enabled=req.enabled,
+                to_addresses=req.to_addresses,
+                mention_handles=req.mention_handles,
+                smtp_host=req.smtp_host,
+                smtp_port=req.smtp_port,
+                smtp_user=req.smtp_user,
+                smtp_password=req.smtp_password,
+                smtp_use_tls=req.smtp_use_tls,
+                from_address=req.from_address,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorOnboardingEmailConfig(**saved)
+
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
         from infra.creator_volume_plan import volume_plan_payload
@@ -2929,6 +3009,36 @@ def create_app(
         return CreatorVolumeTemplateChangelogResponse(
             template_id=tid,
             entries=[CreatorVolumeTemplateChangelogEntry(**row) for row in entries],
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/templates/{template_id}/version-rollback",
+        response_model=CreatorVolumeTemplateRollbackResponse,
+    )
+    def creator_volume_plan_template_rollback(
+        template_id: str,
+        req: CreatorVolumeTemplateRollbackRequest,
+    ) -> CreatorVolumeTemplateRollbackResponse:
+        from infra.creator_volume_templates import rollback_template_version
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        tid = template_id.strip().lower()
+        try:
+            result = rollback_template_version(
+                project.root if tid.startswith("custom_") else None,
+                tid,
+                version_label=req.version_label,
+                changelog_index=req.changelog_index,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateRollbackResponse(
+            id=result["id"],
+            version_label=result.get("version_label"),
+            rolled_back_to=result.get("rolled_back_to"),
         )
 
     @app.get(

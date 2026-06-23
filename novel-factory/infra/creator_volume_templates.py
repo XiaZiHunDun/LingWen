@@ -173,6 +173,7 @@ def _enrich_changelog_diff(entries: list[dict[str, Any]]) -> list[dict[str, Any]
             "after": after,
             "lines": _build_visual_diff_lines(before, after),
         }
+        public["can_rollback"] = bool(current_snap)
         enriched.append(public)
     return enriched
 
@@ -235,6 +236,123 @@ def get_template_version_changelog(
     else:
         raise ValueError(f"unknown template: {template_id!r}")
     return _enrich_changelog_diff(raw)
+
+
+def _find_changelog_entry(
+    changelog: list[dict[str, Any]],
+    *,
+    version_label: str | None = None,
+    changelog_index: int | None = None,
+) -> dict[str, Any]:
+    if changelog_index is not None:
+        idx = int(changelog_index)
+        if idx < 0 or idx >= len(changelog):
+            raise ValueError(f"invalid changelog index: {changelog_index}")
+        return changelog[idx]
+    if version_label is not None and str(version_label).strip():
+        target = _normalize_version_label(version_label.strip(), strict=False)
+        for row in changelog:
+            row_label = _normalize_version_label(row.get("version_label"), strict=False)
+            if row_label and row_label == target:
+                return row
+        raise ValueError(f"version not found in changelog: {version_label!r}")
+    raise ValueError("version_label or changelog_index required")
+
+
+def _restore_volumes_from_snapshot(snapshot: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    if not snapshot:
+        raise ValueError("changelog entry has no volumes snapshot")
+    return [
+        {
+            "label": str(v.get("label", "")),
+            "start_chapter": int(v.get("start_chapter", 0)),
+            "end_chapter": int(v.get("end_chapter", 0)),
+            "core_conflict": str(v.get("core_conflict", "")),
+            "locked": bool(v.get("locked", False)),
+        }
+        for v in snapshot
+    ]
+
+
+def _apply_template_rollback(item: dict[str, Any], entry: dict[str, Any]) -> None:
+    restored = _restore_volumes_from_snapshot(entry.get("volumes_snapshot"))
+    current_label = item.get("version_label")
+    target_label = entry.get("version_label")
+    before_rollback = _snapshot_volumes(item.get("volumes"))
+    item["volumes"] = restored
+    if _normalize_version_label(current_label) != _normalize_version_label(target_label):
+        item["version_label"] = target_label
+        _append_version_changelog(
+            item,
+            new_label=target_label,
+            old_label=current_label,
+            volumes=restored,
+        )
+    else:
+        changelog: list[dict[str, Any]] = list(item.get("version_changelog") or [])
+        changelog.insert(
+            0,
+            {
+                "version_label": target_label,
+                "previous_label": current_label,
+                "changed_at": _now_iso(),
+                "volumes_snapshot": before_rollback,
+                "rollback": True,
+            },
+        )
+        item["version_changelog"] = changelog[:_MAX_CHANGELOG_ENTRIES]
+
+
+def rollback_template_version(
+    project_root: Path | str | None,
+    template_id: str,
+    *,
+    version_label: str | None = None,
+    changelog_index: int | None = None,
+) -> dict[str, Any]:
+    """Restore template volumes (and version label) from a changelog entry."""
+    tid = template_id.strip().lower()
+    if tid.startswith(_CUSTOM_PREFIX):
+        if project_root is None:
+            raise ValueError("project root required for custom templates")
+        store = _load_custom_store(project_root)
+        for item in store.get("templates", []):
+            if item.get("id") == tid:
+                changelog = list(item.get("version_changelog") or [])
+                entry = _find_changelog_entry(
+                    changelog,
+                    version_label=version_label,
+                    changelog_index=changelog_index,
+                )
+                _apply_template_rollback(item, entry)
+                _save_custom_store(project_root, store)
+                return {
+                    "id": tid,
+                    "version_label": item.get("version_label"),
+                    "volumes": item.get("volumes"),
+                    "rolled_back_to": entry.get("version_label"),
+                }
+        raise ValueError(f"unknown template: {template_id!r}")
+    if tid.startswith(_FACTORY_PREFIX):
+        factory = _load_factory_store()
+        for item in factory.get("templates", []):
+            if item.get("id") == tid:
+                changelog = list(item.get("version_changelog") or [])
+                entry = _find_changelog_entry(
+                    changelog,
+                    version_label=version_label,
+                    changelog_index=changelog_index,
+                )
+                _apply_template_rollback(item, entry)
+                _save_factory_store(factory)
+                return {
+                    "id": tid,
+                    "version_label": item.get("version_label"),
+                    "volumes": item.get("volumes"),
+                    "rolled_back_to": entry.get("version_label"),
+                }
+        raise ValueError(f"unknown factory template: {template_id!r}")
+    raise ValueError(f"unknown template: {template_id!r}")
 
 
 def _template_list_row(item: dict[str, Any], scope: str, *, default_description: str) -> dict[str, Any]:

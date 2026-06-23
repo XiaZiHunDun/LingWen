@@ -719,6 +719,74 @@ class TestCreatorEndpoints:
         assert get.status_code == 200
         assert get.json()["url"].startswith("https://")
 
+    def test_onboarding_email_config(self, client: TestClient) -> None:
+        put = client.put(
+            "/api/creator/onboarding/email",
+            json={
+                "enabled": True,
+                "to_addresses": ["writer@example.com"],
+                "mention_handles": ["batch"],
+                "smtp_host": "smtp.example.com",
+                "from_address": "writer@example.com",
+            },
+        )
+        assert put.status_code == 200
+        get = client.get("/api/creator/onboarding/email")
+        assert get.status_code == 200
+        assert get.json()["to_addresses"] == ["writer@example.com"]
+
+    def test_template_version_rollback(self, client: TestClient) -> None:
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "rollback-api",
+                "volumes": [
+                    {"label": "一", "start_chapter": 1, "end_chapter": 6, "core_conflict": "a"},
+                ],
+            },
+        )
+        assert save.status_code == 200
+        tid = save.json()["id"]
+        v1 = client.put(
+            f"/api/creator/volume-plan/templates/{tid}/version",
+            json={"version_label": "v1.0.0"},
+        )
+        assert v1.status_code == 200
+        v2 = client.put(
+            f"/api/creator/volume-plan/templates/{tid}/version",
+            json={"version_label": "v2.0.0"},
+        )
+        assert v2.status_code == 200
+        rollback = client.post(
+            f"/api/creator/volume-plan/templates/{tid}/version-rollback",
+            json={"version_label": "v1.0.0"},
+        )
+        assert rollback.status_code == 200
+        assert rollback.json()["rolled_back_to"] == "v1.0.0"
+        changelog = client.get(f"/api/creator/volume-plan/templates/{tid}/version-changelog")
+        assert changelog.json()["entries"][0].get("can_rollback") is True
+
+    def test_merge_preset_semver_import(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+            json={
+                "packages": [
+                    {
+                        "id": "semver_pkg",
+                        "name": "Semver 包",
+                        "version_label": "2.0.0",
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        assert resp.status_code == 200
+        packages = client.get("/api/creator/settings-docs/merge-preferences/preset-packages")
+        match = next(row for row in packages.json()["packages"] if row["id"] == "semver_pkg")
+        assert match["version_label"] == "v2.0.0"
+        assert match["version_semver_valid"] is True
+
     def test_merge_preset_factory_library(self, client: TestClient) -> None:
         save_pkg = client.post(
             "/api/creator/settings-docs/merge-preferences/preset-packages/import",

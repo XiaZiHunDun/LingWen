@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from infra.creator_settings_docs import MERGE_SOURCES
+from infra.creator_volume_templates import is_valid_version_label, validate_version_label
 
 _STATE_VERSION = "3"
 _DEFAULT = {
@@ -345,6 +346,15 @@ def _normalize_factory_preset_id(package_id: str) -> str:
     return f"{_FACTORY_PRESET_PREFIX}{slug}"
 
 
+def _normalize_preset_version(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    label = str(raw).strip()
+    if not label:
+        return None
+    return validate_version_label(label)
+
+
 def _preset_row(raw: dict[str, Any], *, builtin: bool, scope: str = "project") -> dict[str, Any]:
     pillars = str(raw.get("pillars_merge_source", "editor"))
     outline = str(raw.get("global_outline_merge_source", "editor"))
@@ -352,12 +362,20 @@ def _preset_row(raw: dict[str, Any], *, builtin: bool, scope: str = "project") -
         pillars = "editor"
     if outline not in MERGE_SOURCES:
         outline = "editor"
+    version_label = None
+    if raw.get("version_label"):
+        try:
+            version_label = _normalize_preset_version(str(raw.get("version_label")))
+        except ValueError:
+            version_label = str(raw.get("version_label")).strip()[:32] or None
     return {
         "id": str(raw["id"]),
         "name": str(raw.get("name", raw["id"])),
         "description": str(raw.get("description", "")),
         "builtin": builtin,
         "scope": scope,
+        "version_label": version_label,
+        "version_semver_valid": is_valid_version_label(version_label),
         "pillars_merge_source": pillars,
         "global_outline_merge_source": outline,
     }
@@ -392,6 +410,7 @@ def save_merge_preset_package(
     description: str = "",
     pillars_merge_source: str,
     global_outline_merge_source: str,
+    version_label: str | None = None,
 ) -> dict[str, Any]:
     if pillars_merge_source not in MERGE_SOURCES:
         raise ValueError(f"invalid pillars merge source: {pillars_merge_source!r}")
@@ -400,6 +419,7 @@ def save_merge_preset_package(
     label = name.strip()
     if not label:
         raise ValueError("preset package name required")
+    normalized_version = _normalize_preset_version(version_label) if version_label else None
     pid = str(package_id).strip() or label.lower().replace(" ", "_")
     entry = {
         "id": pid,
@@ -409,6 +429,8 @@ def save_merge_preset_package(
         "global_outline_merge_source": global_outline_merge_source,
         "updated_at": _now_iso(),
     }
+    if normalized_version:
+        entry["version_label"] = normalized_version
     path = _custom_preset_packages_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     custom = _load_custom_preset_packages(project_root)
@@ -447,6 +469,8 @@ def publish_merge_preset_to_factory(
         "published_from": pid,
         "updated_at": _now_iso(),
     }
+    if match.get("version_label"):
+        entry["version_label"] = match.get("version_label")
     kept = [row for row in packages if row.get("id") != entry["id"]]
     kept.insert(0, entry)
     factory["packages"] = kept[:_MAX_FACTORY_PRESET_PACKAGES]
@@ -522,6 +546,7 @@ def export_merge_preset_packages(project_root: Path | str) -> dict[str, Any]:
                 "description": row.get("description", ""),
                 "pillars_merge_source": row.get("pillars_merge_source", "editor"),
                 "global_outline_merge_source": row.get("global_outline_merge_source", "editor"),
+                "version_label": row.get("version_label"),
             }
             for row in custom
         ],
@@ -562,6 +587,7 @@ def import_merge_preset_packages(
             description=str(raw.get("description", "")),
             pillars_merge_source=str(raw.get("pillars_merge_source", "editor")),
             global_outline_merge_source=str(raw.get("global_outline_merge_source", "editor")),
+            version_label=str(raw.get("version_label", "")).strip() or None,
         )
         imported += 1
     return {

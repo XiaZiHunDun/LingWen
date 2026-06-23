@@ -153,6 +153,9 @@ def save_onboarding_progress(
             from infra.creator_onboarding_webhook import dispatch_mention_webhook
 
             dispatch_mention_webhook(project_root, created)
+            from infra.creator_onboarding_email import dispatch_mention_email
+
+            dispatch_mention_email(project_root, created)
     return data
 
 

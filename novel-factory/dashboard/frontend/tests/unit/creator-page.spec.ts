@@ -42,6 +42,9 @@ const creatorMocks = vi.hoisted(() => ({
   ackCreatorOnboardingNotifications: vi.fn(),
   fetchCreatorOnboardingWebhook: vi.fn(),
   saveCreatorOnboardingWebhook: vi.fn(),
+  fetchCreatorOnboardingEmail: vi.fn(),
+  saveCreatorOnboardingEmail: vi.fn(),
+  rollbackCreatorVolumeTemplate: vi.fn(),
   fetchCreatorFactoryMergePresetPackages: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
@@ -92,6 +95,9 @@ vi.mock('../../src/api/index.js', () => ({
   ackCreatorOnboardingNotifications: creatorMocks.ackCreatorOnboardingNotifications,
   fetchCreatorOnboardingWebhook: creatorMocks.fetchCreatorOnboardingWebhook,
   saveCreatorOnboardingWebhook: creatorMocks.saveCreatorOnboardingWebhook,
+  fetchCreatorOnboardingEmail: creatorMocks.fetchCreatorOnboardingEmail,
+  saveCreatorOnboardingEmail: creatorMocks.saveCreatorOnboardingEmail,
+  rollbackCreatorVolumeTemplate: creatorMocks.rollbackCreatorVolumeTemplate,
   fetchCreatorFactoryMergePresetPackages: creatorMocks.fetchCreatorFactoryMergePresetPackages,
   publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
   pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
@@ -313,7 +319,7 @@ describe('CreatorPage', () => {
       packages: [
         { id: 'all_disk', name: '全选磁盘', builtin: true, pillars_merge_source: 'disk', global_outline_merge_source: 'disk' },
         { id: 'pillars_disk_outline_editor', name: '支柱磁盘·大纲编辑器', builtin: true, scope: 'builtin', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
-        { id: 'my_combo', name: '我的组合', builtin: false, scope: 'project', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
+        { id: 'my_combo', name: '我的组合', builtin: false, scope: 'project', version_label: 'v1.0.0', version_semver_valid: true, pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
       ],
     });
     creatorMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValue({
@@ -331,7 +337,33 @@ describe('CreatorPage', () => {
         changed_at: '2026-06-22T12:00:00+00:00',
         diff_summary: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+一: ch1-12'] },
         visual_diff: { before: '', after: '一: ch1-12 x', lines: [{ type: 'add', text: '一: ch1-12 x' }] },
+        can_rollback: true,
       }],
+    });
+    creatorMocks.rollbackCreatorVolumeTemplate.mockResolvedValue({
+      id: 'custom_test',
+      version_label: 'v1.0.0',
+      rolled_back_to: 'v1.0.0',
+    });
+    creatorMocks.fetchCreatorOnboardingEmail.mockResolvedValue({
+      enabled: false,
+      to_addresses: [],
+      mention_handles: [],
+      smtp_host: '',
+      smtp_port: 587,
+      smtp_user: '',
+      smtp_use_tls: true,
+      from_address: '',
+    });
+    creatorMocks.saveCreatorOnboardingEmail.mockResolvedValue({
+      enabled: true,
+      to_addresses: ['writer@example.com'],
+      mention_handles: ['batch'],
+      smtp_host: 'smtp.example.com',
+      smtp_port: 587,
+      smtp_user: '',
+      smtp_use_tls: true,
+      from_address: 'writer@example.com',
     });
     creatorMocks.fetchCreatorOnboardingNotifications.mockResolvedValue({
       unread: 1,
@@ -950,5 +982,38 @@ describe('CreatorPage', () => {
     expect(creatorMocks.setCreatorVolumeTemplateVersion).toHaveBeenCalledWith('custom_test', {
       version_label: 'v2.0.0',
     });
+  });
+
+  it('rolls back template version from changelog', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
+    await flushPromises();
+    const rollbackBtn = wrapper.find('[data-testid="template-changelog-rollback-btn"]');
+    expect(rollbackBtn.exists()).toBe(true);
+    await rollbackBtn.trigger('click');
+    await flushPromises();
+    expect(creatorMocks.rollbackCreatorVolumeTemplate).toHaveBeenCalled();
+  });
+
+  it('shows wizard email panel', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-email-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="wizard-email-to"]').setValue('writer@example.com');
+    await wrapper.find('[data-testid="wizard-email-smtp-host"]').setValue('smtp.example.com');
+    await wrapper.find('[data-testid="save-wizard-email-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorOnboardingEmail).toHaveBeenCalled();
+  });
+
+  it('shows merge preset semver in select', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    const option = wrapper.find('[data-testid="merge-preset-package-select"] option[value="my_combo"]');
+    expect(option.text()).toContain('[v1.0.0]');
   });
 });
