@@ -1117,6 +1117,38 @@ class TestCreatorEndpoints:
         )
         assert preflight.status_code == 400
 
+    def test_creator_v37_endpoints(self, client: TestClient) -> None:
+        drift = client.get(
+            "/api/creator/volume-plan/templates/approvals/missing/snapshot-drift",
+        )
+        assert drift.status_code == 400
+        batch = client.post(
+            "/api/creator/volume-plan/templates/approvals/batch-approve",
+            json={"approval_ids": [], "force": True},
+        )
+        assert batch.status_code == 200
+        assert batch.json()["total"] == 0
+        replay = client.post(
+            "/api/creator/onboarding/notifications/digest/dead-letter/replay",
+            json={"index": 0},
+        )
+        assert replay.status_code == 400
+        schedule = client.put(
+            "/api/creator/onboarding/notifications/digest/schedule",
+            json={
+                "enabled": True,
+                "interval_hours": 24,
+                "channels": ["webhook"],
+                "channel_retry_config": {"webhook": {"max_attempts": 3, "base_backoff_sec": 45}},
+            },
+        )
+        assert schedule.status_code == 200
+        assert schedule.json()["channel_retry_config"]["webhook"]["max_attempts"] == 3
+        changelog_diff = client.get(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/missing/changelog/diff",
+        )
+        assert changelog_diff.status_code == 400
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

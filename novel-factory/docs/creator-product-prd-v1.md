@@ -245,4 +245,18 @@ project:
 
 ## 32. 后续（v3.5+）
 
-- （待定）
+- 审批链 step 指派/备注/超时邮件 — ✅ v3.5
+- digest handle 路由/指数退避/统计 — ✅ v3.5
+- 预设拓扑排序/import diff/工厂冲突检测 — ✅ v3.5
+
+## 33. 后续（v3.6+）
+
+- 审批 OR 签/转交/快照 diff 预览 — ✅ v3.6
+- digest 按 handle 静默/死信队列 — ✅ v3.6
+- Webhook HMAC 签名 · 工厂拉取预检/changelog/拓扑可视化 — ✅ v3.6
+
+## 34. 后续（v3.7+）
+
+- 快照漂移阻断与批量审批 — ✅ v3.7
+- digest 死信重放与按 channel 重试策略 — ✅ v3.7
+- 工厂拉取冲突合并向导与 changelog diff — ✅ v3.7

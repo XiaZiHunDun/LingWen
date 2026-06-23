@@ -29,8 +29,44 @@ def _stats_path(project_root: Path | str) -> Path:
     return root / ".state" / "creator_onboarding_digest_stats.json"
 
 
-def _backoff_seconds(attempts: int) -> int:
-    return min(_MAX_BACKOFF_SEC, _BASE_BACKOFF_SEC * (2 ** max(0, attempts - 1)))
+def _backoff_seconds(attempts: int, *, base: int = _BASE_BACKOFF_SEC) -> int:
+    return min(_MAX_BACKOFF_SEC, base * (2 ** max(0, attempts - 1)))
+
+
+_DEFAULT_CHANNEL_RETRY: dict[str, dict[str, int]] = {
+    "webhook": {"max_attempts": 5, "base_backoff_sec": _BASE_BACKOFF_SEC},
+    "email": {"max_attempts": 5, "base_backoff_sec": _BASE_BACKOFF_SEC},
+}
+
+
+def _normalize_channel_retry_config(raw: Any) -> dict[str, dict[str, int]]:
+    if not isinstance(raw, dict):
+        return dict(_DEFAULT_CHANNEL_RETRY)
+    result: dict[str, dict[str, int]] = {}
+    for channel, policy in raw.items():
+        key = str(channel).strip().lower()
+        if not key or not isinstance(policy, dict):
+            continue
+        max_attempts = int(policy.get("max_attempts") or _DEFAULT_CHANNEL_RETRY.get(key, {}).get("max_attempts", 5))
+        base_backoff = int(
+            policy.get("base_backoff_sec") or _DEFAULT_CHANNEL_RETRY.get(key, {}).get("base_backoff_sec", _BASE_BACKOFF_SEC),
+        )
+        result[key] = {
+            "max_attempts": max(1, min(max_attempts, 20)),
+            "base_backoff_sec": max(10, min(base_backoff, _MAX_BACKOFF_SEC)),
+        }
+    for channel, defaults in _DEFAULT_CHANNEL_RETRY.items():
+        result.setdefault(channel, dict(defaults))
+    return result
+
+
+def _channel_retry_policy(schedule: dict[str, Any], channel: str) -> dict[str, int]:
+    cfg = (schedule.get("channel_retry_config") or {}).get(str(channel).lower()) or {}
+    defaults = _DEFAULT_CHANNEL_RETRY.get(str(channel).lower(), _DEFAULT_CHANNEL_RETRY["webhook"])
+    return {
+        "max_attempts": int(cfg.get("max_attempts") or defaults["max_attempts"]),
+        "base_backoff_sec": int(cfg.get("base_backoff_sec") or defaults["base_backoff_sec"]),
+    }
 
 
 def load_digest_dispatch_stats(project_root: Path | str) -> dict[str, Any]:
@@ -100,16 +136,44 @@ def load_digest_dead_letter(project_root: Path | str) -> dict[str, Any]:
     return {"item_count": len(items), "items": items[:_MAX_RETRY_ITEMS]}
 
 
-def _append_dead_letter(project_root: Path | str, item: dict[str, Any]) -> None:
+def _save_dead_letter_items(project_root: Path | str, items: list[dict[str, Any]]) -> None:
     path = _dead_letter_path(project_root)
-    existing = load_digest_dead_letter(project_root)
-    items = [item, *existing["items"]]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"schema_version": "1", "items": items[:_MAX_RETRY_ITEMS]}, ensure_ascii=False, indent=2)
         + "\n",
         encoding="utf-8",
     )
+
+
+def replay_digest_dead_letter(project_root: Path | str, *, index: int = 0) -> dict[str, Any]:
+    """Move a dead-letter item back into the retry queue."""
+    dead = load_digest_dead_letter(project_root)
+    items = list(dead["items"])
+    if index < 0 or index >= len(items):
+        raise ValueError(f"dead letter item not found at index {index}")
+    item = items.pop(index)
+    _save_dead_letter_items(project_root, items)
+    item.pop("dead_lettered_at", None)
+    item["attempts"] = 0
+    item["next_retry_at"] = _now_iso()
+    item["replayed_at"] = _now_iso()
+    retry_items = _load_retry_queue(project_root)
+    retry_items.insert(0, item)
+    _save_retry_queue(project_root, retry_items)
+    return {
+        "replayed": True,
+        "index": index,
+        "channel": item.get("channel"),
+        "retry_queue_size": len(retry_items),
+        "dead_letter_count": len(items),
+    }
+
+
+def _append_dead_letter(project_root: Path | str, item: dict[str, Any]) -> None:
+    existing = load_digest_dead_letter(project_root)
+    items = [item, *existing["items"]]
+    _save_dead_letter_items(project_root, items)
 
 
 def load_digest_retry_queue(project_root: Path | str) -> dict[str, Any]:
@@ -143,6 +207,7 @@ def enqueue_digest_retry(
 
 def process_digest_retries(project_root: Path | str) -> dict[str, Any]:
     """Retry failed digest channel dispatches with exponential backoff."""
+    schedule = load_digest_schedule(project_root)
     items = _load_retry_queue(project_root)
     if not items:
         return {"retried": 0, "remaining": 0}
@@ -172,15 +237,17 @@ def process_digest_retries(project_root: Path | str) -> dict[str, Any]:
         if ok:
             retried += 1
             record_digest_dispatch(project_root, success=True)
-        elif attempts < 5:
-            item["attempts"] = attempts
-            item["last_error"] = str(item.get("error", ""))
-            delay = _backoff_seconds(attempts)
-            item["next_retry_at"] = (now + timedelta(seconds=delay)).isoformat()
-            kept.append(item)
         else:
-            item["dead_lettered_at"] = _now_iso()
-            _append_dead_letter(project_root, item)
+            policy = _channel_retry_policy(schedule, channel)
+            if attempts < policy["max_attempts"]:
+                item["attempts"] = attempts
+                item["last_error"] = str(item.get("error", ""))
+                delay = _backoff_seconds(attempts, base=policy["base_backoff_sec"])
+                item["next_retry_at"] = (now + timedelta(seconds=delay)).isoformat()
+                kept.append(item)
+            else:
+                item["dead_lettered_at"] = _now_iso()
+                _append_dead_letter(project_root, item)
     _save_retry_queue(project_root, kept)
     dead = load_digest_dead_letter(project_root)
     return {"retried": retried, "remaining": len(kept), "dead_letter_count": dead["item_count"]}
@@ -292,6 +359,7 @@ def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
             "quiet_hours_start": None,
             "quiet_hours_end": None,
             "handle_quiet_hours": {},
+            "channel_retry_config": dict(_DEFAULT_CHANNEL_RETRY),
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     hours = int(data.get("interval_hours", 24))
@@ -309,6 +377,7 @@ def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
         "quiet_hours_start": _normalize_quiet_hour(data.get("quiet_hours_start")),
         "quiet_hours_end": _normalize_quiet_hour(data.get("quiet_hours_end")),
         "handle_quiet_hours": _normalize_handle_quiet_hours(data.get("handle_quiet_hours")),
+        "channel_retry_config": _normalize_channel_retry_config(data.get("channel_retry_config")),
     }
 
 
@@ -322,6 +391,7 @@ def save_digest_schedule(
     quiet_hours_start: int | None = None,
     quiet_hours_end: int | None = None,
     handle_quiet_hours: dict[str, dict[str, int]] | None = None,
+    channel_retry_config: dict[str, dict[str, int]] | None = None,
 ) -> dict[str, Any]:
     hours = max(_MIN_INTERVAL_HOURS, min(int(interval_hours), _MAX_INTERVAL_HOURS))
     normalized_channels = ["webhook"]
@@ -337,6 +407,9 @@ def save_digest_schedule(
     handle_quiet = existing.get("handle_quiet_hours") or {}
     if handle_quiet_hours is not None:
         handle_quiet = _normalize_handle_quiet_hours(handle_quiet_hours)
+    channel_retry = existing.get("channel_retry_config") or dict(_DEFAULT_CHANNEL_RETRY)
+    if channel_retry_config is not None:
+        channel_retry = _normalize_channel_retry_config(channel_retry_config)
     data = {
         "schema_version": _STATE_VERSION,
         "enabled": bool(enabled),
@@ -347,6 +420,7 @@ def save_digest_schedule(
         "quiet_hours_start": _normalize_quiet_hour(quiet_hours_start),
         "quiet_hours_end": _normalize_quiet_hour(quiet_hours_end),
         "handle_quiet_hours": handle_quiet,
+        "channel_retry_config": channel_retry,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

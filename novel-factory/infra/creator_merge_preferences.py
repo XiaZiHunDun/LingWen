@@ -498,14 +498,24 @@ def pull_factory_merge_presets_to_project(
     project_root: Path | str,
     *,
     package_ids: list[str],
+    conflict_strategies: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Import factory preset packages into the active project."""
     if not package_ids:
         raise ValueError("package_ids required")
+    strategies = {
+        str(key).strip(): str(value).strip()
+        for key, value in (conflict_strategies or {}).items()
+        if str(key).strip()
+    }
+    preflight = preflight_factory_merge_preset_pull(project_root, package_ids=package_ids)
+    conflict_ids = {row["package_id"] for row in preflight.get("conflicts") or []}
     factory = _load_factory_preset_store()
     by_id = {row["id"]: row for row in factory.get("packages", [])}
     imported = 0
+    skipped = 0
     resolved: list[str] = []
+    skipped_ids: list[str] = []
     for raw_id in package_ids:
         fid = str(raw_id).strip().lower()
         if not fid.startswith(_FACTORY_PRESET_PREFIX):
@@ -513,8 +523,20 @@ def pull_factory_merge_presets_to_project(
         match = by_id.get(fid)
         if match is None:
             raise ValueError(f"unknown factory preset package: {raw_id!r}")
-        resolved.append(fid)
         local_id = fid.removeprefix(_FACTORY_PRESET_PREFIX) or fid
+        source_id = str(match.get("published_from") or local_id).strip()
+        if source_id in conflict_ids:
+            strategy = (
+                strategies.get(source_id)
+                or strategies.get(fid)
+                or strategies.get(local_id)
+                or "prefer_factory"
+            )
+            if strategy in {"skip", "prefer_project"}:
+                skipped += 1
+                skipped_ids.append(source_id)
+                continue
+        resolved.append(fid)
         save_merge_preset_package(
             project_root,
             package_id=local_id,
@@ -526,8 +548,10 @@ def pull_factory_merge_presets_to_project(
         imported += 1
     return {
         "imported": imported,
+        "skipped": skipped,
         "total": len(package_ids),
         "package_ids": resolved,
+        "skipped_package_ids": skipped_ids,
         "packages": list_merge_preset_packages(project_root),
     }
 
@@ -1290,5 +1314,42 @@ def preflight_factory_merge_preset_pull(
         "conflict_count": len(conflicts),
         "conflicts": conflicts,
         "blocked": bool(conflicts),
+    }
+
+
+def preview_merge_preset_changelog_diff(
+    project_root: Path | str,
+    *,
+    package_id: str,
+    entry_index: int = 0,
+) -> dict[str, Any]:
+    """Field-level diff between a changelog entry and the previous snapshot."""
+    pid = str(package_id).strip()
+    if not pid:
+        raise ValueError("package_id required")
+    if entry_index < 0:
+        raise ValueError("entry_index must be >= 0")
+    changelog = list_merge_preset_changelog(project_root, package_id=pid, limit=entry_index + 2)
+    entries = changelog.get("entries") or []
+    if entry_index >= len(entries):
+        raise ValueError(f"changelog entry index out of range: {entry_index}")
+    current_entry = entries[entry_index]
+    current = current_entry.get("snapshot") or {}
+    previous_entry = entries[entry_index + 1] if entry_index + 1 < len(entries) else None
+    previous = previous_entry.get("snapshot") if previous_entry else None
+    keys = sorted(set(current.keys()) | (set(previous.keys()) if isinstance(previous, dict) else set()))
+    changes: list[dict[str, Any]] = []
+    for key in keys:
+        before = previous.get(key) if isinstance(previous, dict) else None
+        after = current.get(key)
+        if before != after:
+            changes.append({"field": key, "before": before, "after": after})
+    return {
+        "package_id": pid,
+        "entry_index": entry_index,
+        "changed_at": current_entry.get("changed_at"),
+        "action": current_entry.get("action"),
+        "change_count": len(changes),
+        "changes": changes,
     }
 

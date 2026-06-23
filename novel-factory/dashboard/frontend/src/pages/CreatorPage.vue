@@ -194,6 +194,14 @@
             data-testid="wizard-digest-dead-letter-panel"
           >
             <p class="meta-line">死信队列 {{ wizardDigestDeadLetter.item_count }} 条</p>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="replay-wizard-digest-dead-letter-btn"
+              @click="replayWizardDigestDeadLetter"
+            >
+              重放首条死信
+            </button>
           </div>
         </div>
         <ul>
@@ -594,6 +602,24 @@
               data-testid="template-approvals-panel"
             >
               <p class="meta-line">待审批版本变更</p>
+              <div v-if="pendingTemplateApprovals.length > 1" class="batch-actions">
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="batch-approve-template-versions-btn"
+                  @click="batchApproveTemplateVersions"
+                >
+                  批量批准
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="batch-reject-template-versions-btn"
+                  @click="batchRejectTemplateVersions"
+                >
+                  批量驳回
+                </button>
+              </div>
               <ul>
                 <li
                   v-for="approval in pendingTemplateApprovals"
@@ -1276,6 +1302,54 @@
                     data-testid="merge-preset-changelog-row"
                   >
                     {{ entry.action }} · {{ entry.changed_fields?.join(', ') }}
+                    <button
+                      type="button"
+                      class="mini-btn pixel-border"
+                      data-testid="merge-preset-changelog-diff-btn"
+                      @click="previewMergePresetChangelogDiff(idx)"
+                    >
+                      diff
+                    </button>
+                  </li>
+                </ul>
+                <p
+                  v-if="mergePresetChangelogDiff.change_count"
+                  class="meta-line"
+                  data-testid="merge-preset-changelog-diff-panel"
+                >
+                  变更 {{ mergePresetChangelogDiff.change_count }} 项：
+                  {{ mergePresetChangelogDiff.changes?.map((c) => c.field).join(', ') }}
+                </p>
+              </div>
+              <div
+                v-if="factoryMergePresetPullConflicts.conflicts?.length"
+                class="merge-preset-factory-pull-wizard"
+                data-testid="merge-preset-factory-pull-wizard"
+              >
+                <p class="meta-line">工厂拉取冲突（{{ factoryMergePresetPullConflicts.conflict_count }}）</p>
+                <ul>
+                  <li
+                    v-for="(conflict, idx) in factoryMergePresetPullConflicts.conflicts"
+                    :key="`${conflict.package_id}-${idx}`"
+                    data-testid="merge-preset-factory-pull-conflict-row"
+                  >
+                    {{ conflict.message }}
+                    <button
+                      type="button"
+                      class="mini-btn pixel-border"
+                      data-testid="merge-preset-factory-pull-prefer-factory-btn"
+                      @click="pullFactoryMergePresetsWithStrategy(conflict.package_id, 'prefer_factory')"
+                    >
+                      用工厂
+                    </button>
+                    <button
+                      type="button"
+                      class="mini-btn pixel-border"
+                      data-testid="merge-preset-factory-pull-prefer-project-btn"
+                      @click="pullFactoryMergePresetsWithStrategy(conflict.package_id, 'prefer_project')"
+                    >
+                      保留项目
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -1597,9 +1671,14 @@ import {
   fetchCreatorTemplateApprovalOverdue,
   transferCreatorTemplateApproval,
   fetchCreatorTemplateApprovalSnapshotDiff,
+  fetchCreatorTemplateApprovalSnapshotDrift,
+  batchApproveCreatorTemplateApprovals,
+  batchRejectCreatorTemplateApprovals,
   fetchCreatorOnboardingDigestDeadLetter,
+  replayCreatorOnboardingDigestDeadLetter,
   preflightCreatorFactoryMergePresetPull,
   fetchCreatorMergePresetChangelog,
+  fetchCreatorMergePresetChangelogDiff,
   fetchCreatorMergePresetToposort,
   fetchCreatorOnboardingNotifications,
   fetchCreatorOnboardingNotificationDigest,
@@ -1739,6 +1818,8 @@ const templateApprovalEmailOnOverdue = ref(true);
 const mergePresetImportDiff = ref({ added: [], updated: [], removed: [] });
 const mergePresetToposort = ref({ order: [], edges: [], edge_count: 0 });
 const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] });
+const mergePresetChangelogDiff = ref({ change_count: 0, changes: [] });
+const factoryMergePresetPullConflicts = ref({ conflict_count: 0, conflicts: [] });
 const mergePresetImportPreflight = ref(null);
 const templateApprovalSubmitting = ref(false);
 const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
@@ -1847,8 +1928,17 @@ function toggleChangelogVisual(index) {
   expandedChangelogVisual.value = expandedChangelogVisual.value === index ? null : index;
 }
 
-watch(selectedMergePresetPackage, (packageId) => {
-  if (packageId) applyMergePresetPackage(packageId);
+watch(selectedMergePresetPackage, async (packageId) => {
+  if (packageId) {
+    applyMergePresetPackage(packageId);
+    try {
+      mergePresetChangelog.value = await fetchCreatorMergePresetChangelog(packageId);
+    } catch {
+      mergePresetChangelog.value = { package_id: packageId, entry_count: 0, entries: [] };
+    }
+  } else {
+    mergePresetChangelog.value = { package_id: '', entry_count: 0, entries: [] };
+  }
 });
 
 const selectedTemplateCustom = computed(() => selectedTemplateProject.value);
@@ -2278,6 +2368,16 @@ async function processWizardDigestRetries() {
   }
 }
 
+async function replayWizardDigestDeadLetter() {
+  try {
+    const result = await replayCreatorOnboardingDigestDeadLetter({ index: 0 });
+    saveMessage.value = `已重放死信（${result.channel || 'unknown'}）`;
+    await loadWizardDigestSchedule();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
 async function dispatchWizardDigest() {
   try {
     const result = await dispatchCreatorOnboardingDigest(true);
@@ -2619,10 +2719,12 @@ async function pullFactoryMergePresets() {
   if (!packageIds.length) return;
   mergePresetFactoryPulling.value = true;
   error.value = null;
+  factoryMergePresetPullConflicts.value = { conflict_count: 0, conflicts: [] };
   try {
     const preflight = await preflightCreatorFactoryMergePresetPull({ package_ids: packageIds });
-    if (preflight.blocked) {
-      saveMessage.value = `工厂拉取预检发现 ${preflight.conflict_count} 个冲突`;
+    if (preflight.conflict_count) {
+      factoryMergePresetPullConflicts.value = preflight;
+      saveMessage.value = `工厂拉取预检发现 ${preflight.conflict_count} 个冲突，请选择策略`;
       return;
     }
     const result = await pullCreatorFactoryMergePresetPackages({ package_ids: packageIds });
@@ -2632,6 +2734,39 @@ async function pullFactoryMergePresets() {
     handleSaveError(e);
   } finally {
     mergePresetFactoryPulling.value = false;
+  }
+}
+
+async function pullFactoryMergePresetsWithStrategy(packageId, strategy) {
+  const ids = factoryMergePresetPackages.value.map((pkg) => pkg.id);
+  if (!ids.length) return;
+  mergePresetFactoryPulling.value = true;
+  error.value = null;
+  try {
+    const result = await pullCreatorFactoryMergePresetPackages({
+      package_ids: ids,
+      conflict_strategies: { [packageId]: strategy },
+    });
+    saveMessage.value = `拉取完成：导入 ${result.imported}，跳过 ${result.skipped || 0}`;
+    factoryMergePresetPullConflicts.value = { conflict_count: 0, conflicts: [] };
+    await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    mergePresetFactoryPulling.value = false;
+  }
+}
+
+async function previewMergePresetChangelogDiff(entryIndex) {
+  if (!selectedMergePresetPackage.value) return;
+  try {
+    mergePresetChangelogDiff.value = await fetchCreatorMergePresetChangelogDiff(
+      selectedMergePresetPackage.value,
+      entryIndex,
+    );
+    saveMessage.value = `变更 diff：${mergePresetChangelogDiff.value.change_count} 项`;
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 
@@ -2749,7 +2884,17 @@ async function submitTemplateVersionApproval() {
 
 async function approveTemplateVersion(approvalId) {
   try {
-    const result = await approveCreatorTemplateApproval(approvalId);
+    const drift = await fetchCreatorTemplateApprovalSnapshotDrift(approvalId);
+    let force = false;
+    if (drift.drifted) {
+      const ok = window.confirm('审批快照与当前卷纲不一致，仍要批准？');
+      if (!ok) {
+        saveMessage.value = '已取消批准（快照漂移）';
+        return;
+      }
+      force = true;
+    }
+    const result = await approveCreatorTemplateApproval(approvalId, { force });
     saveMessage.value = result.chain_advanced
       ? `审批链进度 ${result.chain_progress}`
       : '已批准版本变更';
@@ -2758,6 +2903,39 @@ async function approveTemplateVersion(approvalId) {
       await loadVolumeTemplates();
       await loadTemplateVersionChangelog();
     }
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function batchApproveTemplateVersions() {
+  const ids = pendingTemplateApprovals.value.map((row) => row.id);
+  if (!ids.length) return;
+  try {
+    const force = window.confirm('批量批准全部待审批项？若存在快照漂移将自动 force。');
+    if (!force) return;
+    const result = await batchApproveCreatorTemplateApprovals({
+      approval_ids: ids,
+      force: true,
+    });
+    saveMessage.value = `批量批准：${result.approved}/${result.total}`;
+    await loadTemplateApprovals();
+    await loadVolumeTemplates();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function batchRejectTemplateVersions() {
+  const ids = pendingTemplateApprovals.value.map((row) => row.id);
+  if (!ids.length) return;
+  try {
+    const result = await batchRejectCreatorTemplateApprovals({
+      approval_ids: ids,
+      reason: '批量驳回',
+    });
+    saveMessage.value = `批量驳回：${result.rejected}/${result.total}`;
+    await loadTemplateApprovals();
   } catch (e) {
     handleSaveError(e);
   }

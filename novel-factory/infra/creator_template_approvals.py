@@ -457,7 +457,14 @@ def approve_template_approval(
     *,
     assignee: str = "",
     resolve_note: str = "",
+    force: bool = False,
 ) -> dict[str, Any]:
+    drift = check_approval_snapshot_drift(project_root, approval_id)
+    if drift.get("drifted") and not force:
+        raise ValueError(
+            "approval volumes snapshot drifted from current template; "
+            "re-submit approval or pass force=true",
+        )
     store = _load_store(project_root)
     aid = str(approval_id).strip()
     chain_cfg = load_approval_chain_config(project_root)
@@ -513,6 +520,69 @@ def approve_template_approval(
         public["chain_advanced"] = False
         return public
     raise ValueError(f"unknown approval: {approval_id!r}")
+
+
+def check_approval_snapshot_drift(
+    project_root: Path | str,
+    approval_id: str,
+) -> dict[str, Any]:
+    """Return whether approval snapshot differs from current template volumes."""
+    diff = preview_template_approval_snapshot_diff(project_root, approval_id)
+    summary = diff.get("diff_summary") or {}
+    return {
+        "approval_id": diff["approval_id"],
+        "template_id": diff["template_id"],
+        "drifted": bool(summary.get("changed")),
+        "diff_summary": summary,
+    }
+
+
+def batch_approve_template_approvals(
+    project_root: Path | str,
+    approval_ids: list[str],
+    *,
+    assignee: str = "",
+    resolve_note: str = "",
+    force: bool = False,
+) -> dict[str, Any]:
+    results: list[dict[str, Any]] = []
+    for aid in approval_ids:
+        try:
+            row = approve_template_approval(
+                project_root,
+                aid,
+                assignee=assignee,
+                resolve_note=resolve_note,
+                force=force,
+            )
+            results.append({"id": aid, "ok": True, "status": row.get("status"), "chain_advanced": row.get("chain_advanced")})
+        except ValueError as exc:
+            results.append({"id": aid, "ok": False, "error": str(exc)})
+    approved = sum(1 for row in results if row.get("ok"))
+    return {"approved": approved, "total": len(approval_ids), "results": results}
+
+
+def batch_reject_template_approvals(
+    project_root: Path | str,
+    approval_ids: list[str],
+    *,
+    reason: str = "",
+    resolve_note: str = "",
+) -> dict[str, Any]:
+    results: list[dict[str, Any]] = []
+    for aid in approval_ids:
+        try:
+            row = reject_template_approval(
+                project_root,
+                aid,
+                reason=reason,
+                resolve_note=resolve_note,
+            )
+            results.append({"id": aid, "ok": True, "status": row.get("status")})
+        except ValueError as exc:
+            results.append({"id": aid, "ok": False, "error": str(exc)})
+    rejected = sum(1 for row in results if row.get("ok"))
+    return {"rejected": rejected, "total": len(approval_ids), "results": results}
 
 
 def reject_template_approval(

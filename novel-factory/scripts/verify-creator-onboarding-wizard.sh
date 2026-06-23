@@ -266,6 +266,30 @@ from infra.creator_volume_templates import list_template_sync_sources
 
 sync_sources = list_template_sync_sources(exclude_slug="${SLUG}")
 assert isinstance(sync_sources, list)
+
+from infra.creator_template_approvals import check_approval_snapshot_drift, batch_approve_template_approvals
+from infra.creator_onboarding_digest_schedule import replay_digest_dead_letter, load_digest_dead_letter, _append_dead_letter
+from infra.creator_merge_preferences import preview_merge_preset_changelog_diff, list_merge_preset_changelog
+
+if changelog:
+    pending2 = submit_template_version_approval(root, saved["id"], version_label="v9.1.0")
+    drift = check_approval_snapshot_drift(root, pending2["id"])
+    assert "drifted" in drift
+    batch = batch_approve_template_approvals(root, [pending2["id"]], force=True)
+    assert batch["approved"] >= 1
+
+_append_dead_letter(root, {"channel": "webhook", "digest": {"unread": 1}, "error": "dead", "attempts": 5})
+if load_digest_dead_letter(root)["item_count"]:
+    replay = replay_digest_dead_letter(root, index=0)
+    assert replay["replayed"] is True
+
+if packages:
+    pkg_id = packages[0]["id"]
+    cl = list_merge_preset_changelog(root, package_id=pkg_id)
+    if cl.get("entry_count"):
+        diff = preview_merge_preset_changelog_diff(root, package_id=pkg_id, entry_index=0)
+        assert "change_count" in diff
+
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY
 

@@ -836,8 +836,35 @@ export async function fetchCreatorTemplateApprovalSnapshotDiff(approvalId) {
   );
 }
 
+export async function fetchCreatorTemplateApprovalSnapshotDrift(approvalId) {
+  return request(
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/snapshot-drift`,
+  );
+}
+
+export async function batchApproveCreatorTemplateApprovals(body) {
+  return request('/creator/volume-plan/templates/approvals/batch-approve', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function batchRejectCreatorTemplateApprovals(body) {
+  return request('/creator/volume-plan/templates/approvals/batch-reject', {
+    method: 'POST',
+    body,
+  });
+}
+
 export async function fetchCreatorOnboardingDigestDeadLetter() {
   return request('/creator/onboarding/notifications/digest/dead-letter');
+}
+
+export async function replayCreatorOnboardingDigestDeadLetter(body = {}) {
+  return request('/creator/onboarding/notifications/digest/dead-letter/replay', {
+    method: 'POST',
+    body,
+  });
 }
 
 export async function preflightCreatorFactoryMergePresetPull(body) {
@@ -850,6 +877,12 @@ export async function preflightCreatorFactoryMergePresetPull(body) {
 export async function fetchCreatorMergePresetChangelog(packageId, limit = 10) {
   return request(
     `/creator/settings-docs/merge-preferences/preset-packages/${encodeURIComponent(packageId)}/changelog?limit=${limit}`,
+  );
+}
+
+export async function fetchCreatorMergePresetChangelogDiff(packageId, entryIndex = 0) {
+  return request(
+    `/creator/settings-docs/merge-preferences/preset-packages/${encodeURIComponent(packageId)}/changelog/diff?entry_index=${entryIndex}`,
   );
 }
 

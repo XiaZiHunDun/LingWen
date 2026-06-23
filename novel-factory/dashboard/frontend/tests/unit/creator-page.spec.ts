@@ -74,9 +74,14 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorTemplateApprovalOverdue: vi.fn(),
   transferCreatorTemplateApproval: vi.fn(),
   fetchCreatorTemplateApprovalSnapshotDiff: vi.fn(),
+  fetchCreatorTemplateApprovalSnapshotDrift: vi.fn(),
+  batchApproveCreatorTemplateApprovals: vi.fn(),
+  batchRejectCreatorTemplateApprovals: vi.fn(),
   fetchCreatorOnboardingDigestDeadLetter: vi.fn(),
+  replayCreatorOnboardingDigestDeadLetter: vi.fn(),
   preflightCreatorFactoryMergePresetPull: vi.fn(),
   fetchCreatorMergePresetChangelog: vi.fn(),
+  fetchCreatorMergePresetChangelogDiff: vi.fn(),
   fetchCreatorMergePresetToposort: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
@@ -159,9 +164,14 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorTemplateApprovalOverdue: creatorMocks.fetchCreatorTemplateApprovalOverdue,
   transferCreatorTemplateApproval: creatorMocks.transferCreatorTemplateApproval,
   fetchCreatorTemplateApprovalSnapshotDiff: creatorMocks.fetchCreatorTemplateApprovalSnapshotDiff,
+  fetchCreatorTemplateApprovalSnapshotDrift: creatorMocks.fetchCreatorTemplateApprovalSnapshotDrift,
+  batchApproveCreatorTemplateApprovals: creatorMocks.batchApproveCreatorTemplateApprovals,
+  batchRejectCreatorTemplateApprovals: creatorMocks.batchRejectCreatorTemplateApprovals,
   fetchCreatorOnboardingDigestDeadLetter: creatorMocks.fetchCreatorOnboardingDigestDeadLetter,
+  replayCreatorOnboardingDigestDeadLetter: creatorMocks.replayCreatorOnboardingDigestDeadLetter,
   preflightCreatorFactoryMergePresetPull: creatorMocks.preflightCreatorFactoryMergePresetPull,
   fetchCreatorMergePresetChangelog: creatorMocks.fetchCreatorMergePresetChangelog,
+  fetchCreatorMergePresetChangelogDiff: creatorMocks.fetchCreatorMergePresetChangelogDiff,
   fetchCreatorMergePresetToposort: creatorMocks.fetchCreatorMergePresetToposort,
   publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
   pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
@@ -474,20 +484,57 @@ describe('CreatorPage', () => {
       current_assignee: 'carol',
       status: 'pending',
     });
+    creatorMocks.fetchCreatorTemplateApprovalSnapshotDrift.mockResolvedValue({
+      approval_id: 'aprv_test',
+      template_id: 'custom_test',
+      drifted: false,
+      diff_summary: { changed: false },
+    });
+    creatorMocks.batchApproveCreatorTemplateApprovals.mockResolvedValue({
+      approved: 2,
+      rejected: 0,
+      total: 2,
+      results: [],
+    });
+    creatorMocks.replayCreatorOnboardingDigestDeadLetter.mockResolvedValue({
+      replayed: true,
+      index: 0,
+      channel: 'webhook',
+      retry_queue_size: 1,
+      dead_letter_count: 0,
+    });
+    creatorMocks.fetchCreatorMergePresetChangelogDiff.mockResolvedValue({
+      package_id: 'my_combo',
+      entry_index: 0,
+      change_count: 1,
+      changes: [{ field: 'name', before: 'A', after: 'B' }],
+    });
     creatorMocks.fetchCreatorTemplateApprovals.mockResolvedValue({
-      approvals: [{
-        id: 'aprv_test',
-        template_id: 'custom_test',
-        status: 'pending',
-        version_label: 'v2.0.0',
-        previous_label: 'v1.0.0',
-        has_volumes_snapshot: true,
-        chain_step: 1,
-        chain_total: 2,
-        chain_progress: '1/2',
-        or_signing: true,
-        current_assignees: ['alice', 'bob'],
-      }],
+      approvals: [
+        {
+          id: 'aprv_test',
+          template_id: 'custom_test',
+          status: 'pending',
+          version_label: 'v2.0.0',
+          previous_label: 'v1.0.0',
+          has_volumes_snapshot: true,
+          chain_step: 1,
+          chain_total: 2,
+          chain_progress: '1/2',
+          or_signing: true,
+          current_assignees: ['alice', 'bob'],
+        },
+        {
+          id: 'aprv_test2',
+          template_id: 'custom_test2',
+          status: 'pending',
+          version_label: 'v3.0.0',
+          previous_label: 'v2.0.0',
+          chain_step: 1,
+          chain_total: 1,
+          chain_progress: '1/1',
+        },
+      ],
     });
     creatorMocks.fetchCreatorTemplateApprovalChainConfig.mockResolvedValue({ required_steps: 2, step_assignees: ['alice'] });
     creatorMocks.saveCreatorTemplateApprovalChainConfig.mockResolvedValue({ required_steps: 3 });
@@ -1419,5 +1466,28 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(creatorMocks.transferCreatorTemplateApproval).toHaveBeenCalled();
     promptSpy.mockRestore();
+  });
+
+  it('shows v3.7 drift guard batch approve dead-letter replay and changelog diff', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-approve-template-versions-btn"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="replay-wizard-digest-dead-letter-btn"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="replay-wizard-digest-dead-letter-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.replayCreatorOnboardingDigestDeadLetter).toHaveBeenCalled();
+    await wrapper.find('[data-testid="batch-approve-template-versions-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.batchApproveCreatorTemplateApprovals).toHaveBeenCalled();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="merge-preset-package-select"]').setValue('my_combo');
+    await flushPromises();
+    await wrapper.find('[data-testid="merge-preset-changelog-diff-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorMergePresetChangelogDiff).toHaveBeenCalled();
+    confirmSpy.mockRestore();
   });
 });
