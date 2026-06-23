@@ -84,6 +84,17 @@
         清单：<code>{{ onboardingWizard.checklist_doc }}</code> ·
         冒烟：<code>{{ onboardingWizard.smoke_command }}</code>
       </p>
+      <div class="merge-range">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="wizard-share-link-btn"
+          @click="copyWizardShareLink"
+        >
+          复制分享链接
+        </button>
+        <span v-if="wizardShareMessage" class="meta-line" data-testid="wizard-share-message">{{ wizardShareMessage }}</span>
+      </div>
     </details>
 
     <div v-if="overview" class="creator-grid" data-testid="creator-grid">
@@ -189,17 +200,37 @@
                 {{ templateApplying ? '套用中…' : '套用模板' }}
               </button>
               <button
-                v-if="selectedTemplateCustom"
+                v-if="selectedTemplateProject"
                 type="button"
-                class="mini-btn mini-btn--danger pixel-border"
+                class="mini-btn pixel-border"
                 data-testid="delete-template-btn"
                 :disabled="templateDeleting"
                 @click="deleteSelectedVolumeTemplate"
               >
                 {{ templateDeleting ? '删除中…' : '删除模板' }}
               </button>
+              <button
+                v-if="selectedTemplateProject"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="publish-factory-template-btn"
+                :disabled="templatePublishing"
+                @click="publishSelectedTemplateToFactory"
+              >
+                {{ templatePublishing ? '发布中…' : '发布到工厂库' }}
+              </button>
+              <button
+                v-if="selectedTemplateFactory"
+                type="button"
+                class="mini-btn mini-btn--danger pixel-border"
+                data-testid="delete-factory-template-btn"
+                :disabled="factoryDeleting"
+                @click="deleteSelectedFactoryTemplate"
+              >
+                {{ factoryDeleting ? '删除中…' : '从工厂库删除' }}
+              </button>
             </div>
-            <div v-if="selectedTemplateCustom" class="merge-range">
+            <div v-if="selectedTemplateProject" class="merge-range">
               <input
                 v-model="renameTemplateName"
                 class="vol-input vol-conflict"
@@ -260,6 +291,16 @@
                 @click="syncTemplatesFromProjects"
               >
                 {{ templateSyncing ? '同步中…' : '跨项目同步' }}
+              </button>
+              <button
+                v-if="factoryTemplateCount"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="pull-factory-templates-btn"
+                :disabled="factoryPulling"
+                @click="pullFactoryTemplates"
+              >
+                {{ factoryPulling ? '拉取中…' : '从工厂库拉取' }}
               </button>
             </div>
             <div v-if="showImportTemplates" class="import-templates-panel" data-testid="import-templates-panel">
@@ -600,6 +641,13 @@
               data-testid="merge-strategy-panel"
             >
               <p class="diff-line">合并策略（三路冲突时选择保留来源）</p>
+              <p
+                v-if="usesGlobalMergeDefault"
+                class="meta-line"
+                data-testid="merge-global-default-badge"
+              >
+                当前使用全局默认合并策略
+              </p>
               <div class="merge-presets" data-testid="merge-presets">
                 <button
                   type="button"
@@ -737,8 +785,12 @@ import {
   importCreatorVolumeTemplates,
   fetchCreatorVolumeTemplateSyncSources,
   syncCreatorVolumeTemplates,
+  publishCreatorVolumeTemplateToFactory,
+  pullCreatorFactoryVolumeTemplates,
+  deleteCreatorFactoryVolumeTemplate,
   fetchCreatorOnboarding,
   saveCreatorOnboardingProgress,
+  applyCreatorOnboardingShare,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -754,7 +806,7 @@ import { useStudioProject } from '../composables/useStudioProject.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 
 const { projectRevision } = useStudioProject();
-const { focusWizard, focusWizardStep, setWizardDeepLink } = useDashboardNav();
+const { focusWizard, focusWizardStep, focusWizardDone, setWizardDeepLink, buildWizardShareUrl } = useDashboardNav();
 const wizardPanelRef = ref(null);
 const overview = ref(null);
 const editableVolumes = ref([]);
@@ -798,6 +850,11 @@ const importTemplatesJson = ref('');
 const templateImporting = ref(false);
 const templateSyncSources = ref([]);
 const templateSyncing = ref(false);
+const templatePublishing = ref(false);
+const factoryPulling = ref(false);
+const factoryDeleting = ref(false);
+const wizardShareMessage = ref('');
+const usesGlobalMergeDefault = ref(false);
 const onboardingWizard = ref(null);
 const completedWizardSteps = ref(new Set());
 const autoCompletedWizardSteps = ref(new Set());
@@ -863,10 +920,19 @@ const selectedTemplateHint = computed(() => {
   return row?.description || '';
 });
 
-const selectedTemplateCustom = computed(() => {
+const selectedTemplateProject = computed(() => {
   const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
-  return Boolean(row && row.builtin === false);
+  return row?.scope === 'project';
 });
+
+const selectedTemplateFactory = computed(() => {
+  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
+  return row?.scope === 'factory';
+});
+
+const factoryTemplateCount = computed(() => volumeTemplates.value.filter((t) => t.scope === 'factory').length);
+
+const selectedTemplateCustom = computed(() => selectedTemplateProject.value);
 
 watch(selectedTemplateId, () => {
   const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
@@ -1022,13 +1088,44 @@ async function loadOnboardingWizard() {
       }
     }
     await focusWizardStepFromUrl();
+    await applyWizardShareFromUrl();
   } catch {
     onboardingWizard.value = null;
   }
 }
 
 function onWizardToggle(event) {
-  setWizardDeepLink(event.target.open, event.target.open ? focusWizardStep.value : null);
+  setWizardDeepLink(
+    event.target.open,
+    event.target.open ? focusWizardStep.value : null,
+    event.target.open ? [...completedWizardSteps.value] : [],
+  );
+}
+
+async function applyWizardShareFromUrl() {
+  const done = focusWizardDone.value;
+  if (!done?.length) return;
+  try {
+    await applyCreatorOnboardingShare({ completed_step_ids: done });
+    onboardingWizard.value = await fetchCreatorOnboarding();
+    completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
+    autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
+  } catch {
+    /* ignore share apply errors */
+  }
+}
+
+async function copyWizardShareLink() {
+  const url = buildWizardShareUrl([...completedWizardSteps.value], focusWizardStep.value);
+  try {
+    await navigator.clipboard.writeText(url);
+    wizardShareMessage.value = '已复制分享链接';
+  } catch {
+    wizardShareMessage.value = url;
+  }
+  setTimeout(() => {
+    wizardShareMessage.value = '';
+  }, 3000);
 }
 
 async function focusWizardStepFromUrl() {
@@ -1122,6 +1219,7 @@ async function loadMergePreferences() {
       const known = settingsHistory.value.some((s) => s.id === prefs.merge_snapshot_id);
       if (known) compareSnapshotId.value = prefs.merge_snapshot_id;
     }
+    usesGlobalMergeDefault.value = Boolean(prefs.uses_global_default);
   } catch {
     /* optional */
   }
@@ -1156,6 +1254,53 @@ async function syncTemplatesFromProjects() {
     handleSaveError(e);
   } finally {
     templateSyncing.value = false;
+  }
+}
+
+async function publishSelectedTemplateToFactory() {
+  if (!selectedTemplateProject.value) return;
+  templatePublishing.value = true;
+  error.value = null;
+  try {
+    await publishCreatorVolumeTemplateToFactory({ template_id: selectedTemplateId.value });
+    saveMessage.value = '已发布到工厂模板库';
+    await loadVolumeTemplates();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templatePublishing.value = false;
+  }
+}
+
+async function pullFactoryTemplates() {
+  const ids = volumeTemplates.value.filter((t) => t.scope === 'factory').map((t) => t.id);
+  if (!ids.length) return;
+  factoryPulling.value = true;
+  error.value = null;
+  try {
+    const result = await pullCreatorFactoryVolumeTemplates({ template_ids: ids });
+    saveMessage.value = `已从工厂库拉取 ${result.imported} 个模板`;
+    await loadVolumeTemplates();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    factoryPulling.value = false;
+  }
+}
+
+async function deleteSelectedFactoryTemplate() {
+  if (!selectedTemplateFactory.value) return;
+  factoryDeleting.value = true;
+  error.value = null;
+  try {
+    await deleteCreatorFactoryVolumeTemplate(selectedTemplateId.value);
+    saveMessage.value = '已从工厂库删除模板';
+    await loadVolumeTemplates();
+    selectedTemplateId.value = volumeTemplates.value[0]?.id || 'three_act';
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    factoryDeleting.value = false;
   }
 }
 

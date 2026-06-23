@@ -309,8 +309,8 @@ def save_creator_settings_docs(
             resolved_snap = merge_snapshot_id or existing.get("merge_snapshot_id")
         save_merge_preferences(
             project.root,
-            pillars_merge_source=pillars_merge_source or "editor",
-            global_outline_merge_source=global_outline_merge_source or "editor",
+            pillars_merge_source=pillars_merge_source or existing.get("pillars_merge_source", "editor"),
+            global_outline_merge_source=global_outline_merge_source or existing.get("global_outline_merge_source", "editor"),
             merge_snapshot_id=resolved_snap,
         )
 

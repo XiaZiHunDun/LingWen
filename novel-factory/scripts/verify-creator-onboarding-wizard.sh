@@ -99,6 +99,21 @@ assert exported["count"] >= 1
 imported = import_custom_volume_templates(root, exported)
 assert imported["imported"] >= 1
 
+from infra.creator_volume_templates import (
+    publish_custom_to_factory_library,
+    list_factory_volume_templates,
+    pull_factory_templates_to_project,
+)
+from infra.creator_onboarding import apply_wizard_share_done
+
+published = publish_custom_to_factory_library(root, saved["id"])
+assert published["id"].startswith("factory_")
+assert len(list_factory_volume_templates()) >= 1
+pulled = pull_factory_templates_to_project(root, template_ids=[published["id"]])
+assert pulled["imported"] >= 1
+share = apply_wizard_share_done(project, done_step_ids=["volume"])
+assert "volume" in share["completed_step_ids"]
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 
@@ -111,6 +126,11 @@ from infra.creator_merge_preferences import load_merge_preferences
 
 prefs = load_merge_preferences(root)
 assert prefs["pillars_merge_source"] == "disk"
+
+from infra.creator_merge_preferences import load_global_merge_preferences
+
+global_prefs = load_global_merge_preferences()
+assert global_prefs["pillars_merge_source"] == "disk"
 
 from infra.creator_volume_templates import list_template_sync_sources
 

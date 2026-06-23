@@ -23,14 +23,23 @@ _BUILTIN_META: dict[str, dict[str, str]] = {
 }
 
 _CUSTOM_PREFIX = "custom_"
+_FACTORY_PREFIX = "factory_"
 _CUSTOM_STATE_VERSION = "1"
+_FACTORY_STATE_VERSION = "1"
 _MAX_CUSTOM_TEMPLATES = 5
+_MAX_FACTORY_TEMPLATES = 20
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
 def _custom_templates_path(project_root: Path | str) -> Path:
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     return root / ".state" / "custom_volume_templates.json"
+
+
+def _factory_templates_path() -> Path:
+    from infra.studio_registry import factory_root
+
+    return factory_root() / "infra" / ".state" / "factory_volume_templates.json"
 
 
 def _chunk_end(max_chapter: int, part_index: int, part_count: int) -> int:
@@ -52,9 +61,27 @@ def _save_custom_store(project_root: Path | str, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _load_factory_store() -> dict[str, Any]:
+    path = _factory_templates_path()
+    if not path.is_file():
+        return {"schema_version": _FACTORY_STATE_VERSION, "templates": []}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _save_factory_store(data: dict[str, Any]) -> None:
+    path = _factory_templates_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def _normalize_template_id(name: str) -> str:
     slug = _SLUG_RE.sub("-", name.strip().lower()).strip("-")
     return f"{_CUSTOM_PREFIX}{slug[:20]}-{uuid.uuid4().hex[:6]}"
+
+
+def _normalize_factory_template_id(name: str) -> str:
+    slug = _SLUG_RE.sub("-", name.strip().lower()).strip("-")
+    return f"{_FACTORY_PREFIX}{slug[:20]}-{uuid.uuid4().hex[:6]}"
 
 
 def _scale_volumes(
@@ -98,9 +125,19 @@ def _scale_volumes(
 
 def list_volume_templates(project_root: Path | str | None = None) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = [
-        {"id": template_id, **meta, "builtin": True}
+        {"id": template_id, **meta, "builtin": True, "scope": "builtin"}
         for template_id, meta in _BUILTIN_META.items()
     ]
+    for item in _load_factory_store().get("templates", []):
+        rows.append(
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "description": item.get("description", "工厂共享模板"),
+                "builtin": False,
+                "scope": "factory",
+            },
+        )
     if project_root is None:
         return rows
     store = _load_custom_store(project_root)
@@ -111,9 +148,23 @@ def list_volume_templates(project_root: Path | str | None = None) -> list[dict[s
                 "name": item["name"],
                 "description": item.get("description", "项目自定义模板"),
                 "builtin": False,
+                "scope": "project",
             },
         )
     return rows
+
+
+def list_factory_volume_templates() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": item["id"],
+            "name": item["name"],
+            "description": item.get("description", "工厂共享模板"),
+            "builtin": False,
+            "scope": "factory",
+        }
+        for item in _load_factory_store().get("templates", [])
+    ]
 
 
 def save_custom_volume_template(
@@ -338,6 +389,99 @@ def sync_custom_volume_templates_from_projects(
     return result
 
 
+def publish_custom_to_factory_library(
+    project_root: Path | str,
+    template_id: str,
+) -> dict[str, Any]:
+    """Copy a project custom template into the factory-wide library."""
+    tid = template_id.strip().lower()
+    if not tid.startswith(_CUSTOM_PREFIX):
+        raise ValueError("only project custom templates can be published to factory")
+    store = _load_custom_store(project_root)
+    match = next(
+        (row for row in store.get("templates", []) if row.get("id") == tid),
+        None,
+    )
+    if match is None:
+        raise ValueError(f"unknown template: {template_id!r}")
+    factory = _load_factory_store()
+    templates: list[dict[str, Any]] = factory.get("templates", [])
+    entry = {
+        "id": _normalize_factory_template_id(str(match["name"])),
+        "name": str(match["name"]),
+        "description": str(match.get("description", "工厂共享模板")),
+        "source_max_chapter": int(match.get("source_max_chapter") or 1),
+        "volumes": match.get("volumes", []),
+        "published_from": str(tid),
+    }
+    templates.insert(0, entry)
+    factory["templates"] = templates[:_MAX_FACTORY_TEMPLATES]
+    factory["schema_version"] = _FACTORY_STATE_VERSION
+    _save_factory_store(factory)
+    return {
+        "id": entry["id"],
+        "name": entry["name"],
+        "description": entry["description"],
+    }
+
+
+def pull_factory_templates_to_project(
+    project_root: Path | str,
+    *,
+    template_ids: list[str],
+) -> dict[str, Any]:
+    """Import selected factory templates into the active project."""
+    if not template_ids:
+        raise ValueError("template_ids required")
+    factory = _load_factory_store()
+    by_id = {row["id"]: row for row in factory.get("templates", [])}
+    collected: list[dict[str, Any]] = []
+    resolved: list[str] = []
+    for raw_id in template_ids:
+        tid = str(raw_id).strip().lower()
+        if not tid.startswith(_FACTORY_PREFIX):
+            raise ValueError(f"not a factory template: {raw_id!r}")
+        match = by_id.get(tid)
+        if match is None:
+            raise ValueError(f"unknown factory template: {raw_id!r}")
+        resolved.append(tid)
+        collected.append(
+            {
+                **match,
+                "id": _normalize_template_id(str(match["name"])),
+                "name": str(match["name"]),
+                "description": f"工厂库 · {match.get('description', '')}".strip(),
+            },
+        )
+    result = import_custom_volume_templates(project_root, {"templates": collected}, replace=False)
+    result["template_ids"] = resolved
+    return result
+
+
+def delete_factory_volume_template(template_id: str) -> dict[str, Any]:
+    """Remove a template from the factory-wide library."""
+    tid = template_id.strip().lower()
+    if not tid.startswith(_FACTORY_PREFIX):
+        raise ValueError("only factory templates can be deleted from factory library")
+    factory = _load_factory_store()
+    templates: list[dict[str, Any]] = factory.get("templates", [])
+    kept = [row for row in templates if row.get("id") != tid]
+    if len(kept) == len(templates):
+        raise ValueError(f"unknown factory template: {template_id!r}")
+    factory["templates"] = kept
+    _save_factory_store(factory)
+    return {"id": tid, "deleted": True}
+
+
+def _resolve_factory_template(tid: str) -> dict[str, Any] | None:
+    if not tid.startswith(_FACTORY_PREFIX):
+        return None
+    return next(
+        (row for row in _load_factory_store().get("templates", []) if row.get("id") == tid),
+        None,
+    )
+
+
 def _build_builtin_template(template_id: str, max_chapter: int) -> list[dict[str, Any]]:
     if template_id == "companion_short":
         return [
@@ -430,6 +574,11 @@ def build_volume_template(
         source_max = int(match.get("source_max_chapter") or max_chapter)
         return _scale_volumes(match.get("volumes", []), source_max, max_chapter)
 
+    factory_match = _resolve_factory_template(tid)
+    if factory_match is not None:
+        source_max = int(factory_match.get("source_max_chapter") or max_chapter)
+        return _scale_volumes(factory_match.get("volumes", []), source_max, max_chapter)
+
     if tid not in _BUILTIN_META:
         raise ValueError(f"unknown template: {template_id!r}")
     return _build_builtin_template(tid, max_chapter)
@@ -453,6 +602,12 @@ def template_meta(
         return {
             "name": str(match["name"]),
             "description": str(match.get("description", "")),
+        }
+    factory_match = _resolve_factory_template(tid)
+    if factory_match is not None:
+        return {
+            "name": str(factory_match["name"]),
+            "description": str(factory_match.get("description", "")),
         }
     if tid not in _BUILTIN_META:
         raise ValueError(f"unknown template: {template_id!r}")

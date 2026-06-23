@@ -1,4 +1,4 @@
-"""Persist last-used creator settings merge strategy per project."""
+"""Persist last-used creator settings merge strategy per project and globally."""
 from __future__ import annotations
 
 import json
@@ -21,15 +21,17 @@ def _prefs_path(project_root: Path | str) -> Path:
     return root / ".state" / "creator_merge_preferences.json"
 
 
+def _global_prefs_path() -> Path:
+    from infra.studio_registry import factory_root
+
+    return factory_root() / "infra" / ".state" / "creator_merge_preferences_global.json"
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def load_merge_preferences(project_root: Path | str) -> dict[str, Any]:
-    path = _prefs_path(project_root)
-    if not path.is_file():
-        return dict(_DEFAULT)
-    data = json.loads(path.read_text(encoding="utf-8"))
+def _normalize_prefs(data: dict[str, Any]) -> dict[str, Any]:
     pillars = str(data.get("pillars_merge_source", "editor"))
     outline = str(data.get("global_outline_merge_source", "editor"))
     if pillars not in MERGE_SOURCES:
@@ -44,6 +46,52 @@ def load_merge_preferences(project_root: Path | str) -> dict[str, Any]:
         "global_outline_merge_source": outline,
         "merge_snapshot_id": snapshot_id,
     }
+
+
+def load_global_merge_preferences() -> dict[str, Any]:
+    path = _global_prefs_path()
+    if not path.is_file():
+        return dict(_DEFAULT)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return _normalize_prefs(data)
+
+
+def save_global_merge_preferences(
+    *,
+    pillars_merge_source: str,
+    global_outline_merge_source: str,
+    merge_snapshot_id: str | None = None,
+) -> dict[str, Any]:
+    if pillars_merge_source not in MERGE_SOURCES:
+        raise ValueError(f"invalid pillars merge source: {pillars_merge_source!r}")
+    if global_outline_merge_source not in MERGE_SOURCES:
+        raise ValueError(f"invalid outline merge source: {global_outline_merge_source!r}")
+    path = _global_prefs_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    snap = merge_snapshot_id.strip() if merge_snapshot_id else None
+    if not snap:
+        snap = None
+    data = {
+        "schema_version": _STATE_VERSION,
+        "pillars_merge_source": pillars_merge_source,
+        "global_outline_merge_source": global_outline_merge_source,
+        "merge_snapshot_id": snap,
+        "updated_at": _now_iso(),
+    }
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return data
+
+
+def load_merge_preferences(project_root: Path | str) -> dict[str, Any]:
+    path = _prefs_path(project_root)
+    if not path.is_file():
+        prefs = load_global_merge_preferences()
+        prefs["uses_global_default"] = True
+        return prefs
+    data = json.loads(path.read_text(encoding="utf-8"))
+    prefs = _normalize_prefs(data)
+    prefs["uses_global_default"] = False
+    return prefs
 
 
 def save_merge_preferences(
@@ -70,4 +118,9 @@ def save_merge_preferences(
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    save_global_merge_preferences(
+        pillars_merge_source=pillars_merge_source,
+        global_outline_merge_source=global_outline_merge_source,
+        merge_snapshot_id=snap,
+    )
     return data

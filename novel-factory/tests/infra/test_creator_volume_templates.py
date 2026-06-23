@@ -9,7 +9,10 @@ from infra.creator_volume_templates import (
     delete_custom_volume_template,
     export_custom_volume_templates,
     import_custom_volume_templates,
+    list_factory_volume_templates,
     list_template_sync_sources,
+    publish_custom_to_factory_library,
+    pull_factory_templates_to_project,
     sync_custom_volume_templates_from_projects,
     list_volume_templates,
     rename_custom_volume_template,
@@ -191,6 +194,45 @@ def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
     assert synced["imported"] == 1
     names = [row["name"] for row in list_volume_templates(target.root) if not row["builtin"]]
     assert any("共享结构" in name for name in names)
+    ProjectPaths.reset()
+
+
+def test_factory_template_publish_pull(factory_tmp, monkeypatch):
+    import infra.creator_volume_templates as cvt
+    from infra.project_init import init_minimal_short_project
+
+    monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
+    monkeypatch.setattr(
+        cvt,
+        "_factory_templates_path",
+        lambda: factory_tmp / "infra" / ".state" / "factory_volume_templates.json",
+    )
+
+    source = init_minimal_short_project(
+        slug="factory-src",
+        title="工厂源",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    target = init_minimal_short_project(
+        slug="factory-tgt",
+        title="工厂目标",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    volumes = [
+        {"label": "A", "start_chapter": 1, "end_chapter": 12, "core_conflict": "x", "locked": False},
+    ]
+    saved = save_custom_volume_template(source.root, name="工厂结构", volumes=volumes, max_chapter=12)
+    published = publish_custom_to_factory_library(source.root, saved["id"])
+    assert published["id"].startswith("factory_")
+    assert len(list_factory_volume_templates()) == 1
+    built = build_volume_template(published["id"], 24, source.root)
+    assert built[-1]["end_chapter"] == 24
+    pulled = pull_factory_templates_to_project(target.root, template_ids=[published["id"]])
+    assert pulled["imported"] == 1
     ProjectPaths.reset()
 
 

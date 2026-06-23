@@ -620,6 +620,30 @@ export async function syncCreatorVolumeTemplates(body) {
   });
 }
 
+export async function fetchCreatorFactoryVolumeTemplates() {
+  return request('/creator/volume-plan/templates/factory');
+}
+
+export async function publishCreatorVolumeTemplateToFactory(body) {
+  return request('/creator/volume-plan/templates/factory/publish', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function pullCreatorFactoryVolumeTemplates(body) {
+  return request('/creator/volume-plan/templates/factory/pull', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function deleteCreatorFactoryVolumeTemplate(templateId) {
+  return request(`/creator/volume-plan/templates/factory/${encodeURIComponent(templateId)}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function fetchCreatorOnboarding() {
   return request('/creator/onboarding');
 }
@@ -627,6 +651,13 @@ export async function fetchCreatorOnboarding() {
 export async function saveCreatorOnboardingProgress(body) {
   return request('/creator/onboarding/progress', {
     method: 'PUT',
+    body,
+  });
+}
+
+export async function applyCreatorOnboardingShare(body) {
+  return request('/creator/onboarding/progress/apply-share', {
+    method: 'POST',
     body,
   });
 }
@@ -669,6 +700,10 @@ export async function previewCreatorSettingsMerge(body) {
 
 export async function fetchCreatorMergePreferences() {
   return request('/creator/settings-docs/merge-preferences');
+}
+
+export async function fetchCreatorGlobalMergePreferences() {
+  return request('/creator/settings-docs/merge-preferences/global');
 }
 
 export async function fetchCreatorSettingsHistory() {

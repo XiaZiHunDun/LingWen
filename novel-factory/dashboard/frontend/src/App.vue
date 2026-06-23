@@ -74,8 +74,14 @@ const { status } = useWorkflowSocket() // Phase 8.11
 onMounted(async () => {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
-  if ((params.get('wizard') === '1' || params.get('step')) && params.get('nav') !== 'creator') {
-    navigateTo('creator', { wizard: true, wizardStep: params.get('step') || null })
+  if ((params.get('wizard') === '1' || params.get('step') || params.get('done')) && params.get('nav') !== 'creator') {
+    const doneRaw = params.get('done')
+    const wizardDone = doneRaw ? doneRaw.split(',').map((s) => s.trim()).filter(Boolean) : []
+    navigateTo('creator', {
+      wizard: true,
+      wizardStep: params.get('step') || null,
+      wizardDone,
+    })
     return
   }
   if (params.get('nav')) return

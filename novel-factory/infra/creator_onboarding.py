@@ -182,3 +182,24 @@ def save_onboarding_progress_from_ui(
         "auto_completed_step_ids": auto,
         "progress_pct": progress_pct(completed, len(steps)),
     }
+
+
+def apply_wizard_share_done(
+    project: StudioProject,
+    *,
+    done_step_ids: list[str],
+) -> dict[str, Any]:
+    """Merge share-link step ids into persisted wizard progress."""
+    payload = onboarding_wizard_payload(project)
+    steps = payload["steps"]
+    step_ids = [step["id"] for step in steps]
+    valid = set(step_ids)
+    desired = list(
+        dict.fromkeys(
+            sid for sid in (payload["completed_step_ids"] + done_step_ids) if sid in valid
+        ),
+    )
+    return save_onboarding_progress_from_ui(
+        project,
+        desired_completed_step_ids=desired,
+    )

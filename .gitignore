@@ -60,6 +60,8 @@ novel-factory/projects/**/.state/creator_settings_history.json
 novel-factory/projects/**/.state/custom_volume_templates.json
 novel-factory/projects/**/.state/creator_onboarding_progress.json
 novel-factory/projects/**/.state/creator_merge_preferences.json
+novel-factory/infra/.state/factory_volume_templates.json
+novel-factory/infra/.state/creator_merge_preferences_global.json
 # State DBs are runtime artifacts — except the canonical workflow.db
 novel-factory/.state/*.db
 !novel-factory/.state/workflow.db

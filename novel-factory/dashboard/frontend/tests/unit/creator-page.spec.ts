@@ -17,8 +17,12 @@ const creatorMocks = vi.hoisted(() => ({
   importCreatorVolumeTemplates: vi.fn(),
   fetchCreatorVolumeTemplateSyncSources: vi.fn(),
   syncCreatorVolumeTemplates: vi.fn(),
+  publishCreatorVolumeTemplateToFactory: vi.fn(),
+  pullCreatorFactoryVolumeTemplates: vi.fn(),
+  deleteCreatorFactoryVolumeTemplate: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
   saveCreatorOnboardingProgress: vi.fn(),
+  applyCreatorOnboardingShare: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
@@ -48,8 +52,12 @@ vi.mock('../../src/api/index.js', () => ({
   importCreatorVolumeTemplates: creatorMocks.importCreatorVolumeTemplates,
   fetchCreatorVolumeTemplateSyncSources: creatorMocks.fetchCreatorVolumeTemplateSyncSources,
   syncCreatorVolumeTemplates: creatorMocks.syncCreatorVolumeTemplates,
+  publishCreatorVolumeTemplateToFactory: creatorMocks.publishCreatorVolumeTemplateToFactory,
+  pullCreatorFactoryVolumeTemplates: creatorMocks.pullCreatorFactoryVolumeTemplates,
+  deleteCreatorFactoryVolumeTemplate: creatorMocks.deleteCreatorFactoryVolumeTemplate,
   fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
   saveCreatorOnboardingProgress: creatorMocks.saveCreatorOnboardingProgress,
+  applyCreatorOnboardingShare: creatorMocks.applyCreatorOnboardingShare,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
@@ -73,15 +81,19 @@ vi.mock('../../src/composables/useStudioProject.js', () => ({
 const navMocks = vi.hoisted(() => ({
   focusWizard: null,
   focusWizardStep: null,
+  focusWizardDone: null,
   setWizardDeepLink: vi.fn(),
+  buildWizardShareUrl: vi.fn(() => 'http://localhost/?nav=creator&wizard=1&done=init'),
 }));
 
 vi.mock('../../src/composables/useDashboardNav.js', async () => {
   const { ref } = await import('vue');
   const focusWizard = ref(false);
   const focusWizardStep = ref(null);
+  const focusWizardDone = ref([]);
   navMocks.focusWizard = focusWizard;
   navMocks.focusWizardStep = focusWizardStep;
+  navMocks.focusWizardDone = focusWizardDone;
   navMocks.setWizardDeepLink.mockImplementation((open, step) => {
     focusWizard.value = Boolean(open);
     if (step !== undefined) focusWizardStep.value = step;
@@ -90,7 +102,9 @@ vi.mock('../../src/composables/useDashboardNav.js', async () => {
     useDashboardNav: () => ({
       focusWizard,
       focusWizardStep,
+      focusWizardDone,
       setWizardDeepLink: navMocks.setWizardDeepLink,
+      buildWizardShareUrl: navMocks.buildWizardShareUrl,
     }),
   };
 });
@@ -134,6 +148,7 @@ describe('CreatorPage', () => {
   beforeEach(() => {
     navMocks.focusWizard.value = false;
     navMocks.focusWizardStep.value = null;
+    navMocks.focusWizardDone.value = [];
     navMocks.setWizardDeepLink.mockClear();
     creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
     creatorMocks.fetchCreatorVolumePlan.mockResolvedValue({
@@ -200,8 +215,9 @@ describe('CreatorPage', () => {
     });
     creatorMocks.fetchCreatorVolumeTemplates.mockResolvedValue({
       templates: [
-        { id: 'three_act', name: '三幕式', description: '建置对抗结局', builtin: true },
-        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false },
+        { id: 'three_act', name: '三幕式', description: '建置对抗结局', builtin: true, scope: 'builtin' },
+        { id: 'factory_shared', name: '工厂模板', description: '共享', builtin: false, scope: 'factory' },
+        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project' },
       ],
     });
     creatorMocks.applyCreatorVolumeTemplate.mockResolvedValue({
@@ -244,6 +260,22 @@ describe('CreatorPage', () => {
       pillars_merge_source: 'disk',
       global_outline_merge_source: 'history',
       merge_snapshot_id: 'snap1',
+      uses_global_default: true,
+    });
+    creatorMocks.applyCreatorOnboardingShare.mockResolvedValue({
+      completed_step_ids: ['init', 'pillars', 'volume'],
+      auto_completed_step_ids: ['init'],
+      progress_pct: 100,
+    });
+    creatorMocks.publishCreatorVolumeTemplateToFactory.mockResolvedValue({
+      id: 'factory_new',
+      name: '我的结构',
+      description: '工厂共享',
+    });
+    creatorMocks.pullCreatorFactoryVolumeTemplates.mockResolvedValue({
+      imported: 1,
+      total: 2,
+      template_ids: ['factory_shared'],
     });
     creatorMocks.fetchCreatorVolumeTemplateSyncSources.mockResolvedValue({
       sources: [{ slug: 'other-book', name: '其他书', template_count: 2 }],
@@ -622,5 +654,53 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(creatorMocks.fetchCreatorMergePreferences).toHaveBeenCalled();
+  });
+
+  it('copies wizard share link', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="wizard-share-link-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(navMocks.buildWizardShareUrl).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="wizard-share-message"]').text()).toContain('已复制');
+  });
+
+  it('applies wizard share done from url', async () => {
+    navMocks.focusWizardDone.value = ['volume'];
+    mount(CreatorPage);
+    await flushPromises();
+
+    expect(creatorMocks.applyCreatorOnboardingShare).toHaveBeenCalledWith({
+      completed_step_ids: ['volume'],
+    });
+  });
+
+  it('publishes project template to factory library', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
+    await flushPromises();
+    await wrapper.find('[data-testid="publish-factory-template-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.publishCreatorVolumeTemplateToFactory).toHaveBeenCalledWith({
+      template_id: 'custom_test',
+    });
+  });
+
+  it('pulls templates from factory library', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="pull-factory-templates-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.pullCreatorFactoryVolumeTemplates).toHaveBeenCalled();
   });
 });

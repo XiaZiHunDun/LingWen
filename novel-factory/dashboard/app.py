@@ -327,6 +327,32 @@ class CreatorVolumeTemplateInfo(BaseModel):
     name: str
     description: str
     builtin: bool = True
+    scope: str = "builtin"
+
+
+class CreatorVolumeFactoryPublishRequest(BaseModel):
+    template_id: str
+
+
+class CreatorVolumeFactoryPublishResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+
+
+class CreatorVolumeFactoryPullRequest(BaseModel):
+    template_ids: list[str]
+
+
+class CreatorVolumeFactoryPullResponse(BaseModel):
+    imported: int
+    total: int
+    template_ids: list[str]
+
+
+class CreatorVolumeFactoryDeleteResponse(BaseModel):
+    id: str
+    deleted: bool
 
 
 class CreatorVolumeSaveTemplateRequest(BaseModel):
@@ -475,6 +501,7 @@ class CreatorMergePreferencesResponse(BaseModel):
     pillars_merge_source: str
     global_outline_merge_source: str
     merge_snapshot_id: Optional[str] = None
+    uses_global_default: bool = False
 
 
 class CreatorSettingsDiffPart(BaseModel):
@@ -2424,6 +2451,25 @@ def create_app(
         )
         return CreatorOnboardingProgressResponse(**result)
 
+    @app.post(
+        "/api/creator/onboarding/progress/apply-share",
+        response_model=CreatorOnboardingProgressResponse,
+    )
+    def creator_onboarding_progress_apply_share(
+        req: CreatorOnboardingProgressRequest,
+    ) -> CreatorOnboardingProgressResponse:
+        from infra.creator_onboarding import apply_wizard_share_done
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = apply_wizard_share_done(
+            project,
+            done_step_ids=req.completed_step_ids,
+        )
+        return CreatorOnboardingProgressResponse(**result)
+
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
         from infra.creator_volume_plan import volume_plan_payload
@@ -2608,6 +2654,76 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorVolumeTemplateSyncResponse(**result)
+
+    @app.get(
+        "/api/creator/volume-plan/templates/factory",
+        response_model=CreatorVolumeTemplateListResponse,
+    )
+    def creator_volume_plan_factory_templates() -> CreatorVolumeTemplateListResponse:
+        from infra.creator_volume_templates import list_factory_volume_templates
+
+        return CreatorVolumeTemplateListResponse(
+            templates=[
+                CreatorVolumeTemplateInfo(**row)
+                for row in list_factory_volume_templates()
+            ],
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/templates/factory/publish",
+        response_model=CreatorVolumeFactoryPublishResponse,
+    )
+    def creator_volume_plan_factory_publish(
+        req: CreatorVolumeFactoryPublishRequest,
+    ) -> CreatorVolumeFactoryPublishResponse:
+        from infra.creator_volume_templates import publish_custom_to_factory_library
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = publish_custom_to_factory_library(project.root, req.template_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeFactoryPublishResponse(**result)
+
+    @app.post(
+        "/api/creator/volume-plan/templates/factory/pull",
+        response_model=CreatorVolumeFactoryPullResponse,
+    )
+    def creator_volume_plan_factory_pull(
+        req: CreatorVolumeFactoryPullRequest,
+    ) -> CreatorVolumeFactoryPullResponse:
+        from infra.creator_volume_templates import pull_factory_templates_to_project
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = pull_factory_templates_to_project(
+                project.root,
+                template_ids=req.template_ids,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeFactoryPullResponse(**result)
+
+    @app.delete(
+        "/api/creator/volume-plan/templates/factory/{template_id}",
+        response_model=CreatorVolumeFactoryDeleteResponse,
+    )
+    def creator_volume_plan_factory_delete(
+        template_id: str,
+    ) -> CreatorVolumeFactoryDeleteResponse:
+        from infra.creator_volume_templates import delete_factory_volume_template
+
+        try:
+            result = delete_factory_volume_template(template_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeFactoryDeleteResponse(**result)
 
     @app.post(
         "/api/creator/volume-plan/apply-template",
@@ -2822,6 +2938,17 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active project")
         return CreatorMergePreferencesResponse(**load_merge_preferences(project.root))
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/global",
+        response_model=CreatorMergePreferencesResponse,
+    )
+    def creator_settings_merge_preferences_global_get() -> CreatorMergePreferencesResponse:
+        from infra.creator_merge_preferences import load_global_merge_preferences
+
+        prefs = load_global_merge_preferences()
+        prefs["uses_global_default"] = True
+        return CreatorMergePreferencesResponse(**prefs)
 
     @app.post(
         "/api/creator/settings-docs/merge-preview",

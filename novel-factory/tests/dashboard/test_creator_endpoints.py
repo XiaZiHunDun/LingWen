@@ -514,3 +514,25 @@ class TestCreatorEndpoints:
         )
         prefs = client.get("/api/creator/settings-docs/merge-preferences").json()
         assert prefs["merge_snapshot_id"] == snap_id
+
+    def test_factory_templates_list(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/volume-plan/templates/factory")
+        assert resp.status_code == 200
+        assert "templates" in resp.json()
+
+    def test_global_merge_preferences(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/settings-docs/merge-preferences/global")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["uses_global_default"] is True
+        assert "pillars_merge_source" in data
+
+    def test_onboarding_apply_share(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/onboarding/progress/apply-share",
+            json={"completed_step_ids": ["pillars", "volume"]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "completed_step_ids" in data
+        assert "progress_pct" in data

@@ -39,7 +39,7 @@ function readDecisionFromUrl() {
 function readWizardFromUrl() {
   if (typeof window === 'undefined') return false;
   const params = new URLSearchParams(window.location.search);
-  return params.get('wizard') === '1' || Boolean(params.get('step'));
+  return params.get('wizard') === '1' || Boolean(params.get('step')) || Boolean(params.get('done'));
 }
 
 function readWizardStepFromUrl() {
@@ -48,7 +48,14 @@ function readWizardStepFromUrl() {
   return step && step.trim() ? step.trim() : null;
 }
 
-function syncNavUrl(activeNav, chapter, decisionId, wizard, wizardStep) {
+function readWizardDoneFromUrl() {
+  if (typeof window === 'undefined') return [];
+  const raw = new URLSearchParams(window.location.search).get('done');
+  if (!raw || !raw.trim()) return [];
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function syncNavUrl(activeNav, chapter, decisionId, wizard, wizardStep, wizardDone) {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   if (activeNav && activeNav !== 'overview') {
@@ -76,6 +83,11 @@ function syncNavUrl(activeNav, chapter, decisionId, wizard, wizardStep) {
   } else {
     url.searchParams.delete('step');
   }
+  if (wizardDone && wizardDone.length) {
+    url.searchParams.set('done', wizardDone.join(','));
+  } else {
+    url.searchParams.delete('done');
+  }
   window.history.replaceState(window.history.state, '', url.toString());
 }
 
@@ -84,10 +96,11 @@ const focusChapter = ref(readChapterFromUrl());
 const focusDecisionId = ref(readDecisionFromUrl());
 const focusWizard = ref(readWizardFromUrl());
 const focusWizardStep = ref(readWizardStepFromUrl());
+const focusWizardDone = ref(readWizardDoneFromUrl());
 
 /**
  * @param {string} nav
- * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean, wizardStep?: string|null }} [opts]
+ * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean, wizardStep?: string|null, wizardDone?: string[]|null }} [opts]
  */
 function navigateTo(nav, opts = {}) {
   activeNav.value = VALID_NAV.includes(nav) ? nav : 'overview';
@@ -95,40 +108,72 @@ function navigateTo(nav, opts = {}) {
     focusChapter.value = null;
     focusDecisionId.value = null;
     focusWizardStep.value = null;
+    focusWizardDone.value = [];
   } else {
     if (opts.chapter !== undefined) focusChapter.value = opts.chapter;
     if (opts.decisionId !== undefined) focusDecisionId.value = opts.decisionId;
     if (opts.wizardStep !== undefined) focusWizardStep.value = opts.wizardStep;
+    if (opts.wizardDone !== undefined) focusWizardDone.value = opts.wizardDone || [];
   }
   if (opts.wizard !== undefined) focusWizard.value = Boolean(opts.wizard);
   if (opts.wizardStep) focusWizard.value = true;
+  if (opts.wizardDone?.length) focusWizard.value = true;
   syncNavUrl(
     activeNav.value,
     focusChapter.value,
     focusDecisionId.value,
     focusWizard.value,
     focusWizardStep.value,
+    focusWizardDone.value,
   );
 }
 
-function setWizardDeepLink(open, wizardStep) {
+function setWizardDeepLink(open, wizardStep, wizardDone) {
   focusWizard.value = Boolean(open);
   if (wizardStep !== undefined) {
     focusWizardStep.value = wizardStep || null;
   }
+  if (wizardDone !== undefined) {
+    focusWizardDone.value = wizardDone || [];
+  }
   syncNavUrl(
     activeNav.value,
     focusChapter.value,
     focusDecisionId.value,
     focusWizard.value,
     focusWizardStep.value,
+    focusWizardDone.value,
   );
+}
+
+function buildWizardShareUrl(completedStepIds, wizardStep) {
+  if (typeof window === 'undefined') return '';
+  const url = new URL(window.location.href);
+  url.searchParams.set('nav', 'creator');
+  url.searchParams.set('wizard', '1');
+  const done = (completedStepIds || []).filter(Boolean);
+  if (done.length) {
+    url.searchParams.set('done', done.join(','));
+  } else {
+    url.searchParams.delete('done');
+  }
+  if (wizardStep) {
+    url.searchParams.set('step', wizardStep);
+  }
+  return url.toString();
 }
 
 function clearDecisionFocus() {
   focusChapter.value = null;
   focusDecisionId.value = null;
-  syncNavUrl(activeNav.value, null, null, focusWizard.value, focusWizardStep.value);
+  syncNavUrl(
+    activeNav.value,
+    null,
+    null,
+    focusWizard.value,
+    focusWizardStep.value,
+    focusWizardDone.value,
+  );
 }
 
 export function useDashboardNav() {
@@ -138,8 +183,10 @@ export function useDashboardNav() {
     focusDecisionId,
     focusWizard,
     focusWizardStep,
+    focusWizardDone,
     navigateTo,
     setWizardDeepLink,
+    buildWizardShareUrl,
     clearDecisionFocus,
   };
 }
