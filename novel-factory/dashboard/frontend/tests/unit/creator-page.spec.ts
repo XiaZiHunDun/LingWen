@@ -8,10 +8,13 @@ const creatorMocks = vi.hoisted(() => ({
   saveCreatorVolumePlan: vi.fn(),
   mergeCreatorVolumePlan: vi.fn(),
   splitCreatorVolumePlan: vi.fn(),
+  fetchCreatorVolumeTemplates: vi.fn(),
+  applyCreatorVolumeTemplate: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
+  previewCreatorSettingsThreeWay: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
   restoreCreatorSettingsSnapshot: vi.fn(),
   studioProductionPreflight: vi.fn(),
@@ -25,10 +28,13 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
   mergeCreatorVolumePlan: creatorMocks.mergeCreatorVolumePlan,
   splitCreatorVolumePlan: creatorMocks.splitCreatorVolumePlan,
+  fetchCreatorVolumeTemplates: creatorMocks.fetchCreatorVolumeTemplates,
+  applyCreatorVolumeTemplate: creatorMocks.applyCreatorVolumeTemplate,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
   previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
+  previewCreatorSettingsThreeWay: creatorMocks.previewCreatorSettingsThreeWay,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot: creatorMocks.restoreCreatorSettingsSnapshot,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
@@ -142,6 +148,21 @@ describe('CreatorPage', () => {
       first_range: 'ch001–ch005',
       second_range: 'ch006–ch010',
     });
+    creatorMocks.fetchCreatorVolumeTemplates.mockResolvedValue({
+      templates: [
+        { id: 'three_act', name: '三幕式', description: '建置对抗结局' },
+        { id: 'five_volume', name: '五卷', description: '五卷均分' },
+      ],
+    });
+    creatorMocks.applyCreatorVolumeTemplate.mockResolvedValue({
+      template_id: 'three_act',
+      template_name: '三幕式',
+      volumes: [
+        { label: '第一幕', start_chapter: 1, end_chapter: 3, core_conflict: '建置', locked: false },
+        { label: '第二幕', start_chapter: 4, end_chapter: 9, core_conflict: '对抗', locked: false },
+        { label: '第三幕', start_chapter: 10, end_chapter: 12, core_conflict: '结局', locked: false },
+      ],
+    });
     creatorMocks.fetchCreatorSettingsHistory.mockResolvedValue({
       snapshots: [
         {
@@ -167,6 +188,21 @@ describe('CreatorPage', () => {
       has_changes: true,
       pillars: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+新行'] },
       global_outline: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+    });
+    creatorMocks.previewCreatorSettingsThreeWay.mockResolvedValue({
+      has_changes: true,
+      pillars: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+新行'] },
+      global_outline: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+      has_history: true,
+      history_snapshot_id: 'snap1',
+      disk_vs_history: {
+        pillars: { changed: true, lines_added: 1, lines_removed: 1, snippet: [] },
+        global_outline: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+      },
+      editor_vs_history: {
+        pillars: { changed: true, lines_added: 2, lines_removed: 1, snippet: [] },
+        global_outline: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+      },
     });
     creatorMocks.studioProductionPreflight.mockResolvedValue({
       all_ok: true,
@@ -238,8 +274,9 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
     await flushPromises();
 
-    expect(creatorMocks.previewCreatorSettingsDocs).toHaveBeenCalled();
+    expect(creatorMocks.previewCreatorSettingsThreeWay).toHaveBeenCalled();
     expect(wrapper.find('[data-testid="settings-diff-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="three-way-history-label"]').exists()).toBe(true);
 
     await wrapper.find('[data-testid="confirm-settings-btn"]').trigger('click');
     await flushPromises();
@@ -291,5 +328,17 @@ describe('CreatorPage', () => {
 
     expect(wrapper.find('[data-testid="settings-history-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="history-row-snap1"]').exists()).toBe(true);
+  });
+
+  it('applies volume template from template library', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="volume-template-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="apply-template-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.applyCreatorVolumeTemplate).toHaveBeenCalled();
+    expect(wrapper.text()).toContain('三幕式');
   });
 });

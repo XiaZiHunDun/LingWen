@@ -121,7 +121,31 @@
               + 卷
             </button>
           </div>
-          <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」添加。</div>
+          <div
+            v-if="volumeTemplates.length"
+            class="volume-template-panel pixel-border"
+            data-testid="volume-template-panel"
+          >
+            <h3 class="subsection-title">模板库</h3>
+            <div class="merge-range">
+              <select v-model="selectedTemplateId" class="vol-input" data-testid="volume-template-select">
+                <option v-for="t in volumeTemplates" :key="t.id" :value="t.id">
+                  {{ t.name }}
+                </option>
+              </select>
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="apply-template-btn"
+                :disabled="templateApplying"
+                @click="applyVolumeTemplate"
+              >
+                {{ templateApplying ? '套用中…' : '套用模板' }}
+              </button>
+            </div>
+            <p v-if="selectedTemplateHint" class="meta-line">{{ selectedTemplateHint }}</p>
+          </div>
+          <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」或套用模板。</div>
           <div
             v-for="(vol, idx) in editableVolumes"
             :key="`${idx}-${vol.label}`"
@@ -410,6 +434,30 @@
               / -{{ settingsDiffPreview.global_outline.lines_removed }} 行
             </p>
             <pre v-if="settingsDiffSnippet.length" class="preview-text">{{ settingsDiffSnippet.join('\n') }}</pre>
+            <template v-if="settingsDiffPreview.has_history">
+              <p class="diff-line" data-testid="three-way-history-label">三路对比（含历史快照）</p>
+              <label v-if="settingsHistory.length" class="meta-line">
+                对比快照
+                <select
+                  v-model="compareSnapshotId"
+                  class="vol-input"
+                  data-testid="compare-snapshot-select"
+                  @change="refreshThreeWayPreview"
+                >
+                  <option v-for="snap in settingsHistory" :key="snap.id" :value="snap.id">
+                    {{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}
+                  </option>
+                </select>
+              </label>
+              <p v-if="settingsDiffPreview.disk_vs_history?.pillars?.changed" class="diff-line">
+                磁盘 vs 历史（支柱）：+{{ settingsDiffPreview.disk_vs_history.pillars.lines_added }}
+                / -{{ settingsDiffPreview.disk_vs_history.pillars.lines_removed }}
+              </p>
+              <p v-if="settingsDiffPreview.editor_vs_history?.pillars?.changed" class="diff-line">
+                编辑器 vs 历史（支柱）：+{{ settingsDiffPreview.editor_vs_history.pillars.lines_added }}
+                / -{{ settingsDiffPreview.editor_vs_history.pillars.lines_removed }}
+              </p>
+            </template>
           </template>
           <div class="batch-actions">
             <button
@@ -479,8 +527,11 @@ import {
   saveCreatorVolumePlan,
   mergeCreatorVolumePlan,
   splitCreatorVolumePlan,
+  fetchCreatorVolumeTemplates,
+  applyCreatorVolumeTemplate,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
+  previewCreatorSettingsThreeWay,
   fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot,
   studioProductionPreflight,
@@ -519,6 +570,10 @@ const splitPreview = ref(null);
 const splitApplying = ref(false);
 const settingsHistory = ref([]);
 const settingsRestoring = ref(false);
+const volumeTemplates = ref([]);
+const selectedTemplateId = ref('three_act');
+const templateApplying = ref(false);
+const compareSnapshotId = ref('');
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -570,6 +625,11 @@ const settingsDiffSnippet = computed(() => {
     ...(preview.pillars?.snippet || []),
     ...(preview.global_outline?.snippet || []),
   ].slice(0, 10);
+});
+
+const selectedTemplateHint = computed(() => {
+  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
+  return row?.description || '';
 });
 
 function formatHistoryTime(iso) {
@@ -685,10 +745,45 @@ async function loadVolumePlan() {
   syncBatchRangeFromVolumes();
 }
 
+async function loadVolumeTemplates() {
+  try {
+    const data = await fetchCreatorVolumeTemplates();
+    volumeTemplates.value = data.templates || [];
+    if (volumeTemplates.value.length && !volumeTemplates.value.some((t) => t.id === selectedTemplateId.value)) {
+      selectedTemplateId.value = volumeTemplates.value[0].id;
+    }
+  } catch {
+    volumeTemplates.value = [];
+  }
+}
+
+async function applyVolumeTemplate() {
+  templateApplying.value = true;
+  error.value = null;
+  try {
+    const result = await applyCreatorVolumeTemplate({
+      template_id: selectedTemplateId.value,
+      max_chapter: overview.value?.max_chapter,
+    });
+    editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+    mergePreview.value = null;
+    splitPreview.value = null;
+    saveMessage.value = `已套用模板「${result.template_name}」，请保存卷纲`;
+    syncSplitChapterFromVolume();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateApplying.value = false;
+  }
+}
+
 async function loadSettingsHistory() {
   try {
     const data = await fetchCreatorSettingsHistory();
     settingsHistory.value = data.snapshots || [];
+    if (settingsHistory.value.length && !compareSnapshotId.value) {
+      compareSnapshotId.value = settingsHistory.value[0].id;
+    }
   } catch {
     settingsHistory.value = [];
   }
@@ -795,6 +890,19 @@ function cancelSettingsDiff() {
   settingsDiffPreview.value = null;
 }
 
+async function refreshThreeWayPreview() {
+  if (!showSettingsDiff.value) return;
+  try {
+    settingsDiffPreview.value = await previewCreatorSettingsThreeWay({
+      pillars_text: pillarsText.value,
+      global_outline_text: globalOutlineText.value,
+      snapshot_id: compareSnapshotId.value || undefined,
+    });
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
 async function requestSaveSettings() {
   error.value = null;
   if (
@@ -805,10 +913,18 @@ async function requestSaveSettings() {
     return;
   }
   try {
-    settingsDiffPreview.value = await previewCreatorSettingsDocs({
-      pillars_text: pillarsText.value,
-      global_outline_text: globalOutlineText.value,
-    });
+    if (settingsHistory.value.length) {
+      settingsDiffPreview.value = await previewCreatorSettingsThreeWay({
+        pillars_text: pillarsText.value,
+        global_outline_text: globalOutlineText.value,
+        snapshot_id: compareSnapshotId.value || undefined,
+      });
+    } else {
+      settingsDiffPreview.value = await previewCreatorSettingsDocs({
+        pillars_text: pillarsText.value,
+        global_outline_text: globalOutlineText.value,
+      });
+    }
     showSettingsDiff.value = true;
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
@@ -942,6 +1058,7 @@ async function refresh() {
       loadVolumePlan(),
       loadSettingsDocs(),
       loadSettingsHistory(),
+      loadVolumeTemplates(),
       pollBatchJob(),
     ]);
     overview.value = ov;
@@ -1274,6 +1391,11 @@ watch(projectRevision, () => {
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+}
+
+.volume-template-panel {
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm);
 }
 
 .volume-merge-panel {

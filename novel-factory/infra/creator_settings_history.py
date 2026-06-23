@@ -122,3 +122,15 @@ def restore_settings_snapshot(project: StudioProject, snapshot_id: str) -> dict[
     pillars_path.write_text(str(match["pillars_text"]).rstrip() + "\n", encoding="utf-8")
     outline_path.write_text(str(match["global_outline_text"]).rstrip() + "\n", encoding="utf-8")
     return creator_settings_docs_payload(project)
+
+
+def load_snapshot_raw(project: StudioProject, snapshot_id: str) -> dict[str, Any]:
+    path = _history_path(project.root)
+    data = _load_history(path)
+    match = next(
+        (snap for snap in data.get("snapshots", []) if snap.get("id") == snapshot_id),
+        None,
+    )
+    if match is None:
+        raise ValueError(f"unknown snapshot: {snapshot_id!r}")
+    return match

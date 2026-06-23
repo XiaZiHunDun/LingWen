@@ -243,3 +243,44 @@ class TestCreatorEndpoints:
             json={"snapshot_id": snap_id},
         )
         assert restored.status_code == 200
+
+    def test_volume_plan_templates(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/volume-plan/templates")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["templates"]) >= 3
+
+        apply = client.post(
+            "/api/creator/volume-plan/apply-template",
+            json={"template_id": "three_act", "max_chapter": 30},
+        )
+        assert apply.status_code == 200
+        body = apply.json()
+        assert body["template_name"]
+        assert len(body["volumes"]) == 3
+
+    def test_settings_three_way_preview(self, client: TestClient) -> None:
+        current = client.get("/api/creator/settings-docs").json()
+        client.put(
+            "/api/creator/settings-docs",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# snap-line\n",
+                "global_outline_text": current["global_outline_text"],
+                "expected_pillars_revision": current["pillars_revision"],
+                "expected_global_outline_revision": current["global_outline_revision"],
+            },
+        )
+        history = client.get("/api/creator/settings-docs/history").json()
+        snap_id = history["snapshots"][0]["id"]
+        resp = client.post(
+            "/api/creator/settings-docs/three-way-preview",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# editor\n",
+                "global_outline_text": current["global_outline_text"],
+                "snapshot_id": snap_id,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["has_history"] is True
+        assert data["disk_vs_history"] is not None

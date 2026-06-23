@@ -322,6 +322,27 @@ class CreatorVolumeSplitResponse(BaseModel):
     second_range: str
 
 
+class CreatorVolumeTemplateInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+
+
+class CreatorVolumeTemplateListResponse(BaseModel):
+    templates: list[CreatorVolumeTemplateInfo]
+
+
+class CreatorVolumeApplyTemplateRequest(BaseModel):
+    template_id: str
+    max_chapter: Optional[int] = None
+
+
+class CreatorVolumeApplyTemplateResponse(BaseModel):
+    template_id: str
+    template_name: str
+    volumes: list[CreatorVolumePlanEntry]
+
+
 class CreatorChapterPreviewResponse(BaseModel):
     chapter: int
     has_body: bool
@@ -361,6 +382,27 @@ class CreatorSettingsDiffResponse(BaseModel):
     has_changes: bool
     pillars: CreatorSettingsDiffPart
     global_outline: CreatorSettingsDiffPart
+
+
+class CreatorSettingsThreeWayPair(BaseModel):
+    pillars: CreatorSettingsDiffPart
+    global_outline: CreatorSettingsDiffPart
+
+
+class CreatorSettingsThreeWayResponse(BaseModel):
+    has_changes: bool
+    pillars: CreatorSettingsDiffPart
+    global_outline: CreatorSettingsDiffPart
+    has_history: bool = False
+    history_snapshot_id: Optional[str] = None
+    disk_vs_history: Optional[CreatorSettingsThreeWayPair] = None
+    editor_vs_history: Optional[CreatorSettingsThreeWayPair] = None
+
+
+class CreatorSettingsThreeWayRequest(BaseModel):
+    pillars_text: str
+    global_outline_text: str
+    snapshot_id: Optional[str] = None
 
 
 class CreatorSettingsHistorySnapshot(BaseModel):
@@ -2241,6 +2283,47 @@ def create_app(
             raise HTTPException(404, "no active project")
         return CreatorVolumePlanResponse(**volume_plan_payload(project.root))
 
+    @app.get(
+        "/api/creator/volume-plan/templates",
+        response_model=CreatorVolumeTemplateListResponse,
+    )
+    def creator_volume_plan_templates() -> CreatorVolumeTemplateListResponse:
+        from infra.creator_volume_templates import list_volume_templates
+
+        return CreatorVolumeTemplateListResponse(
+            templates=[CreatorVolumeTemplateInfo(**row) for row in list_volume_templates()],
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/apply-template",
+        response_model=CreatorVolumeApplyTemplateResponse,
+    )
+    def creator_volume_plan_apply_template(
+        req: CreatorVolumeApplyTemplateRequest,
+    ) -> CreatorVolumeApplyTemplateResponse:
+        from infra.creator_volume_templates import build_volume_template, list_volume_templates
+        from infra.paths import ProjectPaths
+        from infra.project_config import ProjectConfig
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        paths = ProjectPaths.get(project.root)
+        config = ProjectConfig.load(paths)
+        max_chapter = req.max_chapter or config.max_chapter
+        try:
+            built = build_volume_template(req.template_id, max_chapter)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        tid = req.template_id.strip().lower()
+        meta = next(row for row in list_volume_templates() if row["id"] == tid)
+        return CreatorVolumeApplyTemplateResponse(
+            template_id=tid,
+            template_name=meta["name"],
+            volumes=[CreatorVolumePlanEntry(**row) for row in built],
+        )
+
     @app.put("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_put(req: CreatorVolumePlanSaveRequest) -> CreatorVolumePlanResponse:
         from infra.creator_revision import CreatorDocConflictError
@@ -2382,6 +2465,28 @@ def create_app(
                 project,
                 pillars_text=req.pillars_text,
                 global_outline_text=req.global_outline_text,
+            ),
+        )
+
+    @app.post(
+        "/api/creator/settings-docs/three-way-preview",
+        response_model=CreatorSettingsThreeWayResponse,
+    )
+    def creator_settings_three_way_preview(
+        req: CreatorSettingsThreeWayRequest,
+    ) -> CreatorSettingsThreeWayResponse:
+        from infra.creator_settings_docs import preview_settings_three_way
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorSettingsThreeWayResponse(
+            **preview_settings_three_way(
+                project,
+                pillars_text=req.pillars_text,
+                global_outline_text=req.global_outline_text,
+                snapshot_id=req.snapshot_id,
             ),
         )
 

@@ -64,6 +64,53 @@ def preview_settings_docs_diff(
     }
 
 
+def preview_settings_three_way(
+    project: StudioProject,
+    *,
+    pillars_text: str,
+    global_outline_text: str,
+    snapshot_id: str | None = None,
+) -> dict[str, Any]:
+    from infra.creator_settings_history import load_snapshot_raw, settings_history_payload
+
+    disk = creator_settings_docs_payload(project)
+    base = preview_settings_docs_diff(
+        project,
+        pillars_text=pillars_text,
+        global_outline_text=global_outline_text,
+    )
+    history_id = snapshot_id
+    if not history_id:
+        history = settings_history_payload(project)
+        if history["snapshots"]:
+            history_id = history["snapshots"][0]["id"]
+
+    result: dict[str, Any] = {
+        **base,
+        "has_history": False,
+        "history_snapshot_id": None,
+        "disk_vs_history": None,
+        "editor_vs_history": None,
+    }
+    if not history_id:
+        return result
+
+    snap = load_snapshot_raw(project, history_id)
+    hist_pillars = str(snap.get("pillars_text", ""))
+    hist_outline = str(snap.get("global_outline_text", ""))
+    result["has_history"] = True
+    result["history_snapshot_id"] = history_id
+    result["disk_vs_history"] = {
+        "pillars": text_diff_summary(disk["pillars_text"], hist_pillars),
+        "global_outline": text_diff_summary(disk["global_outline_text"], hist_outline),
+    }
+    result["editor_vs_history"] = {
+        "pillars": text_diff_summary(hist_pillars, pillars_text),
+        "global_outline": text_diff_summary(hist_outline, global_outline_text),
+    }
+    return result
+
+
 def creator_settings_docs_payload(project: StudioProject) -> dict[str, Any]:
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)

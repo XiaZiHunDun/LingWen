@@ -7,6 +7,7 @@ from infra.creator_settings_docs import (
     assert_settings_revisions,
     creator_settings_docs_payload,
     preview_settings_docs_diff,
+    preview_settings_three_way,
     save_creator_settings_docs,
     text_diff_summary,
 )
@@ -116,3 +117,37 @@ def test_settings_revision_conflict(factory_tmp):
             pillars_text="# 本地编辑\n",
             expected_pillars_revision=docs["pillars_revision"],
         )
+
+
+def test_three_way_preview(factory_tmp):
+    result = init_minimal_short_project(
+        slug="three-way",
+        title="三路对比",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    ProjectPaths.reset()
+    project = StudioProject(
+        slug=result.slug,
+        name=result.title,
+        role="production",
+        root=result.root,
+        location="projects",
+    )
+    save_creator_settings_docs(project, pillars_text="# 磁盘\n")
+    from infra.creator_settings_history import append_settings_snapshot
+
+    append_settings_snapshot(
+        project,
+        pillars_text="# 历史\n",
+        global_outline_text="# 大纲\n",
+        label="seed",
+    )
+    preview = preview_settings_three_way(
+        project,
+        pillars_text="# 编辑器\n",
+        global_outline_text="# 大纲\n",
+    )
+    assert preview["has_history"] is True
+    assert preview["editor_vs_history"]["pillars"]["changed"] is True

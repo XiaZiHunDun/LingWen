@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.75 (创作者 v1.7, 2026-06-22)  
-> **更新 (2026-06-22)**: 卷纲拆分 · 设定版本历史 · advance 走通 checklist
+> **版本**: v10.76 (创作者 v1.8, 2026-06-22)  
+> **更新 (2026-06-22)**: 卷纲模板库 · 设定三路 diff · studio hybrid 走通
 
 ---
 
@@ -111,7 +111,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v1.7 已落地**：卷纲拆分向导 · 设定版本历史（保存前快照 + 恢复）· [`advance-walkthrough-checklist.md`](novel-factory/docs/advance-walkthrough-checklist.md)
 
-**v1.8 待做**：卷纲模板库 · 设定 diff 三路合并 · studio 创作者 hybrid 走通
+**v1.8 已落地**：卷纲模板库（三幕/五卷/陪伴短篇）· 设定三路 diff · [`studio-creator-hybrid-checklist.md`](novel-factory/docs/studio-creator-hybrid-checklist.md)
+
+**v1.9 待做**：卷纲模板自定义保存 · 设定合并策略 UI · 创作者 onboarding 合一页向导
 
 ### 常用命令
 
