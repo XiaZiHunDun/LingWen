@@ -78,11 +78,15 @@ def list_onboarding_notifications(
     project_root: Path | str,
     *,
     unread_only: bool = False,
+    handle: str | None = None,
 ) -> list[dict[str, Any]]:
     store = _load_store(project_root)
     rows = list(store.get("notifications") or [])
     if unread_only:
         rows = [row for row in rows if not row.get("read")]
+    handle_norm = str(handle).strip().lower() if handle else None
+    if handle_norm:
+        rows = [row for row in rows if str(row.get("handle", "")).lower() == handle_norm]
     return [
         {
             "id": str(row["id"]),
@@ -96,8 +100,23 @@ def list_onboarding_notifications(
     ]
 
 
-def unread_mention_count(project_root: Path | str) -> int:
-    return len(list_onboarding_notifications(project_root, unread_only=True))
+def list_notification_handles(project_root: Path | str) -> list[str]:
+    handles = {
+        str(row.get("handle", "")).lower()
+        for row in list_onboarding_notifications(project_root)
+        if str(row.get("handle", "")).strip()
+    }
+    return sorted(handles)
+
+
+def unread_mention_count(project_root: Path | str, *, handle: str | None = None) -> int:
+    return len(
+        list_onboarding_notifications(
+            project_root,
+            unread_only=True,
+            handle=handle,
+        ),
+    )
 
 
 def ack_onboarding_notifications(
@@ -105,21 +124,29 @@ def ack_onboarding_notifications(
     *,
     notification_ids: list[str] | None = None,
     all_notifications: bool = False,
+    handle: str | None = None,
 ) -> dict[str, Any]:
     store = _load_store(project_root)
     notifications: list[dict[str, Any]] = list(store.get("notifications") or [])
     acked = 0
-    if all_notifications:
-        for row in notifications:
-            if not row.get("read"):
-                row["read"] = True
-                acked += 1
-    elif notification_ids:
-        wanted = {str(nid).strip() for nid in notification_ids if str(nid).strip()}
-        for row in notifications:
-            if row.get("id") in wanted and not row.get("read"):
-                row["read"] = True
-                acked += 1
+    handle_norm = str(handle).strip().lower() if handle else None
+
+    def _should_ack(row: dict[str, Any]) -> bool:
+        if row.get("read"):
+            return False
+        if handle_norm and str(row.get("handle", "")).lower() != handle_norm:
+            return False
+        if all_notifications:
+            return True
+        if notification_ids:
+            wanted = {str(nid).strip() for nid in notification_ids if str(nid).strip()}
+            return row.get("id") in wanted
+        return False
+
+    for row in notifications:
+        if _should_ack(row):
+            row["read"] = True
+            acked += 1
     store["notifications"] = notifications
     _save_store(project_root, store)
-    return {"acked": acked, "unread": unread_mention_count(project_root)}
+    return {"acked": acked, "unread": unread_mention_count(project_root, handle=handle)}

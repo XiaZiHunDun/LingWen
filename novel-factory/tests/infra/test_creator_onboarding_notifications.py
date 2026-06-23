@@ -44,3 +44,23 @@ def test_mention_notifications_created_and_acked(factory_tmp) -> None:
     assert ack["acked"] == 1
     assert unread_mention_count(root) == 0
     ProjectPaths.reset()
+
+
+def test_notifications_filter_by_handle(factory_tmp) -> None:
+    result = init_minimal_short_project(
+        slug="wiz-filter",
+        title="过滤",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    root = result.root
+    save_onboarding_progress(
+        root,
+        completed_step_ids=["init"],
+        step_notes={"volume": "请 @batch 和 @reviewer 协助"},
+    )
+    batch_only = list_onboarding_notifications(root, handle="batch")
+    assert len(batch_only) == 1
+    assert batch_only[0]["handle"] == "batch"
+    ProjectPaths.reset()

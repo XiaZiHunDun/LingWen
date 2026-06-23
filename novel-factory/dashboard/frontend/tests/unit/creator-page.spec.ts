@@ -35,6 +35,8 @@ const creatorMocks = vi.hoisted(() => ({
   exportCreatorMergePreferences: vi.fn(),
   importCreatorMergePreferences: vi.fn(),
   fetchCreatorMergePresetPackages: vi.fn(),
+  exportCreatorMergePresetPackages: vi.fn(),
+  importCreatorMergePresetPackages: vi.fn(),
   fetchCreatorVolumeTemplateChangelog: vi.fn(),
   fetchCreatorOnboardingNotifications: vi.fn(),
   ackCreatorOnboardingNotifications: vi.fn(),
@@ -78,6 +80,8 @@ vi.mock('../../src/api/index.js', () => ({
   exportCreatorMergePreferences: creatorMocks.exportCreatorMergePreferences,
   importCreatorMergePreferences: creatorMocks.importCreatorMergePreferences,
   fetchCreatorMergePresetPackages: creatorMocks.fetchCreatorMergePresetPackages,
+  exportCreatorMergePresetPackages: creatorMocks.exportCreatorMergePresetPackages,
+  importCreatorMergePresetPackages: creatorMocks.importCreatorMergePresetPackages,
   fetchCreatorVolumeTemplateChangelog: creatorMocks.fetchCreatorVolumeTemplateChangelog,
   fetchCreatorOnboardingNotifications: creatorMocks.fetchCreatorOnboardingNotifications,
   ackCreatorOnboardingNotifications: creatorMocks.ackCreatorOnboardingNotifications,
@@ -238,7 +242,7 @@ describe('CreatorPage', () => {
       templates: [
         { id: 'three_act', name: '三幕式', description: '建置对抗结局', builtin: true, scope: 'builtin' },
         { id: 'factory_shared', name: '工厂模板', description: '共享', builtin: false, scope: 'factory' },
-        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project', version_label: 'v1.0.0', version_semver_valid: true, version_changelog: [{ version_label: 'v1.0.0', previous_label: null, changed_at: '2026-06-22T12:00:00+00:00' }] },
+        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project', version_label: 'v1.0.0', version_semver_valid: true, version_changelog: [{ version_label: 'v1.0.0', previous_label: null, changed_at: '2026-06-22T12:00:00+00:00', diff_summary: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] } }] },
       ],
     });
     creatorMocks.applyCreatorVolumeTemplate.mockResolvedValue({
@@ -300,13 +304,30 @@ describe('CreatorPage', () => {
     });
     creatorMocks.fetchCreatorVolumeTemplateChangelog.mockResolvedValue({
       template_id: 'custom_test',
-      entries: [{ version_label: 'v1.0.0', previous_label: null, changed_at: '2026-06-22T12:00:00+00:00' }],
+      entries: [{
+        version_label: 'v1.0.0',
+        previous_label: null,
+        changed_at: '2026-06-22T12:00:00+00:00',
+        diff_summary: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+一: ch1-12'] },
+      }],
     });
     creatorMocks.fetchCreatorOnboardingNotifications.mockResolvedValue({
       unread: 1,
+      handles: ['batch'],
       notifications: [
         { id: 'n1', step_id: 'volume', handle: 'batch', note_excerpt: '先锁卷纲', created_at: '2026-06-22T12:00:00+00:00', read: false },
       ],
+    });
+    creatorMocks.exportCreatorMergePresetPackages.mockResolvedValue({
+      schema_version: '1',
+      count: 1,
+      packages: [{ id: 'my_combo', name: '我的组合', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' }],
+    });
+    creatorMocks.importCreatorMergePresetPackages.mockResolvedValue({
+      imported: 1,
+      total: 1,
+      replaced: false,
+      packages: [],
     });
     creatorMocks.ackCreatorOnboardingNotifications.mockResolvedValue({ acked: 1, unread: 0 });
     creatorMocks.saveCreatorOnboardingProgress.mockResolvedValue({
@@ -812,6 +833,27 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
     await flushPromises();
     expect(wrapper.find('[data-testid="template-version-changelog"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="template-changelog-diff"]').exists()).toBe(true);
+  });
+
+  it('filters wizard notifications by handle', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-notification-handle-filter"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="wizard-notification-handle-filter"]').setValue('batch');
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorOnboardingNotifications).toHaveBeenCalled();
+  });
+
+  it('exports merge preset packages', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-merge-preset-packages-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.exportCreatorMergePresetPackages).toHaveBeenCalled();
   });
 
   it('applies merge preset package', async () => {

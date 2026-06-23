@@ -386,3 +386,68 @@ def save_merge_preset_package(
     )
     return _preset_row(entry, builtin=False)
 
+
+_PRESET_PACKAGES_EXPORT_VERSION = "1"
+
+
+def export_merge_preset_packages(project_root: Path | str) -> dict[str, Any]:
+    """Export project custom merge preset packages for sharing."""
+    custom = _load_custom_preset_packages(project_root)
+    return {
+        "schema_version": _PRESET_PACKAGES_EXPORT_VERSION,
+        "packages": [
+            {
+                "id": row["id"],
+                "name": row.get("name", row["id"]),
+                "description": row.get("description", ""),
+                "pillars_merge_source": row.get("pillars_merge_source", "editor"),
+                "global_outline_merge_source": row.get("global_outline_merge_source", "editor"),
+            }
+            for row in custom
+        ],
+        "count": len(custom),
+    }
+
+
+def import_merge_preset_packages(
+    project_root: Path | str,
+    payload: dict[str, Any],
+    *,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Import shared merge preset packages into the project."""
+    packages = payload.get("packages")
+    if not isinstance(packages, list):
+        raise ValueError("packages array required")
+    if replace:
+        path = _custom_preset_packages_path(project_root)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"schema_version": _PRESET_PACKAGES_VERSION, "packages": []}, ensure_ascii=False, indent=2)
+            + "\n",
+            encoding="utf-8",
+        )
+    imported = 0
+    for raw in packages:
+        if not isinstance(raw, dict):
+            continue
+        pkg_id = str(raw.get("id", "")).strip()
+        name = str(raw.get("name", "")).strip()
+        if not pkg_id or not name:
+            continue
+        save_merge_preset_package(
+            project_root,
+            package_id=pkg_id,
+            name=name,
+            description=str(raw.get("description", "")),
+            pillars_merge_source=str(raw.get("pillars_merge_source", "editor")),
+            global_outline_merge_source=str(raw.get("global_outline_merge_source", "editor")),
+        )
+        imported += 1
+    return {
+        "imported": imported,
+        "total": len(packages),
+        "replaced": replace,
+        "packages": list_merge_preset_packages(project_root),
+    }
+

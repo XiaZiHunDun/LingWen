@@ -333,10 +333,18 @@ class CreatorVolumeTemplateInfo(BaseModel):
     version_changelog: list[dict[str, Any]] = []
 
 
+class CreatorVolumeTemplateChangelogDiffSummary(BaseModel):
+    changed: bool = False
+    lines_added: int = 0
+    lines_removed: int = 0
+    snippet: list[str] = []
+
+
 class CreatorVolumeTemplateChangelogEntry(BaseModel):
     version_label: Optional[str] = None
     previous_label: Optional[str] = None
     changed_at: Optional[str] = None
+    diff_summary: Optional[CreatorVolumeTemplateChangelogDiffSummary] = None
 
 
 class CreatorVolumeTemplateChangelogResponse(BaseModel):
@@ -532,11 +540,13 @@ class CreatorOnboardingNotification(BaseModel):
 class CreatorOnboardingNotificationsResponse(BaseModel):
     notifications: list[CreatorOnboardingNotification]
     unread: int
+    handles: list[str] = []
 
 
 class CreatorOnboardingNotificationsAckRequest(BaseModel):
     notification_ids: list[str] = []
     all_notifications: bool = False
+    handle: Optional[str] = None
 
 
 class CreatorOnboardingNotificationsAckResponse(BaseModel):
@@ -554,6 +564,25 @@ class CreatorMergePresetPackage(BaseModel):
 
 
 class CreatorMergePresetPackagesResponse(BaseModel):
+    packages: list[CreatorMergePresetPackage]
+
+
+class CreatorMergePresetPackagesExportResponse(BaseModel):
+    schema_version: str
+    packages: list[dict[str, Any]]
+    count: int
+
+
+class CreatorMergePresetPackagesImportRequest(BaseModel):
+    schema_version: Optional[str] = None
+    packages: list[dict[str, Any]]
+    replace: bool = False
+
+
+class CreatorMergePresetPackagesImportResponse(BaseModel):
+    imported: int
+    total: int
+    replaced: bool
     packages: list[CreatorMergePresetPackage]
 
 
@@ -2598,18 +2627,24 @@ def create_app(
         "/api/creator/onboarding/notifications",
         response_model=CreatorOnboardingNotificationsResponse,
     )
-    def creator_onboarding_notifications_get() -> CreatorOnboardingNotificationsResponse:
-        from infra.creator_onboarding_notifications import list_onboarding_notifications
+    def creator_onboarding_notifications_get(
+        handle: Optional[str] = None,
+    ) -> CreatorOnboardingNotificationsResponse:
+        from infra.creator_onboarding_notifications import (
+            list_notification_handles,
+            list_onboarding_notifications,
+        )
         from infra.studio_registry import active_project
 
         project = active_project()
         if project is None:
             raise HTTPException(404, "no active project")
-        rows = list_onboarding_notifications(project.root)
+        rows = list_onboarding_notifications(project.root, handle=handle)
         unread = sum(1 for row in rows if not row.get("read"))
         return CreatorOnboardingNotificationsResponse(
             notifications=[CreatorOnboardingNotification(**row) for row in rows],
             unread=unread,
+            handles=list_notification_handles(project.root),
         )
 
     @app.post(
@@ -2629,6 +2664,7 @@ def create_app(
             project.root,
             notification_ids=req.notification_ids,
             all_notifications=req.all_notifications,
+            handle=req.handle,
         )
         return CreatorOnboardingNotificationsAckResponse(**result)
 
@@ -3236,6 +3272,48 @@ def create_app(
         packages = list_merge_preset_packages(project.root)
         return CreatorMergePresetPackagesResponse(
             packages=[CreatorMergePresetPackage(**row) for row in packages],
+        )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/export",
+        response_model=CreatorMergePresetPackagesExportResponse,
+    )
+    def creator_settings_merge_preset_packages_export() -> CreatorMergePresetPackagesExportResponse:
+        from infra.creator_merge_preferences import export_merge_preset_packages
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        data = export_merge_preset_packages(project.root)
+        return CreatorMergePresetPackagesExportResponse(**data)
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+        response_model=CreatorMergePresetPackagesImportResponse,
+    )
+    def creator_settings_merge_preset_packages_import(
+        req: CreatorMergePresetPackagesImportRequest,
+    ) -> CreatorMergePresetPackagesImportResponse:
+        from infra.creator_merge_preferences import import_merge_preset_packages
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = import_merge_preset_packages(
+                project.root,
+                req.model_dump(),
+                replace=req.replace,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePresetPackagesImportResponse(
+            imported=result["imported"],
+            total=result["total"],
+            replaced=result["replaced"],
+            packages=[CreatorMergePresetPackage(**row) for row in result["packages"]],
         )
 
     @app.post(

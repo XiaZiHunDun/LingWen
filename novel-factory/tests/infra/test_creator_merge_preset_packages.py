@@ -58,3 +58,39 @@ def test_save_custom_merge_preset_package(factory_tmp) -> None:
     assert saved["id"] == "my_combo"
     assert get_merge_preset_package(root, "my_combo")["name"] == "我的组合"
     ProjectPaths.reset()
+
+
+def test_export_import_merge_preset_packages(factory_tmp) -> None:
+    from infra.creator_merge_preferences import (
+        export_merge_preset_packages,
+        import_merge_preset_packages,
+    )
+
+    result = init_minimal_short_project(
+        slug="merge-pkg-share",
+        title="分享预设",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    root = result.root
+    save_merge_preset_package(
+        root,
+        package_id="shared_combo",
+        name="分享组合",
+        pillars_merge_source="disk",
+        global_outline_merge_source="editor",
+    )
+    exported = export_merge_preset_packages(root)
+    assert exported["count"] == 1
+    other = init_minimal_short_project(
+        slug="merge-pkg-target",
+        title="目标",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    imported = import_merge_preset_packages(other.root, exported)
+    assert imported["imported"] == 1
+    assert get_merge_preset_package(other.root, "shared_combo")["name"] == "分享组合"
+    ProjectPaths.reset()

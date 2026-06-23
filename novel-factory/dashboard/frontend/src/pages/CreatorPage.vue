@@ -67,6 +67,20 @@
         data-testid="wizard-notifications-panel"
       >
         <p class="meta-line">批注通知</p>
+        <label v-if="wizardNotificationHandles.length" class="meta-line">
+          按 handle 过滤
+          <select
+            v-model="wizardNotificationHandleFilter"
+            class="vol-input"
+            data-testid="wizard-notification-handle-filter"
+            @change="loadWizardNotifications"
+          >
+            <option value="">全部</option>
+            <option v-for="handle in wizardNotificationHandles" :key="handle" :value="handle">
+              @{{ handle }}
+            </option>
+          </select>
+        </label>
         <ul>
           <li
             v-for="note in wizardNotifications"
@@ -325,6 +339,13 @@
                   <span v-if="entry.previous_label">{{ entry.previous_label }} → </span>
                   <strong>{{ entry.version_label || '（清除）' }}</strong>
                   <span v-if="entry.changed_at" class="meta-line"> · {{ formatHistoryTime(entry.changed_at) }}</span>
+                  <span
+                    v-if="entry.diff_summary?.changed"
+                    class="meta-line changelog-diff"
+                    data-testid="template-changelog-diff"
+                  >
+                    · 卷纲 +{{ entry.diff_summary.lines_added }}/-{{ entry.diff_summary.lines_removed }}
+                  </span>
                 </li>
               </ul>
             </div>
@@ -790,6 +811,46 @@
                   </option>
                 </select>
               </label>
+              <div class="merge-range">
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="export-merge-preset-packages-btn"
+                  @click="exportMergePresetPackages"
+                >
+                  分享预设包
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="toggle-import-merge-preset-packages-btn"
+                  @click="showImportMergePresetPackages = !showImportMergePresetPackages"
+                >
+                  {{ showImportMergePresetPackages ? '收起导入' : '导入预设包' }}
+                </button>
+              </div>
+              <div
+                v-if="showImportMergePresetPackages"
+                class="import-templates-panel"
+                data-testid="import-merge-preset-packages-panel"
+              >
+                <textarea
+                  v-model="importMergePresetPackagesJson"
+                  class="vol-input import-templates-json"
+                  data-testid="import-merge-preset-packages-json"
+                  placeholder='{"packages":[...]}'
+                  rows="3"
+                />
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="import-merge-preset-packages-btn"
+                  :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
+                  @click="importMergePresetPackagesFromJson"
+                >
+                  {{ mergePresetPackagesImporting ? '导入中…' : '确认导入' }}
+                </button>
+              </div>
               <label class="meta-line">
                 支柱
                 <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source" @change="refreshMergeStrategyPreview">
@@ -975,6 +1036,8 @@ import {
   fetchCreatorOnboardingNotifications,
   ackCreatorOnboardingNotifications,
   fetchCreatorMergePresetPackages,
+  exportCreatorMergePresetPackages,
+  importCreatorMergePresetPackages,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -1050,6 +1113,11 @@ const mergePresetPackages = ref([]);
 const selectedMergePresetPackage = ref('');
 const wizardNotifications = ref([]);
 const wizardUnreadMentions = ref(0);
+const wizardNotificationHandleFilter = ref('');
+const wizardNotificationHandles = ref([]);
+const showImportMergePresetPackages = ref(false);
+const importMergePresetPackagesJson = ref('');
+const mergePresetPackagesImporting = ref(false);
 const showImportMergePrefs = ref(false);
 const importMergePrefsJson = ref('');
 const mergePrefsImporting = ref(false);
@@ -1470,23 +1538,64 @@ async function loadTemplateVersionChangelog() {
 
 async function loadWizardNotifications() {
   try {
-    const data = await fetchCreatorOnboardingNotifications();
+    const handle = wizardNotificationHandleFilter.value || undefined;
+    const data = await fetchCreatorOnboardingNotifications(handle);
     wizardNotifications.value = data.notifications || [];
+    wizardNotificationHandles.value = data.handles || [];
     wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
   } catch {
     wizardNotifications.value = [];
+    wizardNotificationHandles.value = [];
     wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
   }
 }
 
 async function ackWizardNotifications() {
   try {
-    const result = await ackCreatorOnboardingNotifications({ all_notifications: true });
+    const result = await ackCreatorOnboardingNotifications({
+      all_notifications: true,
+      handle: wizardNotificationHandleFilter.value || undefined,
+    });
     wizardUnreadMentions.value = result.unread ?? 0;
     await loadWizardNotifications();
     saveMessage.value = `已标记 ${result.acked} 条通知为已读`;
   } catch (e) {
     handleSaveError(e);
+  }
+}
+
+async function exportMergePresetPackages() {
+  error.value = null;
+  try {
+    const data = await exportCreatorMergePresetPackages();
+    const text = JSON.stringify(data, null, 2);
+    importMergePresetPackagesJson.value = text;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      saveMessage.value = '已导出预设包并复制到剪贴板';
+    } else {
+      saveMessage.value = '已导出预设包（见导入框）';
+      showImportMergePresetPackages.value = true;
+    }
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function importMergePresetPackagesFromJson() {
+  mergePresetPackagesImporting.value = true;
+  error.value = null;
+  try {
+    const payload = JSON.parse(importMergePresetPackagesJson.value);
+    await importCreatorMergePresetPackages(payload);
+    importMergePresetPackagesJson.value = '';
+    showImportMergePresetPackages.value = false;
+    await loadMergePresetPackages();
+    saveMessage.value = '已导入合并策略预设包';
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    mergePresetPackagesImporting.value = false;
   }
 }
 
@@ -2531,6 +2640,10 @@ watch(projectRevision, () => {
 
 .changelog-row {
   margin-bottom: 2px;
+}
+
+.changelog-diff {
+  color: var(--color-accent);
 }
 
 .version-semver-warn {

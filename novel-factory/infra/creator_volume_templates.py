@@ -85,11 +85,74 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _volumes_repr(volumes: list[dict[str, Any]] | None) -> str:
+    if not volumes:
+        return ""
+    lines: list[str] = []
+    for vol in volumes:
+        lines.append(
+            f"{vol.get('label', '')}: ch{vol.get('start_chapter', '')}-{vol.get('end_chapter', '')} "
+            f"{vol.get('core_conflict', '')}".strip(),
+        )
+    return "\n".join(lines)
+
+
+def _snapshot_volumes(volumes: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    if not volumes:
+        return []
+    return [
+        {
+            "label": str(v.get("label", "")),
+            "start_chapter": int(v.get("start_chapter", 0)),
+            "end_chapter": int(v.get("end_chapter", 0)),
+            "core_conflict": str(v.get("core_conflict", "")),
+        }
+        for v in volumes
+    ]
+
+
+def _enrich_changelog_diff(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    from infra.creator_settings_docs import text_diff_summary
+
+    enriched: list[dict[str, Any]] = []
+    for index, row in enumerate(entries):
+        public = {
+            "version_label": row.get("version_label"),
+            "previous_label": row.get("previous_label"),
+            "changed_at": row.get("changed_at"),
+        }
+        current_snap = row.get("volumes_snapshot")
+        if index + 1 < len(entries):
+            previous_snap = entries[index + 1].get("volumes_snapshot")
+        else:
+            previous_snap = None
+        if current_snap is not None:
+            before = _volumes_repr(previous_snap) if previous_snap is not None else ""
+            after = _volumes_repr(current_snap)
+            diff = text_diff_summary(before, after)
+        else:
+            diff = {
+                "changed": False,
+                "lines_added": 0,
+                "lines_removed": 0,
+                "snippet": [],
+            }
+        public["diff_summary"] = {
+            "changed": diff["changed"],
+            "lines_added": diff["lines_added"],
+            "lines_removed": diff["lines_removed"],
+            "snippet": diff["snippet"][:5],
+        }
+        enriched.append(public)
+    return enriched
+
+
 def _append_version_changelog(
     item: dict[str, Any],
     *,
     new_label: str | None,
     old_label: str | None = None,
+    volumes: list[dict[str, Any]] | None = None,
 ) -> None:
     """Append a version change entry when the label actually changes."""
     normalized_new = _normalize_version_label(new_label)
@@ -103,6 +166,7 @@ def _append_version_changelog(
             "version_label": normalized_new,
             "previous_label": normalized_old,
             "changed_at": _now_iso(),
+            "volumes_snapshot": _snapshot_volumes(volumes if volumes is not None else item.get("volumes")),
         },
     )
     item["version_changelog"] = changelog[:_MAX_CHANGELOG_ENTRIES]
@@ -110,14 +174,7 @@ def _append_version_changelog(
 
 def _changelog_for_list(item: dict[str, Any]) -> list[dict[str, Any]]:
     rows = item.get("version_changelog") or []
-    return [
-        {
-            "version_label": row.get("version_label"),
-            "previous_label": row.get("previous_label"),
-            "changed_at": row.get("changed_at"),
-        }
-        for row in rows[:5]
-    ]
+    return _enrich_changelog_diff(rows[:5])
 
 
 def get_template_version_changelog(
@@ -126,21 +183,28 @@ def get_template_version_changelog(
 ) -> list[dict[str, Any]]:
     """Return version changelog for a custom or factory template."""
     tid = template_id.strip().lower()
+    raw: list[dict[str, Any]] = []
     if tid.startswith(_CUSTOM_PREFIX):
         if project_root is None:
             raise ValueError("project root required for custom templates")
         store = _load_custom_store(project_root)
         for item in store.get("templates", []):
             if item.get("id") == tid:
-                return list(item.get("version_changelog") or [])
-        raise ValueError(f"unknown template: {template_id!r}")
-    if tid.startswith(_FACTORY_PREFIX):
+                raw = list(item.get("version_changelog") or [])
+                break
+        else:
+            raise ValueError(f"unknown template: {template_id!r}")
+    elif tid.startswith(_FACTORY_PREFIX):
         factory = _load_factory_store()
         for item in factory.get("templates", []):
             if item.get("id") == tid:
-                return list(item.get("version_changelog") or [])
-        raise ValueError(f"unknown factory template: {template_id!r}")
-    raise ValueError(f"unknown template: {template_id!r}")
+                raw = list(item.get("version_changelog") or [])
+                break
+        else:
+            raise ValueError(f"unknown factory template: {template_id!r}")
+    else:
+        raise ValueError(f"unknown template: {template_id!r}")
+    return _enrich_changelog_diff(raw)
 
 
 def _template_list_row(item: dict[str, Any], scope: str, *, default_description: str) -> dict[str, Any]:

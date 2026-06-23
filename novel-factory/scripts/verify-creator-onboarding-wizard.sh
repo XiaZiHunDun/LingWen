@@ -142,6 +142,19 @@ from infra.creator_merge_preferences import list_merge_preset_packages
 packages = list_merge_preset_packages(root)
 assert any(pkg["id"] == "pillars_disk_outline_editor" for pkg in packages)
 
+changelog_entry = changelog[0]
+assert "diff_summary" in changelog_entry
+
+from infra.creator_onboarding_notifications import list_onboarding_notifications
+
+filtered = list_onboarding_notifications(root, handle="reviewer")
+assert all(row["handle"] == "reviewer" for row in filtered)
+
+from infra.creator_merge_preferences import export_merge_preset_packages, import_merge_preset_packages
+
+exported_pkgs = export_merge_preset_packages(root)
+import_merge_preset_packages(root, exported_pkgs)
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

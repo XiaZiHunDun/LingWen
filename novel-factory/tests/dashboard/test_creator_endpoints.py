@@ -648,6 +648,63 @@ class TestCreatorEndpoints:
         packages = resp.json()["packages"]
         assert any(pkg["id"] == "pillars_disk_outline_editor" for pkg in packages)
 
+    def test_onboarding_notifications_handle_filter(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/onboarding/notes",
+            json={"step_notes": {"volume": "请 @batch @reviewer"}},
+        )
+        resp = client.get("/api/creator/onboarding/notifications?handle=batch")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["unread"] >= 1
+        assert all(n["handle"] == "batch" for n in data["notifications"])
+        assert "batch" in data.get("handles", [])
+
+    def test_merge_preset_packages_share(self, client: TestClient) -> None:
+        export_resp = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/export")
+        assert export_resp.status_code == 200
+        payload = export_resp.json()
+        import_resp = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+            json={
+                "packages": [
+                    {
+                        "id": "imported_combo",
+                        "name": "导入组合",
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        assert import_resp.status_code == 200
+        assert import_resp.json()["imported"] == 1
+
+    def test_template_changelog_diff_summary(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "diff-changelog",
+                "max_chapter": 12,
+                "version_label": "v1.0.0",
+                "volumes": plan["volumes"] or [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 12,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+            },
+        )
+        tid = save.json()["id"]
+        changelog = client.get(f"/api/creator/volume-plan/templates/{tid}/version-changelog")
+        entries = changelog.json()["entries"]
+        assert entries
+        assert "diff_summary" in entries[0]
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200
