@@ -129,9 +129,22 @@
           >
             立即发送 digest
           </button>
-          <p class="meta-line" data-testid="wizard-digest-background-hint">
+            <p class="meta-line" data-testid="wizard-digest-background-hint">
             Dashboard 后台每 15 分钟自动检查到期 digest
           </p>
+          <p
+            v-if="wizardDigestStats.sent_total || wizardDigestStats.failed_total"
+            class="meta-line"
+            data-testid="wizard-digest-stats"
+          >
+            发送统计：成功 {{ wizardDigestStats.sent_total }} / 失败 {{ wizardDigestStats.failed_total }}
+          </p>
+          <input
+            v-model="wizardDigestHandleChannelsJson"
+            class="vol-input"
+            data-testid="wizard-digest-handle-channels"
+            placeholder='handle 路由 JSON，如 {"batch":["webhook"],"*":["email"]}'
+          />
           <label class="meta-line">
             静默时段（UTC）
             <input
@@ -483,6 +496,13 @@
                 class="vol-input"
                 data-testid="template-approval-chain-steps"
               />
+              <input
+                v-model="templateApprovalStepAssignees"
+                type="text"
+                class="vol-input"
+                data-testid="template-approval-step-assignees"
+                placeholder="审批人（逗号分隔，按步）"
+              />
               <button
                 type="button"
                 class="mini-btn pixel-border"
@@ -512,6 +532,10 @@
               <label class="meta-line">
                 <input v-model="templateApprovalEmailOnReject" type="checkbox" data-testid="template-approval-email-reject" />
                 驳回时发邮件
+              </label>
+              <label class="meta-line">
+                <input v-model="templateApprovalEmailOnOverdue" type="checkbox" data-testid="template-approval-email-overdue" />
+                超时时发邮件
               </label>
               <button
                 type="button"
@@ -553,6 +577,20 @@
                 >
                   <span>{{ approval.previous_label || '—' }} → {{ approval.version_label || '（清除）' }}</span>
                   <span class="meta-line" data-testid="template-approval-chain-progress">{{ approval.chain_progress }}</span>
+                  <span
+                    v-if="approval.current_assignee"
+                    class="meta-line"
+                    data-testid="template-approval-current-assignee"
+                  >
+                    指派：{{ approval.current_assignee }}
+                  </span>
+                  <span
+                    v-if="approval.submit_note"
+                    class="meta-line"
+                    data-testid="template-approval-submit-note"
+                  >
+                    备注：{{ approval.submit_note }}
+                  </span>
                   <button
                     type="button"
                     class="mini-btn pixel-border"
@@ -1241,6 +1279,31 @@
                 <button
                   type="button"
                   class="mini-btn pixel-border"
+                  data-testid="preview-merge-preset-import-diff-btn"
+                  :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
+                  @click="previewMergePresetImportDiff"
+                >
+                  预览 diff
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="toposort-merge-preset-btn"
+                  @click="applyMergePresetToposort"
+                >
+                  拓扑重排
+                </button>
+                <p
+                  v-if="mergePresetImportDiff.added?.length || mergePresetImportDiff.updated?.length"
+                  class="meta-line"
+                  data-testid="merge-preset-import-diff-panel"
+                >
+                  diff：新增 {{ mergePresetImportDiff.added?.length || 0 }} /
+                  更新 {{ mergePresetImportDiff.updated?.length || 0 }}
+                </p>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
                   data-testid="preflight-merge-preset-import-btn"
                   :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
                   @click="preflightMergePresetImport"
@@ -1457,6 +1520,7 @@ import {
   saveCreatorOnboardingDigestSchedule,
   dispatchCreatorOnboardingDigest,
   fetchCreatorOnboardingDigestRetryQueue,
+  fetchCreatorOnboardingDigestStats,
   processCreatorOnboardingDigestRetries,
   ackCreatorOnboardingNotifications,
   fetchCreatorOnboardingWebhook,
@@ -1471,6 +1535,8 @@ import {
   applyCreatorMergePresetConflictFix,
   applyAllCreatorMergePresetConflictFixes,
   preflightCreatorMergePresetImport,
+  previewCreatorMergePresetImportDiff,
+  applyCreatorMergePresetToposort,
   exportCreatorMergePresetPackages,
   importCreatorMergePresetPackages,
   publishCreatorMergePresetToFactory,
@@ -1566,14 +1632,19 @@ const wizardDigestScheduleEnabled = ref(false);
 const wizardDigestScheduleHours = ref(24);
 const wizardDigestQuietStart = ref(null);
 const wizardDigestQuietEnd = ref(null);
+const wizardDigestHandleChannelsJson = ref('');
+const wizardDigestStats = ref({ sent_total: 0, failed_total: 0 });
 const wizardDigestRetryQueue = ref({ item_count: 0, items: [] });
 const templateApprovals = ref([]);
 const templateApprovalHistory = ref([]);
 const overdueTemplateApprovals = ref([]);
 const templateApprovalChainSteps = ref(2);
+const templateApprovalStepAssignees = ref('');
 const templateApprovalSlaHours = ref(72);
 const templateApprovalEmailOnSubmit = ref(true);
 const templateApprovalEmailOnReject = ref(true);
+const templateApprovalEmailOnOverdue = ref(true);
+const mergePresetImportDiff = ref({ added: [], updated: [], removed: [] });
 const mergePresetImportPreflight = ref(null);
 const templateApprovalSubmitting = ref(false);
 const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
@@ -2060,6 +2131,9 @@ async function loadWizardDigestSchedule() {
     wizardDigestScheduleHours.value = data.interval_hours || 24;
     wizardDigestQuietStart.value = data.quiet_hours_start ?? null;
     wizardDigestQuietEnd.value = data.quiet_hours_end ?? null;
+    wizardDigestHandleChannelsJson.value = JSON.stringify(data.handle_channels || {});
+    const stats = await fetchCreatorOnboardingDigestStats();
+    wizardDigestStats.value = stats;
     const retry = await fetchCreatorOnboardingDigestRetryQueue();
     wizardDigestRetryQueue.value = retry;
   } catch {
@@ -2073,10 +2147,15 @@ async function loadWizardDigestSchedule() {
 
 async function saveWizardDigestSchedule() {
   try {
+    let handleChannels = {};
+    if (wizardDigestHandleChannelsJson.value.trim()) {
+      handleChannels = JSON.parse(wizardDigestHandleChannelsJson.value);
+    }
     await saveCreatorOnboardingDigestSchedule({
       enabled: wizardDigestScheduleEnabled.value,
       interval_hours: wizardDigestScheduleHours.value,
       channels: ['webhook', 'email'],
+      handle_channels: handleChannels,
       quiet_hours_start: wizardDigestQuietStart.value,
       quiet_hours_end: wizardDigestQuietEnd.value,
     });
@@ -2262,10 +2341,12 @@ async function loadTemplateApprovalChainConfig() {
   try {
     const data = await fetchCreatorTemplateApprovalChainConfig();
     templateApprovalChainSteps.value = data.required_steps || 2;
+    templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
     const sla = await fetchCreatorTemplateApprovalSlaConfig();
     templateApprovalSlaHours.value = sla.timeout_hours || 72;
     templateApprovalEmailOnSubmit.value = Boolean(sla.email_on_submit);
     templateApprovalEmailOnReject.value = Boolean(sla.email_on_reject);
+    templateApprovalEmailOnOverdue.value = Boolean(sla.email_on_overdue);
     const overdue = await fetchCreatorTemplateApprovalOverdue();
     overdueTemplateApprovals.value = overdue.approvals || [];
   } catch {
@@ -2281,6 +2362,7 @@ async function saveTemplateApprovalSlaConfig() {
       timeout_hours: templateApprovalSlaHours.value,
       email_on_submit: templateApprovalEmailOnSubmit.value,
       email_on_reject: templateApprovalEmailOnReject.value,
+      email_on_overdue: templateApprovalEmailOnOverdue.value,
     });
     saveMessage.value = `已保存审批 SLA（${templateApprovalSlaHours.value}h）`;
     await loadTemplateApprovalChainConfig();
@@ -2291,10 +2373,16 @@ async function saveTemplateApprovalSlaConfig() {
 
 async function saveTemplateApprovalChainConfig() {
   try {
+    const assignees = templateApprovalStepAssignees.value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     const data = await saveCreatorTemplateApprovalChainConfig({
       required_steps: templateApprovalChainSteps.value,
+      step_assignees: assignees,
     });
     templateApprovalChainSteps.value = data.required_steps || 2;
+    templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
     saveMessage.value = `已保存审批链（${templateApprovalChainSteps.value} 步）`;
   } catch (e) {
     handleSaveError(e);
@@ -2348,6 +2436,26 @@ async function applyAllMergePresetConflictFixes() {
   try {
     const result = await applyAllCreatorMergePresetConflictFixes();
     saveMessage.value = `已批量应用 ${result.applied} 项，剩余冲突 ${result.conflict_count}`;
+    await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function previewMergePresetImportDiff() {
+  try {
+    const payload = JSON.parse(importMergePresetPackagesJson.value);
+    mergePresetImportDiff.value = await previewCreatorMergePresetImportDiff(payload);
+    saveMessage.value = `diff：新增 ${mergePresetImportDiff.value.added?.length || 0}，更新 ${mergePresetImportDiff.value.updated?.length || 0}`;
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function applyMergePresetToposort() {
+  try {
+    const result = await applyCreatorMergePresetToposort();
+    saveMessage.value = `已拓扑重排 ${result.reordered} 个预设包`;
     await loadMergePresetPackages();
   } catch (e) {
     handleSaveError(e);

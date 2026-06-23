@@ -1033,6 +1033,51 @@ class TestCreatorEndpoints:
         assert factory.status_code == 200
         assert len(factory.json()["packages"]) >= 1
 
+    def test_creator_v35_endpoints(self, client: TestClient) -> None:
+        chain = client.put(
+            "/api/creator/volume-plan/templates/approvals/chain-config",
+            json={"required_steps": 1, "step_assignees": ["reviewer-a"]},
+        )
+        assert chain.status_code == 200
+        assert chain.json()["step_assignees"] == ["reviewer-a"]
+        sla = client.put(
+            "/api/creator/volume-plan/templates/approvals/sla-config",
+            json={
+                "timeout_hours": 48,
+                "email_on_submit": True,
+                "email_on_reject": True,
+                "email_on_overdue": True,
+            },
+        )
+        assert sla.status_code == 200
+        assert sla.json()["email_on_overdue"] is True
+        stats = client.get("/api/creator/onboarding/notifications/digest/stats")
+        assert stats.status_code == 200
+        assert "sent_total" in stats.json()
+        schedule = client.put(
+            "/api/creator/onboarding/notifications/digest/schedule",
+            json={
+                "enabled": True,
+                "interval_hours": 24,
+                "channels": ["webhook"],
+                "handle_channels": {"batch": ["webhook"]},
+            },
+        )
+        assert schedule.status_code == 200
+        assert schedule.json()["handle_channels"]["batch"] == ["webhook"]
+        topo = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/toposort")
+        assert topo.status_code == 200
+        diff = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import/preview-diff",
+            json={"packages": [{"id": "new_pkg", "name": "新包", "pillars_merge_source": "editor", "global_outline_merge_source": "editor"}]},
+        )
+        assert diff.status_code == 200
+        assert "new_pkg" in diff.json()["added"]
+        factory_conflicts = client.get(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/factory/conflicts",
+        )
+        assert factory_conflicts.status_code == 200
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

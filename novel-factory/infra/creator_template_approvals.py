@@ -44,6 +44,7 @@ def load_approval_sla_config(project_root: Path | str) -> dict[str, Any]:
             "timeout_hours": 72,
             "email_on_submit": True,
             "email_on_reject": True,
+            "email_on_overdue": True,
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     hours = int(data.get("timeout_hours", 72))
@@ -53,6 +54,7 @@ def load_approval_sla_config(project_root: Path | str) -> dict[str, Any]:
         "timeout_hours": hours,
         "email_on_submit": bool(data.get("email_on_submit", True)),
         "email_on_reject": bool(data.get("email_on_reject", True)),
+        "email_on_overdue": bool(data.get("email_on_overdue", True)),
     }
 
 
@@ -62,6 +64,7 @@ def save_approval_sla_config(
     timeout_hours: int,
     email_on_submit: bool = True,
     email_on_reject: bool = True,
+    email_on_overdue: bool = True,
 ) -> dict[str, Any]:
     hours = max(1, min(int(timeout_hours), _MAX_SLA_HOURS))
     data = {
@@ -69,6 +72,7 @@ def save_approval_sla_config(
         "timeout_hours": hours,
         "email_on_submit": bool(email_on_submit),
         "email_on_reject": bool(email_on_reject),
+        "email_on_overdue": bool(email_on_overdue),
     }
     path = _sla_config_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -83,6 +87,7 @@ def list_overdue_template_approvals(project_root: Path | str) -> list[dict[str, 
     now = datetime.now(timezone.utc)
     store = _load_store(project_root)
     overdue: list[dict[str, Any]] = []
+    assignees = _approval_step_assignees(project_root)
     for row in store.get("approvals") or []:
         if str(row.get("status", "")).lower() != "pending":
             continue
@@ -91,10 +96,45 @@ def list_overdue_template_approvals(project_root: Path | str) -> list[dict[str, 
             continue
         hours_pending = (now - submitted).total_seconds() / 3600
         if hours_pending >= timeout_hours:
-            public = _public_approval_row(row)
+            public = _public_approval_row(row, step_assignees=assignees)
             public["hours_pending"] = round(hours_pending, 1)
             overdue.append(public)
     return overdue
+
+
+def notify_overdue_template_approvals(project_root: Path | str) -> dict[str, Any]:
+    """Send overdue reminder emails once per pending approval."""
+    sla = load_approval_sla_config(project_root)
+    if not sla.get("email_on_overdue"):
+        return {"notified": 0, "skipped": True}
+    config = load_approval_chain_config(project_root)
+    assignees = config.get("step_assignees") or []
+    timeout_hours = float(sla["timeout_hours"])
+    now = datetime.now(timezone.utc)
+    store = _load_store(project_root)
+    notified = 0
+    for row in store.get("approvals") or []:
+        if str(row.get("status", "")).lower() != "pending":
+            continue
+        if row.get("overdue_notified_at"):
+            continue
+        submitted = _parse_iso(row.get("submitted_at"))
+        if submitted is None:
+            continue
+        if (now - submitted).total_seconds() / 3600 < timeout_hours:
+            continue
+        public = _public_approval_row(row, step_assignees=assignees)
+        try:
+            from infra.creator_onboarding_email import dispatch_approval_email
+
+            dispatch_approval_email(project_root, "overdue", public)
+        except Exception:
+            pass
+        row["overdue_notified_at"] = _now_iso()
+        notified += 1
+    if notified:
+        _save_store(project_root, store)
+    return {"notified": notified}
 
 
 def _parse_iso(raw: str | None) -> datetime | None:
@@ -109,16 +149,31 @@ def _parse_iso(raw: str | None) -> datetime | None:
 def load_approval_chain_config(project_root: Path | str) -> dict[str, Any]:
     path = _chain_config_path(project_root)
     if not path.is_file():
-        return {"schema_version": "1", "required_steps": 2}
+        return {"schema_version": "1", "required_steps": 2, "step_assignees": []}
     data = json.loads(path.read_text(encoding="utf-8"))
     steps = int(data.get("required_steps", 2))
     steps = max(1, min(steps, _MAX_CHAIN_STEPS))
-    return {"schema_version": "1", "required_steps": steps}
+    assignees_raw = data.get("step_assignees") or []
+    assignees = (
+        [str(a).strip() for a in assignees_raw if str(a).strip()][:steps]
+        if isinstance(assignees_raw, list)
+        else []
+    )
+    return {"schema_version": "1", "required_steps": steps, "step_assignees": assignees}
 
 
-def save_approval_chain_config(project_root: Path | str, *, required_steps: int) -> dict[str, Any]:
+def save_approval_chain_config(
+    project_root: Path | str,
+    *,
+    required_steps: int,
+    step_assignees: list[str] | None = None,
+) -> dict[str, Any]:
     steps = max(1, min(int(required_steps), _MAX_CHAIN_STEPS))
-    data = {"schema_version": "1", "required_steps": steps}
+    existing = load_approval_chain_config(project_root) if _chain_config_path(project_root).is_file() else {}
+    assignees = existing.get("step_assignees") or []
+    if step_assignees is not None:
+        assignees = [str(a).strip() for a in step_assignees if str(a).strip()][:steps]
+    data = {"schema_version": "1", "required_steps": steps, "step_assignees": assignees}
     path = _chain_config_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -174,6 +229,7 @@ def submit_template_version_approval(
     template_id: str,
     *,
     version_label: str | None,
+    submit_note: str = "",
 ) -> dict[str, Any]:
     """Queue a template version label change for approval."""
     tid = template_id.strip().lower()
@@ -203,6 +259,9 @@ def submit_template_version_approval(
         "submitted_at": _now_iso(),
         "resolved_at": None,
         "reject_reason": "",
+        "submit_note": str(submit_note).strip()[:240],
+        "resolve_note": "",
+        "overdue_notified_at": None,
         "chain_step": 1,
         "chain_total": chain_total,
         "chain_log": [],
@@ -211,12 +270,19 @@ def submit_template_version_approval(
     store["approvals"] = approvals[:_MAX_APPROVALS]
     _save_store(project_root, store)
     _notify_approval_event(project_root, "submitted", entry)
-    return _public_approval_row(entry)
+    return _public_approval_row(entry, step_assignees=load_approval_chain_config(project_root).get("step_assignees") or [])
 
 
-def _public_approval_row(row: dict[str, Any], *, include_chain_log: bool = False) -> dict[str, Any]:
+def _public_approval_row(
+    row: dict[str, Any],
+    *,
+    include_chain_log: bool = False,
+    step_assignees: list[str] | None = None,
+) -> dict[str, Any]:
     chain_step = int(row.get("chain_step") or 1)
     chain_total = int(row.get("chain_total") or 1)
+    assignees = step_assignees or []
+    current_assignee = assignees[chain_step - 1] if chain_step - 1 < len(assignees) else ""
     public = {
         "id": str(row["id"]),
         "template_id": str(row.get("template_id", "")),
@@ -227,6 +293,9 @@ def _public_approval_row(row: dict[str, Any], *, include_chain_log: bool = False
         "submitted_at": row.get("submitted_at"),
         "resolved_at": row.get("resolved_at"),
         "reject_reason": str(row.get("reject_reason", "")),
+        "submit_note": str(row.get("submit_note", "")),
+        "resolve_note": str(row.get("resolve_note", "")),
+        "current_assignee": current_assignee,
         "has_volumes_snapshot": bool(row.get("volumes_snapshot")),
         "chain_step": chain_step,
         "chain_total": chain_total,
@@ -241,7 +310,10 @@ def export_template_approval_audit(project_root: Path | str) -> dict[str, Any]:
     """Export full approval audit trail including chain_log entries."""
     store = _load_store(project_root)
     rows = list(store.get("approvals") or [])
-    audit_rows = [_public_approval_row(row, include_chain_log=True) for row in rows]
+    audit_rows = [
+        _public_approval_row(row, include_chain_log=True, step_assignees=_approval_step_assignees(project_root))
+        for row in rows
+    ]
     return {
         "schema_version": "1",
         "count": len(audit_rows),
@@ -261,7 +333,15 @@ def list_template_approval_history(
         for row in store.get("approvals") or []
         if str(row.get("status", "")).lower() in {"approved", "rejected"}
     ]
-    return [_public_approval_row(row, include_chain_log=True) for row in rows[:limit]]
+    assignees = _approval_step_assignees(project_root)
+    return [
+        _public_approval_row(row, include_chain_log=True, step_assignees=assignees)
+        for row in rows[:limit]
+    ]
+
+
+def _approval_step_assignees(project_root: Path | str) -> list[str]:
+    return load_approval_chain_config(project_root).get("step_assignees") or []
 
 
 def _notify_approval_event(
@@ -269,7 +349,8 @@ def _notify_approval_event(
     event: str,
     row: dict[str, Any],
 ) -> None:
-    public = _public_approval_row(row)
+    assignees = _approval_step_assignees(project_root)
+    public = _public_approval_row(row, step_assignees=assignees)
     try:
         from infra.creator_onboarding_webhook import dispatch_approval_webhook
 
@@ -304,27 +385,49 @@ def list_template_approvals(
         rows = [row for row in rows if str(row.get("status", "")).lower() == status_norm]
     if tid:
         rows = [row for row in rows if str(row.get("template_id", "")).lower() == tid]
-    return [_public_approval_row(row) for row in rows]
+    assignees = _approval_step_assignees(project_root)
+    return [_public_approval_row(row, step_assignees=assignees) for row in rows]
 
 
-def approve_template_approval(project_root: Path | str, approval_id: str) -> dict[str, Any]:
+def approve_template_approval(
+    project_root: Path | str,
+    approval_id: str,
+    *,
+    assignee: str = "",
+    resolve_note: str = "",
+) -> dict[str, Any]:
     store = _load_store(project_root)
     aid = str(approval_id).strip()
+    chain_cfg = load_approval_chain_config(project_root)
+    assignees = chain_cfg.get("step_assignees") or []
     for row in store.get("approvals") or []:
         if row.get("id") != aid:
             continue
         if row.get("status") != "pending":
             raise ValueError(f"approval is not pending: {approval_id!r}")
         chain_step = int(row.get("chain_step") or 1)
+        expected = assignees[chain_step - 1] if chain_step - 1 < len(assignees) else ""
+        actor = str(assignee).strip()
+        if expected and actor and actor != expected:
+            raise ValueError(f"approval step {chain_step} assigned to {expected!r}, not {actor!r}")
         chain_total = int(row.get("chain_total") or 1)
         chain_log: list[dict[str, Any]] = list(row.get("chain_log") or [])
-        chain_log.append({"step": chain_step, "approved_at": _now_iso()})
+        chain_log.append(
+            {
+                "step": chain_step,
+                "approved_at": _now_iso(),
+                "assignee": actor or expected,
+                "note": str(resolve_note).strip()[:240],
+            },
+        )
         row["chain_log"] = chain_log
+        if resolve_note:
+            row["resolve_note"] = str(resolve_note).strip()[:240]
         if chain_step < chain_total:
             row["chain_step"] = chain_step + 1
             _save_store(project_root, store)
             _notify_approval_event(project_root, "chain_advanced", row)
-            public = _public_approval_row(row)
+            public = _public_approval_row(row, step_assignees=assignees)
             public["chain_advanced"] = True
             return public
         tid = str(row.get("template_id", ""))
@@ -341,7 +444,7 @@ def approve_template_approval(project_root: Path | str, approval_id: str) -> dic
         row["resolved_at"] = _now_iso()
         _save_store(project_root, store)
         _notify_approval_event(project_root, "approved", row)
-        public = _public_approval_row(row)
+        public = _public_approval_row(row, step_assignees=assignees)
         public["applied"] = result
         public["chain_advanced"] = False
         return public
@@ -353,6 +456,7 @@ def reject_template_approval(
     approval_id: str,
     *,
     reason: str = "",
+    resolve_note: str = "",
 ) -> dict[str, Any]:
     store = _load_store(project_root)
     aid = str(approval_id).strip()
@@ -364,7 +468,10 @@ def reject_template_approval(
         row["status"] = "rejected"
         row["resolved_at"] = _now_iso()
         row["reject_reason"] = str(reason).strip()[:240]
+        if resolve_note:
+            row["resolve_note"] = str(resolve_note).strip()[:240]
         _save_store(project_root, store)
         _notify_approval_event(project_root, "rejected", row)
-        return _public_approval_row(row)
+        assignees = load_approval_chain_config(project_root).get("step_assignees") or []
+        return _public_approval_row(row, step_assignees=assignees)
     raise ValueError(f"unknown approval: {approval_id!r}")

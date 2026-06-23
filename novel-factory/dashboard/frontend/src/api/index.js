@@ -750,6 +750,10 @@ export async function fetchCreatorOnboardingDigestRetryQueue() {
   return request('/creator/onboarding/notifications/digest/retry-queue');
 }
 
+export async function fetchCreatorOnboardingDigestStats() {
+  return request('/creator/onboarding/notifications/digest/stats');
+}
+
 export async function processCreatorOnboardingDigestRetries() {
   return request('/creator/onboarding/notifications/digest/retry', {
     method: 'POST',
@@ -771,10 +775,10 @@ export async function submitCreatorTemplateVersionApproval(templateId, body) {
   );
 }
 
-export async function approveCreatorTemplateApproval(approvalId) {
+export async function approveCreatorTemplateApproval(approvalId, body = {}) {
   return request(
     `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/approve`,
-    { method: 'POST' },
+    { method: 'POST', body },
   );
 }
 
@@ -879,6 +883,34 @@ export async function applyAllCreatorMergePresetConflictFixes() {
 
 export async function preflightCreatorMergePresetImport(body) {
   return request('/creator/settings-docs/merge-preferences/preset-packages/import/preflight', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function previewCreatorMergePresetImportDiff(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/import/preview-diff', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function fetchCreatorMergePresetToposort() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/toposort');
+}
+
+export async function applyCreatorMergePresetToposort() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/toposort/apply', {
+    method: 'POST',
+  });
+}
+
+export async function fetchCreatorFactoryMergePresetConflicts() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/factory/conflicts');
+}
+
+export async function resolveCreatorFactoryMergePresetConflict(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/factory/merge-conflicts', {
     method: 'POST',
     body,
   });

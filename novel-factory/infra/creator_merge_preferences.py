@@ -954,3 +954,213 @@ def apply_all_merge_preset_fixes(project_root: Path | str) -> dict[str, Any]:
         "conflict_count": remaining["conflict_count"],
     }
 
+
+def _preset_import_fields(pkg: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": str(pkg.get("name", "")),
+        "description": str(pkg.get("description", "")),
+        "pillars_merge_source": str(pkg.get("pillars_merge_source", "editor")),
+        "global_outline_merge_source": str(pkg.get("global_outline_merge_source", "editor")),
+        "version_label": pkg.get("version_label"),
+        "depends_on": list(pkg.get("depends_on") or []),
+    }
+
+
+def preview_merge_preset_import_diff(
+    project_root: Path | str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Preview added/updated/removed packages before import."""
+    existing = {row["id"]: row for row in _load_custom_preset_packages(project_root)}
+    incoming = payload.get("packages") or []
+    if not isinstance(incoming, list):
+        raise ValueError("packages array required")
+    replace = bool(payload.get("replace"))
+    added: list[str] = []
+    updated: list[dict[str, Any]] = []
+    unchanged: list[str] = []
+    incoming_ids: set[str] = set()
+    for raw in incoming:
+        if not isinstance(raw, dict):
+            continue
+        pkg_id = str(raw.get("id", "")).strip()
+        if not pkg_id:
+            continue
+        incoming_ids.add(pkg_id)
+        if pkg_id not in existing:
+            added.append(pkg_id)
+            continue
+        before = _preset_import_fields(existing[pkg_id])
+        after = _preset_import_fields(raw)
+        if before != after:
+            changed_fields = [key for key in before if before[key] != after[key]]
+            updated.append({"package_id": pkg_id, "changed_fields": changed_fields})
+        else:
+            unchanged.append(pkg_id)
+    removed = [pid for pid in existing if pid not in incoming_ids] if replace else []
+    return {
+        "added": added,
+        "updated": updated,
+        "removed": removed,
+        "unchanged_count": len(unchanged),
+        "replace": replace,
+    }
+
+
+def toposort_merge_preset_packages(project_root: Path | str) -> dict[str, Any]:
+    """Topological order for project custom preset packages."""
+    all_pkgs = list_merge_preset_packages(project_root)
+    known = {pkg["id"]: pkg for pkg in all_pkgs}
+    project_ids = [pkg["id"] for pkg in all_pkgs if pkg.get("scope") == "project"]
+    in_degree = {pid: 0 for pid in project_ids}
+    adjacency: dict[str, list[str]] = {pid: [] for pid in project_ids}
+    for pid in project_ids:
+        pkg = known[pid]
+        for dep_id in pkg.get("depends_on") or []:
+            if dep_id in project_ids and dep_id != pid:
+                adjacency[dep_id].append(pid)
+                in_degree[pid] += 1
+    queue = [pid for pid in project_ids if in_degree[pid] == 0]
+    order: list[str] = []
+    while queue:
+        node = queue.pop(0)
+        order.append(node)
+        for nxt in adjacency.get(node, []):
+            in_degree[nxt] -= 1
+            if in_degree[nxt] == 0:
+                queue.append(nxt)
+    cyclic = len(order) != len(project_ids)
+    return {
+        "order": order,
+        "cyclic": cyclic,
+        "package_count": len(project_ids),
+    }
+
+
+def apply_toposort_merge_preset_order(project_root: Path | str) -> dict[str, Any]:
+    """Reorder project custom packages file by topological sort."""
+    topo = toposort_merge_preset_packages(project_root)
+    if topo["cyclic"]:
+        raise ValueError("cannot reorder: cyclic dependencies among project packages")
+    custom = _load_custom_preset_packages(project_root)
+    by_id = {row["id"]: row for row in custom}
+    ordered = [by_id[pid] for pid in topo["order"] if pid in by_id]
+    for row in custom:
+        if row["id"] not in topo["order"]:
+            ordered.append(row)
+    path = _custom_preset_packages_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {"schema_version": _PRESET_PACKAGES_VERSION, "packages": ordered[:20]},
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return {"reordered": len(ordered), "order": topo["order"]}
+
+
+def _preset_content_signature(pkg: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": str(pkg.get("name", "")),
+        "description": str(pkg.get("description", "")),
+        "pillars_merge_source": str(pkg.get("pillars_merge_source", "editor")),
+        "global_outline_merge_source": str(pkg.get("global_outline_merge_source", "editor")),
+        "version_label": pkg.get("version_label"),
+        "depends_on": sorted(str(d) for d in (pkg.get("depends_on") or [])),
+    }
+
+
+def detect_factory_merge_preset_conflicts(project_root: Path | str) -> dict[str, Any]:
+    """Detect project/factory preset packages that collide on id or published_from."""
+    packages = list_merge_preset_packages(project_root)
+    project = {p["id"]: p for p in packages if p.get("scope") == "project"}
+    factory = {p["id"]: p for p in packages if p.get("scope") == "factory"}
+    conflicts: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def _append_conflict(*, package_id: str, factory_package_id: str, project_pkg: dict, factory_pkg: dict) -> None:
+        key = f"{package_id}:{factory_package_id}"
+        if key in seen:
+            return
+        seen.add(key)
+        conflicts.append(
+            {
+                "type": "factory_project_collision",
+                "package_id": package_id,
+                "factory_package_id": factory_package_id,
+                "message": f"project {package_id} differs from factory {factory_package_id}",
+            },
+        )
+
+    for pkg_id in sorted(set(project) & set(factory)):
+        if _preset_content_signature(project[pkg_id]) != _preset_content_signature(factory[pkg_id]):
+            _append_conflict(
+                package_id=pkg_id,
+                factory_package_id=pkg_id,
+                project_pkg=project[pkg_id],
+                factory_pkg=factory[pkg_id],
+            )
+
+    for factory_id, factory_pkg in factory.items():
+        source_id = str(factory_pkg.get("published_from") or "").strip()
+        if not source_id and factory_id.startswith(_FACTORY_PRESET_PREFIX):
+            source_id = factory_id[len(_FACTORY_PRESET_PREFIX) :]
+        if not source_id or source_id not in project:
+            continue
+        if _preset_content_signature(project[source_id]) != _preset_content_signature(factory_pkg):
+            _append_conflict(
+                package_id=source_id,
+                factory_package_id=factory_id,
+                project_pkg=project[source_id],
+                factory_pkg=factory_pkg,
+            )
+
+    return {"conflict_count": len(conflicts), "conflicts": conflicts}
+
+
+def resolve_factory_merge_preset_conflict(
+    project_root: Path | str,
+    *,
+    package_id: str,
+    strategy: str = "prefer_factory",
+) -> dict[str, Any]:
+    """Resolve factory/project preset collision."""
+    pid = str(package_id).strip()
+    if not pid:
+        raise ValueError("package_id required")
+    strat = str(strategy).strip().lower()
+    factory_pkgs = {p["id"]: p for p in list_factory_merge_preset_packages()}
+    if pid not in factory_pkgs:
+        raise ValueError(f"factory preset not found: {package_id!r}")
+    custom = _load_custom_preset_packages(project_root)
+    if strat == "prefer_factory":
+        kept = [row for row in custom if row.get("id") != pid]
+        path = _custom_preset_packages_path(project_root)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {"schema_version": _PRESET_PACKAGES_VERSION, "packages": kept[:20]},
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return {
+            "package_id": pid,
+            "strategy": strat,
+            "action": "removed_project_copy",
+            "packages": list_merge_preset_packages(project_root),
+        }
+    if strat == "prefer_project":
+        return {
+            "package_id": pid,
+            "strategy": strat,
+            "action": "kept_project_copy",
+            "packages": list_merge_preset_packages(project_root),
+        }
+    raise ValueError(f"unsupported strategy: {strategy!r}")
+

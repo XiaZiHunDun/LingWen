@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -10,11 +10,61 @@ _STATE_VERSION = "1"
 _MIN_INTERVAL_HOURS = 1
 _MAX_INTERVAL_HOURS = 168
 _MAX_RETRY_ITEMS = 20
+_MAX_BACKOFF_SEC = 3600
+_BASE_BACKOFF_SEC = 60
 
 
 def _retry_path(project_root: Path | str) -> Path:
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     return root / ".state" / "creator_onboarding_digest_retry.json"
+
+
+def _stats_path(project_root: Path | str) -> Path:
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    return root / ".state" / "creator_onboarding_digest_stats.json"
+
+
+def _backoff_seconds(attempts: int) -> int:
+    return min(_MAX_BACKOFF_SEC, _BASE_BACKOFF_SEC * (2 ** max(0, attempts - 1)))
+
+
+def load_digest_dispatch_stats(project_root: Path | str) -> dict[str, Any]:
+    path = _stats_path(project_root)
+    if not path.is_file():
+        return {
+            "schema_version": "1",
+            "sent_total": 0,
+            "failed_total": 0,
+            "last_sent_at": None,
+            "last_failure_at": None,
+        }
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        "schema_version": "1",
+        "sent_total": int(data.get("sent_total") or 0),
+        "failed_total": int(data.get("failed_total") or 0),
+        "last_sent_at": data.get("last_sent_at"),
+        "last_failure_at": data.get("last_failure_at"),
+    }
+
+
+def record_digest_dispatch(
+    project_root: Path | str,
+    *,
+    success: bool,
+) -> dict[str, Any]:
+    path = _stats_path(project_root)
+    stats = load_digest_dispatch_stats(project_root)
+    now = _now_iso()
+    if success:
+        stats["sent_total"] = int(stats["sent_total"]) + 1
+        stats["last_sent_at"] = now
+    else:
+        stats["failed_total"] = int(stats["failed_total"]) + 1
+        stats["last_failure_at"] = now
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(stats, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return stats
 
 
 def _load_retry_queue(project_root: Path | str) -> list[dict[str, Any]]:
@@ -49,6 +99,7 @@ def enqueue_digest_retry(
     error: str = "",
 ) -> None:
     items = _load_retry_queue(project_root)
+    now = datetime.now(timezone.utc)
     items.insert(
         0,
         {
@@ -57,19 +108,26 @@ def enqueue_digest_retry(
             "error": str(error)[:240],
             "queued_at": _now_iso(),
             "attempts": 0,
+            "next_retry_at": now.isoformat(),
         },
     )
     _save_retry_queue(project_root, items)
+    record_digest_dispatch(project_root, success=False)
 
 
 def process_digest_retries(project_root: Path | str) -> dict[str, Any]:
-    """Retry failed digest channel dispatches."""
+    """Retry failed digest channel dispatches with exponential backoff."""
     items = _load_retry_queue(project_root)
     if not items:
         return {"retried": 0, "remaining": 0}
     kept: list[dict[str, Any]] = []
     retried = 0
+    now = datetime.now(timezone.utc)
     for item in items:
+        next_at = _parse_iso(item.get("next_retry_at"))
+        if next_at and now < next_at:
+            kept.append(item)
+            continue
         channel = str(item.get("channel", "")).lower()
         digest = item.get("digest") or {}
         attempts = int(item.get("attempts") or 0) + 1
@@ -87,9 +145,12 @@ def process_digest_retries(project_root: Path | str) -> dict[str, Any]:
             ok = bool(result.get("sent")) and not result.get("error")
         if ok:
             retried += 1
+            record_digest_dispatch(project_root, success=True)
         elif attempts < 5:
             item["attempts"] = attempts
             item["last_error"] = str(item.get("error", ""))
+            delay = _backoff_seconds(attempts)
+            item["next_retry_at"] = (now + timedelta(seconds=delay)).isoformat()
             kept.append(item)
     _save_retry_queue(project_root, kept)
     return {"retried": retried, "remaining": len(kept)}
@@ -105,6 +166,23 @@ def _normalize_quiet_hour(raw: Any) -> int | None:
     if 0 <= hour <= 23:
         return hour
     return None
+
+
+def _normalize_handle_channels(raw: Any) -> dict[str, list[str]]:
+    if not isinstance(raw, dict):
+        return {}
+    routing: dict[str, list[str]] = {}
+    for handle, channels in raw.items():
+        key = str(handle).strip().lower()
+        if not key:
+            continue
+        if isinstance(channels, list):
+            normalized = list(
+                dict.fromkeys(str(ch).strip().lower() for ch in channels if str(ch).strip()),
+            )
+            if normalized:
+                routing[key] = normalized
+    return routing
 
 
 def _in_quiet_hours(schedule: dict[str, Any]) -> bool:
@@ -138,6 +216,16 @@ def _parse_iso(raw: str | None) -> datetime | None:
         return None
 
 
+def _channels_for_handle(schedule: dict[str, Any], handle: str) -> list[str]:
+    routing = schedule.get("handle_channels") or {}
+    key = str(handle).strip().lower() or "default"
+    if key in routing:
+        return routing[key]
+    if "*" in routing:
+        return routing["*"]
+    return schedule.get("channels") or ["webhook"]
+
+
 def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
     path = _schedule_path(project_root)
     if not path.is_file():
@@ -147,6 +235,7 @@ def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
             "interval_hours": 24,
             "last_sent_at": None,
             "channels": ["webhook"],
+            "handle_channels": {},
             "quiet_hours_start": None,
             "quiet_hours_end": None,
         }
@@ -162,6 +251,7 @@ def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
         "interval_hours": hours,
         "last_sent_at": data.get("last_sent_at"),
         "channels": [str(ch).strip().lower() for ch in channels if str(ch).strip()],
+        "handle_channels": _normalize_handle_channels(data.get("handle_channels")),
         "quiet_hours_start": _normalize_quiet_hour(data.get("quiet_hours_start")),
         "quiet_hours_end": _normalize_quiet_hour(data.get("quiet_hours_end")),
     }
@@ -173,6 +263,7 @@ def save_digest_schedule(
     enabled: bool,
     interval_hours: int = 24,
     channels: list[str] | None = None,
+    handle_channels: dict[str, list[str]] | None = None,
     quiet_hours_start: int | None = None,
     quiet_hours_end: int | None = None,
 ) -> dict[str, Any]:
@@ -184,12 +275,16 @@ def save_digest_schedule(
         ) or ["webhook"]
     path = _schedule_path(project_root)
     existing = load_digest_schedule(project_root) if path.is_file() else {}
+    routing = existing.get("handle_channels") or {}
+    if handle_channels is not None:
+        routing = _normalize_handle_channels(handle_channels)
     data = {
         "schema_version": _STATE_VERSION,
         "enabled": bool(enabled),
         "interval_hours": hours,
         "last_sent_at": existing.get("last_sent_at"),
         "channels": normalized_channels,
+        "handle_channels": routing,
         "quiet_hours_start": _normalize_quiet_hour(quiet_hours_start),
         "quiet_hours_end": _normalize_quiet_hour(quiet_hours_end),
     }
@@ -210,6 +305,46 @@ def _due_for_dispatch(schedule: dict[str, Any], *, force: bool = False) -> bool:
     return elapsed_hours >= float(schedule.get("interval_hours", 24))
 
 
+def _dispatch_digest_channels(
+    project_root: Path | str,
+    digest: dict[str, Any],
+    channels: list[str],
+    results: dict[str, Any],
+) -> None:
+    payload = {"schema_version": "1", "type": "digest", "digest": digest}
+    channel_ok = False
+    if "webhook" in channels:
+        from infra.creator_onboarding_webhook import dispatch_digest_webhook
+
+        webhook_result = dispatch_digest_webhook(project_root, payload)
+        results["channels"]["webhook"] = webhook_result
+        if webhook_result.get("error") or not webhook_result.get("dispatched"):
+            enqueue_digest_retry(
+                project_root,
+                channel="webhook",
+                digest=digest,
+                error=str(webhook_result.get("error", "webhook failed")),
+            )
+        else:
+            channel_ok = True
+    if "email" in channels:
+        from infra.creator_onboarding_email import dispatch_digest_email
+
+        email_result = dispatch_digest_email(project_root, digest)
+        results["channels"]["email"] = email_result
+        if email_result.get("error") or not email_result.get("sent"):
+            enqueue_digest_retry(
+                project_root,
+                channel="email",
+                digest=digest,
+                error=str(email_result.get("error", "email failed")),
+            )
+        else:
+            channel_ok = True
+    if channel_ok:
+        record_digest_dispatch(project_root, success=True)
+
+
 def dispatch_scheduled_digest(
     project_root: Path | str,
     *,
@@ -226,33 +361,24 @@ def dispatch_scheduled_digest(
     digest = build_notification_digest(project_root)
     if digest.get("unread", 0) == 0:
         return {"sent": False, "skipped": True, "reason": "no unread notifications"}
-    channels = schedule.get("channels") or ["webhook"]
-    results: dict[str, Any] = {"digest": digest, "channels": {}}
-    payload = {"schema_version": "1", "type": "digest", "digest": digest}
-    if "webhook" in channels:
-        from infra.creator_onboarding_webhook import dispatch_digest_webhook
-
-        webhook_result = dispatch_digest_webhook(project_root, payload)
-        results["channels"]["webhook"] = webhook_result
-        if webhook_result.get("error") or not webhook_result.get("dispatched"):
-            enqueue_digest_retry(
-                project_root,
-                channel="webhook",
-                digest=digest,
-                error=str(webhook_result.get("error", "webhook failed")),
-            )
-    if "email" in channels:
-        from infra.creator_onboarding_email import dispatch_digest_email
-
-        email_result = dispatch_digest_email(project_root, digest)
-        results["channels"]["email"] = email_result
-        if email_result.get("error") or not email_result.get("sent"):
-            enqueue_digest_retry(
-                project_root,
-                channel="email",
-                digest=digest,
-                error=str(email_result.get("error", "email failed")),
-            )
+    results: dict[str, Any] = {"digest": digest, "channels": {}, "handle_routes": {}}
+    routing = schedule.get("handle_channels") or {}
+    groups = digest.get("groups") or []
+    if routing and groups:
+        for group in groups:
+            handle = str(group.get("handle") or "default")
+            channels = _channels_for_handle(schedule, handle)
+            partial = {
+                **digest,
+                "groups": [group],
+                "group_count": 1,
+                "unread": int(group.get("count") or 0),
+            }
+            results["handle_routes"][handle] = channels
+            _dispatch_digest_channels(project_root, partial, channels, results)
+    else:
+        channels = schedule.get("channels") or ["webhook"]
+        _dispatch_digest_channels(project_root, digest, channels, results)
     path = _schedule_path(project_root)
     if path.is_file():
         data = json.loads(path.read_text(encoding="utf-8"))

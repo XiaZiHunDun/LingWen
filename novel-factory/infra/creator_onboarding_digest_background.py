@@ -38,8 +38,12 @@ def tick_digest_for_active_project() -> dict[str, Any]:
     if not schedule.get("enabled"):
         return {"skipped": True, "reason": "schedule disabled"}
     retry_result = process_digest_retries(project.root)
+    from infra.creator_template_approvals import notify_overdue_template_approvals
+
+    overdue_result = notify_overdue_template_approvals(project.root)
     dispatch_result = dispatch_scheduled_digest(project.root, force=False)
     dispatch_result["retry"] = retry_result
+    dispatch_result["overdue"] = overdue_result
     return dispatch_result
 
 
