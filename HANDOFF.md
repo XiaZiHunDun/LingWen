@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.80 (创作者 v2.2, 2026-06-22)  
-> **更新 (2026-06-22)**: 模板导入导出 · 向导自动勾选 · 合并策略记忆
+> **版本**: v10.81 (创作者 v2.3, 2026-06-22)  
+> **更新 (2026-06-22)**: 模板跨项目同步 · 向导单步 deep-link · 合并快照记忆
 
 ---
 
@@ -121,7 +121,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v2.2 已落地**：自定义模板 JSON 导入/导出 · 向导步骤自动勾选（支柱/卷纲检测）· 合并策略记忆上次选择
 
-**v2.3 候选**：模板跨项目批量同步 · 向导步骤 deep-link · 合并策略按字段记忆快照 id
+**v2.3 已落地**：模板跨项目批量同步 · 向导单步 deep-link `?wizard=1&step=volume` · 合并策略记忆历史快照 id
+
+**v2.4 候选**：工厂级模板库 · 向导分享链接 · 合并策略按用户配置
 
 ### 常用命令
 

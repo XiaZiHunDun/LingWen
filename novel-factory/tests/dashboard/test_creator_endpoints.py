@@ -481,3 +481,36 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert "auto_completed_step_ids" in data
         assert "init" in data["auto_completed_step_ids"]
+
+    def test_template_sync_sources(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/volume-plan/templates/sync-sources")
+        assert resp.status_code == 200
+        assert "sources" in resp.json()
+
+    def test_merge_preferences_remember_snapshot(self, client: TestClient) -> None:
+        current = client.get("/api/creator/settings-docs").json()
+        client.put(
+            "/api/creator/settings-docs",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# snap\n",
+                "global_outline_text": current["global_outline_text"],
+                "expected_pillars_revision": current["pillars_revision"],
+                "expected_global_outline_revision": current["global_outline_revision"],
+            },
+        )
+        history = client.get("/api/creator/settings-docs/history").json()
+        snap_id = history["snapshots"][0]["id"]
+        refreshed = client.get("/api/creator/settings-docs").json()
+        client.put(
+            "/api/creator/settings-docs",
+            json={
+                "pillars_text": refreshed["pillars_text"] + "\n# editor\n",
+                "global_outline_text": refreshed["global_outline_text"],
+                "expected_pillars_revision": refreshed["pillars_revision"],
+                "expected_global_outline_revision": refreshed["global_outline_revision"],
+                "pillars_merge_source": "history",
+                "merge_snapshot_id": snap_id,
+            },
+        )
+        prefs = client.get("/api/creator/settings-docs/merge-preferences").json()
+        assert prefs["merge_snapshot_id"] == snap_id

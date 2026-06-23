@@ -38,10 +38,17 @@ function readDecisionFromUrl() {
 
 function readWizardFromUrl() {
   if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('wizard') === '1';
+  const params = new URLSearchParams(window.location.search);
+  return params.get('wizard') === '1' || Boolean(params.get('step'));
 }
 
-function syncNavUrl(activeNav, chapter, decisionId, wizard) {
+function readWizardStepFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const step = new URLSearchParams(window.location.search).get('step');
+  return step && step.trim() ? step.trim() : null;
+}
+
+function syncNavUrl(activeNav, chapter, decisionId, wizard, wizardStep) {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   if (activeNav && activeNav !== 'overview') {
@@ -64,6 +71,11 @@ function syncNavUrl(activeNav, chapter, decisionId, wizard) {
   } else {
     url.searchParams.delete('wizard');
   }
+  if (wizardStep) {
+    url.searchParams.set('step', wizardStep);
+  } else {
+    url.searchParams.delete('step');
+  }
   window.history.replaceState(window.history.state, '', url.toString());
 }
 
@@ -71,33 +83,52 @@ const activeNav = ref(readNavFromUrl());
 const focusChapter = ref(readChapterFromUrl());
 const focusDecisionId = ref(readDecisionFromUrl());
 const focusWizard = ref(readWizardFromUrl());
+const focusWizardStep = ref(readWizardStepFromUrl());
 
 /**
  * @param {string} nav
- * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean }} [opts]
+ * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean, wizardStep?: string|null }} [opts]
  */
 function navigateTo(nav, opts = {}) {
   activeNav.value = VALID_NAV.includes(nav) ? nav : 'overview';
   if (opts.clearFocus) {
     focusChapter.value = null;
     focusDecisionId.value = null;
+    focusWizardStep.value = null;
   } else {
     if (opts.chapter !== undefined) focusChapter.value = opts.chapter;
     if (opts.decisionId !== undefined) focusDecisionId.value = opts.decisionId;
+    if (opts.wizardStep !== undefined) focusWizardStep.value = opts.wizardStep;
   }
   if (opts.wizard !== undefined) focusWizard.value = Boolean(opts.wizard);
-  syncNavUrl(activeNav.value, focusChapter.value, focusDecisionId.value, focusWizard.value);
+  if (opts.wizardStep) focusWizard.value = true;
+  syncNavUrl(
+    activeNav.value,
+    focusChapter.value,
+    focusDecisionId.value,
+    focusWizard.value,
+    focusWizardStep.value,
+  );
 }
 
-function setWizardDeepLink(open) {
+function setWizardDeepLink(open, wizardStep) {
   focusWizard.value = Boolean(open);
-  syncNavUrl(activeNav.value, focusChapter.value, focusDecisionId.value, focusWizard.value);
+  if (wizardStep !== undefined) {
+    focusWizardStep.value = wizardStep || null;
+  }
+  syncNavUrl(
+    activeNav.value,
+    focusChapter.value,
+    focusDecisionId.value,
+    focusWizard.value,
+    focusWizardStep.value,
+  );
 }
 
 function clearDecisionFocus() {
   focusChapter.value = null;
   focusDecisionId.value = null;
-  syncNavUrl(activeNav.value, null, null, focusWizard.value);
+  syncNavUrl(activeNav.value, null, null, focusWizard.value, focusWizardStep.value);
 }
 
 export function useDashboardNav() {
@@ -106,6 +137,7 @@ export function useDashboardNav() {
     focusChapter,
     focusDecisionId,
     focusWizard,
+    focusWizardStep,
     navigateTo,
     setWizardDeepLink,
     clearDecisionFocus,

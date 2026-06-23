@@ -55,7 +55,12 @@
         </span>
       </summary>
       <ol class="wizard-steps">
-        <li v-for="step in onboardingWizard.steps" :key="step.id" class="wizard-step">
+        <li
+          v-for="step in onboardingWizard.steps"
+          :key="step.id"
+          class="wizard-step"
+          :class="{ 'wizard-step--focused': step.id === focusWizardStep }"
+        >
           <label class="wizard-step-label">
             <input
               type="checkbox"
@@ -245,6 +250,16 @@
                 @click="showImportTemplates = !showImportTemplates"
               >
                 {{ showImportTemplates ? '收起导入' : '导入 JSON' }}
+              </button>
+              <button
+                v-if="templateSyncSources.length"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="sync-templates-btn"
+                :disabled="templateSyncing"
+                @click="syncTemplatesFromProjects"
+              >
+                {{ templateSyncing ? '同步中…' : '跨项目同步' }}
               </button>
             </div>
             <div v-if="showImportTemplates" class="import-templates-panel" data-testid="import-templates-panel">
@@ -720,6 +735,8 @@ import {
   renameCreatorVolumeTemplate,
   exportCreatorVolumeTemplates,
   importCreatorVolumeTemplates,
+  fetchCreatorVolumeTemplateSyncSources,
+  syncCreatorVolumeTemplates,
   fetchCreatorOnboarding,
   saveCreatorOnboardingProgress,
   saveCreatorSettingsDocs,
@@ -737,7 +754,7 @@ import { useStudioProject } from '../composables/useStudioProject.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 
 const { projectRevision } = useStudioProject();
-const { focusWizard, setWizardDeepLink } = useDashboardNav();
+const { focusWizard, focusWizardStep, setWizardDeepLink } = useDashboardNav();
 const wizardPanelRef = ref(null);
 const overview = ref(null);
 const editableVolumes = ref([]);
@@ -779,6 +796,8 @@ const renameTemplateName = ref('');
 const showImportTemplates = ref(false);
 const importTemplatesJson = ref('');
 const templateImporting = ref(false);
+const templateSyncSources = ref([]);
+const templateSyncing = ref(false);
 const onboardingWizard = ref(null);
 const completedWizardSteps = ref(new Set());
 const autoCompletedWizardSteps = ref(new Set());
@@ -999,16 +1018,30 @@ async function loadOnboardingWizard() {
       try {
         wizardPanelRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
       } catch {
-        /* jsdom may not implement scrollIntoView */
+        /* jsdom */
       }
     }
+    await focusWizardStepFromUrl();
   } catch {
     onboardingWizard.value = null;
   }
 }
 
 function onWizardToggle(event) {
-  setWizardDeepLink(event.target.open);
+  setWizardDeepLink(event.target.open, event.target.open ? focusWizardStep.value : null);
+}
+
+async function focusWizardStepFromUrl() {
+  if (!focusWizardStep.value || !onboardingWizard.value) return;
+  const exists = onboardingWizard.value.steps.some((s) => s.id === focusWizardStep.value);
+  if (!exists) return;
+  await nextTick();
+  const el = document.querySelector(`[data-testid="wizard-step-${focusWizardStep.value}"]`);
+  try {
+    el?.closest('.wizard-step')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  } catch {
+    /* jsdom */
+  }
 }
 
 async function toggleWizardStep(stepId, checked) {
@@ -1080,6 +1113,52 @@ async function renameSelectedVolumeTemplate() {
   }
 }
 
+async function loadMergePreferences() {
+  try {
+    const prefs = await fetchCreatorMergePreferences();
+    pillarsMergeSource.value = prefs.pillars_merge_source || 'editor';
+    outlineMergeSource.value = prefs.global_outline_merge_source || 'editor';
+    if (prefs.merge_snapshot_id) {
+      const known = settingsHistory.value.some((s) => s.id === prefs.merge_snapshot_id);
+      if (known) compareSnapshotId.value = prefs.merge_snapshot_id;
+    }
+  } catch {
+    /* optional */
+  }
+}
+
+async function loadTemplateSyncSources() {
+  try {
+    const data = await fetchCreatorVolumeTemplateSyncSources();
+    templateSyncSources.value = data.sources || [];
+  } catch {
+    templateSyncSources.value = [];
+  }
+}
+
+async function syncTemplatesFromProjects() {
+  templateSyncing.value = true;
+  error.value = null;
+  try {
+    if (!templateSyncSources.value.length) {
+      await loadTemplateSyncSources();
+    }
+    const slugs = templateSyncSources.value.map((s) => s.slug);
+    if (!slugs.length) {
+      saveMessage.value = '没有其他项目的自定义模板';
+      return;
+    }
+    const result = await syncCreatorVolumeTemplates({ source_slugs: slugs });
+    saveMessage.value = `已从 ${result.sources.length} 个项目同步 ${result.imported} 个模板`;
+    await loadVolumeTemplates();
+    await loadTemplateSyncSources();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateSyncing.value = false;
+  }
+}
+
 async function exportCustomTemplates() {
   error.value = null;
   try {
@@ -1116,16 +1195,6 @@ async function importCustomTemplates() {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     templateImporting.value = false;
-  }
-}
-
-async function loadMergePreferences() {
-  try {
-    const prefs = await fetchCreatorMergePreferences();
-    pillarsMergeSource.value = prefs.pillars_merge_source || 'editor';
-    outlineMergeSource.value = prefs.global_outline_merge_source || 'editor';
-  } catch {
-    /* optional */
   }
 }
 
@@ -1491,11 +1560,12 @@ async function refresh() {
       loadSettingsDocs(),
       loadSettingsHistory(),
       loadVolumeTemplates(),
+      loadTemplateSyncSources(),
       loadOnboardingWizard(),
-      loadMergePreferences(),
       pollBatchJob(),
     ]);
     overview.value = ov;
+    await loadMergePreferences();
     if (batchJob.value?.status === 'running' && !batchPollTimer) {
       lastBatchStatus.value = 'running';
       startBatchPolling();
@@ -1861,6 +1931,12 @@ watch(projectRevision, () => {
 
 .wizard-step {
   margin-bottom: 4px;
+}
+
+.wizard-step--focused {
+  outline: 2px solid var(--color-accent);
+  border-radius: 4px;
+  padding: 2px;
 }
 
 .wizard-step-label {

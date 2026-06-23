@@ -35,3 +35,22 @@ def test_merge_preferences_roundtrip(factory_tmp):
     assert loaded["pillars_merge_source"] == "disk"
     assert loaded["global_outline_merge_source"] == "history"
     ProjectPaths.reset()
+
+
+def test_merge_preferences_remember_snapshot(factory_tmp):
+    result = init_minimal_short_project(
+        slug="merge-snap",
+        title="快照记忆",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    save_merge_preferences(
+        result.root,
+        pillars_merge_source="history",
+        global_outline_merge_source="editor",
+        merge_snapshot_id="snap-abc",
+    )
+    loaded = load_merge_preferences(result.root)
+    assert loaded["merge_snapshot_id"] == "snap-abc"
+    ProjectPaths.reset()

@@ -9,6 +9,8 @@ from infra.creator_volume_templates import (
     delete_custom_volume_template,
     export_custom_volume_templates,
     import_custom_volume_templates,
+    list_template_sync_sources,
+    sync_custom_volume_templates_from_projects,
     list_volume_templates,
     rename_custom_volume_template,
     save_custom_volume_template,
@@ -135,6 +137,60 @@ def test_export_import_custom_templates(factory_tmp):
     imported = import_custom_volume_templates(root, exported)
     assert imported["imported"] == 1
     assert len(list_volume_templates(root)) >= 4
+    ProjectPaths.reset()
+
+
+def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
+    from infra.project_init import init_minimal_short_project
+    from infra.studio_registry import StudioProject
+
+    source = init_minimal_short_project(
+        slug="tpl-source",
+        title="源项目",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    target = init_minimal_short_project(
+        slug="tpl-target",
+        title="目标项目",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    volumes = [
+        {"label": "A", "start_chapter": 1, "end_chapter": 12, "core_conflict": "x", "locked": False},
+    ]
+    save_custom_volume_template(source.root, name="共享结构", volumes=volumes, max_chapter=12)
+    monkeypatch.setattr(
+        "infra.studio_registry.list_projects",
+        lambda: [
+            StudioProject(
+                slug="tpl-source",
+                name="源项目",
+                role="production",
+                root=source.root,
+                location="projects",
+            ),
+            StudioProject(
+                slug="tpl-target",
+                name="目标项目",
+                role="production",
+                root=target.root,
+                location="projects",
+            ),
+        ],
+    )
+    sources = list_template_sync_sources(exclude_slug="tpl-target")
+    assert any(row["slug"] == "tpl-source" for row in sources)
+    synced = sync_custom_volume_templates_from_projects(
+        target.root,
+        source_slugs=["tpl-source"],
+        exclude_slug="tpl-target",
+    )
+    assert synced["imported"] == 1
+    names = [row["name"] for row in list_volume_templates(target.root) if not row["builtin"]]
+    assert any("共享结构" in name for name in names)
     ProjectPaths.reset()
 
 

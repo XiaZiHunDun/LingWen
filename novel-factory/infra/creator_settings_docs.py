@@ -301,12 +301,17 @@ def save_creator_settings_docs(
         path.write_text(resolved_outline.rstrip() + "\n", encoding="utf-8")
 
     if pillars_merge_source or global_outline_merge_source:
-        from infra.creator_merge_preferences import save_merge_preferences
+        from infra.creator_merge_preferences import load_merge_preferences, save_merge_preferences
 
+        existing = load_merge_preferences(project.root)
+        resolved_snap = merge_snapshot_id or existing.get("merge_snapshot_id")
+        if pillars_merge_source != "history" and global_outline_merge_source != "history":
+            resolved_snap = merge_snapshot_id or existing.get("merge_snapshot_id")
         save_merge_preferences(
             project.root,
             pillars_merge_source=pillars_merge_source or "editor",
             global_outline_merge_source=global_outline_merge_source or "editor",
+            merge_snapshot_id=resolved_snap,
         )
 
     return creator_settings_docs_payload(project)

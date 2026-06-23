@@ -375,6 +375,26 @@ class CreatorVolumeTemplateImportResponse(BaseModel):
     replaced: bool
 
 
+class CreatorVolumeTemplateSyncSource(BaseModel):
+    slug: str
+    name: str
+    template_count: int
+
+
+class CreatorVolumeTemplateSyncSourcesResponse(BaseModel):
+    sources: list[CreatorVolumeTemplateSyncSource]
+
+
+class CreatorVolumeTemplateSyncRequest(BaseModel):
+    source_slugs: list[str]
+
+
+class CreatorVolumeTemplateSyncResponse(BaseModel):
+    imported: int
+    total: int
+    sources: list[str]
+
+
 class CreatorVolumeTemplateListResponse(BaseModel):
     templates: list[CreatorVolumeTemplateInfo]
 
@@ -454,6 +474,7 @@ class CreatorOnboardingProgressResponse(BaseModel):
 class CreatorMergePreferencesResponse(BaseModel):
     pillars_merge_source: str
     global_outline_merge_source: str
+    merge_snapshot_id: Optional[str] = None
 
 
 class CreatorSettingsDiffPart(BaseModel):
@@ -2546,6 +2567,47 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorVolumeTemplateImportResponse(**result)
+
+    @app.get(
+        "/api/creator/volume-plan/templates/sync-sources",
+        response_model=CreatorVolumeTemplateSyncSourcesResponse,
+    )
+    def creator_volume_plan_template_sync_sources() -> CreatorVolumeTemplateSyncSourcesResponse:
+        from infra.creator_volume_templates import list_template_sync_sources
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorVolumeTemplateSyncSourcesResponse(
+            sources=[
+                CreatorVolumeTemplateSyncSource(**row)
+                for row in list_template_sync_sources(exclude_slug=project.slug)
+            ],
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/templates/sync",
+        response_model=CreatorVolumeTemplateSyncResponse,
+    )
+    def creator_volume_plan_template_sync(
+        req: CreatorVolumeTemplateSyncRequest,
+    ) -> CreatorVolumeTemplateSyncResponse:
+        from infra.creator_volume_templates import sync_custom_volume_templates_from_projects
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = sync_custom_volume_templates_from_projects(
+                project.root,
+                source_slugs=req.source_slugs,
+                exclude_slug=project.slug,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateSyncResponse(**result)
 
     @app.post(
         "/api/creator/volume-plan/apply-template",

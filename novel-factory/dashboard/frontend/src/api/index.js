@@ -609,6 +609,17 @@ export async function importCreatorVolumeTemplates(body) {
   });
 }
 
+export async function fetchCreatorVolumeTemplateSyncSources() {
+  return request('/creator/volume-plan/templates/sync-sources');
+}
+
+export async function syncCreatorVolumeTemplates(body) {
+  return request('/creator/volume-plan/templates/sync', {
+    method: 'POST',
+    body,
+  });
+}
+
 export async function fetchCreatorOnboarding() {
   return request('/creator/onboarding');
 }

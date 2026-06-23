@@ -15,6 +15,8 @@ const creatorMocks = vi.hoisted(() => ({
   renameCreatorVolumeTemplate: vi.fn(),
   exportCreatorVolumeTemplates: vi.fn(),
   importCreatorVolumeTemplates: vi.fn(),
+  fetchCreatorVolumeTemplateSyncSources: vi.fn(),
+  syncCreatorVolumeTemplates: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
   saveCreatorOnboardingProgress: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
@@ -44,6 +46,8 @@ vi.mock('../../src/api/index.js', () => ({
   renameCreatorVolumeTemplate: creatorMocks.renameCreatorVolumeTemplate,
   exportCreatorVolumeTemplates: creatorMocks.exportCreatorVolumeTemplates,
   importCreatorVolumeTemplates: creatorMocks.importCreatorVolumeTemplates,
+  fetchCreatorVolumeTemplateSyncSources: creatorMocks.fetchCreatorVolumeTemplateSyncSources,
+  syncCreatorVolumeTemplates: creatorMocks.syncCreatorVolumeTemplates,
   fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
   saveCreatorOnboardingProgress: creatorMocks.saveCreatorOnboardingProgress,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
@@ -68,19 +72,24 @@ vi.mock('../../src/composables/useStudioProject.js', () => ({
 
 const navMocks = vi.hoisted(() => ({
   focusWizard: null,
+  focusWizardStep: null,
   setWizardDeepLink: vi.fn(),
 }));
 
 vi.mock('../../src/composables/useDashboardNav.js', async () => {
   const { ref } = await import('vue');
   const focusWizard = ref(false);
+  const focusWizardStep = ref(null);
   navMocks.focusWizard = focusWizard;
-  navMocks.setWizardDeepLink.mockImplementation((open) => {
+  navMocks.focusWizardStep = focusWizardStep;
+  navMocks.setWizardDeepLink.mockImplementation((open, step) => {
     focusWizard.value = Boolean(open);
+    if (step !== undefined) focusWizardStep.value = step;
   });
   return {
     useDashboardNav: () => ({
       focusWizard,
+      focusWizardStep,
       setWizardDeepLink: navMocks.setWizardDeepLink,
     }),
   };
@@ -124,6 +133,7 @@ const overviewFixture = {
 describe('CreatorPage', () => {
   beforeEach(() => {
     navMocks.focusWizard.value = false;
+    navMocks.focusWizardStep.value = null;
     navMocks.setWizardDeepLink.mockClear();
     creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
     creatorMocks.fetchCreatorVolumePlan.mockResolvedValue({
@@ -233,6 +243,15 @@ describe('CreatorPage', () => {
     creatorMocks.fetchCreatorMergePreferences.mockResolvedValue({
       pillars_merge_source: 'disk',
       global_outline_merge_source: 'history',
+      merge_snapshot_id: 'snap1',
+    });
+    creatorMocks.fetchCreatorVolumeTemplateSyncSources.mockResolvedValue({
+      sources: [{ slug: 'other-book', name: '其他书', template_count: 2 }],
+    });
+    creatorMocks.syncCreatorVolumeTemplates.mockResolvedValue({
+      imported: 2,
+      total: 3,
+      sources: ['other-book'],
     });
     creatorMocks.exportCreatorVolumeTemplates.mockResolvedValue({
       schema_version: '1',
@@ -461,6 +480,15 @@ describe('CreatorPage', () => {
     expect(panel.element.open).toBe(true);
   });
 
+  it('highlights wizard step from step deep-link', async () => {
+    navMocks.focusWizard.value = true;
+    navMocks.focusWizardStep.value = 'volume';
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('.wizard-step--focused').exists()).toBe(true);
+  });
+
   it('saves custom volume template', async () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
@@ -577,5 +605,22 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="import-templates-btn"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.importCreatorVolumeTemplates).toHaveBeenCalled();
+  });
+
+  it('syncs templates from other projects', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="sync-templates-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.syncCreatorVolumeTemplates).toHaveBeenCalled();
+  });
+
+  it('restores merge snapshot from preferences', async () => {
+    mount(CreatorPage);
+    await flushPromises();
+
+    expect(creatorMocks.fetchCreatorMergePreferences).toHaveBeenCalled();
   });
 });

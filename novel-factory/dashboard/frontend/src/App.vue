@@ -74,8 +74,8 @@ const { status } = useWorkflowSocket() // Phase 8.11
 onMounted(async () => {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
-  if (params.get('wizard') === '1' && params.get('nav') !== 'creator') {
-    navigateTo('creator', { wizard: true })
+  if ((params.get('wizard') === '1' || params.get('step')) && params.get('nav') !== 'creator') {
+    navigateTo('creator', { wizard: true, wizardStep: params.get('step') || null })
     return
   }
   if (params.get('nav')) return

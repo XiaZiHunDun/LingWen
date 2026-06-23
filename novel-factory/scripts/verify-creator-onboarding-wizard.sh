@@ -111,6 +111,11 @@ from infra.creator_merge_preferences import load_merge_preferences
 
 prefs = load_merge_preferences(root)
 assert prefs["pillars_merge_source"] == "disk"
+
+from infra.creator_volume_templates import list_template_sync_sources
+
+sync_sources = list_template_sync_sources(exclude_slug="${SLUG}")
+assert isinstance(sync_sources, list)
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY
 

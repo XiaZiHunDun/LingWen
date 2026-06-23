@@ -8,10 +8,11 @@ from typing import Any
 
 from infra.creator_settings_docs import MERGE_SOURCES
 
-_STATE_VERSION = "1"
+_STATE_VERSION = "2"
 _DEFAULT = {
     "pillars_merge_source": "editor",
     "global_outline_merge_source": "editor",
+    "merge_snapshot_id": None,
 }
 
 
@@ -24,7 +25,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def load_merge_preferences(project_root: Path | str) -> dict[str, str]:
+def load_merge_preferences(project_root: Path | str) -> dict[str, Any]:
     path = _prefs_path(project_root)
     if not path.is_file():
         return dict(_DEFAULT)
@@ -35,9 +36,13 @@ def load_merge_preferences(project_root: Path | str) -> dict[str, str]:
         pillars = "editor"
     if outline not in MERGE_SOURCES:
         outline = "editor"
+    snapshot_id = data.get("merge_snapshot_id")
+    if snapshot_id is not None:
+        snapshot_id = str(snapshot_id).strip() or None
     return {
         "pillars_merge_source": pillars,
         "global_outline_merge_source": outline,
+        "merge_snapshot_id": snapshot_id,
     }
 
 
@@ -46,6 +51,7 @@ def save_merge_preferences(
     *,
     pillars_merge_source: str,
     global_outline_merge_source: str,
+    merge_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
     if pillars_merge_source not in MERGE_SOURCES:
         raise ValueError(f"invalid pillars merge source: {pillars_merge_source!r}")
@@ -53,10 +59,14 @@ def save_merge_preferences(
         raise ValueError(f"invalid outline merge source: {global_outline_merge_source!r}")
     path = _prefs_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
+    snap = merge_snapshot_id.strip() if merge_snapshot_id else None
+    if not snap:
+        snap = None
     data = {
         "schema_version": _STATE_VERSION,
         "pillars_merge_source": pillars_merge_source,
         "global_outline_merge_source": global_outline_merge_source,
+        "merge_snapshot_id": snap,
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

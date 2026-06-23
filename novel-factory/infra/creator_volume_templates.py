@@ -268,6 +268,76 @@ def import_custom_volume_templates(
     }
 
 
+def list_template_sync_sources(*, exclude_slug: str | None = None) -> list[dict[str, Any]]:
+    """List other factory projects that have custom volume templates."""
+    from infra.studio_registry import list_projects
+
+    rows: list[dict[str, Any]] = []
+    for project in list_projects():
+        if exclude_slug and project.slug == exclude_slug:
+            continue
+        exported = export_custom_volume_templates(project.root)
+        count = int(exported.get("count") or 0)
+        if count > 0:
+            rows.append(
+                {
+                    "slug": project.slug,
+                    "name": project.name,
+                    "template_count": count,
+                },
+            )
+    return rows
+
+
+def sync_custom_volume_templates_from_projects(
+    target_root: Path | str,
+    *,
+    source_slugs: list[str],
+    exclude_slug: str | None = None,
+) -> dict[str, Any]:
+    """Import custom templates from other projects into the active project."""
+    from infra.studio_registry import list_projects
+
+    if not source_slugs:
+        raise ValueError("source_slugs required")
+    by_slug = {project.slug: project for project in list_projects()}
+    collected: list[dict[str, Any]] = []
+    resolved_sources: list[str] = []
+    for slug in source_slugs:
+        sid = str(slug).strip()
+        if not sid or sid == exclude_slug:
+            continue
+        project = by_slug.get(sid)
+        if project is None:
+            raise ValueError(f"unknown project slug: {sid!r}")
+        exported = export_custom_volume_templates(project.root)
+        templates = exported.get("templates", [])
+        if not templates:
+            continue
+        resolved_sources.append(sid)
+        for tpl in templates:
+            name = str(tpl.get("name", "模板"))
+            if f"({sid})" not in name:
+                name = f"{name} ({sid})"
+            collected.append(
+                {
+                    **tpl,
+                    "name": name,
+                    "description": f"同步自 {sid} · {tpl.get('description', '')}".strip(),
+                },
+            )
+    if not collected:
+        store = _load_custom_store(target_root)
+        return {
+            "imported": 0,
+            "total": len(store.get("templates", [])),
+            "sources": resolved_sources,
+        }
+    result = import_custom_volume_templates(target_root, {"templates": collected}, replace=False)
+    result["sources"] = resolved_sources
+    return result
+
+
 def _build_builtin_template(template_id: str, max_chapter: int) -> list[dict[str, Any]]:
     if template_id == "companion_short":
         return [
