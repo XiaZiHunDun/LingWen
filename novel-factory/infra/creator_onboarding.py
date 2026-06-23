@@ -158,8 +158,15 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         "auto_completed_step_ids": [sid for sid in auto_completed if sid in valid_ids],
         "step_notes": step_notes,
         "step_mentions": _step_mentions_for_steps(steps, step_mentions),
+        "unread_mention_count": _unread_mention_count(project.root),
         "progress_pct": progress_pct(completed, len(steps)),
     }
+
+
+def _unread_mention_count(project_root) -> int:
+    from infra.creator_onboarding_notifications import unread_mention_count
+
+    return unread_mention_count(project_root)
 
 
 def _step_mentions_for_steps(

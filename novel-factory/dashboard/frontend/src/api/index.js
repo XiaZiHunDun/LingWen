@@ -676,6 +676,27 @@ export async function setCreatorVolumeTemplateVersion(templateId, body) {
   });
 }
 
+export async function fetchCreatorVolumeTemplateChangelog(templateId) {
+  return request(
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-changelog`,
+  );
+}
+
+export async function fetchCreatorOnboardingNotifications() {
+  return request('/creator/onboarding/notifications');
+}
+
+export async function ackCreatorOnboardingNotifications(body) {
+  return request('/creator/onboarding/notifications/ack', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function fetchCreatorMergePresetPackages() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages');
+}
+
 export async function fetchCreatorChapterPreview(chapterNum) {
   return request(`/creator/chapters/${chapterNum}`);
 }

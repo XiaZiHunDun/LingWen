@@ -595,6 +595,59 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert "batch" in data.get("step_mentions", {}).get("volume", [])
 
+    def test_onboarding_notifications(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/onboarding/notes",
+            json={"step_notes": {"volume": "请 @batch 协助"}},
+        )
+        resp = client.get("/api/creator/onboarding/notifications")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["unread"] >= 1
+        ack = client.post(
+            "/api/creator/onboarding/notifications/ack",
+            json={"all_notifications": True},
+        )
+        assert ack.status_code == 200
+        assert ack.json()["unread"] == 0
+
+    def test_template_version_changelog(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "changelog-api",
+                "max_chapter": 12,
+                "version_label": "v1.0.0",
+                "volumes": plan["volumes"] or [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 12,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+            },
+        )
+        assert save.status_code == 200
+        tid = save.json()["id"]
+        client.put(
+            f"/api/creator/volume-plan/templates/{tid}/version",
+            json={"version_label": "v2.0.0"},
+        )
+        changelog = client.get(f"/api/creator/volume-plan/templates/{tid}/version-changelog")
+        assert changelog.status_code == 200
+        entries = changelog.json()["entries"]
+        assert len(entries) >= 1
+        assert entries[0]["version_label"] == "v2.0.0"
+
+    def test_merge_preset_packages(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/settings-docs/merge-preferences/preset-packages")
+        assert resp.status_code == 200
+        packages = resp.json()["packages"]
+        assert any(pkg["id"] == "pillars_disk_outline_editor" for pkg in packages)
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

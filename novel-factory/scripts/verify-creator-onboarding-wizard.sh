@@ -128,6 +128,20 @@ exported_merge = export_merge_preferences(root)
 assert exported_merge["project"]["pillars_merge_source"] == "disk"
 import_merge_preferences(root, exported_merge, scope="both")
 
+from infra.creator_volume_templates import get_template_version_changelog
+
+changelog = get_template_version_changelog(root, saved["id"])
+assert len(changelog) >= 1
+
+from infra.creator_onboarding_notifications import unread_mention_count
+
+assert unread_mention_count(root) >= 1
+
+from infra.creator_merge_preferences import list_merge_preset_packages
+
+packages = list_merge_preset_packages(root)
+assert any(pkg["id"] == "pillars_disk_outline_editor" for pkg in packages)
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

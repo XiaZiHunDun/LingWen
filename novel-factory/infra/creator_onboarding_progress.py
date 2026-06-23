@@ -120,13 +120,17 @@ def save_onboarding_progress(
             dismissed_seen.add(sid)
             dismissed_unique.append(sid)
     merged_notes = dict(existing.get("step_notes", {}))
+    changed_step_ids: set[str] = set()
     if step_notes is not None:
         for key, value in step_notes.items():
             sid = str(key).strip()
             text = str(value).strip()[:_MAX_NOTE_LEN]
             if sid and text:
+                if merged_notes.get(sid) != text:
+                    changed_step_ids.add(sid)
                 merged_notes[sid] = text
             elif sid in merged_notes:
+                changed_step_ids.add(sid)
                 del merged_notes[sid]
     data = {
         "schema_version": _STATE_VERSION,
@@ -137,6 +141,14 @@ def save_onboarding_progress(
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if changed_step_ids:
+        from infra.creator_onboarding_notifications import record_mentions_from_notes
+
+        record_mentions_from_notes(
+            project_root,
+            step_notes={sid: merged_notes[sid] for sid in changed_step_ids if sid in merged_notes},
+            changed_step_ids=changed_step_ids,
+        )
     return data
 
 

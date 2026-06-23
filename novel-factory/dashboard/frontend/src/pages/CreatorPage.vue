@@ -53,7 +53,41 @@
         <span v-if="onboardingWizard.progress_pct != null" class="wizard-progress-badge" data-testid="wizard-progress-label">
           · {{ onboardingWizard.progress_pct }}%
         </span>
+        <span
+          v-if="wizardUnreadMentions > 0"
+          class="wizard-notification-badge"
+          data-testid="wizard-notification-badge"
+        >
+          · {{ wizardUnreadMentions }} 条 @提及
+        </span>
       </summary>
+      <div
+        v-if="wizardNotifications.length"
+        class="wizard-notifications"
+        data-testid="wizard-notifications-panel"
+      >
+        <p class="meta-line">批注通知</p>
+        <ul>
+          <li
+            v-for="note in wizardNotifications"
+            :key="note.id"
+            class="wizard-notification-row"
+            :class="{ 'wizard-notification-row--unread': !note.read }"
+            data-testid="wizard-notification-row"
+          >
+            <strong>@{{ note.handle }}</strong>
+            <span class="meta-line">{{ note.step_id }} · {{ note.note_excerpt }}</span>
+          </li>
+        </ul>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="wizard-ack-notifications-btn"
+          @click="ackWizardNotifications"
+        >
+          全部标为已读
+        </button>
+      </div>
       <ol class="wizard-steps">
         <li
           v-for="step in onboardingWizard.steps"
@@ -274,6 +308,25 @@
               >
                 {{ templateVersionSaving ? '保存中…' : '设版本标签' }}
               </button>
+            </div>
+            <div
+              v-if="(selectedTemplateProject || selectedTemplateFactory) && templateVersionChangelog.length"
+              class="template-changelog"
+              data-testid="template-version-changelog"
+            >
+              <p class="meta-line">版本变更日志</p>
+              <ul>
+                <li
+                  v-for="(entry, idx) in templateVersionChangelog"
+                  :key="`${entry.changed_at}-${idx}`"
+                  class="changelog-row"
+                  data-testid="template-changelog-row"
+                >
+                  <span v-if="entry.previous_label">{{ entry.previous_label }} → </span>
+                  <strong>{{ entry.version_label || '（清除）' }}</strong>
+                  <span v-if="entry.changed_at" class="meta-line"> · {{ formatHistoryTime(entry.changed_at) }}</span>
+                </li>
+              </ul>
             </div>
             <div v-if="selectedTemplateProject" class="merge-range">
               <input
@@ -720,6 +773,24 @@
                 </button>
               </div>
               <label class="meta-line">
+                预设包
+                <select
+                  class="vol-input"
+                  data-testid="merge-preset-package-select"
+                  :value="selectedMergePresetPackage"
+                  @change="applyMergePresetPackage($event.target.value)"
+                >
+                  <option value="">选择组合预设…</option>
+                  <option
+                    v-for="pkg in mergePresetPackages"
+                    :key="pkg.id"
+                    :value="pkg.id"
+                  >
+                    {{ pkg.name }}
+                  </option>
+                </select>
+              </label>
+              <label class="meta-line">
                 支柱
                 <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source" @change="refreshMergeStrategyPreview">
                   <option value="editor">编辑器</option>
@@ -900,6 +971,10 @@ import {
   applyCreatorOnboardingShare,
   saveCreatorOnboardingNotes,
   setCreatorVolumeTemplateVersion,
+  fetchCreatorVolumeTemplateChangelog,
+  fetchCreatorOnboardingNotifications,
+  ackCreatorOnboardingNotifications,
+  fetchCreatorMergePresetPackages,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -969,7 +1044,12 @@ const wizardStepNotes = ref({});
 const usesGlobalMergeDefault = ref(false);
 const templateVersionLabel = ref('');
 const templateVersionSaving = ref(false);
+const templateVersionChangelog = ref([]);
 const versionSemverPattern = /^v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9][a-zA-Z0-9.-]*)?$/i;
+const mergePresetPackages = ref([]);
+const selectedMergePresetPackage = ref('');
+const wizardNotifications = ref([]);
+const wizardUnreadMentions = ref(0);
 const showImportMergePrefs = ref(false);
 const importMergePrefsJson = ref('');
 const mergePrefsImporting = ref(false);
@@ -1058,6 +1138,8 @@ watch(selectedTemplateId, () => {
   const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
   renameTemplateName.value = row?.name || '';
   templateVersionLabel.value = row?.version_label || '';
+  templateVersionChangelog.value = row?.version_changelog || [];
+  loadTemplateVersionChangelog();
 });
 
 function formatTemplateOption(template) {
@@ -1231,6 +1313,8 @@ async function loadOnboardingWizard() {
     completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
     autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
     wizardStepNotes.value = { ...(onboardingWizard.value?.step_notes || {}) };
+    wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
+    await loadWizardNotifications();
     if (focusWizard.value) {
       await nextTick();
       try {
@@ -1278,6 +1362,7 @@ async function saveWizardStepNote(stepId) {
     await saveCreatorOnboardingNotes({
       step_notes: { [stepId]: wizardStepNotes.value[stepId] || '' },
     });
+    await loadWizardNotifications();
   } catch {
     /* ignore note save errors */
   }
@@ -1342,12 +1427,76 @@ async function toggleWizardStep(stepId, checked) {
 function applyMergePreset(source) {
   pillarsMergeSource.value = source;
   outlineMergeSource.value = source;
+  selectedMergePresetPackage.value = '';
   if (source === 'history' && settingsHistory.value.length) {
     const snapId = compareSnapshotId.value || settingsHistory.value[0].id;
     pillarsSnapshotId.value = snapId;
     outlineSnapshotId.value = snapId;
   }
   refreshMergeStrategyPreview();
+}
+
+function applyMergePresetPackage(packageId) {
+  const pkg = mergePresetPackages.value.find((row) => row.id === packageId);
+  if (!pkg) {
+    selectedMergePresetPackage.value = '';
+    return;
+  }
+  selectedMergePresetPackage.value = packageId;
+  pillarsMergeSource.value = pkg.pillars_merge_source;
+  outlineMergeSource.value = pkg.global_outline_merge_source;
+  if (pkg.pillars_merge_source === 'history' && settingsHistory.value.length) {
+    pillarsSnapshotId.value = compareSnapshotId.value || settingsHistory.value[0].id;
+  }
+  if (pkg.global_outline_merge_source === 'history' && settingsHistory.value.length) {
+    outlineSnapshotId.value = compareSnapshotId.value || settingsHistory.value[0].id;
+  }
+  refreshMergeStrategyPreview();
+}
+
+async function loadTemplateVersionChangelog() {
+  if (!selectedTemplateProject.value && !selectedTemplateFactory.value) {
+    templateVersionChangelog.value = [];
+    return;
+  }
+  try {
+    const data = await fetchCreatorVolumeTemplateChangelog(selectedTemplateId.value);
+    templateVersionChangelog.value = data.entries || [];
+  } catch {
+    const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
+    templateVersionChangelog.value = row?.version_changelog || [];
+  }
+}
+
+async function loadWizardNotifications() {
+  try {
+    const data = await fetchCreatorOnboardingNotifications();
+    wizardNotifications.value = data.notifications || [];
+    wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
+  } catch {
+    wizardNotifications.value = [];
+    wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
+  }
+}
+
+async function ackWizardNotifications() {
+  try {
+    const result = await ackCreatorOnboardingNotifications({ all_notifications: true });
+    wizardUnreadMentions.value = result.unread ?? 0;
+    await loadWizardNotifications();
+    saveMessage.value = `已标记 ${result.acked} 条通知为已读`;
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function loadMergePresetPackages() {
+  try {
+    const data = await fetchCreatorMergePresetPackages();
+    mergePresetPackages.value = data.packages || [];
+  } catch {
+    mergePresetPackages.value = [];
+  }
 }
 
 async function deleteSelectedVolumeTemplate() {
@@ -1433,6 +1582,7 @@ async function saveTemplateVersionLabel() {
     });
     saveMessage.value = '已更新版本标签';
     await loadVolumeTemplates();
+    await loadTemplateVersionChangelog();
   } catch (e) {
     handleSaveError(e);
   } finally {
@@ -1956,6 +2106,7 @@ async function refresh() {
     ]);
     overview.value = ov;
     await loadMergePreferences();
+    await loadMergePresetPackages();
     if (batchJob.value?.status === 'running' && !batchPollTimer) {
       lastBatchStatus.value = 'running';
       startBatchPolling();
@@ -2355,6 +2506,31 @@ watch(projectRevision, () => {
   background: rgba(127, 127, 127, 0.12);
   padding: 1px 4px;
   border-radius: 3px;
+}
+
+.wizard-notification-badge {
+  color: var(--color-warn, #c90);
+  font-size: 8px;
+}
+
+.wizard-notifications {
+  margin: var(--space-sm) 0;
+  padding: var(--space-sm);
+  border: 1px dashed rgba(127, 127, 127, 0.35);
+}
+
+.wizard-notification-row--unread strong {
+  color: var(--color-warn, #c90);
+}
+
+.template-changelog ul {
+  margin: 4px 0 0;
+  padding-left: 1.2em;
+  font-size: 8px;
+}
+
+.changelog-row {
+  margin-bottom: 2px;
 }
 
 .version-semver-warn {

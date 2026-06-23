@@ -29,6 +29,7 @@ _FACTORY_STATE_VERSION = "1"
 _MAX_CUSTOM_TEMPLATES = 5
 _MAX_FACTORY_TEMPLATES = 20
 _MAX_VERSION_LABEL = 32
+_MAX_CHANGELOG_ENTRIES = 20
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 _SEMVER_RE = re.compile(
     r"^v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:-(?P<prerelease>[a-zA-Z0-9][a-zA-Z0-9.-]*))?$",
@@ -78,6 +79,70 @@ def _normalize_version_label(raw: str | None, *, strict: bool = False) -> str | 
     return label[:_MAX_VERSION_LABEL]
 
 
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _append_version_changelog(
+    item: dict[str, Any],
+    *,
+    new_label: str | None,
+    old_label: str | None = None,
+) -> None:
+    """Append a version change entry when the label actually changes."""
+    normalized_new = _normalize_version_label(new_label)
+    normalized_old = _normalize_version_label(old_label)
+    if normalized_new == normalized_old:
+        return
+    changelog: list[dict[str, Any]] = list(item.get("version_changelog") or [])
+    changelog.insert(
+        0,
+        {
+            "version_label": normalized_new,
+            "previous_label": normalized_old,
+            "changed_at": _now_iso(),
+        },
+    )
+    item["version_changelog"] = changelog[:_MAX_CHANGELOG_ENTRIES]
+
+
+def _changelog_for_list(item: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = item.get("version_changelog") or []
+    return [
+        {
+            "version_label": row.get("version_label"),
+            "previous_label": row.get("previous_label"),
+            "changed_at": row.get("changed_at"),
+        }
+        for row in rows[:5]
+    ]
+
+
+def get_template_version_changelog(
+    project_root: Path | str | None,
+    template_id: str,
+) -> list[dict[str, Any]]:
+    """Return version changelog for a custom or factory template."""
+    tid = template_id.strip().lower()
+    if tid.startswith(_CUSTOM_PREFIX):
+        if project_root is None:
+            raise ValueError("project root required for custom templates")
+        store = _load_custom_store(project_root)
+        for item in store.get("templates", []):
+            if item.get("id") == tid:
+                return list(item.get("version_changelog") or [])
+        raise ValueError(f"unknown template: {template_id!r}")
+    if tid.startswith(_FACTORY_PREFIX):
+        factory = _load_factory_store()
+        for item in factory.get("templates", []):
+            if item.get("id") == tid:
+                return list(item.get("version_changelog") or [])
+        raise ValueError(f"unknown factory template: {template_id!r}")
+    raise ValueError(f"unknown template: {template_id!r}")
+
+
 def _template_list_row(item: dict[str, Any], scope: str, *, default_description: str) -> dict[str, Any]:
     return {
         "id": item["id"],
@@ -87,6 +152,7 @@ def _template_list_row(item: dict[str, Any], scope: str, *, default_description:
         "scope": scope,
         "version_label": _normalize_version_label(item.get("version_label")),
         "version_semver_valid": is_valid_version_label(item.get("version_label")),
+        "version_changelog": _changelog_for_list(item),
     }
 
 
@@ -229,6 +295,7 @@ def save_custom_volume_template(
         "name": label,
         "description": (description or "保存自当前卷纲").strip(),
         "version_label": _normalize_version_label(version_label, strict=True) if version_label else None,
+        "version_changelog": [],
         "source_max_chapter": max_chapter,
         "volumes": [
             {
@@ -241,6 +308,8 @@ def save_custom_volume_template(
             for v in volumes
         ],
     }
+    if entry["version_label"]:
+        _append_version_changelog(entry, new_label=entry["version_label"], old_label=None)
     templates.insert(0, entry)
     store["templates"] = templates[:_MAX_CUSTOM_TEMPLATES]
     store["schema_version"] = _CUSTOM_STATE_VERSION
@@ -285,10 +354,16 @@ def rename_custom_volume_template(
             if description is not None:
                 item["description"] = description.strip()
             if version_label is not None:
+                old_label = item.get("version_label")
                 item["version_label"] = (
                     _normalize_version_label(version_label, strict=True)
                     if str(version_label).strip()
                     else None
+                )
+                _append_version_changelog(
+                    item,
+                    new_label=item.get("version_label"),
+                    old_label=old_label,
                 )
             _save_custom_store(project_root, store)
             return {
@@ -313,10 +388,16 @@ def set_custom_template_version_label(
     store = _load_custom_store(project_root)
     for item in store.get("templates", []):
         if item.get("id") == tid:
+            old_label = item.get("version_label")
             item["version_label"] = (
                 _normalize_version_label(version_label, strict=True)
                 if version_label and str(version_label).strip()
                 else None
+            )
+            _append_version_changelog(
+                item,
+                new_label=item.get("version_label"),
+                old_label=old_label,
             )
             _save_custom_store(project_root, store)
             return {
@@ -338,10 +419,16 @@ def set_factory_template_version_label(
     factory = _load_factory_store()
     for item in factory.get("templates", []):
         if item.get("id") == tid:
+            old_label = item.get("version_label")
             item["version_label"] = (
                 _normalize_version_label(version_label, strict=True)
                 if version_label and str(version_label).strip()
                 else None
+            )
+            _append_version_changelog(
+                item,
+                new_label=item.get("version_label"),
+                old_label=old_label,
             )
             _save_factory_store(factory)
             return {

@@ -330,6 +330,18 @@ class CreatorVolumeTemplateInfo(BaseModel):
     scope: str = "builtin"
     version_label: Optional[str] = None
     version_semver_valid: bool = True
+    version_changelog: list[dict[str, Any]] = []
+
+
+class CreatorVolumeTemplateChangelogEntry(BaseModel):
+    version_label: Optional[str] = None
+    previous_label: Optional[str] = None
+    changed_at: Optional[str] = None
+
+
+class CreatorVolumeTemplateChangelogResponse(BaseModel):
+    template_id: str
+    entries: list[CreatorVolumeTemplateChangelogEntry]
 
 
 class CreatorVolumeTemplateVersionRequest(BaseModel):
@@ -504,7 +516,45 @@ class CreatorOnboardingResponse(BaseModel):
     auto_completed_step_ids: list[str] = []
     step_notes: dict[str, str] = {}
     step_mentions: dict[str, list[str]] = {}
+    unread_mention_count: int = 0
     progress_pct: int = 0
+
+
+class CreatorOnboardingNotification(BaseModel):
+    id: str
+    step_id: str
+    handle: str
+    note_excerpt: str
+    created_at: Optional[str] = None
+    read: bool = False
+
+
+class CreatorOnboardingNotificationsResponse(BaseModel):
+    notifications: list[CreatorOnboardingNotification]
+    unread: int
+
+
+class CreatorOnboardingNotificationsAckRequest(BaseModel):
+    notification_ids: list[str] = []
+    all_notifications: bool = False
+
+
+class CreatorOnboardingNotificationsAckResponse(BaseModel):
+    acked: int
+    unread: int
+
+
+class CreatorMergePresetPackage(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    builtin: bool = True
+    pillars_merge_source: str
+    global_outline_merge_source: str
+
+
+class CreatorMergePresetPackagesResponse(BaseModel):
+    packages: list[CreatorMergePresetPackage]
 
 
 class CreatorOnboardingProgressRequest(BaseModel):
@@ -2544,6 +2594,44 @@ def create_app(
         )
         return CreatorOnboardingProgressResponse(**result)
 
+    @app.get(
+        "/api/creator/onboarding/notifications",
+        response_model=CreatorOnboardingNotificationsResponse,
+    )
+    def creator_onboarding_notifications_get() -> CreatorOnboardingNotificationsResponse:
+        from infra.creator_onboarding_notifications import list_onboarding_notifications
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        rows = list_onboarding_notifications(project.root)
+        unread = sum(1 for row in rows if not row.get("read"))
+        return CreatorOnboardingNotificationsResponse(
+            notifications=[CreatorOnboardingNotification(**row) for row in rows],
+            unread=unread,
+        )
+
+    @app.post(
+        "/api/creator/onboarding/notifications/ack",
+        response_model=CreatorOnboardingNotificationsAckResponse,
+    )
+    def creator_onboarding_notifications_ack(
+        req: CreatorOnboardingNotificationsAckRequest,
+    ) -> CreatorOnboardingNotificationsAckResponse:
+        from infra.creator_onboarding_notifications import ack_onboarding_notifications
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = ack_onboarding_notifications(
+            project.root,
+            notification_ids=req.notification_ids,
+            all_notifications=req.all_notifications,
+        )
+        return CreatorOnboardingNotificationsAckResponse(**result)
+
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
         from infra.creator_volume_plan import volume_plan_payload
@@ -2685,6 +2773,32 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorVolumeTemplateVersionResponse(**result)
+
+    @app.get(
+        "/api/creator/volume-plan/templates/{template_id}/version-changelog",
+        response_model=CreatorVolumeTemplateChangelogResponse,
+    )
+    def creator_volume_plan_template_changelog(
+        template_id: str,
+    ) -> CreatorVolumeTemplateChangelogResponse:
+        from infra.creator_volume_templates import get_template_version_changelog
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        tid = template_id.strip().lower()
+        try:
+            entries = get_template_version_changelog(
+                project.root if tid.startswith("custom_") else None,
+                tid,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateChangelogResponse(
+            template_id=tid,
+            entries=[CreatorVolumeTemplateChangelogEntry(**row) for row in entries],
+        )
 
     @app.get(
         "/api/creator/volume-plan/templates/export",
@@ -3106,6 +3220,22 @@ def create_app(
             scope=result["scope"],
             project=result.get("project"),
             global_prefs=result.get("global"),
+        )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/preset-packages",
+        response_model=CreatorMergePresetPackagesResponse,
+    )
+    def creator_settings_merge_preset_packages() -> CreatorMergePresetPackagesResponse:
+        from infra.creator_merge_preferences import list_merge_preset_packages
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        packages = list_merge_preset_packages(project.root)
+        return CreatorMergePresetPackagesResponse(
+            packages=[CreatorMergePresetPackage(**row) for row in packages],
         )
 
     @app.post(
