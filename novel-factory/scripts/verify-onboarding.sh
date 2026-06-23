@@ -63,3 +63,33 @@ if [[ "${LINGWEN_ONBOARDING_PILOT:-0}" == "1" && -n "${MINIMAX_API_KEY:-}" ]]; t
 fi
 
 echo "=== Onboarding verify passed: ${SLUG} ==="
+
+echo "=== Companion onboarding smoke ==="
+COMP_SLUG="${PREFIX}-companion-$(date +%s)"
+COMP_PROJECT="${ROOT}/projects/${COMP_SLUG}"
+
+python lingwen.py init-project "${COMP_SLUG}" \
+  --title "陪伴验收" \
+  --protagonist 测试主角 \
+  --chapters 5 \
+  --creation-mode companion
+
+export LINGWEN_PROJECT_ROOT="${COMP_PROJECT}"
+bash scripts/run-companion-check.sh
+
+python3 - <<PY
+from infra.creator_volume_plan import save_volume_plan, volume_plan_payload
+
+root = "${COMP_PROJECT}"
+save_volume_plan(
+    root,
+    [{"label": "一", "start_chapter": 1, "end_chapter": 5, "core_conflict": "试", "locked": True}],
+)
+payload = volume_plan_payload(root)
+assert payload["locked_volume_count"] == 1
+print("OK companion volume plan:", payload["deviation_count"], "deviations")
+PY
+
+rm -rf "${COMP_PROJECT}"
+
+echo "=== All onboarding verify passed ==="

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "updated_at": "2026-06-23T05:38:23.903616+00:00",
+  "volumes": [
+    {
+      "label": "一",
+      "start_chapter": 1,
+      "end_chapter": 10,
+      "core_conflict": "全书",
+      "locked": true,
+      "locked_at": "2026-06-23T05:38:23.841197+00:00"
+    }
+  ]
+}

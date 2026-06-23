@@ -65,9 +65,25 @@ import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue' /
 import ProjectSwitcher from './components/ProjectSwitcher.vue' // Phase 10.04
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
 import { useDashboardNav } from './composables/useDashboardNav.js' // Phase 9.83 F75
+import { fetchStudioSummary } from './api/index.js'
+import { onMounted } from 'vue'
 
 const { activeNav, navigateTo } = useDashboardNav()
 const { status } = useWorkflowSocket() // Phase 8.11
+
+onMounted(async () => {
+  if (typeof window === 'undefined') return
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('nav')) return
+  try {
+    const summary = await fetchStudioSummary()
+    if (summary.creation_mode === 'companion' || summary.creation_mode === 'advance') {
+      navigateTo('creator')
+    }
+  } catch {
+    /* active project optional */
+  }
+})
 
 function onNavClick(itemId) {
   navigateTo(itemId, { clearFocus: true })

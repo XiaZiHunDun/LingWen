@@ -36,3 +36,48 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert "creation_mode" in data
         assert "quality_profile" in data
+
+    def test_volume_plan_get_put(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/volume-plan")
+        assert resp.status_code == 200
+        assert "volumes" in resp.json()
+
+        put = client.put(
+            "/api/creator/volume-plan",
+            json={
+                "volumes": [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 5,
+                        "core_conflict": "开篇",
+                        "locked": True,
+                    },
+                ],
+            },
+        )
+        assert put.status_code == 200
+        data = put.json()
+        assert data["locked_volume_count"] == 1
+        assert data["volumes"][0]["locked"] is True
+
+    def test_overview_includes_deviations(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/volume-plan",
+            json={
+                "volumes": [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 10,
+                        "core_conflict": "全书",
+                        "locked": True,
+                    },
+                ],
+            },
+        )
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["locked_volume_count"] == 1
+        assert "deviations" in data

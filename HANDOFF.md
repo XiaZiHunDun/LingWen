@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.69 (创作者 v1.1 — check 自动模式 + Dashboard 三栏, 2026-06-22)  
-> **更新 (2026-06-22)**: `lingwen check` 读 `creation_mode` · Dashboard **创作** 页三栏
+> **版本**: v10.70 (创作者 v1.2 — 卷纲锁定 + 偏离 diff, 2026-06-22)  
+> **更新 (2026-06-22)**: Dashboard 卷纲编辑/锁定 · 偏离高亮 · companion 默认导航
 
 ---
 
@@ -99,7 +99,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v1.1 已落地**：`lingwen check` 自动 P0（companion/advance）· Dashboard `?nav=creator` 三栏 · API `/api/creator/overview`
 
-**v1.2 待做**：卷纲锁定 UI · 偏离 diff 高亮
+**v1.2 已落地**：卷纲 `PUT /api/creator/volume-plan` · 偏离 diff · companion/advance 打开 Dashboard 默认进创作页
+
+**v1.3 待做**：语义级纲章偏离 · Dashboard 正文预览
 
 ### 常用命令
 

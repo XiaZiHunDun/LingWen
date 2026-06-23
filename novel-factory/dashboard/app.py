@@ -232,6 +232,23 @@ class CreatorVolumeSummary(BaseModel):
     excerpt: str
 
 
+class CreatorVolumePlanEntry(BaseModel):
+    label: str
+    start_chapter: int
+    end_chapter: int
+    core_conflict: str = ""
+    locked: bool = False
+    locked_at: Optional[str] = None
+
+
+class CreatorVolumeDeviation(BaseModel):
+    type: str
+    severity: str
+    chapter: int
+    volume_label: Optional[str] = None
+    message: str
+
+
 class CreatorOverviewResponse(BaseModel):
     slug: str
     name: str
@@ -252,6 +269,25 @@ class CreatorOverviewResponse(BaseModel):
     advance_batch_hint: str
     notify_per_chapter: bool
     advance_volume_summary: bool
+    locked_volume_count: int = 0
+    deviation_count: int = 0
+    alert_count: int = 0
+    deviations: list[CreatorVolumeDeviation] = []
+
+
+class CreatorVolumePlanResponse(BaseModel):
+    slug: str
+    global_outline_path: str
+    state_path: str
+    volumes: list[CreatorVolumePlanEntry]
+    locked_volume_count: int
+    deviations: list[CreatorVolumeDeviation]
+    deviation_count: int
+    alert_count: int
+
+
+class CreatorVolumePlanSaveRequest(BaseModel):
+    volumes: list[CreatorVolumePlanEntry]
 
 
 class StudioQualityResponse(BaseModel):
@@ -2101,6 +2137,30 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active project")
         return CreatorOverviewResponse(**creator_overview(project))
+
+    @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
+    def creator_volume_plan_get() -> CreatorVolumePlanResponse:
+        from infra.creator_volume_plan import volume_plan_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorVolumePlanResponse(**volume_plan_payload(project.root))
+
+    @app.put("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
+    def creator_volume_plan_put(req: CreatorVolumePlanSaveRequest) -> CreatorVolumePlanResponse:
+        from infra.creator_volume_plan import save_volume_plan, volume_plan_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        save_volume_plan(
+            project.root,
+            [v.model_dump() for v in req.volumes],
+        )
+        return CreatorVolumePlanResponse(**volume_plan_payload(project.root))
 
     @app.get("/api/studio/quality", response_model=StudioQualityResponse)
     def studio_quality_dashboard() -> StudioQualityResponse:

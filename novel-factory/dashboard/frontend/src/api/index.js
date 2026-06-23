@@ -540,6 +540,17 @@ export async function fetchCreatorOverview() {
   return request('/creator/overview');
 }
 
+export async function fetchCreatorVolumePlan() {
+  return request('/creator/volume-plan');
+}
+
+export async function saveCreatorVolumePlan(volumes) {
+  return request('/creator/volume-plan', {
+    method: 'PUT',
+    body: { volumes },
+  });
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from infra.creator_mode import settings_from_project_config
+from infra.creator_volume_plan import load_volume_plan, compute_volume_deviations
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject, quality_report_summary
@@ -63,6 +64,9 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
     report = quality_report_summary(project)
     p0_count = report.get("p0", 0) if report.get("available") else None
 
+    volumes = load_volume_plan(project.root)
+    deviations = compute_volume_deviations(project.root, volumes, paths=paths)
+
     return {
         "slug": project.slug,
         "name": config.name,
@@ -88,4 +92,8 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         ),
         "notify_per_chapter": settings.notify_per_chapter,
         "advance_volume_summary": settings.advance_volume_summary,
+        "locked_volume_count": sum(1 for v in volumes if v.locked),
+        "deviation_count": len(deviations),
+        "alert_count": sum(1 for d in deviations if d["severity"] == "alert"),
+        "deviations": deviations[:30],
     }

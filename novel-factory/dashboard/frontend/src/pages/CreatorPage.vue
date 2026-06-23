@@ -1,5 +1,5 @@
 <!--
-  CreatorPage.vue — 创作者三栏：写 / 脉络 / 设定
+  CreatorPage.vue — 创作者三栏：写 / 脉络 / 设定 + 卷纲锁定与偏离 diff
 -->
 <template>
   <div class="creator-page">
@@ -8,6 +8,13 @@
       <div class="header-actions">
         <span v-if="overview" class="mode-badge pixel-border" data-testid="creation-mode-badge">
           {{ modeLabel }}
+        </span>
+        <span
+          v-if="overview && overview.deviation_count"
+          class="deviation-badge pixel-border"
+          data-testid="deviation-badge"
+        >
+          偏离 {{ overview.deviation_count }}
         </span>
         <button
           class="refresh-btn pixel-border"
@@ -23,18 +30,21 @@
     <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
     </div>
+    <div v-if="saveMessage" class="save-banner pixel-border" data-testid="save-banner">
+      {{ saveMessage }}
+    </div>
 
     <div v-if="overview" class="creator-grid" data-testid="creator-grid">
       <!-- 写 -->
       <section class="creator-column pixel-card" data-testid="column-write">
         <h2 class="column-title">写</h2>
-        <p class="column-hint">章节状态 · 正文在本地编辑器修改</p>
+        <p class="column-hint">章节状态 · 偏离章高亮</p>
         <ul class="chapter-list">
           <li
             v-for="ch in visibleChapters"
             :key="ch.chapter"
             class="chapter-row"
-            :class="{ 'chapter-row--done': ch.has_body }"
+            :class="chapterRowClass(ch.chapter)"
           >
             <span class="ch-label">ch{{ String(ch.chapter).padStart(3, '0') }}</span>
             <span class="ch-status">
@@ -62,6 +72,72 @@
             />
           </div>
         </div>
+
+        <div class="volume-plan-panel" data-testid="volume-plan-panel">
+          <div class="volume-plan-header">
+            <h3 class="subsection-title">卷纲</h3>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="add-volume-btn"
+              @click="addVolume"
+            >
+              + 卷
+            </button>
+          </div>
+          <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」添加。</div>
+          <div
+            v-for="(vol, idx) in editableVolumes"
+            :key="idx"
+            class="volume-edit-row pixel-border"
+            :class="{ 'volume-edit-row--locked': vol.locked }"
+          >
+            <input v-model="vol.label" class="vol-input vol-label" placeholder="卷名" />
+            <div class="vol-range">
+              <input v-model.number="vol.start_chapter" type="number" min="1" class="vol-input vol-num" />
+              <span>–</span>
+              <input v-model.number="vol.end_chapter" type="number" min="1" class="vol-input vol-num" />
+            </div>
+            <input
+              v-model="vol.core_conflict"
+              class="vol-input vol-conflict"
+              placeholder="核心冲突"
+            />
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              :data-testid="`lock-volume-${idx}`"
+              @click="toggleLock(idx)"
+            >
+              {{ vol.locked ? '已锁' : '锁定' }}
+            </button>
+          </div>
+          <button
+            v-if="editableVolumes.length"
+            type="button"
+            class="save-btn pixel-border"
+            data-testid="save-volume-plan-btn"
+            :disabled="saving"
+            @click="saveVolumePlan"
+          >
+            {{ saving ? '保存中…' : '保存卷纲' }}
+          </button>
+        </div>
+
+        <ul
+          v-if="overview.deviations.length"
+          class="deviation-list"
+          data-testid="deviation-list"
+        >
+          <li
+            v-for="(d, i) in overview.deviations"
+            :key="i"
+            :class="`deviation-item deviation-${d.severity}`"
+          >
+            {{ d.message }}
+          </li>
+        </ul>
+
         <template v-if="overview.volume_summaries.length">
           <h3 class="subsection-title">卷摘要</h3>
           <details
@@ -73,12 +149,6 @@
             <pre class="volume-excerpt">{{ vol.excerpt }}</pre>
           </details>
         </template>
-        <p v-else-if="overview.advance_volume_summary" class="meta-line">
-          推进模式：batch 后自动生成 <code>docs/volume-summary-*.md</code>
-          <br />
-          <code>{{ overview.advance_batch_hint }}</code>
-        </p>
-        <p v-else class="meta-line">按章推进；保存后跑 P0 守门即可。</p>
       </section>
 
       <!-- 设定 -->
@@ -111,13 +181,20 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { fetchCreatorOverview } from '../api/index.js';
+import {
+  fetchCreatorOverview,
+  fetchCreatorVolumePlan,
+  saveCreatorVolumePlan,
+} from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
 
 const { projectRevision } = useStudioProject();
 const overview = ref(null);
+const editableVolumes = ref([]);
 const loading = ref(false);
+const saving = ref(false);
 const error = ref(null);
+const saveMessage = ref('');
 
 const modeLabel = computed(() => {
   if (!overview.value) return '';
@@ -125,15 +202,80 @@ const modeLabel = computed(() => {
   return map[overview.value.creation_mode] || overview.value.creation_mode;
 });
 
+const deviationChapters = computed(() => {
+  const set = new Set();
+  for (const d of overview.value?.deviations || []) {
+    if (d.chapter) set.add(d.chapter);
+  }
+  return set;
+});
+
+const alertChapters = computed(() => {
+  const set = new Set();
+  for (const d of overview.value?.deviations || []) {
+    if (d.severity === 'alert' && d.chapter) set.add(d.chapter);
+  }
+  return set;
+});
+
 const visibleChapters = computed(() =>
   (overview.value?.chapters || []).filter((ch) => ch.chapter <= 15),
 );
+
+function chapterRowClass(chapter) {
+  if (alertChapters.value.has(chapter)) return 'chapter-row--alert';
+  if (deviationChapters.value.has(chapter)) return 'chapter-row--warn';
+  const ch = overview.value?.chapters?.find((c) => c.chapter === chapter);
+  if (ch?.has_body) return 'chapter-row--done';
+  return '';
+}
+
+function addVolume() {
+  const nextStart = editableVolumes.value.length
+    ? editableVolumes.value[editableVolumes.value.length - 1].end_chapter + 1
+    : 1;
+  editableVolumes.value.push({
+    label: `卷${editableVolumes.value.length + 1}`,
+    start_chapter: nextStart,
+    end_chapter: Math.min(nextStart + 9, overview.value?.max_chapter || nextStart + 9),
+    core_conflict: '',
+    locked: false,
+  });
+}
+
+function toggleLock(idx) {
+  editableVolumes.value[idx].locked = !editableVolumes.value[idx].locked;
+}
+
+async function loadVolumePlan() {
+  const plan = await fetchCreatorVolumePlan();
+  editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
+}
+
+async function saveVolumePlan() {
+  saving.value = true;
+  saveMessage.value = '';
+  error.value = null;
+  try {
+    await saveCreatorVolumePlan(editableVolumes.value);
+    saveMessage.value = '卷纲已保存并同步到全局大纲';
+    await refresh();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    saving.value = false;
+  }
+}
 
 async function refresh() {
   loading.value = true;
   error.value = null;
   try {
-    overview.value = await fetchCreatorOverview();
+    const [ov] = await Promise.all([
+      fetchCreatorOverview(),
+      loadVolumePlan(),
+    ]);
+    overview.value = ov;
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -175,10 +317,15 @@ watch(projectRevision, () => {
   gap: var(--space-sm);
 }
 
-.mode-badge {
+.mode-badge,
+.deviation-badge {
   font-size: 8px;
   padding: var(--space-xs) var(--space-sm);
   font-family: 'Press Start 2P', monospace;
+}
+
+.deviation-badge {
+  color: #c44;
 }
 
 .creator-grid {
@@ -233,6 +380,16 @@ watch(projectRevision, () => {
   background: rgba(100, 200, 100, 0.08);
 }
 
+.chapter-row--warn {
+  background: rgba(200, 180, 80, 0.15);
+  border-color: #aa8;
+}
+
+.chapter-row--alert {
+  background: rgba(200, 80, 80, 0.15);
+  border-color: #c66;
+}
+
 .progress-bar {
   height: 12px;
   margin-top: var(--space-sm);
@@ -249,6 +406,60 @@ watch(projectRevision, () => {
   font-size: 9px;
   margin: var(--space-md) 0 var(--space-xs);
 }
+
+.volume-plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.volume-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  margin-bottom: 6px;
+  font-size: 8px;
+}
+
+.volume-edit-row--locked {
+  border-color: var(--color-accent);
+  background: rgba(100, 140, 200, 0.08);
+}
+
+.vol-input {
+  font-size: 8px;
+  padding: 2px 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--color-text);
+}
+
+.vol-label { width: 3em; }
+.vol-num { width: 3em; }
+.vol-conflict { flex: 1; min-width: 80px; }
+.vol-range { display: flex; align-items: center; gap: 2px; }
+
+.mini-btn,
+.save-btn {
+  font-size: 7px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.save-btn {
+  margin-top: var(--space-xs);
+}
+
+.deviation-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-sm) 0 0;
+  font-size: 8px;
+}
+
+.deviation-warn { color: #886600; }
+.deviation-alert { color: #c44; }
 
 .settings-excerpt,
 .volume-excerpt {
@@ -283,6 +494,12 @@ watch(projectRevision, () => {
 .error-banner {
   padding: var(--space-sm);
   color: #c44;
+  font-size: 8px;
+}
+
+.save-banner {
+  padding: var(--space-sm);
+  color: #484;
   font-size: 8px;
 }
 </style>

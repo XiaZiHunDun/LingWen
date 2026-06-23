@@ -4,10 +4,14 @@ import { mount, flushPromises } from '@vue/test-utils';
 
 const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOverview: vi.fn(),
+  fetchCreatorVolumePlan: vi.fn(),
+  saveCreatorVolumePlan: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOverview: creatorMocks.fetchCreatorOverview,
+  fetchCreatorVolumePlan: creatorMocks.fetchCreatorVolumePlan,
+  saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
@@ -18,42 +22,75 @@ vi.mock('../../src/composables/useStudioProject.js', () => ({
 
 import CreatorPage from '../../src/pages/CreatorPage.vue';
 
+const overviewFixture = {
+  slug: 'demo-book',
+  name: '演示书',
+  creation_mode: 'advance',
+  quality_profile: 'creator_relaxed',
+  max_chapter: 12,
+  chapters_written: 3,
+  coverage_pct: 25,
+  chapters: [
+    { chapter: 1, has_body: true, has_outline: true, word_count: 2000, excerpt: '第一章' },
+    { chapter: 2, has_body: false, has_outline: true, word_count: 0, excerpt: null },
+    { chapter: 8, has_body: true, has_outline: true, word_count: 500, excerpt: '越界' },
+  ],
+  volume_summaries: [],
+  pillars_excerpt: '支柱',
+  pillars_path: '/docs/novel-pillars.md',
+  global_outline_excerpt: '大纲',
+  global_outline_path: '/全局大纲.md',
+  p0_count: 0,
+  quality_report_available: true,
+  companion_check_cmd: 'bash scripts/run-companion-check.sh',
+  advance_batch_hint: 'bash scripts/run-advance-volume.sh 1 10 10 0.30',
+  notify_per_chapter: false,
+  advance_volume_summary: true,
+  locked_volume_count: 1,
+  deviation_count: 2,
+  alert_count: 1,
+  deviations: [
+    { type: 'missing_body', severity: 'warn', chapter: 2, volume_label: '一', message: '缺正文' },
+    { type: 'outside_locked_plan', severity: 'alert', chapter: 8, volume_label: null, message: '越界' },
+  ],
+};
+
 describe('CreatorPage', () => {
   beforeEach(() => {
-    creatorMocks.fetchCreatorOverview.mockResolvedValue({
-      slug: 'demo-book',
-      name: '演示书',
-      creation_mode: 'companion',
-      quality_profile: 'creator_relaxed',
-      max_chapter: 12,
-      chapters_written: 3,
-      coverage_pct: 25,
-      chapters: [
-        { chapter: 1, has_body: true, has_outline: true, word_count: 2000, excerpt: '第一章' },
-        { chapter: 2, has_body: false, has_outline: true, word_count: 0, excerpt: null },
+    creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
+    creatorMocks.fetchCreatorVolumePlan.mockResolvedValue({
+      volumes: [
+        {
+          label: '一',
+          start_chapter: 1,
+          end_chapter: 5,
+          core_conflict: '开篇',
+          locked: true,
+        },
       ],
-      volume_summaries: [],
-      pillars_excerpt: '支柱',
-      pillars_path: '/docs/novel-pillars.md',
-      global_outline_excerpt: '大纲',
-      global_outline_path: '/全局大纲.md',
-      p0_count: 0,
-      quality_report_available: true,
-      companion_check_cmd: 'bash scripts/run-companion-check.sh',
-      advance_batch_hint: 'bash scripts/run-advance-volume.sh 1 10 10 0.30',
-      notify_per_chapter: true,
-      advance_volume_summary: false,
+      deviations: overviewFixture.deviations,
     });
+    creatorMocks.saveCreatorVolumePlan.mockResolvedValue({});
   });
 
-  it('renders three columns and mode badge', async () => {
+  it('renders three columns, volume plan, and deviation badge', async () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
 
     expect(wrapper.find('[data-testid="creator-grid"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="column-write"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="column-pulse"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="column-settings"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="creation-mode-badge"]').text()).toContain('陪伴');
+    expect(wrapper.find('[data-testid="volume-plan-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="deviation-badge"]').text()).toContain('偏离');
+    expect(wrapper.find('[data-testid="deviation-list"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').text()).toContain('推进');
+  });
+
+  it('saves volume plan on button click', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="save-volume-plan-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.saveCreatorVolumePlan).toHaveBeenCalled();
   });
 });

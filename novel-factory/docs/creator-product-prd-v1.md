@@ -107,5 +107,10 @@ project:
 
 - Dashboard「写 / 脉络 / 设定」三栏（陪伴默认） — ✅ v1.1
 - `lingwen.py check` 自动读 `creation_mode` 应用 profile — ✅ v1.1
-- 卷纲锁定 UI + 偏离 diff 高亮
-- 推进模式：卷纲 vs 实际 diff 对比
+- 卷纲锁定 UI + 偏离 diff 高亮 — ✅ v1.2
+- 推进模式：卷纲 vs 实际 diff 对比 — ✅ v1.2（`infra/creator_volume_plan.py`）
+
+## 10. 后续（v1.3+）
+
+- 卷纲与分章大纲关键词偏离（语义级）
+- Dashboard 内嵌正文只读预览

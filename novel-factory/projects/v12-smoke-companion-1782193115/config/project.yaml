@@ -1,0 +1,14 @@
+# 陪伴验收 — 陪伴模式
+project:
+  name: 陪伴验收
+  slug: v12-smoke-companion-1782193115
+  role: production
+  creation_mode: companion
+  quality_profile: creator_relaxed
+  max_chapter: 5
+  require_chapter_outline: true
+  pillars_path: docs/novel-pillars.md
+  genre: 科幻悬疑
+  style:
+    tone: 第三人称；克制叙事；单线悬疑；每章结尾留钩子
+    avoid: 网络梗、设定矛盾、无因果的转折、冗长设定堆砌
