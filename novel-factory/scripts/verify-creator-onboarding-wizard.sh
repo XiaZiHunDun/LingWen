@@ -233,6 +233,17 @@ from infra.creator_onboarding_digest_background import tick_digest_for_active_pr
 tick = tick_digest_for_active_project()
 assert "skipped" in tick or "sent" in tick
 
+from infra.creator_template_approvals import load_approval_sla_config, list_overdue_template_approvals
+
+sla = load_approval_sla_config(root)
+assert sla.get("timeout_hours", 0) >= 1
+assert isinstance(list_overdue_template_approvals(root), list)
+
+from infra.creator_merge_preferences import preflight_merge_preset_import, apply_all_merge_preset_fixes
+
+preflight = preflight_merge_preset_import(root, {"packages": []})
+assert preflight.get("blocked") is False
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

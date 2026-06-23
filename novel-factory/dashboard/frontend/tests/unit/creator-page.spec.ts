@@ -53,15 +53,22 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOnboardingDigestSchedule: vi.fn(),
   saveCreatorOnboardingDigestSchedule: vi.fn(),
   dispatchCreatorOnboardingDigest: vi.fn(),
+  fetchCreatorOnboardingDigestRetryQueue: vi.fn(),
+  processCreatorOnboardingDigestRetries: vi.fn(),
   fetchCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorMergePresetGraph: vi.fn(),
   fetchCreatorMergePresetConflicts: vi.fn(),
   fetchCreatorMergePresetConflictFixes: vi.fn(),
   applyCreatorMergePresetConflictFix: vi.fn(),
+  applyAllCreatorMergePresetConflictFixes: vi.fn(),
+  preflightCreatorMergePresetImport: vi.fn(),
   fetchCreatorTemplateApprovalChainConfig: vi.fn(),
   saveCreatorTemplateApprovalChainConfig: vi.fn(),
   fetchCreatorTemplateApprovalHistory: vi.fn(),
   exportCreatorTemplateApprovalAudit: vi.fn(),
+  fetchCreatorTemplateApprovalSlaConfig: vi.fn(),
+  saveCreatorTemplateApprovalSlaConfig: vi.fn(),
+  fetchCreatorTemplateApprovalOverdue: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
@@ -122,15 +129,22 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOnboardingDigestSchedule: creatorMocks.fetchCreatorOnboardingDigestSchedule,
   saveCreatorOnboardingDigestSchedule: creatorMocks.saveCreatorOnboardingDigestSchedule,
   dispatchCreatorOnboardingDigest: creatorMocks.dispatchCreatorOnboardingDigest,
+  fetchCreatorOnboardingDigestRetryQueue: creatorMocks.fetchCreatorOnboardingDigestRetryQueue,
+  processCreatorOnboardingDigestRetries: creatorMocks.processCreatorOnboardingDigestRetries,
   fetchCreatorFactoryMergePresetPackages: creatorMocks.fetchCreatorFactoryMergePresetPackages,
   fetchCreatorMergePresetGraph: creatorMocks.fetchCreatorMergePresetGraph,
   fetchCreatorMergePresetConflicts: creatorMocks.fetchCreatorMergePresetConflicts,
   fetchCreatorMergePresetConflictFixes: creatorMocks.fetchCreatorMergePresetConflictFixes,
   applyCreatorMergePresetConflictFix: creatorMocks.applyCreatorMergePresetConflictFix,
+  applyAllCreatorMergePresetConflictFixes: creatorMocks.applyAllCreatorMergePresetConflictFixes,
+  preflightCreatorMergePresetImport: creatorMocks.preflightCreatorMergePresetImport,
   fetchCreatorTemplateApprovalChainConfig: creatorMocks.fetchCreatorTemplateApprovalChainConfig,
   saveCreatorTemplateApprovalChainConfig: creatorMocks.saveCreatorTemplateApprovalChainConfig,
   fetchCreatorTemplateApprovalHistory: creatorMocks.fetchCreatorTemplateApprovalHistory,
   exportCreatorTemplateApprovalAudit: creatorMocks.exportCreatorTemplateApprovalAudit,
+  fetchCreatorTemplateApprovalSlaConfig: creatorMocks.fetchCreatorTemplateApprovalSlaConfig,
+  saveCreatorTemplateApprovalSlaConfig: creatorMocks.saveCreatorTemplateApprovalSlaConfig,
+  fetchCreatorTemplateApprovalOverdue: creatorMocks.fetchCreatorTemplateApprovalOverdue,
   publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
   pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
@@ -385,11 +399,23 @@ describe('CreatorPage', () => {
         applicable: true,
       }],
     });
+    creatorMocks.exportCreatorTemplateApprovalAudit.mockResolvedValue({
+      schema_version: '1',
+      count: 1,
+      approvals: [{ id: 'aprv_done', status: 'approved', chain_log: [] }],
+    });
+    creatorMocks.applyAllCreatorMergePresetConflictFixes.mockResolvedValue({ applied: 2, conflict_count: 0 });
     creatorMocks.applyCreatorMergePresetConflictFix.mockResolvedValue({
       package_id: 'my_combo',
       action: 'remove_dependency',
       conflict_count: 0,
       package: { id: 'my_combo', name: '我的组合' },
+    });
+    creatorMocks.preflightCreatorMergePresetImport.mockResolvedValue({
+      would_import: 1,
+      conflict_count: 1,
+      blocked: true,
+      conflicts: [{ type: 'missing_dependency', package_id: 'x', message: 'bad' }],
     });
     creatorMocks.fetchCreatorTemplateApprovals.mockResolvedValue({
       approvals: [{
@@ -416,10 +442,19 @@ describe('CreatorPage', () => {
         chain_log: [{ step: 1, approved_at: '2026-06-22T12:00:00+00:00' }],
       }],
     });
-    creatorMocks.exportCreatorTemplateApprovalAudit.mockResolvedValue({
-      schema_version: '1',
-      count: 1,
-      approvals: [{ id: 'aprv_done', status: 'approved', chain_log: [] }],
+    creatorMocks.fetchCreatorTemplateApprovalSlaConfig.mockResolvedValue({
+      timeout_hours: 72,
+      email_on_submit: true,
+      email_on_reject: true,
+    });
+    creatorMocks.saveCreatorTemplateApprovalSlaConfig.mockResolvedValue({
+      timeout_hours: 48,
+      email_on_submit: true,
+      email_on_reject: false,
+    });
+    creatorMocks.fetchCreatorTemplateApprovalOverdue.mockResolvedValue({
+      overdue_count: 1,
+      approvals: [{ id: 'aprv_old', template_id: 'custom_test', status: 'pending', hours_pending: 80 }],
     });
     creatorMocks.submitCreatorTemplateVersionApproval.mockResolvedValue({
       id: 'aprv_new',
@@ -443,7 +478,14 @@ describe('CreatorPage', () => {
       interval_hours: 24,
       last_sent_at: null,
       channels: ['webhook'],
+      quiet_hours_start: null,
+      quiet_hours_end: null,
     });
+    creatorMocks.fetchCreatorOnboardingDigestRetryQueue.mockResolvedValue({
+      item_count: 1,
+      items: [{ channel: 'webhook', error: 'timeout', attempts: 1 }],
+    });
+    creatorMocks.processCreatorOnboardingDigestRetries.mockResolvedValue({ retried: 1, remaining: 0 });
     creatorMocks.saveCreatorOnboardingDigestSchedule.mockResolvedValue({
       enabled: true,
       interval_hours: 12,
@@ -1230,5 +1272,36 @@ describe('CreatorPage', () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
     expect(wrapper.find('[data-testid="wizard-digest-background-hint"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="wizard-digest-retry-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="process-wizard-digest-retry-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.processCreatorOnboardingDigestRetries).toHaveBeenCalled();
+  });
+
+  it('shows template approval sla config', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="template-approval-sla-config"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="template-approval-overdue-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="save-template-approval-sla-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorTemplateApprovalSlaConfig).toHaveBeenCalled();
+  });
+
+  it('preflights merge preset import and applies all fixes', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="toggle-import-merge-preset-packages-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="import-merge-preset-packages-json"]').setValue('{"packages":[]}');
+    await wrapper.find('[data-testid="preflight-merge-preset-import-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.preflightCreatorMergePresetImport).toHaveBeenCalled();
+    await wrapper.find('[data-testid="apply-all-merge-preset-fixes-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.applyAllCreatorMergePresetConflictFixes).toHaveBeenCalled();
   });
 });

@@ -28,6 +28,84 @@ def _chain_config_path(project_root: Path | str) -> Path:
     return root / ".state" / "creator_template_approval_chain.json"
 
 
+def _sla_config_path(project_root: Path | str) -> Path:
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    return root / ".state" / "creator_template_approval_sla.json"
+
+
+_MAX_SLA_HOURS = 720
+
+
+def load_approval_sla_config(project_root: Path | str) -> dict[str, Any]:
+    path = _sla_config_path(project_root)
+    if not path.is_file():
+        return {
+            "schema_version": "1",
+            "timeout_hours": 72,
+            "email_on_submit": True,
+            "email_on_reject": True,
+        }
+    data = json.loads(path.read_text(encoding="utf-8"))
+    hours = int(data.get("timeout_hours", 72))
+    hours = max(1, min(hours, _MAX_SLA_HOURS))
+    return {
+        "schema_version": "1",
+        "timeout_hours": hours,
+        "email_on_submit": bool(data.get("email_on_submit", True)),
+        "email_on_reject": bool(data.get("email_on_reject", True)),
+    }
+
+
+def save_approval_sla_config(
+    project_root: Path | str,
+    *,
+    timeout_hours: int,
+    email_on_submit: bool = True,
+    email_on_reject: bool = True,
+) -> dict[str, Any]:
+    hours = max(1, min(int(timeout_hours), _MAX_SLA_HOURS))
+    data = {
+        "schema_version": "1",
+        "timeout_hours": hours,
+        "email_on_submit": bool(email_on_submit),
+        "email_on_reject": bool(email_on_reject),
+    }
+    path = _sla_config_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return data
+
+
+def list_overdue_template_approvals(project_root: Path | str) -> list[dict[str, Any]]:
+    """List pending approvals exceeding SLA timeout."""
+    config = load_approval_sla_config(project_root)
+    timeout_hours = float(config["timeout_hours"])
+    now = datetime.now(timezone.utc)
+    store = _load_store(project_root)
+    overdue: list[dict[str, Any]] = []
+    for row in store.get("approvals") or []:
+        if str(row.get("status", "")).lower() != "pending":
+            continue
+        submitted = _parse_iso(row.get("submitted_at"))
+        if submitted is None:
+            continue
+        hours_pending = (now - submitted).total_seconds() / 3600
+        if hours_pending >= timeout_hours:
+            public = _public_approval_row(row)
+            public["hours_pending"] = round(hours_pending, 1)
+            overdue.append(public)
+    return overdue
+
+
+def _parse_iso(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def load_approval_chain_config(project_root: Path | str) -> dict[str, Any]:
     path = _chain_config_path(project_root)
     if not path.is_file():
@@ -191,12 +269,25 @@ def _notify_approval_event(
     event: str,
     row: dict[str, Any],
 ) -> None:
+    public = _public_approval_row(row)
     try:
         from infra.creator_onboarding_webhook import dispatch_approval_webhook
 
-        dispatch_approval_webhook(project_root, event, _public_approval_row(row))
+        dispatch_approval_webhook(project_root, event, public)
     except Exception:
         pass
+    sla = load_approval_sla_config(project_root)
+    send_email = (
+        (event == "submitted" and sla.get("email_on_submit"))
+        or (event == "rejected" and sla.get("email_on_reject"))
+    )
+    if send_email:
+        try:
+            from infra.creator_onboarding_email import dispatch_approval_email
+
+            dispatch_approval_email(project_root, event, public)
+        except Exception:
+            pass
 
 
 def list_template_approvals(

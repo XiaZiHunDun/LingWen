@@ -27,6 +27,7 @@ def tick_digest_for_active_project() -> dict[str, Any]:
     from infra.creator_onboarding_digest_schedule import (
         dispatch_scheduled_digest,
         load_digest_schedule,
+        process_digest_retries,
     )
     from infra.studio_registry import active_project
 
@@ -36,7 +37,10 @@ def tick_digest_for_active_project() -> dict[str, Any]:
     schedule = load_digest_schedule(project.root)
     if not schedule.get("enabled"):
         return {"skipped": True, "reason": "schedule disabled"}
-    return dispatch_scheduled_digest(project.root, force=False)
+    retry_result = process_digest_retries(project.root)
+    dispatch_result = dispatch_scheduled_digest(project.root, force=False)
+    dispatch_result["retry"] = retry_result
+    return dispatch_result
 
 
 async def run_digest_background_loop() -> None:

@@ -395,6 +395,7 @@ class CreatorVolumeTemplateApproval(BaseModel):
     chain_total: int = 1
     chain_progress: str = "1/1"
     chain_log: list[dict[str, Any]] = []
+    hours_pending: Optional[float] = None
 
 
 class CreatorVolumeTemplateApprovalAuditExportResponse(BaseModel):
@@ -409,6 +410,17 @@ class CreatorVolumeTemplateApprovalHistoryResponse(BaseModel):
 
 class CreatorVolumeTemplateApprovalChainConfig(BaseModel):
     required_steps: int = 2
+
+
+class CreatorVolumeTemplateApprovalSlaConfig(BaseModel):
+    timeout_hours: int = 72
+    email_on_submit: bool = True
+    email_on_reject: bool = True
+
+
+class CreatorVolumeTemplateApprovalOverdueResponse(BaseModel):
+    overdue_count: int
+    approvals: list[CreatorVolumeTemplateApproval] = []
 
 
 class CreatorVolumeTemplateApprovalListResponse(BaseModel):
@@ -645,12 +657,33 @@ class CreatorOnboardingDigestScheduleConfig(BaseModel):
     interval_hours: int = 24
     last_sent_at: Optional[str] = None
     channels: list[str] = ["webhook"]
+    quiet_hours_start: Optional[int] = None
+    quiet_hours_end: Optional[int] = None
 
 
 class CreatorOnboardingDigestScheduleSaveRequest(BaseModel):
     enabled: bool = True
     interval_hours: int = 24
     channels: list[str] = ["webhook"]
+    quiet_hours_start: Optional[int] = None
+    quiet_hours_end: Optional[int] = None
+
+
+class CreatorOnboardingDigestRetryItem(BaseModel):
+    channel: str
+    error: str = ""
+    queued_at: Optional[str] = None
+    attempts: int = 0
+
+
+class CreatorOnboardingDigestRetryQueueResponse(BaseModel):
+    item_count: int
+    items: list[CreatorOnboardingDigestRetryItem] = []
+
+
+class CreatorOnboardingDigestRetryProcessResponse(BaseModel):
+    retried: int
+    remaining: int
 
 
 class CreatorOnboardingDigestDispatchResponse(BaseModel):
@@ -776,6 +809,18 @@ class CreatorMergePresetConflictFixApplyResponse(BaseModel):
     action: str
     conflict_count: int
     package: CreatorMergePresetPackage
+
+
+class CreatorMergePresetImportPreflightResponse(BaseModel):
+    would_import: int
+    conflict_count: int
+    conflicts: list[CreatorMergePresetConflict] = []
+    blocked: bool = False
+
+
+class CreatorMergePresetApplyAllFixesResponse(BaseModel):
+    applied: int
+    conflict_count: int
 
 
 class CreatorMergePresetFactoryPublishRequest(BaseModel):
@@ -2971,8 +3016,41 @@ def create_app(
             enabled=req.enabled,
             interval_hours=req.interval_hours,
             channels=req.channels,
+            quiet_hours_start=req.quiet_hours_start,
+            quiet_hours_end=req.quiet_hours_end,
         )
         return CreatorOnboardingDigestScheduleConfig(**saved)
+
+    @app.get(
+        "/api/creator/onboarding/notifications/digest/retry-queue",
+        response_model=CreatorOnboardingDigestRetryQueueResponse,
+    )
+    def creator_onboarding_digest_retry_queue() -> CreatorOnboardingDigestRetryQueueResponse:
+        from infra.creator_onboarding_digest_schedule import load_digest_retry_queue
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        data = load_digest_retry_queue(project.root)
+        return CreatorOnboardingDigestRetryQueueResponse(
+            item_count=data["item_count"],
+            items=[CreatorOnboardingDigestRetryItem(**row) for row in data["items"]],
+        )
+
+    @app.post(
+        "/api/creator/onboarding/notifications/digest/retry",
+        response_model=CreatorOnboardingDigestRetryProcessResponse,
+    )
+    def creator_onboarding_digest_retry_process() -> CreatorOnboardingDigestRetryProcessResponse:
+        from infra.creator_onboarding_digest_schedule import process_digest_retries
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = process_digest_retries(project.root)
+        return CreatorOnboardingDigestRetryProcessResponse(**result)
 
     @app.post(
         "/api/creator/onboarding/notifications/digest/dispatch",
@@ -3327,6 +3405,57 @@ def create_app(
             raise HTTPException(404, "no active project")
         data = export_template_approval_audit(project.root)
         return CreatorVolumeTemplateApprovalAuditExportResponse(**data)
+
+    @app.get(
+        "/api/creator/volume-plan/templates/approvals/sla-config",
+        response_model=CreatorVolumeTemplateApprovalSlaConfig,
+    )
+    def creator_volume_plan_template_approval_sla_get() -> CreatorVolumeTemplateApprovalSlaConfig:
+        from infra.creator_template_approvals import load_approval_sla_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorVolumeTemplateApprovalSlaConfig(**load_approval_sla_config(project.root))
+
+    @app.put(
+        "/api/creator/volume-plan/templates/approvals/sla-config",
+        response_model=CreatorVolumeTemplateApprovalSlaConfig,
+    )
+    def creator_volume_plan_template_approval_sla_put(
+        req: CreatorVolumeTemplateApprovalSlaConfig,
+    ) -> CreatorVolumeTemplateApprovalSlaConfig:
+        from infra.creator_template_approvals import save_approval_sla_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        saved = save_approval_sla_config(
+            project.root,
+            timeout_hours=req.timeout_hours,
+            email_on_submit=req.email_on_submit,
+            email_on_reject=req.email_on_reject,
+        )
+        return CreatorVolumeTemplateApprovalSlaConfig(**saved)
+
+    @app.get(
+        "/api/creator/volume-plan/templates/approvals/overdue",
+        response_model=CreatorVolumeTemplateApprovalOverdueResponse,
+    )
+    def creator_volume_plan_template_approval_overdue() -> CreatorVolumeTemplateApprovalOverdueResponse:
+        from infra.creator_template_approvals import list_overdue_template_approvals
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        rows = list_overdue_template_approvals(project.root)
+        return CreatorVolumeTemplateApprovalOverdueResponse(
+            overdue_count=len(rows),
+            approvals=[CreatorVolumeTemplateApproval(**row) for row in rows],
+        )
 
     @app.get(
         "/api/creator/volume-plan/templates/approvals/chain-config",
@@ -3946,6 +4075,44 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorMergePresetConflictFixApplyResponse(**result)
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-all",
+        response_model=CreatorMergePresetApplyAllFixesResponse,
+    )
+    def creator_settings_merge_preset_conflict_apply_all() -> CreatorMergePresetApplyAllFixesResponse:
+        from infra.creator_merge_preferences import apply_all_merge_preset_fixes
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = apply_all_merge_preset_fixes(project.root)
+        return CreatorMergePresetApplyAllFixesResponse(**result)
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/import/preflight",
+        response_model=CreatorMergePresetImportPreflightResponse,
+    )
+    def creator_settings_merge_preset_import_preflight(
+        req: CreatorMergePresetPackagesImportRequest,
+    ) -> CreatorMergePresetImportPreflightResponse:
+        from infra.creator_merge_preferences import preflight_merge_preset_import
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = preflight_merge_preset_import(project.root, req.model_dump())
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePresetImportPreflightResponse(
+            would_import=result["would_import"],
+            conflict_count=result["conflict_count"],
+            conflicts=[CreatorMergePresetConflict(**row) for row in result["conflicts"]],
+            blocked=result["blocked"],
+        )
 
     @app.get(
         "/api/creator/settings-docs/merge-preferences/preset-packages/export",

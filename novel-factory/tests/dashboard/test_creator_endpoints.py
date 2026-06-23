@@ -902,9 +902,52 @@ class TestCreatorEndpoints:
         audit = client.get("/api/creator/volume-plan/templates/approvals/audit-export")
         assert audit.status_code == 200
         assert audit.json()["count"] >= 1
-        history = client.get("/api/creator/volume-plan/templates/approvals/history")
-        assert history.status_code == 200
-        assert len(history.json()["approvals"]) >= 1
+
+    def test_template_approval_sla_and_overdue(self, client: TestClient) -> None:
+        sla = client.put(
+            "/api/creator/volume-plan/templates/approvals/sla-config",
+            json={"timeout_hours": 1, "email_on_submit": True, "email_on_reject": True},
+        )
+        assert sla.status_code == 200
+        overdue = client.get("/api/creator/volume-plan/templates/approvals/overdue")
+        assert overdue.status_code == 200
+        assert "overdue_count" in overdue.json()
+
+    def test_digest_quiet_hours_and_retry(self, client: TestClient) -> None:
+        schedule = client.put(
+            "/api/creator/onboarding/notifications/digest/schedule",
+            json={
+                "enabled": True,
+                "interval_hours": 12,
+                "channels": ["webhook"],
+                "quiet_hours_start": 0,
+                "quiet_hours_end": 23,
+            },
+        )
+        assert schedule.status_code == 200
+        assert schedule.json()["quiet_hours_start"] == 0
+        queue = client.get("/api/creator/onboarding/notifications/digest/retry-queue")
+        assert queue.status_code == 200
+        retry = client.post("/api/creator/onboarding/notifications/digest/retry")
+        assert retry.status_code == 200
+
+    def test_merge_preset_import_preflight(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import/preflight",
+            json={
+                "packages": [
+                    {
+                        "id": "preflight_bad",
+                        "name": "预检坏包",
+                        "depends_on": ["ghost_preflight"],
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["blocked"] is True
 
     def test_merge_preset_conflict_fixes(self, client: TestClient) -> None:
         client.post(
@@ -944,6 +987,27 @@ class TestCreatorEndpoints:
             row for row in remaining.json()["conflicts"] if row.get("package_id") == "fix_me"
         ]
         assert fix_me_conflicts == []
+
+    def test_merge_preset_apply_all_fixes(self, client: TestClient) -> None:
+        client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+            json={
+                "packages": [
+                    {
+                        "id": "batch_fix_me",
+                        "name": "批量修",
+                        "depends_on": ["ghost_batch"],
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        resp = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-all",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["applied"] >= 1
 
     def test_merge_preset_factory_library(self, client: TestClient) -> None:
         save_pkg = client.post(

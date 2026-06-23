@@ -746,6 +746,16 @@ export async function dispatchCreatorOnboardingDigest(force = false) {
   });
 }
 
+export async function fetchCreatorOnboardingDigestRetryQueue() {
+  return request('/creator/onboarding/notifications/digest/retry-queue');
+}
+
+export async function processCreatorOnboardingDigestRetries() {
+  return request('/creator/onboarding/notifications/digest/retry', {
+    method: 'POST',
+  });
+}
+
 export async function fetchCreatorTemplateApprovals(params = {}) {
   const search = new URLSearchParams();
   if (params.status) search.set('status', params.status);
@@ -792,6 +802,21 @@ export async function fetchCreatorTemplateApprovalHistory(limit = 20) {
 
 export async function exportCreatorTemplateApprovalAudit() {
   return request('/creator/volume-plan/templates/approvals/audit-export');
+}
+
+export async function fetchCreatorTemplateApprovalSlaConfig() {
+  return request('/creator/volume-plan/templates/approvals/sla-config');
+}
+
+export async function saveCreatorTemplateApprovalSlaConfig(body) {
+  return request('/creator/volume-plan/templates/approvals/sla-config', {
+    method: 'PUT',
+    body,
+  });
+}
+
+export async function fetchCreatorTemplateApprovalOverdue() {
+  return request('/creator/volume-plan/templates/approvals/overdue');
 }
 
 export async function fetchCreatorMergePresetPackages() {
@@ -841,6 +866,19 @@ export async function fetchCreatorMergePresetConflictFixes() {
 
 export async function applyCreatorMergePresetConflictFix(body) {
   return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-fix', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function applyAllCreatorMergePresetConflictFixes() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-all', {
+    method: 'POST',
+  });
+}
+
+export async function preflightCreatorMergePresetImport(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/import/preflight', {
     method: 'POST',
     body,
   });

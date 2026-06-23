@@ -665,9 +665,8 @@ def _semver_tuple(label: str | None) -> tuple[int, ...] | None:
     return tuple(parts)
 
 
-def detect_merge_preset_conflicts(project_root: Path | str) -> dict[str, Any]:
-    """Detect dependency cycles, missing deps, and semver downgrade conflicts."""
-    packages = list_merge_preset_packages(project_root)
+def _conflicts_from_packages(packages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Detect conflicts on a package list (builtin + factory + custom rows)."""
     by_id = {pkg["id"]: pkg for pkg in packages}
     adjacency: dict[str, list[str]] = {
         pkg["id"]: [dep for dep in (pkg.get("depends_on") or []) if dep in by_id]
@@ -742,9 +741,67 @@ def detect_merge_preset_conflicts(project_root: Path | str) -> dict[str, Any]:
             )
             break
 
+    return conflicts
+
+
+def detect_merge_preset_conflicts(project_root: Path | str) -> dict[str, Any]:
+    """Detect dependency cycles, missing deps, and semver downgrade conflicts."""
+    packages = list_merge_preset_packages(project_root)
+    conflicts = _conflicts_from_packages(packages)
     return {
         "conflict_count": len(conflicts),
         "conflicts": conflicts,
+    }
+
+
+def _virtual_packages_after_import(
+    project_root: Path | str,
+    payload: dict[str, Any],
+) -> list[dict[str, Any]]:
+    incoming = payload.get("packages")
+    if not isinstance(incoming, list):
+        raise ValueError("packages array required")
+    custom_by_id = {row["id"]: dict(row) for row in _load_custom_preset_packages(project_root)}
+    for raw in incoming:
+        if not isinstance(raw, dict):
+            continue
+        pkg_id = str(raw.get("id", "")).strip()
+        name = str(raw.get("name", "")).strip()
+        if not pkg_id or not name:
+            continue
+        entry = {
+            "id": pkg_id,
+            "name": name,
+            "description": str(raw.get("description", "")),
+            "pillars_merge_source": str(raw.get("pillars_merge_source", "editor")),
+            "global_outline_merge_source": str(raw.get("global_outline_merge_source", "editor")),
+        }
+        raw_version = raw.get("version_label")
+        if raw_version is not None and str(raw_version).strip():
+            entry["version_label"] = str(raw_version).strip()
+        deps = [str(dep) for dep in (raw.get("depends_on") or []) if str(dep).strip()]
+        if deps:
+            entry["depends_on"] = deps
+        custom_by_id[pkg_id] = entry
+    builtin = [_preset_row(row, builtin=True, scope="builtin") for row in _BUILTIN_MERGE_PRESET_PACKAGES]
+    factory = list_factory_merge_preset_packages()
+    custom = [_preset_row(row, builtin=False, scope="project") for row in custom_by_id.values()]
+    return builtin + factory + custom
+
+
+def preflight_merge_preset_import(
+    project_root: Path | str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Detect conflicts if import payload were applied without saving."""
+    packages = _virtual_packages_after_import(project_root, payload)
+    incoming = payload.get("packages") or []
+    conflicts = _conflicts_from_packages(packages)
+    return {
+        "would_import": len([raw for raw in incoming if isinstance(raw, dict)]),
+        "conflict_count": len(conflicts),
+        "conflicts": conflicts,
+        "blocked": len(conflicts) > 0,
     }
 
 
@@ -864,5 +921,36 @@ def apply_merge_preset_fix(
         "action": act,
         "conflict_count": remaining["conflict_count"],
         "package": _preset_row(target, builtin=False, scope="project"),
+    }
+
+
+def apply_all_merge_preset_fixes(project_root: Path | str) -> dict[str, Any]:
+    """Apply all applicable suggested fixes until no more apply in one pass."""
+    applied = 0
+    last_conflict_count = -1
+    while True:
+        fixes = suggest_merge_preset_fixes(project_root)
+        applicable = [row for row in fixes["fixes"] if row.get("applicable")]
+        if not applicable:
+            break
+        report = detect_merge_preset_conflicts(project_root)
+        if report["conflict_count"] == last_conflict_count:
+            break
+        last_conflict_count = report["conflict_count"]
+        fix = applicable[0]
+        apply_merge_preset_fix(
+            project_root,
+            package_id=str(fix["package_id"]),
+            action=str(fix["action"]),
+            dependency_id=fix.get("dependency_id"),
+            version_label=fix.get("version_label"),
+        )
+        applied += 1
+        if applied > 20:
+            break
+    remaining = detect_merge_preset_conflicts(project_root)
+    return {
+        "applied": applied,
+        "conflict_count": remaining["conflict_count"],
     }
 

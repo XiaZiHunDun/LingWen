@@ -132,6 +132,43 @@
           <p class="meta-line" data-testid="wizard-digest-background-hint">
             Dashboard 后台每 15 分钟自动检查到期 digest
           </p>
+          <label class="meta-line">
+            静默时段（UTC）
+            <input
+              v-model.number="wizardDigestQuietStart"
+              type="number"
+              min="0"
+              max="23"
+              class="vol-input"
+              data-testid="wizard-digest-quiet-start"
+              placeholder="起"
+            />
+            –
+            <input
+              v-model.number="wizardDigestQuietEnd"
+              type="number"
+              min="0"
+              max="23"
+              class="vol-input"
+              data-testid="wizard-digest-quiet-end"
+              placeholder="止"
+            />
+          </label>
+          <div
+            v-if="wizardDigestRetryQueue.item_count"
+            class="wizard-digest-retry"
+            data-testid="wizard-digest-retry-panel"
+          >
+            <p class="meta-line">重试队列 {{ wizardDigestRetryQueue.item_count }} 条</p>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="process-wizard-digest-retry-btn"
+              @click="processWizardDigestRetries"
+            >
+              重试失败 digest
+            </button>
+          </div>
         </div>
         <ul>
           <li
@@ -454,6 +491,52 @@
               >
                 保存审批链
               </button>
+            </div>
+            <div
+              class="template-approval-sla-config"
+              data-testid="template-approval-sla-config"
+            >
+              <p class="meta-line">审批 SLA（{{ templateApprovalSlaHours }} 小时）</p>
+              <input
+                v-model.number="templateApprovalSlaHours"
+                type="number"
+                min="1"
+                max="720"
+                class="vol-input"
+                data-testid="template-approval-sla-hours"
+              />
+              <label class="meta-line">
+                <input v-model="templateApprovalEmailOnSubmit" type="checkbox" data-testid="template-approval-email-submit" />
+                提交时发邮件
+              </label>
+              <label class="meta-line">
+                <input v-model="templateApprovalEmailOnReject" type="checkbox" data-testid="template-approval-email-reject" />
+                驳回时发邮件
+              </label>
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="save-template-approval-sla-btn"
+                @click="saveTemplateApprovalSlaConfig"
+              >
+                保存 SLA
+              </button>
+            </div>
+            <div
+              v-if="overdueTemplateApprovals.length"
+              class="template-approval-overdue"
+              data-testid="template-approval-overdue-panel"
+            >
+              <p class="meta-line">超时待审批（{{ overdueTemplateApprovals.length }}）</p>
+              <ul>
+                <li
+                  v-for="approval in overdueTemplateApprovals"
+                  :key="approval.id"
+                  data-testid="template-approval-overdue-row"
+                >
+                  {{ approval.template_id }} · {{ approval.hours_pending }}h
+                </li>
+              </ul>
             </div>
             <div
               v-if="pendingTemplateApprovals.length"
@@ -1115,6 +1198,14 @@
                 data-testid="merge-preset-conflict-fixes-panel"
               >
                 <p class="meta-line">修复建议（{{ mergePresetConflictFixes.fix_count }}）</p>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="apply-all-merge-preset-fixes-btn"
+                  @click="applyAllMergePresetConflictFixes"
+                >
+                  批量应用可修复项
+                </button>
                 <ul>
                   <li
                     v-for="fix in mergePresetConflictFixes.fixes"
@@ -1147,6 +1238,15 @@
                   placeholder='{"packages":[...]}'
                   rows="3"
                 />
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="preflight-merge-preset-import-btn"
+                  :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
+                  @click="preflightMergePresetImport"
+                >
+                  预检冲突
+                </button>
                 <button
                   type="button"
                   class="mini-btn pixel-border"
@@ -1348,11 +1448,16 @@ import {
   saveCreatorTemplateApprovalChainConfig,
   fetchCreatorTemplateApprovalHistory,
   exportCreatorTemplateApprovalAudit,
+  fetchCreatorTemplateApprovalSlaConfig,
+  saveCreatorTemplateApprovalSlaConfig,
+  fetchCreatorTemplateApprovalOverdue,
   fetchCreatorOnboardingNotifications,
   fetchCreatorOnboardingNotificationDigest,
   fetchCreatorOnboardingDigestSchedule,
   saveCreatorOnboardingDigestSchedule,
   dispatchCreatorOnboardingDigest,
+  fetchCreatorOnboardingDigestRetryQueue,
+  processCreatorOnboardingDigestRetries,
   ackCreatorOnboardingNotifications,
   fetchCreatorOnboardingWebhook,
   saveCreatorOnboardingWebhook,
@@ -1364,6 +1469,8 @@ import {
   fetchCreatorMergePresetConflicts,
   fetchCreatorMergePresetConflictFixes,
   applyCreatorMergePresetConflictFix,
+  applyAllCreatorMergePresetConflictFixes,
+  preflightCreatorMergePresetImport,
   exportCreatorMergePresetPackages,
   importCreatorMergePresetPackages,
   publishCreatorMergePresetToFactory,
@@ -1457,9 +1564,17 @@ const wizardEmailEnabled = ref(false);
 const wizardNotificationDigest = ref({ unread: 0, group_count: 0, groups: [] });
 const wizardDigestScheduleEnabled = ref(false);
 const wizardDigestScheduleHours = ref(24);
+const wizardDigestQuietStart = ref(null);
+const wizardDigestQuietEnd = ref(null);
+const wizardDigestRetryQueue = ref({ item_count: 0, items: [] });
 const templateApprovals = ref([]);
 const templateApprovalHistory = ref([]);
+const overdueTemplateApprovals = ref([]);
 const templateApprovalChainSteps = ref(2);
+const templateApprovalSlaHours = ref(72);
+const templateApprovalEmailOnSubmit = ref(true);
+const templateApprovalEmailOnReject = ref(true);
+const mergePresetImportPreflight = ref(null);
 const templateApprovalSubmitting = ref(false);
 const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
 const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] });
@@ -1943,9 +2058,16 @@ async function loadWizardDigestSchedule() {
     const data = await fetchCreatorOnboardingDigestSchedule();
     wizardDigestScheduleEnabled.value = Boolean(data.enabled);
     wizardDigestScheduleHours.value = data.interval_hours || 24;
+    wizardDigestQuietStart.value = data.quiet_hours_start ?? null;
+    wizardDigestQuietEnd.value = data.quiet_hours_end ?? null;
+    const retry = await fetchCreatorOnboardingDigestRetryQueue();
+    wizardDigestRetryQueue.value = retry;
   } catch {
     wizardDigestScheduleEnabled.value = false;
     wizardDigestScheduleHours.value = 24;
+    wizardDigestQuietStart.value = null;
+    wizardDigestQuietEnd.value = null;
+    wizardDigestRetryQueue.value = { item_count: 0, items: [] };
   }
 }
 
@@ -1955,8 +2077,21 @@ async function saveWizardDigestSchedule() {
       enabled: wizardDigestScheduleEnabled.value,
       interval_hours: wizardDigestScheduleHours.value,
       channels: ['webhook', 'email'],
+      quiet_hours_start: wizardDigestQuietStart.value,
+      quiet_hours_end: wizardDigestQuietEnd.value,
     });
     saveMessage.value = '已保存 digest 定时';
+    await loadWizardDigestSchedule();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function processWizardDigestRetries() {
+  try {
+    const result = await processCreatorOnboardingDigestRetries();
+    saveMessage.value = `已重试 ${result.retried} 条，剩余 ${result.remaining}`;
+    await loadWizardDigestSchedule();
   } catch (e) {
     handleSaveError(e);
   }
@@ -2085,9 +2220,14 @@ async function importMergePresetPackagesFromJson() {
   error.value = null;
   try {
     const payload = JSON.parse(importMergePresetPackagesJson.value);
+    if (mergePresetImportPreflight.value?.blocked) {
+      saveMessage.value = '预检仍有冲突，请先修复或调整 JSON';
+      return;
+    }
     await importCreatorMergePresetPackages(payload);
     importMergePresetPackagesJson.value = '';
     showImportMergePresetPackages.value = false;
+    mergePresetImportPreflight.value = null;
     await loadMergePresetPackages();
     saveMessage.value = '已导入合并策略预设包';
   } catch (e) {
@@ -2122,8 +2262,30 @@ async function loadTemplateApprovalChainConfig() {
   try {
     const data = await fetchCreatorTemplateApprovalChainConfig();
     templateApprovalChainSteps.value = data.required_steps || 2;
+    const sla = await fetchCreatorTemplateApprovalSlaConfig();
+    templateApprovalSlaHours.value = sla.timeout_hours || 72;
+    templateApprovalEmailOnSubmit.value = Boolean(sla.email_on_submit);
+    templateApprovalEmailOnReject.value = Boolean(sla.email_on_reject);
+    const overdue = await fetchCreatorTemplateApprovalOverdue();
+    overdueTemplateApprovals.value = overdue.approvals || [];
   } catch {
     templateApprovalChainSteps.value = 2;
+    templateApprovalSlaHours.value = 72;
+    overdueTemplateApprovals.value = [];
+  }
+}
+
+async function saveTemplateApprovalSlaConfig() {
+  try {
+    await saveCreatorTemplateApprovalSlaConfig({
+      timeout_hours: templateApprovalSlaHours.value,
+      email_on_submit: templateApprovalEmailOnSubmit.value,
+      email_on_reject: templateApprovalEmailOnReject.value,
+    });
+    saveMessage.value = `已保存审批 SLA（${templateApprovalSlaHours.value}h）`;
+    await loadTemplateApprovalChainConfig();
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 
@@ -2177,6 +2339,29 @@ async function applyMergePresetConflictFix(fix) {
     });
     saveMessage.value = `已应用修复，剩余冲突 ${result.conflict_count}`;
     await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function applyAllMergePresetConflictFixes() {
+  try {
+    const result = await applyAllCreatorMergePresetConflictFixes();
+    saveMessage.value = `已批量应用 ${result.applied} 项，剩余冲突 ${result.conflict_count}`;
+    await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function preflightMergePresetImport() {
+  try {
+    const payload = JSON.parse(importMergePresetPackagesJson.value);
+    const result = await preflightCreatorMergePresetImport(payload);
+    mergePresetImportPreflight.value = result;
+    saveMessage.value = result.blocked
+      ? `预检发现 ${result.conflict_count} 个冲突，导入已阻断`
+      : `预检通过，可导入 ${result.would_import} 个包`;
   } catch (e) {
     handleSaveError(e);
   }

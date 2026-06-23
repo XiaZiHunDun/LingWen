@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.91 (创作者 v3.3, 2026-06-22)  
-> **更新 (2026-06-22)**: 模板审批审计 · 向导 digest 后台轮询 · 合并预设包冲突修复向导
+> **版本**: v10.92 (创作者 v3.4, 2026-06-22)  
+> **更新 (2026-06-22)**: 模板审批 SLA/邮件 · digest 静默与重试 · 预设包导入预检与批量修复
 
 ---
 
@@ -143,7 +143,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v3.3 已落地**：模板审批审计与 Webhook · digest 后台轮询 · 预设包冲突修复向导
 
-**v3.4 候选**：（待定）
+**v3.4 已落地**：模板审批 SLA/邮件 · digest 静默时段与重试队列 · 预设包导入预检与批量修复
+
+**v3.5 候选**：（待定）
 
 ### 常用命令
 

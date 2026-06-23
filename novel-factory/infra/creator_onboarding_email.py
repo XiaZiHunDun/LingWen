@@ -177,6 +177,62 @@ def dispatch_mention_email(
         return {"sent": 0, "error": str(exc)}
 
 
+def _build_approval_email_body(event: str, approval: dict[str, Any]) -> str:
+    lines = [
+        "灵文 · 模板版本审批通知",
+        f"事件: {event}",
+        f"模板: {approval.get('template_id', '')}",
+        f"状态: {approval.get('status', '')}",
+        f"版本: {approval.get('previous_label') or '—'} → {approval.get('version_label') or '（清除）'}",
+    ]
+    if approval.get("reject_reason"):
+        lines.append(f"驳回原因: {approval.get('reject_reason')}")
+    if approval.get("chain_progress"):
+        lines.append(f"审批链进度: {approval.get('chain_progress')}")
+    return "\n".join(lines)
+
+
+def dispatch_approval_email(
+    project_root: Path | str,
+    event: str,
+    approval: dict[str, Any],
+) -> dict[str, Any]:
+    """Send template approval lifecycle event via SMTP."""
+    path = _email_path(project_root)
+    if not path.is_file():
+        return {"sent": 0, "skipped": True}
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    config = load_email_config(project_root)
+    if not config.get("enabled"):
+        return {"sent": 0, "skipped": True}
+    recipients = config.get("to_addresses") or []
+    host = str(config.get("smtp_host", "")).strip()
+    if not recipients or not host:
+        return {"sent": 0, "skipped": True, "error": "email not fully configured"}
+    subject_map = {
+        "submitted": "模板版本变更待审批",
+        "rejected": "模板版本变更已驳回",
+        "overdue": "模板版本审批超时提醒",
+    }
+    message = EmailMessage()
+    message["Subject"] = subject_map.get(event, "模板版本审批通知")
+    message["From"] = config.get("from_address") or recipients[0]
+    message["To"] = ", ".join(recipients)
+    message.set_content(_build_approval_email_body(event, approval))
+    try:
+        with smtplib.SMTP(host, int(config.get("smtp_port", 587)), timeout=_SMTP_TIMEOUT_SEC) as smtp:
+            if config.get("smtp_use_tls", True):
+                smtp.starttls()
+            user = str(config.get("smtp_user", "")).strip()
+            password = str(stored.get("smtp_password", "")).strip()
+            if user and password:
+                smtp.login(user, password)
+            smtp.send_message(message)
+        return {"sent": 1}
+    except (smtplib.SMTPException, OSError) as exc:
+        return {"sent": 0, "error": str(exc)}
+
+
 def _build_digest_email_body(digest: dict[str, Any]) -> str:
     lines = [
         "灵文创作向导 · 通知摘要",
