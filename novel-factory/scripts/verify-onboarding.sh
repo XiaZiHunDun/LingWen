@@ -11,9 +11,12 @@ cd "$ROOT"
 PREFIX="${1:-onboarding-smoke}"
 SLUG="${PREFIX}-$(date +%s)"
 PROJECT="${ROOT}/projects/${SLUG}"
+COMP_SLUG=""
+COMP_PROJECT=""
 
 cleanup() {
   rm -rf "${PROJECT}" 2>/dev/null || true
+  rm -rf "${COMP_PROJECT}" 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -89,7 +92,5 @@ payload = volume_plan_payload(root)
 assert payload["locked_volume_count"] == 1
 print("OK companion volume plan:", payload["deviation_count"], "deviations")
 PY
-
-rm -rf "${COMP_PROJECT}"
 
 echo "=== All onboarding verify passed ==="
