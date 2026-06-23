@@ -1,6 +1,7 @@
 """Editable creator settings documents (pillars, global outline)."""
 from __future__ import annotations
 
+import difflib
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,57 @@ from infra.creator_volume_plan import global_outline_path
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
+
+
+def text_diff_summary(before: str, after: str) -> dict[str, Any]:
+    """Line-level diff summary for settings preview."""
+    if before == after:
+        return {
+            "changed": False,
+            "lines_added": 0,
+            "lines_removed": 0,
+            "snippet": [],
+        }
+    before_lines = before.splitlines()
+    after_lines = after.splitlines()
+    diff_lines = list(
+        difflib.unified_diff(before_lines, after_lines, lineterm=""),
+    )
+    added = sum(
+        1 for line in diff_lines if line.startswith("+") and not line.startswith("+++")
+    )
+    removed = sum(
+        1 for line in diff_lines if line.startswith("-") and not line.startswith("---")
+    )
+    snippet = [
+        line
+        for line in diff_lines
+        if (line.startswith("+") or line.startswith("-"))
+        and not line.startswith("+++")
+        and not line.startswith("---")
+    ][:10]
+    return {
+        "changed": True,
+        "lines_added": added,
+        "lines_removed": removed,
+        "snippet": snippet,
+    }
+
+
+def preview_settings_docs_diff(
+    project: StudioProject,
+    *,
+    pillars_text: str,
+    global_outline_text: str,
+) -> dict[str, Any]:
+    current = creator_settings_docs_payload(project)
+    pillars_diff = text_diff_summary(current["pillars_text"], pillars_text)
+    outline_diff = text_diff_summary(current["global_outline_text"], global_outline_text)
+    return {
+        "has_changes": pillars_diff["changed"] or outline_diff["changed"],
+        "pillars": pillars_diff,
+        "global_outline": outline_diff,
+    }
 
 
 def creator_settings_docs_payload(project: StudioProject) -> dict[str, Any]:

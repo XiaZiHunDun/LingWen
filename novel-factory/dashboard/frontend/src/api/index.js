@@ -566,6 +566,13 @@ export async function saveCreatorSettingsDocs(body) {
   });
 }
 
+export async function previewCreatorSettingsDocs(body) {
+  return request('/creator/settings-docs/preview', {
+    method: 'POST',
+    body,
+  });
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */

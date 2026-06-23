@@ -97,3 +97,17 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert "pillars_text" in data
         assert "global_outline_text" in data
+
+    def test_settings_docs_preview(self, client: TestClient) -> None:
+        current = client.get("/api/creator/settings-docs").json()
+        resp = client.post(
+            "/api/creator/settings-docs/preview",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# 预览行\n",
+                "global_outline_text": current["global_outline_text"],
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["has_changes"] is True
+        assert data["pillars"]["changed"] is True

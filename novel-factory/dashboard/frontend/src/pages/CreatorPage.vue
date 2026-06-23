@@ -118,10 +118,41 @@
           <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」添加。</div>
           <div
             v-for="(vol, idx) in editableVolumes"
-            :key="idx"
+            :key="`${idx}-${vol.label}`"
             class="volume-edit-row pixel-border"
-            :class="{ 'volume-edit-row--locked': vol.locked }"
+            :class="{
+              'volume-edit-row--locked': vol.locked,
+              'volume-edit-row--dragging': dragVolumeIndex === idx,
+            }"
+            draggable="true"
+            :data-testid="`volume-row-${idx}`"
+            @dragstart="onVolumeDragStart(idx, $event)"
+            @dragover.prevent
+            @drop.prevent="onVolumeDrop(idx)"
           >
+            <div class="volume-reorder">
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                :data-testid="`volume-move-up-${idx}`"
+                :disabled="idx === 0"
+                title="上移"
+                @click="moveVolume(idx, idx - 1)"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                :data-testid="`volume-move-down-${idx}`"
+                :disabled="idx === editableVolumes.length - 1"
+                title="下移"
+                @click="moveVolume(idx, idx + 1)"
+              >
+                ↓
+              </button>
+              <span class="drag-handle" data-testid="volume-drag-handle" title="拖拽排序">⋮⋮</span>
+            </div>
             <input v-model="vol.label" class="vol-input vol-label" placeholder="卷名" />
             <div class="vol-range">
               <input v-model.number="vol.start_chapter" type="number" min="1" class="vol-input vol-num" />
@@ -256,10 +287,48 @@
           class="save-btn pixel-border"
           data-testid="save-settings-btn"
           :disabled="settingsSaving"
-          @click="saveSettingsDocs"
+          @click="requestSaveSettings"
         >
           {{ settingsSaving ? '保存中…' : '保存设定' }}
         </button>
+        <div
+          v-if="showSettingsDiff && settingsDiffPreview"
+          class="settings-diff-panel pixel-border"
+          data-testid="settings-diff-panel"
+        >
+          <h3 class="subsection-title">变更预览</h3>
+          <p v-if="!settingsDiffPreview.has_changes" class="meta-line">无变更</p>
+          <template v-else>
+            <p v-if="settingsDiffPreview.pillars.changed" class="diff-line">
+              支柱：+{{ settingsDiffPreview.pillars.lines_added }}
+              / -{{ settingsDiffPreview.pillars.lines_removed }} 行
+            </p>
+            <p v-if="settingsDiffPreview.global_outline.changed" class="diff-line">
+              全局大纲：+{{ settingsDiffPreview.global_outline.lines_added }}
+              / -{{ settingsDiffPreview.global_outline.lines_removed }} 行
+            </p>
+            <pre v-if="settingsDiffSnippet.length" class="preview-text">{{ settingsDiffSnippet.join('\n') }}</pre>
+          </template>
+          <div class="batch-actions">
+            <button
+              type="button"
+              class="save-btn pixel-border"
+              data-testid="confirm-settings-btn"
+              :disabled="settingsSaving || !settingsDiffPreview.has_changes"
+              @click="confirmSaveSettings"
+            >
+              确认保存
+            </button>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="cancel-settings-btn"
+              @click="cancelSettingsDiff"
+            >
+              取消
+            </button>
+          </div>
+        </div>
         <details v-if="overview.quality_report_available" class="settings-block">
           <summary>P0 问题（点开才看）</summary>
           <p class="p0-line" :class="overview.p0_count ? 'warn' : 'ok'">
@@ -276,7 +345,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   fetchCreatorOverview,
   fetchCreatorVolumePlan,
@@ -284,6 +353,7 @@ import {
   fetchCreatorSettingsDocs,
   saveCreatorVolumePlan,
   saveCreatorSettingsDocs,
+  previewCreatorSettingsDocs,
   studioProductionPreflight,
   studioProductionRun,
   fetchStudioActiveBatchJob,
@@ -302,6 +372,10 @@ const settingsSaving = ref(false);
 const settingsDocs = ref(null);
 const pillarsText = ref('');
 const globalOutlineText = ref('');
+const settingsBaseline = ref({ pillars: '', outline: '' });
+const settingsDiffPreview = ref(null);
+const showSettingsDiff = ref(false);
+const dragVolumeIndex = ref(null);
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -312,6 +386,9 @@ const batchError = ref(null);
 const batchJob = ref(null);
 const error = ref(null);
 const saveMessage = ref('');
+
+let batchPollTimer = null;
+const lastBatchStatus = ref(null);
 
 const modeLabel = computed(() => {
   if (!overview.value) return '';
@@ -342,6 +419,15 @@ const visibleChapters = computed(() =>
 const showAdvanceBatch = computed(
   () => overview.value?.creation_mode === 'advance' || overview.value?.advance_volume_summary,
 );
+
+const settingsDiffSnippet = computed(() => {
+  const preview = settingsDiffPreview.value;
+  if (!preview) return [];
+  return [
+    ...(preview.pillars?.snippet || []),
+    ...(preview.global_outline?.snippet || []),
+  ].slice(0, 10);
+});
 
 function syncBatchRangeFromVolumes() {
   const locked = editableVolumes.value.filter((v) => v.locked);
@@ -389,6 +475,31 @@ function toggleLock(idx) {
   editableVolumes.value[idx].locked = !editableVolumes.value[idx].locked;
 }
 
+function moveVolume(from, to) {
+  if (from === to || to < 0 || to >= editableVolumes.value.length) return;
+  const items = [...editableVolumes.value];
+  const [item] = items.splice(from, 1);
+  items.splice(to, 0, item);
+  editableVolumes.value = items;
+}
+
+function onVolumeDragStart(idx, event) {
+  dragVolumeIndex.value = idx;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(idx));
+  }
+}
+
+function onVolumeDrop(idx) {
+  if (dragVolumeIndex.value === null || dragVolumeIndex.value === idx) {
+    dragVolumeIndex.value = null;
+    return;
+  }
+  moveVolume(dragVolumeIndex.value, idx);
+  dragVolumeIndex.value = null;
+}
+
 async function loadVolumePlan() {
   const plan = await fetchCreatorVolumePlan();
   editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
@@ -400,9 +511,40 @@ async function loadSettingsDocs() {
   settingsDocs.value = docs;
   pillarsText.value = docs.pillars_text || '';
   globalOutlineText.value = docs.global_outline_text || '';
+  settingsBaseline.value = {
+    pillars: docs.pillars_text || '',
+    outline: docs.global_outline_text || '',
+  };
+  settingsDiffPreview.value = null;
+  showSettingsDiff.value = false;
 }
 
-async function saveSettingsDocs() {
+function cancelSettingsDiff() {
+  showSettingsDiff.value = false;
+  settingsDiffPreview.value = null;
+}
+
+async function requestSaveSettings() {
+  error.value = null;
+  if (
+    pillarsText.value === settingsBaseline.value.pillars
+    && globalOutlineText.value === settingsBaseline.value.outline
+  ) {
+    saveMessage.value = '设定无变更';
+    return;
+  }
+  try {
+    settingsDiffPreview.value = await previewCreatorSettingsDocs({
+      pillars_text: pillarsText.value,
+      global_outline_text: globalOutlineText.value,
+    });
+    showSettingsDiff.value = true;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
+async function confirmSaveSettings() {
   settingsSaving.value = true;
   saveMessage.value = '';
   error.value = null;
@@ -412,6 +554,8 @@ async function saveSettingsDocs() {
       global_outline_text: globalOutlineText.value,
     });
     saveMessage.value = '设定已保存';
+    showSettingsDiff.value = false;
+    settingsDiffPreview.value = null;
     await refresh();
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
@@ -448,11 +592,39 @@ async function runAdvanceBatch() {
       end_chapter: batchEnd.value,
       budget_usd: batchBudget.value,
     });
+    lastBatchStatus.value = batchJob.value?.status ?? 'running';
+    if (batchJob.value?.status === 'running') {
+      startBatchPolling();
+    }
   } catch (e) {
     batchError.value = e instanceof Error ? e.message : String(e);
   } finally {
     batchRunning.value = false;
   }
+}
+
+function stopBatchPolling() {
+  if (batchPollTimer) {
+    clearInterval(batchPollTimer);
+    batchPollTimer = null;
+  }
+}
+
+function startBatchPolling() {
+  stopBatchPolling();
+  batchPollTimer = setInterval(async () => {
+    const prev = lastBatchStatus.value;
+    await pollBatchJob();
+    const status = batchJob.value?.status ?? null;
+    if (prev === 'running' && status === 'completed') {
+      saveMessage.value = 'Batch 已完成，卷摘要已更新';
+      await refresh();
+    }
+    if (status === 'completed' || status === 'failed') {
+      stopBatchPolling();
+    }
+    lastBatchStatus.value = status;
+  }, 3000);
 }
 
 async function pollBatchJob() {
@@ -461,6 +633,9 @@ async function pollBatchJob() {
     if (job) {
       batchJob.value = job;
       batchRunning.value = job.status === 'running';
+    } else if (batchJob.value?.status === 'running') {
+      batchJob.value = { ...batchJob.value, status: 'completed' };
+      batchRunning.value = false;
     }
   } catch {
     /* optional */
@@ -493,6 +668,10 @@ async function refresh() {
       pollBatchJob(),
     ]);
     overview.value = ov;
+    if (batchJob.value?.status === 'running' && !batchPollTimer) {
+      lastBatchStatus.value = 'running';
+      startBatchPolling();
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -501,6 +680,10 @@ async function refresh() {
 }
 
 onMounted(refresh);
+
+onUnmounted(() => {
+  stopBatchPolling();
+});
 
 watch(projectRevision, () => {
   refresh();
@@ -665,6 +848,24 @@ watch(projectRevision, () => {
   background: rgba(100, 140, 200, 0.08);
 }
 
+.volume-edit-row--dragging {
+  opacity: 0.55;
+}
+
+.volume-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.drag-handle {
+  cursor: grab;
+  font-size: 8px;
+  opacity: 0.6;
+  user-select: none;
+}
+
 .vol-input {
   font-size: 8px;
   padding: 2px 4px;
@@ -734,6 +935,16 @@ watch(projectRevision, () => {
   color: #c44;
   font-size: 8px;
   margin-top: 4px;
+}
+
+.settings-diff-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+}
+
+.diff-line {
+  font-size: 8px;
+  margin: 2px 0;
 }
 
 .settings-excerpt,

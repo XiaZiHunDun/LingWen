@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.72 (创作者 v1.4, 2026-06-22)  
-> **更新 (2026-06-22)**: 卷纲重叠检测 · 设定在线编辑 · 推进 batch UI · creator e2e 7/7
+> **版本**: v10.73 (创作者 v1.5, 2026-06-22)  
+> **更新 (2026-06-22)**: 卷纲拖拽排序 · batch 完成自动刷新 · 设定 diff 预览
 
 ---
 
@@ -105,7 +105,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v1.4 已落地**：卷纲重叠 alert · 设定 `PUT /api/creator/settings-docs` · 推进 batch 面板 · Playwright creator e2e（live 7 tests）
 
-**v1.5 待做**：卷纲拖拽 · batch 后自动卷摘要 · 设定 diff 预览
+**v1.5 已落地**：卷纲拖拽/上下排序 · batch 完成轮询刷新卷摘要 · 设定 `POST /api/creator/settings-docs/preview` diff 预览
+
+**v1.6 待做**：卷纲合并向导 · 设定与卷纲并发编辑冲突提示 · companion 真人走通 checklist
 
 ### 常用命令
 

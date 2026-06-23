@@ -65,9 +65,9 @@ docs/volume-summary-ch001-010.md
 ### Dashboard（`?nav=creator`）
 
 - **写**：点击章节行 → 只读预览大纲/正文
-- **脉络**：编辑卷纲 → 锁定 → 保存；**重叠卷范围会 alert**
-- **推进**：Preflight + 启动 Batch（需服务端 `LINGWEN_ALLOW_DASHBOARD_BATCH=1`）
-- **设定**：在线编辑支柱 / 全局大纲 → 保存设定
+- **脉络**：编辑卷纲 → 拖拽/↑↓ 排序 → 锁定 → 保存；**重叠卷范围会 alert**
+- **推进**：Preflight + 启动 Batch；**完成后自动刷新卷摘要**
+- **设定**：编辑 → **变更预览** → 确认保存
 - companion/advance 项目打开 Dashboard 默认进创作页
 
 ## 4. 和工作室线的关系

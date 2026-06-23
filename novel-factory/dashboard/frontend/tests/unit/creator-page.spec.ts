@@ -9,6 +9,7 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
+  previewCreatorSettingsDocs: vi.fn(),
   studioProductionPreflight: vi.fn(),
   studioProductionRun: vi.fn(),
   fetchStudioActiveBatchJob: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
+  previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
   studioProductionRun: creatorMocks.studioProductionRun,
   fetchStudioActiveBatchJob: creatorMocks.fetchStudioActiveBatchJob,
@@ -79,6 +81,13 @@ describe('CreatorPage', () => {
           core_conflict: '开篇',
           locked: true,
         },
+        {
+          label: '二',
+          start_chapter: 6,
+          end_chapter: 10,
+          core_conflict: '发展',
+          locked: false,
+        },
       ],
       deviations: overviewFixture.deviations,
     });
@@ -100,6 +109,11 @@ describe('CreatorPage', () => {
       global_outline_path: '/全局大纲.md',
     });
     creatorMocks.saveCreatorSettingsDocs.mockResolvedValue({});
+    creatorMocks.previewCreatorSettingsDocs.mockResolvedValue({
+      has_changes: true,
+      pillars: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+新行'] },
+      global_outline: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+    });
     creatorMocks.studioProductionPreflight.mockResolvedValue({
       all_ok: true,
       batch_command: 'bash scripts/run-advance-volume.sh 1 5 5 0.3',
@@ -148,5 +162,34 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="advance-batch-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="pillars-textarea"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="save-settings-btn"]').exists()).toBe(true);
+  });
+
+  it('reorders volume rows with move down', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="volume-move-down-0"]').trigger('click');
+    await flushPromises();
+
+    const rows = wrapper.findAll('[data-testid^="volume-row-"]');
+    expect(rows[0].find('.vol-label').element.value).toBe('二');
+    expect(rows[1].find('.vol-label').element.value).toBe('一');
+  });
+
+  it('shows settings diff preview before confirm save', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.previewCreatorSettingsDocs).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="settings-diff-panel"]').exists()).toBe(true);
+
+    await wrapper.find('[data-testid="confirm-settings-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.saveCreatorSettingsDocs).toHaveBeenCalled();
   });
 });

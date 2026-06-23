@@ -314,6 +314,19 @@ class CreatorSettingsDocsSaveRequest(BaseModel):
     global_outline_text: Optional[str] = None
 
 
+class CreatorSettingsDiffPart(BaseModel):
+    changed: bool
+    lines_added: int
+    lines_removed: int
+    snippet: list[str]
+
+
+class CreatorSettingsDiffResponse(BaseModel):
+    has_changes: bool
+    pillars: CreatorSettingsDiffPart
+    global_outline: CreatorSettingsDiffPart
+
+
 class StudioQualityResponse(BaseModel):
     slug: str
     pillars_ok: bool
@@ -2228,6 +2241,26 @@ def create_app(
             raise HTTPException(400, "provide pillars_text and/or global_outline_text")
         return CreatorSettingsDocsResponse(
             **save_creator_settings_docs(
+                project,
+                pillars_text=req.pillars_text,
+                global_outline_text=req.global_outline_text,
+            ),
+        )
+
+    @app.post("/api/creator/settings-docs/preview", response_model=CreatorSettingsDiffResponse)
+    def creator_settings_docs_preview(
+        req: CreatorSettingsDocsSaveRequest,
+    ) -> CreatorSettingsDiffResponse:
+        from infra.creator_settings_docs import preview_settings_docs_diff
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        if req.pillars_text is None or req.global_outline_text is None:
+            raise HTTPException(400, "provide pillars_text and global_outline_text")
+        return CreatorSettingsDiffResponse(
+            **preview_settings_docs_diff(
                 project,
                 pillars_text=req.pillars_text,
                 global_outline_text=req.global_outline_text,
