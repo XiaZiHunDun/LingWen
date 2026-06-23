@@ -169,6 +169,35 @@ def delete_custom_volume_template(project_root: Path | str, template_id: str) ->
     return {"id": tid, "deleted": True}
 
 
+def rename_custom_volume_template(
+    project_root: Path | str,
+    template_id: str,
+    *,
+    name: str,
+    description: str | None = None,
+) -> dict[str, Any]:
+    """Rename a project-scoped custom template."""
+    tid = template_id.strip().lower()
+    if not tid.startswith(_CUSTOM_PREFIX):
+        raise ValueError("builtin templates cannot be renamed")
+    label = name.strip()
+    if not label:
+        raise ValueError("template name required")
+    store = _load_custom_store(project_root)
+    for item in store.get("templates", []):
+        if item.get("id") == tid:
+            item["name"] = label
+            if description is not None:
+                item["description"] = description.strip()
+            _save_custom_store(project_root, store)
+            return {
+                "id": tid,
+                "name": item["name"],
+                "description": str(item.get("description", "")),
+            }
+    raise ValueError(f"unknown template: {template_id!r}")
+
+
 def _build_builtin_template(template_id: str, max_chapter: int) -> list[dict[str, Any]]:
     if template_id == "companion_short":
         return [

@@ -8,6 +8,7 @@ from infra.creator_volume_templates import (
     build_volume_template,
     delete_custom_volume_template,
     list_volume_templates,
+    rename_custom_volume_template,
     save_custom_volume_template,
 )
 
@@ -83,6 +84,31 @@ def test_delete_custom_template(factory_tmp):
     assert not any(row["id"] == saved["id"] for row in rows)
     with pytest.raises(ValueError):
         delete_custom_volume_template(root, "three_act")
+    ProjectPaths.reset()
+
+
+def test_rename_custom_template(factory_tmp):
+    from infra.project_init import init_minimal_short_project
+
+    result = init_minimal_short_project(
+        slug="rename-tpl",
+        title="重命名模板",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=20,
+    )
+    root = result.root
+    volumes = [
+        {"label": "A", "start_chapter": 1, "end_chapter": 20, "core_conflict": "x", "locked": False},
+    ]
+    saved = save_custom_volume_template(root, name="旧名", volumes=volumes, max_chapter=20)
+    renamed = rename_custom_volume_template(root, saved["id"], name="新名", description="说明")
+    assert renamed["name"] == "新名"
+    rows = list_volume_templates(root)
+    match = next(row for row in rows if row["id"] == saved["id"])
+    assert match["name"] == "新名"
+    with pytest.raises(ValueError):
+        rename_custom_volume_template(root, "three_act", name="不行")
     ProjectPaths.reset()
 
 

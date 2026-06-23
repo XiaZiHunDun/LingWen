@@ -50,11 +50,24 @@
     >
       <summary>
         入门向导 · {{ onboardingWizard.mode_label }}（{{ onboardingWizard.max_chapter }} 章上限）
+        <span v-if="onboardingWizard.progress_pct != null" class="wizard-progress-badge" data-testid="wizard-progress-label">
+          · {{ onboardingWizard.progress_pct }}%
+        </span>
       </summary>
       <ol class="wizard-steps">
         <li v-for="step in onboardingWizard.steps" :key="step.id" class="wizard-step">
-          <strong>{{ step.title }}</strong>
-          <span class="meta-line">{{ step.detail }}</span>
+          <label class="wizard-step-label">
+            <input
+              type="checkbox"
+              :checked="completedWizardSteps.has(step.id)"
+              :data-testid="`wizard-step-${step.id}`"
+              @change="toggleWizardStep(step.id, $event.target.checked)"
+            />
+            <span>
+              <strong>{{ step.title }}</strong>
+              <span class="meta-line">{{ step.detail }}</span>
+            </span>
+          </label>
         </li>
       </ol>
       <p class="meta-line">
@@ -174,6 +187,23 @@
                 @click="deleteSelectedVolumeTemplate"
               >
                 {{ templateDeleting ? '删除中…' : '删除模板' }}
+              </button>
+            </div>
+            <div v-if="selectedTemplateCustom" class="merge-range">
+              <input
+                v-model="renameTemplateName"
+                class="vol-input vol-conflict"
+                data-testid="rename-template-name-input"
+                placeholder="重命名模板"
+              />
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="rename-template-btn"
+                :disabled="templateRenaming || !renameTemplateName.trim()"
+                @click="renameSelectedVolumeTemplate"
+              >
+                {{ templateRenaming ? '重命名中…' : '重命名' }}
               </button>
             </div>
             <p v-if="selectedTemplateHint" class="meta-line">{{ selectedTemplateHint }}</p>
@@ -514,6 +544,32 @@
               data-testid="merge-strategy-panel"
             >
               <p class="diff-line">合并策略（三路冲突时选择保留来源）</p>
+              <div class="merge-presets" data-testid="merge-presets">
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="merge-preset-disk"
+                  @click="applyMergePreset('disk')"
+                >
+                  全选磁盘
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="merge-preset-history"
+                  @click="applyMergePreset('history')"
+                >
+                  全选历史
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="merge-preset-editor"
+                  @click="applyMergePreset('editor')"
+                >
+                  全选编辑器
+                </button>
+              </div>
               <label class="meta-line">
                 支柱
                 <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source" @change="refreshMergeStrategyPreview">
@@ -620,7 +676,9 @@ import {
   applyCreatorVolumeTemplate,
   saveCreatorVolumeTemplate,
   deleteCreatorVolumeTemplate,
+  renameCreatorVolumeTemplate,
   fetchCreatorOnboarding,
+  saveCreatorOnboardingProgress,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -672,7 +730,10 @@ const templateApplying = ref(false);
 const customTemplateName = ref('');
 const templateSaving = ref(false);
 const templateDeleting = ref(false);
+const templateRenaming = ref(false);
+const renameTemplateName = ref('');
 const onboardingWizard = ref(null);
+const completedWizardSteps = ref(new Set());
 const compareSnapshotId = ref('');
 const pillarsMergeSource = ref('editor');
 const outlineMergeSource = ref('editor');
@@ -738,6 +799,11 @@ const selectedTemplateHint = computed(() => {
 const selectedTemplateCustom = computed(() => {
   const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
   return Boolean(row && row.builtin === false);
+});
+
+watch(selectedTemplateId, () => {
+  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
+  renameTemplateName.value = row?.name || '';
 });
 
 const showMergeStrategy = computed(() => {
@@ -878,6 +944,7 @@ async function loadVolumePlan() {
 async function loadOnboardingWizard() {
   try {
     onboardingWizard.value = await fetchCreatorOnboarding();
+    completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
     if (focusWizard.value) {
       await nextTick();
       try {
@@ -893,6 +960,36 @@ async function loadOnboardingWizard() {
 
 function onWizardToggle(event) {
   setWizardDeepLink(event.target.open);
+}
+
+async function toggleWizardStep(stepId, checked) {
+  const next = new Set(completedWizardSteps.value);
+  if (checked) {
+    next.add(stepId);
+  } else {
+    next.delete(stepId);
+  }
+  try {
+    const result = await saveCreatorOnboardingProgress({
+      completed_step_ids: [...next],
+    });
+    completedWizardSteps.value = new Set(result.completed_step_ids || []);
+    if (onboardingWizard.value) {
+      onboardingWizard.value = {
+        ...onboardingWizard.value,
+        completed_step_ids: result.completed_step_ids,
+        progress_pct: result.progress_pct,
+      };
+    }
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
+function applyMergePreset(source) {
+  pillarsMergeSource.value = source;
+  outlineMergeSource.value = source;
+  refreshMergeStrategyPreview();
 }
 
 async function deleteSelectedVolumeTemplate() {
@@ -911,6 +1008,24 @@ async function deleteSelectedVolumeTemplate() {
     handleSaveError(e);
   } finally {
     templateDeleting.value = false;
+  }
+}
+
+async function renameSelectedVolumeTemplate() {
+  if (!selectedTemplateCustom.value || !renameTemplateName.value.trim()) return;
+  templateRenaming.value = true;
+  error.value = null;
+  try {
+    const renamed = await renameCreatorVolumeTemplate(selectedTemplateId.value, {
+      name: renameTemplateName.value.trim(),
+    });
+    saveMessage.value = `已重命名为「${renamed.name}」`;
+    await loadVolumeTemplates();
+    selectedTemplateId.value = renamed.id;
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateRenaming.value = false;
   }
 }
 
@@ -1618,6 +1733,13 @@ watch(projectRevision, () => {
   gap: 4px;
 }
 
+.merge-presets {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
 .merge-preview-visual {
   margin-top: var(--space-xs);
 }
@@ -1638,6 +1760,17 @@ watch(projectRevision, () => {
 
 .wizard-step {
   margin-bottom: 4px;
+}
+
+.wizard-step-label {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.wizard-progress-badge {
+  opacity: 0.85;
 }
 
 .volume-template-panel {

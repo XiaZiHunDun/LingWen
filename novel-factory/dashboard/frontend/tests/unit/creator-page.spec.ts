@@ -12,7 +12,9 @@ const creatorMocks = vi.hoisted(() => ({
   applyCreatorVolumeTemplate: vi.fn(),
   saveCreatorVolumeTemplate: vi.fn(),
   deleteCreatorVolumeTemplate: vi.fn(),
+  renameCreatorVolumeTemplate: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
+  saveCreatorOnboardingProgress: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
@@ -36,7 +38,9 @@ vi.mock('../../src/api/index.js', () => ({
   applyCreatorVolumeTemplate: creatorMocks.applyCreatorVolumeTemplate,
   saveCreatorVolumeTemplate: creatorMocks.saveCreatorVolumeTemplate,
   deleteCreatorVolumeTemplate: creatorMocks.deleteCreatorVolumeTemplate,
+  renameCreatorVolumeTemplate: creatorMocks.renameCreatorVolumeTemplate,
   fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
+  saveCreatorOnboardingProgress: creatorMocks.saveCreatorOnboardingProgress,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
@@ -211,6 +215,12 @@ describe('CreatorPage', () => {
       checklist_doc: 'docs/advance-walkthrough-checklist.md',
       smoke_command: 'bash scripts/verify-advance-walkthrough.sh',
       onboarding_doc: 'docs/creator-onboarding-wizard.md',
+      completed_step_ids: ['init'],
+      progress_pct: 33,
+    });
+    creatorMocks.saveCreatorOnboardingProgress.mockResolvedValue({
+      completed_step_ids: ['init', 'pillars'],
+      progress_pct: 67,
     });
     creatorMocks.fetchCreatorSettingsHistory.mockResolvedValue({
       snapshots: [
@@ -251,6 +261,11 @@ describe('CreatorPage', () => {
       },
     });
     creatorMocks.deleteCreatorVolumeTemplate.mockResolvedValue({ id: 'custom_test', deleted: true });
+    creatorMocks.renameCreatorVolumeTemplate.mockResolvedValue({
+      id: 'custom_test',
+      name: '新结构',
+      description: '',
+    });
     creatorMocks.previewCreatorSettingsThreeWay.mockResolvedValue({
       has_changes: true,
       pillars: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+新行'] },
@@ -467,5 +482,52 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(creatorMocks.deleteCreatorVolumeTemplate).toHaveBeenCalledWith('custom_test');
+  });
+
+  it('renames custom volume template', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    const select = wrapper.find('[data-testid="volume-template-select"]');
+    await select.setValue('custom_test');
+    await flushPromises();
+
+    await wrapper.find('[data-testid="rename-template-name-input"]').setValue('新结构');
+    await wrapper.find('[data-testid="rename-template-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.renameCreatorVolumeTemplate).toHaveBeenCalledWith('custom_test', {
+      name: '新结构',
+    });
+  });
+
+  it('applies merge preset to disk', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+
+    await wrapper.find('[data-testid="merge-preset-disk"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.previewCreatorSettingsMerge).toHaveBeenCalled();
+    const mergeCall = creatorMocks.previewCreatorSettingsMerge.mock.calls.at(-1)?.[0];
+    expect(mergeCall?.pillars_merge_source).toBe('disk');
+    expect(mergeCall?.global_outline_merge_source).toBe('disk');
+  });
+
+  it('toggles wizard step completion', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="wizard-progress-label"]').text()).toContain('33%');
+    const checkbox = wrapper.find('[data-testid="wizard-step-pillars"]');
+    await checkbox.setValue(true);
+    await flushPromises();
+
+    expect(creatorMocks.saveCreatorOnboardingProgress).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="wizard-progress-label"]').text()).toContain('67%');
   });
 });

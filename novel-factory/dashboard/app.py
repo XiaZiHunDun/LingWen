@@ -347,6 +347,17 @@ class CreatorVolumeDeleteTemplateResponse(BaseModel):
     deleted: bool
 
 
+class CreatorVolumeRenameTemplateRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class CreatorVolumeRenameTemplateResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+
+
 class CreatorVolumeTemplateListResponse(BaseModel):
     templates: list[CreatorVolumeTemplateInfo]
 
@@ -408,6 +419,17 @@ class CreatorOnboardingResponse(BaseModel):
     checklist_doc: str
     smoke_command: str
     onboarding_doc: str
+    completed_step_ids: list[str] = []
+    progress_pct: int = 0
+
+
+class CreatorOnboardingProgressRequest(BaseModel):
+    completed_step_ids: list[str]
+
+
+class CreatorOnboardingProgressResponse(BaseModel):
+    completed_step_ids: list[str]
+    progress_pct: int
 
 
 class CreatorSettingsDiffPart(BaseModel):
@@ -2341,6 +2363,27 @@ def create_app(
             raise HTTPException(404, "no active project")
         return CreatorOnboardingResponse(**onboarding_wizard_payload(project))
 
+    @app.put("/api/creator/onboarding/progress", response_model=CreatorOnboardingProgressResponse)
+    def creator_onboarding_progress_put(
+        req: CreatorOnboardingProgressRequest,
+    ) -> CreatorOnboardingProgressResponse:
+        from infra.creator_onboarding import onboarding_wizard_payload
+        from infra.creator_onboarding_progress import progress_pct, save_onboarding_progress
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        payload = onboarding_wizard_payload(project)
+        valid_ids = {step["id"] for step in payload["steps"]}
+        completed = [sid for sid in req.completed_step_ids if sid in valid_ids]
+        save_onboarding_progress(project.root, completed_step_ids=completed)
+        total = len(payload["steps"])
+        return CreatorOnboardingProgressResponse(
+            completed_step_ids=completed,
+            progress_pct=progress_pct(completed, total),
+        )
+
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
         from infra.creator_volume_plan import volume_plan_payload
@@ -2421,6 +2464,31 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorVolumeDeleteTemplateResponse(**result)
+
+    @app.patch(
+        "/api/creator/volume-plan/templates/{template_id}",
+        response_model=CreatorVolumeRenameTemplateResponse,
+    )
+    def creator_volume_plan_rename_template(
+        template_id: str,
+        req: CreatorVolumeRenameTemplateRequest,
+    ) -> CreatorVolumeRenameTemplateResponse:
+        from infra.creator_volume_templates import rename_custom_volume_template
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = rename_custom_volume_template(
+                project.root,
+                template_id,
+                name=req.name,
+                description=req.description,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeRenameTemplateResponse(**result)
 
     @app.post(
         "/api/creator/volume-plan/apply-template",

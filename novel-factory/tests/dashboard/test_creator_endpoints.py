@@ -397,3 +397,45 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["pillars"]["source"] == "disk"
         assert data["pillars"]["vs_editor"]["changed"] is True
+
+    def test_volume_plan_rename_custom_template(self, client: TestClient) -> None:
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "原名",
+                "volumes": [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 5,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+                "max_chapter": 10,
+            },
+        )
+        template_id = save.json()["id"]
+        renamed = client.patch(
+            f"/api/creator/volume-plan/templates/{template_id}",
+            json={"name": "新名", "description": "更新说明"},
+        )
+        assert renamed.status_code == 200
+        assert renamed.json()["name"] == "新名"
+        listed = client.get("/api/creator/volume-plan/templates").json()
+        match = next(t for t in listed["templates"] if t["id"] == template_id)
+        assert match["name"] == "新名"
+
+    def test_onboarding_progress_put(self, client: TestClient) -> None:
+        onboarding = client.get("/api/creator/onboarding").json()
+        step_ids = [s["id"] for s in onboarding["steps"][:2]]
+        resp = client.put(
+            "/api/creator/onboarding/progress",
+            json={"completed_step_ids": step_ids},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["completed_step_ids"] == step_ids
+        assert data["progress_pct"] >= 1
+        refreshed = client.get("/api/creator/onboarding").json()
+        assert refreshed["completed_step_ids"] == step_ids

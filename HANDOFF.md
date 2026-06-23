@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.78 (创作者 v2.0, 2026-06-22)  
-> **更新 (2026-06-22)**: 自定义模板删除 · 合并策略可视化 diff · 向导 deep-link
+> **版本**: v10.79 (创作者 v2.1, 2026-06-22)  
+> **更新 (2026-06-22)**: 模板重命名 · 合并策略预设 · 向导步骤进度持久化
 
 ---
 
@@ -117,7 +117,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v2.0 已落地**：自定义卷纲模板删除 · 合并策略可视化 diff · 向导 deep-link `?nav=creator&wizard=1`
 
-**v2.1 候选**：模板重命名 · 合并策略预设 · 向导步骤完成勾选
+**v2.1 已落地**：自定义模板重命名 · 合并策略预设（磁盘/历史/编辑器）· 向导步骤勾选与进度持久化
+
+**v2.2 候选**：模板导入导出 · 向导自动勾选（检测文件存在）· 合并策略记忆上次选择
 
 ### 常用命令
 

@@ -58,6 +58,8 @@ def test_onboarding_payload_by_mode(factory_tmp, mode, checklist):
     assert payload["checklist_doc"] == checklist
     assert payload["onboarding_doc"] == "docs/creator-onboarding-wizard.md"
     assert len(payload["steps"]) >= 4
+    assert "completed_step_ids" in payload
+    assert "progress_pct" in payload
     step_ids = {step["id"] for step in payload["steps"]}
     assert "pillars" in step_ids
     assert "dashboard" in step_ids

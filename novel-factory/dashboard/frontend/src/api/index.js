@@ -591,8 +591,22 @@ export async function deleteCreatorVolumeTemplate(templateId) {
   });
 }
 
+export async function renameCreatorVolumeTemplate(templateId, body) {
+  return request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
+    method: 'PATCH',
+    body,
+  });
+}
+
 export async function fetchCreatorOnboarding() {
   return request('/creator/onboarding');
+}
+
+export async function saveCreatorOnboardingProgress(body) {
+  return request('/creator/onboarding/progress', {
+    method: 'PUT',
+    body,
+  });
 }
 
 export async function fetchCreatorChapterPreview(chapterNum) {

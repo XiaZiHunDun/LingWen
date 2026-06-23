@@ -72,11 +72,6 @@ save_creator_settings_docs(
 reloaded = creator_settings_docs_payload(project)
 assert "# wizard-line" not in reloaded["pillars_text"]
 
-from infra.creator_volume_templates import delete_custom_volume_template
-
-delete_custom_volume_template(root, saved["id"])
-assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
-
 from infra.creator_settings_docs import preview_settings_merge_strategy
 
 merge_preview = preview_settings_merge_strategy(
@@ -86,6 +81,19 @@ merge_preview = preview_settings_merge_strategy(
     pillars_merge_source="disk",
 )
 assert merge_preview["pillars"]["vs_disk"]["changed"] is False
+
+from infra.creator_volume_templates import rename_custom_volume_template, delete_custom_volume_template
+from infra.creator_onboarding_progress import save_onboarding_progress
+
+renamed = rename_custom_volume_template(root, saved["id"], name="向导结构 v2")
+assert renamed["name"] == "向导结构 v2"
+progress = save_onboarding_progress(root, completed_step_ids=["init", "pillars"])
+assert progress["completed_step_ids"] == ["init", "pillars"]
+payload2 = onboarding_wizard_payload(project)
+assert payload2["progress_pct"] >= 1
+
+delete_custom_volume_template(root, saved["id"])
+assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY
 

@@ -9,6 +9,7 @@ from infra.creator_mode import (
     CREATION_MODE_STUDIO,
     settings_from_project_config,
 )
+from infra.creator_onboarding_progress import load_onboarding_progress, progress_pct
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
@@ -113,6 +114,11 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         checklist = "docs/studio-creator-hybrid-checklist.md"
         smoke = "bash scripts/verify-studio-creator-hybrid.sh"
 
+    progress = load_onboarding_progress(project.root)
+    completed = progress.get("completed_step_ids", [])
+    valid_ids = {step["id"] for step in steps}
+    completed = [step_id for step_id in completed if step_id in valid_ids]
+
     return {
         "slug": config.slug,
         "creation_mode": mode,
@@ -122,4 +128,6 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         "checklist_doc": checklist,
         "smoke_command": smoke,
         "onboarding_doc": "docs/creator-onboarding-wizard.md",
+        "completed_step_ids": completed,
+        "progress_pct": progress_pct(completed, len(steps)),
     }
