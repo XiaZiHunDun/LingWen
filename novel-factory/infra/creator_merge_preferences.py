@@ -278,6 +278,7 @@ _BUILTIN_MERGE_PRESET_PACKAGES: list[dict[str, Any]] = [
         "name": "支柱磁盘·大纲编辑器",
         "description": "支柱信任磁盘，大纲保留编辑器",
         "builtin": True,
+        "depends_on": ["all_disk", "all_editor"],
         "pillars_merge_source": "disk",
         "global_outline_merge_source": "editor",
     },
@@ -286,6 +287,7 @@ _BUILTIN_MERGE_PRESET_PACKAGES: list[dict[str, Any]] = [
         "name": "支柱编辑器·大纲磁盘",
         "description": "支柱保留编辑器，大纲信任磁盘",
         "builtin": True,
+        "depends_on": ["all_editor", "all_disk"],
         "pillars_merge_source": "editor",
         "global_outline_merge_source": "disk",
     },
@@ -294,6 +296,7 @@ _BUILTIN_MERGE_PRESET_PACKAGES: list[dict[str, Any]] = [
         "name": "支柱历史·大纲编辑器",
         "description": "支柱取历史快照，大纲保留编辑器",
         "builtin": True,
+        "depends_on": ["all_history", "all_editor"],
         "pillars_merge_source": "history",
         "global_outline_merge_source": "editor",
     },
@@ -368,6 +371,8 @@ def _preset_row(raw: dict[str, Any], *, builtin: bool, scope: str = "project") -
             version_label = _normalize_preset_version(str(raw.get("version_label")))
         except ValueError:
             version_label = str(raw.get("version_label")).strip()[:32] or None
+    depends_on_raw = raw.get("depends_on") or []
+    depends_on = [str(dep).strip() for dep in depends_on_raw if str(dep).strip()] if isinstance(depends_on_raw, list) else []
     return {
         "id": str(raw["id"]),
         "name": str(raw.get("name", raw["id"])),
@@ -376,6 +381,7 @@ def _preset_row(raw: dict[str, Any], *, builtin: bool, scope: str = "project") -
         "scope": scope,
         "version_label": version_label,
         "version_semver_valid": is_valid_version_label(version_label),
+        "depends_on": depends_on,
         "pillars_merge_source": pillars,
         "global_outline_merge_source": outline,
     }
@@ -411,6 +417,7 @@ def save_merge_preset_package(
     pillars_merge_source: str,
     global_outline_merge_source: str,
     version_label: str | None = None,
+    depends_on: list[str] | None = None,
 ) -> dict[str, Any]:
     if pillars_merge_source not in MERGE_SOURCES:
         raise ValueError(f"invalid pillars merge source: {pillars_merge_source!r}")
@@ -431,6 +438,11 @@ def save_merge_preset_package(
     }
     if normalized_version:
         entry["version_label"] = normalized_version
+    if depends_on:
+        known = {row["id"] for row in list_merge_preset_packages(project_root)}
+        deps = [dep for dep in depends_on if dep in known and dep != pid]
+        if deps:
+            entry["depends_on"] = list(dict.fromkeys(deps))
     path = _custom_preset_packages_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     custom = _load_custom_preset_packages(project_root)
@@ -471,6 +483,8 @@ def publish_merge_preset_to_factory(
     }
     if match.get("version_label"):
         entry["version_label"] = match.get("version_label")
+    if match.get("depends_on"):
+        entry["depends_on"] = list(match.get("depends_on") or [])
     kept = [row for row in packages if row.get("id") != entry["id"]]
     kept.insert(0, entry)
     factory["packages"] = kept[:_MAX_FACTORY_PRESET_PACKAGES]
@@ -547,6 +561,7 @@ def export_merge_preset_packages(project_root: Path | str) -> dict[str, Any]:
                 "pillars_merge_source": row.get("pillars_merge_source", "editor"),
                 "global_outline_merge_source": row.get("global_outline_merge_source", "editor"),
                 "version_label": row.get("version_label"),
+                "depends_on": row.get("depends_on") or [],
             }
             for row in custom
         ],
@@ -588,6 +603,7 @@ def import_merge_preset_packages(
             pillars_merge_source=str(raw.get("pillars_merge_source", "editor")),
             global_outline_merge_source=str(raw.get("global_outline_merge_source", "editor")),
             version_label=str(raw.get("version_label", "")).strip() or None,
+            depends_on=[str(dep) for dep in (raw.get("depends_on") or []) if str(dep).strip()],
         )
         imported += 1
     return {
@@ -595,5 +611,37 @@ def import_merge_preset_packages(
         "total": len(packages),
         "replaced": replace,
         "packages": list_merge_preset_packages(project_root),
+    }
+
+
+def build_merge_preset_graph(project_root: Path | str) -> dict[str, Any]:
+    """Build a dependency graph for merge preset packages."""
+    packages = list_merge_preset_packages(project_root)
+    known_ids = {pkg["id"] for pkg in packages}
+    nodes = [
+        {
+            "id": pkg["id"],
+            "name": pkg["name"],
+            "scope": pkg["scope"],
+            "version_label": pkg.get("version_label"),
+        }
+        for pkg in packages
+    ]
+    edges: list[dict[str, str]] = []
+    for pkg in packages:
+        for dep_id in pkg.get("depends_on") or []:
+            if dep_id in known_ids and dep_id != pkg["id"]:
+                edges.append(
+                    {
+                        "from": pkg["id"],
+                        "to": dep_id,
+                        "relation": "depends_on",
+                    },
+                )
+    return {
+        "node_count": len(nodes),
+        "edge_count": len(edges),
+        "nodes": nodes,
+        "edges": edges,
     }
 

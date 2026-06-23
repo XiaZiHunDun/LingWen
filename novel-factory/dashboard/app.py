@@ -376,6 +376,31 @@ class CreatorVolumeTemplateRollbackResponse(BaseModel):
     rolled_back_to: Optional[str] = None
 
 
+class CreatorVolumeTemplateApprovalSubmitRequest(BaseModel):
+    version_label: Optional[str] = None
+
+
+class CreatorVolumeTemplateApproval(BaseModel):
+    id: str
+    template_id: str
+    scope: str = "custom"
+    status: str = "pending"
+    version_label: Optional[str] = None
+    previous_label: Optional[str] = None
+    submitted_at: Optional[str] = None
+    resolved_at: Optional[str] = None
+    reject_reason: str = ""
+    has_volumes_snapshot: bool = False
+
+
+class CreatorVolumeTemplateApprovalListResponse(BaseModel):
+    approvals: list[CreatorVolumeTemplateApproval]
+
+
+class CreatorVolumeTemplateApprovalRejectRequest(BaseModel):
+    reason: str = ""
+
+
 class CreatorVolumeTemplateVersionRequest(BaseModel):
     version_label: Optional[str] = None
 
@@ -578,6 +603,25 @@ class CreatorOnboardingNotificationsAckResponse(BaseModel):
     unread: int
 
 
+class CreatorOnboardingNotificationDigestStep(BaseModel):
+    step_id: str
+    count: int
+
+
+class CreatorOnboardingNotificationDigestGroup(BaseModel):
+    handle: str
+    count: int
+    steps: list[CreatorOnboardingNotificationDigestStep] = []
+    latest_at: Optional[str] = None
+    excerpts: list[str] = []
+
+
+class CreatorOnboardingNotificationDigestResponse(BaseModel):
+    unread: int
+    group_count: int
+    groups: list[CreatorOnboardingNotificationDigestGroup] = []
+
+
 class CreatorOnboardingWebhookConfig(BaseModel):
     enabled: bool = False
     url: str = ""
@@ -628,8 +672,29 @@ class CreatorMergePresetPackage(BaseModel):
     scope: str = "builtin"
     version_label: Optional[str] = None
     version_semver_valid: bool = True
+    depends_on: list[str] = []
     pillars_merge_source: str
     global_outline_merge_source: str
+
+
+class CreatorMergePresetGraphNode(BaseModel):
+    id: str
+    name: str
+    scope: str
+    version_label: Optional[str] = None
+
+
+class CreatorMergePresetGraphEdge(BaseModel):
+    from_pkg: str
+    to: str
+    relation: str = "depends_on"
+
+
+class CreatorMergePresetGraphResponse(BaseModel):
+    node_count: int
+    edge_count: int
+    nodes: list[CreatorMergePresetGraphNode]
+    edges: list[CreatorMergePresetGraphEdge]
 
 
 class CreatorMergePresetFactoryPublishRequest(BaseModel):
@@ -2764,6 +2829,27 @@ def create_app(
         return CreatorOnboardingNotificationsAckResponse(**result)
 
     @app.get(
+        "/api/creator/onboarding/notifications/digest",
+        response_model=CreatorOnboardingNotificationDigestResponse,
+    )
+    def creator_onboarding_notifications_digest(
+        handle: Optional[str] = None,
+        unread_only: bool = True,
+    ) -> CreatorOnboardingNotificationDigestResponse:
+        from infra.creator_onboarding_notifications import build_notification_digest
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        digest = build_notification_digest(
+            project.root,
+            handle=handle,
+            unread_only=unread_only,
+        )
+        return CreatorOnboardingNotificationDigestResponse(**digest)
+
+    @app.get(
         "/api/creator/onboarding/webhook",
         response_model=CreatorOnboardingWebhookConfig,
     )
@@ -3040,6 +3126,96 @@ def create_app(
             version_label=result.get("version_label"),
             rolled_back_to=result.get("rolled_back_to"),
         )
+
+    @app.get(
+        "/api/creator/volume-plan/templates/approvals",
+        response_model=CreatorVolumeTemplateApprovalListResponse,
+    )
+    def creator_volume_plan_template_approvals_list(
+        status: Optional[str] = None,
+        template_id: Optional[str] = None,
+    ) -> CreatorVolumeTemplateApprovalListResponse:
+        from infra.creator_template_approvals import list_template_approvals
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        rows = list_template_approvals(
+            project.root,
+            status=status,
+            template_id=template_id,
+        )
+        return CreatorVolumeTemplateApprovalListResponse(
+            approvals=[CreatorVolumeTemplateApproval(**row) for row in rows],
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/templates/{template_id}/version-approval",
+        response_model=CreatorVolumeTemplateApproval,
+    )
+    def creator_volume_plan_template_approval_submit(
+        template_id: str,
+        req: CreatorVolumeTemplateApprovalSubmitRequest,
+    ) -> CreatorVolumeTemplateApproval:
+        from infra.creator_template_approvals import submit_template_version_approval
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            row = submit_template_version_approval(
+                project.root,
+                template_id,
+                version_label=req.version_label,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateApproval(**row)
+
+    @app.post(
+        "/api/creator/volume-plan/templates/approvals/{approval_id}/approve",
+        response_model=CreatorVolumeTemplateApproval,
+    )
+    def creator_volume_plan_template_approval_approve(
+        approval_id: str,
+    ) -> CreatorVolumeTemplateApproval:
+        from infra.creator_template_approvals import approve_template_approval
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            row = approve_template_approval(project.root, approval_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateApproval(**{k: v for k, v in row.items() if k != "applied"})
+
+    @app.post(
+        "/api/creator/volume-plan/templates/approvals/{approval_id}/reject",
+        response_model=CreatorVolumeTemplateApproval,
+    )
+    def creator_volume_plan_template_approval_reject(
+        approval_id: str,
+        req: CreatorVolumeTemplateApprovalRejectRequest,
+    ) -> CreatorVolumeTemplateApproval:
+        from infra.creator_template_approvals import reject_template_approval
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            row = reject_template_approval(
+                project.root,
+                approval_id,
+                reason=req.reason,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateApproval(**row)
 
     @app.get(
         "/api/creator/volume-plan/templates/export",
@@ -3477,6 +3653,32 @@ def create_app(
         packages = list_merge_preset_packages(project.root)
         return CreatorMergePresetPackagesResponse(
             packages=[CreatorMergePresetPackage(**row) for row in packages],
+        )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/graph",
+        response_model=CreatorMergePresetGraphResponse,
+    )
+    def creator_settings_merge_preset_graph() -> CreatorMergePresetGraphResponse:
+        from infra.creator_merge_preferences import build_merge_preset_graph
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        graph = build_merge_preset_graph(project.root)
+        return CreatorMergePresetGraphResponse(
+            node_count=graph["node_count"],
+            edge_count=graph["edge_count"],
+            nodes=[CreatorMergePresetGraphNode(**row) for row in graph["nodes"]],
+            edges=[
+                CreatorMergePresetGraphEdge(
+                    from_pkg=edge["from"],
+                    to=edge["to"],
+                    relation=edge.get("relation", "depends_on"),
+                )
+                for edge in graph["edges"]
+            ],
         )
 
     @app.get(

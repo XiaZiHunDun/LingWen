@@ -45,7 +45,13 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOnboardingEmail: vi.fn(),
   saveCreatorOnboardingEmail: vi.fn(),
   rollbackCreatorVolumeTemplate: vi.fn(),
+  fetchCreatorTemplateApprovals: vi.fn(),
+  submitCreatorTemplateVersionApproval: vi.fn(),
+  approveCreatorTemplateApproval: vi.fn(),
+  rejectCreatorTemplateApproval: vi.fn(),
+  fetchCreatorOnboardingNotificationDigest: vi.fn(),
   fetchCreatorFactoryMergePresetPackages: vi.fn(),
+  fetchCreatorMergePresetGraph: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
@@ -98,7 +104,13 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOnboardingEmail: creatorMocks.fetchCreatorOnboardingEmail,
   saveCreatorOnboardingEmail: creatorMocks.saveCreatorOnboardingEmail,
   rollbackCreatorVolumeTemplate: creatorMocks.rollbackCreatorVolumeTemplate,
+  fetchCreatorTemplateApprovals: creatorMocks.fetchCreatorTemplateApprovals,
+  submitCreatorTemplateVersionApproval: creatorMocks.submitCreatorTemplateVersionApproval,
+  approveCreatorTemplateApproval: creatorMocks.approveCreatorTemplateApproval,
+  rejectCreatorTemplateApproval: creatorMocks.rejectCreatorTemplateApproval,
+  fetchCreatorOnboardingNotificationDigest: creatorMocks.fetchCreatorOnboardingNotificationDigest,
   fetchCreatorFactoryMergePresetPackages: creatorMocks.fetchCreatorFactoryMergePresetPackages,
+  fetchCreatorMergePresetGraph: creatorMocks.fetchCreatorMergePresetGraph,
   publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
   pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
@@ -318,12 +330,51 @@ describe('CreatorPage', () => {
     creatorMocks.fetchCreatorMergePresetPackages.mockResolvedValue({
       packages: [
         { id: 'all_disk', name: '全选磁盘', builtin: true, pillars_merge_source: 'disk', global_outline_merge_source: 'disk' },
-        { id: 'pillars_disk_outline_editor', name: '支柱磁盘·大纲编辑器', builtin: true, scope: 'builtin', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
+        { id: 'pillars_disk_outline_editor', name: '支柱磁盘·大纲编辑器', builtin: true, scope: 'builtin', depends_on: ['all_disk', 'all_editor'], pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
         { id: 'my_combo', name: '我的组合', builtin: false, scope: 'project', version_label: 'v1.0.0', version_semver_valid: true, pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
       ],
     });
     creatorMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValue({
       packages: [{ id: 'factory_preset_team', name: '工厂组合', builtin: false, scope: 'factory', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' }],
+    });
+    creatorMocks.fetchCreatorMergePresetGraph.mockResolvedValue({
+      node_count: 3,
+      edge_count: 2,
+      nodes: [
+        { id: 'all_disk', name: '全选磁盘', scope: 'builtin' },
+        { id: 'pillars_disk_outline_editor', name: '支柱磁盘·大纲编辑器', scope: 'builtin' },
+      ],
+      edges: [
+        { from_pkg: 'pillars_disk_outline_editor', to: 'all_disk', relation: 'depends_on' },
+        { from_pkg: 'pillars_disk_outline_editor', to: 'all_editor', relation: 'depends_on' },
+      ],
+    });
+    creatorMocks.fetchCreatorTemplateApprovals.mockResolvedValue({
+      approvals: [{
+        id: 'aprv_test',
+        template_id: 'custom_test',
+        status: 'pending',
+        version_label: 'v2.0.0',
+        previous_label: 'v1.0.0',
+        has_volumes_snapshot: true,
+      }],
+    });
+    creatorMocks.submitCreatorTemplateVersionApproval.mockResolvedValue({
+      id: 'aprv_new',
+      template_id: 'custom_test',
+      status: 'pending',
+      version_label: 'v2.0.0',
+    });
+    creatorMocks.approveCreatorTemplateApproval.mockResolvedValue({
+      id: 'aprv_test',
+      template_id: 'custom_test',
+      status: 'approved',
+      version_label: 'v2.0.0',
+    });
+    creatorMocks.fetchCreatorOnboardingNotificationDigest.mockResolvedValue({
+      unread: 1,
+      group_count: 1,
+      groups: [{ handle: 'batch', count: 1, steps: [{ step_id: 'volume', count: 1 }], excerpts: ['先锁卷纲'] }],
     });
     creatorMocks.publishCreatorMergePresetToFactory.mockResolvedValue({ id: 'factory_preset_my_combo', name: '我的组合', scope: 'factory' });
     creatorMocks.pullCreatorFactoryMergePresetPackages.mockResolvedValue({ imported: 1, total: 1, package_ids: ['factory_preset_team'] });
@@ -1015,5 +1066,32 @@ describe('CreatorPage', () => {
     await flushPromises();
     const option = wrapper.find('[data-testid="merge-preset-package-select"] option[value="my_combo"]');
     expect(option.text()).toContain('[v1.0.0]');
+  });
+
+  it('shows wizard notification digest', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-notification-digest"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="wizard-digest-row"]').exists()).toBe(true);
+  });
+
+  it('submits template version approval', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
+    await wrapper.find('[data-testid="template-version-input"]').setValue('v2.0.0');
+    await wrapper.find('[data-testid="submit-template-version-approval-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.submitCreatorTemplateVersionApproval).toHaveBeenCalled();
+  });
+
+  it('shows merge preset dependency graph', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="merge-preset-graph-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="merge-preset-graph-edge"]').exists()).toBe(true);
   });
 });

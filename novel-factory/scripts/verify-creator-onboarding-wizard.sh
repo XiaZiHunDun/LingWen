@@ -187,6 +187,21 @@ if changelog:
     rolled = rollback_template_version(root, saved["id"], version_label=changelog[0].get("version_label"))
     assert rolled.get("rolled_back_to")
 
+from infra.creator_template_approvals import submit_template_version_approval, approve_template_approval
+
+pending = submit_template_version_approval(root, saved["id"], version_label="v9.0.0")
+approve_template_approval(root, pending["id"])
+
+from infra.creator_onboarding_notifications import build_notification_digest
+
+digest = build_notification_digest(root)
+assert digest.get("group_count", 0) >= 0
+
+from infra.creator_merge_preferences import build_merge_preset_graph
+
+graph = build_merge_preset_graph(root)
+assert graph.get("edge_count", 0) >= 3
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

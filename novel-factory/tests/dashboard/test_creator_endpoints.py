@@ -787,6 +787,43 @@ class TestCreatorEndpoints:
         assert match["version_label"] == "v2.0.0"
         assert match["version_semver_valid"] is True
 
+    def test_template_version_approval_flow(self, client: TestClient) -> None:
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "approval-api",
+                "volumes": [
+                    {"label": "一", "start_chapter": 1, "end_chapter": 6, "core_conflict": "a"},
+                ],
+            },
+        )
+        tid = save.json()["id"]
+        submit = client.post(
+            f"/api/creator/volume-plan/templates/{tid}/version-approval",
+            json={"version_label": "v1.0.0"},
+        )
+        assert submit.status_code == 200
+        pending = client.get("/api/creator/volume-plan/templates/approvals?status=pending")
+        assert pending.status_code == 200
+        approval_id = pending.json()["approvals"][0]["id"]
+        approved = client.post(f"/api/creator/volume-plan/templates/approvals/{approval_id}/approve")
+        assert approved.status_code == 200
+        assert approved.json()["status"] == "approved"
+
+    def test_notification_digest(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/onboarding/notes",
+            json={"step_notes": {"volume": "先锁卷纲 @batch"}},
+        )
+        digest = client.get("/api/creator/onboarding/notifications/digest")
+        assert digest.status_code == 200
+        assert digest.json()["group_count"] >= 1
+
+    def test_merge_preset_graph(self, client: TestClient) -> None:
+        graph = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/graph")
+        assert graph.status_code == 200
+        assert graph.json()["edge_count"] >= 3
+
     def test_merge_preset_factory_library(self, client: TestClient) -> None:
         save_pkg = client.post(
             "/api/creator/settings-docs/merge-preferences/preset-packages/import",

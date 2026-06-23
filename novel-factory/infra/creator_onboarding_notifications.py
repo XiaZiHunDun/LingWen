@@ -150,3 +150,59 @@ def ack_onboarding_notifications(
     store["notifications"] = notifications
     _save_store(project_root, store)
     return {"acked": acked, "unread": unread_mention_count(project_root, handle=handle)}
+
+
+def build_notification_digest(
+    project_root: Path | str,
+    *,
+    handle: str | None = None,
+    unread_only: bool = True,
+) -> dict[str, Any]:
+    """Summarize notifications by handle and step for digest views."""
+    rows = list_onboarding_notifications(
+        project_root,
+        unread_only=unread_only,
+        handle=handle,
+    )
+    groups: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        handle_key = str(row.get("handle", "")).lower() or "unknown"
+        group = groups.setdefault(
+            handle_key,
+            {
+                "handle": handle_key,
+                "count": 0,
+                "steps": {},
+                "latest_at": None,
+                "excerpts": [],
+            },
+        )
+        group["count"] += 1
+        step_id = str(row.get("step_id", ""))
+        group["steps"][step_id] = group["steps"].get(step_id, 0) + 1
+        created_at = row.get("created_at")
+        if created_at and (group["latest_at"] is None or created_at > group["latest_at"]):
+            group["latest_at"] = created_at
+        excerpt = str(row.get("note_excerpt", "")).strip()
+        if excerpt and excerpt not in group["excerpts"]:
+            group["excerpts"].append(excerpt)
+    digest_groups = []
+    for group in groups.values():
+        digest_groups.append(
+            {
+                "handle": group["handle"],
+                "count": group["count"],
+                "steps": [
+                    {"step_id": sid, "count": count}
+                    for sid, count in sorted(group["steps"].items())
+                ],
+                "latest_at": group["latest_at"],
+                "excerpts": group["excerpts"][:3],
+            },
+        )
+    digest_groups.sort(key=lambda row: row.get("latest_at") or "", reverse=True)
+    return {
+        "unread": len(rows),
+        "group_count": len(digest_groups),
+        "groups": digest_groups,
+    }

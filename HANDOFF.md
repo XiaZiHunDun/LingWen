@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.88 (创作者 v3.0, 2026-06-22)  
-> **更新 (2026-06-22)**: 模板变更回滚 · 向导通知邮件 · 合并预设包 semver
+> **版本**: v10.89 (创作者 v3.1, 2026-06-22)  
+> **更新 (2026-06-22)**: 模板变更审批 · 向导通知摘要 digest · 合并预设包依赖图
 
 ---
 
@@ -137,7 +137,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v3.0 已落地**：模板变更回滚 · 向导通知邮件 · 合并预设包 semver
 
-**v3.1 候选**：模板变更审批 · 向导通知摘要 digest · 合并预设包依赖图
+**v3.1 已落地**：模板变更审批 · 向导通知摘要 digest · 合并预设包依赖图
+
+**v3.2 候选**：模板变更审批链 · 向导通知定时 digest · 合并预设包冲突检测
 
 ### 常用命令
 

@@ -173,5 +173,5 @@ def dispatch_mention_email(
                 smtp.login(user, password)
             smtp.send_message(message)
         return {"sent": len(payload_rows)}
-    except smtplib.SMTPException as exc:
+    except (smtplib.SMTPException, OSError) as exc:
         return {"sent": 0, "error": str(exc)}

@@ -81,6 +81,24 @@
             </option>
           </select>
         </label>
+        <div
+          v-if="wizardNotificationDigest.groups?.length"
+          class="wizard-digest-panel"
+          data-testid="wizard-notification-digest"
+        >
+          <p class="meta-line">通知摘要（{{ wizardNotificationDigest.unread }} 条未读）</p>
+          <ul>
+            <li
+              v-for="group in wizardNotificationDigest.groups"
+              :key="group.handle"
+              class="wizard-digest-row"
+              data-testid="wizard-digest-row"
+            >
+              <strong>@{{ group.handle }}</strong>
+              <span class="meta-line">{{ group.count }} 条 · {{ group.steps.map((s) => s.step_id).join(', ') }}</span>
+            </li>
+          </ul>
+        </div>
         <ul>
           <li
             v-for="note in wizardNotifications"
@@ -370,6 +388,49 @@
               >
                 {{ templateVersionSaving ? '保存中…' : '设版本标签' }}
               </button>
+              <button
+                v-if="selectedTemplateProject || selectedTemplateFactory"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="submit-template-version-approval-btn"
+                :disabled="templateApprovalSubmitting"
+                @click="submitTemplateVersionApproval"
+              >
+                {{ templateApprovalSubmitting ? '提交中…' : '提交审批' }}
+              </button>
+            </div>
+            <div
+              v-if="pendingTemplateApprovals.length"
+              class="template-approvals"
+              data-testid="template-approvals-panel"
+            >
+              <p class="meta-line">待审批版本变更</p>
+              <ul>
+                <li
+                  v-for="approval in pendingTemplateApprovals"
+                  :key="approval.id"
+                  class="template-approval-row"
+                  data-testid="template-approval-row"
+                >
+                  <span>{{ approval.previous_label || '—' }} → {{ approval.version_label || '（清除）' }}</span>
+                  <button
+                    type="button"
+                    class="mini-btn pixel-border"
+                    data-testid="approve-template-version-btn"
+                    @click="approveTemplateVersion(approval.id)"
+                  >
+                    批准
+                  </button>
+                  <button
+                    type="button"
+                    class="mini-btn pixel-border"
+                    data-testid="reject-template-version-btn"
+                    @click="rejectTemplateVersion(approval.id)"
+                  >
+                    驳回
+                  </button>
+                </li>
+              </ul>
             </div>
             <div
               v-if="(selectedTemplateProject || selectedTemplateFactory) && templateVersionChangelog.length"
@@ -925,6 +986,22 @@
                 </button>
               </div>
               <div
+                v-if="mergePresetGraph.edges?.length"
+                class="merge-preset-graph"
+                data-testid="merge-preset-graph-panel"
+              >
+                <p class="meta-line">预设包依赖图（{{ mergePresetGraph.edge_count }} 条边）</p>
+                <ul>
+                  <li
+                    v-for="edge in mergePresetGraph.edges"
+                    :key="`${edge.from_pkg}-${edge.to}`"
+                    data-testid="merge-preset-graph-edge"
+                  >
+                    {{ edge.from_pkg }} → {{ edge.to }}
+                  </li>
+                </ul>
+              </div>
+              <div
                 v-if="showImportMergePresetPackages"
                 class="import-templates-panel"
                 data-testid="import-merge-preset-packages-panel"
@@ -1129,7 +1206,12 @@ import {
   setCreatorVolumeTemplateVersion,
   fetchCreatorVolumeTemplateChangelog,
   rollbackCreatorVolumeTemplate,
+  fetchCreatorTemplateApprovals,
+  submitCreatorTemplateVersionApproval,
+  approveCreatorTemplateApproval,
+  rejectCreatorTemplateApproval,
   fetchCreatorOnboardingNotifications,
+  fetchCreatorOnboardingNotificationDigest,
   ackCreatorOnboardingNotifications,
   fetchCreatorOnboardingWebhook,
   saveCreatorOnboardingWebhook,
@@ -1137,6 +1219,7 @@ import {
   saveCreatorOnboardingEmail,
   fetchCreatorMergePresetPackages,
   fetchCreatorFactoryMergePresetPackages,
+  fetchCreatorMergePresetGraph,
   exportCreatorMergePresetPackages,
   importCreatorMergePresetPackages,
   publishCreatorMergePresetToFactory,
@@ -1227,6 +1310,10 @@ const wizardWebhookEnabled = ref(false);
 const wizardEmailTo = ref('');
 const wizardEmailSmtpHost = ref('');
 const wizardEmailEnabled = ref(false);
+const wizardNotificationDigest = ref({ unread: 0, group_count: 0, groups: [] });
+const templateApprovals = ref([]);
+const templateApprovalSubmitting = ref(false);
+const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
 const templateRollbackSaving = ref(false);
 const mergePresetFactoryPublishing = ref(false);
 const mergePresetFactoryPulling = ref(false);
@@ -1315,6 +1402,10 @@ const factoryTemplateCount = computed(() => volumeTemplates.value.filter((t) => 
 
 const factoryMergePresetCount = computed(
   () => mergePresetPackages.value.filter((pkg) => pkg.scope === 'factory').length,
+);
+
+const pendingTemplateApprovals = computed(() =>
+  templateApprovals.value.filter((row) => row.status === 'pending'),
 );
 
 const selectedProjectMergePreset = computed(() => {
@@ -1682,12 +1773,15 @@ async function loadWizardNotifications() {
     wizardNotifications.value = data.notifications || [];
     wizardNotificationHandles.value = data.handles || [];
     wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
+    const digest = await fetchCreatorOnboardingNotificationDigest(handle);
+    wizardNotificationDigest.value = digest;
     await loadWizardWebhook();
     await loadWizardEmail();
   } catch {
     wizardNotifications.value = [];
     wizardNotificationHandles.value = [];
     wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
+    wizardNotificationDigest.value = { unread: 0, group_count: 0, groups: [] };
   }
 }
 
@@ -1823,9 +1917,21 @@ async function loadMergePresetPackages() {
     mergePresetPackages.value = data.packages || [];
     const factoryData = await fetchCreatorFactoryMergePresetPackages();
     factoryMergePresetPackages.value = factoryData.packages || [];
+    const graph = await fetchCreatorMergePresetGraph();
+    mergePresetGraph.value = graph;
   } catch {
     mergePresetPackages.value = [];
     factoryMergePresetPackages.value = [];
+    mergePresetGraph.value = { node_count: 0, edge_count: 0, nodes: [], edges: [] };
+  }
+}
+
+async function loadTemplateApprovals() {
+  try {
+    const data = await fetchCreatorTemplateApprovals({ status: 'pending' });
+    templateApprovals.value = data.approvals || [];
+  } catch {
+    templateApprovals.value = [];
   }
 }
 
@@ -1950,6 +2056,49 @@ async function saveTemplateVersionLabel() {
     handleSaveError(e);
   } finally {
     templateVersionSaving.value = false;
+  }
+}
+
+async function submitTemplateVersionApproval() {
+  if (!selectedTemplateId.value) return;
+  if (templateVersionLabel.value.trim() && !isSemverVersionLabel(templateVersionLabel.value)) {
+    saveMessage.value = '版本标签需符合 semver（如 v1.2.0）';
+    return;
+  }
+  templateApprovalSubmitting.value = true;
+  error.value = null;
+  try {
+    await submitCreatorTemplateVersionApproval(selectedTemplateId.value, {
+      version_label: templateVersionLabel.value.trim() || null,
+    });
+    saveMessage.value = '已提交版本变更审批';
+    await loadTemplateApprovals();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateApprovalSubmitting.value = false;
+  }
+}
+
+async function approveTemplateVersion(approvalId) {
+  try {
+    await approveCreatorTemplateApproval(approvalId);
+    saveMessage.value = '已批准版本变更';
+    await loadTemplateApprovals();
+    await loadVolumeTemplates();
+    await loadTemplateVersionChangelog();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function rejectTemplateVersion(approvalId) {
+  try {
+    await rejectCreatorTemplateApproval(approvalId, { reason: '驳回' });
+    saveMessage.value = '已驳回版本变更';
+    await loadTemplateApprovals();
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 
@@ -2470,6 +2619,7 @@ async function refresh() {
     overview.value = ov;
     await loadMergePreferences();
     await loadMergePresetPackages();
+    await loadTemplateApprovals();
     if (batchJob.value?.status === 'running' && !batchPollTimer) {
       lastBatchStatus.value = 'running';
       startBatchPolling();
@@ -2928,6 +3078,29 @@ watch(projectRevision, () => {
   margin-top: var(--space-sm);
   padding-top: var(--space-sm);
   border-top: 1px dashed rgba(127, 127, 127, 0.35);
+}
+
+.wizard-digest-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px dashed rgba(127, 127, 127, 0.25);
+}
+
+.template-approvals {
+  margin-top: var(--space-sm);
+}
+
+.template-approval-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.merge-preset-graph ul {
+  margin: 0;
+  padding-left: 1.2rem;
 }
 
 .version-semver-warn {

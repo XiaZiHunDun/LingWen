@@ -723,6 +723,40 @@ export async function saveCreatorOnboardingEmail(body) {
   });
 }
 
+export async function fetchCreatorOnboardingNotificationDigest(handle) {
+  const params = handle ? `?handle=${encodeURIComponent(handle)}` : '';
+  return request(`/creator/onboarding/notifications/digest${params}`);
+}
+
+export async function fetchCreatorTemplateApprovals(params = {}) {
+  const search = new URLSearchParams();
+  if (params.status) search.set('status', params.status);
+  if (params.template_id) search.set('template_id', params.template_id);
+  const qs = search.toString();
+  return request(`/creator/volume-plan/templates/approvals${qs ? `?${qs}` : ''}`);
+}
+
+export async function submitCreatorTemplateVersionApproval(templateId, body) {
+  return request(
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-approval`,
+    { method: 'POST', body },
+  );
+}
+
+export async function approveCreatorTemplateApproval(approvalId) {
+  return request(
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/approve`,
+    { method: 'POST' },
+  );
+}
+
+export async function rejectCreatorTemplateApproval(approvalId, body) {
+  return request(
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/reject`,
+    { method: 'POST', body },
+  );
+}
+
 export async function fetchCreatorMergePresetPackages() {
   return request('/creator/settings-docs/merge-preferences/preset-packages');
 }
@@ -754,6 +788,10 @@ export async function pullCreatorFactoryMergePresetPackages(body) {
     method: 'POST',
     body,
   });
+}
+
+export async function fetchCreatorMergePresetGraph() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/graph');
 }
 
 export async function deleteCreatorFactoryMergePresetPackage(packageId) {
