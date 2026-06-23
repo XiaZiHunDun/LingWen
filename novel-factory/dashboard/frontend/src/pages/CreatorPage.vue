@@ -30,6 +30,12 @@
     <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
     </div>
+    <div v-if="conflictMessage" class="conflict-banner pixel-border" data-testid="conflict-banner">
+      {{ conflictMessage }}
+      <button type="button" class="mini-btn pixel-border" data-testid="conflict-reload-btn" @click="refresh">
+        重新加载
+      </button>
+    </div>
     <div v-if="saveMessage" class="save-banner pixel-border" data-testid="save-banner">
       {{ saveMessage }}
     </div>
@@ -183,6 +189,58 @@
           >
             {{ saving ? '保存中…' : '保存卷纲' }}
           </button>
+          <div
+            v-if="editableVolumes.length >= 2"
+            class="volume-merge-panel pixel-border"
+            data-testid="volume-merge-panel"
+          >
+            <h3 class="subsection-title">合并向导</h3>
+            <div class="merge-range">
+              <label>
+                从
+                <select v-model.number="mergeStartIdx" class="vol-input" data-testid="merge-start-select">
+                  <option v-for="(vol, idx) in editableVolumes" :key="`s-${idx}`" :value="idx">
+                    {{ vol.label || `卷${idx + 1}` }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                到
+                <select v-model.number="mergeEndIdx" class="vol-input" data-testid="merge-end-select">
+                  <option
+                    v-for="(vol, idx) in editableVolumes"
+                    :key="`e-${idx}`"
+                    :value="idx"
+                    :disabled="idx < mergeStartIdx"
+                  >
+                    {{ vol.label || `卷${idx + 1}` }}
+                  </option>
+                </select>
+              </label>
+              <input
+                v-model="mergeLabel"
+                class="vol-input vol-conflict"
+                data-testid="merge-label-input"
+                placeholder="合并后卷名（可选）"
+              />
+            </div>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="apply-merge-btn"
+              :disabled="mergeApplying || mergeStartIdx > mergeEndIdx"
+              @click="applyVolumeMerge"
+            >
+              {{ mergeApplying ? '合并中…' : '应用合并' }}
+            </button>
+          </div>
+          <p
+            v-if="mergePreview"
+            class="meta-line"
+            data-testid="merge-preview-line"
+          >
+            已合并为「{{ mergePreview.merged_label }}」· {{ mergePreview.merged_range }} · 请保存卷纲
+          </p>
         </div>
 
         <ul
@@ -352,6 +410,7 @@ import {
   fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs,
   saveCreatorVolumePlan,
+  mergeCreatorVolumePlan,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   studioProductionPreflight,
@@ -376,6 +435,14 @@ const settingsBaseline = ref({ pillars: '', outline: '' });
 const settingsDiffPreview = ref(null);
 const showSettingsDiff = ref(false);
 const dragVolumeIndex = ref(null);
+const volumePlanRevision = ref('');
+const settingsRevisions = ref({ pillars: '', outline: '' });
+const conflictMessage = ref('');
+const mergeStartIdx = ref(0);
+const mergeEndIdx = ref(1);
+const mergeLabel = ref('');
+const mergePreview = ref(null);
+const mergeApplying = ref(false);
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -500,10 +567,54 @@ function onVolumeDrop(idx) {
   dragVolumeIndex.value = null;
 }
 
+function isConflictError(err) {
+  return err instanceof Error && err.message.includes('409');
+}
+
+function handleSaveError(err) {
+  if (isConflictError(err)) {
+    conflictMessage.value = '磁盘上的文件已被修改（可能在编辑器中），请重新加载后再保存。';
+    error.value = null;
+    return;
+  }
+  error.value = err instanceof Error ? err.message : String(err);
+}
+
 async function loadVolumePlan() {
   const plan = await fetchCreatorVolumePlan();
   editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
+  volumePlanRevision.value = plan.revision || '';
+  mergeStartIdx.value = 0;
+  mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
+  mergePreview.value = null;
   syncBatchRangeFromVolumes();
+}
+
+async function applyVolumeMerge() {
+  if (mergeStartIdx.value > mergeEndIdx.value) return;
+  mergeApplying.value = true;
+  error.value = null;
+  try {
+    const result = await mergeCreatorVolumePlan({
+      volumes: editableVolumes.value,
+      start_index: mergeStartIdx.value,
+      end_index: mergeEndIdx.value,
+      label: mergeLabel.value.trim() || undefined,
+    });
+    editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+    mergePreview.value = {
+      merged_label: result.merged_label,
+      merged_range: result.merged_range,
+    };
+    mergeStartIdx.value = 0;
+    mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
+    mergeLabel.value = '';
+    saveMessage.value = `已合并为「${result.merged_label}」，请保存卷纲`;
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    mergeApplying.value = false;
+  }
 }
 
 async function loadSettingsDocs() {
@@ -514,6 +625,10 @@ async function loadSettingsDocs() {
   settingsBaseline.value = {
     pillars: docs.pillars_text || '',
     outline: docs.global_outline_text || '',
+  };
+  settingsRevisions.value = {
+    pillars: docs.pillars_revision || '',
+    outline: docs.global_outline_revision || '',
   };
   settingsDiffPreview.value = null;
   showSettingsDiff.value = false;
@@ -552,13 +667,16 @@ async function confirmSaveSettings() {
     await saveCreatorSettingsDocs({
       pillars_text: pillarsText.value,
       global_outline_text: globalOutlineText.value,
+      expected_pillars_revision: settingsRevisions.value.pillars,
+      expected_global_outline_revision: settingsRevisions.value.outline,
     });
     saveMessage.value = '设定已保存';
+    conflictMessage.value = '';
     showSettingsDiff.value = false;
     settingsDiffPreview.value = null;
     await refresh();
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
+    handleSaveError(e);
   } finally {
     settingsSaving.value = false;
   }
@@ -647,11 +765,12 @@ async function saveVolumePlan() {
   saveMessage.value = '';
   error.value = null;
   try {
-    await saveCreatorVolumePlan(editableVolumes.value);
+    await saveCreatorVolumePlan(editableVolumes.value, volumePlanRevision.value);
     saveMessage.value = '卷纲已保存并同步到全局大纲';
+    conflictMessage.value = '';
     await refresh();
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
+    handleSaveError(e);
   } finally {
     saving.value = false;
   }
@@ -660,6 +779,7 @@ async function saveVolumePlan() {
 async function refresh() {
   loading.value = true;
   error.value = null;
+  conflictMessage.value = '';
   try {
     const [ov] = await Promise.all([
       fetchCreatorOverview(),
@@ -987,5 +1107,29 @@ watch(projectRevision, () => {
   padding: var(--space-sm);
   color: #484;
   font-size: 8px;
+}
+
+.conflict-banner {
+  padding: var(--space-sm);
+  color: #a60;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.volume-merge-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+}
+
+.merge-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 8px;
+  margin-bottom: 6px;
+  align-items: center;
 }
 </style>

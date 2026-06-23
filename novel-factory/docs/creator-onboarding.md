@@ -33,6 +33,9 @@ export LINGWEN_PROJECT_ROOT="$(pwd)/projects/my-story"
 
 ## 2. 陪伴模式日常
 
+真人走通清单：[`companion-walkthrough-checklist.md`](companion-walkthrough-checklist.md)  
+冒烟脚本：`bash scripts/verify-companion-walkthrough.sh`
+
 1. 改 `docs/novel-pillars.md` 和各章 `chNNN_大纲.md`（可选）
 2. **你主笔**写 `chNNN.md` 正文
 3. 保存后跑逻辑守门：
@@ -65,7 +68,7 @@ docs/volume-summary-ch001-010.md
 ### Dashboard（`?nav=creator`）
 
 - **写**：点击章节行 → 只读预览大纲/正文
-- **脉络**：编辑卷纲 → 拖拽/↑↓ 排序 → 锁定 → 保存；**重叠卷范围会 alert**
+- **脉络**：编辑卷纲 → 拖拽/↑↓ 排序 → **合并向导** → 锁定 → 保存；重叠 alert；**409 冲突时重新加载**
 - **推进**：Preflight + 启动 Batch；**完成后自动刷新卷摘要**
 - **设定**：编辑 → **变更预览** → 确认保存
 - companion/advance 项目打开 Dashboard 默认进创作页

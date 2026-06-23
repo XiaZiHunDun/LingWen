@@ -544,10 +544,19 @@ export async function fetchCreatorVolumePlan() {
   return request('/creator/volume-plan');
 }
 
-export async function saveCreatorVolumePlan(volumes) {
+export async function saveCreatorVolumePlan(volumes, expectedRevision) {
+  const body = { volumes };
+  if (expectedRevision) body.expected_revision = expectedRevision;
   return request('/creator/volume-plan', {
     method: 'PUT',
-    body: { volumes },
+    body,
+  });
+}
+
+export async function mergeCreatorVolumePlan(body) {
+  return request('/creator/volume-plan/merge', {
+    method: 'POST',
+    body,
   });
 }
 

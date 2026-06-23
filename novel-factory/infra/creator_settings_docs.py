@@ -5,6 +5,7 @@ import difflib
 from pathlib import Path
 from typing import Any
 
+from infra.creator_revision import CreatorDocConflictError, content_revision
 from infra.creator_volume_plan import global_outline_path
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
@@ -82,7 +83,36 @@ def creator_settings_docs_payload(project: StudioProject) -> dict[str, Any]:
         "global_outline_path": str(outline_path),
         "pillars_text": pillars_text,
         "global_outline_text": global_outline_text,
+        "pillars_revision": content_revision(pillars_text),
+        "global_outline_revision": content_revision(global_outline_text),
     }
+
+
+def assert_settings_revisions(
+    project: StudioProject,
+    *,
+    expected_pillars_revision: str | None,
+    expected_global_outline_revision: str | None,
+) -> None:
+    current = creator_settings_docs_payload(project)
+    conflicts: list[str] = []
+    if (
+        expected_pillars_revision is not None
+        and expected_pillars_revision != current["pillars_revision"]
+    ):
+        conflicts.append("pillars")
+    if (
+        expected_global_outline_revision is not None
+        and expected_global_outline_revision != current["global_outline_revision"]
+    ):
+        conflicts.append("global_outline")
+    if conflicts:
+        labels = {"pillars": "创作支柱", "global_outline": "全局大纲"}
+        names = "、".join(labels[field] for field in conflicts)
+        raise CreatorDocConflictError(
+            f"{names} 已在别处修改，请重新加载后再保存",
+            fields=conflicts,
+        )
 
 
 def save_creator_settings_docs(
@@ -90,7 +120,19 @@ def save_creator_settings_docs(
     *,
     pillars_text: str | None = None,
     global_outline_text: str | None = None,
+    expected_pillars_revision: str | None = None,
+    expected_global_outline_revision: str | None = None,
 ) -> dict[str, Any]:
+    if pillars_text is not None or global_outline_text is not None:
+        assert_settings_revisions(
+            project,
+            expected_pillars_revision=expected_pillars_revision
+            if pillars_text is not None
+            else None,
+            expected_global_outline_revision=expected_global_outline_revision
+            if global_outline_text is not None
+            else None,
+        )
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)
 

@@ -131,6 +131,12 @@ project:
 
 ## 13. 后续（v1.6+）
 
-- 卷纲合并向导
-- 设定与卷纲并发编辑冲突提示
-- companion 真人走通 checklist
+- 卷纲合并向导 — ✅ v1.6
+- 设定与卷纲并发编辑冲突提示 — ✅ v1.6（revision + HTTP 409）
+- companion 真人走通 checklist — ✅ v1.6
+
+## 14. 后续（v1.7+）
+
+- 卷纲拆分
+- 设定版本历史
+- advance 真人走通 checklist

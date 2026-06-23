@@ -4,11 +4,13 @@ from __future__ import annotations
 import pytest
 
 from infra.creator_settings_docs import (
+    assert_settings_revisions,
     creator_settings_docs_payload,
     preview_settings_docs_diff,
     save_creator_settings_docs,
     text_diff_summary,
 )
+from infra.creator_revision import CreatorDocConflictError
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject
@@ -87,3 +89,30 @@ def test_preview_settings_docs_diff(factory_tmp):
     assert preview["has_changes"] is True
     assert preview["pillars"]["changed"] is True
     assert preview["global_outline"]["changed"] is False
+
+
+def test_settings_revision_conflict(factory_tmp):
+    result = init_minimal_short_project(
+        slug="settings-conflict",
+        title="设定冲突",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    ProjectPaths.reset()
+    project = StudioProject(
+        slug=result.slug,
+        name=result.title,
+        role="production",
+        root=result.root,
+        location="projects",
+    )
+    save_creator_settings_docs(project, pillars_text="# 旧\n")
+    docs = creator_settings_docs_payload(project)
+    save_creator_settings_docs(project, pillars_text="# 新\n")
+    with pytest.raises(CreatorDocConflictError):
+        save_creator_settings_docs(
+            project,
+            pillars_text="# 本地编辑\n",
+            expected_pillars_revision=docs["pillars_revision"],
+        )

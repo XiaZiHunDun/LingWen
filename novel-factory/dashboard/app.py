@@ -279,6 +279,7 @@ class CreatorVolumePlanResponse(BaseModel):
     slug: str
     global_outline_path: str
     state_path: str
+    revision: str
     volumes: list[CreatorVolumePlanEntry]
     locked_volume_count: int
     deviations: list[CreatorVolumeDeviation]
@@ -288,6 +289,21 @@ class CreatorVolumePlanResponse(BaseModel):
 
 class CreatorVolumePlanSaveRequest(BaseModel):
     volumes: list[CreatorVolumePlanEntry]
+    expected_revision: Optional[str] = None
+
+
+class CreatorVolumeMergeRequest(BaseModel):
+    volumes: list[CreatorVolumePlanEntry]
+    start_index: int
+    end_index: int
+    label: Optional[str] = None
+    core_conflict: Optional[str] = None
+
+
+class CreatorVolumeMergeResponse(BaseModel):
+    volumes: list[CreatorVolumePlanEntry]
+    merged_label: str
+    merged_range: str
 
 
 class CreatorChapterPreviewResponse(BaseModel):
@@ -307,11 +323,15 @@ class CreatorSettingsDocsResponse(BaseModel):
     global_outline_path: str
     pillars_text: str
     global_outline_text: str
+    pillars_revision: str
+    global_outline_revision: str
 
 
 class CreatorSettingsDocsSaveRequest(BaseModel):
     pillars_text: Optional[str] = None
     global_outline_text: Optional[str] = None
+    expected_pillars_revision: Optional[str] = None
+    expected_global_outline_revision: Optional[str] = None
 
 
 class CreatorSettingsDiffPart(BaseModel):
@@ -2187,17 +2207,45 @@ def create_app(
 
     @app.put("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_put(req: CreatorVolumePlanSaveRequest) -> CreatorVolumePlanResponse:
+        from infra.creator_revision import CreatorDocConflictError
         from infra.creator_volume_plan import save_volume_plan, volume_plan_payload
         from infra.studio_registry import active_project
 
         project = active_project()
         if project is None:
             raise HTTPException(404, "no active project")
-        save_volume_plan(
-            project.root,
-            [v.model_dump() for v in req.volumes],
-        )
+        try:
+            save_volume_plan(
+                project.root,
+                [v.model_dump() for v in req.volumes],
+                expected_revision=req.expected_revision,
+            )
+        except CreatorDocConflictError as exc:
+            raise HTTPException(409, str(exc)) from exc
         return CreatorVolumePlanResponse(**volume_plan_payload(project.root))
+
+    @app.post("/api/creator/volume-plan/merge", response_model=CreatorVolumeMergeResponse)
+    def creator_volume_plan_merge(req: CreatorVolumeMergeRequest) -> CreatorVolumeMergeResponse:
+        from infra.creator_volume_plan import merge_volume_range
+
+        try:
+            merged_volumes, merged = merge_volume_range(
+                [v.model_dump() for v in req.volumes],
+                req.start_index,
+                req.end_index,
+                label=req.label,
+                core_conflict=req.core_conflict,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        start = merged.start_chapter
+        end = merged.end_chapter
+        merged_range = f"ch{start:03d}–ch{end:03d}" if start != end else f"ch{start:03d}"
+        return CreatorVolumeMergeResponse(
+            volumes=[CreatorVolumePlanEntry(**v.to_dict()) for v in merged_volumes],
+            merged_label=merged.label,
+            merged_range=merged_range,
+        )
 
     @app.get(
         "/api/creator/chapters/{chapter_num}",
@@ -2231,6 +2279,7 @@ def create_app(
     def creator_settings_docs_put(
         req: CreatorSettingsDocsSaveRequest,
     ) -> CreatorSettingsDocsResponse:
+        from infra.creator_revision import CreatorDocConflictError
         from infra.creator_settings_docs import save_creator_settings_docs
         from infra.studio_registry import active_project
 
@@ -2239,13 +2288,18 @@ def create_app(
             raise HTTPException(404, "no active project")
         if req.pillars_text is None and req.global_outline_text is None:
             raise HTTPException(400, "provide pillars_text and/or global_outline_text")
-        return CreatorSettingsDocsResponse(
-            **save_creator_settings_docs(
-                project,
-                pillars_text=req.pillars_text,
-                global_outline_text=req.global_outline_text,
-            ),
-        )
+        try:
+            return CreatorSettingsDocsResponse(
+                **save_creator_settings_docs(
+                    project,
+                    pillars_text=req.pillars_text,
+                    global_outline_text=req.global_outline_text,
+                    expected_pillars_revision=req.expected_pillars_revision,
+                    expected_global_outline_revision=req.expected_global_outline_revision,
+                ),
+            )
+        except CreatorDocConflictError as exc:
+            raise HTTPException(409, str(exc)) from exc
 
     @app.post("/api/creator/settings-docs/preview", response_model=CreatorSettingsDiffResponse)
     def creator_settings_docs_preview(

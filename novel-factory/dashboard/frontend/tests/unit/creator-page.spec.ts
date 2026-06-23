@@ -6,6 +6,7 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOverview: vi.fn(),
   fetchCreatorVolumePlan: vi.fn(),
   saveCreatorVolumePlan: vi.fn(),
+  mergeCreatorVolumePlan: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOverview: creatorMocks.fetchCreatorOverview,
   fetchCreatorVolumePlan: creatorMocks.fetchCreatorVolumePlan,
   saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
+  mergeCreatorVolumePlan: creatorMocks.mergeCreatorVolumePlan,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
@@ -90,6 +92,7 @@ describe('CreatorPage', () => {
         },
       ],
       deviations: overviewFixture.deviations,
+      revision: 'abc123',
     });
     creatorMocks.saveCreatorVolumePlan.mockResolvedValue({});
     creatorMocks.fetchCreatorChapterPreview.mockResolvedValue({
@@ -107,6 +110,21 @@ describe('CreatorPage', () => {
       global_outline_text: '# 大纲',
       pillars_path: '/docs/novel-pillars.md',
       global_outline_path: '/全局大纲.md',
+      pillars_revision: 'rev-p',
+      global_outline_revision: 'rev-o',
+    });
+    creatorMocks.mergeCreatorVolumePlan.mockResolvedValue({
+      volumes: [
+        {
+          label: '合并',
+          start_chapter: 1,
+          end_chapter: 10,
+          core_conflict: '开篇 / 发展',
+          locked: true,
+        },
+      ],
+      merged_label: '合并',
+      merged_range: 'ch001–ch010',
     });
     creatorMocks.saveCreatorSettingsDocs.mockResolvedValue({});
     creatorMocks.previewCreatorSettingsDocs.mockResolvedValue({
@@ -191,5 +209,31 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(creatorMocks.saveCreatorSettingsDocs).toHaveBeenCalled();
+  });
+
+  it('shows volume merge panel and applies merge', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="volume-merge-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="apply-merge-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.mergeCreatorVolumePlan).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="merge-preview-line"]').text()).toContain('合并');
+  });
+
+  it('shows conflict banner on 409 save error', async () => {
+    creatorMocks.saveCreatorVolumePlan.mockRejectedValueOnce(
+      new Error('API Error 409: Conflict. Details: {"detail":"卷纲已在别处修改"}'),
+    );
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    await wrapper.find('[data-testid="save-volume-plan-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="conflict-banner"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="conflict-reload-btn"]').exists()).toBe(true);
   });
 });

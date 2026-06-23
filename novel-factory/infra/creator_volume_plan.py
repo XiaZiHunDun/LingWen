@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from infra.creator_revision import CreatorDocConflictError, content_revision
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 
@@ -194,13 +195,84 @@ def load_volume_plan(project_root: Path | str) -> list[VolumeEntry]:
     return []
 
 
+def volume_plan_revision(project_root: Path | str) -> str:
+    root = _root(project_root)
+    state_path = volume_plan_state_path(root)
+    if state_path.is_file():
+        return content_revision(state_path.read_text(encoding="utf-8"))
+    outline_path = global_outline_path(root)
+    if outline_path.is_file():
+        return content_revision(outline_path.read_text(encoding="utf-8"))
+    return content_revision("")
+
+
+def _entries_from_raw(volumes: list[dict[str, Any]] | list[VolumeEntry]) -> list[VolumeEntry]:
+    normalized: list[VolumeEntry] = []
+    for raw in volumes:
+        if isinstance(raw, VolumeEntry):
+            normalized.append(raw)
+            continue
+        normalized.append(
+            VolumeEntry(
+                label=str(raw.get("label", "")),
+                start_chapter=int(raw["start_chapter"]),
+                end_chapter=int(raw["end_chapter"]),
+                core_conflict=str(raw.get("core_conflict", "")).strip(),
+                locked=bool(raw.get("locked")),
+                locked_at=raw.get("locked_at"),
+            ),
+        )
+    return normalized
+
+
+def merge_volume_range(
+    volumes: list[dict[str, Any]] | list[VolumeEntry],
+    start_idx: int,
+    end_idx: int,
+    *,
+    label: str | None = None,
+    core_conflict: str | None = None,
+) -> tuple[list[VolumeEntry], VolumeEntry]:
+    """Merge a contiguous slice of volumes into one entry."""
+    entries = _entries_from_raw(volumes)
+    if start_idx < 0 or end_idx >= len(entries) or start_idx > end_idx:
+        raise ValueError("invalid merge range")
+    chunk = entries[start_idx : end_idx + 1]
+    merged_label = (label or "·".join(v.label for v in chunk)).strip()
+    if not merged_label:
+        raise ValueError("merged label required")
+    start = min(v.start_chapter for v in chunk)
+    end = max(v.end_chapter for v in chunk)
+    conflicts = [v.core_conflict.strip() for v in chunk if v.core_conflict.strip()]
+    merged_conflict = (core_conflict or " / ".join(conflicts)).strip()
+    locked = any(v.locked for v in chunk)
+    locked_at = next((v.locked_at for v in chunk if v.locked and v.locked_at), None)
+    merged = VolumeEntry(
+        label=merged_label,
+        start_chapter=start,
+        end_chapter=end,
+        core_conflict=merged_conflict,
+        locked=locked,
+        locked_at=locked_at if locked else None,
+    )
+    return entries[:start_idx] + [merged] + entries[end_idx + 1 :], merged
+
+
 def save_volume_plan(
     project_root: Path | str,
     volumes: list[dict[str, Any]],
     *,
     sync_markdown: bool = True,
+    expected_revision: str | None = None,
 ) -> list[VolumeEntry]:
     root = _root(project_root)
+    if expected_revision is not None:
+        current = volume_plan_revision(root)
+        if current != expected_revision:
+            raise CreatorDocConflictError(
+                "卷纲已在别处修改，请重新加载后再保存",
+                fields=["volume_plan"],
+            )
     existing = {v.label: v for v in load_volume_plan(root)}
     normalized: list[VolumeEntry] = []
     now = datetime.now(timezone.utc).isoformat()
@@ -378,6 +450,7 @@ def volume_plan_payload(project_root: Path | str) -> dict[str, Any]:
         "slug": config.slug,
         "global_outline_path": str(global_outline_path(root)),
         "state_path": str(volume_plan_state_path(root)),
+        "revision": volume_plan_revision(root),
         "volumes": [v.to_dict() for v in volumes],
         "locked_volume_count": locked_count,
         "deviations": deviations,

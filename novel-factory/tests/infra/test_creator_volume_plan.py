@@ -5,12 +5,15 @@ import pytest
 
 from infra.creator_volume_plan import (
     compute_volume_deviations,
+    merge_volume_range,
     parse_chapter_range,
     parse_volume_table_from_markdown,
     save_volume_plan,
     load_volume_plan,
+    volume_plan_revision,
     VolumeEntry,
 )
+from infra.creator_revision import CreatorDocConflictError
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
@@ -136,6 +139,63 @@ def test_volume_overlap_detection(factory_tmp):
     assert len(overlaps) == 1
     assert overlaps[0]["type"] == "volume_overlap"
     assert "ch008" in overlaps[0]["message"] or "008" in overlaps[0]["message"]
+    ProjectPaths.reset()
+
+
+def test_merge_volume_range(factory_tmp):
+    result = init_minimal_short_project(
+        slug="merge-vol",
+        title="合并卷",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=20,
+    )
+    ProjectPaths.reset()
+    root = result.root
+    save_volume_plan(
+        root,
+        [
+            {"label": "一", "start_chapter": 1, "end_chapter": 5, "core_conflict": "A", "locked": True},
+            {"label": "二", "start_chapter": 6, "end_chapter": 10, "core_conflict": "B", "locked": False},
+            {"label": "三", "start_chapter": 11, "end_chapter": 15, "core_conflict": "C", "locked": False},
+        ],
+    )
+    volumes = load_volume_plan(root)
+    merged, entry = merge_volume_range(volumes, 0, 1, label="上篇")
+    assert len(merged) == 2
+    assert entry.label == "上篇"
+    assert entry.start_chapter == 1
+    assert entry.end_chapter == 10
+    assert entry.locked is True
+    assert "A" in entry.core_conflict and "B" in entry.core_conflict
+    ProjectPaths.reset()
+
+
+def test_volume_plan_revision_conflict(factory_tmp):
+    result = init_minimal_short_project(
+        slug="rev-conflict",
+        title="修订冲突",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=10,
+    )
+    ProjectPaths.reset()
+    root = result.root
+    save_volume_plan(
+        root,
+        [{"label": "一", "start_chapter": 1, "end_chapter": 5, "core_conflict": "x", "locked": False}],
+    )
+    rev = volume_plan_revision(root)
+    save_volume_plan(
+        root,
+        [{"label": "一", "start_chapter": 1, "end_chapter": 6, "core_conflict": "y", "locked": False}],
+    )
+    with pytest.raises(CreatorDocConflictError):
+        save_volume_plan(
+            root,
+            [{"label": "一", "start_chapter": 1, "end_chapter": 7, "core_conflict": "z", "locked": False}],
+            expected_revision=rev,
+        )
     ProjectPaths.reset()
 
 
