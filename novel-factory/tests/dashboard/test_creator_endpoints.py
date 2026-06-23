@@ -705,6 +705,44 @@ class TestCreatorEndpoints:
         assert entries
         assert "diff_summary" in entries[0]
 
+    def test_onboarding_webhook_config(self, client: TestClient) -> None:
+        put = client.put(
+            "/api/creator/onboarding/webhook",
+            json={
+                "enabled": True,
+                "url": "https://example.com/hooks/mentions",
+                "mention_handles": ["batch"],
+            },
+        )
+        assert put.status_code == 200
+        get = client.get("/api/creator/onboarding/webhook")
+        assert get.status_code == 200
+        assert get.json()["url"].startswith("https://")
+
+    def test_merge_preset_factory_library(self, client: TestClient) -> None:
+        save_pkg = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+            json={
+                "packages": [
+                    {
+                        "id": "factory_publish_me",
+                        "name": "待发布",
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        assert save_pkg.status_code == 200
+        publish = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/factory/publish",
+            json={"package_id": "factory_publish_me"},
+        )
+        assert publish.status_code == 200
+        factory = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/factory")
+        assert factory.status_code == 200
+        assert len(factory.json()["packages"]) >= 1
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

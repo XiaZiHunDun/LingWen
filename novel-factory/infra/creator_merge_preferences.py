@@ -313,7 +313,39 @@ def _load_custom_preset_packages(project_root: Path | str) -> list[dict[str, Any
     return [row for row in rows if isinstance(row, dict) and row.get("id")]
 
 
-def _preset_row(raw: dict[str, Any], *, builtin: bool) -> dict[str, Any]:
+_FACTORY_PRESET_PACKAGES_VERSION = "1"
+_FACTORY_PRESET_PREFIX = "factory_preset_"
+_MAX_FACTORY_PRESET_PACKAGES = 30
+
+
+def _factory_preset_packages_path() -> Path:
+    from infra.studio_registry import factory_root
+
+    return factory_root() / "infra" / ".state" / "factory_merge_preset_packages.json"
+
+
+def _load_factory_preset_store() -> dict[str, Any]:
+    path = _factory_preset_packages_path()
+    if not path.is_file():
+        return {"schema_version": _FACTORY_PRESET_PACKAGES_VERSION, "packages": []}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _save_factory_preset_store(data: dict[str, Any]) -> None:
+    path = _factory_preset_packages_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _normalize_factory_preset_id(package_id: str) -> str:
+    pid = str(package_id).strip().lower()
+    if pid.startswith(_FACTORY_PRESET_PREFIX):
+        return pid
+    slug = pid.replace(" ", "_")[:24]
+    return f"{_FACTORY_PRESET_PREFIX}{slug}"
+
+
+def _preset_row(raw: dict[str, Any], *, builtin: bool, scope: str = "project") -> dict[str, Any]:
     pillars = str(raw.get("pillars_merge_source", "editor"))
     outline = str(raw.get("global_outline_merge_source", "editor"))
     if pillars not in MERGE_SOURCES:
@@ -325,16 +357,23 @@ def _preset_row(raw: dict[str, Any], *, builtin: bool) -> dict[str, Any]:
         "name": str(raw.get("name", raw["id"])),
         "description": str(raw.get("description", "")),
         "builtin": builtin,
+        "scope": scope,
         "pillars_merge_source": pillars,
         "global_outline_merge_source": outline,
     }
 
 
+def list_factory_merge_preset_packages() -> list[dict[str, Any]]:
+    rows = _load_factory_preset_store().get("packages") or []
+    return [_preset_row(row, builtin=False, scope="factory") for row in rows if row.get("id")]
+
+
 def list_merge_preset_packages(project_root: Path | str) -> list[dict[str, Any]]:
-    """List built-in and project-saved merge strategy preset packages."""
-    builtin = [_preset_row(row, builtin=True) for row in _BUILTIN_MERGE_PRESET_PACKAGES]
-    custom = [_preset_row(row, builtin=False) for row in _load_custom_preset_packages(project_root)]
-    return builtin + custom
+    """List built-in, project-saved, and factory merge strategy preset packages."""
+    builtin = [_preset_row(row, builtin=True, scope="builtin") for row in _BUILTIN_MERGE_PRESET_PACKAGES]
+    custom = [_preset_row(row, builtin=False, scope="project") for row in _load_custom_preset_packages(project_root)]
+    factory = list_factory_merge_preset_packages()
+    return builtin + custom + factory
 
 
 def get_merge_preset_package(project_root: Path | str, package_id: str) -> dict[str, Any]:
@@ -384,7 +423,88 @@ def save_merge_preset_package(
         + "\n",
         encoding="utf-8",
     )
-    return _preset_row(entry, builtin=False)
+    return _preset_row(entry, builtin=False, scope="project")
+
+
+def publish_merge_preset_to_factory(
+    project_root: Path | str,
+    package_id: str,
+) -> dict[str, Any]:
+    """Publish a project custom preset package to the factory library."""
+    pid = str(package_id).strip()
+    custom = _load_custom_preset_packages(project_root)
+    match = next((row for row in custom if row.get("id") == pid), None)
+    if match is None:
+        raise ValueError(f"unknown project preset package: {package_id!r}")
+    factory = _load_factory_preset_store()
+    packages: list[dict[str, Any]] = factory.get("packages", [])
+    entry = {
+        "id": _normalize_factory_preset_id(pid),
+        "name": str(match.get("name", pid)),
+        "description": f"工厂库 · {match.get('description', '')}".strip(),
+        "pillars_merge_source": match.get("pillars_merge_source", "editor"),
+        "global_outline_merge_source": match.get("global_outline_merge_source", "editor"),
+        "published_from": pid,
+        "updated_at": _now_iso(),
+    }
+    kept = [row for row in packages if row.get("id") != entry["id"]]
+    kept.insert(0, entry)
+    factory["packages"] = kept[:_MAX_FACTORY_PRESET_PACKAGES]
+    factory["schema_version"] = _FACTORY_PRESET_PACKAGES_VERSION
+    _save_factory_preset_store(factory)
+    return _preset_row(entry, builtin=False, scope="factory")
+
+
+def pull_factory_merge_presets_to_project(
+    project_root: Path | str,
+    *,
+    package_ids: list[str],
+) -> dict[str, Any]:
+    """Import factory preset packages into the active project."""
+    if not package_ids:
+        raise ValueError("package_ids required")
+    factory = _load_factory_preset_store()
+    by_id = {row["id"]: row for row in factory.get("packages", [])}
+    imported = 0
+    resolved: list[str] = []
+    for raw_id in package_ids:
+        fid = str(raw_id).strip().lower()
+        if not fid.startswith(_FACTORY_PRESET_PREFIX):
+            raise ValueError(f"not a factory preset package: {raw_id!r}")
+        match = by_id.get(fid)
+        if match is None:
+            raise ValueError(f"unknown factory preset package: {raw_id!r}")
+        resolved.append(fid)
+        local_id = fid.removeprefix(_FACTORY_PRESET_PREFIX) or fid
+        save_merge_preset_package(
+            project_root,
+            package_id=local_id,
+            name=str(match.get("name", local_id)),
+            description=str(match.get("description", "")).replace("工厂库 ·", "").strip(),
+            pillars_merge_source=str(match.get("pillars_merge_source", "editor")),
+            global_outline_merge_source=str(match.get("global_outline_merge_source", "editor")),
+        )
+        imported += 1
+    return {
+        "imported": imported,
+        "total": len(package_ids),
+        "package_ids": resolved,
+        "packages": list_merge_preset_packages(project_root),
+    }
+
+
+def delete_factory_merge_preset_package(package_id: str) -> dict[str, Any]:
+    fid = str(package_id).strip().lower()
+    if not fid.startswith(_FACTORY_PRESET_PREFIX):
+        raise ValueError("only factory preset packages can be deleted here")
+    factory = _load_factory_preset_store()
+    packages: list[dict[str, Any]] = factory.get("packages", [])
+    kept = [row for row in packages if row.get("id") != fid]
+    if len(kept) == len(packages):
+        raise ValueError(f"unknown factory preset package: {package_id!r}")
+    factory["packages"] = kept
+    _save_factory_preset_store(factory)
+    return {"id": fid, "deleted": True}
 
 
 _PRESET_PACKAGES_EXPORT_VERSION = "1"

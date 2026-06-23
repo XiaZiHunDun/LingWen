@@ -101,6 +101,27 @@
         >
           全部标为已读
         </button>
+        <div class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
+          <p class="meta-line">通知 Webhook</p>
+          <label class="meta-line">
+            <input v-model="wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" />
+            启用
+          </label>
+          <input
+            v-model="wizardWebhookUrl"
+            class="vol-input"
+            data-testid="wizard-webhook-url"
+            placeholder="https://example.com/hooks/mentions"
+          />
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="save-wizard-webhook-btn"
+            @click="saveWizardWebhook"
+          >
+            保存 Webhook
+          </button>
+        </div>
       </div>
       <ol class="wizard-steps">
         <li
@@ -346,6 +367,25 @@
                   >
                     · 卷纲 +{{ entry.diff_summary.lines_added }}/-{{ entry.diff_summary.lines_removed }}
                   </span>
+                  <button
+                    v-if="entry.visual_diff?.lines?.length"
+                    type="button"
+                    class="mini-btn pixel-border changelog-visual-btn"
+                    data-testid="template-changelog-visual-btn"
+                    @click="toggleChangelogVisual(idx)"
+                  >
+                    {{ expandedChangelogVisual === idx ? '收起对比' : '可视化对比' }}
+                  </button>
+                  <pre
+                    v-if="expandedChangelogVisual === idx && entry.visual_diff?.lines?.length"
+                    class="changelog-visual-diff"
+                    data-testid="template-changelog-visual-diff"
+                  ><span
+                    v-for="(line, lineIdx) in entry.visual_diff.lines"
+                    :key="`${idx}-${lineIdx}`"
+                    :class="`visual-diff-line visual-diff-line--${line.type}`"
+                  >{{ line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ' }}{{ line.text }}
+</span></pre>
                 </li>
               </ul>
             </div>
@@ -796,10 +836,10 @@
               <label class="meta-line">
                 预设包
                 <select
+                  v-model="selectedMergePresetPackage"
                   class="vol-input"
                   data-testid="merge-preset-package-select"
-                  :value="selectedMergePresetPackage"
-                  @change="applyMergePresetPackage($event.target.value)"
+                  @change="onMergePresetPackageChange"
                 >
                   <option value="">选择组合预设…</option>
                   <option
@@ -827,6 +867,24 @@
                   @click="showImportMergePresetPackages = !showImportMergePresetPackages"
                 >
                   {{ showImportMergePresetPackages ? '收起导入' : '导入预设包' }}
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="publish-merge-preset-factory-btn"
+                  :disabled="mergePresetFactoryPublishing || !selectedProjectMergePreset"
+                  @click="publishMergePresetToFactory"
+                >
+                  {{ mergePresetFactoryPublishing ? '发布中…' : '发布到工厂库' }}
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="pull-merge-preset-factory-btn"
+                  :disabled="mergePresetFactoryPulling || !factoryMergePresetCount"
+                  @click="pullFactoryMergePresets"
+                >
+                  {{ mergePresetFactoryPulling ? '拉取中…' : '从工厂库拉取' }}
                 </button>
               </div>
               <div
@@ -1035,9 +1093,14 @@ import {
   fetchCreatorVolumeTemplateChangelog,
   fetchCreatorOnboardingNotifications,
   ackCreatorOnboardingNotifications,
+  fetchCreatorOnboardingWebhook,
+  saveCreatorOnboardingWebhook,
   fetchCreatorMergePresetPackages,
+  fetchCreatorFactoryMergePresetPackages,
   exportCreatorMergePresetPackages,
   importCreatorMergePresetPackages,
+  publishCreatorMergePresetToFactory,
+  pullCreatorFactoryMergePresetPackages,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -1118,6 +1181,12 @@ const wizardNotificationHandles = ref([]);
 const showImportMergePresetPackages = ref(false);
 const importMergePresetPackagesJson = ref('');
 const mergePresetPackagesImporting = ref(false);
+const expandedChangelogVisual = ref(null);
+const wizardWebhookUrl = ref('');
+const wizardWebhookEnabled = ref(false);
+const mergePresetFactoryPublishing = ref(false);
+const mergePresetFactoryPulling = ref(false);
+const factoryMergePresetPackages = ref([]);
 const showImportMergePrefs = ref(false);
 const importMergePrefsJson = ref('');
 const mergePrefsImporting = ref(false);
@@ -1199,6 +1268,23 @@ const selectedTemplateFactory = computed(() => {
 });
 
 const factoryTemplateCount = computed(() => volumeTemplates.value.filter((t) => t.scope === 'factory').length);
+
+const factoryMergePresetCount = computed(
+  () => mergePresetPackages.value.filter((pkg) => pkg.scope === 'factory').length,
+);
+
+const selectedProjectMergePreset = computed(() => {
+  const pkg = mergePresetPackages.value.find((row) => row.id === selectedMergePresetPackage.value);
+  return pkg?.scope === 'project' && !pkg?.builtin;
+});
+
+function toggleChangelogVisual(index) {
+  expandedChangelogVisual.value = expandedChangelogVisual.value === index ? null : index;
+}
+
+watch(selectedMergePresetPackage, (packageId) => {
+  if (packageId) applyMergePresetPackage(packageId);
+});
 
 const selectedTemplateCustom = computed(() => selectedTemplateProject.value);
 
@@ -1506,11 +1592,7 @@ function applyMergePreset(source) {
 
 function applyMergePresetPackage(packageId) {
   const pkg = mergePresetPackages.value.find((row) => row.id === packageId);
-  if (!pkg) {
-    selectedMergePresetPackage.value = '';
-    return;
-  }
-  selectedMergePresetPackage.value = packageId;
+  if (!pkg) return;
   pillarsMergeSource.value = pkg.pillars_merge_source;
   outlineMergeSource.value = pkg.global_outline_merge_source;
   if (pkg.pillars_merge_source === 'history' && settingsHistory.value.length) {
@@ -1520,6 +1602,11 @@ function applyMergePresetPackage(packageId) {
     outlineSnapshotId.value = compareSnapshotId.value || settingsHistory.value[0].id;
   }
   refreshMergeStrategyPreview();
+}
+
+function onMergePresetPackageChange() {
+  const packageId = selectedMergePresetPackage.value;
+  if (packageId) applyMergePresetPackage(packageId);
 }
 
 async function loadTemplateVersionChangelog() {
@@ -1543,10 +1630,35 @@ async function loadWizardNotifications() {
     wizardNotifications.value = data.notifications || [];
     wizardNotificationHandles.value = data.handles || [];
     wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
+    await loadWizardWebhook();
   } catch {
     wizardNotifications.value = [];
     wizardNotificationHandles.value = [];
     wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
+  }
+}
+
+async function loadWizardWebhook() {
+  try {
+    const data = await fetchCreatorOnboardingWebhook();
+    wizardWebhookUrl.value = data.url || '';
+    wizardWebhookEnabled.value = Boolean(data.enabled);
+  } catch {
+    wizardWebhookUrl.value = '';
+    wizardWebhookEnabled.value = false;
+  }
+}
+
+async function saveWizardWebhook() {
+  try {
+    await saveCreatorOnboardingWebhook({
+      url: wizardWebhookUrl.value.trim(),
+      enabled: wizardWebhookEnabled.value,
+      mention_handles: wizardNotificationHandles.value,
+    });
+    saveMessage.value = '已保存通知 Webhook';
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 
@@ -1603,8 +1715,44 @@ async function loadMergePresetPackages() {
   try {
     const data = await fetchCreatorMergePresetPackages();
     mergePresetPackages.value = data.packages || [];
+    const factoryData = await fetchCreatorFactoryMergePresetPackages();
+    factoryMergePresetPackages.value = factoryData.packages || [];
   } catch {
     mergePresetPackages.value = [];
+    factoryMergePresetPackages.value = [];
+  }
+}
+
+async function publishMergePresetToFactory() {
+  if (!selectedProjectMergePreset.value) return;
+  mergePresetFactoryPublishing.value = true;
+  error.value = null;
+  try {
+    await publishCreatorMergePresetToFactory({ package_id: selectedMergePresetPackage.value });
+    saveMessage.value = '已发布预设包到工厂库';
+    await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    mergePresetFactoryPublishing.value = false;
+  }
+}
+
+async function pullFactoryMergePresets() {
+  const ids = mergePresetPackages.value.filter((pkg) => pkg.scope === 'factory').map((pkg) => pkg.id);
+  const fallback = factoryMergePresetPackages.value.map((pkg) => pkg.id);
+  const packageIds = ids.length ? ids : fallback;
+  if (!packageIds.length) return;
+  mergePresetFactoryPulling.value = true;
+  error.value = null;
+  try {
+    const result = await pullCreatorFactoryMergePresetPackages({ package_ids: packageIds });
+    saveMessage.value = `已从工厂库拉取 ${result.imported} 个预设包`;
+    await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    mergePresetFactoryPulling.value = false;
   }
 }
 
@@ -2644,6 +2792,30 @@ watch(projectRevision, () => {
 
 .changelog-diff {
   color: var(--color-accent);
+}
+
+.changelog-visual-diff {
+  margin-top: 4px;
+  font-size: 7px;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow: auto;
+  background: rgba(127, 127, 127, 0.08);
+  padding: 4px;
+}
+
+.visual-diff-line--add {
+  color: #4a4;
+}
+
+.visual-diff-line--remove {
+  color: #c44;
+}
+
+.wizard-webhook-panel {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed rgba(127, 127, 127, 0.35);
 }
 
 .version-semver-warn {

@@ -40,6 +40,11 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorVolumeTemplateChangelog: vi.fn(),
   fetchCreatorOnboardingNotifications: vi.fn(),
   ackCreatorOnboardingNotifications: vi.fn(),
+  fetchCreatorOnboardingWebhook: vi.fn(),
+  saveCreatorOnboardingWebhook: vi.fn(),
+  fetchCreatorFactoryMergePresetPackages: vi.fn(),
+  publishCreatorMergePresetToFactory: vi.fn(),
+  pullCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
   restoreCreatorSettingsSnapshot: vi.fn(),
   studioProductionPreflight: vi.fn(),
@@ -85,6 +90,11 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorVolumeTemplateChangelog: creatorMocks.fetchCreatorVolumeTemplateChangelog,
   fetchCreatorOnboardingNotifications: creatorMocks.fetchCreatorOnboardingNotifications,
   ackCreatorOnboardingNotifications: creatorMocks.ackCreatorOnboardingNotifications,
+  fetchCreatorOnboardingWebhook: creatorMocks.fetchCreatorOnboardingWebhook,
+  saveCreatorOnboardingWebhook: creatorMocks.saveCreatorOnboardingWebhook,
+  fetchCreatorFactoryMergePresetPackages: creatorMocks.fetchCreatorFactoryMergePresetPackages,
+  publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
+  pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot: creatorMocks.restoreCreatorSettingsSnapshot,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
@@ -92,11 +102,14 @@ vi.mock('../../src/api/index.js', () => ({
   fetchStudioActiveBatchJob: creatorMocks.fetchStudioActiveBatchJob,
 }));
 
-vi.mock('../../src/composables/useStudioProject.js', () => ({
-  useStudioProject: () => ({
-    projectRevision: { value: 0 },
-  }),
-}));
+vi.mock('../../src/composables/useStudioProject.js', async () => {
+  const { ref } = await import('vue');
+  return {
+    useStudioProject: () => ({
+      projectRevision: ref(0),
+    }),
+  };
+});
 
 const navMocks = vi.hoisted(() => ({
   focusWizard: null,
@@ -299,9 +312,17 @@ describe('CreatorPage', () => {
     creatorMocks.fetchCreatorMergePresetPackages.mockResolvedValue({
       packages: [
         { id: 'all_disk', name: '全选磁盘', builtin: true, pillars_merge_source: 'disk', global_outline_merge_source: 'disk' },
-        { id: 'pillars_disk_outline_editor', name: '支柱磁盘·大纲编辑器', builtin: true, pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
+        { id: 'pillars_disk_outline_editor', name: '支柱磁盘·大纲编辑器', builtin: true, scope: 'builtin', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
+        { id: 'my_combo', name: '我的组合', builtin: false, scope: 'project', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' },
       ],
     });
+    creatorMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValue({
+      packages: [{ id: 'factory_preset_team', name: '工厂组合', builtin: false, scope: 'factory', pillars_merge_source: 'disk', global_outline_merge_source: 'editor' }],
+    });
+    creatorMocks.publishCreatorMergePresetToFactory.mockResolvedValue({ id: 'factory_preset_my_combo', name: '我的组合', scope: 'factory' });
+    creatorMocks.pullCreatorFactoryMergePresetPackages.mockResolvedValue({ imported: 1, total: 1, package_ids: ['factory_preset_team'] });
+    creatorMocks.fetchCreatorOnboardingWebhook.mockResolvedValue({ enabled: false, url: '', mention_handles: [] });
+    creatorMocks.saveCreatorOnboardingWebhook.mockResolvedValue({ enabled: true, url: 'https://example.com/hook', mention_handles: ['batch'] });
     creatorMocks.fetchCreatorVolumeTemplateChangelog.mockResolvedValue({
       template_id: 'custom_test',
       entries: [{
@@ -309,6 +330,7 @@ describe('CreatorPage', () => {
         previous_label: null,
         changed_at: '2026-06-22T12:00:00+00:00',
         diff_summary: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+一: ch1-12'] },
+        visual_diff: { before: '', after: '一: ch1-12 x', lines: [{ type: 'add', text: '一: ch1-12 x' }] },
       }],
     });
     creatorMocks.fetchCreatorOnboardingNotifications.mockResolvedValue({
@@ -856,18 +878,56 @@ describe('CreatorPage', () => {
     expect(creatorMocks.exportCreatorMergePresetPackages).toHaveBeenCalled();
   });
 
+  it('shows changelog visual diff', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
+    await flushPromises();
+    await wrapper.find('[data-testid="template-changelog-visual-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="template-changelog-visual-diff"]').exists()).toBe(true);
+  });
+
+  it('shows wizard webhook panel', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-webhook-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="wizard-webhook-url"]').setValue('https://example.com/hook');
+    await wrapper.find('[data-testid="save-wizard-webhook-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorOnboardingWebhook).toHaveBeenCalled();
+  });
+
+  it('publishes merge preset to factory', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    const select = wrapper.find('[data-testid="merge-preset-package-select"]');
+    await select.setValue('my_combo');
+    await flushPromises();
+    const publishBtn = wrapper.find('[data-testid="publish-merge-preset-factory-btn"]');
+    expect(publishBtn.element.disabled).toBe(false);
+    await publishBtn.trigger('click');
+    await flushPromises();
+    expect(creatorMocks.publishCreatorMergePresetToFactory).toHaveBeenCalledWith({ package_id: 'my_combo' });
+  });
+
   it('applies merge preset package', async () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
     await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
     await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
     await flushPromises();
-    await wrapper.find('[data-testid="merge-preset-package-select"]').setValue('pillars_disk_outline_editor');
+    const select = wrapper.find('[data-testid="merge-preset-package-select"]');
+    await select.setValue('pillars_disk_outline_editor');
     await flushPromises();
     expect(creatorMocks.previewCreatorSettingsMerge).toHaveBeenCalled();
-    const mergeCall = creatorMocks.previewCreatorSettingsMerge.mock.calls.at(-1)?.[0];
-    expect(mergeCall?.pillars_merge_source).toBe('disk');
-    expect(mergeCall?.global_outline_merge_source).toBe('editor');
+    const matching = creatorMocks.previewCreatorSettingsMerge.mock.calls.find(
+      (call) => call[0]?.pillars_merge_source === 'disk' && call[0]?.global_outline_merge_source === 'editor',
+    );
+    expect(matching).toBeTruthy();
   });
 
   it('saves wizard step note on blur', async () => {

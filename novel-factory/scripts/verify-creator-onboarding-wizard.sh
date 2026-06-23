@@ -155,6 +155,21 @@ from infra.creator_merge_preferences import export_merge_preset_packages, import
 exported_pkgs = export_merge_preset_packages(root)
 import_merge_preset_packages(root, exported_pkgs)
 
+changelog_entry = changelog[0]
+assert changelog_entry.get("visual_diff", {}).get("lines") is not None
+
+from infra.creator_onboarding_webhook import save_webhook_config, load_webhook_config
+
+save_webhook_config(root, url="https://example.com/hooks/mentions", enabled=False)
+assert load_webhook_config(root)["enabled"] is False
+
+from infra.creator_merge_preferences import publish_merge_preset_to_factory, list_factory_merge_preset_packages
+
+if exported_pkgs.get("count"):
+    pkg_id = exported_pkgs["packages"][0]["id"]
+    publish_merge_preset_to_factory(root, pkg_id)
+    assert len(list_factory_merge_preset_packages()) >= 1
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

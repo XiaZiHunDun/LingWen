@@ -144,11 +144,15 @@ def save_onboarding_progress(
     if changed_step_ids:
         from infra.creator_onboarding_notifications import record_mentions_from_notes
 
-        record_mentions_from_notes(
+        created = record_mentions_from_notes(
             project_root,
             step_notes={sid: merged_notes[sid] for sid in changed_step_ids if sid in merged_notes},
             changed_step_ids=changed_step_ids,
         )
+        if created:
+            from infra.creator_onboarding_webhook import dispatch_mention_webhook
+
+            dispatch_mention_webhook(project_root, created)
     return data
 
 

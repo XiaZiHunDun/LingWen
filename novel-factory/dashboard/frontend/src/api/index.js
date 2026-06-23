@@ -694,6 +694,17 @@ export async function ackCreatorOnboardingNotifications(body) {
   });
 }
 
+export async function fetchCreatorOnboardingWebhook() {
+  return request('/creator/onboarding/webhook');
+}
+
+export async function saveCreatorOnboardingWebhook(body) {
+  return request('/creator/onboarding/webhook', {
+    method: 'PUT',
+    body,
+  });
+}
+
 export async function fetchCreatorMergePresetPackages() {
   return request('/creator/settings-docs/merge-preferences/preset-packages');
 }
@@ -707,6 +718,31 @@ export async function importCreatorMergePresetPackages(body) {
     method: 'POST',
     body,
   });
+}
+
+export async function fetchCreatorFactoryMergePresetPackages() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/factory');
+}
+
+export async function publishCreatorMergePresetToFactory(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/factory/publish', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function pullCreatorFactoryMergePresetPackages(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/factory/pull', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function deleteCreatorFactoryMergePresetPackage(packageId) {
+  return request(
+    `/creator/settings-docs/merge-preferences/preset-packages/factory/${encodeURIComponent(packageId)}`,
+    { method: 'DELETE' },
+  );
 }
 
 export async function fetchCreatorChapterPreview(chapterNum) {

@@ -111,6 +111,31 @@ def _snapshot_volumes(volumes: list[dict[str, Any]] | None) -> list[dict[str, An
     ]
 
 
+def _build_visual_diff_lines(before: str, after: str) -> list[dict[str, str]]:
+    import difflib
+
+    before_lines = before.splitlines() if before else []
+    after_lines = after.splitlines() if after else []
+    matcher = difflib.SequenceMatcher(None, before_lines, after_lines)
+    lines: list[dict[str, str]] = []
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            for line in before_lines[i1:i2]:
+                lines.append({"type": "context", "text": line})
+        elif tag == "delete":
+            for line in before_lines[i1:i2]:
+                lines.append({"type": "remove", "text": line})
+        elif tag == "insert":
+            for line in after_lines[j1:j2]:
+                lines.append({"type": "add", "text": line})
+        elif tag == "replace":
+            for line in before_lines[i1:i2]:
+                lines.append({"type": "remove", "text": line})
+            for line in after_lines[j1:j2]:
+                lines.append({"type": "add", "text": line})
+    return lines[:40]
+
+
 def _enrich_changelog_diff(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     from infra.creator_settings_docs import text_diff_summary
 
@@ -142,6 +167,11 @@ def _enrich_changelog_diff(entries: list[dict[str, Any]]) -> list[dict[str, Any]
             "lines_added": diff["lines_added"],
             "lines_removed": diff["lines_removed"],
             "snippet": diff["snippet"][:5],
+        }
+        public["visual_diff"] = {
+            "before": before,
+            "after": after,
+            "lines": _build_visual_diff_lines(before, after),
         }
         enriched.append(public)
     return enriched

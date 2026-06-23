@@ -340,11 +340,23 @@ class CreatorVolumeTemplateChangelogDiffSummary(BaseModel):
     snippet: list[str] = []
 
 
+class CreatorVolumeTemplateChangelogVisualLine(BaseModel):
+    type: str
+    text: str
+
+
+class CreatorVolumeTemplateChangelogVisualDiff(BaseModel):
+    before: str = ""
+    after: str = ""
+    lines: list[CreatorVolumeTemplateChangelogVisualLine] = []
+
+
 class CreatorVolumeTemplateChangelogEntry(BaseModel):
     version_label: Optional[str] = None
     previous_label: Optional[str] = None
     changed_at: Optional[str] = None
     diff_summary: Optional[CreatorVolumeTemplateChangelogDiffSummary] = None
+    visual_diff: Optional[CreatorVolumeTemplateChangelogVisualDiff] = None
 
 
 class CreatorVolumeTemplateChangelogResponse(BaseModel):
@@ -554,13 +566,59 @@ class CreatorOnboardingNotificationsAckResponse(BaseModel):
     unread: int
 
 
+class CreatorOnboardingWebhookConfig(BaseModel):
+    enabled: bool = False
+    url: str = ""
+    mention_handles: list[str] = []
+
+
+class CreatorOnboardingWebhookSaveRequest(BaseModel):
+    enabled: bool = True
+    url: str = ""
+    mention_handles: list[str] = []
+
+
+class CreatorOnboardingWebhookDispatchResponse(BaseModel):
+    dispatched: int = 0
+    skipped: bool = False
+    status: Optional[int] = None
+    error: Optional[str] = None
+
+
 class CreatorMergePresetPackage(BaseModel):
     id: str
     name: str
     description: str = ""
     builtin: bool = True
+    scope: str = "builtin"
     pillars_merge_source: str
     global_outline_merge_source: str
+
+
+class CreatorMergePresetFactoryPublishRequest(BaseModel):
+    package_id: str
+
+
+class CreatorMergePresetFactoryPublishResponse(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    scope: str = "factory"
+
+
+class CreatorMergePresetFactoryPullRequest(BaseModel):
+    package_ids: list[str]
+
+
+class CreatorMergePresetFactoryPullResponse(BaseModel):
+    imported: int
+    total: int
+    package_ids: list[str]
+
+
+class CreatorMergePresetFactoryDeleteResponse(BaseModel):
+    id: str
+    deleted: bool
 
 
 class CreatorMergePresetPackagesResponse(BaseModel):
@@ -2668,6 +2726,43 @@ def create_app(
         )
         return CreatorOnboardingNotificationsAckResponse(**result)
 
+    @app.get(
+        "/api/creator/onboarding/webhook",
+        response_model=CreatorOnboardingWebhookConfig,
+    )
+    def creator_onboarding_webhook_get() -> CreatorOnboardingWebhookConfig:
+        from infra.creator_onboarding_webhook import load_webhook_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOnboardingWebhookConfig(**load_webhook_config(project.root))
+
+    @app.put(
+        "/api/creator/onboarding/webhook",
+        response_model=CreatorOnboardingWebhookConfig,
+    )
+    def creator_onboarding_webhook_put(
+        req: CreatorOnboardingWebhookSaveRequest,
+    ) -> CreatorOnboardingWebhookConfig:
+        from infra.creator_onboarding_webhook import save_webhook_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            saved = save_webhook_config(
+                project.root,
+                url=req.url,
+                enabled=req.enabled,
+                mention_handles=req.mention_handles,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorOnboardingWebhookConfig(**saved)
+
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
         from infra.creator_volume_plan import volume_plan_payload
@@ -3315,6 +3410,83 @@ def create_app(
             replaced=result["replaced"],
             packages=[CreatorMergePresetPackage(**row) for row in result["packages"]],
         )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/factory",
+        response_model=CreatorMergePresetPackagesResponse,
+    )
+    def creator_settings_merge_factory_preset_packages() -> CreatorMergePresetPackagesResponse:
+        from infra.creator_merge_preferences import list_factory_merge_preset_packages
+
+        packages = list_factory_merge_preset_packages()
+        return CreatorMergePresetPackagesResponse(
+            packages=[CreatorMergePresetPackage(**row) for row in packages],
+        )
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/factory/publish",
+        response_model=CreatorMergePresetFactoryPublishResponse,
+    )
+    def creator_settings_merge_factory_preset_publish(
+        req: CreatorMergePresetFactoryPublishRequest,
+    ) -> CreatorMergePresetFactoryPublishResponse:
+        from infra.creator_merge_preferences import publish_merge_preset_to_factory
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = publish_merge_preset_to_factory(project.root, req.package_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePresetFactoryPublishResponse(
+            id=result["id"],
+            name=result["name"],
+            description=result.get("description", ""),
+            scope=result.get("scope", "factory"),
+        )
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/factory/pull",
+        response_model=CreatorMergePresetFactoryPullResponse,
+    )
+    def creator_settings_merge_factory_preset_pull(
+        req: CreatorMergePresetFactoryPullRequest,
+    ) -> CreatorMergePresetFactoryPullResponse:
+        from infra.creator_merge_preferences import pull_factory_merge_presets_to_project
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = pull_factory_merge_presets_to_project(
+                project.root,
+                package_ids=req.package_ids,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePresetFactoryPullResponse(
+            imported=result["imported"],
+            total=result["total"],
+            package_ids=result["package_ids"],
+        )
+
+    @app.delete(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/factory/{package_id}",
+        response_model=CreatorMergePresetFactoryDeleteResponse,
+    )
+    def creator_settings_merge_factory_preset_delete(
+        package_id: str,
+    ) -> CreatorMergePresetFactoryDeleteResponse:
+        from infra.creator_merge_preferences import delete_factory_merge_preset_package
+
+        try:
+            result = delete_factory_merge_preset_package(package_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePresetFactoryDeleteResponse(**result)
 
     @app.post(
         "/api/creator/settings-docs/merge-preview",
