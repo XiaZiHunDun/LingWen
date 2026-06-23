@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.67 (七书 judge 全达标, 2026-06-22)  
-> **更新 (2026-06-22)**: CI **`9008115`** 全绿 · 七样章 LLM judge **7/7 ≥4.0** · **维护模式**
+> **版本**: v10.68 (创作者产品线 v1, 2026-06-22)  
+> **更新 (2026-06-22)**: **双轨** — Studio 维护 + **创作者 companion/advance** 配置与脚本 MVP
 
 ---
 
@@ -18,7 +18,7 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
-| **下一期推荐** | **维护模式**：对外 zip 已可重打 · 按需人工抽检 · 工程向见 §0.1 |
+| **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
 | **最新 CI** | `test` @ **`9008115`**（用户确认全绿） |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
@@ -75,6 +75,27 @@
 | 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
 
 文档地图：`novel-factory/docs/ci-quality-gates.md`
+
+### 0.2 创作者产品线（2026-06-22 · 与 Studio 并列）
+
+| 模式 | 谁写 | 系统做什么 | 入门 |
+|------|------|------------|------|
+| **companion** 陪伴 | 人主笔 ≤30 章 | P0 逻辑守门；默认无 judge/prose | [`creator-onboarding.md`](novel-factory/docs/creator-onboarding.md) |
+| **advance** 推进 | 人定卷纲 | batch + `volume-summary` 卷摘要 | 同上 |
+| **studio** 工厂 | 样章 KPI | 全量门（七书现状） | [`studio-onboarding.md`](novel-factory/docs/studio-onboarding.md) |
+
+```bash
+# 新建（默认陪伴）
+python lingwen.py init-project my-book --title "书名" --chapters 12
+
+# 陪伴守门
+bash scripts/run-companion-check.sh
+
+# 推进 batch + 卷摘要
+bash scripts/run-advance-volume.sh 1 10 10 0.30
+```
+
+PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md) · 配置：`infra/creator_mode.py` · `project.yaml` 字段 `creation_mode` / `quality_profile`
 
 ### 常用命令
 

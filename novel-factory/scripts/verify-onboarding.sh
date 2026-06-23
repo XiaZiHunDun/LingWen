@@ -24,7 +24,8 @@ unset LINGWEN_PROJECT_ROOT
 python lingwen.py init-project "${SLUG}" \
   --title "验收短篇" \
   --protagonist 测试主角 \
-  --genre "都市怪谈"
+  --genre "都市怪谈" \
+  --creation-mode studio
 
 export LINGWEN_PROJECT_ROOT="${PROJECT}"
 export LINGWEN_PRODUCTION_MODE=canon

@@ -22,6 +22,8 @@ class InitProjectOptions(UnifiedOptions):
     genre: str = "科幻悬疑"
     out: Optional[str] = None
     overwrite: bool = False
+    creation_mode: str = "companion"
+    chapters: int = 10
 
 
 @dataclass

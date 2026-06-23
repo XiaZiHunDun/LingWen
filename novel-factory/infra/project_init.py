@@ -1,4 +1,4 @@
-"""Scaffold a minimal short-story project (Phase 10.02)."""
+"""Scaffold creator / studio projects."""
 from __future__ import annotations
 
 import json
@@ -7,7 +7,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from infra.paths import ProjectPaths, resolve_project_root
+from infra.creator_mode import (
+    CREATION_MODE_ADVANCE,
+    CREATION_MODE_COMPANION,
+    CREATION_MODE_STUDIO,
+    QUALITY_CREATOR_RELAXED,
+    QUALITY_STUDIO_FULL,
+    normalize_creation_mode,
+)
+from infra.paths import ProjectPaths
 
 _SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 
@@ -92,6 +100,7 @@ class InitProjectResult:
     title: str
     root: Path
     chapter_count: int
+    creation_mode: str
     files_written: tuple[str, ...]
 
 
@@ -111,6 +120,36 @@ def default_project_parent(factory_root: Path | None = None) -> Path:
     return base / "projects"
 
 
+def _validate_chapter_count(*, creation_mode: str, chapter_count: int) -> None:
+    if creation_mode == CREATION_MODE_STUDIO and chapter_count != 10:
+        raise ValueError("studio template supports exactly 10 chapters")
+    if creation_mode == CREATION_MODE_COMPANION and not 1 <= chapter_count <= 30:
+        raise ValueError("companion mode supports 1–30 chapters")
+    if creation_mode == CREATION_MODE_ADVANCE and not 1 <= chapter_count <= 360:
+        raise ValueError("advance mode supports 1–360 chapters")
+
+
+def _chapter_beats(
+    chapter_count: int,
+) -> list[tuple[int, str, str, tuple[str, ...], tuple[str, ...]]]:
+    beats: list[tuple[int, str, str, tuple[str, ...], tuple[str, ...]]] = []
+    for num, title, overview, events, foreshadow in _MINIMAL_BEATS:
+        if num > chapter_count:
+            break
+        beats.append((num, title, overview, events, foreshadow))
+    for num in range(len(beats) + 1, chapter_count + 1):
+        beats.append(
+            (
+                num,
+                f"第{num}章",
+                f"延续主线，推进第 {num} 章的核心冲突（请按需改写）。",
+                (f"承接 ch{num - 1:03d} 的后果", "为本章结尾留钩子"),
+                ("后续回收",),
+            ),
+        )
+    return beats
+
+
 def init_minimal_short_project(
     *,
     slug: str,
@@ -118,13 +157,14 @@ def init_minimal_short_project(
     protagonist: str = "沈柯",
     genre: str = "科幻悬疑",
     chapter_count: int = 10,
+    creation_mode: str = CREATION_MODE_COMPANION,
     out_dir: Path | None = None,
     factory_root: Path | None = None,
     overwrite: bool = False,
 ) -> InitProjectResult:
-    """Create projects/<slug>/ with 10-chapter minimal short template."""
-    if chapter_count != 10:
-        raise ValueError("minimal-short template currently supports exactly 10 chapters")
+    """Create projects/<slug>/ with outlines, config, and pillars."""
+    mode = normalize_creation_mode(creation_mode)
+    _validate_chapter_count(creation_mode=mode, chapter_count=chapter_count)
 
     normalized_slug = validate_slug(slug)
     parent = out_dir.parent if out_dir else default_project_parent(factory_root)
@@ -151,10 +191,14 @@ def init_minimal_short_project(
             slug=normalized_slug,
             genre=genre,
             chapter_count=chapter_count,
+            creation_mode=mode,
         ),
     )
-    write("docs/novel-pillars.md", _pillars_md(title=title))
-    write("README.md", _readme_md(title=title, slug=normalized_slug))
+    write("docs/novel-pillars.md", _pillars_md(title=title, creation_mode=mode))
+    write(
+        "README.md",
+        _readme_md(title=title, slug=normalized_slug, creation_mode=mode),
+    )
     write(
         "03_内容仓库/角色设定/character_profiles.json",
         json.dumps(
@@ -166,11 +210,16 @@ def init_minimal_short_project(
     )
     write(
         "03_内容仓库/01_全文总体大纲/全局大纲.md",
-        _global_outline_md(title=title, protagonist=protagonist, genre=genre),
+        _global_outline_md(
+            title=title,
+            protagonist=protagonist,
+            genre=genre,
+            chapter_count=chapter_count,
+            creation_mode=mode,
+        ),
     )
 
-    beats = _MINIMAL_BEATS[:chapter_count]
-    for num, ch_title, overview, events, foreshadow in beats:
+    for num, ch_title, overview, events, foreshadow in _chapter_beats(chapter_count):
         write(
             f"03_内容仓库/04_正文/ch{num:03d}_大纲.md",
             _chapter_outline_md(
@@ -187,7 +236,6 @@ def init_minimal_short_project(
     (root / ".state" / ".gitkeep").write_text("", encoding="utf-8")
     written.append(".state/.gitkeep")
 
-    # Validate scaffold satisfies ProjectPaths + gates
     ProjectPaths.reset()
     paths = ProjectPaths.get(root)
     paths._validate()
@@ -197,16 +245,36 @@ def init_minimal_short_project(
         title=title,
         root=root,
         chapter_count=chapter_count,
+        creation_mode=mode,
         files_written=tuple(written),
     )
 
 
-def _project_yaml(*, title: str, slug: str, genre: str, chapter_count: int) -> str:
-    return f"""# {title} — minimal-short 项目配置
+def _project_yaml(
+    *,
+    title: str,
+    slug: str,
+    genre: str,
+    chapter_count: int,
+    creation_mode: str,
+) -> str:
+    quality = (
+        QUALITY_STUDIO_FULL
+        if creation_mode == CREATION_MODE_STUDIO
+        else QUALITY_CREATOR_RELAXED
+    )
+    mode_label = {
+        CREATION_MODE_COMPANION: "陪伴模式",
+        CREATION_MODE_ADVANCE: "推进模式",
+        CREATION_MODE_STUDIO: "工作室工厂",
+    }[creation_mode]
+    return f"""# {title} — {mode_label}
 project:
   name: {title}
   slug: {slug}
   role: production
+  creation_mode: {creation_mode}
+  quality_profile: {quality}
   max_chapter: {chapter_count}
   require_chapter_outline: true
   pillars_path: docs/novel-pillars.md
@@ -217,72 +285,123 @@ project:
 """
 
 
-def _pillars_md(*, title: str) -> str:
-    return f"""# 《{title}》创作支柱（极简模板）
+def _pillars_md(*, title: str, creation_mode: str) -> str:
+    if creation_mode == CREATION_MODE_COMPANION:
+        scope = "≤30 章 · 人主笔 · 系统记录与 P0 逻辑守门"
+    elif creation_mode == CREATION_MODE_ADVANCE:
+        scope = "长篇推进 · 人定卷纲 · 机主笔 · 卷摘要而非逐章精读"
+    else:
+        scope = "10 章样章工厂 · 全量质量门"
+    return f"""# 《{title}》创作支柱
 
-> 状态：模板 · 请按本书改写
+> 模式：{scope}
 
 ## 支柱
 
 1. **因果清晰** — 每个转折有前置铺垫，禁止机械降神。
 2. **人物一致** — 主角的选择符合其恐惧与欲望。
 3. **悬念服务主题** — 钩子指向「这本书在问什么」，而非纯吓人。
-4. **篇幅克制** — 10 章短篇，每章只推进一条主冲突线。
+4. **篇幅克制** — 每章只推进一条主冲突线。
 
 ## 反支柱（本书不是）
 
 - 不是设定集展示
-- 不是多线群像史诗
+- 不是多线群像史诗（除非你主动扩写）
 - 不是为续作强行留扣
 """
 
 
-def _readme_md(*, title: str, slug: str) -> str:
-    return f"""# {title}
+def _readme_md(*, title: str, slug: str, creation_mode: str) -> str:
+    if creation_mode == CREATION_MODE_COMPANION:
+        quick = f"""```bash
+cd novel-factory
+export LINGWEN_PROJECT_ROOT="$(pwd)/projects/{slug}"
 
-灵文工作室 **minimal-short** 模板项目（`{slug}`）。
+# 陪伴模式：仅 P0 逻辑检查（默认不跑 prose/judge）
+bash scripts/run-companion-check.sh
 
-## 快速开始
-
-```bash
+# 你主笔写正文后，再按需跑单章 preflight
+export LINGWEN_PRODUCTION_MODE=canon
+python -m infra.agent_system.chapter_production_pilot \\
+  --preflight-only --chapter-num 1
+```"""
+    elif creation_mode == CREATION_MODE_ADVANCE:
+        quick = f"""```bash
 cd novel-factory
 export LINGWEN_PROJECT_ROOT="$(pwd)/projects/{slug}"
 export LINGWEN_PRODUCTION_MODE=canon
 export LINGWEN_REAL_LLM=1
 
-# preflight 第 1 章
+# 锁定卷纲后，批量产章 + 卷摘要（示例 ch001–010）
+bash scripts/run-advance-volume.sh 1 10 10 0.30
+```"""
+    else:
+        quick = f"""```bash
+cd novel-factory
+export LINGWEN_PROJECT_ROOT="$(pwd)/projects/{slug}"
+export LINGWEN_PRODUCTION_MODE=canon
+export LINGWEN_REAL_LLM=1
+
 python -m infra.agent_system.chapter_production_pilot \\
   --preflight-only --chapter-num 1
 
-# 生产 1–3 章（建议先 dry-run 预算）
 python -m infra.agent_system.chapter_production_batch \\
   --start-chapter 1 --max-chapters 3 --budget-usd 0.15 \\
   --save-summary infra/.state/pilot_records/batch-001-003.json
-```
+```"""
+    return f"""# {title}
+
+灵文 **{creation_mode}** 模板项目（`{slug}`）。
+
+## 快速开始
+
+{quick}
+
+## 文档
+
+- 创作者入门：`novel-factory/docs/creator-onboarding.md`
+- 产品说明：`novel-factory/docs/creator-product-prd-v1.md`
 
 ## 目录
 
-- `config/project.yaml` — 章数上限、风格、支柱路径
-- `03_内容仓库/04_正文/chNNN_大纲.md` — 10 章分章大纲（生产前必填）
-- `docs/novel-pillars.md` — 创作支柱（请按需修改）
+- `config/project.yaml` — 创作模式、章数上限、风格
+- `03_内容仓库/04_正文/chNNN_大纲.md` — 分章大纲
+- `docs/novel-pillars.md` — 创作支柱
 """
 
 
-def _global_outline_md(*, title: str, protagonist: str, genre: str) -> str:
-    return f"""# 《{title}》全局大纲（极简短篇）
+def _global_outline_md(
+    *,
+    title: str,
+    protagonist: str,
+    genre: str,
+    chapter_count: int,
+    creation_mode: str,
+) -> str:
+    if creation_mode == CREATION_MODE_ADVANCE:
+        structure = "按卷推进：每卷锁定纲后再 batch 产章"
+    else:
+        structure = f"起（1–{min(3, chapter_count)}）→ 承 → 合（末章）"
+    return f"""# 《{title}》全局大纲
 
 - **类型**：{genre}
-- **篇幅**：10 章
+- **篇幅**：{chapter_count} 章（可在 pillars / 卷纲中扩写）
 - **主角**：{protagonist}
-- **结构**：起（1–3）→ 承（4–7）→ 合（8–10）
+- **结构**：{structure}
 
 ## 一句话
 
 {protagonist} 被一处无法解释的异常卷入，必须在代价可承受之前做出选择。
 
+## 卷纲占位（推进模式请在此锁定）
+
+| 卷 | 章范围 | 核心冲突 | 状态 |
+|----|--------|----------|------|
+| 一 | 001–{min(10, chapter_count):03d} | （待填） | 草稿 |
+
 ## 终局方向
 
-第 10 章给出主题答案；是否留开放余韵由你定稿时决定。
+末章给出主题答案；是否留开放余韵由你定稿时决定。
 """
 
 
@@ -321,7 +440,7 @@ def _chapter_outline_md(
 def _character_profiles(*, protagonist: str) -> dict[str, Any]:
     return {
         "schema_version": "1.0",
-        "description": f"minimal-short 模板角色（主角 {protagonist}）",
+        "description": f"模板角色（主角 {protagonist}）",
         "characters": [
             {
                 "name": protagonist,

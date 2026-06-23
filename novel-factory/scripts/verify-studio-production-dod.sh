@@ -61,7 +61,8 @@ if [ "$REAL_LLM" -eq 1 ]; then
   python lingwen.py init-project "$SLUG" \
     --title "DoD验收短篇" \
     --protagonist 测试主角 \
-    --genre "都市怪谈"
+    --genre "都市怪谈" \
+    --creation-mode studio
 else
   SLUG="${SLUG:-jinghai-rizhi}"
   PROJECT="$ROOT/projects/$SLUG"

@@ -8,6 +8,11 @@ from typing import Any
 
 import yaml
 
+from infra.creator_mode import (
+    CREATION_MODE_STUDIO,
+    normalize_creation_mode,
+    normalize_quality_profile,
+)
 from infra.paths import ProjectPaths
 
 _DEFAULT_CONFIG_REL = Path("config/project.yaml")
@@ -27,6 +32,8 @@ class ProjectConfig:
     genre: str
     style_tone: str
     style_avoid: str
+    creation_mode: str
+    quality_profile: str
     root: Path
 
     @classmethod
@@ -50,6 +57,13 @@ class ProjectConfig:
             else resolved.root / pillars_rel
         )
         style = raw.get("style") or {}
+        creation_mode = normalize_creation_mode(
+            raw.get("creation_mode", CREATION_MODE_STUDIO),
+        )
+        quality_profile = normalize_quality_profile(
+            raw.get("quality_profile"),
+            creation_mode=creation_mode,
+        )
 
         return cls(
             name=str(raw.get("name", "unnamed")),
@@ -63,6 +77,8 @@ class ProjectConfig:
             style_avoid=str(
                 style.get("avoid", "网络梗、设定矛盾、无因果的转折"),
             ),
+            creation_mode=creation_mode,
+            quality_profile=quality_profile,
             root=resolved.root,
         )
 

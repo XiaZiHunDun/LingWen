@@ -36,12 +36,28 @@ def test_init_minimal_short_project(factory_tmp):
         title="暗夜信标",
         protagonist="沈柯",
         factory_root=factory_tmp,
+        creation_mode="studio",
     )
     assert result.root.is_dir()
     assert (result.root / "config/project.yaml").is_file()
     assert (result.root / "03_内容仓库/04_正文/ch001_大纲.md").is_file()
     assert (result.root / "03_内容仓库/04_正文/ch010_大纲.md").is_file()
     assert result.chapter_count == 10
+    assert result.creation_mode == "studio"
+
+
+def test_init_companion_15_chapters(factory_tmp):
+    result = init_minimal_short_project(
+        slug="companion-15",
+        title="陪伴长篇",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=15,
+    )
+    assert (result.root / "03_内容仓库/04_正文/ch015_大纲.md").is_file()
+    data = yaml.safe_load((result.root / "config/project.yaml").read_text(encoding="utf-8"))
+    assert data["project"]["creation_mode"] == "companion"
+    assert data["project"]["quality_profile"] == "creator_relaxed"
 
 
 def test_init_project_preflight_passes_ch1(factory_tmp, monkeypatch):
@@ -49,6 +65,7 @@ def test_init_project_preflight_passes_ch1(factory_tmp, monkeypatch):
         slug="demo-short",
         title="暗夜信标",
         factory_root=factory_tmp,
+        creation_mode="studio",
     )
     ProjectPaths.reset()
     monkeypatch.setenv("LINGWEN_PROJECT_ROOT", str(result.root))
@@ -77,6 +94,7 @@ def test_init_project_cli_smoke(factory_tmp, monkeypatch):
         slug="cli-demo",
         title="测试短篇",
         factory_root=factory_tmp,
+        creation_mode="studio",
     )
     data = yaml.safe_load((result.root / "config/project.yaml").read_text(encoding="utf-8"))
     assert data["project"]["slug"] == "cli-demo"

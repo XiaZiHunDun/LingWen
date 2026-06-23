@@ -98,6 +98,8 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             genre=getattr(args, "genre", "科幻悬疑"),
             out=getattr(args, "out", None),
             overwrite=getattr(args, "overwrite", False),
+            creation_mode=getattr(args, "creation_mode", "companion"),
+            chapters=getattr(args, "chapters", 10),
         )
     elif command == "anti-trope":
         return AntiTropeOptions(
