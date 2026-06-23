@@ -129,3 +129,38 @@ def dispatch_digest_webhook(
         return {"dispatched": 1, "status": status}
     except urllib.error.URLError as exc:
         return {"dispatched": 0, "error": str(exc.reason or exc)}
+
+
+def dispatch_approval_webhook(
+    project_root: Path | str,
+    event: str,
+    approval: dict[str, Any],
+) -> dict[str, Any]:
+    """POST template version approval lifecycle event to configured webhook."""
+    config = load_webhook_config(project_root)
+    if not config.get("enabled"):
+        return {"dispatched": 0, "skipped": True}
+    url = str(config.get("url", "")).strip()
+    if not url.startswith(("http://", "https://")):
+        return {"dispatched": 0, "skipped": True, "error": "invalid webhook url"}
+    body = json.dumps(
+        {
+            "schema_version": "1",
+            "type": "template_approval",
+            "event": str(event),
+            "approval": approval,
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
+            status = getattr(response, "status", 200)
+        return {"dispatched": 1, "status": status}
+    except urllib.error.URLError as exc:
+        return {"dispatched": 0, "error": str(exc.reason or exc)}

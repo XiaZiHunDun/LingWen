@@ -56,8 +56,12 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorMergePresetGraph: vi.fn(),
   fetchCreatorMergePresetConflicts: vi.fn(),
+  fetchCreatorMergePresetConflictFixes: vi.fn(),
+  applyCreatorMergePresetConflictFix: vi.fn(),
   fetchCreatorTemplateApprovalChainConfig: vi.fn(),
   saveCreatorTemplateApprovalChainConfig: vi.fn(),
+  fetchCreatorTemplateApprovalHistory: vi.fn(),
+  exportCreatorTemplateApprovalAudit: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
@@ -121,8 +125,12 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorFactoryMergePresetPackages: creatorMocks.fetchCreatorFactoryMergePresetPackages,
   fetchCreatorMergePresetGraph: creatorMocks.fetchCreatorMergePresetGraph,
   fetchCreatorMergePresetConflicts: creatorMocks.fetchCreatorMergePresetConflicts,
+  fetchCreatorMergePresetConflictFixes: creatorMocks.fetchCreatorMergePresetConflictFixes,
+  applyCreatorMergePresetConflictFix: creatorMocks.applyCreatorMergePresetConflictFix,
   fetchCreatorTemplateApprovalChainConfig: creatorMocks.fetchCreatorTemplateApprovalChainConfig,
   saveCreatorTemplateApprovalChainConfig: creatorMocks.saveCreatorTemplateApprovalChainConfig,
+  fetchCreatorTemplateApprovalHistory: creatorMocks.fetchCreatorTemplateApprovalHistory,
+  exportCreatorTemplateApprovalAudit: creatorMocks.exportCreatorTemplateApprovalAudit,
   publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
   pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
@@ -365,6 +373,24 @@ describe('CreatorPage', () => {
       conflict_count: 1,
       conflicts: [{ type: 'missing_dependency', package_id: 'my_combo', dependency_id: 'ghost', message: 'my_combo depends on unknown package ghost' }],
     });
+    creatorMocks.fetchCreatorMergePresetConflictFixes.mockResolvedValue({
+      fix_count: 1,
+      fixes: [{
+        id: 'fix_0',
+        conflict_type: 'missing_dependency',
+        package_id: 'my_combo',
+        action: 'remove_dependency',
+        dependency_id: 'ghost',
+        label: '从 my_combo 移除依赖 ghost',
+        applicable: true,
+      }],
+    });
+    creatorMocks.applyCreatorMergePresetConflictFix.mockResolvedValue({
+      package_id: 'my_combo',
+      action: 'remove_dependency',
+      conflict_count: 0,
+      package: { id: 'my_combo', name: '我的组合' },
+    });
     creatorMocks.fetchCreatorTemplateApprovals.mockResolvedValue({
       approvals: [{
         id: 'aprv_test',
@@ -380,6 +406,21 @@ describe('CreatorPage', () => {
     });
     creatorMocks.fetchCreatorTemplateApprovalChainConfig.mockResolvedValue({ required_steps: 2 });
     creatorMocks.saveCreatorTemplateApprovalChainConfig.mockResolvedValue({ required_steps: 3 });
+    creatorMocks.fetchCreatorTemplateApprovalHistory.mockResolvedValue({
+      approvals: [{
+        id: 'aprv_done',
+        template_id: 'custom_test',
+        status: 'approved',
+        version_label: 'v2.0.0',
+        previous_label: 'v1.0.0',
+        chain_log: [{ step: 1, approved_at: '2026-06-22T12:00:00+00:00' }],
+      }],
+    });
+    creatorMocks.exportCreatorTemplateApprovalAudit.mockResolvedValue({
+      schema_version: '1',
+      count: 1,
+      approvals: [{ id: 'aprv_done', status: 'approved', chain_log: [] }],
+    });
     creatorMocks.submitCreatorTemplateVersionApproval.mockResolvedValue({
       id: 'aprv_new',
       template_id: 'custom_test',
@@ -1161,5 +1202,33 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(wrapper.find('[data-testid="merge-preset-conflicts-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="merge-preset-conflict-row"]').exists()).toBe(true);
+  });
+
+  it('shows template approval history and export audit', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="template-approval-history-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="template-approval-chain-log"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="export-template-approval-audit-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.exportCreatorTemplateApprovalAudit).toHaveBeenCalled();
+  });
+
+  it('shows merge preset conflict fix actions', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="merge-preset-conflict-fixes-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="apply-merge-preset-fix-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.applyCreatorMergePresetConflictFix).toHaveBeenCalled();
+  });
+
+  it('shows digest background polling hint', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-digest-background-hint"]').exists()).toBe(true);
   });
 });

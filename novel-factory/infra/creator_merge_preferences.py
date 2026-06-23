@@ -747,3 +747,122 @@ def detect_merge_preset_conflicts(project_root: Path | str) -> dict[str, Any]:
         "conflicts": conflicts,
     }
 
+
+def suggest_merge_preset_fixes(project_root: Path | str) -> dict[str, Any]:
+    """Suggest one-click fixes for detected merge preset conflicts."""
+    report = detect_merge_preset_conflicts(project_root)
+    packages = {pkg["id"]: pkg for pkg in list_merge_preset_packages(project_root)}
+    fixes: list[dict[str, Any]] = []
+
+    for idx, conflict in enumerate(report["conflicts"]):
+        pkg_id = str(conflict.get("package_id", ""))
+        pkg = packages.get(pkg_id, {})
+        editable = pkg.get("scope") == "project" and not pkg.get("builtin")
+        ctype = str(conflict.get("type", ""))
+
+        if ctype in {"missing_dependency", "self_dependency"}:
+            dep_id = str(conflict.get("dependency_id", ""))
+            fixes.append(
+                {
+                    "id": f"fix_{idx}",
+                    "conflict_type": ctype,
+                    "package_id": pkg_id,
+                    "action": "remove_dependency",
+                    "dependency_id": dep_id,
+                    "label": f"从 {pkg_id} 移除依赖 {dep_id}",
+                    "applicable": editable,
+                },
+            )
+        elif ctype == "semver_downgrade":
+            dep_id = str(conflict.get("dependency_id", ""))
+            dep_ver = packages.get(dep_id, {}).get("version_label")
+            fixes.append(
+                {
+                    "id": f"fix_{idx}",
+                    "conflict_type": ctype,
+                    "package_id": pkg_id,
+                    "action": "bump_version",
+                    "version_label": dep_ver,
+                    "label": f"将 {pkg_id} 版本提升至 {dep_ver or '依赖版本'}",
+                    "applicable": editable and bool(dep_ver),
+                },
+            )
+        elif ctype == "circular_dependency":
+            path = list(conflict.get("path") or [])
+            if len(path) >= 2:
+                from_pkg = str(path[-2])
+                dep_id = str(path[-1])
+                from_meta = packages.get(from_pkg, {})
+                fixes.append(
+                    {
+                        "id": f"fix_{idx}",
+                        "conflict_type": ctype,
+                        "package_id": from_pkg,
+                        "action": "remove_dependency",
+                        "dependency_id": dep_id,
+                        "label": f"打断环：从 {from_pkg} 移除对 {dep_id} 的依赖",
+                        "applicable": from_meta.get("scope") == "project" and not from_meta.get("builtin"),
+                    },
+                )
+
+    return {"fix_count": len(fixes), "fixes": fixes}
+
+
+def apply_merge_preset_fix(
+    project_root: Path | str,
+    *,
+    package_id: str,
+    action: str,
+    dependency_id: str | None = None,
+    version_label: str | None = None,
+) -> dict[str, Any]:
+    """Apply a suggested fix to a project custom merge preset package."""
+    pid = str(package_id).strip()
+    if not pid:
+        raise ValueError("package_id required")
+    custom = _load_custom_preset_packages(project_root)
+    target: dict[str, Any] | None = None
+    for row in custom:
+        if row.get("id") == pid:
+            target = row
+            break
+    if target is None:
+        raise ValueError(f"editable package not found: {package_id!r}")
+
+    act = str(action).strip().lower()
+    if act == "remove_dependency":
+        dep = str(dependency_id or "").strip()
+        if not dep:
+            raise ValueError("dependency_id required for remove_dependency")
+        deps = [d for d in (target.get("depends_on") or []) if d != dep]
+        if deps:
+            target["depends_on"] = deps
+        else:
+            target.pop("depends_on", None)
+    elif act == "bump_version":
+        label = _normalize_preset_version(version_label)
+        if not label:
+            raise ValueError("version_label required for bump_version")
+        target["version_label"] = label
+    else:
+        raise ValueError(f"unsupported fix action: {action!r}")
+
+    path = _custom_preset_packages_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {"schema_version": _PRESET_PACKAGES_VERSION, "packages": custom[:20]},
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    remaining = detect_merge_preset_conflicts(project_root)
+    return {
+        "package_id": pid,
+        "action": act,
+        "conflict_count": remaining["conflict_count"],
+        "package": _preset_row(target, builtin=False, scope="project"),
+    }
+

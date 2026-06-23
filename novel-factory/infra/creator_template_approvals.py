@@ -132,13 +132,14 @@ def submit_template_version_approval(
     approvals.insert(0, entry)
     store["approvals"] = approvals[:_MAX_APPROVALS]
     _save_store(project_root, store)
+    _notify_approval_event(project_root, "submitted", entry)
     return _public_approval_row(entry)
 
 
-def _public_approval_row(row: dict[str, Any]) -> dict[str, Any]:
+def _public_approval_row(row: dict[str, Any], *, include_chain_log: bool = False) -> dict[str, Any]:
     chain_step = int(row.get("chain_step") or 1)
     chain_total = int(row.get("chain_total") or 1)
-    return {
+    public = {
         "id": str(row["id"]),
         "template_id": str(row.get("template_id", "")),
         "scope": str(row.get("scope", "custom")),
@@ -153,6 +154,49 @@ def _public_approval_row(row: dict[str, Any]) -> dict[str, Any]:
         "chain_total": chain_total,
         "chain_progress": f"{chain_step}/{chain_total}",
     }
+    if include_chain_log:
+        public["chain_log"] = list(row.get("chain_log") or [])
+    return public
+
+
+def export_template_approval_audit(project_root: Path | str) -> dict[str, Any]:
+    """Export full approval audit trail including chain_log entries."""
+    store = _load_store(project_root)
+    rows = list(store.get("approvals") or [])
+    audit_rows = [_public_approval_row(row, include_chain_log=True) for row in rows]
+    return {
+        "schema_version": "1",
+        "count": len(audit_rows),
+        "approvals": audit_rows,
+    }
+
+
+def list_template_approval_history(
+    project_root: Path | str,
+    *,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """List resolved approvals (approved/rejected) with audit chain_log."""
+    store = _load_store(project_root)
+    rows = [
+        row
+        for row in store.get("approvals") or []
+        if str(row.get("status", "")).lower() in {"approved", "rejected"}
+    ]
+    return [_public_approval_row(row, include_chain_log=True) for row in rows[:limit]]
+
+
+def _notify_approval_event(
+    project_root: Path | str,
+    event: str,
+    row: dict[str, Any],
+) -> None:
+    try:
+        from infra.creator_onboarding_webhook import dispatch_approval_webhook
+
+        dispatch_approval_webhook(project_root, event, _public_approval_row(row))
+    except Exception:
+        pass
 
 
 def list_template_approvals(
@@ -188,6 +232,7 @@ def approve_template_approval(project_root: Path | str, approval_id: str) -> dic
         if chain_step < chain_total:
             row["chain_step"] = chain_step + 1
             _save_store(project_root, store)
+            _notify_approval_event(project_root, "chain_advanced", row)
             public = _public_approval_row(row)
             public["chain_advanced"] = True
             return public
@@ -204,6 +249,7 @@ def approve_template_approval(project_root: Path | str, approval_id: str) -> dic
         row["status"] = "approved"
         row["resolved_at"] = _now_iso()
         _save_store(project_root, store)
+        _notify_approval_event(project_root, "approved", row)
         public = _public_approval_row(row)
         public["applied"] = result
         public["chain_advanced"] = False
@@ -228,5 +274,6 @@ def reject_template_approval(
         row["resolved_at"] = _now_iso()
         row["reject_reason"] = str(reason).strip()[:240]
         _save_store(project_root, store)
+        _notify_approval_event(project_root, "rejected", row)
         return _public_approval_row(row)
     raise ValueError(f"unknown approval: {approval_id!r}")

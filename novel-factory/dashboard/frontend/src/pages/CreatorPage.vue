@@ -129,6 +129,9 @@
           >
             立即发送 digest
           </button>
+          <p class="meta-line" data-testid="wizard-digest-background-hint">
+            Dashboard 后台每 15 分钟自动检查到期 digest
+          </p>
         </div>
         <ul>
           <li
@@ -483,6 +486,41 @@
                   >
                     驳回
                   </button>
+                </li>
+              </ul>
+            </div>
+            <div
+              v-if="templateApprovalHistory.length"
+              class="template-approval-history"
+              data-testid="template-approval-history-panel"
+            >
+              <p class="meta-line">
+                审批历史
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="export-template-approval-audit-btn"
+                  @click="exportTemplateApprovalAudit"
+                >
+                  导出审计
+                </button>
+              </p>
+              <ul>
+                <li
+                  v-for="row in templateApprovalHistory"
+                  :key="row.id"
+                  class="template-approval-row"
+                  data-testid="template-approval-history-row"
+                >
+                  <span>{{ row.template_id }} · {{ row.status }}</span>
+                  <span class="meta-line">{{ row.previous_label || '—' }} → {{ row.version_label || '（清除）' }}</span>
+                  <span
+                    v-if="row.chain_log?.length"
+                    class="meta-line"
+                    data-testid="template-approval-chain-log"
+                  >
+                    链 {{ row.chain_log.length }} 步
+                  </span>
                 </li>
               </ul>
             </div>
@@ -1072,6 +1110,32 @@
                 </ul>
               </div>
               <div
+                v-if="mergePresetConflictFixes.fixes?.length"
+                class="merge-preset-conflict-fixes"
+                data-testid="merge-preset-conflict-fixes-panel"
+              >
+                <p class="meta-line">修复建议（{{ mergePresetConflictFixes.fix_count }}）</p>
+                <ul>
+                  <li
+                    v-for="fix in mergePresetConflictFixes.fixes"
+                    :key="fix.id"
+                    class="merge-preset-fix-row"
+                    data-testid="merge-preset-conflict-fix-row"
+                  >
+                    <span>{{ fix.label }}</span>
+                    <button
+                      v-if="fix.applicable"
+                      type="button"
+                      class="mini-btn pixel-border"
+                      data-testid="apply-merge-preset-fix-btn"
+                      @click="applyMergePresetConflictFix(fix)"
+                    >
+                      应用
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <div
                 v-if="showImportMergePresetPackages"
                 class="import-templates-panel"
                 data-testid="import-merge-preset-packages-panel"
@@ -1282,6 +1346,8 @@ import {
   rejectCreatorTemplateApproval,
   fetchCreatorTemplateApprovalChainConfig,
   saveCreatorTemplateApprovalChainConfig,
+  fetchCreatorTemplateApprovalHistory,
+  exportCreatorTemplateApprovalAudit,
   fetchCreatorOnboardingNotifications,
   fetchCreatorOnboardingNotificationDigest,
   fetchCreatorOnboardingDigestSchedule,
@@ -1296,6 +1362,8 @@ import {
   fetchCreatorFactoryMergePresetPackages,
   fetchCreatorMergePresetGraph,
   fetchCreatorMergePresetConflicts,
+  fetchCreatorMergePresetConflictFixes,
+  applyCreatorMergePresetConflictFix,
   exportCreatorMergePresetPackages,
   importCreatorMergePresetPackages,
   publishCreatorMergePresetToFactory,
@@ -1390,10 +1458,12 @@ const wizardNotificationDigest = ref({ unread: 0, group_count: 0, groups: [] });
 const wizardDigestScheduleEnabled = ref(false);
 const wizardDigestScheduleHours = ref(24);
 const templateApprovals = ref([]);
+const templateApprovalHistory = ref([]);
 const templateApprovalChainSteps = ref(2);
 const templateApprovalSubmitting = ref(false);
 const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
 const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] });
+const mergePresetConflictFixes = ref({ fix_count: 0, fixes: [] });
 const templateRollbackSaving = ref(false);
 const mergePresetFactoryPublishing = ref(false);
 const mergePresetFactoryPulling = ref(false);
@@ -2037,11 +2107,14 @@ async function loadMergePresetPackages() {
     mergePresetGraph.value = graph;
     const conflicts = await fetchCreatorMergePresetConflicts();
     mergePresetConflicts.value = conflicts;
+    const fixes = await fetchCreatorMergePresetConflictFixes();
+    mergePresetConflictFixes.value = fixes;
   } catch {
     mergePresetPackages.value = [];
     factoryMergePresetPackages.value = [];
     mergePresetGraph.value = { node_count: 0, edge_count: 0, nodes: [], edges: [] };
     mergePresetConflicts.value = { conflict_count: 0, conflicts: [] };
+    mergePresetConflictFixes.value = { fix_count: 0, fixes: [] };
   }
 }
 
@@ -2070,9 +2143,42 @@ async function loadTemplateApprovals() {
   try {
     const data = await fetchCreatorTemplateApprovals({ status: 'pending' });
     templateApprovals.value = data.approvals || [];
+    const history = await fetchCreatorTemplateApprovalHistory();
+    templateApprovalHistory.value = history.approvals || [];
     await loadTemplateApprovalChainConfig();
   } catch {
     templateApprovals.value = [];
+    templateApprovalHistory.value = [];
+  }
+}
+
+async function exportTemplateApprovalAudit() {
+  try {
+    const data = await exportCreatorTemplateApprovalAudit();
+    const text = JSON.stringify(data, null, 2);
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      saveMessage.value = `已导出 ${data.count} 条审批审计`;
+    } else {
+      saveMessage.value = `已导出 ${data.count} 条审批审计（无剪贴板）`;
+    }
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function applyMergePresetConflictFix(fix) {
+  try {
+    const result = await applyCreatorMergePresetConflictFix({
+      package_id: fix.package_id,
+      action: fix.action,
+      dependency_id: fix.dependency_id,
+      version_label: fix.version_label,
+    });
+    saveMessage.value = `已应用修复，剩余冲突 ${result.conflict_count}`;
+    await loadMergePresetPackages();
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 

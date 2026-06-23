@@ -876,6 +876,75 @@ class TestCreatorEndpoints:
         body = dispatch.json()
         assert body.get("sent") is True or body.get("skipped") is True
 
+    def test_template_approval_audit_export(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/volume-plan/templates/approvals/chain-config",
+            json={"required_steps": 1},
+        )
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "audit-api",
+                "volumes": [
+                    {"label": "一", "start_chapter": 1, "end_chapter": 6, "core_conflict": "a"},
+                ],
+            },
+        )
+        tid = save.json()["id"]
+        submit = client.post(
+            f"/api/creator/volume-plan/templates/{tid}/version-approval",
+            json={"version_label": "v1.0.0"},
+        )
+        approval_id = submit.json()["id"]
+        approved = client.post(f"/api/creator/volume-plan/templates/approvals/{approval_id}/approve")
+        while approved.status_code == 200 and approved.json().get("chain_advanced"):
+            approved = client.post(f"/api/creator/volume-plan/templates/approvals/{approval_id}/approve")
+        audit = client.get("/api/creator/volume-plan/templates/approvals/audit-export")
+        assert audit.status_code == 200
+        assert audit.json()["count"] >= 1
+        history = client.get("/api/creator/volume-plan/templates/approvals/history")
+        assert history.status_code == 200
+        assert len(history.json()["approvals"]) >= 1
+
+    def test_merge_preset_conflict_fixes(self, client: TestClient) -> None:
+        client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+            json={
+                "packages": [
+                    {
+                        "id": "fix_me",
+                        "name": "待修复",
+                        "depends_on": ["ghost_pkg"],
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        fixes = client.get(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts/fixes",
+        )
+        assert fixes.status_code == 200
+        assert fixes.json()["fix_count"] >= 1
+        fix = fixes.json()["fixes"][0]
+        applied = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-fix",
+            json={
+                "package_id": fix["package_id"],
+                "action": fix["action"],
+                "dependency_id": fix.get("dependency_id"),
+                "version_label": fix.get("version_label"),
+            },
+        )
+        assert applied.status_code == 200
+        assert applied.json()["package_id"] == "fix_me"
+        remaining = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/conflicts")
+        assert remaining.status_code == 200
+        fix_me_conflicts = [
+            row for row in remaining.json()["conflicts"] if row.get("package_id") == "fix_me"
+        ]
+        assert fix_me_conflicts == []
+
     def test_merge_preset_factory_library(self, client: TestClient) -> None:
         save_pkg = client.post(
             "/api/creator/settings-docs/merge-preferences/preset-packages/import",

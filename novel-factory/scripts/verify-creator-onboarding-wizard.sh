@@ -218,6 +218,21 @@ from infra.creator_merge_preferences import detect_merge_preset_conflicts
 conflicts = detect_merge_preset_conflicts(root)
 assert "conflict_count" in conflicts
 
+from infra.creator_template_approvals import export_template_approval_audit
+
+audit = export_template_approval_audit(root)
+assert audit.get("count", 0) >= 0
+
+from infra.creator_merge_preferences import suggest_merge_preset_fixes
+
+fixes = suggest_merge_preset_fixes(root)
+assert "fix_count" in fixes
+
+from infra.creator_onboarding_digest_background import tick_digest_for_active_project
+
+tick = tick_digest_for_active_project()
+assert "skipped" in tick or "sent" in tick
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

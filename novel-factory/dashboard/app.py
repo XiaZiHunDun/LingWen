@@ -394,6 +394,17 @@ class CreatorVolumeTemplateApproval(BaseModel):
     chain_step: int = 1
     chain_total: int = 1
     chain_progress: str = "1/1"
+    chain_log: list[dict[str, Any]] = []
+
+
+class CreatorVolumeTemplateApprovalAuditExportResponse(BaseModel):
+    schema_version: str = "1"
+    count: int
+    approvals: list[CreatorVolumeTemplateApproval]
+
+
+class CreatorVolumeTemplateApprovalHistoryResponse(BaseModel):
+    approvals: list[CreatorVolumeTemplateApproval]
 
 
 class CreatorVolumeTemplateApprovalChainConfig(BaseModel):
@@ -735,6 +746,36 @@ class CreatorMergePresetConflict(BaseModel):
 class CreatorMergePresetConflictsResponse(BaseModel):
     conflict_count: int
     conflicts: list[CreatorMergePresetConflict] = []
+
+
+class CreatorMergePresetConflictFix(BaseModel):
+    id: str
+    conflict_type: str
+    package_id: str
+    action: str
+    dependency_id: Optional[str] = None
+    version_label: Optional[str] = None
+    label: str = ""
+    applicable: bool = False
+
+
+class CreatorMergePresetConflictFixesResponse(BaseModel):
+    fix_count: int
+    fixes: list[CreatorMergePresetConflictFix] = []
+
+
+class CreatorMergePresetConflictFixApplyRequest(BaseModel):
+    package_id: str
+    action: str
+    dependency_id: Optional[str] = None
+    version_label: Optional[str] = None
+
+
+class CreatorMergePresetConflictFixApplyResponse(BaseModel):
+    package_id: str
+    action: str
+    conflict_count: int
+    package: CreatorMergePresetPackage
 
 
 class CreatorMergePresetFactoryPublishRequest(BaseModel):
@@ -1706,12 +1747,22 @@ def create_app(
     async def lifespan(app: FastAPI):
         """Phase 6.4: 启动/停止 WS broadcast 任务"""
         task: Optional[asyncio.Task] = None
+        digest_task: Optional[asyncio.Task] = None
         set_main_event_loop(asyncio.get_running_loop())
         if master_controller is not None:
             task = await start_broadcast_task(manager, master_controller)
+        from infra.creator_onboarding_digest_background import start_digest_background_task
+
+        digest_task = start_digest_background_task()
         try:
             yield
         finally:
+            if digest_task is not None:
+                digest_task.cancel()
+                try:
+                    await digest_task
+                except asyncio.CancelledError:
+                    pass
             if task is not None:
                 task.cancel()
                 try:
@@ -3246,6 +3297,38 @@ def create_app(
         )
 
     @app.get(
+        "/api/creator/volume-plan/templates/approvals/history",
+        response_model=CreatorVolumeTemplateApprovalHistoryResponse,
+    )
+    def creator_volume_plan_template_approval_history(
+        limit: int = 20,
+    ) -> CreatorVolumeTemplateApprovalHistoryResponse:
+        from infra.creator_template_approvals import list_template_approval_history
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        rows = list_template_approval_history(project.root, limit=max(1, min(limit, 50)))
+        return CreatorVolumeTemplateApprovalHistoryResponse(
+            approvals=[CreatorVolumeTemplateApproval(**row) for row in rows],
+        )
+
+    @app.get(
+        "/api/creator/volume-plan/templates/approvals/audit-export",
+        response_model=CreatorVolumeTemplateApprovalAuditExportResponse,
+    )
+    def creator_volume_plan_template_approval_audit_export() -> CreatorVolumeTemplateApprovalAuditExportResponse:
+        from infra.creator_template_approvals import export_template_approval_audit
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        data = export_template_approval_audit(project.root)
+        return CreatorVolumeTemplateApprovalAuditExportResponse(**data)
+
+    @app.get(
         "/api/creator/volume-plan/templates/approvals/chain-config",
         response_model=CreatorVolumeTemplateApprovalChainConfig,
     )
@@ -3821,6 +3904,48 @@ def create_app(
             conflict_count=result["conflict_count"],
             conflicts=[CreatorMergePresetConflict(**row) for row in result["conflicts"]],
         )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts/fixes",
+        response_model=CreatorMergePresetConflictFixesResponse,
+    )
+    def creator_settings_merge_preset_conflict_fixes() -> CreatorMergePresetConflictFixesResponse:
+        from infra.creator_merge_preferences import suggest_merge_preset_fixes
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = suggest_merge_preset_fixes(project.root)
+        return CreatorMergePresetConflictFixesResponse(
+            fix_count=result["fix_count"],
+            fixes=[CreatorMergePresetConflictFix(**row) for row in result["fixes"]],
+        )
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-fix",
+        response_model=CreatorMergePresetConflictFixApplyResponse,
+    )
+    def creator_settings_merge_preset_conflict_apply_fix(
+        req: CreatorMergePresetConflictFixApplyRequest,
+    ) -> CreatorMergePresetConflictFixApplyResponse:
+        from infra.creator_merge_preferences import apply_merge_preset_fix
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = apply_merge_preset_fix(
+                project.root,
+                package_id=req.package_id,
+                action=req.action,
+                dependency_id=req.dependency_id,
+                version_label=req.version_label,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePresetConflictFixApplyResponse(**result)
 
     @app.get(
         "/api/creator/settings-docs/merge-preferences/preset-packages/export",

@@ -786,6 +786,14 @@ export async function saveCreatorTemplateApprovalChainConfig(body) {
   });
 }
 
+export async function fetchCreatorTemplateApprovalHistory(limit = 20) {
+  return request(`/creator/volume-plan/templates/approvals/history?limit=${limit}`);
+}
+
+export async function exportCreatorTemplateApprovalAudit() {
+  return request('/creator/volume-plan/templates/approvals/audit-export');
+}
+
 export async function fetchCreatorMergePresetPackages() {
   return request('/creator/settings-docs/merge-preferences/preset-packages');
 }
@@ -825,6 +833,17 @@ export async function fetchCreatorMergePresetGraph() {
 
 export async function fetchCreatorMergePresetConflicts() {
   return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts');
+}
+
+export async function fetchCreatorMergePresetConflictFixes() {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/fixes');
+}
+
+export async function applyCreatorMergePresetConflictFix(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-fix', {
+    method: 'POST',
+    body,
+  });
 }
 
 export async function deleteCreatorFactoryMergePresetPackage(packageId) {
