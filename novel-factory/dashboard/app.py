@@ -358,6 +358,23 @@ class CreatorVolumeRenameTemplateResponse(BaseModel):
     description: str
 
 
+class CreatorVolumeTemplateExportResponse(BaseModel):
+    schema_version: str
+    templates: list[dict[str, Any]]
+    count: int
+
+
+class CreatorVolumeTemplateImportRequest(BaseModel):
+    templates: list[dict[str, Any]]
+    replace: bool = False
+
+
+class CreatorVolumeTemplateImportResponse(BaseModel):
+    imported: int
+    total: int
+    replaced: bool
+
+
 class CreatorVolumeTemplateListResponse(BaseModel):
     templates: list[CreatorVolumeTemplateInfo]
 
@@ -420,6 +437,7 @@ class CreatorOnboardingResponse(BaseModel):
     smoke_command: str
     onboarding_doc: str
     completed_step_ids: list[str] = []
+    auto_completed_step_ids: list[str] = []
     progress_pct: int = 0
 
 
@@ -429,7 +447,13 @@ class CreatorOnboardingProgressRequest(BaseModel):
 
 class CreatorOnboardingProgressResponse(BaseModel):
     completed_step_ids: list[str]
+    auto_completed_step_ids: list[str] = []
     progress_pct: int
+
+
+class CreatorMergePreferencesResponse(BaseModel):
+    pillars_merge_source: str
+    global_outline_merge_source: str
 
 
 class CreatorSettingsDiffPart(BaseModel):
@@ -2367,22 +2391,17 @@ def create_app(
     def creator_onboarding_progress_put(
         req: CreatorOnboardingProgressRequest,
     ) -> CreatorOnboardingProgressResponse:
-        from infra.creator_onboarding import onboarding_wizard_payload
-        from infra.creator_onboarding_progress import progress_pct, save_onboarding_progress
+        from infra.creator_onboarding import save_onboarding_progress_from_ui
         from infra.studio_registry import active_project
 
         project = active_project()
         if project is None:
             raise HTTPException(404, "no active project")
-        payload = onboarding_wizard_payload(project)
-        valid_ids = {step["id"] for step in payload["steps"]}
-        completed = [sid for sid in req.completed_step_ids if sid in valid_ids]
-        save_onboarding_progress(project.root, completed_step_ids=completed)
-        total = len(payload["steps"])
-        return CreatorOnboardingProgressResponse(
-            completed_step_ids=completed,
-            progress_pct=progress_pct(completed, total),
+        result = save_onboarding_progress_from_ui(
+            project,
+            desired_completed_step_ids=req.completed_step_ids,
         )
+        return CreatorOnboardingProgressResponse(**result)
 
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
@@ -2489,6 +2508,44 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorVolumeRenameTemplateResponse(**result)
+
+    @app.get(
+        "/api/creator/volume-plan/templates/export",
+        response_model=CreatorVolumeTemplateExportResponse,
+    )
+    def creator_volume_plan_export_templates() -> CreatorVolumeTemplateExportResponse:
+        from infra.creator_volume_templates import export_custom_volume_templates
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorVolumeTemplateExportResponse(
+            **export_custom_volume_templates(project.root),
+        )
+
+    @app.post(
+        "/api/creator/volume-plan/templates/import",
+        response_model=CreatorVolumeTemplateImportResponse,
+    )
+    def creator_volume_plan_import_templates(
+        req: CreatorVolumeTemplateImportRequest,
+    ) -> CreatorVolumeTemplateImportResponse:
+        from infra.creator_volume_templates import import_custom_volume_templates
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = import_custom_volume_templates(
+                project.root,
+                {"templates": req.templates},
+                replace=req.replace,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateImportResponse(**result)
 
     @app.post(
         "/api/creator/volume-plan/apply-template",
@@ -2690,6 +2747,19 @@ def create_app(
                 snapshot_id=req.snapshot_id,
             ),
         )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences",
+        response_model=CreatorMergePreferencesResponse,
+    )
+    def creator_settings_merge_preferences_get() -> CreatorMergePreferencesResponse:
+        from infra.creator_merge_preferences import load_merge_preferences
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorMergePreferencesResponse(**load_merge_preferences(project.root))
 
     @app.post(
         "/api/creator/settings-docs/merge-preview",

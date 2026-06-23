@@ -92,8 +92,25 @@ assert progress["completed_step_ids"] == ["init", "pillars"]
 payload2 = onboarding_wizard_payload(project)
 assert payload2["progress_pct"] >= 1
 
+from infra.creator_volume_templates import export_custom_volume_templates, import_custom_volume_templates
+
+exported = export_custom_volume_templates(root)
+assert exported["count"] >= 1
+imported = import_custom_volume_templates(root, exported)
+assert imported["imported"] >= 1
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
+
+from infra.creator_onboarding_autodetect import infer_auto_completed_steps
+
+auto = infer_auto_completed_steps(project)
+assert "init" in auto
+
+from infra.creator_merge_preferences import load_merge_preferences
+
+prefs = load_merge_preferences(root)
+assert prefs["pillars_merge_source"] == "disk"
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY
 

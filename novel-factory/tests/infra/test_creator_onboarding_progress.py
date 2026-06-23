@@ -4,8 +4,10 @@ from __future__ import annotations
 import pytest
 
 from infra.creator_onboarding_progress import (
+    effective_completed_step_ids,
     load_onboarding_progress,
     progress_pct,
+    reconcile_onboarding_toggle,
     save_onboarding_progress,
 )
 from infra.paths import ProjectPaths
@@ -43,3 +45,25 @@ def test_save_and_load_progress(factory_tmp):
 def test_progress_pct_empty():
     assert progress_pct([], 6) == 0
     assert progress_pct(["a", "b", "c"], 3) == 100
+
+
+def test_effective_completed_respects_dismissed():
+    completed = effective_completed_step_ids(
+        step_ids=["init", "pillars", "volume"],
+        auto_completed=["init", "pillars"],
+        manual_completed=["volume"],
+        dismissed_auto=["pillars"],
+    )
+    assert completed == ["init", "volume"]
+
+
+def test_reconcile_toggle_uncheck_auto():
+    manual, dismissed = reconcile_onboarding_toggle(
+        step_ids=["init", "pillars", "volume"],
+        auto_completed=["init", "pillars"],
+        manual_completed=[],
+        dismissed_auto=[],
+        desired_completed=["init"],
+    )
+    assert manual == []
+    assert "pillars" in dismissed

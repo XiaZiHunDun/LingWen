@@ -598,6 +598,17 @@ export async function renameCreatorVolumeTemplate(templateId, body) {
   });
 }
 
+export async function exportCreatorVolumeTemplates() {
+  return request('/creator/volume-plan/templates/export');
+}
+
+export async function importCreatorVolumeTemplates(body) {
+  return request('/creator/volume-plan/templates/import', {
+    method: 'POST',
+    body,
+  });
+}
+
 export async function fetchCreatorOnboarding() {
   return request('/creator/onboarding');
 }
@@ -643,6 +654,10 @@ export async function previewCreatorSettingsMerge(body) {
     method: 'POST',
     body,
   });
+}
+
+export async function fetchCreatorMergePreferences() {
+  return request('/creator/settings-docs/merge-preferences');
 }
 
 export async function fetchCreatorSettingsHistory() {

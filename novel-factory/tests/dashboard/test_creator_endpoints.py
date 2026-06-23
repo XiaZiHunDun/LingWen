@@ -439,3 +439,45 @@ class TestCreatorEndpoints:
         assert data["progress_pct"] >= 1
         refreshed = client.get("/api/creator/onboarding").json()
         assert refreshed["completed_step_ids"] == step_ids
+
+    def test_templates_export_import(self, client: TestClient) -> None:
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "可导出",
+                "volumes": [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 5,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+                "max_chapter": 10,
+            },
+        )
+        template_id = save.json()["id"]
+        exported = client.get("/api/creator/volume-plan/templates/export")
+        assert exported.status_code == 200
+        assert exported.json()["count"] >= 1
+        client.delete(f"/api/creator/volume-plan/templates/{template_id}")
+        imported = client.post(
+            "/api/creator/volume-plan/templates/import",
+            json={"templates": exported.json()["templates"]},
+        )
+        assert imported.status_code == 200
+        assert imported.json()["imported"] >= 1
+
+    def test_merge_preferences_get(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/settings-docs/merge-preferences")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["pillars_merge_source"] in {"editor", "disk", "history"}
+
+    def test_onboarding_includes_auto_completed(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/onboarding")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "auto_completed_step_ids" in data
+        assert "init" in data["auto_completed_step_ids"]

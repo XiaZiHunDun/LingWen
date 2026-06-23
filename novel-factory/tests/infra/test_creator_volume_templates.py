@@ -7,6 +7,8 @@ from infra.paths import ProjectPaths
 from infra.creator_volume_templates import (
     build_volume_template,
     delete_custom_volume_template,
+    export_custom_volume_templates,
+    import_custom_volume_templates,
     list_volume_templates,
     rename_custom_volume_template,
     save_custom_volume_template,
@@ -109,6 +111,30 @@ def test_rename_custom_template(factory_tmp):
     assert match["name"] == "新名"
     with pytest.raises(ValueError):
         rename_custom_volume_template(root, "three_act", name="不行")
+    ProjectPaths.reset()
+
+
+def test_export_import_custom_templates(factory_tmp):
+    from infra.project_init import init_minimal_short_project
+
+    result = init_minimal_short_project(
+        slug="tpl-io",
+        title="导入导出",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    root = result.root
+    volumes = [
+        {"label": "A", "start_chapter": 1, "end_chapter": 12, "core_conflict": "x", "locked": False},
+    ]
+    save_custom_volume_template(root, name="导出源", volumes=volumes, max_chapter=12)
+    exported = export_custom_volume_templates(root)
+    assert exported["count"] == 1
+    delete_custom_volume_template(root, exported["templates"][0]["id"])
+    imported = import_custom_volume_templates(root, exported)
+    assert imported["imported"] == 1
+    assert len(list_volume_templates(root)) >= 4
     ProjectPaths.reset()
 
 

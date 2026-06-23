@@ -300,4 +300,13 @@ def save_creator_settings_docs(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(resolved_outline.rstrip() + "\n", encoding="utf-8")
 
+    if pillars_merge_source or global_outline_merge_source:
+        from infra.creator_merge_preferences import save_merge_preferences
+
+        save_merge_preferences(
+            project.root,
+            pillars_merge_source=pillars_merge_source or "editor",
+            global_outline_merge_source=global_outline_merge_source or "editor",
+        )
+
     return creator_settings_docs_payload(project)

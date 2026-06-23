@@ -65,6 +65,11 @@
             />
             <span>
               <strong>{{ step.title }}</strong>
+              <span
+                v-if="autoCompletedWizardSteps.has(step.id)"
+                class="wizard-auto-badge"
+                data-testid="wizard-auto-badge"
+              >自动</span>
               <span class="meta-line">{{ step.detail }}</span>
             </span>
           </label>
@@ -222,6 +227,42 @@
                 @click="saveCustomVolumeTemplate"
               >
                 {{ templateSaving ? '保存中…' : '存为模板' }}
+              </button>
+            </div>
+            <div class="merge-range">
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="export-templates-btn"
+                @click="exportCustomTemplates"
+              >
+                导出 JSON
+              </button>
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="toggle-import-templates-btn"
+                @click="showImportTemplates = !showImportTemplates"
+              >
+                {{ showImportTemplates ? '收起导入' : '导入 JSON' }}
+              </button>
+            </div>
+            <div v-if="showImportTemplates" class="import-templates-panel" data-testid="import-templates-panel">
+              <textarea
+                v-model="importTemplatesJson"
+                class="vol-input import-templates-json"
+                data-testid="import-templates-json"
+                placeholder='{"templates":[...]}'
+                rows="4"
+              />
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="import-templates-btn"
+                :disabled="templateImporting || !importTemplatesJson.trim()"
+                @click="importCustomTemplates"
+              >
+                {{ templateImporting ? '导入中…' : '确认导入' }}
               </button>
             </div>
           </div>
@@ -677,12 +718,15 @@ import {
   saveCreatorVolumeTemplate,
   deleteCreatorVolumeTemplate,
   renameCreatorVolumeTemplate,
+  exportCreatorVolumeTemplates,
+  importCreatorVolumeTemplates,
   fetchCreatorOnboarding,
   saveCreatorOnboardingProgress,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
   previewCreatorSettingsMerge,
+  fetchCreatorMergePreferences,
   fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot,
   studioProductionPreflight,
@@ -732,8 +776,12 @@ const templateSaving = ref(false);
 const templateDeleting = ref(false);
 const templateRenaming = ref(false);
 const renameTemplateName = ref('');
+const showImportTemplates = ref(false);
+const importTemplatesJson = ref('');
+const templateImporting = ref(false);
 const onboardingWizard = ref(null);
 const completedWizardSteps = ref(new Set());
+const autoCompletedWizardSteps = ref(new Set());
 const compareSnapshotId = ref('');
 const pillarsMergeSource = ref('editor');
 const outlineMergeSource = ref('editor');
@@ -945,6 +993,7 @@ async function loadOnboardingWizard() {
   try {
     onboardingWizard.value = await fetchCreatorOnboarding();
     completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
+    autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
     if (focusWizard.value) {
       await nextTick();
       try {
@@ -974,10 +1023,12 @@ async function toggleWizardStep(stepId, checked) {
       completed_step_ids: [...next],
     });
     completedWizardSteps.value = new Set(result.completed_step_ids || []);
+    autoCompletedWizardSteps.value = new Set(result.auto_completed_step_ids || []);
     if (onboardingWizard.value) {
       onboardingWizard.value = {
         ...onboardingWizard.value,
         completed_step_ids: result.completed_step_ids,
+        auto_completed_step_ids: result.auto_completed_step_ids,
         progress_pct: result.progress_pct,
       };
     }
@@ -1026,6 +1077,55 @@ async function renameSelectedVolumeTemplate() {
     handleSaveError(e);
   } finally {
     templateRenaming.value = false;
+  }
+}
+
+async function exportCustomTemplates() {
+  error.value = null;
+  try {
+    const data = await exportCreatorVolumeTemplates();
+    const text = JSON.stringify(data, null, 2);
+    importTemplatesJson.value = text;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      saveMessage.value = `已导出 ${data.count} 个模板并复制到剪贴板`;
+    } else {
+      saveMessage.value = `已导出 ${data.count} 个模板（见导入框）`;
+      showImportTemplates.value = true;
+    }
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function importCustomTemplates() {
+  templateImporting.value = true;
+  error.value = null;
+  try {
+    const payload = JSON.parse(importTemplatesJson.value);
+    const templates = payload.templates || payload;
+    const result = await importCreatorVolumeTemplates({
+      templates: Array.isArray(templates) ? templates : [],
+      replace: false,
+    });
+    saveMessage.value = `已导入 ${result.imported} 个模板（共 ${result.total} 个）`;
+    importTemplatesJson.value = '';
+    showImportTemplates.value = false;
+    await loadVolumeTemplates();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    templateImporting.value = false;
+  }
+}
+
+async function loadMergePreferences() {
+  try {
+    const prefs = await fetchCreatorMergePreferences();
+    pillarsMergeSource.value = prefs.pillars_merge_source || 'editor';
+    outlineMergeSource.value = prefs.global_outline_merge_source || 'editor';
+  } catch {
+    /* optional */
   }
 }
 
@@ -1392,6 +1492,7 @@ async function refresh() {
       loadSettingsHistory(),
       loadVolumeTemplates(),
       loadOnboardingWizard(),
+      loadMergePreferences(),
       pollBatchJob(),
     ]);
     overview.value = ov;
@@ -1771,6 +1872,25 @@ watch(projectRevision, () => {
 
 .wizard-progress-badge {
   opacity: 0.85;
+}
+
+.wizard-auto-badge {
+  margin-left: 4px;
+  font-size: 7px;
+  color: var(--color-accent);
+}
+
+.import-templates-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.import-templates-json {
+  width: 100%;
+  min-height: 72px;
+  font-family: monospace;
 }
 
 .volume-template-panel {

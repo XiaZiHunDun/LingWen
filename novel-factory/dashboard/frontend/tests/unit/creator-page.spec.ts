@@ -13,6 +13,8 @@ const creatorMocks = vi.hoisted(() => ({
   saveCreatorVolumeTemplate: vi.fn(),
   deleteCreatorVolumeTemplate: vi.fn(),
   renameCreatorVolumeTemplate: vi.fn(),
+  exportCreatorVolumeTemplates: vi.fn(),
+  importCreatorVolumeTemplates: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
   saveCreatorOnboardingProgress: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
@@ -21,6 +23,7 @@ const creatorMocks = vi.hoisted(() => ({
   previewCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsThreeWay: vi.fn(),
   previewCreatorSettingsMerge: vi.fn(),
+  fetchCreatorMergePreferences: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
   restoreCreatorSettingsSnapshot: vi.fn(),
   studioProductionPreflight: vi.fn(),
@@ -39,6 +42,8 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorVolumeTemplate: creatorMocks.saveCreatorVolumeTemplate,
   deleteCreatorVolumeTemplate: creatorMocks.deleteCreatorVolumeTemplate,
   renameCreatorVolumeTemplate: creatorMocks.renameCreatorVolumeTemplate,
+  exportCreatorVolumeTemplates: creatorMocks.exportCreatorVolumeTemplates,
+  importCreatorVolumeTemplates: creatorMocks.importCreatorVolumeTemplates,
   fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
   saveCreatorOnboardingProgress: creatorMocks.saveCreatorOnboardingProgress,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
@@ -47,6 +52,7 @@ vi.mock('../../src/api/index.js', () => ({
   previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay: creatorMocks.previewCreatorSettingsThreeWay,
   previewCreatorSettingsMerge: creatorMocks.previewCreatorSettingsMerge,
+  fetchCreatorMergePreferences: creatorMocks.fetchCreatorMergePreferences,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot: creatorMocks.restoreCreatorSettingsSnapshot,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
@@ -216,11 +222,27 @@ describe('CreatorPage', () => {
       smoke_command: 'bash scripts/verify-advance-walkthrough.sh',
       onboarding_doc: 'docs/creator-onboarding-wizard.md',
       completed_step_ids: ['init'],
+      auto_completed_step_ids: ['init', 'dashboard'],
       progress_pct: 33,
     });
     creatorMocks.saveCreatorOnboardingProgress.mockResolvedValue({
       completed_step_ids: ['init', 'pillars'],
+      auto_completed_step_ids: ['init', 'dashboard'],
       progress_pct: 67,
+    });
+    creatorMocks.fetchCreatorMergePreferences.mockResolvedValue({
+      pillars_merge_source: 'disk',
+      global_outline_merge_source: 'history',
+    });
+    creatorMocks.exportCreatorVolumeTemplates.mockResolvedValue({
+      schema_version: '1',
+      count: 1,
+      templates: [{ id: 'custom_x', name: '导出', volumes: [] }],
+    });
+    creatorMocks.importCreatorVolumeTemplates.mockResolvedValue({
+      imported: 1,
+      total: 2,
+      replaced: false,
     });
     creatorMocks.fetchCreatorSettingsHistory.mockResolvedValue({
       snapshots: [
@@ -529,5 +551,31 @@ describe('CreatorPage', () => {
 
     expect(creatorMocks.saveCreatorOnboardingProgress).toHaveBeenCalled();
     expect(wrapper.find('[data-testid="wizard-progress-label"]').text()).toContain('67%');
+  });
+
+  it('loads merge preferences on mount', async () => {
+    mount(CreatorPage);
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorMergePreferences).toHaveBeenCalled();
+  });
+
+  it('exports custom templates', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="export-templates-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.exportCreatorVolumeTemplates).toHaveBeenCalled();
+  });
+
+  it('imports custom templates from json', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="toggle-import-templates-btn"]').trigger('click');
+    await wrapper.find('[data-testid="import-templates-json"]').setValue(
+      JSON.stringify({ templates: [{ name: '导入', source_max_chapter: 10, volumes: [{ label: '一', start_chapter: 1, end_chapter: 10, core_conflict: 'x' }] }] }),
+    );
+    await wrapper.find('[data-testid="import-templates-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.importCreatorVolumeTemplates).toHaveBeenCalled();
   });
 });

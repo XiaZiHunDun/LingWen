@@ -198,6 +198,76 @@ def rename_custom_volume_template(
     raise ValueError(f"unknown template: {template_id!r}")
 
 
+_EXPORT_SCHEMA_VERSION = "1"
+
+
+def _normalize_import_entry(raw: dict[str, Any]) -> dict[str, Any]:
+    name = str(raw.get("name", "")).strip()
+    if not name:
+        raise ValueError("import template name required")
+    volumes = raw.get("volumes", [])
+    if not isinstance(volumes, list) or not volumes:
+        raise ValueError(f"import template {name!r} volumes required")
+    max_chapter = int(raw.get("source_max_chapter") or raw.get("max_chapter") or 1)
+    if max_chapter < 1:
+        raise ValueError("source_max_chapter must be >= 1")
+    return {
+        "id": _normalize_template_id(name),
+        "name": name,
+        "description": str(raw.get("description", "导入模板")).strip(),
+        "source_max_chapter": max_chapter,
+        "volumes": [
+            {
+                "label": str(v["label"]),
+                "start_chapter": int(v["start_chapter"]),
+                "end_chapter": int(v["end_chapter"]),
+                "core_conflict": str(v.get("core_conflict", "")),
+                "locked": False,
+            }
+            for v in volumes
+        ],
+    }
+
+
+def export_custom_volume_templates(project_root: Path | str) -> dict[str, Any]:
+    """Export project custom templates as portable JSON."""
+    store = _load_custom_store(project_root)
+    return {
+        "schema_version": _EXPORT_SCHEMA_VERSION,
+        "templates": store.get("templates", []),
+        "count": len(store.get("templates", [])),
+    }
+
+
+def import_custom_volume_templates(
+    project_root: Path | str,
+    payload: dict[str, Any],
+    *,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Import custom templates from export JSON."""
+    raw_templates = payload.get("templates", [])
+    if not isinstance(raw_templates, list):
+        raise ValueError("templates must be a list")
+    normalized = [_normalize_import_entry(row) for row in raw_templates]
+    if replace:
+        merged = normalized
+    else:
+        store = _load_custom_store(project_root)
+        existing = store.get("templates", [])
+        merged = normalized + existing
+    store = {
+        "schema_version": _CUSTOM_STATE_VERSION,
+        "templates": merged[:_MAX_CUSTOM_TEMPLATES],
+    }
+    _save_custom_store(project_root, store)
+    return {
+        "imported": len(normalized),
+        "total": len(store["templates"]),
+        "replaced": replace,
+    }
+
+
 def _build_builtin_template(template_id: str, max_chapter: int) -> list[dict[str, Any]]:
     if template_id == "companion_short":
         return [

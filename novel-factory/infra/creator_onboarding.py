@@ -9,7 +9,14 @@ from infra.creator_mode import (
     CREATION_MODE_STUDIO,
     settings_from_project_config,
 )
-from infra.creator_onboarding_progress import load_onboarding_progress, progress_pct
+from infra.creator_onboarding_autodetect import infer_auto_completed_steps
+from infra.creator_onboarding_progress import (
+    effective_completed_step_ids,
+    load_onboarding_progress,
+    progress_pct,
+    reconcile_onboarding_toggle,
+    save_onboarding_progress,
+)
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
@@ -115,9 +122,16 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         smoke = "bash scripts/verify-studio-creator-hybrid.sh"
 
     progress = load_onboarding_progress(project.root)
-    completed = progress.get("completed_step_ids", [])
-    valid_ids = {step["id"] for step in steps}
-    completed = [step_id for step_id in completed if step_id in valid_ids]
+    manual = progress.get("completed_step_ids", [])
+    dismissed = progress.get("dismissed_auto_step_ids", [])
+    valid_ids = [step["id"] for step in steps]
+    auto_completed = infer_auto_completed_steps(project)
+    completed = effective_completed_step_ids(
+        step_ids=valid_ids,
+        auto_completed=auto_completed,
+        manual_completed=manual,
+        dismissed_auto=dismissed,
+    )
 
     return {
         "slug": config.slug,
@@ -129,5 +143,42 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         "smoke_command": smoke,
         "onboarding_doc": "docs/creator-onboarding-wizard.md",
         "completed_step_ids": completed,
+        "auto_completed_step_ids": [sid for sid in auto_completed if sid in valid_ids],
+        "progress_pct": progress_pct(completed, len(steps)),
+    }
+
+
+def save_onboarding_progress_from_ui(
+    project: StudioProject,
+    *,
+    desired_completed_step_ids: list[str],
+) -> dict[str, Any]:
+    """Persist wizard checkboxes; reconciles manual vs auto-detected steps."""
+    payload = onboarding_wizard_payload(project)
+    steps = payload["steps"]
+    step_ids = [step["id"] for step in steps]
+    auto = payload["auto_completed_step_ids"]
+    progress = load_onboarding_progress(project.root)
+    manual, dismissed = reconcile_onboarding_toggle(
+        step_ids=step_ids,
+        auto_completed=auto,
+        manual_completed=progress.get("completed_step_ids", []),
+        dismissed_auto=progress.get("dismissed_auto_step_ids", []),
+        desired_completed=desired_completed_step_ids,
+    )
+    save_onboarding_progress(
+        project.root,
+        completed_step_ids=manual,
+        dismissed_auto_step_ids=dismissed,
+    )
+    completed = effective_completed_step_ids(
+        step_ids=step_ids,
+        auto_completed=auto,
+        manual_completed=manual,
+        dismissed_auto=dismissed,
+    )
+    return {
+        "completed_step_ids": completed,
+        "auto_completed_step_ids": auto,
         "progress_pct": progress_pct(completed, len(steps)),
     }
