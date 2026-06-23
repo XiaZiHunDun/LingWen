@@ -214,6 +214,44 @@ class StudioSummaryResponse(BaseModel):
     pilot_record_count: int
     pillars_ok: bool
     pillars_path: str
+    creation_mode: str = "studio"
+    quality_profile: str = "studio_full"
+
+
+class CreatorChapterRow(BaseModel):
+    chapter: int
+    has_body: bool
+    has_outline: bool
+    word_count: int
+    excerpt: Optional[str] = None
+
+
+class CreatorVolumeSummary(BaseModel):
+    path: str
+    name: str
+    excerpt: str
+
+
+class CreatorOverviewResponse(BaseModel):
+    slug: str
+    name: str
+    creation_mode: str
+    quality_profile: str
+    max_chapter: int
+    chapters_written: int
+    coverage_pct: float
+    chapters: list[CreatorChapterRow]
+    volume_summaries: list[CreatorVolumeSummary]
+    pillars_excerpt: str
+    pillars_path: str
+    global_outline_excerpt: str
+    global_outline_path: str
+    p0_count: Optional[int] = None
+    quality_report_available: bool
+    companion_check_cmd: str
+    advance_batch_hint: str
+    notify_per_chapter: bool
+    advance_volume_summary: bool
 
 
 class StudioQualityResponse(BaseModel):
@@ -2053,6 +2091,16 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active studio project")
         return StudioSummaryResponse(**project_summary(project))
+
+    @app.get("/api/creator/overview", response_model=CreatorOverviewResponse)
+    def creator_overview_endpoint() -> CreatorOverviewResponse:
+        from infra.creator_dashboard import creator_overview
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOverviewResponse(**creator_overview(project))
 
     @app.get("/api/studio/quality", response_model=StudioQualityResponse)
     def studio_quality_dashboard() -> StudioQualityResponse:

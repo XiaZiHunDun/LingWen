@@ -34,6 +34,7 @@ class CheckOptions(UnifiedOptions):
     llm: bool = False
     limit: int = 20
     fail_severity: Optional[str] = None  # P0|P1|P2|P3 — exit 1 if any issue at or above severity
+    fail_severity_explicit: bool = False
 
 
 @dataclass

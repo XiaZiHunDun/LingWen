@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.68 (创作者产品线 v1, 2026-06-22)  
-> **更新 (2026-06-22)**: **双轨** — Studio 维护 + **创作者 companion/advance** 配置与脚本 MVP
+> **版本**: v10.69 (创作者 v1.1 — check 自动模式 + Dashboard 三栏, 2026-06-22)  
+> **更新 (2026-06-22)**: `lingwen check` 读 `creation_mode` · Dashboard **创作** 页三栏
 
 ---
 
@@ -96,6 +96,10 @@ bash scripts/run-advance-volume.sh 1 10 10 0.30
 ```
 
 PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md) · 配置：`infra/creator_mode.py` · `project.yaml` 字段 `creation_mode` / `quality_profile`
+
+**v1.1 已落地**：`lingwen check` 自动 P0（companion/advance）· Dashboard `?nav=creator` 三栏 · API `/api/creator/overview`
+
+**v1.2 待做**：卷纲锁定 UI · 偏离 diff 高亮
 
 ### 常用命令
 

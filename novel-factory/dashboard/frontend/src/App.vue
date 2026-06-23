@@ -33,6 +33,7 @@
         </div>
       </header>
       <main class="main-content">
+        <CreatorPage v-if="activeNav === 'creator'" />
         <StudioPage v-if="activeNav === 'studio'" />
         <OverviewPage v-if="activeNav === 'overview'" />
         <DecisionsPage v-else-if="activeNav === 'decisions'" />
@@ -49,6 +50,7 @@
 
 <script setup>
 import OverviewPage from './pages/OverviewPage.vue'
+import CreatorPage from './pages/CreatorPage.vue'
 import StudioPage from './pages/StudioPage.vue'
 import DecisionsPage from './pages/DecisionsPage.vue'
 import WorkflowsPage from './pages/WorkflowsPage.vue'
@@ -72,6 +74,7 @@ function onNavClick(itemId) {
 }
 
 const navItems = [
+  { id: 'creator', label: '创作', icon: '✍️' },
   { id: 'studio', label: '工作室', icon: '🏭' },
   { id: 'overview', label: '总览', icon: '📊' },
   { id: 'decisions', label: '决策', icon: '⚡' },

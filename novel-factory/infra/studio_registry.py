@@ -190,6 +190,8 @@ def project_summary(project: StudioProject) -> dict[str, Any]:
         "pilot_record_count": record_count,
         "pillars_ok": config.pillars_path.is_file(),
         "pillars_path": str(config.pillars_path),
+        "creation_mode": config.creation_mode,
+        "quality_profile": config.quality_profile,
     }
 
 

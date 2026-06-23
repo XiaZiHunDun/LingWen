@@ -20,5 +20,5 @@ python lingwen.py check \
   "$@"
 
 echo ""
-echo "陪伴模式：默认不跑 prose 校准 / LLM judge / golden。"
+echo "陪伴模式：默认 P0 守门（lingwen check --full 会读 creation_mode）。"
 echo "需要全文审查时，自行加 --llm 或跑 studio 验收脚本。"

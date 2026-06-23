@@ -224,6 +224,7 @@ def build_options(args: argparse.Namespace) -> UnifiedOptions:
             llm=args.llm,
             limit=args.limit,
             fail_severity=getattr(args, "fail_severity", None),
+            fail_severity_explicit="--fail-severity" in sys.argv,
         )
     elif command == "repair":
         return RepairOptions(

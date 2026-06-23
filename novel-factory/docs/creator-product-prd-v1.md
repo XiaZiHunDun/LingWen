@@ -105,6 +105,7 @@ project:
 
 ## 9. 后续（v1.1+）
 
-- Dashboard「写 / 脉络 / 设定」三栏（陪伴默认）
+- Dashboard「写 / 脉络 / 设定」三栏（陪伴默认） — ✅ v1.1
+- `lingwen.py check` 自动读 `creation_mode` 应用 profile — ✅ v1.1
 - 卷纲锁定 UI + 偏离 diff 高亮
-- `lingwen.py check` 自动读 `creation_mode` 应用 profile
+- 推进模式：卷纲 vs 实际 diff 对比

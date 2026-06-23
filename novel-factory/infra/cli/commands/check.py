@@ -5,6 +5,7 @@ Mirrors lines 78-210 of the original infra/cli/commands.py.
 from typing import List, Optional
 
 from infra.cli.options import UnifiedOptions
+from infra.creator_check import apply_creator_check_defaults, format_check_mode_banner
 
 from .base import Command
 
@@ -42,11 +43,24 @@ class CheckCommand(Command):
         Returns:
             Exit code
         """
+        explicit = bool(getattr(options, "fail_severity_explicit", False))
+        llm_requested = bool(getattr(options, "llm", False))
+        options, config, settings = apply_creator_check_defaults(
+            options,
+            paths=self.paths,
+            fail_severity_explicit=explicit,
+        )
+
         chapters = self.get_range(options)
         summary = self.format_chapter_summary(chapters)
 
         print(f"检查命令 | 范围: {summary}")
+        print(f"模式: {format_check_mode_banner(config, settings)}")
+        if llm_requested and not settings.run_llm_judge:
+            print("[提示] 当前创作模式默认关闭 LLM 检查；工作室模式请用 --creation-mode studio 或显式改 project.yaml")
         print(f"选项: quick={options.quick}, full={options.full}, llm={options.llm}")
+        if options.fail_severity:
+            print(f"失败门槛: {options.fail_severity} 及以上")
 
         if options.quick:
             return self._check_quick(chapters, options)

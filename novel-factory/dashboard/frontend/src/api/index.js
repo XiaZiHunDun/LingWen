@@ -536,6 +536,10 @@ export async function fetchStudioProseJudge() {
   return request('/studio/prose-judge');
 }
 
+export async function fetchCreatorOverview() {
+  return request('/creator/overview');
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */
