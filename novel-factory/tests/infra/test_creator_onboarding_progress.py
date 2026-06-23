@@ -54,10 +54,30 @@ def test_save_and_load_step_notes(factory_tmp):
     save_onboarding_progress(
         root,
         completed_step_ids=["init"],
-        step_notes={"volume": "先锁第一卷"},
+        step_notes={"volume": "先锁第一卷 @reviewer"},
     )
     loaded = load_onboarding_progress(root)
-    assert loaded["step_notes"]["volume"] == "先锁第一卷"
+    assert loaded["step_notes"]["volume"] == "先锁第一卷 @reviewer"
+    assert loaded["step_mentions"]["volume"] == ["reviewer"]
+    ProjectPaths.reset()
+
+
+def test_step_mentions_from_note_text(factory_tmp):
+    result = init_minimal_short_project(
+        slug="wiz-mentions",
+        title="提及",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    root = result.root
+    save_onboarding_progress(
+        root,
+        completed_step_ids=[],
+        step_notes={"volume": "请 @volume 锁定"},
+    )
+    loaded = load_onboarding_progress(root)
+    assert loaded["step_mentions"]["volume"] == ["volume"]
     ProjectPaths.reset()
 
 

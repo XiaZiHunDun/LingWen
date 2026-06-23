@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-_STATE_VERSION = "2"
+_STATE_VERSION = "3"
 _MAX_NOTE_LEN = 500
+_MENTION_RE = re.compile(r"@([a-zA-Z][a-zA-Z0-9_-]{0,31})")
 
 
 def _progress_path(project_root: Path | str) -> Path:
@@ -31,6 +33,39 @@ def _normalize_step_notes(raw: Any) -> dict[str, str]:
     return notes
 
 
+def extract_step_mentions(text: str) -> list[str]:
+    """Extract @mention handles from wizard note text."""
+    return list(
+        dict.fromkeys(match.group(1).lower() for match in _MENTION_RE.finditer(str(text))),
+    )
+
+
+def build_step_mentions(notes: dict[str, str]) -> dict[str, list[str]]:
+    return {
+        sid: mentions
+        for sid, note in notes.items()
+        if (mentions := extract_step_mentions(note))
+    }
+
+
+def _normalize_step_mentions(raw: Any, notes: dict[str, str]) -> dict[str, list[str]]:
+    if isinstance(raw, dict) and raw:
+        mentions: dict[str, list[str]] = {}
+        for key, value in raw.items():
+            sid = str(key).strip()
+            if not sid:
+                continue
+            if isinstance(value, list):
+                handles = [str(item).strip().lower() for item in value if str(item).strip()]
+            else:
+                handles = extract_step_mentions(str(value))
+            if handles:
+                mentions[sid] = list(dict.fromkeys(handles))
+        if mentions:
+            return mentions
+    return build_step_mentions(notes)
+
+
 def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
     path = _progress_path(project_root)
     if not path.is_file():
@@ -39,6 +74,7 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
             "completed_step_ids": [],
             "dismissed_auto_step_ids": [],
             "step_notes": {},
+            "step_mentions": {},
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     ids = data.get("completed_step_ids", [])
@@ -47,11 +83,13 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
         ids = []
     if not isinstance(dismissed, list):
         dismissed = []
+    notes = _normalize_step_notes(data.get("step_notes", {}))
     return {
         "schema_version": _STATE_VERSION,
         "completed_step_ids": [str(x) for x in ids],
         "dismissed_auto_step_ids": [str(x) for x in dismissed],
-        "step_notes": _normalize_step_notes(data.get("step_notes", {})),
+        "step_notes": notes,
+        "step_mentions": _normalize_step_mentions(data.get("step_mentions"), notes),
     }
 
 
@@ -95,6 +133,7 @@ def save_onboarding_progress(
         "completed_step_ids": unique_ids,
         "dismissed_auto_step_ids": dismissed_unique,
         "step_notes": merged_notes,
+        "step_mentions": build_step_mentions(merged_notes),
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -115,6 +154,23 @@ def merge_step_notes(
         text = str(value).strip()[:_MAX_NOTE_LEN]
         if sid and text:
             merged[sid] = text
+    return merged
+
+
+def merge_step_mention_maps(
+    existing: dict[str, list[str]],
+    incoming: dict[str, list[str]],
+    *,
+    valid_step_ids: set[str] | None = None,
+) -> dict[str, list[str]]:
+    merged = {sid: list(handles) for sid, handles in existing.items()}
+    for key, handles in incoming.items():
+        sid = str(key).strip()
+        if not sid or (valid_step_ids is not None and sid not in valid_step_ids):
+            continue
+        cleaned = [str(h).strip().lower() for h in handles if str(h).strip()]
+        if cleaned:
+            merged[sid] = list(dict.fromkeys(cleaned))
     return merged
 
 

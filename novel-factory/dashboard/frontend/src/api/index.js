@@ -720,6 +720,17 @@ export async function fetchCreatorGlobalMergePreferences() {
   return request('/creator/settings-docs/merge-preferences/global');
 }
 
+export async function exportCreatorMergePreferences() {
+  return request('/creator/settings-docs/merge-preferences/export');
+}
+
+export async function importCreatorMergePreferences(body) {
+  return request('/creator/settings-docs/merge-preferences/import', {
+    method: 'POST',
+    body,
+  });
+}
+
 export async function fetchCreatorSettingsHistory() {
   return request('/creator/settings-docs/history');
 }

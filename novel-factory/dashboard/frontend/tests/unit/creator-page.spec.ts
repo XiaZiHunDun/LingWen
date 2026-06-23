@@ -32,6 +32,8 @@ const creatorMocks = vi.hoisted(() => ({
   previewCreatorSettingsThreeWay: vi.fn(),
   previewCreatorSettingsMerge: vi.fn(),
   fetchCreatorMergePreferences: vi.fn(),
+  exportCreatorMergePreferences: vi.fn(),
+  importCreatorMergePreferences: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
   restoreCreatorSettingsSnapshot: vi.fn(),
   studioProductionPreflight: vi.fn(),
@@ -69,6 +71,8 @@ vi.mock('../../src/api/index.js', () => ({
   previewCreatorSettingsThreeWay: creatorMocks.previewCreatorSettingsThreeWay,
   previewCreatorSettingsMerge: creatorMocks.previewCreatorSettingsMerge,
   fetchCreatorMergePreferences: creatorMocks.fetchCreatorMergePreferences,
+  exportCreatorMergePreferences: creatorMocks.exportCreatorMergePreferences,
+  importCreatorMergePreferences: creatorMocks.importCreatorMergePreferences,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot: creatorMocks.restoreCreatorSettingsSnapshot,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
@@ -226,7 +230,7 @@ describe('CreatorPage', () => {
       templates: [
         { id: 'three_act', name: '三幕式', description: '建置对抗结局', builtin: true, scope: 'builtin' },
         { id: 'factory_shared', name: '工厂模板', description: '共享', builtin: false, scope: 'factory' },
-        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project', version_label: 'v1' },
+        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project', version_label: 'v1.0.0', version_semver_valid: true },
       ],
     });
     creatorMocks.applyCreatorVolumeTemplate.mockResolvedValue({
@@ -259,6 +263,7 @@ describe('CreatorPage', () => {
       completed_step_ids: ['init'],
       auto_completed_step_ids: ['init', 'dashboard'],
       step_notes: { volume: '先锁卷纲' },
+      step_mentions: { volume: ['batch'] },
       progress_pct: 33,
     });
     creatorMocks.saveCreatorOnboardingNotes.mockResolvedValue({
@@ -268,7 +273,15 @@ describe('CreatorPage', () => {
     });
     creatorMocks.setCreatorVolumeTemplateVersion.mockResolvedValue({
       id: 'custom_test',
-      version_label: 'v2',
+      version_label: 'v2.0.0',
+    });
+    creatorMocks.exportCreatorMergePreferences.mockResolvedValue({
+      schema_version: '1',
+      project: { pillars_merge_source: 'disk' },
+      global: { pillars_merge_source: 'disk' },
+    });
+    creatorMocks.importCreatorMergePreferences.mockResolvedValue({
+      scope: 'both',
     });
     creatorMocks.saveCreatorOnboardingProgress.mockResolvedValue({
       completed_step_ids: ['init', 'pillars'],
@@ -729,7 +742,35 @@ describe('CreatorPage', () => {
   it('shows template version label in select', async () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
-    expect(wrapper.find('[data-testid="volume-template-select"]').text()).toContain('[v1]');
+    expect(wrapper.find('[data-testid="volume-template-select"]').text()).toContain('[v1.0.0]');
+  });
+
+  it('shows semver warning for invalid template version', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
+    await flushPromises();
+    await wrapper.find('[data-testid="template-version-input"]').setValue('latest');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="template-version-semver-warn"]').exists()).toBe(true);
+  });
+
+  it('shows wizard mention badges', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-mention-badge"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('@batch');
+  });
+
+  it('exports merge preferences', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-merge-prefs-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.exportCreatorMergePreferences).toHaveBeenCalled();
   });
 
   it('saves wizard step note on blur', async () => {
@@ -746,11 +787,11 @@ describe('CreatorPage', () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
     await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
-    await wrapper.find('[data-testid="template-version-input"]').setValue('v2');
+    await wrapper.find('[data-testid="template-version-input"]').setValue('v2.0.0');
     await wrapper.find('[data-testid="set-template-version-btn"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.setCreatorVolumeTemplateVersion).toHaveBeenCalledWith('custom_test', {
-      version_label: 'v2',
+      version_label: 'v2.0.0',
     });
   });
 });

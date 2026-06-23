@@ -30,14 +30,51 @@ _MAX_CUSTOM_TEMPLATES = 5
 _MAX_FACTORY_TEMPLATES = 20
 _MAX_VERSION_LABEL = 32
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+_SEMVER_RE = re.compile(
+    r"^v?(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:-(?P<prerelease>[a-zA-Z0-9][a-zA-Z0-9.-]*))?$",
+    re.IGNORECASE,
+)
 
 
-def _normalize_version_label(raw: str | None) -> str | None:
+def validate_version_label(raw: str) -> str:
+    """Validate and canonicalize a semver version label."""
+    label = str(raw).strip()
+    if not label:
+        raise ValueError("version label required")
+    match = _SEMVER_RE.match(label)
+    if not match:
+        raise ValueError(
+            f"invalid semver version label: {label!r} (expected v1.2.3 or 1.2.3-beta)",
+        )
+    major = int(match.group("major"))
+    minor = int(match.group("minor"))
+    patch = int(match.group("patch") or 0)
+    prerelease = match.group("prerelease")
+    canonical = f"v{major}.{minor}.{patch}"
+    if prerelease:
+        canonical += f"-{prerelease}"
+    return canonical[:_MAX_VERSION_LABEL]
+
+
+def is_valid_version_label(raw: str | None) -> bool:
+    if raw is None:
+        return True
+    label = str(raw).strip()
+    if not label:
+        return True
+    return _SEMVER_RE.match(label) is not None
+
+
+def _normalize_version_label(raw: str | None, *, strict: bool = False) -> str | None:
     if raw is None:
         return None
     label = str(raw).strip()
     if not label:
         return None
+    if strict:
+        return validate_version_label(label)
+    if _SEMVER_RE.match(label):
+        return validate_version_label(label)
     return label[:_MAX_VERSION_LABEL]
 
 
@@ -49,6 +86,7 @@ def _template_list_row(item: dict[str, Any], scope: str, *, default_description:
         "builtin": False,
         "scope": scope,
         "version_label": _normalize_version_label(item.get("version_label")),
+        "version_semver_valid": is_valid_version_label(item.get("version_label")),
     }
 
 
@@ -190,7 +228,7 @@ def save_custom_volume_template(
         "id": _normalize_template_id(label),
         "name": label,
         "description": (description or "保存自当前卷纲").strip(),
-        "version_label": _normalize_version_label(version_label),
+        "version_label": _normalize_version_label(version_label, strict=True) if version_label else None,
         "source_max_chapter": max_chapter,
         "volumes": [
             {
@@ -247,7 +285,11 @@ def rename_custom_volume_template(
             if description is not None:
                 item["description"] = description.strip()
             if version_label is not None:
-                item["version_label"] = _normalize_version_label(version_label)
+                item["version_label"] = (
+                    _normalize_version_label(version_label, strict=True)
+                    if str(version_label).strip()
+                    else None
+                )
             _save_custom_store(project_root, store)
             return {
                 "id": tid,
@@ -271,7 +313,11 @@ def set_custom_template_version_label(
     store = _load_custom_store(project_root)
     for item in store.get("templates", []):
         if item.get("id") == tid:
-            item["version_label"] = _normalize_version_label(version_label)
+            item["version_label"] = (
+                _normalize_version_label(version_label, strict=True)
+                if version_label and str(version_label).strip()
+                else None
+            )
             _save_custom_store(project_root, store)
             return {
                 "id": tid,
@@ -292,7 +338,11 @@ def set_factory_template_version_label(
     factory = _load_factory_store()
     for item in factory.get("templates", []):
         if item.get("id") == tid:
-            item["version_label"] = _normalize_version_label(version_label)
+            item["version_label"] = (
+                _normalize_version_label(version_label, strict=True)
+                if version_label and str(version_label).strip()
+                else None
+            )
             _save_factory_store(factory)
             return {
                 "id": tid,
@@ -318,7 +368,11 @@ def _normalize_import_entry(raw: dict[str, Any]) -> dict[str, Any]:
         "id": _normalize_template_id(name),
         "name": name,
         "description": str(raw.get("description", "导入模板")).strip(),
-        "version_label": _normalize_version_label(raw.get("version_label")),
+        "version_label": (
+            _normalize_version_label(raw.get("version_label"), strict=True)
+            if raw.get("version_label")
+            else None
+        ),
         "source_max_chapter": max_chapter,
         "volumes": [
             {

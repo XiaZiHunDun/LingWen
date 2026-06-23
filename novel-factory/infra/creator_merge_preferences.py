@@ -168,3 +168,153 @@ def save_merge_preferences(
         global_outline_merge_snapshot_id=outline_snap,
     )
     return data
+
+
+_EXPORT_SCHEMA_VERSION = "1"
+
+
+def _prefs_export_block(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = _normalize_prefs(data)
+    return {
+        "pillars_merge_source": normalized["pillars_merge_source"],
+        "global_outline_merge_source": normalized["global_outline_merge_source"],
+        "merge_snapshot_id": normalized["merge_snapshot_id"],
+        "pillars_merge_snapshot_id": normalized["pillars_merge_snapshot_id"],
+        "global_outline_merge_snapshot_id": normalized["global_outline_merge_snapshot_id"],
+    }
+
+
+def export_merge_preferences(project_root: Path | str) -> dict[str, Any]:
+    """Export project + global merge preferences as portable JSON."""
+    project = load_merge_preferences(project_root)
+    global_prefs = load_global_merge_preferences()
+    return {
+        "schema_version": _EXPORT_SCHEMA_VERSION,
+        "project": _prefs_export_block(project),
+        "global": _prefs_export_block(global_prefs),
+    }
+
+
+def import_merge_preferences(
+    project_root: Path | str,
+    payload: dict[str, Any],
+    *,
+    scope: str = "project",
+) -> dict[str, Any]:
+    """Import merge preferences from export JSON."""
+    scope_norm = str(scope).strip().lower()
+    if scope_norm not in {"project", "global", "both"}:
+        raise ValueError("scope must be project, global, or both")
+
+    def _apply_block(block: dict[str, Any], *, to_project: bool, to_global: bool) -> None:
+        kwargs = {
+            "pillars_merge_source": str(block.get("pillars_merge_source", "editor")),
+            "global_outline_merge_source": str(block.get("global_outline_merge_source", "editor")),
+            "merge_snapshot_id": block.get("merge_snapshot_id"),
+            "pillars_merge_snapshot_id": block.get("pillars_merge_snapshot_id"),
+            "global_outline_merge_snapshot_id": block.get("global_outline_merge_snapshot_id"),
+        }
+        if to_project:
+            save_merge_preferences(project_root, **kwargs)
+        if to_global:
+            save_global_merge_preferences(**kwargs)
+
+    if scope_norm == "both":
+        project_block = payload.get("project")
+        global_block = payload.get("global")
+        if not isinstance(project_block, dict) or not isinstance(global_block, dict):
+            raise ValueError("project and global blocks required for scope=both")
+        _apply_block(project_block, to_project=True, to_global=False)
+        _apply_block(global_block, to_project=False, to_global=True)
+        return {
+            "scope": "both",
+            "project": load_merge_preferences(project_root),
+            "global": load_global_merge_preferences(),
+        }
+
+    block = payload.get(scope_norm)
+    if not isinstance(block, dict):
+        raise ValueError(f"{scope_norm} block required")
+    _apply_block(
+        block,
+        to_project=scope_norm == "project",
+        to_global=scope_norm == "global",
+    )
+    if scope_norm == "global":
+        return {"scope": "global", "global": load_global_merge_preferences()}
+    return {"scope": "project", "project": load_merge_preferences(project_root)}
+
+
+_EXPORT_SCHEMA_VERSION = "1"
+
+
+def _prefs_export_block(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = _normalize_prefs(data)
+    return {
+        "pillars_merge_source": normalized["pillars_merge_source"],
+        "global_outline_merge_source": normalized["global_outline_merge_source"],
+        "merge_snapshot_id": normalized["merge_snapshot_id"],
+        "pillars_merge_snapshot_id": normalized["pillars_merge_snapshot_id"],
+        "global_outline_merge_snapshot_id": normalized["global_outline_merge_snapshot_id"],
+    }
+
+
+def export_merge_preferences(project_root: Path | str) -> dict[str, Any]:
+    """Export project + global merge preferences as portable JSON."""
+    project = load_merge_preferences(project_root)
+    global_prefs = load_global_merge_preferences()
+    return {
+        "schema_version": _EXPORT_SCHEMA_VERSION,
+        "project": _prefs_export_block(project),
+        "global": _prefs_export_block(global_prefs),
+    }
+
+
+def import_merge_preferences(
+    project_root: Path | str,
+    payload: dict[str, Any],
+    *,
+    scope: str = "project",
+) -> dict[str, Any]:
+    """Import merge preferences from export JSON."""
+    scope_norm = str(scope).strip().lower()
+    if scope_norm not in {"project", "global", "both"}:
+        raise ValueError("scope must be project, global, or both")
+
+    def _apply_block(block: dict[str, Any], *, to_project: bool, to_global: bool) -> None:
+        kwargs = {
+            "pillars_merge_source": str(block.get("pillars_merge_source", "editor")),
+            "global_outline_merge_source": str(block.get("global_outline_merge_source", "editor")),
+            "merge_snapshot_id": block.get("merge_snapshot_id"),
+            "pillars_merge_snapshot_id": block.get("pillars_merge_snapshot_id"),
+            "global_outline_merge_snapshot_id": block.get("global_outline_merge_snapshot_id"),
+        }
+        if to_project:
+            save_merge_preferences(project_root, **kwargs)
+        if to_global:
+            save_global_merge_preferences(**kwargs)
+
+    if scope_norm == "both":
+        project_block = payload.get("project")
+        global_block = payload.get("global")
+        if not isinstance(project_block, dict) or not isinstance(global_block, dict):
+            raise ValueError("project and global blocks required for scope=both")
+        _apply_block(project_block, to_project=True, to_global=False)
+        _apply_block(global_block, to_project=False, to_global=True)
+        return {
+            "scope": "both",
+            "project": load_merge_preferences(project_root),
+            "global": load_global_merge_preferences(),
+        }
+
+    block = payload.get(scope_norm)
+    if not isinstance(block, dict):
+        raise ValueError(f"{scope_norm} block required")
+    _apply_block(
+        block,
+        to_project=scope_norm == "project",
+        to_global=scope_norm == "global",
+    )
+    if scope_norm == "global":
+        return {"scope": "global", "global": load_global_merge_preferences()}
+    return {"scope": "project", "project": load_merge_preferences(project_root)}

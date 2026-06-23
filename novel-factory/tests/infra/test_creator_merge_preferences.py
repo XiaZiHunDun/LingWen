@@ -118,3 +118,45 @@ def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
     assert loaded["uses_global_default"] is False
     assert load_global_merge_preferences()["pillars_merge_source"] == "editor"
     ProjectPaths.reset()
+
+
+def test_merge_preferences_export_import(factory_tmp, monkeypatch):
+    import infra.creator_merge_preferences as cmp
+
+    monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
+    monkeypatch.setattr(
+        cmp,
+        "_global_prefs_path",
+        lambda: factory_tmp / "infra" / ".state" / "creator_merge_preferences_global.json",
+    )
+
+    from infra.creator_merge_preferences import (
+        export_merge_preferences,
+        import_merge_preferences,
+        save_merge_preferences,
+    )
+
+    result = init_minimal_short_project(
+        slug="merge-export",
+        title="合并导出",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    save_merge_preferences(
+        result.root,
+        pillars_merge_source="disk",
+        global_outline_merge_source="history",
+        pillars_merge_snapshot_id="snap-a",
+        global_outline_merge_snapshot_id="snap-b",
+    )
+    exported = export_merge_preferences(result.root)
+    assert exported["project"]["pillars_merge_source"] == "disk"
+    assert exported["global"]["pillars_merge_source"] == "disk"
+    imported = import_merge_preferences(
+        result.root,
+        exported,
+        scope="both",
+    )
+    assert imported["scope"] == "both"
+    ProjectPaths.reset()

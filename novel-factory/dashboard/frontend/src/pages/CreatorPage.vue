@@ -82,11 +82,23 @@
             :value="wizardStepNotes[step.id] || ''"
             class="vol-input wizard-step-note"
             :data-testid="`wizard-note-${step.id}`"
-            placeholder="协作批注（可选）"
+            placeholder="协作批注（可选，支持 @volume @reviewer）"
             rows="2"
             @input="wizardStepNotes[step.id] = $event.target.value"
             @blur="saveWizardStepNote(step.id)"
           />
+          <div
+            v-if="wizardMentionsForStep(step.id).length"
+            class="wizard-mentions"
+            data-testid="wizard-mentions"
+          >
+            <span
+              v-for="mention in wizardMentionsForStep(step.id)"
+              :key="`${step.id}-${mention}`"
+              class="wizard-mention-badge"
+              data-testid="wizard-mention-badge"
+            >@{{ mention }}</span>
+          </div>
         </li>
       </ol>
       <p class="meta-line">
@@ -244,8 +256,15 @@
                 v-model="templateVersionLabel"
                 class="vol-input vol-conflict"
                 data-testid="template-version-input"
-                placeholder="版本标签（如 v1.2）"
+                placeholder="版本标签（semver，如 v1.2.0）"
               />
+              <p
+                v-if="templateVersionLabel && !isSemverVersionLabel(templateVersionLabel)"
+                class="meta-line version-semver-warn"
+                data-testid="template-version-semver-warn"
+              >
+                版本标签需符合 semver（如 v1.2.0）
+              </p>
               <button
                 type="button"
                 class="mini-btn pixel-border"
@@ -758,6 +777,42 @@
                   data-testid="merge-strategy-snippet"
                 >{{ mergeStrategySnippet.join('\n') }}</pre>
               </div>
+              <div class="merge-range">
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="export-merge-prefs-btn"
+                  @click="exportMergePreferences"
+                >
+                  导出合并策略
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="toggle-import-merge-prefs-btn"
+                  @click="showImportMergePrefs = !showImportMergePrefs"
+                >
+                  {{ showImportMergePrefs ? '收起导入' : '导入合并策略' }}
+                </button>
+              </div>
+              <div v-if="showImportMergePrefs" class="import-templates-panel" data-testid="import-merge-prefs-panel">
+                <textarea
+                  v-model="importMergePrefsJson"
+                  class="vol-input import-templates-json"
+                  data-testid="import-merge-prefs-json"
+                  placeholder='{"project":{...},"global":{...}}'
+                  rows="4"
+                />
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="import-merge-prefs-btn"
+                  :disabled="mergePrefsImporting || !importMergePrefsJson.trim()"
+                  @click="importMergePreferencesFromJson"
+                >
+                  {{ mergePrefsImporting ? '导入中…' : '确认导入' }}
+                </button>
+              </div>
             </div>
           </template>
           <div class="batch-actions">
@@ -850,6 +905,8 @@ import {
   previewCreatorSettingsThreeWay,
   previewCreatorSettingsMerge,
   fetchCreatorMergePreferences,
+  exportCreatorMergePreferences,
+  importCreatorMergePreferences,
   fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot,
   studioProductionPreflight,
@@ -912,6 +969,10 @@ const wizardStepNotes = ref({});
 const usesGlobalMergeDefault = ref(false);
 const templateVersionLabel = ref('');
 const templateVersionSaving = ref(false);
+const versionSemverPattern = /^v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9][a-zA-Z0-9.-]*)?$/i;
+const showImportMergePrefs = ref(false);
+const importMergePrefsJson = ref('');
+const mergePrefsImporting = ref(false);
 const pillarsSnapshotId = ref('');
 const outlineSnapshotId = ref('');
 const onboardingWizard = ref(null);
@@ -1001,9 +1062,32 @@ watch(selectedTemplateId, () => {
 
 function formatTemplateOption(template) {
   if (template.version_label) {
-    return `[${template.version_label}] ${template.name}`;
+    const prefix = template.version_semver_valid === false ? '!' : '';
+    return `${prefix}[${template.version_label}] ${template.name}`;
   }
   return template.name;
+}
+
+function isSemverVersionLabel(label) {
+  return versionSemverPattern.test(String(label || '').trim());
+}
+
+function extractMentionsFromText(text) {
+  const re = /@([a-zA-Z][a-zA-Z0-9_-]{0,31})/g;
+  const found = [];
+  let match = re.exec(String(text || ''));
+  while (match) {
+    const handle = match[1].toLowerCase();
+    if (!found.includes(handle)) found.push(handle);
+    match = re.exec(String(text || ''));
+  }
+  return found;
+}
+
+function wizardMentionsForStep(stepId) {
+  const fromApi = onboardingWizard.value?.step_mentions?.[stepId];
+  if (fromApi?.length) return fromApi;
+  return extractMentionsFromText(wizardStepNotes.value[stepId] || '');
 }
 
 const showMergeStrategy = computed(() => {
@@ -1337,6 +1421,10 @@ async function loadTemplateSyncSources() {
 
 async function saveTemplateVersionLabel() {
   if (!selectedTemplateProject.value && !selectedTemplateFactory.value) return;
+  if (templateVersionLabel.value.trim() && !isSemverVersionLabel(templateVersionLabel.value)) {
+    saveMessage.value = '版本标签需符合 semver（如 v1.2.0）';
+    return;
+  }
   templateVersionSaving.value = true;
   error.value = null;
   try {
@@ -1419,6 +1507,41 @@ async function deleteSelectedFactoryTemplate() {
     handleSaveError(e);
   } finally {
     factoryDeleting.value = false;
+  }
+}
+
+async function exportMergePreferences() {
+  error.value = null;
+  try {
+    const data = await exportCreatorMergePreferences();
+    const text = JSON.stringify(data, null, 2);
+    importMergePrefsJson.value = text;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      saveMessage.value = '已导出合并策略并复制到剪贴板';
+    } else {
+      saveMessage.value = '已导出合并策略（见导入框）';
+      showImportMergePrefs.value = true;
+    }
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function importMergePreferencesFromJson() {
+  mergePrefsImporting.value = true;
+  error.value = null;
+  try {
+    const payload = JSON.parse(importMergePrefsJson.value);
+    await importCreatorMergePreferences({ ...payload, scope: payload.scope || 'both' });
+    saveMessage.value = '已导入合并策略';
+    importMergePrefsJson.value = '';
+    showImportMergePrefs.value = false;
+    await loadMergePreferences();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    mergePrefsImporting.value = false;
   }
 }
 
@@ -2217,6 +2340,25 @@ watch(projectRevision, () => {
   width: 100%;
   margin-top: 4px;
   font-size: 0.85rem;
+}
+
+.wizard-mentions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.wizard-mention-badge {
+  font-size: 7px;
+  color: var(--color-accent);
+  background: rgba(127, 127, 127, 0.12);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.version-semver-warn {
+  color: var(--color-warn, #c90);
 }
 
 .wizard-progress-badge {

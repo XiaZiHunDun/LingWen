@@ -329,6 +329,7 @@ class CreatorVolumeTemplateInfo(BaseModel):
     builtin: bool = True
     scope: str = "builtin"
     version_label: Optional[str] = None
+    version_semver_valid: bool = True
 
 
 class CreatorVolumeTemplateVersionRequest(BaseModel):
@@ -487,6 +488,7 @@ class CreatorOnboardingStep(BaseModel):
     title: str
     detail: str
     note: str = ""
+    mentions: list[str] = []
 
 
 class CreatorOnboardingResponse(BaseModel):
@@ -501,6 +503,7 @@ class CreatorOnboardingResponse(BaseModel):
     completed_step_ids: list[str] = []
     auto_completed_step_ids: list[str] = []
     step_notes: dict[str, str] = {}
+    step_mentions: dict[str, list[str]] = {}
     progress_pct: int = 0
 
 
@@ -517,7 +520,33 @@ class CreatorOnboardingProgressResponse(BaseModel):
     completed_step_ids: list[str]
     auto_completed_step_ids: list[str] = []
     step_notes: dict[str, str] = {}
+    step_mentions: dict[str, list[str]] = {}
     progress_pct: int
+
+
+class CreatorMergePreferencesExportResponse(BaseModel):
+    schema_version: str
+    project: dict[str, Any]
+    global_prefs: dict[str, Any] = Field(alias="global")
+
+    model_config = {"populate_by_name": True}
+
+
+class CreatorMergePreferencesImportRequest(BaseModel):
+    schema_version: Optional[str] = None
+    project: Optional[dict[str, Any]] = None
+    global_prefs: Optional[dict[str, Any]] = Field(default=None, alias="global")
+    scope: str = "project"
+
+    model_config = {"populate_by_name": True}
+
+
+class CreatorMergePreferencesImportResponse(BaseModel):
+    scope: str
+    project: Optional[dict[str, Any]] = None
+    global_prefs: Optional[dict[str, Any]] = Field(default=None, alias="global")
+
+    model_config = {"populate_by_name": True}
 
 
 class CreatorMergePreferencesResponse(BaseModel):
@@ -3032,6 +3061,52 @@ def create_app(
         prefs = load_global_merge_preferences()
         prefs["uses_global_default"] = True
         return CreatorMergePreferencesResponse(**prefs)
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/export",
+        response_model=CreatorMergePreferencesExportResponse,
+    )
+    def creator_settings_merge_preferences_export() -> CreatorMergePreferencesExportResponse:
+        from infra.creator_merge_preferences import export_merge_preferences
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        data = export_merge_preferences(project.root)
+        return CreatorMergePreferencesExportResponse(
+            schema_version=data["schema_version"],
+            project=data["project"],
+            global_prefs=data["global"],
+        )
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preferences/import",
+        response_model=CreatorMergePreferencesImportResponse,
+    )
+    def creator_settings_merge_preferences_import(
+        req: CreatorMergePreferencesImportRequest,
+    ) -> CreatorMergePreferencesImportResponse:
+        from infra.creator_merge_preferences import import_merge_preferences
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        payload = req.model_dump(by_alias=True, exclude_none=True)
+        try:
+            result = import_merge_preferences(
+                project.root,
+                payload,
+                scope=req.scope,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMergePreferencesImportResponse(
+            scope=result["scope"],
+            project=result.get("project"),
+            global_prefs=result.get("global"),
+        )
 
     @app.post(
         "/api/creator/settings-docs/merge-preview",

@@ -111,14 +111,22 @@ assert published["id"].startswith("factory_")
 assert len(list_factory_volume_templates()) >= 1
 pulled = pull_factory_templates_to_project(root, template_ids=[published["id"]])
 assert pulled["imported"] >= 1
-share = apply_wizard_share_done(project, done_step_ids=["volume"], step_notes={"volume": "先锁第一卷"})
+share = apply_wizard_share_done(project, done_step_ids=["volume"], step_notes={"volume": "先锁第一卷 @reviewer"})
 assert "volume" in share["completed_step_ids"]
-assert share["step_notes"].get("volume") == "先锁第一卷"
+assert share["step_notes"].get("volume") == "先锁第一卷 @reviewer"
+assert "reviewer" in share["step_mentions"].get("volume", [])
 
-from infra.creator_volume_templates import set_custom_template_version_label
+from infra.creator_volume_templates import set_custom_template_version_label, validate_version_label
 
-versioned = set_custom_template_version_label(root, saved["id"], version_label="v2.5")
-assert versioned["version_label"] == "v2.5"
+versioned = set_custom_template_version_label(root, saved["id"], version_label="v2.5.0")
+assert versioned["version_label"] == "v2.5.0"
+assert validate_version_label("2.0") == "v2.0.0"
+
+from infra.creator_merge_preferences import export_merge_preferences, import_merge_preferences
+
+exported_merge = export_merge_preferences(root)
+assert exported_merge["project"]["pillars_merge_source"] == "disk"
+import_merge_preferences(root, exported_merge, scope="both")
 
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))

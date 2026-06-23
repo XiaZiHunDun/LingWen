@@ -552,13 +552,48 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["step_notes"].get("volume") == "先锁第一卷"
 
-    def test_merge_preferences_per_doc_snapshots(self, client: TestClient) -> None:
-        prefs = client.get("/api/creator/settings-docs/merge-preferences").json()
-        assert "pillars_merge_snapshot_id" in prefs
-        assert "global_outline_merge_snapshot_id" in prefs
-        resp = client.get("/api/creator/volume-plan/templates/factory")
+    def test_merge_preferences_export_import(self, client: TestClient) -> None:
+        export_resp = client.get("/api/creator/settings-docs/merge-preferences/export")
+        assert export_resp.status_code == 200
+        payload = export_resp.json()
+        assert "project" in payload
+        assert "global" in payload
+        import_resp = client.post(
+            "/api/creator/settings-docs/merge-preferences/import",
+            json={**payload, "scope": "project"},
+        )
+        assert import_resp.status_code == 200
+        assert import_resp.json()["scope"] == "project"
+
+    def test_template_version_semver_rejects_invalid(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        resp = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "semver-bad",
+                "max_chapter": 12,
+                "version_label": "latest",
+                "volumes": plan["volumes"] or [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 12,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+            },
+        )
+        assert resp.status_code == 400
+
+    def test_onboarding_notes_with_mentions(self, client: TestClient) -> None:
+        resp = client.put(
+            "/api/creator/onboarding/notes",
+            json={"step_notes": {"volume": "请 @batch 协助"}},
+        )
         assert resp.status_code == 200
-        assert "templates" in resp.json()
+        data = resp.json()
+        assert "batch" in data.get("step_mentions", {}).get("volume", [])
 
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")

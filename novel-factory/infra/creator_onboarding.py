@@ -11,6 +11,7 @@ from infra.creator_mode import (
 )
 from infra.creator_onboarding_autodetect import infer_auto_completed_steps
 from infra.creator_onboarding_progress import (
+    build_step_mentions,
     effective_completed_step_ids,
     load_onboarding_progress,
     merge_step_notes,
@@ -126,6 +127,7 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
     manual = progress.get("completed_step_ids", [])
     dismissed = progress.get("dismissed_auto_step_ids", [])
     step_notes = progress.get("step_notes", {})
+    step_mentions = progress.get("step_mentions", {})
     valid_ids = [step["id"] for step in steps]
     auto_completed = infer_auto_completed_steps(project)
     completed = effective_completed_step_ids(
@@ -135,7 +137,11 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         dismissed_auto=dismissed,
     )
     steps_with_notes = [
-        {**step, "note": step_notes.get(step["id"], "")}
+        {
+            **step,
+            "note": step_notes.get(step["id"], ""),
+            "mentions": step_mentions.get(step["id"], []),
+        }
         for step in steps
     ]
 
@@ -151,7 +157,20 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         "completed_step_ids": completed,
         "auto_completed_step_ids": [sid for sid in auto_completed if sid in valid_ids],
         "step_notes": step_notes,
+        "step_mentions": _step_mentions_for_steps(steps, step_mentions),
         "progress_pct": progress_pct(completed, len(steps)),
+    }
+
+
+def _step_mentions_for_steps(
+    steps: list[dict[str, Any]],
+    step_mentions: dict[str, list[str]],
+) -> dict[str, list[str]]:
+    valid = {step["id"] for step in steps}
+    return {
+        sid: handles
+        for sid, handles in step_mentions.items()
+        if sid in valid and handles
     }
 
 
@@ -163,6 +182,7 @@ def _progress_response(
     manual: list[str],
     dismissed: list[str],
     step_notes: dict[str, str],
+    step_mentions: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
     completed = effective_completed_step_ids(
         step_ids=step_ids,
@@ -170,10 +190,12 @@ def _progress_response(
         manual_completed=manual,
         dismissed_auto=dismissed,
     )
+    mentions = step_mentions if step_mentions is not None else build_step_mentions(step_notes)
     return {
         "completed_step_ids": completed,
         "auto_completed_step_ids": auto,
         "step_notes": step_notes,
+        "step_mentions": _step_mentions_for_steps(steps, mentions),
         "progress_pct": progress_pct(completed, len(steps)),
     }
 
@@ -210,6 +232,7 @@ def save_onboarding_progress_from_ui(
         manual=manual,
         dismissed=dismissed,
         step_notes=saved.get("step_notes", {}),
+        step_mentions=saved.get("step_mentions", {}),
     )
 
 
@@ -242,6 +265,7 @@ def save_onboarding_notes_from_ui(
         manual=progress.get("completed_step_ids", []),
         dismissed=progress.get("dismissed_auto_step_ids", []),
         step_notes=saved.get("step_notes", {}),
+        step_mentions=saved.get("step_mentions", {}),
     )
 
 
