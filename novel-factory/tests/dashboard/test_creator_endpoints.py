@@ -149,6 +149,29 @@ class TestCreatorEndpoints:
         )
         assert stale.status_code == 409
 
+    def test_volume_plan_split(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/volume-plan/split",
+            json={
+                "volumes": [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 10,
+                        "core_conflict": "A",
+                        "locked": True,
+                    },
+                ],
+                "volume_index": 0,
+                "split_at_chapter": 6,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["volumes"]) == 2
+        assert data["first_label"]
+        assert data["second_label"]
+
     def test_overview_includes_deviations(self, client: TestClient) -> None:
         client.put(
             "/api/creator/volume-plan",
@@ -200,3 +223,23 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["has_changes"] is True
         assert data["pillars"]["changed"] is True
+
+    def test_settings_history_and_restore(self, client: TestClient) -> None:
+        current = client.get("/api/creator/settings-docs").json()
+        client.put(
+            "/api/creator/settings-docs",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# history-line\n",
+                "global_outline_text": current["global_outline_text"],
+                "expected_pillars_revision": current["pillars_revision"],
+                "expected_global_outline_revision": current["global_outline_revision"],
+            },
+        )
+        history = client.get("/api/creator/settings-docs/history").json()
+        assert history["count"] >= 1
+        snap_id = history["snapshots"][0]["id"]
+        restored = client.post(
+            "/api/creator/settings-docs/restore",
+            json={"snapshot_id": snap_id},
+        )
+        assert restored.status_code == 200

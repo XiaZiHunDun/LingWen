@@ -258,6 +258,48 @@ def merge_volume_range(
     return entries[:start_idx] + [merged] + entries[end_idx + 1 :], merged
 
 
+def split_volume(
+    volumes: list[dict[str, Any]] | list[VolumeEntry],
+    volume_index: int,
+    split_at_chapter: int,
+    *,
+    first_label: str | None = None,
+    second_label: str | None = None,
+    first_conflict: str | None = None,
+    second_conflict: str | None = None,
+) -> tuple[list[VolumeEntry], VolumeEntry, VolumeEntry]:
+    """Split one volume at split_at_chapter (first chapter of the lower segment)."""
+    entries = _entries_from_raw(volumes)
+    if volume_index < 0 or volume_index >= len(entries):
+        raise ValueError("invalid volume index")
+    vol = entries[volume_index]
+    if split_at_chapter <= vol.start_chapter or split_at_chapter > vol.end_chapter:
+        raise ValueError("split chapter must be inside volume (exclusive of start)")
+    first_end = split_at_chapter - 1
+    if first_end < vol.start_chapter:
+        raise ValueError("split would create empty first volume")
+
+    first = VolumeEntry(
+        label=(first_label or f"{vol.label}上").strip(),
+        start_chapter=vol.start_chapter,
+        end_chapter=first_end,
+        core_conflict=(first_conflict or vol.core_conflict).strip(),
+        locked=vol.locked,
+        locked_at=vol.locked_at if vol.locked else None,
+    )
+    second = VolumeEntry(
+        label=(second_label or f"{vol.label}下").strip(),
+        start_chapter=split_at_chapter,
+        end_chapter=vol.end_chapter,
+        core_conflict=(second_conflict or vol.core_conflict).strip(),
+        locked=vol.locked,
+        locked_at=vol.locked_at if vol.locked else None,
+    )
+    if not first.label or not second.label:
+        raise ValueError("split volume labels required")
+    return entries[:volume_index] + [first, second] + entries[volume_index + 1 :], first, second
+
+
 def save_volume_plan(
     project_root: Path | str,
     volumes: list[dict[str, Any]],

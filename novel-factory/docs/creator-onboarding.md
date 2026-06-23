@@ -49,6 +49,9 @@ bash scripts/run-companion-check.sh
 
 ## 3. 推进模式日常
 
+走通清单：[`advance-walkthrough-checklist.md`](advance-walkthrough-checklist.md)  
+冒烟：`bash scripts/verify-advance-walkthrough.sh`
+
 1. 打开 `03_内容仓库/01_全文总体大纲/全局大纲.md`，填**卷纲表**
 2. 批量产一章范围：
 
@@ -68,9 +71,9 @@ docs/volume-summary-ch001-010.md
 ### Dashboard（`?nav=creator`）
 
 - **写**：点击章节行 → 只读预览大纲/正文
-- **脉络**：编辑卷纲 → 拖拽/↑↓ 排序 → **合并向导** → 锁定 → 保存；重叠 alert；**409 冲突时重新加载**
-- **推进**：Preflight + 启动 Batch；**完成后自动刷新卷摘要**
-- **设定**：编辑 → **变更预览** → 确认保存
+- **脉络**：编辑卷纲 → 拖拽/↑↓ 排序 → **合并/拆分向导** → 锁定 → 保存；409 冲突时重新加载
+- **推进**：Preflight + 启动 Batch；完成后自动刷新卷摘要
+- **设定**：编辑 → 变更预览 → 确认保存 · **版本历史可恢复**
 - companion/advance 项目打开 Dashboard 默认进创作页
 
 ## 4. 和工作室线的关系

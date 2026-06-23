@@ -7,10 +7,13 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorVolumePlan: vi.fn(),
   saveCreatorVolumePlan: vi.fn(),
   mergeCreatorVolumePlan: vi.fn(),
+  splitCreatorVolumePlan: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
+  fetchCreatorSettingsHistory: vi.fn(),
+  restoreCreatorSettingsSnapshot: vi.fn(),
   studioProductionPreflight: vi.fn(),
   studioProductionRun: vi.fn(),
   fetchStudioActiveBatchJob: vi.fn(),
@@ -21,10 +24,13 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorVolumePlan: creatorMocks.fetchCreatorVolumePlan,
   saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
   mergeCreatorVolumePlan: creatorMocks.mergeCreatorVolumePlan,
+  splitCreatorVolumePlan: creatorMocks.splitCreatorVolumePlan,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
   previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
+  fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
+  restoreCreatorSettingsSnapshot: creatorMocks.restoreCreatorSettingsSnapshot,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
   studioProductionRun: creatorMocks.studioProductionRun,
   fetchStudioActiveBatchJob: creatorMocks.fetchStudioActiveBatchJob,
@@ -125,6 +131,36 @@ describe('CreatorPage', () => {
       ],
       merged_label: '合并',
       merged_range: 'ch001–ch010',
+    });
+    creatorMocks.splitCreatorVolumePlan.mockResolvedValue({
+      volumes: [
+        { label: '一上', start_chapter: 1, end_chapter: 5, core_conflict: '开篇', locked: true },
+        { label: '一下', start_chapter: 6, end_chapter: 10, core_conflict: '发展', locked: false },
+      ],
+      first_label: '一上',
+      second_label: '一下',
+      first_range: 'ch001–ch005',
+      second_range: 'ch006–ch010',
+    });
+    creatorMocks.fetchCreatorSettingsHistory.mockResolvedValue({
+      snapshots: [
+        {
+          id: 'snap1',
+          saved_at: '2026-06-22T12:00:00+00:00',
+          label: 'before-save',
+          pillars_excerpt: '# 旧',
+          global_outline_excerpt: '# 大纲',
+          pillars_lines: 1,
+          global_outline_lines: 1,
+        },
+      ],
+      count: 1,
+    });
+    creatorMocks.restoreCreatorSettingsSnapshot.mockResolvedValue({
+      pillars_text: '# 恢复',
+      global_outline_text: '# 大纲',
+      pillars_revision: 'r1',
+      global_outline_revision: 'r2',
     });
     creatorMocks.saveCreatorSettingsDocs.mockResolvedValue({});
     creatorMocks.previewCreatorSettingsDocs.mockResolvedValue({
@@ -235,5 +271,25 @@ describe('CreatorPage', () => {
 
     expect(wrapper.find('[data-testid="conflict-banner"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="conflict-reload-btn"]').exists()).toBe(true);
+  });
+
+  it('shows split panel and applies split', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="volume-split-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="apply-split-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.splitCreatorVolumePlan).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="split-preview-line"]').text()).toContain('一上');
+  });
+
+  it('shows settings history panel', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="settings-history-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="history-row-snap1"]').exists()).toBe(true);
   });
 });

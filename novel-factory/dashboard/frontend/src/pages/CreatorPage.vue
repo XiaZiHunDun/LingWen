@@ -241,6 +241,50 @@
           >
             已合并为「{{ mergePreview.merged_label }}」· {{ mergePreview.merged_range }} · 请保存卷纲
           </p>
+          <div
+            v-if="editableVolumes.length >= 1"
+            class="volume-split-panel pixel-border"
+            data-testid="volume-split-panel"
+          >
+            <h3 class="subsection-title">拆分向导</h3>
+            <div class="merge-range">
+              <label>
+                卷
+                <select v-model.number="splitVolumeIdx" class="vol-input" data-testid="split-volume-select">
+                  <option v-for="(vol, idx) in editableVolumes" :key="`split-${idx}`" :value="idx">
+                    {{ vol.label || `卷${idx + 1}` }} ({{ vol.start_chapter }}–{{ vol.end_chapter }})
+                  </option>
+                </select>
+              </label>
+              <label>
+                从章
+                <input
+                  v-model.number="splitAtChapter"
+                  type="number"
+                  min="1"
+                  class="vol-input vol-num"
+                  data-testid="split-at-chapter"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="apply-split-btn"
+              :disabled="splitApplying"
+              @click="applyVolumeSplit"
+            >
+              {{ splitApplying ? '拆分中…' : '应用拆分' }}
+            </button>
+          </div>
+          <p
+            v-if="splitPreview"
+            class="meta-line"
+            data-testid="split-preview-line"
+          >
+            已拆为「{{ splitPreview.first_label }}」{{ splitPreview.first_range }}
+            与「{{ splitPreview.second_label }}」{{ splitPreview.second_range }} · 请保存卷纲
+          </p>
         </div>
 
         <ul
@@ -387,6 +431,29 @@
             </button>
           </div>
         </div>
+        <details v-if="settingsHistory.length" class="settings-block" data-testid="settings-history-panel">
+          <summary>版本历史（{{ settingsHistory.length }}）</summary>
+          <ul class="history-list">
+            <li
+              v-for="snap in settingsHistory"
+              :key="snap.id"
+              class="history-row pixel-border"
+              :data-testid="`history-row-${snap.id}`"
+            >
+              <span class="history-meta">{{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}</span>
+              <span class="history-excerpt">{{ snap.pillars_excerpt || '（空支柱）' }}</span>
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                :data-testid="`restore-history-${snap.id}`"
+                :disabled="settingsRestoring"
+                @click="restoreSettingsHistory(snap.id)"
+              >
+                恢复
+              </button>
+            </li>
+          </ul>
+        </details>
         <details v-if="overview.quality_report_available" class="settings-block">
           <summary>P0 问题（点开才看）</summary>
           <p class="p0-line" :class="overview.p0_count ? 'warn' : 'ok'">
@@ -411,8 +478,11 @@ import {
   fetchCreatorSettingsDocs,
   saveCreatorVolumePlan,
   mergeCreatorVolumePlan,
+  splitCreatorVolumePlan,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
+  fetchCreatorSettingsHistory,
+  restoreCreatorSettingsSnapshot,
   studioProductionPreflight,
   studioProductionRun,
   fetchStudioActiveBatchJob,
@@ -443,6 +513,12 @@ const mergeEndIdx = ref(1);
 const mergeLabel = ref('');
 const mergePreview = ref(null);
 const mergeApplying = ref(false);
+const splitVolumeIdx = ref(0);
+const splitAtChapter = ref(2);
+const splitPreview = ref(null);
+const splitApplying = ref(false);
+const settingsHistory = ref([]);
+const settingsRestoring = ref(false);
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -495,6 +571,22 @@ const settingsDiffSnippet = computed(() => {
     ...(preview.global_outline?.snippet || []),
   ].slice(0, 10);
 });
+
+function formatHistoryTime(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false });
+  } catch {
+    return iso;
+  }
+}
+
+function syncSplitChapterFromVolume() {
+  const vol = editableVolumes.value[splitVolumeIdx.value];
+  if (!vol) return;
+  const mid = vol.start_chapter + Math.floor((vol.end_chapter - vol.start_chapter) / 2);
+  splitAtChapter.value = Math.min(vol.end_chapter, Math.max(vol.start_chapter + 1, mid));
+}
 
 function syncBatchRangeFromVolumes() {
   const locked = editableVolumes.value.filter((v) => v.locked);
@@ -587,7 +679,71 @@ async function loadVolumePlan() {
   mergeStartIdx.value = 0;
   mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
   mergePreview.value = null;
+  splitVolumeIdx.value = 0;
+  splitPreview.value = null;
+  syncSplitChapterFromVolume();
   syncBatchRangeFromVolumes();
+}
+
+async function loadSettingsHistory() {
+  try {
+    const data = await fetchCreatorSettingsHistory();
+    settingsHistory.value = data.snapshots || [];
+  } catch {
+    settingsHistory.value = [];
+  }
+}
+
+async function applyVolumeSplit() {
+  splitApplying.value = true;
+  error.value = null;
+  try {
+    const result = await splitCreatorVolumePlan({
+      volumes: editableVolumes.value,
+      volume_index: splitVolumeIdx.value,
+      split_at_chapter: splitAtChapter.value,
+    });
+    editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+    splitPreview.value = {
+      first_label: result.first_label,
+      second_label: result.second_label,
+      first_range: result.first_range,
+      second_range: result.second_range,
+    };
+    mergePreview.value = null;
+    saveMessage.value = `已拆为「${result.first_label}」与「${result.second_label}」，请保存卷纲`;
+    syncSplitChapterFromVolume();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    splitApplying.value = false;
+  }
+}
+
+async function restoreSettingsHistory(snapshotId) {
+  settingsRestoring.value = true;
+  error.value = null;
+  try {
+    const docs = await restoreCreatorSettingsSnapshot(snapshotId);
+    settingsDocs.value = docs;
+    pillarsText.value = docs.pillars_text || '';
+    globalOutlineText.value = docs.global_outline_text || '';
+    settingsBaseline.value = {
+      pillars: docs.pillars_text || '',
+      outline: docs.global_outline_text || '',
+    };
+    settingsRevisions.value = {
+      pillars: docs.pillars_revision || '',
+      outline: docs.global_outline_revision || '',
+    };
+    saveMessage.value = '已从历史版本恢复设定';
+    conflictMessage.value = '';
+    await loadSettingsHistory();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    settingsRestoring.value = false;
+  }
 }
 
 async function applyVolumeMerge() {
@@ -785,6 +941,7 @@ async function refresh() {
       fetchCreatorOverview(),
       loadVolumePlan(),
       loadSettingsDocs(),
+      loadSettingsHistory(),
       pollBatchJob(),
     ]);
     overview.value = ov;
@@ -1122,6 +1279,36 @@ watch(projectRevision, () => {
 .volume-merge-panel {
   margin-top: var(--space-sm);
   padding: var(--space-sm);
+}
+
+.volume-split-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0 0;
+}
+
+.history-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  margin-bottom: 4px;
+  font-size: 8px;
+}
+
+.history-meta {
+  opacity: 0.75;
+}
+
+.history-excerpt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .merge-range {

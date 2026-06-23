@@ -137,6 +137,12 @@ project:
 
 ## 14. 后续（v1.7+）
 
-- 卷纲拆分
-- 设定版本历史
-- advance 真人走通 checklist
+- 卷纲拆分 — ✅ v1.7
+- 设定版本历史 — ✅ v1.7
+- advance 真人走通 checklist — ✅ v1.7
+
+## 15. 后续（v1.8+）
+
+- 卷纲模板库
+- 设定 diff 三路合并
+- studio 创作者 hybrid 走通

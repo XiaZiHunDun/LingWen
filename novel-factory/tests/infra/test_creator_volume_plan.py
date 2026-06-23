@@ -10,6 +10,7 @@ from infra.creator_volume_plan import (
     parse_volume_table_from_markdown,
     save_volume_plan,
     load_volume_plan,
+    split_volume,
     volume_plan_revision,
     VolumeEntry,
 )
@@ -196,6 +197,28 @@ def test_volume_plan_revision_conflict(factory_tmp):
             [{"label": "一", "start_chapter": 1, "end_chapter": 7, "core_conflict": "z", "locked": False}],
             expected_revision=rev,
         )
+    ProjectPaths.reset()
+
+
+def test_split_volume(factory_tmp):
+    result = init_minimal_short_project(
+        slug="split-vol",
+        title="拆分卷",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=20,
+    )
+    ProjectPaths.reset()
+    root = result.root
+    volumes = [
+        VolumeEntry("一", 1, 10, "开篇", True),
+        VolumeEntry("二", 11, 20, "发展", False),
+    ]
+    split, first, second = split_volume(volumes, 0, 6)
+    assert len(split) == 3
+    assert first.end_chapter == 5
+    assert second.start_chapter == 6
+    assert second.end_chapter == 10
     ProjectPaths.reset()
 
 

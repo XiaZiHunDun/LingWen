@@ -306,6 +306,22 @@ class CreatorVolumeMergeResponse(BaseModel):
     merged_range: str
 
 
+class CreatorVolumeSplitRequest(BaseModel):
+    volumes: list[CreatorVolumePlanEntry]
+    volume_index: int
+    split_at_chapter: int
+    first_label: Optional[str] = None
+    second_label: Optional[str] = None
+
+
+class CreatorVolumeSplitResponse(BaseModel):
+    volumes: list[CreatorVolumePlanEntry]
+    first_label: str
+    second_label: str
+    first_range: str
+    second_range: str
+
+
 class CreatorChapterPreviewResponse(BaseModel):
     chapter: int
     has_body: bool
@@ -345,6 +361,26 @@ class CreatorSettingsDiffResponse(BaseModel):
     has_changes: bool
     pillars: CreatorSettingsDiffPart
     global_outline: CreatorSettingsDiffPart
+
+
+class CreatorSettingsHistorySnapshot(BaseModel):
+    id: str
+    saved_at: Optional[str] = None
+    label: str
+    pillars_excerpt: str
+    global_outline_excerpt: str
+    pillars_lines: int
+    global_outline_lines: int
+
+
+class CreatorSettingsHistoryResponse(BaseModel):
+    slug: str
+    snapshots: list[CreatorSettingsHistorySnapshot]
+    count: int
+
+
+class CreatorSettingsRestoreRequest(BaseModel):
+    snapshot_id: str
 
 
 class StudioQualityResponse(BaseModel):
@@ -2247,6 +2283,34 @@ def create_app(
             merged_range=merged_range,
         )
 
+    @app.post("/api/creator/volume-plan/split", response_model=CreatorVolumeSplitResponse)
+    def creator_volume_plan_split(req: CreatorVolumeSplitRequest) -> CreatorVolumeSplitResponse:
+        from infra.creator_volume_plan import split_volume
+
+        try:
+            split_volumes, first, second = split_volume(
+                [v.model_dump() for v in req.volumes],
+                req.volume_index,
+                req.split_at_chapter,
+                first_label=req.first_label,
+                second_label=req.second_label,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+        def _range(vol) -> str:
+            if vol.start_chapter == vol.end_chapter:
+                return f"ch{vol.start_chapter:03d}"
+            return f"ch{vol.start_chapter:03d}–ch{vol.end_chapter:03d}"
+
+        return CreatorVolumeSplitResponse(
+            volumes=[CreatorVolumePlanEntry(**v.to_dict()) for v in split_volumes],
+            first_label=first.label,
+            second_label=second.label,
+            first_range=_range(first),
+            second_range=_range(second),
+        )
+
     @app.get(
         "/api/creator/chapters/{chapter_num}",
         response_model=CreatorChapterPreviewResponse,
@@ -2320,6 +2384,33 @@ def create_app(
                 global_outline_text=req.global_outline_text,
             ),
         )
+
+    @app.get("/api/creator/settings-docs/history", response_model=CreatorSettingsHistoryResponse)
+    def creator_settings_history_get() -> CreatorSettingsHistoryResponse:
+        from infra.creator_settings_history import settings_history_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorSettingsHistoryResponse(**settings_history_payload(project))
+
+    @app.post("/api/creator/settings-docs/restore", response_model=CreatorSettingsDocsResponse)
+    def creator_settings_history_restore(
+        req: CreatorSettingsRestoreRequest,
+    ) -> CreatorSettingsDocsResponse:
+        from infra.creator_settings_history import restore_settings_snapshot
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            return CreatorSettingsDocsResponse(
+                **restore_settings_snapshot(project, req.snapshot_id),
+            )
+        except ValueError as exc:
+            raise HTTPException(404, str(exc)) from exc
 
     @app.get("/api/studio/quality", response_model=StudioQualityResponse)
     def studio_quality_dashboard() -> StudioQualityResponse:

@@ -560,6 +560,13 @@ export async function mergeCreatorVolumePlan(body) {
   });
 }
 
+export async function splitCreatorVolumePlan(body) {
+  return request('/creator/volume-plan/split', {
+    method: 'POST',
+    body,
+  });
+}
+
 export async function fetchCreatorChapterPreview(chapterNum) {
   return request(`/creator/chapters/${chapterNum}`);
 }
@@ -579,6 +586,17 @@ export async function previewCreatorSettingsDocs(body) {
   return request('/creator/settings-docs/preview', {
     method: 'POST',
     body,
+  });
+}
+
+export async function fetchCreatorSettingsHistory() {
+  return request('/creator/settings-docs/history');
+}
+
+export async function restoreCreatorSettingsSnapshot(snapshotId) {
+  return request('/creator/settings-docs/restore', {
+    method: 'POST',
+    body: { snapshot_id: snapshotId },
   });
 }
 

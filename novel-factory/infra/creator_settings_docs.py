@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from infra.creator_revision import CreatorDocConflictError, content_revision
+from infra.creator_settings_history import append_settings_snapshot
 from infra.creator_volume_plan import global_outline_path
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
@@ -135,6 +136,22 @@ def save_creator_settings_docs(
         )
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)
+
+    current = creator_settings_docs_payload(project)
+    if pillars_text is not None and pillars_text != current["pillars_text"]:
+        append_settings_snapshot(
+            project,
+            pillars_text=current["pillars_text"],
+            global_outline_text=current["global_outline_text"],
+            label="before-save",
+        )
+    elif global_outline_text is not None and global_outline_text != current["global_outline_text"]:
+        append_settings_snapshot(
+            project,
+            pillars_text=current["pillars_text"],
+            global_outline_text=current["global_outline_text"],
+            label="before-save",
+        )
 
     if pillars_text is not None:
         path = config.pillars_path
