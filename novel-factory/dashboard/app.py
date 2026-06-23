@@ -342,6 +342,11 @@ class CreatorVolumeSaveTemplateResponse(BaseModel):
     description: str
 
 
+class CreatorVolumeDeleteTemplateResponse(BaseModel):
+    id: str
+    deleted: bool
+
+
 class CreatorVolumeTemplateListResponse(BaseModel):
     templates: list[CreatorVolumeTemplateInfo]
 
@@ -436,6 +441,25 @@ class CreatorSettingsThreeWayResponse(BaseModel):
 class CreatorSettingsThreeWayRequest(BaseModel):
     pillars_text: str
     global_outline_text: str
+    snapshot_id: Optional[str] = None
+
+
+class CreatorSettingsMergeFieldPreview(BaseModel):
+    source: str
+    vs_disk: CreatorSettingsDiffPart
+    vs_editor: CreatorSettingsDiffPart
+
+
+class CreatorSettingsMergePreviewResponse(BaseModel):
+    pillars: CreatorSettingsMergeFieldPreview
+    global_outline: CreatorSettingsMergeFieldPreview
+
+
+class CreatorSettingsMergePreviewRequest(BaseModel):
+    pillars_text: str
+    global_outline_text: str
+    pillars_merge_source: str = "editor"
+    global_outline_merge_source: str = "editor"
     snapshot_id: Optional[str] = None
 
 
@@ -2379,6 +2403,25 @@ def create_app(
             description=saved.get("description", ""),
         )
 
+    @app.delete(
+        "/api/creator/volume-plan/templates/{template_id}",
+        response_model=CreatorVolumeDeleteTemplateResponse,
+    )
+    def creator_volume_plan_delete_template(
+        template_id: str,
+    ) -> CreatorVolumeDeleteTemplateResponse:
+        from infra.creator_volume_templates import delete_custom_volume_template
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = delete_custom_volume_template(project.root, template_id)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeDeleteTemplateResponse(**result)
+
     @app.post(
         "/api/creator/volume-plan/apply-template",
         response_model=CreatorVolumeApplyTemplateResponse,
@@ -2579,6 +2622,32 @@ def create_app(
                 snapshot_id=req.snapshot_id,
             ),
         )
+
+    @app.post(
+        "/api/creator/settings-docs/merge-preview",
+        response_model=CreatorSettingsMergePreviewResponse,
+    )
+    def creator_settings_merge_preview(
+        req: CreatorSettingsMergePreviewRequest,
+    ) -> CreatorSettingsMergePreviewResponse:
+        from infra.creator_settings_docs import preview_settings_merge_strategy
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            payload = preview_settings_merge_strategy(
+                project,
+                pillars_text=req.pillars_text,
+                global_outline_text=req.global_outline_text,
+                pillars_merge_source=req.pillars_merge_source,
+                global_outline_merge_source=req.global_outline_merge_source,
+                snapshot_id=req.snapshot_id,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorSettingsMergePreviewResponse(**payload)
 
     @app.get("/api/creator/settings-docs/history", response_model=CreatorSettingsHistoryResponse)
     def creator_settings_history_get() -> CreatorSettingsHistoryResponse:

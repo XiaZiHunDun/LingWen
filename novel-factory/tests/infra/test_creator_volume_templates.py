@@ -6,6 +6,7 @@ import pytest
 from infra.paths import ProjectPaths
 from infra.creator_volume_templates import (
     build_volume_template,
+    delete_custom_volume_template,
     list_volume_templates,
     save_custom_volume_template,
 )
@@ -58,6 +59,30 @@ def test_custom_template_save_and_apply(factory_tmp):
     assert any(row["id"] == saved["id"] and not row["builtin"] for row in rows)
     built = build_volume_template(saved["id"], 40, root)
     assert built[-1]["end_chapter"] == 40
+    ProjectPaths.reset()
+
+
+def test_delete_custom_template(factory_tmp):
+    from infra.project_init import init_minimal_short_project
+
+    result = init_minimal_short_project(
+        slug="del-tpl",
+        title="删除模板",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=20,
+    )
+    root = result.root
+    volumes = [
+        {"label": "A", "start_chapter": 1, "end_chapter": 20, "core_conflict": "x", "locked": False},
+    ]
+    saved = save_custom_volume_template(root, name="待删", volumes=volumes, max_chapter=20)
+    deleted = delete_custom_volume_template(root, saved["id"])
+    assert deleted["deleted"] is True
+    rows = list_volume_templates(root)
+    assert not any(row["id"] == saved["id"] for row in rows)
+    with pytest.raises(ValueError):
+        delete_custom_volume_template(root, "three_act")
     ProjectPaths.reset()
 
 

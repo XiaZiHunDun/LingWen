@@ -42,9 +42,11 @@
 
     <details
       v-if="onboardingWizard"
+      ref="wizardPanelRef"
       class="onboarding-wizard pixel-border"
       data-testid="onboarding-wizard-panel"
-      open
+      :open="focusWizard"
+      @toggle="onWizardToggle"
     >
       <summary>
         入门向导 · {{ onboardingWizard.mode_label }}（{{ onboardingWizard.max_chapter }} 章上限）
@@ -162,6 +164,16 @@
                 @click="applyVolumeTemplate"
               >
                 {{ templateApplying ? '套用中…' : '套用模板' }}
+              </button>
+              <button
+                v-if="selectedTemplateCustom"
+                type="button"
+                class="mini-btn mini-btn--danger pixel-border"
+                data-testid="delete-template-btn"
+                :disabled="templateDeleting"
+                @click="deleteSelectedVolumeTemplate"
+              >
+                {{ templateDeleting ? '删除中…' : '删除模板' }}
               </button>
             </div>
             <p v-if="selectedTemplateHint" class="meta-line">{{ selectedTemplateHint }}</p>
@@ -504,7 +516,7 @@
               <p class="diff-line">合并策略（三路冲突时选择保留来源）</p>
               <label class="meta-line">
                 支柱
-                <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source">
+                <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source" @change="refreshMergeStrategyPreview">
                   <option value="editor">编辑器</option>
                   <option value="disk">磁盘</option>
                   <option value="history">历史快照</option>
@@ -512,12 +524,28 @@
               </label>
               <label class="meta-line">
                 全局大纲
-                <select v-model="outlineMergeSource" class="vol-input" data-testid="outline-merge-source">
+                <select
+                  v-model="outlineMergeSource"
+                  class="vol-input"
+                  data-testid="outline-merge-source"
+                  @change="refreshMergeStrategyPreview"
+                >
                   <option value="editor">编辑器</option>
                   <option value="disk">磁盘</option>
                   <option value="history">历史快照</option>
                 </select>
               </label>
+              <div v-if="mergeStrategyPreview" class="merge-preview-visual" data-testid="merge-preview-visual">
+                <p v-if="mergeStrategyPreview.pillars.vs_disk.changed" class="diff-line">
+                  支柱将写入 vs 磁盘：+{{ mergeStrategyPreview.pillars.vs_disk.lines_added }}
+                  / -{{ mergeStrategyPreview.pillars.vs_disk.lines_removed }}
+                </p>
+                <pre
+                  v-if="mergeStrategySnippet.length"
+                  class="preview-text"
+                  data-testid="merge-strategy-snippet"
+                >{{ mergeStrategySnippet.join('\n') }}</pre>
+              </div>
             </div>
           </template>
           <div class="batch-actions">
@@ -579,7 +607,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   fetchCreatorOverview,
   fetchCreatorVolumePlan,
@@ -591,10 +619,12 @@ import {
   fetchCreatorVolumeTemplates,
   applyCreatorVolumeTemplate,
   saveCreatorVolumeTemplate,
+  deleteCreatorVolumeTemplate,
   fetchCreatorOnboarding,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
+  previewCreatorSettingsMerge,
   fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot,
   studioProductionPreflight,
@@ -602,8 +632,11 @@ import {
   fetchStudioActiveBatchJob,
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
+import { useDashboardNav } from '../composables/useDashboardNav.js';
 
 const { projectRevision } = useStudioProject();
+const { focusWizard, setWizardDeepLink } = useDashboardNav();
+const wizardPanelRef = ref(null);
 const overview = ref(null);
 const editableVolumes = ref([]);
 const selectedChapter = ref(null);
@@ -638,10 +671,12 @@ const selectedTemplateId = ref('three_act');
 const templateApplying = ref(false);
 const customTemplateName = ref('');
 const templateSaving = ref(false);
+const templateDeleting = ref(false);
 const onboardingWizard = ref(null);
 const compareSnapshotId = ref('');
 const pillarsMergeSource = ref('editor');
 const outlineMergeSource = ref('editor');
+const mergeStrategyPreview = ref(null);
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -700,6 +735,11 @@ const selectedTemplateHint = computed(() => {
   return row?.description || '';
 });
 
+const selectedTemplateCustom = computed(() => {
+  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
+  return Boolean(row && row.builtin === false);
+});
+
 const showMergeStrategy = computed(() => {
   const preview = settingsDiffPreview.value;
   if (!preview?.has_history) return false;
@@ -711,6 +751,15 @@ const showMergeStrategy = computed(() => {
     || editorHist?.pillars?.changed
     || editorHist?.global_outline?.changed,
   );
+});
+
+const mergeStrategySnippet = computed(() => {
+  const preview = mergeStrategyPreview.value;
+  if (!preview) return [];
+  return [
+    ...(preview.pillars?.vs_disk?.snippet || []),
+    ...(preview.global_outline?.vs_disk?.snippet || []),
+  ].slice(0, 12);
 });
 
 function formatHistoryTime(iso) {
@@ -829,8 +878,39 @@ async function loadVolumePlan() {
 async function loadOnboardingWizard() {
   try {
     onboardingWizard.value = await fetchCreatorOnboarding();
+    if (focusWizard.value) {
+      await nextTick();
+      try {
+        wizardPanelRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      } catch {
+        /* jsdom may not implement scrollIntoView */
+      }
+    }
   } catch {
     onboardingWizard.value = null;
+  }
+}
+
+function onWizardToggle(event) {
+  setWizardDeepLink(event.target.open);
+}
+
+async function deleteSelectedVolumeTemplate() {
+  if (!selectedTemplateCustom.value) return;
+  templateDeleting.value = true;
+  error.value = null;
+  try {
+    const deletedId = selectedTemplateId.value;
+    await deleteCreatorVolumeTemplate(deletedId);
+    saveMessage.value = '已删除自定义模板';
+    await loadVolumeTemplates();
+    if (!volumeTemplates.value.some((t) => t.id === deletedId)) {
+      selectedTemplateId.value = volumeTemplates.value[0]?.id || 'three_act';
+    }
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateDeleting.value = false;
   }
 }
 
@@ -1000,6 +1080,24 @@ function cancelSettingsDiff() {
   settingsDiffPreview.value = null;
 }
 
+async function refreshMergeStrategyPreview() {
+  if (!showMergeStrategy.value) {
+    mergeStrategyPreview.value = null;
+    return;
+  }
+  try {
+    mergeStrategyPreview.value = await previewCreatorSettingsMerge({
+      pillars_text: pillarsText.value,
+      global_outline_text: globalOutlineText.value,
+      pillars_merge_source: pillarsMergeSource.value,
+      global_outline_merge_source: outlineMergeSource.value,
+      snapshot_id: compareSnapshotId.value || undefined,
+    });
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
 async function refreshThreeWayPreview() {
   if (!showSettingsDiff.value) return;
   try {
@@ -1008,6 +1106,7 @@ async function refreshThreeWayPreview() {
       global_outline_text: globalOutlineText.value,
       snapshot_id: compareSnapshotId.value || undefined,
     });
+    await refreshMergeStrategyPreview();
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   }
@@ -1036,6 +1135,7 @@ async function requestSaveSettings() {
       });
     }
     showSettingsDiff.value = true;
+    await refreshMergeStrategyPreview();
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   }
@@ -1062,6 +1162,7 @@ async function confirmSaveSettings() {
     conflictMessage.value = '';
     showSettingsDiff.value = false;
     settingsDiffPreview.value = null;
+    mergeStrategyPreview.value = null;
     await refresh();
   } catch (e) {
     handleSaveError(e);
@@ -1515,6 +1616,14 @@ watch(projectRevision, () => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.merge-preview-visual {
+  margin-top: var(--space-xs);
+}
+
+.mini-btn--danger {
+  color: #c44;
 }
 
 .onboarding-wizard {

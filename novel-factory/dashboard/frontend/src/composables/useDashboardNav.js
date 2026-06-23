@@ -36,7 +36,12 @@ function readDecisionFromUrl() {
   return id && id.trim() ? id.trim() : null;
 }
 
-function syncNavUrl(activeNav, chapter, decisionId) {
+function readWizardFromUrl() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('wizard') === '1';
+}
+
+function syncNavUrl(activeNav, chapter, decisionId, wizard) {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   if (activeNav && activeNav !== 'overview') {
@@ -54,16 +59,22 @@ function syncNavUrl(activeNav, chapter, decisionId) {
   } else {
     url.searchParams.delete('decision');
   }
+  if (wizard) {
+    url.searchParams.set('wizard', '1');
+  } else {
+    url.searchParams.delete('wizard');
+  }
   window.history.replaceState(window.history.state, '', url.toString());
 }
 
 const activeNav = ref(readNavFromUrl());
 const focusChapter = ref(readChapterFromUrl());
 const focusDecisionId = ref(readDecisionFromUrl());
+const focusWizard = ref(readWizardFromUrl());
 
 /**
  * @param {string} nav
- * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean }} [opts]
+ * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean }} [opts]
  */
 function navigateTo(nav, opts = {}) {
   activeNav.value = VALID_NAV.includes(nav) ? nav : 'overview';
@@ -74,13 +85,19 @@ function navigateTo(nav, opts = {}) {
     if (opts.chapter !== undefined) focusChapter.value = opts.chapter;
     if (opts.decisionId !== undefined) focusDecisionId.value = opts.decisionId;
   }
-  syncNavUrl(activeNav.value, focusChapter.value, focusDecisionId.value);
+  if (opts.wizard !== undefined) focusWizard.value = Boolean(opts.wizard);
+  syncNavUrl(activeNav.value, focusChapter.value, focusDecisionId.value, focusWizard.value);
+}
+
+function setWizardDeepLink(open) {
+  focusWizard.value = Boolean(open);
+  syncNavUrl(activeNav.value, focusChapter.value, focusDecisionId.value, focusWizard.value);
 }
 
 function clearDecisionFocus() {
   focusChapter.value = null;
   focusDecisionId.value = null;
-  syncNavUrl(activeNav.value, null, null);
+  syncNavUrl(activeNav.value, null, null, focusWizard.value);
 }
 
 export function useDashboardNav() {
@@ -88,7 +105,9 @@ export function useDashboardNav() {
     activeNav,
     focusChapter,
     focusDecisionId,
+    focusWizard,
     navigateTo,
+    setWizardDeepLink,
     clearDecisionFocus,
   };
 }

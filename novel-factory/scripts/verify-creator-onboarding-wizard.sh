@@ -71,6 +71,21 @@ save_creator_settings_docs(
 )
 reloaded = creator_settings_docs_payload(project)
 assert "# wizard-line" not in reloaded["pillars_text"]
+
+from infra.creator_volume_templates import delete_custom_volume_template
+
+delete_custom_volume_template(root, saved["id"])
+assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
+
+from infra.creator_settings_docs import preview_settings_merge_strategy
+
+merge_preview = preview_settings_merge_strategy(
+    project,
+    pillars_text=current["pillars_text"] + "\\n# editor\\n",
+    global_outline_text=current["global_outline_text"],
+    pillars_merge_source="disk",
+)
+assert merge_preview["pillars"]["vs_disk"]["changed"] is False
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY
 

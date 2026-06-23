@@ -7,6 +7,7 @@ from infra.creator_settings_docs import (
     assert_settings_revisions,
     creator_settings_docs_payload,
     preview_settings_docs_diff,
+    preview_settings_merge_strategy,
     preview_settings_three_way,
     resolve_merged_settings,
     save_creator_settings_docs,
@@ -218,3 +219,32 @@ def test_save_with_merge_sources(factory_tmp):
     )
     reloaded = creator_settings_docs_payload(project)
     assert reloaded["pillars_text"] == current["pillars_text"]
+
+
+def test_merge_strategy_preview(factory_tmp):
+    result = init_minimal_short_project(
+        slug="merge-preview",
+        title="合并预览",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    ProjectPaths.reset()
+    project = StudioProject(
+        slug=result.slug,
+        name=result.title,
+        role="production",
+        root=result.root,
+        location="projects",
+    )
+    save_creator_settings_docs(project, pillars_text="# 磁盘\n", global_outline_text="# 大纲\n")
+    preview = preview_settings_merge_strategy(
+        project,
+        pillars_text="# 编辑器\n",
+        global_outline_text="# 大纲\n",
+        pillars_merge_source="disk",
+        global_outline_merge_source="editor",
+    )
+    assert preview["pillars"]["source"] == "disk"
+    assert preview["pillars"]["vs_editor"]["changed"] is True
+    assert preview["pillars"]["vs_disk"]["changed"] is False

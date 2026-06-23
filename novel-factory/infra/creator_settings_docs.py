@@ -113,6 +113,45 @@ def preview_settings_three_way(
     return result
 
 
+def preview_settings_merge_strategy(
+    project: StudioProject,
+    *,
+    pillars_text: str,
+    global_outline_text: str,
+    pillars_merge_source: str = "editor",
+    global_outline_merge_source: str = "editor",
+    snapshot_id: str | None = None,
+) -> dict[str, Any]:
+    """Visual diff for chosen merge sources vs disk and editor."""
+    disk = creator_settings_docs_payload(project)
+    resolved_pillars, resolved_outline = resolve_merged_settings(
+        project,
+        pillars_source=pillars_merge_source,
+        outline_source=global_outline_merge_source,
+        editor_pillars=pillars_text,
+        editor_outline=global_outline_text,
+        snapshot_id=snapshot_id,
+    )
+
+    def field_block(source: str, field: str, editor_value: str, resolved_value: str) -> dict[str, Any]:
+        disk_key = "pillars_text" if field == "pillars" else "global_outline_text"
+        return {
+            "source": source,
+            "vs_disk": text_diff_summary(disk[disk_key], resolved_value),
+            "vs_editor": text_diff_summary(editor_value, resolved_value),
+        }
+
+    return {
+        "pillars": field_block(pillars_merge_source, "pillars", pillars_text, resolved_pillars),
+        "global_outline": field_block(
+            global_outline_merge_source,
+            "outline",
+            global_outline_text,
+            resolved_outline,
+        ),
+    }
+
+
 def creator_settings_docs_payload(project: StudioProject) -> dict[str, Any]:
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)

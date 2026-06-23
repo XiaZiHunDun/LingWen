@@ -154,6 +154,21 @@ def save_custom_volume_template(
     return entry
 
 
+def delete_custom_volume_template(project_root: Path | str, template_id: str) -> dict[str, Any]:
+    """Remove a project-scoped custom template. Builtin templates cannot be deleted."""
+    tid = template_id.strip().lower()
+    if not tid.startswith(_CUSTOM_PREFIX):
+        raise ValueError("builtin templates cannot be deleted")
+    store = _load_custom_store(project_root)
+    templates: list[dict[str, Any]] = store.get("templates", [])
+    kept = [row for row in templates if row.get("id") != tid]
+    if len(kept) == len(templates):
+        raise ValueError(f"unknown template: {template_id!r}")
+    store["templates"] = kept
+    _save_custom_store(project_root, store)
+    return {"id": tid, "deleted": True}
+
+
 def _build_builtin_template(template_id: str, max_chapter: int) -> list[dict[str, Any]]:
     if template_id == "companion_short":
         return [

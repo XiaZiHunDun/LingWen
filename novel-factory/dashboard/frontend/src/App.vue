@@ -74,6 +74,10 @@ const { status } = useWorkflowSocket() // Phase 8.11
 onMounted(async () => {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
+  if (params.get('wizard') === '1' && params.get('nav') !== 'creator') {
+    navigateTo('creator', { wizard: true })
+    return
+  }
   if (params.get('nav')) return
   try {
     const summary = await fetchStudioSummary()

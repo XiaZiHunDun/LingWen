@@ -11,12 +11,14 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorVolumeTemplates: vi.fn(),
   applyCreatorVolumeTemplate: vi.fn(),
   saveCreatorVolumeTemplate: vi.fn(),
+  deleteCreatorVolumeTemplate: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsThreeWay: vi.fn(),
+  previewCreatorSettingsMerge: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
   restoreCreatorSettingsSnapshot: vi.fn(),
   studioProductionPreflight: vi.fn(),
@@ -33,12 +35,14 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorVolumeTemplates: creatorMocks.fetchCreatorVolumeTemplates,
   applyCreatorVolumeTemplate: creatorMocks.applyCreatorVolumeTemplate,
   saveCreatorVolumeTemplate: creatorMocks.saveCreatorVolumeTemplate,
+  deleteCreatorVolumeTemplate: creatorMocks.deleteCreatorVolumeTemplate,
   fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
   previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay: creatorMocks.previewCreatorSettingsThreeWay,
+  previewCreatorSettingsMerge: creatorMocks.previewCreatorSettingsMerge,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
   restoreCreatorSettingsSnapshot: creatorMocks.restoreCreatorSettingsSnapshot,
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
@@ -51,6 +55,26 @@ vi.mock('../../src/composables/useStudioProject.js', () => ({
     projectRevision: { value: 0 },
   }),
 }));
+
+const navMocks = vi.hoisted(() => ({
+  focusWizard: null,
+  setWizardDeepLink: vi.fn(),
+}));
+
+vi.mock('../../src/composables/useDashboardNav.js', async () => {
+  const { ref } = await import('vue');
+  const focusWizard = ref(false);
+  navMocks.focusWizard = focusWizard;
+  navMocks.setWizardDeepLink.mockImplementation((open) => {
+    focusWizard.value = Boolean(open);
+  });
+  return {
+    useDashboardNav: () => ({
+      focusWizard,
+      setWizardDeepLink: navMocks.setWizardDeepLink,
+    }),
+  };
+});
 
 import CreatorPage from '../../src/pages/CreatorPage.vue';
 
@@ -89,6 +113,8 @@ const overviewFixture = {
 
 describe('CreatorPage', () => {
   beforeEach(() => {
+    navMocks.focusWizard.value = false;
+    navMocks.setWizardDeepLink.mockClear();
     creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
     creatorMocks.fetchCreatorVolumePlan.mockResolvedValue({
       volumes: [
@@ -154,8 +180,8 @@ describe('CreatorPage', () => {
     });
     creatorMocks.fetchCreatorVolumeTemplates.mockResolvedValue({
       templates: [
-        { id: 'three_act', name: '三幕式', description: '建置对抗结局' },
-        { id: 'five_volume', name: '五卷', description: '五卷均分' },
+        { id: 'three_act', name: '三幕式', description: '建置对抗结局', builtin: true },
+        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false },
       ],
     });
     creatorMocks.applyCreatorVolumeTemplate.mockResolvedValue({
@@ -212,6 +238,19 @@ describe('CreatorPage', () => {
       pillars: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+新行'] },
       global_outline: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
     });
+    creatorMocks.previewCreatorSettingsMerge.mockResolvedValue({
+      pillars: {
+        source: 'disk',
+        vs_disk: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+        vs_editor: { changed: true, lines_added: 1, lines_removed: 1, snippet: ['-旧', '+磁盘'] },
+      },
+      global_outline: {
+        source: 'editor',
+        vs_disk: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+        vs_editor: { changed: false, lines_added: 0, lines_removed: 0, snippet: [] },
+      },
+    });
+    creatorMocks.deleteCreatorVolumeTemplate.mockResolvedValue({ id: 'custom_test', deleted: true });
     creatorMocks.previewCreatorSettingsThreeWay.mockResolvedValue({
       has_changes: true,
       pillars: { changed: true, lines_added: 1, lines_removed: 0, snippet: ['+新行'] },
@@ -375,6 +414,16 @@ describe('CreatorPage', () => {
     expect(wrapper.text()).toContain('advance-walkthrough-checklist');
   });
 
+  it('opens onboarding wizard when wizard deep-link is active', async () => {
+    navMocks.focusWizard.value = true;
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    const panel = wrapper.find('[data-testid="onboarding-wizard-panel"]');
+    expect(panel.exists()).toBe(true);
+    expect(panel.element.open).toBe(true);
+  });
+
   it('saves custom volume template', async () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
@@ -395,11 +444,28 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="merge-strategy-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="merge-preview-visual"]').exists()).toBe(true);
+    expect(creatorMocks.previewCreatorSettingsMerge).toHaveBeenCalled();
     await wrapper.find('[data-testid="pillars-merge-source"]').setValue('disk');
     await wrapper.find('[data-testid="confirm-settings-btn"]').trigger('click');
     await flushPromises();
 
     const call = creatorMocks.saveCreatorSettingsDocs.mock.calls.at(-1)?.[0];
     expect(call?.pillars_merge_source).toBe('disk');
+  });
+
+  it('deletes custom volume template', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    const select = wrapper.find('[data-testid="volume-template-select"]');
+    await select.setValue('custom_test');
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="delete-template-btn"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="delete-template-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(creatorMocks.deleteCreatorVolumeTemplate).toHaveBeenCalledWith('custom_test');
   });
 });

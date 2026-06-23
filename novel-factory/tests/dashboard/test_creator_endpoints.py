@@ -357,3 +357,43 @@ class TestCreatorEndpoints:
         after = client.get("/api/creator/settings-docs").json()
         assert "# disk-only" in after["pillars_text"]
         assert "# editor-extra" not in after["pillars_text"]
+
+    def test_volume_plan_delete_custom_template(self, client: TestClient) -> None:
+        save = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "待删模板",
+                "volumes": [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 5,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+                "max_chapter": 10,
+            },
+        )
+        template_id = save.json()["id"]
+        deleted = client.delete(f"/api/creator/volume-plan/templates/{template_id}")
+        assert deleted.status_code == 200
+        assert deleted.json()["deleted"] is True
+        bad = client.delete("/api/creator/volume-plan/templates/three_act")
+        assert bad.status_code == 400
+
+    def test_settings_merge_preview(self, client: TestClient) -> None:
+        current = client.get("/api/creator/settings-docs").json()
+        resp = client.post(
+            "/api/creator/settings-docs/merge-preview",
+            json={
+                "pillars_text": current["pillars_text"] + "\n# editor\n",
+                "global_outline_text": current["global_outline_text"],
+                "pillars_merge_source": "disk",
+                "global_outline_merge_source": "editor",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["pillars"]["source"] == "disk"
+        assert data["pillars"]["vs_editor"]["changed"] is True
