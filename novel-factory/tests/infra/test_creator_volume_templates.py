@@ -17,6 +17,7 @@ from infra.creator_volume_templates import (
     list_volume_templates,
     rename_custom_volume_template,
     save_custom_volume_template,
+    set_custom_template_version_label,
 )
 
 
@@ -67,6 +68,11 @@ def test_custom_template_save_and_apply(factory_tmp):
     assert any(row["id"] == saved["id"] and not row["builtin"] for row in rows)
     built = build_volume_template(saved["id"], 40, root)
     assert built[-1]["end_chapter"] == 40
+    versioned = set_custom_template_version_label(root, saved["id"], version_label="v1.0")
+    assert versioned["version_label"] == "v1.0"
+    rows = list_volume_templates(root)
+    match = next(row for row in rows if row["id"] == saved["id"])
+    assert match["version_label"] == "v1.0"
     ProjectPaths.reset()
 
 

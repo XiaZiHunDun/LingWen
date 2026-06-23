@@ -3,8 +3,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.82 (创作者 v2.4, 2026-06-22)  
-> **更新 (2026-06-22)**: 工厂级模板库 · 向导进度分享链接 · 合并策略全局配置
+> **版本**: v10.83 (创作者 v2.5, 2026-06-22)  
+> **更新 (2026-06-22)**: 模板版本标签 · 向导协作批注 · 合并策略分文档快照
 
 ---
 
@@ -125,7 +125,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v2.4 已落地**：工厂级共享模板库（`infra/.state/factory_volume_templates.json`）· 向导进度分享链接 `?done=step1,step2` · 合并策略全局默认（`infra/.state/creator_merge_preferences_global.json`）
 
-**v2.5 候选**：模板库版本标签 · 向导协作批注 · 合并策略按文档类型拆分
+**v2.5 已落地**：卷纲模板 `version_label` 版本标签 · 向导步骤协作批注（`step_notes` + 分享链接 `notes`）· 合并策略支柱/大纲独立历史快照 id
+
+**v2.6 候选**：模板版本 semver 校验 · 向导批注 @提及 · 合并策略导入导出
 
 ### 常用命令
 

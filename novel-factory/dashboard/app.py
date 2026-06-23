@@ -328,6 +328,16 @@ class CreatorVolumeTemplateInfo(BaseModel):
     description: str
     builtin: bool = True
     scope: str = "builtin"
+    version_label: Optional[str] = None
+
+
+class CreatorVolumeTemplateVersionRequest(BaseModel):
+    version_label: Optional[str] = None
+
+
+class CreatorVolumeTemplateVersionResponse(BaseModel):
+    id: str
+    version_label: Optional[str] = None
 
 
 class CreatorVolumeFactoryPublishRequest(BaseModel):
@@ -360,6 +370,7 @@ class CreatorVolumeSaveTemplateRequest(BaseModel):
     volumes: list[CreatorVolumePlanEntry]
     max_chapter: Optional[int] = None
     description: Optional[str] = None
+    version_label: Optional[str] = None
 
 
 class CreatorVolumeSaveTemplateResponse(BaseModel):
@@ -376,12 +387,14 @@ class CreatorVolumeDeleteTemplateResponse(BaseModel):
 class CreatorVolumeRenameTemplateRequest(BaseModel):
     name: str
     description: Optional[str] = None
+    version_label: Optional[str] = None
 
 
 class CreatorVolumeRenameTemplateResponse(BaseModel):
     id: str
     name: str
     description: str
+    version_label: Optional[str] = None
 
 
 class CreatorVolumeTemplateExportResponse(BaseModel):
@@ -465,12 +478,15 @@ class CreatorSettingsDocsSaveRequest(BaseModel):
     pillars_merge_source: Optional[str] = None
     global_outline_merge_source: Optional[str] = None
     merge_snapshot_id: Optional[str] = None
+    pillars_merge_snapshot_id: Optional[str] = None
+    global_outline_merge_snapshot_id: Optional[str] = None
 
 
 class CreatorOnboardingStep(BaseModel):
     id: str
     title: str
     detail: str
+    note: str = ""
 
 
 class CreatorOnboardingResponse(BaseModel):
@@ -484,16 +500,23 @@ class CreatorOnboardingResponse(BaseModel):
     onboarding_doc: str
     completed_step_ids: list[str] = []
     auto_completed_step_ids: list[str] = []
+    step_notes: dict[str, str] = {}
     progress_pct: int = 0
 
 
 class CreatorOnboardingProgressRequest(BaseModel):
-    completed_step_ids: list[str]
+    completed_step_ids: list[str] = []
+    step_notes: Optional[dict[str, str]] = None
+
+
+class CreatorOnboardingNotesRequest(BaseModel):
+    step_notes: dict[str, str]
 
 
 class CreatorOnboardingProgressResponse(BaseModel):
     completed_step_ids: list[str]
     auto_completed_step_ids: list[str] = []
+    step_notes: dict[str, str] = {}
     progress_pct: int
 
 
@@ -501,6 +524,8 @@ class CreatorMergePreferencesResponse(BaseModel):
     pillars_merge_source: str
     global_outline_merge_source: str
     merge_snapshot_id: Optional[str] = None
+    pillars_merge_snapshot_id: Optional[str] = None
+    global_outline_merge_snapshot_id: Optional[str] = None
     uses_global_default: bool = False
 
 
@@ -555,6 +580,8 @@ class CreatorSettingsMergePreviewRequest(BaseModel):
     pillars_merge_source: str = "editor"
     global_outline_merge_source: str = "editor"
     snapshot_id: Optional[str] = None
+    pillars_merge_snapshot_id: Optional[str] = None
+    global_outline_merge_snapshot_id: Optional[str] = None
 
 
 class CreatorSettingsHistorySnapshot(BaseModel):
@@ -2448,7 +2475,24 @@ def create_app(
         result = save_onboarding_progress_from_ui(
             project,
             desired_completed_step_ids=req.completed_step_ids,
+            step_notes=req.step_notes,
         )
+        return CreatorOnboardingProgressResponse(**result)
+
+    @app.put(
+        "/api/creator/onboarding/notes",
+        response_model=CreatorOnboardingProgressResponse,
+    )
+    def creator_onboarding_notes_put(
+        req: CreatorOnboardingNotesRequest,
+    ) -> CreatorOnboardingProgressResponse:
+        from infra.creator_onboarding import save_onboarding_notes_from_ui
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = save_onboarding_notes_from_ui(project, step_notes=req.step_notes)
         return CreatorOnboardingProgressResponse(**result)
 
     @app.post(
@@ -2467,6 +2511,7 @@ def create_app(
         result = apply_wizard_share_done(
             project,
             done_step_ids=req.completed_step_ids,
+            step_notes=req.step_notes or {},
         )
         return CreatorOnboardingProgressResponse(**result)
 
@@ -2523,6 +2568,7 @@ def create_app(
                 volumes=[v.model_dump() for v in req.volumes],
                 max_chapter=max_chapter,
                 description=req.description,
+                version_label=req.version_label,
             )
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
@@ -2571,10 +2617,45 @@ def create_app(
                 template_id,
                 name=req.name,
                 description=req.description,
+                version_label=req.version_label,
             )
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorVolumeRenameTemplateResponse(**result)
+
+    @app.put(
+        "/api/creator/volume-plan/templates/{template_id}/version",
+        response_model=CreatorVolumeTemplateVersionResponse,
+    )
+    def creator_volume_plan_template_version(
+        template_id: str,
+        req: CreatorVolumeTemplateVersionRequest,
+    ) -> CreatorVolumeTemplateVersionResponse:
+        from infra.creator_volume_templates import (
+            set_custom_template_version_label,
+            set_factory_template_version_label,
+        )
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        tid = template_id.strip().lower()
+        try:
+            if tid.startswith("factory_"):
+                result = set_factory_template_version_label(
+                    tid,
+                    version_label=req.version_label,
+                )
+            else:
+                result = set_custom_template_version_label(
+                    project.root,
+                    tid,
+                    version_label=req.version_label,
+                )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorVolumeTemplateVersionResponse(**result)
 
     @app.get(
         "/api/creator/volume-plan/templates/export",
@@ -2877,6 +2958,8 @@ def create_app(
                     pillars_merge_source=req.pillars_merge_source,
                     global_outline_merge_source=req.global_outline_merge_source,
                     merge_snapshot_id=req.merge_snapshot_id,
+                    pillars_merge_snapshot_id=req.pillars_merge_snapshot_id,
+                    global_outline_merge_snapshot_id=req.global_outline_merge_snapshot_id,
                 ),
             )
         except CreatorDocConflictError as exc:
@@ -2971,6 +3054,8 @@ def create_app(
                 pillars_merge_source=req.pillars_merge_source,
                 global_outline_merge_source=req.global_outline_merge_source,
                 snapshot_id=req.snapshot_id,
+                pillars_merge_snapshot_id=req.pillars_merge_snapshot_id,
+                global_outline_merge_snapshot_id=req.global_outline_merge_snapshot_id,
             )
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc

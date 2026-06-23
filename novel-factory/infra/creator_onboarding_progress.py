@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-_STATE_VERSION = "1"
+_STATE_VERSION = "2"
+_MAX_NOTE_LEN = 500
 
 
 def _progress_path(project_root: Path | str) -> Path:
@@ -18,10 +19,27 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _normalize_step_notes(raw: Any) -> dict[str, str]:
+    if not isinstance(raw, dict):
+        return {}
+    notes: dict[str, str] = {}
+    for key, value in raw.items():
+        sid = str(key).strip()
+        text = str(value).strip()[:_MAX_NOTE_LEN]
+        if sid and text:
+            notes[sid] = text
+    return notes
+
+
 def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
     path = _progress_path(project_root)
     if not path.is_file():
-        return {"schema_version": _STATE_VERSION, "completed_step_ids": []}
+        return {
+            "schema_version": _STATE_VERSION,
+            "completed_step_ids": [],
+            "dismissed_auto_step_ids": [],
+            "step_notes": {},
+        }
     data = json.loads(path.read_text(encoding="utf-8"))
     ids = data.get("completed_step_ids", [])
     dismissed = data.get("dismissed_auto_step_ids", [])
@@ -33,6 +51,7 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
         "schema_version": _STATE_VERSION,
         "completed_step_ids": [str(x) for x in ids],
         "dismissed_auto_step_ids": [str(x) for x in dismissed],
+        "step_notes": _normalize_step_notes(data.get("step_notes", {})),
     }
 
 
@@ -41,9 +60,13 @@ def save_onboarding_progress(
     *,
     completed_step_ids: list[str],
     dismissed_auto_step_ids: list[str] | None = None,
+    step_notes: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     path = _progress_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing = load_onboarding_progress(project_root) if path.is_file() else {
+        "step_notes": {},
+    }
     unique_ids: list[str] = []
     seen: set[str] = set()
     for step_id in completed_step_ids:
@@ -58,14 +81,41 @@ def save_onboarding_progress(
         if sid and sid not in dismissed_seen:
             dismissed_seen.add(sid)
             dismissed_unique.append(sid)
+    merged_notes = dict(existing.get("step_notes", {}))
+    if step_notes is not None:
+        for key, value in step_notes.items():
+            sid = str(key).strip()
+            text = str(value).strip()[:_MAX_NOTE_LEN]
+            if sid and text:
+                merged_notes[sid] = text
+            elif sid in merged_notes:
+                del merged_notes[sid]
     data = {
         "schema_version": _STATE_VERSION,
         "completed_step_ids": unique_ids,
         "dismissed_auto_step_ids": dismissed_unique,
+        "step_notes": merged_notes,
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return data
+
+
+def merge_step_notes(
+    existing: dict[str, str],
+    incoming: dict[str, str],
+    *,
+    valid_step_ids: set[str] | None = None,
+) -> dict[str, str]:
+    merged = dict(existing)
+    for key, value in incoming.items():
+        sid = str(key).strip()
+        if valid_step_ids is not None and sid not in valid_step_ids:
+            continue
+        text = str(value).strip()[:_MAX_NOTE_LEN]
+        if sid and text:
+            merged[sid] = text
+    return merged
 
 
 def effective_completed_step_ids(

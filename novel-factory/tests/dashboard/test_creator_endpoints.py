@@ -515,7 +515,47 @@ class TestCreatorEndpoints:
         prefs = client.get("/api/creator/settings-docs/merge-preferences").json()
         assert prefs["merge_snapshot_id"] == snap_id
 
-    def test_factory_templates_list(self, client: TestClient) -> None:
+    def test_template_version_label(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        resp = client.post(
+            "/api/creator/volume-plan/templates/save",
+            json={
+                "name": "版本测试",
+                "max_chapter": 12,
+                "volumes": plan["volumes"] or [
+                    {
+                        "label": "一",
+                        "start_chapter": 1,
+                        "end_chapter": 12,
+                        "core_conflict": "x",
+                        "locked": False,
+                    },
+                ],
+                "version_label": "v2.5",
+            },
+        )
+        assert resp.status_code == 200
+        template_id = resp.json()["id"]
+        version_resp = client.put(
+            f"/api/creator/volume-plan/templates/{template_id}/version",
+            json={"version_label": "v2.5.1"},
+        )
+        assert version_resp.status_code == 200
+        assert version_resp.json()["version_label"] == "v2.5.1"
+
+    def test_onboarding_notes(self, client: TestClient) -> None:
+        resp = client.put(
+            "/api/creator/onboarding/notes",
+            json={"step_notes": {"volume": "先锁第一卷"}},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["step_notes"].get("volume") == "先锁第一卷"
+
+    def test_merge_preferences_per_doc_snapshots(self, client: TestClient) -> None:
+        prefs = client.get("/api/creator/settings-docs/merge-preferences").json()
+        assert "pillars_merge_snapshot_id" in prefs
+        assert "global_outline_merge_snapshot_id" in prefs
         resp = client.get("/api/creator/volume-plan/templates/factory")
         assert resp.status_code == 200
         assert "templates" in resp.json()

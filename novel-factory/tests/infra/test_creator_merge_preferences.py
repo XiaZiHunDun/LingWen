@@ -56,6 +56,27 @@ def test_merge_preferences_remember_snapshot(factory_tmp):
     ProjectPaths.reset()
 
 
+def test_merge_preferences_per_doc_snapshots(factory_tmp):
+    result = init_minimal_short_project(
+        slug="per-doc-snap",
+        title="分文档快照",
+        factory_root=factory_tmp,
+        creation_mode="companion",
+        chapter_count=5,
+    )
+    save_merge_preferences(
+        result.root,
+        pillars_merge_source="history",
+        global_outline_merge_source="editor",
+        pillars_merge_snapshot_id="snap-pillars",
+        global_outline_merge_snapshot_id="snap-outline",
+    )
+    loaded = load_merge_preferences(result.root)
+    assert loaded["pillars_merge_snapshot_id"] == "snap-pillars"
+    assert loaded["global_outline_merge_snapshot_id"] == "snap-outline"
+    ProjectPaths.reset()
+
+
 def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
     import infra.creator_merge_preferences as cmp
 

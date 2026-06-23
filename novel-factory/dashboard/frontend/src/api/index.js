@@ -662,6 +662,20 @@ export async function applyCreatorOnboardingShare(body) {
   });
 }
 
+export async function saveCreatorOnboardingNotes(body) {
+  return request('/creator/onboarding/notes', {
+    method: 'PUT',
+    body,
+  });
+}
+
+export async function setCreatorVolumeTemplateVersion(templateId, body) {
+  return request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version`, {
+    method: 'PUT',
+    body,
+  });
+}
+
 export async function fetchCreatorChapterPreview(chapterNum) {
   return request(`/creator/chapters/${chapterNum}`);
 }

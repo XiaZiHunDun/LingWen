@@ -78,6 +78,15 @@
               <span class="meta-line">{{ step.detail }}</span>
             </span>
           </label>
+          <textarea
+            :value="wizardStepNotes[step.id] || ''"
+            class="vol-input wizard-step-note"
+            :data-testid="`wizard-note-${step.id}`"
+            placeholder="协作批注（可选）"
+            rows="2"
+            @input="wizardStepNotes[step.id] = $event.target.value"
+            @blur="saveWizardStepNote(step.id)"
+          />
         </li>
       </ol>
       <p class="meta-line">
@@ -187,7 +196,7 @@
             <div class="merge-range">
               <select v-model="selectedTemplateId" class="vol-input" data-testid="volume-template-select">
                 <option v-for="t in volumeTemplates" :key="t.id" :value="t.id">
-                  {{ t.name }}
+                  {{ formatTemplateOption(t) }}
                 </option>
               </select>
               <button
@@ -228,6 +237,23 @@
                 @click="deleteSelectedFactoryTemplate"
               >
                 {{ factoryDeleting ? '删除中…' : '从工厂库删除' }}
+              </button>
+            </div>
+            <div v-if="selectedTemplateProject || selectedTemplateFactory" class="merge-range">
+              <input
+                v-model="templateVersionLabel"
+                class="vol-input vol-conflict"
+                data-testid="template-version-input"
+                placeholder="版本标签（如 v1.2）"
+              />
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="set-template-version-btn"
+                :disabled="templateVersionSaving"
+                @click="saveTemplateVersionLabel"
+              >
+                {{ templateVersionSaving ? '保存中…' : '设版本标签' }}
               </button>
             </div>
             <div v-if="selectedTemplateProject" class="merge-range">
@@ -682,6 +708,19 @@
                   <option value="history">历史快照</option>
                 </select>
               </label>
+              <label v-if="pillarsMergeSource === 'history' && settingsHistory.length" class="meta-line">
+                支柱历史快照
+                <select
+                  v-model="pillarsSnapshotId"
+                  class="vol-input"
+                  data-testid="pillars-snapshot-select"
+                  @change="refreshMergeStrategyPreview"
+                >
+                  <option v-for="snap in settingsHistory" :key="`p-${snap.id}`" :value="snap.id">
+                    {{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}
+                  </option>
+                </select>
+              </label>
               <label class="meta-line">
                 全局大纲
                 <select
@@ -693,6 +732,19 @@
                   <option value="editor">编辑器</option>
                   <option value="disk">磁盘</option>
                   <option value="history">历史快照</option>
+                </select>
+              </label>
+              <label v-if="outlineMergeSource === 'history' && settingsHistory.length" class="meta-line">
+                大纲历史快照
+                <select
+                  v-model="outlineSnapshotId"
+                  class="vol-input"
+                  data-testid="outline-snapshot-select"
+                  @change="refreshMergeStrategyPreview"
+                >
+                  <option v-for="snap in settingsHistory" :key="`o-${snap.id}`" :value="snap.id">
+                    {{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}
+                  </option>
                 </select>
               </label>
               <div v-if="mergeStrategyPreview" class="merge-preview-visual" data-testid="merge-preview-visual">
@@ -791,6 +843,8 @@ import {
   fetchCreatorOnboarding,
   saveCreatorOnboardingProgress,
   applyCreatorOnboardingShare,
+  saveCreatorOnboardingNotes,
+  setCreatorVolumeTemplateVersion,
   saveCreatorSettingsDocs,
   previewCreatorSettingsDocs,
   previewCreatorSettingsThreeWay,
@@ -806,7 +860,7 @@ import { useStudioProject } from '../composables/useStudioProject.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 
 const { projectRevision } = useStudioProject();
-const { focusWizard, focusWizardStep, focusWizardDone, setWizardDeepLink, buildWizardShareUrl } = useDashboardNav();
+const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl } = useDashboardNav();
 const wizardPanelRef = ref(null);
 const overview = ref(null);
 const editableVolumes = ref([]);
@@ -854,7 +908,12 @@ const templatePublishing = ref(false);
 const factoryPulling = ref(false);
 const factoryDeleting = ref(false);
 const wizardShareMessage = ref('');
+const wizardStepNotes = ref({});
 const usesGlobalMergeDefault = ref(false);
+const templateVersionLabel = ref('');
+const templateVersionSaving = ref(false);
+const pillarsSnapshotId = ref('');
+const outlineSnapshotId = ref('');
 const onboardingWizard = ref(null);
 const completedWizardSteps = ref(new Set());
 const autoCompletedWizardSteps = ref(new Set());
@@ -937,7 +996,15 @@ const selectedTemplateCustom = computed(() => selectedTemplateProject.value);
 watch(selectedTemplateId, () => {
   const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
   renameTemplateName.value = row?.name || '';
+  templateVersionLabel.value = row?.version_label || '';
 });
+
+function formatTemplateOption(template) {
+  if (template.version_label) {
+    return `[${template.version_label}] ${template.name}`;
+  }
+  return template.name;
+}
 
 const showMergeStrategy = computed(() => {
   const preview = settingsDiffPreview.value;
@@ -1079,6 +1146,7 @@ async function loadOnboardingWizard() {
     onboardingWizard.value = await fetchCreatorOnboarding();
     completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
     autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
+    wizardStepNotes.value = { ...(onboardingWizard.value?.step_notes || {}) };
     if (focusWizard.value) {
       await nextTick();
       try {
@@ -1099,24 +1167,44 @@ function onWizardToggle(event) {
     event.target.open,
     event.target.open ? focusWizardStep.value : null,
     event.target.open ? [...completedWizardSteps.value] : [],
+    event.target.open ? { ...wizardStepNotes.value } : {},
   );
 }
 
 async function applyWizardShareFromUrl() {
   const done = focusWizardDone.value;
-  if (!done?.length) return;
+  const notes = focusWizardNotes.value;
+  if (!done?.length && (!notes || !Object.keys(notes).length)) return;
   try {
-    await applyCreatorOnboardingShare({ completed_step_ids: done });
+    await applyCreatorOnboardingShare({
+      completed_step_ids: done || [],
+      step_notes: notes || {},
+    });
     onboardingWizard.value = await fetchCreatorOnboarding();
     completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
     autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
+    wizardStepNotes.value = { ...(onboardingWizard.value?.step_notes || {}) };
   } catch {
     /* ignore share apply errors */
   }
 }
 
+async function saveWizardStepNote(stepId) {
+  try {
+    await saveCreatorOnboardingNotes({
+      step_notes: { [stepId]: wizardStepNotes.value[stepId] || '' },
+    });
+  } catch {
+    /* ignore note save errors */
+  }
+}
+
 async function copyWizardShareLink() {
-  const url = buildWizardShareUrl([...completedWizardSteps.value], focusWizardStep.value);
+  const url = buildWizardShareUrl(
+    [...completedWizardSteps.value],
+    focusWizardStep.value,
+    wizardStepNotes.value,
+  );
   try {
     await navigator.clipboard.writeText(url);
     wizardShareMessage.value = '已复制分享链接';
@@ -1170,6 +1258,11 @@ async function toggleWizardStep(stepId, checked) {
 function applyMergePreset(source) {
   pillarsMergeSource.value = source;
   outlineMergeSource.value = source;
+  if (source === 'history' && settingsHistory.value.length) {
+    const snapId = compareSnapshotId.value || settingsHistory.value[0].id;
+    pillarsSnapshotId.value = snapId;
+    outlineSnapshotId.value = snapId;
+  }
   refreshMergeStrategyPreview();
 }
 
@@ -1219,6 +1312,14 @@ async function loadMergePreferences() {
       const known = settingsHistory.value.some((s) => s.id === prefs.merge_snapshot_id);
       if (known) compareSnapshotId.value = prefs.merge_snapshot_id;
     }
+    const pillarsSnap = prefs.pillars_merge_snapshot_id || prefs.merge_snapshot_id;
+    const outlineSnap = prefs.global_outline_merge_snapshot_id || prefs.merge_snapshot_id;
+    if (pillarsSnap && settingsHistory.value.some((s) => s.id === pillarsSnap)) {
+      pillarsSnapshotId.value = pillarsSnap;
+    }
+    if (outlineSnap && settingsHistory.value.some((s) => s.id === outlineSnap)) {
+      outlineSnapshotId.value = outlineSnap;
+    }
     usesGlobalMergeDefault.value = Boolean(prefs.uses_global_default);
   } catch {
     /* optional */
@@ -1231,6 +1332,23 @@ async function loadTemplateSyncSources() {
     templateSyncSources.value = data.sources || [];
   } catch {
     templateSyncSources.value = [];
+  }
+}
+
+async function saveTemplateVersionLabel() {
+  if (!selectedTemplateProject.value && !selectedTemplateFactory.value) return;
+  templateVersionSaving.value = true;
+  error.value = null;
+  try {
+    await setCreatorVolumeTemplateVersion(selectedTemplateId.value, {
+      version_label: templateVersionLabel.value.trim() || null,
+    });
+    saveMessage.value = '已更新版本标签';
+    await loadVolumeTemplates();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    templateVersionSaving.value = false;
   }
 }
 
@@ -1521,6 +1639,8 @@ async function refreshMergeStrategyPreview() {
       pillars_merge_source: pillarsMergeSource.value,
       global_outline_merge_source: outlineMergeSource.value,
       snapshot_id: compareSnapshotId.value || undefined,
+      pillars_merge_snapshot_id: pillarsSnapshotId.value || compareSnapshotId.value || undefined,
+      global_outline_merge_snapshot_id: outlineSnapshotId.value || compareSnapshotId.value || undefined,
     });
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
@@ -1585,6 +1705,8 @@ async function confirmSaveSettings() {
       body.pillars_merge_source = pillarsMergeSource.value;
       body.global_outline_merge_source = outlineMergeSource.value;
       body.merge_snapshot_id = compareSnapshotId.value || undefined;
+      body.pillars_merge_snapshot_id = pillarsSnapshotId.value || compareSnapshotId.value || undefined;
+      body.global_outline_merge_snapshot_id = outlineSnapshotId.value || compareSnapshotId.value || undefined;
     }
     await saveCreatorSettingsDocs(body);
     saveMessage.value = '设定已保存';
@@ -2089,6 +2211,12 @@ watch(projectRevision, () => {
   gap: var(--space-xs);
   align-items: flex-start;
   cursor: pointer;
+}
+
+.wizard-step-note {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 0.85rem;
 }
 
 .wizard-progress-badge {

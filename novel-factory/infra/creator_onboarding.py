@@ -13,6 +13,7 @@ from infra.creator_onboarding_autodetect import infer_auto_completed_steps
 from infra.creator_onboarding_progress import (
     effective_completed_step_ids,
     load_onboarding_progress,
+    merge_step_notes,
     progress_pct,
     reconcile_onboarding_toggle,
     save_onboarding_progress,
@@ -124,6 +125,7 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
     progress = load_onboarding_progress(project.root)
     manual = progress.get("completed_step_ids", [])
     dismissed = progress.get("dismissed_auto_step_ids", [])
+    step_notes = progress.get("step_notes", {})
     valid_ids = [step["id"] for step in steps]
     auto_completed = infer_auto_completed_steps(project)
     completed = effective_completed_step_ids(
@@ -132,18 +134,46 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         manual_completed=manual,
         dismissed_auto=dismissed,
     )
+    steps_with_notes = [
+        {**step, "note": step_notes.get(step["id"], "")}
+        for step in steps
+    ]
 
     return {
         "slug": config.slug,
         "creation_mode": mode,
         "mode_label": _MODE_LABELS.get(mode, mode),
         "max_chapter": config.max_chapter,
-        "steps": steps,
+        "steps": steps_with_notes,
         "checklist_doc": checklist,
         "smoke_command": smoke,
         "onboarding_doc": "docs/creator-onboarding-wizard.md",
         "completed_step_ids": completed,
         "auto_completed_step_ids": [sid for sid in auto_completed if sid in valid_ids],
+        "step_notes": step_notes,
+        "progress_pct": progress_pct(completed, len(steps)),
+    }
+
+
+def _progress_response(
+    *,
+    steps: list[dict[str, Any]],
+    step_ids: list[str],
+    auto: list[str],
+    manual: list[str],
+    dismissed: list[str],
+    step_notes: dict[str, str],
+) -> dict[str, Any]:
+    completed = effective_completed_step_ids(
+        step_ids=step_ids,
+        auto_completed=auto,
+        manual_completed=manual,
+        dismissed_auto=dismissed,
+    )
+    return {
+        "completed_step_ids": completed,
+        "auto_completed_step_ids": auto,
+        "step_notes": step_notes,
         "progress_pct": progress_pct(completed, len(steps)),
     }
 
@@ -152,6 +182,7 @@ def save_onboarding_progress_from_ui(
     project: StudioProject,
     *,
     desired_completed_step_ids: list[str],
+    step_notes: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Persist wizard checkboxes; reconciles manual vs auto-detected steps."""
     payload = onboarding_wizard_payload(project)
@@ -166,30 +197,61 @@ def save_onboarding_progress_from_ui(
         dismissed_auto=progress.get("dismissed_auto_step_ids", []),
         desired_completed=desired_completed_step_ids,
     )
-    save_onboarding_progress(
+    saved = save_onboarding_progress(
         project.root,
         completed_step_ids=manual,
         dismissed_auto_step_ids=dismissed,
+        step_notes=step_notes,
     )
-    completed = effective_completed_step_ids(
+    return _progress_response(
+        steps=steps,
         step_ids=step_ids,
-        auto_completed=auto,
-        manual_completed=manual,
-        dismissed_auto=dismissed,
+        auto=auto,
+        manual=manual,
+        dismissed=dismissed,
+        step_notes=saved.get("step_notes", {}),
     )
-    return {
-        "completed_step_ids": completed,
-        "auto_completed_step_ids": auto,
-        "progress_pct": progress_pct(completed, len(steps)),
-    }
+
+
+def save_onboarding_notes_from_ui(
+    project: StudioProject,
+    *,
+    step_notes: dict[str, str],
+) -> dict[str, Any]:
+    """Persist collaboration notes without changing completion checkboxes."""
+    payload = onboarding_wizard_payload(project)
+    steps = payload["steps"]
+    step_ids = [step["id"] for step in steps]
+    progress = load_onboarding_progress(project.root)
+    merged = merge_step_notes(
+        progress.get("step_notes", {}),
+        step_notes,
+        valid_step_ids=set(step_ids),
+    )
+    saved = save_onboarding_progress(
+        project.root,
+        completed_step_ids=progress.get("completed_step_ids", []),
+        dismissed_auto_step_ids=progress.get("dismissed_auto_step_ids", []),
+        step_notes=merged,
+    )
+    auto = payload["auto_completed_step_ids"]
+    return _progress_response(
+        steps=steps,
+        step_ids=step_ids,
+        auto=auto,
+        manual=progress.get("completed_step_ids", []),
+        dismissed=progress.get("dismissed_auto_step_ids", []),
+        step_notes=saved.get("step_notes", {}),
+    )
 
 
 def apply_wizard_share_done(
     project: StudioProject,
     *,
     done_step_ids: list[str],
+    step_notes: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Merge share-link step ids into persisted wizard progress."""
+    """Merge share-link step ids and notes into persisted wizard progress."""
     payload = onboarding_wizard_payload(project)
     steps = payload["steps"]
     step_ids = [step["id"] for step in steps]
@@ -199,7 +261,12 @@ def apply_wizard_share_done(
             sid for sid in (payload["completed_step_ids"] + done_step_ids) if sid in valid
         ),
     )
+    progress = load_onboarding_progress(project.root)
+    merged_notes = progress.get("step_notes", {})
+    if step_notes:
+        merged_notes = merge_step_notes(merged_notes, step_notes, valid_step_ids=valid)
     return save_onboarding_progress_from_ui(
         project,
         desired_completed_step_ids=desired,
+        step_notes=merged_notes,
     )

@@ -8,11 +8,13 @@ from typing import Any
 
 from infra.creator_settings_docs import MERGE_SOURCES
 
-_STATE_VERSION = "2"
+_STATE_VERSION = "3"
 _DEFAULT = {
     "pillars_merge_source": "editor",
     "global_outline_merge_source": "editor",
     "merge_snapshot_id": None,
+    "pillars_merge_snapshot_id": None,
+    "global_outline_merge_snapshot_id": None,
 }
 
 
@@ -38,13 +40,25 @@ def _normalize_prefs(data: dict[str, Any]) -> dict[str, Any]:
         pillars = "editor"
     if outline not in MERGE_SOURCES:
         outline = "editor"
-    snapshot_id = data.get("merge_snapshot_id")
-    if snapshot_id is not None:
-        snapshot_id = str(snapshot_id).strip() or None
+    legacy_snap = data.get("merge_snapshot_id")
+    if legacy_snap is not None:
+        legacy_snap = str(legacy_snap).strip() or None
+    pillars_snap = data.get("pillars_merge_snapshot_id")
+    if pillars_snap is not None:
+        pillars_snap = str(pillars_snap).strip() or None
+    if not pillars_snap:
+        pillars_snap = legacy_snap
+    outline_snap = data.get("global_outline_merge_snapshot_id")
+    if outline_snap is not None:
+        outline_snap = str(outline_snap).strip() or None
+    if not outline_snap:
+        outline_snap = legacy_snap
     return {
         "pillars_merge_source": pillars,
         "global_outline_merge_source": outline,
-        "merge_snapshot_id": snapshot_id,
+        "merge_snapshot_id": legacy_snap,
+        "pillars_merge_snapshot_id": pillars_snap,
+        "global_outline_merge_snapshot_id": outline_snap,
     }
 
 
@@ -61,6 +75,8 @@ def save_global_merge_preferences(
     pillars_merge_source: str,
     global_outline_merge_source: str,
     merge_snapshot_id: str | None = None,
+    pillars_merge_snapshot_id: str | None = None,
+    global_outline_merge_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
     if pillars_merge_source not in MERGE_SOURCES:
         raise ValueError(f"invalid pillars merge source: {pillars_merge_source!r}")
@@ -68,14 +84,26 @@ def save_global_merge_preferences(
         raise ValueError(f"invalid outline merge source: {global_outline_merge_source!r}")
     path = _global_prefs_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    snap = merge_snapshot_id.strip() if merge_snapshot_id else None
-    if not snap:
-        snap = None
+    legacy = merge_snapshot_id.strip() if merge_snapshot_id else None
+    if not legacy:
+        legacy = None
+    pillars_snap = pillars_merge_snapshot_id.strip() if pillars_merge_snapshot_id else None
+    if not pillars_snap:
+        pillars_snap = legacy
+    outline_snap = (
+        global_outline_merge_snapshot_id.strip()
+        if global_outline_merge_snapshot_id
+        else None
+    )
+    if not outline_snap:
+        outline_snap = legacy
     data = {
         "schema_version": _STATE_VERSION,
         "pillars_merge_source": pillars_merge_source,
         "global_outline_merge_source": global_outline_merge_source,
-        "merge_snapshot_id": snap,
+        "merge_snapshot_id": legacy,
+        "pillars_merge_snapshot_id": pillars_snap,
+        "global_outline_merge_snapshot_id": outline_snap,
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -100,6 +128,8 @@ def save_merge_preferences(
     pillars_merge_source: str,
     global_outline_merge_source: str,
     merge_snapshot_id: str | None = None,
+    pillars_merge_snapshot_id: str | None = None,
+    global_outline_merge_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
     if pillars_merge_source not in MERGE_SOURCES:
         raise ValueError(f"invalid pillars merge source: {pillars_merge_source!r}")
@@ -107,20 +137,34 @@ def save_merge_preferences(
         raise ValueError(f"invalid outline merge source: {global_outline_merge_source!r}")
     path = _prefs_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
-    snap = merge_snapshot_id.strip() if merge_snapshot_id else None
-    if not snap:
-        snap = None
+    legacy = merge_snapshot_id.strip() if merge_snapshot_id else None
+    if not legacy:
+        legacy = None
+    pillars_snap = pillars_merge_snapshot_id.strip() if pillars_merge_snapshot_id else None
+    if not pillars_snap:
+        pillars_snap = legacy
+    outline_snap = (
+        global_outline_merge_snapshot_id.strip()
+        if global_outline_merge_snapshot_id
+        else None
+    )
+    if not outline_snap:
+        outline_snap = legacy
     data = {
         "schema_version": _STATE_VERSION,
         "pillars_merge_source": pillars_merge_source,
         "global_outline_merge_source": global_outline_merge_source,
-        "merge_snapshot_id": snap,
+        "merge_snapshot_id": legacy,
+        "pillars_merge_snapshot_id": pillars_snap,
+        "global_outline_merge_snapshot_id": outline_snap,
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     save_global_merge_preferences(
         pillars_merge_source=pillars_merge_source,
         global_outline_merge_source=global_outline_merge_source,
-        merge_snapshot_id=snap,
+        merge_snapshot_id=legacy,
+        pillars_merge_snapshot_id=pillars_snap,
+        global_outline_merge_snapshot_id=outline_snap,
     )
     return data

@@ -28,7 +28,28 @@ _CUSTOM_STATE_VERSION = "1"
 _FACTORY_STATE_VERSION = "1"
 _MAX_CUSTOM_TEMPLATES = 5
 _MAX_FACTORY_TEMPLATES = 20
+_MAX_VERSION_LABEL = 32
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _normalize_version_label(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    label = str(raw).strip()
+    if not label:
+        return None
+    return label[:_MAX_VERSION_LABEL]
+
+
+def _template_list_row(item: dict[str, Any], scope: str, *, default_description: str) -> dict[str, Any]:
+    return {
+        "id": item["id"],
+        "name": item["name"],
+        "description": str(item.get("description", default_description)),
+        "builtin": False,
+        "scope": scope,
+        "version_label": _normalize_version_label(item.get("version_label")),
+    }
 
 
 def _custom_templates_path(project_root: Path | str) -> Path:
@@ -130,39 +151,21 @@ def list_volume_templates(project_root: Path | str | None = None) -> list[dict[s
     ]
     for item in _load_factory_store().get("templates", []):
         rows.append(
-            {
-                "id": item["id"],
-                "name": item["name"],
-                "description": item.get("description", "工厂共享模板"),
-                "builtin": False,
-                "scope": "factory",
-            },
+            _template_list_row(item, "factory", default_description="工厂共享模板"),
         )
     if project_root is None:
         return rows
     store = _load_custom_store(project_root)
     for item in store.get("templates", []):
         rows.append(
-            {
-                "id": item["id"],
-                "name": item["name"],
-                "description": item.get("description", "项目自定义模板"),
-                "builtin": False,
-                "scope": "project",
-            },
+            _template_list_row(item, "project", default_description="项目自定义模板"),
         )
     return rows
 
 
 def list_factory_volume_templates() -> list[dict[str, Any]]:
     return [
-        {
-            "id": item["id"],
-            "name": item["name"],
-            "description": item.get("description", "工厂共享模板"),
-            "builtin": False,
-            "scope": "factory",
-        }
+        _template_list_row(item, "factory", default_description="工厂共享模板")
         for item in _load_factory_store().get("templates", [])
     ]
 
@@ -174,6 +177,7 @@ def save_custom_volume_template(
     volumes: list[dict[str, Any]],
     max_chapter: int,
     description: str | None = None,
+    version_label: str | None = None,
 ) -> dict[str, Any]:
     label = name.strip()
     if not label:
@@ -186,6 +190,7 @@ def save_custom_volume_template(
         "id": _normalize_template_id(label),
         "name": label,
         "description": (description or "保存自当前卷纲").strip(),
+        "version_label": _normalize_version_label(version_label),
         "source_max_chapter": max_chapter,
         "volumes": [
             {
@@ -226,6 +231,7 @@ def rename_custom_volume_template(
     *,
     name: str,
     description: str | None = None,
+    version_label: str | None = None,
 ) -> dict[str, Any]:
     """Rename a project-scoped custom template."""
     tid = template_id.strip().lower()
@@ -240,13 +246,59 @@ def rename_custom_volume_template(
             item["name"] = label
             if description is not None:
                 item["description"] = description.strip()
+            if version_label is not None:
+                item["version_label"] = _normalize_version_label(version_label)
             _save_custom_store(project_root, store)
             return {
                 "id": tid,
                 "name": item["name"],
                 "description": str(item.get("description", "")),
+                "version_label": _normalize_version_label(item.get("version_label")),
             }
     raise ValueError(f"unknown template: {template_id!r}")
+
+
+def set_custom_template_version_label(
+    project_root: Path | str,
+    template_id: str,
+    *,
+    version_label: str | None,
+) -> dict[str, Any]:
+    """Set version label on a project custom template."""
+    tid = template_id.strip().lower()
+    if not tid.startswith(_CUSTOM_PREFIX):
+        raise ValueError("builtin templates cannot be versioned")
+    store = _load_custom_store(project_root)
+    for item in store.get("templates", []):
+        if item.get("id") == tid:
+            item["version_label"] = _normalize_version_label(version_label)
+            _save_custom_store(project_root, store)
+            return {
+                "id": tid,
+                "version_label": item["version_label"],
+            }
+    raise ValueError(f"unknown template: {template_id!r}")
+
+
+def set_factory_template_version_label(
+    template_id: str,
+    *,
+    version_label: str | None,
+) -> dict[str, Any]:
+    """Set version label on a factory shared template."""
+    tid = template_id.strip().lower()
+    if not tid.startswith(_FACTORY_PREFIX):
+        raise ValueError("only factory templates support version labels here")
+    factory = _load_factory_store()
+    for item in factory.get("templates", []):
+        if item.get("id") == tid:
+            item["version_label"] = _normalize_version_label(version_label)
+            _save_factory_store(factory)
+            return {
+                "id": tid,
+                "version_label": item["version_label"],
+            }
+    raise ValueError(f"unknown factory template: {template_id!r}")
 
 
 _EXPORT_SCHEMA_VERSION = "1"
@@ -266,6 +318,7 @@ def _normalize_import_entry(raw: dict[str, Any]) -> dict[str, Any]:
         "id": _normalize_template_id(name),
         "name": name,
         "description": str(raw.get("description", "导入模板")).strip(),
+        "version_label": _normalize_version_label(raw.get("version_label")),
         "source_max_chapter": max_chapter,
         "volumes": [
             {
@@ -410,6 +463,7 @@ def publish_custom_to_factory_library(
         "id": _normalize_factory_template_id(str(match["name"])),
         "name": str(match["name"]),
         "description": str(match.get("description", "工厂共享模板")),
+        "version_label": _normalize_version_label(match.get("version_label")),
         "source_max_chapter": int(match.get("source_max_chapter") or 1),
         "volumes": match.get("volumes", []),
         "published_from": str(tid),
@@ -422,6 +476,7 @@ def publish_custom_to_factory_library(
         "id": entry["id"],
         "name": entry["name"],
         "description": entry["description"],
+        "version_label": entry.get("version_label"),
     }
 
 

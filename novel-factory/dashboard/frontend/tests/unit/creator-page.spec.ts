@@ -23,6 +23,8 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOnboarding: vi.fn(),
   saveCreatorOnboardingProgress: vi.fn(),
   applyCreatorOnboardingShare: vi.fn(),
+  saveCreatorOnboardingNotes: vi.fn(),
+  setCreatorVolumeTemplateVersion: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
@@ -58,6 +60,8 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOnboarding: creatorMocks.fetchCreatorOnboarding,
   saveCreatorOnboardingProgress: creatorMocks.saveCreatorOnboardingProgress,
   applyCreatorOnboardingShare: creatorMocks.applyCreatorOnboardingShare,
+  saveCreatorOnboardingNotes: creatorMocks.saveCreatorOnboardingNotes,
+  setCreatorVolumeTemplateVersion: creatorMocks.setCreatorVolumeTemplateVersion,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
@@ -82,6 +86,7 @@ const navMocks = vi.hoisted(() => ({
   focusWizard: null,
   focusWizardStep: null,
   focusWizardDone: null,
+  focusWizardNotes: null,
   setWizardDeepLink: vi.fn(),
   buildWizardShareUrl: vi.fn(() => 'http://localhost/?nav=creator&wizard=1&done=init'),
 }));
@@ -91,9 +96,11 @@ vi.mock('../../src/composables/useDashboardNav.js', async () => {
   const focusWizard = ref(false);
   const focusWizardStep = ref(null);
   const focusWizardDone = ref([]);
+  const focusWizardNotes = ref({});
   navMocks.focusWizard = focusWizard;
   navMocks.focusWizardStep = focusWizardStep;
   navMocks.focusWizardDone = focusWizardDone;
+  navMocks.focusWizardNotes = focusWizardNotes;
   navMocks.setWizardDeepLink.mockImplementation((open, step) => {
     focusWizard.value = Boolean(open);
     if (step !== undefined) focusWizardStep.value = step;
@@ -103,6 +110,7 @@ vi.mock('../../src/composables/useDashboardNav.js', async () => {
       focusWizard,
       focusWizardStep,
       focusWizardDone,
+      focusWizardNotes,
       setWizardDeepLink: navMocks.setWizardDeepLink,
       buildWizardShareUrl: navMocks.buildWizardShareUrl,
     }),
@@ -149,6 +157,7 @@ describe('CreatorPage', () => {
     navMocks.focusWizard.value = false;
     navMocks.focusWizardStep.value = null;
     navMocks.focusWizardDone.value = [];
+    navMocks.focusWizardNotes.value = {};
     navMocks.setWizardDeepLink.mockClear();
     creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
     creatorMocks.fetchCreatorVolumePlan.mockResolvedValue({
@@ -217,7 +226,7 @@ describe('CreatorPage', () => {
       templates: [
         { id: 'three_act', name: '三幕式', description: '建置对抗结局', builtin: true, scope: 'builtin' },
         { id: 'factory_shared', name: '工厂模板', description: '共享', builtin: false, scope: 'factory' },
-        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project' },
+        { id: 'custom_test', name: '我的结构', description: '自定义', builtin: false, scope: 'project', version_label: 'v1' },
       ],
     });
     creatorMocks.applyCreatorVolumeTemplate.mockResolvedValue({
@@ -249,7 +258,17 @@ describe('CreatorPage', () => {
       onboarding_doc: 'docs/creator-onboarding-wizard.md',
       completed_step_ids: ['init'],
       auto_completed_step_ids: ['init', 'dashboard'],
+      step_notes: { volume: '先锁卷纲' },
       progress_pct: 33,
+    });
+    creatorMocks.saveCreatorOnboardingNotes.mockResolvedValue({
+      step_notes: { volume: '先锁卷纲' },
+      completed_step_ids: ['init'],
+      progress_pct: 33,
+    });
+    creatorMocks.setCreatorVolumeTemplateVersion.mockResolvedValue({
+      id: 'custom_test',
+      version_label: 'v2',
     });
     creatorMocks.saveCreatorOnboardingProgress.mockResolvedValue({
       completed_step_ids: ['init', 'pillars'],
@@ -260,6 +279,8 @@ describe('CreatorPage', () => {
       pillars_merge_source: 'disk',
       global_outline_merge_source: 'history',
       merge_snapshot_id: 'snap1',
+      pillars_merge_snapshot_id: 'snap1',
+      global_outline_merge_snapshot_id: 'snap2',
       uses_global_default: true,
     });
     creatorMocks.applyCreatorOnboardingShare.mockResolvedValue({
@@ -677,6 +698,7 @@ describe('CreatorPage', () => {
 
     expect(creatorMocks.applyCreatorOnboardingShare).toHaveBeenCalledWith({
       completed_step_ids: ['volume'],
+      step_notes: {},
     });
   });
 
@@ -702,5 +724,33 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(creatorMocks.pullCreatorFactoryVolumeTemplates).toHaveBeenCalled();
+  });
+
+  it('shows template version label in select', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-template-select"]').text()).toContain('[v1]');
+  });
+
+  it('saves wizard step note on blur', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const note = wrapper.find('[data-testid="wizard-note-volume"]');
+    await note.setValue('协作备注');
+    await note.trigger('blur');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorOnboardingNotes).toHaveBeenCalled();
+  });
+
+  it('sets template version label', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-template-select"]').setValue('custom_test');
+    await wrapper.find('[data-testid="template-version-input"]').setValue('v2');
+    await wrapper.find('[data-testid="set-template-version-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.setCreatorVolumeTemplateVersion).toHaveBeenCalledWith('custom_test', {
+      version_label: 'v2',
+    });
   });
 });

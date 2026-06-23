@@ -42,6 +42,25 @@ def test_save_and_load_progress(factory_tmp):
     ProjectPaths.reset()
 
 
+def test_save_and_load_step_notes(factory_tmp):
+    result = init_minimal_short_project(
+        slug="wiz-notes",
+        title="向导批注",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=12,
+    )
+    root = result.root
+    save_onboarding_progress(
+        root,
+        completed_step_ids=["init"],
+        step_notes={"volume": "先锁第一卷"},
+    )
+    loaded = load_onboarding_progress(root)
+    assert loaded["step_notes"]["volume"] == "先锁第一卷"
+    ProjectPaths.reset()
+
+
 def test_progress_pct_empty():
     assert progress_pct([], 6) == 0
     assert progress_pct(["a", "b", "c"], 3) == 100

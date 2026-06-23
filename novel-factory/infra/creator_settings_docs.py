@@ -121,6 +121,8 @@ def preview_settings_merge_strategy(
     pillars_merge_source: str = "editor",
     global_outline_merge_source: str = "editor",
     snapshot_id: str | None = None,
+    pillars_merge_snapshot_id: str | None = None,
+    global_outline_merge_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
     """Visual diff for chosen merge sources vs disk and editor."""
     disk = creator_settings_docs_payload(project)
@@ -131,6 +133,8 @@ def preview_settings_merge_strategy(
         editor_pillars=pillars_text,
         editor_outline=global_outline_text,
         snapshot_id=snapshot_id,
+        pillars_snapshot_id=pillars_merge_snapshot_id,
+        outline_snapshot_id=global_outline_merge_snapshot_id,
     )
 
     def field_block(source: str, field: str, editor_value: str, resolved_value: str) -> dict[str, Any]:
@@ -212,6 +216,8 @@ def resolve_merged_settings(
     editor_pillars: str,
     editor_outline: str,
     snapshot_id: str | None = None,
+    pillars_snapshot_id: str | None = None,
+    outline_snapshot_id: str | None = None,
 ) -> tuple[str, str]:
     from infra.creator_settings_history import load_snapshot_raw
 
@@ -225,9 +231,12 @@ def resolve_merged_settings(
         if source == "disk":
             key = "pillars_text" if field == "pillars" else "global_outline_text"
             return disk[key]
-        if not snapshot_id:
+        sid = pillars_snapshot_id if field == "pillars" else outline_snapshot_id
+        if not sid:
+            sid = snapshot_id
+        if not sid:
             raise ValueError("history merge requires snapshot_id")
-        snap = load_snapshot_raw(project, snapshot_id)
+        snap = load_snapshot_raw(project, sid)
         key = "pillars_text" if field == "pillars" else "global_outline_text"
         return str(snap[key])
 
@@ -246,6 +255,8 @@ def save_creator_settings_docs(
     pillars_merge_source: str | None = None,
     global_outline_merge_source: str | None = None,
     merge_snapshot_id: str | None = None,
+    pillars_merge_snapshot_id: str | None = None,
+    global_outline_merge_snapshot_id: str | None = None,
 ) -> dict[str, Any]:
     resolved_pillars = pillars_text
     resolved_outline = global_outline_text
@@ -259,6 +270,8 @@ def save_creator_settings_docs(
             editor_pillars=pillars_text,
             editor_outline=global_outline_text,
             snapshot_id=merge_snapshot_id,
+            pillars_snapshot_id=pillars_merge_snapshot_id,
+            outline_snapshot_id=global_outline_merge_snapshot_id,
         )
 
     if resolved_pillars is not None or resolved_outline is not None:
@@ -304,14 +317,35 @@ def save_creator_settings_docs(
         from infra.creator_merge_preferences import load_merge_preferences, save_merge_preferences
 
         existing = load_merge_preferences(project.root)
-        resolved_snap = merge_snapshot_id or existing.get("merge_snapshot_id")
-        if pillars_merge_source != "history" and global_outline_merge_source != "history":
-            resolved_snap = merge_snapshot_id or existing.get("merge_snapshot_id")
+        resolved_pillars_snap = (
+            pillars_merge_snapshot_id
+            or existing.get("pillars_merge_snapshot_id")
+            or merge_snapshot_id
+            or existing.get("merge_snapshot_id")
+        )
+        resolved_outline_snap = (
+            global_outline_merge_snapshot_id
+            or existing.get("global_outline_merge_snapshot_id")
+            or merge_snapshot_id
+            or existing.get("merge_snapshot_id")
+        )
+        if pillars_merge_source != "history":
+            resolved_pillars_snap = (
+                pillars_merge_snapshot_id
+                or existing.get("pillars_merge_snapshot_id")
+            )
+        if global_outline_merge_source != "history":
+            resolved_outline_snap = (
+                global_outline_merge_snapshot_id
+                or existing.get("global_outline_merge_snapshot_id")
+            )
         save_merge_preferences(
             project.root,
             pillars_merge_source=pillars_merge_source or existing.get("pillars_merge_source", "editor"),
             global_outline_merge_source=global_outline_merge_source or existing.get("global_outline_merge_source", "editor"),
-            merge_snapshot_id=resolved_snap,
+            merge_snapshot_id=merge_snapshot_id or existing.get("merge_snapshot_id"),
+            pillars_merge_snapshot_id=resolved_pillars_snap,
+            global_outline_merge_snapshot_id=resolved_outline_snap,
         )
 
     return creator_settings_docs_payload(project)
