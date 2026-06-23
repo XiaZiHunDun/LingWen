@@ -19,6 +19,11 @@ def _retry_path(project_root: Path | str) -> Path:
     return root / ".state" / "creator_onboarding_digest_retry.json"
 
 
+def _dead_letter_path(project_root: Path | str) -> Path:
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    return root / ".state" / "creator_onboarding_digest_dead_letter.json"
+
+
 def _stats_path(project_root: Path | str) -> Path:
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     return root / ".state" / "creator_onboarding_digest_stats.json"
@@ -78,6 +83,27 @@ def _load_retry_queue(project_root: Path | str) -> list[dict[str, Any]]:
 
 def _save_retry_queue(project_root: Path | str, items: list[dict[str, Any]]) -> None:
     path = _retry_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"schema_version": "1", "items": items[:_MAX_RETRY_ITEMS]}, ensure_ascii=False, indent=2)
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def load_digest_dead_letter(project_root: Path | str) -> dict[str, Any]:
+    path = _dead_letter_path(project_root)
+    if not path.is_file():
+        return {"item_count": 0, "items": []}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    items = data.get("items") or []
+    return {"item_count": len(items), "items": items[:_MAX_RETRY_ITEMS]}
+
+
+def _append_dead_letter(project_root: Path | str, item: dict[str, Any]) -> None:
+    path = _dead_letter_path(project_root)
+    existing = load_digest_dead_letter(project_root)
+    items = [item, *existing["items"]]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"schema_version": "1", "items": items[:_MAX_RETRY_ITEMS]}, ensure_ascii=False, indent=2)
@@ -152,8 +178,12 @@ def process_digest_retries(project_root: Path | str) -> dict[str, Any]:
             delay = _backoff_seconds(attempts)
             item["next_retry_at"] = (now + timedelta(seconds=delay)).isoformat()
             kept.append(item)
+        else:
+            item["dead_lettered_at"] = _now_iso()
+            _append_dead_letter(project_root, item)
     _save_retry_queue(project_root, kept)
-    return {"retried": retried, "remaining": len(kept)}
+    dead = load_digest_dead_letter(project_root)
+    return {"retried": retried, "remaining": len(kept), "dead_letter_count": dead["item_count"]}
 
 
 def _normalize_quiet_hour(raw: Any) -> int | None:
@@ -185,17 +215,40 @@ def _normalize_handle_channels(raw: Any) -> dict[str, list[str]]:
     return routing
 
 
-def _in_quiet_hours(schedule: dict[str, Any]) -> bool:
+def _normalize_handle_quiet_hours(raw: Any) -> dict[str, dict[str, int]]:
+    if not isinstance(raw, dict):
+        return {}
+    result: dict[str, dict[str, int]] = {}
+    for handle, window in raw.items():
+        if not isinstance(window, dict):
+            continue
+        start = _normalize_quiet_hour(window.get("start", window.get("quiet_hours_start")))
+        end = _normalize_quiet_hour(window.get("end", window.get("quiet_hours_end")))
+        key = str(handle).strip().lower()
+        if key and start is not None and end is not None:
+            result[key] = {"start": start, "end": end}
+    return result
+
+
+def _hour_in_quiet_range(start_h: int, end_h: int) -> bool:
+    hour = datetime.now(timezone.utc).hour
+    if start_h <= end_h:
+        return start_h <= hour < end_h
+    return hour >= start_h or hour < end_h
+
+
+def _in_quiet_hours(schedule: dict[str, Any], *, handle: str | None = None) -> bool:
+    if handle:
+        windows = schedule.get("handle_quiet_hours") or {}
+        key = str(handle).strip().lower() or "default"
+        window = windows.get(key) or windows.get("*")
+        if window:
+            return _hour_in_quiet_range(int(window["start"]), int(window["end"]))
     start = schedule.get("quiet_hours_start")
     end = schedule.get("quiet_hours_end")
     if start is None or end is None:
         return False
-    hour = datetime.now(timezone.utc).hour
-    start_h = int(start)
-    end_h = int(end)
-    if start_h <= end_h:
-        return start_h <= hour < end_h
-    return hour >= start_h or hour < end_h
+    return _hour_in_quiet_range(int(start), int(end))
 
 
 def _schedule_path(project_root: Path | str) -> Path:
@@ -238,6 +291,7 @@ def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
             "handle_channels": {},
             "quiet_hours_start": None,
             "quiet_hours_end": None,
+            "handle_quiet_hours": {},
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     hours = int(data.get("interval_hours", 24))
@@ -254,6 +308,7 @@ def load_digest_schedule(project_root: Path | str) -> dict[str, Any]:
         "handle_channels": _normalize_handle_channels(data.get("handle_channels")),
         "quiet_hours_start": _normalize_quiet_hour(data.get("quiet_hours_start")),
         "quiet_hours_end": _normalize_quiet_hour(data.get("quiet_hours_end")),
+        "handle_quiet_hours": _normalize_handle_quiet_hours(data.get("handle_quiet_hours")),
     }
 
 
@@ -266,6 +321,7 @@ def save_digest_schedule(
     handle_channels: dict[str, list[str]] | None = None,
     quiet_hours_start: int | None = None,
     quiet_hours_end: int | None = None,
+    handle_quiet_hours: dict[str, dict[str, int]] | None = None,
 ) -> dict[str, Any]:
     hours = max(_MIN_INTERVAL_HOURS, min(int(interval_hours), _MAX_INTERVAL_HOURS))
     normalized_channels = ["webhook"]
@@ -278,6 +334,9 @@ def save_digest_schedule(
     routing = existing.get("handle_channels") or {}
     if handle_channels is not None:
         routing = _normalize_handle_channels(handle_channels)
+    handle_quiet = existing.get("handle_quiet_hours") or {}
+    if handle_quiet_hours is not None:
+        handle_quiet = _normalize_handle_quiet_hours(handle_quiet_hours)
     data = {
         "schema_version": _STATE_VERSION,
         "enabled": bool(enabled),
@@ -287,6 +346,7 @@ def save_digest_schedule(
         "handle_channels": routing,
         "quiet_hours_start": _normalize_quiet_hour(quiet_hours_start),
         "quiet_hours_end": _normalize_quiet_hour(quiet_hours_end),
+        "handle_quiet_hours": handle_quiet,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -361,12 +421,15 @@ def dispatch_scheduled_digest(
     digest = build_notification_digest(project_root)
     if digest.get("unread", 0) == 0:
         return {"sent": False, "skipped": True, "reason": "no unread notifications"}
-    results: dict[str, Any] = {"digest": digest, "channels": {}, "handle_routes": {}}
+    results: dict[str, Any] = {"digest": digest, "channels": {}, "handle_routes": {}, "skipped_handles": []}
     routing = schedule.get("handle_channels") or {}
     groups = digest.get("groups") or []
     if routing and groups:
         for group in groups:
             handle = str(group.get("handle") or "default")
+            if not force and _in_quiet_hours(schedule, handle=handle):
+                results["skipped_handles"].append(handle)
+                continue
             channels = _channels_for_handle(schedule, handle)
             partial = {
                 **digest,

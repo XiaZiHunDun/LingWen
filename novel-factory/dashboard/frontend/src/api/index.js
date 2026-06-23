@@ -823,6 +823,36 @@ export async function fetchCreatorTemplateApprovalOverdue() {
   return request('/creator/volume-plan/templates/approvals/overdue');
 }
 
+export async function transferCreatorTemplateApproval(approvalId, body) {
+  return request(
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/transfer`,
+    { method: 'POST', body },
+  );
+}
+
+export async function fetchCreatorTemplateApprovalSnapshotDiff(approvalId) {
+  return request(
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/snapshot-diff`,
+  );
+}
+
+export async function fetchCreatorOnboardingDigestDeadLetter() {
+  return request('/creator/onboarding/notifications/digest/dead-letter');
+}
+
+export async function preflightCreatorFactoryMergePresetPull(body) {
+  return request('/creator/settings-docs/merge-preferences/preset-packages/factory/pull/preflight', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function fetchCreatorMergePresetChangelog(packageId, limit = 10) {
+  return request(
+    `/creator/settings-docs/merge-preferences/preset-packages/${encodeURIComponent(packageId)}/changelog?limit=${limit}`,
+  );
+}
+
 export async function fetchCreatorMergePresetPackages() {
   return request('/creator/settings-docs/merge-preferences/preset-packages');
 }

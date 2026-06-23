@@ -1,6 +1,8 @@
 """Webhook dispatch for creator onboarding @mention notifications."""
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import urllib.error
 import urllib.request
@@ -9,12 +11,27 @@ from typing import Any
 
 _STATE_VERSION = "1"
 _MAX_URL = 512
+_MAX_SECRET = 128
 _WEBHOOK_TIMEOUT_SEC = 5
 
 
 def _webhook_path(project_root: Path | str) -> Path:
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     return root / ".state" / "creator_onboarding_webhook.json"
+
+
+def _sign_payload(secret: str, body: bytes) -> str:
+    digest = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+    return f"sha256={digest}"
+
+
+def _webhook_headers(project_root: Path | str, body: bytes) -> dict[str, str]:
+    headers = {"Content-Type": "application/json"}
+    config = load_webhook_config(project_root)
+    secret = str(config.get("signing_secret", "")).strip()
+    if secret:
+        headers["X-LingWen-Signature"] = _sign_payload(secret, body)
+    return headers
 
 
 def load_webhook_config(project_root: Path | str) -> dict[str, Any]:
@@ -25,6 +42,7 @@ def load_webhook_config(project_root: Path | str) -> dict[str, Any]:
             "enabled": False,
             "url": "",
             "mention_handles": [],
+            "signing_secret": "",
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     handles = data.get("mention_handles") or []
@@ -35,6 +53,7 @@ def load_webhook_config(project_root: Path | str) -> dict[str, Any]:
         "enabled": bool(data.get("enabled")),
         "url": str(data.get("url", ""))[:_MAX_URL],
         "mention_handles": [str(h).strip().lower() for h in handles if str(h).strip()],
+        "signing_secret": str(data.get("signing_secret", ""))[:_MAX_SECRET],
     }
 
 
@@ -44,6 +63,7 @@ def save_webhook_config(
     url: str,
     enabled: bool = True,
     mention_handles: list[str] | None = None,
+    signing_secret: str | None = None,
 ) -> dict[str, Any]:
     normalized_url = str(url).strip()[:_MAX_URL]
     if enabled and normalized_url and not normalized_url.startswith(("http://", "https://")):
@@ -53,16 +73,37 @@ def save_webhook_config(
         handles = list(
             dict.fromkeys(str(h).strip().lower() for h in mention_handles if str(h).strip()),
         )
+    existing = load_webhook_config(project_root) if _webhook_path(project_root).is_file() else {}
+    secret = existing.get("signing_secret", "")
+    if signing_secret is not None:
+        secret = str(signing_secret).strip()[:_MAX_SECRET]
     data = {
         "schema_version": _STATE_VERSION,
         "enabled": bool(enabled),
         "url": normalized_url,
         "mention_handles": handles,
+        "signing_secret": secret,
     }
     path = _webhook_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return data
+
+
+def _post_webhook(project_root: Path | str, url: str, payload: dict[str, Any]) -> dict[str, Any]:
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=body,
+        headers=_webhook_headers(project_root, body),
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
+            status = getattr(response, "status", 200)
+        return {"dispatched": 1, "status": status, "signed": bool(load_webhook_config(project_root).get("signing_secret"))}
+    except urllib.error.URLError as exc:
+        return {"dispatched": 0, "error": str(exc.reason or exc)}
 
 
 def dispatch_mention_webhook(
@@ -87,22 +128,14 @@ def dispatch_mention_webhook(
         payload_rows.append(row)
     if not payload_rows:
         return {"dispatched": 0, "skipped": True}
-    body = json.dumps(
-        {"schema_version": "1", "notifications": payload_rows},
-        ensure_ascii=False,
-    ).encode("utf-8")
-    request = urllib.request.Request(
+    result = _post_webhook(
+        project_root,
         url,
-        data=body,
-        headers={"Content-Type": "application/json"},
-        method="POST",
+        {"schema_version": "1", "notifications": payload_rows},
     )
-    try:
-        with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
-            status = getattr(response, "status", 200)
-        return {"dispatched": len(payload_rows), "status": status}
-    except urllib.error.URLError as exc:
-        return {"dispatched": 0, "error": str(exc.reason or exc)}
+    if result.get("dispatched"):
+        result["dispatched"] = len(payload_rows)
+    return result
 
 
 def dispatch_digest_webhook(
@@ -116,19 +149,7 @@ def dispatch_digest_webhook(
     url = str(config.get("url", "")).strip()
     if not url.startswith(("http://", "https://")):
         return {"dispatched": 0, "skipped": True, "error": "invalid webhook url"}
-    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    request = urllib.request.Request(
-        url,
-        data=body,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
-            status = getattr(response, "status", 200)
-        return {"dispatched": 1, "status": status}
-    except urllib.error.URLError as exc:
-        return {"dispatched": 0, "error": str(exc.reason or exc)}
+    return _post_webhook(project_root, url, payload)
 
 
 def dispatch_approval_webhook(
@@ -143,24 +164,13 @@ def dispatch_approval_webhook(
     url = str(config.get("url", "")).strip()
     if not url.startswith(("http://", "https://")):
         return {"dispatched": 0, "skipped": True, "error": "invalid webhook url"}
-    body = json.dumps(
+    return _post_webhook(
+        project_root,
+        url,
         {
             "schema_version": "1",
             "type": "template_approval",
             "event": str(event),
             "approval": approval,
         },
-        ensure_ascii=False,
-    ).encode("utf-8")
-    request = urllib.request.Request(
-        url,
-        data=body,
-        headers={"Content-Type": "application/json"},
-        method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
-            status = getattr(response, "status", 200)
-        return {"dispatched": 1, "status": status}
-    except urllib.error.URLError as exc:
-        return {"dispatched": 0, "error": str(exc.reason or exc)}

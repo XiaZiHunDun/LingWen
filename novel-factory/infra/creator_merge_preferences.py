@@ -428,6 +428,10 @@ def save_merge_preset_package(
         raise ValueError("preset package name required")
     normalized_version = _normalize_preset_version(version_label) if version_label else None
     pid = str(package_id).strip() or label.lower().replace(" ", "_")
+    path = _custom_preset_packages_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    custom = _load_custom_preset_packages(project_root)
+    previous = next((row for row in custom if row.get("id") == pid), None)
     entry = {
         "id": pid,
         "name": label,
@@ -442,9 +446,6 @@ def save_merge_preset_package(
         deps = [dep for dep in depends_on if str(dep).strip() and dep != pid]
         if deps:
             entry["depends_on"] = list(dict.fromkeys(str(dep).strip() for dep in deps))
-    path = _custom_preset_packages_path(project_root)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    custom = _load_custom_preset_packages(project_root)
     kept = [row for row in custom if row.get("id") != pid]
     kept.insert(0, entry)
     path.write_text(
@@ -456,6 +457,7 @@ def save_merge_preset_package(
         + "\n",
         encoding="utf-8",
     )
+    _append_merge_preset_changelog(project_root, pid, previous, entry)
     return _preset_row(entry, builtin=False, scope="project")
 
 
@@ -1030,10 +1032,25 @@ def toposort_merge_preset_packages(project_root: Path | str) -> dict[str, Any]:
             if in_degree[nxt] == 0:
                 queue.append(nxt)
     cyclic = len(order) != len(project_ids)
+    graph = build_merge_preset_graph(project_root)
+    order_index = {pid: idx for idx, pid in enumerate(order)}
+    nodes = [
+        {**node, "topo_index": order_index.get(node["id"])}
+        for node in graph.get("nodes", [])
+        if node.get("id") in order_index or node.get("scope") != "project"
+    ]
+    project_edges = [
+        edge
+        for edge in graph.get("edges", [])
+        if edge.get("from") in order_index and edge.get("to") in order_index
+    ]
     return {
         "order": order,
         "cyclic": cyclic,
         "package_count": len(project_ids),
+        "nodes": nodes,
+        "edges": project_edges,
+        "edge_count": len(project_edges),
     }
 
 
@@ -1163,4 +1180,115 @@ def resolve_factory_merge_preset_conflict(
             "packages": list_merge_preset_packages(project_root),
         }
     raise ValueError(f"unsupported strategy: {strategy!r}")
+
+
+_PRESET_CHANGELOG_VERSION = "1"
+_MAX_PRESET_CHANGELOG = 20
+
+
+def _preset_changelog_path(project_root: Path | str) -> Path:
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    return root / ".state" / "creator_merge_preset_changelog.json"
+
+
+def _load_preset_changelog_store(project_root: Path | str) -> dict[str, Any]:
+    path = _preset_changelog_path(project_root)
+    if not path.is_file():
+        return {"schema_version": _PRESET_CHANGELOG_VERSION, "packages": {}}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _append_merge_preset_changelog(
+    project_root: Path | str,
+    package_id: str,
+    before: dict[str, Any] | None,
+    after: dict[str, Any],
+) -> None:
+    before_sig = _preset_content_signature(before) if before else None
+    after_sig = _preset_content_signature(after)
+    if before_sig == after_sig:
+        return
+    changed_fields = []
+    if before_sig:
+        changed_fields = [key for key in after_sig if before_sig.get(key) != after_sig.get(key)]
+    else:
+        changed_fields = list(after_sig.keys())
+    store = _load_preset_changelog_store(project_root)
+    packages = store.setdefault("packages", {})
+    rows: list[dict[str, Any]] = list(packages.get(package_id) or [])
+    rows.insert(
+        0,
+        {
+            "changed_at": _now_iso(),
+            "action": "update" if before else "create",
+            "changed_fields": changed_fields,
+            "snapshot": after_sig,
+        },
+    )
+    packages[package_id] = rows[:_MAX_PRESET_CHANGELOG]
+    path = _preset_changelog_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(store, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def list_merge_preset_changelog(
+    project_root: Path | str,
+    *,
+    package_id: str,
+    limit: int = 10,
+) -> dict[str, Any]:
+    pid = str(package_id).strip()
+    if not pid:
+        raise ValueError("package_id required")
+    store = _load_preset_changelog_store(project_root)
+    rows = list((store.get("packages") or {}).get(pid) or [])
+    return {"package_id": pid, "entry_count": len(rows), "entries": rows[:limit]}
+
+
+def preflight_factory_merge_preset_pull(
+    project_root: Path | str,
+    *,
+    package_ids: list[str],
+) -> dict[str, Any]:
+    """Detect conflicts before pulling factory presets into the project."""
+    if not package_ids:
+        raise ValueError("package_ids required")
+    factory = _load_factory_preset_store()
+    by_id = {row["id"]: row for row in factory.get("packages", [])}
+    custom = {row["id"]: row for row in _load_custom_preset_packages(project_root)}
+    conflicts: list[dict[str, Any]] = []
+    for raw_id in package_ids:
+        fid = str(raw_id).strip().lower()
+        if not fid.startswith(_FACTORY_PRESET_PREFIX):
+            raise ValueError(f"not a factory preset package: {raw_id!r}")
+        match = by_id.get(fid)
+        if match is None:
+            raise ValueError(f"unknown factory preset package: {raw_id!r}")
+        local_id = fid.removeprefix(_FACTORY_PRESET_PREFIX) or fid
+        source_id = str(match.get("published_from") or local_id).strip()
+        if source_id in custom:
+            factory_row = {
+                "id": source_id,
+                "name": match.get("name"),
+                "description": match.get("description"),
+                "pillars_merge_source": match.get("pillars_merge_source"),
+                "global_outline_merge_source": match.get("global_outline_merge_source"),
+                "version_label": match.get("version_label"),
+                "depends_on": match.get("depends_on"),
+            }
+            if _preset_content_signature(custom[source_id]) != _preset_content_signature(factory_row):
+                conflicts.append(
+                    {
+                        "type": "factory_pull_overwrite",
+                        "package_id": source_id,
+                        "factory_package_id": fid,
+                        "message": f"pulling {fid} would overwrite project preset {source_id}",
+                    },
+                )
+    return {
+        "would_import": len(package_ids),
+        "conflict_count": len(conflicts),
+        "conflicts": conflicts,
+        "blocked": bool(conflicts),
+    }
 

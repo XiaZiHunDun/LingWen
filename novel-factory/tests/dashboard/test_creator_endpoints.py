@@ -1078,6 +1078,45 @@ class TestCreatorEndpoints:
         )
         assert factory_conflicts.status_code == 200
 
+    def test_creator_v36_endpoints(self, client: TestClient) -> None:
+        chain = client.put(
+            "/api/creator/volume-plan/templates/approvals/chain-config",
+            json={"required_steps": 1, "step_assignee_groups": [["alice", "bob"]]},
+        )
+        assert chain.status_code == 200
+        assert chain.json()["step_assignee_groups"] == [["alice", "bob"]]
+        dead = client.get("/api/creator/onboarding/notifications/digest/dead-letter")
+        assert dead.status_code == 200
+        webhook = client.put(
+            "/api/creator/onboarding/webhook",
+            json={
+                "enabled": True,
+                "url": "https://example.com/hook",
+                "mention_handles": [],
+                "signing_secret": "secret",
+            },
+        )
+        assert webhook.status_code == 200
+        assert webhook.json()["signing_secret"] == "secret"
+        schedule = client.put(
+            "/api/creator/onboarding/notifications/digest/schedule",
+            json={
+                "enabled": True,
+                "interval_hours": 24,
+                "channels": ["webhook"],
+                "handle_quiet_hours": {"batch": {"start": 22, "end": 6}},
+            },
+        )
+        assert schedule.status_code == 200
+        topo = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/toposort")
+        assert topo.status_code == 200
+        assert "edges" in topo.json()
+        preflight = client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/factory/pull/preflight",
+            json={"package_ids": ["factory_preset_missing"]},
+        )
+        assert preflight.status_code == 400
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

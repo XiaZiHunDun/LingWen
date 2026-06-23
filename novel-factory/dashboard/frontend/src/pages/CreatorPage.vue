@@ -145,6 +145,12 @@
             data-testid="wizard-digest-handle-channels"
             placeholder='handle 路由 JSON，如 {"batch":["webhook"],"*":["email"]}'
           />
+          <input
+            v-model="wizardDigestHandleQuietJson"
+            class="vol-input"
+            data-testid="wizard-digest-handle-quiet-hours"
+            placeholder='handle 静默 JSON，如 {"batch":{"start":22,"end":6}}'
+          />
           <label class="meta-line">
             静默时段（UTC）
             <input
@@ -182,6 +188,13 @@
               重试失败 digest
             </button>
           </div>
+          <div
+            v-if="wizardDigestDeadLetter.item_count"
+            class="wizard-digest-dead-letter"
+            data-testid="wizard-digest-dead-letter-panel"
+          >
+            <p class="meta-line">死信队列 {{ wizardDigestDeadLetter.item_count }} 条</p>
+          </div>
         </div>
         <ul>
           <li
@@ -214,6 +227,12 @@
             class="vol-input"
             data-testid="wizard-webhook-url"
             placeholder="https://example.com/hooks/mentions"
+          />
+          <input
+            v-model="wizardWebhookSigningSecret"
+            class="vol-input"
+            data-testid="wizard-webhook-signing-secret"
+            placeholder="Webhook 签名密钥（可选）"
           />
           <button
             type="button"
@@ -501,7 +520,14 @@
                 type="text"
                 class="vol-input"
                 data-testid="template-approval-step-assignees"
-                placeholder="审批人（逗号分隔，按步）"
+                placeholder="审批人（逗号分步）"
+              />
+              <input
+                v-model="templateApprovalOrGroups"
+                type="text"
+                class="vol-input"
+                data-testid="template-approval-or-groups"
+                placeholder="OR 签：alice|bob,carol"
               />
               <button
                 type="button"
@@ -578,7 +604,14 @@
                   <span>{{ approval.previous_label || '—' }} → {{ approval.version_label || '（清除）' }}</span>
                   <span class="meta-line" data-testid="template-approval-chain-progress">{{ approval.chain_progress }}</span>
                   <span
-                    v-if="approval.current_assignee"
+                    v-if="approval.or_signing && approval.current_assignees?.length"
+                    class="meta-line"
+                    data-testid="template-approval-or-assignees"
+                  >
+                    OR 签：{{ approval.current_assignees.join(' / ') }}
+                  </span>
+                  <span
+                    v-else-if="approval.current_assignee"
                     class="meta-line"
                     data-testid="template-approval-current-assignee"
                   >
@@ -591,6 +624,22 @@
                   >
                     备注：{{ approval.submit_note }}
                   </span>
+                  <button
+                    type="button"
+                    class="mini-btn pixel-border"
+                    data-testid="preview-approval-snapshot-diff-btn"
+                    @click="previewApprovalSnapshotDiff(approval.id)"
+                  >
+                    快照 diff
+                  </button>
+                  <button
+                    type="button"
+                    class="mini-btn pixel-border"
+                    data-testid="transfer-template-approval-btn"
+                    @click="transferTemplateApproval(approval.id)"
+                  >
+                    转交
+                  </button>
                   <button
                     type="button"
                     class="mini-btn pixel-border"
@@ -1199,6 +1248,38 @@
                 </button>
               </div>
               <div
+                v-if="mergePresetToposort.edges?.length"
+                class="merge-preset-toposort"
+                data-testid="merge-preset-toposort-panel"
+              >
+                <p class="meta-line">拓扑序（{{ mergePresetToposort.order?.join(' → ') }}）</p>
+                <ul>
+                  <li
+                    v-for="edge in mergePresetToposort.edges"
+                    :key="`${edge.from}-${edge.to}`"
+                    data-testid="merge-preset-toposort-edge"
+                  >
+                    {{ edge.from }} → {{ edge.to }}
+                  </li>
+                </ul>
+              </div>
+              <div
+                v-if="mergePresetChangelog.entries?.length"
+                class="merge-preset-changelog"
+                data-testid="merge-preset-changelog-panel"
+              >
+                <p class="meta-line">预设变更（{{ mergePresetChangelog.entry_count }}）</p>
+                <ul>
+                  <li
+                    v-for="(entry, idx) in mergePresetChangelog.entries"
+                    :key="idx"
+                    data-testid="merge-preset-changelog-row"
+                  >
+                    {{ entry.action }} · {{ entry.changed_fields?.join(', ') }}
+                  </li>
+                </ul>
+              </div>
+              <div
                 v-if="mergePresetGraph.edges?.length"
                 class="merge-preset-graph"
                 data-testid="merge-preset-graph-panel"
@@ -1514,6 +1595,12 @@ import {
   fetchCreatorTemplateApprovalSlaConfig,
   saveCreatorTemplateApprovalSlaConfig,
   fetchCreatorTemplateApprovalOverdue,
+  transferCreatorTemplateApproval,
+  fetchCreatorTemplateApprovalSnapshotDiff,
+  fetchCreatorOnboardingDigestDeadLetter,
+  preflightCreatorFactoryMergePresetPull,
+  fetchCreatorMergePresetChangelog,
+  fetchCreatorMergePresetToposort,
   fetchCreatorOnboardingNotifications,
   fetchCreatorOnboardingNotificationDigest,
   fetchCreatorOnboardingDigestSchedule,
@@ -1633,18 +1720,25 @@ const wizardDigestScheduleHours = ref(24);
 const wizardDigestQuietStart = ref(null);
 const wizardDigestQuietEnd = ref(null);
 const wizardDigestHandleChannelsJson = ref('');
+const wizardDigestHandleQuietJson = ref('');
 const wizardDigestStats = ref({ sent_total: 0, failed_total: 0 });
+const wizardDigestDeadLetter = ref({ item_count: 0, items: [] });
 const wizardDigestRetryQueue = ref({ item_count: 0, items: [] });
+const wizardWebhookSigningSecret = ref('');
 const templateApprovals = ref([]);
 const templateApprovalHistory = ref([]);
 const overdueTemplateApprovals = ref([]);
 const templateApprovalChainSteps = ref(2);
 const templateApprovalStepAssignees = ref('');
+const templateApprovalOrGroups = ref('');
+const templateApprovalSnapshotDiff = ref(null);
 const templateApprovalSlaHours = ref(72);
 const templateApprovalEmailOnSubmit = ref(true);
 const templateApprovalEmailOnReject = ref(true);
 const templateApprovalEmailOnOverdue = ref(true);
 const mergePresetImportDiff = ref({ added: [], updated: [], removed: [] });
+const mergePresetToposort = ref({ order: [], edges: [], edge_count: 0 });
+const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] });
 const mergePresetImportPreflight = ref(null);
 const templateApprovalSubmitting = ref(false);
 const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
@@ -2132,10 +2226,13 @@ async function loadWizardDigestSchedule() {
     wizardDigestQuietStart.value = data.quiet_hours_start ?? null;
     wizardDigestQuietEnd.value = data.quiet_hours_end ?? null;
     wizardDigestHandleChannelsJson.value = JSON.stringify(data.handle_channels || {});
+    wizardDigestHandleQuietJson.value = JSON.stringify(data.handle_quiet_hours || {});
     const stats = await fetchCreatorOnboardingDigestStats();
     wizardDigestStats.value = stats;
     const retry = await fetchCreatorOnboardingDigestRetryQueue();
     wizardDigestRetryQueue.value = retry;
+    const deadLetter = await fetchCreatorOnboardingDigestDeadLetter();
+    wizardDigestDeadLetter.value = deadLetter;
   } catch {
     wizardDigestScheduleEnabled.value = false;
     wizardDigestScheduleHours.value = 24;
@@ -2148,14 +2245,19 @@ async function loadWizardDigestSchedule() {
 async function saveWizardDigestSchedule() {
   try {
     let handleChannels = {};
+    let handleQuietHours = {};
     if (wizardDigestHandleChannelsJson.value.trim()) {
       handleChannels = JSON.parse(wizardDigestHandleChannelsJson.value);
+    }
+    if (wizardDigestHandleQuietJson.value.trim()) {
+      handleQuietHours = JSON.parse(wizardDigestHandleQuietJson.value);
     }
     await saveCreatorOnboardingDigestSchedule({
       enabled: wizardDigestScheduleEnabled.value,
       interval_hours: wizardDigestScheduleHours.value,
       channels: ['webhook', 'email'],
       handle_channels: handleChannels,
+      handle_quiet_hours: handleQuietHours,
       quiet_hours_start: wizardDigestQuietStart.value,
       quiet_hours_end: wizardDigestQuietEnd.value,
     });
@@ -2190,6 +2292,7 @@ async function loadWizardWebhook() {
     const data = await fetchCreatorOnboardingWebhook();
     wizardWebhookUrl.value = data.url || '';
     wizardWebhookEnabled.value = Boolean(data.enabled);
+    wizardWebhookSigningSecret.value = data.signing_secret || '';
   } catch {
     wizardWebhookUrl.value = '';
     wizardWebhookEnabled.value = false;
@@ -2202,6 +2305,7 @@ async function saveWizardWebhook() {
       url: wizardWebhookUrl.value.trim(),
       enabled: wizardWebhookEnabled.value,
       mention_handles: wizardNotificationHandles.value,
+      signing_secret: wizardWebhookSigningSecret.value.trim(),
     });
     saveMessage.value = '已保存通知 Webhook';
   } catch (e) {
@@ -2328,6 +2432,14 @@ async function loadMergePresetPackages() {
     mergePresetConflicts.value = conflicts;
     const fixes = await fetchCreatorMergePresetConflictFixes();
     mergePresetConflictFixes.value = fixes;
+    const topo = await fetchCreatorMergePresetToposort();
+    mergePresetToposort.value = topo;
+    if (selectedMergePresetPackage.value) {
+      const changelog = await fetchCreatorMergePresetChangelog(selectedMergePresetPackage.value);
+      mergePresetChangelog.value = changelog;
+    } else {
+      mergePresetChangelog.value = { package_id: '', entry_count: 0, entries: [] };
+    }
   } catch {
     mergePresetPackages.value = [];
     factoryMergePresetPackages.value = [];
@@ -2342,6 +2454,11 @@ async function loadTemplateApprovalChainConfig() {
     const data = await fetchCreatorTemplateApprovalChainConfig();
     templateApprovalChainSteps.value = data.required_steps || 2;
     templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
+    if (data.step_assignee_groups?.length) {
+      templateApprovalOrGroups.value = data.step_assignee_groups
+        .map((group) => group.join('|'))
+        .join(',');
+    }
     const sla = await fetchCreatorTemplateApprovalSlaConfig();
     templateApprovalSlaHours.value = sla.timeout_hours || 72;
     templateApprovalEmailOnSubmit.value = Boolean(sla.email_on_submit);
@@ -2377,9 +2494,14 @@ async function saveTemplateApprovalChainConfig() {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+    const orGroups = templateApprovalOrGroups.value
+      .split(',')
+      .map((step) => step.split('|').map((s) => s.trim()).filter(Boolean))
+      .filter((group) => group.length);
     const data = await saveCreatorTemplateApprovalChainConfig({
       required_steps: templateApprovalChainSteps.value,
       step_assignees: assignees,
+      step_assignee_groups: orGroups.length ? orGroups : undefined,
     });
     templateApprovalChainSteps.value = data.required_steps || 2;
     templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
@@ -2498,6 +2620,11 @@ async function pullFactoryMergePresets() {
   mergePresetFactoryPulling.value = true;
   error.value = null;
   try {
+    const preflight = await preflightCreatorFactoryMergePresetPull({ package_ids: packageIds });
+    if (preflight.blocked) {
+      saveMessage.value = `工厂拉取预检发现 ${preflight.conflict_count} 个冲突`;
+      return;
+    }
     const result = await pullCreatorFactoryMergePresetPackages({ package_ids: packageIds });
     saveMessage.value = `已从工厂库拉取 ${result.imported} 个预设包`;
     await loadMergePresetPackages();
@@ -2641,6 +2768,33 @@ async function rejectTemplateVersion(approvalId) {
     await rejectCreatorTemplateApproval(approvalId, { reason: '驳回' });
     saveMessage.value = '已驳回版本变更';
     await loadTemplateApprovals();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function transferTemplateApproval(approvalId) {
+  const toAssignee = window.prompt('转交给（审批人 ID）');
+  if (!toAssignee?.trim()) return;
+  try {
+    await transferCreatorTemplateApproval(approvalId, {
+      to_assignee: toAssignee.trim(),
+      note: '委派转交',
+    });
+    saveMessage.value = `已转交给 ${toAssignee.trim()}`;
+    await loadTemplateApprovals();
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function previewApprovalSnapshotDiff(approvalId) {
+  try {
+    templateApprovalSnapshotDiff.value = await fetchCreatorTemplateApprovalSnapshotDiff(approvalId);
+    const summary = templateApprovalSnapshotDiff.value?.diff_summary;
+    saveMessage.value = summary?.changed
+      ? `快照 diff：+${summary.lines_added} / -${summary.lines_removed}`
+      : '快照与当前卷纲一致';
   } catch (e) {
     handleSaveError(e);
   }
