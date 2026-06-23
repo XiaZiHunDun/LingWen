@@ -391,6 +391,13 @@ class CreatorVolumeTemplateApproval(BaseModel):
     resolved_at: Optional[str] = None
     reject_reason: str = ""
     has_volumes_snapshot: bool = False
+    chain_step: int = 1
+    chain_total: int = 1
+    chain_progress: str = "1/1"
+
+
+class CreatorVolumeTemplateApprovalChainConfig(BaseModel):
+    required_steps: int = 2
 
 
 class CreatorVolumeTemplateApprovalListResponse(BaseModel):
@@ -622,6 +629,26 @@ class CreatorOnboardingNotificationDigestResponse(BaseModel):
     groups: list[CreatorOnboardingNotificationDigestGroup] = []
 
 
+class CreatorOnboardingDigestScheduleConfig(BaseModel):
+    enabled: bool = False
+    interval_hours: int = 24
+    last_sent_at: Optional[str] = None
+    channels: list[str] = ["webhook"]
+
+
+class CreatorOnboardingDigestScheduleSaveRequest(BaseModel):
+    enabled: bool = True
+    interval_hours: int = 24
+    channels: list[str] = ["webhook"]
+
+
+class CreatorOnboardingDigestDispatchResponse(BaseModel):
+    sent: bool = False
+    skipped: bool = False
+    reason: Optional[str] = None
+    last_sent_at: Optional[str] = None
+
+
 class CreatorOnboardingWebhookConfig(BaseModel):
     enabled: bool = False
     url: str = ""
@@ -695,6 +722,19 @@ class CreatorMergePresetGraphResponse(BaseModel):
     edge_count: int
     nodes: list[CreatorMergePresetGraphNode]
     edges: list[CreatorMergePresetGraphEdge]
+
+
+class CreatorMergePresetConflict(BaseModel):
+    type: str
+    package_id: str
+    dependency_id: Optional[str] = None
+    path: list[str] = []
+    message: str = ""
+
+
+class CreatorMergePresetConflictsResponse(BaseModel):
+    conflict_count: int
+    conflicts: list[CreatorMergePresetConflict] = []
 
 
 class CreatorMergePresetFactoryPublishRequest(BaseModel):
@@ -2850,6 +2890,61 @@ def create_app(
         return CreatorOnboardingNotificationDigestResponse(**digest)
 
     @app.get(
+        "/api/creator/onboarding/notifications/digest/schedule",
+        response_model=CreatorOnboardingDigestScheduleConfig,
+    )
+    def creator_onboarding_digest_schedule_get() -> CreatorOnboardingDigestScheduleConfig:
+        from infra.creator_onboarding_digest_schedule import load_digest_schedule
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOnboardingDigestScheduleConfig(**load_digest_schedule(project.root))
+
+    @app.put(
+        "/api/creator/onboarding/notifications/digest/schedule",
+        response_model=CreatorOnboardingDigestScheduleConfig,
+    )
+    def creator_onboarding_digest_schedule_put(
+        req: CreatorOnboardingDigestScheduleSaveRequest,
+    ) -> CreatorOnboardingDigestScheduleConfig:
+        from infra.creator_onboarding_digest_schedule import save_digest_schedule
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        saved = save_digest_schedule(
+            project.root,
+            enabled=req.enabled,
+            interval_hours=req.interval_hours,
+            channels=req.channels,
+        )
+        return CreatorOnboardingDigestScheduleConfig(**saved)
+
+    @app.post(
+        "/api/creator/onboarding/notifications/digest/dispatch",
+        response_model=CreatorOnboardingDigestDispatchResponse,
+    )
+    def creator_onboarding_digest_dispatch(
+        force: bool = False,
+    ) -> CreatorOnboardingDigestDispatchResponse:
+        from infra.creator_onboarding_digest_schedule import dispatch_scheduled_digest
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = dispatch_scheduled_digest(project.root, force=force)
+        return CreatorOnboardingDigestDispatchResponse(
+            sent=bool(result.get("sent")),
+            skipped=bool(result.get("skipped")),
+            reason=result.get("reason"),
+            last_sent_at=result.get("last_sent_at"),
+        )
+
+    @app.get(
         "/api/creator/onboarding/webhook",
         response_model=CreatorOnboardingWebhookConfig,
     )
@@ -3149,6 +3244,35 @@ def create_app(
         return CreatorVolumeTemplateApprovalListResponse(
             approvals=[CreatorVolumeTemplateApproval(**row) for row in rows],
         )
+
+    @app.get(
+        "/api/creator/volume-plan/templates/approvals/chain-config",
+        response_model=CreatorVolumeTemplateApprovalChainConfig,
+    )
+    def creator_volume_plan_template_approval_chain_get() -> CreatorVolumeTemplateApprovalChainConfig:
+        from infra.creator_template_approvals import load_approval_chain_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorVolumeTemplateApprovalChainConfig(**load_approval_chain_config(project.root))
+
+    @app.put(
+        "/api/creator/volume-plan/templates/approvals/chain-config",
+        response_model=CreatorVolumeTemplateApprovalChainConfig,
+    )
+    def creator_volume_plan_template_approval_chain_put(
+        req: CreatorVolumeTemplateApprovalChainConfig,
+    ) -> CreatorVolumeTemplateApprovalChainConfig:
+        from infra.creator_template_approvals import save_approval_chain_config
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        saved = save_approval_chain_config(project.root, required_steps=req.required_steps)
+        return CreatorVolumeTemplateApprovalChainConfig(**saved)
 
     @app.post(
         "/api/creator/volume-plan/templates/{template_id}/version-approval",
@@ -3679,6 +3803,23 @@ def create_app(
                 )
                 for edge in graph["edges"]
             ],
+        )
+
+    @app.get(
+        "/api/creator/settings-docs/merge-preferences/preset-packages/conflicts",
+        response_model=CreatorMergePresetConflictsResponse,
+    )
+    def creator_settings_merge_preset_conflicts() -> CreatorMergePresetConflictsResponse:
+        from infra.creator_merge_preferences import detect_merge_preset_conflicts
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = detect_merge_preset_conflicts(project.root)
+        return CreatorMergePresetConflictsResponse(
+            conflict_count=result["conflict_count"],
+            conflicts=[CreatorMergePresetConflict(**row) for row in result["conflicts"]],
         )
 
     @app.get(

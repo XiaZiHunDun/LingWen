@@ -788,6 +788,10 @@ class TestCreatorEndpoints:
         assert match["version_semver_valid"] is True
 
     def test_template_version_approval_flow(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/volume-plan/templates/approvals/chain-config",
+            json={"required_steps": 1},
+        )
         save = client.post(
             "/api/creator/volume-plan/templates/save",
             json={
@@ -803,10 +807,10 @@ class TestCreatorEndpoints:
             json={"version_label": "v1.0.0"},
         )
         assert submit.status_code == 200
-        pending = client.get("/api/creator/volume-plan/templates/approvals?status=pending")
-        assert pending.status_code == 200
-        approval_id = pending.json()["approvals"][0]["id"]
+        approval_id = submit.json()["id"]
         approved = client.post(f"/api/creator/volume-plan/templates/approvals/{approval_id}/approve")
+        while approved.status_code == 200 and approved.json().get("chain_advanced"):
+            approved = client.post(f"/api/creator/volume-plan/templates/approvals/{approval_id}/approve")
         assert approved.status_code == 200
         assert approved.json()["status"] == "approved"
 
@@ -823,6 +827,54 @@ class TestCreatorEndpoints:
         graph = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/graph")
         assert graph.status_code == 200
         assert graph.json()["edge_count"] >= 3
+
+    def test_merge_preset_conflicts(self, client: TestClient) -> None:
+        client.post(
+            "/api/creator/settings-docs/merge-preferences/preset-packages/import",
+            json={
+                "packages": [
+                    {
+                        "id": "conflict_pkg",
+                        "name": "冲突包",
+                        "depends_on": ["ghost_pkg"],
+                        "pillars_merge_source": "disk",
+                        "global_outline_merge_source": "editor",
+                    },
+                ],
+            },
+        )
+        resp = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/conflicts")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["conflict_count"] >= 1
+        assert any(row["type"] == "missing_dependency" for row in data["conflicts"])
+
+    def test_template_approval_chain_config(self, client: TestClient) -> None:
+        get_resp = client.get("/api/creator/volume-plan/templates/approvals/chain-config")
+        assert get_resp.status_code == 200
+        assert get_resp.json()["required_steps"] >= 1
+        put_resp = client.put(
+            "/api/creator/volume-plan/templates/approvals/chain-config",
+            json={"required_steps": 3},
+        )
+        assert put_resp.status_code == 200
+        assert put_resp.json()["required_steps"] == 3
+
+    def test_digest_schedule_and_dispatch(self, client: TestClient) -> None:
+        client.put(
+            "/api/creator/onboarding/notes",
+            json={"step_notes": {"volume": "先锁卷纲 @batch"}},
+        )
+        schedule = client.put(
+            "/api/creator/onboarding/notifications/digest/schedule",
+            json={"enabled": True, "interval_hours": 12, "channels": ["webhook"]},
+        )
+        assert schedule.status_code == 200
+        assert schedule.json()["enabled"] is True
+        dispatch = client.post("/api/creator/onboarding/notifications/digest/dispatch?force=true")
+        assert dispatch.status_code == 200
+        body = dispatch.json()
+        assert body.get("sent") is True or body.get("skipped") is True
 
     def test_merge_preset_factory_library(self, client: TestClient) -> None:
         save_pkg = client.post(

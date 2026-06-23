@@ -103,3 +103,29 @@ def dispatch_mention_webhook(
         return {"dispatched": len(payload_rows), "status": status}
     except urllib.error.URLError as exc:
         return {"dispatched": 0, "error": str(exc.reason or exc)}
+
+
+def dispatch_digest_webhook(
+    project_root: Path | str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """POST notification digest summary to configured webhook."""
+    config = load_webhook_config(project_root)
+    if not config.get("enabled"):
+        return {"dispatched": 0, "skipped": True}
+    url = str(config.get("url", "")).strip()
+    if not url.startswith(("http://", "https://")):
+        return {"dispatched": 0, "skipped": True, "error": "invalid webhook url"}
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_WEBHOOK_TIMEOUT_SEC) as response:
+            status = getattr(response, "status", 200)
+        return {"dispatched": 1, "status": status}
+    except urllib.error.URLError as exc:
+        return {"dispatched": 0, "error": str(exc.reason or exc)}

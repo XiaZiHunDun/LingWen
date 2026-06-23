@@ -202,6 +202,22 @@ from infra.creator_merge_preferences import build_merge_preset_graph
 graph = build_merge_preset_graph(root)
 assert graph.get("edge_count", 0) >= 3
 
+from infra.creator_template_approvals import save_approval_chain_config
+
+chain = save_approval_chain_config(root, required_steps=2)
+assert chain["required_steps"] == 2
+
+from infra.creator_onboarding_digest_schedule import save_digest_schedule, dispatch_scheduled_digest
+
+save_digest_schedule(root, enabled=True, interval_hours=24, channels=["webhook"])
+digest_dispatch = dispatch_scheduled_digest(root, force=True)
+assert digest_dispatch.get("sent") is True or digest_dispatch.get("skipped") is True
+
+from infra.creator_merge_preferences import detect_merge_preset_conflicts
+
+conflicts = detect_merge_preset_conflicts(root)
+assert "conflict_count" in conflicts
+
 delete_custom_volume_template(root, saved["id"])
 assert not any(r["id"] == saved["id"] for r in list_volume_templates(root))
 

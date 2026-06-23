@@ -16,10 +16,35 @@ from infra.creator_volume_templates import (
     set_factory_template_version_label,
 )
 
-_STATE_VERSION = "1"
+_STATE_VERSION = "2"
 _MAX_APPROVALS = 50
+_MAX_CHAIN_STEPS = 5
 _CUSTOM_PREFIX = "custom_"
 _FACTORY_PREFIX = "factory_"
+
+
+def _chain_config_path(project_root: Path | str) -> Path:
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    return root / ".state" / "creator_template_approval_chain.json"
+
+
+def load_approval_chain_config(project_root: Path | str) -> dict[str, Any]:
+    path = _chain_config_path(project_root)
+    if not path.is_file():
+        return {"schema_version": "1", "required_steps": 2}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    steps = int(data.get("required_steps", 2))
+    steps = max(1, min(steps, _MAX_CHAIN_STEPS))
+    return {"schema_version": "1", "required_steps": steps}
+
+
+def save_approval_chain_config(project_root: Path | str, *, required_steps: int) -> dict[str, Any]:
+    steps = max(1, min(int(required_steps), _MAX_CHAIN_STEPS))
+    data = {"schema_version": "1", "required_steps": steps}
+    path = _chain_config_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return data
 
 
 def _approvals_path(project_root: Path | str) -> Path:
@@ -88,6 +113,7 @@ def submit_template_version_approval(
     for row in approvals:
         if row.get("template_id") == tid and row.get("status") == "pending":
             raise ValueError("template already has a pending approval")
+    chain_total = load_approval_chain_config(project_root)["required_steps"]
     entry = {
         "id": f"aprv_{uuid.uuid4().hex[:10]}",
         "template_id": tid,
@@ -99,6 +125,9 @@ def submit_template_version_approval(
         "submitted_at": _now_iso(),
         "resolved_at": None,
         "reject_reason": "",
+        "chain_step": 1,
+        "chain_total": chain_total,
+        "chain_log": [],
     }
     approvals.insert(0, entry)
     store["approvals"] = approvals[:_MAX_APPROVALS]
@@ -107,6 +136,8 @@ def submit_template_version_approval(
 
 
 def _public_approval_row(row: dict[str, Any]) -> dict[str, Any]:
+    chain_step = int(row.get("chain_step") or 1)
+    chain_total = int(row.get("chain_total") or 1)
     return {
         "id": str(row["id"]),
         "template_id": str(row.get("template_id", "")),
@@ -118,6 +149,9 @@ def _public_approval_row(row: dict[str, Any]) -> dict[str, Any]:
         "resolved_at": row.get("resolved_at"),
         "reject_reason": str(row.get("reject_reason", "")),
         "has_volumes_snapshot": bool(row.get("volumes_snapshot")),
+        "chain_step": chain_step,
+        "chain_total": chain_total,
+        "chain_progress": f"{chain_step}/{chain_total}",
     }
 
 
@@ -146,6 +180,17 @@ def approve_template_approval(project_root: Path | str, approval_id: str) -> dic
             continue
         if row.get("status") != "pending":
             raise ValueError(f"approval is not pending: {approval_id!r}")
+        chain_step = int(row.get("chain_step") or 1)
+        chain_total = int(row.get("chain_total") or 1)
+        chain_log: list[dict[str, Any]] = list(row.get("chain_log") or [])
+        chain_log.append({"step": chain_step, "approved_at": _now_iso()})
+        row["chain_log"] = chain_log
+        if chain_step < chain_total:
+            row["chain_step"] = chain_step + 1
+            _save_store(project_root, store)
+            public = _public_approval_row(row)
+            public["chain_advanced"] = True
+            return public
         tid = str(row.get("template_id", ""))
         proposed = row.get("version_label")
         if row.get("scope") == "factory":
@@ -161,6 +206,7 @@ def approve_template_approval(project_root: Path | str, approval_id: str) -> dic
         _save_store(project_root, store)
         public = _public_approval_row(row)
         public["applied"] = result
+        public["chain_advanced"] = False
         return public
     raise ValueError(f"unknown approval: {approval_id!r}")
 

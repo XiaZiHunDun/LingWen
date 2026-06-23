@@ -99,6 +99,37 @@
             </li>
           </ul>
         </div>
+        <div class="wizard-digest-schedule-panel" data-testid="wizard-digest-schedule-panel">
+          <p class="meta-line">定时 digest</p>
+          <label class="meta-line">
+            <input v-model="wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" />
+            启用（每 {{ wizardDigestScheduleHours }} 小时）
+          </label>
+          <input
+            v-model.number="wizardDigestScheduleHours"
+            type="number"
+            min="1"
+            max="168"
+            class="vol-input"
+            data-testid="wizard-digest-schedule-hours"
+          />
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="save-wizard-digest-schedule-btn"
+            @click="saveWizardDigestSchedule"
+          >
+            保存定时
+          </button>
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="dispatch-wizard-digest-btn"
+            @click="dispatchWizardDigest"
+          >
+            立即发送 digest
+          </button>
+        </div>
         <ul>
           <li
             v-for="note in wizardNotifications"
@@ -400,6 +431,28 @@
               </button>
             </div>
             <div
+              class="template-approval-chain-config"
+              data-testid="template-approval-chain-config"
+            >
+              <p class="meta-line">审批链步数</p>
+              <input
+                v-model.number="templateApprovalChainSteps"
+                type="number"
+                min="1"
+                max="5"
+                class="vol-input"
+                data-testid="template-approval-chain-steps"
+              />
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="save-template-approval-chain-btn"
+                @click="saveTemplateApprovalChainConfig"
+              >
+                保存审批链
+              </button>
+            </div>
+            <div
               v-if="pendingTemplateApprovals.length"
               class="template-approvals"
               data-testid="template-approvals-panel"
@@ -413,6 +466,7 @@
                   data-testid="template-approval-row"
                 >
                   <span>{{ approval.previous_label || '—' }} → {{ approval.version_label || '（清除）' }}</span>
+                  <span class="meta-line" data-testid="template-approval-chain-progress">{{ approval.chain_progress }}</span>
                   <button
                     type="button"
                     class="mini-btn pixel-border"
@@ -1002,6 +1056,22 @@
                 </ul>
               </div>
               <div
+                v-if="mergePresetConflicts.conflicts?.length"
+                class="merge-preset-conflicts"
+                data-testid="merge-preset-conflicts-panel"
+              >
+                <p class="meta-line">预设包冲突（{{ mergePresetConflicts.conflict_count }}）</p>
+                <ul>
+                  <li
+                    v-for="(conflict, idx) in mergePresetConflicts.conflicts"
+                    :key="`${conflict.type}-${idx}`"
+                    data-testid="merge-preset-conflict-row"
+                  >
+                    {{ conflict.message }}
+                  </li>
+                </ul>
+              </div>
+              <div
                 v-if="showImportMergePresetPackages"
                 class="import-templates-panel"
                 data-testid="import-merge-preset-packages-panel"
@@ -1210,8 +1280,13 @@ import {
   submitCreatorTemplateVersionApproval,
   approveCreatorTemplateApproval,
   rejectCreatorTemplateApproval,
+  fetchCreatorTemplateApprovalChainConfig,
+  saveCreatorTemplateApprovalChainConfig,
   fetchCreatorOnboardingNotifications,
   fetchCreatorOnboardingNotificationDigest,
+  fetchCreatorOnboardingDigestSchedule,
+  saveCreatorOnboardingDigestSchedule,
+  dispatchCreatorOnboardingDigest,
   ackCreatorOnboardingNotifications,
   fetchCreatorOnboardingWebhook,
   saveCreatorOnboardingWebhook,
@@ -1220,6 +1295,7 @@ import {
   fetchCreatorMergePresetPackages,
   fetchCreatorFactoryMergePresetPackages,
   fetchCreatorMergePresetGraph,
+  fetchCreatorMergePresetConflicts,
   exportCreatorMergePresetPackages,
   importCreatorMergePresetPackages,
   publishCreatorMergePresetToFactory,
@@ -1311,9 +1387,13 @@ const wizardEmailTo = ref('');
 const wizardEmailSmtpHost = ref('');
 const wizardEmailEnabled = ref(false);
 const wizardNotificationDigest = ref({ unread: 0, group_count: 0, groups: [] });
+const wizardDigestScheduleEnabled = ref(false);
+const wizardDigestScheduleHours = ref(24);
 const templateApprovals = ref([]);
+const templateApprovalChainSteps = ref(2);
 const templateApprovalSubmitting = ref(false);
 const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
+const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] });
 const templateRollbackSaving = ref(false);
 const mergePresetFactoryPublishing = ref(false);
 const mergePresetFactoryPulling = ref(false);
@@ -1775,6 +1855,7 @@ async function loadWizardNotifications() {
     wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
     const digest = await fetchCreatorOnboardingNotificationDigest(handle);
     wizardNotificationDigest.value = digest;
+    await loadWizardDigestSchedule();
     await loadWizardWebhook();
     await loadWizardEmail();
   } catch {
@@ -1782,6 +1863,41 @@ async function loadWizardNotifications() {
     wizardNotificationHandles.value = [];
     wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
     wizardNotificationDigest.value = { unread: 0, group_count: 0, groups: [] };
+    wizardDigestScheduleEnabled.value = false;
+    wizardDigestScheduleHours.value = 24;
+  }
+}
+
+async function loadWizardDigestSchedule() {
+  try {
+    const data = await fetchCreatorOnboardingDigestSchedule();
+    wizardDigestScheduleEnabled.value = Boolean(data.enabled);
+    wizardDigestScheduleHours.value = data.interval_hours || 24;
+  } catch {
+    wizardDigestScheduleEnabled.value = false;
+    wizardDigestScheduleHours.value = 24;
+  }
+}
+
+async function saveWizardDigestSchedule() {
+  try {
+    await saveCreatorOnboardingDigestSchedule({
+      enabled: wizardDigestScheduleEnabled.value,
+      interval_hours: wizardDigestScheduleHours.value,
+      channels: ['webhook', 'email'],
+    });
+    saveMessage.value = '已保存 digest 定时';
+  } catch (e) {
+    handleSaveError(e);
+  }
+}
+
+async function dispatchWizardDigest() {
+  try {
+    const result = await dispatchCreatorOnboardingDigest(true);
+    saveMessage.value = result.sent ? '已发送 digest' : `跳过：${result.reason || '未知'}`;
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 
@@ -1919,10 +2035,34 @@ async function loadMergePresetPackages() {
     factoryMergePresetPackages.value = factoryData.packages || [];
     const graph = await fetchCreatorMergePresetGraph();
     mergePresetGraph.value = graph;
+    const conflicts = await fetchCreatorMergePresetConflicts();
+    mergePresetConflicts.value = conflicts;
   } catch {
     mergePresetPackages.value = [];
     factoryMergePresetPackages.value = [];
     mergePresetGraph.value = { node_count: 0, edge_count: 0, nodes: [], edges: [] };
+    mergePresetConflicts.value = { conflict_count: 0, conflicts: [] };
+  }
+}
+
+async function loadTemplateApprovalChainConfig() {
+  try {
+    const data = await fetchCreatorTemplateApprovalChainConfig();
+    templateApprovalChainSteps.value = data.required_steps || 2;
+  } catch {
+    templateApprovalChainSteps.value = 2;
+  }
+}
+
+async function saveTemplateApprovalChainConfig() {
+  try {
+    const data = await saveCreatorTemplateApprovalChainConfig({
+      required_steps: templateApprovalChainSteps.value,
+    });
+    templateApprovalChainSteps.value = data.required_steps || 2;
+    saveMessage.value = `已保存审批链（${templateApprovalChainSteps.value} 步）`;
+  } catch (e) {
+    handleSaveError(e);
   }
 }
 
@@ -1930,6 +2070,7 @@ async function loadTemplateApprovals() {
   try {
     const data = await fetchCreatorTemplateApprovals({ status: 'pending' });
     templateApprovals.value = data.approvals || [];
+    await loadTemplateApprovalChainConfig();
   } catch {
     templateApprovals.value = [];
   }
@@ -2082,11 +2223,15 @@ async function submitTemplateVersionApproval() {
 
 async function approveTemplateVersion(approvalId) {
   try {
-    await approveCreatorTemplateApproval(approvalId);
-    saveMessage.value = '已批准版本变更';
+    const result = await approveCreatorTemplateApproval(approvalId);
+    saveMessage.value = result.chain_advanced
+      ? `审批链进度 ${result.chain_progress}`
+      : '已批准版本变更';
     await loadTemplateApprovals();
-    await loadVolumeTemplates();
-    await loadTemplateVersionChangelog();
+    if (!result.chain_advanced) {
+      await loadVolumeTemplates();
+      await loadTemplateVersionChangelog();
+    }
   } catch (e) {
     handleSaveError(e);
   }

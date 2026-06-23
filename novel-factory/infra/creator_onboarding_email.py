@@ -175,3 +175,52 @@ def dispatch_mention_email(
         return {"sent": len(payload_rows)}
     except (smtplib.SMTPException, OSError) as exc:
         return {"sent": 0, "error": str(exc)}
+
+
+def _build_digest_email_body(digest: dict[str, Any]) -> str:
+    lines = [
+        "灵文创作向导 · 通知摘要",
+        f"未读 {digest.get('unread', 0)} 条 · {digest.get('group_count', 0)} 个 handle",
+        "",
+    ]
+    for group in digest.get("groups") or []:
+        steps = ", ".join(f"{s['step_id']}({s['count']})" for s in group.get("steps") or [])
+        lines.append(f"- @{group.get('handle')} · {group.get('count')} 条 · {steps}")
+    return "\n".join(lines)
+
+
+def dispatch_digest_email(
+    project_root: Path | str,
+    digest: dict[str, Any],
+) -> dict[str, Any]:
+    """Send notification digest summary via SMTP."""
+    if not digest.get("unread"):
+        return {"sent": 0, "skipped": True}
+    path = _email_path(project_root)
+    if not path.is_file():
+        return {"sent": 0, "skipped": True}
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    config = load_email_config(project_root)
+    if not config.get("enabled"):
+        return {"sent": 0, "skipped": True}
+    recipients = config.get("to_addresses") or []
+    host = str(config.get("smtp_host", "")).strip()
+    if not recipients or not host:
+        return {"sent": 0, "skipped": True, "error": "email not fully configured"}
+    message = EmailMessage()
+    message["Subject"] = "灵文创作向导 · 通知摘要"
+    message["From"] = config.get("from_address") or recipients[0]
+    message["To"] = ", ".join(recipients)
+    message.set_content(_build_digest_email_body(digest))
+    try:
+        with smtplib.SMTP(host, int(config.get("smtp_port", 587)), timeout=_SMTP_TIMEOUT_SEC) as smtp:
+            if config.get("smtp_use_tls", True):
+                smtp.starttls()
+            user = str(config.get("smtp_user", "")).strip()
+            password = str(stored.get("smtp_password", "")).strip()
+            if user and password:
+                smtp.login(user, password)
+            smtp.send_message(message)
+        return {"sent": 1}
+    except (smtplib.SMTPException, OSError) as exc:
+        return {"sent": 0, "error": str(exc)}

@@ -50,8 +50,14 @@ const creatorMocks = vi.hoisted(() => ({
   approveCreatorTemplateApproval: vi.fn(),
   rejectCreatorTemplateApproval: vi.fn(),
   fetchCreatorOnboardingNotificationDigest: vi.fn(),
+  fetchCreatorOnboardingDigestSchedule: vi.fn(),
+  saveCreatorOnboardingDigestSchedule: vi.fn(),
+  dispatchCreatorOnboardingDigest: vi.fn(),
   fetchCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorMergePresetGraph: vi.fn(),
+  fetchCreatorMergePresetConflicts: vi.fn(),
+  fetchCreatorTemplateApprovalChainConfig: vi.fn(),
+  saveCreatorTemplateApprovalChainConfig: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
   fetchCreatorSettingsHistory: vi.fn(),
@@ -109,8 +115,14 @@ vi.mock('../../src/api/index.js', () => ({
   approveCreatorTemplateApproval: creatorMocks.approveCreatorTemplateApproval,
   rejectCreatorTemplateApproval: creatorMocks.rejectCreatorTemplateApproval,
   fetchCreatorOnboardingNotificationDigest: creatorMocks.fetchCreatorOnboardingNotificationDigest,
+  fetchCreatorOnboardingDigestSchedule: creatorMocks.fetchCreatorOnboardingDigestSchedule,
+  saveCreatorOnboardingDigestSchedule: creatorMocks.saveCreatorOnboardingDigestSchedule,
+  dispatchCreatorOnboardingDigest: creatorMocks.dispatchCreatorOnboardingDigest,
   fetchCreatorFactoryMergePresetPackages: creatorMocks.fetchCreatorFactoryMergePresetPackages,
   fetchCreatorMergePresetGraph: creatorMocks.fetchCreatorMergePresetGraph,
+  fetchCreatorMergePresetConflicts: creatorMocks.fetchCreatorMergePresetConflicts,
+  fetchCreatorTemplateApprovalChainConfig: creatorMocks.fetchCreatorTemplateApprovalChainConfig,
+  saveCreatorTemplateApprovalChainConfig: creatorMocks.saveCreatorTemplateApprovalChainConfig,
   publishCreatorMergePresetToFactory: creatorMocks.publishCreatorMergePresetToFactory,
   pullCreatorFactoryMergePresetPackages: creatorMocks.pullCreatorFactoryMergePresetPackages,
   fetchCreatorSettingsHistory: creatorMocks.fetchCreatorSettingsHistory,
@@ -349,6 +361,10 @@ describe('CreatorPage', () => {
         { from_pkg: 'pillars_disk_outline_editor', to: 'all_editor', relation: 'depends_on' },
       ],
     });
+    creatorMocks.fetchCreatorMergePresetConflicts.mockResolvedValue({
+      conflict_count: 1,
+      conflicts: [{ type: 'missing_dependency', package_id: 'my_combo', dependency_id: 'ghost', message: 'my_combo depends on unknown package ghost' }],
+    });
     creatorMocks.fetchCreatorTemplateApprovals.mockResolvedValue({
       approvals: [{
         id: 'aprv_test',
@@ -357,8 +373,13 @@ describe('CreatorPage', () => {
         version_label: 'v2.0.0',
         previous_label: 'v1.0.0',
         has_volumes_snapshot: true,
+        chain_step: 1,
+        chain_total: 2,
+        chain_progress: '1/2',
       }],
     });
+    creatorMocks.fetchCreatorTemplateApprovalChainConfig.mockResolvedValue({ required_steps: 2 });
+    creatorMocks.saveCreatorTemplateApprovalChainConfig.mockResolvedValue({ required_steps: 3 });
     creatorMocks.submitCreatorTemplateVersionApproval.mockResolvedValue({
       id: 'aprv_new',
       template_id: 'custom_test',
@@ -376,6 +397,19 @@ describe('CreatorPage', () => {
       group_count: 1,
       groups: [{ handle: 'batch', count: 1, steps: [{ step_id: 'volume', count: 1 }], excerpts: ['先锁卷纲'] }],
     });
+    creatorMocks.fetchCreatorOnboardingDigestSchedule.mockResolvedValue({
+      enabled: false,
+      interval_hours: 24,
+      last_sent_at: null,
+      channels: ['webhook'],
+    });
+    creatorMocks.saveCreatorOnboardingDigestSchedule.mockResolvedValue({
+      enabled: true,
+      interval_hours: 12,
+      last_sent_at: null,
+      channels: ['webhook', 'email'],
+    });
+    creatorMocks.dispatchCreatorOnboardingDigest.mockResolvedValue({ sent: true });
     creatorMocks.publishCreatorMergePresetToFactory.mockResolvedValue({ id: 'factory_preset_my_combo', name: '我的组合', scope: 'factory' });
     creatorMocks.pullCreatorFactoryMergePresetPackages.mockResolvedValue({ imported: 1, total: 1, package_ids: ['factory_preset_team'] });
     creatorMocks.fetchCreatorOnboardingWebhook.mockResolvedValue({ enabled: false, url: '', mention_handles: [] });
@@ -1093,5 +1127,39 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(wrapper.find('[data-testid="merge-preset-graph-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="merge-preset-graph-edge"]').exists()).toBe(true);
+  });
+
+  it('shows wizard digest schedule panel', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-digest-schedule-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="wizard-digest-schedule-enabled"]').setValue(true);
+    await wrapper.find('[data-testid="save-wizard-digest-schedule-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorOnboardingDigestSchedule).toHaveBeenCalled();
+    await wrapper.find('[data-testid="dispatch-wizard-digest-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.dispatchCreatorOnboardingDigest).toHaveBeenCalled();
+  });
+
+  it('shows template approval chain progress and config', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="template-approval-chain-config"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="template-approval-chain-progress"]').text()).toBe('1/2');
+    await wrapper.find('[data-testid="template-approval-chain-steps"]').setValue(3);
+    await wrapper.find('[data-testid="save-template-approval-chain-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorTemplateApprovalChainConfig).toHaveBeenCalled();
+  });
+
+  it('shows merge preset conflicts panel', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="pillars-textarea"]').setValue('# 支柱\n新内容');
+    await wrapper.find('[data-testid="save-settings-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="merge-preset-conflicts-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="merge-preset-conflict-row"]').exists()).toBe(true);
   });
 });

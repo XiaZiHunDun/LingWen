@@ -439,10 +439,9 @@ def save_merge_preset_package(
     if normalized_version:
         entry["version_label"] = normalized_version
     if depends_on:
-        known = {row["id"] for row in list_merge_preset_packages(project_root)}
-        deps = [dep for dep in depends_on if dep in known and dep != pid]
+        deps = [dep for dep in depends_on if str(dep).strip() and dep != pid]
         if deps:
-            entry["depends_on"] = list(dict.fromkeys(deps))
+            entry["depends_on"] = list(dict.fromkeys(str(dep).strip() for dep in deps))
     path = _custom_preset_packages_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     custom = _load_custom_preset_packages(project_root)
@@ -595,6 +594,10 @@ def import_merge_preset_packages(
         name = str(raw.get("name", "")).strip()
         if not pkg_id or not name:
             continue
+        raw_version = raw.get("version_label")
+        version_label = None
+        if raw_version is not None:
+            version_label = str(raw_version).strip() or None
         save_merge_preset_package(
             project_root,
             package_id=pkg_id,
@@ -602,7 +605,7 @@ def import_merge_preset_packages(
             description=str(raw.get("description", "")),
             pillars_merge_source=str(raw.get("pillars_merge_source", "editor")),
             global_outline_merge_source=str(raw.get("global_outline_merge_source", "editor")),
-            version_label=str(raw.get("version_label", "")).strip() or None,
+            version_label=version_label,
             depends_on=[str(dep) for dep in (raw.get("depends_on") or []) if str(dep).strip()],
         )
         imported += 1
@@ -643,5 +646,104 @@ def build_merge_preset_graph(project_root: Path | str) -> dict[str, Any]:
         "edge_count": len(edges),
         "nodes": nodes,
         "edges": edges,
+    }
+
+
+def _semver_tuple(label: str | None) -> tuple[int, ...] | None:
+    from infra.creator_volume_templates import is_valid_version_label, validate_version_label
+
+    if not label or not is_valid_version_label(label):
+        return None
+    canonical = validate_version_label(str(label))
+    core = canonical.lstrip("v").split("-", 1)[0]
+    parts: list[int] = []
+    for piece in core.split("."):
+        try:
+            parts.append(int(piece))
+        except ValueError:
+            return None
+    return tuple(parts)
+
+
+def detect_merge_preset_conflicts(project_root: Path | str) -> dict[str, Any]:
+    """Detect dependency cycles, missing deps, and semver downgrade conflicts."""
+    packages = list_merge_preset_packages(project_root)
+    by_id = {pkg["id"]: pkg for pkg in packages}
+    adjacency: dict[str, list[str]] = {
+        pkg["id"]: [dep for dep in (pkg.get("depends_on") or []) if dep in by_id]
+        for pkg in packages
+    }
+    conflicts: list[dict[str, Any]] = []
+
+    for pkg in packages:
+        for dep_id in pkg.get("depends_on") or []:
+            if dep_id not in by_id:
+                conflicts.append(
+                    {
+                        "type": "missing_dependency",
+                        "package_id": pkg["id"],
+                        "dependency_id": dep_id,
+                        "message": f"{pkg['id']} depends on unknown package {dep_id}",
+                    },
+                )
+            elif dep_id == pkg["id"]:
+                conflicts.append(
+                    {
+                        "type": "self_dependency",
+                        "package_id": pkg["id"],
+                        "dependency_id": dep_id,
+                        "message": f"{pkg['id']} depends on itself",
+                    },
+                )
+            else:
+                pkg_ver = _semver_tuple(pkg.get("version_label"))
+                dep_ver = _semver_tuple(by_id[dep_id].get("version_label"))
+                if pkg_ver and dep_ver and pkg_ver < dep_ver:
+                    conflicts.append(
+                        {
+                            "type": "semver_downgrade",
+                            "package_id": pkg["id"],
+                            "dependency_id": dep_id,
+                            "message": (
+                                f"{pkg['id']} ({pkg.get('version_label')}) "
+                                f"is older than dependency {dep_id} ({by_id[dep_id].get('version_label')})"
+                            ),
+                        },
+                    )
+
+    visited: set[str] = set()
+    stack: set[str] = set()
+    cycle_path: list[str] = []
+
+    def _dfs(node: str, path: list[str]) -> bool:
+        if node in stack:
+            cycle_path.extend(path[path.index(node) :] + [node])
+            return True
+        if node in visited:
+            return False
+        visited.add(node)
+        stack.add(node)
+        for nxt in adjacency.get(node, []):
+            if _dfs(nxt, path + [node]):
+                return True
+        stack.remove(node)
+        return False
+
+    for node_id in adjacency:
+        cycle_path.clear()
+        if _dfs(node_id, []):
+            conflicts.append(
+                {
+                    "type": "circular_dependency",
+                    "package_id": cycle_path[0] if cycle_path else node_id,
+                    "path": cycle_path,
+                    "message": " -> ".join(cycle_path),
+                },
+            )
+            break
+
+    return {
+        "conflict_count": len(conflicts),
+        "conflicts": conflicts,
     }
 
