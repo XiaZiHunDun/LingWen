@@ -46,7 +46,7 @@ export default defineConfig({
     },
     {
       name: 'live-backend',
-      testMatch: /(ripples-audit|decisions-resolve)\.spec\.js/,
+      testMatch: /(ripples-audit|decisions-resolve|creator-workspace)\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
   ],

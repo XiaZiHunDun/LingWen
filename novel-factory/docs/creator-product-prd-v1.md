@@ -118,6 +118,13 @@ project:
 
 ## 11. 后续（v1.4+）
 
-- 卷纲拖拽/合并与范围重叠检测
-- Dashboard 一键 advance batch
-- 设定栏轻量在线编辑
+- 卷纲拖拽/合并与范围重叠检测 — ✅ v1.4（重叠 alert）
+- Dashboard 一键 advance batch — ✅ v1.4
+- 设定栏轻量在线编辑 — ✅ v1.4
+- 创作页 Playwright live e2e — ✅ v1.4（7 tests）
+
+## 12. 后续（v1.5+）
+
+- 卷纲拖拽排序
+- batch 完成后自动刷新卷摘要
+- 设定编辑 diff 预览

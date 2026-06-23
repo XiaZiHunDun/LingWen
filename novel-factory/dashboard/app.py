@@ -301,6 +301,19 @@ class CreatorChapterPreviewResponse(BaseModel):
     outline_truncated: bool
 
 
+class CreatorSettingsDocsResponse(BaseModel):
+    slug: str
+    pillars_path: str
+    global_outline_path: str
+    pillars_text: str
+    global_outline_text: str
+
+
+class CreatorSettingsDocsSaveRequest(BaseModel):
+    pillars_text: Optional[str] = None
+    global_outline_text: Optional[str] = None
+
+
 class StudioQualityResponse(BaseModel):
     slug: str
     pillars_ok: bool
@@ -2190,6 +2203,36 @@ def create_app(
             )
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
+
+    @app.get("/api/creator/settings-docs", response_model=CreatorSettingsDocsResponse)
+    def creator_settings_docs_get() -> CreatorSettingsDocsResponse:
+        from infra.creator_settings_docs import creator_settings_docs_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorSettingsDocsResponse(**creator_settings_docs_payload(project))
+
+    @app.put("/api/creator/settings-docs", response_model=CreatorSettingsDocsResponse)
+    def creator_settings_docs_put(
+        req: CreatorSettingsDocsSaveRequest,
+    ) -> CreatorSettingsDocsResponse:
+        from infra.creator_settings_docs import save_creator_settings_docs
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        if req.pillars_text is None and req.global_outline_text is None:
+            raise HTTPException(400, "provide pillars_text and/or global_outline_text")
+        return CreatorSettingsDocsResponse(
+            **save_creator_settings_docs(
+                project,
+                pillars_text=req.pillars_text,
+                global_outline_text=req.global_outline_text,
+            ),
+        )
 
     @app.get("/api/studio/quality", response_model=StudioQualityResponse)
     def studio_quality_dashboard() -> StudioQualityResponse:

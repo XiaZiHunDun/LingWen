@@ -265,6 +265,29 @@ def _chapter_in_locked_range(chapter: int, volumes: list[VolumeEntry]) -> bool:
     return False
 
 
+def detect_volume_overlaps(volumes: list[VolumeEntry]) -> list[dict[str, Any]]:
+    overlaps: list[dict[str, Any]] = []
+    for i, left in enumerate(volumes):
+        for right in volumes[i + 1 :]:
+            start = max(left.start_chapter, right.start_chapter)
+            end = min(left.end_chapter, right.end_chapter)
+            if start > end:
+                continue
+            overlaps.append(
+                {
+                    "type": "volume_overlap",
+                    "severity": "alert",
+                    "chapter": start,
+                    "volume_label": f"{left.label}/{right.label}",
+                    "message": (
+                        f"卷「{left.label}」与「{right.label}」"
+                        f"在 ch{start:03d}–ch{end:03d} 章范围重叠"
+                    ),
+                },
+            )
+    return overlaps
+
+
 def compute_volume_deviations(
     project_root: Path | str,
     volumes: list[VolumeEntry],
@@ -275,10 +298,9 @@ def compute_volume_deviations(
     resolved_paths = paths or ProjectPaths.get(root)
     config = ProjectConfig.load(resolved_paths)
     locked = [v for v in volumes if v.locked]
+    deviations: list[dict[str, Any]] = list(detect_volume_overlaps(volumes))
     if not locked:
-        return []
-
-    deviations: list[dict[str, Any]] = []
+        return deviations
     written: list[int] = []
     for num in range(1, config.max_chapter + 1):
         if resolved_paths.read_chapter(num):

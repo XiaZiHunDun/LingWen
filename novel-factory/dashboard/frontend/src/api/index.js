@@ -555,6 +555,17 @@ export async function fetchCreatorChapterPreview(chapterNum) {
   return request(`/creator/chapters/${chapterNum}`);
 }
 
+export async function fetchCreatorSettingsDocs() {
+  return request('/creator/settings-docs');
+}
+
+export async function saveCreatorSettingsDocs(body) {
+  return request('/creator/settings-docs', {
+    method: 'PUT',
+    body,
+  });
+}
+
 /**
  * @param {{ start_chapter: number, end_chapter: number, mode?: string, budget_usd?: number }} req
  */

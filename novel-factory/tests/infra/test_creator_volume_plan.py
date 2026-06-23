@@ -115,6 +115,30 @@ def test_semantic_drift_when_outline_keywords_mismatch(factory_tmp):
     ProjectPaths.reset()
 
 
+def test_volume_overlap_detection(factory_tmp):
+    result = init_minimal_short_project(
+        slug="overlap-test",
+        title="重叠测试",
+        factory_root=factory_tmp,
+        creation_mode="advance",
+        chapter_count=20,
+    )
+    ProjectPaths.reset()
+    root = result.root
+    from infra.creator_volume_plan import VolumeEntry, detect_volume_overlaps
+
+    overlaps = detect_volume_overlaps(
+        [
+            VolumeEntry("一", 1, 10, "A", True),
+            VolumeEntry("二", 8, 15, "B", False),
+        ],
+    )
+    assert len(overlaps) == 1
+    assert overlaps[0]["type"] == "volume_overlap"
+    assert "ch008" in overlaps[0]["message"] or "008" in overlaps[0]["message"]
+    ProjectPaths.reset()
+
+
 @pytest.fixture
 def factory_tmp(tmp_path):
     ProjectPaths.reset()

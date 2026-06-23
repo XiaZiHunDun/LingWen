@@ -90,3 +90,10 @@ class TestCreatorEndpoints:
         assert "body_preview" in data
         assert "outline_preview" in data
         assert data["has_body"] is True
+
+    def test_settings_docs_get(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/settings-docs")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "pillars_text" in data
+        assert "global_outline_text" in data

@@ -42,7 +42,11 @@ class TestDashboardE2ESmokeSpec:
         assert "app-root" in spec.read_text(encoding="utf-8")
 
     def test_live_e2e_specs_exist(self):
-        for name in ("ripples-audit.spec.js", "decisions-resolve.spec.js"):
+        for name in (
+            "ripples-audit.spec.js",
+            "decisions-resolve.spec.js",
+            "creator-workspace.spec.js",
+        ):
             spec = FRONTEND_DIR / "tests" / "e2e-smoke" / name
             assert spec.is_file(), name
             text = spec.read_text(encoding="utf-8")

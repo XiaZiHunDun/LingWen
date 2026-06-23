@@ -7,6 +7,11 @@ const creatorMocks = vi.hoisted(() => ({
   fetchCreatorVolumePlan: vi.fn(),
   saveCreatorVolumePlan: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
+  fetchCreatorSettingsDocs: vi.fn(),
+  saveCreatorSettingsDocs: vi.fn(),
+  studioProductionPreflight: vi.fn(),
+  studioProductionRun: vi.fn(),
+  fetchStudioActiveBatchJob: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
@@ -14,6 +19,11 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorVolumePlan: creatorMocks.fetchCreatorVolumePlan,
   saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
+  fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
+  saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
+  studioProductionPreflight: creatorMocks.studioProductionPreflight,
+  studioProductionRun: creatorMocks.studioProductionRun,
+  fetchStudioActiveBatchJob: creatorMocks.fetchStudioActiveBatchJob,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
@@ -83,6 +93,19 @@ describe('CreatorPage', () => {
       body_truncated: false,
       outline_truncated: false,
     });
+    creatorMocks.fetchCreatorSettingsDocs.mockResolvedValue({
+      pillars_text: '# 支柱',
+      global_outline_text: '# 大纲',
+      pillars_path: '/docs/novel-pillars.md',
+      global_outline_path: '/全局大纲.md',
+    });
+    creatorMocks.saveCreatorSettingsDocs.mockResolvedValue({});
+    creatorMocks.studioProductionPreflight.mockResolvedValue({
+      all_ok: true,
+      batch_command: 'bash scripts/run-advance-volume.sh 1 5 5 0.3',
+    });
+    creatorMocks.studioProductionRun.mockResolvedValue({ job_id: 'abc', status: 'running' });
+    creatorMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
   });
 
   it('renders three columns, volume plan, and deviation badge', async () => {
@@ -116,5 +139,14 @@ describe('CreatorPage', () => {
     expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1);
     expect(wrapper.find('[data-testid="chapter-preview-panel"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('第一章正文预览');
+  });
+
+  it('shows advance batch panel and settings editor', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="advance-batch-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="pillars-textarea"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="save-settings-btn"]').exists()).toBe(true);
   });
 });

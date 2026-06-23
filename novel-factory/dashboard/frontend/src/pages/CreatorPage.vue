@@ -168,6 +168,53 @@
           </li>
         </ul>
 
+        <div
+          v-if="showAdvanceBatch"
+          class="advance-batch-panel pixel-border"
+          data-testid="advance-batch-panel"
+        >
+          <h3 class="subsection-title">推进 batch</h3>
+          <div class="batch-range">
+            <label>
+              起
+              <input v-model.number="batchStart" type="number" min="1" class="vol-input vol-num" />
+            </label>
+            <label>
+              止
+              <input v-model.number="batchEnd" type="number" min="1" class="vol-input vol-num" />
+            </label>
+            <label>
+              预算 $
+              <input v-model.number="batchBudget" type="number" min="0" step="0.01" class="vol-input vol-num" />
+            </label>
+          </div>
+          <div class="batch-actions">
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="advance-preflight-btn"
+              :disabled="batchRunning"
+              @click="runAdvancePreflight"
+            >
+              Preflight
+            </button>
+            <button
+              type="button"
+              class="save-btn pixel-border"
+              data-testid="advance-batch-btn"
+              :disabled="batchRunning || !preflightOk"
+              @click="runAdvanceBatch"
+            >
+              {{ batchRunning ? '运行中…' : '启动 Batch' }}
+            </button>
+          </div>
+          <p v-if="batchCommand" class="meta-line"><code>{{ batchCommand }}</code></p>
+          <p v-if="batchError" class="batch-error">{{ batchError }}</p>
+          <p v-if="batchJob" class="meta-line" data-testid="batch-job-status">
+            任务 {{ batchJob.job_id }} · {{ batchJob.status }}
+          </p>
+        </div>
+
         <template v-if="overview.volume_summaries.length">
           <h3 class="subsection-title">卷摘要</h3>
           <details
@@ -186,14 +233,33 @@
         <h2 class="column-title">设定</h2>
         <details class="settings-block" open>
           <summary>创作支柱</summary>
-          <pre class="settings-excerpt">{{ overview.pillars_excerpt || '（空）' }}</pre>
-          <code class="path-line">{{ overview.pillars_path }}</code>
+          <textarea
+            v-model="pillarsText"
+            class="settings-textarea"
+            data-testid="pillars-textarea"
+            rows="6"
+          />
+          <code class="path-line">{{ settingsDocs?.pillars_path || overview.pillars_path }}</code>
         </details>
-        <details class="settings-block">
+        <details class="settings-block" open>
           <summary>全局大纲</summary>
-          <pre class="settings-excerpt">{{ overview.global_outline_excerpt || '（空）' }}</pre>
-          <code class="path-line">{{ overview.global_outline_path }}</code>
+          <textarea
+            v-model="globalOutlineText"
+            class="settings-textarea"
+            data-testid="global-outline-textarea"
+            rows="8"
+          />
+          <code class="path-line">{{ settingsDocs?.global_outline_path || overview.global_outline_path }}</code>
         </details>
+        <button
+          type="button"
+          class="save-btn pixel-border"
+          data-testid="save-settings-btn"
+          :disabled="settingsSaving"
+          @click="saveSettingsDocs"
+        >
+          {{ settingsSaving ? '保存中…' : '保存设定' }}
+        </button>
         <details v-if="overview.quality_report_available" class="settings-block">
           <summary>P0 问题（点开才看）</summary>
           <p class="p0-line" :class="overview.p0_count ? 'warn' : 'ok'">
@@ -215,7 +281,12 @@ import {
   fetchCreatorOverview,
   fetchCreatorVolumePlan,
   fetchCreatorChapterPreview,
+  fetchCreatorSettingsDocs,
   saveCreatorVolumePlan,
+  saveCreatorSettingsDocs,
+  studioProductionPreflight,
+  studioProductionRun,
+  fetchStudioActiveBatchJob,
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
 
@@ -227,6 +298,18 @@ const chapterPreview = ref(null);
 const previewLoading = ref(false);
 const loading = ref(false);
 const saving = ref(false);
+const settingsSaving = ref(false);
+const settingsDocs = ref(null);
+const pillarsText = ref('');
+const globalOutlineText = ref('');
+const batchStart = ref(1);
+const batchEnd = ref(10);
+const batchBudget = ref(0.3);
+const batchCommand = ref('');
+const preflightOk = ref(false);
+const batchRunning = ref(false);
+const batchError = ref(null);
+const batchJob = ref(null);
 const error = ref(null);
 const saveMessage = ref('');
 
@@ -255,6 +338,18 @@ const alertChapters = computed(() => {
 const visibleChapters = computed(() =>
   (overview.value?.chapters || []).filter((ch) => ch.chapter <= 15),
 );
+
+const showAdvanceBatch = computed(
+  () => overview.value?.creation_mode === 'advance' || overview.value?.advance_volume_summary,
+);
+
+function syncBatchRangeFromVolumes() {
+  const locked = editableVolumes.value.filter((v) => v.locked);
+  if (!locked.length) return;
+  const vol = locked[0];
+  batchStart.value = vol.start_chapter;
+  batchEnd.value = Math.min(vol.end_chapter, overview.value?.max_chapter || vol.end_chapter);
+}
 
 function chapterRowClass(chapter) {
   if (alertChapters.value.has(chapter)) return 'chapter-row--alert';
@@ -297,6 +392,79 @@ function toggleLock(idx) {
 async function loadVolumePlan() {
   const plan = await fetchCreatorVolumePlan();
   editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
+  syncBatchRangeFromVolumes();
+}
+
+async function loadSettingsDocs() {
+  const docs = await fetchCreatorSettingsDocs();
+  settingsDocs.value = docs;
+  pillarsText.value = docs.pillars_text || '';
+  globalOutlineText.value = docs.global_outline_text || '';
+}
+
+async function saveSettingsDocs() {
+  settingsSaving.value = true;
+  saveMessage.value = '';
+  error.value = null;
+  try {
+    await saveCreatorSettingsDocs({
+      pillars_text: pillarsText.value,
+      global_outline_text: globalOutlineText.value,
+    });
+    saveMessage.value = '设定已保存';
+    await refresh();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    settingsSaving.value = false;
+  }
+}
+
+async function runAdvancePreflight() {
+  batchError.value = null;
+  preflightOk.value = false;
+  try {
+    const data = await studioProductionPreflight({
+      start_chapter: batchStart.value,
+      end_chapter: batchEnd.value,
+      budget_usd: batchBudget.value,
+    });
+    batchCommand.value = data.batch_command || '';
+    preflightOk.value = Boolean(data.all_ok);
+    if (!data.all_ok) {
+      batchError.value = 'Preflight 未通过，请检查大纲与支柱';
+    }
+  } catch (e) {
+    batchError.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
+async function runAdvanceBatch() {
+  batchError.value = null;
+  batchRunning.value = true;
+  try {
+    batchJob.value = await studioProductionRun({
+      start_chapter: batchStart.value,
+      end_chapter: batchEnd.value,
+      budget_usd: batchBudget.value,
+    });
+  } catch (e) {
+    batchError.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    batchRunning.value = false;
+  }
+}
+
+async function pollBatchJob() {
+  try {
+    const job = await fetchStudioActiveBatchJob();
+    if (job) {
+      batchJob.value = job;
+      batchRunning.value = job.status === 'running';
+    }
+  } catch {
+    /* optional */
+  }
 }
 
 async function saveVolumePlan() {
@@ -321,6 +489,8 @@ async function refresh() {
     const [ov] = await Promise.all([
       fetchCreatorOverview(),
       loadVolumePlan(),
+      loadSettingsDocs(),
+      pollBatchJob(),
     ]);
     overview.value = ov;
   } catch (e) {
@@ -528,6 +698,43 @@ watch(projectRevision, () => {
 
 .deviation-warn { color: #886600; }
 .deviation-alert { color: #c44; }
+
+.settings-textarea {
+  width: 100%;
+  font-size: 8px;
+  font-family: inherit;
+  padding: var(--space-xs);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--color-text);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.batch-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 8px;
+  margin-bottom: 6px;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.advance-batch-panel {
+  margin-top: var(--space-md);
+  padding: var(--space-sm);
+}
+
+.batch-error {
+  color: #c44;
+  font-size: 8px;
+  margin-top: 4px;
+}
 
 .settings-excerpt,
 .volume-excerpt {

@@ -27,9 +27,10 @@ class TestE2eLiveF70:
         assert "timeout-minutes: 25" in text
 
     def test_live_backend_spec_count(self):
-        """live-backend project runs 5 tests (2 files × multi-test)."""
+        """live-backend project runs 7 tests (3 files × multi-test)."""
         cfg = NOVEL_FACTORY / "dashboard" / "frontend" / "playwright.config.js"
         text = cfg.read_text(encoding="utf-8")
         assert "live-backend" in text
         assert "ripples-audit" in text
         assert "decisions-resolve" in text
+        assert "creator-workspace" in text
