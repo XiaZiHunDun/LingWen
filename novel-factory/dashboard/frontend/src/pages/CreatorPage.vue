@@ -200,6 +200,35 @@
       快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
     </p>
     <div
+      v-if="uiProfile.volume_plan_diff_share_link_preview && volumePlanDiffShareLinkPreview"
+      class="volume-plan-diff-share-link-preview pixel-border"
+      data-testid="volume-plan-diff-share-link-preview"
+    >
+      <p class="meta-line">
+        分享链接解析：{{ volumePlanDiffShareLinkPreview.change_count }} 条变更
+        <span v-if="volumePlanDiffShareLinkPreview.global_outline_path">
+          · {{ volumePlanDiffShareLinkPreview.global_outline_path }}
+        </span>
+      </p>
+      <ul class="volume-plan-diff-share-link-preview-list">
+        <li
+          v-for="(row, idx) in volumePlanDiffShareLinkPreview.changes"
+          :key="`share-diff-${row.label}-${idx}`"
+          class="meta-line"
+        >
+          {{ row.label }}：{{ row.message }}
+        </li>
+      </ul>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="dismiss-volume-plan-diff-share-preview-btn"
+        @click="dismissVolumePlanDiffShareLinkPreview"
+      >
+        关闭预览
+      </button>
+    </div>
+    <div
       v-if="showVolumePlanDiffPrintPreview"
       class="volume-plan-diff-print-preview pixel-border"
       data-testid="volume-plan-diff-print-preview"
@@ -2156,6 +2185,32 @@
               并发运行：峰值 {{ batchHistoryConcurrencyChart.peak }}
             </p>
           </div>
+          <div
+            v-if="batchHistoryQueueDepthChart"
+            class="batch-history-queue-depth-chart"
+            data-testid="batch-history-queue-depth-chart"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryQueueDepthChart.width} ${batchHistoryQueueDepthChart.height}`"
+              class="batch-history-queue-depth-chart-svg"
+              role="img"
+              aria-label="batch 历史队列深度图"
+            >
+              <rect
+                v-for="bar in batchHistoryQueueDepthChart.bars"
+                :key="`queue-depth-bar-${bar.id}`"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.barWidth"
+                :height="bar.barHeight"
+                class="batch-history-queue-depth-bar"
+                :data-testid="`batch-history-queue-depth-${bar.id}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-queue-depth-chart-label">
+              队列深度：峰值 {{ batchHistoryQueueDepthChart.peak }}
+            </p>
+          </div>
           <p
             v-if="batchHistoryAvgDuration != null"
             class="meta-line batch-history-avg-duration"
@@ -3092,6 +3147,7 @@ const pendingModeSwitch = ref(null);
 const creationModeSwitchHistory = ref([]);
 const lastModeSwitchUndo = ref(null);
 const showVolumePlanDiffPrintPreview = ref(false);
+const volumePlanDiffShareLinkPreview = ref(null);
 const volumePlanDiffPrintPreviewText = ref('');
 
 const CREATION_MODE_SWITCH_HISTORY_KEY = 'creator_mode_switch_history';
@@ -3321,10 +3377,13 @@ const defaultUiProfile = {
   batch_history_duration_distribution: false,
   volume_plan_diff_export_share_link: false,
   batch_history_concurrency_chart: false,
+  volume_plan_diff_share_link_preview: false,
+  batch_history_queue_depth_chart: false,
   creation_mode_switch_confirm_dialog: false,
   creation_mode_switch_history: false,
   creation_mode_switch_undo_hint: false,
   creation_mode_switch_hotkey: false,
+  creation_mode_switch_speech: false,
   creation_mode_badge_hint: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
@@ -3693,6 +3752,61 @@ const batchHistoryConcurrencyChart = computed(() => {
     const bucketStart = minStart + (span * idx) / bucketCount;
     const bucketEnd = minStart + (span * (idx + 1)) / bucketCount;
     buckets[idx].count = ranges.filter(
+      (row) => row.start < bucketEnd && row.end > bucketStart,
+    ).length;
+  }
+  const max = Math.max(...buckets.map((row) => row.count), 1);
+  const width = 200;
+  const height = 40;
+  const slot = width / bucketCount;
+  const bars = buckets.map((row, idx) => {
+    const barHeight = (row.count / max) * (height - 8);
+    return {
+      ...row,
+      x: idx * slot + 2,
+      y: height - barHeight,
+      barWidth: slot - 4,
+      barHeight,
+    };
+  });
+  return { bars, width, height, peak };
+});
+
+const batchHistoryQueueDepthChart = computed(() => {
+  if (!uiProfile.value.batch_history_queue_depth_chart || !batchHistory.value.length) return null;
+  const waits = batchHistory.value
+    .map((job) => {
+      const queued = Date.parse(job?.queued_at || job?.created_at || '');
+      const started = Date.parse(job?.started_at || '');
+      if (!Number.isFinite(queued)) return null;
+      const end = Number.isFinite(started) && started > queued ? started : queued;
+      if (end <= queued) return null;
+      return { start: queued, end };
+    })
+    .filter(Boolean);
+  if (!waits.length) return null;
+  const events = [];
+  for (const row of waits) {
+    events.push({ t: row.start, delta: 1 });
+    events.push({ t: row.end, delta: -1 });
+  }
+  events.sort((a, b) => a.t - b.t || a.delta - b.delta);
+  let current = 0;
+  let peak = 0;
+  for (const event of events) {
+    current += event.delta;
+    peak = Math.max(peak, current);
+  }
+  const minStart = Math.min(...waits.map((row) => row.start));
+  const maxEnd = Math.max(...waits.map((row) => row.end));
+  const span = maxEnd - minStart;
+  if (span <= 0) return { peak, bars: [], width: 200, height: 40 };
+  const bucketCount = Math.min(8, Math.max(4, waits.length));
+  const buckets = Array.from({ length: bucketCount }, (_, idx) => ({ id: `q${idx}`, count: 0 }));
+  for (let idx = 0; idx < bucketCount; idx += 1) {
+    const bucketStart = minStart + (span * idx) / bucketCount;
+    const bucketEnd = minStart + (span * (idx + 1)) / bucketCount;
+    buckets[idx].count = waits.filter(
       (row) => row.start < bucketEnd && row.end > bucketStart,
     ).length;
   }
@@ -4670,6 +4784,18 @@ async function copyCreationModeYaml(mode) {
     saveMessage.value = snippet;
   }
   maybeRecordModeSwitch(mode, 'YAML');
+  speakCreationModeSwitch(mode);
+}
+
+function speakCreationModeSwitch(mode) {
+  if (!uiProfile.value.creation_mode_switch_speech || !mode) return;
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  if (typeof SpeechSynthesisUtterance === 'undefined') return;
+  const label = CREATION_MODE_ONBOARDING_LABELS[mode] || mode;
+  const utterance = new SpeechSynthesisUtterance(`${label}模式，请设置 creation_mode 为 ${mode}`);
+  utterance.lang = 'zh-CN';
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
 }
 
 function applyBatchHistoryBudgetFromJob(job) {
@@ -5052,6 +5178,50 @@ function encodeVolumePlanDiffShareToken(payload) {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+}
+
+function decodeVolumePlanDiffShareToken(token) {
+  try {
+    const padded = String(token || '')
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const json = decodeURIComponent(escape(atob(padded)));
+    const data = JSON.parse(json);
+    if (data.v !== 1 || !Array.isArray(data.changes)) return null;
+    return {
+      change_count: data.c ?? data.changes.length,
+      changes: data.changes,
+      global_outline_path: data.p || '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function parseVolumePlanDiffShareHash(hash = window.location.hash) {
+  const match = String(hash || '').match(/#creator-diff=([^&]+)/);
+  if (!match) return null;
+  return decodeVolumePlanDiffShareToken(match[1]);
+}
+
+function tryLoadVolumePlanDiffShareLinkPreview() {
+  if (!uiProfile.value.volume_plan_diff_share_link_preview) {
+    volumePlanDiffShareLinkPreview.value = null;
+    return;
+  }
+  const parsed = parseVolumePlanDiffShareHash();
+  volumePlanDiffShareLinkPreview.value = parsed;
+  if (parsed?.change_count) {
+    saveMessage.value = `已解析分享链接（${parsed.change_count} 条变更）`;
+  }
+}
+
+function dismissVolumePlanDiffShareLinkPreview() {
+  volumePlanDiffShareLinkPreview.value = null;
+  if (window.location.hash.includes('creator-diff=')) {
+    const nextHash = window.location.hash.replace(/#?creator-diff=[^&]*/g, '').replace(/^#/, '');
+    window.history.replaceState(null, '', nextHash ? `#${nextHash}` : window.location.pathname + window.location.search);
+  }
 }
 
 function buildVolumePlanDiffShareLink(changes) {
@@ -6611,6 +6781,7 @@ async function refresh() {
     await loadMergePresetPackages();
     await loadTemplateApprovals();
     await loadBatchHistory();
+    tryLoadVolumePlanDiffShareLinkPreview();
     if (batchJob.value?.status === 'running' && !batchPollTimer) {
       lastBatchStatus.value = 'running';
       startBatchPolling();
@@ -7067,6 +7238,35 @@ watch(
 .creation-mode-hotkey-hint {
   margin: var(--space-xs) 0;
   color: var(--text-muted, #666);
+}
+
+.volume-plan-diff-share-link-preview {
+  margin: var(--space-sm) 0;
+  padding: var(--space-sm);
+}
+
+.volume-plan-diff-share-link-preview-list {
+  margin: var(--space-xs) 0;
+  padding-left: 1.2rem;
+}
+
+.batch-history-queue-depth-chart {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-queue-depth-chart-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  display: block;
+}
+
+.batch-history-queue-depth-bar {
+  fill: rgba(160, 120, 180, 0.8);
+}
+
+.batch-history-queue-depth-chart-label {
+  margin: 2px 0 0;
 }
 
 .volume-plan-diff-print-preview {

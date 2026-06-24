@@ -73,6 +73,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_switch_history": True,
             "creation_mode_switch_undo_hint": True,
             "creation_mode_switch_hotkey": True,
+            "creation_mode_switch_speech": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -148,7 +149,10 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "batch_history_duration_distribution": True,
             "volume_plan_diff_export_share_link": True,
             "batch_history_concurrency_chart": True,
+            "volume_plan_diff_share_link_preview": True,
+            "batch_history_queue_depth_chart": True,
             "creation_mode_switch_hotkey": True,
+            "creation_mode_switch_speech": True,
             "creation_mode_capability_matrix": True,
             "creation_mode_badge_hint": True,
             "creation_mode_switch_hint": True,
@@ -162,6 +166,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_switch_confirm_dialog": True,
             "creation_mode_switch_history": True,
             "creation_mode_switch_undo_hint": True,
+            "creation_mode_switch_hotkey": True,
+            "creation_mode_switch_speech": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -244,6 +250,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "batch_history_duration_distribution": False,
         "volume_plan_diff_export_share_link": False,
         "batch_history_concurrency_chart": False,
+        "volume_plan_diff_share_link_preview": False,
+        "batch_history_queue_depth_chart": False,
         "creation_mode_capability_matrix": True,
         "creation_mode_switch_guide_animation": True,
         "creation_mode_onboarding_step_link": True,
@@ -251,6 +259,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "creation_mode_switch_history": True,
         "creation_mode_switch_undo_hint": True,
         "creation_mode_switch_hotkey": True,
+        "creation_mode_switch_speech": True,
         "creation_mode_badge_hint": False,
         "creation_mode_switch_hint": False,
         "creation_mode_switch_doc_link": False,

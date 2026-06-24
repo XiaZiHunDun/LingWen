@@ -4254,4 +4254,98 @@ describe('CreatorPage', () => {
     expect(writeText).toHaveBeenCalledWith('creation_mode: companion');
     writeText.mockRestore();
   });
+
+  it('v6.10 parses volume plan diff share link preview from hash', async () => {
+    const payload = {
+      v: 1,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: '分享解析测试' }],
+      p: '/docs/outline.md',
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const preview = wrapper.find('[data-testid="volume-plan-diff-share-link-preview"]');
+    expect(preview.exists()).toBe(true);
+    expect(preview.text()).toContain('分享解析测试');
+    expect(preview.text()).toContain('/docs/outline.md');
+    window.location.hash = '';
+  });
+
+  it('v6.10 batch history queue depth chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_queue_depth_chart: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-w1',
+          queued_at: '2026-06-10T12:00:00Z',
+          started_at: '2026-06-10T12:15:00Z',
+          finished_at: '2026-06-10T12:20:00Z',
+          status: 'completed',
+        },
+        {
+          job_id: 'job-w2',
+          queued_at: '2026-06-10T12:05:00Z',
+          started_at: '2026-06-10T12:18:00Z',
+          finished_at: '2026-06-10T12:25:00Z',
+          status: 'completed',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const chart = wrapper.find('[data-testid="batch-history-queue-depth-chart"]');
+    expect(chart.exists()).toBe(true);
+    expect(chart.text()).toContain('峰值 2');
+    expect(wrapper.find('[data-testid="batch-history-queue-depth-q0"]').exists()).toBe(true);
+  });
+
+  it('v6.10 speaks creation mode label on yaml copy', async () => {
+    const speak = vi.fn();
+    const cancel = vi.fn();
+    vi.stubGlobal('speechSynthesis', { speak, cancel });
+    vi.stubGlobal('SpeechSynthesisUtterance', class {
+      constructor(text) {
+        this.text = text;
+        this.lang = '';
+      }
+    });
+    vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+        creation_mode_switch_speech: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="copy-creation-mode-yaml-companion"]').trigger('click');
+    await flushPromises();
+    expect(speak).toHaveBeenCalled();
+    expect(speak.mock.calls[0][0].text).toContain('陪伴模式');
+    vi.unstubAllGlobals();
+  });
 });
