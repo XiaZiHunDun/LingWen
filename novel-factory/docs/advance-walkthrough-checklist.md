@@ -71,6 +71,14 @@ bash scripts/run-companion-check.sh
 - [ ] P0 通过
 - [ ] 创作页偏离列表可接受（缺章 / 关键词 / 越界）
 
+### Dashboard Beta（v7.0+）
+
+详见 [`creator-beta-pack/advance-dashboard-beta.md`](creator-beta-pack/advance-dashboard-beta.md)
+
+- [ ] 卷纲 diff 分享链接 v3 + 协作批注（分享协作 v2）
+- [ ] batch 运维摘要折叠区
+- [ ] 冒烟：`bash scripts/verify-creator-beta-pack.sh`
+
 ## 通过标准
 
 | 项 | 标准 |

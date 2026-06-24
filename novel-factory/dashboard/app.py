@@ -348,6 +348,7 @@ class CreatorUiProfile(BaseModel):
     creation_mode_preview_pinned_sidebar: bool = False
     volume_plan_diff_share_link_e2e: bool = False
     batch_history_ops_summary: bool = False
+    volume_plan_diff_share_collab_v2: bool = False
     creation_mode_accessibility_checklist: bool = False
     creation_mode_capability_matrix: bool = False
     creation_mode_switch_guide_animation: bool = False
@@ -1344,6 +1345,15 @@ class CreatorOnboardingProgressRequest(BaseModel):
 
 class CreatorOnboardingNotesRequest(BaseModel):
     step_notes: dict[str, str]
+
+
+class CreatorDiffCollabNotesRequest(BaseModel):
+    notes: dict[str, str] = {}
+
+
+class CreatorDiffCollabNotesResponse(BaseModel):
+    notes: dict[str, str] = {}
+    count: int = 0
 
 
 class CreatorOnboardingProgressResponse(BaseModel):
@@ -3442,6 +3452,42 @@ def create_app(
             raise HTTPException(404, "no active project")
         result = save_onboarding_notes_from_ui(project, step_notes=req.step_notes)
         return CreatorOnboardingProgressResponse(**result)
+
+    @app.get(
+        "/api/creator/diff-collab-notes",
+        response_model=CreatorDiffCollabNotesResponse,
+    )
+    def creator_diff_collab_notes_get() -> CreatorDiffCollabNotesResponse:
+        from infra.creator_diff_collab import diff_collab_notes_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        payload = diff_collab_notes_payload(project.root)
+        return CreatorDiffCollabNotesResponse(**payload)
+
+    @app.put(
+        "/api/creator/diff-collab-notes",
+        response_model=CreatorDiffCollabNotesResponse,
+    )
+    def creator_diff_collab_notes_put(
+        req: CreatorDiffCollabNotesRequest,
+    ) -> CreatorDiffCollabNotesResponse:
+        from infra.creator_diff_collab import (
+            diff_collab_notes_payload,
+            load_diff_collab_notes,
+            merge_diff_collab_notes,
+            save_diff_collab_notes,
+        )
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        merged = merge_diff_collab_notes(load_diff_collab_notes(project.root), req.notes)
+        save_diff_collab_notes(project.root, merged)
+        return CreatorDiffCollabNotesResponse(**diff_collab_notes_payload(project.root))
 
     @app.post(
         "/api/creator/onboarding/progress/apply-share",

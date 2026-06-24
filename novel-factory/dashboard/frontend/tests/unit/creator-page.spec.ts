@@ -25,6 +25,8 @@ const creatorMocks = vi.hoisted(() => ({
   saveCreatorOnboardingProgress: vi.fn(),
   applyCreatorOnboardingShare: vi.fn(),
   saveCreatorOnboardingNotes: vi.fn(),
+  fetchCreatorDiffCollabNotes: vi.fn(),
+  saveCreatorDiffCollabNotes: vi.fn(),
   setCreatorVolumeTemplateVersion: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   saveCreatorChapterBody: vi.fn(),
@@ -124,6 +126,8 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorOnboardingProgress: creatorMocks.saveCreatorOnboardingProgress,
   applyCreatorOnboardingShare: creatorMocks.applyCreatorOnboardingShare,
   saveCreatorOnboardingNotes: creatorMocks.saveCreatorOnboardingNotes,
+  fetchCreatorDiffCollabNotes: creatorMocks.fetchCreatorDiffCollabNotes,
+  saveCreatorDiffCollabNotes: creatorMocks.saveCreatorDiffCollabNotes,
   setCreatorVolumeTemplateVersion: creatorMocks.setCreatorVolumeTemplateVersion,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   saveCreatorChapterBody: creatorMocks.saveCreatorChapterBody,
@@ -491,6 +495,8 @@ describe('CreatorPage', () => {
       completed_step_ids: ['init'],
       progress_pct: 33,
     });
+    creatorMocks.fetchCreatorDiffCollabNotes.mockResolvedValue({ notes: {}, count: 0 });
+    creatorMocks.saveCreatorDiffCollabNotes.mockResolvedValue({ notes: {}, count: 0 });
     creatorMocks.setCreatorVolumeTemplateVersion.mockResolvedValue({
       id: 'custom_test',
       version_label: 'v2.0.0',
@@ -4774,5 +4780,59 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(creatorMocks.saveCreatorVolumePlan).toHaveBeenCalled();
     window.location.hash = '';
+  });
+
+  it('post-v7 share collab v2 preview notes', async () => {
+    const payload = {
+      v: 3,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: '冲突更新' }],
+      d: [{
+        label: '一',
+        start_chapter: 1,
+        end_chapter: 5,
+        core_conflict: '协作测试',
+        locked: false,
+      }],
+      n: { 一: '请 @reviewer 确认卷纲' },
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_collab_v2: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="share-collab-note-一"]').text()).toContain('@reviewer');
+    window.location.hash = '';
+  });
+
+  it('post-v7 diff collab panel edits notes', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_share_collab_v2: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突变更' }],
+    });
+    creatorMocks.fetchCreatorDiffCollabNotes.mockResolvedValue({
+      notes: { 一: '待 reviewer 确认' },
+      count: 1,
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-collab-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="diff-collab-note-input-一"]').element.value).toBe('待 reviewer 确认');
   });
 });

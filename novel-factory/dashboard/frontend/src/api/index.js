@@ -689,6 +689,17 @@ export async function saveCreatorOnboardingNotes(body) {
   });
 }
 
+export async function fetchCreatorDiffCollabNotes() {
+  return request('/creator/diff-collab-notes');
+}
+
+export async function saveCreatorDiffCollabNotes(body) {
+  return request('/creator/diff-collab-notes', {
+    method: 'PUT',
+    body,
+  });
+}
+
 export async function setCreatorVolumeTemplateVersion(templateId, body) {
   return request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version`, {
     method: 'PUT',

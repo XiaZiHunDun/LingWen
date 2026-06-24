@@ -265,6 +265,13 @@
           class="meta-line"
         >
           {{ row.label }}：{{ row.message }}
+          <span
+            v-if="uiProfile.volume_plan_diff_share_collab_v2 && volumePlanDiffShareLinkPreview.collab_notes?.[row.label]"
+            class="volume-plan-diff-share-collab-note"
+            :data-testid="`share-collab-note-${row.label}`"
+          >
+            批注：{{ volumePlanDiffShareLinkPreview.collab_notes[row.label] }}
+          </span>
         </li>
       </ul>
       <button
@@ -1728,6 +1735,27 @@
             >
               复制分享链接
             </button>
+            <div
+              v-if="uiProfile.volume_plan_diff_share_collab_v2 && volumePlanDiffCollabRows.length"
+              class="volume-plan-diff-collab-panel pixel-border"
+              data-testid="volume-plan-diff-collab-panel"
+            >
+              <p class="meta-line">协作批注（分享链接 v3 附带，按卷联动 diff）</p>
+              <label
+                v-for="row in volumePlanDiffCollabRows"
+                :key="`collab-edit-${row.label}`"
+                class="volume-plan-diff-collab-row"
+              >
+                卷 {{ row.label }}
+                <input
+                  class="vol-input volume-plan-diff-collab-input"
+                  :data-testid="`diff-collab-note-input-${row.label}`"
+                  :value="diffCollabNotes[row.label] || ''"
+                  placeholder="@reviewer 请确认"
+                  @input="setDiffCollabNote(row.label, $event.target.value)"
+                />
+              </label>
+            </div>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -3324,6 +3352,8 @@ import {
   saveCreatorOnboardingProgress,
   applyCreatorOnboardingShare,
   saveCreatorOnboardingNotes,
+  fetchCreatorDiffCollabNotes,
+  saveCreatorDiffCollabNotes,
   setCreatorVolumeTemplateVersion,
   fetchCreatorVolumeTemplateChangelog,
   rollbackCreatorVolumeTemplate,
@@ -3411,6 +3441,7 @@ const pendingShareApply = ref(null);
 const pendingShareMerge = ref(null);
 const shareE2eApplyDone = ref(false);
 const batchHistoryOpsSummaryOpen = ref(false);
+const diffCollabNotes = ref({});
 const creationModeSwitchAriaMessage = ref('');
 const volumePlanDiffPrintPreviewText = ref('');
 
@@ -3656,6 +3687,7 @@ const defaultUiProfile = {
   creation_mode_preview_pinned_sidebar: false,
   volume_plan_diff_share_link_e2e: false,
   batch_history_ops_summary: false,
+  volume_plan_diff_share_collab_v2: false,
   creation_mode_accessibility_checklist: false,
   creation_mode_switch_confirm_dialog: false,
   creation_mode_switch_history: false,
@@ -4302,6 +4334,20 @@ const batchHistoryOpsSummaryLine = computed(() => {
     parts.push(`均时 ${batchHistoryAvgDuration.value} 分`);
   }
   return ` · ${parts.join(' · ')}`;
+});
+
+const volumePlanDiffCollabRows = computed(() => {
+  if (!uiProfile.value.volume_plan_diff_share_collab_v2) return [];
+  const rows = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value?.changes || [];
+  const seen = new Set();
+  return rows.filter((row) => {
+    const label = String(row?.label || '').trim();
+    if (!label || seen.has(label)) return false;
+    seen.add(label);
+    return true;
+  });
 });
 
 const batchHistoryWeeklySummary = computed(() => {
@@ -5627,14 +5673,24 @@ async function shareVolumePlanDiffEmail() {
     : '已打开邮件分享';
 }
 
-function encodeVolumePlanDiffShareToken(payload, draftVolumes = null) {
+function encodeVolumePlanDiffShareToken(payload, draftVolumes = null, collabNotes = null) {
+  const hasDraft = Boolean(draftVolumes?.length);
+  const normalizedNotes = collabNotes && Object.keys(collabNotes).length
+    ? Object.fromEntries(
+      Object.entries(collabNotes)
+        .map(([label, note]) => [String(label).trim(), String(note).trim()])
+        .filter(([label, note]) => label && note),
+    )
+    : null;
+  const hasNotes = Boolean(normalizedNotes && Object.keys(normalizedNotes).length);
   const compact = {
-    v: draftVolumes?.length ? 2 : 1,
+    v: hasNotes ? 3 : (hasDraft ? 2 : 1),
     c: payload.change_count,
     changes: payload.changes,
     p: payload.global_outline_path || '',
   };
-  if (draftVolumes?.length) compact.d = draftVolumes;
+  if (hasDraft) compact.d = draftVolumes;
+  if (hasNotes) compact.n = normalizedNotes;
   const json = JSON.stringify(compact);
   return btoa(unescape(encodeURIComponent(json)))
     .replace(/\+/g, '-')
@@ -5649,14 +5705,14 @@ function decodeVolumePlanDiffShareToken(token) {
       .replace(/_/g, '/');
     const json = decodeURIComponent(escape(atob(padded)));
     const data = JSON.parse(json);
-    if (data.v > 2) {
+    if (data.v > 3) {
       return {
         valid: false,
         error: 'unsupported_version',
         error_label: `不支持的分享版本 v${data.v}`,
       };
     }
-    if (data.v !== 1 && data.v !== 2) {
+    if (data.v !== 1 && data.v !== 2 && data.v !== 3) {
       return { valid: false, error: 'unsupported_version', error_label: '不支持的分享版本' };
     }
     if (!Array.isArray(data.changes)) {
@@ -5671,12 +5727,22 @@ function decodeVolumePlanDiffShareToken(token) {
         locked: Boolean(row.locked),
       }))
       : null;
+    const collabNotes = {};
+    if (data.n && typeof data.n === 'object') {
+      for (const [label, note] of Object.entries(data.n)) {
+        const key = String(label).trim();
+        const text = String(note).trim();
+        if (key && text) collabNotes[key] = text;
+      }
+    }
     return {
       valid: true,
       change_count: data.c ?? data.changes.length,
       changes: data.changes,
       global_outline_path: data.p || '',
       draft_volumes: draftVolumes,
+      collab_notes: collabNotes,
+      has_collab_notes: Boolean(Object.keys(collabNotes).length),
       can_apply: Boolean(draftVolumes?.length),
     };
   } catch {
@@ -5737,6 +5803,9 @@ async function applyVolumePlanDiffShareLinkDirect(parsed) {
   if (!parsed?.draft_volumes?.length) return;
   editableVolumes.value = parsed.draft_volumes.map((vol) => ({ ...vol }));
   await refreshVolumePlanDiffPreview();
+  if (parsed.collab_notes) {
+    await mergeIncomingDiffCollabNotes(parsed.collab_notes);
+  }
   pendingShareApply.value = null;
   pendingShareMerge.value = null;
   shareE2eApplyDone.value = true;
@@ -5820,12 +5889,56 @@ async function applyVolumePlanDiffShareLink() {
   requestApplyVolumePlanDiffShareLink();
 }
 
+function buildVolumePlanDiffShareCollabNotes(changes) {
+  if (!uiProfile.value.volume_plan_diff_share_collab_v2) return null;
+  const labels = [...new Set(changes.map((row) => String(row?.label || '').trim()).filter(Boolean))];
+  const notes = {};
+  for (const label of labels) {
+    const note = String(diffCollabNotes.value[label] || '').trim();
+    if (note) notes[label] = note;
+  }
+  return Object.keys(notes).length ? notes : null;
+}
+
+function setDiffCollabNote(label, value) {
+  diffCollabNotes.value = {
+    ...diffCollabNotes.value,
+    [label]: String(value || ''),
+  };
+}
+
+async function loadDiffCollabNotes() {
+  if (!uiProfile.value.volume_plan_diff_share_collab_v2) {
+    diffCollabNotes.value = {};
+    return;
+  }
+  try {
+    const payload = await fetchCreatorDiffCollabNotes();
+    diffCollabNotes.value = { ...(payload?.notes || {}) };
+  } catch {
+    diffCollabNotes.value = {};
+  }
+}
+
+async function mergeIncomingDiffCollabNotes(collabNotes) {
+  if (!uiProfile.value.volume_plan_diff_share_collab_v2 || !collabNotes) return;
+  const entries = Object.entries(collabNotes).filter(([, note]) => String(note).trim());
+  if (!entries.length) return;
+  const merged = { ...diffCollabNotes.value };
+  for (const [label, note] of entries) {
+    merged[label] = String(note).trim();
+  }
+  const saved = await saveCreatorDiffCollabNotes({ notes: merged });
+  diffCollabNotes.value = { ...(saved?.notes || merged) };
+}
+
 function buildVolumePlanDiffShareLink(changes) {
   const payload = buildVolumePlanDiffExportPayload(changes);
   const draft = uiProfile.value.volume_plan_diff_share_link_apply
     ? buildVolumePlanDiffShareDraft()
     : null;
-  const token = encodeVolumePlanDiffShareToken(payload, draft);
+  const collabNotes = buildVolumePlanDiffShareCollabNotes(changes);
+  const token = encodeVolumePlanDiffShareToken(payload, draft, collabNotes);
   return `${window.location.origin}${window.location.pathname}#creator-diff=${token}`;
 }
 
@@ -7383,6 +7496,7 @@ async function refresh() {
     await loadMergePresetPackages();
     await loadTemplateApprovals();
     await loadBatchHistory();
+    await loadDiffCollabNotes();
     tryLoadVolumePlanDiffShareLinkPreview();
     if (batchJob.value?.status === 'running' && !batchPollTimer) {
       lastBatchStatus.value = 'running';
@@ -8048,6 +8162,30 @@ watch(
 
 .batch-history-ops-summary-body {
   margin-top: var(--space-xs);
+}
+
+.volume-plan-diff-collab-panel {
+  margin: var(--space-xs) 0;
+  padding: var(--space-sm);
+}
+
+.volume-plan-diff-collab-row {
+  display: block;
+  margin: var(--space-xs) 0;
+  font-size: 10px;
+}
+
+.volume-plan-diff-collab-input {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.volume-plan-diff-share-collab-note {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.9;
+  font-size: 10px;
 }
 
 .volume-plan-diff-print-preview {

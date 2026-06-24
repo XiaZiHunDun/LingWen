@@ -50,6 +50,14 @@ bash scripts/run-companion-check.sh
 - [ ] **设定** 栏：编辑支柱 → 变更预览 → 确认保存
 - [ ] 若提示「已在别处修改」→ 点 **重新加载**
 
+### Dashboard Beta（v7.0+）
+
+详见 [`creator-beta-pack/companion-dashboard-beta.md`](creator-beta-pack/companion-dashboard-beta.md)
+
+- [ ] 逻辑审查 P0 内嵌 · 复查段落跳转
+- [ ] 三模式切换无障碍清单 ≥4 项
+- [ ] 冒烟：`bash scripts/verify-creator-beta-pack.sh`
+
 ## 6. 日常循环
 
 1. 写下一章正文

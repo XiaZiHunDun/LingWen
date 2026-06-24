@@ -479,6 +479,8 @@ project:
 
 ## 71. v7.0 之后（产品级）
 
-- 创作者 beta 文档包（walkthrough 与 Dashboard 对齐）
-- 分享协作 v2（多人批注 × diff）
-- Studio 解耦发布（独立 changelog）
+- 创作者 beta 文档包（walkthrough 与 Dashboard 对齐）— ✅
+- 分享协作 v2（多人批注 × diff）— ✅
+- Studio 解耦发布（独立 changelog）— ✅
+
+证据：`docs/creator-beta-pack/` · `volume_plan_diff_share_collab_v2` · `docs/creator-changelog.md` · `docs/studio-changelog.md`

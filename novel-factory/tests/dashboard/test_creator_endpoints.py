@@ -1623,6 +1623,19 @@ class TestCreatorEndpoints:
         assert "volume_plan_diff_share_link_e2e" in profile
         assert "batch_history_ops_summary" in profile
         assert "creation_mode_accessibility_checklist" in profile
+        assert "volume_plan_diff_share_collab_v2" in profile
+
+    def test_creator_diff_collab_notes(self, client: TestClient) -> None:
+        put_resp = client.put(
+            "/api/creator/diff-collab-notes",
+            json={"notes": {"一": "请 @reviewer 确认"}},
+        )
+        assert put_resp.status_code == 200
+        data = put_resp.json()
+        assert data["notes"]["一"] == "请 @reviewer 确认"
+        get_resp = client.get("/api/creator/diff-collab-notes")
+        assert get_resp.status_code == 200
+        assert get_resp.json()["notes"]["一"] == "请 @reviewer 确认"
 
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")

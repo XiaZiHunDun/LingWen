@@ -3,7 +3,7 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v12.0 (创作者 v7.0 里程碑, 2026-06-24)  
+> **版本**: v12.1 (创作者 v7.0+ 产品级, 2026-06-24)  
 > **更新 (2026-06-22)**: 审批转交/OR签/快照 diff · digest handle 静默与死信 · Webhook 签名 · 预设拉取预检/changelog/拓扑可视化
 
 ---
@@ -223,7 +223,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v7.0 里程碑已落地**：分享闭环 Playwright E2E · batch 运维摘要折叠区 · 无障碍验收清单
 
-**v7.0 之后（产品级）**：创作者 beta 文档包 · 分享协作 v2 · Studio 线解耦 changelog
+**v7.0+ 产品级已落地**：创作者 beta 文档包 · 分享协作 v2 · Studio/Creator changelog 解耦
+
+**v7.0 之后（产品级）**：~~创作者 beta 文档包 · 分享协作 v2 · Studio 线解耦 changelog~~ → 已落地，见 [`creator-changelog.md`](novel-factory/docs/creator-changelog.md)
 
 ### 0.2.1 创作者线完整路线图（v6.11 → v7.0）
 
@@ -243,13 +245,21 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 | **v6.14** | 分享与本地卷纲冲突合并向导 | 章节失败率热力格 | 三模式预览固定侧栏 | ✅ |
 | **v7.0** | Playwright：分享链接→应用→保存 | batch 历史面板「运维摘要」折叠区 | 无障碍验收清单 + verify 脚本扩展 | ✅ |
 
+**v7.0+ 产品级（已落地）**
+
+| 项 | 说明 | 证据 |
+|----|------|------|
+| 创作者 beta 文档包 | `docs/creator-beta-pack/` + walkthrough 对齐 | `verify-creator-beta-pack.sh` |
+| 分享协作 v2 | diff 分享 v3 token · `diff-collab-notes` API | `volume_plan_diff_share_collab_v2` |
+| Studio 解耦发布 | `creator-changelog.md` / `studio-changelog.md` | 本 HANDOFF §0.2 |
+
 **v7.0 之后（产品级，非逐版小功能）**
 
 | 项 | 说明 |
 |----|------|
-| 创作者 beta 文档包 | 陪伴/推进 walkthrough 与 Dashboard 能力对齐 |
-| 分享协作 v2 | 多人批注与 diff 联动（复用向导 `step_notes`） |
-| Studio 解耦发布 | 创作者线独立 changelog；Studio 维持模式不改 |
+| ~~创作者 beta 文档包~~ | ✅ 已落地 |
+| ~~分享协作 v2~~ | ✅ 已落地 |
+| ~~Studio 解耦发布~~ | ✅ 已落地 |
 
 **Studio / 仓库维护轨（与创作者线并行，§0.1）**
 

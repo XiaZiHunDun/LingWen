@@ -34,6 +34,7 @@ export LINGWEN_PROJECT_ROOT="$(pwd)/projects/my-story"
 ## 2. 陪伴模式日常
 
 真人走通清单：[`companion-walkthrough-checklist.md`](companion-walkthrough-checklist.md)  
+Dashboard Beta：[`creator-beta-pack/README.md`](creator-beta-pack/README.md)  
 冒烟脚本：`bash scripts/verify-companion-walkthrough.sh`
 
 1. 改 `docs/novel-pillars.md` 和各章 `chNNN_大纲.md`（可选）
@@ -50,6 +51,7 @@ bash scripts/run-companion-check.sh
 ## 3. 推进模式日常
 
 走通清单：[`advance-walkthrough-checklist.md`](advance-walkthrough-checklist.md)  
+Dashboard Beta：[`creator-beta-pack/README.md`](creator-beta-pack/README.md)  
 冒烟：`bash scripts/verify-advance-walkthrough.sh`
 
 1. 打开 `03_内容仓库/01_全文总体大纲/全局大纲.md`，填**卷纲表**

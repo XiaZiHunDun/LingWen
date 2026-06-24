@@ -408,6 +408,7 @@ assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_chapte
 assert resolve_creator_ui_profile(creation_mode="studio")["creation_mode_preview_pinned_sidebar"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_share_link_e2e"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_ops_summary"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_share_collab_v2"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_accessibility_checklist"] is True
 
 # v7.0 无障碍验收：推进模式应启用分享 E2E 与运维摘要
