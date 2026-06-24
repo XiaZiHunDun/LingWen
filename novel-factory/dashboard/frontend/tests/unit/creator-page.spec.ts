@@ -3402,4 +3402,88 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="batch-history-success-rate"]').text()).toContain('67%');
     expect(wrapper.find('[data-testid="batch-history-success-rate"]').text()).toContain('2/3');
   });
+
+  it('v6.1 filters volume plan diff by volume label', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_volume_filter: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [
+          { type: 'changed', label: '一', message: '卷一变更' },
+          { type: 'changed', label: '二', message: '卷二变更' },
+        ],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('卷筛选');
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-plan-diff-volume-filter"]').setValue('二');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-changed-二"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-changed-一"]').exists()).toBe(false);
+  });
+
+  it('v6.1 batch history average duration', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_avg_duration: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-a',
+          start_chapter: 1,
+          end_chapter: 3,
+          status: 'completed',
+          started_at: '2026-06-22T10:00:00+00:00',
+          finished_at: '2026-06-22T10:30:00+00:00',
+        },
+        {
+          job_id: 'job-b',
+          start_chapter: 4,
+          end_chapter: 6,
+          status: 'completed',
+          started_at: '2026-06-22T11:00:00+00:00',
+          finished_at: '2026-06-22T12:00:00+00:00',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-avg-duration"]').text()).toContain('45 分钟');
+  });
+
+  it('v6.1 copies creation mode yaml snippet', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="copy-creation-mode-yaml-companion"]').trigger('click');
+    await flushPromises();
+    expect(writeText).toHaveBeenCalledWith('creation_mode: companion');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('creation_mode: companion');
+  });
 });

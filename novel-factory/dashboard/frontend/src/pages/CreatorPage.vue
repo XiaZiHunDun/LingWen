@@ -97,6 +97,15 @@
         >
           <strong>{{ row.label }}</strong>
           <span class="meta-line">{{ row.summary }}</span>
+          <button
+            v-if="uiProfile.creation_mode_yaml_snippet"
+            type="button"
+            class="mini-btn pixel-border creation-mode-yaml-btn"
+            :data-testid="`copy-creation-mode-yaml-${row.mode}`"
+            @click.stop="copyCreationModeYaml(row.mode)"
+          >
+            复制 YAML
+          </button>
         </li>
       </ul>
     </div>
@@ -1278,6 +1287,27 @@
               </option>
             </select>
           </label>
+          <label
+            v-if="uiProfile.volume_plan_diff_volume_filter && volumePlanDiffPreview?.has_changes && volumePlanDiffVolumeOptions.length"
+            class="meta-line volume-plan-diff-volume-filter"
+            data-testid="volume-plan-diff-volume-filter-label"
+          >
+            变更卷
+            <select
+              v-model="volumePlanDiffVolumeFilter"
+              class="vol-input"
+              data-testid="volume-plan-diff-volume-filter"
+            >
+              <option value="">全部卷</option>
+              <option
+                v-for="volLabel in volumePlanDiffVolumeOptions"
+                :key="`vol-diff-volume-${volLabel}`"
+                :value="volLabel"
+              >
+                卷{{ volLabel }}
+              </option>
+            </select>
+          </label>
           <div
             v-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview?.has_changes && !uiProfile.volume_plan_diff_auto_collapse"
             class="volume-plan-diff-panel pixel-border"
@@ -1745,6 +1775,13 @@
             data-testid="batch-history-success-rate"
           >
             成功率 {{ batchHistorySuccessRate.pct }}%（{{ batchHistorySuccessRate.completed }}/{{ batchHistorySuccessRate.total }} 已完成）
+          </p>
+          <p
+            v-if="batchHistoryAvgDuration != null"
+            class="meta-line batch-history-avg-duration"
+            data-testid="batch-history-avg-duration"
+          >
+            平均耗时 {{ batchHistoryAvgDuration }} 分钟
           </p>
           <div class="batch-history-actions">
             <button
@@ -2624,6 +2661,7 @@ const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
 const volumePlanDiffExpanded = ref(false);
 const volumePlanDiffTypeFilter = ref('');
+const volumePlanDiffVolumeFilter = ref('');
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
@@ -2826,6 +2864,8 @@ const defaultUiProfile = {
   batch_history_duration: false,
   volume_plan_diff_export: false,
   batch_history_success_rate: false,
+  volume_plan_diff_volume_filter: false,
+  batch_history_avg_duration: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -2833,6 +2873,7 @@ const defaultUiProfile = {
   advance_creation_mode_badge_tint: false,
   creation_mode_badge_legend: false,
   creation_mode_switch_preview: false,
+  creation_mode_yaml_snippet: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -2850,15 +2891,23 @@ watch(
     volumePlanDiffExpanded.value = Boolean(hasChanges);
     if (!hasChanges) {
       volumePlanDiffTypeFilter.value = '';
+      volumePlanDiffVolumeFilter.value = '';
     }
   },
 );
 
 watch(volumePlanDiffPreview, () => {
-  if (!volumePlanDiffTypeFilter.value) return;
-  const types = new Set((volumePlanDiffPreview.value?.changes || []).map((row) => row.type));
-  if (!types.has(volumePlanDiffTypeFilter.value)) {
-    volumePlanDiffTypeFilter.value = '';
+  if (volumePlanDiffTypeFilter.value) {
+    const types = new Set((volumePlanDiffPreview.value?.changes || []).map((row) => row.type));
+    if (!types.has(volumePlanDiffTypeFilter.value)) {
+      volumePlanDiffTypeFilter.value = '';
+    }
+  }
+  if (volumePlanDiffVolumeFilter.value) {
+    const labels = new Set((volumePlanDiffPreview.value?.changes || []).map((row) => row.label));
+    if (!labels.has(volumePlanDiffVolumeFilter.value)) {
+      volumePlanDiffVolumeFilter.value = '';
+    }
   }
 });
 const deviationHighlightEnabled = computed(
@@ -2947,13 +2996,23 @@ const volumePlanDiffTypeOptions = computed(() => {
   return [...types].sort();
 });
 
-const filteredVolumePlanDiffChanges = computed(() => {
-  const rows = volumePlanDiffPreview.value?.changes || [];
-  if (!uiProfile.value.volume_plan_diff_type_filter || !volumePlanDiffTypeFilter.value) {
-    return rows;
+const volumePlanDiffVolumeOptions = computed(() => {
+  const labels = new Set();
+  for (const row of volumePlanDiffPreview.value?.changes || []) {
+    if (row?.label) labels.add(String(row.label));
   }
-  const selected = volumePlanDiffTypeFilter.value;
-  return rows.filter((row) => String(row.type) === selected);
+  return [...labels].sort();
+});
+
+const filteredVolumePlanDiffChanges = computed(() => {
+  let rows = volumePlanDiffPreview.value?.changes || [];
+  if (uiProfile.value.volume_plan_diff_type_filter && volumePlanDiffTypeFilter.value) {
+    rows = rows.filter((row) => String(row.type) === volumePlanDiffTypeFilter.value);
+  }
+  if (uiProfile.value.volume_plan_diff_volume_filter && volumePlanDiffVolumeFilter.value) {
+    rows = rows.filter((row) => String(row.label) === volumePlanDiffVolumeFilter.value);
+  }
+  return rows;
 });
 
 const creationModeSwitchHintText = computed(() => {
@@ -2989,6 +3048,15 @@ const batchHistorySuccessRate = computed(() => {
     completed,
     pct: Math.round((completed / total) * 100),
   };
+});
+
+const batchHistoryAvgDuration = computed(() => {
+  if (!uiProfile.value.batch_history_avg_duration || !batchHistory.value.length) return null;
+  const durations = batchHistory.value
+    .map((job) => batchJobDurationMinutes(job))
+    .filter((minutes) => minutes != null);
+  if (!durations.length) return null;
+  return Math.round(durations.reduce((sum, minutes) => sum + minutes, 0) / durations.length);
 });
 
 const creationModeSwitchDocLinks = computed(() => {
@@ -3712,14 +3780,30 @@ async function loadBatchHistory() {
   }
 }
 
+function batchJobDurationMinutes(job) {
+  const start = job?.started_at ? Date.parse(job.started_at) : Number.NaN;
+  const end = job?.finished_at ? Date.parse(job.finished_at) : Number.NaN;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+  return Math.round((end - start) / 60000);
+}
+
 function batchJobDurationLabel(job) {
   if (!uiProfile.value.batch_history_duration || !job) return '';
-  const start = job.started_at ? Date.parse(job.started_at) : Number.NaN;
-  const end = job.finished_at ? Date.parse(job.finished_at) : Number.NaN;
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return '';
-  const minutes = Math.round((end - start) / 60000);
+  const minutes = batchJobDurationMinutes(job);
+  if (minutes == null) return '';
   if (minutes < 1) return '耗时 <1 分钟';
   return `耗时 ${minutes} 分钟`;
+}
+
+async function copyCreationModeYaml(mode) {
+  if (!uiProfile.value.creation_mode_yaml_snippet || !mode) return;
+  const snippet = `creation_mode: ${mode}`;
+  try {
+    await navigator.clipboard.writeText(snippet);
+    saveMessage.value = `已复制：${snippet}`;
+  } catch {
+    saveMessage.value = snippet;
+  }
 }
 
 function applyBatchHistoryBudgetFromJob(job) {
@@ -5572,6 +5656,24 @@ watch(
 .creation-mode-preview-item--active {
   border-color: rgba(100, 140, 200, 0.65);
   background: rgba(100, 140, 200, 0.1);
+}
+
+.creation-mode-yaml-btn {
+  margin-top: var(--space-xs);
+  font-size: 7px;
+}
+
+.volume-plan-diff-volume-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  margin-left: var(--space-sm);
+}
+
+.batch-history-avg-duration {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-accent);
 }
 
 .batch-history-success-rate {
