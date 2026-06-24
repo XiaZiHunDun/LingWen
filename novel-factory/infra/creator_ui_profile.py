@@ -46,6 +46,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "wizard_default_collapsed": True,
             "wizard_expand_if_incomplete": True,
             "chapter_inline_edit": True,
+            "chapter_full_preview": False,
+            "logic_check_inline_issues": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -63,6 +65,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "wizard_default_collapsed": False,
             "wizard_expand_if_incomplete": False,
             "chapter_inline_edit": False,
+            "chapter_full_preview": True,
+            "logic_check_inline_issues": False,
             "deviation_min_severity": "alert",
         }
     return {
@@ -79,6 +83,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "wizard_default_collapsed": False,
         "wizard_expand_if_incomplete": False,
         "chapter_inline_edit": False,
+        "chapter_full_preview": False,
+        "logic_check_inline_issues": False,
         "deviation_min_severity": None,
     }
 

@@ -407,6 +407,14 @@
                 {{ chapterBodySaving ? '保存中…' : '保存正文' }}
               </button>
             </div>
+            <div
+              v-else-if="uiProfile.chapter_full_preview && chapterPreview.has_body"
+              class="chapter-read-preview"
+              data-testid="chapter-read-preview"
+            >
+              <label class="meta-line">正文（只读全文）</label>
+              <pre class="preview-text chapter-full-text">{{ chapterPreview.body_text || chapterPreview.body_preview }}</pre>
+            </div>
             <details v-else-if="chapterPreview.has_body" :open="!chapterPreview.has_outline">
               <summary>正文</summary>
               <pre class="preview-text">{{ chapterPreview.body_preview || '（空）' }}</pre>
@@ -466,19 +474,26 @@
               v-for="row in overview.volume_pulse.volumes"
               :key="row.label"
               class="volume-pulse-row"
+              :class="{ 'volume-pulse-row--active': highlightedVolumeLabel === row.label }"
+              role="button"
+              tabindex="0"
               :data-testid="`volume-pulse-row-${row.label}`"
+              @click="jumpToVolume(row)"
+              @keydown.enter="jumpToVolume(row)"
             >
               <strong>{{ row.label }}</strong>
               <span class="meta-line">{{ row.headline }}</span>
             </li>
           </ul>
-          <p
+          <button
             v-if="overview.volume_pulse.latest_summary"
-            class="meta-line"
-            data-testid="volume-pulse-latest-summary"
+            type="button"
+            class="link-btn meta-line"
+            data-testid="volume-pulse-jump-summary-btn"
+            @click="openVolumeSummaryByName(overview.volume_pulse.latest_summary.name)"
           >
             最新摘要：{{ overview.volume_pulse.latest_summary.name }}
-          </p>
+          </button>
         </div>
 
         <div class="volume-plan-panel" data-testid="volume-plan-panel">
@@ -1178,6 +1193,14 @@
           <button
             type="button"
             class="save-btn pixel-border"
+            data-testid="open-batch-summary-btn"
+            @click="openVolumeSummaryForRange(batchSummaryPrompt.start, batchSummaryPrompt.end)"
+          >
+            查看卷摘要
+          </button>
+          <button
+            type="button"
+            class="save-btn pixel-border"
             data-testid="dismiss-batch-summary-prompt-btn"
             @click="batchSummaryPrompt = null"
           >
@@ -1191,6 +1214,8 @@
             v-for="vol in overview.volume_summaries"
             :key="vol.path"
             class="volume-block"
+            :open="openVolumeSummaryName === vol.name"
+            :data-testid="`volume-summary-block-${vol.name}`"
           >
             <summary>{{ vol.name }}</summary>
             <pre class="volume-excerpt">{{ vol.excerpt }}</pre>
@@ -1733,6 +1758,26 @@
             {{ logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ logicCheckResult.p0_count }} ·
             共 {{ logicCheckResult.total_issues }} 条
           </p>
+          <ul
+            v-if="uiProfile.logic_check_inline_issues && logicCheckResult?.issues?.length"
+            class="logic-check-issues"
+            data-testid="logic-check-issues"
+          >
+            <li
+              v-for="(issue, idx) in logicCheckResult.issues"
+              :key="`${issue.chapter}-${idx}`"
+              class="logic-check-issue"
+              role="button"
+              tabindex="0"
+              :data-testid="`logic-check-issue-${idx}`"
+              @click="jumpToChapter(issue.chapter)"
+              @keydown.enter="jumpToChapter(issue.chapter)"
+            >
+              <span class="issue-severity">{{ issue.severity }}</span>
+              <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
+              {{ issue.title || issue.message }}
+            </li>
+          </ul>
         </div>
         <div v-else-if="uiProfile.show_studio_workflow" class="cmd-block">
           <p class="subsection-title">守门命令</p>
@@ -1852,6 +1897,8 @@ const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
 const chapterBodySaving = ref(false);
 const batchSummaryPrompt = ref(null);
+const openVolumeSummaryName = ref(null);
+const highlightedVolumeLabel = ref(null);
 const previewLoading = ref(false);
 const loading = ref(false);
 const saving = ref(false);
@@ -1987,6 +2034,8 @@ const defaultUiProfile = {
   wizard_default_collapsed: false,
   wizard_expand_if_incomplete: false,
   chapter_inline_edit: false,
+  chapter_full_preview: false,
+  logic_check_inline_issues: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2225,13 +2274,57 @@ async function selectChapter(chapter) {
   chapterPreview.value = null;
   chapterBodyDraft.value = '';
   try {
-    const full = Boolean(uiProfile.value.chapter_inline_edit);
+    const full = Boolean(uiProfile.value.chapter_inline_edit || uiProfile.value.chapter_full_preview);
     chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterPreview.value.body_preview ?? '';
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     previewLoading.value = false;
+  }
+}
+
+async function jumpToChapter(chapter) {
+  if (!chapter) return;
+  await selectChapter(chapter);
+  await nextTick();
+  try {
+    document.querySelector('[data-testid="chapter-preview-panel"]')?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  } catch {
+    /* jsdom */
+  }
+}
+
+async function jumpToVolume(row) {
+  if (!row) return;
+  highlightedVolumeLabel.value = row.label;
+  await jumpToChapter(row.start_chapter);
+}
+
+function openVolumeSummaryByName(name) {
+  if (!name) return;
+  openVolumeSummaryName.value = name;
+  nextTick(() => {
+    try {
+      document.querySelector(`[data-testid="volume-summary-block-${name}"]`)?.scrollIntoView?.({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } catch {
+      /* jsdom */
+    }
+  });
+}
+
+function openVolumeSummaryForRange(start, end) {
+  const pad = (n) => String(n).padStart(3, '0');
+  const target = `volume-summary-ch${pad(start)}-${pad(end)}.md`;
+  const match = overview.value?.volume_summaries?.find((vol) => vol.name === target);
+  if (match) {
+    openVolumeSummaryByName(match.name);
   }
 }
 
@@ -3866,6 +3959,52 @@ watch(projectRevision, () => {
 .chapter-body-textarea {
   width: 100%;
   min-height: 180px;
+}
+
+.chapter-read-preview {
+  margin-top: var(--space-sm);
+}
+
+.chapter-full-text {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.volume-pulse-row {
+  cursor: pointer;
+}
+
+.volume-pulse-row--active {
+  outline: 2px solid var(--color-accent);
+}
+
+.logic-check-issues {
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.logic-check-issue {
+  cursor: pointer;
+  margin-bottom: var(--space-xs);
+  font-size: 8px;
+}
+
+.issue-severity {
+  display: inline-block;
+  min-width: 2.5em;
+  margin-right: var(--space-xs);
+  font-weight: bold;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
 }
 
 .batch-summary-prompt {

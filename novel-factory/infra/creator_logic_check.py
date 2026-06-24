@@ -70,6 +70,22 @@ def run_creator_logic_check(
 
     fail_severity = settings.fail_severity
     passed = not _issues_meet_fail_threshold(issues, fail_severity)
+    ranked = sorted(
+        issues,
+        key=lambda i: (
+            _SEVERITY_RANK.get(i.severity.value, 99),
+            i.location.chapter if i.location else 0,
+        ),
+    )
+    issue_rows = [
+        {
+            "severity": issue.severity.value,
+            "chapter": issue.location.chapter if issue.location else 0,
+            "title": issue.title,
+            "message": issue.description or issue.title,
+        }
+        for issue in ranked[:30]
+    ]
     return {
         "passed": passed,
         "fail_severity": fail_severity,
@@ -78,4 +94,5 @@ def run_creator_logic_check(
         "total_issues": len(issues),
         "issue_counts": issue_counts,
         "p0_count": issue_counts["P0"],
+        "issues": issue_rows,
     }

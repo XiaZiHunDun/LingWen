@@ -312,6 +312,12 @@ from infra.creator_volume_summary import write_volume_summary
 summary_path = write_volume_summary(root, start_chapter=1, end_chapter=1)
 assert summary_path.is_file()
 
+from infra.creator_logic_check import run_creator_logic_check
+
+check = run_creator_logic_check(root)
+assert "issues" in check
+assert resolve_creator_ui_profile(creation_mode="advance")["chapter_full_preview"] is True
+
 from infra.creator_ui_profile import filter_deviations_by_min_severity
 
 filtered = filter_deviations_by_min_severity(

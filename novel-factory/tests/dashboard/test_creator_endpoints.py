@@ -1169,6 +1169,9 @@ class TestCreatorEndpoints:
         assert "wizard_default_collapsed" in profile
         assert "wizard_expand_if_incomplete" in profile
         assert "chapter_inline_edit" in profile
+        assert "chapter_inline_edit" in profile
+        assert "chapter_full_preview" in profile
+        assert "logic_check_inline_issues" in profile
         assert "deviation_min_severity" in profile
         assert "deviation_total_count" in data
         if data.get("volume_pulse"):
@@ -1198,6 +1201,13 @@ class TestCreatorEndpoints:
         assert resp.status_code == 200
         data = resp.json()
         assert data["wizard_panel_dismissed"] is True
+
+    def test_creator_v41_logic_check_issues(self, client: TestClient) -> None:
+        resp = client.post("/api/creator/logic-check")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "issues" in data
+        assert isinstance(data["issues"], list)
 
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")

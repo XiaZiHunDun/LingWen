@@ -282,6 +282,8 @@ const overviewFixture = {
         wizard_default_collapsed: false,
         wizard_expand_if_incomplete: false,
         chapter_inline_edit: false,
+        chapter_full_preview: true,
+        logic_check_inline_issues: false,
         deviation_min_severity: 'alert',
   },
   volume_pulse: {
@@ -889,7 +891,7 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
     await flushPromises();
 
-    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: false });
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: true });
     expect(wrapper.find('[data-testid="chapter-preview-panel"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('第一章正文预览');
   });
@@ -1712,5 +1714,67 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="save-chapter-body-btn"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.saveCreatorChapterBody).toHaveBeenCalledWith(1, '新正文');
+  });
+
+  it('v4.1 advance full read preview and pulse jump', async () => {
+    creatorMocks.fetchCreatorChapterPreview.mockResolvedValueOnce({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 2000,
+      body_preview: '截断',
+      body_text: '推进模式全文正文',
+      outline_preview: '大纲',
+      body_truncated: false,
+      outline_truncated: false,
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-pulse-row-一"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: true });
+    expect(wrapper.find('[data-testid="chapter-read-preview"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('推进模式全文正文');
+  });
+
+  it('v4.1 companion logic check inline issues jump to chapter', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
+        chapter_full_preview: false,
+        logic_check_inline_issues: true,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    creatorMocks.runCreatorLogicCheck.mockReset();
+    creatorMocks.runCreatorLogicCheck.mockResolvedValue({
+      passed: false,
+      p0_count: 1,
+      total_issues: 1,
+      issues: [{ severity: 'P0', chapter: 2, title: '逻辑矛盾', message: '逻辑矛盾' }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="logic-check-issues"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(2, { full: true });
   });
 });

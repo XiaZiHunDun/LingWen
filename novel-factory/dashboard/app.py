@@ -263,6 +263,8 @@ class CreatorUiProfile(BaseModel):
     wizard_default_collapsed: bool = False
     wizard_expand_if_incomplete: bool = False
     chapter_inline_edit: bool = False
+    chapter_full_preview: bool = False
+    logic_check_inline_issues: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -294,6 +296,13 @@ class CreatorVolumePulse(BaseModel):
     latest_summary: Optional[CreatorVolumePulseSummary] = None
 
 
+class CreatorLogicCheckIssue(BaseModel):
+    severity: str
+    chapter: int = 0
+    title: str = ""
+    message: str = ""
+
+
 class CreatorLogicCheckResponse(BaseModel):
     passed: bool
     fail_severity: Optional[str] = None
@@ -302,6 +311,7 @@ class CreatorLogicCheckResponse(BaseModel):
     total_issues: int = 0
     issue_counts: dict[str, int] = {}
     p0_count: int = 0
+    issues: list[CreatorLogicCheckIssue] = []
 
 
 class CreatorOverviewResponse(BaseModel):
