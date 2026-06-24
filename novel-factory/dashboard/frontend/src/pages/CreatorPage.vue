@@ -84,15 +84,29 @@
     <div
       v-if="uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
       class="creation-mode-switch-preview pixel-border"
+      :class="{ 'creation-mode-switch-preview--guide': uiProfile.creation_mode_switch_guide_animation }"
       data-testid="creation-mode-switch-preview"
     >
       <p class="meta-line">三模式预览 · 切换请编辑 config/project.yaml → creation_mode</p>
+      <p
+        v-if="uiProfile.creation_mode_switch_guide_animation"
+        class="meta-line creation-mode-guide-hint"
+        data-testid="creation-mode-guide-hint"
+      >
+        引导动画：依次高亮陪伴 → 推进 → 工作室
+      </p>
       <ul class="creation-mode-preview-list">
         <li
-          v-for="row in creationModePreviewRows"
+          v-for="(row, previewIdx) in creationModePreviewRows"
           :key="`mode-preview-${row.mode}`"
           class="creation-mode-preview-item"
-          :class="{ 'creation-mode-preview-item--active': row.active }"
+          :class="{
+            'creation-mode-preview-item--active': row.active,
+            'creation-mode-preview-item--guide': uiProfile.creation_mode_switch_guide_animation,
+          }"
+          :style="uiProfile.creation_mode_switch_guide_animation
+            ? { animationDelay: `${previewIdx * 0.8}s` }
+            : undefined"
           :data-testid="`creation-mode-preview-${row.mode}`"
         >
           <strong>{{ row.label }}</strong>
@@ -1370,6 +1384,15 @@
             >
               导出 diff JSON
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export_markdown && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="export-volume-plan-diff-markdown-btn"
+              @click="exportVolumePlanDiffMarkdown"
+            >
+              导出 diff Markdown
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1497,6 +1520,15 @@
                 @click="exportVolumePlanDiff"
               >
                 导出 diff JSON
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export_markdown && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="export-volume-plan-diff-markdown-btn"
+                @click="exportVolumePlanDiffMarkdown"
+              >
+                导出 diff Markdown
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -1833,6 +1865,21 @@
             >
               {{ week.weekLabel }} · {{ week.total }} 次
               · 成功 {{ week.completed }} · 失败 {{ week.failed }}
+            </li>
+          </ul>
+          <ul
+            v-if="uiProfile.batch_history_monthly_summary && batchHistoryMonthlySummary.length"
+            class="batch-history-monthly-summary"
+            data-testid="batch-history-monthly-summary"
+          >
+            <li
+              v-for="month in batchHistoryMonthlySummary"
+              :key="`batch-month-${month.monthKey}`"
+              class="meta-line batch-history-monthly-item"
+              :data-testid="`batch-history-month-${month.monthKey}`"
+            >
+              {{ month.monthLabel }} · {{ month.total }} 次
+              · 成功 {{ month.completed }} · 失败 {{ month.failed }}
             </li>
           </ul>
           <div class="batch-history-actions">
@@ -2922,7 +2969,10 @@ const defaultUiProfile = {
   volume_plan_diff_export_highlight: false,
   batch_history_failure_trend: false,
   batch_history_weekly_summary: false,
+  batch_history_monthly_summary: false,
+  volume_plan_diff_export_markdown: false,
   creation_mode_capability_matrix: false,
+  creation_mode_switch_guide_animation: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -3172,6 +3222,23 @@ const batchHistoryWeeklySummary = computed(() => {
     if (status === 'failed') row.failed += 1;
   }
   return Array.from(groups.values()).sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+});
+
+const batchHistoryMonthlySummary = computed(() => {
+  if (!uiProfile.value.batch_history_monthly_summary || !batchHistory.value.length) return [];
+  const groups = new Map();
+  for (const job of batchHistory.value) {
+    const monthKey = batchJobMonthKey(job);
+    if (!groups.has(monthKey)) {
+      groups.set(monthKey, { monthKey, monthLabel: monthKey, total: 0, completed: 0, failed: 0 });
+    }
+    const row = groups.get(monthKey);
+    row.total += 1;
+    const status = String(job?.status).toLowerCase();
+    if (status === 'completed') row.completed += 1;
+    if (status === 'failed') row.failed += 1;
+  }
+  return Array.from(groups.values()).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
 });
 
 const creationModeSwitchDocLinks = computed(() => {
@@ -3916,6 +3983,13 @@ function batchJobIsoWeekKey(job) {
   return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 
+function batchJobMonthKey(job) {
+  const raw = job?.finished_at || job?.started_at;
+  if (!raw) return '未知月';
+  const monthKey = String(raw).slice(0, 7);
+  return /^\d{4}-\d{2}$/.test(monthKey) ? monthKey : '未知月';
+}
+
 function batchJobDurationLabel(job) {
   if (!uiProfile.value.batch_history_duration || !job) return '';
   const minutes = batchJobDurationMinutes(job);
@@ -4016,6 +4090,56 @@ function downloadJsonExport(filename, payload) {
   URL.revokeObjectURL(url);
 }
 
+function downloadTextExport(filename, content, mimeType = 'text/plain') {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildVolumePlanDiffMarkdown(changes) {
+  const lines = [
+    '# 卷纲 Diff',
+    '',
+    `变更数：${changes.length}`,
+    '',
+    '## 变更列表',
+    '',
+  ];
+  for (const row of changes) {
+    lines.push(`- **${row.type}** · ${row.label}：${row.message}`);
+    if (row.details?.length) {
+      for (const detail of row.details) {
+        lines.push(`  - ${detail}`);
+      }
+    }
+  }
+  const outlinePath = volumePlanDiffPreview.value.global_outline_path || '';
+  if (outlinePath) {
+    lines.push('', '## 全局大纲', '', `\`${outlinePath}\``);
+  }
+  if (uiProfile.value.volume_plan_diff_export_outline) {
+    const excerpt = volumePlanDiffPreview.value.global_outline_excerpt || '';
+    if (excerpt) {
+      lines.push('', '### 摘录', '', '```', excerpt, '```');
+    }
+  }
+  if (uiProfile.value.volume_plan_diff_export_highlight) {
+    const highlighted = (volumePlanDiffPreview.value.global_outline_lines || [])
+      .filter((line) => line.highlighted);
+    if (highlighted.length) {
+      lines.push('', '### 高亮行', '');
+      for (const line of highlighted) {
+        lines.push(`> ${line.text}`);
+      }
+    }
+  }
+  return `${lines.join('\n')}\n`;
+}
+
 async function exportBatchHistory() {
   if (!uiProfile.value.batch_history_export) return;
   try {
@@ -4059,6 +4183,19 @@ function exportVolumePlanDiff() {
   const outlineNote = uiProfile.value.volume_plan_diff_export_outline ? '（含大纲摘录）' : '';
   const highlightNote = uiProfile.value.volume_plan_diff_export_highlight ? '（含变更高亮）' : '';
   saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）${outlineNote}${highlightNote}`;
+}
+
+function exportVolumePlanDiffMarkdown() {
+  if (!uiProfile.value.volume_plan_diff_export_markdown || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  downloadTextExport(
+    'creator-volume-plan-diff.md',
+    buildVolumePlanDiffMarkdown(changes),
+    'text/markdown',
+  );
+  saveMessage.value = `已导出卷纲 diff Markdown（${changes.length} 条变更）`;
 }
 
 async function loadOnboardingWizard() {
@@ -5808,6 +5945,32 @@ watch(
   background: rgba(100, 140, 200, 0.1);
 }
 
+.creation-mode-switch-preview--guide {
+  border-color: rgba(100, 140, 200, 0.45);
+}
+
+.creation-mode-guide-hint {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-accent);
+}
+
+.creation-mode-preview-item--guide {
+  animation: creation-mode-guide-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes creation-mode-guide-pulse {
+  0%, 100% {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+  33% {
+    border-color: rgba(100, 140, 200, 0.75);
+    background: rgba(100, 140, 200, 0.14);
+    box-shadow: 0 0 0 1px rgba(100, 140, 200, 0.25);
+  }
+}
+
 .creation-mode-yaml-btn {
   margin-top: var(--space-xs);
   font-size: 7px;
@@ -5829,6 +5992,13 @@ watch(
 .batch-history-failure-trend {
   margin: 0 0 var(--space-xs);
   color: #a44;
+}
+
+.batch-history-monthly-summary,
+.batch-history-weekly-summary {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-xs);
 }
 
 .batch-history-success-rate {

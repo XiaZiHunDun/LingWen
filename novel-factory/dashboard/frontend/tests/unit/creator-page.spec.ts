@@ -3690,4 +3690,110 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="creation-mode-capability-human-writing"]').text()).toContain('人主笔');
     expect(wrapper.find('[data-testid="creation-mode-capability-factory-pipeline"]').text()).toContain('✓');
   });
+
+  it('v6.4 exports volume plan diff markdown', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    let exportedMarkdown = '';
+    const originalBlob = globalThis.Blob;
+    globalThis.Blob = class extends originalBlob {
+      constructor(parts, options) {
+        super(parts, options);
+        exportedMarkdown = String(parts[0]);
+      }
+    };
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export_markdown: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+        global_outline_path: '/全局大纲.md',
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('Markdown 导出');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-volume-plan-diff-markdown-btn"]').trigger('click');
+    await flushPromises();
+    expect(exportedMarkdown).toContain('# 卷纲 Diff');
+    expect(exportedMarkdown).toContain('核心冲突已修改');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('Markdown');
+    globalThis.Blob = originalBlob;
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v6.4 batch history monthly summary', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_monthly_summary: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-m6-a',
+          start_chapter: 1,
+          end_chapter: 2,
+          status: 'completed',
+          finished_at: '2026-06-10T12:00:00Z',
+        },
+        {
+          job_id: 'job-m6-b',
+          start_chapter: 3,
+          end_chapter: 4,
+          status: 'failed',
+          finished_at: '2026-06-18T12:00:00Z',
+        },
+        {
+          job_id: 'job-m5',
+          start_chapter: 5,
+          end_chapter: 6,
+          status: 'completed',
+          finished_at: '2026-05-20T12:00:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const summary = wrapper.find('[data-testid="batch-history-monthly-summary"]');
+    expect(summary.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-month-2026-06"]').text()).toContain('2 次');
+    expect(wrapper.find('[data-testid="batch-history-month-2026-06"]').text()).toContain('成功 1 · 失败 1');
+    expect(wrapper.find('[data-testid="batch-history-month-2026-05"]').text()).toContain('1 次');
+  });
+
+  it('v6.4 shows creation mode switch guide animation', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_switch_preview: true,
+        creation_mode_switch_guide_animation: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-guide-hint"]').text()).toContain('引导动画');
+    expect(wrapper.find('[data-testid="creation-mode-preview-companion"]').classes()).toContain(
+      'creation-mode-preview-item--guide',
+    );
+    expect(wrapper.find('[data-testid="creation-mode-switch-preview"]').classes()).toContain(
+      'creation-mode-switch-preview--guide',
+    );
+  });
 });
