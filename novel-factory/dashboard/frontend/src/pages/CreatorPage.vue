@@ -82,14 +82,40 @@
       </button>
     </div>
     <div
-      v-if="uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
+      v-if="uiProfile.creation_mode_switch_aria_live"
+      class="creation-mode-aria-live"
+      aria-live="polite"
+      data-testid="creation-mode-switch-aria-live"
+    >
+      {{ creationModeSwitchAriaMessage }}
+    </div>
+    <aside
+      v-if="uiProfile.creation_mode_preview_pinned_sidebar && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
+      class="creation-mode-pinned-sidebar pixel-border"
+      data-testid="creation-mode-pinned-sidebar"
+    >
+      <p class="meta-line">三模式侧栏</p>
+      <ul class="creation-mode-pinned-list">
+        <li
+          v-for="row in creationModePreviewRows"
+          :key="`mode-pinned-${row.mode}`"
+          class="creation-mode-pinned-item"
+          :class="{ 'creation-mode-pinned-item--active': row.active }"
+          :data-testid="`creation-mode-pinned-${row.mode}`"
+        >
+          {{ row.label }}
+        </li>
+      </ul>
+    </aside>
+    <div
+      v-if="uiProfile.creation_mode_switch_preview && creationModePreviewRows.length && !uiProfile.creation_mode_preview_pinned_sidebar"
       class="creation-mode-switch-preview pixel-border"
-      :class="{ 'creation-mode-switch-preview--guide': uiProfile.creation_mode_switch_guide_animation }"
+      :class="{ 'creation-mode-switch-preview--guide': creationModeGuideAnimationEnabled }"
       data-testid="creation-mode-switch-preview"
     >
       <p class="meta-line">三模式预览 · 切换请编辑 config/project.yaml → creation_mode</p>
       <p
-        v-if="uiProfile.creation_mode_switch_guide_animation"
+        v-if="creationModeGuideAnimationEnabled"
         class="meta-line creation-mode-guide-hint"
         data-testid="creation-mode-guide-hint"
       >
@@ -102,9 +128,9 @@
           class="creation-mode-preview-item"
           :class="{
             'creation-mode-preview-item--active': row.active,
-            'creation-mode-preview-item--guide': uiProfile.creation_mode_switch_guide_animation,
+            'creation-mode-preview-item--guide': creationModeGuideAnimationEnabled,
           }"
-          :style="uiProfile.creation_mode_switch_guide_animation
+          :style="creationModeGuideAnimationEnabled
             ? { animationDelay: `${previewIdx * 0.8}s` }
             : undefined"
           :data-testid="`creation-mode-preview-${row.mode}`"
@@ -204,6 +230,14 @@
       class="volume-plan-diff-share-link-preview pixel-border"
       data-testid="volume-plan-diff-share-link-preview"
     >
+      <p
+        v-if="volumePlanDiffShareLinkPreview.valid === false"
+        class="meta-line volume-plan-diff-share-link-error"
+        data-testid="volume-plan-diff-share-token-error"
+      >
+        {{ volumePlanDiffShareLinkPreview.error_label }}
+      </p>
+      <template v-else>
       <p class="meta-line">
         分享链接解析：{{ volumePlanDiffShareLinkPreview.change_count }} 条变更
         <span v-if="volumePlanDiffShareLinkPreview.global_outline_path">
@@ -224,10 +258,11 @@
         type="button"
         class="mini-btn pixel-border"
         data-testid="apply-volume-plan-diff-share-btn"
-        @click="applyVolumePlanDiffShareLink"
+        @click="requestApplyVolumePlanDiffShareLink"
       >
         一键应用卷纲
       </button>
+      </template>
       <button
         type="button"
         class="mini-btn pixel-border"
@@ -236,6 +271,67 @@
       >
         关闭预览
       </button>
+    </div>
+    <div
+      v-if="pendingShareApply"
+      class="volume-plan-diff-share-apply-confirm pixel-border"
+      data-testid="volume-plan-diff-share-apply-confirm"
+    >
+      <p class="meta-line">
+        确认应用分享卷纲（{{ pendingShareApply.draft_volumes?.length || 0 }} 卷）？
+      </p>
+      <div class="mode-switch-confirm-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="confirm-share-apply-btn"
+          @click="confirmApplyVolumePlanDiffShareLink"
+        >
+          确认应用
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="cancel-share-apply-btn"
+          @click="cancelApplyVolumePlanDiffShareLink"
+        >
+          取消
+        </button>
+      </div>
+    </div>
+    <div
+      v-if="pendingShareMerge"
+      class="volume-plan-diff-share-merge-wizard pixel-border"
+      data-testid="volume-plan-diff-share-merge-wizard"
+    >
+      <p class="meta-line">分享卷纲与本地存在 {{ pendingShareMerge.conflicts.length }} 处冲突</p>
+      <ul class="volume-plan-diff-share-merge-list">
+        <li
+          v-for="row in pendingShareMerge.conflicts"
+          :key="`share-merge-${row.label}`"
+          class="meta-line"
+        >
+          {{ row.label }}：本地「{{ row.local.core_conflict }}」 / 分享「{{ row.share.core_conflict }}」
+        </li>
+      </ul>
+      <div class="mode-switch-confirm-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="share-merge-use-share-btn"
+          @click="confirmShareMergeUseShare"
+        >
+          使用分享版
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="share-merge-keep-local-btn"
+          @click="cancelShareMerge"
+        >
+          保留本地
+        </button>
+      </div>
     </div>
     <div
       v-if="showVolumePlanDiffPrintPreview"
@@ -2246,6 +2342,79 @@
               吞吐率：均值 {{ batchHistoryThroughputChart.avg }} 章/分 · 峰值 {{ batchHistoryThroughputChart.peak }}
             </p>
           </div>
+          <div
+            v-if="batchHistoryCostEfficiencyChart"
+            class="batch-history-cost-efficiency-chart"
+            data-testid="batch-history-cost-efficiency-chart"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryCostEfficiencyChart.width} ${batchHistoryCostEfficiencyChart.height}`"
+              class="batch-history-cost-efficiency-chart-svg"
+              role="img"
+              aria-label="batch 历史成本效率图"
+            >
+              <rect
+                v-for="bar in batchHistoryCostEfficiencyChart.bars"
+                :key="`cost-bar-${bar.id}`"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.barWidth"
+                :height="bar.barHeight"
+                class="batch-history-cost-efficiency-bar"
+                :data-testid="`batch-history-cost-${bar.id}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-cost-efficiency-chart-label">
+              成本效率：均值 ${{ batchHistoryCostEfficiencyChart.avg }} /章
+            </p>
+          </div>
+          <div
+            v-if="batchHistoryRetryRateStack"
+            class="batch-history-retry-rate-stack"
+            data-testid="batch-history-retry-rate-stack"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryRetryRateStack.width} ${batchHistoryRetryRateStack.height}`"
+              class="batch-history-retry-rate-stack-svg"
+              role="img"
+              aria-label="batch 历史重试成功率堆叠图"
+            >
+              <rect
+                v-for="segment in batchHistoryRetryRateStack.segments"
+                :key="`retry-seg-${segment.id}`"
+                :x="segment.x"
+                y="0"
+                :width="segment.width"
+                :height="batchHistoryRetryRateStack.height"
+                :class="`batch-history-retry-seg batch-history-retry-seg--${segment.id}`"
+                :data-testid="`batch-history-retry-${segment.id}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-retry-rate-stack-label">
+              重试分布：首次成功 {{ batchHistoryRetryRateStack.firstSuccess }}
+              · 重试成功 {{ batchHistoryRetryRateStack.retriedSuccess }}
+              · 失败 {{ batchHistoryRetryRateStack.failed }}
+            </p>
+          </div>
+          <div
+            v-if="batchHistoryChapterFailureHeatmap"
+            class="batch-history-chapter-failure-heatmap"
+            data-testid="batch-history-chapter-failure-heatmap"
+          >
+            <div class="batch-history-chapter-failure-grid">
+              <span
+                v-for="cell in batchHistoryChapterFailureHeatmap.cells"
+                :key="`heat-ch-${cell.chapter}`"
+                class="batch-history-chapter-failure-cell"
+                :class="{ 'batch-history-chapter-failure-cell--failed': cell.failed }"
+                :data-testid="`batch-history-heat-ch${cell.chapter}`"
+                :title="`ch${String(cell.chapter).padStart(3, '0')}`"
+              />
+            </div>
+            <p class="meta-line batch-history-chapter-failure-heatmap-label">
+              章节失败热力：{{ batchHistoryChapterFailureHeatmap.failedCount }} / {{ batchHistoryChapterFailureHeatmap.cells.length }}
+            </p>
+          </div>
           <p
             v-if="batchHistoryAvgDuration != null"
             class="meta-line batch-history-avg-duration"
@@ -3183,6 +3352,9 @@ const creationModeSwitchHistory = ref([]);
 const lastModeSwitchUndo = ref(null);
 const showVolumePlanDiffPrintPreview = ref(false);
 const volumePlanDiffShareLinkPreview = ref(null);
+const pendingShareApply = ref(null);
+const pendingShareMerge = ref(null);
+const creationModeSwitchAriaMessage = ref('');
 const volumePlanDiffPrintPreviewText = ref('');
 
 const CREATION_MODE_SWITCH_HISTORY_KEY = 'creator_mode_switch_history';
@@ -3416,6 +3588,15 @@ const defaultUiProfile = {
   batch_history_queue_depth_chart: false,
   volume_plan_diff_share_link_apply: false,
   batch_history_throughput_chart: false,
+  volume_plan_diff_share_link_apply_confirm: false,
+  batch_history_cost_efficiency_chart: false,
+  creation_mode_switch_reduced_motion: false,
+  volume_plan_diff_share_token_validation: false,
+  batch_history_retry_rate_stack: false,
+  creation_mode_switch_aria_live: false,
+  volume_plan_diff_share_link_merge: false,
+  batch_history_chapter_failure_heatmap: false,
+  creation_mode_preview_pinned_sidebar: false,
   creation_mode_switch_confirm_dialog: false,
   creation_mode_switch_history: false,
   creation_mode_switch_undo_hint: false,
@@ -3595,6 +3776,13 @@ const creationModePreviewRows = computed(() => {
     { mode: 'advance', label: '推进', summary: '人定卷纲 + batch 产章', active: current === 'advance' },
     { mode: 'studio', label: '工作室', summary: '工厂流水线批量产章', active: current === 'studio' },
   ];
+});
+
+const creationModeGuideAnimationEnabled = computed(() => {
+  if (!uiProfile.value.creation_mode_switch_guide_animation) return false;
+  if (!uiProfile.value.creation_mode_switch_reduced_motion) return true;
+  if (typeof window === 'undefined' || !window.matchMedia) return true;
+  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 });
 
 const CREATION_MODE_CAPABILITY_ROWS = [
@@ -3906,6 +4094,94 @@ const batchHistoryThroughputChart = computed(() => {
     peak: peak.toFixed(2),
     avg: avg.toFixed(2),
   };
+});
+
+const batchHistoryCostEfficiencyChart = computed(() => {
+  if (!uiProfile.value.batch_history_cost_efficiency_chart || !batchHistory.value.length) return null;
+  const rates = batchHistory.value
+    .map((job) => {
+      const budget = Number(job.budget_usd);
+      if (!Number.isFinite(budget) || budget <= 0) return null;
+      const start = Number(job.start_chapter) || 0;
+      const end = Number(job.end_chapter) || start;
+      const chapters = Math.max(1, end - start + 1);
+      return {
+        id: String(job.job_id || `${start}-${end}`),
+        rate: budget / chapters,
+      };
+    })
+    .filter(Boolean);
+  if (!rates.length) return null;
+  const peak = Math.max(...rates.map((row) => row.rate), 0.01);
+  const avg = rates.reduce((sum, row) => sum + row.rate, 0) / rates.length;
+  const width = 200;
+  const height = 40;
+  const shown = rates.slice(0, 8);
+  const slot = width / shown.length;
+  const bars = shown.map((row, idx) => {
+    const barHeight = (row.rate / peak) * (height - 8);
+    return {
+      ...row,
+      x: idx * slot + 2,
+      y: height - barHeight,
+      barWidth: slot - 4,
+      barHeight,
+    };
+  });
+  return { bars, width, height, avg: avg.toFixed(3) };
+});
+
+const batchHistoryRetryRateStack = computed(() => {
+  if (!uiProfile.value.batch_history_retry_rate_stack || !batchHistory.value.length) return null;
+  let firstSuccess = 0;
+  let retriedSuccess = 0;
+  let failed = 0;
+  for (const job of batchHistory.value) {
+    const status = String(job?.status).toLowerCase();
+    const retries = Number(job?.retry_count) || 0;
+    if (status === 'completed') {
+      if (retries > 0) retriedSuccess += 1;
+      else firstSuccess += 1;
+    } else if (status === 'failed') {
+      failed += 1;
+    }
+  }
+  const total = firstSuccess + retriedSuccess + failed;
+  if (!total) return null;
+  const width = 200;
+  const height = 14;
+  const segments = [];
+  let x = 0;
+  for (const segment of [
+    { id: 'first', count: firstSuccess },
+    { id: 'retried', count: retriedSuccess },
+    { id: 'failed', count: failed },
+  ]) {
+    if (!segment.count) continue;
+    const segmentWidth = (segment.count / total) * width;
+    segments.push({ ...segment, x, width: segmentWidth });
+    x += segmentWidth;
+  }
+  return { segments, width, height, firstSuccess, retriedSuccess, failed, total };
+});
+
+const batchHistoryChapterFailureHeatmap = computed(() => {
+  if (!uiProfile.value.batch_history_chapter_failure_heatmap || !batchHistory.value.length) return null;
+  const chapterMap = new Map();
+  for (const job of batchHistory.value) {
+    const start = Number(job.start_chapter) || 1;
+    const end = Number(job.end_chapter) || start;
+    const failed = String(job?.status).toLowerCase() === 'failed';
+    for (let chapter = start; chapter <= end; chapter += 1) {
+      chapterMap.set(chapter, failed);
+    }
+  }
+  const cells = [...chapterMap.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([chapter, failed]) => ({ chapter, failed }));
+  if (!cells.length) return null;
+  const failedCount = cells.filter((cell) => cell.failed).length;
+  return { cells, failedCount };
 });
 
 const batchHistoryAvgDuration = computed(() => {
@@ -4867,6 +5143,13 @@ async function copyCreationModeYaml(mode) {
   maybeRecordModeSwitch(mode, 'YAML');
   speakCreationModeSwitch(mode);
   triggerCreationModeSwitchHaptic();
+  announceCreationModeSwitch(mode);
+}
+
+function announceCreationModeSwitch(mode) {
+  if (!uiProfile.value.creation_mode_switch_aria_live || !mode) return;
+  const label = CREATION_MODE_ONBOARDING_LABELS[mode] || mode;
+  creationModeSwitchAriaMessage.value = `已请求切换至${label}模式`;
 }
 
 function triggerCreationModeSwitchHaptic() {
@@ -5279,8 +5562,19 @@ function decodeVolumePlanDiffShareToken(token) {
       .replace(/_/g, '/');
     const json = decodeURIComponent(escape(atob(padded)));
     const data = JSON.parse(json);
-    if (data.v !== 1 && data.v !== 2) return null;
-    if (!Array.isArray(data.changes)) return null;
+    if (data.v > 2) {
+      return {
+        valid: false,
+        error: 'unsupported_version',
+        error_label: `不支持的分享版本 v${data.v}`,
+      };
+    }
+    if (data.v !== 1 && data.v !== 2) {
+      return { valid: false, error: 'unsupported_version', error_label: '不支持的分享版本' };
+    }
+    if (!Array.isArray(data.changes)) {
+      return { valid: false, error: 'invalid_payload', error_label: '分享数据缺少变更列表' };
+    }
     const draftVolumes = Array.isArray(data.d)
       ? data.d.map((row) => ({
         label: row.label,
@@ -5291,6 +5585,7 @@ function decodeVolumePlanDiffShareToken(token) {
       }))
       : null;
     return {
+      valid: true,
       change_count: data.c ?? data.changes.length,
       changes: data.changes,
       global_outline_path: data.p || '',
@@ -5298,7 +5593,7 @@ function decodeVolumePlanDiffShareToken(token) {
       can_apply: Boolean(draftVolumes?.length),
     };
   } catch {
-    return null;
+    return { valid: false, error: 'corrupt_token', error_label: '分享链接已损坏或无法解析' };
   }
 }
 
@@ -5308,13 +5603,25 @@ function parseVolumePlanDiffShareHash(hash = window.location.hash) {
   return decodeVolumePlanDiffShareToken(match[1]);
 }
 
+function parseVolumePlanDiffShareHashWithValidation(hash = window.location.hash) {
+  const parsed = parseVolumePlanDiffShareHash(hash);
+  if (!parsed) return null;
+  if (!uiProfile.value.volume_plan_diff_share_token_validation) return parsed;
+  if (parsed.valid === false) return parsed;
+  return parsed;
+}
+
 function tryLoadVolumePlanDiffShareLinkPreview() {
   if (!uiProfile.value.volume_plan_diff_share_link_preview) {
     volumePlanDiffShareLinkPreview.value = null;
     return;
   }
-  const parsed = parseVolumePlanDiffShareHash();
+  const parsed = parseVolumePlanDiffShareHashWithValidation();
   volumePlanDiffShareLinkPreview.value = parsed;
+  if (parsed?.valid === false) {
+    saveMessage.value = parsed.error_label;
+    return;
+  }
   if (parsed?.change_count) {
     saveMessage.value = `已解析分享链接（${parsed.change_count} 条变更）`;
   }
@@ -5338,14 +5645,84 @@ function buildVolumePlanDiffShareDraft() {
   }));
 }
 
-async function applyVolumePlanDiffShareLink() {
-  if (!uiProfile.value.volume_plan_diff_share_link_apply) return;
-  const parsed = volumePlanDiffShareLinkPreview.value;
+async function applyVolumePlanDiffShareLinkDirect(parsed) {
   if (!parsed?.draft_volumes?.length) return;
   editableVolumes.value = parsed.draft_volumes.map((vol) => ({ ...vol }));
   await refreshVolumePlanDiffPreview();
   dismissVolumePlanDiffShareLinkPreview();
+  pendingShareApply.value = null;
+  pendingShareMerge.value = null;
   saveMessage.value = `已应用分享卷纲（${parsed.draft_volumes.length} 卷）`;
+}
+
+function detectShareVolumeMergeConflicts(parsed) {
+  if (!parsed?.draft_volumes?.length) return [];
+  const localByLabel = Object.fromEntries(
+    editableVolumes.value.map((vol) => [vol.label, vol]),
+  );
+  const conflicts = [];
+  for (const shareVol of parsed.draft_volumes) {
+    const local = localByLabel[shareVol.label];
+    if (!local) continue;
+    if (
+      local.core_conflict !== shareVol.core_conflict
+      || Number(local.start_chapter) !== Number(shareVol.start_chapter)
+      || Number(local.end_chapter) !== Number(shareVol.end_chapter)
+      || Boolean(local.locked) !== Boolean(shareVol.locked)
+    ) {
+      conflicts.push({ label: shareVol.label, local, share: shareVol });
+    }
+  }
+  return conflicts;
+}
+
+function requestApplyVolumePlanDiffShareLink() {
+  if (!uiProfile.value.volume_plan_diff_share_link_apply) return;
+  const parsed = volumePlanDiffShareLinkPreview.value;
+  if (!parsed?.can_apply) return;
+  if (uiProfile.value.volume_plan_diff_share_link_apply_confirm) {
+    pendingShareApply.value = parsed;
+    return;
+  }
+  proceedApplyVolumePlanDiffShareLink(parsed);
+}
+
+function confirmApplyVolumePlanDiffShareLink() {
+  const parsed = pendingShareApply.value;
+  pendingShareApply.value = null;
+  if (!parsed) return;
+  proceedApplyVolumePlanDiffShareLink(parsed);
+}
+
+function cancelApplyVolumePlanDiffShareLink() {
+  pendingShareApply.value = null;
+}
+
+async function proceedApplyVolumePlanDiffShareLink(parsed) {
+  if (uiProfile.value.volume_plan_diff_share_link_merge) {
+    const conflicts = detectShareVolumeMergeConflicts(parsed);
+    if (conflicts.length) {
+      pendingShareMerge.value = { parsed, conflicts };
+      return;
+    }
+  }
+  await applyVolumePlanDiffShareLinkDirect(parsed);
+}
+
+async function confirmShareMergeUseShare() {
+  const pending = pendingShareMerge.value;
+  pendingShareMerge.value = null;
+  if (!pending?.parsed) return;
+  await applyVolumePlanDiffShareLinkDirect(pending.parsed);
+}
+
+function cancelShareMerge() {
+  pendingShareMerge.value = null;
+  saveMessage.value = '已保留本地卷纲，未应用分享变更';
+}
+
+async function applyVolumePlanDiffShareLink() {
+  requestApplyVolumePlanDiffShareLink();
 }
 
 function buildVolumePlanDiffShareLink(changes) {
@@ -7413,6 +7790,130 @@ watch(
 
 .batch-history-throughput-chart-label {
   margin: 2px 0 0;
+}
+
+.batch-history-cost-efficiency-chart {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-cost-efficiency-chart-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  display: block;
+}
+
+.batch-history-cost-efficiency-bar {
+  fill: rgba(220, 160, 80, 0.85);
+}
+
+.batch-history-cost-efficiency-chart-label {
+  margin: 2px 0 0;
+}
+
+.batch-history-retry-rate-stack {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-retry-rate-stack-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 14px;
+  display: block;
+}
+
+.batch-history-retry-seg--first {
+  fill: rgba(100, 160, 100, 0.85);
+}
+
+.batch-history-retry-seg--retried {
+  fill: rgba(100, 140, 200, 0.85);
+}
+
+.batch-history-retry-seg--failed {
+  fill: rgba(200, 90, 90, 0.85);
+}
+
+.batch-history-retry-rate-stack-label {
+  margin: 2px 0 0;
+}
+
+.batch-history-chapter-failure-heatmap {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-chapter-failure-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 220px;
+}
+
+.batch-history-chapter-failure-cell {
+  width: 12px;
+  height: 12px;
+  background: rgba(100, 160, 100, 0.75);
+  display: inline-block;
+}
+
+.batch-history-chapter-failure-cell--failed {
+  background: rgba(200, 90, 90, 0.9);
+}
+
+.batch-history-chapter-failure-heatmap-label {
+  margin: 2px 0 0;
+}
+
+.creation-mode-aria-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.creation-mode-pinned-sidebar {
+  position: sticky;
+  top: var(--space-sm);
+  float: right;
+  width: 120px;
+  margin-left: var(--space-sm);
+  padding: var(--space-sm);
+  z-index: 2;
+}
+
+.creation-mode-pinned-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.creation-mode-pinned-item {
+  font-size: 10px;
+  padding: 2px 0;
+}
+
+.creation-mode-pinned-item--active {
+  font-weight: bold;
+}
+
+.volume-plan-diff-share-link-error {
+  color: var(--danger, #a33);
+}
+
+.volume-plan-diff-share-apply-confirm,
+.volume-plan-diff-share-merge-wizard {
+  margin: var(--space-sm) 0;
+  padding: var(--space-sm);
+}
+
+.volume-plan-diff-share-merge-list {
+  margin: var(--space-xs) 0;
+  padding-left: 1.2rem;
 }
 
 .volume-plan-diff-print-preview {

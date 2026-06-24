@@ -23,4 +23,6 @@ def enrich_batch_history_job(job: dict[str, Any]) -> dict[str, Any]:
     reason = derive_batch_failure_reason(row)
     if reason:
         row["failure_reason"] = reason
+    if row.get("retry_count") is None:
+        row["retry_count"] = 0
     return row

@@ -337,6 +337,15 @@ class CreatorUiProfile(BaseModel):
     batch_history_queue_depth_chart: bool = False
     volume_plan_diff_share_link_apply: bool = False
     batch_history_throughput_chart: bool = False
+    volume_plan_diff_share_link_apply_confirm: bool = False
+    batch_history_cost_efficiency_chart: bool = False
+    creation_mode_switch_reduced_motion: bool = False
+    volume_plan_diff_share_token_validation: bool = False
+    batch_history_retry_rate_stack: bool = False
+    creation_mode_switch_aria_live: bool = False
+    volume_plan_diff_share_link_merge: bool = False
+    batch_history_chapter_failure_heatmap: bool = False
+    creation_mode_preview_pinned_sidebar: bool = False
     creation_mode_capability_matrix: bool = False
     creation_mode_switch_guide_animation: bool = False
     creation_mode_onboarding_step_link: bool = False
@@ -346,6 +355,9 @@ class CreatorUiProfile(BaseModel):
     creation_mode_switch_hotkey: bool = False
     creation_mode_switch_speech: bool = False
     creation_mode_switch_haptic: bool = False
+    creation_mode_switch_reduced_motion: bool = False
+    creation_mode_switch_aria_live: bool = False
+    creation_mode_preview_pinned_sidebar: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False

@@ -4439,4 +4439,221 @@ describe('CreatorPage', () => {
     expect(vibrate).toHaveBeenCalledWith(15);
     vi.unstubAllGlobals();
   });
+
+  it('v6.12 shows share apply confirm before applying', async () => {
+    const payload = {
+      v: 2,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: '冲突' }],
+      d: [{
+        label: '一',
+        start_chapter: 1,
+        end_chapter: 5,
+        core_conflict: '确认后应用',
+        locked: false,
+      }],
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_link_apply: true,
+        volume_plan_diff_share_link_apply_confirm: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="apply-volume-plan-diff-share-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-share-apply-confirm"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="confirm-share-apply-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-row-0"] .vol-conflict').element.value).toBe('确认后应用');
+    window.location.hash = '';
+  });
+
+  it('v6.12 batch history cost efficiency chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_cost_efficiency_chart: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [{
+        job_id: 'job-cost',
+        start_chapter: 1,
+        end_chapter: 10,
+        budget_usd: 1.0,
+        status: 'completed',
+        started_at: '2026-06-10T12:00:00Z',
+        finished_at: '2026-06-10T12:10:00Z',
+      }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-cost-efficiency-chart"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-cost-job-cost"]').exists()).toBe(true);
+  });
+
+  it('v6.12 disables guide animation when prefers-reduced-motion', async () => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockReturnValue({ matches: true }),
+    });
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_switch_preview: true,
+        creation_mode_switch_guide_animation: true,
+        creation_mode_switch_reduced_motion: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-guide-hint"]').exists()).toBe(false);
+  });
+
+  it('v6.13 shows share token validation error', async () => {
+    window.location.hash = '#creator-diff=not-valid-token!!!';
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_token_validation: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-share-token-error"]').exists()).toBe(true);
+    window.location.hash = '';
+  });
+
+  it('v6.13 batch history retry rate stack', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_retry_rate_stack: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        { job_id: 'j1', status: 'completed', retry_count: 0, start_chapter: 1, end_chapter: 2 },
+        { job_id: 'j2', status: 'completed', retry_count: 2, start_chapter: 3, end_chapter: 4 },
+        { job_id: 'j3', status: 'failed', retry_count: 1, start_chapter: 5, end_chapter: 6 },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const stack = wrapper.find('[data-testid="batch-history-retry-rate-stack"]');
+    expect(stack.exists()).toBe(true);
+    expect(stack.text()).toContain('重试成功 1');
+  });
+
+  it('v6.13 announces mode switch via aria-live', async () => {
+    vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+        creation_mode_switch_aria_live: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="copy-creation-mode-yaml-companion"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-switch-aria-live"]').text()).toContain('陪伴');
+  });
+
+  it('v6.14 share merge wizard when local conflicts', async () => {
+    const payload = {
+      v: 2,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: '冲突' }],
+      d: [{
+        label: '一',
+        start_chapter: 1,
+        end_chapter: 5,
+        core_conflict: '分享版冲突',
+        locked: false,
+      }],
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_link_apply: true,
+        volume_plan_diff_share_link_merge: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('本地冲突');
+    await flushPromises();
+    await wrapper.find('[data-testid="apply-volume-plan-diff-share-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-share-merge-wizard"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="share-merge-use-share-btn"]').trigger('click');
+    await flushPromises();
+    expect(conflictInput.element.value).toBe('分享版冲突');
+    window.location.hash = '';
+  });
+
+  it('v6.14 batch chapter failure heatmap', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_chapter_failure_heatmap: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        { job_id: 'ok', status: 'completed', start_chapter: 1, end_chapter: 2 },
+        { job_id: 'bad', status: 'failed', start_chapter: 3, end_chapter: 4 },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-chapter-failure-heatmap"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-heat-ch3"]').classes()).toContain('batch-history-chapter-failure-cell--failed');
+  });
+
+  it('v6.14 shows pinned mode sidebar', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_switch_preview: true,
+        creation_mode_preview_pinned_sidebar: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-pinned-sidebar"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="creation-mode-switch-preview"]').exists()).toBe(false);
+  });
 });
