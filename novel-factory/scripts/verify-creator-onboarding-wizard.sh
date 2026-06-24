@@ -330,6 +330,8 @@ assert resolve_creator_ui_profile(creation_mode="companion")["logic_check_issue_
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_open_first_deviation"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["issue_paragraph_highlight_unified"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_deviation_inline_summary"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["issue_keyboard_navigation"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_deviation_summary_link"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 

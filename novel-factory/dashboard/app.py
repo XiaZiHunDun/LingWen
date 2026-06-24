@@ -288,6 +288,9 @@ class CreatorUiProfile(BaseModel):
     batch_open_first_deviation: bool = False
     deviation_click_highlight: bool = False
     batch_deviation_inline_summary: bool = False
+    batch_deviation_inline_dismiss: bool = False
+    batch_deviation_summary_link: bool = False
+    issue_keyboard_navigation: bool = False
     issue_paragraph_highlight_unified: bool = False
     deviation_min_severity: Optional[str] = None
 

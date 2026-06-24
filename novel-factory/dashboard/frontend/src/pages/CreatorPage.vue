@@ -402,6 +402,26 @@
               {{ d.message }}
             </li>
           </ul>
+          <div v-if="uiProfile.batch_deviation_summary_link || uiProfile.batch_deviation_inline_dismiss" class="batch-deviation-inline-actions">
+            <button
+              v-if="uiProfile.batch_deviation_summary_link"
+              type="button"
+              class="save-btn pixel-border"
+              data-testid="batch-deviation-open-summary-btn"
+              @click="openVolumeSummaryForRange(batchDeviationInlineSummary.start, batchDeviationInlineSummary.end)"
+            >
+              查看卷摘要
+            </button>
+            <button
+              v-if="uiProfile.batch_deviation_inline_dismiss"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="dismiss-batch-deviation-inline-btn"
+              @click="dismissBatchDeviationInlineSummary"
+            >
+              知道了
+            </button>
+          </div>
         </div>
         <div
           v-if="chapterPreview"
@@ -535,6 +555,7 @@
                   :data-testid="`chapter-recheck-issue-${idx}`"
                   @click="focusIssueParagraph(issue, idx)"
                   @keydown.enter="focusIssueParagraph(issue, idx)"
+                  @keydown="onRecheckIssueKeydown($event, issue, idx)"
                 >
                   <span class="issue-severity">{{ issue.severity }}</span>
                   {{ issue.title || issue.message }}
@@ -1953,6 +1974,7 @@
               :data-testid="`logic-check-issue-${idx}`"
               @click="handleLogicCheckIssueClick(issue, idx)"
               @keydown.enter="handleLogicCheckIssueClick(issue, idx)"
+              @keydown="onLogicCheckIssueKeydown($event, issue, idx)"
             >
               <span class="issue-severity">{{ issue.severity }}</span>
               <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
@@ -2249,6 +2271,9 @@ const defaultUiProfile = {
   batch_open_first_deviation: false,
   deviation_click_highlight: false,
   batch_deviation_inline_summary: false,
+  batch_deviation_inline_dismiss: false,
+  batch_deviation_summary_link: false,
+  issue_keyboard_navigation: false,
   issue_paragraph_highlight_unified: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
@@ -2773,6 +2798,59 @@ function updateBatchDeviationInlineSummary(start, end) {
   batchDeviationInlineSummary.value = items.length
     ? { start, end, items }
     : null;
+}
+
+async function linkBatchDeviationInlineSummary(start, end) {
+  if (
+    !batchDeviationInlineSummary.value
+    || !uiProfile.value.batch_deviation_summary_link
+    || !overview.value?.volume_summaries?.length
+  ) {
+    return;
+  }
+  await nextTick();
+  openVolumeSummaryForRange(start, end);
+}
+
+function dismissBatchDeviationInlineSummary() {
+  batchDeviationInlineSummary.value = null;
+}
+
+function navigateIssueList(event, issues, currentIdx, onSelect, testIdPrefix) {
+  if (!uiProfile.value.issue_keyboard_navigation || !issues?.length) return;
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+  event.preventDefault();
+  const delta = event.key === 'ArrowDown' ? 1 : -1;
+  const nextIdx = Math.max(0, Math.min(issues.length - 1, currentIdx + delta));
+  if (nextIdx === currentIdx) return;
+  onSelect(issues[nextIdx], nextIdx);
+  nextTick(() => {
+    try {
+      document.querySelector(`[data-testid="${testIdPrefix}-${nextIdx}"]`)?.focus?.();
+    } catch {
+      /* jsdom */
+    }
+  });
+}
+
+function onRecheckIssueKeydown(event, issue, idx) {
+  navigateIssueList(
+    event,
+    chapterRecheckResult.value?.issues,
+    idx,
+    (item, newIdx) => focusIssueParagraph(item, newIdx),
+    'chapter-recheck-issue',
+  );
+}
+
+function onLogicCheckIssueKeydown(event, issue, idx) {
+  navigateIssueList(
+    event,
+    logicCheckResult.value?.issues,
+    idx,
+    (item, newIdx) => handleLogicCheckIssueClick(item, newIdx),
+    'logic-check-issue',
+  );
 }
 
 async function scrollToBatchDeviationList(start, end) {
@@ -4227,6 +4305,7 @@ function startBatchPolling() {
         await openFirstBatchDeviationChapter(batchStart.value, batchEnd.value);
       }
       updateBatchDeviationInlineSummary(batchStart.value, batchEnd.value);
+      await linkBatchDeviationInlineSummary(batchStart.value, batchEnd.value);
     }
     if (status === 'completed' || status === 'failed') {
       stopBatchPolling();
@@ -4484,6 +4563,18 @@ watch(projectRevision, () => {
 
 .batch-deviation-inline-item {
   padding: 4px 0;
+}
+
+.batch-deviation-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.logic-check-issue:focus-visible {
+  outline: 2px solid rgba(200, 180, 80, 0.85);
+  outline-offset: 1px;
 }
 
 @keyframes issue-line-flash {
