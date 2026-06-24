@@ -116,7 +116,7 @@
             type="button"
             class="mini-btn pixel-border creation-mode-yaml-btn"
             :data-testid="`copy-creation-mode-yaml-${row.mode}`"
-            @click.stop="copyCreationModeYaml(row.mode)"
+            @click.stop="requestCreationModeYaml(row.mode, row.active)"
           >
             复制 YAML
           </button>
@@ -125,12 +125,40 @@
             type="button"
             class="mini-btn pixel-border creation-mode-onboarding-link-btn"
             :data-testid="`link-onboarding-step-${row.mode}`"
-            @click.stop="linkModeToOnboardingStep(row.mode)"
+            @click.stop="requestOnboardingStepLink(row.mode, row.active)"
           >
             向导步骤
           </button>
         </li>
       </ul>
+    </div>
+    <div
+      v-if="pendingModeSwitch"
+      class="mode-switch-confirm-dialog pixel-border"
+      data-testid="creation-mode-switch-confirm-dialog"
+    >
+      <p class="meta-line">
+        确认切换至 <strong>{{ pendingModeSwitchLabel }}</strong>？
+      </p>
+      <p class="meta-line">请编辑 config/project.yaml → creation_mode</p>
+      <div class="mode-switch-confirm-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="confirm-mode-switch-btn"
+          @click="confirmCreationModeSwitch"
+        >
+          确认
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="cancel-mode-switch-btn"
+          @click="cancelCreationModeSwitch"
+        >
+          取消
+        </button>
+      </div>
     </div>
     <div
       v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
@@ -1426,6 +1454,15 @@
             >
               邮件分享 diff
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export_pdf && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="export-volume-plan-diff-pdf-btn"
+              @click="exportVolumePlanDiffPdf"
+            >
+              导出 diff PDF
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1571,6 +1608,15 @@
                 @click="shareVolumePlanDiffEmail"
               >
                 邮件分享 diff
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export_pdf && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="export-volume-plan-diff-pdf-btn"
+                @click="exportVolumePlanDiffPdf"
+              >
+                导出 diff PDF
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -2023,6 +2069,13 @@
                   >
                     · {{ batchJobDurationLabel(job) }}
                   </span>
+                  <span
+                    v-if="batchHistoryFailureReasonLabel(job)"
+                    class="meta-line batch-history-failure-reason"
+                    :data-testid="`batch-history-failure-reason-${job.job_id}`"
+                  >
+                    · {{ batchHistoryFailureReasonLabel(job) }}
+                  </span>
                   <button
                     v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
                     type="button"
@@ -2061,6 +2114,13 @@
                 :data-testid="`batch-history-duration-${job.job_id}`"
               >
                 · {{ batchJobDurationLabel(job) }}
+              </span>
+              <span
+                v-if="batchHistoryFailureReasonLabel(job)"
+                class="meta-line batch-history-failure-reason"
+                :data-testid="`batch-history-failure-reason-${job.job_id}`"
+              >
+                · {{ batchHistoryFailureReasonLabel(job) }}
               </span>
               <button
                 v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
@@ -2819,6 +2879,7 @@ const savedVolumeSnapshot = ref([]);
 const batchHistory = ref([]);
 const batchHistoryStatusFilter = ref('');
 const batchHistoryBudgetHint = ref('');
+const pendingModeSwitch = ref(null);
 const highlightedBatchHistoryId = ref('');
 const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
@@ -3036,10 +3097,13 @@ const defaultUiProfile = {
   batch_history_monthly_summary: false,
   volume_plan_diff_export_markdown: false,
   volume_plan_diff_export_email_share: false,
+  volume_plan_diff_export_pdf: false,
   batch_history_success_rate_chart: false,
+  batch_history_failure_reason_label: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
   creation_mode_onboarding_step_link: false,
+  creation_mode_switch_confirm_dialog: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -3244,6 +3308,11 @@ const CREATION_MODE_ONBOARDING_FOCUS_STEP = {
 const creationModeCapabilityRows = computed(() => {
   if (!uiProfile.value.creation_mode_capability_matrix) return [];
   return CREATION_MODE_CAPABILITY_ROWS;
+});
+
+const pendingModeSwitchLabel = computed(() => {
+  if (!pendingModeSwitch.value?.mode) return '';
+  return CREATION_MODE_ONBOARDING_LABELS[pendingModeSwitch.value.mode] || pendingModeSwitch.value.mode;
 });
 
 const batchHistorySuccessRate = computed(() => {
@@ -4109,6 +4178,51 @@ function batchJobDurationLabel(job) {
   return `耗时 ${minutes} 分钟`;
 }
 
+function batchHistoryFailureReasonLabel(job) {
+  if (!uiProfile.value.batch_history_failure_reason_label || !job) return '';
+  if (String(job?.status).toLowerCase() !== 'failed') return '';
+  return job.failure_reason || job.error || '';
+}
+
+function requestCreationModeYaml(mode, active = false) {
+  if (!uiProfile.value.creation_mode_yaml_snippet || !mode || active) {
+    if (mode) copyCreationModeYaml(mode);
+    return;
+  }
+  if (!uiProfile.value.creation_mode_switch_confirm_dialog) {
+    copyCreationModeYaml(mode);
+    return;
+  }
+  pendingModeSwitch.value = { mode, action: 'yaml' };
+}
+
+function requestOnboardingStepLink(mode, active = false) {
+  if (!uiProfile.value.creation_mode_onboarding_step_link || !mode || active) {
+    if (mode) linkModeToOnboardingStep(mode);
+    return;
+  }
+  if (!uiProfile.value.creation_mode_switch_confirm_dialog) {
+    linkModeToOnboardingStep(mode);
+    return;
+  }
+  pendingModeSwitch.value = { mode, action: 'onboarding' };
+}
+
+async function confirmCreationModeSwitch() {
+  const pending = pendingModeSwitch.value;
+  pendingModeSwitch.value = null;
+  if (!pending?.mode) return;
+  if (pending.action === 'onboarding') {
+    await linkModeToOnboardingStep(pending.mode);
+    return;
+  }
+  await copyCreationModeYaml(pending.mode);
+}
+
+function cancelCreationModeSwitch() {
+  pendingModeSwitch.value = null;
+}
+
 async function copyCreationModeYaml(mode) {
   if (!uiProfile.value.creation_mode_yaml_snippet || !mode) return;
   const snippet = `creation_mode: ${mode}`;
@@ -4251,6 +4365,54 @@ function buildVolumePlanDiffMarkdown(changes) {
   return `${lines.join('\n')}\n`;
 }
 
+function buildMinimalTextPdf(lines) {
+  const contentLines = [];
+  for (const line of lines) {
+    let remaining = String(line);
+    if (!remaining) {
+      contentLines.push('');
+      continue;
+    }
+    while (remaining.length > 0) {
+      contentLines.push(remaining.slice(0, 96));
+      remaining = remaining.slice(96);
+    }
+  }
+  const limited = contentLines.slice(0, 48);
+  let stream = 'BT\n/F1 11 Tf\n';
+  let y = 780;
+  for (const line of limited) {
+    const safe = line
+      .replace(/\\/g, '\\\\')
+      .replace(/\(/g, '\\(')
+      .replace(/\)/g, '\\)');
+    stream += `1 0 0 1 40 ${y} Tm (${safe}) Tj\n`;
+    y -= 14;
+  }
+  stream += 'ET';
+  const objects = [
+    '1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n',
+    '2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n',
+    '3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>endobj\n',
+    `4 0 obj<< /Length ${stream.length} >>stream\n${stream}endstream\nendobj\n`,
+    '5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n',
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  for (const obj of objects) {
+    offsets.push(pdf.length);
+    pdf += obj;
+  }
+  const xrefPos = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += '0000000000 65535 f \n';
+  for (let i = 1; i <= objects.length; i += 1) {
+    pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+  pdf += `trailer<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+  return pdf;
+}
+
 async function exportBatchHistory() {
   if (!uiProfile.value.batch_history_export) return;
   try {
@@ -4354,6 +4516,16 @@ function exportVolumePlanDiffMarkdown() {
     'text/markdown',
   );
   saveMessage.value = `已导出卷纲 diff Markdown（${changes.length} 条变更）`;
+}
+
+function exportVolumePlanDiffPdf() {
+  if (!uiProfile.value.volume_plan_diff_export_pdf || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  const pdf = buildMinimalTextPdf(buildVolumePlanDiffMarkdown(changes).split('\n'));
+  downloadTextExport('creator-volume-plan-diff.pdf', pdf, 'application/pdf');
+  saveMessage.value = `已导出卷纲 diff PDF（${changes.length} 条变更）`;
 }
 
 async function loadOnboardingWizard() {
@@ -6079,6 +6251,23 @@ watch(
   padding: var(--space-xs) var(--space-sm);
   font-size: 7px;
   color: var(--color-accent);
+}
+
+.mode-switch-confirm-dialog {
+  margin: var(--space-xs) 0;
+  padding: var(--space-sm);
+  border-color: rgba(180, 120, 40, 0.55);
+  background: rgba(180, 120, 40, 0.08);
+}
+
+.mode-switch-confirm-actions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.batch-history-failure-reason {
+  color: #a44;
 }
 
 .creation-mode-switch-preview {

@@ -3892,4 +3892,95 @@ describe('CreatorPage', () => {
     expect(navMocks.setWizardDeepLink).toHaveBeenLastCalledWith(true, 'write');
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('陪伴');
   });
+
+  it('v6.6 exports volume plan diff pdf', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    let exportedPdf = '';
+    const originalBlob = globalThis.Blob;
+    globalThis.Blob = class extends originalBlob {
+      constructor(parts, options) {
+        super(parts, options);
+        exportedPdf = String(parts[0]);
+      }
+    };
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export_pdf: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('PDF 导出');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-volume-plan-diff-pdf-btn"]').trigger('click');
+    await flushPromises();
+    expect(exportedPdf.startsWith('%PDF-1.4')).toBe(true);
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('PDF');
+    globalThis.Blob = originalBlob;
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v6.6 batch history failure reason label', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_failure_reason_label: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-fail-reason',
+          start_chapter: 1,
+          end_chapter: 2,
+          status: 'failed',
+          failure_reason: 'chapter_failed',
+          finished_at: '2026-06-10T12:00:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const reason = wrapper.find('[data-testid="batch-history-failure-reason-job-fail-reason"]');
+    expect(reason.text()).toContain('chapter_failed');
+  });
+
+  it('v6.6 creation mode switch confirm dialog', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+        creation_mode_switch_confirm_dialog: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="copy-creation-mode-yaml-companion"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-switch-confirm-dialog"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="confirm-mode-switch-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-switch-confirm-dialog"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('creation_mode: companion');
+  });
 });

@@ -324,10 +324,13 @@ class CreatorUiProfile(BaseModel):
     batch_history_monthly_summary: bool = False
     volume_plan_diff_export_markdown: bool = False
     volume_plan_diff_export_email_share: bool = False
+    volume_plan_diff_export_pdf: bool = False
     batch_history_success_rate_chart: bool = False
+    batch_history_failure_reason_label: bool = False
     creation_mode_capability_matrix: bool = False
     creation_mode_switch_guide_animation: bool = False
     creation_mode_onboarding_step_link: bool = False
+    creation_mode_switch_confirm_dialog: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
@@ -471,6 +474,8 @@ class CreatorBatchHistoryItem(BaseModel):
     started_at: str
     finished_at: Optional[str] = None
     exit_code: Optional[int] = None
+    error: Optional[str] = None
+    failure_reason: Optional[str] = None
 
 
 class CreatorBatchHistoryResponse(BaseModel):
@@ -3309,7 +3314,9 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active project")
         jobs = list_batch_jobs_for_slug(project.slug, limit=5)
-        return CreatorBatchHistoryResponse(jobs=jobs)
+        from infra.creator_batch_history import enrich_batch_history_job
+
+        return CreatorBatchHistoryResponse(jobs=[enrich_batch_history_job(row) for row in jobs])
 
     @app.get("/api/creator/batch-history/export", response_model=CreatorBatchHistoryExportResponse)
     def creator_batch_history_export_endpoint() -> CreatorBatchHistoryExportResponse:
@@ -3320,7 +3327,10 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active project")
         jobs = list_batch_jobs_for_slug(project.slug, limit=20)
-        return CreatorBatchHistoryExportResponse(count=len(jobs), jobs=jobs)
+        from infra.creator_batch_history import enrich_batch_history_job
+
+        enriched = [enrich_batch_history_job(row) for row in jobs]
+        return CreatorBatchHistoryExportResponse(count=len(enriched), jobs=enriched)
 
     @app.post("/api/creator/volume-plan/diff", response_model=CreatorVolumePlanDiffResponse)
     def creator_volume_plan_diff_endpoint(
