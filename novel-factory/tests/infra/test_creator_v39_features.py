@@ -24,6 +24,8 @@ def factory_tmp(tmp_path):
 def test_companion_wizard_collapsed_profile() -> None:
     profile = resolve_creator_ui_profile(creation_mode="companion")
     assert profile["wizard_default_collapsed"] is True
+    assert profile["wizard_expand_if_incomplete"] is True
+    assert profile["chapter_inline_edit"] is True
     assert profile["deviation_min_severity"] is None
 
 

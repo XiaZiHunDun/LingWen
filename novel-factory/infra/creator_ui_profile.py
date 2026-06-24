@@ -44,6 +44,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "simplified_notifications": True,
             "volume_pulse_enabled": False,
             "wizard_default_collapsed": True,
+            "wizard_expand_if_incomplete": True,
+            "chapter_inline_edit": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -59,6 +61,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "simplified_notifications": True,
             "volume_pulse_enabled": True,
             "wizard_default_collapsed": False,
+            "wizard_expand_if_incomplete": False,
+            "chapter_inline_edit": False,
             "deviation_min_severity": "alert",
         }
     return {
@@ -73,6 +77,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "simplified_notifications": False,
         "volume_pulse_enabled": True,
         "wizard_default_collapsed": False,
+        "wizard_expand_if_incomplete": False,
+        "chapter_inline_edit": False,
         "deviation_min_severity": None,
     }
 

@@ -160,6 +160,7 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         "step_mentions": _step_mentions_for_steps(steps, step_mentions),
         "unread_mention_count": _unread_mention_count(project.root),
         "progress_pct": progress_pct(completed, len(steps)),
+        "wizard_panel_dismissed": bool(progress.get("wizard_panel_dismissed", False)),
     }
 
 
@@ -301,3 +302,10 @@ def apply_wizard_share_done(
         desired_completed_step_ids=desired,
         step_notes=merged_notes,
     )
+
+
+def dismiss_onboarding_wizard_panel(project: StudioProject) -> dict[str, Any]:
+    from infra.creator_onboarding_progress import dismiss_wizard_panel
+
+    dismiss_wizard_panel(project.root)
+    return onboarding_wizard_payload(project)

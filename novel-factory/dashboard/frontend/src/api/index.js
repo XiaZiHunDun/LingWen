@@ -990,8 +990,27 @@ export async function deleteCreatorFactoryMergePresetPackage(packageId) {
   );
 }
 
-export async function fetchCreatorChapterPreview(chapterNum) {
-  return request(`/creator/chapters/${chapterNum}`);
+export async function fetchCreatorChapterPreview(chapterNum, { full = false } = {}) {
+  const query = full ? '?full=1' : '';
+  return request(`/creator/chapters/${chapterNum}${query}`);
+}
+
+export async function saveCreatorChapterBody(chapterNum, body) {
+  return request(`/creator/chapters/${chapterNum}`, {
+    method: 'PUT',
+    body: { body },
+  });
+}
+
+export async function generateCreatorVolumeSummary({ startChapter, endChapter }) {
+  return request('/creator/volume-summary/generate', {
+    method: 'POST',
+    body: { start_chapter: startChapter, end_chapter: endChapter },
+  });
+}
+
+export async function dismissCreatorWizardPanel() {
+  return request('/creator/onboarding/wizard-dismiss', { method: 'PUT' });
 }
 
 export async function fetchCreatorSettingsDocs() {

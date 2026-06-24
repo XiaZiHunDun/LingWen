@@ -385,13 +385,44 @@
               <summary>分章大纲</summary>
               <pre class="preview-text">{{ chapterPreview.outline_preview || '（空）' }}</pre>
             </details>
-            <details v-if="chapterPreview.has_body" :open="!chapterPreview.has_outline">
+            <div
+              v-if="uiProfile.chapter_inline_edit"
+              class="chapter-inline-edit"
+              data-testid="chapter-inline-edit"
+            >
+              <label class="meta-line">正文（内嵌编辑）</label>
+              <textarea
+                v-model="chapterBodyDraft"
+                class="settings-textarea chapter-body-textarea"
+                rows="12"
+                data-testid="chapter-body-textarea"
+              />
+              <button
+                type="button"
+                class="save-btn pixel-border"
+                data-testid="save-chapter-body-btn"
+                :disabled="chapterBodySaving"
+                @click="saveChapterBody"
+              >
+                {{ chapterBodySaving ? '保存中…' : '保存正文' }}
+              </button>
+            </div>
+            <details v-else-if="chapterPreview.has_body" :open="!chapterPreview.has_outline">
               <summary>正文</summary>
               <pre class="preview-text">{{ chapterPreview.body_preview || '（空）' }}</pre>
               <p v-if="chapterPreview.body_truncated" class="meta-line">正文已截断 · 完整内容请在编辑器查看</p>
             </details>
-            <p v-if="!chapterPreview.has_body && !chapterPreview.has_outline" class="meta-line">
+            <p
+              v-if="!uiProfile.chapter_inline_edit && !chapterPreview.has_body && !chapterPreview.has_outline"
+              class="meta-line"
+            >
               本章尚无大纲与正文
+            </p>
+            <p
+              v-if="uiProfile.chapter_inline_edit && !chapterPreview.has_body && !chapterPreview.has_outline"
+              class="meta-line"
+            >
+              本章尚无大纲，可直接在上方编写正文
             </p>
           </template>
         </div>
@@ -1134,6 +1165,26 @@
           </p>
         </div>
 
+        <div
+          v-if="batchSummaryPrompt"
+          class="batch-summary-prompt pixel-border"
+          data-testid="batch-summary-prompt"
+        >
+          <p>
+            Batch 已完成 · 已生成 ch{{ String(batchSummaryPrompt.start).padStart(3, '0') }}–ch{{
+              String(batchSummaryPrompt.end).padStart(3, '0')
+            }} 卷摘要，请在下方查看脉络是否跑偏。
+          </p>
+          <button
+            type="button"
+            class="save-btn pixel-border"
+            data-testid="dismiss-batch-summary-prompt-btn"
+            @click="batchSummaryPrompt = null"
+          >
+            知道了
+          </button>
+        </div>
+
         <template v-if="overview.volume_summaries.length">
           <h3 class="subsection-title">卷摘要</h3>
           <details
@@ -1699,6 +1750,9 @@ import {
   runCreatorLogicCheck,
   fetchCreatorVolumePlan,
   fetchCreatorChapterPreview,
+  saveCreatorChapterBody,
+  generateCreatorVolumeSummary,
+  dismissCreatorWizardPanel,
   fetchCreatorSettingsDocs,
   saveCreatorVolumePlan,
   mergeCreatorVolumePlan,
@@ -1795,6 +1849,9 @@ const overview = ref(null);
 const editableVolumes = ref([]);
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
+const chapterBodyDraft = ref('');
+const chapterBodySaving = ref(false);
+const batchSummaryPrompt = ref(null);
 const previewLoading = ref(false);
 const loading = ref(false);
 const saving = ref(false);
@@ -1928,6 +1985,8 @@ const defaultUiProfile = {
   simplified_notifications: false,
   volume_pulse_enabled: false,
   wizard_default_collapsed: false,
+  wizard_expand_if_incomplete: false,
+  chapter_inline_edit: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -1954,6 +2013,12 @@ function syncWizardPanelOpen() {
   }
   if (wizardUnreadMentions.value > 0) {
     wizardPanelOpen.value = true;
+    return;
+  }
+  if (uiProfile.value.wizard_expand_if_incomplete) {
+    const incomplete = (onboardingWizard.value?.progress_pct ?? 100) < 100;
+    const dismissed = Boolean(onboardingWizard.value?.wizard_panel_dismissed);
+    wizardPanelOpen.value = incomplete && !dismissed;
     return;
   }
   if (uiProfile.value.wizard_default_collapsed) {
@@ -2158,12 +2223,31 @@ async function selectChapter(chapter) {
   selectedChapter.value = chapter;
   previewLoading.value = true;
   chapterPreview.value = null;
+  chapterBodyDraft.value = '';
   try {
-    chapterPreview.value = await fetchCreatorChapterPreview(chapter);
+    const full = Boolean(uiProfile.value.chapter_inline_edit);
+    chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
+    chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterPreview.value.body_preview ?? '';
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     previewLoading.value = false;
+  }
+}
+
+async function saveChapterBody() {
+  if (!selectedChapter.value) return;
+  chapterBodySaving.value = true;
+  saveMessage.value = '';
+  try {
+    chapterPreview.value = await saveCreatorChapterBody(selectedChapter.value, chapterBodyDraft.value);
+    chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
+    saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
+    await refresh();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    chapterBodySaving.value = false;
   }
 }
 
@@ -2260,6 +2344,15 @@ async function loadOnboardingWizard() {
 
 function onWizardToggle(event) {
   wizardPanelOpen.value = event.target.open;
+  if (!event.target.open && uiProfile.value.wizard_expand_if_incomplete) {
+    dismissCreatorWizardPanel()
+      .then((data) => {
+        onboardingWizard.value = data;
+      })
+      .catch(() => {
+        /* ignore dismiss errors */
+      });
+  }
   setWizardDeepLink(
     event.target.open,
     event.target.open ? focusWizardStep.value : null,
@@ -3548,6 +3641,20 @@ function startBatchPolling() {
     await pollBatchJob();
     const status = batchJob.value?.status ?? null;
     if (prev === 'running' && status === 'completed') {
+      if (showAdvanceBatch.value && overview.value?.advance_volume_summary) {
+        try {
+          await generateCreatorVolumeSummary({
+            startChapter: batchStart.value,
+            endChapter: batchEnd.value,
+          });
+          batchSummaryPrompt.value = {
+            start: batchStart.value,
+            end: batchEnd.value,
+          };
+        } catch {
+          /* volume summary optional */
+        }
+      }
       saveMessage.value = 'Batch 已完成，卷摘要已更新';
       await refresh();
     }
@@ -3750,6 +3857,21 @@ watch(projectRevision, () => {
   padding: var(--space-sm);
   max-height: 320px;
   overflow: auto;
+}
+
+.chapter-inline-edit {
+  margin-top: var(--space-sm);
+}
+
+.chapter-body-textarea {
+  width: 100%;
+  min-height: 180px;
+}
+
+.batch-summary-prompt {
+  margin: var(--space-sm) 0;
+  padding: var(--space-sm);
+  background: rgba(80, 160, 120, 0.12);
 }
 
 .preview-text {

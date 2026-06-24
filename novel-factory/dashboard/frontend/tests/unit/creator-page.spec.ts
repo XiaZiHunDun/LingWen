@@ -27,6 +27,9 @@ const creatorMocks = vi.hoisted(() => ({
   saveCreatorOnboardingNotes: vi.fn(),
   setCreatorVolumeTemplateVersion: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
+  saveCreatorChapterBody: vi.fn(),
+  generateCreatorVolumeSummary: vi.fn(),
+  dismissCreatorWizardPanel: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
@@ -118,6 +121,9 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorOnboardingNotes: creatorMocks.saveCreatorOnboardingNotes,
   setCreatorVolumeTemplateVersion: creatorMocks.setCreatorVolumeTemplateVersion,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
+  saveCreatorChapterBody: creatorMocks.saveCreatorChapterBody,
+  generateCreatorVolumeSummary: creatorMocks.generateCreatorVolumeSummary,
+  dismissCreatorWizardPanel: creatorMocks.dismissCreatorWizardPanel,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
   previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
@@ -273,8 +279,10 @@ const overviewFixture = {
     show_merge_preset_advanced: true,
     simplified_notifications: false,
     volume_pulse_enabled: true,
-    wizard_default_collapsed: false,
-    deviation_min_severity: 'alert',
+        wizard_default_collapsed: false,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: false,
+        deviation_min_severity: 'alert',
   },
   volume_pulse: {
     volume_count: 1,
@@ -338,6 +346,30 @@ describe('CreatorPage', () => {
       outline_preview: '大纲预览',
       body_truncated: false,
       outline_truncated: false,
+      body_text: '第一章正文预览',
+    });
+    creatorMocks.saveCreatorChapterBody.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 2000,
+      body_preview: '第一章正文预览',
+      outline_preview: '大纲预览',
+      body_truncated: false,
+      outline_truncated: false,
+      body_text: '第一章正文预览',
+    });
+    creatorMocks.generateCreatorVolumeSummary.mockResolvedValue({
+      path: 'docs/volume-summary-ch001-010.md',
+      written: true,
+    });
+    creatorMocks.dismissCreatorWizardPanel.mockResolvedValue({
+      mode_label: '陪伴',
+      max_chapter: 12,
+      steps: [{ id: 'init', title: '初始化' }],
+      completed_step_ids: [],
+      progress_pct: 0,
+      wizard_panel_dismissed: true,
     });
     creatorMocks.fetchCreatorSettingsDocs.mockResolvedValue({
       pillars_text: '# 支柱',
@@ -857,7 +889,7 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
     await flushPromises();
 
-    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1);
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: false });
     expect(wrapper.find('[data-testid="chapter-preview-panel"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('第一章正文预览');
   });
@@ -1600,6 +1632,8 @@ describe('CreatorPage', () => {
         simplified_notifications: true,
         volume_pulse_enabled: false,
         wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
         deviation_min_severity: null,
       },
       volume_pulse: null,
@@ -1621,5 +1655,62 @@ describe('CreatorPage', () => {
     const items = wrapper.findAll('[data-testid="deviation-list"] .deviation-item');
     expect(items.length).toBe(1);
     expect(wrapper.find('[data-testid="deviation-badge"]').text()).toContain('1');
+  });
+
+  it('v4.0 companion inline chapter edit and wizard expand when incomplete', async () => {
+    navMocks.focusWizard.value = false;
+    navMocks.focusWizardStep.value = null;
+    creatorMocks.fetchCreatorOnboarding.mockResolvedValueOnce({
+      mode_label: '陪伴',
+      max_chapter: 12,
+      steps: [
+        { id: 'init', title: '初始化' },
+        { id: 'pillars', title: '支柱' },
+      ],
+      completed_step_ids: [],
+      auto_completed_step_ids: [],
+      step_notes: {},
+      unread_mention_count: 0,
+      progress_pct: 0,
+      wizard_panel_dismissed: false,
+    });
+    creatorMocks.fetchCreatorOnboardingNotifications.mockResolvedValueOnce({
+      unread: 0,
+      handles: [],
+      notifications: [],
+    });
+    creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: true,
+        chapter_inline_edit: true,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="onboarding-wizard-panel"]').element.open).toBe(true);
+
+    await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="chapter-inline-edit"]').exists()).toBe(true);
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: true });
+    await wrapper.find('[data-testid="chapter-body-textarea"]').setValue('新正文');
+    await wrapper.find('[data-testid="save-chapter-body-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorChapterBody).toHaveBeenCalledWith(1, '新正文');
   });
 });

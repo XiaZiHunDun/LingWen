@@ -121,6 +121,7 @@ def creator_chapter_preview(
     *,
     body_limit: int = 4000,
     outline_limit: int = 2500,
+    include_full_body: bool = False,
 ) -> dict[str, Any]:
     root = project.root if isinstance(project.root, Path) else Path(project.root)
     paths = ProjectPaths.get(root)
@@ -134,7 +135,7 @@ def creator_chapter_preview(
     if outline_path.is_file():
         outline = outline_path.read_text(encoding="utf-8")
 
-    return {
+    payload: dict[str, Any] = {
         "chapter": chapter_num,
         "has_body": bool(body.strip()),
         "has_outline": outline_path.is_file(),
@@ -144,3 +145,21 @@ def creator_chapter_preview(
         "body_truncated": len(body) > body_limit,
         "outline_truncated": len(outline) > outline_limit,
     }
+    if include_full_body:
+        payload["body_text"] = body
+    return payload
+
+
+def save_creator_chapter_body(
+    project: StudioProject,
+    chapter_num: int,
+    body: str,
+) -> dict[str, Any]:
+    root = project.root if isinstance(project.root, Path) else Path(project.root)
+    paths = ProjectPaths.get(root)
+    config = ProjectConfig.load(paths)
+    if chapter_num < 1 or chapter_num > config.max_chapter:
+        raise ValueError(f"chapter {chapter_num} out of range 1–{config.max_chapter}")
+    normalized = body.rstrip() + "\n" if body.strip() else ""
+    paths.write_chapter(chapter_num, normalized)
+    return creator_chapter_preview(project, chapter_num, include_full_body=True)

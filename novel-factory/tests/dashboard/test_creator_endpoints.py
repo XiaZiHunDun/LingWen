@@ -1167,10 +1167,37 @@ class TestCreatorEndpoints:
         data = resp.json()
         profile = data["ui_profile"]
         assert "wizard_default_collapsed" in profile
+        assert "wizard_expand_if_incomplete" in profile
+        assert "chapter_inline_edit" in profile
         assert "deviation_min_severity" in profile
         assert "deviation_total_count" in data
         if data.get("volume_pulse"):
             assert "alerts_only" in data["volume_pulse"]
+
+    def test_creator_v40_chapter_body_and_volume_summary(self, client: TestClient) -> None:
+        preview = client.get("/api/creator/chapters/1?full=1")
+        assert preview.status_code == 200
+        assert preview.json()["has_body"] is True
+
+        saved = client.put("/api/creator/chapters/1", json={"body": "Dashboard 内嵌保存测试。"})
+        assert saved.status_code == 200
+        body = saved.json()
+        assert body["body_text"] is not None
+        assert "内嵌保存" in body["body_text"]
+
+        summary = client.post(
+            "/api/creator/volume-summary/generate",
+            json={"start_chapter": 1, "end_chapter": 1},
+        )
+        assert summary.status_code == 200
+        assert summary.json()["written"] is True
+        assert "volume-summary" in summary.json()["path"]
+
+    def test_creator_v40_wizard_dismiss(self, client: TestClient) -> None:
+        resp = client.put("/api/creator/onboarding/wizard-dismiss")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["wizard_panel_dismissed"] is True
 
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")

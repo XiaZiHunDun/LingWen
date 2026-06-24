@@ -261,6 +261,8 @@ class CreatorUiProfile(BaseModel):
     simplified_notifications: bool = True
     volume_pulse_enabled: bool = False
     wizard_default_collapsed: bool = False
+    wizard_expand_if_incomplete: bool = False
+    chapter_inline_edit: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -704,6 +706,21 @@ class CreatorChapterPreviewResponse(BaseModel):
     outline_preview: str
     body_truncated: bool
     outline_truncated: bool
+    body_text: Optional[str] = None
+
+
+class CreatorChapterBodySaveRequest(BaseModel):
+    body: str = ""
+
+
+class CreatorVolumeSummaryGenerateRequest(BaseModel):
+    start_chapter: int
+    end_chapter: int
+
+
+class CreatorVolumeSummaryGenerateResponse(BaseModel):
+    path: str
+    written: bool = True
 
 
 class CreatorSettingsDocsResponse(BaseModel):
@@ -751,6 +768,7 @@ class CreatorOnboardingResponse(BaseModel):
     step_mentions: dict[str, list[str]] = {}
     unread_mention_count: int = 0
     progress_pct: int = 0
+    wizard_panel_dismissed: bool = False
 
 
 class CreatorOnboardingNotification(BaseModel):
@@ -3163,6 +3181,16 @@ def create_app(
         )
         return CreatorOnboardingProgressResponse(**result)
 
+    @app.put("/api/creator/onboarding/wizard-dismiss", response_model=CreatorOnboardingResponse)
+    def creator_onboarding_wizard_dismiss() -> CreatorOnboardingResponse:
+        from infra.creator_onboarding import dismiss_onboarding_wizard_panel
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOnboardingResponse(**dismiss_onboarding_wizard_panel(project))
+
     @app.put(
         "/api/creator/onboarding/notes",
         response_model=CreatorOnboardingProgressResponse,
@@ -4271,7 +4299,10 @@ def create_app(
         "/api/creator/chapters/{chapter_num}",
         response_model=CreatorChapterPreviewResponse,
     )
-    def creator_chapter_preview_endpoint(chapter_num: int) -> CreatorChapterPreviewResponse:
+    def creator_chapter_preview_endpoint(
+        chapter_num: int,
+        full: bool = False,
+    ) -> CreatorChapterPreviewResponse:
         from infra.creator_dashboard import creator_chapter_preview
         from infra.studio_registry import active_project
 
@@ -4280,10 +4311,54 @@ def create_app(
             raise HTTPException(404, "no active project")
         try:
             return CreatorChapterPreviewResponse(
-                **creator_chapter_preview(project, chapter_num),
+                **creator_chapter_preview(project, chapter_num, include_full_body=full),
             )
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
+
+    @app.put(
+        "/api/creator/chapters/{chapter_num}",
+        response_model=CreatorChapterPreviewResponse,
+    )
+    def creator_chapter_body_put(
+        chapter_num: int,
+        req: CreatorChapterBodySaveRequest,
+    ) -> CreatorChapterPreviewResponse:
+        from infra.creator_dashboard import save_creator_chapter_body
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            return CreatorChapterPreviewResponse(
+                **save_creator_chapter_body(project, chapter_num, req.body),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+    @app.post(
+        "/api/creator/volume-summary/generate",
+        response_model=CreatorVolumeSummaryGenerateResponse,
+    )
+    def creator_volume_summary_generate(
+        req: CreatorVolumeSummaryGenerateRequest,
+    ) -> CreatorVolumeSummaryGenerateResponse:
+        from infra.creator_volume_summary import write_volume_summary
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        if req.start_chapter < 1 or req.end_chapter < req.start_chapter:
+            raise HTTPException(400, "invalid chapter range")
+        out = write_volume_summary(
+            project.root,
+            start_chapter=req.start_chapter,
+            end_chapter=req.end_chapter,
+        )
+        rel = out.relative_to(project.root).as_posix()
+        return CreatorVolumeSummaryGenerateResponse(path=rel, written=True)
 
     @app.get("/api/creator/settings-docs", response_model=CreatorSettingsDocsResponse)
     def creator_settings_docs_get() -> CreatorSettingsDocsResponse:

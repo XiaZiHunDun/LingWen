@@ -296,6 +296,22 @@ from infra.creator_volume_pulse import build_volume_pulse
 
 profile = resolve_creator_ui_profile(creation_mode="companion")
 assert profile["wizard_default_collapsed"] is True
+assert profile["wizard_expand_if_incomplete"] is True
+assert profile["chapter_inline_edit"] is True
+
+from infra.creator_dashboard import save_creator_chapter_body
+from infra.creator_onboarding_progress import dismiss_wizard_panel
+
+saved_ch = save_creator_chapter_body(project, 1, "向导冒烟正文")
+assert saved_ch["has_body"] is True
+dismiss = dismiss_wizard_panel(root)
+assert dismiss["wizard_panel_dismissed"] is True
+
+from infra.creator_volume_summary import write_volume_summary
+
+summary_path = write_volume_summary(root, start_chapter=1, end_chapter=1)
+assert summary_path.is_file()
+
 from infra.creator_ui_profile import filter_deviations_by_min_severity
 
 filtered = filter_deviations_by_min_severity(

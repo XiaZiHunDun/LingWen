@@ -75,6 +75,7 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
             "dismissed_auto_step_ids": [],
             "step_notes": {},
             "step_mentions": {},
+            "wizard_panel_dismissed": False,
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     ids = data.get("completed_step_ids", [])
@@ -90,6 +91,7 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
         "dismissed_auto_step_ids": [str(x) for x in dismissed],
         "step_notes": notes,
         "step_mentions": _normalize_step_mentions(data.get("step_mentions"), notes),
+        "wizard_panel_dismissed": bool(data.get("wizard_panel_dismissed", False)),
     }
 
 
@@ -99,6 +101,7 @@ def save_onboarding_progress(
     completed_step_ids: list[str],
     dismissed_auto_step_ids: list[str] | None = None,
     step_notes: dict[str, str] | None = None,
+    wizard_panel_dismissed: bool | None = None,
 ) -> dict[str, Any]:
     path = _progress_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -138,6 +141,11 @@ def save_onboarding_progress(
         "dismissed_auto_step_ids": dismissed_unique,
         "step_notes": merged_notes,
         "step_mentions": build_step_mentions(merged_notes),
+        "wizard_panel_dismissed": (
+            bool(wizard_panel_dismissed)
+            if wizard_panel_dismissed is not None
+            else bool(existing.get("wizard_panel_dismissed", False))
+        ),
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -157,6 +165,16 @@ def save_onboarding_progress(
 
             dispatch_mention_email(project_root, created)
     return data
+
+
+def dismiss_wizard_panel(project_root: Path | str) -> dict[str, Any]:
+    progress = load_onboarding_progress(project_root)
+    return save_onboarding_progress(
+        project_root,
+        completed_step_ids=progress.get("completed_step_ids", []),
+        dismissed_auto_step_ids=progress.get("dismissed_auto_step_ids", []),
+        wizard_panel_dismissed=True,
+    )
 
 
 def merge_step_notes(
