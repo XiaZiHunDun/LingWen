@@ -298,9 +298,12 @@ class CreatorUiProfile(BaseModel):
     batch_history_panel: bool = False
     batch_history_replay_range: bool = False
     batch_history_status_filter: bool = False
+    volume_plan_diff_outline_side_by_side: bool = False
+    batch_history_export: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
     studio_creation_entry_hint: bool = False
+    studio_wizard_collapse_memory: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -410,6 +413,8 @@ class CreatorVolumePlanDiffChange(BaseModel):
 class CreatorVolumePlanDiffResponse(BaseModel):
     has_changes: bool
     changes: list[CreatorVolumePlanDiffChange]
+    global_outline_excerpt: str = ""
+    global_outline_path: str = ""
 
 
 class CreatorBatchHistoryItem(BaseModel):
@@ -427,6 +432,16 @@ class CreatorBatchHistoryItem(BaseModel):
 
 class CreatorBatchHistoryResponse(BaseModel):
     jobs: list[CreatorBatchHistoryItem] = []
+
+
+class CreatorBatchHistoryExportResponse(BaseModel):
+    schema_version: str = "1"
+    count: int = 0
+    jobs: list[CreatorBatchHistoryItem] = []
+
+
+class CreatorWizardPanelCollapsedRequest(BaseModel):
+    collapsed: bool
 
 
 class CreatorVolumeMergeRequest(BaseModel):
@@ -853,6 +868,7 @@ class CreatorOnboardingResponse(BaseModel):
     unread_mention_count: int = 0
     progress_pct: int = 0
     wizard_panel_dismissed: bool = False
+    wizard_panel_collapsed: bool = False
 
 
 class CreatorOnboardingNotification(BaseModel):
@@ -3252,19 +3268,29 @@ def create_app(
         jobs = list_batch_jobs_for_slug(project.slug, limit=5)
         return CreatorBatchHistoryResponse(jobs=jobs)
 
-    @app.post("/api/creator/volume-plan/diff", response_model=CreatorVolumePlanDiffResponse)
-    def creator_volume_plan_diff_endpoint(
-        body: CreatorVolumePlanSaveRequest,
-    ) -> CreatorVolumePlanDiffResponse:
-        from infra.creator_volume_plan import load_volume_plan, preview_volume_plan_diff
+    @app.get("/api/creator/batch-history/export", response_model=CreatorBatchHistoryExportResponse)
+    def creator_batch_history_export_endpoint() -> CreatorBatchHistoryExportResponse:
+        from infra.studio_batch_runner import list_batch_jobs_for_slug
         from infra.studio_registry import active_project
 
         project = active_project()
         if project is None:
             raise HTTPException(404, "no active project")
-        baseline = [v.to_dict() for v in load_volume_plan(project.root)]
+        jobs = list_batch_jobs_for_slug(project.slug, limit=20)
+        return CreatorBatchHistoryExportResponse(count=len(jobs), jobs=jobs)
+
+    @app.post("/api/creator/volume-plan/diff", response_model=CreatorVolumePlanDiffResponse)
+    def creator_volume_plan_diff_endpoint(
+        body: CreatorVolumePlanSaveRequest,
+    ) -> CreatorVolumePlanDiffResponse:
+        from infra.creator_volume_plan import volume_plan_diff_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
         draft = [v.model_dump() for v in body.volumes]
-        result = preview_volume_plan_diff(baseline, draft)
+        result = volume_plan_diff_payload(project.root, draft)
         return CreatorVolumePlanDiffResponse(**result)
 
     @app.get("/api/creator/onboarding", response_model=CreatorOnboardingResponse)
@@ -3303,6 +3329,20 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active project")
         return CreatorOnboardingResponse(**dismiss_onboarding_wizard_panel(project))
+
+    @app.put("/api/creator/onboarding/wizard-collapse", response_model=CreatorOnboardingResponse)
+    def creator_onboarding_wizard_collapse(
+        req: CreatorWizardPanelCollapsedRequest,
+    ) -> CreatorOnboardingResponse:
+        from infra.creator_onboarding import save_onboarding_wizard_panel_collapsed
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorOnboardingResponse(
+            **save_onboarding_wizard_panel_collapsed(project, collapsed=req.collapsed),
+        )
 
     @app.put(
         "/api/creator/onboarding/notes",

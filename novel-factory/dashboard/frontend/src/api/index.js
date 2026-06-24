@@ -569,6 +569,10 @@ export async function fetchCreatorBatchHistory() {
   return request('/creator/batch-history');
 }
 
+export async function exportCreatorBatchHistory() {
+  return request('/creator/batch-history/export');
+}
+
 export async function mergeCreatorVolumePlan(body) {
   return request('/creator/volume-plan/merge', {
     method: 'POST',
@@ -1030,6 +1034,13 @@ export async function generateCreatorVolumeSummary({ startChapter, endChapter })
 
 export async function dismissCreatorWizardPanel() {
   return request('/creator/onboarding/wizard-dismiss', { method: 'PUT' });
+}
+
+export async function saveCreatorWizardPanelCollapsed(collapsed) {
+  return request('/creator/onboarding/wizard-collapse', {
+    method: 'PUT',
+    body: { collapsed },
+  });
 }
 
 export async function fetchCreatorSettingsDocs() {

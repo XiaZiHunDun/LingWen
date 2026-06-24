@@ -100,6 +100,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "batch_history_panel": True,
             "batch_history_replay_range": True,
             "batch_history_status_filter": True,
+            "volume_plan_diff_outline_side_by_side": True,
+            "batch_history_export": True,
             "creation_mode_switch_hint": True,
             "creation_mode_switch_doc_link": True,
             "deviation_min_severity": "alert",
@@ -149,9 +151,12 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "batch_history_panel": False,
         "batch_history_replay_range": False,
         "batch_history_status_filter": False,
+        "volume_plan_diff_outline_side_by_side": False,
+        "batch_history_export": False,
         "creation_mode_switch_hint": False,
         "creation_mode_switch_doc_link": False,
         "studio_creation_entry_hint": True,
+        "studio_wizard_collapse_memory": True,
         "deviation_min_severity": None,
     }
 

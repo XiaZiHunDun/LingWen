@@ -1393,6 +1393,40 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["has_changes"] is True
         assert data["changes"][0].get("details")
+        assert "global_outline_excerpt" in data
+
+    def test_creator_v53_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_outline_side_by_side" in profile
+        assert "batch_history_export" in profile
+        assert "studio_wizard_collapse_memory" in profile
+
+    def test_creator_v53_batch_history_export(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/batch-history/export")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["schema_version"] == "1"
+        assert "jobs" in data
+        assert data["count"] == len(data["jobs"])
+
+    def test_creator_v53_wizard_collapse(self, client: TestClient) -> None:
+        collapsed = client.put(
+            "/api/creator/onboarding/wizard-collapse",
+            json={"collapsed": True},
+        )
+        assert collapsed.status_code == 200
+        assert collapsed.json()["wizard_panel_collapsed"] is True
+        onboarding = client.get("/api/creator/onboarding")
+        assert onboarding.status_code == 200
+        assert onboarding.json()["wizard_panel_collapsed"] is True
+        restored = client.put(
+            "/api/creator/onboarding/wizard-collapse",
+            json={"collapsed": False},
+        )
+        assert restored.status_code == 200
+        assert restored.json()["wizard_panel_collapsed"] is False
 
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")

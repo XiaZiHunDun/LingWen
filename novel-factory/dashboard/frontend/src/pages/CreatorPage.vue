@@ -1225,36 +1225,52 @@
             data-testid="volume-plan-diff-panel"
           >
             <p class="meta-line">卷纲未保存变更</p>
-            <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
-              <li
-                v-for="(row, idx) in volumePlanDiffPreview.changes"
-                :key="`vol-diff-${row.label}-${idx}`"
-                class="volume-plan-diff-item"
-                :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
-              >
-                <details
-                  v-if="uiProfile.volume_plan_diff_expand_detail && row.details?.length"
-                  class="volume-plan-diff-details"
-                  :data-testid="`volume-plan-diff-details-${row.type}-${row.label}`"
-                >
-                  <summary>
-                    <span class="diff-type">{{ row.type }}</span> {{ row.message }}
-                  </summary>
-                  <ul class="volume-plan-diff-detail-list">
-                    <li
-                      v-for="(line, detailIdx) in row.details"
-                      :key="`vol-diff-detail-${row.label}-${detailIdx}`"
-                      :data-testid="`volume-plan-diff-detail-${row.label}-${detailIdx}`"
+            <div
+              class="volume-plan-diff-body"
+              :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
+            >
+              <div class="volume-plan-diff-main">
+                <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
+                  <li
+                    v-for="(row, idx) in volumePlanDiffPreview.changes"
+                    :key="`vol-diff-${row.label}-${idx}`"
+                    class="volume-plan-diff-item"
+                    :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
+                  >
+                    <details
+                      v-if="uiProfile.volume_plan_diff_expand_detail && row.details?.length"
+                      class="volume-plan-diff-details"
+                      :data-testid="`volume-plan-diff-details-${row.type}-${row.label}`"
                     >
-                      {{ line }}
-                    </li>
-                  </ul>
-                </details>
-                <template v-else>
-                  <span class="diff-type">{{ row.type }}</span> {{ row.message }}
-                </template>
-              </li>
-            </ul>
+                      <summary>
+                        <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                      </summary>
+                      <ul class="volume-plan-diff-detail-list">
+                        <li
+                          v-for="(line, detailIdx) in row.details"
+                          :key="`vol-diff-detail-${row.label}-${detailIdx}`"
+                          :data-testid="`volume-plan-diff-detail-${row.label}-${detailIdx}`"
+                        >
+                          {{ line }}
+                        </li>
+                      </ul>
+                    </details>
+                    <template v-else>
+                      <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                    </template>
+                  </li>
+                </ul>
+              </div>
+              <aside
+                v-if="uiProfile.volume_plan_diff_outline_side_by_side && volumePlanDiffPreview.global_outline_excerpt"
+                class="volume-plan-diff-outline-col pixel-border"
+                data-testid="volume-plan-diff-outline-side-by-side"
+              >
+                <p class="meta-line">全局大纲摘录</p>
+                <pre class="volume-plan-outline-excerpt">{{ volumePlanDiffPreview.global_outline_excerpt }}</pre>
+                <code class="path-line">{{ volumePlanDiffPreview.global_outline_path }}</code>
+              </aside>
+            </div>
             <div
               v-if="volumePlanSaveConfirmOpen"
               class="volume-plan-save-confirm pixel-border"
@@ -1473,6 +1489,17 @@
           data-testid="batch-history-panel"
         >
           <h3 class="subsection-title">Batch 历史</h3>
+          <div class="batch-history-actions">
+            <button
+              v-if="uiProfile.batch_history_export"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="export-batch-history-btn"
+              @click="exportBatchHistory"
+            >
+              导出 JSON
+            </button>
+          </div>
           <label
             v-if="uiProfile.batch_history_status_filter"
             class="meta-line batch-history-filter"
@@ -2161,11 +2188,13 @@ import {
   fetchCreatorVolumePlan,
   previewCreatorVolumePlanDiff,
   fetchCreatorBatchHistory,
+  exportCreatorBatchHistory,
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
   generateCreatorVolumeSummary,
   dismissCreatorWizardPanel,
+  saveCreatorWizardPanelCollapsed,
   fetchCreatorSettingsDocs,
   saveCreatorVolumePlan,
   mergeCreatorVolumePlan,
@@ -2451,9 +2480,12 @@ const defaultUiProfile = {
   batch_history_panel: false,
   batch_history_replay_range: false,
   batch_history_status_filter: false,
+  volume_plan_diff_outline_side_by_side: false,
+  batch_history_export: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
+  studio_wizard_collapse_memory: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2485,6 +2517,10 @@ function syncWizardPanelOpen() {
   }
   if (wizardUnreadMentions.value > 0) {
     wizardPanelOpen.value = true;
+    return;
+  }
+  if (uiProfile.value.studio_wizard_collapse_memory && onboardingWizard.value) {
+    wizardPanelOpen.value = !Boolean(onboardingWizard.value.wizard_panel_collapsed);
     return;
   }
   if (uiProfile.value.wizard_expand_if_incomplete) {
@@ -3227,6 +3263,34 @@ function openModeSwitchDoc(link) {
   saveMessage.value = `文档：${link.path}`;
 }
 
+function downloadJsonExport(filename, payload) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+async function exportBatchHistory() {
+  if (!uiProfile.value.batch_history_export) return;
+  try {
+    const payload = await exportCreatorBatchHistory();
+    const jobs = payload?.jobs?.length
+      ? payload.jobs
+      : filteredBatchHistory.value;
+    downloadJsonExport('creator-batch-history.json', {
+      schema_version: payload?.schema_version || '1',
+      count: jobs.length,
+      jobs,
+    });
+    saveMessage.value = `已导出 ${jobs.length} 条 batch 历史`;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
 async function loadOnboardingWizard() {
   try {
     onboardingWizard.value = await fetchCreatorOnboarding();
@@ -3252,7 +3316,15 @@ async function loadOnboardingWizard() {
 
 function onWizardToggle(event) {
   wizardPanelOpen.value = event.target.open;
-  if (!event.target.open && uiProfile.value.wizard_expand_if_incomplete) {
+  if (uiProfile.value.studio_wizard_collapse_memory) {
+    saveCreatorWizardPanelCollapsed(!event.target.open)
+      .then((data) => {
+        onboardingWizard.value = data;
+      })
+      .catch(() => {
+        /* ignore collapse save errors */
+      });
+  } else if (!event.target.open && uiProfile.value.wizard_expand_if_incomplete) {
     dismissCreatorWizardPanel()
       .then((data) => {
         onboardingWizard.value = data;
@@ -4718,6 +4790,12 @@ watch(projectRevision, () => {
   refresh();
 });
 
+watch(onboardingWizard, () => {
+  if (uiProfile.value.studio_wizard_collapse_memory) {
+    syncWizardPanelOpen();
+  }
+});
+
 watch(
   editableVolumes,
   () => {
@@ -4896,6 +4974,33 @@ watch(
   margin-top: var(--space-sm);
   padding: var(--space-xs);
   background: rgba(200, 160, 80, 0.1);
+}
+
+.volume-plan-diff-side-by-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.volume-plan-diff-outline-col {
+  padding: var(--space-xs);
+  background: rgba(100, 140, 200, 0.08);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.volume-plan-outline-excerpt {
+  margin: var(--space-xs) 0;
+  white-space: pre-wrap;
+  font-size: 7px;
+  line-height: 1.5;
+}
+
+.batch-history-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-xs);
 }
 
 .volume-plan-diff-list {

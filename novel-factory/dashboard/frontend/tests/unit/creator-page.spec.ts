@@ -31,6 +31,7 @@ const creatorMocks = vi.hoisted(() => ({
   saveCreatorChapterOutline: vi.fn(),
   generateCreatorVolumeSummary: vi.fn(),
   dismissCreatorWizardPanel: vi.fn(),
+  saveCreatorWizardPanelCollapsed: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
@@ -97,6 +98,7 @@ const creatorMocks = vi.hoisted(() => ({
   fetchStudioActiveBatchJob: vi.fn(),
   previewCreatorVolumePlanDiff: vi.fn(),
   fetchCreatorBatchHistory: vi.fn(),
+  exportCreatorBatchHistory: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
@@ -128,6 +130,7 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorChapterOutline: creatorMocks.saveCreatorChapterOutline,
   generateCreatorVolumeSummary: creatorMocks.generateCreatorVolumeSummary,
   dismissCreatorWizardPanel: creatorMocks.dismissCreatorWizardPanel,
+  saveCreatorWizardPanelCollapsed: creatorMocks.saveCreatorWizardPanelCollapsed,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
   saveCreatorSettingsDocs: creatorMocks.saveCreatorSettingsDocs,
   previewCreatorSettingsDocs: creatorMocks.previewCreatorSettingsDocs,
@@ -194,6 +197,7 @@ vi.mock('../../src/api/index.js', () => ({
   fetchStudioActiveBatchJob: creatorMocks.fetchStudioActiveBatchJob,
   previewCreatorVolumePlanDiff: creatorMocks.previewCreatorVolumePlanDiff,
   fetchCreatorBatchHistory: creatorMocks.fetchCreatorBatchHistory,
+  exportCreatorBatchHistory: creatorMocks.exportCreatorBatchHistory,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', async () => {
@@ -900,6 +904,36 @@ describe('CreatorPage', () => {
     creatorMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
     creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
     creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({ jobs: [] });
+    creatorMocks.exportCreatorBatchHistory.mockResolvedValue({
+      schema_version: '1',
+      count: 1,
+      jobs: [
+        {
+          job_id: 'job-export',
+          start_chapter: 1,
+          end_chapter: 5,
+          status: 'completed',
+        },
+      ],
+    });
+    creatorMocks.saveCreatorWizardPanelCollapsed.mockImplementation(async (collapsed) => ({
+      slug: 'demo-book',
+      creation_mode: 'studio',
+      mode_label: '工作室',
+      max_chapter: 12,
+      steps: [{ id: 'init', title: '新建', detail: 'init-project' }],
+      checklist_doc: 'docs/advance-walkthrough-checklist.md',
+      smoke_command: 'bash scripts/verify-advance-walkthrough.sh',
+      onboarding_doc: 'docs/creator-onboarding-wizard.md',
+      completed_step_ids: ['init'],
+      auto_completed_step_ids: ['init'],
+      step_notes: {},
+      step_mentions: {},
+      unread_mention_count: 0,
+      progress_pct: 33,
+      wizard_panel_dismissed: false,
+      wizard_panel_collapsed: collapsed,
+    }));
   });
 
   it('renders three columns, volume plan, and deviation badge', async () => {
@@ -2717,5 +2751,103 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="mode-switch-doc-advance-checklist"]').trigger('click');
     await flushPromises();
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('advance-walkthrough-checklist');
+  });
+
+  it('v5.3 volume plan diff shows global outline side by side', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_outline_side_by_side: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突已修改', details: [] }],
+      global_outline_excerpt: '全局大纲摘录',
+      global_outline_path: '/全局大纲.md',
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('新冲突');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-outline-side-by-side"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-outline-side-by-side"]').text()).toContain('全局大纲摘录');
+  });
+
+  it('v5.3 batch history export downloads json', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_export: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-export-ui',
+          start_chapter: 1,
+          end_chapter: 5,
+          status: 'completed',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="export-batch-history-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.exportCreatorBatchHistory).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('已导出');
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v5.3 studio wizard collapse memory saves toggle state', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'studio',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'studio',
+        primary_action: 'studio_quality',
+        show_studio_workflow: true,
+        studio_wizard_collapse_memory: true,
+        wizard_expand_if_incomplete: false,
+        wizard_default_collapsed: false,
+      },
+    });
+    creatorMocks.fetchCreatorOnboarding.mockResolvedValue({
+      slug: 'demo-book',
+      creation_mode: 'studio',
+      mode_label: '工作室',
+      max_chapter: 12,
+      steps: [{ id: 'init', title: '新建', detail: 'init-project' }],
+      checklist_doc: 'docs/advance-walkthrough-checklist.md',
+      smoke_command: 'bash scripts/verify-advance-walkthrough.sh',
+      onboarding_doc: 'docs/creator-onboarding-wizard.md',
+      completed_step_ids: ['init'],
+      auto_completed_step_ids: ['init'],
+      step_notes: {},
+      step_mentions: {},
+      unread_mention_count: 0,
+      progress_pct: 33,
+      wizard_panel_dismissed: false,
+      wizard_panel_collapsed: false,
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const panel = wrapper.find('[data-testid="onboarding-wizard-panel"]');
+    panel.element.open = false;
+    await panel.trigger('toggle');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorWizardPanelCollapsed).toHaveBeenCalledWith(true);
   });
 });

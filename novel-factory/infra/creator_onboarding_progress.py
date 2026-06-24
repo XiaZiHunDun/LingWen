@@ -76,6 +76,7 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
             "step_notes": {},
             "step_mentions": {},
             "wizard_panel_dismissed": False,
+            "wizard_panel_collapsed": False,
         }
     data = json.loads(path.read_text(encoding="utf-8"))
     ids = data.get("completed_step_ids", [])
@@ -92,6 +93,7 @@ def load_onboarding_progress(project_root: Path | str) -> dict[str, Any]:
         "step_notes": notes,
         "step_mentions": _normalize_step_mentions(data.get("step_mentions"), notes),
         "wizard_panel_dismissed": bool(data.get("wizard_panel_dismissed", False)),
+        "wizard_panel_collapsed": bool(data.get("wizard_panel_collapsed", False)),
     }
 
 
@@ -102,6 +104,7 @@ def save_onboarding_progress(
     dismissed_auto_step_ids: list[str] | None = None,
     step_notes: dict[str, str] | None = None,
     wizard_panel_dismissed: bool | None = None,
+    wizard_panel_collapsed: bool | None = None,
 ) -> dict[str, Any]:
     path = _progress_path(project_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,6 +149,11 @@ def save_onboarding_progress(
             if wizard_panel_dismissed is not None
             else bool(existing.get("wizard_panel_dismissed", False))
         ),
+        "wizard_panel_collapsed": (
+            bool(wizard_panel_collapsed)
+            if wizard_panel_collapsed is not None
+            else bool(existing.get("wizard_panel_collapsed", False))
+        ),
         "updated_at": _now_iso(),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -174,6 +182,16 @@ def dismiss_wizard_panel(project_root: Path | str) -> dict[str, Any]:
         completed_step_ids=progress.get("completed_step_ids", []),
         dismissed_auto_step_ids=progress.get("dismissed_auto_step_ids", []),
         wizard_panel_dismissed=True,
+    )
+
+
+def save_wizard_panel_collapsed(project_root: Path | str, *, collapsed: bool) -> dict[str, Any]:
+    progress = load_onboarding_progress(project_root)
+    return save_onboarding_progress(
+        project_root,
+        completed_step_ids=progress.get("completed_step_ids", []),
+        dismissed_auto_step_ids=progress.get("dismissed_auto_step_ids", []),
+        wizard_panel_collapsed=collapsed,
     )
 
 

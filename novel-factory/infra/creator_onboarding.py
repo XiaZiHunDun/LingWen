@@ -161,6 +161,7 @@ def onboarding_wizard_payload(project: StudioProject) -> dict[str, Any]:
         "unread_mention_count": _unread_mention_count(project.root),
         "progress_pct": progress_pct(completed, len(steps)),
         "wizard_panel_dismissed": bool(progress.get("wizard_panel_dismissed", False)),
+        "wizard_panel_collapsed": bool(progress.get("wizard_panel_collapsed", False)),
     }
 
 
@@ -308,4 +309,15 @@ def dismiss_onboarding_wizard_panel(project: StudioProject) -> dict[str, Any]:
     from infra.creator_onboarding_progress import dismiss_wizard_panel
 
     dismiss_wizard_panel(project.root)
+    return onboarding_wizard_payload(project)
+
+
+def save_onboarding_wizard_panel_collapsed(
+    project: StudioProject,
+    *,
+    collapsed: bool,
+) -> dict[str, Any]:
+    from infra.creator_onboarding_progress import save_wizard_panel_collapsed
+
+    save_wizard_panel_collapsed(project.root, collapsed=collapsed)
     return onboarding_wizard_payload(project)

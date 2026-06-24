@@ -557,6 +557,22 @@ def preview_volume_plan_diff(
     return {"has_changes": bool(changes), "changes": changes}
 
 
+def volume_plan_diff_payload(
+    project_root: Path | str,
+    draft: list[dict[str, Any]],
+) -> dict[str, Any]:
+    from infra.creator_dashboard import _excerpt
+
+    root = _root(project_root)
+    baseline = [v.to_dict() for v in load_volume_plan(root)]
+    result = preview_volume_plan_diff(baseline, draft)
+    outline_path = global_outline_path(root)
+    outline_text = outline_path.read_text(encoding="utf-8") if outline_path.is_file() else ""
+    result["global_outline_excerpt"] = _excerpt(outline_text, limit=480)
+    result["global_outline_path"] = str(outline_path)
+    return result
+
+
 def volume_plan_payload(project_root: Path | str) -> dict[str, Any]:
     root = _root(project_root)
     paths = ProjectPaths.get(root)

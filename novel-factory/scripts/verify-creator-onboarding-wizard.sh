@@ -341,6 +341,9 @@ assert resolve_creator_ui_profile(creation_mode="studio")["studio_creation_entry
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_expand_detail"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_status_filter"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_switch_doc_link"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_outline_side_by_side"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_export"] is True
+assert resolve_creator_ui_profile(creation_mode="studio")["studio_wizard_collapse_memory"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 
