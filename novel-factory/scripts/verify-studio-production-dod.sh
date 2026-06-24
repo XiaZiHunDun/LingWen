@@ -97,7 +97,7 @@ if [ "$REAL_LLM" -eq 1 ]; then
   mkdir -p "$RECORD_DIR"
   export LINGWEN_REAL_LLM=1
   export LINGWEN_EMIT_CHAPTER=1
-  export LINGWEN_MEMORY_RAG=stub
+  export LINGWEN_MEMORY_RAG="${LINGWEN_MEMORY_RAG:-$(python3 -c 'from infra.agent_system.chapter_memory_hook import default_studio_memory_rag_mode; print(default_studio_memory_rag_mode())')}"
 
   if [ "$REAL_LLM_BATCH" -eq 1 ]; then
     END=$((BATCH_MAX))

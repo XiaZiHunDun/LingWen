@@ -8,6 +8,7 @@ import pytest
 
 from infra.agent_system.chapter_production_batch import (
     BatchResult,
+    auto_resolve_calibrate_from,
     build_batch_plan,
     load_calibration_from_batch,
     resolve_chapter_cost_budget,
@@ -198,6 +199,18 @@ class TestRunProductionBatch:
         cost, source = resolve_cost_per_chapter_usd(calibrate_from=path)
         assert cost == pytest.approx(0.03)
         assert "batch.json" in source
+
+    def test_auto_resolve_calibrate_from_project_records(self, tmp_path, monkeypatch):
+        records = tmp_path / ".state" / "pilot_records"
+        records.mkdir(parents=True)
+        batch = records / "batch-001-002.json"
+        batch.write_text(
+            json.dumps({"chapters_attempted": 2, "total_cost_usd": 0.12}),
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("LINGWEN_PROJECT_ROOT", str(tmp_path))
+        resolved = auto_resolve_calibrate_from()
+        assert resolved == batch
 
     def test_build_batch_plan_budget_headroom(self):
         checks = [

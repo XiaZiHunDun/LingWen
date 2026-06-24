@@ -129,6 +129,22 @@ def load_calibration_from_batch(path: Path) -> tuple[float, str] | None:
     return cost / attempted, f"calibrated:{path.name}"
 
 
+def auto_resolve_calibrate_from() -> Path | None:
+    """Pick latest batch summary JSON under the active project's pilot_records."""
+    project_root = os.environ.get("LINGWEN_PROJECT_ROOT", "").strip()
+    if not project_root:
+        return None
+    records = Path(project_root) / ".state" / "pilot_records"
+    if not records.is_dir():
+        return None
+    batches = sorted(
+        list(records.glob("batch-*.json")) + list(records.glob("studio-dod-batch-*.json")),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    return batches[0] if batches else None
+
+
 def resolve_cost_per_chapter_usd(
     *,
     calibrate_from: Path | None = None,
@@ -249,7 +265,12 @@ def run_production_batch(
         chapter_num=start_chapter,
         require_real_llm_gate=require_gate,
     )
-    cost_per_chapter, cal_source = resolve_cost_per_chapter_usd(calibrate_from=calibrate_from)
+    resolved_calibrate = calibrate_from
+    if resolved_calibrate is None and budget_usd is not None:
+        resolved_calibrate = auto_resolve_calibrate_from()
+    cost_per_chapter, cal_source = resolve_cost_per_chapter_usd(
+        calibrate_from=resolved_calibrate,
+    )
     batch_plan = build_batch_plan(
         start_chapter=start_chapter,
         max_chapters=max_chapters,

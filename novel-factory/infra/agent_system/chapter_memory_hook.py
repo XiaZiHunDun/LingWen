@@ -142,3 +142,12 @@ def memory_rag_live_gateway_check() -> tuple[bool, str]:
         return True, "MemoryGateway live ready (Qdrant + Embedder)"
     err = get_initialization_error() or "MemoryGateway unavailable"
     return False, f"MemoryGateway NoOp: {err}"
+
+
+def default_studio_memory_rag_mode() -> MemoryRagMode:
+    """Studio production default: live when gateway ready, else stub."""
+    env = os.environ.get("LINGWEN_MEMORY_RAG", "").strip()
+    if env:
+        return resolve_memory_rag_mode(env)
+    ok, _ = memory_rag_live_gateway_check()
+    return "live" if ok else "stub"

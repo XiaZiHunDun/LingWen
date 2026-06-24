@@ -554,6 +554,9 @@ def fill_calibration_samples(
 ) -> list[dict[str, Any]]:
     filled: list[dict[str, Any]] = []
     for row in samples:
+        if str(row.get("verdict") or "").strip() in ("留", "删", "疑"):
+            filled.append(dict(row))
+            continue
         verdict, note = suggest_calibration_verdict(row, signals)
         filled.append({**row, "verdict": verdict, "note": note})
     return filled
@@ -576,8 +579,10 @@ def build_calibration_round(
     project_root: Path,
     *,
     per_chapter: int = 5,
+    overrides: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     from infra.full_check_report import load_report_summary
+    from infra.prose_calibration_overrides import apply_calibration_overrides
 
     summary = load_report_summary(project_root)
     if not summary.get("available"):
@@ -591,6 +596,8 @@ def build_calibration_round(
         else cross_reference_signals({"chapters": []}, summary)
     )
     filled = fill_calibration_samples(samples, signals)
+    if overrides:
+        filled = apply_calibration_overrides(filled, slug=slug, overrides=overrides)
     return {
         "slug": slug,
         "samples": filled,

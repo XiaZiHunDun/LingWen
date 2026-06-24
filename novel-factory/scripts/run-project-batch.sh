@@ -16,7 +16,7 @@ set -a && source .env && set +a
 
 export LINGWEN_REAL_LLM="${LINGWEN_REAL_LLM:-1}"
 export LINGWEN_INCREMENTAL_BACKFILL="${LINGWEN_INCREMENTAL_BACKFILL:-1}"
-export LINGWEN_MEMORY_RAG="${LINGWEN_MEMORY_RAG:-stub}"
+export LINGWEN_MEMORY_RAG="${LINGWEN_MEMORY_RAG:-$(python3 -c 'from infra.agent_system.chapter_memory_hook import default_studio_memory_rag_mode; print(default_studio_memory_rag_mode())')}"
 export LINGWEN_EMIT_CHAPTER="${LINGWEN_EMIT_CHAPTER:-1}"
 export LINGWEN_PRODUCTION_MODE="${LINGWEN_PRODUCTION_MODE:-canon}"
 export LINGWEN_CHAPTER_WORD_TARGET="${LINGWEN_CHAPTER_WORD_TARGET:-2500}"

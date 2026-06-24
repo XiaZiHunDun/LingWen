@@ -13,13 +13,15 @@ from datetime import date
 from pathlib import Path
 
 from infra.prose_calibration import list_primary_revision_slugs
+from infra.prose_calibration_overrides import load_all_calibration_overrides
 from infra.prose_judge import build_calibration_round, render_calibration_log_document
 
 root = Path.cwd()
+overrides = load_all_calibration_overrides()
 rounds = []
 for slug in list_primary_revision_slugs():
     project = root / "projects" / slug
-    rounds.append(build_calibration_round(slug, project))
+    rounds.append(build_calibration_round(slug, project, overrides=overrides))
 
 llm_note = (
     "> **LLM judge**：本地未配置 `MINIMAX_API_KEY` 时跳过 `--llm` 刷新；"

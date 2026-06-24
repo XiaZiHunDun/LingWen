@@ -9,6 +9,14 @@
 - llm×7 路径过滤 · e2e-live 5/5 blocking
 - 无 blocking 工程项；不开第九本书 / 星陨 wave / SaaS
 
+## v12.1 Studio 维护轨 P2（2026-06）
+
+- **人工抽检覆写**：`config/prose_calibration_overrides.yaml` + `run-prose-calibration-override.sh`；fill 保留 log/YAML 覆写
+- **batch 默认 calibrate**：`chapter_production_batch.auto_resolve_calibrate_from` 自动选最新 pilot JSON
+- **RAG live 默认**：`default_studio_memory_rag_mode()` — Qdrant 可用时 live，否则 stub
+- **gh CI 状态**：`scripts/gh-ci-status.sh`（gh 优先，curl 回退）
+- 验收：`bash scripts/verify-studio-maintenance-track.sh`
+
 ## v11 工程（2026-06）
 
 - budget `--calibrate-from` · wave 367–376 文档 · Memory RAG live pilot

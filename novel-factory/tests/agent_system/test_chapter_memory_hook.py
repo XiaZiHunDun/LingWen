@@ -9,6 +9,7 @@ import pytest
 from infra.agent_system.chapter_golden_path import run_golden_path
 from infra.agent_system.chapter_memory_hook import (
     WORKFLOWS_WITH_MEMORY,
+    default_studio_memory_rag_mode,
     describe_memory_rag_hook,
     maybe_attach_memory_context,
     memory_rag_live_gateway_check,
@@ -25,6 +26,13 @@ class TestChapterMemoryHookHelpers:
         assert resolve_memory_rag_mode() == "stub"
         monkeypatch.setenv("LINGWEN_MEMORY_RAG", "1")
         assert resolve_memory_rag_mode() == "live"
+
+    def test_default_studio_memory_rag_mode(self, monkeypatch):
+        monkeypatch.delenv("LINGWEN_MEMORY_RAG", raising=False)
+        mode = default_studio_memory_rag_mode()
+        assert mode in ("live", "stub")
+        monkeypatch.setenv("LINGWEN_MEMORY_RAG", "stub")
+        assert default_studio_memory_rag_mode() == "stub"
 
     def test_stub_context_has_source_and_chapter(self):
         ctx = stub_chapter_memory_context(12)

@@ -320,8 +320,11 @@ def batch_command(
         "export LINGWEN_PRODUCTION_MODE=canon",
         "export LINGWEN_REAL_LLM=1",
         "export LINGWEN_EMIT_CHAPTER=1",
-        "export LINGWEN_MEMORY_RAG=stub",
     ]
+    from infra.agent_system.chapter_memory_hook import default_studio_memory_rag_mode
+
+    mem_mode = default_studio_memory_rag_mode()
+    lines.append(f"export LINGWEN_MEMORY_RAG={mem_mode}")
     calibrate_arg = ""
     if calibrate_from is not None:
         calibrate_arg = f' "{calibrate_from}"'
