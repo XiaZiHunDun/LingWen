@@ -1616,6 +1616,14 @@ class TestCreatorEndpoints:
         assert "batch_history_chapter_failure_heatmap" in profile
         assert "creation_mode_preview_pinned_sidebar" in profile
 
+    def test_creator_v7_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_share_link_e2e" in profile
+        assert "batch_history_ops_summary" in profile
+        assert "creation_mode_accessibility_checklist" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

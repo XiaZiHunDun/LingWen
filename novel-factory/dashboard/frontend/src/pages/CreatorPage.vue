@@ -225,6 +225,20 @@
     >
       快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
     </p>
+    <ul
+      v-if="uiProfile.creation_mode_accessibility_checklist && creationModeAccessibilityItems.length"
+      class="creation-mode-accessibility-checklist pixel-border"
+      data-testid="creation-mode-accessibility-checklist"
+    >
+      <li
+        v-for="item in creationModeAccessibilityItems"
+        :key="`a11y-${item.id}`"
+        class="meta-line creation-mode-accessibility-item"
+        :data-testid="`creation-mode-a11y-${item.id}`"
+      >
+        {{ item.enabled ? '✓' : '—' }} {{ item.label }}
+      </li>
+    </ul>
     <div
       v-if="uiProfile.volume_plan_diff_share_link_preview && volumePlanDiffShareLinkPreview"
       class="volume-plan-diff-share-link-preview pixel-border"
@@ -262,6 +276,31 @@
       >
         一键应用卷纲
       </button>
+      <ol
+        v-if="uiProfile.volume_plan_diff_share_link_e2e && volumePlanDiffShareLinkPreview.can_apply"
+        class="volume-plan-diff-share-e2e-steps"
+        data-testid="volume-plan-diff-share-e2e-steps"
+      >
+        <li
+          class="volume-plan-diff-share-e2e-step volume-plan-diff-share-e2e-step--done"
+          data-testid="share-e2e-step-parse"
+        >
+          1. 解析分享链接
+        </li>
+        <li
+          class="volume-plan-diff-share-e2e-step"
+          :class="{ 'volume-plan-diff-share-e2e-step--done': shareE2eApplyDone }"
+          data-testid="share-e2e-step-apply"
+        >
+          2. 应用卷纲
+        </li>
+        <li
+          class="volume-plan-diff-share-e2e-step"
+          data-testid="share-e2e-step-save"
+        >
+          3. 保存卷纲
+        </li>
+      </ol>
       </template>
       <button
         type="button"
@@ -2171,6 +2210,21 @@
           data-testid="batch-history-panel"
         >
           <h3 class="subsection-title">Batch 历史</h3>
+          <button
+            v-if="uiProfile.batch_history_ops_summary"
+            type="button"
+            class="mini-btn pixel-border batch-history-ops-summary-toggle"
+            data-testid="batch-history-ops-summary-toggle"
+            @click="toggleBatchHistoryOpsSummary"
+          >
+            运维摘要{{ batchHistoryOpsSummaryOpen ? '（收起）' : '（展开）' }}
+            <span class="batch-history-ops-summary-line">{{ batchHistoryOpsSummaryLine }}</span>
+          </button>
+          <div
+            v-show="!uiProfile.batch_history_ops_summary || batchHistoryOpsSummaryOpen"
+            class="batch-history-ops-summary-body"
+            data-testid="batch-history-ops-summary-body"
+          >
           <p
             v-if="batchHistorySuccessRate"
             class="meta-line batch-history-success-rate"
@@ -2430,6 +2484,7 @@
             失败率 {{ batchHistoryFailureTrend.failurePct }}%（{{ batchHistoryFailureTrend.failed }}/{{ batchHistoryFailureTrend.total }}）
             · 近期趋势{{ batchHistoryFailureTrend.trendLabel }}
           </p>
+          </div>
           <ul
             v-if="uiProfile.batch_history_weekly_summary && batchHistoryWeeklySummary.length"
             class="batch-history-weekly-summary"
@@ -3354,6 +3409,8 @@ const showVolumePlanDiffPrintPreview = ref(false);
 const volumePlanDiffShareLinkPreview = ref(null);
 const pendingShareApply = ref(null);
 const pendingShareMerge = ref(null);
+const shareE2eApplyDone = ref(false);
+const batchHistoryOpsSummaryOpen = ref(false);
 const creationModeSwitchAriaMessage = ref('');
 const volumePlanDiffPrintPreviewText = ref('');
 
@@ -3597,6 +3654,9 @@ const defaultUiProfile = {
   volume_plan_diff_share_link_merge: false,
   batch_history_chapter_failure_heatmap: false,
   creation_mode_preview_pinned_sidebar: false,
+  volume_plan_diff_share_link_e2e: false,
+  batch_history_ops_summary: false,
+  creation_mode_accessibility_checklist: false,
   creation_mode_switch_confirm_dialog: false,
   creation_mode_switch_history: false,
   creation_mode_switch_undo_hint: false,
@@ -3783,6 +3843,19 @@ const creationModeGuideAnimationEnabled = computed(() => {
   if (!uiProfile.value.creation_mode_switch_reduced_motion) return true;
   if (typeof window === 'undefined' || !window.matchMedia) return true;
   return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+});
+
+const creationModeAccessibilityItems = computed(() => {
+  if (!uiProfile.value.creation_mode_accessibility_checklist) return [];
+  const profile = uiProfile.value;
+  return [
+    { id: 'hotkey', label: '快捷键 Alt+Shift+1/2/3', enabled: profile.creation_mode_switch_hotkey },
+    { id: 'speech', label: '语音朗读', enabled: profile.creation_mode_switch_speech },
+    { id: 'haptic', label: '触觉反馈', enabled: profile.creation_mode_switch_haptic },
+    { id: 'aria', label: 'ARIA 公告', enabled: profile.creation_mode_switch_aria_live },
+    { id: 'reduced', label: '减动画偏好', enabled: profile.creation_mode_switch_reduced_motion },
+    { id: 'pinned', label: '固定侧栏', enabled: profile.creation_mode_preview_pinned_sidebar },
+  ];
 });
 
 const CREATION_MODE_CAPABILITY_ROWS = [
@@ -4215,6 +4288,20 @@ const batchHistoryFailureTrend = computed(() => {
     failurePct: Math.round((failed / total) * 100),
     trendLabel,
   };
+});
+
+const batchHistoryOpsSummaryLine = computed(() => {
+  if (!uiProfile.value.batch_history_ops_summary || !batchHistory.value.length) return '';
+  const total = batchHistory.value.length;
+  const completed = batchHistory.value.filter(
+    (job) => String(job?.status).toLowerCase() === 'completed',
+  ).length;
+  const pct = Math.round((completed / total) * 100);
+  const parts = [`${total} 任务`, `成功率 ${pct}%`];
+  if (batchHistoryAvgDuration.value != null) {
+    parts.push(`均时 ${batchHistoryAvgDuration.value} 分`);
+  }
+  return ` · ${parts.join(' · ')}`;
 });
 
 const batchHistoryWeeklySummary = computed(() => {
@@ -5629,6 +5716,7 @@ function tryLoadVolumePlanDiffShareLinkPreview() {
 
 function dismissVolumePlanDiffShareLinkPreview() {
   volumePlanDiffShareLinkPreview.value = null;
+  shareE2eApplyDone.value = false;
   if (window.location.hash.includes('creator-diff=')) {
     const nextHash = window.location.hash.replace(/#?creator-diff=[^&]*/g, '').replace(/^#/, '');
     window.history.replaceState(null, '', nextHash ? `#${nextHash}` : window.location.pathname + window.location.search);
@@ -5649,10 +5737,17 @@ async function applyVolumePlanDiffShareLinkDirect(parsed) {
   if (!parsed?.draft_volumes?.length) return;
   editableVolumes.value = parsed.draft_volumes.map((vol) => ({ ...vol }));
   await refreshVolumePlanDiffPreview();
-  dismissVolumePlanDiffShareLinkPreview();
   pendingShareApply.value = null;
   pendingShareMerge.value = null;
+  shareE2eApplyDone.value = true;
+  if (!uiProfile.value.volume_plan_diff_share_link_e2e) {
+    dismissVolumePlanDiffShareLinkPreview();
+  }
   saveMessage.value = `已应用分享卷纲（${parsed.draft_volumes.length} 卷）`;
+}
+
+function toggleBatchHistoryOpsSummary() {
+  batchHistoryOpsSummaryOpen.value = !batchHistoryOpsSummaryOpen.value;
 }
 
 function detectShareVolumeMergeConflicts(parsed) {
@@ -7238,6 +7333,9 @@ async function saveVolumePlan() {
       : '卷纲已保存并同步到全局大纲';
     conflictMessage.value = '';
     volumePlanSaveConfirmOpen.value = false;
+    if (uiProfile.value.volume_plan_diff_share_link_e2e && volumePlanDiffShareLinkPreview.value) {
+      dismissVolumePlanDiffShareLinkPreview();
+    }
     await refresh();
   } catch (e) {
     handleSaveError(e);
@@ -7914,6 +8012,42 @@ watch(
 .volume-plan-diff-share-merge-list {
   margin: var(--space-xs) 0;
   padding-left: 1.2rem;
+}
+
+.volume-plan-diff-share-e2e-steps {
+  margin: var(--space-xs) 0;
+  padding-left: 1.2rem;
+  font-size: 10px;
+}
+
+.volume-plan-diff-share-e2e-step--done {
+  font-weight: bold;
+}
+
+.creation-mode-accessibility-checklist {
+  margin: var(--space-sm) 0;
+  padding: var(--space-sm);
+  list-style: none;
+}
+
+.creation-mode-accessibility-item {
+  margin: 0;
+}
+
+.batch-history-ops-summary-toggle {
+  margin: var(--space-xs) 0;
+  width: 100%;
+  text-align: left;
+}
+
+.batch-history-ops-summary-line {
+  display: block;
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+.batch-history-ops-summary-body {
+  margin-top: var(--space-xs);
 }
 
 .volume-plan-diff-print-preview {

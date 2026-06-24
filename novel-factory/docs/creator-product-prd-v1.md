@@ -473,6 +473,12 @@ project:
 
 ## 70. 下一里程碑（v7.0）
 
-- 分享链接 Playwright E2E（解析→应用→保存）
-- batch 历史运维摘要折叠区
-- 三模式无障碍验收 + verify 脚本扩展
+- 分享链接 Playwright E2E（解析→应用→保存）— ✅ v7.0
+- batch 历史运维摘要折叠区 — ✅ v7.0
+- 三模式无障碍验收 + verify 脚本扩展 — ✅ v7.0
+
+## 71. v7.0 之后（产品级）
+
+- 创作者 beta 文档包（walkthrough 与 Dashboard 对齐）
+- 分享协作 v2（多人批注 × diff）
+- Studio 解耦发布（独立 changelog）

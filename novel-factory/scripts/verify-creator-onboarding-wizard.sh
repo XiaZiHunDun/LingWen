@@ -406,6 +406,25 @@ assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_swit
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_share_link_merge"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_chapter_failure_heatmap"] is True
 assert resolve_creator_ui_profile(creation_mode="studio")["creation_mode_preview_pinned_sidebar"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_share_link_e2e"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_ops_summary"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_accessibility_checklist"] is True
+
+# v7.0 无障碍验收：推进模式应启用分享 E2E 与运维摘要
+advance_v7 = resolve_creator_ui_profile(creation_mode="advance")
+assert advance_v7["creation_mode_accessibility_checklist"] is True
+enabled_a11y = sum(
+    1 for key in (
+        "creation_mode_switch_hotkey",
+        "creation_mode_switch_speech",
+        "creation_mode_switch_haptic",
+        "creation_mode_switch_aria_live",
+        "creation_mode_switch_reduced_motion",
+        "creation_mode_preview_pinned_sidebar",
+    )
+    if advance_v7.get(key)
+)
+assert enabled_a11y >= 4, f"advance a11y flags enabled: {enabled_a11y}"
 
 from infra.creator_dashboard import save_creator_chapter_outline
 

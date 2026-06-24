@@ -346,6 +346,9 @@ class CreatorUiProfile(BaseModel):
     volume_plan_diff_share_link_merge: bool = False
     batch_history_chapter_failure_heatmap: bool = False
     creation_mode_preview_pinned_sidebar: bool = False
+    volume_plan_diff_share_link_e2e: bool = False
+    batch_history_ops_summary: bool = False
+    creation_mode_accessibility_checklist: bool = False
     creation_mode_capability_matrix: bool = False
     creation_mode_switch_guide_animation: bool = False
     creation_mode_onboarding_step_link: bool = False

@@ -3,7 +3,7 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v11.30 (创作者 v6.14, 2026-06-24)  
+> **版本**: v12.0 (创作者 v7.0 里程碑, 2026-06-24)  
 > **更新 (2026-06-22)**: 审批转交/OR签/快照 diff · digest handle 静默与死信 · Webhook 签名 · 预设拉取预检/changelog/拓扑可视化
 
 ---
@@ -221,7 +221,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v6.12–v6.14 已批量落地**：应用确认 / token 校验 / 冲突合并 · 成本/重试/热力图 · 减动画 / ARIA / 固定侧栏
 
-**v7.0 下一里程碑**：分享闭环 E2E · batch 运维摘要 · 无障碍验收
+**v7.0 里程碑已落地**：分享闭环 Playwright E2E · batch 运维摘要折叠区 · 无障碍验收清单
+
+**v7.0 之后（产品级）**：创作者 beta 文档包 · 分享协作 v2 · Studio 线解耦 changelog
 
 ### 0.2.1 创作者线完整路线图（v6.11 → v7.0）
 
@@ -239,7 +241,7 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 | **v6.12** | 应用前 diff 二次确认对话框 | 成本效率图（$/章） | `prefers-reduced-motion` 关闭引导动画 | ✅ |
 | **v6.13** | 分享 token 版本/损坏提示 | 重试成功率堆叠条 | `aria-live` 模式切换公告 | ✅ |
 | **v6.14** | 分享与本地卷纲冲突合并向导 | 章节失败率热力格 | 三模式预览固定侧栏 | ✅ |
-| **v7.0** | Playwright：分享链接→应用→保存 | batch 历史面板「运维摘要」折叠区 | 无障碍验收清单 + verify 脚本扩展 | **下一里程碑** |
+| **v7.0** | Playwright：分享链接→应用→保存 | batch 历史面板「运维摘要」折叠区 | 无障碍验收清单 + verify 脚本扩展 | ✅ |
 
 **v7.0 之后（产品级，非逐版小功能）**
 

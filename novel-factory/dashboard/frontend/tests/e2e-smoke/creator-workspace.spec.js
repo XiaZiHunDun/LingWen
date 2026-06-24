@@ -21,4 +21,44 @@ test.describe('Creator workspace live e2e', () => {
     await expect(page.getByTestId('volume-plan-panel')).toBeVisible();
     await expect(page.getByTestId('pillars-textarea')).toBeVisible();
   });
+
+  test('creator_share_link_apply_save_flow', async ({ page }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    const token = await page.evaluate(() => {
+      const payload = {
+        v: 2,
+        c: 1,
+        changes: [{ type: 'changed', label: '一', message: 'e2e 分享' }],
+        d: [{
+          label: '一',
+          start_chapter: 1,
+          end_chapter: 5,
+          core_conflict: 'E2E 分享卷纲',
+          locked: false,
+        }],
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    });
+    await page.goto(`/?nav=creator#creator-diff=${token}`, { waitUntil: 'domcontentloaded' });
+    const preview = page.getByTestId('volume-plan-diff-share-link-preview');
+    await expect(preview).toBeVisible({ timeout: 30_000 });
+    const applyBtn = page.getByTestId('apply-volume-plan-diff-share-btn');
+    if (await applyBtn.isVisible()) {
+      await applyBtn.click();
+      const confirm = page.getByTestId('confirm-share-apply-btn');
+      if (await confirm.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await confirm.click();
+      }
+      const mergeShare = page.getByTestId('share-merge-use-share-btn');
+      if (await mergeShare.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await mergeShare.click();
+      }
+    }
+    await page.getByTestId('save-volume-plan-btn').click();
+    await expect(page.getByTestId('save-banner')).toBeVisible({ timeout: 20_000 });
+  });
 });

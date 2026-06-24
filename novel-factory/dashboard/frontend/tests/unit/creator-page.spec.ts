@@ -4656,4 +4656,123 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="creation-mode-pinned-sidebar"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="creation-mode-switch-preview"]').exists()).toBe(false);
   });
+
+  it('v7.0 shows share link e2e steps', async () => {
+    const payload = {
+      v: 2,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: 'e2e' }],
+      d: [{ label: '一', start_chapter: 1, end_chapter: 5, core_conflict: 'e2e', locked: false }],
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_link_apply: true,
+        volume_plan_diff_share_link_e2e: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-share-e2e-steps"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="share-e2e-step-parse"]').exists()).toBe(true);
+    window.location.hash = '';
+  });
+
+  it('v7.0 batch history ops summary collapsible', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_ops_summary: true,
+        batch_history_success_rate: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-ops',
+          status: 'completed',
+          start_chapter: 1,
+          end_chapter: 3,
+          started_at: '2026-06-10T12:00:00Z',
+          finished_at: '2026-06-10T12:05:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const toggle = wrapper.find('[data-testid="batch-history-ops-summary-toggle"]');
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.text()).toContain('展开');
+    const body = wrapper.find('[data-testid="batch-history-ops-summary-body"]');
+    expect(body.element.style.display).toBe('none');
+    await toggle.trigger('click');
+    await flushPromises();
+    expect(toggle.text()).toContain('收起');
+    expect(body.element.style.display).not.toBe('none');
+    expect(wrapper.find('[data-testid="batch-history-success-rate"]').text()).toContain('100%');
+  });
+
+  it('v7.0 creation mode accessibility checklist', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_accessibility_checklist: true,
+        creation_mode_switch_hotkey: true,
+        creation_mode_switch_speech: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const list = wrapper.find('[data-testid="creation-mode-accessibility-checklist"]');
+    expect(list.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="creation-mode-a11y-hotkey"]').text()).toContain('快捷键');
+    expect(wrapper.find('[data-testid="creation-mode-a11y-speech"]').text()).toContain('语音朗读');
+  });
+
+  it('v7.0 share link apply save flow unit', async () => {
+    creatorMocks.saveCreatorVolumePlan.mockResolvedValue({ revision: 2 });
+    const payload = {
+      v: 2,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: 'flow' }],
+      d: [{
+        label: '一',
+        start_chapter: 1,
+        end_chapter: 5,
+        core_conflict: '闭环测试',
+        locked: false,
+      }],
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_link_apply: true,
+        volume_plan_diff_share_link_e2e: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="apply-volume-plan-diff-share-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="share-e2e-step-apply"]').classes()).toContain('volume-plan-diff-share-e2e-step--done');
+    await wrapper.find('[data-testid="save-volume-plan-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorVolumePlan).toHaveBeenCalled();
+    window.location.hash = '';
+  });
 });
