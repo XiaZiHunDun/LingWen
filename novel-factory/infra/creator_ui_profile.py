@@ -50,6 +50,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "logic_check_inline_issues": True,
             "logic_check_p0_only": True,
             "deviation_chapter_jump": True,
+            "chapter_save_p0_recheck": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -71,6 +72,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "logic_check_inline_issues": False,
             "logic_check_p0_only": False,
             "deviation_chapter_jump": True,
+            "batch_highlight_alert_volumes": True,
+            "volume_pulse_summary_generate": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -91,6 +94,9 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "logic_check_inline_issues": False,
         "logic_check_p0_only": False,
         "deviation_chapter_jump": False,
+        "chapter_save_p0_recheck": False,
+        "batch_highlight_alert_volumes": False,
+        "volume_pulse_summary_generate": False,
         "deviation_min_severity": None,
     }
 

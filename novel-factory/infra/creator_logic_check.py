@@ -30,6 +30,7 @@ def run_creator_logic_check(
     project_root: Path | str,
     *,
     limit: int | None = None,
+    chapter_num: int | None = None,
 ) -> dict[str, Any]:
     """Run full consistency check with creation_mode defaults; return structured summary."""
     from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
@@ -50,7 +51,12 @@ def run_creator_logic_check(
 
     chapters = list(range(1, config.max_chapter + 1))
     check_limit = min(int(options.limit or config.max_chapter), config.max_chapter)
-    chapters = chapters[:check_limit]
+    if chapter_num is not None:
+        if chapter_num < 1 or chapter_num > config.max_chapter:
+            raise ValueError(f"chapter {chapter_num} out of range 1–{config.max_chapter}")
+        chapters = [chapter_num]
+    else:
+        chapters = chapters[:check_limit]
 
     issues = []
     engine = ConsistencyEngine()
@@ -100,5 +106,6 @@ def run_creator_logic_check(
         "issue_counts": issue_counts,
         "p0_count": issue_counts["P0"],
         "p0_only": p0_only,
+        "chapter": chapter_num,
         "issues": issue_rows,
     }

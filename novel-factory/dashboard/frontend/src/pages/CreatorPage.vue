@@ -487,6 +487,15 @@
             >
               <strong>{{ row.label }}</strong>
               <span class="meta-line">{{ row.headline }}</span>
+              <button
+                v-if="uiProfile.volume_pulse_summary_generate"
+                type="button"
+                class="mini-btn pixel-border volume-pulse-generate-btn"
+                :data-testid="`volume-pulse-generate-${row.label}`"
+                @click.stop="generateVolumeSummaryForRow(row)"
+              >
+                生成摘要
+              </button>
             </li>
           </ul>
           <button
@@ -2058,6 +2067,9 @@ const defaultUiProfile = {
   logic_check_inline_issues: false,
   logic_check_p0_only: false,
   deviation_chapter_jump: false,
+  chapter_save_p0_recheck: false,
+  batch_highlight_alert_volumes: false,
+  volume_pulse_summary_generate: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2350,6 +2362,58 @@ function openVolumeSummaryForRange(start, end) {
   }
 }
 
+function volumeOverlapsRange(row, start, end) {
+  return row.start_chapter <= end && row.end_chapter >= start;
+}
+
+async function highlightBatchAlertVolumes(start, end) {
+  if (!uiProfile.value.batch_highlight_alert_volumes) return;
+  await nextTick();
+  const rows = overview.value?.volume_pulse?.volumes || [];
+  const alertRow = rows.find(
+    (row) => row.status === 'alert' && volumeOverlapsRange(row, start, end),
+  );
+  if (!alertRow) return;
+  highlightedVolumeLabel.value = alertRow.label;
+  try {
+    document.querySelector('[data-testid="volume-pulse-panel"]')?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  } catch {
+    /* jsdom */
+  }
+}
+
+async function generateVolumeSummaryForRow(row) {
+  if (!row) return;
+  try {
+    await generateCreatorVolumeSummary({
+      startChapter: row.start_chapter,
+      endChapter: row.end_chapter,
+    });
+    saveMessage.value = `已生成「${row.label}」卷摘要`;
+    await refresh();
+    openVolumeSummaryForRange(row.start_chapter, row.end_chapter);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
+async function recheckChapterP0(chapter) {
+  logicCheckRunning.value = true;
+  try {
+    logicCheckResult.value = await runCreatorLogicCheck({ chapter });
+    if (logicCheckResult.value.p0_count > 0) {
+      saveMessage.value = `ch${String(chapter).padStart(3, '0')} 保存后复查：发现 ${logicCheckResult.value.p0_count} 条 P0`;
+    }
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    logicCheckRunning.value = false;
+  }
+}
+
 async function saveChapterBody() {
   if (!selectedChapter.value) return;
   chapterBodySaving.value = true;
@@ -2359,6 +2423,9 @@ async function saveChapterBody() {
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
     saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
     await refresh();
+    if (uiProfile.value.chapter_save_p0_recheck) {
+      await recheckChapterP0(selectedChapter.value);
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -3772,6 +3839,9 @@ function startBatchPolling() {
       }
       saveMessage.value = 'Batch 已完成，卷摘要已更新';
       await refresh();
+      if (uiProfile.value.batch_highlight_alert_volumes) {
+        await highlightBatchAlertVolumes(batchStart.value, batchEnd.value);
+      }
     }
     if (status === 'completed' || status === 'failed') {
       stopBatchPolling();
@@ -4020,6 +4090,11 @@ watch(projectRevision, () => {
 
 .volume-pulse-row--active {
   outline: 2px solid var(--color-accent);
+}
+
+.volume-pulse-generate-btn {
+  margin-left: var(--space-xs);
+  font-size: 7px;
 }
 
 .logic-check-issues {

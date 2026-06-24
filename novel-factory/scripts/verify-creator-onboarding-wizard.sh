@@ -319,6 +319,10 @@ assert "issues" in check
 assert "p0_only" in check
 assert resolve_creator_ui_profile(creation_mode="advance")["chapter_full_preview"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["deviation_chapter_jump"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_pulse_summary_generate"] is True
+
+single = run_creator_logic_check(root, chapter_num=1)
+assert single.get("chapter") == 1
 
 from infra.creator_dashboard import _build_volume_summaries
 from infra.creator_volume_pulse import build_volume_pulse

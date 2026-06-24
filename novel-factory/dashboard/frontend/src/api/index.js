@@ -540,8 +540,9 @@ export async function fetchCreatorOverview() {
   return request('/creator/overview');
 }
 
-export async function runCreatorLogicCheck() {
-  return request('/creator/logic-check', { method: 'POST' });
+export async function runCreatorLogicCheck({ chapter } = {}) {
+  const query = chapter != null ? `?chapter=${chapter}` : '';
+  return request(`/creator/logic-check${query}`, { method: 'POST' });
 }
 
 export async function fetchCreatorVolumePlan() {

@@ -1226,6 +1226,21 @@ class TestCreatorEndpoints:
             row = data["volume_summaries"][0]
             assert "pulse_status" in row
 
+    def test_creator_v43_logic_check_chapter(self, client: TestClient) -> None:
+        resp = client.post("/api/creator/logic-check?chapter=1")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("chapter") == 1
+        assert data["chapters_checked"] == 1
+
+    def test_creator_v43_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "chapter_save_p0_recheck" in profile
+        assert "batch_highlight_alert_volumes" in profile
+        assert "volume_pulse_summary_generate" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

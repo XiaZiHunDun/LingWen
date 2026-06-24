@@ -286,6 +286,8 @@ const overviewFixture = {
         logic_check_inline_issues: false,
         logic_check_p0_only: false,
         deviation_chapter_jump: true,
+        batch_highlight_alert_volumes: true,
+        volume_pulse_summary_generate: true,
         deviation_min_severity: 'alert',
   },
   volume_summaries: [
@@ -1800,5 +1802,62 @@ describe('CreatorPage', () => {
     const summary = wrapper.find('[data-testid="volume-summary-block-volume-summary-ch001-005.md"]');
     expect(summary.classes()).toContain('volume-block--warn');
     expect(summary.text()).toContain('一 ·');
+  });
+
+  it('v4.3 pulse generate summary and companion save recheck', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-pulse-generate-一"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="volume-pulse-generate-一"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.generateCreatorVolumeSummary).toHaveBeenCalledWith({
+      startChapter: 1,
+      endChapter: 5,
+    });
+
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
+        chapter_full_preview: false,
+        logic_check_inline_issues: true,
+        logic_check_p0_only: true,
+        deviation_chapter_jump: true,
+        chapter_save_p0_recheck: true,
+        batch_highlight_alert_volumes: false,
+        volume_pulse_summary_generate: false,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    creatorMocks.runCreatorLogicCheck.mockReset();
+    creatorMocks.runCreatorLogicCheck.mockResolvedValue({
+      passed: true,
+      p0_count: 0,
+      total_issues: 0,
+      p0_only: true,
+      chapter: 1,
+      issues: [],
+    });
+    const companionWrapper = mount(CreatorPage);
+    await flushPromises();
+    await companionWrapper.find('[data-testid="chapter-row-1"]').trigger('click');
+    await flushPromises();
+    await companionWrapper.find('[data-testid="save-chapter-body-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalledWith({ chapter: 1 });
   });
 });

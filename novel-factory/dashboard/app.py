@@ -271,6 +271,9 @@ class CreatorUiProfile(BaseModel):
     logic_check_inline_issues: bool = False
     logic_check_p0_only: bool = False
     deviation_chapter_jump: bool = False
+    chapter_save_p0_recheck: bool = False
+    batch_highlight_alert_volumes: bool = False
+    volume_pulse_summary_generate: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -318,6 +321,7 @@ class CreatorLogicCheckResponse(BaseModel):
     issue_counts: dict[str, int] = {}
     p0_count: int = 0
     p0_only: bool = False
+    chapter: Optional[int] = None
     issues: list[CreatorLogicCheckIssue] = []
 
 
@@ -3161,14 +3165,17 @@ def create_app(
         return CreatorOverviewResponse(**creator_overview(project))
 
     @app.post("/api/creator/logic-check", response_model=CreatorLogicCheckResponse)
-    def creator_logic_check_endpoint() -> CreatorLogicCheckResponse:
+    def creator_logic_check_endpoint(chapter: Optional[int] = None) -> CreatorLogicCheckResponse:
         from infra.creator_logic_check import run_creator_logic_check
         from infra.studio_registry import active_project
 
         project = active_project()
         if project is None:
             raise HTTPException(404, "no active project")
-        result = run_creator_logic_check(project.root)
+        try:
+            result = run_creator_logic_check(project.root, chapter_num=chapter)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
         return CreatorLogicCheckResponse(**result)
 
     @app.get("/api/creator/onboarding", response_model=CreatorOnboardingResponse)
