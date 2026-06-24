@@ -2249,4 +2249,117 @@ describe('CreatorPage', () => {
     );
     vi.useRealTimers();
   });
+
+  it('v4.8 companion unified issue paragraph highlight', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
+        chapter_full_preview: false,
+        logic_check_inline_issues: true,
+        logic_check_p0_only: true,
+        recheck_issue_paragraph_jump: true,
+        logic_check_issue_highlight: true,
+        issue_paragraph_highlight_unified: true,
+        recheck_issue_highlight: false,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    creatorMocks.fetchCreatorChapterPreview.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 20,
+      body_text: '第一段。\n\n第二段。',
+      body_preview: '第一段。\n\n第二段。',
+      outline_preview: '大纲',
+      outline_text: '大纲',
+      body_truncated: false,
+      outline_truncated: false,
+    });
+    creatorMocks.runCreatorLogicCheck.mockResolvedValue({
+      passed: false,
+      p0_count: 1,
+      total_issues: 1,
+      issues: [{ severity: 'P0', chapter: 1, message: '逻辑问题', paragraph: 2 }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="logic-check-issue-0"]').classes()).toContain('issue-line--active');
+    expect(wrapper.find('[data-testid="logic-check-issue-0"]').classes()).not.toContain('logic-check-issue--active');
+    expect(wrapper.find('[data-testid="chapter-body-textarea"]').classes()).toContain(
+      'chapter-body-textarea--highlight',
+    );
+  });
+
+  it('v4.8 advance batch deviation inline summary in write column', async () => {
+    vi.useFakeTimers();
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_highlight_alert_volumes: false,
+        batch_clear_pulse_no_alert: false,
+        batch_auto_open_summary: false,
+        batch_deviation_prompt: false,
+        batch_scroll_deviation_list: false,
+        batch_open_first_deviation: false,
+        batch_deviation_inline_summary: true,
+      },
+      deviations: [
+        { type: 'missing_body', severity: 'alert', chapter: 2, volume_label: '一', message: '缺正文' },
+      ],
+    });
+    creatorMocks.studioProductionRun.mockResolvedValue({ job_id: 'job-v48', status: 'running' });
+    creatorMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="advance-preflight-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="advance-batch-btn"]').trigger('click');
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(3000);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-deviation-inline-summary"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('1 条偏离');
+    expect(wrapper.find('[data-testid="batch-deviation-inline-ch2"]').exists()).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('v4.8 deviation click highlight', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        deviation_list_highlight: false,
+        deviation_click_highlight: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="deviation-item-ch8"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="deviation-item-ch8"]').classes()).toContain('deviation-item--active');
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(8, { full: true });
+  });
 });

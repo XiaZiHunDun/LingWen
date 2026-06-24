@@ -286,6 +286,9 @@ class CreatorUiProfile(BaseModel):
     logic_check_issue_highlight: bool = False
     deviation_list_highlight: bool = False
     batch_open_first_deviation: bool = False
+    deviation_click_highlight: bool = False
+    batch_deviation_inline_summary: bool = False
+    issue_paragraph_highlight_unified: bool = False
     deviation_min_severity: Optional[str] = None
 
 

@@ -56,6 +56,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "recheck_issue_paragraph_jump": True,
             "recheck_issue_highlight": True,
             "logic_check_issue_highlight": True,
+            "issue_paragraph_highlight_unified": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -86,6 +87,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "chapter_outline_read_preview": True,
             "deviation_list_highlight": True,
             "batch_open_first_deviation": True,
+            "deviation_click_highlight": True,
+            "batch_deviation_inline_summary": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -121,6 +124,9 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "logic_check_issue_highlight": False,
         "deviation_list_highlight": False,
         "batch_open_first_deviation": False,
+        "deviation_click_highlight": False,
+        "batch_deviation_inline_summary": False,
+        "issue_paragraph_highlight_unified": False,
         "deviation_min_severity": None,
     }
 

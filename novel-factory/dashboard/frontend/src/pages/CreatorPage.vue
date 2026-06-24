@@ -371,6 +371,39 @@
           </li>
         </ul>
         <div
+          v-if="uiProfile.batch_deviation_inline_summary && batchDeviationInlineSummary?.items?.length"
+          class="batch-deviation-inline-summary pixel-border"
+          data-testid="batch-deviation-inline-summary"
+        >
+          <p class="meta-line" data-testid="batch-deviation-inline-summary-title">
+            Batch ch{{ String(batchDeviationInlineSummary.start).padStart(3, '0') }}–ch{{
+              String(batchDeviationInlineSummary.end).padStart(3, '0')
+            }} · {{ batchDeviationInlineSummary.items.length }} 条偏离
+          </p>
+          <ul class="batch-deviation-inline-list" data-testid="batch-deviation-inline-list">
+            <li
+              v-for="(d, i) in batchDeviationInlineSummary.items"
+              :key="`batch-dev-${d.chapter}-${i}`"
+              class="batch-deviation-inline-item"
+              :class="[
+                `deviation-${d.severity}`,
+                {
+                  'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter,
+                  'deviation-item--active': deviationHighlightEnabled && highlightedDeviationChapter === d.chapter,
+                },
+              ]"
+              role="button"
+              tabindex="0"
+              :data-testid="`batch-deviation-inline-ch${d.chapter}`"
+              @click="handleDeviationClick(d)"
+              @keydown.enter="handleDeviationClick(d)"
+            >
+              <span v-if="d.chapter" class="deviation-chapter">ch{{ String(d.chapter).padStart(3, '0') }}</span>
+              {{ d.message }}
+            </li>
+          </ul>
+        </div>
+        <div
           v-if="chapterPreview"
           class="chapter-preview pixel-border"
           data-testid="chapter-preview-panel"
@@ -491,7 +524,11 @@
                   class="logic-check-issue"
                   :class="{
                     'logic-check-issue--clickable': uiProfile.recheck_issue_paragraph_jump && issue.paragraph,
-                    'logic-check-issue--active': uiProfile.recheck_issue_highlight && activeRecheckIssueIdx === idx,
+                    'logic-check-issue--active': !uiProfile.issue_paragraph_highlight_unified
+                      && uiProfile.recheck_issue_highlight
+                      && activeRecheckIssueIdx === idx,
+                    'issue-line--active': uiProfile.issue_paragraph_highlight_unified
+                      && activeRecheckIssueIdx === idx,
                   }"
                   role="button"
                   tabindex="0"
@@ -1242,14 +1279,14 @@
               `deviation-${d.severity}`,
               {
                 'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter,
-                'deviation-item--active': uiProfile.deviation_list_highlight && highlightedDeviationChapter === d.chapter,
+                'deviation-item--active': deviationHighlightEnabled && highlightedDeviationChapter === d.chapter,
               },
             ]"
             :role="uiProfile.deviation_chapter_jump && d.chapter ? 'button' : undefined"
             :tabindex="uiProfile.deviation_chapter_jump && d.chapter ? 0 : undefined"
             :data-testid="d.chapter ? `deviation-item-ch${d.chapter}` : `deviation-item-${i}`"
-            @click="uiProfile.deviation_chapter_jump && d.chapter ? jumpToChapter(d.chapter) : undefined"
-            @keydown.enter="uiProfile.deviation_chapter_jump && d.chapter ? jumpToChapter(d.chapter) : undefined"
+            @click="handleDeviationClick(d)"
+            @keydown.enter="handleDeviationClick(d)"
           >
             <span v-if="d.chapter" class="deviation-chapter">ch{{ String(d.chapter).padStart(3, '0') }}</span>
             {{ d.message }}
@@ -1905,7 +1942,11 @@
               class="logic-check-issue"
               :class="{
                 'logic-check-issue--clickable': Boolean(issue.chapter),
-                'logic-check-issue--active': uiProfile.logic_check_issue_highlight && activeLogicCheckIssueIdx === idx,
+                'logic-check-issue--active': !uiProfile.issue_paragraph_highlight_unified
+                  && uiProfile.logic_check_issue_highlight
+                  && activeLogicCheckIssueIdx === idx,
+                'issue-line--active': uiProfile.issue_paragraph_highlight_unified
+                  && activeLogicCheckIssueIdx === idx,
               }"
               role="button"
               tabindex="0"
@@ -2048,6 +2089,7 @@ let chapterBodyHighlightTimer = null;
 let logicCheckIssueHighlightTimer = null;
 let deviationHighlightTimer = null;
 const batchSummaryPrompt = ref(null);
+const batchDeviationInlineSummary = ref(null);
 const chapterRecheckResult = ref(null);
 const openVolumeSummaryName = ref(null);
 const highlightedVolumeLabel = ref(null);
@@ -2205,11 +2247,19 @@ const defaultUiProfile = {
   logic_check_issue_highlight: false,
   deviation_list_highlight: false,
   batch_open_first_deviation: false,
+  deviation_click_highlight: false,
+  batch_deviation_inline_summary: false,
+  issue_paragraph_highlight_unified: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
 
 const uiProfile = computed(() => overview.value?.ui_profile || defaultUiProfile);
+const deviationHighlightEnabled = computed(
+  () => Boolean(
+    uiProfile.value.deviation_list_highlight || uiProfile.value.deviation_click_highlight,
+  ),
+);
 
 const visibleDeviations = computed(() => overview.value?.deviations || []);
 
@@ -2615,21 +2665,37 @@ async function saveChapterOutline() {
   }
 }
 
-function pulseChapterBodyHighlight(issueIdx) {
-  if (!uiProfile.value.recheck_issue_highlight) return;
-  activeRecheckIssueIdx.value = issueIdx ?? null;
-  chapterBodyHighlightActive.value = true;
-  if (chapterBodyHighlightTimer) {
-    clearTimeout(chapterBodyHighlightTimer);
+function pulseChapterBodyHighlight(issueIdx, source = 'recheck') {
+  const bodyHighlight = uiProfile.value.recheck_issue_highlight
+    || (uiProfile.value.issue_paragraph_highlight_unified && source === 'logic');
+  if (bodyHighlight) {
+    if (source === 'recheck') {
+      activeRecheckIssueIdx.value = issueIdx ?? null;
+    }
+    chapterBodyHighlightActive.value = true;
+    if (chapterBodyHighlightTimer) {
+      clearTimeout(chapterBodyHighlightTimer);
+    }
+    chapterBodyHighlightTimer = setTimeout(() => {
+      chapterBodyHighlightActive.value = false;
+      if (source === 'recheck') {
+        activeRecheckIssueIdx.value = null;
+      }
+      chapterBodyHighlightTimer = null;
+    }, 1200);
+  } else if (source === 'recheck') {
+    activeRecheckIssueIdx.value = issueIdx ?? null;
+    if (chapterBodyHighlightTimer) {
+      clearTimeout(chapterBodyHighlightTimer);
+    }
+    chapterBodyHighlightTimer = setTimeout(() => {
+      activeRecheckIssueIdx.value = null;
+      chapterBodyHighlightTimer = null;
+    }, 1200);
   }
-  chapterBodyHighlightTimer = setTimeout(() => {
-    chapterBodyHighlightActive.value = false;
-    activeRecheckIssueIdx.value = null;
-    chapterBodyHighlightTimer = null;
-  }, 1200);
 }
 
-function focusIssueParagraph(issue, issueIdx) {
+function focusIssueParagraph(issue, issueIdx, source = 'recheck') {
   if (!uiProfile.value.recheck_issue_paragraph_jump || !issue?.paragraph) return;
   const textarea = chapterBodyTextareaRef.value;
   if (!textarea) return;
@@ -2647,11 +2713,13 @@ function focusIssueParagraph(issue, issueIdx) {
   } catch {
     /* jsdom */
   }
-  pulseChapterBodyHighlight(issueIdx);
+  pulseChapterBodyHighlight(issueIdx, source);
 }
 
 function pulseLogicCheckIssueHighlight(issueIdx) {
-  if (!uiProfile.value.logic_check_issue_highlight) return;
+  if (!uiProfile.value.logic_check_issue_highlight && !uiProfile.value.issue_paragraph_highlight_unified) {
+    return;
+  }
   activeLogicCheckIssueIdx.value = issueIdx ?? null;
   if (logicCheckIssueHighlightTimer) {
     clearTimeout(logicCheckIssueHighlightTimer);
@@ -2663,7 +2731,7 @@ function pulseLogicCheckIssueHighlight(issueIdx) {
 }
 
 function pulseDeviationHighlight(chapter) {
-  if (!uiProfile.value.deviation_list_highlight || !chapter) return;
+  if (!deviationHighlightEnabled.value || !chapter) return;
   highlightedDeviationChapter.value = chapter;
   if (deviationHighlightTimer) {
     clearTimeout(deviationHighlightTimer);
@@ -2686,8 +2754,25 @@ async function handleLogicCheckIssueClick(issue, issueIdx) {
   await jumpToChapter(issue.chapter);
   if (uiProfile.value.recheck_issue_paragraph_jump && issue.paragraph) {
     await nextTick();
-    focusIssueParagraph(issue, null);
+    focusIssueParagraph(issue, issueIdx, 'logic');
   }
+}
+
+async function handleDeviationClick(deviation) {
+  if (!deviation?.chapter || !uiProfile.value.deviation_chapter_jump) return;
+  pulseDeviationHighlight(deviation.chapter);
+  await jumpToChapter(deviation.chapter);
+}
+
+function updateBatchDeviationInlineSummary(start, end) {
+  if (!uiProfile.value.batch_deviation_inline_summary) {
+    batchDeviationInlineSummary.value = null;
+    return;
+  }
+  const items = batchDeviationsInRange(start, end);
+  batchDeviationInlineSummary.value = items.length
+    ? { start, end, items }
+    : null;
 }
 
 async function scrollToBatchDeviationList(start, end) {
@@ -4141,6 +4226,7 @@ function startBatchPolling() {
       if (uiProfile.value.batch_open_first_deviation) {
         await openFirstBatchDeviationChapter(batchStart.value, batchEnd.value);
       }
+      updateBatchDeviationInlineSummary(batchStart.value, batchEnd.value);
     }
     if (status === 'completed' || status === 'failed') {
       stopBatchPolling();
@@ -4375,6 +4461,34 @@ watch(projectRevision, () => {
 .logic-check-issue--active {
   animation: recheck-issue-flash 1.2s ease-out;
   background: rgba(255, 220, 100, 0.35);
+}
+
+.issue-line--active {
+  animation: issue-line-flash 1.2s ease-out;
+  background: rgba(255, 220, 100, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(200, 180, 80, 0.65);
+}
+
+.batch-deviation-inline-summary {
+  margin: var(--space-sm) 0;
+  padding: var(--space-xs);
+  background: rgba(200, 80, 80, 0.08);
+}
+
+.batch-deviation-inline-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0 0;
+  font-size: 8px;
+}
+
+.batch-deviation-inline-item {
+  padding: 4px 0;
+}
+
+@keyframes issue-line-flash {
+  0% { background: rgba(255, 220, 100, 0.55); }
+  100% { background: rgba(255, 220, 100, 0.35); }
 }
 
 .chapter-body-textarea--highlight {

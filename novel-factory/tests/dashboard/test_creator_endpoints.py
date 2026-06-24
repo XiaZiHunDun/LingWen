@@ -1301,6 +1301,14 @@ class TestCreatorEndpoints:
         assert "deviation_list_highlight" in profile
         assert "batch_open_first_deviation" in profile
 
+    def test_creator_v48_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "issue_paragraph_highlight_unified" in profile
+        assert "deviation_click_highlight" in profile
+        assert "batch_deviation_inline_summary" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200
