@@ -216,6 +216,19 @@ def start_batch_job(
     return job
 
 
+def list_batch_jobs_for_slug(slug: str, *, limit: int = 5) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for path in sorted(_jobs_dir().glob("*.json"), reverse=True):
+        job = BatchJob(**json.loads(path.read_text(encoding="utf-8")))
+        job = _poll_job(job)
+        if job.slug != slug:
+            continue
+        rows.append(job.to_dict())
+        if len(rows) >= limit:
+            break
+    return rows
+
+
 def get_batch_job(job_id: str, *, log_tail_lines: int = 40) -> dict[str, Any] | None:
     job = _load_job(job_id)
     if job is None:

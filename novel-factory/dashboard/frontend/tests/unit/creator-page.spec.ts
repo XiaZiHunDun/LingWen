@@ -95,6 +95,8 @@ const creatorMocks = vi.hoisted(() => ({
   studioProductionPreflight: vi.fn(),
   studioProductionRun: vi.fn(),
   fetchStudioActiveBatchJob: vi.fn(),
+  previewCreatorVolumePlanDiff: vi.fn(),
+  fetchCreatorBatchHistory: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
@@ -190,6 +192,8 @@ vi.mock('../../src/api/index.js', () => ({
   studioProductionPreflight: creatorMocks.studioProductionPreflight,
   studioProductionRun: creatorMocks.studioProductionRun,
   fetchStudioActiveBatchJob: creatorMocks.fetchStudioActiveBatchJob,
+  previewCreatorVolumePlanDiff: creatorMocks.previewCreatorVolumePlanDiff,
+  fetchCreatorBatchHistory: creatorMocks.fetchCreatorBatchHistory,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', async () => {
@@ -894,6 +898,8 @@ describe('CreatorPage', () => {
     });
     creatorMocks.studioProductionRun.mockResolvedValue({ job_id: 'abc', status: 'running' });
     creatorMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({ jobs: [] });
   });
 
   it('renders three columns, volume plan, and deviation badge', async () => {
@@ -2483,5 +2489,71 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(2, { full: true });
     expect(wrapper.find('[data-testid="logic-check-issue-1"]').classes()).toContain('logic-check-issue--active');
+  });
+
+  it('v5.0 companion creation mode switch hint', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'companion',
+        primary_action: 'logic_check',
+        creation_mode_switch_hint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const hint = wrapper.find('[data-testid="creation-mode-switch-hint"]');
+    expect(hint.exists()).toBe(true);
+    expect(hint.text()).toContain('陪伴模式');
+    expect(hint.text()).toContain('creation_mode: advance');
+  });
+
+  it('v5.0 volume plan diff panel on unsaved edits', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('新冲突');
+    await flushPromises();
+    expect(creatorMocks.previewCreatorVolumePlanDiff).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="volume-plan-diff-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-changed-一"]').exists()).toBe(true);
+  });
+
+  it('v5.0 batch history panel lists recent jobs', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-v50',
+          start_chapter: 1,
+          end_chapter: 5,
+          status: 'completed',
+          finished_at: '2026-06-22',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-job-v50"]').text()).toContain('completed');
   });
 });

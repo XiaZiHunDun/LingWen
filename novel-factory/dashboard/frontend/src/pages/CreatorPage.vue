@@ -39,6 +39,13 @@
     <div v-if="saveMessage" class="save-banner pixel-border" data-testid="save-banner">
       {{ saveMessage }}
     </div>
+    <p
+      v-if="uiProfile.creation_mode_switch_hint && creationModeSwitchHintText"
+      class="mode-switch-hint pixel-border"
+      data-testid="creation-mode-switch-hint"
+    >
+      {{ creationModeSwitchHintText }}
+    </p>
 
     <details
       v-if="onboardingWizard"
@@ -1190,6 +1197,23 @@
             {{ saving ? '保存中…' : '保存卷纲' }}
           </button>
           <div
+            v-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview?.has_changes"
+            class="volume-plan-diff-panel pixel-border"
+            data-testid="volume-plan-diff-panel"
+          >
+            <p class="meta-line">卷纲未保存变更</p>
+            <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
+              <li
+                v-for="(row, idx) in volumePlanDiffPreview.changes"
+                :key="`vol-diff-${row.label}-${idx}`"
+                class="volume-plan-diff-item"
+                :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
+              >
+                <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+              </li>
+            </ul>
+          </div>
+          <div
             v-if="editableVolumes.length >= 2"
             class="volume-merge-panel pixel-border"
             data-testid="volume-merge-panel"
@@ -1359,6 +1383,26 @@
           <p v-if="batchJob" class="meta-line" data-testid="batch-job-status">
             任务 {{ batchJob.job_id }} · {{ batchJob.status }}
           </p>
+        </div>
+
+        <div
+          v-if="uiProfile.batch_history_panel && batchHistory.length"
+          class="batch-history-panel pixel-border"
+          data-testid="batch-history-panel"
+        >
+          <h3 class="subsection-title">Batch 历史</h3>
+          <ul class="batch-history-list" data-testid="batch-history-list">
+            <li
+              v-for="job in batchHistory"
+              :key="job.job_id"
+              class="batch-history-item"
+              :data-testid="`batch-history-${job.job_id}`"
+            >
+              ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
+              · {{ job.status }}
+              <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
+            </li>
+          </ul>
         </div>
 
         <div
@@ -1997,6 +2041,8 @@ import {
   fetchCreatorOverview,
   runCreatorLogicCheck,
   fetchCreatorVolumePlan,
+  previewCreatorVolumePlanDiff,
+  fetchCreatorBatchHistory,
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
@@ -2096,6 +2142,9 @@ const wizardPanelRef = ref(null);
 const wizardPanelOpen = ref(false);
 const overview = ref(null);
 const editableVolumes = ref([]);
+const savedVolumeSnapshot = ref([]);
+const batchHistory = ref([]);
+const volumePlanDiffPreview = ref(null);
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
@@ -2275,6 +2324,9 @@ const defaultUiProfile = {
   batch_deviation_summary_link: false,
   issue_keyboard_navigation: false,
   issue_paragraph_highlight_unified: false,
+  volume_plan_diff_preview: false,
+  batch_history_panel: false,
+  creation_mode_switch_hint: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2328,6 +2380,18 @@ const modeLabel = computed(() => {
   if (!overview.value) return '';
   const map = { companion: '陪伴', advance: '推进', studio: '工作室' };
   return map[overview.value.creation_mode] || overview.value.creation_mode;
+});
+
+const creationModeSwitchHintText = computed(() => {
+  if (!uiProfile.value.creation_mode_switch_hint || !overview.value) return '';
+  const mode = overview.value.creation_mode;
+  if (mode === 'companion') {
+    return '陪伴模式：人主笔 + P0 守门。切换推进请编辑 config/project.yaml → creation_mode: advance';
+  }
+  if (mode === 'advance') {
+    return '推进模式：人定卷纲 + batch 产章。切换陪伴请编辑 config/project.yaml → creation_mode: companion';
+  }
+  return '';
 });
 
 const deviationChapters = computed(() => {
@@ -2935,6 +2999,7 @@ function handleSaveError(err) {
 async function loadVolumePlan() {
   const plan = await fetchCreatorVolumePlan();
   editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
+  savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
   volumePlanRevision.value = plan.revision || '';
   mergeStartIdx.value = 0;
   mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
@@ -2943,6 +3008,32 @@ async function loadVolumePlan() {
   splitPreview.value = null;
   syncSplitChapterFromVolume();
   syncBatchRangeFromVolumes();
+  await refreshVolumePlanDiffPreview();
+}
+
+async function refreshVolumePlanDiffPreview() {
+  if (!uiProfile.value.volume_plan_diff_preview || !editableVolumes.value.length) {
+    volumePlanDiffPreview.value = null;
+    return;
+  }
+  try {
+    volumePlanDiffPreview.value = await previewCreatorVolumePlanDiff(editableVolumes.value);
+  } catch {
+    volumePlanDiffPreview.value = null;
+  }
+}
+
+async function loadBatchHistory() {
+  if (!uiProfile.value.batch_history_panel) {
+    batchHistory.value = [];
+    return;
+  }
+  try {
+    const payload = await fetchCreatorBatchHistory();
+    batchHistory.value = payload?.jobs || [];
+  } catch {
+    batchHistory.value = [];
+  }
 }
 
 async function loadOnboardingWizard() {
@@ -4306,6 +4397,7 @@ function startBatchPolling() {
       }
       updateBatchDeviationInlineSummary(batchStart.value, batchEnd.value);
       await linkBatchDeviationInlineSummary(batchStart.value, batchEnd.value);
+      await loadBatchHistory();
     }
     if (status === 'completed' || status === 'failed') {
       stopBatchPolling();
@@ -4381,6 +4473,7 @@ async function refresh() {
     await loadMergePreferences();
     await loadMergePresetPackages();
     await loadTemplateApprovals();
+    await loadBatchHistory();
     if (batchJob.value?.status === 'running' && !batchPollTimer) {
       lastBatchStatus.value = 'running';
       startBatchPolling();
@@ -4413,6 +4506,14 @@ onUnmounted(() => {
 watch(projectRevision, () => {
   refresh();
 });
+
+watch(
+  editableVolumes,
+  () => {
+    refreshVolumePlanDiffPreview();
+  },
+  { deep: true },
+);
 </script>
 
 <style scoped>
@@ -4570,6 +4671,50 @@ watch(projectRevision, () => {
   flex-wrap: wrap;
   gap: var(--space-xs);
   margin-top: var(--space-xs);
+}
+
+.mode-switch-hint {
+  font-size: 8px;
+  padding: var(--space-xs) var(--space-sm);
+  margin: 0;
+  color: var(--color-accent);
+  background: rgba(100, 140, 200, 0.08);
+}
+
+.volume-plan-diff-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-xs);
+  background: rgba(200, 160, 80, 0.1);
+}
+
+.volume-plan-diff-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0 0;
+  font-size: 8px;
+}
+
+.volume-plan-diff-item .diff-type {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  margin-right: var(--space-xs);
+  text-transform: uppercase;
+}
+
+.batch-history-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-xs);
+}
+
+.batch-history-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0 0;
+  font-size: 8px;
+}
+
+.batch-history-item {
+  padding: 4px 0;
 }
 
 .logic-check-issue:focus-visible {

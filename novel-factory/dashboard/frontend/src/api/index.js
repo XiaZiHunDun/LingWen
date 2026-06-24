@@ -558,6 +558,17 @@ export async function saveCreatorVolumePlan(volumes, expectedRevision) {
   });
 }
 
+export async function previewCreatorVolumePlanDiff(volumes) {
+  return request('/creator/volume-plan/diff', {
+    method: 'POST',
+    body: { volumes },
+  });
+}
+
+export async function fetchCreatorBatchHistory() {
+  return request('/creator/batch-history');
+}
+
 export async function mergeCreatorVolumePlan(body) {
   return request('/creator/volume-plan/merge', {
     method: 'POST',

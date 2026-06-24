@@ -481,6 +481,41 @@ def compute_volume_deviations(
     return deviations
 
 
+def preview_volume_plan_diff(
+    baseline: list[dict[str, Any]],
+    draft: list[dict[str, Any]],
+) -> dict[str, Any]:
+    baseline_by_label = {str(row.get("label", "")).strip(): row for row in baseline if row.get("label")}
+    draft_by_label = {str(row.get("label", "")).strip(): row for row in draft if row.get("label")}
+    changes: list[dict[str, str]] = []
+
+    for label, row in draft_by_label.items():
+        if label not in baseline_by_label:
+            changes.append({"type": "added", "label": label, "message": f"新增卷「{label}」"})
+            continue
+        prev = baseline_by_label[label]
+        parts: list[str] = []
+        if int(prev.get("start_chapter", 0)) != int(row.get("start_chapter", 0)) or int(
+            prev.get("end_chapter", 0),
+        ) != int(row.get("end_chapter", 0)):
+            parts.append(
+                f"章范围 ch{int(prev.get('start_chapter', 0)):03d}–ch{int(prev.get('end_chapter', 0)):03d}"
+                f" → ch{int(row.get('start_chapter', 0)):03d}–ch{int(row.get('end_chapter', 0)):03d}",
+            )
+        if str(prev.get("core_conflict", "")).strip() != str(row.get("core_conflict", "")).strip():
+            parts.append("核心冲突已修改")
+        if bool(prev.get("locked")) != bool(row.get("locked")):
+            parts.append("锁定" if row.get("locked") else "解锁")
+        if parts:
+            changes.append({"type": "changed", "label": label, "message": " · ".join(parts)})
+
+    for label in baseline_by_label:
+        if label not in draft_by_label:
+            changes.append({"type": "removed", "label": label, "message": f"移除卷「{label}」"})
+
+    return {"has_changes": bool(changes), "changes": changes}
+
+
 def volume_plan_payload(project_root: Path | str) -> dict[str, Any]:
     root = _root(project_root)
     paths = ProjectPaths.get(root)

@@ -1317,6 +1317,44 @@ class TestCreatorEndpoints:
         assert "batch_deviation_inline_dismiss" in profile
         assert "batch_deviation_summary_link" in profile
 
+    def test_creator_v50_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_preview" in profile
+        assert "batch_history_panel" in profile
+        assert "creation_mode_switch_hint" in profile
+
+    def test_creator_v50_volume_plan_diff(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        volumes = plan["volumes"]
+        if not volumes:
+            volumes = [
+                {
+                    "label": "一",
+                    "start_chapter": 1,
+                    "end_chapter": 5,
+                    "core_conflict": "开篇",
+                    "locked": False,
+                },
+            ]
+        modified = [dict(volumes[0], core_conflict="v5.0 diff smoke")]
+        resp = client.post(
+            "/api/creator/volume-plan/diff",
+            json={"volumes": modified, "expected_revision": plan["revision"]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["has_changes"] is True
+        assert any(row["label"] == volumes[0]["label"] for row in data["changes"])
+
+    def test_creator_v50_batch_history(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/batch-history")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "jobs" in data
+        assert isinstance(data["jobs"], list)
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

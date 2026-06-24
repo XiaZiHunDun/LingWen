@@ -292,6 +292,9 @@ class CreatorUiProfile(BaseModel):
     batch_deviation_summary_link: bool = False
     issue_keyboard_navigation: bool = False
     issue_paragraph_highlight_unified: bool = False
+    volume_plan_diff_preview: bool = False
+    batch_history_panel: bool = False
+    creation_mode_switch_hint: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -389,6 +392,34 @@ class CreatorVolumePlanResponse(BaseModel):
 class CreatorVolumePlanSaveRequest(BaseModel):
     volumes: list[CreatorVolumePlanEntry]
     expected_revision: Optional[str] = None
+
+
+class CreatorVolumePlanDiffChange(BaseModel):
+    type: str
+    label: str
+    message: str
+
+
+class CreatorVolumePlanDiffResponse(BaseModel):
+    has_changes: bool
+    changes: list[CreatorVolumePlanDiffChange]
+
+
+class CreatorBatchHistoryItem(BaseModel):
+    job_id: str
+    slug: str
+    start_chapter: int
+    end_chapter: int
+    budget_usd: float = 0.0
+    mode: str = "canon"
+    status: str
+    started_at: str
+    finished_at: Optional[str] = None
+    exit_code: Optional[int] = None
+
+
+class CreatorBatchHistoryResponse(BaseModel):
+    jobs: list[CreatorBatchHistoryItem] = []
 
 
 class CreatorVolumeMergeRequest(BaseModel):
@@ -3202,6 +3233,32 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorLogicCheckResponse(**result)
+
+    @app.get("/api/creator/batch-history", response_model=CreatorBatchHistoryResponse)
+    def creator_batch_history_endpoint() -> CreatorBatchHistoryResponse:
+        from infra.studio_batch_runner import list_batch_jobs_for_slug
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        jobs = list_batch_jobs_for_slug(project.slug, limit=5)
+        return CreatorBatchHistoryResponse(jobs=jobs)
+
+    @app.post("/api/creator/volume-plan/diff", response_model=CreatorVolumePlanDiffResponse)
+    def creator_volume_plan_diff_endpoint(
+        body: CreatorVolumePlanSaveRequest,
+    ) -> CreatorVolumePlanDiffResponse:
+        from infra.creator_volume_plan import load_volume_plan, preview_volume_plan_diff
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        baseline = [v.to_dict() for v in load_volume_plan(project.root)]
+        draft = [v.model_dump() for v in body.volumes]
+        result = preview_volume_plan_diff(baseline, draft)
+        return CreatorVolumePlanDiffResponse(**result)
 
     @app.get("/api/creator/onboarding", response_model=CreatorOnboardingResponse)
     def creator_onboarding_endpoint() -> CreatorOnboardingResponse:
