@@ -1594,6 +1594,14 @@ class TestCreatorEndpoints:
         assert "batch_history_queue_depth_chart" in profile
         assert "creation_mode_switch_speech" in profile
 
+    def test_creator_v611_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_share_link_apply" in profile
+        assert "batch_history_throughput_chart" in profile
+        assert "creation_mode_switch_haptic" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

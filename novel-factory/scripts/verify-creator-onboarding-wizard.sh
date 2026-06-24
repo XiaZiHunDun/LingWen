@@ -395,6 +395,9 @@ assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_swit
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_share_link_preview"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_queue_depth_chart"] is True
 assert resolve_creator_ui_profile(creation_mode="studio")["creation_mode_switch_speech"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_share_link_apply"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_throughput_chart"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_switch_haptic"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 

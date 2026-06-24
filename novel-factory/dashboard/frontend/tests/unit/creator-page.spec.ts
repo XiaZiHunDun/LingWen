@@ -4348,4 +4348,95 @@ describe('CreatorPage', () => {
     expect(speak.mock.calls[0][0].text).toContain('陪伴模式');
     vi.unstubAllGlobals();
   });
+
+  it('v6.11 applies volume plan diff from share link v2 token', async () => {
+    const payload = {
+      v: 2,
+      c: 1,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+      p: '/docs/outline.md',
+      d: [{
+        label: '一',
+        start_chapter: 1,
+        end_chapter: 5,
+        core_conflict: '分享应用测试',
+        locked: false,
+      }],
+    };
+    const token = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    window.location.hash = `#creator-diff=${token}`;
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_share_link_preview: true,
+        volume_plan_diff_share_link_apply: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({ has_changes: false, changes: [] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="apply-volume-plan-diff-share-btn"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="apply-volume-plan-diff-share-btn"]').trigger('click');
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    expect(conflictInput.element.value).toBe('分享应用测试');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('已应用分享卷纲');
+    window.location.hash = '';
+  });
+
+  it('v6.11 batch history throughput chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_throughput_chart: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-t1',
+          start_chapter: 1,
+          end_chapter: 10,
+          status: 'completed',
+          started_at: '2026-06-10T12:00:00Z',
+          finished_at: '2026-06-10T12:10:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const chart = wrapper.find('[data-testid="batch-history-throughput-chart"]');
+    expect(chart.exists()).toBe(true);
+    expect(chart.text()).toContain('章/分');
+    expect(wrapper.find('[data-testid="batch-history-throughput-job-t1"]').exists()).toBe(true);
+  });
+
+  it('v6.11 triggers haptic feedback on yaml copy', async () => {
+    const vibrate = vi.fn();
+    vi.stubGlobal('navigator', { ...navigator, vibrate });
+    vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+        creation_mode_switch_haptic: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="copy-creation-mode-yaml-companion"]').trigger('click');
+    await flushPromises();
+    expect(vibrate).toHaveBeenCalledWith(15);
+    vi.unstubAllGlobals();
+  });
 });

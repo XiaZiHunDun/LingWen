@@ -220,6 +220,15 @@
         </li>
       </ul>
       <button
+        v-if="uiProfile.volume_plan_diff_share_link_apply && volumePlanDiffShareLinkPreview.can_apply"
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="apply-volume-plan-diff-share-btn"
+        @click="applyVolumePlanDiffShareLink"
+      >
+        一键应用卷纲
+      </button>
+      <button
         type="button"
         class="mini-btn pixel-border"
         data-testid="dismiss-volume-plan-diff-share-preview-btn"
@@ -2211,6 +2220,32 @@
               队列深度：峰值 {{ batchHistoryQueueDepthChart.peak }}
             </p>
           </div>
+          <div
+            v-if="batchHistoryThroughputChart"
+            class="batch-history-throughput-chart"
+            data-testid="batch-history-throughput-chart"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryThroughputChart.width} ${batchHistoryThroughputChart.height}`"
+              class="batch-history-throughput-chart-svg"
+              role="img"
+              aria-label="batch 历史吞吐率图"
+            >
+              <rect
+                v-for="bar in batchHistoryThroughputChart.bars"
+                :key="`throughput-bar-${bar.id}`"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.barWidth"
+                :height="bar.barHeight"
+                class="batch-history-throughput-bar"
+                :data-testid="`batch-history-throughput-${bar.id}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-throughput-chart-label">
+              吞吐率：均值 {{ batchHistoryThroughputChart.avg }} 章/分 · 峰值 {{ batchHistoryThroughputChart.peak }}
+            </p>
+          </div>
           <p
             v-if="batchHistoryAvgDuration != null"
             class="meta-line batch-history-avg-duration"
@@ -3379,11 +3414,14 @@ const defaultUiProfile = {
   batch_history_concurrency_chart: false,
   volume_plan_diff_share_link_preview: false,
   batch_history_queue_depth_chart: false,
+  volume_plan_diff_share_link_apply: false,
+  batch_history_throughput_chart: false,
   creation_mode_switch_confirm_dialog: false,
   creation_mode_switch_history: false,
   creation_mode_switch_undo_hint: false,
   creation_mode_switch_hotkey: false,
   creation_mode_switch_speech: false,
+  creation_mode_switch_haptic: false,
   creation_mode_badge_hint: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
@@ -3825,6 +3863,49 @@ const batchHistoryQueueDepthChart = computed(() => {
     };
   });
   return { bars, width, height, peak };
+});
+
+const batchHistoryThroughputChart = computed(() => {
+  if (!uiProfile.value.batch_history_throughput_chart || !batchHistory.value.length) return null;
+  const rates = batchHistory.value
+    .map((job) => {
+      const minutes = batchJobDurationMinutes(job);
+      if (minutes == null || minutes < 1) return null;
+      const start = Number(job.start_chapter) || 0;
+      const end = Number(job.end_chapter) || start;
+      const chapters = Math.max(1, end - start + 1);
+      return {
+        id: String(job.job_id || `${start}-${end}`),
+        rate: chapters / minutes,
+        chapters,
+        minutes,
+      };
+    })
+    .filter(Boolean);
+  if (!rates.length) return null;
+  const peak = Math.max(...rates.map((row) => row.rate), 0.1);
+  const avg = rates.reduce((sum, row) => sum + row.rate, 0) / rates.length;
+  const width = 200;
+  const height = 40;
+  const shown = rates.slice(0, 8);
+  const slot = width / shown.length;
+  const bars = shown.map((row, idx) => {
+    const barHeight = (row.rate / peak) * (height - 8);
+    return {
+      ...row,
+      x: idx * slot + 2,
+      y: height - barHeight,
+      barWidth: slot - 4,
+      barHeight,
+    };
+  });
+  return {
+    bars,
+    width,
+    height,
+    peak: peak.toFixed(2),
+    avg: avg.toFixed(2),
+  };
 });
 
 const batchHistoryAvgDuration = computed(() => {
@@ -4785,6 +4866,16 @@ async function copyCreationModeYaml(mode) {
   }
   maybeRecordModeSwitch(mode, 'YAML');
   speakCreationModeSwitch(mode);
+  triggerCreationModeSwitchHaptic();
+}
+
+function triggerCreationModeSwitchHaptic() {
+  if (!uiProfile.value.creation_mode_switch_haptic) return;
+  try {
+    navigator?.vibrate?.(15);
+  } catch {
+    // ignore unsupported environments
+  }
 }
 
 function speakCreationModeSwitch(mode) {
@@ -5166,13 +5257,14 @@ async function shareVolumePlanDiffEmail() {
     : '已打开邮件分享';
 }
 
-function encodeVolumePlanDiffShareToken(payload) {
+function encodeVolumePlanDiffShareToken(payload, draftVolumes = null) {
   const compact = {
-    v: 1,
+    v: draftVolumes?.length ? 2 : 1,
     c: payload.change_count,
     changes: payload.changes,
     p: payload.global_outline_path || '',
   };
+  if (draftVolumes?.length) compact.d = draftVolumes;
   const json = JSON.stringify(compact);
   return btoa(unescape(encodeURIComponent(json)))
     .replace(/\+/g, '-')
@@ -5187,11 +5279,23 @@ function decodeVolumePlanDiffShareToken(token) {
       .replace(/_/g, '/');
     const json = decodeURIComponent(escape(atob(padded)));
     const data = JSON.parse(json);
-    if (data.v !== 1 || !Array.isArray(data.changes)) return null;
+    if (data.v !== 1 && data.v !== 2) return null;
+    if (!Array.isArray(data.changes)) return null;
+    const draftVolumes = Array.isArray(data.d)
+      ? data.d.map((row) => ({
+        label: row.label,
+        start_chapter: Number(row.start_chapter) || 1,
+        end_chapter: Number(row.end_chapter) || 1,
+        core_conflict: row.core_conflict || '',
+        locked: Boolean(row.locked),
+      }))
+      : null;
     return {
       change_count: data.c ?? data.changes.length,
       changes: data.changes,
       global_outline_path: data.p || '',
+      draft_volumes: draftVolumes,
+      can_apply: Boolean(draftVolumes?.length),
     };
   } catch {
     return null;
@@ -5224,9 +5328,32 @@ function dismissVolumePlanDiffShareLinkPreview() {
   }
 }
 
+function buildVolumePlanDiffShareDraft() {
+  return editableVolumes.value.map((vol) => ({
+    label: vol.label,
+    start_chapter: vol.start_chapter,
+    end_chapter: vol.end_chapter,
+    core_conflict: vol.core_conflict,
+    locked: Boolean(vol.locked),
+  }));
+}
+
+async function applyVolumePlanDiffShareLink() {
+  if (!uiProfile.value.volume_plan_diff_share_link_apply) return;
+  const parsed = volumePlanDiffShareLinkPreview.value;
+  if (!parsed?.draft_volumes?.length) return;
+  editableVolumes.value = parsed.draft_volumes.map((vol) => ({ ...vol }));
+  await refreshVolumePlanDiffPreview();
+  dismissVolumePlanDiffShareLinkPreview();
+  saveMessage.value = `已应用分享卷纲（${parsed.draft_volumes.length} 卷）`;
+}
+
 function buildVolumePlanDiffShareLink(changes) {
   const payload = buildVolumePlanDiffExportPayload(changes);
-  const token = encodeVolumePlanDiffShareToken(payload);
+  const draft = uiProfile.value.volume_plan_diff_share_link_apply
+    ? buildVolumePlanDiffShareDraft()
+    : null;
+  const token = encodeVolumePlanDiffShareToken(payload, draft);
   return `${window.location.origin}${window.location.pathname}#creator-diff=${token}`;
 }
 
@@ -7266,6 +7393,25 @@ watch(
 }
 
 .batch-history-queue-depth-chart-label {
+  margin: 2px 0 0;
+}
+
+.batch-history-throughput-chart {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-throughput-chart-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  display: block;
+}
+
+.batch-history-throughput-bar {
+  fill: rgba(200, 140, 80, 0.8);
+}
+
+.batch-history-throughput-chart-label {
   margin: 2px 0 0;
 }
 
