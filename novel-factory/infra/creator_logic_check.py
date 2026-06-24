@@ -37,10 +37,14 @@ def run_creator_logic_check(
     from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
     from infra.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
 
+    from infra.creator_ui_profile import ui_profile_from_project_config
+
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     paths = ProjectPaths.get(root)
     config = ProjectConfig.load(paths)
     settings = settings_from_project_config(config)
+    ui_profile = ui_profile_from_project_config(config)
+    p0_only = bool(ui_profile.get("logic_check_p0_only"))
     options = CheckOptions(full=True, quick=False, llm=False, limit=limit or config.max_chapter)
     options, _, settings = apply_creator_check_defaults(options, paths=paths, fail_severity_explicit=False)
 
@@ -77,6 +81,7 @@ def run_creator_logic_check(
             i.location.chapter if i.location else 0,
         ),
     )
+    display_issues = [issue for issue in ranked if issue.severity.value == "P0"] if p0_only else ranked
     issue_rows = [
         {
             "severity": issue.severity.value,
@@ -84,7 +89,7 @@ def run_creator_logic_check(
             "title": issue.title,
             "message": issue.description or issue.title,
         }
-        for issue in ranked[:30]
+        for issue in display_issues[:30]
     ]
     return {
         "passed": passed,
@@ -94,5 +99,6 @@ def run_creator_logic_check(
         "total_issues": len(issues),
         "issue_counts": issue_counts,
         "p0_count": issue_counts["P0"],
+        "p0_only": p0_only,
         "issues": issue_rows,
     }

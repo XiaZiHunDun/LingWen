@@ -21,6 +21,46 @@ def _excerpt(text: str, *, limit: int = 280) -> str:
     return compact[:limit].rstrip() + "…"
 
 
+_SUMMARY_NAME_RE = re.compile(r"volume-summary-ch(\d+)-(\d+)\.md", re.IGNORECASE)
+
+
+def _build_volume_summaries(
+    project_root: Path,
+    volume_pulse: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    docs_dir = project_root / "docs"
+    if not docs_dir.is_dir():
+        return []
+    pulse_by_range: dict[tuple[int, int], dict[str, Any]] = {}
+    if volume_pulse:
+        for row in volume_pulse.get("volumes", []):
+            pulse_by_range[(row["start_chapter"], row["end_chapter"])] = row
+
+    summaries: list[dict[str, Any]] = []
+    for path in sorted(docs_dir.glob("volume-summary-ch*.md"), key=lambda p: p.name):
+        entry: dict[str, Any] = {
+            "path": str(path),
+            "name": path.name,
+            "excerpt": _excerpt(path.read_text(encoding="utf-8"), limit=400),
+            "start_chapter": None,
+            "end_chapter": None,
+            "pulse_status": None,
+            "volume_label": None,
+        }
+        match = _SUMMARY_NAME_RE.match(path.name)
+        if match:
+            start = int(match.group(1))
+            end = int(match.group(2))
+            entry["start_chapter"] = start
+            entry["end_chapter"] = end
+            pulse_row = pulse_by_range.get((start, end))
+            if pulse_row:
+                entry["pulse_status"] = pulse_row.get("status")
+                entry["volume_label"] = pulse_row.get("label")
+        summaries.append(entry)
+    return summaries
+
+
 def creator_overview(project: StudioProject) -> dict[str, Any]:
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)
@@ -43,18 +83,6 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         )
 
     written = sum(1 for row in chapter_rows if row["has_body"])
-    volume_docs = sorted(
-        (project.root / "docs").glob("volume-summary-ch*.md"),
-        key=lambda p: p.name,
-    ) if (project.root / "docs").is_dir() else []
-    volume_summaries = [
-        {
-            "path": str(p),
-            "name": p.name,
-            "excerpt": _excerpt(p.read_text(encoding="utf-8"), limit=400),
-        }
-        for p in volume_docs
-    ]
 
     pillars_text = ""
     if config.pillars_path.is_file():
@@ -74,11 +102,17 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         ui_profile.get("deviation_min_severity"),
     )
     alerts_only = ui_profile.get("deviation_min_severity") == "alert"
+    full_pulse = (
+        build_volume_pulse(project.root, alerts_only=False)
+        if ui_profile.get("volume_pulse_enabled")
+        else None
+    )
     volume_pulse = (
         build_volume_pulse(project.root, alerts_only=alerts_only)
         if ui_profile.get("volume_pulse_enabled")
         else None
     )
+    volume_summaries = _build_volume_summaries(project.root, full_pulse)
 
     return {
         "slug": project.slug,

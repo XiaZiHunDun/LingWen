@@ -284,8 +284,21 @@ const overviewFixture = {
         chapter_inline_edit: false,
         chapter_full_preview: true,
         logic_check_inline_issues: false,
+        logic_check_p0_only: false,
+        deviation_chapter_jump: true,
         deviation_min_severity: 'alert',
   },
+  volume_summaries: [
+    {
+      path: '/docs/volume-summary-ch001-005.md',
+      name: 'volume-summary-ch001-005.md',
+      excerpt: '卷摘要摘录',
+      start_chapter: 1,
+      end_chapter: 5,
+      pulse_status: 'warn',
+      volume_label: '一',
+    },
+  ],
   volume_pulse: {
     volume_count: 1,
     alert_count: 0,
@@ -1776,5 +1789,16 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(2, { full: true });
+  });
+
+  it('v4.2 deviation click and volume summary pulse status', async () => {
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="deviation-item-ch8"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(8, { full: true });
+    const summary = wrapper.find('[data-testid="volume-summary-block-volume-summary-ch001-005.md"]');
+    expect(summary.classes()).toContain('volume-block--warn');
+    expect(summary.text()).toContain('一 ·');
   });
 });

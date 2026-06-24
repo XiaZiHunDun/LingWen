@@ -458,6 +458,7 @@
         <div
           v-if="overview.volume_pulse?.volume_count"
           class="volume-pulse-panel pixel-border"
+          :class="`volume-pulse-panel--${overview.volume_pulse.overall_status}`"
           data-testid="volume-pulse-panel"
         >
           <h3 class="subsection-title">卷级脉络</h3>
@@ -474,7 +475,10 @@
               v-for="row in overview.volume_pulse.volumes"
               :key="row.label"
               class="volume-pulse-row"
-              :class="{ 'volume-pulse-row--active': highlightedVolumeLabel === row.label }"
+              :class="[
+                `volume-pulse-row--${row.status}`,
+                { 'volume-pulse-row--active': highlightedVolumeLabel === row.label },
+              ]"
               role="button"
               tabindex="0"
               :data-testid="`volume-pulse-row-${row.label}`"
@@ -1127,8 +1131,18 @@
           <li
             v-for="(d, i) in visibleDeviations"
             :key="i"
-            :class="`deviation-item deviation-${d.severity}`"
+            :class="[
+              'deviation-item',
+              `deviation-${d.severity}`,
+              { 'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter },
+            ]"
+            :role="uiProfile.deviation_chapter_jump && d.chapter ? 'button' : undefined"
+            :tabindex="uiProfile.deviation_chapter_jump && d.chapter ? 0 : undefined"
+            :data-testid="d.chapter ? `deviation-item-ch${d.chapter}` : `deviation-item-${i}`"
+            @click="uiProfile.deviation_chapter_jump && d.chapter ? jumpToChapter(d.chapter) : undefined"
+            @keydown.enter="uiProfile.deviation_chapter_jump && d.chapter ? jumpToChapter(d.chapter) : undefined"
           >
+            <span v-if="d.chapter" class="deviation-chapter">ch{{ String(d.chapter).padStart(3, '0') }}</span>
             {{ d.message }}
           </li>
         </ul>
@@ -1214,10 +1228,15 @@
             v-for="vol in overview.volume_summaries"
             :key="vol.path"
             class="volume-block"
+            :class="vol.pulse_status ? `volume-block--${vol.pulse_status}` : ''"
             :open="openVolumeSummaryName === vol.name"
             :data-testid="`volume-summary-block-${vol.name}`"
           >
-            <summary>{{ vol.name }}</summary>
+            <summary>
+              <span v-if="vol.volume_label" class="volume-summary-label">{{ vol.volume_label }} · </span>
+              {{ vol.name }}
+              <span v-if="vol.pulse_status" class="volume-summary-status">（{{ vol.pulse_status }}）</span>
+            </summary>
             <pre class="volume-excerpt">{{ vol.excerpt }}</pre>
           </details>
         </template>
@@ -1757,6 +1776,7 @@
           <p v-if="logicCheckResult" class="meta-line" data-testid="companion-logic-check-result">
             {{ logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ logicCheckResult.p0_count }} ·
             共 {{ logicCheckResult.total_issues }} 条
+            <span v-if="logicCheckResult.p0_only">（仅展示 P0）</span>
           </p>
           <ul
             v-if="uiProfile.logic_check_inline_issues && logicCheckResult?.issues?.length"
@@ -2036,6 +2056,8 @@ const defaultUiProfile = {
   chapter_inline_edit: false,
   chapter_full_preview: false,
   logic_check_inline_issues: false,
+  logic_check_p0_only: false,
+  deviation_chapter_jump: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -3972,6 +3994,28 @@ watch(projectRevision, () => {
 
 .volume-pulse-row {
   cursor: pointer;
+  padding-left: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.volume-pulse-row--alert {
+  border-left: 3px solid #c66;
+}
+
+.volume-pulse-row--warn {
+  border-left: 3px solid #aa8;
+}
+
+.volume-pulse-row--ok {
+  border-left: 3px solid #6a6;
+}
+
+.volume-pulse-panel--alert {
+  border-color: #c66;
+}
+
+.volume-pulse-panel--warn {
+  border-color: #aa8;
 }
 
 .volume-pulse-row--active {
@@ -4117,6 +4161,38 @@ watch(projectRevision, () => {
 
 .deviation-warn { color: #886600; }
 .deviation-alert { color: #c44; }
+
+.deviation-item--clickable {
+  cursor: pointer;
+}
+
+.deviation-item--clickable:hover {
+  text-decoration: underline;
+}
+
+.deviation-chapter {
+  display: inline-block;
+  min-width: 3.5em;
+  margin-right: var(--space-xs);
+  font-weight: bold;
+}
+
+.volume-block--alert summary {
+  color: #c44;
+}
+
+.volume-block--warn summary {
+  color: #886600;
+}
+
+.volume-block--ok summary {
+  color: #3a7;
+}
+
+.volume-summary-status {
+  opacity: 0.85;
+  font-size: 7px;
+}
 
 .settings-textarea {
   width: 100%;

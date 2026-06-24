@@ -316,7 +316,16 @@ from infra.creator_logic_check import run_creator_logic_check
 
 check = run_creator_logic_check(root)
 assert "issues" in check
+assert "p0_only" in check
 assert resolve_creator_ui_profile(creation_mode="advance")["chapter_full_preview"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["deviation_chapter_jump"] is True
+
+from infra.creator_dashboard import _build_volume_summaries
+from infra.creator_volume_pulse import build_volume_pulse
+
+summaries = _build_volume_summaries(root, build_volume_pulse(root, alerts_only=False))
+if summaries:
+    assert "pulse_status" in summaries[0]
 
 from infra.creator_ui_profile import filter_deviations_by_min_severity
 

@@ -1209,6 +1209,23 @@ class TestCreatorEndpoints:
         assert "issues" in data
         assert isinstance(data["issues"], list)
 
+    def test_creator_v42_logic_check_p0_only(self, client: TestClient) -> None:
+        resp = client.post("/api/creator/logic-check")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "p0_only" in data
+
+    def test_creator_v42_overview_summary_pulse_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        data = resp.json()
+        profile = data["ui_profile"]
+        assert "deviation_chapter_jump" in profile
+        assert "logic_check_p0_only" in profile
+        if data.get("volume_summaries"):
+            row = data["volume_summaries"][0]
+            assert "pulse_status" in row
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

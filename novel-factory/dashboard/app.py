@@ -230,6 +230,10 @@ class CreatorVolumeSummary(BaseModel):
     path: str
     name: str
     excerpt: str
+    start_chapter: Optional[int] = None
+    end_chapter: Optional[int] = None
+    pulse_status: Optional[str] = None
+    volume_label: Optional[str] = None
 
 
 class CreatorVolumePlanEntry(BaseModel):
@@ -265,6 +269,8 @@ class CreatorUiProfile(BaseModel):
     chapter_inline_edit: bool = False
     chapter_full_preview: bool = False
     logic_check_inline_issues: bool = False
+    logic_check_p0_only: bool = False
+    deviation_chapter_jump: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -311,6 +317,7 @@ class CreatorLogicCheckResponse(BaseModel):
     total_issues: int = 0
     issue_counts: dict[str, int] = {}
     p0_count: int = 0
+    p0_only: bool = False
     issues: list[CreatorLogicCheckIssue] = []
 
 
