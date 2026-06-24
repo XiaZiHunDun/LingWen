@@ -3020,4 +3020,78 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('工作室');
   });
+
+  it('v5.6 refreshes volume plan diff after save', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_refresh_on_save: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+      })
+      .mockResolvedValue({ has_changes: false, changes: [] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('保存后刷新');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-panel"]').exists()).toBe(true);
+    const callsBeforeSave = creatorMocks.previewCreatorVolumePlanDiff.mock.calls.length;
+    await wrapper.find('[data-testid="save-volume-plan-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.previewCreatorVolumePlanDiff.mock.calls.length).toBeGreaterThan(callsBeforeSave);
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('diff 已刷新');
+    expect(wrapper.find('[data-testid="volume-plan-diff-panel"]').exists()).toBe(false);
+  });
+
+  it('v5.6 batch history running job pulse class', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_running_pulse: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-run',
+          start_chapter: 1,
+          end_chapter: 3,
+          status: 'running',
+          finished_at: '',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-job-run"]').classes()).toContain(
+      'batch-history-item--running-pulse',
+    );
+  });
+
+  it('v5.6 companion mode badge tint class', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'companion',
+        primary_action: 'logic_check',
+        companion_creation_mode_badge_tint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').classes()).toContain(
+      'mode-badge--companion-tint',
+    );
+  });
 });

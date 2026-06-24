@@ -9,7 +9,10 @@
         <span
           v-if="overview"
           class="mode-badge pixel-border"
-          :class="{ 'mode-badge--hintable': modeBadgeHintEnabled && creationModeBadgeHintText }"
+          :class="{
+            'mode-badge--hintable': modeBadgeHintEnabled && creationModeBadgeHintText,
+            'mode-badge--companion-tint': uiProfile.companion_creation_mode_badge_tint && overview.creation_mode === 'companion',
+          }"
           data-testid="creation-mode-badge"
           :title="modeBadgeHintEnabled ? creationModeBadgeHintText : undefined"
           @click="showCreationModeBadgeHint"
@@ -2558,8 +2561,11 @@ const defaultUiProfile = {
   batch_history_date_group: false,
   volume_plan_diff_jump_outline_edit: false,
   batch_history_status_color: false,
+  volume_plan_diff_refresh_on_save: false,
+  batch_history_running_pulse: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
+  companion_creation_mode_badge_tint: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -3385,9 +3391,16 @@ function showCreationModeBadgeHint() {
 }
 
 function batchHistoryStatusClass(job) {
-  if (!uiProfile.value.batch_history_status_color || !job?.status) return {};
+  if (!job?.status) return {};
   const status = String(job.status).toLowerCase();
-  return { [`batch-history-item--status-${status}`]: true };
+  const classes = {};
+  if (uiProfile.value.batch_history_status_color) {
+    classes[`batch-history-item--status-${status}`] = true;
+  }
+  if (uiProfile.value.batch_history_running_pulse && status === 'running') {
+    classes['batch-history-item--running-pulse'] = true;
+  }
+  return classes;
 }
 
 async function jumpToGlobalOutlineEdit() {
@@ -4848,7 +4861,13 @@ async function saveVolumePlan() {
   error.value = null;
   try {
     await saveCreatorVolumePlan(editableVolumes.value, volumePlanRevision.value);
-    saveMessage.value = '卷纲已保存并同步到全局大纲';
+    if (uiProfile.value.volume_plan_diff_refresh_on_save) {
+      savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
+      await refreshVolumePlanDiffPreview();
+    }
+    saveMessage.value = uiProfile.value.volume_plan_diff_refresh_on_save
+      ? '卷纲已保存并同步到全局大纲 · diff 已刷新'
+      : '卷纲已保存并同步到全局大纲';
     conflictMessage.value = '';
     volumePlanSaveConfirmOpen.value = false;
     await refresh();
@@ -5113,6 +5132,12 @@ watch(
   cursor: help;
 }
 
+.mode-badge--companion-tint {
+  color: #2a6;
+  background: rgba(80, 180, 120, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(60, 140, 90, 0.45);
+}
+
 .volume-plan-outline-lines {
   list-style: none;
   padding: 0;
@@ -5143,6 +5168,15 @@ watch(
 
 .batch-history-item--status-running {
   border-left: 3px solid #48c;
+}
+
+.batch-history-item--running-pulse {
+  animation: batch-history-running-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes batch-history-running-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 .batch-history-date-label {
