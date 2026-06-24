@@ -3486,4 +3486,99 @@ describe('CreatorPage', () => {
     expect(writeText).toHaveBeenCalledWith('creation_mode: companion');
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('creation_mode: companion');
   });
+
+  it('v6.2 exports volume plan diff with outline excerpt', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    let exportedPayload = null;
+    const originalBlob = globalThis.Blob;
+    globalThis.Blob = class extends originalBlob {
+      constructor(parts, options) {
+        super(parts, options);
+        try {
+          exportedPayload = JSON.parse(String(parts[0]));
+        } catch {
+          exportedPayload = null;
+        }
+      }
+    };
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export: true,
+        volume_plan_diff_export_outline: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+        global_outline_path: '/全局大纲.md',
+        global_outline_excerpt: '大纲摘录内容',
+        global_outline_lines: [{ text: '第一卷', highlighted: true }],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('导出含大纲');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-volume-plan-diff-btn"]').trigger('click');
+    await flushPromises();
+    expect(exportedPayload?.global_outline_excerpt).toBe('大纲摘录内容');
+    expect(exportedPayload?.global_outline_lines?.length).toBe(1);
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('含大纲摘录');
+    globalThis.Blob = originalBlob;
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v6.2 batch history failure trend', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_failure_trend: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        { job_id: 'job-new-fail', start_chapter: 1, end_chapter: 2, status: 'failed' },
+        { job_id: 'job-new-ok', start_chapter: 3, end_chapter: 4, status: 'completed' },
+        { job_id: 'job-old-ok', start_chapter: 5, end_chapter: 6, status: 'completed' },
+        { job_id: 'job-old-ok2', start_chapter: 7, end_chapter: 8, status: 'completed' },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const trend = wrapper.find('[data-testid="batch-history-failure-trend"]');
+    expect(trend.text()).toContain('25%');
+    expect(trend.text()).toContain('上升');
+  });
+
+  it('v6.2 opens mode switch doc on click', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'companion',
+        creation_mode_switch_doc_link: true,
+        creation_mode_switch_doc_open: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="mode-switch-doc-advance-checklist"]').trigger('click');
+    await flushPromises();
+    expect(openSpy).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('已打开文档');
+    openSpy.mockRestore();
+  });
 });

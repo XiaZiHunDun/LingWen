@@ -76,7 +76,7 @@
         type="button"
         class="mini-btn pixel-border mode-switch-doc-link"
         :data-testid="`mode-switch-doc-${link.id}`"
-        @click="openModeSwitchDoc(link)"
+        @click="openModeSwitchDoc(link, uiProfile.creation_mode_switch_doc_open)"
       >
         {{ link.label }}
       </button>
@@ -1783,6 +1783,14 @@
           >
             平均耗时 {{ batchHistoryAvgDuration }} 分钟
           </p>
+          <p
+            v-if="batchHistoryFailureTrend"
+            class="meta-line batch-history-failure-trend"
+            data-testid="batch-history-failure-trend"
+          >
+            失败率 {{ batchHistoryFailureTrend.failurePct }}%（{{ batchHistoryFailureTrend.failed }}/{{ batchHistoryFailureTrend.total }}）
+            · 近期趋势{{ batchHistoryFailureTrend.trendLabel }}
+          </p>
           <div class="batch-history-actions">
             <button
               v-if="uiProfile.batch_history_export"
@@ -2866,6 +2874,8 @@ const defaultUiProfile = {
   batch_history_success_rate: false,
   volume_plan_diff_volume_filter: false,
   batch_history_avg_duration: false,
+  volume_plan_diff_export_outline: false,
+  batch_history_failure_trend: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -2874,6 +2884,7 @@ const defaultUiProfile = {
   creation_mode_badge_legend: false,
   creation_mode_switch_preview: false,
   creation_mode_yaml_snippet: false,
+  creation_mode_switch_doc_open: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -3057,6 +3068,30 @@ const batchHistoryAvgDuration = computed(() => {
     .filter((minutes) => minutes != null);
   if (!durations.length) return null;
   return Math.round(durations.reduce((sum, minutes) => sum + minutes, 0) / durations.length);
+});
+
+const batchHistoryFailureTrend = computed(() => {
+  if (!uiProfile.value.batch_history_failure_trend || batchHistory.value.length < 2) return null;
+  const jobs = batchHistory.value;
+  const total = jobs.length;
+  const failed = jobs.filter((job) => String(job?.status).toLowerCase() === 'failed').length;
+  const mid = Math.ceil(total / 2);
+  const recent = jobs.slice(0, mid);
+  const older = jobs.slice(mid);
+  const rate = (items) => (
+    items.filter((job) => String(job?.status).toLowerCase() === 'failed').length / items.length
+  );
+  const recentRate = rate(recent);
+  const olderRate = older.length ? rate(older) : recentRate;
+  let trendLabel = '持平';
+  if (recentRate > olderRate + 0.01) trendLabel = '上升';
+  else if (recentRate < olderRate - 0.01) trendLabel = '下降';
+  return {
+    total,
+    failed,
+    failurePct: Math.round((failed / total) * 100),
+    trendLabel,
+  };
 });
 
 const creationModeSwitchDocLinks = computed(() => {
@@ -3833,8 +3868,17 @@ function retryBatchHistoryJob(job) {
   saveMessage.value = `已填入失败任务范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}，可重新运行 batch`;
 }
 
-function openModeSwitchDoc(link) {
+function openModeSwitchDoc(link, fromClick = false) {
   if (!link?.path) return;
+  if (uiProfile.value.creation_mode_switch_doc_open && fromClick) {
+    try {
+      window.open(link.path, '_blank', 'noopener');
+    } catch {
+      /* jsdom */
+    }
+    saveMessage.value = `已打开文档：${link.path}`;
+    return;
+  }
   saveMessage.value = `文档：${link.path}`;
 }
 
@@ -3901,14 +3945,20 @@ function exportVolumePlanDiff() {
   const changes = filteredVolumePlanDiffChanges.value.length
     ? filteredVolumePlanDiffChanges.value
     : volumePlanDiffPreview.value.changes || [];
-  downloadJsonExport('creator-volume-plan-diff.json', {
+  const payload = {
     schema_version: '1',
     has_changes: volumePlanDiffPreview.value.has_changes,
     change_count: changes.length,
     changes,
     global_outline_path: volumePlanDiffPreview.value.global_outline_path || '',
-  });
-  saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）`;
+  };
+  if (uiProfile.value.volume_plan_diff_export_outline) {
+    payload.global_outline_excerpt = volumePlanDiffPreview.value.global_outline_excerpt || '';
+    payload.global_outline_lines = volumePlanDiffPreview.value.global_outline_lines || [];
+  }
+  downloadJsonExport('creator-volume-plan-diff.json', payload);
+  const outlineNote = uiProfile.value.volume_plan_diff_export_outline ? '（含大纲摘录）' : '';
+  saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）${outlineNote}`;
 }
 
 async function loadOnboardingWizard() {
@@ -5674,6 +5724,11 @@ watch(
 .batch-history-avg-duration {
   margin: 0 0 var(--space-xs);
   color: var(--color-accent);
+}
+
+.batch-history-failure-trend {
+  margin: 0 0 var(--space-xs);
+  color: #a44;
 }
 
 .batch-history-success-rate {

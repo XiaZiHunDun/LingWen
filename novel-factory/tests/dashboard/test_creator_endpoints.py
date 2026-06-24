@@ -1516,6 +1516,14 @@ class TestCreatorEndpoints:
         assert "batch_history_avg_duration" in profile
         assert "creation_mode_yaml_snippet" in profile
 
+    def test_creator_v62_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_export_outline" in profile
+        assert "batch_history_failure_trend" in profile
+        assert "creation_mode_switch_doc_open" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

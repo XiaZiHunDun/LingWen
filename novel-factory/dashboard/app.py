@@ -317,11 +317,14 @@ class CreatorUiProfile(BaseModel):
     batch_history_success_rate: bool = False
     volume_plan_diff_volume_filter: bool = False
     batch_history_avg_duration: bool = False
+    volume_plan_diff_export_outline: bool = False
+    batch_history_failure_trend: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
     creation_mode_switch_preview: bool = False
     creation_mode_yaml_snippet: bool = False
+    creation_mode_switch_doc_open: bool = False
     studio_creation_entry_hint: bool = False
     studio_wizard_collapse_memory: bool = False
     studio_creation_mode_badge_hint: bool = False
