@@ -1428,6 +1428,38 @@ class TestCreatorEndpoints:
         assert restored.status_code == 200
         assert restored.json()["wizard_panel_collapsed"] is False
 
+    def test_creator_v54_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_outline_row_highlight" in profile
+        assert "batch_history_date_group" in profile
+        assert "creation_mode_badge_hint" in profile
+
+    def test_creator_v54_volume_plan_diff_outline_lines(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        volumes = plan["volumes"]
+        if not volumes:
+            volumes = [
+                {
+                    "label": "一",
+                    "start_chapter": 1,
+                    "end_chapter": 5,
+                    "core_conflict": "开篇",
+                    "locked": False,
+                },
+            ]
+        modified = [dict(volumes[0], core_conflict="v5.4 outline highlight")]
+        resp = client.post(
+            "/api/creator/volume-plan/diff",
+            json={"volumes": modified, "expected_revision": plan["revision"]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["has_changes"] is True
+        assert data.get("highlight_volume_labels")
+        assert isinstance(data.get("global_outline_lines"), list)
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

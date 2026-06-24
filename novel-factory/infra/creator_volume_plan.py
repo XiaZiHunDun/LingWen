@@ -557,6 +557,29 @@ def preview_volume_plan_diff(
     return {"has_changes": bool(changes), "changes": changes}
 
 
+def build_outline_highlight_lines(
+    outline_text: str,
+    volume_labels: list[str],
+    *,
+    limit: int = 40,
+) -> list[dict[str, Any]]:
+    labels = {str(label).strip() for label in volume_labels if str(label).strip()}
+    lines: list[dict[str, Any]] = []
+    for raw in outline_text.splitlines():
+        if len(lines) >= limit:
+            break
+        text = raw.rstrip()
+        if not text:
+            continue
+        highlighted = False
+        if labels and text.startswith("|") and "|" in text[1:]:
+            cells = [cell.strip() for cell in text.strip("|").split("|")]
+            if cells and cells[0] in labels:
+                highlighted = True
+        lines.append({"text": text, "highlighted": highlighted})
+    return lines
+
+
 def volume_plan_diff_payload(
     project_root: Path | str,
     draft: list[dict[str, Any]],
@@ -570,6 +593,9 @@ def volume_plan_diff_payload(
     outline_text = outline_path.read_text(encoding="utf-8") if outline_path.is_file() else ""
     result["global_outline_excerpt"] = _excerpt(outline_text, limit=480)
     result["global_outline_path"] = str(outline_path)
+    labels = [str(row.get("label", "")).strip() for row in result.get("changes", []) if row.get("label")]
+    result["highlight_volume_labels"] = labels
+    result["global_outline_lines"] = build_outline_highlight_lines(outline_text, labels)
     return result
 
 

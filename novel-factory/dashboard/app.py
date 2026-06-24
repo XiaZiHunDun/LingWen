@@ -300,6 +300,9 @@ class CreatorUiProfile(BaseModel):
     batch_history_status_filter: bool = False
     volume_plan_diff_outline_side_by_side: bool = False
     batch_history_export: bool = False
+    volume_plan_diff_outline_row_highlight: bool = False
+    batch_history_date_group: bool = False
+    creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
     studio_creation_entry_hint: bool = False
@@ -410,11 +413,18 @@ class CreatorVolumePlanDiffChange(BaseModel):
     details: list[str] = []
 
 
+class CreatorOutlineHighlightLine(BaseModel):
+    text: str
+    highlighted: bool = False
+
+
 class CreatorVolumePlanDiffResponse(BaseModel):
     has_changes: bool
     changes: list[CreatorVolumePlanDiffChange]
     global_outline_excerpt: str = ""
     global_outline_path: str = ""
+    highlight_volume_labels: list[str] = []
+    global_outline_lines: list[CreatorOutlineHighlightLine] = []
 
 
 class CreatorBatchHistoryItem(BaseModel):

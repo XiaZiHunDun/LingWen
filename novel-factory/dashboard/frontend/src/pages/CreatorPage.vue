@@ -6,7 +6,14 @@
     <header class="page-header">
       <h1 class="page-title" data-testid="page-title">创作伴侣</h1>
       <div class="header-actions">
-        <span v-if="overview" class="mode-badge pixel-border" data-testid="creation-mode-badge">
+        <span
+          v-if="overview"
+          class="mode-badge pixel-border"
+          :class="{ 'mode-badge--hintable': uiProfile.creation_mode_badge_hint && creationModeBadgeHintText }"
+          data-testid="creation-mode-badge"
+          :title="uiProfile.creation_mode_badge_hint ? creationModeBadgeHintText : undefined"
+          @click="showCreationModeBadgeHint"
+        >
           {{ modeLabel }}
         </span>
         <span
@@ -1267,7 +1274,25 @@
                 data-testid="volume-plan-diff-outline-side-by-side"
               >
                 <p class="meta-line">全局大纲摘录</p>
-                <pre class="volume-plan-outline-excerpt">{{ volumePlanDiffPreview.global_outline_excerpt }}</pre>
+                <pre
+                  v-if="!uiProfile.volume_plan_diff_outline_row_highlight || !volumePlanDiffPreview.global_outline_lines?.length"
+                  class="volume-plan-outline-excerpt"
+                >{{ volumePlanDiffPreview.global_outline_excerpt }}</pre>
+                <ul
+                  v-else
+                  class="volume-plan-outline-lines"
+                  data-testid="volume-plan-diff-outline-lines"
+                >
+                  <li
+                    v-for="(line, lineIdx) in volumePlanDiffPreview.global_outline_lines"
+                    :key="`outline-line-${lineIdx}`"
+                    class="volume-plan-outline-line"
+                    :class="{ 'volume-plan-outline-line--highlight': line.highlighted }"
+                    :data-testid="line.highlighted ? `volume-plan-outline-line-highlight-${lineIdx}` : `volume-plan-outline-line-${lineIdx}`"
+                  >
+                    {{ line.text }}
+                  </li>
+                </ul>
                 <code class="path-line">{{ volumePlanDiffPreview.global_outline_path }}</code>
               </aside>
             </div>
@@ -1528,6 +1553,40 @@
           >
             无匹配任务
           </p>
+          <div
+            v-else-if="uiProfile.batch_history_date_group"
+            class="batch-history-groups"
+            data-testid="batch-history-date-groups"
+          >
+            <section
+              v-for="group in batchHistoryDateGroups"
+              :key="`batch-date-${group.date}`"
+              class="batch-history-date-group"
+              :data-testid="`batch-history-date-${group.date}`"
+            >
+              <p class="meta-line batch-history-date-label">{{ group.date }}</p>
+              <ul class="batch-history-list" data-testid="batch-history-list">
+                <li
+                  v-for="job in group.jobs"
+                  :key="job.job_id"
+                  class="batch-history-item"
+                  :class="{
+                    'batch-history-item--clickable': uiProfile.batch_history_replay_range,
+                    'batch-history-item--active': highlightedBatchHistoryId === job.job_id,
+                  }"
+                  :role="uiProfile.batch_history_replay_range ? 'button' : undefined"
+                  :tabindex="uiProfile.batch_history_replay_range ? 0 : undefined"
+                  :data-testid="`batch-history-${job.job_id}`"
+                  @click="applyBatchHistoryRange(job)"
+                  @keydown.enter="applyBatchHistoryRange(job)"
+                >
+                  ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
+                  · {{ job.status }}
+                  <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
+                </li>
+              </ul>
+            </section>
+          </div>
           <ul v-else class="batch-history-list" data-testid="batch-history-list">
             <li
               v-for="job in filteredBatchHistory"
@@ -2482,6 +2541,9 @@ const defaultUiProfile = {
   batch_history_status_filter: false,
   volume_plan_diff_outline_side_by_side: false,
   batch_history_export: false,
+  volume_plan_diff_outline_row_highlight: false,
+  batch_history_date_group: false,
+  creation_mode_badge_hint: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -2545,6 +2607,14 @@ const modeLabel = computed(() => {
   return map[overview.value.creation_mode] || overview.value.creation_mode;
 });
 
+const creationModeBadgeHintText = computed(() => {
+  if (!uiProfile.value.creation_mode_badge_hint || !overview.value) return '';
+  const mode = overview.value.creation_mode;
+  if (mode === 'companion') return '陪伴：人主笔 + P0 守门';
+  if (mode === 'advance') return '推进：人定卷纲 + batch 产章';
+  return '';
+});
+
 const creationModeSwitchHintText = computed(() => {
   if (!uiProfile.value.creation_mode_switch_hint || !overview.value) return '';
   const mode = overview.value.creation_mode;
@@ -2598,6 +2668,24 @@ const filteredBatchHistory = computed(() => {
   }
   const status = batchHistoryStatusFilter.value;
   return batchHistory.value.filter((job) => String(job.status) === status);
+});
+
+const batchHistoryDateGroups = computed(() => {
+  const jobs = filteredBatchHistory.value;
+  if (!uiProfile.value.batch_history_date_group) {
+    return [{ date: '', jobs }];
+  }
+  const groups = new Map();
+  for (const job of jobs) {
+    const raw = job.finished_at || job.started_at || '未知日期';
+    const date = String(raw).slice(0, 10);
+    if (!groups.has(date)) groups.set(date, []);
+    groups.get(date).push(job);
+  }
+  return Array.from(groups.entries()).map(([date, groupedJobs]) => ({
+    date,
+    jobs: groupedJobs,
+  }));
 });
 
 const studioCreationEntryHintText = computed(() => {
@@ -3261,6 +3349,11 @@ function applyBatchHistoryRange(job) {
 function openModeSwitchDoc(link) {
   if (!link?.path) return;
   saveMessage.value = `文档：${link.path}`;
+}
+
+function showCreationModeBadgeHint() {
+  if (!creationModeBadgeHintText.value) return;
+  saveMessage.value = creationModeBadgeHintText.value;
 }
 
 function downloadJsonExport(filename, payload) {
@@ -4968,6 +5061,40 @@ watch(
   margin: 0;
   color: var(--color-accent);
   background: rgba(100, 140, 200, 0.08);
+}
+
+.mode-badge--hintable {
+  cursor: help;
+}
+
+.volume-plan-outline-lines {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0;
+  font-size: 7px;
+  line-height: 1.5;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.volume-plan-outline-line {
+  padding: 2px 0;
+  white-space: pre-wrap;
+}
+
+.volume-plan-outline-line--highlight {
+  background: rgba(255, 220, 100, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(200, 180, 80, 0.65);
+}
+
+.batch-history-date-label {
+  margin: var(--space-xs) 0 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+}
+
+.batch-history-date-group + .batch-history-date-group {
+  margin-top: var(--space-xs);
 }
 
 .volume-plan-diff-panel {

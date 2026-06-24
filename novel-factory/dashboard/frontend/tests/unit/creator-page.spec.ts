@@ -2850,4 +2850,90 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(creatorMocks.saveCreatorWizardPanelCollapsed).toHaveBeenCalledWith(true);
   });
+
+  it('v5.4 volume plan diff highlights global outline volume rows', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_outline_side_by_side: true,
+        volume_plan_diff_outline_row_highlight: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突已修改', details: [] }],
+      global_outline_excerpt: '| 一 | 1-5 | 开篇 |',
+      global_outline_path: '/全局大纲.md',
+      highlight_volume_labels: ['一'],
+      global_outline_lines: [
+        { text: '| 卷 | 章范围 | 核心冲突 | 锁定 |', highlighted: false },
+        { text: '| 一 | 1-5 | 开篇 | 是 |', highlighted: true },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('新冲突');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-outline-lines"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-outline-line-highlight-1"]').exists()).toBe(true);
+  });
+
+  it('v5.4 batch history groups jobs by date', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_date_group: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-a',
+          start_chapter: 1,
+          end_chapter: 5,
+          status: 'completed',
+          started_at: '2026-06-22T10:00:00+00:00',
+          finished_at: '2026-06-22T12:00:00+00:00',
+        },
+        {
+          job_id: 'job-b',
+          start_chapter: 6,
+          end_chapter: 8,
+          status: 'failed',
+          started_at: '2026-06-21T09:00:00+00:00',
+          finished_at: '2026-06-21T11:00:00+00:00',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-date-groups"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-date-2026-06-22"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-date-2026-06-21"]').exists()).toBe(true);
+  });
+
+  it('v5.4 companion mode badge hint on click', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'companion',
+        primary_action: 'logic_check',
+        creation_mode_badge_hint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const badge = wrapper.find('[data-testid="creation-mode-badge"]');
+    expect(badge.attributes('title')).toContain('人主笔');
+    await badge.trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('陪伴');
+  });
 });
