@@ -414,6 +414,7 @@
                   ref="chapterBodyTextareaRef"
                   v-model="chapterBodyDraft"
                   class="settings-textarea chapter-body-textarea"
+                  :class="{ 'chapter-body-textarea--highlight': chapterBodyHighlightActive }"
                   rows="12"
                   data-testid="chapter-body-textarea"
                 />
@@ -428,7 +429,17 @@
                 </button>
               </div>
             </div>
-            <details v-else-if="chapterPreview.has_outline" open>
+            <div
+              v-if="uiProfile.chapter_outline_read_preview && chapterPreview.has_outline"
+              class="chapter-outline-read-preview"
+              data-testid="chapter-outline-read-preview"
+            >
+              <label class="meta-line">分章大纲（只读）</label>
+              <pre class="preview-text chapter-outline-full-text">{{
+                chapterPreview.outline_text || chapterPreview.outline_preview || '（空）'
+              }}</pre>
+            </div>
+            <details v-else-if="chapterPreview.has_outline && !uiProfile.chapter_outline_read_preview" open>
               <summary>分章大纲</summary>
               <pre class="preview-text">{{ chapterPreview.outline_preview || '（空）' }}</pre>
             </details>
@@ -442,6 +453,7 @@
                 ref="chapterBodyTextareaRef"
                 v-model="chapterBodyDraft"
                 class="settings-textarea chapter-body-textarea"
+                :class="{ 'chapter-body-textarea--highlight': chapterBodyHighlightActive }"
                 rows="12"
                 data-testid="chapter-body-textarea"
               />
@@ -477,12 +489,15 @@
                   v-for="(issue, idx) in chapterRecheckResult.issues"
                   :key="`recheck-${issue.chapter}-${idx}`"
                   class="logic-check-issue"
-                  :class="{ 'logic-check-issue--clickable': uiProfile.recheck_issue_paragraph_jump && issue.paragraph }"
+                  :class="{
+                    'logic-check-issue--clickable': uiProfile.recheck_issue_paragraph_jump && issue.paragraph,
+                    'logic-check-issue--active': uiProfile.recheck_issue_highlight && activeRecheckIssueIdx === idx,
+                  }"
                   role="button"
                   tabindex="0"
                   :data-testid="`chapter-recheck-issue-${idx}`"
-                  @click="focusIssueParagraph(issue)"
-                  @keydown.enter="focusIssueParagraph(issue)"
+                  @click="focusIssueParagraph(issue, idx)"
+                  @keydown.enter="focusIssueParagraph(issue, idx)"
                 >
                   <span class="issue-severity">{{ issue.severity }}</span>
                   {{ issue.title || issue.message }}
@@ -2018,6 +2033,9 @@ const chapterOutlineDraft = ref('');
 const chapterBodySaving = ref(false);
 const chapterOutlineSaving = ref(false);
 const chapterBodyTextareaRef = ref(null);
+const chapterBodyHighlightActive = ref(false);
+const activeRecheckIssueIdx = ref(null);
+let chapterBodyHighlightTimer = null;
 const batchSummaryPrompt = ref(null);
 const chapterRecheckResult = ref(null);
 const openVolumeSummaryName = ref(null);
@@ -2170,6 +2188,9 @@ const defaultUiProfile = {
   chapter_outline_inline_edit: false,
   recheck_issue_paragraph_jump: false,
   batch_clear_pulse_no_alert: false,
+  recheck_issue_highlight: false,
+  batch_scroll_deviation_list: false,
+  chapter_outline_read_preview: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2415,7 +2436,8 @@ async function selectChapter(chapter) {
     const full = Boolean(
       uiProfile.value.chapter_inline_edit
         || uiProfile.value.chapter_full_preview
-        || uiProfile.value.chapter_outline_inline_edit,
+        || uiProfile.value.chapter_outline_inline_edit
+        || uiProfile.value.chapter_outline_read_preview,
     );
     chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterPreview.value.body_preview ?? '';
@@ -2579,7 +2601,21 @@ async function saveChapterOutline() {
   }
 }
 
-function focusIssueParagraph(issue) {
+function pulseChapterBodyHighlight(issueIdx) {
+  if (!uiProfile.value.recheck_issue_highlight) return;
+  activeRecheckIssueIdx.value = issueIdx ?? null;
+  chapterBodyHighlightActive.value = true;
+  if (chapterBodyHighlightTimer) {
+    clearTimeout(chapterBodyHighlightTimer);
+  }
+  chapterBodyHighlightTimer = setTimeout(() => {
+    chapterBodyHighlightActive.value = false;
+    activeRecheckIssueIdx.value = null;
+    chapterBodyHighlightTimer = null;
+  }, 1200);
+}
+
+function focusIssueParagraph(issue, issueIdx) {
   if (!uiProfile.value.recheck_issue_paragraph_jump || !issue?.paragraph) return;
   const textarea = chapterBodyTextareaRef.value;
   if (!textarea) return;
@@ -2594,6 +2630,24 @@ function focusIssueParagraph(issue) {
   try {
     const lineHeight = 16;
     textarea.scrollTop = Math.max(0, (offset / Math.max(chapterBodyDraft.value.length, 1)) * textarea.scrollHeight - lineHeight * 2);
+  } catch {
+    /* jsdom */
+  }
+  pulseChapterBodyHighlight(issueIdx);
+}
+
+async function scrollToBatchDeviationList(start, end) {
+  if (!uiProfile.value.batch_scroll_deviation_list) return;
+  await nextTick();
+  const rows = visibleDeviations.value.filter(
+    (row) => row.chapter && row.chapter >= start && row.chapter <= end,
+  );
+  if (!rows.length) return;
+  try {
+    document.querySelector('[data-testid="deviation-list"]')?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'start',
+    });
   } catch {
     /* jsdom */
   }
@@ -4020,6 +4074,9 @@ function startBatchPolling() {
       if (uiProfile.value.batch_auto_open_summary && batchSummaryPrompt.value) {
         openVolumeSummaryForRange(batchStart.value, batchEnd.value);
       }
+      if (uiProfile.value.batch_scroll_deviation_list) {
+        await scrollToBatchDeviationList(batchStart.value, batchEnd.value);
+      }
     }
     if (status === 'completed' || status === 'failed') {
       stopBatchPolling();
@@ -4110,6 +4167,10 @@ onMounted(refresh);
 
 onUnmounted(() => {
   stopBatchPolling();
+  if (chapterBodyHighlightTimer) {
+    clearTimeout(chapterBodyHighlightTimer);
+    chapterBodyHighlightTimer = null;
+  }
 });
 
 watch(projectRevision, () => {
@@ -4237,6 +4298,30 @@ watch(projectRevision, () => {
 .logic-check-issue--clickable {
   cursor: pointer;
   text-decoration: underline;
+}
+
+.logic-check-issue--active {
+  animation: recheck-issue-flash 1.2s ease-out;
+  background: rgba(255, 220, 100, 0.35);
+}
+
+.chapter-body-textarea--highlight {
+  animation: chapter-body-highlight-pulse 1.2s ease-out;
+  box-shadow: 0 0 0 2px rgba(200, 180, 80, 0.75);
+}
+
+.chapter-outline-read-preview {
+  margin-bottom: var(--space-sm);
+}
+
+@keyframes recheck-issue-flash {
+  0% { background: rgba(255, 220, 100, 0.55); }
+  100% { background: rgba(255, 220, 100, 0.35); }
+}
+
+@keyframes chapter-body-highlight-pulse {
+  0% { background: rgba(255, 220, 100, 0.4); }
+  100% { background: transparent; }
 }
 
 .chapter-inline-edit {

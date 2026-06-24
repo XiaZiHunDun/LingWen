@@ -280,6 +280,9 @@ class CreatorUiProfile(BaseModel):
     chapter_outline_inline_edit: bool = False
     recheck_issue_paragraph_jump: bool = False
     batch_clear_pulse_no_alert: bool = False
+    recheck_issue_highlight: bool = False
+    batch_scroll_deviation_list: bool = False
+    chapter_outline_read_preview: bool = False
     deviation_min_severity: Optional[str] = None
 
 

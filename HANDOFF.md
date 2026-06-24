@@ -3,7 +3,7 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v11.03 (创作者 v4.5, 2026-06-23)  
+> **版本**: v11.04 (创作者 v4.6, 2026-06-23)  
 > **更新 (2026-06-22)**: 审批转交/OR签/快照 diff · digest handle 静默与死信 · Webhook 签名 · 预设拉取预检/changelog/拓扑可视化
 
 ---
@@ -167,7 +167,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v4.5 已落地**：复查问题点击定位段落 · batch 无偏离时自动收起 pulse 高亮 · 陪伴章纲并排编辑
 
-**v4.6 候选**：（待定）
+**v4.6 已落地**：复查问题高亮动画 · batch 完成后自动滚到偏离列表 · 推进模式章纲只读预览
+
+**v4.7 候选**：（待定）
 
 ### 常用命令
 

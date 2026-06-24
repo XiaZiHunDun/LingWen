@@ -1279,6 +1279,20 @@ class TestCreatorEndpoints:
             assert "paragraph" in issue
             assert "line" in issue
 
+    def test_creator_v46_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "recheck_issue_highlight" in profile
+        assert "batch_scroll_deviation_list" in profile
+        assert "chapter_outline_read_preview" in profile
+
+    def test_creator_v46_chapter_outline_full_preview(self, client: TestClient) -> None:
+        preview = client.get("/api/creator/chapters/1?full=1")
+        assert preview.status_code == 200
+        data = preview.json()
+        assert "outline_text" in data
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

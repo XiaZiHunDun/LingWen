@@ -324,6 +324,8 @@ assert resolve_creator_ui_profile(creation_mode="advance")["batch_auto_open_summ
 assert resolve_creator_ui_profile(creation_mode="companion")["chapter_recheck_inline"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["chapter_outline_inline_edit"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_clear_pulse_no_alert"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["recheck_issue_highlight"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["chapter_outline_read_preview"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 
