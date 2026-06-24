@@ -3329,4 +3329,77 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="creation-mode-badge-legend"]').text()).toContain('陪伴=绿');
     expect(wrapper.find('[data-testid="creation-mode-badge-legend"]').text()).toContain('工作室=琥珀');
   });
+
+  it('v6.0 shows three-mode switch preview with active mode', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-switch-preview"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="creation-mode-preview-advance"]').classes()).toContain(
+      'creation-mode-preview-item--active',
+    );
+    expect(wrapper.find('[data-testid="creation-mode-preview-companion"]').text()).toContain('陪伴');
+  });
+
+  it('v6.0 exports volume plan diff json', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+        global_outline_path: '/全局大纲.md',
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('导出 diff');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-volume-plan-diff-btn"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('已导出卷纲 diff');
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v6.0 batch history success rate summary', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_success_rate: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        { job_id: 'job-ok', start_chapter: 1, end_chapter: 3, status: 'completed' },
+        { job_id: 'job-ok2', start_chapter: 4, end_chapter: 6, status: 'completed' },
+        { job_id: 'job-bad', start_chapter: 7, end_chapter: 8, status: 'failed' },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-success-rate"]').text()).toContain('67%');
+    expect(wrapper.find('[data-testid="batch-history-success-rate"]').text()).toContain('2/3');
+  });
 });

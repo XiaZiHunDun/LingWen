@@ -313,9 +313,12 @@ class CreatorUiProfile(BaseModel):
     batch_history_budget_hint: bool = False
     volume_plan_diff_type_filter: bool = False
     batch_history_duration: bool = False
+    volume_plan_diff_export: bool = False
+    batch_history_success_rate: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
+    creation_mode_switch_preview: bool = False
     studio_creation_entry_hint: bool = False
     studio_wizard_collapse_memory: bool = False
     studio_creation_mode_badge_hint: bool = False

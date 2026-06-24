@@ -81,6 +81,25 @@
         {{ link.label }}
       </button>
     </div>
+    <div
+      v-if="uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
+      class="creation-mode-switch-preview pixel-border"
+      data-testid="creation-mode-switch-preview"
+    >
+      <p class="meta-line">三模式预览 · 切换请编辑 config/project.yaml → creation_mode</p>
+      <ul class="creation-mode-preview-list">
+        <li
+          v-for="row in creationModePreviewRows"
+          :key="`mode-preview-${row.mode}`"
+          class="creation-mode-preview-item"
+          :class="{ 'creation-mode-preview-item--active': row.active }"
+          :data-testid="`creation-mode-preview-${row.mode}`"
+        >
+          <strong>{{ row.label }}</strong>
+          <span class="meta-line">{{ row.summary }}</span>
+        </li>
+      </ul>
+    </div>
     <p
       v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
       class="mode-switch-hint studio-entry-hint pixel-border"
@@ -1283,6 +1302,15 @@
             >
               编辑全局大纲
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="export-volume-plan-diff-btn"
+              @click="exportVolumePlanDiff"
+            >
+              导出 diff JSON
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1401,6 +1429,15 @@
                 @click="jumpToGlobalOutlineEdit"
               >
                 编辑全局大纲
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="export-volume-plan-diff-btn"
+                @click="exportVolumePlanDiff"
+              >
+                导出 diff JSON
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -1702,6 +1739,13 @@
           data-testid="batch-history-panel"
         >
           <h3 class="subsection-title">Batch 历史</h3>
+          <p
+            v-if="batchHistorySuccessRate"
+            class="meta-line batch-history-success-rate"
+            data-testid="batch-history-success-rate"
+          >
+            成功率 {{ batchHistorySuccessRate.pct }}%（{{ batchHistorySuccessRate.completed }}/{{ batchHistorySuccessRate.total }} 已完成）
+          </p>
           <div class="batch-history-actions">
             <button
               v-if="uiProfile.batch_history_export"
@@ -2780,12 +2824,15 @@ const defaultUiProfile = {
   batch_history_budget_hint: false,
   volume_plan_diff_type_filter: false,
   batch_history_duration: false,
+  volume_plan_diff_export: false,
+  batch_history_success_rate: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
   companion_creation_mode_badge_tint: false,
   advance_creation_mode_badge_tint: false,
   creation_mode_badge_legend: false,
+  creation_mode_switch_preview: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -2919,6 +2966,29 @@ const creationModeSwitchHintText = computed(() => {
     return '推进模式：人定卷纲 + batch 产章。切换陪伴请编辑 config/project.yaml → creation_mode: companion';
   }
   return '';
+});
+
+const creationModePreviewRows = computed(() => {
+  if (!uiProfile.value.creation_mode_switch_preview || !overview.value) return [];
+  const current = overview.value.creation_mode;
+  return [
+    { mode: 'companion', label: '陪伴', summary: '人主笔 + P0 守门', active: current === 'companion' },
+    { mode: 'advance', label: '推进', summary: '人定卷纲 + batch 产章', active: current === 'advance' },
+    { mode: 'studio', label: '工作室', summary: '工厂流水线批量产章', active: current === 'studio' },
+  ];
+});
+
+const batchHistorySuccessRate = computed(() => {
+  if (!uiProfile.value.batch_history_success_rate || !batchHistory.value.length) return null;
+  const total = batchHistory.value.length;
+  const completed = batchHistory.value.filter(
+    (job) => String(job?.status).toLowerCase() === 'completed',
+  ).length;
+  return {
+    total,
+    completed,
+    pct: Math.round((completed / total) * 100),
+  };
 });
 
 const creationModeSwitchDocLinks = computed(() => {
@@ -3740,6 +3810,21 @@ async function exportBatchHistory() {
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   }
+}
+
+function exportVolumePlanDiff() {
+  if (!uiProfile.value.volume_plan_diff_export || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  downloadJsonExport('creator-volume-plan-diff.json', {
+    schema_version: '1',
+    has_changes: volumePlanDiffPreview.value.has_changes,
+    change_count: changes.length,
+    changes,
+    global_outline_path: volumePlanDiffPreview.value.global_outline_path || '',
+  });
+  saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）`;
 }
 
 async function loadOnboardingWizard() {
@@ -5464,6 +5549,33 @@ watch(
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
   font-size: 7px;
+  color: var(--color-accent);
+}
+
+.creation-mode-switch-preview {
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.creation-mode-preview-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0 0;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.creation-mode-preview-item {
+  padding: var(--space-xs);
+  border: 1px solid transparent;
+}
+
+.creation-mode-preview-item--active {
+  border-color: rgba(100, 140, 200, 0.65);
+  background: rgba(100, 140, 200, 0.1);
+}
+
+.batch-history-success-rate {
+  margin: 0 0 var(--space-xs);
   color: var(--color-accent);
 }
 
