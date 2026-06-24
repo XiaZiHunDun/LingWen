@@ -1476,6 +1476,14 @@ class TestCreatorEndpoints:
         assert "batch_history_running_pulse" in profile
         assert "companion_creation_mode_badge_tint" in profile
 
+    def test_creator_v57_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_auto_collapse" in profile
+        assert "batch_history_failed_retry" in profile
+        assert "advance_creation_mode_badge_tint" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

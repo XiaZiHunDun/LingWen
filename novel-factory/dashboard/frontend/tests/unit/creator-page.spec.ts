@@ -3031,6 +3031,7 @@ describe('CreatorPage', () => {
       },
     });
     creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
       .mockResolvedValueOnce({
         has_changes: true,
         changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
@@ -3092,6 +3093,96 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(wrapper.find('[data-testid="creation-mode-badge"]').classes()).toContain(
       'mode-badge--companion-tint',
+    );
+  });
+
+  it('v5.7 collapses volume plan diff when no changes', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_auto_collapse: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: false,
+      changes: [],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const panel = wrapper.find('[data-testid="volume-plan-diff-panel"]');
+    expect(panel.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-no-changes"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-list"]').exists()).toBe(false);
+  });
+
+  it('v5.7 expands volume plan diff when edits introduce changes', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_auto_collapse: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({ has_changes: true, changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }] });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('自动展开');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-list"]').exists()).toBe(true);
+    expect((wrapper.find('[data-testid="volume-plan-diff-panel"]').element as HTMLDetailsElement).open).toBe(true);
+  });
+
+  it('v5.7 batch history failed job retry fills range', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_failed_retry: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-fail-retry',
+          start_chapter: 11,
+          end_chapter: 15,
+          status: 'failed',
+          budget_usd: 2.5,
+          finished_at: '2026-06-20',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="batch-history-retry-job-fail-retry"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-start-input"]').element.value).toBe('11');
+    expect(wrapper.find('[data-testid="batch-end-input"]').element.value).toBe('15');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('失败任务');
+  });
+
+  it('v5.7 advance mode badge tint class', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        primary_action: 'volume_pulse',
+        advance_creation_mode_badge_tint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').classes()).toContain(
+      'mode-badge--advance-tint',
     );
   });
 });

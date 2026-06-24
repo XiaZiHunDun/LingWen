@@ -306,6 +306,9 @@ class CreatorUiProfile(BaseModel):
     batch_history_status_color: bool = False
     volume_plan_diff_refresh_on_save: bool = False
     batch_history_running_pulse: bool = False
+    volume_plan_diff_auto_collapse: bool = False
+    batch_history_failed_retry: bool = False
+    advance_creation_mode_badge_tint: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False

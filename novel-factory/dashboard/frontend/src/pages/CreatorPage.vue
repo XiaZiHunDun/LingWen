@@ -12,6 +12,7 @@
           :class="{
             'mode-badge--hintable': modeBadgeHintEnabled && creationModeBadgeHintText,
             'mode-badge--companion-tint': uiProfile.companion_creation_mode_badge_tint && overview.creation_mode === 'companion',
+            'mode-badge--advance-tint': uiProfile.advance_creation_mode_badge_tint && overview.creation_mode === 'advance',
           }"
           data-testid="creation-mode-badge"
           :title="modeBadgeHintEnabled ? creationModeBadgeHintText : undefined"
@@ -1230,7 +1231,7 @@
             {{ saving ? '保存中…' : '保存卷纲' }}
           </button>
           <div
-            v-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview?.has_changes"
+            v-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview?.has_changes && !uiProfile.volume_plan_diff_auto_collapse"
             class="volume-plan-diff-panel pixel-border"
             data-testid="volume-plan-diff-panel"
           >
@@ -1336,6 +1337,122 @@
               </div>
             </div>
           </div>
+          <details
+            v-else-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview && uiProfile.volume_plan_diff_auto_collapse"
+            class="volume-plan-diff-panel pixel-border"
+            :open="volumePlanDiffExpanded"
+            data-testid="volume-plan-diff-panel"
+            @toggle="onVolumePlanDiffToggle"
+          >
+            <summary class="volume-plan-diff-summary" data-testid="volume-plan-diff-summary">
+              {{ volumePlanDiffPreview?.has_changes ? '卷纲未保存变更' : '卷纲与已保存一致' }}
+            </summary>
+            <template v-if="volumePlanDiffPreview?.has_changes">
+              <button
+                v-if="uiProfile.volume_plan_diff_jump_outline_edit"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="jump-global-outline-edit-btn"
+                @click="jumpToGlobalOutlineEdit"
+              >
+                编辑全局大纲
+              </button>
+              <div
+                class="volume-plan-diff-body"
+                :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
+              >
+                <div class="volume-plan-diff-main">
+                  <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
+                    <li
+                      v-for="(row, idx) in volumePlanDiffPreview.changes"
+                      :key="`vol-diff-collapse-${row.label}-${idx}`"
+                      class="volume-plan-diff-item"
+                      :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
+                    >
+                      <details
+                        v-if="uiProfile.volume_plan_diff_expand_detail && row.details?.length"
+                        class="volume-plan-diff-details"
+                        :data-testid="`volume-plan-diff-details-${row.type}-${row.label}`"
+                      >
+                        <summary>
+                          <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                        </summary>
+                        <ul class="volume-plan-diff-detail-list">
+                          <li
+                            v-for="(line, detailIdx) in row.details"
+                            :key="`vol-diff-detail-collapse-${row.label}-${detailIdx}`"
+                            :data-testid="`volume-plan-diff-detail-${row.label}-${detailIdx}`"
+                          >
+                            {{ line }}
+                          </li>
+                        </ul>
+                      </details>
+                      <template v-else>
+                        <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                      </template>
+                    </li>
+                  </ul>
+                </div>
+                <aside
+                  v-if="uiProfile.volume_plan_diff_outline_side_by_side && volumePlanDiffPreview.global_outline_excerpt"
+                  class="volume-plan-diff-outline-col pixel-border"
+                  data-testid="volume-plan-diff-outline-side-by-side"
+                >
+                  <p class="meta-line">全局大纲摘录</p>
+                  <pre
+                    v-if="!uiProfile.volume_plan_diff_outline_row_highlight || !volumePlanDiffPreview.global_outline_lines?.length"
+                    class="volume-plan-outline-excerpt"
+                  >{{ volumePlanDiffPreview.global_outline_excerpt }}</pre>
+                  <ul
+                    v-else
+                    class="volume-plan-outline-lines"
+                    data-testid="volume-plan-diff-outline-lines"
+                  >
+                    <li
+                      v-for="(line, lineIdx) in volumePlanDiffPreview.global_outline_lines"
+                      :key="`outline-line-collapse-${lineIdx}`"
+                      class="volume-plan-outline-line"
+                      :class="{ 'volume-plan-outline-line--highlight': line.highlighted }"
+                      :data-testid="line.highlighted ? `volume-plan-outline-line-highlight-${lineIdx}` : `volume-plan-outline-line-${lineIdx}`"
+                    >
+                      {{ line.text }}
+                    </li>
+                  </ul>
+                  <code class="path-line">{{ volumePlanDiffPreview.global_outline_path }}</code>
+                </aside>
+              </div>
+              <div
+                v-if="volumePlanSaveConfirmOpen"
+                class="volume-plan-save-confirm pixel-border"
+                data-testid="volume-plan-save-confirm-panel"
+              >
+                <p class="meta-line">确认保存以上卷纲变更？</p>
+                <div class="batch-actions">
+                  <button
+                    type="button"
+                    class="save-btn pixel-border"
+                    data-testid="confirm-volume-plan-save-btn"
+                    :disabled="saving"
+                    @click="confirmSaveVolumePlan"
+                  >
+                    {{ saving ? '保存中…' : '确认保存' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="mini-btn pixel-border"
+                    data-testid="cancel-volume-plan-save-btn"
+                    :disabled="saving"
+                    @click="cancelVolumePlanSave"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </template>
+            <p v-else class="meta-line" data-testid="volume-plan-diff-no-changes">
+              当前编辑与已保存卷纲一致
+            </p>
+          </details>
           <div
             v-if="editableVolumes.length >= 2"
             class="volume-merge-panel pixel-border"
@@ -1596,6 +1713,15 @@
                   ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
                   · {{ job.status }}
                   <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
+                  <button
+                    v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
+                    type="button"
+                    class="mini-btn pixel-border batch-history-retry-btn"
+                    :data-testid="`batch-history-retry-${job.job_id}`"
+                    @click.stop="retryBatchHistoryJob(job)"
+                  >
+                    重试
+                  </button>
                 </li>
               </ul>
             </section>
@@ -1619,6 +1745,15 @@
               ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
               · {{ job.status }}
               <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
+              <button
+                v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
+                type="button"
+                class="mini-btn pixel-border batch-history-retry-btn"
+                :data-testid="`batch-history-retry-${job.job_id}`"
+                @click.stop="retryBatchHistoryJob(job)"
+              >
+                重试
+              </button>
             </li>
           </ul>
         </div>
@@ -2369,6 +2504,7 @@ const batchHistoryStatusFilter = ref('');
 const highlightedBatchHistoryId = ref('');
 const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
+const volumePlanDiffExpanded = ref(false);
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
@@ -2563,9 +2699,12 @@ const defaultUiProfile = {
   batch_history_status_color: false,
   volume_plan_diff_refresh_on_save: false,
   batch_history_running_pulse: false,
+  volume_plan_diff_auto_collapse: false,
+  batch_history_failed_retry: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   companion_creation_mode_badge_tint: false,
+  advance_creation_mode_badge_tint: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -2575,6 +2714,14 @@ const defaultUiProfile = {
 };
 
 const uiProfile = computed(() => overview.value?.ui_profile || defaultUiProfile);
+
+watch(
+  () => volumePlanDiffPreview.value?.has_changes,
+  (hasChanges) => {
+    if (!uiProfile.value.volume_plan_diff_auto_collapse) return;
+    volumePlanDiffExpanded.value = Boolean(hasChanges);
+  },
+);
 const deviationHighlightEnabled = computed(
   () => Boolean(
     uiProfile.value.deviation_list_highlight || uiProfile.value.deviation_click_highlight,
@@ -3344,7 +3491,6 @@ async function loadVolumePlan() {
   splitPreview.value = null;
   syncSplitChapterFromVolume();
   syncBatchRangeFromVolumes();
-  await refreshVolumePlanDiffPreview();
 }
 
 async function refreshVolumePlanDiffPreview() {
@@ -3354,9 +3500,20 @@ async function refreshVolumePlanDiffPreview() {
   }
   try {
     volumePlanDiffPreview.value = await previewCreatorVolumePlanDiff(editableVolumes.value);
+    if (uiProfile.value.volume_plan_diff_auto_collapse) {
+      volumePlanDiffExpanded.value = Boolean(volumePlanDiffPreview.value?.has_changes);
+    }
   } catch {
     volumePlanDiffPreview.value = null;
+    if (uiProfile.value.volume_plan_diff_auto_collapse) {
+      volumePlanDiffExpanded.value = false;
+    }
   }
+}
+
+function onVolumePlanDiffToggle(event) {
+  if (!uiProfile.value.volume_plan_diff_auto_collapse) return;
+  volumePlanDiffExpanded.value = Boolean(event.target?.open);
 }
 
 async function loadBatchHistory() {
@@ -3378,6 +3535,18 @@ function applyBatchHistoryRange(job) {
   batchEnd.value = Number(job.end_chapter) || batchStart.value;
   highlightedBatchHistoryId.value = job.job_id || '';
   saveMessage.value = `已填入 batch 范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}`;
+}
+
+function retryBatchHistoryJob(job) {
+  if (!uiProfile.value.batch_history_failed_retry || !job) return;
+  if (String(job.status).toLowerCase() !== 'failed') return;
+  batchStart.value = Number(job.start_chapter) || 1;
+  batchEnd.value = Number(job.end_chapter) || batchStart.value;
+  if (job.budget_usd != null && !Number.isNaN(Number(job.budget_usd))) {
+    batchBudget.value = Number(job.budget_usd);
+  }
+  highlightedBatchHistoryId.value = job.job_id || '';
+  saveMessage.value = `已填入失败任务范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}，可重新运行 batch`;
 }
 
 function openModeSwitchDoc(link) {
@@ -4911,6 +5080,7 @@ async function refresh() {
     ]);
     overview.value = ov;
     syncWizardPanelOpen();
+    await refreshVolumePlanDiffPreview();
     await loadMergePreferences();
     await loadMergePresetPackages();
     await loadTemplateApprovals();
@@ -5136,6 +5306,23 @@ watch(
   color: #2a6;
   background: rgba(80, 180, 120, 0.15);
   box-shadow: inset 0 0 0 1px rgba(60, 140, 90, 0.45);
+}
+
+.mode-badge--advance-tint {
+  color: #36a;
+  background: rgba(80, 140, 220, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(60, 110, 180, 0.45);
+}
+
+.volume-plan-diff-summary {
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+}
+
+.batch-history-retry-btn {
+  margin-left: var(--space-xs);
+  font-size: 7px;
 }
 
 .volume-plan-outline-lines {
