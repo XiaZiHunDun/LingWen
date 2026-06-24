@@ -2633,4 +2633,89 @@ describe('CreatorPage', () => {
     expect(hint.text()).toContain('工作室模式');
     expect(hint.text()).toContain('creation_mode: companion');
   });
+
+  it('v5.2 volume plan diff expand detail lines', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_expand_detail: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [
+        {
+          type: 'changed',
+          label: '一',
+          message: '核心冲突已修改',
+          details: ['核心冲突：开篇 → 新冲突'],
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('新冲突');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-details-changed-一"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-detail-一-0"]').text()).toContain('核心冲突');
+  });
+
+  it('v5.2 batch history status filter', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_status_filter: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-done',
+          start_chapter: 1,
+          end_chapter: 5,
+          status: 'completed',
+          finished_at: '2026-06-22',
+        },
+        {
+          job_id: 'job-fail',
+          start_chapter: 6,
+          end_chapter: 8,
+          status: 'failed',
+          finished_at: '2026-06-21',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.findAll('[data-testid^="batch-history-job-"]').length).toBe(2);
+    await wrapper.find('[data-testid="batch-history-status-filter"]').setValue('failed');
+    await flushPromises();
+    expect(wrapper.findAll('[data-testid^="batch-history-job-"]').length).toBe(1);
+    expect(wrapper.find('[data-testid="batch-history-job-fail"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-job-done"]').exists()).toBe(false);
+  });
+
+  it('v5.2 companion mode switch doc links', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'companion',
+        primary_action: 'logic_check',
+        creation_mode_switch_doc_link: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-switch-doc-links"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="mode-switch-doc-advance-checklist"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('advance-walkthrough-checklist');
+  });
 });

@@ -487,31 +487,72 @@ def preview_volume_plan_diff(
 ) -> dict[str, Any]:
     baseline_by_label = {str(row.get("label", "")).strip(): row for row in baseline if row.get("label")}
     draft_by_label = {str(row.get("label", "")).strip(): row for row in draft if row.get("label")}
-    changes: list[dict[str, str]] = []
+    changes: list[dict[str, Any]] = []
+
+    def _volume_row_details(row: dict[str, Any]) -> list[str]:
+        locked = "已锁定" if row.get("locked") else "未锁定"
+        return [
+            f"章范围 ch{int(row.get('start_chapter', 0)):03d}–ch{int(row.get('end_chapter', 0)):03d}",
+            f"核心冲突：{str(row.get('core_conflict', '')).strip() or '（空）'}",
+            locked,
+        ]
 
     for label, row in draft_by_label.items():
         if label not in baseline_by_label:
-            changes.append({"type": "added", "label": label, "message": f"新增卷「{label}」"})
+            changes.append(
+                {
+                    "type": "added",
+                    "label": label,
+                    "message": f"新增卷「{label}」",
+                    "details": _volume_row_details(row),
+                },
+            )
             continue
         prev = baseline_by_label[label]
         parts: list[str] = []
+        detail_lines: list[str] = []
         if int(prev.get("start_chapter", 0)) != int(row.get("start_chapter", 0)) or int(
             prev.get("end_chapter", 0),
         ) != int(row.get("end_chapter", 0)):
-            parts.append(
+            range_msg = (
                 f"章范围 ch{int(prev.get('start_chapter', 0)):03d}–ch{int(prev.get('end_chapter', 0)):03d}"
-                f" → ch{int(row.get('start_chapter', 0)):03d}–ch{int(row.get('end_chapter', 0)):03d}",
+                f" → ch{int(row.get('start_chapter', 0)):03d}–ch{int(row.get('end_chapter', 0)):03d}"
             )
-        if str(prev.get("core_conflict", "")).strip() != str(row.get("core_conflict", "")).strip():
+            parts.append(range_msg)
+            detail_lines.append(range_msg)
+        prev_conflict = str(prev.get("core_conflict", "")).strip()
+        next_conflict = str(row.get("core_conflict", "")).strip()
+        if prev_conflict != next_conflict:
             parts.append("核心冲突已修改")
+            detail_lines.append(
+                f"核心冲突：{prev_conflict or '（空）'} → {next_conflict or '（空）'}",
+            )
         if bool(prev.get("locked")) != bool(row.get("locked")):
-            parts.append("锁定" if row.get("locked") else "解锁")
+            lock_msg = "锁定" if row.get("locked") else "解锁"
+            parts.append(lock_msg)
+            detail_lines.append(
+                f"锁定：{'是' if prev.get('locked') else '否'} → {'是' if row.get('locked') else '否'}",
+            )
         if parts:
-            changes.append({"type": "changed", "label": label, "message": " · ".join(parts)})
+            changes.append(
+                {
+                    "type": "changed",
+                    "label": label,
+                    "message": " · ".join(parts),
+                    "details": detail_lines,
+                },
+            )
 
     for label in baseline_by_label:
         if label not in draft_by_label:
-            changes.append({"type": "removed", "label": label, "message": f"移除卷「{label}」"})
+            changes.append(
+                {
+                    "type": "removed",
+                    "label": label,
+                    "message": f"移除卷「{label}」",
+                    "details": _volume_row_details(baseline_by_label[label]),
+                },
+            )
 
     return {"has_changes": bool(changes), "changes": changes}
 

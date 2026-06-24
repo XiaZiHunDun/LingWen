@@ -46,6 +46,22 @@
     >
       {{ creationModeSwitchHintText }}
     </p>
+    <div
+      v-if="uiProfile.creation_mode_switch_doc_link && creationModeSwitchDocLinks.length"
+      class="mode-switch-doc-links pixel-border"
+      data-testid="creation-mode-switch-doc-links"
+    >
+      <button
+        v-for="link in creationModeSwitchDocLinks"
+        :key="link.id"
+        type="button"
+        class="mini-btn pixel-border mode-switch-doc-link"
+        :data-testid="`mode-switch-doc-${link.id}`"
+        @click="openModeSwitchDoc(link)"
+      >
+        {{ link.label }}
+      </button>
+    </div>
     <p
       v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
       class="mode-switch-hint studio-entry-hint pixel-border"
@@ -1216,7 +1232,27 @@
                 class="volume-plan-diff-item"
                 :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
               >
-                <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                <details
+                  v-if="uiProfile.volume_plan_diff_expand_detail && row.details?.length"
+                  class="volume-plan-diff-details"
+                  :data-testid="`volume-plan-diff-details-${row.type}-${row.label}`"
+                >
+                  <summary>
+                    <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                  </summary>
+                  <ul class="volume-plan-diff-detail-list">
+                    <li
+                      v-for="(line, detailIdx) in row.details"
+                      :key="`vol-diff-detail-${row.label}-${detailIdx}`"
+                      :data-testid="`volume-plan-diff-detail-${row.label}-${detailIdx}`"
+                    >
+                      {{ line }}
+                    </li>
+                  </ul>
+                </details>
+                <template v-else>
+                  <span class="diff-type">{{ row.type }}</span> {{ row.message }}
+                </template>
               </li>
             </ul>
             <div
@@ -1437,9 +1473,37 @@
           data-testid="batch-history-panel"
         >
           <h3 class="subsection-title">Batch 历史</h3>
-          <ul class="batch-history-list" data-testid="batch-history-list">
+          <label
+            v-if="uiProfile.batch_history_status_filter"
+            class="meta-line batch-history-filter"
+            data-testid="batch-history-filter-label"
+          >
+            状态筛选
+            <select
+              v-model="batchHistoryStatusFilter"
+              class="vol-input"
+              data-testid="batch-history-status-filter"
+            >
+              <option value="">全部</option>
+              <option
+                v-for="status in batchHistoryStatusOptions"
+                :key="status"
+                :value="status"
+              >
+                {{ status }}
+              </option>
+            </select>
+          </label>
+          <p
+            v-if="!filteredBatchHistory.length"
+            class="meta-line"
+            data-testid="batch-history-empty"
+          >
+            无匹配任务
+          </p>
+          <ul v-else class="batch-history-list" data-testid="batch-history-list">
             <li
-              v-for="job in batchHistory"
+              v-for="job in filteredBatchHistory"
               :key="job.job_id"
               class="batch-history-item"
               :class="{
@@ -2198,6 +2262,7 @@ const overview = ref(null);
 const editableVolumes = ref([]);
 const savedVolumeSnapshot = ref([]);
 const batchHistory = ref([]);
+const batchHistoryStatusFilter = ref('');
 const highlightedBatchHistoryId = ref('');
 const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
@@ -2382,9 +2447,12 @@ const defaultUiProfile = {
   issue_paragraph_highlight_unified: false,
   volume_plan_diff_preview: false,
   volume_plan_diff_save_confirm: false,
+  volume_plan_diff_expand_detail: false,
   batch_history_panel: false,
   batch_history_replay_range: false,
+  batch_history_status_filter: false,
   creation_mode_switch_hint: false,
+  creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
@@ -2451,6 +2519,49 @@ const creationModeSwitchHintText = computed(() => {
     return '推进模式：人定卷纲 + batch 产章。切换陪伴请编辑 config/project.yaml → creation_mode: companion';
   }
   return '';
+});
+
+const creationModeSwitchDocLinks = computed(() => {
+  if (!uiProfile.value.creation_mode_switch_doc_link || !overview.value) return [];
+  const mode = overview.value.creation_mode;
+  const onboardingDoc = onboardingWizard.value?.onboarding_doc || 'docs/creator-onboarding.md';
+  if (mode === 'companion') {
+    return [
+      {
+        id: 'advance-checklist',
+        label: '推进走通清单',
+        path: 'docs/advance-walkthrough-checklist.md',
+      },
+      { id: 'onboarding', label: '模式说明', path: onboardingDoc },
+    ];
+  }
+  if (mode === 'advance') {
+    return [
+      {
+        id: 'companion-checklist',
+        label: '陪伴走通清单',
+        path: 'docs/companion-walkthrough-checklist.md',
+      },
+      { id: 'onboarding', label: '模式说明', path: onboardingDoc },
+    ];
+  }
+  return [];
+});
+
+const batchHistoryStatusOptions = computed(() => {
+  const statuses = new Set();
+  for (const job of batchHistory.value) {
+    if (job?.status) statuses.add(String(job.status));
+  }
+  return Array.from(statuses).sort();
+});
+
+const filteredBatchHistory = computed(() => {
+  if (!uiProfile.value.batch_history_status_filter || !batchHistoryStatusFilter.value) {
+    return batchHistory.value;
+  }
+  const status = batchHistoryStatusFilter.value;
+  return batchHistory.value.filter((job) => String(job.status) === status);
 });
 
 const studioCreationEntryHintText = computed(() => {
@@ -3109,6 +3220,11 @@ function applyBatchHistoryRange(job) {
   batchEnd.value = Number(job.end_chapter) || batchStart.value;
   highlightedBatchHistoryId.value = job.job_id || '';
   saveMessage.value = `已填入 batch 范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}`;
+}
+
+function openModeSwitchDoc(link) {
+  if (!link?.path) return;
+  saveMessage.value = `文档：${link.path}`;
 }
 
 async function loadOnboardingWizard() {
@@ -4794,6 +4910,41 @@ watch(
   font-size: 7px;
   margin-right: var(--space-xs);
   text-transform: uppercase;
+}
+
+.volume-plan-diff-details summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.volume-plan-diff-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.volume-plan-diff-detail-list {
+  list-style: none;
+  padding: var(--space-xs) 0 0 var(--space-sm);
+  margin: 0;
+  font-size: 7px;
+  opacity: 0.9;
+}
+
+.mode-switch-doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+}
+
+.mode-switch-doc-link {
+  font-size: 7px;
+}
+
+.batch-history-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }
 
 .batch-history-panel {

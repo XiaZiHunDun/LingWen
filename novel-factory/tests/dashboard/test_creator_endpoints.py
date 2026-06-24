@@ -1363,6 +1363,37 @@ class TestCreatorEndpoints:
         assert "batch_history_replay_range" in profile
         assert "studio_creation_entry_hint" in profile
 
+    def test_creator_v52_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_expand_detail" in profile
+        assert "batch_history_status_filter" in profile
+        assert "creation_mode_switch_doc_link" in profile
+
+    def test_creator_v52_volume_plan_diff_details(self, client: TestClient) -> None:
+        plan = client.get("/api/creator/volume-plan").json()
+        volumes = plan["volumes"]
+        if not volumes:
+            volumes = [
+                {
+                    "label": "一",
+                    "start_chapter": 1,
+                    "end_chapter": 5,
+                    "core_conflict": "开篇",
+                    "locked": False,
+                },
+            ]
+        modified = [dict(volumes[0], core_conflict="v5.2 detail smoke")]
+        resp = client.post(
+            "/api/creator/volume-plan/diff",
+            json={"volumes": modified, "expected_revision": plan["revision"]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["has_changes"] is True
+        assert data["changes"][0].get("details")
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

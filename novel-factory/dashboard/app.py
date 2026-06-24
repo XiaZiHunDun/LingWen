@@ -294,9 +294,12 @@ class CreatorUiProfile(BaseModel):
     issue_paragraph_highlight_unified: bool = False
     volume_plan_diff_preview: bool = False
     volume_plan_diff_save_confirm: bool = False
+    volume_plan_diff_expand_detail: bool = False
     batch_history_panel: bool = False
     batch_history_replay_range: bool = False
+    batch_history_status_filter: bool = False
     creation_mode_switch_hint: bool = False
+    creation_mode_switch_doc_link: bool = False
     studio_creation_entry_hint: bool = False
     deviation_min_severity: Optional[str] = None
 
@@ -401,6 +404,7 @@ class CreatorVolumePlanDiffChange(BaseModel):
     type: str
     label: str
     message: str
+    details: list[str] = []
 
 
 class CreatorVolumePlanDiffResponse(BaseModel):
