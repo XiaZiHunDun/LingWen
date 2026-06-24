@@ -1249,6 +1249,36 @@ class TestCreatorEndpoints:
         assert "batch_deviation_prompt" in profile
         assert "chapter_recheck_inline" in profile
 
+    def test_creator_v45_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "chapter_outline_inline_edit" in profile
+        assert "recheck_issue_paragraph_jump" in profile
+        assert "batch_clear_pulse_no_alert" in profile
+
+    def test_creator_v45_chapter_outline_save(self, client: TestClient) -> None:
+        preview = client.get("/api/creator/chapters/1?full=1")
+        assert preview.status_code == 200
+        assert "outline_text" in preview.json()
+
+        saved = client.put(
+            "/api/creator/chapters/1/outline",
+            json={"outline": "Dashboard 内嵌大纲保存测试。"},
+        )
+        assert saved.status_code == 200
+        body = saved.json()
+        assert body["outline_text"] is not None
+        assert "内嵌大纲" in body["outline_text"]
+
+    def test_creator_v45_logic_check_paragraph(self, client: TestClient) -> None:
+        resp = client.post("/api/creator/logic-check?chapter=1")
+        assert resp.status_code == 200
+        data = resp.json()
+        for issue in data.get("issues", []):
+            assert "paragraph" in issue
+            assert "line" in issue
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

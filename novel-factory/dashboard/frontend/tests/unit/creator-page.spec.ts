@@ -28,6 +28,7 @@ const creatorMocks = vi.hoisted(() => ({
   setCreatorVolumeTemplateVersion: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   saveCreatorChapterBody: vi.fn(),
+  saveCreatorChapterOutline: vi.fn(),
   generateCreatorVolumeSummary: vi.fn(),
   dismissCreatorWizardPanel: vi.fn(),
   fetchCreatorSettingsDocs: vi.fn(),
@@ -122,6 +123,7 @@ vi.mock('../../src/api/index.js', () => ({
   setCreatorVolumeTemplateVersion: creatorMocks.setCreatorVolumeTemplateVersion,
   fetchCreatorChapterPreview: creatorMocks.fetchCreatorChapterPreview,
   saveCreatorChapterBody: creatorMocks.saveCreatorChapterBody,
+  saveCreatorChapterOutline: creatorMocks.saveCreatorChapterOutline,
   generateCreatorVolumeSummary: creatorMocks.generateCreatorVolumeSummary,
   dismissCreatorWizardPanel: creatorMocks.dismissCreatorWizardPanel,
   fetchCreatorSettingsDocs: creatorMocks.fetchCreatorSettingsDocs,
@@ -378,6 +380,19 @@ describe('CreatorPage', () => {
       body_truncated: false,
       outline_truncated: false,
       body_text: '第一章正文预览',
+      outline_text: '大纲预览',
+    });
+    creatorMocks.saveCreatorChapterOutline.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 2000,
+      body_preview: '第一章正文预览',
+      outline_preview: '更新大纲',
+      body_truncated: false,
+      outline_truncated: false,
+      body_text: '第一章正文预览',
+      outline_text: '更新大纲',
     });
     creatorMocks.generateCreatorVolumeSummary.mockResolvedValue({
       path: 'docs/volume-summary-ch001-010.md',
@@ -1866,5 +1881,134 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalledWith({ chapter: 1 });
     expect(companionWrapper.find('[data-testid="chapter-recheck-inline-panel"]').exists()).toBe(true);
+  });
+
+  it('v4.5 companion dual outline/body edit and recheck paragraph jump', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
+        chapter_full_preview: false,
+        logic_check_inline_issues: true,
+        logic_check_p0_only: true,
+        deviation_chapter_jump: true,
+        chapter_save_p0_recheck: true,
+        chapter_recheck_inline: true,
+        chapter_outline_inline_edit: true,
+        recheck_issue_paragraph_jump: true,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    creatorMocks.fetchCreatorChapterPreview.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 20,
+      body_preview: '第一段。\n\n第二段。',
+      outline_preview: '章纲预览',
+      body_truncated: false,
+      outline_truncated: false,
+      body_text: '第一段。\n\n第二段。',
+      outline_text: '章纲预览',
+    });
+    creatorMocks.runCreatorLogicCheck.mockResolvedValue({
+      passed: false,
+      p0_count: 1,
+      total_issues: 1,
+      p0_only: true,
+      chapter: 1,
+      issues: [{ chapter: 1, severity: 'p0', message: '测试问题', paragraph: 2, line: 3 }],
+    });
+    creatorMocks.saveCreatorChapterBody.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 20,
+      body_preview: '第一段。\n\n第二段。',
+      outline_preview: '章纲预览',
+      body_truncated: false,
+      outline_truncated: false,
+      body_text: '第一段。\n\n第二段。',
+      outline_text: '章纲预览',
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="chapter-dual-edit"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="chapter-outline-textarea"]').setValue('新章纲');
+    await wrapper.find('[data-testid="save-chapter-outline-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorChapterOutline).toHaveBeenCalledWith(1, '新章纲');
+    await wrapper.find('[data-testid="save-chapter-body-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalledWith({ chapter: 1 });
+    const textarea = wrapper.find('[data-testid="chapter-body-textarea"]').element as HTMLTextAreaElement;
+    const selectSpy = vi.spyOn(textarea, 'setSelectionRange');
+    await wrapper.find('[data-testid="chapter-recheck-issue-0"]').trigger('click');
+    await flushPromises();
+    expect(selectSpy).toHaveBeenCalled();
+    const [start, end] = selectSpy.mock.calls[0];
+    expect(end).toBeGreaterThan(start);
+  });
+
+  it('v4.5 advance batch clears pulse highlight when no alert volume', async () => {
+    vi.useFakeTimers();
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_highlight_alert_volumes: false,
+        batch_clear_pulse_no_alert: true,
+        batch_auto_open_summary: false,
+        batch_deviation_prompt: false,
+      },
+      volume_pulse: {
+        ...overviewFixture.volume_pulse,
+        volumes: [
+          {
+            label: '一',
+            start_chapter: 1,
+            end_chapter: 5,
+            written: 5,
+            total_chapters: 5,
+            progress_pct: 100,
+            locked: true,
+            status: 'warn',
+            deviation_count: 0,
+            headline: '已完成',
+          },
+        ],
+      },
+    });
+    creatorMocks.studioProductionRun.mockResolvedValue({ job_id: 'job-v45', status: 'running' });
+    creatorMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="volume-pulse-row-一"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-pulse-row-一"]').classes()).toContain('volume-pulse-row--active');
+    await wrapper.find('[data-testid="advance-preflight-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="advance-batch-btn"]').trigger('click');
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(3000);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-pulse-row-一"]').classes()).not.toContain('volume-pulse-row--active');
+    vi.useRealTimers();
   });
 });

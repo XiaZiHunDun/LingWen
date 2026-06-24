@@ -381,17 +381,65 @@
           </h3>
           <p v-if="previewLoading" class="meta-line">加载中…</p>
           <template v-else>
-            <details v-if="chapterPreview.has_outline" open>
+            <div
+              v-if="uiProfile.chapter_outline_inline_edit"
+              class="chapter-dual-edit"
+              data-testid="chapter-dual-edit"
+            >
+              <div class="chapter-outline-edit">
+                <label class="meta-line">分章大纲</label>
+                <textarea
+                  v-model="chapterOutlineDraft"
+                  class="settings-textarea chapter-outline-textarea"
+                  rows="10"
+                  data-testid="chapter-outline-textarea"
+                />
+                <button
+                  type="button"
+                  class="save-btn pixel-border"
+                  data-testid="save-chapter-outline-btn"
+                  :disabled="chapterOutlineSaving"
+                  @click="saveChapterOutline"
+                >
+                  {{ chapterOutlineSaving ? '保存中…' : '保存大纲' }}
+                </button>
+              </div>
+              <div
+                v-if="uiProfile.chapter_inline_edit"
+                class="chapter-inline-edit"
+                data-testid="chapter-inline-edit"
+              >
+                <label class="meta-line">正文（内嵌编辑）</label>
+                <textarea
+                  ref="chapterBodyTextareaRef"
+                  v-model="chapterBodyDraft"
+                  class="settings-textarea chapter-body-textarea"
+                  rows="12"
+                  data-testid="chapter-body-textarea"
+                />
+                <button
+                  type="button"
+                  class="save-btn pixel-border"
+                  data-testid="save-chapter-body-btn"
+                  :disabled="chapterBodySaving"
+                  @click="saveChapterBody"
+                >
+                  {{ chapterBodySaving ? '保存中…' : '保存正文' }}
+                </button>
+              </div>
+            </div>
+            <details v-else-if="chapterPreview.has_outline" open>
               <summary>分章大纲</summary>
               <pre class="preview-text">{{ chapterPreview.outline_preview || '（空）' }}</pre>
             </details>
             <div
-              v-if="uiProfile.chapter_inline_edit"
+              v-if="!uiProfile.chapter_outline_inline_edit && uiProfile.chapter_inline_edit"
               class="chapter-inline-edit"
               data-testid="chapter-inline-edit"
             >
               <label class="meta-line">正文（内嵌编辑）</label>
               <textarea
+                ref="chapterBodyTextareaRef"
                 v-model="chapterBodyDraft"
                 class="settings-textarea chapter-body-textarea"
                 rows="12"
@@ -429,6 +477,12 @@
                   v-for="(issue, idx) in chapterRecheckResult.issues"
                   :key="`recheck-${issue.chapter}-${idx}`"
                   class="logic-check-issue"
+                  :class="{ 'logic-check-issue--clickable': uiProfile.recheck_issue_paragraph_jump && issue.paragraph }"
+                  role="button"
+                  tabindex="0"
+                  :data-testid="`chapter-recheck-issue-${idx}`"
+                  @click="focusIssueParagraph(issue)"
+                  @keydown.enter="focusIssueParagraph(issue)"
                 >
                   <span class="issue-severity">{{ issue.severity }}</span>
                   {{ issue.title || issue.message }}
@@ -1860,6 +1914,7 @@ import {
   fetchCreatorVolumePlan,
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
+  saveCreatorChapterOutline,
   generateCreatorVolumeSummary,
   dismissCreatorWizardPanel,
   fetchCreatorSettingsDocs,
@@ -1959,7 +2014,10 @@ const editableVolumes = ref([]);
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
+const chapterOutlineDraft = ref('');
 const chapterBodySaving = ref(false);
+const chapterOutlineSaving = ref(false);
+const chapterBodyTextareaRef = ref(null);
 const batchSummaryPrompt = ref(null);
 const chapterRecheckResult = ref(null);
 const openVolumeSummaryName = ref(null);
@@ -2109,6 +2167,9 @@ const defaultUiProfile = {
   batch_auto_open_summary: false,
   batch_deviation_prompt: false,
   chapter_recheck_inline: false,
+  chapter_outline_inline_edit: false,
+  recheck_issue_paragraph_jump: false,
+  batch_clear_pulse_no_alert: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2346,13 +2407,19 @@ async function selectChapter(chapter) {
   previewLoading.value = true;
   chapterPreview.value = null;
   chapterBodyDraft.value = '';
+  chapterOutlineDraft.value = '';
   if (chapterRecheckResult.value?.chapter !== chapter) {
     chapterRecheckResult.value = null;
   }
   try {
-    const full = Boolean(uiProfile.value.chapter_inline_edit || uiProfile.value.chapter_full_preview);
+    const full = Boolean(
+      uiProfile.value.chapter_inline_edit
+        || uiProfile.value.chapter_full_preview
+        || uiProfile.value.chapter_outline_inline_edit,
+    );
     chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterPreview.value.body_preview ?? '';
+    chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterPreview.value.outline_preview ?? '';
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -2416,21 +2483,28 @@ function collectBatchAlertVolumeLabels(start, end) {
 }
 
 async function highlightBatchAlertVolumes(start, end) {
-  if (!uiProfile.value.batch_highlight_alert_volumes) return;
+  if (!uiProfile.value.batch_highlight_alert_volumes && !uiProfile.value.batch_clear_pulse_no_alert) {
+    return;
+  }
   await nextTick();
   const rows = overview.value?.volume_pulse?.volumes || [];
   const alertRow = rows.find(
     (row) => row.status === 'alert' && volumeOverlapsRange(row, start, end),
   );
-  if (!alertRow) return;
-  highlightedVolumeLabel.value = alertRow.label;
-  try {
-    document.querySelector('[data-testid="volume-pulse-panel"]')?.scrollIntoView?.({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  } catch {
-    /* jsdom */
+  if (alertRow) {
+    highlightedVolumeLabel.value = alertRow.label;
+    try {
+      document.querySelector('[data-testid="volume-pulse-panel"]')?.scrollIntoView?.({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } catch {
+      /* jsdom */
+    }
+    return;
+  }
+  if (uiProfile.value.batch_clear_pulse_no_alert) {
+    highlightedVolumeLabel.value = null;
   }
 }
 
@@ -2475,6 +2549,7 @@ async function saveChapterBody() {
   try {
     chapterPreview.value = await saveCreatorChapterBody(selectedChapter.value, chapterBodyDraft.value);
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
+    chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterOutlineDraft.value;
     saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
     await refresh();
     if (uiProfile.value.chapter_save_p0_recheck) {
@@ -2484,6 +2559,43 @@ async function saveChapterBody() {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     chapterBodySaving.value = false;
+  }
+}
+
+async function saveChapterOutline() {
+  if (!selectedChapter.value) return;
+  chapterOutlineSaving.value = true;
+  saveMessage.value = '';
+  try {
+    chapterPreview.value = await saveCreatorChapterOutline(selectedChapter.value, chapterOutlineDraft.value);
+    chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterOutlineDraft.value;
+    chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
+    saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 大纲已保存`;
+    await refresh();
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    chapterOutlineSaving.value = false;
+  }
+}
+
+function focusIssueParagraph(issue) {
+  if (!uiProfile.value.recheck_issue_paragraph_jump || !issue?.paragraph) return;
+  const textarea = chapterBodyTextareaRef.value;
+  if (!textarea) return;
+  const paragraphs = chapterBodyDraft.value.split(/\n\s*\n/);
+  const idx = Math.max(0, Number(issue.paragraph) - 1);
+  const target = paragraphs[idx] ?? '';
+  if (!target) return;
+  const offset = chapterBodyDraft.value.indexOf(target);
+  if (offset < 0) return;
+  textarea.focus();
+  textarea.setSelectionRange(offset, offset + target.length);
+  try {
+    const lineHeight = 16;
+    textarea.scrollTop = Math.max(0, (offset / Math.max(chapterBodyDraft.value.length, 1)) * textarea.scrollHeight - lineHeight * 2);
+  } catch {
+    /* jsdom */
   }
 }
 
@@ -3902,7 +4014,7 @@ function startBatchPolling() {
             : [],
         };
       }
-      if (uiProfile.value.batch_highlight_alert_volumes) {
+      if (uiProfile.value.batch_highlight_alert_volumes || uiProfile.value.batch_clear_pulse_no_alert) {
         await highlightBatchAlertVolumes(batchStart.value, batchEnd.value);
       }
       if (uiProfile.value.batch_auto_open_summary && batchSummaryPrompt.value) {
@@ -4108,6 +4220,23 @@ watch(projectRevision, () => {
   padding: var(--space-sm);
   max-height: 320px;
   overflow: auto;
+}
+
+.chapter-dual-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.chapter-outline-textarea {
+  width: 100%;
+  min-height: 160px;
+}
+
+.logic-check-issue--clickable {
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .chapter-inline-edit {

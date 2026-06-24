@@ -1003,6 +1003,13 @@ export async function saveCreatorChapterBody(chapterNum, body) {
   });
 }
 
+export async function saveCreatorChapterOutline(chapterNum, outline) {
+  return request(`/creator/chapters/${chapterNum}/outline`, {
+    method: 'PUT',
+    body: { outline },
+  });
+}
+
 export async function generateCreatorVolumeSummary({ startChapter, endChapter }) {
   return request('/creator/volume-summary/generate', {
     method: 'POST',

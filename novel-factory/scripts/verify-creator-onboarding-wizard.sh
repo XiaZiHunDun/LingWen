@@ -322,6 +322,13 @@ assert resolve_creator_ui_profile(creation_mode="companion")["deviation_chapter_
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_pulse_summary_generate"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_auto_open_summary"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["chapter_recheck_inline"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["chapter_outline_inline_edit"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_clear_pulse_no_alert"] is True
+
+from infra.creator_dashboard import save_creator_chapter_outline
+
+outline_saved = save_creator_chapter_outline(project, 1, "向导冒烟章纲")
+assert outline_saved["outline_text"] == "向导冒烟章纲"
 
 single = run_creator_logic_check(root, chapter_num=1)
 assert single.get("chapter") == 1

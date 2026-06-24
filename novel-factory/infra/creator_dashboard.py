@@ -156,6 +156,7 @@ def creator_chapter_preview(
     body_limit: int = 4000,
     outline_limit: int = 2500,
     include_full_body: bool = False,
+    include_full_outline: bool = False,
 ) -> dict[str, Any]:
     root = project.root if isinstance(project.root, Path) else Path(project.root)
     paths = ProjectPaths.get(root)
@@ -181,7 +182,31 @@ def creator_chapter_preview(
     }
     if include_full_body:
         payload["body_text"] = body
+    if include_full_outline:
+        payload["outline_text"] = outline
     return payload
+
+
+def save_creator_chapter_outline(
+    project: StudioProject,
+    chapter_num: int,
+    outline: str,
+) -> dict[str, Any]:
+    root = project.root if isinstance(project.root, Path) else Path(project.root)
+    paths = ProjectPaths.get(root)
+    config = ProjectConfig.load(paths)
+    if chapter_num < 1 or chapter_num > config.max_chapter:
+        raise ValueError(f"chapter {chapter_num} out of range 1–{config.max_chapter}")
+    outline_path = config.chapter_outline_path(chapter_num, paths)
+    outline_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized = outline.rstrip() + "\n" if outline.strip() else ""
+    outline_path.write_text(normalized, encoding="utf-8")
+    return creator_chapter_preview(
+        project,
+        chapter_num,
+        include_full_body=True,
+        include_full_outline=True,
+    )
 
 
 def save_creator_chapter_body(
@@ -196,4 +221,9 @@ def save_creator_chapter_body(
         raise ValueError(f"chapter {chapter_num} out of range 1–{config.max_chapter}")
     normalized = body.rstrip() + "\n" if body.strip() else ""
     paths.write_chapter(chapter_num, normalized)
-    return creator_chapter_preview(project, chapter_num, include_full_body=True)
+    return creator_chapter_preview(
+        project,
+        chapter_num,
+        include_full_body=True,
+        include_full_outline=True,
+    )

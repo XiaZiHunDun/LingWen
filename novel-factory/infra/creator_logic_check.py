@@ -92,6 +92,8 @@ def run_creator_logic_check(
         {
             "severity": issue.severity.value,
             "chapter": issue.location.chapter if issue.location else 0,
+            "paragraph": issue.location.paragraph if issue.location else None,
+            "line": issue.location.line if issue.location else None,
             "title": issue.title,
             "message": issue.description or issue.title,
         }

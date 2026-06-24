@@ -277,6 +277,9 @@ class CreatorUiProfile(BaseModel):
     batch_auto_open_summary: bool = False
     batch_deviation_prompt: bool = False
     chapter_recheck_inline: bool = False
+    chapter_outline_inline_edit: bool = False
+    recheck_issue_paragraph_jump: bool = False
+    batch_clear_pulse_no_alert: bool = False
     deviation_min_severity: Optional[str] = None
 
 
@@ -311,6 +314,8 @@ class CreatorVolumePulse(BaseModel):
 class CreatorLogicCheckIssue(BaseModel):
     severity: str
     chapter: int = 0
+    paragraph: Optional[int] = None
+    line: Optional[int] = None
     title: str = ""
     message: str = ""
 
@@ -731,10 +736,15 @@ class CreatorChapterPreviewResponse(BaseModel):
     body_truncated: bool
     outline_truncated: bool
     body_text: Optional[str] = None
+    outline_text: Optional[str] = None
 
 
 class CreatorChapterBodySaveRequest(BaseModel):
     body: str = ""
+
+
+class CreatorChapterOutlineSaveRequest(BaseModel):
+    outline: str = ""
 
 
 class CreatorVolumeSummaryGenerateRequest(BaseModel):
@@ -4338,7 +4348,33 @@ def create_app(
             raise HTTPException(404, "no active project")
         try:
             return CreatorChapterPreviewResponse(
-                **creator_chapter_preview(project, chapter_num, include_full_body=full),
+                **creator_chapter_preview(
+                    project,
+                    chapter_num,
+                    include_full_body=full,
+                    include_full_outline=full,
+                ),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+    @app.put(
+        "/api/creator/chapters/{chapter_num}/outline",
+        response_model=CreatorChapterPreviewResponse,
+    )
+    def creator_chapter_outline_put(
+        chapter_num: int,
+        req: CreatorChapterOutlineSaveRequest,
+    ) -> CreatorChapterPreviewResponse:
+        from infra.creator_dashboard import save_creator_chapter_outline
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            return CreatorChapterPreviewResponse(
+                **save_creator_chapter_outline(project, chapter_num, req.outline),
             )
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
