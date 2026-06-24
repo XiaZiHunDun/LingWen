@@ -3581,4 +3581,113 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('已打开文档');
     openSpy.mockRestore();
   });
+
+  it('v6.3 exports volume plan diff with highlighted changes', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    let exportedPayload = null;
+    const originalBlob = globalThis.Blob;
+    globalThis.Blob = class extends originalBlob {
+      constructor(parts, options) {
+        super(parts, options);
+        try {
+          exportedPayload = JSON.parse(String(parts[0]));
+        } catch {
+          exportedPayload = null;
+        }
+      }
+    };
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export: true,
+        volume_plan_diff_export_highlight: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+        global_outline_lines: [
+          { text: '第一卷', highlighted: true },
+          { text: '第二卷', highlighted: false },
+        ],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('高亮导出');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-volume-plan-diff-btn"]').trigger('click');
+    await flushPromises();
+    expect(exportedPayload?.highlighted_changes?.[0]?.highlighted).toBe(true);
+    expect(exportedPayload?.highlighted_outline_lines?.length).toBe(1);
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('含变更高亮');
+    globalThis.Blob = originalBlob;
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v6.3 batch history weekly summary', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_weekly_summary: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-w1-a',
+          start_chapter: 1,
+          end_chapter: 2,
+          status: 'completed',
+          finished_at: '2026-06-10T12:00:00Z',
+        },
+        {
+          job_id: 'job-w1-b',
+          start_chapter: 3,
+          end_chapter: 4,
+          status: 'failed',
+          finished_at: '2026-06-11T12:00:00Z',
+        },
+        {
+          job_id: 'job-w2',
+          start_chapter: 5,
+          end_chapter: 6,
+          status: 'completed',
+          finished_at: '2026-06-18T12:00:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const summary = wrapper.find('[data-testid="batch-history-weekly-summary"]');
+    expect(summary.exists()).toBe(true);
+    expect(summary.text()).toContain('2 次');
+    expect(summary.text()).toContain('成功 1 · 失败 1');
+  });
+
+  it('v6.3 shows creation mode capability matrix', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_capability_matrix: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const matrix = wrapper.find('[data-testid="creation-mode-capability-matrix"]');
+    expect(matrix.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="creation-mode-capability-human-writing"]').text()).toContain('人主笔');
+    expect(wrapper.find('[data-testid="creation-mode-capability-factory-pipeline"]').text()).toContain('✓');
+  });
 });

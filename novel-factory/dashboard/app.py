@@ -318,7 +318,10 @@ class CreatorUiProfile(BaseModel):
     volume_plan_diff_volume_filter: bool = False
     batch_history_avg_duration: bool = False
     volume_plan_diff_export_outline: bool = False
+    volume_plan_diff_export_highlight: bool = False
     batch_history_failure_trend: bool = False
+    batch_history_weekly_summary: bool = False
+    creation_mode_capability_matrix: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False

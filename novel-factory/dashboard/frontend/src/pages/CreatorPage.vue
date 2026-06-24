@@ -109,6 +109,35 @@
         </li>
       </ul>
     </div>
+    <div
+      v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
+      class="creation-mode-capability-matrix pixel-border"
+      data-testid="creation-mode-capability-matrix"
+    >
+      <p class="meta-line">三模式能力对照</p>
+      <table class="creation-mode-capability-table">
+        <thead>
+          <tr>
+            <th scope="col">能力</th>
+            <th scope="col">陪伴</th>
+            <th scope="col">推进</th>
+            <th scope="col">工作室</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="row in creationModeCapabilityRows"
+            :key="`capability-${row.id}`"
+            :data-testid="`creation-mode-capability-${row.id}`"
+          >
+            <th scope="row">{{ row.label }}</th>
+            <td>{{ row.companion ? '✓' : '—' }}</td>
+            <td>{{ row.advance ? '✓' : '—' }}</td>
+            <td>{{ row.studio ? '✓' : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <p
       v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
       class="mode-switch-hint studio-entry-hint pixel-border"
@@ -1791,6 +1820,21 @@
             失败率 {{ batchHistoryFailureTrend.failurePct }}%（{{ batchHistoryFailureTrend.failed }}/{{ batchHistoryFailureTrend.total }}）
             · 近期趋势{{ batchHistoryFailureTrend.trendLabel }}
           </p>
+          <ul
+            v-if="uiProfile.batch_history_weekly_summary && batchHistoryWeeklySummary.length"
+            class="batch-history-weekly-summary"
+            data-testid="batch-history-weekly-summary"
+          >
+            <li
+              v-for="week in batchHistoryWeeklySummary"
+              :key="`batch-week-${week.weekKey}`"
+              class="meta-line batch-history-weekly-item"
+              :data-testid="`batch-history-week-${week.weekKey}`"
+            >
+              {{ week.weekLabel }} · {{ week.total }} 次
+              · 成功 {{ week.completed }} · 失败 {{ week.failed }}
+            </li>
+          </ul>
           <div class="batch-history-actions">
             <button
               v-if="uiProfile.batch_history_export"
@@ -2875,7 +2919,10 @@ const defaultUiProfile = {
   volume_plan_diff_volume_filter: false,
   batch_history_avg_duration: false,
   volume_plan_diff_export_outline: false,
+  volume_plan_diff_export_highlight: false,
   batch_history_failure_trend: false,
+  batch_history_weekly_summary: false,
+  creation_mode_capability_matrix: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -3048,6 +3095,22 @@ const creationModePreviewRows = computed(() => {
   ];
 });
 
+const CREATION_MODE_CAPABILITY_ROWS = [
+  { id: 'human-writing', label: '人主笔', companion: true, advance: false, studio: false },
+  { id: 'p0-guard', label: 'P0 守门', companion: true, advance: false, studio: false },
+  { id: 'inline-chapter-edit', label: '章内嵌编辑', companion: true, advance: false, studio: false },
+  { id: 'volume-plan-edit', label: '卷纲编辑', companion: true, advance: true, studio: false },
+  { id: 'volume-pulse', label: '脉络预警', companion: false, advance: true, studio: true },
+  { id: 'batch-generate', label: 'Batch 产章', companion: false, advance: true, studio: true },
+  { id: 'factory-pipeline', label: '工厂流水线', companion: false, advance: false, studio: true },
+  { id: 'digest-ops', label: 'Digest 运维', companion: false, advance: false, studio: true },
+];
+
+const creationModeCapabilityRows = computed(() => {
+  if (!uiProfile.value.creation_mode_capability_matrix) return [];
+  return CREATION_MODE_CAPABILITY_ROWS;
+});
+
 const batchHistorySuccessRate = computed(() => {
   if (!uiProfile.value.batch_history_success_rate || !batchHistory.value.length) return null;
   const total = batchHistory.value.length;
@@ -3092,6 +3155,23 @@ const batchHistoryFailureTrend = computed(() => {
     failurePct: Math.round((failed / total) * 100),
     trendLabel,
   };
+});
+
+const batchHistoryWeeklySummary = computed(() => {
+  if (!uiProfile.value.batch_history_weekly_summary || !batchHistory.value.length) return [];
+  const groups = new Map();
+  for (const job of batchHistory.value) {
+    const weekKey = batchJobIsoWeekKey(job);
+    if (!groups.has(weekKey)) {
+      groups.set(weekKey, { weekKey, weekLabel: weekKey, total: 0, completed: 0, failed: 0 });
+    }
+    const row = groups.get(weekKey);
+    row.total += 1;
+    const status = String(job?.status).toLowerCase();
+    if (status === 'completed') row.completed += 1;
+    if (status === 'failed') row.failed += 1;
+  }
+  return Array.from(groups.values()).sort((a, b) => b.weekKey.localeCompare(a.weekKey));
 });
 
 const creationModeSwitchDocLinks = computed(() => {
@@ -3822,6 +3902,20 @@ function batchJobDurationMinutes(job) {
   return Math.round((end - start) / 60000);
 }
 
+function batchJobIsoWeekKey(job) {
+  const raw = job?.finished_at || job?.started_at;
+  if (!raw) return '未知周';
+  const date = new Date(`${String(raw).slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '未知周';
+  const day = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - day + 3);
+  const week1 = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+  const weekNum = 1 + Math.round(
+    ((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getUTCDay() + 6) % 7)) / 7,
+  );
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}
+
 function batchJobDurationLabel(job) {
   if (!uiProfile.value.batch_history_duration || !job) return '';
   const minutes = batchJobDurationMinutes(job);
@@ -3956,9 +4050,15 @@ function exportVolumePlanDiff() {
     payload.global_outline_excerpt = volumePlanDiffPreview.value.global_outline_excerpt || '';
     payload.global_outline_lines = volumePlanDiffPreview.value.global_outline_lines || [];
   }
+  if (uiProfile.value.volume_plan_diff_export_highlight) {
+    payload.highlighted_changes = changes.map((row) => ({ ...row, highlighted: true }));
+    const outlineLines = volumePlanDiffPreview.value.global_outline_lines || [];
+    payload.highlighted_outline_lines = outlineLines.filter((line) => line.highlighted);
+  }
   downloadJsonExport('creator-volume-plan-diff.json', payload);
   const outlineNote = uiProfile.value.volume_plan_diff_export_outline ? '（含大纲摘录）' : '';
-  saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）${outlineNote}`;
+  const highlightNote = uiProfile.value.volume_plan_diff_export_highlight ? '（含变更高亮）' : '';
+  saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）${outlineNote}${highlightNote}`;
 }
 
 async function loadOnboardingWizard() {
