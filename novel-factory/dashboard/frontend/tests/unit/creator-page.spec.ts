@@ -3185,4 +3185,78 @@ describe('CreatorPage', () => {
       'mode-badge--advance-tint',
     );
   });
+
+  it('v5.8 shows volume plan diff change count badge', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_change_count: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [
+          { type: 'changed', label: '一', message: '核心冲突已修改' },
+          { type: 'changed', label: '二', message: '章范围已修改' },
+        ],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('计数测试');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-change-count"]').text()).toContain('2 处');
+  });
+
+  it('v5.8 batch history replay shows budget hint', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_replay_range: true,
+        batch_history_budget_hint: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-budget',
+          start_chapter: 3,
+          end_chapter: 7,
+          status: 'completed',
+          budget_usd: 1.75,
+          finished_at: '2026-06-22',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="batch-history-job-budget"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-budget-input"]').element.value).toBe('1.75');
+    expect(wrapper.find('[data-testid="batch-history-budget-hint"]').text()).toContain('回填预算');
+  });
+
+  it('v5.8 studio mode badge tint class', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'studio',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'studio',
+        primary_action: 'studio_quality',
+        studio_creation_mode_badge_tint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').classes()).toContain(
+      'mode-badge--studio-tint',
+    );
+  });
 });

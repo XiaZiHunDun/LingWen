@@ -356,6 +356,9 @@ assert resolve_creator_ui_profile(creation_mode="companion")["companion_creation
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_auto_collapse"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_failed_retry"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["advance_creation_mode_badge_tint"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_change_count"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_budget_hint"] is True
+assert resolve_creator_ui_profile(creation_mode="studio")["studio_creation_mode_badge_tint"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 

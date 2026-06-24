@@ -13,6 +13,7 @@
             'mode-badge--hintable': modeBadgeHintEnabled && creationModeBadgeHintText,
             'mode-badge--companion-tint': uiProfile.companion_creation_mode_badge_tint && overview.creation_mode === 'companion',
             'mode-badge--advance-tint': uiProfile.advance_creation_mode_badge_tint && overview.creation_mode === 'advance',
+            'mode-badge--studio-tint': uiProfile.studio_creation_mode_badge_tint && overview.creation_mode === 'studio',
           }"
           data-testid="creation-mode-badge"
           :title="modeBadgeHintEnabled ? creationModeBadgeHintText : undefined"
@@ -1235,7 +1236,16 @@
             class="volume-plan-diff-panel pixel-border"
             data-testid="volume-plan-diff-panel"
           >
-            <p class="meta-line">卷纲未保存变更</p>
+            <p class="meta-line">
+              卷纲未保存变更
+              <span
+                v-if="uiProfile.volume_plan_diff_change_count && volumePlanDiffChangeCount"
+                class="volume-plan-diff-count"
+                data-testid="volume-plan-diff-change-count"
+              >
+                {{ volumePlanDiffChangeCount }} 处
+              </span>
+            </p>
             <button
               v-if="uiProfile.volume_plan_diff_jump_outline_edit"
               type="button"
@@ -1346,6 +1356,13 @@
           >
             <summary class="volume-plan-diff-summary" data-testid="volume-plan-diff-summary">
               {{ volumePlanDiffPreview?.has_changes ? '卷纲未保存变更' : '卷纲与已保存一致' }}
+              <span
+                v-if="uiProfile.volume_plan_diff_change_count && volumePlanDiffPreview?.has_changes && volumePlanDiffChangeCount"
+                class="volume-plan-diff-count"
+                data-testid="volume-plan-diff-change-count"
+              >
+                {{ volumePlanDiffChangeCount }} 处
+              </span>
             </summary>
             <template v-if="volumePlanDiffPreview?.has_changes">
               <button
@@ -1607,9 +1624,23 @@
             </label>
             <label>
               预算 $
-              <input v-model.number="batchBudget" type="number" min="0" step="0.01" class="vol-input vol-num" />
+              <input
+                v-model.number="batchBudget"
+                type="number"
+                min="0"
+                step="0.01"
+                class="vol-input vol-num"
+                data-testid="batch-budget-input"
+              />
             </label>
           </div>
+          <p
+            v-if="uiProfile.batch_history_budget_hint && batchHistoryBudgetHint"
+            class="meta-line batch-history-budget-hint"
+            data-testid="batch-history-budget-hint"
+          >
+            {{ batchHistoryBudgetHint }}
+          </p>
           <div class="batch-actions">
             <button
               type="button"
@@ -2501,6 +2532,7 @@ const editableVolumes = ref([]);
 const savedVolumeSnapshot = ref([]);
 const batchHistory = ref([]);
 const batchHistoryStatusFilter = ref('');
+const batchHistoryBudgetHint = ref('');
 const highlightedBatchHistoryId = ref('');
 const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
@@ -2701,8 +2733,11 @@ const defaultUiProfile = {
   batch_history_running_pulse: false,
   volume_plan_diff_auto_collapse: false,
   batch_history_failed_retry: false,
+  volume_plan_diff_change_count: false,
+  batch_history_budget_hint: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
+  studio_creation_mode_badge_tint: false,
   companion_creation_mode_badge_tint: false,
   advance_creation_mode_badge_tint: false,
   creation_mode_switch_hint: false,
@@ -2794,6 +2829,10 @@ const modeBadgeHintEnabled = computed(
     (uiProfile.value.creation_mode_badge_hint || uiProfile.value.studio_creation_mode_badge_hint)
     && creationModeBadgeHintText.value,
   ),
+);
+
+const volumePlanDiffChangeCount = computed(
+  () => volumePlanDiffPreview.value?.changes?.length || 0,
 );
 
 const creationModeSwitchHintText = computed(() => {
@@ -3529,11 +3568,20 @@ async function loadBatchHistory() {
   }
 }
 
+function applyBatchHistoryBudgetFromJob(job) {
+  batchHistoryBudgetHint.value = '';
+  if (!uiProfile.value.batch_history_budget_hint || !job) return;
+  if (job.budget_usd == null || Number.isNaN(Number(job.budget_usd))) return;
+  batchBudget.value = Number(job.budget_usd);
+  batchHistoryBudgetHint.value = `已从历史任务回填预算 $${batchBudget.value}`;
+}
+
 function applyBatchHistoryRange(job) {
   if (!uiProfile.value.batch_history_replay_range || !job) return;
   batchStart.value = Number(job.start_chapter) || 1;
   batchEnd.value = Number(job.end_chapter) || batchStart.value;
   highlightedBatchHistoryId.value = job.job_id || '';
+  applyBatchHistoryBudgetFromJob(job);
   saveMessage.value = `已填入 batch 范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}`;
 }
 
@@ -3542,9 +3590,7 @@ function retryBatchHistoryJob(job) {
   if (String(job.status).toLowerCase() !== 'failed') return;
   batchStart.value = Number(job.start_chapter) || 1;
   batchEnd.value = Number(job.end_chapter) || batchStart.value;
-  if (job.budget_usd != null && !Number.isNaN(Number(job.budget_usd))) {
-    batchBudget.value = Number(job.budget_usd);
-  }
+  applyBatchHistoryBudgetFromJob(job);
   highlightedBatchHistoryId.value = job.job_id || '';
   saveMessage.value = `已填入失败任务范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}，可重新运行 batch`;
 }
@@ -5312,6 +5358,27 @@ watch(
   color: #36a;
   background: rgba(80, 140, 220, 0.15);
   box-shadow: inset 0 0 0 1px rgba(60, 110, 180, 0.45);
+}
+
+.mode-badge--studio-tint {
+  color: #a63;
+  background: rgba(200, 140, 80, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(160, 110, 60, 0.45);
+}
+
+.volume-plan-diff-count {
+  margin-left: var(--space-xs);
+  padding: 1px 4px;
+  border-radius: 2px;
+  color: #a60;
+  background: rgba(255, 200, 80, 0.35);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+}
+
+.batch-history-budget-hint {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-accent);
 }
 
 .volume-plan-diff-summary {
