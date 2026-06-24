@@ -62,6 +62,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_switch_doc_link": True,
             "creation_mode_badge_hint": True,
             "companion_creation_mode_badge_tint": True,
+            "creation_mode_badge_legend": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -115,9 +116,12 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "advance_creation_mode_badge_tint": True,
             "volume_plan_diff_change_count": True,
             "batch_history_budget_hint": True,
+            "volume_plan_diff_type_filter": True,
+            "batch_history_duration": True,
             "creation_mode_badge_hint": True,
             "creation_mode_switch_hint": True,
             "creation_mode_switch_doc_link": True,
+            "creation_mode_badge_legend": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -178,6 +182,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "advance_creation_mode_badge_tint": False,
         "volume_plan_diff_change_count": False,
         "batch_history_budget_hint": False,
+        "volume_plan_diff_type_filter": False,
+        "batch_history_duration": False,
         "creation_mode_badge_hint": False,
         "creation_mode_switch_hint": False,
         "creation_mode_switch_doc_link": False,
@@ -185,6 +191,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "studio_wizard_collapse_memory": True,
         "studio_creation_mode_badge_hint": True,
         "studio_creation_mode_badge_tint": True,
+        "creation_mode_badge_legend": True,
         "companion_creation_mode_badge_tint": False,
         "deviation_min_severity": None,
     }

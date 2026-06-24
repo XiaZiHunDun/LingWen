@@ -3259,4 +3259,74 @@ describe('CreatorPage', () => {
       'mode-badge--studio-tint',
     );
   });
+
+  it('v5.9 filters volume plan diff changes by type', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_type_filter: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [
+          { type: 'changed', label: '一', message: '核心冲突已修改' },
+          { type: 'added', label: '三', message: '新增卷' },
+        ],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('类型筛选');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-type-filter"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="volume-plan-diff-type-filter"]').setValue('added');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-plan-diff-added-三"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="volume-plan-diff-changed-一"]').exists()).toBe(false);
+  });
+
+  it('v5.9 batch history shows job duration', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_duration: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-duration',
+          start_chapter: 1,
+          end_chapter: 4,
+          status: 'completed',
+          started_at: '2026-06-22T10:00:00+00:00',
+          finished_at: '2026-06-22T10:45:00+00:00',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-duration-job-duration"]').text()).toContain('45 分钟');
+  });
+
+  it('v5.9 creation mode badge legend', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_badge_legend: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-badge-legend"]').text()).toContain('陪伴=绿');
+    expect(wrapper.find('[data-testid="creation-mode-badge-legend"]').text()).toContain('工作室=琥珀');
+  });
 });

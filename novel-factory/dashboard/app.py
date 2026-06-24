@@ -311,6 +311,8 @@ class CreatorUiProfile(BaseModel):
     advance_creation_mode_badge_tint: bool = False
     volume_plan_diff_change_count: bool = False
     batch_history_budget_hint: bool = False
+    volume_plan_diff_type_filter: bool = False
+    batch_history_duration: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
@@ -319,6 +321,7 @@ class CreatorUiProfile(BaseModel):
     studio_creation_mode_badge_hint: bool = False
     studio_creation_mode_badge_tint: bool = False
     companion_creation_mode_badge_tint: bool = False
+    creation_mode_badge_legend: bool = False
     deviation_min_severity: Optional[str] = None
 
 

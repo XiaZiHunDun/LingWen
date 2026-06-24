@@ -38,6 +38,13 @@
         </button>
       </div>
     </header>
+    <p
+      v-if="uiProfile.creation_mode_badge_legend"
+      class="mode-badge-legend meta-line pixel-border"
+      data-testid="creation-mode-badge-legend"
+    >
+      徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
+    </p>
 
     <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
@@ -1231,6 +1238,27 @@
           >
             {{ saving ? '保存中…' : '保存卷纲' }}
           </button>
+          <label
+            v-if="uiProfile.volume_plan_diff_type_filter && volumePlanDiffPreview?.has_changes && volumePlanDiffTypeOptions.length"
+            class="meta-line volume-plan-diff-type-filter"
+            data-testid="volume-plan-diff-type-filter-label"
+          >
+            变更类型
+            <select
+              v-model="volumePlanDiffTypeFilter"
+              class="vol-input"
+              data-testid="volume-plan-diff-type-filter"
+            >
+              <option value="">全部</option>
+              <option
+                v-for="diffType in volumePlanDiffTypeOptions"
+                :key="`vol-diff-type-${diffType}`"
+                :value="diffType"
+              >
+                {{ diffType }}
+              </option>
+            </select>
+          </label>
           <div
             v-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview?.has_changes && !uiProfile.volume_plan_diff_auto_collapse"
             class="volume-plan-diff-panel pixel-border"
@@ -1262,7 +1290,7 @@
               <div class="volume-plan-diff-main">
                 <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
                   <li
-                    v-for="(row, idx) in volumePlanDiffPreview.changes"
+                    v-for="(row, idx) in filteredVolumePlanDiffChanges"
                     :key="`vol-diff-${row.label}-${idx}`"
                     class="volume-plan-diff-item"
                     :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
@@ -1381,7 +1409,7 @@
                 <div class="volume-plan-diff-main">
                   <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
                     <li
-                      v-for="(row, idx) in volumePlanDiffPreview.changes"
+                      v-for="(row, idx) in filteredVolumePlanDiffChanges"
                       :key="`vol-diff-collapse-${row.label}-${idx}`"
                       class="volume-plan-diff-item"
                       :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
@@ -1744,6 +1772,13 @@
                   ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
                   · {{ job.status }}
                   <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
+                  <span
+                    v-if="batchJobDurationLabel(job)"
+                    class="meta-line batch-history-duration"
+                    :data-testid="`batch-history-duration-${job.job_id}`"
+                  >
+                    · {{ batchJobDurationLabel(job) }}
+                  </span>
                   <button
                     v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
                     type="button"
@@ -1776,6 +1811,13 @@
               ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
               · {{ job.status }}
               <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
+              <span
+                v-if="batchJobDurationLabel(job)"
+                class="meta-line batch-history-duration"
+                :data-testid="`batch-history-duration-${job.job_id}`"
+              >
+                · {{ batchJobDurationLabel(job) }}
+              </span>
               <button
                 v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
                 type="button"
@@ -2537,6 +2579,7 @@ const highlightedBatchHistoryId = ref('');
 const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
 const volumePlanDiffExpanded = ref(false);
+const volumePlanDiffTypeFilter = ref('');
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
@@ -2735,11 +2778,14 @@ const defaultUiProfile = {
   batch_history_failed_retry: false,
   volume_plan_diff_change_count: false,
   batch_history_budget_hint: false,
+  volume_plan_diff_type_filter: false,
+  batch_history_duration: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
   companion_creation_mode_badge_tint: false,
   advance_creation_mode_badge_tint: false,
+  creation_mode_badge_legend: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -2755,8 +2801,19 @@ watch(
   (hasChanges) => {
     if (!uiProfile.value.volume_plan_diff_auto_collapse) return;
     volumePlanDiffExpanded.value = Boolean(hasChanges);
+    if (!hasChanges) {
+      volumePlanDiffTypeFilter.value = '';
+    }
   },
 );
+
+watch(volumePlanDiffPreview, () => {
+  if (!volumePlanDiffTypeFilter.value) return;
+  const types = new Set((volumePlanDiffPreview.value?.changes || []).map((row) => row.type));
+  if (!types.has(volumePlanDiffTypeFilter.value)) {
+    volumePlanDiffTypeFilter.value = '';
+  }
+});
 const deviationHighlightEnabled = computed(
   () => Boolean(
     uiProfile.value.deviation_list_highlight || uiProfile.value.deviation_click_highlight,
@@ -2834,6 +2891,23 @@ const modeBadgeHintEnabled = computed(
 const volumePlanDiffChangeCount = computed(
   () => volumePlanDiffPreview.value?.changes?.length || 0,
 );
+
+const volumePlanDiffTypeOptions = computed(() => {
+  const types = new Set();
+  for (const row of volumePlanDiffPreview.value?.changes || []) {
+    if (row?.type) types.add(String(row.type));
+  }
+  return [...types].sort();
+});
+
+const filteredVolumePlanDiffChanges = computed(() => {
+  const rows = volumePlanDiffPreview.value?.changes || [];
+  if (!uiProfile.value.volume_plan_diff_type_filter || !volumePlanDiffTypeFilter.value) {
+    return rows;
+  }
+  const selected = volumePlanDiffTypeFilter.value;
+  return rows.filter((row) => String(row.type) === selected);
+});
 
 const creationModeSwitchHintText = computed(() => {
   if (!uiProfile.value.creation_mode_switch_hint || !overview.value) return '';
@@ -3566,6 +3640,16 @@ async function loadBatchHistory() {
   } catch {
     batchHistory.value = [];
   }
+}
+
+function batchJobDurationLabel(job) {
+  if (!uiProfile.value.batch_history_duration || !job) return '';
+  const start = job.started_at ? Date.parse(job.started_at) : Number.NaN;
+  const end = job.finished_at ? Date.parse(job.finished_at) : Number.NaN;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return '';
+  const minutes = Math.round((end - start) / 60000);
+  if (minutes < 1) return '耗时 <1 分钟';
+  return `耗时 ${minutes} 分钟`;
 }
 
 function applyBatchHistoryBudgetFromJob(job) {
@@ -5376,8 +5460,26 @@ watch(
   font-size: 6px;
 }
 
+.mode-badge-legend {
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 7px;
+  color: var(--color-accent);
+}
+
+.volume-plan-diff-type-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
 .batch-history-budget-hint {
   margin: var(--space-xs) 0 0;
+  color: var(--color-accent);
+}
+
+.batch-history-duration {
   color: var(--color-accent);
 }
 
