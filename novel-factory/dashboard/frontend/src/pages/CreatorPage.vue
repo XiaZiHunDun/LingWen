@@ -1240,7 +1240,10 @@
             :class="[
               'deviation-item',
               `deviation-${d.severity}`,
-              { 'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter },
+              {
+                'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter,
+                'deviation-item--active': uiProfile.deviation_list_highlight && highlightedDeviationChapter === d.chapter,
+              },
             ]"
             :role="uiProfile.deviation_chapter_jump && d.chapter ? 'button' : undefined"
             :tabindex="uiProfile.deviation_chapter_jump && d.chapter ? 0 : undefined"
@@ -1900,11 +1903,15 @@
               v-for="(issue, idx) in logicCheckResult.issues"
               :key="`${issue.chapter}-${idx}`"
               class="logic-check-issue"
+              :class="{
+                'logic-check-issue--clickable': Boolean(issue.chapter),
+                'logic-check-issue--active': uiProfile.logic_check_issue_highlight && activeLogicCheckIssueIdx === idx,
+              }"
               role="button"
               tabindex="0"
               :data-testid="`logic-check-issue-${idx}`"
-              @click="jumpToChapter(issue.chapter)"
-              @keydown.enter="jumpToChapter(issue.chapter)"
+              @click="handleLogicCheckIssueClick(issue, idx)"
+              @keydown.enter="handleLogicCheckIssueClick(issue, idx)"
             >
               <span class="issue-severity">{{ issue.severity }}</span>
               <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
@@ -2035,7 +2042,11 @@ const chapterOutlineSaving = ref(false);
 const chapterBodyTextareaRef = ref(null);
 const chapterBodyHighlightActive = ref(false);
 const activeRecheckIssueIdx = ref(null);
+const activeLogicCheckIssueIdx = ref(null);
+const highlightedDeviationChapter = ref(null);
 let chapterBodyHighlightTimer = null;
+let logicCheckIssueHighlightTimer = null;
+let deviationHighlightTimer = null;
 const batchSummaryPrompt = ref(null);
 const chapterRecheckResult = ref(null);
 const openVolumeSummaryName = ref(null);
@@ -2191,6 +2202,9 @@ const defaultUiProfile = {
   recheck_issue_highlight: false,
   batch_scroll_deviation_list: false,
   chapter_outline_read_preview: false,
+  logic_check_issue_highlight: false,
+  deviation_list_highlight: false,
+  batch_open_first_deviation: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2636,13 +2650,52 @@ function focusIssueParagraph(issue, issueIdx) {
   pulseChapterBodyHighlight(issueIdx);
 }
 
+function pulseLogicCheckIssueHighlight(issueIdx) {
+  if (!uiProfile.value.logic_check_issue_highlight) return;
+  activeLogicCheckIssueIdx.value = issueIdx ?? null;
+  if (logicCheckIssueHighlightTimer) {
+    clearTimeout(logicCheckIssueHighlightTimer);
+  }
+  logicCheckIssueHighlightTimer = setTimeout(() => {
+    activeLogicCheckIssueIdx.value = null;
+    logicCheckIssueHighlightTimer = null;
+  }, 1200);
+}
+
+function pulseDeviationHighlight(chapter) {
+  if (!uiProfile.value.deviation_list_highlight || !chapter) return;
+  highlightedDeviationChapter.value = chapter;
+  if (deviationHighlightTimer) {
+    clearTimeout(deviationHighlightTimer);
+  }
+  deviationHighlightTimer = setTimeout(() => {
+    highlightedDeviationChapter.value = null;
+    deviationHighlightTimer = null;
+  }, 1200);
+}
+
+function batchDeviationsInRange(start, end) {
+  return visibleDeviations.value
+    .filter((row) => row.chapter && row.chapter >= start && row.chapter <= end)
+    .sort((a, b) => a.chapter - b.chapter);
+}
+
+async function handleLogicCheckIssueClick(issue, issueIdx) {
+  if (!issue?.chapter) return;
+  pulseLogicCheckIssueHighlight(issueIdx);
+  await jumpToChapter(issue.chapter);
+  if (uiProfile.value.recheck_issue_paragraph_jump && issue.paragraph) {
+    await nextTick();
+    focusIssueParagraph(issue, null);
+  }
+}
+
 async function scrollToBatchDeviationList(start, end) {
   if (!uiProfile.value.batch_scroll_deviation_list) return;
-  await nextTick();
-  const rows = visibleDeviations.value.filter(
-    (row) => row.chapter && row.chapter >= start && row.chapter <= end,
-  );
+  const rows = batchDeviationsInRange(start, end);
   if (!rows.length) return;
+  pulseDeviationHighlight(rows[0].chapter);
+  await nextTick();
   try {
     document.querySelector('[data-testid="deviation-list"]')?.scrollIntoView?.({
       behavior: 'smooth',
@@ -2651,6 +2704,14 @@ async function scrollToBatchDeviationList(start, end) {
   } catch {
     /* jsdom */
   }
+}
+
+async function openFirstBatchDeviationChapter(start, end) {
+  if (!uiProfile.value.batch_open_first_deviation) return;
+  const rows = batchDeviationsInRange(start, end);
+  if (!rows.length) return;
+  pulseDeviationHighlight(rows[0].chapter);
+  await jumpToChapter(rows[0].chapter);
 }
 
 function addVolume() {
@@ -4077,6 +4138,9 @@ function startBatchPolling() {
       if (uiProfile.value.batch_scroll_deviation_list) {
         await scrollToBatchDeviationList(batchStart.value, batchEnd.value);
       }
+      if (uiProfile.value.batch_open_first_deviation) {
+        await openFirstBatchDeviationChapter(batchStart.value, batchEnd.value);
+      }
     }
     if (status === 'completed' || status === 'failed') {
       stopBatchPolling();
@@ -4170,6 +4234,14 @@ onUnmounted(() => {
   if (chapterBodyHighlightTimer) {
     clearTimeout(chapterBodyHighlightTimer);
     chapterBodyHighlightTimer = null;
+  }
+  if (logicCheckIssueHighlightTimer) {
+    clearTimeout(logicCheckIssueHighlightTimer);
+    logicCheckIssueHighlightTimer = null;
+  }
+  if (deviationHighlightTimer) {
+    clearTimeout(deviationHighlightTimer);
+    deviationHighlightTimer = null;
   }
 });
 
@@ -4534,6 +4606,16 @@ watch(projectRevision, () => {
 
 .deviation-item--clickable:hover {
   text-decoration: underline;
+}
+
+.deviation-item--active {
+  animation: deviation-item-flash 1.2s ease-out;
+  box-shadow: inset 0 0 0 2px rgba(200, 80, 80, 0.55);
+}
+
+@keyframes deviation-item-flash {
+  0% { background: rgba(255, 200, 120, 0.45); }
+  100% { background: transparent; }
 }
 
 .deviation-chapter {

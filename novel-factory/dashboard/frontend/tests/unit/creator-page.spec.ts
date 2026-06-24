@@ -2158,4 +2158,95 @@ describe('CreatorPage', () => {
     querySpy.mockRestore();
     vi.useRealTimers();
   });
+
+  it('v4.7 companion logic check issue highlight on click', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
+        chapter_full_preview: false,
+        logic_check_inline_issues: true,
+        logic_check_p0_only: true,
+        recheck_issue_paragraph_jump: true,
+        logic_check_issue_highlight: true,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    creatorMocks.fetchCreatorChapterPreview.mockResolvedValue({
+      chapter: 1,
+      has_body: true,
+      has_outline: true,
+      word_count: 20,
+      body_text: '第一段。\n\n第二段。',
+      body_preview: '第一段。\n\n第二段。',
+      outline_preview: '大纲',
+      outline_text: '大纲',
+      body_truncated: false,
+      outline_truncated: false,
+    });
+    creatorMocks.runCreatorLogicCheck.mockResolvedValue({
+      passed: false,
+      p0_count: 1,
+      total_issues: 1,
+      issues: [{ severity: 'P0', chapter: 1, message: '逻辑问题', paragraph: 2 }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="logic-check-issue-0"]').classes()).toContain(
+      'logic-check-issue--active',
+    );
+  });
+
+  it('v4.7 advance batch opens first deviation chapter with highlight', async () => {
+    vi.useFakeTimers();
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_highlight_alert_volumes: false,
+        batch_clear_pulse_no_alert: false,
+        batch_auto_open_summary: false,
+        batch_deviation_prompt: false,
+        batch_scroll_deviation_list: false,
+        batch_open_first_deviation: true,
+        deviation_list_highlight: true,
+      },
+      deviations: [
+        { type: 'missing_body', severity: 'alert', chapter: 2, volume_label: '一', message: '缺正文' },
+      ],
+    });
+    creatorMocks.studioProductionRun.mockResolvedValue({ job_id: 'job-v47', status: 'running' });
+    creatorMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="advance-preflight-btn"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-testid="advance-batch-btn"]').trigger('click');
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(3000);
+    await flushPromises();
+    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(2, { full: true });
+    expect(wrapper.find('[data-testid="deviation-item-ch2"]').classes()).toContain(
+      'deviation-item--active',
+    );
+    vi.useRealTimers();
+  });
 });

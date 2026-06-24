@@ -283,6 +283,9 @@ class CreatorUiProfile(BaseModel):
     recheck_issue_highlight: bool = False
     batch_scroll_deviation_list: bool = False
     chapter_outline_read_preview: bool = False
+    logic_check_issue_highlight: bool = False
+    deviation_list_highlight: bool = False
+    batch_open_first_deviation: bool = False
     deviation_min_severity: Optional[str] = None
 
 

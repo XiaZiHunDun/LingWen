@@ -1293,6 +1293,14 @@ class TestCreatorEndpoints:
         data = preview.json()
         assert "outline_text" in data
 
+    def test_creator_v47_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "logic_check_issue_highlight" in profile
+        assert "deviation_list_highlight" in profile
+        assert "batch_open_first_deviation" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200
