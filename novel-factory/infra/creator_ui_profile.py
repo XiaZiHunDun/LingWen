@@ -10,7 +10,6 @@ from infra.creator_mode import (
     settings_from_project_config,
 )
 
-
 _SEVERITY_RANK = {"alert": 0, "warn": 1, "info": 2}
 
 
@@ -187,8 +186,6 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_switch_confirm_dialog": True,
             "creation_mode_switch_history": True,
             "creation_mode_switch_undo_hint": True,
-            "creation_mode_switch_hotkey": True,
-            "creation_mode_switch_speech": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -308,9 +305,6 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "studio_creation_mode_badge_hint": True,
         "studio_creation_mode_badge_tint": True,
         "creation_mode_badge_legend": True,
-        "creation_mode_switch_preview": True,
-        "creation_mode_yaml_snippet": True,
-        "creation_mode_switch_doc_open": True,
         "companion_creation_mode_badge_tint": False,
         "deviation_min_severity": None,
     }

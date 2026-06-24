@@ -20,6 +20,7 @@ from infra.cross_volume.storage import RippleStorage
 E2E_PENDING_RIPPLE_ID = "rip-pending-1"
 E2E_REJECTED_RIPPLE_ID = "rip-rejected-1"
 E2E_DECISION_ID = "e2e-dec1"
+E2E_CREATOR_SLUG = "e2e-live-creator"
 
 _DEFAULT_STATE_DIR = Path(__file__).resolve().parents[2] / "infra" / ".state"
 
@@ -108,9 +109,31 @@ def reset_e2e_decision(state_dir: Path | None = None) -> None:
         queue.add(_make_e2e_decision())
 
 
+def ensure_e2e_creator_project() -> Path:
+    """Advance-mode project for creator share-link live e2e."""
+    from infra.project_init import init_minimal_short_project
+    from infra.studio_registry import activate_project, factory_root, get_project_by_slug
+
+    factory = factory_root()
+    existing = get_project_by_slug(E2E_CREATOR_SLUG)
+    if existing is None:
+        init_minimal_short_project(
+            slug=E2E_CREATOR_SLUG,
+            title="E2E 创作伴侣",
+            factory_root=factory,
+            creation_mode="advance",
+            chapter_count=12,
+        )
+    activate_project(E2E_CREATOR_SLUG)
+    project = get_project_by_slug(E2E_CREATOR_SLUG)
+    assert project is not None
+    return project.root
+
+
 def ensure_e2e_fixtures() -> None:
     ensure_e2e_ripples()
     ensure_e2e_decision()
+    ensure_e2e_creator_project()
 
 
 def main(argv: list[str] | None = None) -> int:

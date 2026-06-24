@@ -6,11 +6,11 @@ from unittest.mock import patch
 import pytest
 
 from infra.creator_template_approvals import (
+    approve_template_approval,
     export_template_approval_audit,
     list_template_approval_history,
     save_approval_chain_config,
     submit_template_version_approval,
-    approve_template_approval,
 )
 from infra.creator_volume_templates import save_custom_volume_template
 from infra.paths import ProjectPaths

@@ -7,8 +7,8 @@ from typing import Any
 
 from infra.creator_mode import settings_from_project_config
 from infra.creator_ui_profile import filter_deviations_by_min_severity, ui_profile_from_project_config
+from infra.creator_volume_plan import compute_volume_deviations, load_volume_plan
 from infra.creator_volume_pulse import build_volume_pulse
-from infra.creator_volume_plan import load_volume_plan, compute_volume_deviations
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject, quality_report_summary
@@ -65,7 +65,6 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
     paths = ProjectPaths.get(project.root)
     config = ProjectConfig.load(paths)
     settings = settings_from_project_config(config)
-    chapters_dir = project.root / "03_内容仓库" / "04_正文"
     global_outline = project.root / "03_内容仓库" / "01_全文总体大纲" / "全局大纲.md"
 
     chapter_rows: list[dict[str, Any]] = []

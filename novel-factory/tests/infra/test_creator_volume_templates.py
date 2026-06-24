@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import pytest
 
-from infra.paths import ProjectPaths
 from infra.creator_volume_templates import (
     build_volume_template,
     delete_custom_volume_template,
@@ -11,14 +10,15 @@ from infra.creator_volume_templates import (
     import_custom_volume_templates,
     list_factory_volume_templates,
     list_template_sync_sources,
+    list_volume_templates,
     publish_custom_to_factory_library,
     pull_factory_templates_to_project,
-    sync_custom_volume_templates_from_projects,
-    list_volume_templates,
     rename_custom_volume_template,
     save_custom_volume_template,
     set_custom_template_version_label,
+    sync_custom_volume_templates_from_projects,
 )
+from infra.paths import ProjectPaths
 
 
 def test_list_volume_templates():
@@ -47,8 +47,8 @@ def test_unknown_template():
 
 
 def test_custom_template_save_and_apply(factory_tmp):
-    from infra.project_init import init_minimal_short_project
     from infra.paths import ProjectPaths
+    from infra.project_init import init_minimal_short_project
 
     ProjectPaths.reset()
     result = init_minimal_short_project(

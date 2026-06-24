@@ -137,6 +137,9 @@ dashboard/frontend/.husky/_/
 dashboard/frontend/test-results/
 dashboard/frontend/playwright-report/
 
+# Playwright live e2e ephemeral advance-mode fixture (e2e_seed)
+projects/e2e-live-creator/
+
 # Phase 9.24: legacy memory/ superseded by auto-memory path
 # (active path: ~/.claude/projects/.../memory/, see CLAUDE.md)
 memory/

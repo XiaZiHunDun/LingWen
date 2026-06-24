@@ -3,18 +3,18 @@ from __future__ import annotations
 
 import pytest
 
+from infra.creator_revision import CreatorDocConflictError
 from infra.creator_volume_plan import (
+    VolumeEntry,
     compute_volume_deviations,
+    load_volume_plan,
     merge_volume_range,
     parse_chapter_range,
     parse_volume_table_from_markdown,
     save_volume_plan,
-    load_volume_plan,
     split_volume,
     volume_plan_revision,
-    VolumeEntry,
 )
-from infra.creator_revision import CreatorDocConflictError
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
@@ -120,7 +120,7 @@ def test_semantic_drift_when_outline_keywords_mismatch(factory_tmp):
 
 
 def test_volume_overlap_detection(factory_tmp):
-    result = init_minimal_short_project(
+    init_minimal_short_project(
         slug="overlap-test",
         title="重叠测试",
         factory_root=factory_tmp,
@@ -128,7 +128,6 @@ def test_volume_overlap_detection(factory_tmp):
         chapter_count=20,
     )
     ProjectPaths.reset()
-    root = result.root
     from infra.creator_volume_plan import VolumeEntry, detect_volume_overlaps
 
     overlaps = detect_volume_overlaps(
@@ -201,7 +200,7 @@ def test_volume_plan_revision_conflict(factory_tmp):
 
 
 def test_split_volume(factory_tmp):
-    result = init_minimal_short_project(
+    init_minimal_short_project(
         slug="split-vol",
         title="拆分卷",
         factory_root=factory_tmp,
@@ -209,7 +208,6 @@ def test_split_volume(factory_tmp):
         chapter_count=20,
     )
     ProjectPaths.reset()
-    root = result.root
     volumes = [
         VolumeEntry("一", 1, 10, "开篇", True),
         VolumeEntry("二", 11, 20, "发展", False),

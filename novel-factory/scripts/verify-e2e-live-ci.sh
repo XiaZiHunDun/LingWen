@@ -22,4 +22,4 @@ pnpm exec playwright install --with-deps chromium 2>/dev/null \
 
 CI=true LINGWEN_E2E_LIVE=1 pnpm e2e:live
 
-echo "[F70] live-backend e2e: 5 passed (CI parity OK)"
+echo "[F70] live-backend e2e: 8 passed (CI parity OK)"

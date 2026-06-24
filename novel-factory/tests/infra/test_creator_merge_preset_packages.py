@@ -8,8 +8,8 @@ from infra.creator_merge_preferences import (
     list_merge_preset_packages,
     save_merge_preset_package,
 )
-from infra.project_init import init_minimal_short_project
 from infra.paths import ProjectPaths
+from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture

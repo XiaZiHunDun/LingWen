@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 
+from infra.creator_revision import CreatorDocConflictError
 from infra.creator_settings_docs import (
     assert_settings_revisions,
     creator_settings_docs_payload,
@@ -13,7 +14,6 @@ from infra.creator_settings_docs import (
     save_creator_settings_docs,
     text_diff_summary,
 )
-from infra.creator_revision import CreatorDocConflictError
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

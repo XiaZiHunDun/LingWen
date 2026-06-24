@@ -701,36 +701,6 @@ class CreatorVolumeTemplateApprovalSnapshotDiffResponse(BaseModel):
     visual_diff: dict[str, Any] = {}
 
 
-class CreatorVolumeTemplateApprovalDriftResponse(BaseModel):
-    approval_id: str
-    template_id: str
-    drifted: bool = False
-    diff_summary: dict[str, Any] = {}
-
-
-class CreatorVolumeTemplateApprovalBatchRequest(BaseModel):
-    approval_ids: list[str]
-    assignee: str = ""
-    resolve_note: str = ""
-    reason: str = ""
-    force: bool = False
-
-
-class CreatorVolumeTemplateApprovalBatchResult(BaseModel):
-    id: str
-    ok: bool
-    status: Optional[str] = None
-    chain_advanced: Optional[bool] = None
-    error: Optional[str] = None
-
-
-class CreatorVolumeTemplateApprovalBatchResponse(BaseModel):
-    approved: int = 0
-    rejected: int = 0
-    total: int = 0
-    results: list[CreatorVolumeTemplateApprovalBatchResult] = []
-
-
 class CreatorVolumeTemplateApprovalSlaConfig(BaseModel):
     timeout_hours: int = 72
     email_on_submit: bool = True
@@ -1047,18 +1017,6 @@ class CreatorOnboardingDigestRetryProcessResponse(BaseModel):
 class CreatorOnboardingDigestDeadLetterResponse(BaseModel):
     item_count: int
     items: list[CreatorOnboardingDigestRetryItem] = []
-
-
-class CreatorOnboardingDigestDeadLetterReplayRequest(BaseModel):
-    index: int = 0
-
-
-class CreatorOnboardingDigestDeadLetterReplayResponse(BaseModel):
-    replayed: bool
-    index: int
-    channel: Optional[str] = None
-    retry_queue_size: int = 0
-    dead_letter_count: int = 0
 
 
 class CreatorOnboardingDigestDeadLetterReplayRequest(BaseModel):

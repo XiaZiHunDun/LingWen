@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_onboarding import onboarding_wizard_payload
 from infra.creator_mode import (
     CREATION_MODE_ADVANCE,
     CREATION_MODE_COMPANION,
     CREATION_MODE_STUDIO,
 )
+from infra.creator_onboarding import onboarding_wizard_payload
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

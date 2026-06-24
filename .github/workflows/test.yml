@@ -266,7 +266,7 @@ jobs:
         run: bash scripts/run-llm-golden-check.sh ${{ matrix.slug }}
 
   e2e-live:
-    name: Playwright live-backend (5 specs)
+    name: Playwright live-backend (8 tests)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
@@ -318,7 +318,7 @@ jobs:
         run: |
           if [ "${{ job.status }}" = "success" ]; then
             echo "### Playwright live-backend — passed" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Playwright **live-backend** project (5 tests)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Playwright **live-backend** project (8 tests)" >> "$GITHUB_STEP_SUMMARY"
             echo "- Local parity: \`bash scripts/verify-e2e-live-ci.sh\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "### Playwright live-backend — failed" >> "$GITHUB_STEP_SUMMARY"

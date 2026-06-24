@@ -663,7 +663,6 @@ class TestCreatorEndpoints:
     def test_merge_preset_packages_share(self, client: TestClient) -> None:
         export_resp = client.get("/api/creator/settings-docs/merge-preferences/preset-packages/export")
         assert export_resp.status_code == 200
-        payload = export_resp.json()
         import_resp = client.post(
             "/api/creator/settings-docs/merge-preferences/preset-packages/import",
             json={

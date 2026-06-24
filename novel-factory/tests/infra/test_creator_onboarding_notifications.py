@@ -9,8 +9,8 @@ from infra.creator_onboarding_notifications import (
     unread_mention_count,
 )
 from infra.creator_onboarding_progress import save_onboarding_progress
-from infra.project_init import init_minimal_short_project
 from infra.paths import ProjectPaths
+from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture

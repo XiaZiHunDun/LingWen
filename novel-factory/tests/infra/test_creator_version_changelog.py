@@ -8,8 +8,8 @@ from infra.creator_volume_templates import (
     save_custom_volume_template,
     set_custom_template_version_label,
 )
-from infra.project_init import init_minimal_short_project
 from infra.paths import ProjectPaths
+from infra.project_init import init_minimal_short_project
 
 
 @pytest.fixture
