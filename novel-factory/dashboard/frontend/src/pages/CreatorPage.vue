@@ -10,11 +10,11 @@
           {{ modeLabel }}
         </span>
         <span
-          v-if="overview && overview.deviation_count"
+          v-if="overview && displayDeviationBadge"
           class="deviation-badge pixel-border"
           data-testid="deviation-badge"
         >
-          偏离 {{ overview.deviation_count }}
+          偏离 {{ displayDeviationCount }}
         </span>
         <button
           class="refresh-btn pixel-border"
@@ -45,7 +45,7 @@
       ref="wizardPanelRef"
       class="onboarding-wizard pixel-border"
       data-testid="onboarding-wizard-panel"
-      :open="focusWizard"
+      :open="wizardPanelOpen"
       @toggle="onWizardToggle"
     >
       <summary>
@@ -228,7 +228,7 @@
         >
           全部标为已读
         </button>
-        <div class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
+        <div v-if="!uiProfile.simplified_notifications" class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
           <p class="meta-line">通知 Webhook</p>
           <label class="meta-line">
             <input v-model="wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" />
@@ -255,7 +255,7 @@
             保存 Webhook
           </button>
         </div>
-        <div class="wizard-email-panel" data-testid="wizard-email-panel">
+        <div v-if="!uiProfile.simplified_notifications" class="wizard-email-panel" data-testid="wizard-email-panel">
           <p class="meta-line">通知邮件</p>
           <label class="meta-line">
             <input v-model="wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" />
@@ -423,7 +423,12 @@
         >
           <h3 class="subsection-title">卷级脉络</h3>
           <p class="meta-line" data-testid="volume-pulse-overall">
-            {{ overview.volume_pulse.alert_count ? `${overview.volume_pulse.alert_count} 卷需关注` : '各卷按计划推进' }}
+            <template v-if="overview.volume_pulse.alerts_only">
+              {{ overview.volume_pulse.alert_count ? `${overview.volume_pulse.alert_count} 卷需关注` : '暂无 alert 级偏离' }}
+            </template>
+            <template v-else>
+              {{ overview.volume_pulse.alert_count ? `${overview.volume_pulse.alert_count} 卷需关注` : '各卷按计划推进' }}
+            </template>
           </p>
           <ul>
             <li
@@ -1069,12 +1074,12 @@
         </div>
 
         <ul
-          v-if="overview.deviations.length"
+          v-if="visibleDeviations.length"
           class="deviation-list"
           data-testid="deviation-list"
         >
           <li
-            v-for="(d, i) in overview.deviations"
+            v-for="(d, i) in visibleDeviations"
             :key="i"
             :class="`deviation-item deviation-${d.severity}`"
           >
@@ -1785,6 +1790,7 @@ import { useDashboardNav } from '../composables/useDashboardNav.js';
 const { projectRevision } = useStudioProject();
 const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl } = useDashboardNav();
 const wizardPanelRef = ref(null);
+const wizardPanelOpen = ref(false);
 const overview = ref(null);
 const editableVolumes = ref([]);
 const selectedChapter = ref(null);
@@ -1921,10 +1927,41 @@ const defaultUiProfile = {
   show_merge_preset_advanced: true,
   simplified_notifications: false,
   volume_pulse_enabled: false,
+  wizard_default_collapsed: false,
+  deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
 
 const uiProfile = computed(() => overview.value?.ui_profile || defaultUiProfile);
+
+const visibleDeviations = computed(() => overview.value?.deviations || []);
+
+const displayDeviationCount = computed(() => {
+  const ov = overview.value;
+  if (!ov) return 0;
+  if (uiProfile.value.deviation_min_severity === 'alert') {
+    return ov.alert_count || 0;
+  }
+  return ov.deviation_count || 0;
+});
+
+const displayDeviationBadge = computed(() => displayDeviationCount.value > 0);
+
+function syncWizardPanelOpen() {
+  if (focusWizard.value || focusWizardStep.value) {
+    wizardPanelOpen.value = true;
+    return;
+  }
+  if (wizardUnreadMentions.value > 0) {
+    wizardPanelOpen.value = true;
+    return;
+  }
+  if (uiProfile.value.wizard_default_collapsed) {
+    wizardPanelOpen.value = false;
+    return;
+  }
+  wizardPanelOpen.value = Boolean(focusWizard.value);
+}
 
 let batchPollTimer = null;
 const lastBatchStatus = ref(null);
@@ -2206,7 +2243,7 @@ async function loadOnboardingWizard() {
     wizardStepNotes.value = { ...(onboardingWizard.value?.step_notes || {}) };
     wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
     await loadWizardNotifications();
-    if (focusWizard.value) {
+    if (wizardPanelOpen.value) {
       await nextTick();
       try {
         wizardPanelRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
@@ -2222,6 +2259,7 @@ async function loadOnboardingWizard() {
 }
 
 function onWizardToggle(event) {
+  wizardPanelOpen.value = event.target.open;
   setWizardDeepLink(
     event.target.open,
     event.target.open ? focusWizardStep.value : null,
@@ -3583,6 +3621,7 @@ async function refresh() {
       pollBatchJob(),
     ]);
     overview.value = ov;
+    syncWizardPanelOpen();
     await loadMergePreferences();
     await loadMergePresetPackages();
     await loadTemplateApprovals();

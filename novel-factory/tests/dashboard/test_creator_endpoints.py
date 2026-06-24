@@ -1161,6 +1161,17 @@ class TestCreatorEndpoints:
         assert "passed" in body
         assert "p0_count" in body
 
+    def test_creator_v39_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        data = resp.json()
+        profile = data["ui_profile"]
+        assert "wizard_default_collapsed" in profile
+        assert "deviation_min_severity" in profile
+        assert "deviation_total_count" in data
+        if data.get("volume_pulse"):
+            assert "alerts_only" in data["volume_pulse"]
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

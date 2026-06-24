@@ -260,6 +260,8 @@ class CreatorUiProfile(BaseModel):
     show_merge_preset_advanced: bool = False
     simplified_notifications: bool = True
     volume_pulse_enabled: bool = False
+    wizard_default_collapsed: bool = False
+    deviation_min_severity: Optional[str] = None
 
 
 class CreatorVolumePulseRow(BaseModel):
@@ -285,6 +287,7 @@ class CreatorVolumePulse(BaseModel):
     alert_count: int = 0
     warn_count: int = 0
     overall_status: str = "ok"
+    alerts_only: bool = False
     volumes: list[CreatorVolumePulseRow] = []
     latest_summary: Optional[CreatorVolumePulseSummary] = None
 
@@ -321,6 +324,7 @@ class CreatorOverviewResponse(BaseModel):
     advance_volume_summary: bool
     locked_volume_count: int = 0
     deviation_count: int = 0
+    deviation_total_count: int = 0
     alert_count: int = 0
     deviations: list[CreatorVolumeDeviation] = []
     ui_profile: CreatorUiProfile

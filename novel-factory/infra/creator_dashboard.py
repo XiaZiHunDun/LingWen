@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from infra.creator_mode import settings_from_project_config
-from infra.creator_ui_profile import ui_profile_from_project_config
+from infra.creator_ui_profile import filter_deviations_by_min_severity, ui_profile_from_project_config
 from infra.creator_volume_pulse import build_volume_pulse
 from infra.creator_volume_plan import load_volume_plan, compute_volume_deviations
 from infra.paths import ProjectPaths
@@ -67,9 +67,18 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
     p0_count = report.get("p0", 0) if report.get("available") else None
 
     volumes = load_volume_plan(project.root)
-    deviations = compute_volume_deviations(project.root, volumes, paths=paths)
+    all_deviations = compute_volume_deviations(project.root, volumes, paths=paths)
     ui_profile = ui_profile_from_project_config(config)
-    volume_pulse = build_volume_pulse(project.root) if ui_profile.get("volume_pulse_enabled") else None
+    deviations = filter_deviations_by_min_severity(
+        all_deviations,
+        ui_profile.get("deviation_min_severity"),
+    )
+    alerts_only = ui_profile.get("deviation_min_severity") == "alert"
+    volume_pulse = (
+        build_volume_pulse(project.root, alerts_only=alerts_only)
+        if ui_profile.get("volume_pulse_enabled")
+        else None
+    )
 
     return {
         "slug": project.slug,
@@ -99,6 +108,7 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         "locked_volume_count": sum(1 for v in volumes if v.locked),
         "deviation_count": len(deviations),
         "alert_count": sum(1 for d in deviations if d["severity"] == "alert"),
+        "deviation_total_count": len(all_deviations),
         "deviations": deviations[:30],
         "ui_profile": ui_profile,
         "volume_pulse": volume_pulse,

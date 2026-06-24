@@ -37,7 +37,7 @@ def _volume_headline(
     return f"已写 {written}/{total} 章"
 
 
-def build_volume_pulse(project_root: Path | str) -> dict[str, Any]:
+def build_volume_pulse(project_root: Path | str, *, alerts_only: bool = False) -> dict[str, Any]:
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     paths = ProjectPaths.get(root)
     volumes = load_volume_plan(root)
@@ -88,10 +88,13 @@ def build_volume_pulse(project_root: Path | str) -> dict[str, Any]:
 
     alert_count = sum(1 for row in volume_rows if row["status"] == "alert")
     warn_count = sum(1 for row in volume_rows if row["status"] == "warn")
+    if alerts_only:
+        volume_rows = [row for row in volume_rows if row["status"] == "alert"]
     return {
         "volume_count": len(volume_rows),
         "alert_count": alert_count,
         "warn_count": warn_count,
+        "alerts_only": alerts_only,
         "overall_status": "alert" if alert_count else ("warn" if warn_count else "ok"),
         "volumes": volume_rows,
         "latest_summary": latest_summary,

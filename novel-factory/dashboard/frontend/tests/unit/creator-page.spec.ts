@@ -255,7 +255,8 @@ const overviewFixture = {
   notify_per_chapter: false,
   advance_volume_summary: true,
   locked_volume_count: 1,
-  deviation_count: 2,
+  deviation_count: 1,
+  deviation_total_count: 2,
   alert_count: 1,
   deviations: [
     { type: 'missing_body', severity: 'warn', chapter: 2, volume_label: '一', message: '缺正文' },
@@ -270,14 +271,17 @@ const overviewFixture = {
     show_factory_presets: true,
     show_template_version_ops: true,
     show_merge_preset_advanced: true,
-    simplified_notifications: true,
+    simplified_notifications: false,
     volume_pulse_enabled: true,
+    wizard_default_collapsed: false,
+    deviation_min_severity: 'alert',
   },
   volume_pulse: {
-    volume_count: 2,
+    volume_count: 1,
     alert_count: 0,
     warn_count: 1,
     overall_status: 'warn',
+    alerts_only: true,
     volumes: [
       {
         label: '一',
@@ -1559,5 +1563,63 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalled();
+  });
+
+  it('v3.9 collapses wizard for companion and hides warn deviations for advance', async () => {
+    navMocks.focusWizard.value = false;
+    navMocks.focusWizardStep.value = null;
+    creatorMocks.fetchCreatorOnboarding.mockResolvedValueOnce({
+      mode_label: '陪伴',
+      max_chapter: 12,
+      steps: [{ id: 'init', title: '初始化' }],
+      completed_step_ids: [],
+      auto_completed_step_ids: [],
+      step_notes: {},
+      unread_mention_count: 0,
+      progress_pct: 0,
+    });
+    creatorMocks.fetchCreatorOnboardingNotifications.mockResolvedValueOnce({
+      unread: 0,
+      handles: [],
+      notifications: [],
+    });
+    creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      deviation_count: 2,
+      deviation_total_count: 2,
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const wizard = wrapper.find('[data-testid="onboarding-wizard-panel"]');
+    expect(wizard.element.open).toBe(false);
+    expect(wrapper.find('[data-testid="wizard-webhook-panel"]').exists()).toBe(false);
+
+    creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
+      ...overviewFixture,
+      deviations: [{ type: 'x', severity: 'alert', chapter: 8, message: '越界' }],
+      deviation_count: 1,
+      deviation_total_count: 2,
+    });
+    await wrapper.find('[data-testid="refresh-btn"]').trigger('click');
+    await flushPromises();
+    const items = wrapper.findAll('[data-testid="deviation-list"] .deviation-item');
+    expect(items.length).toBe(1);
+    expect(wrapper.find('[data-testid="deviation-badge"]').text()).toContain('1');
   });
 });

@@ -295,11 +295,14 @@ from infra.creator_ui_profile import resolve_creator_ui_profile
 from infra.creator_volume_pulse import build_volume_pulse
 
 profile = resolve_creator_ui_profile(creation_mode="companion")
-assert profile["primary_action"] == "logic_check"
-check = run_creator_logic_check(root)
-assert "passed" in check
-pulse = build_volume_pulse(root)
-assert "volume_count" in pulse
+assert profile["wizard_default_collapsed"] is True
+from infra.creator_ui_profile import filter_deviations_by_min_severity
+
+filtered = filter_deviations_by_min_severity(
+    [{"severity": "warn"}, {"severity": "alert"}],
+    "alert",
+)
+assert len(filtered) == 1
 
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY

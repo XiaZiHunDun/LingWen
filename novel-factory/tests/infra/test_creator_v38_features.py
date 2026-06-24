@@ -99,5 +99,7 @@ def test_volume_pulse_for_advance(factory_tmp) -> None:
         location="projects",
     )
     overview = creator_overview(project)
-    assert overview["volume_pulse"]["volume_count"] == 2
+    assert overview["volume_pulse"]["alerts_only"] is True
+    full_pulse = build_volume_pulse(root, alerts_only=False)
+    assert full_pulse["volume_count"] == 2
     ProjectPaths.reset()

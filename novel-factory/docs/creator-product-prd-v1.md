@@ -266,3 +266,9 @@ project:
 - 模式化 UI profile（companion/advance 隐藏 Studio 运维面板）— ✅ v3.8
 - 陪伴模式一键逻辑审查 API — ✅ v3.8
 - 推进模式卷级脉络 pulse — ✅ v3.8
+
+## 36. 后续（v3.9+）
+
+- 陪伴默认折叠入门向导 — ✅ v3.9
+- 推进仅展示 alert 级偏离与 pulse — ✅ v3.9
+- 简化通知面板（隐藏 Webhook/邮件集成）— ✅ v3.9
