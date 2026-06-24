@@ -1460,6 +1460,14 @@ class TestCreatorEndpoints:
         assert data.get("highlight_volume_labels")
         assert isinstance(data.get("global_outline_lines"), list)
 
+    def test_creator_v55_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_jump_outline_edit" in profile
+        assert "batch_history_status_color" in profile
+        assert "studio_creation_mode_badge_hint" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

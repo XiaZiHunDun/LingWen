@@ -9,9 +9,9 @@
         <span
           v-if="overview"
           class="mode-badge pixel-border"
-          :class="{ 'mode-badge--hintable': uiProfile.creation_mode_badge_hint && creationModeBadgeHintText }"
+          :class="{ 'mode-badge--hintable': modeBadgeHintEnabled && creationModeBadgeHintText }"
           data-testid="creation-mode-badge"
-          :title="uiProfile.creation_mode_badge_hint ? creationModeBadgeHintText : undefined"
+          :title="modeBadgeHintEnabled ? creationModeBadgeHintText : undefined"
           @click="showCreationModeBadgeHint"
         >
           {{ modeLabel }}
@@ -1232,6 +1232,15 @@
             data-testid="volume-plan-diff-panel"
           >
             <p class="meta-line">卷纲未保存变更</p>
+            <button
+              v-if="uiProfile.volume_plan_diff_jump_outline_edit"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="jump-global-outline-edit-btn"
+              @click="jumpToGlobalOutlineEdit"
+            >
+              编辑全局大纲
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1573,6 +1582,7 @@
                   :class="{
                     'batch-history-item--clickable': uiProfile.batch_history_replay_range,
                     'batch-history-item--active': highlightedBatchHistoryId === job.job_id,
+                    ...batchHistoryStatusClass(job),
                   }"
                   :role="uiProfile.batch_history_replay_range ? 'button' : undefined"
                   :tabindex="uiProfile.batch_history_replay_range ? 0 : undefined"
@@ -1595,6 +1605,7 @@
               :class="{
                 'batch-history-item--clickable': uiProfile.batch_history_replay_range,
                 'batch-history-item--active': highlightedBatchHistoryId === job.job_id,
+                ...batchHistoryStatusClass(job),
               }"
               :role="uiProfile.batch_history_replay_range ? 'button' : undefined"
               :tabindex="uiProfile.batch_history_replay_range ? 0 : undefined"
@@ -1680,6 +1691,7 @@
         <details class="settings-block" open>
           <summary>全局大纲</summary>
           <textarea
+            ref="globalOutlineEditorRef"
             v-model="globalOutlineText"
             class="settings-textarea"
             data-testid="global-outline-textarea"
@@ -2380,6 +2392,7 @@ const settingsSaving = ref(false);
 const settingsDocs = ref(null);
 const pillarsText = ref('');
 const globalOutlineText = ref('');
+const globalOutlineEditorRef = ref(null);
 const settingsBaseline = ref({ pillars: '', outline: '' });
 const settingsDiffPreview = ref(null);
 const showSettingsDiff = ref(false);
@@ -2543,7 +2556,10 @@ const defaultUiProfile = {
   batch_history_export: false,
   volume_plan_diff_outline_row_highlight: false,
   batch_history_date_group: false,
+  volume_plan_diff_jump_outline_edit: false,
+  batch_history_status_color: false,
   creation_mode_badge_hint: false,
+  studio_creation_mode_badge_hint: false,
   creation_mode_switch_hint: false,
   creation_mode_switch_doc_link: false,
   studio_creation_entry_hint: false,
@@ -2608,12 +2624,24 @@ const modeLabel = computed(() => {
 });
 
 const creationModeBadgeHintText = computed(() => {
-  if (!uiProfile.value.creation_mode_badge_hint || !overview.value) return '';
+  if (!overview.value) return '';
   const mode = overview.value.creation_mode;
-  if (mode === 'companion') return '陪伴：人主笔 + P0 守门';
-  if (mode === 'advance') return '推进：人定卷纲 + batch 产章';
+  if (uiProfile.value.creation_mode_badge_hint) {
+    if (mode === 'companion') return '陪伴：人主笔 + P0 守门';
+    if (mode === 'advance') return '推进：人定卷纲 + batch 产章';
+  }
+  if (uiProfile.value.studio_creation_mode_badge_hint && mode === 'studio') {
+    return '工作室：工厂流水线与批量产章';
+  }
   return '';
 });
+
+const modeBadgeHintEnabled = computed(
+  () => Boolean(
+    (uiProfile.value.creation_mode_badge_hint || uiProfile.value.studio_creation_mode_badge_hint)
+    && creationModeBadgeHintText.value,
+  ),
+);
 
 const creationModeSwitchHintText = computed(() => {
   if (!uiProfile.value.creation_mode_switch_hint || !overview.value) return '';
@@ -3354,6 +3382,24 @@ function openModeSwitchDoc(link) {
 function showCreationModeBadgeHint() {
   if (!creationModeBadgeHintText.value) return;
   saveMessage.value = creationModeBadgeHintText.value;
+}
+
+function batchHistoryStatusClass(job) {
+  if (!uiProfile.value.batch_history_status_color || !job?.status) return {};
+  const status = String(job.status).toLowerCase();
+  return { [`batch-history-item--status-${status}`]: true };
+}
+
+async function jumpToGlobalOutlineEdit() {
+  if (!uiProfile.value.volume_plan_diff_jump_outline_edit) return;
+  await nextTick();
+  try {
+    globalOutlineEditorRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    globalOutlineEditorRef.value?.focus?.();
+  } catch {
+    /* jsdom */
+  }
+  saveMessage.value = '已跳转全局大纲编辑';
 }
 
 function downloadJsonExport(filename, payload) {
@@ -5085,6 +5131,18 @@ watch(
 .volume-plan-outline-line--highlight {
   background: rgba(255, 220, 100, 0.35);
   box-shadow: inset 0 0 0 1px rgba(200, 180, 80, 0.65);
+}
+
+.batch-history-item--status-completed {
+  border-left: 3px solid #4a9;
+}
+
+.batch-history-item--status-failed {
+  border-left: 3px solid #c44;
+}
+
+.batch-history-item--status-running {
+  border-left: 3px solid #48c;
 }
 
 .batch-history-date-label {

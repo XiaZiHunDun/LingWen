@@ -2936,4 +2936,88 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('陪伴');
   });
+
+  it('v5.5 jump from volume diff to global outline editor', async () => {
+    const focusSpy = vi.spyOn(HTMLTextAreaElement.prototype, 'focus').mockImplementation(() => {});
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_jump_outline_edit: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突已修改', details: [] }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('新冲突');
+    await flushPromises();
+    await wrapper.find('[data-testid="jump-global-outline-edit-btn"]').trigger('click');
+    await flushPromises();
+    expect(focusSpy).toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('全局大纲');
+    focusSpy.mockRestore();
+  });
+
+  it('v5.5 batch history status color classes', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_status_color: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-ok',
+          start_chapter: 1,
+          end_chapter: 5,
+          status: 'completed',
+          finished_at: '2026-06-22',
+        },
+        {
+          job_id: 'job-bad',
+          start_chapter: 6,
+          end_chapter: 8,
+          status: 'failed',
+          finished_at: '2026-06-21',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-history-job-ok"]').classes()).toContain(
+      'batch-history-item--status-completed',
+    );
+    expect(wrapper.find('[data-testid="batch-history-job-bad"]').classes()).toContain(
+      'batch-history-item--status-failed',
+    );
+  });
+
+  it('v5.5 studio mode badge hint on click', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'studio',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'studio',
+        primary_action: 'studio_quality',
+        show_studio_workflow: true,
+        studio_creation_mode_badge_hint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const badge = wrapper.find('[data-testid="creation-mode-badge"]');
+    expect(badge.attributes('title')).toContain('工作室');
+    await badge.trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('工作室');
+  });
 });

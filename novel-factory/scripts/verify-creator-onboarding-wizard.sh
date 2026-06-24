@@ -347,6 +347,9 @@ assert resolve_creator_ui_profile(creation_mode="studio")["studio_wizard_collaps
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_outline_row_highlight"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_date_group"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_badge_hint"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_jump_outline_edit"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_status_color"] is True
+assert resolve_creator_ui_profile(creation_mode="studio")["studio_creation_mode_badge_hint"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 
