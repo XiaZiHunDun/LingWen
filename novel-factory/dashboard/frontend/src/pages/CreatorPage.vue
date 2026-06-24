@@ -160,6 +160,46 @@
         </button>
       </div>
     </div>
+    <ul
+      v-if="uiProfile.creation_mode_switch_history && creationModeSwitchHistory.length"
+      class="creation-mode-switch-history pixel-border"
+      data-testid="creation-mode-switch-history"
+    >
+      <li
+        v-for="(entry, idx) in creationModeSwitchHistory"
+        :key="`mode-switch-history-${entry.mode}-${entry.at}-${idx}`"
+        class="meta-line creation-mode-switch-history-item"
+        :data-testid="`creation-mode-switch-history-${idx}`"
+      >
+        {{ entry.at }} · {{ entry.label }}（{{ entry.action }}）
+      </li>
+    </ul>
+    <div
+      v-if="showVolumePlanDiffPrintPreview"
+      class="volume-plan-diff-print-preview pixel-border"
+      data-testid="volume-plan-diff-print-preview"
+    >
+      <p class="meta-line">卷纲 diff 打印预览</p>
+      <pre class="volume-plan-diff-print-preview-body">{{ volumePlanDiffPrintPreviewText }}</pre>
+      <div class="volume-plan-diff-print-preview-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="print-volume-plan-diff-btn"
+          @click="printVolumePlanDiffPreview"
+        >
+          打印
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="close-volume-plan-diff-print-preview-btn"
+          @click="closeVolumePlanDiffPrintPreview"
+        >
+          关闭
+        </button>
+      </div>
+    </div>
     <div
       v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
       class="creation-mode-capability-matrix pixel-border"
@@ -1463,6 +1503,15 @@
             >
               导出 diff PDF
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export_print_preview && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="preview-volume-plan-diff-print-btn"
+              @click="openVolumePlanDiffPrintPreview"
+            >
+              打印预览
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1617,6 +1666,15 @@
                 @click="exportVolumePlanDiffPdf"
               >
                 导出 diff PDF
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export_print_preview && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="preview-volume-plan-diff-print-btn"
+                @click="openVolumePlanDiffPrintPreview"
+              >
+                打印预览
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -1945,6 +2003,38 @@
             </svg>
             <p class="meta-line batch-history-success-rate-chart-label">
               累计成功率趋势（{{ batchHistorySuccessRateChart.points.length }} 次）
+            </p>
+          </div>
+          <div
+            v-if="batchHistoryStatusStackChart"
+            class="batch-history-status-stack-chart"
+            data-testid="batch-history-status-stack-chart"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryStatusStackChart.width} ${batchHistoryStatusStackChart.height}`"
+              class="batch-history-status-stack-chart-svg"
+              role="img"
+              aria-label="batch 历史状态堆叠图"
+            >
+              <rect
+                v-for="segment in batchHistoryStatusStackChart.segments"
+                :key="`batch-stack-${segment.status}`"
+                :x="segment.x"
+                y="0"
+                :width="segment.width"
+                :height="batchHistoryStatusStackChart.height"
+                :class="`batch-history-stack-segment batch-history-stack-segment--${segment.status}`"
+                :data-testid="`batch-history-stack-${segment.status}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-status-stack-label">
+              状态分布：
+              <span
+                v-for="segment in batchHistoryStatusStackChart.segments"
+                :key="`batch-stack-label-${segment.status}`"
+              >
+                {{ segment.status }} {{ segment.count }}
+              </span>
             </p>
           </div>
           <p
@@ -2880,6 +2970,11 @@ const batchHistory = ref([]);
 const batchHistoryStatusFilter = ref('');
 const batchHistoryBudgetHint = ref('');
 const pendingModeSwitch = ref(null);
+const creationModeSwitchHistory = ref([]);
+const showVolumePlanDiffPrintPreview = ref(false);
+const volumePlanDiffPrintPreviewText = ref('');
+
+const CREATION_MODE_SWITCH_HISTORY_KEY = 'creator_mode_switch_history';
 const highlightedBatchHistoryId = ref('');
 const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
@@ -3100,10 +3195,13 @@ const defaultUiProfile = {
   volume_plan_diff_export_pdf: false,
   batch_history_success_rate_chart: false,
   batch_history_failure_reason_label: false,
+  volume_plan_diff_export_print_preview: false,
+  batch_history_status_stack_chart: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
   creation_mode_onboarding_step_link: false,
   creation_mode_switch_confirm_dialog: false,
+  creation_mode_switch_history: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -3352,6 +3450,41 @@ const batchHistorySuccessRateChart = computed(() => {
     return `${x},${y}`;
   }).join(' ');
   return { points, polyline, width, height };
+});
+
+const BATCH_STACK_STATUS_COLORS = {
+  completed: 'completed',
+  failed: 'failed',
+  running: 'running',
+  other: 'other',
+};
+
+const batchHistoryStatusStackChart = computed(() => {
+  if (!uiProfile.value.batch_history_status_stack_chart || !batchHistory.value.length) return null;
+  const counts = { completed: 0, failed: 0, running: 0, other: 0 };
+  for (const job of batchHistory.value) {
+    const status = String(job?.status).toLowerCase();
+    if (status in counts) counts[status] += 1;
+    else counts.other += 1;
+  }
+  const total = batchHistory.value.length;
+  const width = 200;
+  const height = 14;
+  let x = 0;
+  const segments = [];
+  for (const status of ['completed', 'failed', 'running', 'other']) {
+    const count = counts[status];
+    if (!count) continue;
+    const segmentWidth = (count / total) * width;
+    segments.push({
+      status: BATCH_STACK_STATUS_COLORS[status],
+      count,
+      x,
+      width: segmentWidth,
+    });
+    x += segmentWidth;
+  }
+  return { segments, width, height, total };
 });
 
 const batchHistoryAvgDuration = computed(() => {
@@ -4184,6 +4317,46 @@ function batchHistoryFailureReasonLabel(job) {
   return job.failure_reason || job.error || '';
 }
 
+function loadCreationModeSwitchHistory() {
+  if (!uiProfile.value.creation_mode_switch_history) {
+    creationModeSwitchHistory.value = [];
+    return;
+  }
+  try {
+    const raw = localStorage.getItem(CREATION_MODE_SWITCH_HISTORY_KEY);
+    creationModeSwitchHistory.value = raw ? JSON.parse(raw) : [];
+  } catch {
+    creationModeSwitchHistory.value = [];
+  }
+}
+
+function recordCreationModeSwitchHistory(mode, action) {
+  if (!uiProfile.value.creation_mode_switch_history || !mode) return;
+  const entry = {
+    mode,
+    label: CREATION_MODE_ONBOARDING_LABELS[mode] || mode,
+    action,
+    at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+  };
+  const next = [
+    entry,
+    ...creationModeSwitchHistory.value.filter(
+      (row) => !(row.mode === entry.mode && row.action === entry.action && row.at === entry.at),
+    ),
+  ].slice(0, 5);
+  creationModeSwitchHistory.value = next;
+  try {
+    localStorage.setItem(CREATION_MODE_SWITCH_HISTORY_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+function maybeRecordModeSwitch(mode, action) {
+  if (!mode || !overview.value || mode === overview.value.creation_mode) return;
+  recordCreationModeSwitchHistory(mode, action);
+}
+
 function requestCreationModeYaml(mode, active = false) {
   if (!uiProfile.value.creation_mode_yaml_snippet || !mode || active) {
     if (mode) copyCreationModeYaml(mode);
@@ -4232,6 +4405,7 @@ async function copyCreationModeYaml(mode) {
   } catch {
     saveMessage.value = snippet;
   }
+  maybeRecordModeSwitch(mode, 'YAML');
 }
 
 function applyBatchHistoryBudgetFromJob(job) {
@@ -4487,6 +4661,7 @@ async function linkModeToOnboardingStep(mode) {
   await nextTick();
   await focusWizardStepFromUrl();
   saveMessage.value = `已联动 ${CREATION_MODE_ONBOARDING_LABELS[mode] || mode} 向导步骤`;
+  maybeRecordModeSwitch(mode, '向导');
 }
 
 async function shareVolumePlanDiffEmail() {
@@ -4526,6 +4701,29 @@ function exportVolumePlanDiffPdf() {
   const pdf = buildMinimalTextPdf(buildVolumePlanDiffMarkdown(changes).split('\n'));
   downloadTextExport('creator-volume-plan-diff.pdf', pdf, 'application/pdf');
   saveMessage.value = `已导出卷纲 diff PDF（${changes.length} 条变更）`;
+}
+
+function openVolumePlanDiffPrintPreview() {
+  if (!uiProfile.value.volume_plan_diff_export_print_preview || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  volumePlanDiffPrintPreviewText.value = buildVolumePlanDiffMarkdown(changes);
+  showVolumePlanDiffPrintPreview.value = true;
+  saveMessage.value = '已打开卷纲 diff 打印预览';
+}
+
+function closeVolumePlanDiffPrintPreview() {
+  showVolumePlanDiffPrintPreview.value = false;
+}
+
+function printVolumePlanDiffPrintPreview() {
+  if (!showVolumePlanDiffPrintPreview.value) return;
+  const printWindow = window.open('', '_blank', 'noopener');
+  if (!printWindow) return;
+  printWindow.document.write(`<pre>${volumePlanDiffPrintPreviewText.value.replace(/</g, '&lt;')}</pre>`);
+  printWindow.document.close();
+  printWindow.print();
 }
 
 async function loadOnboardingWizard() {
@@ -5996,6 +6194,7 @@ async function refresh() {
     ]);
     overview.value = ov;
     syncWizardPanelOpen();
+    loadCreationModeSwitchHistory();
     await refreshVolumePlanDiffPreview();
     await loadMergePreferences();
     await loadMergePresetPackages();
@@ -6362,6 +6561,65 @@ watch(
 
 .batch-history-success-rate-chart-label {
   margin: 2px 0 0;
+}
+
+.batch-history-status-stack-chart {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-status-stack-chart-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 14px;
+  display: block;
+}
+
+.batch-history-stack-segment--completed {
+  fill: rgba(80, 160, 100, 0.85);
+}
+
+.batch-history-stack-segment--failed {
+  fill: rgba(180, 80, 80, 0.85);
+}
+
+.batch-history-stack-segment--running {
+  fill: rgba(100, 140, 200, 0.85);
+}
+
+.batch-history-stack-segment--other {
+  fill: rgba(140, 140, 140, 0.65);
+}
+
+.batch-history-status-stack-label {
+  margin: 2px 0 0;
+}
+
+.creation-mode-switch-history {
+  list-style: none;
+  padding: var(--space-xs) var(--space-sm);
+  margin: var(--space-xs) 0;
+}
+
+.creation-mode-switch-history-item {
+  margin: 0;
+}
+
+.volume-plan-diff-print-preview {
+  margin: var(--space-xs) 0;
+  padding: var(--space-sm);
+}
+
+.volume-plan-diff-print-preview-body {
+  max-height: 240px;
+  overflow: auto;
+  font-size: 8px;
+  white-space: pre-wrap;
+  margin: var(--space-xs) 0;
+}
+
+.volume-plan-diff-print-preview-actions {
+  display: flex;
+  gap: var(--space-xs);
 }
 
 .volume-plan-diff-volume-filter {

@@ -3983,4 +3983,80 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="creation-mode-switch-confirm-dialog"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('creation_mode: companion');
   });
+
+  it('v6.7 opens volume plan diff print preview', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export_print_preview: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('打印预览');
+    await flushPromises();
+    await wrapper.find('[data-testid="preview-volume-plan-diff-print-btn"]').trigger('click');
+    await flushPromises();
+    const preview = wrapper.find('[data-testid="volume-plan-diff-print-preview"]');
+    expect(preview.exists()).toBe(true);
+    expect(preview.text()).toContain('核心冲突已修改');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('打印预览');
+  });
+
+  it('v6.7 batch history status stack chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_status_stack_chart: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        { job_id: 'job-ok', start_chapter: 1, end_chapter: 2, status: 'completed' },
+        { job_id: 'job-fail', start_chapter: 3, end_chapter: 4, status: 'failed' },
+        { job_id: 'job-run', start_chapter: 5, end_chapter: 6, status: 'running' },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const chart = wrapper.find('[data-testid="batch-history-status-stack-chart"]');
+    expect(chart.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-stack-completed"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-stack-failed"]').exists()).toBe(true);
+    expect(chart.text()).toContain('completed 1');
+  });
+
+  it('v6.7 shows creation mode switch history', async () => {
+    localStorage.setItem(
+      'creator_mode_switch_history',
+      JSON.stringify([
+        { mode: 'companion', label: '陪伴', action: 'YAML', at: '2026-06-10 12:00:00' },
+      ]),
+    );
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode_switch_history: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const history = wrapper.find('[data-testid="creation-mode-switch-history"]');
+    expect(history.exists()).toBe(true);
+    expect(history.text()).toContain('陪伴');
+    expect(history.text()).toContain('YAML');
+    localStorage.removeItem('creator_mode_switch_history');
+  });
 });

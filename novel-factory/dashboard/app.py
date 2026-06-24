@@ -327,10 +327,13 @@ class CreatorUiProfile(BaseModel):
     volume_plan_diff_export_pdf: bool = False
     batch_history_success_rate_chart: bool = False
     batch_history_failure_reason_label: bool = False
+    volume_plan_diff_export_print_preview: bool = False
+    batch_history_status_stack_chart: bool = False
     creation_mode_capability_matrix: bool = False
     creation_mode_switch_guide_animation: bool = False
     creation_mode_onboarding_step_link: bool = False
     creation_mode_switch_confirm_dialog: bool = False
+    creation_mode_switch_history: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False
