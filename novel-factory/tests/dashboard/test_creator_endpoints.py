@@ -1578,6 +1578,14 @@ class TestCreatorEndpoints:
         assert "batch_history_duration_distribution" in profile
         assert "creation_mode_switch_undo_hint" in profile
 
+    def test_creator_v69_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_export_share_link" in profile
+        assert "batch_history_concurrency_chart" in profile
+        assert "creation_mode_switch_hotkey" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

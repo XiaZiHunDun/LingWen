@@ -331,12 +331,15 @@ class CreatorUiProfile(BaseModel):
     batch_history_status_stack_chart: bool = False
     volume_plan_diff_export_zip: bool = False
     batch_history_duration_distribution: bool = False
+    volume_plan_diff_export_share_link: bool = False
+    batch_history_concurrency_chart: bool = False
     creation_mode_capability_matrix: bool = False
     creation_mode_switch_guide_animation: bool = False
     creation_mode_onboarding_step_link: bool = False
     creation_mode_switch_confirm_dialog: bool = False
     creation_mode_switch_history: bool = False
     creation_mode_switch_undo_hint: bool = False
+    creation_mode_switch_hotkey: bool = False
     creation_mode_badge_hint: bool = False
     creation_mode_switch_hint: bool = False
     creation_mode_switch_doc_link: bool = False

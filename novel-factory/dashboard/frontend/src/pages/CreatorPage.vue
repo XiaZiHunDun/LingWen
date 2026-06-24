@@ -192,6 +192,13 @@
         复制撤销 YAML
       </button>
     </div>
+    <p
+      v-if="uiProfile.creation_mode_switch_hotkey"
+      class="meta-line creation-mode-hotkey-hint"
+      data-testid="creation-mode-switch-hotkey-hint"
+    >
+      快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
+    </p>
     <div
       v-if="showVolumePlanDiffPrintPreview"
       class="volume-plan-diff-print-preview pixel-border"
@@ -1539,6 +1546,15 @@
             >
               导出 ZIP
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export_share_link && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="share-volume-plan-diff-link-btn"
+              @click="shareVolumePlanDiffLink"
+            >
+              复制分享链接
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1711,6 +1727,15 @@
                 @click="exportVolumePlanDiffZip"
               >
                 导出 ZIP
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export_share_link && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="share-volume-plan-diff-link-btn"
+                @click="shareVolumePlanDiffLink"
+              >
+                复制分享链接
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -2103,6 +2128,32 @@
               >
                 {{ bar.label }} {{ bar.count }}
               </span>
+            </p>
+          </div>
+          <div
+            v-if="batchHistoryConcurrencyChart"
+            class="batch-history-concurrency-chart"
+            data-testid="batch-history-concurrency-chart"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryConcurrencyChart.width} ${batchHistoryConcurrencyChart.height}`"
+              class="batch-history-concurrency-chart-svg"
+              role="img"
+              aria-label="batch 历史并发运行图"
+            >
+              <rect
+                v-for="bar in batchHistoryConcurrencyChart.bars"
+                :key="`concurrency-bar-${bar.id}`"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.barWidth"
+                :height="bar.barHeight"
+                class="batch-history-concurrency-bar"
+                :data-testid="`batch-history-concurrency-${bar.id}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-concurrency-chart-label">
+              并发运行：峰值 {{ batchHistoryConcurrencyChart.peak }}
             </p>
           </div>
           <p
@@ -3268,9 +3319,12 @@ const defaultUiProfile = {
   batch_history_status_stack_chart: false,
   volume_plan_diff_export_zip: false,
   batch_history_duration_distribution: false,
+  volume_plan_diff_export_share_link: false,
+  batch_history_concurrency_chart: false,
   creation_mode_switch_confirm_dialog: false,
   creation_mode_switch_history: false,
   creation_mode_switch_undo_hint: false,
+  creation_mode_switch_hotkey: false,
   creation_mode_badge_hint: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
@@ -3475,6 +3529,12 @@ const CREATION_MODE_ONBOARDING_FOCUS_STEP = {
   studio: 'preflight',
 };
 
+const CREATION_MODE_HOTKEY_MODES = {
+  1: 'companion',
+  2: 'advance',
+  3: 'studio',
+};
+
 const creationModeCapabilityRows = computed(() => {
   if (!uiProfile.value.creation_mode_capability_matrix) return [];
   return CREATION_MODE_CAPABILITY_ROWS;
@@ -3594,6 +3654,63 @@ const batchHistoryDurationDistribution = computed(() => {
     };
   });
   return { bars, width, height, measured };
+});
+
+const batchHistoryConcurrencyChart = computed(() => {
+  if (!uiProfile.value.batch_history_concurrency_chart || !batchHistory.value.length) return null;
+  const ranges = batchHistory.value
+    .map((job) => {
+      const start = job?.started_at ? Date.parse(job.started_at) : Number.NaN;
+      let end = job?.finished_at ? Date.parse(job.finished_at) : Number.NaN;
+      if (!Number.isFinite(start)) return null;
+      if (!Number.isFinite(end) || end < start) end = Date.now();
+      return { start, end };
+    })
+    .filter(Boolean);
+  if (!ranges.length) return null;
+  const minStart = Math.min(...ranges.map((row) => row.start));
+  const maxEnd = Math.max(...ranges.map((row) => row.end));
+  const span = maxEnd - minStart;
+  if (span <= 0) return null;
+  const events = [];
+  for (const row of ranges) {
+    events.push({ t: row.start, delta: 1 });
+    events.push({ t: row.end, delta: -1 });
+  }
+  events.sort((a, b) => a.t - b.t || a.delta - b.delta);
+  let current = 0;
+  let peak = 0;
+  for (const event of events) {
+    current += event.delta;
+    peak = Math.max(peak, current);
+  }
+  const bucketCount = Math.min(8, Math.max(4, ranges.length));
+  const buckets = Array.from({ length: bucketCount }, (_, idx) => ({
+    id: `b${idx}`,
+    count: 0,
+  }));
+  for (let idx = 0; idx < bucketCount; idx += 1) {
+    const bucketStart = minStart + (span * idx) / bucketCount;
+    const bucketEnd = minStart + (span * (idx + 1)) / bucketCount;
+    buckets[idx].count = ranges.filter(
+      (row) => row.start < bucketEnd && row.end > bucketStart,
+    ).length;
+  }
+  const max = Math.max(...buckets.map((row) => row.count), 1);
+  const width = 200;
+  const height = 40;
+  const slot = width / bucketCount;
+  const bars = buckets.map((row, idx) => {
+    const barHeight = (row.count / max) * (height - 8);
+    return {
+      ...row,
+      x: idx * slot + 2,
+      y: height - barHeight,
+      barWidth: slot - 4,
+      barHeight,
+    };
+  });
+  return { bars, width, height, peak };
 });
 
 const batchHistoryAvgDuration = computed(() => {
@@ -4511,6 +4628,23 @@ function requestOnboardingStepLink(mode, active = false) {
   pendingModeSwitch.value = { mode, action: 'onboarding' };
 }
 
+function isEditableHotkeyTarget(target) {
+  if (!target || typeof target !== 'object') return false;
+  const tag = String(target.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || Boolean(target.isContentEditable);
+}
+
+function onCreationModeSwitchHotkey(event) {
+  if (!uiProfile.value.creation_mode_switch_hotkey) return;
+  if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+  const mode = CREATION_MODE_HOTKEY_MODES[event.key];
+  if (!mode) return;
+  if (isEditableHotkeyTarget(event.target)) return;
+  event.preventDefault();
+  const active = overview.value?.creation_mode === mode;
+  requestCreationModeYaml(mode, active);
+}
+
 async function confirmCreationModeSwitch() {
   const pending = pendingModeSwitch.value;
   pendingModeSwitch.value = null;
@@ -4904,6 +5038,40 @@ async function shareVolumePlanDiffEmail() {
   saveMessage.value = recipient
     ? `已打开邮件分享（${recipient}）`
     : '已打开邮件分享';
+}
+
+function encodeVolumePlanDiffShareToken(payload) {
+  const compact = {
+    v: 1,
+    c: payload.change_count,
+    changes: payload.changes,
+    p: payload.global_outline_path || '',
+  };
+  const json = JSON.stringify(compact);
+  return btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function buildVolumePlanDiffShareLink(changes) {
+  const payload = buildVolumePlanDiffExportPayload(changes);
+  const token = encodeVolumePlanDiffShareToken(payload);
+  return `${window.location.origin}${window.location.pathname}#creator-diff=${token}`;
+}
+
+async function shareVolumePlanDiffLink() {
+  if (!uiProfile.value.volume_plan_diff_export_share_link || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  const link = buildVolumePlanDiffShareLink(changes);
+  try {
+    await navigator.clipboard.writeText(link);
+    saveMessage.value = `已复制卷纲 diff 分享链接（${changes.length} 条变更）`;
+  } catch {
+    saveMessage.value = link;
+  }
 }
 
 function exportVolumePlanDiffMarkdown() {
@@ -6454,9 +6622,13 @@ async function refresh() {
   }
 }
 
-onMounted(refresh);
+onMounted(() => {
+  refresh();
+  window.addEventListener('keydown', onCreationModeSwitchHotkey);
+});
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', onCreationModeSwitchHotkey);
   stopBatchPolling();
   if (chapterBodyHighlightTimer) {
     clearTimeout(chapterBodyHighlightTimer);
@@ -6871,6 +7043,30 @@ watch(
 
 .batch-history-duration-distribution-label {
   margin: 2px 0 0;
+}
+
+.batch-history-concurrency-chart {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-concurrency-chart-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  display: block;
+}
+
+.batch-history-concurrency-bar {
+  fill: rgba(120, 160, 120, 0.8);
+}
+
+.batch-history-concurrency-chart-label {
+  margin: 2px 0 0;
+}
+
+.creation-mode-hotkey-hint {
+  margin: var(--space-xs) 0;
+  color: var(--text-muted, #666);
 }
 
 .volume-plan-diff-print-preview {

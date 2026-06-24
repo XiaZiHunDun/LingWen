@@ -4164,4 +4164,94 @@ describe('CreatorPage', () => {
     expect(writeText).toHaveBeenCalledWith('creation_mode: advance');
     writeText.mockRestore();
   });
+
+  it('v6.9 copies volume plan diff share link', async () => {
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export_share_link: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+        global_outline_path: '/docs/outline.md',
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('分享链接');
+    await flushPromises();
+    await wrapper.find('[data-testid="share-volume-plan-diff-link-btn"]').trigger('click');
+    await flushPromises();
+    expect(writeText).toHaveBeenCalled();
+    const link = writeText.mock.calls[0][0];
+    expect(link).toContain('#creator-diff=');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('分享链接');
+    writeText.mockRestore();
+  });
+
+  it('v6.9 batch history concurrency chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_concurrency_chart: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-a',
+          start_chapter: 1,
+          end_chapter: 2,
+          status: 'completed',
+          started_at: '2026-06-10T12:00:00Z',
+          finished_at: '2026-06-10T12:10:00Z',
+        },
+        {
+          job_id: 'job-b',
+          start_chapter: 3,
+          end_chapter: 4,
+          status: 'completed',
+          started_at: '2026-06-10T12:05:00Z',
+          finished_at: '2026-06-10T12:15:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const chart = wrapper.find('[data-testid="batch-history-concurrency-chart"]');
+    expect(chart.exists()).toBe(true);
+    expect(chart.text()).toContain('峰值 2');
+    expect(wrapper.find('[data-testid="batch-history-concurrency-b0"]').exists()).toBe(true);
+  });
+
+  it('v6.9 creation mode switch hotkey copies yaml', async () => {
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+        creation_mode_switch_hotkey: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="creation-mode-switch-hotkey-hint"]').exists()).toBe(true);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '1', altKey: true, shiftKey: true }));
+    await flushPromises();
+    expect(writeText).toHaveBeenCalledWith('creation_mode: companion');
+    writeText.mockRestore();
+  });
 });
