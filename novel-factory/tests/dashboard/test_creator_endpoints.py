@@ -1149,6 +1149,18 @@ class TestCreatorEndpoints:
         )
         assert changelog_diff.status_code == 400
 
+    def test_creator_v38_endpoints(self, client: TestClient) -> None:
+        overview = client.get("/api/creator/overview")
+        assert overview.status_code == 200
+        data = overview.json()
+        assert "ui_profile" in data
+        assert data["ui_profile"]["creation_mode"] in {"companion", "advance", "studio"}
+        logic = client.post("/api/creator/logic-check")
+        assert logic.status_code == 200
+        body = logic.json()
+        assert "passed" in body
+        assert "p0_count" in body
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

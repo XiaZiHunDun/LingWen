@@ -3,7 +3,7 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v10.95 (创作者 v3.7, 2026-06-22)  
+> **版本**: v10.96 (创作者 v3.8, 2026-06-23)  
 > **更新 (2026-06-22)**: 审批转交/OR签/快照 diff · digest handle 静默与死信 · Webhook 签名 · 预设拉取预检/changelog/拓扑可视化
 
 ---
@@ -151,7 +151,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v3.7 已落地**：快照漂移阻断与批量审批 · digest 死信重放与 channel 重试策略 · 工厂拉取冲突合并向导与 changelog diff
 
-**v3.8 候选**：（待定）
+**v3.8 已落地**：模式化 UI profile（companion/advance 隐藏 Studio 运维）· 陪伴一键逻辑审查 · 推进卷级脉络 pulse
+
+**v3.9 候选**：（待定）
 
 ### 常用命令
 

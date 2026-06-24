@@ -290,6 +290,17 @@ if packages:
         diff = preview_merge_preset_changelog_diff(root, package_id=pkg_id, entry_index=0)
         assert "change_count" in diff
 
+from infra.creator_logic_check import run_creator_logic_check
+from infra.creator_ui_profile import resolve_creator_ui_profile
+from infra.creator_volume_pulse import build_volume_pulse
+
+profile = resolve_creator_ui_profile(creation_mode="companion")
+assert profile["primary_action"] == "logic_check"
+check = run_creator_logic_check(root)
+assert "passed" in check
+pulse = build_volume_pulse(root)
+assert "volume_count" in pulse
+
 print("OK creator onboarding:", payload["mode_label"], len(payload["steps"]), "steps")
 PY
 

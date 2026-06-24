@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from infra.creator_mode import settings_from_project_config
+from infra.creator_ui_profile import ui_profile_from_project_config
+from infra.creator_volume_pulse import build_volume_pulse
 from infra.creator_volume_plan import load_volume_plan, compute_volume_deviations
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
@@ -66,6 +68,8 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
 
     volumes = load_volume_plan(project.root)
     deviations = compute_volume_deviations(project.root, volumes, paths=paths)
+    ui_profile = ui_profile_from_project_config(config)
+    volume_pulse = build_volume_pulse(project.root) if ui_profile.get("volume_pulse_enabled") else None
 
     return {
         "slug": project.slug,
@@ -96,6 +100,8 @@ def creator_overview(project: StudioProject) -> dict[str, Any]:
         "deviation_count": len(deviations),
         "alert_count": sum(1 for d in deviations if d["severity"] == "alert"),
         "deviations": deviations[:30],
+        "ui_profile": ui_profile,
+        "volume_pulse": volume_pulse,
     }
 
 

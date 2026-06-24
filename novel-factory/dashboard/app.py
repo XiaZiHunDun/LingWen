@@ -249,6 +249,56 @@ class CreatorVolumeDeviation(BaseModel):
     message: str
 
 
+class CreatorUiProfile(BaseModel):
+    creation_mode: str
+    quality_profile: str = ""
+    primary_action: str = "logic_check"
+    show_studio_workflow: bool = False
+    show_digest_ops: bool = False
+    show_factory_presets: bool = False
+    show_template_version_ops: bool = True
+    show_merge_preset_advanced: bool = False
+    simplified_notifications: bool = True
+    volume_pulse_enabled: bool = False
+
+
+class CreatorVolumePulseRow(BaseModel):
+    label: str
+    start_chapter: int
+    end_chapter: int
+    written: int
+    total_chapters: int
+    progress_pct: float = 0.0
+    locked: bool = False
+    status: str = "ok"
+    deviation_count: int = 0
+    headline: str = ""
+
+
+class CreatorVolumePulseSummary(BaseModel):
+    name: str
+    excerpt: str = ""
+
+
+class CreatorVolumePulse(BaseModel):
+    volume_count: int = 0
+    alert_count: int = 0
+    warn_count: int = 0
+    overall_status: str = "ok"
+    volumes: list[CreatorVolumePulseRow] = []
+    latest_summary: Optional[CreatorVolumePulseSummary] = None
+
+
+class CreatorLogicCheckResponse(BaseModel):
+    passed: bool
+    fail_severity: Optional[str] = None
+    creation_mode: str = "companion"
+    chapters_checked: int = 0
+    total_issues: int = 0
+    issue_counts: dict[str, int] = {}
+    p0_count: int = 0
+
+
 class CreatorOverviewResponse(BaseModel):
     slug: str
     name: str
@@ -273,6 +323,8 @@ class CreatorOverviewResponse(BaseModel):
     deviation_count: int = 0
     alert_count: int = 0
     deviations: list[CreatorVolumeDeviation] = []
+    ui_profile: CreatorUiProfile
+    volume_pulse: Optional[CreatorVolumePulse] = None
 
 
 class CreatorVolumePlanResponse(BaseModel):
@@ -3068,6 +3120,17 @@ def create_app(
         if project is None:
             raise HTTPException(404, "no active project")
         return CreatorOverviewResponse(**creator_overview(project))
+
+    @app.post("/api/creator/logic-check", response_model=CreatorLogicCheckResponse)
+    def creator_logic_check_endpoint() -> CreatorLogicCheckResponse:
+        from infra.creator_logic_check import run_creator_logic_check
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        result = run_creator_logic_check(project.root)
+        return CreatorLogicCheckResponse(**result)
 
     @app.get("/api/creator/onboarding", response_model=CreatorOnboardingResponse)
     def creator_onboarding_endpoint() -> CreatorOnboardingResponse:

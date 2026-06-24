@@ -540,6 +540,10 @@ export async function fetchCreatorOverview() {
   return request('/creator/overview');
 }
 
+export async function runCreatorLogicCheck() {
+  return request('/creator/logic-check', { method: 'POST' });
+}
+
 export async function fetchCreatorVolumePlan() {
   return request('/creator/volume-plan');
 }

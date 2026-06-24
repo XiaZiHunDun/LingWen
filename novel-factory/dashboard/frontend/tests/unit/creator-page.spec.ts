@@ -4,6 +4,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 
 const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOverview: vi.fn(),
+  runCreatorLogicCheck: vi.fn(),
   fetchCreatorVolumePlan: vi.fn(),
   saveCreatorVolumePlan: vi.fn(),
   mergeCreatorVolumePlan: vi.fn(),
@@ -94,6 +95,7 @@ const creatorMocks = vi.hoisted(() => ({
 
 vi.mock('../../src/api/index.js', () => ({
   fetchCreatorOverview: creatorMocks.fetchCreatorOverview,
+  runCreatorLogicCheck: creatorMocks.runCreatorLogicCheck,
   fetchCreatorVolumePlan: creatorMocks.fetchCreatorVolumePlan,
   saveCreatorVolumePlan: creatorMocks.saveCreatorVolumePlan,
   mergeCreatorVolumePlan: creatorMocks.mergeCreatorVolumePlan,
@@ -259,6 +261,39 @@ const overviewFixture = {
     { type: 'missing_body', severity: 'warn', chapter: 2, volume_label: '一', message: '缺正文' },
     { type: 'outside_locked_plan', severity: 'alert', chapter: 8, volume_label: null, message: '越界' },
   ],
+  ui_profile: {
+    creation_mode: 'advance',
+    quality_profile: 'creator_relaxed',
+    primary_action: 'volume_pulse',
+    show_studio_workflow: true,
+    show_digest_ops: true,
+    show_factory_presets: true,
+    show_template_version_ops: true,
+    show_merge_preset_advanced: true,
+    simplified_notifications: true,
+    volume_pulse_enabled: true,
+  },
+  volume_pulse: {
+    volume_count: 2,
+    alert_count: 0,
+    warn_count: 1,
+    overall_status: 'warn',
+    volumes: [
+      {
+        label: '一',
+        start_chapter: 1,
+        end_chapter: 5,
+        written: 1,
+        total_chapters: 5,
+        progress_pct: 20,
+        locked: true,
+        status: 'warn',
+        deviation_count: 1,
+        headline: '已写 1/5 章 · 卷纲已锁定',
+      },
+    ],
+    latest_summary: null,
+  },
 };
 
 describe('CreatorPage', () => {
@@ -1489,5 +1524,40 @@ describe('CreatorPage', () => {
     await flushPromises();
     expect(creatorMocks.fetchCreatorMergePresetChangelogDiff).toHaveBeenCalled();
     confirmSpy.mockRestore();
+  });
+
+  it('shows v3.8 volume pulse and companion logic check when ui_profile requests', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
+      ...overviewFixture,
+      creation_mode: 'companion',
+      ui_profile: {
+        creation_mode: 'companion',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+      },
+      volume_pulse: null,
+    });
+    creatorMocks.runCreatorLogicCheck.mockResolvedValue({
+      passed: true,
+      p0_count: 0,
+      total_issues: 0,
+      chapters_checked: 6,
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="volume-pulse-panel"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="template-approval-chain-config"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="wizard-digest-schedule-panel"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="companion-logic-check-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalled();
   });
 });

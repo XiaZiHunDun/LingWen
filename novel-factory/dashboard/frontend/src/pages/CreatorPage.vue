@@ -99,7 +99,11 @@
             </li>
           </ul>
         </div>
-        <div class="wizard-digest-schedule-panel" data-testid="wizard-digest-schedule-panel">
+        <div
+          v-if="uiProfile.show_digest_ops"
+          class="wizard-digest-schedule-panel"
+          data-testid="wizard-digest-schedule-panel"
+        >
           <p class="meta-line">定时 digest</p>
           <label class="meta-line">
             <input v-model="wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" />
@@ -412,6 +416,35 @@
           </div>
         </div>
 
+        <div
+          v-if="overview.volume_pulse?.volume_count"
+          class="volume-pulse-panel pixel-border"
+          data-testid="volume-pulse-panel"
+        >
+          <h3 class="subsection-title">卷级脉络</h3>
+          <p class="meta-line" data-testid="volume-pulse-overall">
+            {{ overview.volume_pulse.alert_count ? `${overview.volume_pulse.alert_count} 卷需关注` : '各卷按计划推进' }}
+          </p>
+          <ul>
+            <li
+              v-for="row in overview.volume_pulse.volumes"
+              :key="row.label"
+              class="volume-pulse-row"
+              :data-testid="`volume-pulse-row-${row.label}`"
+            >
+              <strong>{{ row.label }}</strong>
+              <span class="meta-line">{{ row.headline }}</span>
+            </li>
+          </ul>
+          <p
+            v-if="overview.volume_pulse.latest_summary"
+            class="meta-line"
+            data-testid="volume-pulse-latest-summary"
+          >
+            最新摘要：{{ overview.volume_pulse.latest_summary.name }}
+          </p>
+        </div>
+
         <div class="volume-plan-panel" data-testid="volume-plan-panel">
           <div class="volume-plan-header">
             <h3 class="subsection-title">卷纲</h3>
@@ -456,7 +489,7 @@
                 {{ templateDeleting ? '删除中…' : '删除模板' }}
               </button>
               <button
-                v-if="selectedTemplateProject"
+                v-if="selectedTemplateProject && uiProfile.show_factory_presets"
                 type="button"
                 class="mini-btn pixel-border"
                 data-testid="publish-factory-template-btn"
@@ -466,7 +499,7 @@
                 {{ templatePublishing ? '发布中…' : '发布到工厂库' }}
               </button>
               <button
-                v-if="selectedTemplateFactory"
+                v-if="selectedTemplateFactory && uiProfile.show_factory_presets"
                 type="button"
                 class="mini-btn mini-btn--danger pixel-border"
                 data-testid="delete-factory-template-btn"
@@ -476,7 +509,7 @@
                 {{ factoryDeleting ? '删除中…' : '从工厂库删除' }}
               </button>
             </div>
-            <div v-if="selectedTemplateProject || selectedTemplateFactory" class="merge-range">
+            <div v-if="(selectedTemplateProject || selectedTemplateFactory) && uiProfile.show_template_version_ops" class="merge-range">
               <input
                 v-model="templateVersionLabel"
                 class="vol-input vol-conflict"
@@ -500,7 +533,7 @@
                 {{ templateVersionSaving ? '保存中…' : '设版本标签' }}
               </button>
               <button
-                v-if="selectedTemplateProject || selectedTemplateFactory"
+                v-if="uiProfile.show_studio_workflow && (selectedTemplateProject || selectedTemplateFactory)"
                 type="button"
                 class="mini-btn pixel-border"
                 data-testid="submit-template-version-approval-btn"
@@ -511,6 +544,7 @@
               </button>
             </div>
             <div
+              v-if="uiProfile.show_studio_workflow"
               class="template-approval-chain-config"
               data-testid="template-approval-chain-config"
             >
@@ -547,6 +581,7 @@
               </button>
             </div>
             <div
+              v-if="uiProfile.show_studio_workflow"
               class="template-approval-sla-config"
               data-testid="template-approval-sla-config"
             >
@@ -581,7 +616,7 @@
               </button>
             </div>
             <div
-              v-if="overdueTemplateApprovals.length"
+              v-if="uiProfile.show_studio_workflow && overdueTemplateApprovals.length"
               class="template-approval-overdue"
               data-testid="template-approval-overdue-panel"
             >
@@ -597,7 +632,7 @@
               </ul>
             </div>
             <div
-              v-if="pendingTemplateApprovals.length"
+              v-if="uiProfile.show_studio_workflow && pendingTemplateApprovals.length"
               class="template-approvals"
               data-testid="template-approvals-panel"
             >
@@ -686,7 +721,7 @@
               </ul>
             </div>
             <div
-              v-if="templateApprovalHistory.length"
+              v-if="uiProfile.show_studio_workflow && templateApprovalHistory.length"
               class="template-approval-history"
               data-testid="template-approval-history-panel"
             >
@@ -838,7 +873,7 @@
                 {{ templateSyncing ? '同步中…' : '跨项目同步' }}
               </button>
               <button
-                v-if="factoryTemplateCount"
+                v-if="factoryTemplateCount && uiProfile.show_factory_presets"
                 type="button"
                 class="mini-btn pixel-border"
                 data-testid="pull-factory-templates-btn"
@@ -1255,6 +1290,7 @@
                   {{ showImportMergePresetPackages ? '收起导入' : '导入预设包' }}
                 </button>
                 <button
+                  v-if="uiProfile.show_factory_presets"
                   type="button"
                   class="mini-btn pixel-border"
                   data-testid="publish-merge-preset-factory-btn"
@@ -1264,6 +1300,7 @@
                   {{ mergePresetFactoryPublishing ? '发布中…' : '发布到工厂库' }}
                 </button>
                 <button
+                  v-if="uiProfile.show_factory_presets"
                   type="button"
                   class="mini-btn pixel-border"
                   data-testid="pull-merge-preset-factory-btn"
@@ -1274,7 +1311,7 @@
                 </button>
               </div>
               <div
-                v-if="mergePresetToposort.edges?.length"
+                v-if="uiProfile.show_merge_preset_advanced && mergePresetToposort.edges?.length"
                 class="merge-preset-toposort"
                 data-testid="merge-preset-toposort-panel"
               >
@@ -1322,7 +1359,7 @@
                 </p>
               </div>
               <div
-                v-if="factoryMergePresetPullConflicts.conflicts?.length"
+                v-if="uiProfile.show_factory_presets && factoryMergePresetPullConflicts.conflicts?.length"
                 class="merge-preset-factory-pull-wizard"
                 data-testid="merge-preset-factory-pull-wizard"
               >
@@ -1354,7 +1391,7 @@
                 </ul>
               </div>
               <div
-                v-if="mergePresetGraph.edges?.length"
+                v-if="uiProfile.show_merge_preset_advanced && mergePresetGraph.edges?.length"
                 class="merge-preset-graph"
                 data-testid="merge-preset-graph-panel"
               >
@@ -1370,7 +1407,7 @@
                 </ul>
               </div>
               <div
-                v-if="mergePresetConflicts.conflicts?.length"
+                v-if="uiProfile.show_merge_preset_advanced && mergePresetConflicts.conflicts?.length"
                 class="merge-preset-conflicts"
                 data-testid="merge-preset-conflicts-panel"
               >
@@ -1386,7 +1423,7 @@
                 </ul>
               </div>
               <div
-                v-if="mergePresetConflictFixes.fixes?.length"
+                v-if="uiProfile.show_merge_preset_advanced && mergePresetConflictFixes.fixes?.length"
                 class="merge-preset-conflict-fixes"
                 data-testid="merge-preset-conflict-fixes-panel"
               >
@@ -1620,7 +1657,28 @@
             {{ overview.p0_count ? `发现 ${overview.p0_count} 条 P0` : '无 P0' }}
           </p>
         </details>
-        <div class="cmd-block">
+        <div
+          v-if="uiProfile.primary_action === 'logic_check'"
+          class="cmd-block companion-check-panel"
+          data-testid="companion-logic-check-panel"
+        >
+          <p class="subsection-title">逻辑审查</p>
+          <p class="meta-line">仅检查 P0 逻辑问题，不打 prose 分。</p>
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="run-companion-logic-check-btn"
+            :disabled="logicCheckRunning"
+            @click="runCompanionLogicCheck"
+          >
+            {{ logicCheckRunning ? '检查中…' : '一键逻辑审查' }}
+          </button>
+          <p v-if="logicCheckResult" class="meta-line" data-testid="companion-logic-check-result">
+            {{ logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ logicCheckResult.p0_count }} ·
+            共 {{ logicCheckResult.total_issues }} 条
+          </p>
+        </div>
+        <div v-else-if="uiProfile.show_studio_workflow" class="cmd-block">
           <p class="subsection-title">守门命令</p>
           <code>{{ overview.companion_check_cmd }}</code>
         </div>
@@ -1633,6 +1691,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   fetchCreatorOverview,
+  runCreatorLogicCheck,
   fetchCreatorVolumePlan,
   fetchCreatorChapterPreview,
   fetchCreatorSettingsDocs,
@@ -1851,6 +1910,21 @@ const batchError = ref(null);
 const batchJob = ref(null);
 const error = ref(null);
 const saveMessage = ref('');
+const logicCheckRunning = ref(false);
+const logicCheckResult = ref(null);
+
+const defaultUiProfile = {
+  show_studio_workflow: true,
+  show_digest_ops: true,
+  show_factory_presets: true,
+  show_template_version_ops: true,
+  show_merge_preset_advanced: true,
+  simplified_notifications: false,
+  volume_pulse_enabled: false,
+  primary_action: 'studio_quality',
+};
+
+const uiProfile = computed(() => overview.value?.ui_profile || defaultUiProfile);
 
 let batchPollTimer = null;
 const lastBatchStatus = ref(null);
@@ -3474,6 +3548,22 @@ async function saveVolumePlan() {
     handleSaveError(e);
   } finally {
     saving.value = false;
+  }
+}
+
+async function runCompanionLogicCheck() {
+  logicCheckRunning.value = true;
+  error.value = null;
+  try {
+    logicCheckResult.value = await runCreatorLogicCheck();
+    saveMessage.value = logicCheckResult.value.passed
+      ? '逻辑审查通过'
+      : `发现 ${logicCheckResult.value.p0_count} 条 P0`;
+    await refresh();
+  } catch (e) {
+    handleSaveError(e);
+  } finally {
+    logicCheckRunning.value = false;
   }
 }
 

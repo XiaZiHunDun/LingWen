@@ -260,3 +260,9 @@ project:
 - 快照漂移阻断与批量审批 — ✅ v3.7
 - digest 死信重放与按 channel 重试策略 — ✅ v3.7
 - 工厂拉取冲突合并向导与 changelog diff — ✅ v3.7
+
+## 35. 后续（v3.8+）
+
+- 模式化 UI profile（companion/advance 隐藏 Studio 运维面板）— ✅ v3.8
+- 陪伴模式一键逻辑审查 API — ✅ v3.8
+- 推进模式卷级脉络 pulse — ✅ v3.8
