@@ -320,6 +320,8 @@ assert "p0_only" in check
 assert resolve_creator_ui_profile(creation_mode="advance")["chapter_full_preview"] is True
 assert resolve_creator_ui_profile(creation_mode="companion")["deviation_chapter_jump"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_pulse_summary_generate"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_auto_open_summary"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["chapter_recheck_inline"] is True
 
 single = run_creator_logic_check(root, chapter_num=1)
 assert single.get("chapter") == 1

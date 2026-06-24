@@ -288,6 +288,9 @@ const overviewFixture = {
         deviation_chapter_jump: true,
         batch_highlight_alert_volumes: true,
         volume_pulse_summary_generate: true,
+        batch_auto_open_summary: true,
+        batch_deviation_prompt: true,
+        chapter_recheck_inline: false,
         deviation_min_severity: 'alert',
   },
   volume_summaries: [
@@ -1839,6 +1842,9 @@ describe('CreatorPage', () => {
         chapter_save_p0_recheck: true,
         batch_highlight_alert_volumes: false,
         volume_pulse_summary_generate: false,
+        batch_auto_open_summary: false,
+        batch_deviation_prompt: false,
+        chapter_recheck_inline: true,
         deviation_min_severity: null,
       },
       volume_pulse: null,
@@ -1859,5 +1865,6 @@ describe('CreatorPage', () => {
     await companionWrapper.find('[data-testid="save-chapter-body-btn"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalledWith({ chapter: 1 });
+    expect(companionWrapper.find('[data-testid="chapter-recheck-inline-panel"]').exists()).toBe(true);
   });
 });

@@ -408,6 +408,34 @@
               </button>
             </div>
             <div
+              v-if="
+                uiProfile.chapter_recheck_inline
+                  && chapterRecheckResult
+                  && chapterRecheckResult.chapter === selectedChapter
+              "
+              class="chapter-recheck-panel pixel-border"
+              data-testid="chapter-recheck-inline-panel"
+            >
+              <p class="meta-line" data-testid="chapter-recheck-inline-summary">
+                保存后复查 · {{ chapterRecheckResult.passed ? '通过' : '未通过' }}
+                · P0 {{ chapterRecheckResult.p0_count }}
+              </p>
+              <ul
+                v-if="chapterRecheckResult.issues?.length"
+                class="logic-check-issues"
+                data-testid="chapter-recheck-inline-issues"
+              >
+                <li
+                  v-for="(issue, idx) in chapterRecheckResult.issues"
+                  :key="`recheck-${issue.chapter}-${idx}`"
+                  class="logic-check-issue"
+                >
+                  <span class="issue-severity">{{ issue.severity }}</span>
+                  {{ issue.title || issue.message }}
+                </li>
+              </ul>
+            </div>
+            <div
               v-else-if="uiProfile.chapter_full_preview && chapterPreview.has_body"
               class="chapter-read-preview"
               data-testid="chapter-read-preview"
@@ -1213,6 +1241,13 @@
               String(batchSummaryPrompt.end).padStart(3, '0')
             }} 卷摘要，请在下方查看脉络是否跑偏。
           </p>
+          <p
+            v-if="uiProfile.batch_deviation_prompt && batchSummaryPrompt.alert_volume_labels?.length"
+            class="meta-line batch-alert-volumes"
+            data-testid="batch-alert-volumes-line"
+          >
+            以下卷需关注：{{ batchSummaryPrompt.alert_volume_labels.join('、') }}
+          </p>
           <button
             type="button"
             class="save-btn pixel-border"
@@ -1926,6 +1961,7 @@ const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
 const chapterBodySaving = ref(false);
 const batchSummaryPrompt = ref(null);
+const chapterRecheckResult = ref(null);
 const openVolumeSummaryName = ref(null);
 const highlightedVolumeLabel = ref(null);
 const previewLoading = ref(false);
@@ -2070,6 +2106,9 @@ const defaultUiProfile = {
   chapter_save_p0_recheck: false,
   batch_highlight_alert_volumes: false,
   volume_pulse_summary_generate: false,
+  batch_auto_open_summary: false,
+  batch_deviation_prompt: false,
+  chapter_recheck_inline: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2307,6 +2346,9 @@ async function selectChapter(chapter) {
   previewLoading.value = true;
   chapterPreview.value = null;
   chapterBodyDraft.value = '';
+  if (chapterRecheckResult.value?.chapter !== chapter) {
+    chapterRecheckResult.value = null;
+  }
   try {
     const full = Boolean(uiProfile.value.chapter_inline_edit || uiProfile.value.chapter_full_preview);
     chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
@@ -2366,6 +2408,13 @@ function volumeOverlapsRange(row, start, end) {
   return row.start_chapter <= end && row.end_chapter >= start;
 }
 
+function collectBatchAlertVolumeLabels(start, end) {
+  const rows = overview.value?.volume_pulse?.volumes || [];
+  return rows
+    .filter((row) => row.status === 'alert' && volumeOverlapsRange(row, start, end))
+    .map((row) => row.label);
+}
+
 async function highlightBatchAlertVolumes(start, end) {
   if (!uiProfile.value.batch_highlight_alert_volumes) return;
   await nextTick();
@@ -2403,9 +2452,14 @@ async function generateVolumeSummaryForRow(row) {
 async function recheckChapterP0(chapter) {
   logicCheckRunning.value = true;
   try {
-    logicCheckResult.value = await runCreatorLogicCheck({ chapter });
-    if (logicCheckResult.value.p0_count > 0) {
-      saveMessage.value = `ch${String(chapter).padStart(3, '0')} 保存后复查：发现 ${logicCheckResult.value.p0_count} 条 P0`;
+    const result = await runCreatorLogicCheck({ chapter });
+    if (uiProfile.value.chapter_recheck_inline) {
+      chapterRecheckResult.value = { ...result, chapter };
+    } else {
+      logicCheckResult.value = result;
+    }
+    if (result.p0_count > 0) {
+      saveMessage.value = `ch${String(chapter).padStart(3, '0')} 保存后复查：发现 ${result.p0_count} 条 P0`;
     }
   } catch (e) {
     handleSaveError(e);
@@ -3832,6 +3886,7 @@ function startBatchPolling() {
           batchSummaryPrompt.value = {
             start: batchStart.value,
             end: batchEnd.value,
+            alert_volume_labels: [],
           };
         } catch {
           /* volume summary optional */
@@ -3839,8 +3894,19 @@ function startBatchPolling() {
       }
       saveMessage.value = 'Batch 已完成，卷摘要已更新';
       await refresh();
+      if (batchSummaryPrompt.value) {
+        batchSummaryPrompt.value = {
+          ...batchSummaryPrompt.value,
+          alert_volume_labels: uiProfile.value.batch_deviation_prompt
+            ? collectBatchAlertVolumeLabels(batchStart.value, batchEnd.value)
+            : [],
+        };
+      }
       if (uiProfile.value.batch_highlight_alert_volumes) {
         await highlightBatchAlertVolumes(batchStart.value, batchEnd.value);
+      }
+      if (uiProfile.value.batch_auto_open_summary && batchSummaryPrompt.value) {
+        openVolumeSummaryForRange(batchStart.value, batchEnd.value);
       }
     }
     if (status === 'completed' || status === 'failed') {
@@ -4124,6 +4190,17 @@ watch(projectRevision, () => {
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
+}
+
+.chapter-recheck-panel {
+  margin-top: var(--space-sm);
+  padding: var(--space-xs);
+  background: rgba(200, 180, 80, 0.1);
+}
+
+.batch-alert-volumes {
+  color: #c44;
+  font-weight: bold;
 }
 
 .batch-summary-prompt {

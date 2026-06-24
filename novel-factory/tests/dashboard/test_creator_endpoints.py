@@ -1241,6 +1241,14 @@ class TestCreatorEndpoints:
         assert "batch_highlight_alert_volumes" in profile
         assert "volume_pulse_summary_generate" in profile
 
+    def test_creator_v44_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "batch_auto_open_summary" in profile
+        assert "batch_deviation_prompt" in profile
+        assert "chapter_recheck_inline" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

@@ -274,6 +274,9 @@ class CreatorUiProfile(BaseModel):
     chapter_save_p0_recheck: bool = False
     batch_highlight_alert_volumes: bool = False
     volume_pulse_summary_generate: bool = False
+    batch_auto_open_summary: bool = False
+    batch_deviation_prompt: bool = False
+    chapter_recheck_inline: bool = False
     deviation_min_severity: Optional[str] = None
 
 
