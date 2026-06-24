@@ -1118,6 +1118,9 @@ class TestCreatorEndpoints:
         assert preflight.status_code == 400
 
     def test_creator_v37_endpoints(self, client: TestClient) -> None:
+        from infra.creator_onboarding_digest_schedule import _save_dead_letter_items
+        from infra.studio_registry import active_project
+
         drift = client.get(
             "/api/creator/volume-plan/templates/approvals/missing/snapshot-drift",
         )
@@ -1128,6 +1131,9 @@ class TestCreatorEndpoints:
         )
         assert batch.status_code == 200
         assert batch.json()["total"] == 0
+        project = active_project()
+        assert project is not None
+        _save_dead_letter_items(project.root, [])
         replay = client.post(
             "/api/creator/onboarding/notifications/digest/dead-letter/replay",
             json={"index": 0},
@@ -1563,6 +1569,14 @@ class TestCreatorEndpoints:
         assert "volume_plan_diff_export_print_preview" in profile
         assert "batch_history_status_stack_chart" in profile
         assert "creation_mode_switch_history" in profile
+
+    def test_creator_v68_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_export_zip" in profile
+        assert "batch_history_duration_distribution" in profile
+        assert "creation_mode_switch_undo_hint" in profile
 
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")

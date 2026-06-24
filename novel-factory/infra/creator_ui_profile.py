@@ -71,6 +71,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_onboarding_step_link": True,
             "creation_mode_switch_confirm_dialog": True,
             "creation_mode_switch_history": True,
+            "creation_mode_switch_undo_hint": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -142,6 +143,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "batch_history_failure_reason_label": True,
             "volume_plan_diff_export_print_preview": True,
             "batch_history_status_stack_chart": True,
+            "volume_plan_diff_export_zip": True,
+            "batch_history_duration_distribution": True,
             "creation_mode_capability_matrix": True,
             "creation_mode_badge_hint": True,
             "creation_mode_switch_hint": True,
@@ -154,6 +157,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_onboarding_step_link": True,
             "creation_mode_switch_confirm_dialog": True,
             "creation_mode_switch_history": True,
+            "creation_mode_switch_undo_hint": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -232,11 +236,14 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "batch_history_failure_reason_label": False,
         "volume_plan_diff_export_print_preview": False,
         "batch_history_status_stack_chart": False,
+        "volume_plan_diff_export_zip": False,
+        "batch_history_duration_distribution": False,
         "creation_mode_capability_matrix": True,
         "creation_mode_switch_guide_animation": True,
         "creation_mode_onboarding_step_link": True,
         "creation_mode_switch_confirm_dialog": True,
         "creation_mode_switch_history": True,
+        "creation_mode_switch_undo_hint": True,
         "creation_mode_badge_hint": False,
         "creation_mode_switch_hint": False,
         "creation_mode_switch_doc_link": False,

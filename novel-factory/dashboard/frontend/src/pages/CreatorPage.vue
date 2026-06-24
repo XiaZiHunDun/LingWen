@@ -175,6 +175,24 @@
       </li>
     </ul>
     <div
+      v-if="uiProfile.creation_mode_switch_undo_hint && lastModeSwitchUndo"
+      class="mode-switch-undo-hint pixel-border"
+      data-testid="creation-mode-switch-undo-hint"
+    >
+      <p class="meta-line">
+        已请求切换至 {{ lastModeSwitchUndo.toLabel }}，撤销请恢复
+        <code>creation_mode: {{ lastModeSwitchUndo.fromMode }}</code>
+      </p>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="copy-mode-switch-undo-btn"
+        @click="applyModeSwitchUndoHint"
+      >
+        复制撤销 YAML
+      </button>
+    </div>
+    <div
       v-if="showVolumePlanDiffPrintPreview"
       class="volume-plan-diff-print-preview pixel-border"
       data-testid="volume-plan-diff-print-preview"
@@ -1512,6 +1530,15 @@
             >
               打印预览
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export_zip && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="export-volume-plan-diff-zip-btn"
+              @click="exportVolumePlanDiffZip"
+            >
+              导出 ZIP
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1675,6 +1702,15 @@
                 @click="openVolumePlanDiffPrintPreview"
               >
                 打印预览
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export_zip && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="export-volume-plan-diff-zip-btn"
+                @click="exportVolumePlanDiffZip"
+              >
+                导出 ZIP
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -2034,6 +2070,38 @@
                 :key="`batch-stack-label-${segment.status}`"
               >
                 {{ segment.status }} {{ segment.count }}
+              </span>
+            </p>
+          </div>
+          <div
+            v-if="batchHistoryDurationDistribution"
+            class="batch-history-duration-distribution"
+            data-testid="batch-history-duration-distribution"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistoryDurationDistribution.width} ${batchHistoryDurationDistribution.height}`"
+              class="batch-history-duration-distribution-svg"
+              role="img"
+              aria-label="batch 历史耗时分布图"
+            >
+              <rect
+                v-for="bar in batchHistoryDurationDistribution.bars"
+                :key="`duration-bar-${bar.id}`"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.barWidth"
+                :height="bar.barHeight"
+                class="batch-history-duration-bar"
+                :data-testid="`batch-history-duration-${bar.id}`"
+              />
+            </svg>
+            <p class="meta-line batch-history-duration-distribution-label">
+              耗时分布：
+              <span
+                v-for="bar in batchHistoryDurationDistribution.bars"
+                :key="`duration-label-${bar.id}`"
+              >
+                {{ bar.label }} {{ bar.count }}
               </span>
             </p>
           </div>
@@ -2971,6 +3039,7 @@ const batchHistoryStatusFilter = ref('');
 const batchHistoryBudgetHint = ref('');
 const pendingModeSwitch = ref(null);
 const creationModeSwitchHistory = ref([]);
+const lastModeSwitchUndo = ref(null);
 const showVolumePlanDiffPrintPreview = ref(false);
 const volumePlanDiffPrintPreviewText = ref('');
 
@@ -3197,12 +3266,15 @@ const defaultUiProfile = {
   batch_history_failure_reason_label: false,
   volume_plan_diff_export_print_preview: false,
   batch_history_status_stack_chart: false,
+  volume_plan_diff_export_zip: false,
+  batch_history_duration_distribution: false,
+  creation_mode_switch_confirm_dialog: false,
+  creation_mode_switch_history: false,
+  creation_mode_switch_undo_hint: false,
+  creation_mode_badge_hint: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
   creation_mode_onboarding_step_link: false,
-  creation_mode_switch_confirm_dialog: false,
-  creation_mode_switch_history: false,
-  creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
   companion_creation_mode_badge_tint: false,
@@ -3485,6 +3557,43 @@ const batchHistoryStatusStackChart = computed(() => {
     x += segmentWidth;
   }
   return { segments, width, height, total };
+});
+
+const BATCH_DURATION_BUCKETS = [
+  { id: 'lt1', label: '<1分', min: 0, max: 1 },
+  { id: '1to5', label: '1-5分', min: 1, max: 5 },
+  { id: '5to15', label: '5-15分', min: 5, max: 15 },
+  { id: 'gte15', label: '15分+', min: 15, max: Number.POSITIVE_INFINITY },
+];
+
+const batchHistoryDurationDistribution = computed(() => {
+  if (!uiProfile.value.batch_history_duration_distribution || !batchHistory.value.length) return null;
+  const buckets = BATCH_DURATION_BUCKETS.map((bucket) => ({ ...bucket, count: 0 }));
+  for (const job of batchHistory.value) {
+    const minutes = batchJobDurationMinutes(job);
+    if (minutes == null) continue;
+    const bucket = buckets.find(
+      (row) => minutes >= row.min && minutes < row.max,
+    ) || buckets[buckets.length - 1];
+    bucket.count += 1;
+  }
+  const measured = buckets.reduce((sum, row) => sum + row.count, 0);
+  if (!measured) return null;
+  const max = Math.max(...buckets.map((row) => row.count), 1);
+  const width = 200;
+  const height = 40;
+  const slot = width / buckets.length;
+  const bars = buckets.map((row, idx) => {
+    const barHeight = (row.count / max) * (height - 8);
+    return {
+      ...row,
+      x: idx * slot + 2,
+      y: height - barHeight,
+      barWidth: slot - 4,
+      barHeight,
+    };
+  });
+  return { bars, width, height, measured };
 });
 
 const batchHistoryAvgDuration = computed(() => {
@@ -4354,7 +4463,28 @@ function recordCreationModeSwitchHistory(mode, action) {
 
 function maybeRecordModeSwitch(mode, action) {
   if (!mode || !overview.value || mode === overview.value.creation_mode) return;
+  if (uiProfile.value.creation_mode_switch_undo_hint) {
+    lastModeSwitchUndo.value = {
+      fromMode: overview.value.creation_mode,
+      fromLabel: CREATION_MODE_ONBOARDING_LABELS[overview.value.creation_mode] || overview.value.creation_mode,
+      toMode: mode,
+      toLabel: CREATION_MODE_ONBOARDING_LABELS[mode] || mode,
+      action,
+    };
+  }
   recordCreationModeSwitchHistory(mode, action);
+}
+
+async function applyModeSwitchUndoHint() {
+  if (!uiProfile.value.creation_mode_switch_undo_hint || !lastModeSwitchUndo.value) return;
+  const snippet = `creation_mode: ${lastModeSwitchUndo.value.fromMode}`;
+  try {
+    await navigator.clipboard.writeText(snippet);
+    saveMessage.value = `撤销提示：已复制 ${snippet}`;
+  } catch {
+    saveMessage.value = snippet;
+  }
+  lastModeSwitchUndo.value = null;
 }
 
 function requestCreationModeYaml(mode, active = false) {
@@ -4587,6 +4717,117 @@ function buildMinimalTextPdf(lines) {
   return pdf;
 }
 
+function crc32Bytes(bytes) {
+  let crc = 0xffffffff;
+  for (let i = 0; i < bytes.length; i += 1) {
+    crc ^= bytes[i];
+    for (let j = 0; j < 8; j += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function buildMinimalZip(entries) {
+  const encoder = new TextEncoder();
+  const parts = [];
+  const central = [];
+  let offset = 0;
+  for (const entry of entries) {
+    const nameBytes = encoder.encode(entry.name);
+    const dataBytes = typeof entry.content === 'string'
+      ? encoder.encode(entry.content)
+      : entry.content;
+    const crc = crc32Bytes(dataBytes);
+    const localHeader = new Uint8Array(30 + nameBytes.length);
+    const localView = new DataView(localHeader.buffer);
+    localView.setUint32(0, 0x04034b50, true);
+    localView.setUint16(4, 20, true);
+    localView.setUint16(6, 0, true);
+    localView.setUint16(8, 0, true);
+    localView.setUint32(14, crc, true);
+    localView.setUint32(18, dataBytes.length, true);
+    localView.setUint32(22, dataBytes.length, true);
+    localView.setUint16(26, nameBytes.length, true);
+    localView.setUint16(28, 0, true);
+    localHeader.set(nameBytes, 30);
+    parts.push(localHeader, dataBytes);
+
+    const centralHeader = new Uint8Array(46 + nameBytes.length);
+    const centralView = new DataView(centralHeader.buffer);
+    centralView.setUint32(0, 0x02014b50, true);
+    centralView.setUint16(4, 20, true);
+    centralView.setUint16(6, 20, true);
+    centralView.setUint16(8, 0, true);
+    centralView.setUint16(10, 0, true);
+    centralView.setUint32(16, crc, true);
+    centralView.setUint32(20, dataBytes.length, true);
+    centralView.setUint32(24, dataBytes.length, true);
+    centralView.setUint16(28, nameBytes.length, true);
+    centralView.setUint16(30, 0, true);
+    centralView.setUint16(32, 0, true);
+    centralView.setUint16(34, 0, true);
+    centralView.setUint16(36, 0, true);
+    centralView.setUint32(38, 0, true);
+    centralView.setUint32(42, offset, true);
+    centralHeader.set(nameBytes, 46);
+    central.push(centralHeader);
+    offset += localHeader.length + dataBytes.length;
+  }
+  const centralSize = central.reduce((sum, row) => sum + row.length, 0);
+  const centralStart = offset;
+  const end = new Uint8Array(22);
+  const endView = new DataView(end.buffer);
+  endView.setUint32(0, 0x06054b50, true);
+  endView.setUint16(8, entries.length, true);
+  endView.setUint16(10, entries.length, true);
+  endView.setUint32(12, centralSize, true);
+  endView.setUint32(16, centralStart, true);
+  const totalLength = offset + centralSize + end.length;
+  const zip = new Uint8Array(totalLength);
+  let cursor = 0;
+  for (const part of parts) {
+    zip.set(part, cursor);
+    cursor += part.length;
+  }
+  for (const part of central) {
+    zip.set(part, cursor);
+    cursor += part.length;
+  }
+  zip.set(end, cursor);
+  return zip;
+}
+
+function downloadBinaryExport(filename, bytes, mimeType = 'application/octet-stream') {
+  const blob = new Blob([bytes], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildVolumePlanDiffExportPayload(changes) {
+  const payload = {
+    schema_version: '1',
+    has_changes: volumePlanDiffPreview.value.has_changes,
+    change_count: changes.length,
+    changes,
+    global_outline_path: volumePlanDiffPreview.value.global_outline_path || '',
+  };
+  if (uiProfile.value.volume_plan_diff_export_outline) {
+    payload.global_outline_excerpt = volumePlanDiffPreview.value.global_outline_excerpt || '';
+    payload.global_outline_lines = volumePlanDiffPreview.value.global_outline_lines || [];
+  }
+  if (uiProfile.value.volume_plan_diff_export_highlight) {
+    payload.highlighted_changes = changes.map((row) => ({ ...row, highlighted: true }));
+    const outlineLines = volumePlanDiffPreview.value.global_outline_lines || [];
+    payload.highlighted_outline_lines = outlineLines.filter((line) => line.highlighted);
+  }
+  return payload;
+}
+
 async function exportBatchHistory() {
   if (!uiProfile.value.batch_history_export) return;
   try {
@@ -4610,22 +4851,7 @@ function exportVolumePlanDiff() {
   const changes = filteredVolumePlanDiffChanges.value.length
     ? filteredVolumePlanDiffChanges.value
     : volumePlanDiffPreview.value.changes || [];
-  const payload = {
-    schema_version: '1',
-    has_changes: volumePlanDiffPreview.value.has_changes,
-    change_count: changes.length,
-    changes,
-    global_outline_path: volumePlanDiffPreview.value.global_outline_path || '',
-  };
-  if (uiProfile.value.volume_plan_diff_export_outline) {
-    payload.global_outline_excerpt = volumePlanDiffPreview.value.global_outline_excerpt || '';
-    payload.global_outline_lines = volumePlanDiffPreview.value.global_outline_lines || [];
-  }
-  if (uiProfile.value.volume_plan_diff_export_highlight) {
-    payload.highlighted_changes = changes.map((row) => ({ ...row, highlighted: true }));
-    const outlineLines = volumePlanDiffPreview.value.global_outline_lines || [];
-    payload.highlighted_outline_lines = outlineLines.filter((line) => line.highlighted);
-  }
+  const payload = buildVolumePlanDiffExportPayload(changes);
   downloadJsonExport('creator-volume-plan-diff.json', payload);
   const outlineNote = uiProfile.value.volume_plan_diff_export_outline ? '（含大纲摘录）' : '';
   const highlightNote = uiProfile.value.volume_plan_diff_export_highlight ? '（含变更高亮）' : '';
@@ -4724,6 +4950,23 @@ function printVolumePlanDiffPrintPreview() {
   printWindow.document.write(`<pre>${volumePlanDiffPrintPreviewText.value.replace(/</g, '&lt;')}</pre>`);
   printWindow.document.close();
   printWindow.print();
+}
+
+function exportVolumePlanDiffZip() {
+  if (!uiProfile.value.volume_plan_diff_export_zip || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  const payload = buildVolumePlanDiffExportPayload(changes);
+  const markdown = buildVolumePlanDiffMarkdown(changes);
+  const pdf = buildMinimalTextPdf(markdown.split('\n'));
+  const zip = buildMinimalZip([
+    { name: 'creator-volume-plan-diff.json', content: JSON.stringify(payload, null, 2) },
+    { name: 'creator-volume-plan-diff.md', content: markdown },
+    { name: 'creator-volume-plan-diff.pdf', content: pdf },
+  ]);
+  downloadBinaryExport('creator-volume-plan-diff.zip', zip, 'application/zip');
+  saveMessage.value = `已导出卷纲 diff ZIP（${changes.length} 条变更）`;
 }
 
 async function loadOnboardingWizard() {
@@ -6602,6 +6845,32 @@ watch(
 
 .creation-mode-switch-history-item {
   margin: 0;
+}
+
+.mode-switch-undo-hint {
+  margin: var(--space-xs) 0;
+  padding: var(--space-sm);
+  border-color: rgba(180, 120, 40, 0.45);
+  background: rgba(180, 120, 40, 0.06);
+}
+
+.batch-history-duration-distribution {
+  margin: 0 0 var(--space-xs);
+}
+
+.batch-history-duration-distribution-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  display: block;
+}
+
+.batch-history-duration-bar {
+  fill: rgba(100, 140, 200, 0.75);
+}
+
+.batch-history-duration-distribution-label {
+  margin: 2px 0 0;
 }
 
 .volume-plan-diff-print-preview {

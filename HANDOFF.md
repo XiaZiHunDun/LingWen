@@ -3,7 +3,7 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v11.25 (创作者 v6.7, 2026-06-24)  
+> **版本**: v11.26 (创作者 v6.8, 2026-06-24)  
 > **更新 (2026-06-22)**: 审批转交/OR签/快照 diff · digest handle 静默与死信 · Webhook 签名 · 预设拉取预检/changelog/拓扑可视化
 
 ---
@@ -211,7 +211,9 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **v6.7 已落地**：卷纲 diff 导出打印预览 · batch 历史按状态堆叠图 · 三模式切换历史记录
 
-**v6.8 候选**：卷纲 diff 导出 ZIP 打包 · batch 历史耗时分布图 · 三模式切换撤销提示
+**v6.8 已落地**：卷纲 diff 导出 ZIP 打包 · batch 历史耗时分布图 · 三模式切换撤销提示
+
+**v6.9 候选**：卷纲 diff 导出分享链接 · batch 历史并发运行图 · 三模式切换快捷键
 
 ### 常用命令
 

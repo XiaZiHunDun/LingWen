@@ -4059,4 +4059,109 @@ describe('CreatorPage', () => {
     expect(history.text()).toContain('YAML');
     localStorage.removeItem('creator_mode_switch_history');
   });
+
+  it('v6.8 exports volume plan diff zip bundle', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    let exportedZip = null;
+    const originalBlob = globalThis.Blob;
+    globalThis.Blob = class extends originalBlob {
+      constructor(parts, options) {
+        super(parts, options);
+        exportedZip = parts[0];
+      }
+    };
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export_zip: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('ZIP 导出');
+    await flushPromises();
+    await wrapper.find('[data-testid="export-volume-plan-diff-zip-btn"]').trigger('click');
+    await flushPromises();
+    expect(exportedZip?.[0]).toBe(0x50);
+    expect(exportedZip?.[1]).toBe(0x4b);
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('ZIP');
+    globalThis.Blob = originalBlob;
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('v6.8 batch history duration distribution chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_duration_distribution: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-fast',
+          start_chapter: 1,
+          end_chapter: 2,
+          status: 'completed',
+          started_at: '2026-06-10T12:00:00Z',
+          finished_at: '2026-06-10T12:00:30Z',
+        },
+        {
+          job_id: 'job-slow',
+          start_chapter: 3,
+          end_chapter: 4,
+          status: 'completed',
+          started_at: '2026-06-10T12:00:00Z',
+          finished_at: '2026-06-10T12:20:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const chart = wrapper.find('[data-testid="batch-history-duration-distribution"]');
+    expect(chart.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="batch-history-duration-lt1"]').exists()).toBe(true);
+    expect(chart.text()).toContain('5-15分');
+  });
+
+  it('v6.8 shows mode switch undo hint after yaml copy', async () => {
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_yaml_snippet: true,
+        creation_mode_switch_undo_hint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="copy-creation-mode-yaml-companion"]').trigger('click');
+    await flushPromises();
+    const hint = wrapper.find('[data-testid="creation-mode-switch-undo-hint"]');
+    expect(hint.exists()).toBe(true);
+    expect(hint.text()).toContain('creation_mode: advance');
+    await wrapper.find('[data-testid="copy-mode-switch-undo-btn"]').trigger('click');
+    await flushPromises();
+    expect(writeText).toHaveBeenCalledWith('creation_mode: advance');
+    writeText.mockRestore();
+  });
 });
