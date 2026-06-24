@@ -68,6 +68,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_badge_legend": True,
             "creation_mode_capability_matrix": True,
             "creation_mode_switch_guide_animation": True,
+            "creation_mode_onboarding_step_link": True,
             "deviation_min_severity": None,
         }
     if mode == CREATION_MODE_ADVANCE:
@@ -133,6 +134,8 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "batch_history_weekly_summary": True,
             "batch_history_monthly_summary": True,
             "volume_plan_diff_export_markdown": True,
+            "volume_plan_diff_export_email_share": True,
+            "batch_history_success_rate_chart": True,
             "creation_mode_capability_matrix": True,
             "creation_mode_badge_hint": True,
             "creation_mode_switch_hint": True,
@@ -142,6 +145,7 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_switch_doc_open": True,
             "creation_mode_badge_legend": True,
             "creation_mode_switch_guide_animation": True,
+            "creation_mode_onboarding_step_link": True,
             "deviation_min_severity": "alert",
         }
     return {
@@ -214,8 +218,11 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "batch_history_weekly_summary": False,
         "batch_history_monthly_summary": False,
         "volume_plan_diff_export_markdown": False,
+        "volume_plan_diff_export_email_share": False,
+        "batch_history_success_rate_chart": False,
         "creation_mode_capability_matrix": True,
         "creation_mode_switch_guide_animation": True,
+        "creation_mode_onboarding_step_link": True,
         "creation_mode_badge_hint": False,
         "creation_mode_switch_hint": False,
         "creation_mode_switch_doc_link": False,

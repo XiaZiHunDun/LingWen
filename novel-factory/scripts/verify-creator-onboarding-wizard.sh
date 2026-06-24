@@ -377,6 +377,9 @@ assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_capa
 assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_export_markdown"] is True
 assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_monthly_summary"] is True
 assert resolve_creator_ui_profile(creation_mode="studio")["creation_mode_switch_guide_animation"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["volume_plan_diff_export_email_share"] is True
+assert resolve_creator_ui_profile(creation_mode="advance")["batch_history_success_rate_chart"] is True
+assert resolve_creator_ui_profile(creation_mode="companion")["creation_mode_onboarding_step_link"] is True
 
 from infra.creator_dashboard import save_creator_chapter_outline
 

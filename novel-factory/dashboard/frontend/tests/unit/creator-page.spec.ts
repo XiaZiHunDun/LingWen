@@ -3796,4 +3796,100 @@ describe('CreatorPage', () => {
       'creation-mode-switch-preview--guide',
     );
   });
+
+  it('v6.5 shares volume plan diff via email', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    creatorMocks.fetchCreatorOnboardingEmail.mockResolvedValue({
+      enabled: true,
+      to_addresses: ['writer@example.com'],
+      smtp_host: 'smtp.example.com',
+    });
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_export_email_share: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff
+      .mockResolvedValueOnce({ has_changes: false, changes: [] })
+      .mockResolvedValue({
+        has_changes: true,
+        changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+      });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('邮件分享');
+    await flushPromises();
+    await wrapper.find('[data-testid="share-volume-plan-diff-email-btn"]').trigger('click');
+    await flushPromises();
+    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('mailto:'), '_blank');
+    expect(openSpy.mock.calls[0][0]).toContain('writer%40example.com');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('邮件分享');
+    openSpy.mockRestore();
+  });
+
+  it('v6.5 batch history success rate chart', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_success_rate_chart: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-1',
+          start_chapter: 1,
+          end_chapter: 2,
+          status: 'completed',
+          finished_at: '2026-06-01T12:00:00Z',
+        },
+        {
+          job_id: 'job-2',
+          start_chapter: 3,
+          end_chapter: 4,
+          status: 'failed',
+          finished_at: '2026-06-02T12:00:00Z',
+        },
+        {
+          job_id: 'job-3',
+          start_chapter: 5,
+          end_chapter: 6,
+          status: 'completed',
+          finished_at: '2026-06-03T12:00:00Z',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const chart = wrapper.find('[data-testid="batch-history-success-rate-chart"]');
+    expect(chart.exists()).toBe(true);
+    expect(chart.find('polyline').exists()).toBe(true);
+    expect(chart.text()).toContain('累计成功率趋势');
+  });
+
+  it('v6.5 links creation mode preview to onboarding steps', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'advance',
+        creation_mode_switch_preview: true,
+        creation_mode_onboarding_step_link: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="wizard-step-modes-volume"]').text()).toContain('推进');
+    await wrapper.find('[data-testid="link-onboarding-step-companion"]').trigger('click');
+    await flushPromises();
+    expect(navMocks.setWizardDeepLink).toHaveBeenLastCalledWith(true, 'write');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('陪伴');
+  });
 });

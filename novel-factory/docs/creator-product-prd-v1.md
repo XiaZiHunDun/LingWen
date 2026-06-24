@@ -422,3 +422,9 @@ project:
 - 卷纲 diff Markdown 导出 — ✅ v6.4
 - batch 历史按月汇总 — ✅ v6.4
 - 三模式切换引导动画 — ✅ v6.4
+
+## 62. 后续（v6.5+）
+
+- 卷纲 diff 导出邮件分享 — ✅ v6.5
+- batch 历史成功率折线图 — ✅ v6.5
+- 三模式 onboarding 步骤联动 — ✅ v6.5

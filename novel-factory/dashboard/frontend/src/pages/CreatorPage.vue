@@ -120,6 +120,15 @@
           >
             复制 YAML
           </button>
+          <button
+            v-if="uiProfile.creation_mode_onboarding_step_link"
+            type="button"
+            class="mini-btn pixel-border creation-mode-onboarding-link-btn"
+            :data-testid="`link-onboarding-step-${row.mode}`"
+            @click.stop="linkModeToOnboardingStep(row.mode)"
+          >
+            向导步骤
+          </button>
         </li>
       </ul>
     </div>
@@ -408,7 +417,11 @@
           v-for="step in onboardingWizard.steps"
           :key="step.id"
           class="wizard-step"
-          :class="{ 'wizard-step--focused': step.id === focusWizardStep }"
+          :class="{
+            'wizard-step--focused': step.id === focusWizardStep,
+            'wizard-step--mode-linked': uiProfile.creation_mode_onboarding_step_link
+              && isOnboardingStepLinkedToCurrentMode(step.id),
+          }"
         >
           <label class="wizard-step-label">
             <input
@@ -424,6 +437,17 @@
                 class="wizard-auto-badge"
                 data-testid="wizard-auto-badge"
               >自动</span>
+              <span
+                v-if="uiProfile.creation_mode_onboarding_step_link && onboardingModesForStep(step.id).length"
+                class="wizard-step-mode-badges"
+                :data-testid="`wizard-step-modes-${step.id}`"
+              >
+                <span
+                  v-for="modeRow in onboardingModesForStep(step.id)"
+                  :key="`${step.id}-${modeRow.mode}`"
+                  class="wizard-step-mode-badge"
+                >{{ modeRow.label }}</span>
+              </span>
               <span class="meta-line">{{ step.detail }}</span>
             </span>
           </label>
@@ -1393,6 +1417,15 @@
             >
               导出 diff Markdown
             </button>
+            <button
+              v-if="uiProfile.volume_plan_diff_export_email_share && volumePlanDiffPreview?.has_changes"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="share-volume-plan-diff-email-btn"
+              @click="shareVolumePlanDiffEmail"
+            >
+              邮件分享 diff
+            </button>
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1529,6 +1562,15 @@
                 @click="exportVolumePlanDiffMarkdown"
               >
                 导出 diff Markdown
+              </button>
+              <button
+                v-if="uiProfile.volume_plan_diff_export_email_share && volumePlanDiffPreview?.has_changes"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="share-volume-plan-diff-email-btn"
+                @click="shareVolumePlanDiffEmail"
+              >
+                邮件分享 diff
               </button>
               <div
                 class="volume-plan-diff-body"
@@ -1837,6 +1879,28 @@
           >
             成功率 {{ batchHistorySuccessRate.pct }}%（{{ batchHistorySuccessRate.completed }}/{{ batchHistorySuccessRate.total }} 已完成）
           </p>
+          <div
+            v-if="batchHistorySuccessRateChart"
+            class="batch-history-success-rate-chart"
+            data-testid="batch-history-success-rate-chart"
+          >
+            <svg
+              :viewBox="`0 0 ${batchHistorySuccessRateChart.width} ${batchHistorySuccessRateChart.height}`"
+              class="batch-history-success-rate-chart-svg"
+              role="img"
+              aria-label="batch 历史成功率折线图"
+            >
+              <polyline
+                :points="batchHistorySuccessRateChart.polyline"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+            </svg>
+            <p class="meta-line batch-history-success-rate-chart-label">
+              累计成功率趋势（{{ batchHistorySuccessRateChart.points.length }} 次）
+            </p>
+          </div>
           <p
             v-if="batchHistoryAvgDuration != null"
             class="meta-line batch-history-avg-duration"
@@ -2971,8 +3035,11 @@ const defaultUiProfile = {
   batch_history_weekly_summary: false,
   batch_history_monthly_summary: false,
   volume_plan_diff_export_markdown: false,
+  volume_plan_diff_export_email_share: false,
+  batch_history_success_rate_chart: false,
   creation_mode_capability_matrix: false,
   creation_mode_switch_guide_animation: false,
+  creation_mode_onboarding_step_link: false,
   creation_mode_badge_hint: false,
   studio_creation_mode_badge_hint: false,
   studio_creation_mode_badge_tint: false,
@@ -3156,6 +3223,24 @@ const CREATION_MODE_CAPABILITY_ROWS = [
   { id: 'digest-ops', label: 'Digest 运维', companion: false, advance: false, studio: true },
 ];
 
+const CREATION_MODE_ONBOARDING_STEPS = {
+  companion: ['init', 'pillars', 'dashboard', 'write', 'check'],
+  advance: ['init', 'pillars', 'dashboard', 'volume', 'batch', 'check'],
+  studio: ['init', 'pillars', 'dashboard', 'volume', 'preflight', 'check'],
+};
+
+const CREATION_MODE_ONBOARDING_LABELS = {
+  companion: '陪伴',
+  advance: '推进',
+  studio: '工作室',
+};
+
+const CREATION_MODE_ONBOARDING_FOCUS_STEP = {
+  companion: 'write',
+  advance: 'volume',
+  studio: 'preflight',
+};
+
 const creationModeCapabilityRows = computed(() => {
   if (!uiProfile.value.creation_mode_capability_matrix) return [];
   return CREATION_MODE_CAPABILITY_ROWS;
@@ -3172,6 +3257,32 @@ const batchHistorySuccessRate = computed(() => {
     completed,
     pct: Math.round((completed / total) * 100),
   };
+});
+
+const batchHistorySuccessRateChart = computed(() => {
+  if (!uiProfile.value.batch_history_success_rate_chart || batchHistory.value.length < 2) return null;
+  const jobs = [...batchHistory.value].sort((a, b) => {
+    const ta = Date.parse(a.finished_at || a.started_at || 0);
+    const tb = Date.parse(b.finished_at || b.started_at || 0);
+    return ta - tb;
+  });
+  let completed = 0;
+  const points = jobs.map((job, idx) => {
+    if (String(job?.status).toLowerCase() === 'completed') completed += 1;
+    return {
+      index: idx,
+      rate: Math.round((completed / (idx + 1)) * 100),
+    };
+  });
+  const width = 200;
+  const height = 48;
+  const maxX = Math.max(points.length - 1, 1);
+  const polyline = points.map((point, idx) => {
+    const x = (idx / maxX) * width;
+    const y = height - (point.rate / 100) * height;
+    return `${x},${y}`;
+  }).join(' ');
+  return { points, polyline, width, height };
 });
 
 const batchHistoryAvgDuration = computed(() => {
@@ -4183,6 +4294,53 @@ function exportVolumePlanDiff() {
   const outlineNote = uiProfile.value.volume_plan_diff_export_outline ? '（含大纲摘录）' : '';
   const highlightNote = uiProfile.value.volume_plan_diff_export_highlight ? '（含变更高亮）' : '';
   saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）${outlineNote}${highlightNote}`;
+}
+
+function buildVolumePlanDiffMailto(changes, recipient = '') {
+  const body = encodeURIComponent(buildVolumePlanDiffMarkdown(changes));
+  const subject = encodeURIComponent('卷纲 Diff 变更');
+  const to = recipient ? encodeURIComponent(recipient) : '';
+  return `mailto:${to}?subject=${subject}&body=${body}`;
+}
+
+function onboardingModesForStep(stepId) {
+  if (!uiProfile.value.creation_mode_onboarding_step_link) return [];
+  return Object.entries(CREATION_MODE_ONBOARDING_STEPS)
+    .filter(([, steps]) => steps.includes(stepId))
+    .map(([mode]) => ({ mode, label: CREATION_MODE_ONBOARDING_LABELS[mode] }));
+}
+
+function isOnboardingStepLinkedToCurrentMode(stepId) {
+  if (!uiProfile.value.creation_mode_onboarding_step_link || !overview.value) return false;
+  const steps = CREATION_MODE_ONBOARDING_STEPS[overview.value.creation_mode] || [];
+  return steps.includes(stepId);
+}
+
+async function linkModeToOnboardingStep(mode) {
+  if (!uiProfile.value.creation_mode_onboarding_step_link || !mode) return;
+  const firstStep = CREATION_MODE_ONBOARDING_FOCUS_STEP[mode];
+  if (!firstStep) return;
+  wizardPanelOpen.value = true;
+  setWizardDeepLink(true, firstStep);
+  await nextTick();
+  await focusWizardStepFromUrl();
+  saveMessage.value = `已联动 ${CREATION_MODE_ONBOARDING_LABELS[mode] || mode} 向导步骤`;
+}
+
+async function shareVolumePlanDiffEmail() {
+  if (!uiProfile.value.volume_plan_diff_export_email_share || !volumePlanDiffPreview.value?.has_changes) return;
+  const changes = filteredVolumePlanDiffChanges.value.length
+    ? filteredVolumePlanDiffChanges.value
+    : volumePlanDiffPreview.value.changes || [];
+  const recipient = wizardEmailTo.value
+    .split(/[,\s;]+/)
+    .map((item) => item.trim())
+    .find(Boolean) || '';
+  const mailtoUrl = buildVolumePlanDiffMailto(changes, recipient);
+  window.open(mailtoUrl, '_blank');
+  saveMessage.value = recipient
+    ? `已打开邮件分享（${recipient}）`
+    : '已打开邮件分享';
 }
 
 function exportVolumePlanDiffMarkdown() {
@@ -5974,6 +6132,47 @@ watch(
 .creation-mode-yaml-btn {
   margin-top: var(--space-xs);
   font-size: 7px;
+}
+
+.creation-mode-onboarding-link-btn {
+  margin-top: var(--space-xs);
+  margin-left: var(--space-xs);
+  font-size: 7px;
+}
+
+.wizard-step--mode-linked {
+  border-color: rgba(100, 140, 200, 0.45);
+  background: rgba(100, 140, 200, 0.06);
+}
+
+.wizard-step-mode-badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.wizard-step-mode-badge {
+  font-size: 7px;
+  padding: 1px 4px;
+  border: 1px solid rgba(100, 140, 200, 0.45);
+  border-radius: 2px;
+  color: var(--color-accent);
+}
+
+.batch-history-success-rate-chart {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-accent);
+}
+
+.batch-history-success-rate-chart-svg {
+  width: 100%;
+  max-width: 220px;
+  height: 48px;
+  display: block;
+}
+
+.batch-history-success-rate-chart-label {
+  margin: 2px 0 0;
 }
 
 .volume-plan-diff-volume-filter {
