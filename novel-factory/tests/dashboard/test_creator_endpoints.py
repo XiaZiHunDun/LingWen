@@ -1355,6 +1355,14 @@ class TestCreatorEndpoints:
         assert "jobs" in data
         assert isinstance(data["jobs"], list)
 
+    def test_creator_v51_overview_profile_fields(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/overview")
+        assert resp.status_code == 200
+        profile = resp.json()["ui_profile"]
+        assert "volume_plan_diff_save_confirm" in profile
+        assert "batch_history_replay_range" in profile
+        assert "studio_creation_entry_hint" in profile
+
     def test_global_merge_preferences(self, client: TestClient) -> None:
         resp = client.get("/api/creator/settings-docs/merge-preferences/global")
         assert resp.status_code == 200

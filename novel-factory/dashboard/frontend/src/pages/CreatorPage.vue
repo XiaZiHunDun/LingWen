@@ -46,6 +46,13 @@
     >
       {{ creationModeSwitchHintText }}
     </p>
+    <p
+      v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
+      class="mode-switch-hint studio-entry-hint pixel-border"
+      data-testid="studio-creation-entry-hint"
+    >
+      {{ studioCreationEntryHintText }}
+    </p>
 
     <details
       v-if="onboardingWizard"
@@ -1192,7 +1199,7 @@
             class="save-btn pixel-border"
             data-testid="save-volume-plan-btn"
             :disabled="saving"
-            @click="saveVolumePlan"
+            @click="requestSaveVolumePlan"
           >
             {{ saving ? '保存中…' : '保存卷纲' }}
           </button>
@@ -1212,6 +1219,33 @@
                 <span class="diff-type">{{ row.type }}</span> {{ row.message }}
               </li>
             </ul>
+            <div
+              v-if="volumePlanSaveConfirmOpen"
+              class="volume-plan-save-confirm pixel-border"
+              data-testid="volume-plan-save-confirm-panel"
+            >
+              <p class="meta-line">确认保存以上卷纲变更？</p>
+              <div class="batch-actions">
+                <button
+                  type="button"
+                  class="save-btn pixel-border"
+                  data-testid="confirm-volume-plan-save-btn"
+                  :disabled="saving"
+                  @click="confirmSaveVolumePlan"
+                >
+                  {{ saving ? '保存中…' : '确认保存' }}
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="cancel-volume-plan-save-btn"
+                  :disabled="saving"
+                  @click="cancelVolumePlanSave"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
           </div>
           <div
             v-if="editableVolumes.length >= 2"
@@ -1347,11 +1381,23 @@
           <div class="batch-range">
             <label>
               起
-              <input v-model.number="batchStart" type="number" min="1" class="vol-input vol-num" />
+              <input
+                v-model.number="batchStart"
+                type="number"
+                min="1"
+                class="vol-input vol-num"
+                data-testid="batch-start-input"
+              />
             </label>
             <label>
               止
-              <input v-model.number="batchEnd" type="number" min="1" class="vol-input vol-num" />
+              <input
+                v-model.number="batchEnd"
+                type="number"
+                min="1"
+                class="vol-input vol-num"
+                data-testid="batch-end-input"
+              />
             </label>
             <label>
               预算 $
@@ -1396,7 +1442,15 @@
               v-for="job in batchHistory"
               :key="job.job_id"
               class="batch-history-item"
+              :class="{
+                'batch-history-item--clickable': uiProfile.batch_history_replay_range,
+                'batch-history-item--active': highlightedBatchHistoryId === job.job_id,
+              }"
+              :role="uiProfile.batch_history_replay_range ? 'button' : undefined"
+              :tabindex="uiProfile.batch_history_replay_range ? 0 : undefined"
               :data-testid="`batch-history-${job.job_id}`"
+              @click="applyBatchHistoryRange(job)"
+              @keydown.enter="applyBatchHistoryRange(job)"
             >
               ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
               · {{ job.status }}
@@ -2144,6 +2198,8 @@ const overview = ref(null);
 const editableVolumes = ref([]);
 const savedVolumeSnapshot = ref([]);
 const batchHistory = ref([]);
+const highlightedBatchHistoryId = ref('');
+const volumePlanSaveConfirmOpen = ref(false);
 const volumePlanDiffPreview = ref(null);
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
@@ -2325,8 +2381,11 @@ const defaultUiProfile = {
   issue_keyboard_navigation: false,
   issue_paragraph_highlight_unified: false,
   volume_plan_diff_preview: false,
+  volume_plan_diff_save_confirm: false,
   batch_history_panel: false,
+  batch_history_replay_range: false,
   creation_mode_switch_hint: false,
+  studio_creation_entry_hint: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
 };
@@ -2390,6 +2449,14 @@ const creationModeSwitchHintText = computed(() => {
   }
   if (mode === 'advance') {
     return '推进模式：人定卷纲 + batch 产章。切换陪伴请编辑 config/project.yaml → creation_mode: companion';
+  }
+  return '';
+});
+
+const studioCreationEntryHintText = computed(() => {
+  if (!uiProfile.value.studio_creation_entry_hint || !overview.value) return '';
+  if (overview.value.creation_mode === 'studio') {
+    return '工作室模式：工厂流水线与批量产章。人主笔请设 creation_mode: companion，人定卷纲请设 creation_mode: advance';
   }
   return '';
 });
@@ -3034,6 +3101,14 @@ async function loadBatchHistory() {
   } catch {
     batchHistory.value = [];
   }
+}
+
+function applyBatchHistoryRange(job) {
+  if (!uiProfile.value.batch_history_replay_range || !job) return;
+  batchStart.value = Number(job.start_chapter) || 1;
+  batchEnd.value = Number(job.end_chapter) || batchStart.value;
+  highlightedBatchHistoryId.value = job.job_id || '';
+  saveMessage.value = `已填入 batch 范围 ch${String(batchStart.value).padStart(3, '0')}–ch${String(batchEnd.value).padStart(3, '0')}`;
 }
 
 async function loadOnboardingWizard() {
@@ -4421,6 +4496,25 @@ async function pollBatchJob() {
   }
 }
 
+function requestSaveVolumePlan() {
+  if (
+    uiProfile.value.volume_plan_diff_save_confirm
+    && volumePlanDiffPreview.value?.has_changes
+  ) {
+    volumePlanSaveConfirmOpen.value = true;
+    return;
+  }
+  saveVolumePlan();
+}
+
+function cancelVolumePlanSave() {
+  volumePlanSaveConfirmOpen.value = false;
+}
+
+async function confirmSaveVolumePlan() {
+  await saveVolumePlan();
+}
+
 async function saveVolumePlan() {
   saving.value = true;
   saveMessage.value = '';
@@ -4429,6 +4523,7 @@ async function saveVolumePlan() {
     await saveCreatorVolumePlan(editableVolumes.value, volumePlanRevision.value);
     saveMessage.value = '卷纲已保存并同步到全局大纲';
     conflictMessage.value = '';
+    volumePlanSaveConfirmOpen.value = false;
     await refresh();
   } catch (e) {
     handleSaveError(e);
@@ -4715,6 +4810,25 @@ watch(
 
 .batch-history-item {
   padding: 4px 0;
+}
+
+.batch-history-item--clickable {
+  cursor: pointer;
+}
+
+.batch-history-item--clickable:hover,
+.batch-history-item--active {
+  background: rgba(100, 140, 200, 0.12);
+}
+
+.studio-entry-hint {
+  background: rgba(120, 100, 180, 0.1);
+}
+
+.volume-plan-save-confirm {
+  margin-top: var(--space-xs);
+  padding: var(--space-xs);
+  background: rgba(200, 120, 80, 0.1);
 }
 
 .logic-check-issue:focus-visible {

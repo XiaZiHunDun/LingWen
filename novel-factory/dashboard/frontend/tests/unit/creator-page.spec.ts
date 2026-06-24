@@ -2556,4 +2556,81 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="batch-history-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="batch-history-job-v50"]').text()).toContain('completed');
   });
+
+  it('v5.1 volume plan save confirm before persisting diff', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        volume_plan_diff_preview: true,
+        volume_plan_diff_save_confirm: true,
+      },
+    });
+    creatorMocks.previewCreatorVolumePlanDiff.mockResolvedValue({
+      has_changes: true,
+      changes: [{ type: 'changed', label: '一', message: '核心冲突已修改' }],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const conflictInput = wrapper.find('[data-testid="volume-row-0"] .vol-conflict');
+    await conflictInput.setValue('新冲突');
+    await flushPromises();
+    creatorMocks.saveCreatorVolumePlan.mockClear();
+    await wrapper.find('[data-testid="save-volume-plan-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorVolumePlan).not.toHaveBeenCalled();
+    expect(wrapper.find('[data-testid="volume-plan-save-confirm-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="confirm-volume-plan-save-btn"]').trigger('click');
+    await flushPromises();
+    expect(creatorMocks.saveCreatorVolumePlan).toHaveBeenCalled();
+  });
+
+  it('v5.1 batch history click replays chapter range', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        batch_history_panel: true,
+        batch_history_replay_range: true,
+      },
+    });
+    creatorMocks.fetchCreatorBatchHistory.mockResolvedValue({
+      jobs: [
+        {
+          job_id: 'job-v51',
+          start_chapter: 2,
+          end_chapter: 7,
+          status: 'completed',
+          finished_at: '2026-06-22',
+        },
+      ],
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    await wrapper.find('[data-testid="batch-history-job-v51"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="batch-start-input"]').element.value).toBe('2');
+    expect(wrapper.find('[data-testid="batch-end-input"]').element.value).toBe('7');
+    expect(wrapper.find('[data-testid="batch-history-job-v51"]').classes()).toContain('batch-history-item--active');
+  });
+
+  it('v5.1 studio creation entry hint', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...overviewFixture,
+      creation_mode: 'studio',
+      ui_profile: {
+        ...overviewFixture.ui_profile,
+        creation_mode: 'studio',
+        primary_action: 'studio_quality',
+        show_studio_workflow: true,
+        studio_creation_entry_hint: true,
+      },
+    });
+    const wrapper = mount(CreatorPage);
+    await flushPromises();
+    const hint = wrapper.find('[data-testid="studio-creation-entry-hint"]');
+    expect(hint.exists()).toBe(true);
+    expect(hint.text()).toContain('工作室模式');
+    expect(hint.text()).toContain('creation_mode: companion');
+  });
 });

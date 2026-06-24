@@ -94,7 +94,9 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "batch_deviation_inline_dismiss": True,
             "batch_deviation_summary_link": True,
             "volume_plan_diff_preview": True,
+            "volume_plan_diff_save_confirm": True,
             "batch_history_panel": True,
+            "batch_history_replay_range": True,
             "creation_mode_switch_hint": True,
             "deviation_min_severity": "alert",
         }
@@ -138,8 +140,11 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "batch_deviation_inline_dismiss": False,
         "batch_deviation_summary_link": False,
         "volume_plan_diff_preview": False,
+        "volume_plan_diff_save_confirm": False,
         "batch_history_panel": False,
+        "batch_history_replay_range": False,
         "creation_mode_switch_hint": False,
+        "studio_creation_entry_hint": True,
         "deviation_min_severity": None,
     }
 
