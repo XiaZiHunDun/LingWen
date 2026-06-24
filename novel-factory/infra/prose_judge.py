@@ -679,6 +679,7 @@ def render_calibration_log_document(
             "",
             "```bash",
             "bash scripts/run-prose-calibration-fill.sh",
+            "bash scripts/run-prose-calibration-override.sh <slug> <chapter> <issue_type> <留|删|疑> [备注]",
             "bash scripts/run-prose-judge.sh <slug> --llm   # 需 MINIMAX_API_KEY",
             "```",
             "",

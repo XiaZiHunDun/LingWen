@@ -71,7 +71,7 @@
 | pytest×3 · vitest · lint · build | 每次 push blocking |
 | golden×8 | 七 Studio + 星陨 testbed |
 | **llm×7** | **路径过滤**；改 `projects/**`/`infra/**` 或 PR label `llm-check` 才跑 |
-| e2e-live | Playwright 5/5 blocking |
+| e2e-live | Playwright 8/8 live-backend blocking |
 | 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
 
 文档地图：`novel-factory/docs/ci-quality-gates.md`
@@ -275,6 +275,7 @@ cd novel-factory
 bash scripts/verify-studio-production-dod.sh              # DoD A+B（无 API）
 bash scripts/verify-studio-production-dod.sh --real-llm   # DoD C（耗 API ~$0.04）
 bash scripts/prepare-studio-samples-zip.sh                # 七样章 zip → dist/
+bash scripts/verify-studio-maintenance-run.sh             # 维护例行：校准+zip+DoD+track
 bash scripts/verify-e2e-live-ci.sh                        # 本地 e2e parity
 python -m pytest tests/ci/ -q -o addopts=                 # CI 契约测（快）
 ```
@@ -1085,6 +1086,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 
 **维护模式（v12 后默认）**：
 
+- [x] 样章维护例行（2026-06-24）→ `verify-studio-maintenance-run.sh` · 七样章 zip 已重打
 - [ ] 样章正文改动 → `prepare-studio-samples-zip.sh` + 必要时 `prose-judge-llm` workflow
 - [ ] 改 Python/frontend → 本地最小验证（见 `ci-quality-gates.md` §本地最小验证）
 - [ ] push 后扫 **GitHub Actions → test**（纯文档可跳过 llm×7）
