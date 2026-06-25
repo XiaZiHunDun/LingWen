@@ -32,13 +32,21 @@ test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await clickNav(page, /决策/);
     await waitForPendingDecisionCard(page);
+    const resolveResponse = page.waitForResponse(
+      (resp) =>
+        resp.request().method() === 'POST'
+        && resp.url().includes('/api/decisions/')
+        && resp.url().includes('/resolve')
+        && resp.status() === 200,
+      { timeout: 30_000 },
+    );
     await page.getByTestId('option-btn').first().click();
+    await resolveResponse;
     // Pending tab clears after resolve (WS authority); resolved card lives under 已完成.
     await page.getByRole('button', { name: /已完成/ }).click();
     const expandBtn = page.getByRole('button', { name: /展开/ });
-    if (await expandBtn.isVisible()) {
-      await expandBtn.click();
-    }
+    await expandBtn.waitFor({ state: 'visible', timeout: 15_000 });
+    await expandBtn.click();
     await expect(page.getByTestId('readonly-hint')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('readonly-hint')).toContainText('已解决');
   });
