@@ -32,4 +32,5 @@ class TestE2ECompanionProjectSeed:
         assert body.exists()
         plan = json.loads((root1 / ".state/volume_plan.json").read_text(encoding="utf-8"))
         assert plan["volumes"][0]["label"] == "一"
+        assert plan["volumes"][0]["locked"] is True
         assert E2E_COMPANION_SLUG in str(root1)

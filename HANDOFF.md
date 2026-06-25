@@ -228,6 +228,8 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 
 **Dashboard IA v1（2026-06-22）**：产品壳按用户旅程重组 — **今日** · **创作**（写/脉络/设定 Tab + `?workspace=` 深链）· **生产** · **待办** · **洞察**；审阅者 `?role=reviewer`；顶栏字号三档
 
+**Dashboard IA v1.1（打磨）**：今日审阅视图 + 复制审阅链接 · 脉络子组件拆分 · 陪伴 E2E 偏离种子 · `popstate` 恢复 Tab · 模式说明 DOM 置底
+
 **v7.0 之后（产品级）**：~~创作者 beta 文档包 · 分享协作 v2 · Studio 线解耦 changelog~~ → 已落地，见 [`creator-changelog.md`](novel-factory/docs/creator-changelog.md)
 
 ### 0.2.1 创作者线完整路线图（v6.11 → v7.0）

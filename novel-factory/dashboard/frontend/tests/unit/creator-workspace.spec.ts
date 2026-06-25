@@ -198,4 +198,12 @@ describe('Creator workspace tabs (Phase C)', () => {
     expect(badge.exists()).toBe(true)
     expect(badge.text()).toBe('2')
   })
+
+  test('mode guide panel follows creator grid in DOM order', async () => {
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    const grid = wrapper.find(byTestid('creator-grid')).element
+    const guide = wrapper.find(byTestid('creator-mode-guide-panel')).element
+    expect(grid.compareDocumentPosition(guide) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })

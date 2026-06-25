@@ -149,29 +149,32 @@ def ensure_e2e_companion_project() -> Path:
             chapter_count=5,
         )
         root = result.root
-        body_dir = root / "03_内容仓库/04_正文"
-        body_dir.mkdir(parents=True, exist_ok=True)
-        (body_dir / "ch001.md").write_text(
-            "# 第一章\n\nE2E 陪伴模式正文种子，用于追读力与逻辑审查冒烟。\n",
-            encoding="utf-8",
-        )
-        state_dir = root / ".state"
-        state_dir.mkdir(parents=True, exist_ok=True)
-        volume_plan = {
-            "volumes": [
-                {
-                    "label": "一",
-                    "start_chapter": 1,
-                    "end_chapter": 5,
-                    "core_conflict": "E2E 陪伴卷纲",
-                    "locked": False,
-                }
-            ]
-        }
-        (state_dir / "volume_plan.json").write_text(
-            json.dumps(volume_plan, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+    else:
+        root = existing.root
+
+    body_dir = root / "03_内容仓库/04_正文"
+    body_dir.mkdir(parents=True, exist_ok=True)
+    (body_dir / "ch001.md").write_text(
+        "# 第一章\n\nE2E 陪伴模式正文种子，用于追读力与逻辑审查冒烟。\n",
+        encoding="utf-8",
+    )
+    state_dir = root / ".state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    volume_plan = {
+        "volumes": [
+            {
+                "label": "一",
+                "start_chapter": 1,
+                "end_chapter": 5,
+                "core_conflict": "E2E 陪伴卷纲",
+                "locked": True,
+            }
+        ]
+    }
+    (state_dir / "volume_plan.json").write_text(
+        json.dumps(volume_plan, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     project = get_project_by_slug(E2E_COMPANION_SLUG)
     assert project is not None
     return project.root

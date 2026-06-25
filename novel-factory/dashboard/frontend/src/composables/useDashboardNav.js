@@ -483,6 +483,27 @@ function clearDecisionFocus() {
   );
 }
 
+function syncNavFromBrowserUrl() {
+  const raw = readRawNavFromUrl();
+  activeNav.value = readNavFromUrl();
+  produceTab.value = readProduceTab(raw);
+  inboxTab.value = readInboxTab(raw);
+  insightTab.value = readInsightTab(raw);
+  focusChapter.value = readChapterFromUrl();
+  focusDecisionId.value = readDecisionFromUrl();
+  focusWizard.value = readWizardFromUrl();
+  focusWizardStep.value = readWizardStepFromUrl();
+  focusWizardDone.value = readWizardDoneFromUrl();
+  focusWizardNotes.value = readWizardNotesFromUrl();
+  focusCreatorWorkspace.value = readCreatorWorkspaceFromUrl();
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    syncNavFromBrowserUrl();
+  });
+}
+
 export function isProduceNav(nav) {
   return nav === 'produce' || LEGACY_PRODUCE_NAV_IDS.includes(nav);
 }
@@ -513,6 +534,7 @@ export function useDashboardNav() {
     setInboxTab,
     setInsightTab,
     setCreatorWorkspace,
+    syncNavFromBrowserUrl,
     isProduceNav,
     isInboxNav,
     isInsightNav,

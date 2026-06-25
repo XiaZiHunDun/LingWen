@@ -40,7 +40,36 @@ export function resolveTodayPrimaryAction(ctx) {
     chaptersWritten = 0,
     coveragePct = 0,
     alertCount = 0,
+    isReviewer = false,
   } = ctx;
+
+  if (isReviewer) {
+    if (pendingDecisions > 0) {
+      return {
+        id: 'decisions',
+        label: `查看 ${pendingDecisions} 条待决策`,
+        nav: 'inbox',
+        tab: 'decisions',
+        reason: '审阅模式：确认工作流待办',
+      };
+    }
+    if (pendingRipples > 0) {
+      return {
+        id: 'ripples',
+        label: `查看 ${pendingRipples} 条一致性变更`,
+        nav: 'inbox',
+        tab: 'ripples',
+        reason: '审阅模式：只读审阅跨卷变更',
+      };
+    }
+    return {
+      id: 'insight',
+      label: '查看追读力洞察',
+      nav: 'insight',
+      tab: 'overview',
+      reason: '审阅模式：只读查看本书诊断数据',
+    };
+  }
 
   if (pendingDecisions > 0) {
     return {

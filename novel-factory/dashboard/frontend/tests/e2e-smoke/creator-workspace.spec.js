@@ -37,6 +37,18 @@ test.describe('Creator workspace live e2e', () => {
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
+  test('companion_pulse_shows_deviation_badge', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
+    await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
+    const badge = page.getByTestId('creator-workspace-tab-pulse').locator('.hub-tab-badge');
+    await expect(badge).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('creator-workspace-tab-pulse').click();
+    await expect(page.getByTestId('deviation-list')).toBeVisible({ timeout: 30_000 });
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
+  });
+
   test('creator_workspace_deep_link_opens_pulse_tab', async ({ page }) => {
     skipUnlessLive(test);
     test.setTimeout(60_000);

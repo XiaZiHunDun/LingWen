@@ -10,15 +10,35 @@
           {{ snapshot.projectName }}
         </p>
       </div>
-      <button
-        class="refresh-btn pixel-border"
-        data-testid="refresh-btn"
-        :disabled="loading"
-        @click="refresh"
-      >
-        {{ loading ? '加载中…' : '刷新' }}
-      </button>
+      <div class="header-actions">
+        <button
+          v-if="isReviewer"
+          type="button"
+          class="share-link-btn pixel-border"
+          :class="{ 'share-link-btn--ok': shareMessage === '已复制链接' }"
+          data-testid="today-share-link-btn"
+          @click="copyShareLink"
+        >
+          {{ shareMessage || '复制审阅链接' }}
+        </button>
+        <button
+          class="refresh-btn pixel-border"
+          data-testid="refresh-btn"
+          :disabled="loading"
+          @click="reload"
+        >
+          {{ loading ? '加载中…' : '刷新' }}
+        </button>
+      </div>
     </header>
+
+    <div
+      v-if="isReviewer"
+      class="reviewer-banner pixel-border"
+      data-testid="today-reviewer-banner"
+    >
+      审阅视图：今日页仅展示待办与健康度摘要，不可发起创作或生产。
+    </div>
 
     <div v-if="lastError" class="error-banner pixel-border" data-testid="error-banner">
       {{ lastError }}
@@ -98,23 +118,47 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useTodayHub } from '../composables/useTodayHub.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { copyDashboardShareUrl } from '../utils/shareLink.js';
 
 const { snapshot, loading, lastError, refresh } = useTodayHub();
 const { navigateTo } = useDashboardNav();
+const isReviewer = inject('isReviewer', computed(() => false));
+const shareMessage = ref('');
 
 onMounted(() => {
-  refresh();
+  reload();
 });
 
-const quickLinks = computed(() => [
-  { id: 'creator', label: '创作', icon: '✍️', nav: 'creator' },
-  { id: 'produce', label: '生产', icon: '🏭', nav: 'produce', tab: 'studio' },
-  { id: 'inbox', label: '待办', icon: '📥', nav: 'inbox', tab: 'decisions' },
-  { id: 'insight', label: '洞察', icon: '📊', nav: 'insight', tab: 'overview' },
-]);
+function reload() {
+  refresh({ isReviewer: isReviewer.value });
+}
+
+const quickLinks = computed(() => {
+  const all = [
+    { id: 'creator', label: '创作', icon: '✍️', nav: 'creator' },
+    { id: 'produce', label: '生产', icon: '🏭', nav: 'produce', tab: 'studio' },
+    { id: 'inbox', label: '待办', icon: '📥', nav: 'inbox', tab: 'decisions' },
+    { id: 'insight', label: '洞察', icon: '📊', nav: 'insight', tab: 'overview' },
+  ];
+  if (!isReviewer.value) return all;
+  return all.filter((l) => l.id === 'inbox' || l.id === 'insight');
+});
+
+async function copyShareLink() {
+  const tab = snapshot.value?.primaryAction?.tab === 'ripples' ? 'ripples' : 'decisions';
+  const result = await copyDashboardShareUrl({
+    nav: 'inbox',
+    tab,
+    role: 'reviewer',
+  });
+  shareMessage.value = result.ok ? '已复制链接' : '复制失败';
+  if (result.ok) {
+    setTimeout(() => { shareMessage.value = ''; }, 2000);
+  }
+}
 
 function go(nav, tab) {
   navigateTo(nav, { clearFocus: true, tab });
@@ -144,6 +188,35 @@ function onPrimaryAction() {
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-md);
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.share-link-btn {
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.share-link-btn--ok {
+  background: var(--color-success);
+  color: white;
+}
+
+.reviewer-banner {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  background: var(--bg-primary);
+  border-left: 4px solid var(--color-accent);
 }
 
 .page-title {

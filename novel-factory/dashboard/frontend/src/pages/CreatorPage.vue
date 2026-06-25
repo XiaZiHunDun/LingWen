@@ -67,764 +67,6 @@
       data-testid="creator-workspace-tabs"
     />
 
-    <details
-      class="creator-mode-guide-panel pixel-border"
-      data-testid="creator-mode-guide-panel"
-      :open="modeGuideExpanded"
-    >
-      <summary class="creator-mode-guide-summary">
-        模式说明与能力对照<span v-if="modeLabel"> · {{ modeLabel }}</span>
-      </summary>
-    <p
-      v-if="uiProfile.creation_mode_badge_legend && !uiProfile.creator_simplified_mode_ops"
-      class="mode-badge-legend meta-line pixel-border"
-      data-testid="creation-mode-badge-legend"
-    >
-      徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
-    </p>
-    <p
-      v-if="uiProfile.creation_mode_switch_hint && creationModeSwitchHintText"
-      class="mode-switch-hint pixel-border"
-      data-testid="creation-mode-switch-hint"
-    >
-      {{ creationModeSwitchHintText }}
-    </p>
-    <div
-      v-if="uiProfile.creation_mode_switch_doc_link && creationModeSwitchDocLinks.length"
-      class="mode-switch-doc-links pixel-border"
-      data-testid="creation-mode-switch-doc-links"
-    >
-      <button
-        v-for="link in creationModeSwitchDocLinks"
-        :key="link.id"
-        type="button"
-        class="mini-btn pixel-border mode-switch-doc-link"
-        :data-testid="`mode-switch-doc-${link.id}`"
-        @click="openModeSwitchDoc(link, uiProfile.creation_mode_switch_doc_open)"
-      >
-        {{ link.label }}
-      </button>
-    </div>
-    <div
-      v-if="uiProfile.creation_mode_switch_aria_live"
-      class="creation-mode-aria-live"
-      aria-live="polite"
-      data-testid="creation-mode-switch-aria-live"
-    >
-      {{ creationModeSwitchAriaMessage }}
-    </div>
-    <aside
-      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_preview_pinned_sidebar && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
-      class="creation-mode-pinned-sidebar pixel-border"
-      data-testid="creation-mode-pinned-sidebar"
-    >
-      <p class="meta-line">三模式侧栏</p>
-      <ul class="creation-mode-pinned-list">
-        <li
-          v-for="row in creationModePreviewRows"
-          :key="`mode-pinned-${row.mode}`"
-          class="creation-mode-pinned-item"
-          :class="{ 'creation-mode-pinned-item--active': row.active }"
-          :data-testid="`creation-mode-pinned-${row.mode}`"
-        >
-          {{ row.label }}
-        </li>
-      </ul>
-    </aside>
-    <div
-      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length && !uiProfile.creation_mode_preview_pinned_sidebar"
-      class="creation-mode-switch-preview pixel-border"
-      :class="{ 'creation-mode-switch-preview--guide': creationModeGuideAnimationEnabled }"
-      data-testid="creation-mode-switch-preview"
-    >
-      <p class="meta-line">三模式预览 · 切换请编辑 config/project.yaml → creation_mode</p>
-      <p
-        v-if="creationModeGuideAnimationEnabled"
-        class="meta-line creation-mode-guide-hint"
-        data-testid="creation-mode-guide-hint"
-      >
-        引导动画：依次高亮陪伴 → 推进 → 工作室
-      </p>
-      <ul class="creation-mode-preview-list">
-        <li
-          v-for="(row, previewIdx) in creationModePreviewRows"
-          :key="`mode-preview-${row.mode}`"
-          class="creation-mode-preview-item"
-          :class="{
-            'creation-mode-preview-item--active': row.active,
-            'creation-mode-preview-item--guide': creationModeGuideAnimationEnabled,
-          }"
-          :style="creationModeGuideAnimationEnabled
-            ? { animationDelay: `${previewIdx * 0.8}s` }
-            : undefined"
-          :data-testid="`creation-mode-preview-${row.mode}`"
-        >
-          <strong>{{ row.label }}</strong>
-          <span class="meta-line">{{ row.summary }}</span>
-          <button
-            v-if="uiProfile.creation_mode_yaml_snippet"
-            type="button"
-            class="mini-btn pixel-border creation-mode-yaml-btn"
-            :data-testid="`copy-creation-mode-yaml-${row.mode}`"
-            @click.stop="requestCreationModeYaml(row.mode, row.active)"
-          >
-            复制 YAML
-          </button>
-          <button
-            v-if="uiProfile.creation_mode_onboarding_step_link"
-            type="button"
-            class="mini-btn pixel-border creation-mode-onboarding-link-btn"
-            :data-testid="`link-onboarding-step-${row.mode}`"
-            @click.stop="requestOnboardingStepLink(row.mode, row.active)"
-          >
-            向导步骤
-          </button>
-        </li>
-      </ul>
-    </div>
-    <div
-      v-if="pendingModeSwitch"
-      class="mode-switch-confirm-dialog pixel-border"
-      data-testid="creation-mode-switch-confirm-dialog"
-    >
-      <p class="meta-line">
-        确认切换至 <strong>{{ pendingModeSwitchLabel }}</strong>？
-      </p>
-      <p class="meta-line">请编辑 config/project.yaml → creation_mode</p>
-      <div class="mode-switch-confirm-actions">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="confirm-mode-switch-btn"
-          @click="confirmCreationModeSwitch"
-        >
-          确认
-        </button>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="cancel-mode-switch-btn"
-          @click="cancelCreationModeSwitch"
-        >
-          取消
-        </button>
-      </div>
-    </div>
-    <ul
-      v-if="uiProfile.creation_mode_switch_history && creationModeSwitchHistory.length"
-      class="creation-mode-switch-history pixel-border"
-      data-testid="creation-mode-switch-history"
-    >
-      <li
-        v-for="(entry, idx) in creationModeSwitchHistory"
-        :key="`mode-switch-history-${entry.mode}-${entry.at}-${idx}`"
-        class="meta-line creation-mode-switch-history-item"
-        :data-testid="`creation-mode-switch-history-${idx}`"
-      >
-        {{ entry.at }} · {{ entry.label }}（{{ entry.action }}）
-      </li>
-    </ul>
-    <div
-      v-if="uiProfile.creation_mode_switch_undo_hint && lastModeSwitchUndo"
-      class="mode-switch-undo-hint pixel-border"
-      data-testid="creation-mode-switch-undo-hint"
-    >
-      <p class="meta-line">
-        已请求切换至 {{ lastModeSwitchUndo.toLabel }}，撤销请恢复
-        <code>creation_mode: {{ lastModeSwitchUndo.fromMode }}</code>
-      </p>
-      <button
-        type="button"
-        class="mini-btn pixel-border"
-        data-testid="copy-mode-switch-undo-btn"
-        @click="applyModeSwitchUndoHint"
-      >
-        复制撤销 YAML
-      </button>
-    </div>
-    <p
-      v-if="uiProfile.creation_mode_switch_hotkey"
-      class="meta-line creation-mode-hotkey-hint"
-      data-testid="creation-mode-switch-hotkey-hint"
-    >
-      快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
-    </p>
-    <ul
-      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_accessibility_checklist && creationModeAccessibilityItems.length"
-      class="creation-mode-accessibility-checklist pixel-border"
-      data-testid="creation-mode-accessibility-checklist"
-    >
-      <li
-        v-for="item in creationModeAccessibilityItems"
-        :key="`a11y-${item.id}`"
-        class="meta-line creation-mode-accessibility-item"
-        :data-testid="`creation-mode-a11y-${item.id}`"
-      >
-        {{ item.enabled ? '✓' : '—' }} {{ item.label }}
-      </li>
-    </ul>
-    <div
-      v-if="uiProfile.volume_plan_diff_share_link_preview && volumePlanDiffShareLinkPreview"
-      class="volume-plan-diff-share-link-preview pixel-border"
-      data-testid="volume-plan-diff-share-link-preview"
-    >
-      <p
-        v-if="volumePlanDiffShareLinkPreview.valid === false"
-        class="meta-line volume-plan-diff-share-link-error"
-        data-testid="volume-plan-diff-share-token-error"
-      >
-        {{ volumePlanDiffShareLinkPreview.error_label }}
-      </p>
-      <template v-else>
-      <p class="meta-line">
-        分享链接解析：{{ volumePlanDiffShareLinkPreview.change_count }} 条变更
-        <span v-if="volumePlanDiffShareLinkPreview.global_outline_path">
-          · {{ volumePlanDiffShareLinkPreview.global_outline_path }}
-        </span>
-      </p>
-      <ul class="volume-plan-diff-share-link-preview-list">
-        <li
-          v-for="(row, idx) in volumePlanDiffShareLinkPreview.changes"
-          :key="`share-diff-${row.label}-${idx}`"
-          class="meta-line"
-        >
-          {{ row.label }}：{{ row.message }}
-          <span
-            v-if="uiProfile.volume_plan_diff_share_collab_v2 && volumePlanDiffShareLinkPreview.collab_notes?.[row.label]"
-            class="volume-plan-diff-share-collab-note"
-            :data-testid="`share-collab-note-${row.label}`"
-          >
-            批注：{{ volumePlanDiffShareLinkPreview.collab_notes[row.label] }}
-          </span>
-        </li>
-      </ul>
-      <button
-        v-if="uiProfile.volume_plan_diff_share_link_apply && volumePlanDiffShareLinkPreview.can_apply"
-        type="button"
-        class="mini-btn pixel-border"
-        data-testid="apply-volume-plan-diff-share-btn"
-        @click="requestApplyVolumePlanDiffShareLink"
-      >
-        一键应用卷纲
-      </button>
-      <ol
-        v-if="uiProfile.volume_plan_diff_share_link_e2e && volumePlanDiffShareLinkPreview.can_apply"
-        class="volume-plan-diff-share-e2e-steps"
-        data-testid="volume-plan-diff-share-e2e-steps"
-      >
-        <li
-          class="volume-plan-diff-share-e2e-step volume-plan-diff-share-e2e-step--done"
-          data-testid="share-e2e-step-parse"
-        >
-          1. 解析分享链接
-        </li>
-        <li
-          class="volume-plan-diff-share-e2e-step"
-          :class="{ 'volume-plan-diff-share-e2e-step--done': shareE2eApplyDone }"
-          data-testid="share-e2e-step-apply"
-        >
-          2. 应用卷纲
-        </li>
-        <li
-          class="volume-plan-diff-share-e2e-step"
-          data-testid="share-e2e-step-save"
-        >
-          3. 保存卷纲
-        </li>
-      </ol>
-      </template>
-      <button
-        type="button"
-        class="mini-btn pixel-border"
-        data-testid="dismiss-volume-plan-diff-share-preview-btn"
-        @click="dismissVolumePlanDiffShareLinkPreview"
-      >
-        关闭预览
-      </button>
-    </div>
-    <div
-      v-if="pendingShareApply"
-      class="volume-plan-diff-share-apply-confirm pixel-border"
-      data-testid="volume-plan-diff-share-apply-confirm"
-    >
-      <p class="meta-line">
-        确认应用分享卷纲（{{ pendingShareApply.draft_volumes?.length || 0 }} 卷）？
-      </p>
-      <div class="mode-switch-confirm-actions">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="confirm-share-apply-btn"
-          @click="confirmApplyVolumePlanDiffShareLink"
-        >
-          确认应用
-        </button>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="cancel-share-apply-btn"
-          @click="cancelApplyVolumePlanDiffShareLink"
-        >
-          取消
-        </button>
-      </div>
-    </div>
-    <div
-      v-if="pendingShareMerge"
-      class="volume-plan-diff-share-merge-wizard pixel-border"
-      data-testid="volume-plan-diff-share-merge-wizard"
-    >
-      <p class="meta-line">分享卷纲与本地存在 {{ pendingShareMerge.conflicts.length }} 处冲突</p>
-      <ul class="volume-plan-diff-share-merge-list">
-        <li
-          v-for="row in pendingShareMerge.conflicts"
-          :key="`share-merge-${row.label}`"
-          class="meta-line"
-        >
-          {{ row.label }}：本地「{{ row.local.core_conflict }}」 / 分享「{{ row.share.core_conflict }}」
-        </li>
-      </ul>
-      <div class="mode-switch-confirm-actions">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="share-merge-use-share-btn"
-          @click="confirmShareMergeUseShare"
-        >
-          使用分享版
-        </button>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="share-merge-keep-local-btn"
-          @click="cancelShareMerge"
-        >
-          保留本地
-        </button>
-      </div>
-    </div>
-    <div
-      v-if="showVolumePlanDiffPrintPreview"
-      class="volume-plan-diff-print-preview pixel-border"
-      data-testid="volume-plan-diff-print-preview"
-    >
-      <p class="meta-line">卷纲 diff 打印预览</p>
-      <pre class="volume-plan-diff-print-preview-body">{{ volumePlanDiffPrintPreviewText }}</pre>
-      <div class="volume-plan-diff-print-preview-actions">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="print-volume-plan-diff-btn"
-          @click="printVolumePlanDiffPreview"
-        >
-          打印
-        </button>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="close-volume-plan-diff-print-preview-btn"
-          @click="closeVolumePlanDiffPrintPreview"
-        >
-          关闭
-        </button>
-      </div>
-    </div>
-    <div
-      v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length && !uiProfile.creator_simplified_mode_ops"
-      class="creation-mode-capability-matrix pixel-border"
-      data-testid="creation-mode-capability-matrix"
-    >
-      <p class="meta-line">三模式能力对照</p>
-      <table class="creation-mode-capability-table">
-        <thead>
-          <tr>
-            <th scope="col">能力</th>
-            <th scope="col">陪伴</th>
-            <th scope="col">推进</th>
-            <th scope="col">工作室</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in creationModeCapabilityRows"
-            :key="`capability-${row.id}`"
-            :data-testid="`creation-mode-capability-${row.id}`"
-          >
-            <th scope="row">{{ row.label }}</th>
-            <td>{{ row.companion ? '✓' : '—' }}</td>
-            <td>{{ row.advance ? '✓' : '—' }}</td>
-            <td>{{ row.studio ? '✓' : '—' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <details
-      v-if="uiProfile.creator_simplified_mode_ops"
-      class="creator-advanced-ops pixel-border"
-      data-testid="creator-advanced-ops"
-    >
-      <summary class="creator-advanced-ops-summary">高级：三模式对照与运维</summary>
-      <div
-        v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
-        class="creation-mode-capability-matrix pixel-border"
-        data-testid="creation-mode-capability-matrix-advanced"
-      >
-        <p class="meta-line">三模式能力对照</p>
-        <table class="creation-mode-capability-table">
-          <thead>
-            <tr>
-              <th scope="col">能力</th>
-              <th scope="col">陪伴</th>
-              <th scope="col">推进</th>
-              <th scope="col">工作室</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in creationModeCapabilityRows"
-              :key="`capability-adv-${row.id}`"
-            >
-              <th scope="row">{{ row.label }}</th>
-              <td>{{ row.companion ? '✓' : '—' }}</td>
-              <td>{{ row.advance ? '✓' : '—' }}</td>
-              <td>{{ row.studio ? '✓' : '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="meta-line">切换模式：编辑 <code>config/project.yaml</code> → <code>creation_mode</code></p>
-    </details>
-    <p
-      v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
-      class="mode-switch-hint studio-entry-hint pixel-border"
-      data-testid="studio-creation-entry-hint"
-    >
-      {{ studioCreationEntryHintText }}
-    </p>
-    </details>
-
-    <details
-      v-if="onboardingWizard"
-      ref="wizardPanelRef"
-      class="onboarding-wizard pixel-border"
-      data-testid="onboarding-wizard-panel"
-      :open="wizardPanelOpen"
-      @toggle="onWizardToggle"
-    >
-      <summary>
-        入门向导 · {{ onboardingWizard.mode_label }}（{{ onboardingWizard.max_chapter }} 章上限）
-        <span v-if="onboardingWizard.progress_pct != null" class="wizard-progress-badge" data-testid="wizard-progress-label">
-          · {{ onboardingWizard.progress_pct }}%
-        </span>
-        <span
-          v-if="wizardUnreadMentions > 0"
-          class="wizard-notification-badge"
-          data-testid="wizard-notification-badge"
-        >
-          · {{ wizardUnreadMentions }} 条 @提及
-        </span>
-      </summary>
-      <div
-        v-if="wizardNotifications.length"
-        class="wizard-notifications"
-        data-testid="wizard-notifications-panel"
-      >
-        <p class="meta-line">批注通知</p>
-        <label v-if="wizardNotificationHandles.length" class="meta-line">
-          按 handle 过滤
-          <select
-            v-model="wizardNotificationHandleFilter"
-            class="vol-input"
-            data-testid="wizard-notification-handle-filter"
-            @change="loadWizardNotifications"
-          >
-            <option value="">全部</option>
-            <option v-for="handle in wizardNotificationHandles" :key="handle" :value="handle">
-              @{{ handle }}
-            </option>
-          </select>
-        </label>
-        <div
-          v-if="wizardNotificationDigest.groups?.length"
-          class="wizard-digest-panel"
-          data-testid="wizard-notification-digest"
-        >
-          <p class="meta-line">通知摘要（{{ wizardNotificationDigest.unread }} 条未读）</p>
-          <ul>
-            <li
-              v-for="group in wizardNotificationDigest.groups"
-              :key="group.handle"
-              class="wizard-digest-row"
-              data-testid="wizard-digest-row"
-            >
-              <strong>@{{ group.handle }}</strong>
-              <span class="meta-line">{{ group.count }} 条 · {{ group.steps.map((s) => s.step_id).join(', ') }}</span>
-            </li>
-          </ul>
-        </div>
-        <div
-          v-if="uiProfile.show_digest_ops"
-          class="wizard-digest-schedule-panel"
-          data-testid="wizard-digest-schedule-panel"
-        >
-          <p class="meta-line">定时 digest</p>
-          <label class="meta-line">
-            <input v-model="wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" />
-            启用（每 {{ wizardDigestScheduleHours }} 小时）
-          </label>
-          <input
-            v-model.number="wizardDigestScheduleHours"
-            type="number"
-            min="1"
-            max="168"
-            class="vol-input"
-            data-testid="wizard-digest-schedule-hours"
-          />
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="save-wizard-digest-schedule-btn"
-            @click="saveWizardDigestSchedule"
-          >
-            保存定时
-          </button>
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="dispatch-wizard-digest-btn"
-            @click="dispatchWizardDigest"
-          >
-            立即发送 digest
-          </button>
-            <p class="meta-line" data-testid="wizard-digest-background-hint">
-            Dashboard 后台每 15 分钟自动检查到期 digest
-          </p>
-          <p
-            v-if="wizardDigestStats.sent_total || wizardDigestStats.failed_total"
-            class="meta-line"
-            data-testid="wizard-digest-stats"
-          >
-            发送统计：成功 {{ wizardDigestStats.sent_total }} / 失败 {{ wizardDigestStats.failed_total }}
-          </p>
-          <input
-            v-model="wizardDigestHandleChannelsJson"
-            class="vol-input"
-            data-testid="wizard-digest-handle-channels"
-            placeholder='handle 路由 JSON，如 {"batch":["webhook"],"*":["email"]}'
-          />
-          <input
-            v-model="wizardDigestHandleQuietJson"
-            class="vol-input"
-            data-testid="wizard-digest-handle-quiet-hours"
-            placeholder='handle 静默 JSON，如 {"batch":{"start":22,"end":6}}'
-          />
-          <label class="meta-line">
-            静默时段（UTC）
-            <input
-              v-model.number="wizardDigestQuietStart"
-              type="number"
-              min="0"
-              max="23"
-              class="vol-input"
-              data-testid="wizard-digest-quiet-start"
-              placeholder="起"
-            />
-            –
-            <input
-              v-model.number="wizardDigestQuietEnd"
-              type="number"
-              min="0"
-              max="23"
-              class="vol-input"
-              data-testid="wizard-digest-quiet-end"
-              placeholder="止"
-            />
-          </label>
-          <div
-            v-if="wizardDigestRetryQueue.item_count"
-            class="wizard-digest-retry"
-            data-testid="wizard-digest-retry-panel"
-          >
-            <p class="meta-line">重试队列 {{ wizardDigestRetryQueue.item_count }} 条</p>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="process-wizard-digest-retry-btn"
-              @click="processWizardDigestRetries"
-            >
-              重试失败 digest
-            </button>
-          </div>
-          <div
-            v-if="wizardDigestDeadLetter.item_count"
-            class="wizard-digest-dead-letter"
-            data-testid="wizard-digest-dead-letter-panel"
-          >
-            <p class="meta-line">死信队列 {{ wizardDigestDeadLetter.item_count }} 条</p>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="replay-wizard-digest-dead-letter-btn"
-              @click="replayWizardDigestDeadLetter"
-            >
-              重放首条死信
-            </button>
-          </div>
-        </div>
-        <ul>
-          <li
-            v-for="note in wizardNotifications"
-            :key="note.id"
-            class="wizard-notification-row"
-            :class="{ 'wizard-notification-row--unread': !note.read }"
-            data-testid="wizard-notification-row"
-          >
-            <strong>@{{ note.handle }}</strong>
-            <span class="meta-line">{{ note.step_id }} · {{ note.note_excerpt }}</span>
-          </li>
-        </ul>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="wizard-ack-notifications-btn"
-          @click="ackWizardNotifications"
-        >
-          全部标为已读
-        </button>
-        <div v-if="!uiProfile.simplified_notifications" class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
-          <p class="meta-line">通知 Webhook</p>
-          <label class="meta-line">
-            <input v-model="wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" />
-            启用
-          </label>
-          <input
-            v-model="wizardWebhookUrl"
-            class="vol-input"
-            data-testid="wizard-webhook-url"
-            placeholder="https://example.com/hooks/mentions"
-          />
-          <input
-            v-model="wizardWebhookSigningSecret"
-            class="vol-input"
-            data-testid="wizard-webhook-signing-secret"
-            placeholder="Webhook 签名密钥（可选）"
-          />
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="save-wizard-webhook-btn"
-            @click="saveWizardWebhook"
-          >
-            保存 Webhook
-          </button>
-        </div>
-        <div v-if="!uiProfile.simplified_notifications" class="wizard-email-panel" data-testid="wizard-email-panel">
-          <p class="meta-line">通知邮件</p>
-          <label class="meta-line">
-            <input v-model="wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" />
-            启用
-          </label>
-          <input
-            v-model="wizardEmailTo"
-            class="vol-input"
-            data-testid="wizard-email-to"
-            placeholder="user@example.com"
-          />
-          <input
-            v-model="wizardEmailSmtpHost"
-            class="vol-input"
-            data-testid="wizard-email-smtp-host"
-            placeholder="smtp.example.com"
-          />
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="save-wizard-email-btn"
-            @click="saveWizardEmail"
-          >
-            保存邮件
-          </button>
-        </div>
-      </div>
-      <ol class="wizard-steps">
-        <li
-          v-for="step in onboardingWizard.steps"
-          :key="step.id"
-          class="wizard-step"
-          :class="{
-            'wizard-step--focused': step.id === focusWizardStep,
-            'wizard-step--mode-linked': uiProfile.creation_mode_onboarding_step_link
-              && isOnboardingStepLinkedToCurrentMode(step.id),
-          }"
-        >
-          <label class="wizard-step-label">
-            <input
-              type="checkbox"
-              :checked="completedWizardSteps.has(step.id)"
-              :data-testid="`wizard-step-${step.id}`"
-              @change="toggleWizardStep(step.id, $event.target.checked)"
-            />
-            <span>
-              <strong>{{ step.title }}</strong>
-              <span
-                v-if="autoCompletedWizardSteps.has(step.id)"
-                class="wizard-auto-badge"
-                data-testid="wizard-auto-badge"
-              >自动</span>
-              <span
-                v-if="uiProfile.creation_mode_onboarding_step_link && onboardingModesForStep(step.id).length"
-                class="wizard-step-mode-badges"
-                :data-testid="`wizard-step-modes-${step.id}`"
-              >
-                <span
-                  v-for="modeRow in onboardingModesForStep(step.id)"
-                  :key="`${step.id}-${modeRow.mode}`"
-                  class="wizard-step-mode-badge"
-                >{{ modeRow.label }}</span>
-              </span>
-              <span class="meta-line">{{ step.detail }}</span>
-            </span>
-          </label>
-          <textarea
-            :value="wizardStepNotes[step.id] || ''"
-            class="vol-input wizard-step-note"
-            :data-testid="`wizard-note-${step.id}`"
-            placeholder="协作批注（可选，支持 @volume @reviewer）"
-            rows="2"
-            @input="wizardStepNotes[step.id] = $event.target.value"
-            @blur="saveWizardStepNote(step.id)"
-          />
-          <div
-            v-if="wizardMentionsForStep(step.id).length"
-            class="wizard-mentions"
-            data-testid="wizard-mentions"
-          >
-            <span
-              v-for="mention in wizardMentionsForStep(step.id)"
-              :key="`${step.id}-${mention}`"
-              class="wizard-mention-badge"
-              data-testid="wizard-mention-badge"
-            >@{{ mention }}</span>
-          </div>
-        </li>
-      </ol>
-      <p class="meta-line">
-        清单：<code>{{ onboardingWizard.checklist_doc }}</code> ·
-        冒烟：<code>{{ onboardingWizard.smoke_command }}</code>
-      </p>
-      <div class="merge-range">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="wizard-share-link-btn"
-          @click="copyWizardShareLink"
-        >
-          复制分享链接
-        </button>
-        <span v-if="wizardShareMessage" class="meta-line" data-testid="wizard-share-message">{{ wizardShareMessage }}</span>
-      </div>
-    </details>
-
     <div
       v-if="overview"
       class="creator-grid"
@@ -1138,38 +380,11 @@
         class="creator-column pixel-card"
         data-testid="column-pulse"
       >
-        <h2 class="column-title">脉络</h2>
-        <p class="column-hint">写作进度 · 卷纲与偏离</p>
-        <div
-          v-if="showPulseCompanionEmpty"
-          class="pulse-empty-guide pixel-border"
-          data-testid="pulse-empty-guide"
-        >
-          <p class="subsection-title">暂无脉络数据</p>
-          <p class="meta-line">
-            陪伴模式以逐章写作为主。写完 ch001 后，偏离项会出现在这里；也可在下方添加卷纲规划多章节奏。
-          </p>
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="pulse-empty-go-write-btn"
-            @click="setWorkspaceTab('write')"
-          >
-            回到写作
-          </button>
-        </div>
-        <div class="progress-block">
-          <p class="progress-text">
-            已写 <strong>{{ overview.chapters_written }}</strong> / {{ overview.max_chapter }} 章
-            （{{ overview.coverage_pct }}%）
-          </p>
-          <div class="progress-bar pixel-border">
-            <div
-              class="progress-fill"
-              :style="{ width: `${Math.min(100, overview.coverage_pct)}%` }"
-            />
-          </div>
-        </div>
+        <CreatorPulseIntro
+          :overview="overview"
+          :show-empty-guide="showPulseCompanionEmpty"
+          @go-write="setWorkspaceTab('write')"
+        />
 
         <div
           v-if="overview.volume_pulse?.volume_count"
@@ -1237,12 +452,14 @@
               + 卷
             </button>
           </div>
-          <div
+          <component
+            :is="uiProfile.creator_simplified_mode_ops ? 'details' : 'div'"
             v-if="volumeTemplates.length"
             class="volume-template-panel pixel-border"
             data-testid="volume-template-panel"
           >
-            <h3 class="subsection-title">模板库</h3>
+            <summary v-if="uiProfile.creator_simplified_mode_ops" class="subsection-title">模板库（进阶）</summary>
+            <h3 v-else class="subsection-title">模板库</h3>
             <div class="merge-range">
               <select v-model="selectedTemplateId" class="vol-input" data-testid="volume-template-select">
                 <option v-for="t in volumeTemplates" :key="t.id" :value="t.id">
@@ -1681,7 +898,7 @@
                 {{ templateImporting ? '导入中…' : '确认导入' }}
               </button>
             </div>
-          </div>
+          </component>
           <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」或套用模板。</div>
           <div
             v-for="(vol, idx) in editableVolumes"
@@ -2276,32 +1493,13 @@
           </p>
         </div>
 
-        <ul
-          v-if="visibleDeviations.length"
-          class="deviation-list"
-          data-testid="deviation-list"
-        >
-          <li
-            v-for="(d, i) in visibleDeviations"
-            :key="i"
-            :class="[
-              'deviation-item',
-              `deviation-${d.severity}`,
-              {
-                'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter,
-                'deviation-item--active': deviationHighlightEnabled && highlightedDeviationChapter === d.chapter,
-              },
-            ]"
-            :role="uiProfile.deviation_chapter_jump && d.chapter ? 'button' : undefined"
-            :tabindex="uiProfile.deviation_chapter_jump && d.chapter ? 0 : undefined"
-            :data-testid="d.chapter ? `deviation-item-ch${d.chapter}` : `deviation-item-${i}`"
-            @click="handleDeviationClick(d)"
-            @keydown.enter="handleDeviationClick(d)"
-          >
-            <span v-if="d.chapter" class="deviation-chapter">ch{{ String(d.chapter).padStart(3, '0') }}</span>
-            {{ d.message }}
-          </li>
-        </ul>
+        <CreatorDeviationList
+          :deviations="visibleDeviations"
+          :ui-profile="uiProfile"
+          :highlight-enabled="deviationHighlightEnabled"
+          :highlighted-chapter="highlightedDeviationChapter"
+          @deviation-click="handleDeviationClick"
+        />
 
         <div
           v-if="showAdvanceBatch && showAdvanceBatchOnCreator"
@@ -3481,6 +2679,764 @@
         </div>
       </section>
     </div>
+
+    <details
+      class="creator-mode-guide-panel pixel-border"
+      data-testid="creator-mode-guide-panel"
+      :open="modeGuideExpanded"
+    >
+      <summary class="creator-mode-guide-summary">
+        模式说明与能力对照<span v-if="modeLabel"> · {{ modeLabel }}</span>
+      </summary>
+    <p
+      v-if="uiProfile.creation_mode_badge_legend && !uiProfile.creator_simplified_mode_ops"
+      class="mode-badge-legend meta-line pixel-border"
+      data-testid="creation-mode-badge-legend"
+    >
+      徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
+    </p>
+    <p
+      v-if="uiProfile.creation_mode_switch_hint && creationModeSwitchHintText"
+      class="mode-switch-hint pixel-border"
+      data-testid="creation-mode-switch-hint"
+    >
+      {{ creationModeSwitchHintText }}
+    </p>
+    <div
+      v-if="uiProfile.creation_mode_switch_doc_link && creationModeSwitchDocLinks.length"
+      class="mode-switch-doc-links pixel-border"
+      data-testid="creation-mode-switch-doc-links"
+    >
+      <button
+        v-for="link in creationModeSwitchDocLinks"
+        :key="link.id"
+        type="button"
+        class="mini-btn pixel-border mode-switch-doc-link"
+        :data-testid="`mode-switch-doc-${link.id}`"
+        @click="openModeSwitchDoc(link, uiProfile.creation_mode_switch_doc_open)"
+      >
+        {{ link.label }}
+      </button>
+    </div>
+    <div
+      v-if="uiProfile.creation_mode_switch_aria_live"
+      class="creation-mode-aria-live"
+      aria-live="polite"
+      data-testid="creation-mode-switch-aria-live"
+    >
+      {{ creationModeSwitchAriaMessage }}
+    </div>
+    <aside
+      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_preview_pinned_sidebar && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
+      class="creation-mode-pinned-sidebar pixel-border"
+      data-testid="creation-mode-pinned-sidebar"
+    >
+      <p class="meta-line">三模式侧栏</p>
+      <ul class="creation-mode-pinned-list">
+        <li
+          v-for="row in creationModePreviewRows"
+          :key="`mode-pinned-${row.mode}`"
+          class="creation-mode-pinned-item"
+          :class="{ 'creation-mode-pinned-item--active': row.active }"
+          :data-testid="`creation-mode-pinned-${row.mode}`"
+        >
+          {{ row.label }}
+        </li>
+      </ul>
+    </aside>
+    <div
+      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length && !uiProfile.creation_mode_preview_pinned_sidebar"
+      class="creation-mode-switch-preview pixel-border"
+      :class="{ 'creation-mode-switch-preview--guide': creationModeGuideAnimationEnabled }"
+      data-testid="creation-mode-switch-preview"
+    >
+      <p class="meta-line">三模式预览 · 切换请编辑 config/project.yaml → creation_mode</p>
+      <p
+        v-if="creationModeGuideAnimationEnabled"
+        class="meta-line creation-mode-guide-hint"
+        data-testid="creation-mode-guide-hint"
+      >
+        引导动画：依次高亮陪伴 → 推进 → 工作室
+      </p>
+      <ul class="creation-mode-preview-list">
+        <li
+          v-for="(row, previewIdx) in creationModePreviewRows"
+          :key="`mode-preview-${row.mode}`"
+          class="creation-mode-preview-item"
+          :class="{
+            'creation-mode-preview-item--active': row.active,
+            'creation-mode-preview-item--guide': creationModeGuideAnimationEnabled,
+          }"
+          :style="creationModeGuideAnimationEnabled
+            ? { animationDelay: `${previewIdx * 0.8}s` }
+            : undefined"
+          :data-testid="`creation-mode-preview-${row.mode}`"
+        >
+          <strong>{{ row.label }}</strong>
+          <span class="meta-line">{{ row.summary }}</span>
+          <button
+            v-if="uiProfile.creation_mode_yaml_snippet"
+            type="button"
+            class="mini-btn pixel-border creation-mode-yaml-btn"
+            :data-testid="`copy-creation-mode-yaml-${row.mode}`"
+            @click.stop="requestCreationModeYaml(row.mode, row.active)"
+          >
+            复制 YAML
+          </button>
+          <button
+            v-if="uiProfile.creation_mode_onboarding_step_link"
+            type="button"
+            class="mini-btn pixel-border creation-mode-onboarding-link-btn"
+            :data-testid="`link-onboarding-step-${row.mode}`"
+            @click.stop="requestOnboardingStepLink(row.mode, row.active)"
+          >
+            向导步骤
+          </button>
+        </li>
+      </ul>
+    </div>
+    <div
+      v-if="pendingModeSwitch"
+      class="mode-switch-confirm-dialog pixel-border"
+      data-testid="creation-mode-switch-confirm-dialog"
+    >
+      <p class="meta-line">
+        确认切换至 <strong>{{ pendingModeSwitchLabel }}</strong>？
+      </p>
+      <p class="meta-line">请编辑 config/project.yaml → creation_mode</p>
+      <div class="mode-switch-confirm-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="confirm-mode-switch-btn"
+          @click="confirmCreationModeSwitch"
+        >
+          确认
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="cancel-mode-switch-btn"
+          @click="cancelCreationModeSwitch"
+        >
+          取消
+        </button>
+      </div>
+    </div>
+    <ul
+      v-if="uiProfile.creation_mode_switch_history && creationModeSwitchHistory.length"
+      class="creation-mode-switch-history pixel-border"
+      data-testid="creation-mode-switch-history"
+    >
+      <li
+        v-for="(entry, idx) in creationModeSwitchHistory"
+        :key="`mode-switch-history-${entry.mode}-${entry.at}-${idx}`"
+        class="meta-line creation-mode-switch-history-item"
+        :data-testid="`creation-mode-switch-history-${idx}`"
+      >
+        {{ entry.at }} · {{ entry.label }}（{{ entry.action }}）
+      </li>
+    </ul>
+    <div
+      v-if="uiProfile.creation_mode_switch_undo_hint && lastModeSwitchUndo"
+      class="mode-switch-undo-hint pixel-border"
+      data-testid="creation-mode-switch-undo-hint"
+    >
+      <p class="meta-line">
+        已请求切换至 {{ lastModeSwitchUndo.toLabel }}，撤销请恢复
+        <code>creation_mode: {{ lastModeSwitchUndo.fromMode }}</code>
+      </p>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="copy-mode-switch-undo-btn"
+        @click="applyModeSwitchUndoHint"
+      >
+        复制撤销 YAML
+      </button>
+    </div>
+    <p
+      v-if="uiProfile.creation_mode_switch_hotkey"
+      class="meta-line creation-mode-hotkey-hint"
+      data-testid="creation-mode-switch-hotkey-hint"
+    >
+      快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
+    </p>
+    <ul
+      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_accessibility_checklist && creationModeAccessibilityItems.length"
+      class="creation-mode-accessibility-checklist pixel-border"
+      data-testid="creation-mode-accessibility-checklist"
+    >
+      <li
+        v-for="item in creationModeAccessibilityItems"
+        :key="`a11y-${item.id}`"
+        class="meta-line creation-mode-accessibility-item"
+        :data-testid="`creation-mode-a11y-${item.id}`"
+      >
+        {{ item.enabled ? '✓' : '—' }} {{ item.label }}
+      </li>
+    </ul>
+    <div
+      v-if="uiProfile.volume_plan_diff_share_link_preview && volumePlanDiffShareLinkPreview"
+      class="volume-plan-diff-share-link-preview pixel-border"
+      data-testid="volume-plan-diff-share-link-preview"
+    >
+      <p
+        v-if="volumePlanDiffShareLinkPreview.valid === false"
+        class="meta-line volume-plan-diff-share-link-error"
+        data-testid="volume-plan-diff-share-token-error"
+      >
+        {{ volumePlanDiffShareLinkPreview.error_label }}
+      </p>
+      <template v-else>
+      <p class="meta-line">
+        分享链接解析：{{ volumePlanDiffShareLinkPreview.change_count }} 条变更
+        <span v-if="volumePlanDiffShareLinkPreview.global_outline_path">
+          · {{ volumePlanDiffShareLinkPreview.global_outline_path }}
+        </span>
+      </p>
+      <ul class="volume-plan-diff-share-link-preview-list">
+        <li
+          v-for="(row, idx) in volumePlanDiffShareLinkPreview.changes"
+          :key="`share-diff-${row.label}-${idx}`"
+          class="meta-line"
+        >
+          {{ row.label }}：{{ row.message }}
+          <span
+            v-if="uiProfile.volume_plan_diff_share_collab_v2 && volumePlanDiffShareLinkPreview.collab_notes?.[row.label]"
+            class="volume-plan-diff-share-collab-note"
+            :data-testid="`share-collab-note-${row.label}`"
+          >
+            批注：{{ volumePlanDiffShareLinkPreview.collab_notes[row.label] }}
+          </span>
+        </li>
+      </ul>
+      <button
+        v-if="uiProfile.volume_plan_diff_share_link_apply && volumePlanDiffShareLinkPreview.can_apply"
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="apply-volume-plan-diff-share-btn"
+        @click="requestApplyVolumePlanDiffShareLink"
+      >
+        一键应用卷纲
+      </button>
+      <ol
+        v-if="uiProfile.volume_plan_diff_share_link_e2e && volumePlanDiffShareLinkPreview.can_apply"
+        class="volume-plan-diff-share-e2e-steps"
+        data-testid="volume-plan-diff-share-e2e-steps"
+      >
+        <li
+          class="volume-plan-diff-share-e2e-step volume-plan-diff-share-e2e-step--done"
+          data-testid="share-e2e-step-parse"
+        >
+          1. 解析分享链接
+        </li>
+        <li
+          class="volume-plan-diff-share-e2e-step"
+          :class="{ 'volume-plan-diff-share-e2e-step--done': shareE2eApplyDone }"
+          data-testid="share-e2e-step-apply"
+        >
+          2. 应用卷纲
+        </li>
+        <li
+          class="volume-plan-diff-share-e2e-step"
+          data-testid="share-e2e-step-save"
+        >
+          3. 保存卷纲
+        </li>
+      </ol>
+      </template>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="dismiss-volume-plan-diff-share-preview-btn"
+        @click="dismissVolumePlanDiffShareLinkPreview"
+      >
+        关闭预览
+      </button>
+    </div>
+    <div
+      v-if="pendingShareApply"
+      class="volume-plan-diff-share-apply-confirm pixel-border"
+      data-testid="volume-plan-diff-share-apply-confirm"
+    >
+      <p class="meta-line">
+        确认应用分享卷纲（{{ pendingShareApply.draft_volumes?.length || 0 }} 卷）？
+      </p>
+      <div class="mode-switch-confirm-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="confirm-share-apply-btn"
+          @click="confirmApplyVolumePlanDiffShareLink"
+        >
+          确认应用
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="cancel-share-apply-btn"
+          @click="cancelApplyVolumePlanDiffShareLink"
+        >
+          取消
+        </button>
+      </div>
+    </div>
+    <div
+      v-if="pendingShareMerge"
+      class="volume-plan-diff-share-merge-wizard pixel-border"
+      data-testid="volume-plan-diff-share-merge-wizard"
+    >
+      <p class="meta-line">分享卷纲与本地存在 {{ pendingShareMerge.conflicts.length }} 处冲突</p>
+      <ul class="volume-plan-diff-share-merge-list">
+        <li
+          v-for="row in pendingShareMerge.conflicts"
+          :key="`share-merge-${row.label}`"
+          class="meta-line"
+        >
+          {{ row.label }}：本地「{{ row.local.core_conflict }}」 / 分享「{{ row.share.core_conflict }}」
+        </li>
+      </ul>
+      <div class="mode-switch-confirm-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="share-merge-use-share-btn"
+          @click="confirmShareMergeUseShare"
+        >
+          使用分享版
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="share-merge-keep-local-btn"
+          @click="cancelShareMerge"
+        >
+          保留本地
+        </button>
+      </div>
+    </div>
+    <div
+      v-if="showVolumePlanDiffPrintPreview"
+      class="volume-plan-diff-print-preview pixel-border"
+      data-testid="volume-plan-diff-print-preview"
+    >
+      <p class="meta-line">卷纲 diff 打印预览</p>
+      <pre class="volume-plan-diff-print-preview-body">{{ volumePlanDiffPrintPreviewText }}</pre>
+      <div class="volume-plan-diff-print-preview-actions">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="print-volume-plan-diff-btn"
+          @click="printVolumePlanDiffPreview"
+        >
+          打印
+        </button>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="close-volume-plan-diff-print-preview-btn"
+          @click="closeVolumePlanDiffPrintPreview"
+        >
+          关闭
+        </button>
+      </div>
+    </div>
+    <div
+      v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length && !uiProfile.creator_simplified_mode_ops"
+      class="creation-mode-capability-matrix pixel-border"
+      data-testid="creation-mode-capability-matrix"
+    >
+      <p class="meta-line">三模式能力对照</p>
+      <table class="creation-mode-capability-table">
+        <thead>
+          <tr>
+            <th scope="col">能力</th>
+            <th scope="col">陪伴</th>
+            <th scope="col">推进</th>
+            <th scope="col">工作室</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="row in creationModeCapabilityRows"
+            :key="`capability-${row.id}`"
+            :data-testid="`creation-mode-capability-${row.id}`"
+          >
+            <th scope="row">{{ row.label }}</th>
+            <td>{{ row.companion ? '✓' : '—' }}</td>
+            <td>{{ row.advance ? '✓' : '—' }}</td>
+            <td>{{ row.studio ? '✓' : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <details
+      v-if="uiProfile.creator_simplified_mode_ops"
+      class="creator-advanced-ops pixel-border"
+      data-testid="creator-advanced-ops"
+    >
+      <summary class="creator-advanced-ops-summary">高级：三模式对照与运维</summary>
+      <div
+        v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
+        class="creation-mode-capability-matrix pixel-border"
+        data-testid="creation-mode-capability-matrix-advanced"
+      >
+        <p class="meta-line">三模式能力对照</p>
+        <table class="creation-mode-capability-table">
+          <thead>
+            <tr>
+              <th scope="col">能力</th>
+              <th scope="col">陪伴</th>
+              <th scope="col">推进</th>
+              <th scope="col">工作室</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in creationModeCapabilityRows"
+              :key="`capability-adv-${row.id}`"
+            >
+              <th scope="row">{{ row.label }}</th>
+              <td>{{ row.companion ? '✓' : '—' }}</td>
+              <td>{{ row.advance ? '✓' : '—' }}</td>
+              <td>{{ row.studio ? '✓' : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="meta-line">切换模式：编辑 <code>config/project.yaml</code> → <code>creation_mode</code></p>
+    </details>
+    <p
+      v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
+      class="mode-switch-hint studio-entry-hint pixel-border"
+      data-testid="studio-creation-entry-hint"
+    >
+      {{ studioCreationEntryHintText }}
+    </p>
+    </details>
+
+    <details
+      v-if="onboardingWizard"
+      ref="wizardPanelRef"
+      class="onboarding-wizard pixel-border"
+      data-testid="onboarding-wizard-panel"
+      :open="wizardPanelOpen"
+      @toggle="onWizardToggle"
+    >
+      <summary>
+        入门向导 · {{ onboardingWizard.mode_label }}（{{ onboardingWizard.max_chapter }} 章上限）
+        <span v-if="onboardingWizard.progress_pct != null" class="wizard-progress-badge" data-testid="wizard-progress-label">
+          · {{ onboardingWizard.progress_pct }}%
+        </span>
+        <span
+          v-if="wizardUnreadMentions > 0"
+          class="wizard-notification-badge"
+          data-testid="wizard-notification-badge"
+        >
+          · {{ wizardUnreadMentions }} 条 @提及
+        </span>
+      </summary>
+      <div
+        v-if="wizardNotifications.length"
+        class="wizard-notifications"
+        data-testid="wizard-notifications-panel"
+      >
+        <p class="meta-line">批注通知</p>
+        <label v-if="wizardNotificationHandles.length" class="meta-line">
+          按 handle 过滤
+          <select
+            v-model="wizardNotificationHandleFilter"
+            class="vol-input"
+            data-testid="wizard-notification-handle-filter"
+            @change="loadWizardNotifications"
+          >
+            <option value="">全部</option>
+            <option v-for="handle in wizardNotificationHandles" :key="handle" :value="handle">
+              @{{ handle }}
+            </option>
+          </select>
+        </label>
+        <div
+          v-if="wizardNotificationDigest.groups?.length"
+          class="wizard-digest-panel"
+          data-testid="wizard-notification-digest"
+        >
+          <p class="meta-line">通知摘要（{{ wizardNotificationDigest.unread }} 条未读）</p>
+          <ul>
+            <li
+              v-for="group in wizardNotificationDigest.groups"
+              :key="group.handle"
+              class="wizard-digest-row"
+              data-testid="wizard-digest-row"
+            >
+              <strong>@{{ group.handle }}</strong>
+              <span class="meta-line">{{ group.count }} 条 · {{ group.steps.map((s) => s.step_id).join(', ') }}</span>
+            </li>
+          </ul>
+        </div>
+        <div
+          v-if="uiProfile.show_digest_ops"
+          class="wizard-digest-schedule-panel"
+          data-testid="wizard-digest-schedule-panel"
+        >
+          <p class="meta-line">定时 digest</p>
+          <label class="meta-line">
+            <input v-model="wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" />
+            启用（每 {{ wizardDigestScheduleHours }} 小时）
+          </label>
+          <input
+            v-model.number="wizardDigestScheduleHours"
+            type="number"
+            min="1"
+            max="168"
+            class="vol-input"
+            data-testid="wizard-digest-schedule-hours"
+          />
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="save-wizard-digest-schedule-btn"
+            @click="saveWizardDigestSchedule"
+          >
+            保存定时
+          </button>
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="dispatch-wizard-digest-btn"
+            @click="dispatchWizardDigest"
+          >
+            立即发送 digest
+          </button>
+            <p class="meta-line" data-testid="wizard-digest-background-hint">
+            Dashboard 后台每 15 分钟自动检查到期 digest
+          </p>
+          <p
+            v-if="wizardDigestStats.sent_total || wizardDigestStats.failed_total"
+            class="meta-line"
+            data-testid="wizard-digest-stats"
+          >
+            发送统计：成功 {{ wizardDigestStats.sent_total }} / 失败 {{ wizardDigestStats.failed_total }}
+          </p>
+          <input
+            v-model="wizardDigestHandleChannelsJson"
+            class="vol-input"
+            data-testid="wizard-digest-handle-channels"
+            placeholder='handle 路由 JSON，如 {"batch":["webhook"],"*":["email"]}'
+          />
+          <input
+            v-model="wizardDigestHandleQuietJson"
+            class="vol-input"
+            data-testid="wizard-digest-handle-quiet-hours"
+            placeholder='handle 静默 JSON，如 {"batch":{"start":22,"end":6}}'
+          />
+          <label class="meta-line">
+            静默时段（UTC）
+            <input
+              v-model.number="wizardDigestQuietStart"
+              type="number"
+              min="0"
+              max="23"
+              class="vol-input"
+              data-testid="wizard-digest-quiet-start"
+              placeholder="起"
+            />
+            –
+            <input
+              v-model.number="wizardDigestQuietEnd"
+              type="number"
+              min="0"
+              max="23"
+              class="vol-input"
+              data-testid="wizard-digest-quiet-end"
+              placeholder="止"
+            />
+          </label>
+          <div
+            v-if="wizardDigestRetryQueue.item_count"
+            class="wizard-digest-retry"
+            data-testid="wizard-digest-retry-panel"
+          >
+            <p class="meta-line">重试队列 {{ wizardDigestRetryQueue.item_count }} 条</p>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="process-wizard-digest-retry-btn"
+              @click="processWizardDigestRetries"
+            >
+              重试失败 digest
+            </button>
+          </div>
+          <div
+            v-if="wizardDigestDeadLetter.item_count"
+            class="wizard-digest-dead-letter"
+            data-testid="wizard-digest-dead-letter-panel"
+          >
+            <p class="meta-line">死信队列 {{ wizardDigestDeadLetter.item_count }} 条</p>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="replay-wizard-digest-dead-letter-btn"
+              @click="replayWizardDigestDeadLetter"
+            >
+              重放首条死信
+            </button>
+          </div>
+        </div>
+        <ul>
+          <li
+            v-for="note in wizardNotifications"
+            :key="note.id"
+            class="wizard-notification-row"
+            :class="{ 'wizard-notification-row--unread': !note.read }"
+            data-testid="wizard-notification-row"
+          >
+            <strong>@{{ note.handle }}</strong>
+            <span class="meta-line">{{ note.step_id }} · {{ note.note_excerpt }}</span>
+          </li>
+        </ul>
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="wizard-ack-notifications-btn"
+          @click="ackWizardNotifications"
+        >
+          全部标为已读
+        </button>
+        <div v-if="!uiProfile.simplified_notifications" class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
+          <p class="meta-line">通知 Webhook</p>
+          <label class="meta-line">
+            <input v-model="wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" />
+            启用
+          </label>
+          <input
+            v-model="wizardWebhookUrl"
+            class="vol-input"
+            data-testid="wizard-webhook-url"
+            placeholder="https://example.com/hooks/mentions"
+          />
+          <input
+            v-model="wizardWebhookSigningSecret"
+            class="vol-input"
+            data-testid="wizard-webhook-signing-secret"
+            placeholder="Webhook 签名密钥（可选）"
+          />
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="save-wizard-webhook-btn"
+            @click="saveWizardWebhook"
+          >
+            保存 Webhook
+          </button>
+        </div>
+        <div v-if="!uiProfile.simplified_notifications" class="wizard-email-panel" data-testid="wizard-email-panel">
+          <p class="meta-line">通知邮件</p>
+          <label class="meta-line">
+            <input v-model="wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" />
+            启用
+          </label>
+          <input
+            v-model="wizardEmailTo"
+            class="vol-input"
+            data-testid="wizard-email-to"
+            placeholder="user@example.com"
+          />
+          <input
+            v-model="wizardEmailSmtpHost"
+            class="vol-input"
+            data-testid="wizard-email-smtp-host"
+            placeholder="smtp.example.com"
+          />
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="save-wizard-email-btn"
+            @click="saveWizardEmail"
+          >
+            保存邮件
+          </button>
+        </div>
+      </div>
+      <ol class="wizard-steps">
+        <li
+          v-for="step in onboardingWizard.steps"
+          :key="step.id"
+          class="wizard-step"
+          :class="{
+            'wizard-step--focused': step.id === focusWizardStep,
+            'wizard-step--mode-linked': uiProfile.creation_mode_onboarding_step_link
+              && isOnboardingStepLinkedToCurrentMode(step.id),
+          }"
+        >
+          <label class="wizard-step-label">
+            <input
+              type="checkbox"
+              :checked="completedWizardSteps.has(step.id)"
+              :data-testid="`wizard-step-${step.id}`"
+              @change="toggleWizardStep(step.id, $event.target.checked)"
+            />
+            <span>
+              <strong>{{ step.title }}</strong>
+              <span
+                v-if="autoCompletedWizardSteps.has(step.id)"
+                class="wizard-auto-badge"
+                data-testid="wizard-auto-badge"
+              >自动</span>
+              <span
+                v-if="uiProfile.creation_mode_onboarding_step_link && onboardingModesForStep(step.id).length"
+                class="wizard-step-mode-badges"
+                :data-testid="`wizard-step-modes-${step.id}`"
+              >
+                <span
+                  v-for="modeRow in onboardingModesForStep(step.id)"
+                  :key="`${step.id}-${modeRow.mode}`"
+                  class="wizard-step-mode-badge"
+                >{{ modeRow.label }}</span>
+              </span>
+              <span class="meta-line">{{ step.detail }}</span>
+            </span>
+          </label>
+          <textarea
+            :value="wizardStepNotes[step.id] || ''"
+            class="vol-input wizard-step-note"
+            :data-testid="`wizard-note-${step.id}`"
+            placeholder="协作批注（可选，支持 @volume @reviewer）"
+            rows="2"
+            @input="wizardStepNotes[step.id] = $event.target.value"
+            @blur="saveWizardStepNote(step.id)"
+          />
+          <div
+            v-if="wizardMentionsForStep(step.id).length"
+            class="wizard-mentions"
+            data-testid="wizard-mentions"
+          >
+            <span
+              v-for="mention in wizardMentionsForStep(step.id)"
+              :key="`${step.id}-${mention}`"
+              class="wizard-mention-badge"
+              data-testid="wizard-mention-badge"
+            >@{{ mention }}</span>
+          </div>
+        </li>
+      </ol>
+      <p class="meta-line">
+        清单：<code>{{ onboardingWizard.checklist_doc }}</code> ·
+        冒烟：<code>{{ onboardingWizard.smoke_command }}</code>
+      </p>
+      <div class="merge-range">
+        <button
+          type="button"
+          class="mini-btn pixel-border"
+          data-testid="wizard-share-link-btn"
+          @click="copyWizardShareLink"
+        >
+          复制分享链接
+        </button>
+        <span v-if="wizardShareMessage" class="meta-line" data-testid="wizard-share-message">{{ wizardShareMessage }}</span>
+      </div>
+    </details>
   </div>
 </template>
 
@@ -3590,6 +3546,8 @@ import { useStudioProject } from '../composables/useStudioProject.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 import { useCreatorWorkspace } from '../composables/useCreatorWorkspace.js';
 import HubTabBar from '../components/HubTabBar.vue';
+import CreatorPulseIntro from '../components/creator/CreatorPulseIntro.vue';
+import CreatorDeviationList from '../components/creator/CreatorDeviationList.vue';
 
 const { projectRevision } = useStudioProject();
 const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo, focusCreatorWorkspace, setCreatorWorkspace } = useDashboardNav();
@@ -7806,17 +7764,12 @@ watch(
   gap: var(--space-md);
 }
 
-.creator-grid {
-  order: 1;
-}
-
 .creator-grid--tabbed {
   grid-template-columns: 1fr;
 }
 
 .creator-workspace-tabs {
   padding: 0 var(--space-md);
-  order: 0;
 }
 
 .deviation-badge--clickable {
@@ -7825,11 +7778,6 @@ watch(
 
 .deviation-badge--clickable:hover {
   outline: 2px solid var(--color-accent);
-}
-
-.creator-mode-guide-panel,
-.onboarding-wizard {
-  order: 2;
 }
 
 .creator-advanced-ops-summary {

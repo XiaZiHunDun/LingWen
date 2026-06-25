@@ -19,7 +19,8 @@ function pendingRippleCount(stats) {
   return Number(stats.by_status.pending ?? stats.by_status.PENDING ?? 0) || 0;
 }
 
-async function loadTodaySnapshot() {
+async function loadTodaySnapshot(options = {}) {
+  const isReviewer = Boolean(options.isReviewer);
   const [
     summary,
     creator,
@@ -60,6 +61,7 @@ async function loadTodaySnapshot() {
     chaptersWritten,
     coveragePct,
     alertCount: creator?.alert_count ?? 0,
+    isReviewer,
   });
 
   const todoCards = [
@@ -94,7 +96,7 @@ async function loadTodaySnapshot() {
       nav: 'creator',
       hint: (creator?.alert_count ?? 0) > 0 ? '查看偏离' : '正常',
     },
-  ];
+  ].filter((card) => !isReviewer || ['decisions', 'ripples'].includes(card.id));
 
   const health = {
     chaptersWritten,
@@ -119,11 +121,11 @@ const snapshot = ref(null);
 const loading = ref(false);
 const lastError = ref(null);
 
-async function refresh() {
+async function refresh(options = {}) {
   loading.value = true;
   lastError.value = null;
   try {
-    snapshot.value = await loadTodaySnapshot();
+    snapshot.value = await loadTodaySnapshot(options);
   } catch (e) {
     lastError.value = e?.message || String(e);
   } finally {

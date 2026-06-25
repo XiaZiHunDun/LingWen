@@ -2,10 +2,12 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { computed } from 'vue'
 import { byTestid } from '../helpers/by-testid'
 
 const mocks = vi.hoisted(() => ({
   navigateTo: vi.fn(),
+  copyDashboardShareUrl: vi.fn().mockResolvedValue({ ok: true }),
   fetchStudioSummary: vi.fn(),
   fetchCreatorOverview: vi.fn(),
   fetchPendingDecisions: vi.fn(),
@@ -14,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   fetchStudioQualityReport: vi.fn(),
   fetchStudioActiveBatchJob: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
+}))
+
+vi.mock('../../src/utils/shareLink.js', () => ({
+  copyDashboardShareUrl: mocks.copyDashboardShareUrl,
 }))
 
 vi.mock('../../src/composables/useDashboardNav.js', () => ({
@@ -99,6 +105,33 @@ describe('TodayPage (Phase A)', () => {
     await wrapper.find(byTestid('today-todo-decisions')).trigger('click')
     expect(mocks.navigateTo).toHaveBeenCalledWith('inbox', expect.objectContaining({ tab: 'decisions', clearFocus: true }))
   })
+
+  test('reviewer mode shows banner and hides author quick links', async () => {
+    const wrapper = mount(TodayPage, {
+      global: {
+        provide: { isReviewer: computed(() => true) },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find(byTestid('today-reviewer-banner')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('today-quick-creator')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('today-quick-inbox')).exists()).toBe(true)
+  })
+
+  test('reviewer share link copies inbox URL', async () => {
+    const wrapper = mount(TodayPage, {
+      global: {
+        provide: { isReviewer: computed(() => true) },
+      },
+    })
+    await flushPromises()
+    await wrapper.find(byTestid('today-share-link-btn')).trigger('click')
+    await flushPromises()
+    expect(mocks.copyDashboardShareUrl).toHaveBeenCalledWith(expect.objectContaining({
+      nav: 'inbox',
+      role: 'reviewer',
+    }))
+  })
 })
 
 describe('resolveTodayPrimaryAction', () => {
@@ -118,5 +151,15 @@ describe('resolveTodayPrimaryAction', () => {
       chaptersWritten: 0,
     })
     expect(action.label).toContain('ch001')
+  })
+
+  test('reviewer prioritizes decisions then insight', () => {
+    const withDecisions = resolveTodayPrimaryAction({
+      isReviewer: true,
+      pendingDecisions: 2,
+    })
+    expect(withDecisions.nav).toBe('inbox')
+    const fallback = resolveTodayPrimaryAction({ isReviewer: true })
+    expect(fallback.nav).toBe('insight')
   })
 })

@@ -19,7 +19,7 @@ class TestE2eLive1113:
             (specs_dir / "ripples-audit.spec.js").read_text(encoding="utf-8").count("test("),
             (specs_dir / "creator-workspace.spec.js").read_text(encoding="utf-8").count("test("),
         ]
-        assert sum(names) == 8
+        assert sum(names) == 11
 
     def test_verify_script_playwright_fallback(self):
         script = NOVEL_FACTORY / "scripts" / "verify-e2e-live-ci.sh"

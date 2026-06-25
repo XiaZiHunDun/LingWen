@@ -9,6 +9,11 @@ const navMocks = vi.hoisted(() => ({
   inboxTab: { value: 'decisions' },
   setProduceTab: vi.fn(),
   setInboxTab: vi.fn(),
+  copyDashboardShareUrl: vi.fn().mockResolvedValue({ ok: true, url: 'http://test' }),
+}))
+
+vi.mock('../../src/utils/shareLink.js', () => ({
+  copyDashboardShareUrl: navMocks.copyDashboardShareUrl,
 }))
 
 vi.mock('../../src/composables/useDashboardNav.js', () => ({
@@ -17,6 +22,8 @@ vi.mock('../../src/composables/useDashboardNav.js', () => ({
     inboxTab: ref(navMocks.inboxTab.value),
     setProduceTab: navMocks.setProduceTab,
     setInboxTab: navMocks.setInboxTab,
+    focusChapter: ref(null),
+    focusDecisionId: ref(null),
   }),
 }))
 
@@ -79,5 +86,17 @@ describe('InboxPage (Phase B)', () => {
     await flushPromises()
     await wrapper.find(byTestid('inbox-tabs-ripples')).trigger('click')
     expect(navMocks.setInboxTab).toHaveBeenCalledWith('ripples')
+  })
+
+  test('share link button copies reviewer URL', async () => {
+    const wrapper = mount(InboxPage)
+    await flushPromises()
+    await wrapper.find(byTestid('inbox-share-link-btn')).trigger('click')
+    await flushPromises()
+    expect(navMocks.copyDashboardShareUrl).toHaveBeenCalledWith(expect.objectContaining({
+      nav: 'inbox',
+      role: 'reviewer',
+    }))
+    expect(wrapper.find(byTestid('inbox-share-link-btn')).text()).toBe('已复制链接')
   })
 })
