@@ -22,7 +22,10 @@
       data-testid="overview-empty-guide"
     >
       <p class="overview-empty-title">本书尚无追读力数据</p>
-      <p class="overview-empty-hint">
+      <p v-if="isReadonlyInsight" class="overview-empty-hint" data-testid="overview-empty-reviewer-hint">
+        审阅模式下无法代您发起写作或生产。请联系作者更新正文后，再回来看钩子与爽点趋势。
+      </p>
+      <p v-else class="overview-empty-hint">
         追读力统计来自已发布正文。可先写 ch001，或在「生产」页跑 Preflight / Batch 产章后再回来看钩子与爽点趋势。
       </p>
       <div class="overview-empty-actions" v-if="!isReadonlyInsight">

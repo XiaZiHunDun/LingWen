@@ -1,6 +1,7 @@
 /**
  * Phase 9.83 F75 + Phase B/D: dashboard nav + URL deep link.
  * ?nav=produce&tab=studio | ?nav=inbox&tab=decisions | ?nav=insight&tab=overview
+ * ?nav=creator&workspace=pulse — creator workspace tab deep link
  * ?role=reviewer — external reviewer (insight read-only)
  */
 import { ref } from 'vue';
@@ -16,6 +17,8 @@ import {
 const PRODUCE_TAB_IDS = PRODUCE_TABS.map((t) => t.id);
 const INBOX_TAB_IDS = INBOX_TABS.map((t) => t.id);
 const INSIGHT_TAB_IDS = INSIGHT_TABS.map((t) => t.id);
+
+export const CREATOR_WORKSPACE_IDS = ['write', 'pulse', 'settings'];
 
 const VALID_NAV = [
   'today',
@@ -77,6 +80,18 @@ function readInsightTab(rawNav) {
   if (tab && INSIGHT_TAB_IDS.includes(tab)) return tab;
   if (rawNav && LEGACY_INSIGHT_NAV_IDS.includes(rawNav)) return rawNav;
   return 'overview';
+}
+
+function readCreatorWorkspaceFromUrl() {
+  if (typeof window === 'undefined') return null;
+  const ws = new URLSearchParams(window.location.search).get('workspace');
+  if (ws && CREATOR_WORKSPACE_IDS.includes(ws) && ws !== 'write') return ws;
+  return null;
+}
+
+function normalizeCreatorWorkspace(tab) {
+  if (!tab || tab === 'write') return null;
+  return CREATOR_WORKSPACE_IDS.includes(tab) ? tab : null;
 }
 
 function readNavFromUrl() {
@@ -226,6 +241,16 @@ function syncNavUrl(
   } else {
     url.searchParams.delete('notes');
   }
+  if (activeNav === 'creator') {
+    const ws = focusCreatorWorkspace.value;
+    if (ws && ws !== 'write' && CREATOR_WORKSPACE_IDS.includes(ws)) {
+      url.searchParams.set('workspace', ws);
+    } else {
+      url.searchParams.delete('workspace');
+    }
+  } else {
+    url.searchParams.delete('workspace');
+  }
   preserveRoleParams(url);
   window.history.replaceState(window.history.state, '', url.toString());
 }
@@ -241,6 +266,7 @@ const focusWizard = ref(readWizardFromUrl());
 const focusWizardStep = ref(readWizardStepFromUrl());
 const focusWizardDone = ref(readWizardDoneFromUrl());
 const focusWizardNotes = ref(readWizardNotesFromUrl());
+const focusCreatorWorkspace = ref(readCreatorWorkspaceFromUrl());
 
 function resolveNavTarget(nav) {
   if (LEGACY_PRODUCE_NAV_IDS.includes(nav)) {
@@ -264,7 +290,7 @@ function guardReviewerNav(nav) {
 
 /**
  * @param {string} nav
- * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean, wizardStep?: string|null, wizardDone?: string[]|null, wizardNotes?: Record<string, string>|null, tab?: string|null }} [opts]
+ * @param {{ chapter?: number|null, decisionId?: string|null, clearFocus?: boolean, wizard?: boolean, wizardStep?: string|null, wizardDone?: string[]|null, wizardNotes?: Record<string, string>|null, tab?: string|null, workspace?: string|null }} [opts]
  */
 function navigateTo(nav, opts = {}) {
   const target = resolveNavTarget(nav);
@@ -293,6 +319,7 @@ function navigateTo(nav, opts = {}) {
     focusWizardStep.value = null;
     focusWizardDone.value = [];
     focusWizardNotes.value = {};
+    focusCreatorWorkspace.value = null;
   } else {
     if (opts.chapter !== undefined) focusChapter.value = opts.chapter;
     if (opts.decisionId !== undefined) focusDecisionId.value = opts.decisionId;
@@ -304,6 +331,9 @@ function navigateTo(nav, opts = {}) {
   if (opts.wizardStep) focusWizard.value = true;
   if (opts.wizardDone?.length) focusWizard.value = true;
   if (opts.wizardNotes && Object.keys(opts.wizardNotes).length) focusWizard.value = true;
+  if (opts.workspace !== undefined) {
+    focusCreatorWorkspace.value = normalizeCreatorWorkspace(opts.workspace);
+  }
   syncNavUrl(
     activeNav.value,
     focusChapter.value,
@@ -358,6 +388,22 @@ function setInsightTab(tab) {
   if (!INSIGHT_TAB_IDS.includes(tab)) return;
   insightTab.value = tab;
   activeNav.value = 'insight';
+  syncNavUrl(
+    activeNav.value,
+    focusChapter.value,
+    focusDecisionId.value,
+    focusWizard.value,
+    focusWizardStep.value,
+    focusWizardDone.value,
+    focusWizardNotes.value,
+    produceTab.value,
+    inboxTab.value,
+    insightTab.value,
+  );
+}
+
+function setCreatorWorkspace(tab) {
+  focusCreatorWorkspace.value = normalizeCreatorWorkspace(tab);
   syncNavUrl(
     activeNav.value,
     focusChapter.value,
@@ -461,10 +507,12 @@ export function useDashboardNav() {
     focusWizardStep,
     focusWizardDone,
     focusWizardNotes,
+    focusCreatorWorkspace,
     navigateTo,
     setProduceTab,
     setInboxTab,
     setInsightTab,
+    setCreatorWorkspace,
     isProduceNav,
     isInboxNav,
     isInsightNav,

@@ -46,6 +46,7 @@
 
 | 主题 | 状态 | 证据 / commit |
 |------|------|----------------|
+| **Dashboard 产品壳 IA（Phase A–D）** | ✅ | 今日 / 生产 / 待办 / 洞察 hub；创作 Tab；审阅深链；顶栏字号三档 |
 | **七书 LLM judge 全 ≥4.0** | ✅ | `9008115` 黄沙 · `174f9a0` 四书 polish |
 | 七样章 prose polish 两轮 | ✅ | `5906e77` → `9008115` |
 | 维护对齐（HANDOFF/DoD/gap/rubric） | ✅ | `82f0313` |
@@ -224,6 +225,8 @@ PRD：[`creator-product-prd-v1.md`](novel-factory/docs/creator-product-prd-v1.md
 **v7.0 里程碑已落地**：分享闭环 Playwright E2E · batch 运维摘要折叠区 · 无障碍验收清单
 
 **v7.0+ 产品级已落地**：创作者 beta 文档包 · 分享协作 v2 · Studio/Creator changelog 解耦
+
+**Dashboard IA v1（2026-06-22）**：产品壳按用户旅程重组 — **今日** · **创作**（写/脉络/设定 Tab + `?workspace=` 深链）· **生产** · **待办** · **洞察**；审阅者 `?role=reviewer`；顶栏字号三档
 
 **v7.0 之后（产品级）**：~~创作者 beta 文档包 · 分享协作 v2 · Studio 线解耦 changelog~~ → 已落地，见 [`creator-changelog.md`](novel-factory/docs/creator-changelog.md)
 

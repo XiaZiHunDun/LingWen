@@ -18,8 +18,31 @@ test.describe('Creator workspace live e2e', () => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
     await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
+    await page.getByTestId('creator-workspace-tab-pulse').click();
     await expect(page.getByTestId('volume-plan-panel')).toBeVisible();
+    await expect(page.getByTestId('pillars-textarea')).toBeHidden();
+    await page.getByTestId('creator-workspace-tab-settings').click();
     await expect(page.getByTestId('pillars-textarea')).toBeVisible();
+  });
+
+  test('companion_workspace_tabs_and_logic_check', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
+    await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('companion-logic-check-write')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('creator-workspace-tab-pulse').click();
+    await expect(page.getByTestId('column-write')).toBeHidden();
+    await expect(page.getByTestId('column-pulse')).toBeVisible();
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
+  });
+
+  test('creator_workspace_deep_link_opens_pulse_tab', async ({ page }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+    await page.goto('/?nav=creator&workspace=pulse', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('column-pulse')).toBeVisible();
+    await expect(page.getByTestId('column-write')).toBeHidden();
   });
 
   test('creator_share_link_apply_save_flow', async ({ page }) => {

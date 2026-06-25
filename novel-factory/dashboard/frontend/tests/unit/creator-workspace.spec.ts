@@ -46,9 +46,11 @@ vi.mock('../../src/composables/useDashboardNav.js', () => ({
     focusWizardStep: { value: null },
     focusWizardDone: { value: [] },
     focusWizardNotes: { value: {} },
+    focusCreatorWorkspace: { value: null },
     setWizardDeepLink: vi.fn(),
     buildWizardShareUrl: vi.fn(),
     navigateTo: vi.fn(),
+    setCreatorWorkspace: vi.fn(),
   }),
 }))
 
@@ -152,5 +154,48 @@ describe('Creator workspace tabs (Phase C)', () => {
     await flushPromises()
     expect(wrapper.find('[data-testid="creation-mode-capability-matrix"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="creator-advanced-ops"]').exists()).toBe(true)
+  })
+
+  test('companion shows logic check in write tab when primary_action is logic_check', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...companionOverview,
+      ui_profile: {
+        ...companionOverview.ui_profile,
+        primary_action: 'logic_check',
+      },
+    })
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('companion-logic-check-write')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('companion-logic-check-panel')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('run-companion-logic-check-btn')).exists()).toBe(true)
+  })
+
+  test('companion pulse tab shows empty guide when no volumes or deviations', async () => {
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    await wrapper.find(byTestid('creator-workspace-tab-pulse')).trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('pulse-empty-guide')).exists()).toBe(true)
+  })
+
+  test('pulse tab badge shows deviation count', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...companionOverview,
+      deviation_count: 2,
+      alert_count: 1,
+      deviations: [
+        { type: 'missing_body', severity: 'warn', chapter: 2, message: '缺正文' },
+      ],
+      ui_profile: {
+        ...companionOverview.ui_profile,
+        deviation_min_severity: null,
+      },
+    })
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    const badge = wrapper.find(byTestid('creator-workspace-tab-pulse')).find('.hub-tab-badge')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('2')
   })
 })

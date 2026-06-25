@@ -21,6 +21,7 @@ E2E_PENDING_RIPPLE_ID = "rip-pending-1"
 E2E_REJECTED_RIPPLE_ID = "rip-rejected-1"
 E2E_DECISION_ID = "e2e-dec1"
 E2E_CREATOR_SLUG = "e2e-live-creator"
+E2E_COMPANION_SLUG = "e2e-live-companion"
 
 _DEFAULT_STATE_DIR = Path(__file__).resolve().parents[2] / "infra" / ".state"
 
@@ -119,7 +120,7 @@ def ensure_e2e_creator_project() -> Path:
     if existing is None:
         init_minimal_short_project(
             slug=E2E_CREATOR_SLUG,
-            title="E2E 创作伴侣",
+            title="E2E 推进创作",
             factory_root=factory,
             creation_mode="advance",
             chapter_count=12,
@@ -130,9 +131,56 @@ def ensure_e2e_creator_project() -> Path:
     return project.root
 
 
+def ensure_e2e_companion_project() -> Path:
+    """Companion-mode project for creator workspace live e2e."""
+    import json
+
+    from infra.project_init import init_minimal_short_project
+    from infra.studio_registry import factory_root, get_project_by_slug
+
+    factory = factory_root()
+    existing = get_project_by_slug(E2E_COMPANION_SLUG)
+    if existing is None:
+        result = init_minimal_short_project(
+            slug=E2E_COMPANION_SLUG,
+            title="E2E 陪伴创作",
+            factory_root=factory,
+            creation_mode="companion",
+            chapter_count=5,
+        )
+        root = result.root
+        body_dir = root / "03_内容仓库/04_正文"
+        body_dir.mkdir(parents=True, exist_ok=True)
+        (body_dir / "ch001.md").write_text(
+            "# 第一章\n\nE2E 陪伴模式正文种子，用于追读力与逻辑审查冒烟。\n",
+            encoding="utf-8",
+        )
+        state_dir = root / ".state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        volume_plan = {
+            "volumes": [
+                {
+                    "label": "一",
+                    "start_chapter": 1,
+                    "end_chapter": 5,
+                    "core_conflict": "E2E 陪伴卷纲",
+                    "locked": False,
+                }
+            ]
+        }
+        (state_dir / "volume_plan.json").write_text(
+            json.dumps(volume_plan, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    project = get_project_by_slug(E2E_COMPANION_SLUG)
+    assert project is not None
+    return project.root
+
+
 def ensure_e2e_fixtures() -> None:
     ensure_e2e_ripples()
     ensure_e2e_decision()
+    ensure_e2e_companion_project()
     ensure_e2e_creator_project()
 
 

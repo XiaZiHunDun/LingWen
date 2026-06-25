@@ -5,14 +5,18 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { ref, computed } from 'vue'
 import { byTestid } from '../helpers/by-testid'
 
-const navMocks = vi.hoisted(() => ({
-  insightTab: { value: 'overview' },
-  setInsightTab: vi.fn(),
-}))
+const navMocks = vi.hoisted(() => {
+  // ref must be created inside hoisted callback (vitest init order)
+  const { ref: vueRef } = require('vue') as typeof import('vue')
+  return {
+    insightTab: vueRef('overview'),
+    setInsightTab: vi.fn(),
+  }
+})
 
 vi.mock('../../src/composables/useDashboardNav.js', () => ({
   useDashboardNav: () => ({
-    insightTab: ref(navMocks.insightTab.value),
+    insightTab: navMocks.insightTab,
     setInsightTab: navMocks.setInsightTab,
   }),
 }))
@@ -52,6 +56,17 @@ describe('InsightPage (Phase D)', () => {
     })
     await flushPromises()
     expect(wrapper.find(byTestid('insight-readonly-banner')).exists()).toBe(true)
+  })
+
+  test('subtitle reflects active insight tab', async () => {
+    navMocks.insightTab.value = 'analytics'
+    const wrapper = mount(InsightPage, {
+      global: {
+        provide: { isReadonlyInsight: computed(() => false) },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('.hub-subtitle').text()).toContain('生产 KPI')
   })
 })
 

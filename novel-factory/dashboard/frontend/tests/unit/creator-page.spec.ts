@@ -228,13 +228,18 @@ vi.mock('../../src/composables/useDashboardNav.js', async () => {
   const focusWizardStep = ref(null);
   const focusWizardDone = ref([]);
   const focusWizardNotes = ref({});
+  const focusCreatorWorkspace = ref(null);
   navMocks.focusWizard = focusWizard;
   navMocks.focusWizardStep = focusWizardStep;
   navMocks.focusWizardDone = focusWizardDone;
   navMocks.focusWizardNotes = focusWizardNotes;
+  navMocks.focusCreatorWorkspace = focusCreatorWorkspace;
   navMocks.setWizardDeepLink.mockImplementation((open, step) => {
     focusWizard.value = Boolean(open);
     if (step !== undefined) focusWizardStep.value = step;
+  });
+  navMocks.setCreatorWorkspace = vi.fn((tab) => {
+    focusCreatorWorkspace.value = tab === 'write' ? null : tab;
   });
   return {
     useDashboardNav: () => ({
@@ -242,8 +247,11 @@ vi.mock('../../src/composables/useDashboardNav.js', async () => {
       focusWizardStep,
       focusWizardDone,
       focusWizardNotes,
+      focusCreatorWorkspace,
       setWizardDeepLink: navMocks.setWizardDeepLink,
       buildWizardShareUrl: navMocks.buildWizardShareUrl,
+      setCreatorWorkspace: navMocks.setCreatorWorkspace,
+      navigateTo: vi.fn(),
     }),
   };
 });
@@ -1675,7 +1683,10 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="volume-pulse-panel"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="template-approval-chain-config"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="wizard-digest-schedule-panel"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="companion-logic-check-panel"]').exists()).toBe(true);
+    expect(
+      wrapper.find('[data-testid="companion-logic-check-panel"]').exists()
+      || wrapper.find('[data-testid="companion-logic-check-write"]').exists(),
+    ).toBe(true);
     await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.runCreatorLogicCheck).toHaveBeenCalled();

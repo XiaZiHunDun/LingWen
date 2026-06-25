@@ -61,6 +61,7 @@
       v-if="overview && workspaceTabsEnabled"
       v-model="workspaceActiveTab"
       :tabs="workspaceTabs"
+      :badges="workspaceTabBadges"
       test-id="creator-workspace-tab"
       class="creator-workspace-tabs"
       data-testid="creator-workspace-tabs"
@@ -857,6 +858,57 @@
           </li>
         </ul>
         <div
+          v-if="showCompanionLogicCheckInWrite"
+          class="companion-logic-check-write pixel-border"
+          data-testid="companion-logic-check-write"
+        >
+          <p class="subsection-title">逻辑审查</p>
+          <p class="meta-line">写完一章后，可一键检查 P0 逻辑问题。</p>
+          <button
+            type="button"
+            class="save-btn pixel-border"
+            data-testid="run-companion-logic-check-btn"
+            :disabled="logicCheckRunning"
+            @click="runCompanionLogicCheck"
+          >
+            {{ logicCheckRunning ? '检查中…' : '一键逻辑审查' }}
+          </button>
+          <p v-if="logicCheckResult" class="meta-line" data-testid="companion-logic-check-write-result">
+            {{ logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ logicCheckResult.p0_count }}
+            <span v-if="logicCheckResult.total_issues != null"> · 共 {{ logicCheckResult.total_issues }} 条</span>
+            <span v-if="logicCheckResult.p0_only">（仅展示 P0）</span>
+          </p>
+          <ul
+            v-if="uiProfile.logic_check_inline_issues && logicCheckResult?.issues?.length"
+            class="logic-check-issues"
+            data-testid="logic-check-issues"
+          >
+            <li
+              v-for="(issue, idx) in logicCheckResult.issues"
+              :key="`write-${issue.chapter}-${idx}`"
+              class="logic-check-issue"
+              :class="{
+                'logic-check-issue--clickable': Boolean(issue.chapter),
+                'logic-check-issue--active': !uiProfile.issue_paragraph_highlight_unified
+                  && uiProfile.logic_check_issue_highlight
+                  && activeLogicCheckIssueIdx === idx,
+                'issue-line--active': uiProfile.issue_paragraph_highlight_unified
+                  && activeLogicCheckIssueIdx === idx,
+              }"
+              role="button"
+              tabindex="0"
+              :data-testid="`logic-check-issue-${idx}`"
+              @click="handleLogicCheckIssueClick(issue, idx)"
+              @keydown.enter="handleLogicCheckIssueClick(issue, idx)"
+              @keydown="onLogicCheckIssueKeydown($event, issue, idx)"
+            >
+              <span class="issue-severity">{{ issue.severity }}</span>
+              <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
+              {{ issue.title || issue.message }}
+            </li>
+          </ul>
+        </div>
+        <div
           v-if="uiProfile.batch_deviation_inline_summary && batchDeviationInlineSummary?.items?.length"
           class="batch-deviation-inline-summary pixel-border"
           data-testid="batch-deviation-inline-summary"
@@ -1087,6 +1139,25 @@
         data-testid="column-pulse"
       >
         <h2 class="column-title">脉络</h2>
+        <p class="column-hint">写作进度 · 卷纲与偏离</p>
+        <div
+          v-if="showPulseCompanionEmpty"
+          class="pulse-empty-guide pixel-border"
+          data-testid="pulse-empty-guide"
+        >
+          <p class="subsection-title">暂无脉络数据</p>
+          <p class="meta-line">
+            陪伴模式以逐章写作为主。写完 ch001 后，偏离项会出现在这里；也可在下方添加卷纲规划多章节奏。
+          </p>
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="pulse-empty-go-write-btn"
+            @click="setWorkspaceTab('write')"
+          >
+            回到写作
+          </button>
+        </div>
         <div class="progress-block">
           <p class="progress-text">
             已写 <strong>{{ overview.chapters_written }}</strong> / {{ overview.max_chapter }} 章
@@ -3354,7 +3425,7 @@
           </p>
         </details>
         <div
-          v-if="uiProfile.primary_action === 'logic_check'"
+          v-if="uiProfile.primary_action === 'logic_check' && !workspaceTabsEnabled"
           class="cmd-block companion-check-panel"
           data-testid="companion-logic-check-panel"
         >
@@ -3521,7 +3592,7 @@ import { useCreatorWorkspace } from '../composables/useCreatorWorkspace.js';
 import HubTabBar from '../components/HubTabBar.vue';
 
 const { projectRevision } = useStudioProject();
-const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo } = useDashboardNav();
+const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo, focusCreatorWorkspace, setCreatorWorkspace } = useDashboardNav();
 const wizardPanelRef = ref(null);
 const wizardPanelOpen = ref(false);
 const overview = ref(null);
@@ -3833,8 +3904,24 @@ const modeGuideExpanded = computed(
 function onDeviationBadgeClick() {
   if (workspaceTabsEnabled.value) {
     setWorkspaceTab('pulse');
+    setCreatorWorkspace('pulse');
   }
 }
+
+watch(workspaceActiveTab, (tab) => {
+  if (workspaceTabsEnabled.value) {
+    setCreatorWorkspace(tab);
+  }
+});
+
+watch(
+  () => [focusCreatorWorkspace.value, workspaceTabsEnabled.value, overview.value],
+  () => {
+    if (!workspaceTabsEnabled.value || !focusCreatorWorkspace.value) return;
+    setWorkspaceTab(focusCreatorWorkspace.value);
+  },
+  { immediate: true },
+);
 
 function maybeAutoSelectWritingChapter() {
   if (!workspaceTabsEnabled.value || selectedChapter.value) return;
@@ -3891,6 +3978,24 @@ const displayDeviationCount = computed(() => {
 });
 
 const displayDeviationBadge = computed(() => displayDeviationCount.value > 0);
+
+const workspaceTabBadges = computed(() => {
+  if (!displayDeviationCount.value) return null;
+  return { pulse: displayDeviationCount.value };
+});
+
+const showCompanionLogicCheckInWrite = computed(
+  () => uiProfile.value.primary_action === 'logic_check' && workspaceTabsEnabled.value,
+);
+
+const showPulseCompanionEmpty = computed(() => {
+  if (overview.value?.creation_mode !== 'companion') return false;
+  if (!workspaceTabsEnabled.value) return false;
+  if (editableVolumes.value.length > 0) return false;
+  if (visibleDeviations.value.length > 0) return false;
+  if (overview.value.volume_pulse?.volume_count) return false;
+  return true;
+});
 
 function syncWizardPanelOpen() {
   if (focusWizard.value || focusWizardStep.value) {
@@ -9171,6 +9276,24 @@ watch(
 .volume-template-panel {
   margin-bottom: var(--space-sm);
   padding: var(--space-sm);
+}
+
+.pulse-empty-guide {
+  margin-bottom: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.pulse-empty-guide .meta-line {
+  margin: var(--space-xs) 0 var(--space-sm);
+}
+
+.companion-logic-check-write {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+}
+
+.companion-logic-check-write .subsection-title {
+  margin-bottom: var(--space-xs);
 }
 
 .volume-merge-panel {

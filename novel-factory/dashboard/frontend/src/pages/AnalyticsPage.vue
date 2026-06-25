@@ -49,7 +49,7 @@
     <section class="kpi-section" data-testid="production-rollup-kpi">
       <h2 class="section-title">生产记录汇总</h2>
       <div
-        v-if="productionRecordsDir"
+        v-if="productionRecordsDir && !isReadonlyInsight"
         class="records-dir-hint"
         data-testid="production-records-dir"
       >
@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import HookTrendChart from '../components/HookTrendChart.vue';
 import CoolpointChart from '../components/CoolpointChart.vue';
@@ -169,6 +169,8 @@ import {
   productionSummaryLines,
   resolveProductionSummary,
 } from '../utils/productionSummary.js';
+
+const isReadonlyInsight = inject('isReadonlyInsight', computed(() => false));
 
 const overviewStore = useOverviewStore();
 const rippleStore = useRippleStore();
