@@ -2,21 +2,13 @@
 
 灵文 Dashboard「脉络栏」卷纲编辑区的组件与 composable 分层说明（重构后）。
 
-## 页面入口
+> 创作页整体结构见 [creator-page-architecture.md](./creator-page-architecture.md)。
+
+## 在创作页中的位置
 
 ```
-CreatorPage.vue
-  └── CreatorPageLayout.vue          ← useCreatorPage() 编排 + provide
-        ├── CreatorPageHeader        ← inject CREATOR_PAGE_CHROME_KEY
-        ├── CreatorPageBanners
-        ├── CreatorWorkspaceShell
-        │     └── CreatorPulsePanel
-        │           └── CreatorVolumePlanPanel   ← inject CREATOR_VOLUME_PLAN_KEY
-        ├── CreatorModeGuidePanel
-        └── CreatorVolumePlanShareModals
+CreatorPage → CreatorPageLayout → CreatorPulsePanel → CreatorVolumePlanPanel
 ```
-
-`useCreatorPage` 负责页面级 `refresh`、工作区 Tab、以及向子面板 provide 各域 context。
 
 ## 卷纲面板组件树
 
