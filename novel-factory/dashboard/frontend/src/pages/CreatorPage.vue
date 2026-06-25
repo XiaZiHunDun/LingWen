@@ -1075,202 +1075,8 @@
       </section>
     </div>
 
-    <details
-      class="creator-mode-guide-panel pixel-border"
-      data-testid="creator-mode-guide-panel"
-      :open="modeGuideExpanded"
-    >
-      <summary class="creator-mode-guide-summary">
-        模式说明与能力对照<span v-if="modeLabel"> · {{ modeLabel }}</span>
-      </summary>
-    <p
-      v-if="uiProfile.creation_mode_badge_legend && !uiProfile.creator_simplified_mode_ops"
-      class="mode-badge-legend meta-line pixel-border"
-      data-testid="creation-mode-badge-legend"
-    >
-      徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
-    </p>
-    <p
-      v-if="uiProfile.creation_mode_switch_hint && creationModeSwitchHintText"
-      class="mode-switch-hint pixel-border"
-      data-testid="creation-mode-switch-hint"
-    >
-      {{ creationModeSwitchHintText }}
-    </p>
-    <div
-      v-if="uiProfile.creation_mode_switch_doc_link && creationModeSwitchDocLinks.length"
-      class="mode-switch-doc-links pixel-border"
-      data-testid="creation-mode-switch-doc-links"
-    >
-      <button
-        v-for="link in creationModeSwitchDocLinks"
-        :key="link.id"
-        type="button"
-        class="mini-btn pixel-border mode-switch-doc-link"
-        :data-testid="`mode-switch-doc-${link.id}`"
-        @click="openModeSwitchDoc(link, uiProfile.creation_mode_switch_doc_open)"
-      >
-        {{ link.label }}
-      </button>
-    </div>
-    <div
-      v-if="uiProfile.creation_mode_switch_aria_live"
-      class="creation-mode-aria-live"
-      aria-live="polite"
-      data-testid="creation-mode-switch-aria-live"
-    >
-      {{ creationModeSwitchAriaMessage }}
-    </div>
-    <aside
-      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_preview_pinned_sidebar && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
-      class="creation-mode-pinned-sidebar pixel-border"
-      data-testid="creation-mode-pinned-sidebar"
-    >
-      <p class="meta-line">三模式侧栏</p>
-      <ul class="creation-mode-pinned-list">
-        <li
-          v-for="row in creationModePreviewRows"
-          :key="`mode-pinned-${row.mode}`"
-          class="creation-mode-pinned-item"
-          :class="{ 'creation-mode-pinned-item--active': row.active }"
-          :data-testid="`creation-mode-pinned-${row.mode}`"
-        >
-          {{ row.label }}
-        </li>
-      </ul>
-    </aside>
-    <div
-      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length && !uiProfile.creation_mode_preview_pinned_sidebar"
-      class="creation-mode-switch-preview pixel-border"
-      :class="{ 'creation-mode-switch-preview--guide': creationModeGuideAnimationEnabled }"
-      data-testid="creation-mode-switch-preview"
-    >
-      <p class="meta-line">三模式预览 · 切换请编辑 config/project.yaml → creation_mode</p>
-      <p
-        v-if="creationModeGuideAnimationEnabled"
-        class="meta-line creation-mode-guide-hint"
-        data-testid="creation-mode-guide-hint"
-      >
-        引导动画：依次高亮陪伴 → 推进 → 工作室
-      </p>
-      <ul class="creation-mode-preview-list">
-        <li
-          v-for="(row, previewIdx) in creationModePreviewRows"
-          :key="`mode-preview-${row.mode}`"
-          class="creation-mode-preview-item"
-          :class="{
-            'creation-mode-preview-item--active': row.active,
-            'creation-mode-preview-item--guide': creationModeGuideAnimationEnabled,
-          }"
-          :style="creationModeGuideAnimationEnabled
-            ? { animationDelay: `${previewIdx * 0.8}s` }
-            : undefined"
-          :data-testid="`creation-mode-preview-${row.mode}`"
-        >
-          <strong>{{ row.label }}</strong>
-          <span class="meta-line">{{ row.summary }}</span>
-          <button
-            v-if="uiProfile.creation_mode_yaml_snippet"
-            type="button"
-            class="mini-btn pixel-border creation-mode-yaml-btn"
-            :data-testid="`copy-creation-mode-yaml-${row.mode}`"
-            @click.stop="requestCreationModeYaml(row.mode, row.active)"
-          >
-            复制 YAML
-          </button>
-          <button
-            v-if="uiProfile.creation_mode_onboarding_step_link"
-            type="button"
-            class="mini-btn pixel-border creation-mode-onboarding-link-btn"
-            :data-testid="`link-onboarding-step-${row.mode}`"
-            @click.stop="requestOnboardingStepLink(row.mode, row.active)"
-          >
-            向导步骤
-          </button>
-        </li>
-      </ul>
-    </div>
-    <div
-      v-if="pendingModeSwitch"
-      class="mode-switch-confirm-dialog pixel-border"
-      data-testid="creation-mode-switch-confirm-dialog"
-    >
-      <p class="meta-line">
-        确认切换至 <strong>{{ pendingModeSwitchLabel }}</strong>？
-      </p>
-      <p class="meta-line">请编辑 config/project.yaml → creation_mode</p>
-      <div class="mode-switch-confirm-actions">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="confirm-mode-switch-btn"
-          @click="confirmCreationModeSwitch"
-        >
-          确认
-        </button>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="cancel-mode-switch-btn"
-          @click="cancelCreationModeSwitch"
-        >
-          取消
-        </button>
-      </div>
-    </div>
-    <ul
-      v-if="uiProfile.creation_mode_switch_history && creationModeSwitchHistory.length"
-      class="creation-mode-switch-history pixel-border"
-      data-testid="creation-mode-switch-history"
-    >
-      <li
-        v-for="(entry, idx) in creationModeSwitchHistory"
-        :key="`mode-switch-history-${entry.mode}-${entry.at}-${idx}`"
-        class="meta-line creation-mode-switch-history-item"
-        :data-testid="`creation-mode-switch-history-${idx}`"
-      >
-        {{ entry.at }} · {{ entry.label }}（{{ entry.action }}）
-      </li>
-    </ul>
-    <div
-      v-if="uiProfile.creation_mode_switch_undo_hint && lastModeSwitchUndo"
-      class="mode-switch-undo-hint pixel-border"
-      data-testid="creation-mode-switch-undo-hint"
-    >
-      <p class="meta-line">
-        已请求切换至 {{ lastModeSwitchUndo.toLabel }}，撤销请恢复
-        <code>creation_mode: {{ lastModeSwitchUndo.fromMode }}</code>
-      </p>
-      <button
-        type="button"
-        class="mini-btn pixel-border"
-        data-testid="copy-mode-switch-undo-btn"
-        @click="applyModeSwitchUndoHint"
-      >
-        复制撤销 YAML
-      </button>
-    </div>
-    <p
-      v-if="uiProfile.creation_mode_switch_hotkey"
-      class="meta-line creation-mode-hotkey-hint"
-      data-testid="creation-mode-switch-hotkey-hint"
-    >
-      快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
-    </p>
-    <ul
-      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_accessibility_checklist && creationModeAccessibilityItems.length"
-      class="creation-mode-accessibility-checklist pixel-border"
-      data-testid="creation-mode-accessibility-checklist"
-    >
-      <li
-        v-for="item in creationModeAccessibilityItems"
-        :key="`a11y-${item.id}`"
-        class="meta-line creation-mode-accessibility-item"
-        :data-testid="`creation-mode-a11y-${item.id}`"
-      >
-        {{ item.enabled ? '✓' : '—' }} {{ item.label }}
-      </li>
-    </ul>
+    <CreatorModeGuidePanel :mode-label="modeLabel" />
+
     <CreatorVolumePlanShareModals
       :ui-profile="uiProfile"
       :volume-plan-diff-share-link-preview="volumePlanDiffShareLinkPreview"
@@ -1288,401 +1094,8 @@
       @print-preview="printVolumePlanDiffPrintPreview"
       @close-print-preview="closeVolumePlanDiffPrintPreview"
     />
-    <div
-      v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length && !uiProfile.creator_simplified_mode_ops"
-      class="creation-mode-capability-matrix pixel-border"
-      data-testid="creation-mode-capability-matrix"
-    >
-      <p class="meta-line">三模式能力对照</p>
-      <table class="creation-mode-capability-table">
-        <thead>
-          <tr>
-            <th scope="col">能力</th>
-            <th scope="col">陪伴</th>
-            <th scope="col">推进</th>
-            <th scope="col">工作室</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in creationModeCapabilityRows"
-            :key="`capability-${row.id}`"
-            :data-testid="`creation-mode-capability-${row.id}`"
-          >
-            <th scope="row">{{ row.label }}</th>
-            <td>{{ row.companion ? '✓' : '—' }}</td>
-            <td>{{ row.advance ? '✓' : '—' }}</td>
-            <td>{{ row.studio ? '✓' : '—' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <details
-      v-if="uiProfile.creator_simplified_mode_ops"
-      class="creator-advanced-ops pixel-border"
-      data-testid="creator-advanced-ops"
-    >
-      <summary class="creator-advanced-ops-summary">高级：三模式对照与运维</summary>
-      <div
-        v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
-        class="creation-mode-capability-matrix pixel-border"
-        data-testid="creation-mode-capability-matrix-advanced"
-      >
-        <p class="meta-line">三模式能力对照</p>
-        <table class="creation-mode-capability-table">
-          <thead>
-            <tr>
-              <th scope="col">能力</th>
-              <th scope="col">陪伴</th>
-              <th scope="col">推进</th>
-              <th scope="col">工作室</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in creationModeCapabilityRows"
-              :key="`capability-adv-${row.id}`"
-            >
-              <th scope="row">{{ row.label }}</th>
-              <td>{{ row.companion ? '✓' : '—' }}</td>
-              <td>{{ row.advance ? '✓' : '—' }}</td>
-              <td>{{ row.studio ? '✓' : '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="meta-line">切换模式：编辑 <code>config/project.yaml</code> → <code>creation_mode</code></p>
-    </details>
-    <p
-      v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
-      class="mode-switch-hint studio-entry-hint pixel-border"
-      data-testid="studio-creation-entry-hint"
-    >
-      {{ studioCreationEntryHintText }}
-    </p>
-    </details>
 
-    <details
-      v-if="onboardingWizard"
-      ref="wizardPanelRef"
-      class="onboarding-wizard pixel-border"
-      data-testid="onboarding-wizard-panel"
-      :open="wizardPanelOpen"
-      @toggle="onWizardToggle"
-    >
-      <summary>
-        入门向导 · {{ onboardingWizard.mode_label }}（{{ onboardingWizard.max_chapter }} 章上限）
-        <span v-if="onboardingWizard.progress_pct != null" class="wizard-progress-badge" data-testid="wizard-progress-label">
-          · {{ onboardingWizard.progress_pct }}%
-        </span>
-        <span
-          v-if="wizardUnreadMentions > 0"
-          class="wizard-notification-badge"
-          data-testid="wizard-notification-badge"
-        >
-          · {{ wizardUnreadMentions }} 条 @提及
-        </span>
-      </summary>
-      <div
-        v-if="wizardNotifications.length"
-        class="wizard-notifications"
-        data-testid="wizard-notifications-panel"
-      >
-        <p class="meta-line">批注通知</p>
-        <label v-if="wizardNotificationHandles.length" class="meta-line">
-          按 handle 过滤
-          <select
-            v-model="wizardNotificationHandleFilter"
-            class="vol-input"
-            data-testid="wizard-notification-handle-filter"
-            @change="loadWizardNotifications"
-          >
-            <option value="">全部</option>
-            <option v-for="handle in wizardNotificationHandles" :key="handle" :value="handle">
-              @{{ handle }}
-            </option>
-          </select>
-        </label>
-        <div
-          v-if="wizardNotificationDigest.groups?.length"
-          class="wizard-digest-panel"
-          data-testid="wizard-notification-digest"
-        >
-          <p class="meta-line">通知摘要（{{ wizardNotificationDigest.unread }} 条未读）</p>
-          <ul>
-            <li
-              v-for="group in wizardNotificationDigest.groups"
-              :key="group.handle"
-              class="wizard-digest-row"
-              data-testid="wizard-digest-row"
-            >
-              <strong>@{{ group.handle }}</strong>
-              <span class="meta-line">{{ group.count }} 条 · {{ group.steps.map((s) => s.step_id).join(', ') }}</span>
-            </li>
-          </ul>
-        </div>
-        <div
-          v-if="uiProfile.show_digest_ops"
-          class="wizard-digest-schedule-panel"
-          data-testid="wizard-digest-schedule-panel"
-        >
-          <p class="meta-line">定时 digest</p>
-          <label class="meta-line">
-            <input v-model="wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" />
-            启用（每 {{ wizardDigestScheduleHours }} 小时）
-          </label>
-          <input
-            v-model.number="wizardDigestScheduleHours"
-            type="number"
-            min="1"
-            max="168"
-            class="vol-input"
-            data-testid="wizard-digest-schedule-hours"
-          />
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="save-wizard-digest-schedule-btn"
-            @click="saveWizardDigestSchedule"
-          >
-            保存定时
-          </button>
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="dispatch-wizard-digest-btn"
-            @click="dispatchWizardDigest"
-          >
-            立即发送 digest
-          </button>
-            <p class="meta-line" data-testid="wizard-digest-background-hint">
-            Dashboard 后台每 15 分钟自动检查到期 digest
-          </p>
-          <p
-            v-if="wizardDigestStats.sent_total || wizardDigestStats.failed_total"
-            class="meta-line"
-            data-testid="wizard-digest-stats"
-          >
-            发送统计：成功 {{ wizardDigestStats.sent_total }} / 失败 {{ wizardDigestStats.failed_total }}
-          </p>
-          <input
-            v-model="wizardDigestHandleChannelsJson"
-            class="vol-input"
-            data-testid="wizard-digest-handle-channels"
-            placeholder='handle 路由 JSON，如 {"batch":["webhook"],"*":["email"]}'
-          />
-          <input
-            v-model="wizardDigestHandleQuietJson"
-            class="vol-input"
-            data-testid="wizard-digest-handle-quiet-hours"
-            placeholder='handle 静默 JSON，如 {"batch":{"start":22,"end":6}}'
-          />
-          <label class="meta-line">
-            静默时段（UTC）
-            <input
-              v-model.number="wizardDigestQuietStart"
-              type="number"
-              min="0"
-              max="23"
-              class="vol-input"
-              data-testid="wizard-digest-quiet-start"
-              placeholder="起"
-            />
-            –
-            <input
-              v-model.number="wizardDigestQuietEnd"
-              type="number"
-              min="0"
-              max="23"
-              class="vol-input"
-              data-testid="wizard-digest-quiet-end"
-              placeholder="止"
-            />
-          </label>
-          <div
-            v-if="wizardDigestRetryQueue.item_count"
-            class="wizard-digest-retry"
-            data-testid="wizard-digest-retry-panel"
-          >
-            <p class="meta-line">重试队列 {{ wizardDigestRetryQueue.item_count }} 条</p>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="process-wizard-digest-retry-btn"
-              @click="processWizardDigestRetries"
-            >
-              重试失败 digest
-            </button>
-          </div>
-          <div
-            v-if="wizardDigestDeadLetter.item_count"
-            class="wizard-digest-dead-letter"
-            data-testid="wizard-digest-dead-letter-panel"
-          >
-            <p class="meta-line">死信队列 {{ wizardDigestDeadLetter.item_count }} 条</p>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="replay-wizard-digest-dead-letter-btn"
-              @click="replayWizardDigestDeadLetter"
-            >
-              重放首条死信
-            </button>
-          </div>
-        </div>
-        <ul>
-          <li
-            v-for="note in wizardNotifications"
-            :key="note.id"
-            class="wizard-notification-row"
-            :class="{ 'wizard-notification-row--unread': !note.read }"
-            data-testid="wizard-notification-row"
-          >
-            <strong>@{{ note.handle }}</strong>
-            <span class="meta-line">{{ note.step_id }} · {{ note.note_excerpt }}</span>
-          </li>
-        </ul>
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="wizard-ack-notifications-btn"
-          @click="ackWizardNotifications"
-        >
-          全部标为已读
-        </button>
-        <div v-if="!uiProfile.simplified_notifications" class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
-          <p class="meta-line">通知 Webhook</p>
-          <label class="meta-line">
-            <input v-model="wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" />
-            启用
-          </label>
-          <input
-            v-model="wizardWebhookUrl"
-            class="vol-input"
-            data-testid="wizard-webhook-url"
-            placeholder="https://example.com/hooks/mentions"
-          />
-          <input
-            v-model="wizardWebhookSigningSecret"
-            class="vol-input"
-            data-testid="wizard-webhook-signing-secret"
-            placeholder="Webhook 签名密钥（可选）"
-          />
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="save-wizard-webhook-btn"
-            @click="saveWizardWebhook"
-          >
-            保存 Webhook
-          </button>
-        </div>
-        <div v-if="!uiProfile.simplified_notifications" class="wizard-email-panel" data-testid="wizard-email-panel">
-          <p class="meta-line">通知邮件</p>
-          <label class="meta-line">
-            <input v-model="wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" />
-            启用
-          </label>
-          <input
-            v-model="wizardEmailTo"
-            class="vol-input"
-            data-testid="wizard-email-to"
-            placeholder="user@example.com"
-          />
-          <input
-            v-model="wizardEmailSmtpHost"
-            class="vol-input"
-            data-testid="wizard-email-smtp-host"
-            placeholder="smtp.example.com"
-          />
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="save-wizard-email-btn"
-            @click="saveWizardEmail"
-          >
-            保存邮件
-          </button>
-        </div>
-      </div>
-      <ol class="wizard-steps">
-        <li
-          v-for="step in onboardingWizard.steps"
-          :key="step.id"
-          class="wizard-step"
-          :class="{
-            'wizard-step--focused': step.id === focusWizardStep,
-            'wizard-step--mode-linked': uiProfile.creation_mode_onboarding_step_link
-              && isOnboardingStepLinkedToCurrentMode(step.id),
-          }"
-        >
-          <label class="wizard-step-label">
-            <input
-              type="checkbox"
-              :checked="completedWizardSteps.has(step.id)"
-              :data-testid="`wizard-step-${step.id}`"
-              @change="toggleWizardStep(step.id, $event.target.checked)"
-            />
-            <span>
-              <strong>{{ step.title }}</strong>
-              <span
-                v-if="autoCompletedWizardSteps.has(step.id)"
-                class="wizard-auto-badge"
-                data-testid="wizard-auto-badge"
-              >自动</span>
-              <span
-                v-if="uiProfile.creation_mode_onboarding_step_link && onboardingModesForStep(step.id).length"
-                class="wizard-step-mode-badges"
-                :data-testid="`wizard-step-modes-${step.id}`"
-              >
-                <span
-                  v-for="modeRow in onboardingModesForStep(step.id)"
-                  :key="`${step.id}-${modeRow.mode}`"
-                  class="wizard-step-mode-badge"
-                >{{ modeRow.label }}</span>
-              </span>
-              <span class="meta-line">{{ step.detail }}</span>
-            </span>
-          </label>
-          <textarea
-            :value="wizardStepNotes[step.id] || ''"
-            class="vol-input wizard-step-note"
-            :data-testid="`wizard-note-${step.id}`"
-            placeholder="协作批注（可选，支持 @volume @reviewer）"
-            rows="2"
-            @input="wizardStepNotes[step.id] = $event.target.value"
-            @blur="saveWizardStepNote(step.id)"
-          />
-          <div
-            v-if="wizardMentionsForStep(step.id).length"
-            class="wizard-mentions"
-            data-testid="wizard-mentions"
-          >
-            <span
-              v-for="mention in wizardMentionsForStep(step.id)"
-              :key="`${step.id}-${mention}`"
-              class="wizard-mention-badge"
-              data-testid="wizard-mention-badge"
-            >@{{ mention }}</span>
-          </div>
-        </li>
-      </ol>
-      <p class="meta-line">
-        清单：<code>{{ onboardingWizard.checklist_doc }}</code> ·
-        冒烟：<code>{{ onboardingWizard.smoke_command }}</code>
-      </p>
-      <div class="merge-range">
-        <button
-          type="button"
-          class="mini-btn pixel-border"
-          data-testid="wizard-share-link-btn"
-          @click="copyWizardShareLink"
-        >
-          复制分享链接
-        </button>
-        <span v-if="wizardShareMessage" class="meta-line" data-testid="wizard-share-message">{{ wizardShareMessage }}</span>
-      </div>
-    </details>
+    <CreatorOnboardingWizardPanel />
   </div>
 </template>
 
@@ -1801,20 +1214,18 @@ import CreatorAdvanceBatchPanel from '../components/creator/CreatorAdvanceBatchP
 import CreatorBatchHistoryPanel from '../components/creator/CreatorBatchHistoryPanel.vue';
 import CreatorBatchSummaryPrompt from '../components/creator/CreatorBatchSummaryPrompt.vue';
 import CreatorVolumePlanShareModals from '../components/creator/CreatorVolumePlanShareModals.vue';
+import CreatorModeGuidePanel from '../components/creator/CreatorModeGuidePanel.vue';
+import CreatorOnboardingWizardPanel from '../components/creator/CreatorOnboardingWizardPanel.vue';
+import { useCreatorModeGuide } from '../composables/useCreatorModeGuide.js';
+import { useCreatorOnboarding } from '../composables/useCreatorOnboarding.js';
+import { CREATOR_MODE_GUIDE_KEY, createCreatorModeGuideContext } from '../components/creator/creatorModeGuideKey.js';
+import { CREATOR_ONBOARDING_KEY, createCreatorOnboardingContext } from '../components/creator/creatorOnboardingKey.js';
 import { CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext } from '../components/creator/creatorBatchHistoryKey.js';
 import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
 
 const { projectRevision } = useStudioProject();
 const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo, focusCreatorWorkspace, setCreatorWorkspace } = useDashboardNav();
-const wizardPanelRef = ref(null);
-const wizardPanelOpen = ref(false);
 const overview = ref(null);
-const pendingModeSwitch = ref(null);
-const creationModeSwitchHistory = ref([]);
-const lastModeSwitchUndo = ref(null);
-const creationModeSwitchAriaMessage = ref('');
-
-const CREATION_MODE_SWITCH_HISTORY_KEY = 'creator_mode_switch_history';
 const selectedChapter = ref(null);
 const chapterPreview = ref(null);
 const chapterBodyDraft = ref('');
@@ -1849,34 +1260,12 @@ const settingsRevisions = ref({ pillars: '', outline: '' });
 const conflictMessage = ref('');
 const settingsHistory = ref([]);
 const settingsRestoring = ref(false);
-const wizardShareMessage = ref('');
-const wizardStepNotes = ref({});
 const usesGlobalMergeDefault = ref(false);
 const mergePresetPackages = ref([]);
 const selectedMergePresetPackage = ref('');
-const wizardNotifications = ref([]);
-const wizardUnreadMentions = ref(0);
-const wizardNotificationHandleFilter = ref('');
-const wizardNotificationHandles = ref([]);
 const showImportMergePresetPackages = ref(false);
 const importMergePresetPackagesJson = ref('');
 const mergePresetPackagesImporting = ref(false);
-const wizardWebhookUrl = ref('');
-const wizardWebhookEnabled = ref(false);
-const wizardEmailTo = ref('');
-const wizardEmailSmtpHost = ref('');
-const wizardEmailEnabled = ref(false);
-const wizardNotificationDigest = ref({ unread: 0, group_count: 0, groups: [] });
-const wizardDigestScheduleEnabled = ref(false);
-const wizardDigestScheduleHours = ref(24);
-const wizardDigestQuietStart = ref(null);
-const wizardDigestQuietEnd = ref(null);
-const wizardDigestHandleChannelsJson = ref('');
-const wizardDigestHandleQuietJson = ref('');
-const wizardDigestStats = ref({ sent_total: 0, failed_total: 0 });
-const wizardDigestDeadLetter = ref({ item_count: 0, items: [] });
-const wizardDigestRetryQueue = ref({ item_count: 0, items: [] });
-const wizardWebhookSigningSecret = ref('');
 const mergePresetImportDiff = ref({ added: [], updated: [], removed: [] });
 const mergePresetToposort = ref({ order: [], edges: [], edge_count: 0 });
 const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] });
@@ -1894,9 +1283,6 @@ const importMergePrefsJson = ref('');
 const mergePrefsImporting = ref(false);
 const pillarsSnapshotId = ref('');
 const outlineSnapshotId = ref('');
-const onboardingWizard = ref(null);
-const completedWizardSteps = ref(new Set());
-const autoCompletedWizardSteps = ref(new Set());
 const compareSnapshotId = ref('');
 const pillarsMergeSource = ref('editor');
 const outlineMergeSource = ref('editor');
@@ -2047,9 +1433,6 @@ const {
   setWorkspaceTab,
 } = useCreatorWorkspace(uiProfile, overview);
 
-const modeGuideExpanded = computed(
-  () => !uiProfile.value.creator_mode_guide_default_collapsed,
-);
 
 function onDeviationBadgeClick() {
   if (workspaceTabsEnabled.value) {
@@ -2122,36 +1505,6 @@ const showPulseCompanionEmpty = computed(() => {
   return true;
 });
 
-function syncWizardPanelOpen() {
-  if (focusWizard.value || focusWizardStep.value) {
-    wizardPanelOpen.value = true;
-    return;
-  }
-  if (wizardUnreadMentions.value > 0) {
-    wizardPanelOpen.value = true;
-    return;
-  }
-  const progress = onboardingWizard.value?.progress_pct ?? 100;
-  if (progress >= 100 && !focusWizard.value) {
-    wizardPanelOpen.value = false;
-    return;
-  }
-  if (uiProfile.value.studio_wizard_collapse_memory && onboardingWizard.value) {
-    wizardPanelOpen.value = !Boolean(onboardingWizard.value.wizard_panel_collapsed);
-    return;
-  }
-  if (uiProfile.value.wizard_expand_if_incomplete) {
-    const incomplete = (onboardingWizard.value?.progress_pct ?? 100) < 100;
-    const dismissed = Boolean(onboardingWizard.value?.wizard_panel_dismissed);
-    wizardPanelOpen.value = incomplete && !dismissed;
-    return;
-  }
-  if (uiProfile.value.wizard_default_collapsed) {
-    wizardPanelOpen.value = false;
-    return;
-  }
-  wizardPanelOpen.value = Boolean(focusWizard.value);
-}
 
 let batchPollTimer = null;
 const lastBatchStatus = ref(null);
@@ -2183,129 +1536,18 @@ const modeBadgeHintEnabled = computed(
 );
 
 
-const creationModeSwitchHintText = computed(() => {
-  if (!uiProfile.value.creation_mode_switch_hint || !overview.value) return '';
-  const mode = overview.value.creation_mode;
-  if (mode === 'companion') {
-    return '陪伴模式：人主笔 + P0 守门。切换推进请编辑 config/project.yaml → creation_mode: advance';
-  }
-  if (mode === 'advance') {
-    return '推进模式：人定卷纲 + batch 产章。切换陪伴请编辑 config/project.yaml → creation_mode: companion';
-  }
-  return '';
-});
-
-const creationModePreviewRows = computed(() => {
-  if (!uiProfile.value.creation_mode_switch_preview || !overview.value) return [];
-  const current = overview.value.creation_mode;
-  return [
-    { mode: 'companion', label: '陪伴', summary: '人主笔 + P0 守门', active: current === 'companion' },
-    { mode: 'advance', label: '推进', summary: '人定卷纲 + batch 产章', active: current === 'advance' },
-    { mode: 'studio', label: '工作室', summary: '工厂流水线批量产章', active: current === 'studio' },
-  ];
-});
-
-const creationModeGuideAnimationEnabled = computed(() => {
-  if (!uiProfile.value.creation_mode_switch_guide_animation) return false;
-  if (!uiProfile.value.creation_mode_switch_reduced_motion) return true;
-  if (typeof window === 'undefined' || !window.matchMedia) return true;
-  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-});
-
-const creationModeAccessibilityItems = computed(() => {
-  if (!uiProfile.value.creation_mode_accessibility_checklist) return [];
-  const profile = uiProfile.value;
-  return [
-    { id: 'hotkey', label: '快捷键 Alt+Shift+1/2/3', enabled: profile.creation_mode_switch_hotkey },
-    { id: 'speech', label: '语音朗读', enabled: profile.creation_mode_switch_speech },
-    { id: 'haptic', label: '触觉反馈', enabled: profile.creation_mode_switch_haptic },
-    { id: 'aria', label: 'ARIA 公告', enabled: profile.creation_mode_switch_aria_live },
-    { id: 'reduced', label: '减动画偏好', enabled: profile.creation_mode_switch_reduced_motion },
-    { id: 'pinned', label: '固定侧栏', enabled: profile.creation_mode_preview_pinned_sidebar },
-  ];
-});
-
-const CREATION_MODE_CAPABILITY_ROWS = [
-  { id: 'human-writing', label: '人主笔', companion: true, advance: false, studio: false },
-  { id: 'p0-guard', label: 'P0 守门', companion: true, advance: false, studio: false },
-  { id: 'inline-chapter-edit', label: '章内嵌编辑', companion: true, advance: false, studio: false },
-  { id: 'volume-plan-edit', label: '卷纲编辑', companion: true, advance: true, studio: false },
-  { id: 'volume-pulse', label: '脉络预警', companion: false, advance: true, studio: true },
-  { id: 'batch-generate', label: 'Batch 产章', companion: false, advance: true, studio: true },
-  { id: 'factory-pipeline', label: '工厂流水线', companion: false, advance: false, studio: true },
-  { id: 'digest-ops', label: 'Digest 运维', companion: false, advance: false, studio: true },
-];
-
-const CREATION_MODE_ONBOARDING_STEPS = {
-  companion: ['init', 'pillars', 'dashboard', 'write', 'check'],
-  advance: ['init', 'pillars', 'dashboard', 'volume', 'batch', 'check'],
-  studio: ['init', 'pillars', 'dashboard', 'volume', 'preflight', 'check'],
-};
-
-const CREATION_MODE_ONBOARDING_LABELS = {
-  companion: '陪伴',
-  advance: '推进',
-  studio: '工作室',
-};
-
-const CREATION_MODE_ONBOARDING_FOCUS_STEP = {
-  companion: 'write',
-  advance: 'volume',
-  studio: 'preflight',
-};
-
-const CREATION_MODE_HOTKEY_MODES = {
-  1: 'companion',
-  2: 'advance',
-  3: 'studio',
-};
-
-const creationModeCapabilityRows = computed(() => {
-  if (!uiProfile.value.creation_mode_capability_matrix) return [];
-  return CREATION_MODE_CAPABILITY_ROWS;
-});
-
-const pendingModeSwitchLabel = computed(() => {
-  if (!pendingModeSwitch.value?.mode) return '';
-  return CREATION_MODE_ONBOARDING_LABELS[pendingModeSwitch.value.mode] || pendingModeSwitch.value.mode;
-});
 
 
-const creationModeSwitchDocLinks = computed(() => {
-  if (!uiProfile.value.creation_mode_switch_doc_link || !overview.value) return [];
-  const mode = overview.value.creation_mode;
-  const onboardingDoc = onboardingWizard.value?.onboarding_doc || 'docs/creator-onboarding.md';
-  if (mode === 'companion') {
-    return [
-      {
-        id: 'advance-checklist',
-        label: '推进走通清单',
-        path: 'docs/advance-walkthrough-checklist.md',
-      },
-      { id: 'onboarding', label: '模式说明', path: onboardingDoc },
-    ];
-  }
-  if (mode === 'advance') {
-    return [
-      {
-        id: 'companion-checklist',
-        label: '陪伴走通清单',
-        path: 'docs/companion-walkthrough-checklist.md',
-      },
-      { id: 'onboarding', label: '模式说明', path: onboardingDoc },
-    ];
-  }
-  return [];
-});
 
 
-const studioCreationEntryHintText = computed(() => {
-  if (!uiProfile.value.studio_creation_entry_hint || !overview.value) return '';
-  if (overview.value.creation_mode === 'studio') {
-    return '工作室模式：工厂流水线与批量产章。人主笔请设 creation_mode: companion，人定卷纲请设 creation_mode: advance';
-  }
-  return '';
-});
+
+
+
+
+
+
+
+
 
 const deviationChapters = computed(() => {
   const set = new Set();
@@ -2379,24 +1621,6 @@ function formatMergePresetOption(pkg) {
     return `${prefix}[${pkg.version_label}] ${pkg.name}`;
   }
   return pkg.name;
-}
-
-function extractMentionsFromText(text) {
-  const re = /@([a-zA-Z][a-zA-Z0-9_-]{0,31})/g;
-  const found = [];
-  let match = re.exec(String(text || ''));
-  while (match) {
-    const handle = match[1].toLowerCase();
-    if (!found.includes(handle)) found.push(handle);
-    match = re.exec(String(text || ''));
-  }
-  return found;
-}
-
-function wizardMentionsForStep(stepId) {
-  const fromApi = onboardingWizard.value?.step_mentions?.[stepId];
-  if (fromApi?.length) return fromApi;
-  return extractMentionsFromText(wizardStepNotes.value[stepId] || '');
 }
 
 const showMergeStrategy = computed(() => {
@@ -2807,6 +2031,27 @@ function handleSaveError(err) {
   error.value = err instanceof Error ? err.message : String(err);
 }
 
+
+const onboardingHub = useCreatorOnboarding({
+  uiProfile,
+  overview,
+  error,
+  saveMessage,
+  handleSaveError,
+  focusWizard,
+  focusWizardStep,
+  focusWizardDone,
+  focusWizardNotes,
+  setWizardDeepLink,
+  buildWizardShareUrl,
+});
+const {
+  panelContext: onboardingPanelContext,
+  wizardEmailTo,
+  loadOnboardingWizard,
+  syncWizardPanelOpen,
+} = onboardingHub;
+
 const refreshRef = { fn: async () => {} };
 
 const batchHistoryHub = useCreatorBatchHistory({
@@ -2865,342 +2110,45 @@ const {
 } = volumePlan;
 
 
-function loadCreationModeSwitchHistory() {
-  if (!uiProfile.value.creation_mode_switch_history) {
-    creationModeSwitchHistory.value = [];
-    return;
-  }
-  try {
-    const raw = localStorage.getItem(CREATION_MODE_SWITCH_HISTORY_KEY);
-    creationModeSwitchHistory.value = raw ? JSON.parse(raw) : [];
-  } catch {
-    creationModeSwitchHistory.value = [];
-  }
-}
+const modeGuideHub = useCreatorModeGuide({
+  uiProfile,
+  overview,
+  saveMessage,
+  onboardingWizard: onboardingHub.onboardingWizard,
+  linkModeToOnboardingStep: onboardingHub.linkModeToOnboardingStep,
+});
+const { panelContext: modeGuidePanelContext, loadCreationModeSwitchHistory, onCreationModeSwitchHotkey } = modeGuideHub;
 
-function recordCreationModeSwitchHistory(mode, action) {
-  if (!uiProfile.value.creation_mode_switch_history || !mode) return;
-  const entry = {
-    mode,
-    label: CREATION_MODE_ONBOARDING_LABELS[mode] || mode,
-    action,
-    at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-  };
-  const next = [
-    entry,
-    ...creationModeSwitchHistory.value.filter(
-      (row) => !(row.mode === entry.mode && row.action === entry.action && row.at === entry.at),
-    ),
-  ].slice(0, 5);
-  creationModeSwitchHistory.value = next;
-  try {
-    localStorage.setItem(CREATION_MODE_SWITCH_HISTORY_KEY, JSON.stringify(next));
-  } catch {
-    /* ignore storage errors */
-  }
-}
 
-function maybeRecordModeSwitch(mode, action) {
-  if (!mode || !overview.value || mode === overview.value.creation_mode) return;
-  if (uiProfile.value.creation_mode_switch_undo_hint) {
-    lastModeSwitchUndo.value = {
-      fromMode: overview.value.creation_mode,
-      fromLabel: CREATION_MODE_ONBOARDING_LABELS[overview.value.creation_mode] || overview.value.creation_mode,
-      toMode: mode,
-      toLabel: CREATION_MODE_ONBOARDING_LABELS[mode] || mode,
-      action,
-    };
-  }
-  recordCreationModeSwitchHistory(mode, action);
-}
 
-async function applyModeSwitchUndoHint() {
-  if (!uiProfile.value.creation_mode_switch_undo_hint || !lastModeSwitchUndo.value) return;
-  const snippet = `creation_mode: ${lastModeSwitchUndo.value.fromMode}`;
-  try {
-    await navigator.clipboard.writeText(snippet);
-    saveMessage.value = `撤销提示：已复制 ${snippet}`;
-  } catch {
-    saveMessage.value = snippet;
-  }
-  lastModeSwitchUndo.value = null;
-}
 
-function requestCreationModeYaml(mode, active = false) {
-  if (!uiProfile.value.creation_mode_yaml_snippet || !mode || active) {
-    if (mode) copyCreationModeYaml(mode);
-    return;
-  }
-  if (!uiProfile.value.creation_mode_switch_confirm_dialog) {
-    copyCreationModeYaml(mode);
-    return;
-  }
-  pendingModeSwitch.value = { mode, action: 'yaml' };
-}
 
-function requestOnboardingStepLink(mode, active = false) {
-  if (!uiProfile.value.creation_mode_onboarding_step_link || !mode || active) {
-    if (mode) linkModeToOnboardingStep(mode);
-    return;
-  }
-  if (!uiProfile.value.creation_mode_switch_confirm_dialog) {
-    linkModeToOnboardingStep(mode);
-    return;
-  }
-  pendingModeSwitch.value = { mode, action: 'onboarding' };
-}
 
-function isEditableHotkeyTarget(target) {
-  if (!target || typeof target !== 'object') return false;
-  const tag = String(target.tagName || '').toLowerCase();
-  return tag === 'input' || tag === 'textarea' || Boolean(target.isContentEditable);
-}
 
-function onCreationModeSwitchHotkey(event) {
-  if (!uiProfile.value.creation_mode_switch_hotkey) return;
-  if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
-  const mode = CREATION_MODE_HOTKEY_MODES[event.key];
-  if (!mode) return;
-  if (isEditableHotkeyTarget(event.target)) return;
-  event.preventDefault();
-  const active = overview.value?.creation_mode === mode;
-  requestCreationModeYaml(mode, active);
-}
 
-async function confirmCreationModeSwitch() {
-  const pending = pendingModeSwitch.value;
-  pendingModeSwitch.value = null;
-  if (!pending?.mode) return;
-  if (pending.action === 'onboarding') {
-    await linkModeToOnboardingStep(pending.mode);
-    return;
-  }
-  await copyCreationModeYaml(pending.mode);
-}
 
-function cancelCreationModeSwitch() {
-  pendingModeSwitch.value = null;
-}
 
-async function copyCreationModeYaml(mode) {
-  if (!uiProfile.value.creation_mode_yaml_snippet || !mode) return;
-  const snippet = `creation_mode: ${mode}`;
-  try {
-    await navigator.clipboard.writeText(snippet);
-    saveMessage.value = `已复制：${snippet}`;
-  } catch {
-    saveMessage.value = snippet;
-  }
-  maybeRecordModeSwitch(mode, 'YAML');
-  speakCreationModeSwitch(mode);
-  triggerCreationModeSwitchHaptic();
-  announceCreationModeSwitch(mode);
-}
 
-function announceCreationModeSwitch(mode) {
-  if (!uiProfile.value.creation_mode_switch_aria_live || !mode) return;
-  const label = CREATION_MODE_ONBOARDING_LABELS[mode] || mode;
-  creationModeSwitchAriaMessage.value = `已请求切换至${label}模式`;
-}
 
-function triggerCreationModeSwitchHaptic() {
-  if (!uiProfile.value.creation_mode_switch_haptic) return;
-  try {
-    navigator?.vibrate?.(15);
-  } catch {
-    // ignore unsupported environments
-  }
-}
 
-function speakCreationModeSwitch(mode) {
-  if (!uiProfile.value.creation_mode_switch_speech || !mode) return;
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  if (typeof SpeechSynthesisUtterance === 'undefined') return;
-  const label = CREATION_MODE_ONBOARDING_LABELS[mode] || mode;
-  const utterance = new SpeechSynthesisUtterance(`${label}模式，请设置 creation_mode 为 ${mode}`);
-  utterance.lang = 'zh-CN';
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
 
-function openModeSwitchDoc(link, fromClick = false) {
-  if (!link?.path) return;
-  if (uiProfile.value.creation_mode_switch_doc_open && fromClick) {
-    try {
-      window.open(link.path, '_blank', 'noopener');
-    } catch {
-      /* jsdom */
-    }
-    saveMessage.value = `已打开文档：${link.path}`;
-    return;
-  }
-  saveMessage.value = `文档：${link.path}`;
-}
+
+
 
 function showCreationModeBadgeHint() {
   if (!creationModeBadgeHintText.value) return;
   saveMessage.value = creationModeBadgeHintText.value;
 }
 
-function onboardingModesForStep(stepId) {
-  if (!uiProfile.value.creation_mode_onboarding_step_link) return [];
-  return Object.entries(CREATION_MODE_ONBOARDING_STEPS)
-    .filter(([, steps]) => steps.includes(stepId))
-    .map(([mode]) => ({ mode, label: CREATION_MODE_ONBOARDING_LABELS[mode] }));
-}
 
-function isOnboardingStepLinkedToCurrentMode(stepId) {
-  if (!uiProfile.value.creation_mode_onboarding_step_link || !overview.value) return false;
-  const steps = CREATION_MODE_ONBOARDING_STEPS[overview.value.creation_mode] || [];
-  return steps.includes(stepId);
-}
 
-async function linkModeToOnboardingStep(mode) {
-  if (!uiProfile.value.creation_mode_onboarding_step_link || !mode) return;
-  const firstStep = CREATION_MODE_ONBOARDING_FOCUS_STEP[mode];
-  if (!firstStep) return;
-  wizardPanelOpen.value = true;
-  setWizardDeepLink(true, firstStep);
-  await nextTick();
-  await focusWizardStepFromUrl();
-  saveMessage.value = `已联动 ${CREATION_MODE_ONBOARDING_LABELS[mode] || mode} 向导步骤`;
-  maybeRecordModeSwitch(mode, '向导');
-}
 
-async function loadOnboardingWizard() {
-  try {
-    onboardingWizard.value = await fetchCreatorOnboarding();
-    completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
-    autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
-    wizardStepNotes.value = { ...(onboardingWizard.value?.step_notes || {}) };
-    wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
-    await loadWizardNotifications();
-    if (wizardPanelOpen.value) {
-      await nextTick();
-      try {
-        wizardPanelRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-      } catch {
-        /* jsdom */
-      }
-    }
-    await focusWizardStepFromUrl();
-    await applyWizardShareFromUrl();
-  } catch {
-    onboardingWizard.value = null;
-  }
-}
 
-function onWizardToggle(event) {
-  wizardPanelOpen.value = event.target.open;
-  if (uiProfile.value.studio_wizard_collapse_memory) {
-    saveCreatorWizardPanelCollapsed(!event.target.open)
-      .then((data) => {
-        onboardingWizard.value = data;
-      })
-      .catch(() => {
-        /* ignore collapse save errors */
-      });
-  } else if (!event.target.open && uiProfile.value.wizard_expand_if_incomplete) {
-    dismissCreatorWizardPanel()
-      .then((data) => {
-        onboardingWizard.value = data;
-      })
-      .catch(() => {
-        /* ignore dismiss errors */
-      });
-  }
-  setWizardDeepLink(
-    event.target.open,
-    event.target.open ? focusWizardStep.value : null,
-    event.target.open ? [...completedWizardSteps.value] : [],
-    event.target.open ? { ...wizardStepNotes.value } : {},
-  );
-}
 
-async function applyWizardShareFromUrl() {
-  const done = focusWizardDone.value;
-  const notes = focusWizardNotes.value;
-  if (!done?.length && (!notes || !Object.keys(notes).length)) return;
-  try {
-    await applyCreatorOnboardingShare({
-      completed_step_ids: done || [],
-      step_notes: notes || {},
-    });
-    onboardingWizard.value = await fetchCreatorOnboarding();
-    completedWizardSteps.value = new Set(onboardingWizard.value?.completed_step_ids || []);
-    autoCompletedWizardSteps.value = new Set(onboardingWizard.value?.auto_completed_step_ids || []);
-    wizardStepNotes.value = { ...(onboardingWizard.value?.step_notes || {}) };
-  } catch {
-    /* ignore share apply errors */
-  }
-}
 
-async function saveWizardStepNote(stepId) {
-  try {
-    await saveCreatorOnboardingNotes({
-      step_notes: { [stepId]: wizardStepNotes.value[stepId] || '' },
-    });
-    await loadWizardNotifications();
-  } catch {
-    /* ignore note save errors */
-  }
-}
 
-async function copyWizardShareLink() {
-  const url = buildWizardShareUrl(
-    [...completedWizardSteps.value],
-    focusWizardStep.value,
-    wizardStepNotes.value,
-  );
-  try {
-    await navigator.clipboard.writeText(url);
-    wizardShareMessage.value = '已复制分享链接';
-  } catch {
-    wizardShareMessage.value = url;
-  }
-  setTimeout(() => {
-    wizardShareMessage.value = '';
-  }, 3000);
-}
 
-async function focusWizardStepFromUrl() {
-  if (!focusWizardStep.value || !onboardingWizard.value) return;
-  const exists = onboardingWizard.value.steps.some((s) => s.id === focusWizardStep.value);
-  if (!exists) return;
-  await nextTick();
-  const el = document.querySelector(`[data-testid="wizard-step-${focusWizardStep.value}"]`);
-  try {
-    el?.closest('.wizard-step')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-  } catch {
-    /* jsdom */
-  }
-}
 
-async function toggleWizardStep(stepId, checked) {
-  const next = new Set(completedWizardSteps.value);
-  if (checked) {
-    next.add(stepId);
-  } else {
-    next.delete(stepId);
-  }
-  try {
-    const result = await saveCreatorOnboardingProgress({
-      completed_step_ids: [...next],
-    });
-    completedWizardSteps.value = new Set(result.completed_step_ids || []);
-    autoCompletedWizardSteps.value = new Set(result.auto_completed_step_ids || []);
-    if (onboardingWizard.value) {
-      onboardingWizard.value = {
-        ...onboardingWizard.value,
-        completed_step_ids: result.completed_step_ids,
-        auto_completed_step_ids: result.auto_completed_step_ids,
-        progress_pct: result.progress_pct,
-      };
-    }
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  }
-}
 
 function applyMergePreset(source) {
   pillarsMergeSource.value = source;
@@ -3233,180 +2181,16 @@ function onMergePresetPackageChange() {
   if (packageId) applyMergePresetPackage(packageId);
 }
 
-async function loadWizardNotifications() {
-  try {
-    const handle = wizardNotificationHandleFilter.value || undefined;
-    const data = await fetchCreatorOnboardingNotifications(handle);
-    wizardNotifications.value = data.notifications || [];
-    wizardNotificationHandles.value = data.handles || [];
-    wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
-    const digest = await fetchCreatorOnboardingNotificationDigest(handle);
-    wizardNotificationDigest.value = digest;
-    await loadWizardDigestSchedule();
-    await loadWizardWebhook();
-    await loadWizardEmail();
-  } catch {
-    wizardNotifications.value = [];
-    wizardNotificationHandles.value = [];
-    wizardUnreadMentions.value = onboardingWizard.value?.unread_mention_count || 0;
-    wizardNotificationDigest.value = { unread: 0, group_count: 0, groups: [] };
-    wizardDigestScheduleEnabled.value = false;
-    wizardDigestScheduleHours.value = 24;
-  }
-}
 
-async function loadWizardDigestSchedule() {
-  try {
-    const data = await fetchCreatorOnboardingDigestSchedule();
-    wizardDigestScheduleEnabled.value = Boolean(data.enabled);
-    wizardDigestScheduleHours.value = data.interval_hours || 24;
-    wizardDigestQuietStart.value = data.quiet_hours_start ?? null;
-    wizardDigestQuietEnd.value = data.quiet_hours_end ?? null;
-    wizardDigestHandleChannelsJson.value = JSON.stringify(data.handle_channels || {});
-    wizardDigestHandleQuietJson.value = JSON.stringify(data.handle_quiet_hours || {});
-    const stats = await fetchCreatorOnboardingDigestStats();
-    wizardDigestStats.value = stats;
-    const retry = await fetchCreatorOnboardingDigestRetryQueue();
-    wizardDigestRetryQueue.value = retry;
-    const deadLetter = await fetchCreatorOnboardingDigestDeadLetter();
-    wizardDigestDeadLetter.value = deadLetter;
-  } catch {
-    wizardDigestScheduleEnabled.value = false;
-    wizardDigestScheduleHours.value = 24;
-    wizardDigestQuietStart.value = null;
-    wizardDigestQuietEnd.value = null;
-    wizardDigestRetryQueue.value = { item_count: 0, items: [] };
-  }
-}
 
-async function saveWizardDigestSchedule() {
-  try {
-    let handleChannels = {};
-    let handleQuietHours = {};
-    if (wizardDigestHandleChannelsJson.value.trim()) {
-      handleChannels = JSON.parse(wizardDigestHandleChannelsJson.value);
-    }
-    if (wizardDigestHandleQuietJson.value.trim()) {
-      handleQuietHours = JSON.parse(wizardDigestHandleQuietJson.value);
-    }
-    await saveCreatorOnboardingDigestSchedule({
-      enabled: wizardDigestScheduleEnabled.value,
-      interval_hours: wizardDigestScheduleHours.value,
-      channels: ['webhook', 'email'],
-      handle_channels: handleChannels,
-      handle_quiet_hours: handleQuietHours,
-      quiet_hours_start: wizardDigestQuietStart.value,
-      quiet_hours_end: wizardDigestQuietEnd.value,
-    });
-    saveMessage.value = '已保存 digest 定时';
-    await loadWizardDigestSchedule();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function processWizardDigestRetries() {
-  try {
-    const result = await processCreatorOnboardingDigestRetries();
-    saveMessage.value = `已重试 ${result.retried} 条，剩余 ${result.remaining}`;
-    await loadWizardDigestSchedule();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function replayWizardDigestDeadLetter() {
-  try {
-    const result = await replayCreatorOnboardingDigestDeadLetter({ index: 0 });
-    saveMessage.value = `已重放死信（${result.channel || 'unknown'}）`;
-    await loadWizardDigestSchedule();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function dispatchWizardDigest() {
-  try {
-    const result = await dispatchCreatorOnboardingDigest(true);
-    saveMessage.value = result.sent ? '已发送 digest' : `跳过：${result.reason || '未知'}`;
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function loadWizardWebhook() {
-  try {
-    const data = await fetchCreatorOnboardingWebhook();
-    wizardWebhookUrl.value = data.url || '';
-    wizardWebhookEnabled.value = Boolean(data.enabled);
-    wizardWebhookSigningSecret.value = data.signing_secret || '';
-  } catch {
-    wizardWebhookUrl.value = '';
-    wizardWebhookEnabled.value = false;
-  }
-}
 
-async function saveWizardWebhook() {
-  try {
-    await saveCreatorOnboardingWebhook({
-      url: wizardWebhookUrl.value.trim(),
-      enabled: wizardWebhookEnabled.value,
-      mention_handles: wizardNotificationHandles.value,
-      signing_secret: wizardWebhookSigningSecret.value.trim(),
-    });
-    saveMessage.value = '已保存通知 Webhook';
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function loadWizardEmail() {
-  try {
-    const data = await fetchCreatorOnboardingEmail();
-    wizardEmailTo.value = (data.to_addresses || []).join(', ');
-    wizardEmailSmtpHost.value = data.smtp_host || '';
-    wizardEmailEnabled.value = Boolean(data.enabled);
-  } catch {
-    wizardEmailTo.value = '';
-    wizardEmailSmtpHost.value = '';
-    wizardEmailEnabled.value = false;
-  }
-}
 
-async function saveWizardEmail() {
-  try {
-    const toAddresses = wizardEmailTo.value
-      .split(',')
-      .map((addr) => addr.trim())
-      .filter(Boolean);
-    await saveCreatorOnboardingEmail({
-      enabled: wizardEmailEnabled.value,
-      to_addresses: toAddresses,
-      mention_handles: wizardNotificationHandles.value,
-      smtp_host: wizardEmailSmtpHost.value.trim(),
-      smtp_port: 587,
-      smtp_use_tls: true,
-      from_address: toAddresses[0] || '',
-    });
-    saveMessage.value = '已保存通知邮件';
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function ackWizardNotifications() {
-  try {
-    const result = await ackCreatorOnboardingNotifications({
-      all_notifications: true,
-      handle: wizardNotificationHandleFilter.value || undefined,
-    });
-    wizardUnreadMentions.value = result.unread ?? 0;
-    await loadWizardNotifications();
-    saveMessage.value = `已标记 ${result.acked} 条通知为已读`;
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
 async function exportMergePresetPackages() {
   error.value = null;
@@ -3993,6 +2777,16 @@ async function refresh() {
 }
 
 
+
+provide(
+  CREATOR_ONBOARDING_KEY,
+  createCreatorOnboardingContext(onboardingPanelContext),
+);
+provide(
+  CREATOR_MODE_GUIDE_KEY,
+  createCreatorModeGuideContext(modeGuidePanelContext),
+);
+
 provide(
   CREATOR_BATCH_HISTORY_KEY,
   createCreatorBatchHistoryContext(batchHistoryPanelContext),
@@ -4029,11 +2823,6 @@ watch(projectRevision, () => {
   refresh();
 });
 
-watch(onboardingWizard, () => {
-  if (uiProfile.value.studio_wizard_collapse_memory) {
-    syncWizardPanelOpen();
-  }
-});
 
 watch(
   editableVolumes,
@@ -4067,19 +2856,7 @@ watch(
   outline: 2px solid var(--color-accent);
 }
 
-.creator-advanced-ops-summary {
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-family: var(--font-ui);
-  padding: var(--space-xs) 0;
-}
 
-.creator-mode-guide-summary {
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-family: 'Press Start 2P', monospace;
-  padding: var(--space-xs) 0;
-}
 
 .page-header {
   display: flex;
@@ -4231,13 +3008,6 @@ watch(
   margin-top: var(--space-xs);
 }
 
-.mode-switch-hint {
-  font-size: var(--text-sm);
-  padding: var(--space-xs) var(--space-sm);
-  margin: 0;
-  color: var(--color-accent);
-  background: rgba(100, 140, 200, 0.08);
-}
 
 .mode-badge--hintable {
   cursor: help;
@@ -4271,387 +3041,77 @@ watch(
   font-size: 6px;
 }
 
-.mode-badge-legend {
-  margin: 0;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
-  color: var(--color-accent);
-}
-
-.mode-switch-confirm-dialog {
-  margin: var(--space-xs) 0;
-  padding: var(--space-sm);
-  border-color: rgba(180, 120, 40, 0.55);
-  background: rgba(180, 120, 40, 0.08);
-}
-
-.mode-switch-confirm-actions {
-  display: flex;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
-
-.batch-history-failure-reason {
-  color: #a44;
-}
-
-.creation-mode-switch-preview {
-  padding: var(--space-xs) var(--space-sm);
-}
-
-.creation-mode-preview-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0 0;
-  display: grid;
-  gap: var(--space-xs);
-}
-
-.creation-mode-preview-item {
-  padding: var(--space-xs);
-  border: 1px solid transparent;
-}
-
-.creation-mode-preview-item--active {
-  border-color: rgba(100, 140, 200, 0.65);
-  background: rgba(100, 140, 200, 0.1);
-}
-
-.creation-mode-switch-preview--guide {
-  border-color: rgba(100, 140, 200, 0.45);
-}
-
-.creation-mode-guide-hint {
-  margin: var(--space-xs) 0 0;
-  color: var(--color-accent);
-}
-
-.creation-mode-preview-item--guide {
-  animation: creation-mode-guide-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes creation-mode-guide-pulse {
-  0%, 100% {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-  }
-  33% {
-    border-color: rgba(100, 140, 200, 0.75);
-    background: rgba(100, 140, 200, 0.14);
-    box-shadow: 0 0 0 1px rgba(100, 140, 200, 0.25);
-  }
-}
-
-.creation-mode-yaml-btn {
-  margin-top: var(--space-xs);
-  font-size: var(--text-xs);
-}
-
-.creation-mode-onboarding-link-btn {
-  margin-top: var(--space-xs);
-  margin-left: var(--space-xs);
-  font-size: var(--text-xs);
-}
-
-.wizard-step--mode-linked {
-  border-color: rgba(100, 140, 200, 0.45);
-  background: rgba(100, 140, 200, 0.06);
-}
-
-.wizard-step-mode-badges {
-  display: inline-flex;
-  gap: 4px;
-  margin-left: 6px;
-}
-
-.wizard-step-mode-badge {
-  font-size: var(--text-xs);
-  padding: 1px 4px;
-  border: 1px solid rgba(100, 140, 200, 0.45);
-  border-radius: 2px;
-  color: var(--color-accent);
-}
-
-.batch-history-success-rate-chart {
-  margin: 0 0 var(--space-xs);
-  color: var(--color-accent);
-}
-
-.batch-history-success-rate-chart-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 48px;
-  display: block;
-}
-
-.batch-history-success-rate-chart-label {
-  margin: 2px 0 0;
-}
-
-.batch-history-status-stack-chart {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-status-stack-chart-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 14px;
-  display: block;
-}
-
-.batch-history-stack-segment--completed {
-  fill: rgba(80, 160, 100, 0.85);
-}
-
-.batch-history-stack-segment--failed {
-  fill: rgba(180, 80, 80, 0.85);
-}
-
-.batch-history-stack-segment--running {
-  fill: rgba(100, 140, 200, 0.85);
-}
-
-.batch-history-stack-segment--other {
-  fill: rgba(140, 140, 140, 0.65);
-}
-
-.batch-history-status-stack-label {
-  margin: 2px 0 0;
-}
-
-.creation-mode-switch-history {
-  list-style: none;
-  padding: var(--space-xs) var(--space-sm);
-  margin: var(--space-xs) 0;
-}
-
-.creation-mode-switch-history-item {
-  margin: 0;
-}
-
-.mode-switch-undo-hint {
-  margin: var(--space-xs) 0;
-  padding: var(--space-sm);
-  border-color: rgba(180, 120, 40, 0.45);
-  background: rgba(180, 120, 40, 0.06);
-}
-
-.batch-history-duration-distribution {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-duration-distribution-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 40px;
-  display: block;
-}
-
-.batch-history-duration-bar {
-  fill: rgba(100, 140, 200, 0.75);
-}
-
-.batch-history-duration-distribution-label {
-  margin: 2px 0 0;
-}
-
-.batch-history-concurrency-chart {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-concurrency-chart-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 40px;
-  display: block;
-}
-
-.batch-history-concurrency-bar {
-  fill: rgba(120, 160, 120, 0.8);
-}
-
-.batch-history-concurrency-chart-label {
-  margin: 2px 0 0;
-}
-
-.creation-mode-hotkey-hint {
-  margin: var(--space-xs) 0;
-  color: var(--text-muted, #666);
-}
-
-.batch-history-queue-depth-chart {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-queue-depth-chart-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 40px;
-  display: block;
-}
-
-.batch-history-queue-depth-bar {
-  fill: rgba(160, 120, 180, 0.8);
-}
-
-.batch-history-queue-depth-chart-label {
-  margin: 2px 0 0;
-}
-
-.batch-history-throughput-chart {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-throughput-chart-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 40px;
-  display: block;
-}
-
-.batch-history-throughput-bar {
-  fill: rgba(200, 140, 80, 0.8);
-}
-
-.batch-history-throughput-chart-label {
-  margin: 2px 0 0;
-}
-
-.batch-history-cost-efficiency-chart {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-cost-efficiency-chart-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 40px;
-  display: block;
-}
-
-.batch-history-cost-efficiency-bar {
-  fill: rgba(220, 160, 80, 0.85);
-}
-
-.batch-history-cost-efficiency-chart-label {
-  margin: 2px 0 0;
-}
-
-.batch-history-retry-rate-stack {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-retry-rate-stack-svg {
-  width: 100%;
-  max-width: 220px;
-  height: 14px;
-  display: block;
-}
-
-.batch-history-retry-seg--first {
-  fill: rgba(100, 160, 100, 0.85);
-}
-
-.batch-history-retry-seg--retried {
-  fill: rgba(100, 140, 200, 0.85);
-}
-
-.batch-history-retry-seg--failed {
-  fill: rgba(200, 90, 90, 0.85);
-}
-
-.batch-history-retry-rate-stack-label {
-  margin: 2px 0 0;
-}
-
-.batch-history-chapter-failure-heatmap {
-  margin: 0 0 var(--space-xs);
-}
-
-.batch-history-chapter-failure-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  max-width: 220px;
-}
-
-.batch-history-chapter-failure-cell {
-  width: 12px;
-  height: 12px;
-  background: rgba(100, 160, 100, 0.75);
-  display: inline-block;
-}
-
-.batch-history-chapter-failure-cell--failed {
-  background: rgba(200, 90, 90, 0.9);
-}
-
-.batch-history-chapter-failure-heatmap-label {
-  margin: 2px 0 0;
-}
-
-.creation-mode-aria-live {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.creation-mode-pinned-sidebar {
-  position: sticky;
-  top: var(--space-sm);
-  float: right;
-  width: 120px;
-  margin-left: var(--space-sm);
-  padding: var(--space-sm);
-  z-index: 2;
-}
-
-.creation-mode-pinned-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.creation-mode-pinned-item {
-  font-size: var(--text-md);
-  padding: 2px 0;
-}
-
-.creation-mode-pinned-item--active {
-  font-weight: bold;
-}
-
-.creation-mode-accessibility-checklist {
-  margin: var(--space-sm) 0;
-  padding: var(--space-sm);
-  list-style: none;
-}
-
-.creation-mode-accessibility-item {
-  margin: 0;
-}
-
-.batch-history-ops-summary-toggle {
-  margin: var(--space-xs) 0;
-  width: 100%;
-  text-align: left;
-}
-
-.batch-history-ops-summary-line {
-  display: block;
-  font-size: var(--text-md);
-  opacity: 0.85;
-}
-
-.batch-history-ops-summary-body {
-  margin-top: var(--space-xs);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .volume-plan-diff-collab-panel {
   margin: var(--space-xs) 0;
@@ -4678,27 +3138,9 @@ watch(
   margin-left: var(--space-sm);
 }
 
-.batch-history-avg-duration {
-  margin: 0 0 var(--space-xs);
-  color: var(--color-accent);
-}
 
-.batch-history-failure-trend {
-  margin: 0 0 var(--space-xs);
-  color: #a44;
-}
 
-.batch-history-monthly-summary,
-.batch-history-weekly-summary {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 var(--space-xs);
-}
 
-.batch-history-success-rate {
-  margin: 0 0 var(--space-xs);
-  color: var(--color-accent);
-}
 
 .volume-plan-diff-type-filter {
   display: inline-flex;
@@ -4707,14 +3149,7 @@ watch(
   margin-top: var(--space-xs);
 }
 
-.batch-history-budget-hint {
-  margin: var(--space-xs) 0 0;
-  color: var(--color-accent);
-}
 
-.batch-history-duration {
-  color: var(--color-accent);
-}
 
 .volume-plan-diff-summary {
   cursor: pointer;
@@ -4722,10 +3157,6 @@ watch(
   font-size: var(--text-xs);
 }
 
-.batch-history-retry-btn {
-  margin-left: var(--space-xs);
-  font-size: var(--text-xs);
-}
 
 .volume-plan-outline-lines {
   list-style: none;
@@ -4747,36 +3178,12 @@ watch(
   box-shadow: inset 0 0 0 1px rgba(200, 180, 80, 0.65);
 }
 
-.batch-history-item--status-completed {
-  border-left: 3px solid #4a9;
-}
 
-.batch-history-item--status-failed {
-  border-left: 3px solid #c44;
-}
 
-.batch-history-item--status-running {
-  border-left: 3px solid #48c;
-}
 
-.batch-history-item--running-pulse {
-  animation: batch-history-running-pulse 1.4s ease-in-out infinite;
-}
 
-@keyframes batch-history-running-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
 
-.batch-history-date-label {
-  margin: var(--space-xs) 0 0;
-  font-family: 'Press Start 2P', monospace;
-  font-size: var(--text-xs);
-}
 
-.batch-history-date-group + .batch-history-date-group {
-  margin-top: var(--space-xs);
-}
 
 .volume-plan-diff-panel {
   margin-top: var(--space-sm);
@@ -4805,11 +3212,6 @@ watch(
   line-height: 1.5;
 }
 
-.batch-history-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--space-xs);
-}
 
 .volume-plan-diff-list {
   list-style: none;
@@ -4842,52 +3244,14 @@ watch(
   opacity: 0.9;
 }
 
-.mode-switch-doc-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  padding: var(--space-xs);
-}
 
-.mode-switch-doc-link {
-  font-size: var(--text-xs);
-}
 
-.batch-history-filter {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-xs);
-}
 
-.batch-history-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-xs);
-}
 
-.batch-history-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-sm);
-}
 
-.batch-history-item {
-  padding: 4px 0;
-}
 
-.batch-history-item--clickable {
-  cursor: pointer;
-}
 
-.batch-history-item--clickable:hover,
-.batch-history-item--active {
-  background: rgba(100, 140, 200, 0.12);
-}
 
-.studio-entry-hint {
-  background: rgba(120, 100, 180, 0.1);
-}
 
 .volume-plan-save-confirm {
   margin-top: var(--space-xs);
@@ -5291,68 +3655,16 @@ watch(
   color: #c44;
 }
 
-.onboarding-wizard {
-  padding: var(--space-sm);
-  font-size: var(--text-sm);
-}
 
-.wizard-steps {
-  margin: var(--space-xs) 0 0;
-  padding-left: 1.2em;
-}
 
-.wizard-step {
-  margin-bottom: 4px;
-}
 
-.wizard-step--focused {
-  outline: 2px solid var(--color-accent);
-  border-radius: 4px;
-  padding: 2px;
-}
 
-.wizard-step-label {
-  display: flex;
-  gap: var(--space-xs);
-  align-items: flex-start;
-  cursor: pointer;
-}
 
-.wizard-step-note {
-  width: 100%;
-  margin-top: 4px;
-  font-size: 0.85rem;
-}
 
-.wizard-mentions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
 
-.wizard-mention-badge {
-  font-size: var(--text-xs);
-  color: var(--color-accent);
-  background: rgba(127, 127, 127, 0.12);
-  padding: 1px 4px;
-  border-radius: 3px;
-}
 
-.wizard-notification-badge {
-  color: var(--color-warn, #c90);
-  font-size: var(--text-sm);
-}
 
-.wizard-notifications {
-  margin: var(--space-sm) 0;
-  padding: var(--space-sm);
-  border: 1px dashed rgba(127, 127, 127, 0.35);
-}
 
-.wizard-notification-row--unread strong {
-  color: var(--color-warn, #c90);
-}
 
 .template-changelog ul {
   margin: 4px 0 0;
@@ -5386,23 +3698,8 @@ watch(
   color: #c44;
 }
 
-.wizard-webhook-panel {
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px dashed rgba(127, 127, 127, 0.35);
-}
 
-.wizard-email-panel {
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px dashed rgba(127, 127, 127, 0.35);
-}
 
-.wizard-digest-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-sm);
-  border: 1px dashed rgba(127, 127, 127, 0.25);
-}
 
 .template-approvals {
   margin-top: var(--space-sm);
@@ -5425,15 +3722,7 @@ watch(
   color: var(--color-warn, #c90);
 }
 
-.wizard-progress-badge {
-  opacity: 0.85;
-}
 
-.wizard-auto-badge {
-  margin-left: 4px;
-  font-size: var(--text-xs);
-  color: var(--color-accent);
-}
 
 .import-templates-panel {
   display: flex;

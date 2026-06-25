@@ -1076,40 +1076,12 @@ if (!vp) {
   font-size: 6px;
 }
 
-.volume-plan-diff-share-link-preview {
-  margin: var(--space-sm) 0;
-  padding: var(--space-sm);
-}
 
-.volume-plan-diff-share-link-preview-list {
-  margin: var(--space-xs) 0;
-  padding-left: 1.2rem;
-}
 
-.volume-plan-diff-share-link-error {
-  color: var(--danger, #a33);
-}
 
-.volume-plan-diff-share-apply-confirm,
-.volume-plan-diff-share-merge-wizard {
-  margin: var(--space-sm) 0;
-  padding: var(--space-sm);
-}
 
-.volume-plan-diff-share-merge-list {
-  margin: var(--space-xs) 0;
-  padding-left: 1.2rem;
-}
 
-.volume-plan-diff-share-e2e-steps {
-  margin: var(--space-xs) 0;
-  padding-left: 1.2rem;
-  font-size: var(--text-md);
-}
 
-.volume-plan-diff-share-e2e-step--done {
-  font-weight: bold;
-}
 
 .volume-plan-diff-collab-panel {
   margin: var(--space-xs) 0;
@@ -1128,30 +1100,9 @@ if (!vp) {
   margin-top: 2px;
 }
 
-.volume-plan-diff-share-collab-note {
-  display: block;
-  margin-top: 2px;
-  opacity: 0.9;
-  font-size: var(--text-md);
-}
 
-.volume-plan-diff-print-preview {
-  margin: var(--space-xs) 0;
-  padding: var(--space-sm);
-}
 
-.volume-plan-diff-print-preview-body {
-  max-height: 240px;
-  overflow: auto;
-  font-size: var(--text-sm);
-  white-space: pre-wrap;
-  margin: var(--space-xs) 0;
-}
 
-.volume-plan-diff-print-preview-actions {
-  display: flex;
-  gap: var(--space-xs);
-}
 
 .volume-plan-diff-volume-filter {
   display: inline-flex;
