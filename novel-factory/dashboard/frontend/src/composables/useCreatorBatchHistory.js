@@ -590,6 +590,7 @@ function toggleBatchHistoryOpsSummary() {
   const panelContext = {
     uiProfile,
     batchHistory,
+    batchHistoryBudgetHint,
     batchHistoryOpsSummaryOpen,
     toggleBatchHistoryOpsSummary,
     batchHistoryOpsSummaryLine,
