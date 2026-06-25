@@ -39,6 +39,28 @@
   --space-xl: 32px;
 }
 
+html[data-text-scale="large"] {
+  --text-xs: 16px;
+  --text-sm: 18px;
+  --text-base: 19px;
+  --text-md: 20px;
+  --text-lg: 23px;
+  --text-xl: 26px;
+  --text-2xl: 33px;
+  --sidebar-width: 240px;
+}
+
+html[data-text-scale="xlarge"] {
+  --text-xs: 17px;
+  --text-sm: 19px;
+  --text-base: 21px;
+  --text-md: 22px;
+  --text-lg: 25px;
+  --text-xl: 28px;
+  --text-2xl: 36px;
+  --sidebar-width: 252px;
+}
+
 * {
   margin: 0;
   padding: 0;

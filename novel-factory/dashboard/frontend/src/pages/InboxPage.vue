@@ -11,6 +11,7 @@
       <button
         type="button"
         class="share-link-btn pixel-border"
+        :class="{ 'share-link-btn--ok': shareMessage === '已复制链接' }"
         data-testid="inbox-share-link-btn"
         @click="copyShareLink"
       >
@@ -90,6 +91,12 @@ async function copyShareLink() {
   background: var(--bg-secondary);
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.share-link-btn--ok {
+  background: var(--color-success);
+  color: white;
 }
 
 .page-title {

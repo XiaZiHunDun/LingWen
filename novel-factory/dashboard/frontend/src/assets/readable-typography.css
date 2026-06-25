@@ -356,3 +356,59 @@
   font-family: var(--font-ui) !important;
   font-size: var(--text-sm) !important;
 }
+
+/* —— Hub 页（今日 / 生产 / 待办 / 洞察）—— */
+#app .today-page .page-title,
+#app .produce-page .page-title,
+#app .inbox-page .page-title,
+#app .insight-page .page-title {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-xl) !important;
+  font-weight: 700;
+}
+
+#app .hub-subtitle,
+#app .project-line,
+#app .primary-reason,
+#app .todo-hint,
+#app .health-list,
+#app .health-list li {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-sm) !important;
+  line-height: var(--leading-relaxed);
+}
+
+#app .primary-cta {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-md) !important;
+  font-weight: 600;
+}
+
+#app .todo-value {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-2xl) !important;
+  font-weight: 700;
+}
+
+#app .hub-tab,
+#app .share-link-btn,
+#app .quick-link {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-sm) !important;
+}
+
+#app .creation-mode-hint {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-sm) !important;
+}
+
+#app .text-scale-toggle .scale-btn {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-xs) !important;
+}
+
+#app .reviewer-badge,
+#app .insight-readonly-banner {
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-sm) !important;
+}

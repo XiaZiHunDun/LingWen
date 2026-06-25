@@ -211,10 +211,12 @@ function onPrimaryAction() {
   cursor: pointer;
   border: none;
   background: var(--bg-secondary);
+  transition: outline-color 0.15s ease, transform 0.1s ease;
 }
 
 .todo-card:hover {
   outline: 2px solid var(--color-accent);
+  transform: translateY(-2px);
 }
 
 .todo-value {
@@ -253,6 +255,12 @@ function onPrimaryAction() {
   padding: 10px 14px;
   background: var(--bg-secondary);
   cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.quick-link:hover {
+  background: var(--bg-primary);
+  transform: translateY(-1px);
 }
 
 .error-banner {

@@ -45,6 +45,7 @@
             >
               审阅模式
             </span>
+            <TextScaleToggle />
             <CreationModeHint v-if="!isReviewer" />
             <ProjectSwitcher />
           </div>
@@ -76,6 +77,7 @@ import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanne
 import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue'
 import ProjectSwitcher from './components/ProjectSwitcher.vue'
 import CreationModeHint from './components/CreationModeHint.vue'
+import TextScaleToggle from './components/TextScaleToggle.vue'
 import { DASHBOARD_NAV_GROUPS, REVIEWER_NAV_GROUPS } from './config/dashboardNav.js'
 import { useWorkflowSocket } from './composables/useWorkflowSocket.js'
 import { useDashboardNav } from './composables/useDashboardNav.js'

@@ -23,14 +23,14 @@
     >
       <p class="overview-empty-title">本书尚无追读力数据</p>
       <p class="overview-empty-hint">
-        追读力统计来自已发布正文。可先写 ch001，或在工作室跑 Preflight / Batch 产章后再回来看钩子与爽点趋势。
+        追读力统计来自已发布正文。可先写 ch001，或在「生产」页跑 Preflight / Batch 产章后再回来看钩子与爽点趋势。
       </p>
       <div class="overview-empty-actions" v-if="!isReadonlyInsight">
         <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-creator-btn" @click="goCreator">
           去创作页
         </button>
-        <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-studio-btn" @click="goStudio">
-          去工作室
+        <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-produce-btn" @click="goProduce">
+          去生产
         </button>
       </div>
     </section>
@@ -101,7 +101,7 @@ function goCreator() {
   navigateTo('creator')
 }
 
-function goStudio() {
+function goProduce() {
   navigateTo('produce', { tab: 'studio' })
 }
 

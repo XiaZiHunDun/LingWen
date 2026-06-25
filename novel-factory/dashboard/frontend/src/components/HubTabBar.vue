@@ -38,12 +38,18 @@ defineEmits(['update:modelValue']);
   font-size: var(--text-sm);
   font-family: var(--font-ui);
   font-weight: 500;
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: var(--bg-secondary);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.hub-tab:hover:not(.hub-tab--active) {
+  background: var(--bg-primary);
+  transform: translateY(-1px);
 }
 
 .hub-tab--active {
