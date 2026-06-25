@@ -1,103 +1,112 @@
 <!--
-  CreatorVolumePlanPanel.vue — 脉络栏卷纲编辑区（从 CreatorPage 拆出）
+  CreatorVolumePlanMergeSplitPanel — 卷纲合并/拆分（从 CreatorVolumePlanPanel 拆出）
 -->
 <template>
-  <div class="volume-plan-panel" data-testid="volume-plan-panel">
-          <div class="volume-plan-header">
-            <h3 class="subsection-title">卷纲</h3>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="add-volume-btn"
-              @click="vp.addVolume"
-            >
-              + 卷
-            </button>
-          </div>
-          <CreatorVolumePlanTemplatesPanel />
-          <div v-if="!vp.editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」或套用模板。</div>
           <div
-            v-for="(vol, idx) in vp.editableVolumes"
-            :key="`${idx}-${vol.label}`"
-            class="volume-edit-row pixel-border"
-            :class="{
-              'volume-edit-row--locked': vol.locked,
-              'volume-edit-row--dragging': vp.dragVolumeIndex === idx,
-            }"
-            draggable="true"
-            :data-testid="`volume-row-${idx}`"
-            @dragstart="vp.onVolumeDragStart(idx, $event)"
-            @dragover.prevent
-            @drop.prevent="vp.onVolumeDrop(idx)"
+            v-if="vp.editableVolumes.length >= 2"
+            class="volume-merge-panel pixel-border"
+            data-testid="volume-merge-panel"
           >
-            <div class="volume-reorder">
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`volume-move-up-${idx}`"
-                :disabled="idx === 0"
-                title="上移"
-                @click="vp.moveVolume(idx, idx - 1)"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`volume-move-down-${idx}`"
-                :disabled="idx === vp.editableVolumes.length - 1"
-                title="下移"
-                @click="vp.moveVolume(idx, idx + 1)"
-              >
-                ↓
-              </button>
-              <span class="drag-handle" data-testid="volume-drag-handle" title="拖拽排序">⋮⋮</span>
+            <h3 class="subsection-title">合并向导</h3>
+            <div class="merge-range">
+              <label>
+                从
+                <select v-model.number="vp.mergeStartIdx" class="vol-input" data-testid="merge-start-select">
+                  <option v-for="(vol, idx) in vp.editableVolumes" :key="`s-${idx}`" :value="idx">
+                    {{ vol.label || `卷${idx + 1}` }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                到
+                <select v-model.number="vp.mergeEndIdx" class="vol-input" data-testid="merge-end-select">
+                  <option
+                    v-for="(vol, idx) in vp.editableVolumes"
+                    :key="`e-${idx}`"
+                    :value="idx"
+                    :disabled="idx < vp.mergeStartIdx"
+                  >
+                    {{ vol.label || `卷${idx + 1}` }}
+                  </option>
+                </select>
+              </label>
+              <input
+                v-model="vp.mergeLabel"
+                class="vol-input vol-conflict"
+                data-testid="merge-label-input"
+                placeholder="合并后卷名（可选）"
+              />
             </div>
-            <input v-model="vol.label" class="vol-input vol-label" placeholder="卷名" />
-            <div class="vol-range">
-              <input v-model.number="vol.start_chapter" type="number" min="1" class="vol-input vol-num" />
-              <span>–</span>
-              <input v-model.number="vol.end_chapter" type="number" min="1" class="vol-input vol-num" />
-            </div>
-            <input
-              v-model="vol.core_conflict"
-              class="vol-input vol-conflict"
-              placeholder="核心冲突"
-            />
             <button
               type="button"
               class="mini-btn pixel-border"
-              :data-testid="`lock-volume-${idx}`"
-              @click="vp.toggleLock(idx)"
+              data-testid="apply-merge-btn"
+              :disabled="vp.mergeApplying || vp.mergeStartIdx > vp.mergeEndIdx"
+              @click="vp.applyVolumeMerge"
             >
-              {{ vol.locked ? '已锁' : '锁定' }}
+              {{ vp.mergeApplying ? '合并中…' : '应用合并' }}
             </button>
           </div>
-          <button
-            v-if="vp.editableVolumes.length"
-            type="button"
-            class="save-btn pixel-border"
-            data-testid="save-volume-plan-btn"
-            :disabled="vp.saving"
-            @click="vp.requestSaveVolumePlan"
+          <p
+            v-if="vp.mergePreview"
+            class="meta-line"
+            data-testid="merge-preview-line"
           >
-            {{ vp.saving ? '保存中…' : '保存卷纲' }}
-          </button>
-          <CreatorVolumePlanDiffPanel />
-          <CreatorVolumePlanMergeSplitPanel />
-  </div>
+            已合并为「{{ vp.mergePreview.merged_label }}」· {{ vp.mergePreview.merged_range }} · 请保存卷纲
+          </p>
+          <div
+            v-if="vp.editableVolumes.length >= 1"
+            class="volume-split-panel pixel-border"
+            data-testid="volume-split-panel"
+          >
+            <h3 class="subsection-title">拆分向导</h3>
+            <div class="merge-range">
+              <label>
+                卷
+                <select v-model.number="vp.splitVolumeIdx" class="vol-input" data-testid="split-volume-select">
+                  <option v-for="(vol, idx) in vp.editableVolumes" :key="`split-${idx}`" :value="idx">
+                    {{ vol.label || `卷${idx + 1}` }} ({{ vol.start_chapter }}–{{ vol.end_chapter }})
+                  </option>
+                </select>
+              </label>
+              <label>
+                从章
+                <input
+                  v-model.number="vp.splitAtChapter"
+                  type="number"
+                  min="1"
+                  class="vol-input vol-num"
+                  data-testid="split-at-chapter"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="apply-split-btn"
+              :disabled="vp.splitApplying"
+              @click="vp.applyVolumeSplit"
+            >
+              {{ vp.splitApplying ? '拆分中…' : '应用拆分' }}
+            </button>
+          </div>
+          <p
+            v-if="vp.splitPreview"
+            class="meta-line"
+            data-testid="split-preview-line"
+          >
+            已拆为「{{ vp.splitPreview.first_label }}」{{ vp.splitPreview.first_range }}
+            与「{{ vp.splitPreview.second_label }}」{{ vp.splitPreview.second_range }} · 请保存卷纲
+          </p>
 </template>
 
 <script setup>
 import { inject } from 'vue';
 import { CREATOR_VOLUME_PLAN_KEY } from './creatorVolumePlanKey.js';
-import CreatorVolumePlanTemplatesPanel from './CreatorVolumePlanTemplatesPanel.vue';
-import CreatorVolumePlanDiffPanel from './CreatorVolumePlanDiffPanel.vue';
-import CreatorVolumePlanMergeSplitPanel from './CreatorVolumePlanMergeSplitPanel.vue';
 
 const vp = inject(CREATOR_VOLUME_PLAN_KEY);
 if (!vp) {
-  throw new Error('CreatorVolumePlanPanel requires CREATOR_VOLUME_PLAN_KEY provide');
+  throw new Error('CreatorVolumePlanMergeSplitPanel requires CREATOR_VOLUME_PLAN_KEY provide');
 }
 </script>
 
