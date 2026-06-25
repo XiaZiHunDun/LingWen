@@ -1,7 +1,7 @@
 /**
  * Phase C: Creator workspace — task-focused tabs (写 / 脉络 / 设定).
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 export const CREATOR_WORKSPACE_TABS = [
   { id: 'write', label: '写作', icon: '✍️' },
@@ -10,10 +10,16 @@ export const CREATOR_WORKSPACE_TABS = [
 ];
 
 /**
- * @param {import('vue').Ref<object|null>} uiProfile
+ * @param {import('vue').ComputedRef<object>} uiProfile
  * @param {import('vue').Ref<object|null>} overview
+ * @param {{
+ *   focusCreatorWorkspace?: import('vue').Ref<string|null>,
+ *   setCreatorWorkspace?: (tab: string) => void,
+ *   displayDeviationCount?: import('vue').ComputedRef<number>,
+ * } | undefined} nav
  */
-export function useCreatorWorkspace(uiProfile, overview) {
+export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
+  const { focusCreatorWorkspace, setCreatorWorkspace, displayDeviationCount } = nav;
   const activeTab = ref('write');
 
   const tabsEnabled = computed(() => {
@@ -35,11 +41,45 @@ export function useCreatorWorkspace(uiProfile, overview) {
     }
   }
 
+  const workspaceTabBadges = displayDeviationCount
+    ? computed(() => {
+      if (!displayDeviationCount.value) return null;
+      return { pulse: displayDeviationCount.value };
+    })
+    : computed(() => null);
+
+  function onDeviationBadgeClick() {
+    if (!tabsEnabled.value || !setCreatorWorkspace) return;
+    setWorkspaceTab('pulse');
+    setCreatorWorkspace('pulse');
+  }
+
+  if (setCreatorWorkspace) {
+    watch(activeTab, (tab) => {
+      if (tabsEnabled.value) {
+        setCreatorWorkspace(tab);
+      }
+    });
+
+    if (focusCreatorWorkspace) {
+      watch(
+        () => [focusCreatorWorkspace.value, tabsEnabled.value, overview.value],
+        () => {
+          if (!tabsEnabled.value || !focusCreatorWorkspace.value) return;
+          setWorkspaceTab(focusCreatorWorkspace.value);
+        },
+        { immediate: true },
+      );
+    }
+  }
+
   return {
     activeTab,
     tabsEnabled,
     workspaceTabs: CREATOR_WORKSPACE_TABS,
     isColumnVisible,
     setWorkspaceTab,
+    workspaceTabBadges,
+    onDeviationBadgeClick,
   };
 }
