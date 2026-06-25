@@ -498,581 +498,7 @@
       </section>
 
       <!-- 设定 -->
-      <section
-        v-show="isWorkspaceColumnVisible('settings')"
-        class="creator-column pixel-card"
-        data-testid="column-settings"
-      >
-        <h2 class="column-title">设定</h2>
-        <details class="settings-block" open>
-          <summary>创作支柱</summary>
-          <textarea
-            v-model="pillarsText"
-            class="settings-textarea"
-            data-testid="pillars-textarea"
-            rows="6"
-          />
-          <code class="path-line">{{ settingsDocs?.pillars_path || overview.pillars_path }}</code>
-        </details>
-        <details class="settings-block" open>
-          <summary>全局大纲</summary>
-          <textarea
-            ref="globalOutlineEditorRef"
-            v-model="globalOutlineText"
-            class="settings-textarea"
-            data-testid="global-outline-textarea"
-            rows="8"
-          />
-          <code class="path-line">{{ settingsDocs?.global_outline_path || overview.global_outline_path }}</code>
-        </details>
-        <button
-          type="button"
-          class="save-btn pixel-border"
-          data-testid="save-settings-btn"
-          :disabled="settingsSaving"
-          @click="requestSaveSettings"
-        >
-          {{ settingsSaving ? '保存中…' : '保存设定' }}
-        </button>
-        <div
-          v-if="showSettingsDiff && settingsDiffPreview"
-          class="settings-diff-panel pixel-border"
-          data-testid="settings-diff-panel"
-        >
-          <h3 class="subsection-title">变更预览</h3>
-          <p v-if="!settingsDiffPreview.has_changes" class="meta-line">无变更</p>
-          <template v-else>
-            <p v-if="settingsDiffPreview.pillars.changed" class="diff-line">
-              支柱：+{{ settingsDiffPreview.pillars.lines_added }}
-              / -{{ settingsDiffPreview.pillars.lines_removed }} 行
-            </p>
-            <p v-if="settingsDiffPreview.global_outline.changed" class="diff-line">
-              全局大纲：+{{ settingsDiffPreview.global_outline.lines_added }}
-              / -{{ settingsDiffPreview.global_outline.lines_removed }} 行
-            </p>
-            <pre v-if="settingsDiffSnippet.length" class="preview-text">{{ settingsDiffSnippet.join('\n') }}</pre>
-            <template v-if="settingsDiffPreview.has_history">
-              <p class="diff-line" data-testid="three-way-history-label">三路对比（含历史快照）</p>
-              <label v-if="settingsHistory.length" class="meta-line">
-                对比快照
-                <select
-                  v-model="compareSnapshotId"
-                  class="vol-input"
-                  data-testid="compare-snapshot-select"
-                  @change="refreshThreeWayPreview"
-                >
-                  <option v-for="snap in settingsHistory" :key="snap.id" :value="snap.id">
-                    {{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}
-                  </option>
-                </select>
-              </label>
-              <p v-if="settingsDiffPreview.disk_vs_history?.pillars?.changed" class="diff-line">
-                磁盘 vs 历史（支柱）：+{{ settingsDiffPreview.disk_vs_history.pillars.lines_added }}
-                / -{{ settingsDiffPreview.disk_vs_history.pillars.lines_removed }}
-              </p>
-              <p v-if="settingsDiffPreview.editor_vs_history?.pillars?.changed" class="diff-line">
-                编辑器 vs 历史（支柱）：+{{ settingsDiffPreview.editor_vs_history.pillars.lines_added }}
-                / -{{ settingsDiffPreview.editor_vs_history.pillars.lines_removed }}
-              </p>
-            </template>
-            <div
-              v-if="showMergeStrategy"
-              class="merge-strategy-panel"
-              data-testid="merge-strategy-panel"
-            >
-              <p class="diff-line">合并策略（三路冲突时选择保留来源）</p>
-              <p
-                v-if="usesGlobalMergeDefault"
-                class="meta-line"
-                data-testid="merge-global-default-badge"
-              >
-                当前使用全局默认合并策略
-              </p>
-              <div class="merge-presets" data-testid="merge-presets">
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="merge-preset-disk"
-                  @click="applyMergePreset('disk')"
-                >
-                  全选磁盘
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="merge-preset-history"
-                  @click="applyMergePreset('history')"
-                >
-                  全选历史
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="merge-preset-editor"
-                  @click="applyMergePreset('editor')"
-                >
-                  全选编辑器
-                </button>
-              </div>
-              <label class="meta-line">
-                预设包
-                <select
-                  v-model="selectedMergePresetPackage"
-                  class="vol-input"
-                  data-testid="merge-preset-package-select"
-                  @change="onMergePresetPackageChange"
-                >
-                  <option value="">选择组合预设…</option>
-                  <option
-                    v-for="pkg in mergePresetPackages"
-                    :key="pkg.id"
-                    :value="pkg.id"
-                  >
-                    {{ formatMergePresetOption(pkg) }}
-                  </option>
-                </select>
-              </label>
-              <div class="merge-range">
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="export-merge-preset-packages-btn"
-                  @click="exportMergePresetPackages"
-                >
-                  分享预设包
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="toggle-import-merge-preset-packages-btn"
-                  @click="showImportMergePresetPackages = !showImportMergePresetPackages"
-                >
-                  {{ showImportMergePresetPackages ? '收起导入' : '导入预设包' }}
-                </button>
-                <button
-                  v-if="uiProfile.show_factory_presets"
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="publish-merge-preset-factory-btn"
-                  :disabled="mergePresetFactoryPublishing || !selectedProjectMergePreset"
-                  @click="publishMergePresetToFactory"
-                >
-                  {{ mergePresetFactoryPublishing ? '发布中…' : '发布到工厂库' }}
-                </button>
-                <button
-                  v-if="uiProfile.show_factory_presets"
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="pull-merge-preset-factory-btn"
-                  :disabled="mergePresetFactoryPulling || !factoryMergePresetCount"
-                  @click="pullFactoryMergePresets"
-                >
-                  {{ mergePresetFactoryPulling ? '拉取中…' : '从工厂库拉取' }}
-                </button>
-              </div>
-              <div
-                v-if="uiProfile.show_merge_preset_advanced && mergePresetToposort.edges?.length"
-                class="merge-preset-toposort"
-                data-testid="merge-preset-toposort-panel"
-              >
-                <p class="meta-line">拓扑序（{{ mergePresetToposort.order?.join(' → ') }}）</p>
-                <ul>
-                  <li
-                    v-for="edge in mergePresetToposort.edges"
-                    :key="`${edge.from}-${edge.to}`"
-                    data-testid="merge-preset-toposort-edge"
-                  >
-                    {{ edge.from }} → {{ edge.to }}
-                  </li>
-                </ul>
-              </div>
-              <div
-                v-if="mergePresetChangelog.entries?.length"
-                class="merge-preset-changelog"
-                data-testid="merge-preset-changelog-panel"
-              >
-                <p class="meta-line">预设变更（{{ mergePresetChangelog.entry_count }}）</p>
-                <ul>
-                  <li
-                    v-for="(entry, idx) in mergePresetChangelog.entries"
-                    :key="idx"
-                    data-testid="merge-preset-changelog-row"
-                  >
-                    {{ entry.action }} · {{ entry.changed_fields?.join(', ') }}
-                    <button
-                      type="button"
-                      class="mini-btn pixel-border"
-                      data-testid="merge-preset-changelog-diff-btn"
-                      @click="previewMergePresetChangelogDiff(idx)"
-                    >
-                      diff
-                    </button>
-                  </li>
-                </ul>
-                <p
-                  v-if="mergePresetChangelogDiff.change_count"
-                  class="meta-line"
-                  data-testid="merge-preset-changelog-diff-panel"
-                >
-                  变更 {{ mergePresetChangelogDiff.change_count }} 项：
-                  {{ mergePresetChangelogDiff.changes?.map((c) => c.field).join(', ') }}
-                </p>
-              </div>
-              <div
-                v-if="uiProfile.show_factory_presets && factoryMergePresetPullConflicts.conflicts?.length"
-                class="merge-preset-factory-pull-wizard"
-                data-testid="merge-preset-factory-pull-wizard"
-              >
-                <p class="meta-line">工厂拉取冲突（{{ factoryMergePresetPullConflicts.conflict_count }}）</p>
-                <ul>
-                  <li
-                    v-for="(conflict, idx) in factoryMergePresetPullConflicts.conflicts"
-                    :key="`${conflict.package_id}-${idx}`"
-                    data-testid="merge-preset-factory-pull-conflict-row"
-                  >
-                    {{ conflict.message }}
-                    <button
-                      type="button"
-                      class="mini-btn pixel-border"
-                      data-testid="merge-preset-factory-pull-prefer-factory-btn"
-                      @click="pullFactoryMergePresetsWithStrategy(conflict.package_id, 'prefer_factory')"
-                    >
-                      用工厂
-                    </button>
-                    <button
-                      type="button"
-                      class="mini-btn pixel-border"
-                      data-testid="merge-preset-factory-pull-prefer-project-btn"
-                      @click="pullFactoryMergePresetsWithStrategy(conflict.package_id, 'prefer_project')"
-                    >
-                      保留项目
-                    </button>
-                  </li>
-                </ul>
-              </div>
-              <div
-                v-if="uiProfile.show_merge_preset_advanced && mergePresetGraph.edges?.length"
-                class="merge-preset-graph"
-                data-testid="merge-preset-graph-panel"
-              >
-                <p class="meta-line">预设包依赖图（{{ mergePresetGraph.edge_count }} 条边）</p>
-                <ul>
-                  <li
-                    v-for="edge in mergePresetGraph.edges"
-                    :key="`${edge.from_pkg}-${edge.to}`"
-                    data-testid="merge-preset-graph-edge"
-                  >
-                    {{ edge.from_pkg }} → {{ edge.to }}
-                  </li>
-                </ul>
-              </div>
-              <div
-                v-if="uiProfile.show_merge_preset_advanced && mergePresetConflicts.conflicts?.length"
-                class="merge-preset-conflicts"
-                data-testid="merge-preset-conflicts-panel"
-              >
-                <p class="meta-line">预设包冲突（{{ mergePresetConflicts.conflict_count }}）</p>
-                <ul>
-                  <li
-                    v-for="(conflict, idx) in mergePresetConflicts.conflicts"
-                    :key="`${conflict.type}-${idx}`"
-                    data-testid="merge-preset-conflict-row"
-                  >
-                    {{ conflict.message }}
-                  </li>
-                </ul>
-              </div>
-              <div
-                v-if="uiProfile.show_merge_preset_advanced && mergePresetConflictFixes.fixes?.length"
-                class="merge-preset-conflict-fixes"
-                data-testid="merge-preset-conflict-fixes-panel"
-              >
-                <p class="meta-line">修复建议（{{ mergePresetConflictFixes.fix_count }}）</p>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="apply-all-merge-preset-fixes-btn"
-                  @click="applyAllMergePresetConflictFixes"
-                >
-                  批量应用可修复项
-                </button>
-                <ul>
-                  <li
-                    v-for="fix in mergePresetConflictFixes.fixes"
-                    :key="fix.id"
-                    class="merge-preset-fix-row"
-                    data-testid="merge-preset-conflict-fix-row"
-                  >
-                    <span>{{ fix.label }}</span>
-                    <button
-                      v-if="fix.applicable"
-                      type="button"
-                      class="mini-btn pixel-border"
-                      data-testid="apply-merge-preset-fix-btn"
-                      @click="applyMergePresetConflictFix(fix)"
-                    >
-                      应用
-                    </button>
-                  </li>
-                </ul>
-              </div>
-              <div
-                v-if="showImportMergePresetPackages"
-                class="import-templates-panel"
-                data-testid="import-merge-preset-packages-panel"
-              >
-                <textarea
-                  v-model="importMergePresetPackagesJson"
-                  class="vol-input import-templates-json"
-                  data-testid="import-merge-preset-packages-json"
-                  placeholder='{"packages":[...]}'
-                  rows="3"
-                />
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="preview-merge-preset-import-diff-btn"
-                  :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
-                  @click="previewMergePresetImportDiff"
-                >
-                  预览 diff
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="toposort-merge-preset-btn"
-                  @click="applyMergePresetToposort"
-                >
-                  拓扑重排
-                </button>
-                <p
-                  v-if="mergePresetImportDiff.added?.length || mergePresetImportDiff.updated?.length"
-                  class="meta-line"
-                  data-testid="merge-preset-import-diff-panel"
-                >
-                  diff：新增 {{ mergePresetImportDiff.added?.length || 0 }} /
-                  更新 {{ mergePresetImportDiff.updated?.length || 0 }}
-                </p>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="preflight-merge-preset-import-btn"
-                  :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
-                  @click="preflightMergePresetImport"
-                >
-                  预检冲突
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="import-merge-preset-packages-btn"
-                  :disabled="mergePresetPackagesImporting || !importMergePresetPackagesJson.trim()"
-                  @click="importMergePresetPackagesFromJson"
-                >
-                  {{ mergePresetPackagesImporting ? '导入中…' : '确认导入' }}
-                </button>
-              </div>
-              <label class="meta-line">
-                支柱
-                <select v-model="pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source" @change="refreshMergeStrategyPreview">
-                  <option value="editor">编辑器</option>
-                  <option value="disk">磁盘</option>
-                  <option value="history">历史快照</option>
-                </select>
-              </label>
-              <label v-if="pillarsMergeSource === 'history' && settingsHistory.length" class="meta-line">
-                支柱历史快照
-                <select
-                  v-model="pillarsSnapshotId"
-                  class="vol-input"
-                  data-testid="pillars-snapshot-select"
-                  @change="refreshMergeStrategyPreview"
-                >
-                  <option v-for="snap in settingsHistory" :key="`p-${snap.id}`" :value="snap.id">
-                    {{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}
-                  </option>
-                </select>
-              </label>
-              <label class="meta-line">
-                全局大纲
-                <select
-                  v-model="outlineMergeSource"
-                  class="vol-input"
-                  data-testid="outline-merge-source"
-                  @change="refreshMergeStrategyPreview"
-                >
-                  <option value="editor">编辑器</option>
-                  <option value="disk">磁盘</option>
-                  <option value="history">历史快照</option>
-                </select>
-              </label>
-              <label v-if="outlineMergeSource === 'history' && settingsHistory.length" class="meta-line">
-                大纲历史快照
-                <select
-                  v-model="outlineSnapshotId"
-                  class="vol-input"
-                  data-testid="outline-snapshot-select"
-                  @change="refreshMergeStrategyPreview"
-                >
-                  <option v-for="snap in settingsHistory" :key="`o-${snap.id}`" :value="snap.id">
-                    {{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}
-                  </option>
-                </select>
-              </label>
-              <div v-if="mergeStrategyPreview" class="merge-preview-visual" data-testid="merge-preview-visual">
-                <p v-if="mergeStrategyPreview.pillars.vs_disk.changed" class="diff-line">
-                  支柱将写入 vs 磁盘：+{{ mergeStrategyPreview.pillars.vs_disk.lines_added }}
-                  / -{{ mergeStrategyPreview.pillars.vs_disk.lines_removed }}
-                </p>
-                <pre
-                  v-if="mergeStrategySnippet.length"
-                  class="preview-text"
-                  data-testid="merge-strategy-snippet"
-                >{{ mergeStrategySnippet.join('\n') }}</pre>
-              </div>
-              <div class="merge-range">
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="export-merge-prefs-btn"
-                  @click="exportMergePreferences"
-                >
-                  导出合并策略
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="toggle-import-merge-prefs-btn"
-                  @click="showImportMergePrefs = !showImportMergePrefs"
-                >
-                  {{ showImportMergePrefs ? '收起导入' : '导入合并策略' }}
-                </button>
-              </div>
-              <div v-if="showImportMergePrefs" class="import-templates-panel" data-testid="import-merge-prefs-panel">
-                <textarea
-                  v-model="importMergePrefsJson"
-                  class="vol-input import-templates-json"
-                  data-testid="import-merge-prefs-json"
-                  placeholder='{"project":{...},"global":{...}}'
-                  rows="4"
-                />
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="import-merge-prefs-btn"
-                  :disabled="mergePrefsImporting || !importMergePrefsJson.trim()"
-                  @click="importMergePreferencesFromJson"
-                >
-                  {{ mergePrefsImporting ? '导入中…' : '确认导入' }}
-                </button>
-              </div>
-            </div>
-          </template>
-          <div class="batch-actions">
-            <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="confirm-settings-btn"
-              :disabled="settingsSaving || !settingsDiffPreview.has_changes"
-              @click="confirmSaveSettings"
-            >
-              确认保存
-            </button>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="cancel-settings-btn"
-              @click="cancelSettingsDiff"
-            >
-              取消
-            </button>
-          </div>
-        </div>
-        <details v-if="settingsHistory.length" class="settings-block" data-testid="settings-history-panel">
-          <summary>版本历史（{{ settingsHistory.length }}）</summary>
-          <ul class="history-list">
-            <li
-              v-for="snap in settingsHistory"
-              :key="snap.id"
-              class="history-row pixel-border"
-              :data-testid="`history-row-${snap.id}`"
-            >
-              <span class="history-meta">{{ snap.label }} · {{ formatHistoryTime(snap.saved_at) }}</span>
-              <span class="history-excerpt">{{ snap.pillars_excerpt || '（空支柱）' }}</span>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`restore-history-${snap.id}`"
-                :disabled="settingsRestoring"
-                @click="restoreSettingsHistory(snap.id)"
-              >
-                恢复
-              </button>
-            </li>
-          </ul>
-        </details>
-        <details v-if="overview.quality_report_available" class="settings-block">
-          <summary>P0 问题（点开才看）</summary>
-          <p class="p0-line" :class="overview.p0_count ? 'warn' : 'ok'">
-            {{ overview.p0_count ? `发现 ${overview.p0_count} 条 P0` : '无 P0' }}
-          </p>
-        </details>
-        <div
-          v-if="uiProfile.primary_action === 'logic_check' && !workspaceTabsEnabled"
-          class="cmd-block companion-check-panel"
-          data-testid="companion-logic-check-panel"
-        >
-          <p class="subsection-title">逻辑审查</p>
-          <p class="meta-line">仅检查 P0 逻辑问题，不打 prose 分。</p>
-          <button
-            type="button"
-            class="mini-btn pixel-border"
-            data-testid="run-companion-logic-check-btn"
-            :disabled="logicCheckRunning"
-            @click="runCompanionLogicCheck"
-          >
-            {{ logicCheckRunning ? '检查中…' : '一键逻辑审查' }}
-          </button>
-          <p v-if="logicCheckResult" class="meta-line" data-testid="companion-logic-check-result">
-            {{ logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ logicCheckResult.p0_count }} ·
-            共 {{ logicCheckResult.total_issues }} 条
-            <span v-if="logicCheckResult.p0_only">（仅展示 P0）</span>
-          </p>
-          <ul
-            v-if="uiProfile.logic_check_inline_issues && logicCheckResult?.issues?.length"
-            class="logic-check-issues"
-            data-testid="logic-check-issues"
-          >
-            <li
-              v-for="(issue, idx) in logicCheckResult.issues"
-              :key="`${issue.chapter}-${idx}`"
-              class="logic-check-issue"
-              :class="{
-                'logic-check-issue--clickable': Boolean(issue.chapter),
-                'logic-check-issue--active': !uiProfile.issue_paragraph_highlight_unified
-                  && uiProfile.logic_check_issue_highlight
-                  && activeLogicCheckIssueIdx === idx,
-                'issue-line--active': uiProfile.issue_paragraph_highlight_unified
-                  && activeLogicCheckIssueIdx === idx,
-              }"
-              role="button"
-              tabindex="0"
-              :data-testid="`logic-check-issue-${idx}`"
-              @click="handleLogicCheckIssueClick(issue, idx)"
-              @keydown.enter="handleLogicCheckIssueClick(issue, idx)"
-              @keydown="onLogicCheckIssueKeydown($event, issue, idx)"
-            >
-              <span class="issue-severity">{{ issue.severity }}</span>
-              <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
-              {{ issue.title || issue.message }}
-            </li>
-          </ul>
-        </div>
-        <div v-else-if="uiProfile.show_studio_workflow" class="cmd-block">
-          <p class="subsection-title">守门命令</p>
-          <code>{{ overview.companion_check_cmd }}</code>
-        </div>
-      </section>
+      <CreatorSettingsPanel />
     </div>
 
     <CreatorModeGuidePanel :mode-label="modeLabel" />
@@ -1216,10 +642,13 @@ import CreatorBatchSummaryPrompt from '../components/creator/CreatorBatchSummary
 import CreatorVolumePlanShareModals from '../components/creator/CreatorVolumePlanShareModals.vue';
 import CreatorModeGuidePanel from '../components/creator/CreatorModeGuidePanel.vue';
 import CreatorOnboardingWizardPanel from '../components/creator/CreatorOnboardingWizardPanel.vue';
+import CreatorSettingsPanel from '../components/creator/CreatorSettingsPanel.vue';
 import { useCreatorModeGuide } from '../composables/useCreatorModeGuide.js';
 import { useCreatorOnboarding } from '../composables/useCreatorOnboarding.js';
+import { useCreatorSettings } from '../composables/useCreatorSettings.js';
 import { CREATOR_MODE_GUIDE_KEY, createCreatorModeGuideContext } from '../components/creator/creatorModeGuideKey.js';
 import { CREATOR_ONBOARDING_KEY, createCreatorOnboardingContext } from '../components/creator/creatorOnboardingKey.js';
+import { CREATOR_SETTINGS_KEY, createCreatorSettingsContext } from '../components/creator/creatorSettingsKey.js';
 import { CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext } from '../components/creator/creatorBatchHistoryKey.js';
 import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
 
@@ -1248,45 +677,9 @@ const highlightedVolumeLabel = ref(null);
 const previewLoading = ref(false);
 const loading = ref(false);
 const saving = ref(false);
-const settingsSaving = ref(false);
-const settingsDocs = ref(null);
-const pillarsText = ref('');
 const globalOutlineText = ref('');
 const globalOutlineEditorRef = ref(null);
-const settingsBaseline = ref({ pillars: '', outline: '' });
-const settingsDiffPreview = ref(null);
-const showSettingsDiff = ref(false);
-const settingsRevisions = ref({ pillars: '', outline: '' });
 const conflictMessage = ref('');
-const settingsHistory = ref([]);
-const settingsRestoring = ref(false);
-const usesGlobalMergeDefault = ref(false);
-const mergePresetPackages = ref([]);
-const selectedMergePresetPackage = ref('');
-const showImportMergePresetPackages = ref(false);
-const importMergePresetPackagesJson = ref('');
-const mergePresetPackagesImporting = ref(false);
-const mergePresetImportDiff = ref({ added: [], updated: [], removed: [] });
-const mergePresetToposort = ref({ order: [], edges: [], edge_count: 0 });
-const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] });
-const mergePresetChangelogDiff = ref({ change_count: 0, changes: [] });
-const factoryMergePresetPullConflicts = ref({ conflict_count: 0, conflicts: [] });
-const mergePresetImportPreflight = ref(null);
-const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
-const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] });
-const mergePresetConflictFixes = ref({ fix_count: 0, fixes: [] });
-const mergePresetFactoryPublishing = ref(false);
-const mergePresetFactoryPulling = ref(false);
-const factoryMergePresetPackages = ref([]);
-const showImportMergePrefs = ref(false);
-const importMergePrefsJson = ref('');
-const mergePrefsImporting = ref(false);
-const pillarsSnapshotId = ref('');
-const outlineSnapshotId = ref('');
-const compareSnapshotId = ref('');
-const pillarsMergeSource = ref('editor');
-const outlineMergeSource = ref('editor');
-const mergeStrategyPreview = ref(null);
 const batchStart = ref(1);
 const batchEnd = ref(10);
 const batchBudget = ref(0.3);
@@ -1581,69 +974,13 @@ function goProduceConsole() {
   navigateTo('produce', { tab: 'studio', clearFocus: true });
 }
 
-const settingsDiffSnippet = computed(() => {
-  const preview = settingsDiffPreview.value;
-  if (!preview) return [];
-  return [
-    ...(preview.pillars?.snippet || []),
-    ...(preview.global_outline?.snippet || []),
-  ].slice(0, 10);
-});
 
 
-const factoryMergePresetCount = computed(
-  () => mergePresetPackages.value.filter((pkg) => pkg.scope === 'factory').length,
-);
 
 
-const selectedProjectMergePreset = computed(() => {
-  const pkg = mergePresetPackages.value.find((row) => row.id === selectedMergePresetPackage.value);
-  return pkg?.scope === 'project' && !pkg?.builtin;
-});
-
-watch(selectedMergePresetPackage, async (packageId) => {
-  if (packageId) {
-    applyMergePresetPackage(packageId);
-    try {
-      mergePresetChangelog.value = await fetchCreatorMergePresetChangelog(packageId);
-    } catch {
-      mergePresetChangelog.value = { package_id: packageId, entry_count: 0, entries: [] };
-    }
-  } else {
-    mergePresetChangelog.value = { package_id: '', entry_count: 0, entries: [] };
-  }
-});
 
 
-function formatMergePresetOption(pkg) {
-  if (pkg.version_label) {
-    const prefix = pkg.version_semver_valid === false ? '!' : '';
-    return `${prefix}[${pkg.version_label}] ${pkg.name}`;
-  }
-  return pkg.name;
-}
 
-const showMergeStrategy = computed(() => {
-  const preview = settingsDiffPreview.value;
-  if (!preview?.has_history) return false;
-  const diskHist = preview.disk_vs_history;
-  const editorHist = preview.editor_vs_history;
-  return Boolean(
-    diskHist?.pillars?.changed
-    || diskHist?.global_outline?.changed
-    || editorHist?.pillars?.changed
-    || editorHist?.global_outline?.changed,
-  );
-});
-
-const mergeStrategySnippet = computed(() => {
-  const preview = mergeStrategyPreview.value;
-  if (!preview) return [];
-  return [
-    ...(preview.pillars?.vs_disk?.snippet || []),
-    ...(preview.global_outline?.vs_disk?.snippet || []),
-  ].slice(0, 12);
-});
 
 function chapterRowClass(chapter) {
   if (alertChapters.value.has(chapter)) return 'chapter-row--alert';
@@ -2150,36 +1487,6 @@ function showCreationModeBadgeHint() {
 
 
 
-function applyMergePreset(source) {
-  pillarsMergeSource.value = source;
-  outlineMergeSource.value = source;
-  selectedMergePresetPackage.value = '';
-  if (source === 'history' && settingsHistory.value.length) {
-    const snapId = compareSnapshotId.value || settingsHistory.value[0].id;
-    pillarsSnapshotId.value = snapId;
-    outlineSnapshotId.value = snapId;
-  }
-  refreshMergeStrategyPreview();
-}
-
-function applyMergePresetPackage(packageId) {
-  const pkg = mergePresetPackages.value.find((row) => row.id === packageId);
-  if (!pkg) return;
-  pillarsMergeSource.value = pkg.pillars_merge_source;
-  outlineMergeSource.value = pkg.global_outline_merge_source;
-  if (pkg.pillars_merge_source === 'history' && settingsHistory.value.length) {
-    pillarsSnapshotId.value = compareSnapshotId.value || settingsHistory.value[0].id;
-  }
-  if (pkg.global_outline_merge_source === 'history' && settingsHistory.value.length) {
-    outlineSnapshotId.value = compareSnapshotId.value || settingsHistory.value[0].id;
-  }
-  refreshMergeStrategyPreview();
-}
-
-function onMergePresetPackageChange() {
-  const packageId = selectedMergePresetPackage.value;
-  if (packageId) applyMergePresetPackage(packageId);
-}
 
 
 
@@ -2192,418 +1499,30 @@ function onMergePresetPackageChange() {
 
 
 
-async function exportMergePresetPackages() {
-  error.value = null;
-  try {
-    const data = await exportCreatorMergePresetPackages();
-    const text = JSON.stringify(data, null, 2);
-    importMergePresetPackagesJson.value = text;
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      saveMessage.value = '已导出预设包并复制到剪贴板';
-    } else {
-      saveMessage.value = '已导出预设包（见导入框）';
-      showImportMergePresetPackages.value = true;
-    }
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function importMergePresetPackagesFromJson() {
-  mergePresetPackagesImporting.value = true;
-  error.value = null;
-  try {
-    const payload = JSON.parse(importMergePresetPackagesJson.value);
-    if (mergePresetImportPreflight.value?.blocked) {
-      saveMessage.value = '预检仍有冲突，请先修复或调整 JSON';
-      return;
-    }
-    await importCreatorMergePresetPackages(payload);
-    importMergePresetPackagesJson.value = '';
-    showImportMergePresetPackages.value = false;
-    mergePresetImportPreflight.value = null;
-    await loadMergePresetPackages();
-    saveMessage.value = '已导入合并策略预设包';
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    mergePresetPackagesImporting.value = false;
-  }
-}
 
-async function loadMergePresetPackages() {
-  try {
-    const data = await fetchCreatorMergePresetPackages();
-    mergePresetPackages.value = data.packages || [];
-    const factoryData = await fetchCreatorFactoryMergePresetPackages();
-    factoryMergePresetPackages.value = factoryData.packages || [];
-    const graph = await fetchCreatorMergePresetGraph();
-    mergePresetGraph.value = graph;
-    const conflicts = await fetchCreatorMergePresetConflicts();
-    mergePresetConflicts.value = conflicts;
-    const fixes = await fetchCreatorMergePresetConflictFixes();
-    mergePresetConflictFixes.value = fixes;
-    const topo = await fetchCreatorMergePresetToposort();
-    mergePresetToposort.value = topo;
-    if (selectedMergePresetPackage.value) {
-      const changelog = await fetchCreatorMergePresetChangelog(selectedMergePresetPackage.value);
-      mergePresetChangelog.value = changelog;
-    } else {
-      mergePresetChangelog.value = { package_id: '', entry_count: 0, entries: [] };
-    }
-  } catch {
-    mergePresetPackages.value = [];
-    factoryMergePresetPackages.value = [];
-    mergePresetGraph.value = { node_count: 0, edge_count: 0, nodes: [], edges: [] };
-    mergePresetConflicts.value = { conflict_count: 0, conflicts: [] };
-    mergePresetConflictFixes.value = { fix_count: 0, fixes: [] };
-  }
-}
 
-async function applyMergePresetConflictFix(fix) {
-  try {
-    const result = await applyCreatorMergePresetConflictFix({
-      package_id: fix.package_id,
-      action: fix.action,
-      dependency_id: fix.dependency_id,
-      version_label: fix.version_label,
-    });
-    saveMessage.value = `已应用修复，剩余冲突 ${result.conflict_count}`;
-    await loadMergePresetPackages();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function applyAllMergePresetConflictFixes() {
-  try {
-    const result = await applyAllCreatorMergePresetConflictFixes();
-    saveMessage.value = `已批量应用 ${result.applied} 项，剩余冲突 ${result.conflict_count}`;
-    await loadMergePresetPackages();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function previewMergePresetImportDiff() {
-  try {
-    const payload = JSON.parse(importMergePresetPackagesJson.value);
-    mergePresetImportDiff.value = await previewCreatorMergePresetImportDiff(payload);
-    saveMessage.value = `diff：新增 ${mergePresetImportDiff.value.added?.length || 0}，更新 ${mergePresetImportDiff.value.updated?.length || 0}`;
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function applyMergePresetToposort() {
-  try {
-    const result = await applyCreatorMergePresetToposort();
-    saveMessage.value = `已拓扑重排 ${result.reordered} 个预设包`;
-    await loadMergePresetPackages();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function preflightMergePresetImport() {
-  try {
-    const payload = JSON.parse(importMergePresetPackagesJson.value);
-    const result = await preflightCreatorMergePresetImport(payload);
-    mergePresetImportPreflight.value = result;
-    saveMessage.value = result.blocked
-      ? `预检发现 ${result.conflict_count} 个冲突，导入已阻断`
-      : `预检通过，可导入 ${result.would_import} 个包`;
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function publishMergePresetToFactory() {
-  if (!selectedProjectMergePreset.value) return;
-  mergePresetFactoryPublishing.value = true;
-  error.value = null;
-  try {
-    await publishCreatorMergePresetToFactory({ package_id: selectedMergePresetPackage.value });
-    saveMessage.value = '已发布预设包到工厂库';
-    await loadMergePresetPackages();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    mergePresetFactoryPublishing.value = false;
-  }
-}
 
-async function pullFactoryMergePresets() {
-  const ids = mergePresetPackages.value.filter((pkg) => pkg.scope === 'factory').map((pkg) => pkg.id);
-  const fallback = factoryMergePresetPackages.value.map((pkg) => pkg.id);
-  const packageIds = ids.length ? ids : fallback;
-  if (!packageIds.length) return;
-  mergePresetFactoryPulling.value = true;
-  error.value = null;
-  factoryMergePresetPullConflicts.value = { conflict_count: 0, conflicts: [] };
-  try {
-    const preflight = await preflightCreatorFactoryMergePresetPull({ package_ids: packageIds });
-    if (preflight.conflict_count) {
-      factoryMergePresetPullConflicts.value = preflight;
-      saveMessage.value = `工厂拉取预检发现 ${preflight.conflict_count} 个冲突，请选择策略`;
-      return;
-    }
-    const result = await pullCreatorFactoryMergePresetPackages({ package_ids: packageIds });
-    saveMessage.value = `已从工厂库拉取 ${result.imported} 个预设包`;
-    await loadMergePresetPackages();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    mergePresetFactoryPulling.value = false;
-  }
-}
 
-async function pullFactoryMergePresetsWithStrategy(packageId, strategy) {
-  const ids = factoryMergePresetPackages.value.map((pkg) => pkg.id);
-  if (!ids.length) return;
-  mergePresetFactoryPulling.value = true;
-  error.value = null;
-  try {
-    const result = await pullCreatorFactoryMergePresetPackages({
-      package_ids: ids,
-      conflict_strategies: { [packageId]: strategy },
-    });
-    saveMessage.value = `拉取完成：导入 ${result.imported}，跳过 ${result.skipped || 0}`;
-    factoryMergePresetPullConflicts.value = { conflict_count: 0, conflicts: [] };
-    await loadMergePresetPackages();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    mergePresetFactoryPulling.value = false;
-  }
-}
 
-async function previewMergePresetChangelogDiff(entryIndex) {
-  if (!selectedMergePresetPackage.value) return;
-  try {
-    mergePresetChangelogDiff.value = await fetchCreatorMergePresetChangelogDiff(
-      selectedMergePresetPackage.value,
-      entryIndex,
-    );
-    saveMessage.value = `变更 diff：${mergePresetChangelogDiff.value.change_count} 项`;
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function loadMergePreferences() {
-  try {
-    const prefs = await fetchCreatorMergePreferences();
-    pillarsMergeSource.value = prefs.pillars_merge_source || 'editor';
-    outlineMergeSource.value = prefs.global_outline_merge_source || 'editor';
-    if (prefs.merge_snapshot_id) {
-      const known = settingsHistory.value.some((s) => s.id === prefs.merge_snapshot_id);
-      if (known) compareSnapshotId.value = prefs.merge_snapshot_id;
-    }
-    const pillarsSnap = prefs.pillars_merge_snapshot_id || prefs.merge_snapshot_id;
-    const outlineSnap = prefs.global_outline_merge_snapshot_id || prefs.merge_snapshot_id;
-    if (pillarsSnap && settingsHistory.value.some((s) => s.id === pillarsSnap)) {
-      pillarsSnapshotId.value = pillarsSnap;
-    }
-    if (outlineSnap && settingsHistory.value.some((s) => s.id === outlineSnap)) {
-      outlineSnapshotId.value = outlineSnap;
-    }
-    usesGlobalMergeDefault.value = Boolean(prefs.uses_global_default);
-  } catch {
-    /* optional */
-  }
-}
 
-async function exportMergePreferences() {
-  error.value = null;
-  try {
-    const data = await exportCreatorMergePreferences();
-    const text = JSON.stringify(data, null, 2);
-    importMergePrefsJson.value = text;
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      saveMessage.value = '已导出合并策略并复制到剪贴板';
-    } else {
-      saveMessage.value = '已导出合并策略（见导入框）';
-      showImportMergePrefs.value = true;
-    }
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
 
-async function importMergePreferencesFromJson() {
-  mergePrefsImporting.value = true;
-  error.value = null;
-  try {
-    const payload = JSON.parse(importMergePrefsJson.value);
-    await importCreatorMergePreferences({ ...payload, scope: payload.scope || 'both' });
-    saveMessage.value = '已导入合并策略';
-    importMergePrefsJson.value = '';
-    showImportMergePrefs.value = false;
-    await loadMergePreferences();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    mergePrefsImporting.value = false;
-  }
-}
 
-async function loadSettingsHistory() {
-  try {
-    const data = await fetchCreatorSettingsHistory();
-    settingsHistory.value = data.snapshots || [];
-    if (settingsHistory.value.length && !compareSnapshotId.value) {
-      compareSnapshotId.value = settingsHistory.value[0].id;
-    }
-  } catch {
-    settingsHistory.value = [];
-  }
-}
 
-async function restoreSettingsHistory(snapshotId) {
-  settingsRestoring.value = true;
-  error.value = null;
-  try {
-    const docs = await restoreCreatorSettingsSnapshot(snapshotId);
-    settingsDocs.value = docs;
-    pillarsText.value = docs.pillars_text || '';
-    globalOutlineText.value = docs.global_outline_text || '';
-    settingsBaseline.value = {
-      pillars: docs.pillars_text || '',
-      outline: docs.global_outline_text || '',
-    };
-    settingsRevisions.value = {
-      pillars: docs.pillars_revision || '',
-      outline: docs.global_outline_revision || '',
-    };
-    saveMessage.value = '已从历史版本恢复设定';
-    conflictMessage.value = '';
-    await loadSettingsHistory();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    settingsRestoring.value = false;
-  }
-}
 
-async function loadSettingsDocs() {
-  const docs = await fetchCreatorSettingsDocs();
-  settingsDocs.value = docs;
-  pillarsText.value = docs.pillars_text || '';
-  globalOutlineText.value = docs.global_outline_text || '';
-  settingsBaseline.value = {
-    pillars: docs.pillars_text || '',
-    outline: docs.global_outline_text || '',
-  };
-  settingsRevisions.value = {
-    pillars: docs.pillars_revision || '',
-    outline: docs.global_outline_revision || '',
-  };
-  settingsDiffPreview.value = null;
-  showSettingsDiff.value = false;
-}
 
-function cancelSettingsDiff() {
-  showSettingsDiff.value = false;
-  settingsDiffPreview.value = null;
-}
 
-async function refreshMergeStrategyPreview() {
-  if (!showMergeStrategy.value) {
-    mergeStrategyPreview.value = null;
-    return;
-  }
-  try {
-    mergeStrategyPreview.value = await previewCreatorSettingsMerge({
-      pillars_text: pillarsText.value,
-      global_outline_text: globalOutlineText.value,
-      pillars_merge_source: pillarsMergeSource.value,
-      global_outline_merge_source: outlineMergeSource.value,
-      snapshot_id: compareSnapshotId.value || undefined,
-      pillars_merge_snapshot_id: pillarsSnapshotId.value || compareSnapshotId.value || undefined,
-      global_outline_merge_snapshot_id: outlineSnapshotId.value || compareSnapshotId.value || undefined,
-    });
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  }
-}
 
-async function refreshThreeWayPreview() {
-  if (!showSettingsDiff.value) return;
-  try {
-    settingsDiffPreview.value = await previewCreatorSettingsThreeWay({
-      pillars_text: pillarsText.value,
-      global_outline_text: globalOutlineText.value,
-      snapshot_id: compareSnapshotId.value || undefined,
-    });
-    await refreshMergeStrategyPreview();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  }
-}
 
-async function requestSaveSettings() {
-  error.value = null;
-  if (
-    pillarsText.value === settingsBaseline.value.pillars
-    && globalOutlineText.value === settingsBaseline.value.outline
-  ) {
-    saveMessage.value = '设定无变更';
-    return;
-  }
-  try {
-    if (settingsHistory.value.length) {
-      settingsDiffPreview.value = await previewCreatorSettingsThreeWay({
-        pillars_text: pillarsText.value,
-        global_outline_text: globalOutlineText.value,
-        snapshot_id: compareSnapshotId.value || undefined,
-      });
-    } else {
-      settingsDiffPreview.value = await previewCreatorSettingsDocs({
-        pillars_text: pillarsText.value,
-        global_outline_text: globalOutlineText.value,
-      });
-    }
-    showSettingsDiff.value = true;
-    await refreshMergeStrategyPreview();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  }
-}
 
-async function confirmSaveSettings() {
-  settingsSaving.value = true;
-  saveMessage.value = '';
-  error.value = null;
-  try {
-    const body = {
-      pillars_text: pillarsText.value,
-      global_outline_text: globalOutlineText.value,
-      expected_pillars_revision: settingsRevisions.value.pillars,
-      expected_global_outline_revision: settingsRevisions.value.outline,
-    };
-    if (showMergeStrategy.value) {
-      body.pillars_merge_source = pillarsMergeSource.value;
-      body.global_outline_merge_source = outlineMergeSource.value;
-      body.merge_snapshot_id = compareSnapshotId.value || undefined;
-      body.pillars_merge_snapshot_id = pillarsSnapshotId.value || compareSnapshotId.value || undefined;
-      body.global_outline_merge_snapshot_id = outlineSnapshotId.value || compareSnapshotId.value || undefined;
-    }
-    await saveCreatorSettingsDocs(body);
-    saveMessage.value = '设定已保存';
-    conflictMessage.value = '';
-    showSettingsDiff.value = false;
-    settingsDiffPreview.value = null;
-    mergeStrategyPreview.value = null;
-    await refresh();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    settingsSaving.value = false;
-  }
-}
+
+
 
 async function runAdvancePreflight() {
   batchError.value = null;
@@ -2739,6 +1658,35 @@ async function runCompanionLogicCheck() {
   }
 }
 
+
+const settingsHub = useCreatorSettings({
+  uiProfile,
+  overview,
+  error,
+  saveMessage,
+  conflictMessage,
+  handleSaveError,
+  onAfterSettingsSave: async () => refresh(),
+  globalOutlineEditorRef,
+  globalOutlineText,
+  isWorkspaceColumnVisible,
+  workspaceTabsEnabled,
+  logicCheckRunning,
+  logicCheckResult,
+  activeLogicCheckIssueIdx,
+  runCompanionLogicCheck,
+  handleLogicCheckIssueClick,
+  onLogicCheckIssueKeydown,
+});
+const {
+  panelContext: settingsPanelContext,
+  loadSettingsDocs,
+  loadSettingsHistory,
+  loadMergePreferences,
+  loadMergePresetPackages,
+} = settingsHub;
+
+
 async function refresh() {
   loading.value = true;
   error.value = null;
@@ -2778,6 +1726,10 @@ async function refresh() {
 
 
 
+provide(
+  CREATOR_SETTINGS_KEY,
+  createCreatorSettingsContext(settingsPanelContext),
+);
 provide(
   CREATOR_ONBOARDING_KEY,
   createCreatorOnboardingContext(onboardingPanelContext),
@@ -3534,17 +2486,6 @@ watch(
   font-size: var(--text-xs);
 }
 
-.settings-textarea {
-  width: 100%;
-  font-size: var(--text-sm);
-  font-family: inherit;
-  padding: var(--space-xs);
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--color-text);
-  resize: vertical;
-  min-height: 80px;
-}
 
 .batch-range {
   display: flex;
@@ -3554,11 +2495,6 @@ watch(
   margin-bottom: 6px;
 }
 
-.batch-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
 
 .advance-batch-panel {
   margin-top: var(--space-md);
@@ -3571,34 +2507,11 @@ watch(
   margin-top: 4px;
 }
 
-.settings-diff-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-sm);
-}
 
-.diff-line {
-  font-size: var(--text-sm);
-  margin: 2px 0;
-}
 
-.settings-excerpt,
-.volume-excerpt {
-  font-size: var(--text-sm);
-  white-space: pre-wrap;
-  max-height: 160px;
-  overflow: auto;
-  margin: var(--space-sm) 0;
-}
 
 .path-line,
-.cmd-block code {
-  font-size: var(--text-xs);
-  word-break: break-all;
-  display: block;
-}
 
-.p0-line.ok { color: #4a4; }
-.p0-line.warn { color: #c44; }
 
 .meta-line {
   font-size: var(--text-sm);
@@ -3633,23 +2546,8 @@ watch(
   flex-wrap: wrap;
 }
 
-.merge-strategy-panel {
-  margin-top: var(--space-xs);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
-.merge-presets {
-  display: flex;
-  gap: var(--space-xs);
-  flex-wrap: wrap;
-  margin-bottom: 4px;
-}
 
-.merge-preview-visual {
-  margin-top: var(--space-xs);
-}
 
 .mini-btn--danger {
   color: #c44;
@@ -3666,76 +2564,22 @@ watch(
 
 
 
-.template-changelog ul {
-  margin: 4px 0 0;
-  padding-left: 1.2em;
-  font-size: var(--text-sm);
-}
-
-.changelog-row {
-  margin-bottom: 2px;
-}
-
-.changelog-diff {
-  color: var(--color-accent);
-}
-
-.changelog-visual-diff {
-  margin-top: 4px;
-  font-size: var(--text-xs);
-  white-space: pre-wrap;
-  max-height: 120px;
-  overflow: auto;
-  background: rgba(127, 127, 127, 0.08);
-  padding: 4px;
-}
-
-.visual-diff-line--add {
-  color: #4a4;
-}
-
-.visual-diff-line--remove {
-  color: #c44;
-}
 
 
 
 
-.template-approvals {
-  margin-top: var(--space-sm);
-}
-
-.template-approval-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  align-items: center;
-  margin-bottom: var(--space-xs);
-}
-
-.merge-preset-graph ul {
-  margin: 0;
-  padding-left: 1.2rem;
-}
-
-.version-semver-warn {
-  color: var(--color-warn, #c90);
-}
 
 
 
-.import-templates-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
 
-.import-templates-json {
-  width: 100%;
-  min-height: 72px;
-  font-family: monospace;
-}
+
+
+
+
+
+
+
+
 
 .volume-template-panel {
   margin-bottom: var(--space-sm);
@@ -3770,37 +2614,8 @@ watch(
   padding: var(--space-sm);
 }
 
-.history-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0 0;
-}
 
-.history-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 6px;
-  margin-bottom: 4px;
-  font-size: var(--text-sm);
-}
 
-.history-meta {
-  opacity: 0.75;
-}
 
-.history-excerpt {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.merge-range {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: var(--text-sm);
-  margin-bottom: 6px;
-  align-items: center;
-}
 </style>

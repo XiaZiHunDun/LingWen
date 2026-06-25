@@ -658,27 +658,7 @@
             >
               复制分享链接
             </button>
-            <div
-              v-if="vp.uiProfile.volume_plan_diff_share_collab_v2 && vp.volumePlanDiffCollabRows.length"
-              class="volume-plan-diff-collab-panel pixel-border"
-              data-testid="volume-plan-diff-collab-panel"
-            >
-              <p class="meta-line">协作批注（分享链接 v3 附带，按卷联动 diff）</p>
-              <label
-                v-for="row in vp.volumePlanDiffCollabRows"
-                :key="`collab-edit-${row.label}`"
-                class="volume-plan-diff-collab-row"
-              >
-                卷 {{ row.label }}
-                <input
-                  class="vol-input volume-plan-diff-collab-input"
-                  :data-testid="`diff-collab-note-input-${row.label}`"
-                  :value="vp.diffCollabNotes[row.label] || ''"
-                  placeholder="@reviewer 请确认"
-                  @input="vp.setDiffCollabNote(row.label, $event.target.value)"
-                />
-              </label>
-            </div>
+            <CreatorVolumePlanCollabPanel />
             <div
               class="volume-plan-diff-body"
               :class="{ 'volume-plan-diff-side-by-side': vp.uiProfile.volume_plan_diff_outline_side_by_side }"
@@ -1058,6 +1038,7 @@
 <script setup>
 import { inject } from 'vue';
 import { CREATOR_VOLUME_PLAN_KEY } from './creatorVolumePlanKey.js';
+import CreatorVolumePlanCollabPanel from './CreatorVolumePlanCollabPanel.vue';
 
 const vp = inject(CREATOR_VOLUME_PLAN_KEY);
 if (!vp) {
