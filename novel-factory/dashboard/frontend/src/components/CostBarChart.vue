@@ -91,7 +91,7 @@ const PIXEL_TOOLTIP = {
   borderWidth: 2,
   textStyle: {
     fontFamily: 'Press Start 2P',
-    fontSize: 8,
+    fontSize: 13,
     color: '#fff7e8',
   },
 }
@@ -140,7 +140,7 @@ function render() {
           right: 10,
           textStyle: {
             fontFamily: 'Press Start 2P',
-            fontSize: 8,
+            fontSize: 13,
             color: '#2a220f',
           },
         }
@@ -160,7 +160,7 @@ function render() {
       axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
       axisLabel: {
         rotate: 30,
-        fontSize: 7,
+        fontSize: 12,
         fontFamily: 'Press Start 2P',
         color: '#2a220f',
         interval: 0,
@@ -173,13 +173,13 @@ function render() {
       nameGap: 8,
       nameTextStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#2a220f',
       },
       axisLine: { lineStyle: { color: '#2a220f', width: 2 } },
       axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
       axisLabel: {
-        fontSize: 7,
+        fontSize: 12,
         fontFamily: 'Press Start 2P',
         color: '#2a220f',
         formatter: (v) => `$${Number(v).toFixed(4)}`,
@@ -204,7 +204,7 @@ function render() {
           show: true,
           position: 'top',
           fontFamily: 'Press Start 2P',
-          fontSize: 7,
+          fontSize: 12,
           color: '#2a220f',
           formatter: (p) => `$${Number(p.value).toFixed(4)}`,
         },
@@ -243,7 +243,7 @@ watch(() => props.mode, render)
 
 .cost-bar-chart-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-size: var(--text-sm);
   color: var(--color-accent, #26a8ff);
   margin: 0 0 var(--space-sm) 0;
 }
@@ -258,7 +258,7 @@ watch(() => props.mode, render)
 
 .mode-tab {
   font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: var(--space-xs) var(--space-sm);
   background: none;
   border: none;
@@ -295,7 +295,7 @@ watch(() => props.mode, render)
   left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: var(--text-md);
   color: var(--color-text-dim, #b88230);
   text-align: center;
   padding: 16px;

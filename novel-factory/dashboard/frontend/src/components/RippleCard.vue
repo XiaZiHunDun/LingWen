@@ -73,10 +73,11 @@ defineEmits(['select']);
 .ripple-card:hover { background: #f6f6f6; }
 .ripple-card__header { display: flex; justify-content: space-between; margin-bottom: 6px; }
 .ripple-card__dim { font-weight: 600; color: #2c3e50; }
-.ripple-card__status { font-size: 0.85em; padding: 2px 8px; border-radius: 4px; }
+.ripple-card__status { font-size: var(--text-sm); padding: 4px 10px; border-radius: 4px; }
 .ripple-card__status--pending { background: #fff3cd; color: #856404; }
 .ripple-card__status--applied { background: #d4edda; color: #155724; }
 .ripple-card__status--rejected { background: #f8d7da; color: #721c24; }
-.ripple-card__body { display: flex; gap: 12px; font-size: 0.9em; color: #555; }
-.ripple-card__footer { margin-top: 6px; font-size: 0.85em; color: #888; }
+.ripple-card__dim { font-weight: 600; font-size: var(--text-md); color: #2c3e50; }
+.ripple-card__body { display: flex; gap: 12px; font-size: var(--text-sm); color: #555; }
+.ripple-card__footer { margin-top: 8px; font-size: var(--text-sm); color: #666; }
 </style>

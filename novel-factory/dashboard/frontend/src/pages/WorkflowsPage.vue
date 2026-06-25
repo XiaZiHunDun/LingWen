@@ -263,7 +263,7 @@ async function loadGraph() {
 }
 
 .ws-indicator {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 4px 8px;
   background: var(--bg-secondary);
@@ -331,7 +331,7 @@ async function loadGraph() {
 }
 
 .wf-item-name {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   display: flex;
   align-items: center;
@@ -353,7 +353,7 @@ async function loadGraph() {
   display: flex;
   justify-content: space-between;
   margin-top: var(--space-xs);
-  font-size: 8px;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
 }
 
@@ -379,7 +379,7 @@ async function loadGraph() {
 }
 
 .form-label {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-text-dim);
 }
@@ -387,7 +387,7 @@ async function loadGraph() {
 .form-textarea,
 .form-input {
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--text-md);
   padding: var(--space-xs);
   background: var(--bg-primary);
   border: 2px solid var(--border-color);
@@ -396,7 +396,7 @@ async function loadGraph() {
 }
 
 .run-btn {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   padding: 10px 16px;
   background: var(--color-accent);
@@ -428,7 +428,7 @@ async function loadGraph() {
   background: #ffcdd2;
   color: #c62828;
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--text-md);
 }
 
 .active-status {
@@ -436,7 +436,7 @@ async function loadGraph() {
 }
 
 .view-graph-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 4px 8px;
   margin-top: var(--space-xs);
@@ -461,7 +461,7 @@ async function loadGraph() {
 }
 
 .graph-section .loading {
-  font-size: 10px;
+  font-size: var(--text-md);
   text-align: center;
   padding: var(--space-lg);
 }

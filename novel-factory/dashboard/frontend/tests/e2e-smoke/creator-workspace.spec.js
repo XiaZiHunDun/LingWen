@@ -8,10 +8,10 @@ test.describe('Creator workspace live e2e', () => {
     test.setTimeout(60_000);
     await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('page-title')).toHaveText('创作伴侣');
-    await expect(page.getByTestId('creator-grid')).toBeVisible();
+    await expect(page.getByTestId('creator-workspace-tabs')).toBeVisible();
     await expect(page.getByTestId('column-write')).toBeVisible();
-    await expect(page.getByTestId('column-pulse')).toBeVisible();
-    await expect(page.getByTestId('column-settings')).toBeVisible();
+    await expect(page.getByTestId('creator-workspace-tab-pulse')).toBeVisible();
+    await expect(page.getByTestId('creator-workspace-tab-settings')).toBeVisible();
   });
 
   test('creator_volume_plan_panel_visible', async ({ page }) => {

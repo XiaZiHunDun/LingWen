@@ -144,7 +144,7 @@ const emitDecisionLink = (chapterNum) => {
 .chapter-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .chapter-table th,
@@ -228,6 +228,6 @@ const emitDecisionLink = (chapterNum) => {
   padding: var(--space-xl);
   color: var(--color-text);
   opacity: 0.6;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 </style>

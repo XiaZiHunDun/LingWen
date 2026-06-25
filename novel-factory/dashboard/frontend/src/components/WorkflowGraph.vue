@@ -146,13 +146,13 @@ onBeforeUnmount(() => {
 }
 
 .graph-title {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
 }
 
 .reset-zoom-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 4px 8px;
   background: var(--bg-primary);
@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
 }
 
 .zoom-display {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   min-width: 50px;
   text-align: center;
@@ -218,7 +218,7 @@ onBeforeUnmount(() => {
 }
 
 .error-state .error-detail {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   white-space: pre-wrap;
   background: var(--bg-primary);

@@ -241,7 +241,7 @@ watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate:
 }
 
 .count-badge {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 6px 10px;
   border: 2px solid var(--border-color);
@@ -256,7 +256,7 @@ watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate:
 }
 
 .tab-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 8px 12px;
   background: transparent;
@@ -277,7 +277,7 @@ watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate:
   background: #ffcdd2;
   color: #c62828;
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--text-md);
 }
 
 .loading,
@@ -293,7 +293,7 @@ watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate:
 }
 
 .empty-state .hint {
-  font-size: 10px;
+  font-size: var(--text-md);
   color: var(--color-text-dim);
 }
 
@@ -305,7 +305,7 @@ watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate:
 
 /* Phase 6.6.A: 折叠展开按钮 + tab 颜色指示线 */
 .expand-toggle {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 6px 10px;
   background: var(--bg-secondary);
@@ -327,7 +327,7 @@ watch([focusChapter, focusDecisionId, pending], applyDecisionFocus, { immediate:
 }
 
 .focus-banner {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: var(--space-sm);
   background: #fff9c4;

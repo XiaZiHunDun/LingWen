@@ -42,16 +42,16 @@ onMounted(() => {
 }
 
 .switcher-label {
-  font-size: 8px;
-  font-family: 'Press Start 2P', monospace;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
   color: var(--color-text);
 }
 
 .switcher-select {
-  font-size: 10px;
-  font-family: monospace;
-  padding: 4px 8px;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  padding: 8px 12px;
   background: var(--bg-primary);
-  min-width: 180px;
+  min-width: 220px;
 }
 </style>

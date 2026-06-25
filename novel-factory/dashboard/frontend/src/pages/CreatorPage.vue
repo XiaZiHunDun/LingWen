@@ -23,8 +23,13 @@
         </span>
         <span
           v-if="overview && displayDeviationBadge"
-          class="deviation-badge pixel-border"
+          class="deviation-badge pixel-border deviation-badge--clickable"
           data-testid="deviation-badge"
+          role="button"
+          tabindex="0"
+          :title="workspaceTabsEnabled ? '查看脉络与偏离' : undefined"
+          @click="onDeviationBadgeClick"
+          @keydown.enter="onDeviationBadgeClick"
         >
           偏离 {{ displayDeviationCount }}
         </span>
@@ -38,13 +43,6 @@
         </button>
       </div>
     </header>
-    <p
-      v-if="uiProfile.creation_mode_badge_legend"
-      class="mode-badge-legend meta-line pixel-border"
-      data-testid="creation-mode-badge-legend"
-    >
-      徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
-    </p>
 
     <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
       {{ error }}
@@ -58,6 +56,31 @@
     <div v-if="saveMessage" class="save-banner pixel-border" data-testid="save-banner">
       {{ saveMessage }}
     </div>
+
+    <HubTabBar
+      v-if="overview && workspaceTabsEnabled"
+      v-model="workspaceActiveTab"
+      :tabs="workspaceTabs"
+      test-id="creator-workspace-tab"
+      class="creator-workspace-tabs"
+      data-testid="creator-workspace-tabs"
+    />
+
+    <details
+      class="creator-mode-guide-panel pixel-border"
+      data-testid="creator-mode-guide-panel"
+      :open="modeGuideExpanded"
+    >
+      <summary class="creator-mode-guide-summary">
+        模式说明与能力对照<span v-if="modeLabel"> · {{ modeLabel }}</span>
+      </summary>
+    <p
+      v-if="uiProfile.creation_mode_badge_legend && !uiProfile.creator_simplified_mode_ops"
+      class="mode-badge-legend meta-line pixel-border"
+      data-testid="creation-mode-badge-legend"
+    >
+      徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
+    </p>
     <p
       v-if="uiProfile.creation_mode_switch_hint && creationModeSwitchHintText"
       class="mode-switch-hint pixel-border"
@@ -90,7 +113,7 @@
       {{ creationModeSwitchAriaMessage }}
     </div>
     <aside
-      v-if="uiProfile.creation_mode_preview_pinned_sidebar && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
+      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_preview_pinned_sidebar && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length"
       class="creation-mode-pinned-sidebar pixel-border"
       data-testid="creation-mode-pinned-sidebar"
     >
@@ -108,7 +131,7 @@
       </ul>
     </aside>
     <div
-      v-if="uiProfile.creation_mode_switch_preview && creationModePreviewRows.length && !uiProfile.creation_mode_preview_pinned_sidebar"
+      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_switch_preview && creationModePreviewRows.length && !uiProfile.creation_mode_preview_pinned_sidebar"
       class="creation-mode-switch-preview pixel-border"
       :class="{ 'creation-mode-switch-preview--guide': creationModeGuideAnimationEnabled }"
       data-testid="creation-mode-switch-preview"
@@ -226,7 +249,7 @@
       快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
     </p>
     <ul
-      v-if="uiProfile.creation_mode_accessibility_checklist && creationModeAccessibilityItems.length"
+      v-if="!uiProfile.creator_simplified_mode_ops && uiProfile.creation_mode_accessibility_checklist && creationModeAccessibilityItems.length"
       class="creation-mode-accessibility-checklist pixel-border"
       data-testid="creation-mode-accessibility-checklist"
     >
@@ -406,7 +429,7 @@
       </div>
     </div>
     <div
-      v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
+      v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length && !uiProfile.creator_simplified_mode_ops"
       class="creation-mode-capability-matrix pixel-border"
       data-testid="creation-mode-capability-matrix"
     >
@@ -434,6 +457,42 @@
         </tbody>
       </table>
     </div>
+    <details
+      v-if="uiProfile.creator_simplified_mode_ops"
+      class="creator-advanced-ops pixel-border"
+      data-testid="creator-advanced-ops"
+    >
+      <summary class="creator-advanced-ops-summary">高级：三模式对照与运维</summary>
+      <div
+        v-if="uiProfile.creation_mode_capability_matrix && creationModeCapabilityRows.length"
+        class="creation-mode-capability-matrix pixel-border"
+        data-testid="creation-mode-capability-matrix-advanced"
+      >
+        <p class="meta-line">三模式能力对照</p>
+        <table class="creation-mode-capability-table">
+          <thead>
+            <tr>
+              <th scope="col">能力</th>
+              <th scope="col">陪伴</th>
+              <th scope="col">推进</th>
+              <th scope="col">工作室</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in creationModeCapabilityRows"
+              :key="`capability-adv-${row.id}`"
+            >
+              <th scope="row">{{ row.label }}</th>
+              <td>{{ row.companion ? '✓' : '—' }}</td>
+              <td>{{ row.advance ? '✓' : '—' }}</td>
+              <td>{{ row.studio ? '✓' : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="meta-line">切换模式：编辑 <code>config/project.yaml</code> → <code>creation_mode</code></p>
+    </details>
     <p
       v-if="uiProfile.studio_creation_entry_hint && studioCreationEntryHintText"
       class="mode-switch-hint studio-entry-hint pixel-border"
@@ -441,6 +500,7 @@
     >
       {{ studioCreationEntryHintText }}
     </p>
+    </details>
 
     <details
       v-if="onboardingWizard"
@@ -764,9 +824,18 @@
       </div>
     </details>
 
-    <div v-if="overview" class="creator-grid" data-testid="creator-grid">
+    <div
+      v-if="overview"
+      class="creator-grid"
+      :class="{ 'creator-grid--tabbed': workspaceTabsEnabled }"
+      data-testid="creator-grid"
+    >
       <!-- 写 -->
-      <section class="creator-column pixel-card" data-testid="column-write">
+      <section
+        v-show="isWorkspaceColumnVisible('write')"
+        class="creator-column pixel-card"
+        data-testid="column-write"
+      >
         <h2 class="column-title">写</h2>
         <p class="column-hint">章节状态 · 偏离章高亮</p>
         <ul class="chapter-list">
@@ -1012,7 +1081,11 @@
       </section>
 
       <!-- 脉络 -->
-      <section class="creator-column pixel-card" data-testid="column-pulse">
+      <section
+        v-show="isWorkspaceColumnVisible('pulse')"
+        class="creator-column pixel-card"
+        data-testid="column-pulse"
+      >
         <h2 class="column-title">脉络</h2>
         <div class="progress-block">
           <p class="progress-text">
@@ -2160,7 +2233,7 @@
         </ul>
 
         <div
-          v-if="showAdvanceBatch"
+          v-if="showAdvanceBatch && showAdvanceBatchOnCreator"
           class="advance-batch-panel pixel-border"
           data-testid="advance-batch-panel"
         >
@@ -2230,6 +2303,25 @@
           <p v-if="batchJob" class="meta-line" data-testid="batch-job-status">
             任务 {{ batchJob.job_id }} · {{ batchJob.status }}
           </p>
+        </div>
+
+        <div
+          v-else-if="showAdvanceBatch"
+          class="advance-produce-cta pixel-border"
+          data-testid="advance-produce-cta"
+        >
+          <h3 class="subsection-title">批量产章</h3>
+          <p class="meta-line">
+            Preflight、Batch 与生产记录已合并到「生产」页，避免与工作室重复操作。
+          </p>
+          <button
+            type="button"
+            class="save-btn pixel-border"
+            data-testid="advance-go-produce-btn"
+            @click="goProduceConsole"
+          >
+            去生产控制台
+          </button>
         </div>
 
         <div
@@ -2742,7 +2834,11 @@
       </section>
 
       <!-- 设定 -->
-      <section class="creator-column pixel-card" data-testid="column-settings">
+      <section
+        v-show="isWorkspaceColumnVisible('settings')"
+        class="creator-column pixel-card"
+        data-testid="column-settings"
+      >
         <h2 class="column-title">设定</h2>
         <details class="settings-block" open>
           <summary>创作支柱</summary>
@@ -3421,9 +3517,11 @@ import {
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useCreatorWorkspace } from '../composables/useCreatorWorkspace.js';
+import HubTabBar from '../components/HubTabBar.vue';
 
 const { projectRevision } = useStudioProject();
-const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl } = useDashboardNav();
+const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo } = useDashboardNav();
 const wizardPanelRef = ref(null);
 const wizardPanelOpen = ref(false);
 const overview = ref(null);
@@ -3713,9 +3811,41 @@ const defaultUiProfile = {
   studio_wizard_collapse_memory: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
+  creator_workspace_tabs: false,
+  creator_mode_guide_default_collapsed: false,
+  creator_simplified_mode_ops: false,
 };
 
 const uiProfile = computed(() => overview.value?.ui_profile || defaultUiProfile);
+
+const {
+  activeTab: workspaceActiveTab,
+  tabsEnabled: workspaceTabsEnabled,
+  workspaceTabs,
+  isColumnVisible: isWorkspaceColumnVisible,
+  setWorkspaceTab,
+} = useCreatorWorkspace(uiProfile, overview);
+
+const modeGuideExpanded = computed(
+  () => !uiProfile.value.creator_mode_guide_default_collapsed,
+);
+
+function onDeviationBadgeClick() {
+  if (workspaceTabsEnabled.value) {
+    setWorkspaceTab('pulse');
+  }
+}
+
+function maybeAutoSelectWritingChapter() {
+  if (!workspaceTabsEnabled.value || selectedChapter.value) return;
+  const ov = overview.value;
+  if (!ov || ov.creation_mode !== 'companion') return;
+  const chapters = ov.chapters || [];
+  const target = chapters.find((ch) => !ch.has_body) || chapters[0];
+  if (target?.chapter) {
+    selectChapter(target.chapter);
+  }
+}
 
 watch(
   () => volumePlanDiffPreview.value?.has_changes,
@@ -3769,6 +3899,11 @@ function syncWizardPanelOpen() {
   }
   if (wizardUnreadMentions.value > 0) {
     wizardPanelOpen.value = true;
+    return;
+  }
+  const progress = onboardingWizard.value?.progress_pct ?? 100;
+  if (progress >= 100 && !focusWizard.value) {
+    wizardPanelOpen.value = false;
     return;
   }
   if (uiProfile.value.studio_wizard_collapse_memory && onboardingWizard.value) {
@@ -4476,6 +4611,14 @@ const visibleChapters = computed(() =>
 const showAdvanceBatch = computed(
   () => overview.value?.creation_mode === 'advance' || overview.value?.advance_volume_summary,
 );
+
+const showAdvanceBatchOnCreator = computed(
+  () => uiProfile.value.advance_batch_panel_on_creator === true,
+);
+
+function goProduceConsole() {
+  navigateTo('produce', { tab: 'studio', clearFocus: true });
+}
 
 const settingsDiffSnippet = computed(() => {
   const preview = settingsDiffPreview.value;
@@ -7489,6 +7632,7 @@ async function refresh() {
       pollBatchJob(),
     ]);
     overview.value = ov;
+    maybeAutoSelectWritingChapter();
     syncWizardPanelOpen();
     loadCreationModeSwitchHistory();
     await refreshVolumePlanDiffPreview();
@@ -7557,6 +7701,46 @@ watch(
   gap: var(--space-md);
 }
 
+.creator-grid {
+  order: 1;
+}
+
+.creator-grid--tabbed {
+  grid-template-columns: 1fr;
+}
+
+.creator-workspace-tabs {
+  padding: 0 var(--space-md);
+  order: 0;
+}
+
+.deviation-badge--clickable {
+  cursor: pointer;
+}
+
+.deviation-badge--clickable:hover {
+  outline: 2px solid var(--color-accent);
+}
+
+.creator-mode-guide-panel,
+.onboarding-wizard {
+  order: 2;
+}
+
+.creator-advanced-ops-summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  padding: var(--space-xs) 0;
+}
+
+.creator-mode-guide-summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: 'Press Start 2P', monospace;
+  padding: var(--space-xs) 0;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -7579,7 +7763,7 @@ watch(
 
 .mode-badge,
 .deviation-badge {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: var(--space-xs) var(--space-sm);
   font-family: 'Press Start 2P', monospace;
 }
@@ -7607,14 +7791,14 @@ watch(
 }
 
 .column-title {
-  font-size: 12px;
+  font-size: var(--text-lg);
   margin-bottom: var(--space-sm);
   color: var(--color-accent);
   font-family: 'Press Start 2P', monospace;
 }
 
 .column-hint {
-  font-size: 8px;
+  font-size: var(--text-sm);
   opacity: 0.7;
   margin-bottom: var(--space-md);
 }
@@ -7631,7 +7815,7 @@ watch(
 .chapter-row {
   display: flex;
   justify-content: space-between;
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: 4px 6px;
   border: 1px solid var(--border-color);
 }
@@ -7693,7 +7877,7 @@ watch(
   list-style: none;
   padding: 0;
   margin: var(--space-xs) 0 0;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .batch-deviation-inline-item {
@@ -7708,7 +7892,7 @@ watch(
 }
 
 .mode-switch-hint {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: var(--space-xs) var(--space-sm);
   margin: 0;
   color: var(--color-accent);
@@ -7750,7 +7934,7 @@ watch(
 .mode-badge-legend {
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
-  font-size: 7px;
+  font-size: var(--text-xs);
   color: var(--color-accent);
 }
 
@@ -7821,13 +8005,13 @@ watch(
 
 .creation-mode-yaml-btn {
   margin-top: var(--space-xs);
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .creation-mode-onboarding-link-btn {
   margin-top: var(--space-xs);
   margin-left: var(--space-xs);
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .wizard-step--mode-linked {
@@ -7842,7 +8026,7 @@ watch(
 }
 
 .wizard-step-mode-badge {
-  font-size: 7px;
+  font-size: var(--text-xs);
   padding: 1px 4px;
   border: 1px solid rgba(100, 140, 200, 0.45);
   border-radius: 2px;
@@ -8105,7 +8289,7 @@ watch(
 }
 
 .creation-mode-pinned-item {
-  font-size: 10px;
+  font-size: var(--text-md);
   padding: 2px 0;
 }
 
@@ -8131,7 +8315,7 @@ watch(
 .volume-plan-diff-share-e2e-steps {
   margin: var(--space-xs) 0;
   padding-left: 1.2rem;
-  font-size: 10px;
+  font-size: var(--text-md);
 }
 
 .volume-plan-diff-share-e2e-step--done {
@@ -8156,7 +8340,7 @@ watch(
 
 .batch-history-ops-summary-line {
   display: block;
-  font-size: 10px;
+  font-size: var(--text-md);
   opacity: 0.85;
 }
 
@@ -8172,7 +8356,7 @@ watch(
 .volume-plan-diff-collab-row {
   display: block;
   margin: var(--space-xs) 0;
-  font-size: 10px;
+  font-size: var(--text-md);
 }
 
 .volume-plan-diff-collab-input {
@@ -8185,7 +8369,7 @@ watch(
   display: block;
   margin-top: 2px;
   opacity: 0.9;
-  font-size: 10px;
+  font-size: var(--text-md);
 }
 
 .volume-plan-diff-print-preview {
@@ -8196,7 +8380,7 @@ watch(
 .volume-plan-diff-print-preview-body {
   max-height: 240px;
   overflow: auto;
-  font-size: 8px;
+  font-size: var(--text-sm);
   white-space: pre-wrap;
   margin: var(--space-xs) 0;
 }
@@ -8255,19 +8439,19 @@ watch(
 .volume-plan-diff-summary {
   cursor: pointer;
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .batch-history-retry-btn {
   margin-left: var(--space-xs);
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .volume-plan-outline-lines {
   list-style: none;
   padding: 0;
   margin: var(--space-xs) 0;
-  font-size: 7px;
+  font-size: var(--text-xs);
   line-height: 1.5;
   max-height: 220px;
   overflow: auto;
@@ -8307,7 +8491,7 @@ watch(
 .batch-history-date-label {
   margin: var(--space-xs) 0 0;
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .batch-history-date-group + .batch-history-date-group {
@@ -8337,7 +8521,7 @@ watch(
 .volume-plan-outline-excerpt {
   margin: var(--space-xs) 0;
   white-space: pre-wrap;
-  font-size: 7px;
+  font-size: var(--text-xs);
   line-height: 1.5;
 }
 
@@ -8351,12 +8535,12 @@ watch(
   list-style: none;
   padding: 0;
   margin: var(--space-xs) 0 0;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .volume-plan-diff-item .diff-type {
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
+  font-size: var(--text-xs);
   margin-right: var(--space-xs);
   text-transform: uppercase;
 }
@@ -8374,7 +8558,7 @@ watch(
   list-style: none;
   padding: var(--space-xs) 0 0 var(--space-sm);
   margin: 0;
-  font-size: 7px;
+  font-size: var(--text-xs);
   opacity: 0.9;
 }
 
@@ -8386,7 +8570,7 @@ watch(
 }
 
 .mode-switch-doc-link {
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .batch-history-filter {
@@ -8405,7 +8589,7 @@ watch(
   list-style: none;
   padding: 0;
   margin: var(--space-xs) 0 0;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .batch-history-item {
@@ -8510,7 +8694,7 @@ watch(
 
 .volume-pulse-generate-btn {
   margin-left: var(--space-xs);
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .logic-check-issues {
@@ -8522,7 +8706,7 @@ watch(
 .logic-check-issue {
   cursor: pointer;
   margin-bottom: var(--space-xs);
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .issue-severity {
@@ -8560,7 +8744,7 @@ watch(
 }
 
 .preview-text {
-  font-size: 8px;
+  font-size: var(--text-sm);
   white-space: pre-wrap;
   margin: var(--space-xs) 0;
 }
@@ -8588,7 +8772,7 @@ watch(
 }
 
 .subsection-title {
-  font-size: 9px;
+  font-size: var(--text-sm);
   margin: var(--space-md) 0 var(--space-xs);
 }
 
@@ -8604,7 +8788,7 @@ watch(
   gap: 4px;
   padding: 6px;
   margin-bottom: 6px;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .volume-edit-row--locked {
@@ -8625,13 +8809,13 @@ watch(
 
 .drag-handle {
   cursor: grab;
-  font-size: 8px;
+  font-size: var(--text-sm);
   opacity: 0.6;
   user-select: none;
 }
 
 .vol-input {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: 2px 4px;
   border: 1px solid var(--border-color);
   background: var(--bg-primary);
@@ -8645,7 +8829,7 @@ watch(
 
 .mini-btn,
 .save-btn {
-  font-size: 7px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   cursor: pointer;
 }
@@ -8658,7 +8842,7 @@ watch(
   list-style: none;
   padding: 0;
   margin: var(--space-sm) 0 0;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .deviation-warn { color: #886600; }
@@ -8703,12 +8887,12 @@ watch(
 
 .volume-summary-status {
   opacity: 0.85;
-  font-size: 7px;
+  font-size: var(--text-xs);
 }
 
 .settings-textarea {
   width: 100%;
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: inherit;
   padding: var(--space-xs);
   border: 1px solid var(--border-color);
@@ -8722,7 +8906,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 8px;
+  font-size: var(--text-sm);
   margin-bottom: 6px;
 }
 
@@ -8739,7 +8923,7 @@ watch(
 
 .batch-error {
   color: #c44;
-  font-size: 8px;
+  font-size: var(--text-sm);
   margin-top: 4px;
 }
 
@@ -8749,13 +8933,13 @@ watch(
 }
 
 .diff-line {
-  font-size: 8px;
+  font-size: var(--text-sm);
   margin: 2px 0;
 }
 
 .settings-excerpt,
 .volume-excerpt {
-  font-size: 8px;
+  font-size: var(--text-sm);
   white-space: pre-wrap;
   max-height: 160px;
   overflow: auto;
@@ -8764,7 +8948,7 @@ watch(
 
 .path-line,
 .cmd-block code {
-  font-size: 7px;
+  font-size: var(--text-xs);
   word-break: break-all;
   display: block;
 }
@@ -8773,12 +8957,12 @@ watch(
 .p0-line.warn { color: #c44; }
 
 .meta-line {
-  font-size: 8px;
+  font-size: var(--text-sm);
   opacity: 0.75;
 }
 
 .refresh-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: var(--space-xs) var(--space-sm);
   cursor: pointer;
 }
@@ -8786,19 +8970,19 @@ watch(
 .error-banner {
   padding: var(--space-sm);
   color: #c44;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .save-banner {
   padding: var(--space-sm);
   color: #484;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .conflict-banner {
   padding: var(--space-sm);
   color: #a60;
-  font-size: 8px;
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -8829,7 +9013,7 @@ watch(
 
 .onboarding-wizard {
   padding: var(--space-sm);
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .wizard-steps {
@@ -8868,7 +9052,7 @@ watch(
 }
 
 .wizard-mention-badge {
-  font-size: 7px;
+  font-size: var(--text-xs);
   color: var(--color-accent);
   background: rgba(127, 127, 127, 0.12);
   padding: 1px 4px;
@@ -8877,7 +9061,7 @@ watch(
 
 .wizard-notification-badge {
   color: var(--color-warn, #c90);
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .wizard-notifications {
@@ -8893,7 +9077,7 @@ watch(
 .template-changelog ul {
   margin: 4px 0 0;
   padding-left: 1.2em;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .changelog-row {
@@ -8906,7 +9090,7 @@ watch(
 
 .changelog-visual-diff {
   margin-top: 4px;
-  font-size: 7px;
+  font-size: var(--text-xs);
   white-space: pre-wrap;
   max-height: 120px;
   overflow: auto;
@@ -8967,7 +9151,7 @@ watch(
 
 .wizard-auto-badge {
   margin-left: 4px;
-  font-size: 7px;
+  font-size: var(--text-xs);
   color: var(--color-accent);
 }
 
@@ -9011,7 +9195,7 @@ watch(
   gap: 4px;
   padding: 6px;
   margin-bottom: 4px;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .history-meta {
@@ -9028,7 +9212,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 8px;
+  font-size: var(--text-sm);
   margin-bottom: 6px;
   align-items: center;
 }

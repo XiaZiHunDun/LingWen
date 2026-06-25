@@ -44,7 +44,7 @@ const initBarChart = () => {
       borderWidth: 2,
       textStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#fff7e8'
       },
       formatter: (params) => {
@@ -59,7 +59,7 @@ const initBarChart = () => {
       nameGap: 8,
       nameTextStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#2a220f'
       },
       axisLine: {
@@ -70,7 +70,7 @@ const initBarChart = () => {
       },
       axisLabel: {
         fontFamily: 'Press Start 2P',
-        fontSize: 6,
+        fontSize: 12,
         color: '#2a220f'
       }
     },
@@ -81,7 +81,7 @@ const initBarChart = () => {
       nameGap: 8,
       nameTextStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#2a220f'
       },
       axisLine: {
@@ -92,7 +92,7 @@ const initBarChart = () => {
       },
       axisLabel: {
         fontFamily: 'Press Start 2P',
-        fontSize: 6,
+        fontSize: 12,
         color: '#2a220f'
       },
       splitLine: {

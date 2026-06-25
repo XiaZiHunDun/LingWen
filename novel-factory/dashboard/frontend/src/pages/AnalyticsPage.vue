@@ -48,13 +48,16 @@
 
     <section class="kpi-section" data-testid="production-rollup-kpi">
       <h2 class="section-title">生产记录汇总</h2>
-      <p
+      <div
         v-if="productionRecordsDir"
         class="records-dir-hint"
         data-testid="production-records-dir"
       >
-        数据来源：<code>{{ productionRecordsDir }}</code>
-      </p>
+        <details class="records-dir-details">
+          <summary>数据来源（运维路径）</summary>
+          <code>{{ productionRecordsDir }}</code>
+        </details>
+      </div>
       <div class="stats-row">
         <StatCard
           v-for="card in productionRollupKpiCards"
@@ -274,21 +277,21 @@ watch(projectRevision, () => {
 }
 
 .page-title {
-  font-size: 12px;
+  font-size: var(--text-xl);
   font-weight: bold;
   color: var(--color-text);
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-ui);
 }
 
 .project-hint {
-  font-size: 10px;
+  font-size: var(--text-sm);
   font-family: monospace;
   margin: var(--space-xs) 0 0;
   opacity: 0.85;
 }
 
 .records-dir-hint {
-  font-size: 10px;
+  font-size: var(--text-sm);
   font-family: monospace;
   margin: 0 0 var(--space-sm);
   opacity: 0.9;
@@ -296,14 +299,14 @@ watch(projectRevision, () => {
 }
 
 .records-dir-hint code {
-  font-size: 9px;
+  font-size: var(--text-sm);
 }
 
 .refresh-btn {
   background-color: var(--bg-secondary);
   color: var(--color-text);
   padding: var(--space-sm) var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   cursor: pointer;
 }
@@ -317,7 +320,7 @@ watch(projectRevision, () => {
   background-color: var(--color-danger);
   color: white;
   padding: var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
 }
 
@@ -327,8 +330,9 @@ watch(projectRevision, () => {
 }
 
 .section-title {
-  font-size: 10px;
-  font-family: 'Press Start 2P', monospace;
+  font-size: var(--text-lg);
+  font-family: var(--font-ui);
+  font-weight: 600;
   margin: 0 0 var(--space-sm) 0;
   color: var(--color-accent);
 }
@@ -347,7 +351,7 @@ watch(projectRevision, () => {
 .production-summary {
   margin: var(--space-sm) 0 0;
   padding-left: 1.2em;
-  font-size: 10px;
+  font-size: var(--text-sm);
   font-family: monospace;
   line-height: 1.5;
 }
@@ -356,25 +360,38 @@ watch(projectRevision, () => {
   width: 100%;
   margin-top: var(--space-sm);
   border-collapse: collapse;
-  font-size: 10px;
+  font-size: var(--text-sm);
   font-family: monospace;
 }
 
 .rollup-table th,
 .rollup-table td {
   border: 1px solid var(--border-color);
-  padding: 6px 8px;
+  padding: 10px 12px;
   text-align: left;
 }
 
 .rollup-table th {
   background: var(--bg-primary);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.records-dir-details summary {
+  cursor: pointer;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.records-dir-details code {
+  display: block;
+  margin-top: var(--space-xs);
+  word-break: break-all;
 }
 
 .empty-hint {
-  font-size: 10px;
+  font-size: var(--text-sm);
   font-family: monospace;
   opacity: 0.8;
   margin: var(--space-sm) 0 0;

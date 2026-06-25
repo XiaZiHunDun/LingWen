@@ -1,7 +1,7 @@
 <!-- dashboard/frontend/src/pages/RipplesPage.vue — Phase 9.13 + 9.41 F30 ImpactGraph -->
 <template>
   <div class="ripples-page" data-testid="ripples-page">
-    <h1>Ripples</h1>
+    <h1 class="page-title">涟漪变更</h1>
     <ImpactGraph
       :graph="referenceGraph"
       data-testid="ripples-page-impact-graph"
@@ -115,6 +115,17 @@ function onImpactNodeClick(payload) {
 </script>
 
 <style scoped>
-.ripples-page { padding: 24px; max-width: 1200px; margin: 0 auto; }
-.ripples-page h1 { margin-bottom: 16px; }
+.ripples-page {
+  padding: var(--space-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: var(--text-xl);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--color-accent);
+  margin: 0 0 var(--space-md);
+}
 </style>

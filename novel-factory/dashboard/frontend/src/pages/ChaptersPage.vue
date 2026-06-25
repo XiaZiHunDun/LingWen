@@ -208,7 +208,8 @@ function onChapterDecisionLink(chapterNum) {
     pendingDecisions.value,
     status.value,
   );
-  navigateTo('decisions', {
+  navigateTo('inbox', {
+    tab: 'decisions',
     chapter: chapterNum,
     decisionId: decision?.decision_id ?? null,
   });
@@ -306,7 +307,7 @@ watch(projectRevision, () => {
 }
 
 .range-label {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   display: flex;
   align-items: center;
@@ -314,7 +315,7 @@ watch(projectRevision, () => {
 }
 
 .range-select {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: monospace;
   padding: 4px 8px;
   background: var(--bg-secondary);
@@ -324,7 +325,7 @@ watch(projectRevision, () => {
   background-color: var(--bg-secondary);
   color: var(--color-text);
   padding: var(--space-sm) var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   cursor: pointer;
 }
@@ -338,14 +339,14 @@ watch(projectRevision, () => {
   background-color: var(--color-danger);
   color: white;
   padding: var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
 }
 
 .latest-batch-badge {
   margin: 0;
   padding: var(--space-sm) var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   background: #e3f2fd;
   color: var(--color-text);
@@ -358,14 +359,14 @@ watch(projectRevision, () => {
 }
 
 .section-title {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   margin: 0 0 var(--space-sm) 0;
   color: var(--color-accent);
 }
 
 .production-idle {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: 0;
   opacity: 0.7;
@@ -375,13 +376,13 @@ watch(projectRevision, () => {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: 0 0 var(--space-xs) 0;
 }
 
 .status-pill {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: 2px 6px;
   border: 1px solid var(--border-color);
   font-family: 'Press Start 2P', monospace;
@@ -396,7 +397,7 @@ watch(projectRevision, () => {
 }
 
 .backfill-line {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: var(--space-xs) 0 0;
 }
@@ -404,7 +405,7 @@ watch(projectRevision, () => {
 .production-summary-list {
   margin: var(--space-xs) 0 0;
   padding-left: 1.2em;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   line-height: 1.5;
 }
@@ -416,14 +417,14 @@ watch(projectRevision, () => {
 }
 
 .history-hint {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: 0;
   opacity: 0.7;
 }
 
 .history-error {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: 0;
   color: var(--color-danger);
@@ -432,7 +433,7 @@ watch(projectRevision, () => {
 .history-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: monospace;
   margin-top: var(--space-xs);
 }
@@ -445,7 +446,7 @@ watch(projectRevision, () => {
 }
 
 .chapters-empty {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   opacity: 0.7;
 }

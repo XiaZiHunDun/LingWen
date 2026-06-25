@@ -7,8 +7,8 @@ cd "$ROOT"
 unset LINGWEN_PROJECT_ROOT
 
 if ! curl -sf http://127.0.0.1:8765/api/health >/dev/null 2>&1; then
-  echo "Starting API on 0.0.0.0:8765 ..."
-  DASHBOARD_HOST=0.0.0.0 DASHBOARD_PORT=8765 python dashboard/app.py &
+  echo "Starting API on 0.0.0.0:8765 (dev stub: decisions + e2e seed) ..."
+  DASHBOARD_HOST=0.0.0.0 DASHBOARD_PORT=8765 LINGWEN_DASHBOARD_DEV=1 python dashboard/app.py &
   API_PID=$!
   sleep 2
 else

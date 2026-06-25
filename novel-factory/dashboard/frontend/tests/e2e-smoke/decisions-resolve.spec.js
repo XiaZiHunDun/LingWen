@@ -19,9 +19,9 @@ test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
   test('decisions_page_renders_title', async ({ page }) => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await clickNav(page, /决策/);
-    await expect(page.getByTestId('page-title')).toHaveText('决策中心');
+    await page.goto('/?nav=inbox&tab=decisions', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('page-title')).toHaveText('待办');
+    await expect(page.getByTestId('decision-card').or(page.getByTestId('count-badge'))).toBeVisible();
   });
 
   test('resolve_pending_decision_shows_readonly_state', async ({ page }) => {
@@ -29,8 +29,7 @@ test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
     test.setTimeout(90_000);
     resetE2eDecision();
 
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await clickNav(page, /决策/);
+    await page.goto('/?nav=inbox&tab=decisions', { waitUntil: 'domcontentloaded' });
     await waitForPendingDecisionCard(page);
     const resolveResponse = page.waitForResponse(
       (resp) =>

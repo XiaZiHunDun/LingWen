@@ -43,20 +43,23 @@ const trendClass = computed(() => {
 }
 
 .stat-label {
-  font-size: 8px;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
   color: var(--color-text);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: var(--text-2xl);
   font-weight: bold;
+  font-family: var(--font-display);
   color: var(--color-text);
 }
 
 .stat-trend {
-  font-size: 8px;
-  font-weight: bold;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  font-weight: 600;
 }
 
 .trend-positive {

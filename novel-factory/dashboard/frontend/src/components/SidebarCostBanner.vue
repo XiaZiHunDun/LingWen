@@ -282,12 +282,12 @@ const tierAlarm = computed(() => {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: 8px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 .sidebar-cost-icon {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
   margin-right: 4px;
 }
@@ -333,7 +333,7 @@ const tierAlarm = computed(() => {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: 8px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -349,7 +349,7 @@ const tierAlarm = computed(() => {
   gap: var(--space-xs);
 }
 .time-window-tab {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 4px 8px;
   background: var(--bg-secondary);
@@ -367,7 +367,7 @@ const tierAlarm = computed(() => {
    跟 Phase 8.11 💰 icon 同 pattern). 颜色变量: 红 = exceeded, 橙 = warning. */
 .tier-alarm {
   margin-left: 4px;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
 }
 .tier-alarm-exceeded { color: #f56c6c; }

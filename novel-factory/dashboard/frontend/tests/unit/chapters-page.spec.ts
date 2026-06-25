@@ -179,9 +179,10 @@ describe('ChaptersPage (F63/F88)', () => {
     const link = wrapper.find('[data-testid="chapter-decision-link"]')
     expect(link.exists()).toBe(true)
     await link.trigger('click')
-    expect(navMocks.navigateTo).toHaveBeenCalledWith('decisions', {
+    expect(navMocks.navigateTo).toHaveBeenCalledWith('inbox', {
       chapter: 5,
       decisionId: 'd5',
+      tab: 'decisions',
     })
   })
 })

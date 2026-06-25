@@ -22,7 +22,8 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
   test('drawer_open_shows_audit_timeline_or_empty', async ({ page }) => {
     skipUnlessLive(test);
     await page.goto('/');
-    await clickNav(page, /涟漪/);
+    await clickNav(page, /待办/);
+    await page.getByTestId('inbox-tabs-ripples').click();
     await openFirstRippleDrawer(page);
     await expect(
       page.getByTestId('ripple-audit-list').or(page.getByTestId('ripple-audit-empty')),
@@ -36,7 +37,8 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
     page.on('dialog', (dialog) => dialog.accept('e2e rollback reason'));
 
     await page.goto('/');
-    await clickNav(page, /涟漪/);
+    await clickNav(page, /待办/);
+    await page.getByTestId('inbox-tabs-ripples').click();
     await openFirstRippleDrawer(page);
 
     await page.getByTestId('ripple-drawer-apply').click();
@@ -56,7 +58,8 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
     await page.goto('/');
-    await clickNav(page, /涟漪/);
+    await clickNav(page, /待办/);
+    await page.getByTestId('inbox-tabs-ripples').click();
     await waitForRippleListReady(page);
     const rejectedCard = page
       .getByTestId('ripple-card')

@@ -17,6 +17,13 @@ const mocks = vi.hoisted(() => ({
     projects: [{ slug: 'anye-xinbiao', name: '暗夜信标', role: 'production' }],
     active_slug: 'anye-xinbiao',
   }),
+  fetchStudioSummary: vi.fn(),
+  fetchCreatorOverview: vi.fn(),
+  fetchPendingDecisions: vi.fn(),
+  fetchStudioQuality: vi.fn(),
+  fetchStudioQualityReport: vi.fn(),
+  fetchStudioActiveBatchJob: vi.fn(),
+  fetchCreatorOnboarding: vi.fn(),
   connected: { value: true },
   status: {
     value: {
@@ -44,6 +51,13 @@ vi.mock('../../src/api/index.js', () => ({
   fetchBudgets: mocks.fetchBudgets,
   fetchBudgetsByTier: mocks.fetchBudgetsByTier,
   fetchStudioProjects: mocks.fetchStudioProjects,
+  fetchStudioSummary: mocks.fetchStudioSummary,
+  fetchCreatorOverview: mocks.fetchCreatorOverview,
+  fetchPendingDecisions: mocks.fetchPendingDecisions,
+  fetchStudioQuality: mocks.fetchStudioQuality,
+  fetchStudioQualityReport: mocks.fetchStudioQualityReport,
+  fetchStudioActiveBatchJob: mocks.fetchStudioActiveBatchJob,
+  fetchCreatorOnboarding: mocks.fetchCreatorOnboarding,
   setStudioActive: vi.fn(),
 }))
 
@@ -74,7 +88,31 @@ describe('App smoke (Phase 9.31 F15)', () => {
   })
 
   beforeEach(() => {
+    window.history.replaceState(null, '', '/')
     mocks.connected.value = true
+    mocks.fetchStudioSummary.mockResolvedValue({
+      name: '暗夜信标',
+      slug: 'anye-xinbiao',
+      creation_mode: 'companion',
+    })
+    mocks.fetchCreatorOverview.mockResolvedValue({
+      name: '暗夜信标',
+      creation_mode: 'companion',
+      chapters_written: 3,
+      max_chapter: 100,
+      coverage_pct: 3,
+      alert_count: 0,
+      p0_count: 0,
+    })
+    mocks.fetchPendingDecisions.mockResolvedValue([])
+    mocks.fetchStudioQuality.mockResolvedValue({
+      chapters_written: 3,
+      max_chapter: 100,
+      coverage_pct: 3,
+    })
+    mocks.fetchStudioQualityReport.mockResolvedValue({ available: true, p0: 0 })
+    mocks.fetchStudioActiveBatchJob.mockResolvedValue({ active: false })
+    mocks.fetchCreatorOnboarding.mockResolvedValue({ progress_pct: 100 })
     mocks.fetchOverview.mockResolvedValue({
       total_chapters: 10,
       total_hooks: 100,
@@ -93,42 +131,46 @@ describe('App smoke (Phase 9.31 F15)', () => {
     mocks.fetchBudgetsByTier.mockResolvedValue({ haiku: null, sonnet: null, opus: null })
   })
 
-  test('app-root renders overview by default', async () => {
+  test('app-root renders today by default', async () => {
     const wrapper = mount(App)
     await flushPromises()
     expect(wrapper.find(byTestid('app-root')).exists()).toBe(true)
-    expect(wrapper.find(byTestid('page-title')).text()).toBe('追读力总览')
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('今日')
+    expect(wrapper.find(byTestid('creation-mode-hint')).text()).toContain('陪伴模式')
   })
 
-  test('click 工作流 nav shows WorkflowsPage', async () => {
+  test('click 工作流 nav shows WorkflowsPage inside produce hub', async () => {
     const wrapper = mount(App)
     await flushPromises()
-    const nav = wrapper.findAll('.nav-item').find((n) => n.text().includes('工作流'))
-    expect(nav).toBeTruthy()
-    await nav!.trigger('click')
+    await wrapper.find(byTestid('nav-produce')).trigger('click')
     await flushPromises()
-    expect(wrapper.find(byTestid('page-title')).text()).toBe('工作流')
+    await wrapper.find(byTestid('produce-tabs-workflows')).trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('生产')
+    expect(wrapper.find(byTestid('page-title')).text()).not.toBe('工作流')
+    expect(wrapper.text()).toContain('工作流')
   })
 
-  test('click 章节 nav shows ChaptersPage', async () => {
+  test('click 章节 via produce tab shows ChaptersPage', async () => {
     const wrapper = mount(App)
     await flushPromises()
-    const nav = wrapper.findAll('.nav-item').find((n) => n.text().includes('章节'))
-    expect(nav).toBeTruthy()
-    await nav!.trigger('click')
+    await wrapper.find(byTestid('nav-produce')).trigger('click')
     await flushPromises()
-    expect(wrapper.find(byTestid('page-title')).text()).toBe('章节管理')
+    await wrapper.find(byTestid('produce-tabs-chapters')).trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('生产')
+    expect(wrapper.text()).toContain('章节管理')
   })
 
-  test('click 分析 nav shows AnalyticsPage', async () => {
+  test('click 分析 via insight tab shows analytics inside hub', async () => {
     const wrapper = mount(App)
     await flushPromises()
-    const nav = wrapper.findAll('.nav-item').find((n) => n.text().includes('分析'))
-    expect(nav).toBeTruthy()
-    await nav!.trigger('click')
+    await wrapper.find(byTestid('nav-insight')).trigger('click')
     await flushPromises()
-    expect(wrapper.find(byTestid('page-title')).text()).toBe('数据分析')
-    expect(wrapper.find(byTestid('production-kpi')).exists()).toBe(true)
+    await wrapper.find(byTestid('insight-tabs-analytics')).trigger('click')
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).text()).toBe('洞察')
+    expect(wrapper.text()).toContain('数据分析')
   })
 
   test('click 设置 nav shows SettingsPage', async () => {
@@ -152,8 +194,20 @@ describe('App smoke (Phase 9.31 F15)', () => {
     vi.useRealTimers()
   })
 
+  test('reviewer mode shows limited nav and badge', async () => {
+    window.history.replaceState(null, '', '/?role=reviewer')
+    vi.resetModules()
+    const { default: FreshApp } = await import('../../src/App.vue')
+    const wrapper = mount(FreshApp)
+    await flushPromises()
+    expect(wrapper.find(byTestid('reviewer-mode-badge')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('nav-produce')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('nav-inbox')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('nav-insight')).exists()).toBe(true)
+  })
+
   test('overview error banner on API failure', async () => {
-    window.history.replaceState(null, '', '/')
+    window.history.replaceState(null, '', '/?nav=insight&tab=overview')
     vi.resetModules()
     mocks.fetchOverview.mockRejectedValue(new Error('api down'))
     mocks.fetchChapters.mockRejectedValue(new Error('api down'))

@@ -85,7 +85,7 @@ defineEmits(['update:status', 'update:dimension', 'update:volume', 'update:sortB
 </script>
 
 <style scoped>
-.ripple-filter { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
-.ripple-filter label { display: flex; align-items: center; gap: 6px; font-size: 0.9em; }
-.ripple-filter select, .ripple-filter input { padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; }
+.ripple-filter { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; font-size: var(--text-sm); }
+.ripple-filter label { display: flex; align-items: center; gap: 8px; font-size: var(--text-sm); font-family: var(--font-ui); }
+.ripple-filter select, .ripple-filter input { padding: 8px 10px; min-height: 36px; border-radius: 4px; border: 1px solid #ccc; font-size: var(--text-sm); }
 </style>

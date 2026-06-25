@@ -107,7 +107,7 @@ function renderPerTier() {
       right: 10,
       textStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#2a220f',
       },
     },
@@ -118,7 +118,7 @@ function renderPerTier() {
       borderWidth: 2,
       textStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#fff7e8',
       },
     },
@@ -129,7 +129,7 @@ function renderPerTier() {
       axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
       axisLabel: {
         rotate: 30,
-        fontSize: 7,
+        fontSize: 12,
         fontFamily: 'Press Start 2P',
         color: '#2a220f',
         interval: 'auto',
@@ -140,11 +140,11 @@ function renderPerTier() {
       name: 'USD',
       nameLocation: 'end',
       nameGap: 8,
-      nameTextStyle: { fontFamily: 'Press Start 2P', fontSize: 8, color: '#2a220f' },
+      nameTextStyle: { fontFamily: 'Press Start 2P', fontSize: 13, color: '#2a220f' },
       axisLine: { lineStyle: { color: '#2a220f', width: 2 } },
       axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
       axisLabel: {
-        fontSize: 7,
+        fontSize: 12,
         fontFamily: 'Press Start 2P',
         color: '#2a220f',
         formatter: (v) => `$${Number(v).toFixed(4)}`,
@@ -171,7 +171,7 @@ function renderTotal() {
       right: 10,
       textStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#2a220f',
       },
     },
@@ -182,7 +182,7 @@ function renderTotal() {
       borderWidth: 2,
       textStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#fff7e8',
       },
       formatter: (params) => {
@@ -199,7 +199,7 @@ function renderTotal() {
       axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
       axisLabel: {
         rotate: 30,
-        fontSize: 7,
+        fontSize: 12,
         fontFamily: 'Press Start 2P',
         color: '#2a220f',
         interval: 'auto',
@@ -212,13 +212,13 @@ function renderTotal() {
       nameGap: 8,
       nameTextStyle: {
         fontFamily: 'Press Start 2P',
-        fontSize: 8,
+        fontSize: 13,
         color: '#2a220f',
       },
       axisLine: { lineStyle: { color: '#2a220f', width: 2 } },
       axisTick: { lineStyle: { color: '#2a220f', width: 2 } },
       axisLabel: {
-        fontSize: 7,
+        fontSize: 12,
         fontFamily: 'Press Start 2P',
         color: '#2a220f',
         formatter: (v) => `$${Number(v).toFixed(4)}`,
@@ -299,7 +299,7 @@ watch(() => [props.costByDay, props.costByDayPerTier], render, { deep: true })
 
 .cost-trend-chart-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-size: var(--text-sm);
   color: var(--color-accent, #26a8ff);
   margin: 0 0 var(--space-sm) 0;
 }
@@ -315,7 +315,7 @@ watch(() => [props.costByDay, props.costByDayPerTier], render, { deep: true })
   left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: var(--text-md);
   color: var(--color-text-dim, #b88230);
   text-align: center;
   padding: 16px;

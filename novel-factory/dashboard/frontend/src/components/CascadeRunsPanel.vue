@@ -294,11 +294,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .cascade-runs-panel { margin-top: 12px; }
 .cascade-runs-loading, .cascade-runs-error, .cascade-runs-empty {
-  padding: 16px; text-align: center; color: #555; font-size: 0.9em;
+  padding: 16px; text-align: center; color: #555; font-size: var(--text-sm); font-family: var(--font-ui);
 }
 .cascade-runs-error { color: #c0392b; }
 .cascade-runs-table {
-  width: 100%; border-collapse: collapse; font-size: 0.85em;
+  width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-family: var(--font-ui);
   max-height: 400px; overflow-y: auto; display: block;
 }
 .cascade-runs-table thead, .cascade-runs-table tbody { display: table; width: 100%; table-layout: fixed; }

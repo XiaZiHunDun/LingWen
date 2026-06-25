@@ -204,7 +204,7 @@ async function onCancel() {
 }
 
 .kind-badge {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 4px 8px;
   border: 2px solid var(--border-color);
@@ -219,13 +219,13 @@ async function onCancel() {
 .kind-style-pick { background: #ffe0b2; color: #000; }
 
 .priority-badge {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
 }
 
 .node-id {
-  font-size: 8px;
+  font-size: var(--text-sm);
   color: var(--color-text-dim);
   margin-left: auto;
 }
@@ -238,14 +238,14 @@ async function onCancel() {
 }
 
 .context summary {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   cursor: pointer;
   color: var(--color-text-dim);
 }
 
 .context pre {
-  font-size: 10px;
+  font-size: var(--text-md);
   background: var(--bg-primary);
   padding: var(--space-xs);
   overflow-x: auto;
@@ -258,7 +258,7 @@ async function onCancel() {
 }
 
 .option-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 8px 12px;
   background: var(--color-accent);
@@ -286,7 +286,7 @@ async function onCancel() {
 }
 
 .action-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 6px 10px;
   background: var(--bg-primary);
@@ -304,14 +304,14 @@ async function onCancel() {
 }
 
 .error-text {
-  font-size: 10px;
+  font-size: var(--text-md);
   color: #c62828;
   font-family: monospace;
 }
 
 /* Phase 6.6.B: status badge (resolved/deferred/cancelled 颜色) */
 .status-badge {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 3px 6px;
   border: 2px solid;
@@ -337,7 +337,7 @@ async function onCancel() {
 }
 
 .meta-info {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: monospace;
   color: var(--color-text-dim);
   background: var(--bg-primary);
@@ -359,7 +359,7 @@ async function onCancel() {
 }
 
 .readonly-hint {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-text-dim);
 }

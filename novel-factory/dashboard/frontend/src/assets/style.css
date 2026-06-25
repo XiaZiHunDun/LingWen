@@ -9,7 +9,27 @@
   --color-danger: #d7263e;
   --color-success: #2ec27e;
   --color-text: #2a220f;
+  --color-text-dim: #5c5344;
   --border-color: #2a220f;
+
+  /* Typography — 可读性优先（正文不用 8px 像素字体） */
+  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
+  --font-display: "Press Start 2P", var(--font-ui);
+  --font-mono: ui-monospace, "Cascadia Code", "Source Han Sans SC", monospace;
+
+  --text-xs: 15px;
+  --text-sm: 16px;
+  --text-base: 17px;
+  --text-md: 18px;
+  --text-lg: 21px;
+  --text-xl: 24px;
+  --text-2xl: 30px;
+
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.65;
+
+  --sidebar-width: 228px;
 
   /* Spacing */
   --space-xs: 4px;
@@ -26,43 +46,45 @@
 }
 
 body {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
   background-color: var(--bg-primary);
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: var(--leading-normal);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Pixel border style */
 .pixel-border {
-  border: 4px solid var(--border-color);
-  box-shadow: 6px 6px 0 var(--border-color);
+  border: 3px solid var(--border-color);
+  box-shadow: 4px 4px 0 var(--border-color);
 }
 
 /* Card component */
 .pixel-card {
   background-color: var(--bg-secondary);
-  border: 4px solid var(--border-color);
-  box-shadow: 6px 6px 0 var(--border-color);
+  border: 3px solid var(--border-color);
+  box-shadow: 4px 4px 0 var(--border-color);
   padding: var(--space-md);
 }
 
 /* Button styles */
 .pixel-btn {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  padding: 10px var(--space-md);
   background-color: var(--bg-secondary);
   color: var(--color-text);
-  border: 4px solid var(--border-color);
-  box-shadow: 4px 4px 0 var(--border-color);
+  border: 3px solid var(--border-color);
+  box-shadow: 3px 3px 0 var(--border-color);
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .pixel-btn:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--border-color);
+  box-shadow: 5px 5px 0 var(--border-color);
 }
 
 .pixel-btn:active {

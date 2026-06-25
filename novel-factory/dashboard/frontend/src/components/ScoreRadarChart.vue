@@ -68,7 +68,7 @@ function render() {
       indicator: S1_S8,
       shape: 'polygon',
       splitNumber: 5,
-      axisName: { color: '#555', fontSize: 11 },
+      axisName: { color: '#555', fontSize: 14 },
     },
     series: [{
       type: 'radar',
@@ -120,7 +120,7 @@ watch([() => props.scoresA, () => props.scoresB, () => props.winner], render, { 
 }
 .radar-title {
   margin: 0 0 8px 0;
-  font-size: 12px;
+  font-size: var(--text-lg);
   color: #333;
   text-align: center;
 }
@@ -133,12 +133,12 @@ watch([() => props.scoresA, () => props.scoresB, () => props.winner], render, { 
   color: #b88230;
   border-left: 3px solid #e6a23c;
   padding: 6px 10px;
-  font-size: 10px;
+  font-size: var(--text-md);
   margin-bottom: 8px;
 }
 .winner-badge {
   text-align: center;
-  font-size: 10px;
+  font-size: var(--text-md);
   color: #67c23a;
   margin-top: 4px;
 }

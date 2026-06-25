@@ -283,14 +283,14 @@ onMounted(() => {
 }
 
 .page-title {
-  font-size: 12px;
+  font-size: var(--text-xl);
   font-weight: bold;
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-ui);
 }
 
 .refresh-btn,
 .save-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-secondary);
@@ -307,7 +307,7 @@ onMounted(() => {
   background: var(--color-danger);
   color: white;
   padding: var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
 }
 
@@ -315,7 +315,7 @@ onMounted(() => {
   background: var(--color-success);
   color: white;
   padding: var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
 }
 
@@ -326,14 +326,15 @@ onMounted(() => {
 }
 
 .section-title {
-  font-size: 10px;
-  font-family: 'Press Start 2P', monospace;
+  font-size: var(--text-lg);
+  font-family: var(--font-ui);
+  font-weight: 600;
   color: var(--color-accent);
   margin: 0 0 var(--space-sm);
 }
 
 .subsection-title {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   margin: var(--space-md) 0 var(--space-xs);
 }
@@ -341,21 +342,22 @@ onMounted(() => {
 .settings-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
 }
 
 .settings-table th,
 .settings-table td {
   border: 1px solid var(--border-color);
-  padding: 6px 8px;
+  padding: 10px 12px;
   text-align: left;
 }
 
 .settings-table th {
   background: var(--bg-primary);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .status-exceeded {
@@ -369,7 +371,7 @@ onMounted(() => {
 
 .empty-hint,
 .readonly-note {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   opacity: 0.8;
   margin: var(--space-xs) 0 0;
@@ -384,14 +386,14 @@ onMounted(() => {
 }
 
 .field-label {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   width: 100%;
 }
 
 .budget-select,
 .budget-input {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   padding: 6px 8px;
   background: var(--bg-primary);
@@ -399,13 +401,13 @@ onMounted(() => {
 }
 
 .edit-error {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   color: var(--color-danger);
   margin: var(--space-xs) 0 0;
 }
 
 code {
-  font-size: 9px;
+  font-size: var(--text-sm);
 }
 </style>

@@ -73,7 +73,7 @@ describe('OverviewPage e2e 加深 (Phase 8.45.2)', () => {
     expect(wrapper.findAll(byTestid('stat-card'))).toHaveLength(5)
   })
 
-  test('empty state: api returns 0 chapters + 0 overview → page-title visible + 5 stat-card (with "0"/"-" fallback)', async () => {
+  test('empty state: api returns 0 chapters + 0 overview → empty guide instead of stat cards', async () => {
     mocks.fetchOverview.mockResolvedValue({
       total_chapters: 0,
       total_hooks: 0,
@@ -86,12 +86,8 @@ describe('OverviewPage e2e 加深 (Phase 8.45.2)', () => {
     const wrapper = await mountPage()
 
     expect(wrapper.find(byTestid('page-title')).exists()).toBe(true)
-    // 修正: statCards computed 永远 render 5 (Phase 8.34 store registry 0 改),
-    // 用 '0' / '-' fallback. 验证 5 stat-cards 显 + fallback 文本出现.
-    expect(wrapper.findAll(byTestid('stat-card'))).toHaveLength(5)
-    // 验证 fallback 文本: total_chapters=0 → '0', avg_hook_strength=null → '-'
-    expect(wrapper.text()).toContain('0')
-    expect(wrapper.text()).toContain('-')
+    expect(wrapper.find(byTestid('overview-empty-guide')).exists()).toBe(true)
+    expect(wrapper.findAll(byTestid('stat-card'))).toHaveLength(0)
     expect(wrapper.find(byTestid('error-banner')).exists()).toBe(false)
   })
 

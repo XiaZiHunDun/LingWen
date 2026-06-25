@@ -79,6 +79,9 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_preview_pinned_sidebar": True,
             "creation_mode_accessibility_checklist": True,
             "deviation_min_severity": None,
+            "creator_workspace_tabs": True,
+            "creator_mode_guide_default_collapsed": True,
+            "creator_simplified_mode_ops": True,
         }
     if mode == CREATION_MODE_ADVANCE:
         return {
@@ -187,6 +190,9 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
             "creation_mode_switch_history": True,
             "creation_mode_switch_undo_hint": True,
             "deviation_min_severity": "alert",
+            "creator_workspace_tabs": True,
+            "creator_mode_guide_default_collapsed": True,
+            "creator_simplified_mode_ops": False,
         }
     return {
         "creation_mode": CREATION_MODE_STUDIO,
@@ -307,6 +313,9 @@ def resolve_creator_ui_profile(*, creation_mode: str, quality_profile: str = "")
         "creation_mode_badge_legend": True,
         "companion_creation_mode_badge_tint": False,
         "deviation_min_severity": None,
+        "creator_workspace_tabs": False,
+        "creator_mode_guide_default_collapsed": False,
+        "creator_simplified_mode_ops": False,
     }
 
 

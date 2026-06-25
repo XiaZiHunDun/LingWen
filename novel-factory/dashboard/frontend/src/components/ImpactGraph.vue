@@ -165,15 +165,17 @@ defineExpose({ impactNodeColor })
 }
 
 .impact-graph-title {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: 600;
   color: var(--color-accent, #26a8ff);
   margin: 0 0 12px 0;
 }
 
 .impact-graph-count {
-  font-size: 8px;
-  color: var(--color-text-dim, #b88230);
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  color: var(--color-text-dim, #5c5344);
 }
 
 .impact-graph {
@@ -195,7 +197,7 @@ defineExpose({ impactNodeColor })
   background: #fef3c7;
   color: #92400e;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
 }
 
 .impact-graph-empty {
@@ -203,6 +205,6 @@ defineExpose({ impactNodeColor })
   text-align: center;
   color: var(--color-text-dim, #b88230);
   font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-size: var(--text-sm);
 }
 </style>

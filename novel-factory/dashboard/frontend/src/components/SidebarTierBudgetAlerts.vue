@@ -131,7 +131,7 @@ watch(
 
 .sidebar-tier-budget-alert-icon {
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
-  font-size: 8px;
+  font-size: var(--text-sm);
 }
 
 .sidebar-tier-budget-alert-text {

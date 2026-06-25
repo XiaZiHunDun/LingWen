@@ -16,6 +16,26 @@
       {{ error }}
     </div>
 
+    <section
+      v-if="showOverviewEmptyGuide"
+      class="overview-empty-guide pixel-card"
+      data-testid="overview-empty-guide"
+    >
+      <p class="overview-empty-title">本书尚无追读力数据</p>
+      <p class="overview-empty-hint">
+        追读力统计来自已发布正文。可先写 ch001，或在工作室跑 Preflight / Batch 产章后再回来看钩子与爽点趋势。
+      </p>
+      <div class="overview-empty-actions" v-if="!isReadonlyInsight">
+        <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-creator-btn" @click="goCreator">
+          去创作页
+        </button>
+        <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-studio-btn" @click="goStudio">
+          去工作室
+        </button>
+      </div>
+    </section>
+
+    <template v-if="!showOverviewEmptyGuide">
     <section class="stats-section">
       <StatCard
         v-for="stat in statCards"
@@ -38,6 +58,7 @@
       <ChapterTable v-if="chapters.length > 0" :chapters="chapters" />
       <p v-else class="chapters-empty" data-testid="chapters-empty">暂无章节</p>
     </section>
+    </template>
   </div>
 </template>
 
@@ -48,14 +69,17 @@
 //   page-local 4 个 ref + loadData + onMounted + fetchOverview/fetchChapters import
 // 页面 UI state (chartData / statCards computed) 仍 page-local, 从 store.overview /
 //   store.chapters 派生 (store 已做 envelope 解包, chapters 是 bare array)
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import StatCard from '../components/StatCard.vue'
 import HookTrendChart from '../components/HookTrendChart.vue'
 import CoolpointChart from '../components/CoolpointChart.vue'
 import ChapterTable from '../components/ChapterTable.vue'
 import { useOverviewStore } from '../composables/useOverviewStore.js'
+import { useDashboardNav } from '../composables/useDashboardNav.js'
 
 const store = useOverviewStore()
+const { navigateTo } = useDashboardNav()
+const isReadonlyInsight = inject('isReadonlyInsight', computed(() => false))
 
 // Phase 8.45.2: 模板 binding 兼容 — 恢复 Phase 8.34 漏改的 3 个 template
 // binding (loading / error / chapters 引用 undefined 的 latent bug).
@@ -65,6 +89,21 @@ const store = useOverviewStore()
 // refs 仍 reactive.
 const { loading, chapters, refresh } = store
 const error = store.lastError
+
+const showOverviewEmptyGuide = computed(() => {
+  if (loading.value || error.value) return false
+  if (store.chapters.value.length > 0) return false
+  const o = store.overview.value || {}
+  return (o.total_chapters ?? 0) === 0 && (o.total_hooks ?? 0) === 0
+})
+
+function goCreator() {
+  navigateTo('creator')
+}
+
+function goStudio() {
+  navigateTo('produce', { tab: 'studio' })
+}
 
 // chartData 派生 chapters (按 hook_count / coolpoint_count 投影)
 const chartData = computed(() => {
@@ -127,18 +166,18 @@ const statCards = computed(() => {
 }
 
 .page-title {
-  font-size: 12px;
+  font-size: var(--text-xl);
   font-weight: bold;
   color: var(--color-text);
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-ui);
 }
 
 .refresh-btn {
   background-color: var(--bg-secondary);
   color: var(--color-text);
   padding: var(--space-sm) var(--space-md);
-  font-size: 8px;
-  font-family: 'Press Start 2P', monospace;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
   cursor: pointer;
   transition: background-color 0.1s;
 }
@@ -157,8 +196,8 @@ const statCards = computed(() => {
   background-color: var(--color-danger);
   color: white;
   padding: var(--space-md);
-  font-size: 8px;
-  font-family: 'Press Start 2P', monospace;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
 }
 
 .stats-section {
@@ -178,5 +217,50 @@ const statCards = computed(() => {
 
 .table-section {
   width: 100%;
+}
+
+.overview-empty-guide {
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.overview-empty-title {
+  font-size: var(--text-lg);
+  font-family: var(--font-ui);
+  margin-bottom: var(--space-sm);
+}
+
+.overview-empty-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto var(--space-md);
+}
+
+.overview-empty-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.empty-cta-btn {
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  cursor: pointer;
+}
+
+.empty-cta-btn:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+.chapters-empty {
+  text-align: center;
+  color: var(--color-text-dim);
+  padding: var(--space-md);
 }
 </style>

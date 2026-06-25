@@ -22,6 +22,25 @@
       {{ error }}
     </div>
 
+    <section
+      v-if="showStudioEmptyGuide"
+      class="studio-empty-guide pixel-card"
+      data-testid="studio-empty-guide"
+    >
+      <p class="studio-empty-title">本书尚未开始正文生产</p>
+      <p class="studio-empty-hint">
+        建议先在下方<strong>生产控制台</strong>跑 Preflight，确认环境无误后再 Batch 产章；若做人主笔，可去创作页写 ch001。
+      </p>
+      <div class="studio-empty-actions">
+        <button type="button" class="empty-cta-btn pixel-border" data-testid="studio-scroll-production-btn" @click="scrollToProduction">
+          去 Preflight
+        </button>
+        <button type="button" class="empty-cta-btn pixel-border" data-testid="studio-go-creator-btn" @click="goCreator">
+          去创作页
+        </button>
+      </div>
+    </section>
+
     <section v-if="summary" class="studio-section pixel-card" data-testid="project-summary">
       <h2 class="section-title">{{ summary.name }}</h2>
       <div class="stats-row">
@@ -30,9 +49,10 @@
         <StatCard label="最新章" :value="summary.latest_chapter ? `ch${String(summary.latest_chapter).padStart(3, '0')}` : '—'" />
         <StatCard label="上限" :value="String(summary.max_chapter)" />
       </div>
-      <p class="meta-line">
-        <code>{{ summary.root }}</code>
-      </p>
+      <details class="studio-path-details">
+        <summary class="meta-line">项目路径（运维）</summary>
+        <p class="meta-line"><code>{{ summary.root }}</code></p>
+      </details>
     </section>
 
     <section v-if="quality" class="studio-section pixel-card" data-testid="quality-panel">
@@ -40,7 +60,10 @@
       <ul class="quality-list">
         <li :class="quality.pillars_ok ? 'ok' : 'warn'">
           支柱文件：{{ quality.pillars_ok ? '✓' : '✗' }}
-          <code>{{ quality.pillars_path }}</code>
+          <details class="studio-path-details inline-details">
+            <summary class="meta-line">查看路径</summary>
+            <code>{{ quality.pillars_path }}</code>
+          </details>
         </li>
         <li>正文覆盖率：{{ quality.coverage_pct }}%（{{ quality.chapters_written }}/{{ quality.max_chapter }}）</li>
         <li>大纲数量：{{ quality.outlines_present }}</li>
@@ -60,7 +83,13 @@
     <section v-if="qualityReport" class="studio-section pixel-card" data-testid="quality-report-panel">
       <h2 class="section-title">Full-check 质检报告</h2>
       <div v-if="!qualityReport.available" class="report-empty">
-        暂无报告。生成：<code>bash scripts/generate-full-check-report.sh {{ activeSlug || 'slug' }}</code>
+        <p>暂无质检报告。产章后可生成 full-check 报告查看 P0–P3 问题分布。</p>
+        <p class="meta-line">
+          CLI：<code>bash scripts/generate-full-check-report.sh {{ activeSlug || 'slug' }}</code>
+        </p>
+        <button type="button" class="empty-cta-btn pixel-border" data-testid="report-empty-go-production-btn" @click="scrollToProduction">
+          先去跑 Preflight / Batch
+        </button>
       </div>
       <template v-else>
         <div class="report-summary">
@@ -211,7 +240,7 @@
       </div>
     </section>
 
-    <section class="studio-section pixel-card" data-testid="production-console">
+    <section ref="productionSectionRef" class="studio-section pixel-card" data-testid="production-console">
       <h2 class="section-title">生产控制台</h2>
       <form class="prod-form" @submit.prevent="runPreflight">
         <div class="form-row">
@@ -313,8 +342,24 @@ import {
   fetchStudioActiveBatchJob,
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
+import { useDashboardNav } from '../composables/useDashboardNav.js';
 
 const { summary, quality, qualityReport, proseDiff, proseJudge, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
+const { navigateTo } = useDashboardNav();
+const productionSectionRef = ref(null);
+
+const showStudioEmptyGuide = computed(() => {
+  if (loading.value || error.value || !quality.value) return false;
+  return (quality.value.chapters_written ?? 0) === 0;
+});
+
+function scrollToProduction() {
+  productionSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goCreator() {
+  navigateTo('creator');
+}
 
 const proseDiffChapters = computed(() => {
   const rows = proseDiff.value?.chapters || [];
@@ -492,7 +537,7 @@ onUnmounted(() => {
 .refresh-btn,
 .run-btn,
 .copy-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-secondary);
@@ -506,14 +551,14 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
   margin: 0 0 var(--space-sm);
 }
 
 .subsection-title {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   margin: var(--space-md) 0 var(--space-xs);
 }
@@ -525,14 +570,14 @@ onUnmounted(() => {
 }
 
 .meta-line {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin-top: var(--space-sm);
   opacity: 0.85;
 }
 
 .quality-list {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: 0;
   padding-left: 1.2rem;
@@ -560,12 +605,12 @@ onUnmounted(() => {
 }
 
 .form-row label {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
 }
 
 .form-input {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   padding: 6px 8px;
   background: var(--bg-primary);
@@ -576,7 +621,7 @@ onUnmounted(() => {
   width: 100%;
   margin-top: var(--space-md);
   border-collapse: collapse;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
 }
 
@@ -596,7 +641,7 @@ onUnmounted(() => {
 }
 
 .command-pre {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   background: var(--bg-primary);
   padding: var(--space-sm);
@@ -605,7 +650,7 @@ onUnmounted(() => {
 }
 
 .onboarding-steps {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   padding-left: 1.2rem;
 }
@@ -615,12 +660,12 @@ onUnmounted(() => {
   background: var(--color-danger);
   color: white;
   padding: var(--space-md);
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
 }
 
 .copy-msg {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin-top: var(--space-xs);
 }
@@ -633,7 +678,7 @@ onUnmounted(() => {
 }
 
 .batch-error {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   color: var(--color-danger);
   margin-top: var(--space-xs);
@@ -646,7 +691,7 @@ onUnmounted(() => {
 }
 
 .job-meta {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
 }
 
@@ -676,7 +721,7 @@ onUnmounted(() => {
 
 .report-chapter {
   margin-top: var(--space-sm);
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
 }
 
@@ -697,9 +742,63 @@ onUnmounted(() => {
   color: var(--color-warning);
 }
 
+.studio-path-details {
+  margin-top: var(--space-xs);
+}
+
+.studio-path-details summary {
+  cursor: pointer;
+  color: var(--color-accent);
+}
+
+.inline-details {
+  display: inline-block;
+  margin-left: var(--space-xs);
+}
+
 .report-empty {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
+}
+
+.studio-empty-guide {
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.studio-empty-title {
+  font-size: 12px;
+  font-family: 'Press Start 2P', monospace;
+  margin-bottom: var(--space-sm);
+}
+
+.studio-empty-hint {
+  font-size: var(--text-md);
+  color: var(--color-text-dim);
+  line-height: 1.6;
+  max-width: 560px;
+  margin: 0 auto var(--space-md);
+}
+
+.studio-empty-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.empty-cta-btn {
+  font-size: var(--text-sm);
+  font-family: 'Press Start 2P', monospace;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  margin-top: var(--space-sm);
+}
+
+.empty-cta-btn:hover {
+  background: var(--color-accent);
+  color: white;
 }
 
 .prose-heatmap {
@@ -728,7 +827,7 @@ onUnmounted(() => {
 }
 
 .heatmap-label {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: monospace;
   margin-top: 2px;
 }
@@ -740,7 +839,7 @@ onUnmounted(() => {
 }
 
 .diff-status {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: var(--space-xs) 0;
 }
@@ -761,7 +860,7 @@ onUnmounted(() => {
 }
 
 .diff-total-chip {
-  font-size: 9px;
+  font-size: var(--text-sm);
   font-family: monospace;
   padding: 2px 6px;
   border: 1px solid var(--border-color);
@@ -771,7 +870,7 @@ onUnmounted(() => {
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
 }
 
@@ -802,7 +901,7 @@ onUnmounted(() => {
   list-style: none;
   margin: var(--space-xs) 0;
   padding: 0;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
 }
 
@@ -816,7 +915,7 @@ onUnmounted(() => {
 }
 
 .judge-dim-chip {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: 2px 4px;
   border: 1px solid var(--border-color);
 }
@@ -826,6 +925,6 @@ onUnmounted(() => {
 }
 
 code {
-  font-size: 9px;
+  font-size: var(--text-sm);
 }
 </style>

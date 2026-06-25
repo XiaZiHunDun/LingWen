@@ -259,7 +259,7 @@ function onResume(decision, option) {
 }
 
 .status-pill {
-  font-size: 8px;
+  font-size: var(--text-sm);
   padding: 4px 8px;
   border: 2px solid var(--border-color);
   font-family: 'Press Start 2P', monospace;
@@ -283,7 +283,7 @@ function onResume(decision, option) {
 }
 
 .stat-label {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-text-dim);
   margin-bottom: 4px;
@@ -298,7 +298,7 @@ function onResume(decision, option) {
 .text-failed { color: #c62828; }
 
 .section-title {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   margin: 0 0 var(--space-xs) 0;
   color: var(--color-accent);
@@ -311,7 +311,7 @@ function onResume(decision, option) {
 }
 
 .paused-node {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   padding: 4px 8px;
   background: #fff59d;
@@ -337,7 +337,7 @@ function onResume(decision, option) {
   display: flex;
   gap: var(--space-sm);
   align-items: center;
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: monospace;
   margin-bottom: 4px;
 }
@@ -359,7 +359,7 @@ function onResume(decision, option) {
 }
 
 .pending-prompt {
-  font-size: 11px;
+  font-size: var(--text-md);
   margin: 4px 0;
   line-height: 1.4;
 }
@@ -372,7 +372,7 @@ function onResume(decision, option) {
 }
 
 .resume-btn {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 6px 10px;
   background: #c8e6c9;
@@ -396,7 +396,7 @@ function onResume(decision, option) {
 }
 
 .cost-total-usd {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: 'Press Start 2P', monospace;
   color: var(--color-accent);
   margin: 0;
@@ -409,7 +409,7 @@ function onResume(decision, option) {
 }
 
 .backfill-summary {
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   margin: 0;
   line-height: 1.4;
@@ -424,7 +424,7 @@ function onResume(decision, option) {
 .production-summary-list {
   margin: 0;
   padding-left: 1.2em;
-  font-size: 10px;
+  font-size: var(--text-md);
   font-family: monospace;
   line-height: 1.5;
 }
@@ -436,7 +436,7 @@ function onResume(decision, option) {
   margin-top: var(--space-md);
 }
 .time-window-tab {
-  font-size: 8px;
+  font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: 4px 8px;
   background: var(--bg-primary);

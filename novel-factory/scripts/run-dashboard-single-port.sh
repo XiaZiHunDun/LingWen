@@ -20,6 +20,7 @@ pkill -f "python dashboard/app.py" 2>/dev/null || true
 sleep 1
 
 export LINGWEN_SERVE_UI=1
+export LINGWEN_DASHBOARD_DEV=1
 export DASHBOARD_HOST=0.0.0.0
 export DASHBOARD_PORT=8765
 

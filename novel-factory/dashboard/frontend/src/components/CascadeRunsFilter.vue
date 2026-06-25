@@ -144,18 +144,19 @@ function emitSinceDays(raw) {
 <style scoped>
 .cascade-runs-filter {
   display: flex; gap: 16px; margin-bottom: 12px; align-items: center;
-  flex-wrap: wrap; font-size: 0.85em;
+  flex-wrap: wrap; font-size: var(--text-sm); font-family: var(--font-ui);
 }
-.cascade-runs-filter-label { display: flex; align-items: center; gap: 6px; }
+.cascade-runs-filter-label { display: flex; align-items: center; gap: 8px; font-size: var(--text-sm); }
 .cascade-runs-filter select, .cascade-runs-filter input {
-  padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;
+  padding: 8px 10px; min-height: 36px; border-radius: 4px; border: 1px solid #ccc;
+  font-size: var(--text-sm); font-family: var(--font-ui);
 }
 .cascade-runs-filter input[type="number"] { width: 60px; }
 .cascade-runs-filter input[type="text"] { width: 120px; }
 .filter-depth-sep { color: #666; }
 .filter-reset {
-  padding: 4px 10px; border: 1px solid #c0392b; background: #fff; color: #c0392b;
-  border-radius: 4px; cursor: pointer; font-size: 0.85em;
+  padding: 8px 12px; border: 1px solid #c0392b; background: #fff; color: #c0392b;
+  border-radius: 4px; cursor: pointer; font-size: var(--text-sm); font-family: var(--font-ui);
 }
 .filter-reset:hover { background: #c0392b; color: #fff; }
 </style>

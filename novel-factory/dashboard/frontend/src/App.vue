@@ -4,76 +4,102 @@
     <aside class="sidebar pixel-card">
       <div class="sidebar-header">
         <h2 class="sidebar-title">追读力</h2>
-        <span class="sidebar-subtitle">Dashboard</span>
+        <span class="sidebar-subtitle">{{ isReviewer ? '审阅视图' : 'Dashboard' }}</span>
       </div>
-      <SidebarTierBudgetAlerts :status="status" />
+      <SidebarTierBudgetAlerts v-if="!isReviewer" :status="status" />
       <nav class="nav-menu">
-        <a
-          v-for="item in navItems"
-          :key="item.id"
-          href="#"
-          class="nav-item"
-          :class="{ 'nav-item--active': activeNav === item.id }"
-          @click.prevent="onNavClick(item.id)"
+        <div
+          v-for="group in visibleNavGroups"
+          :key="group.id"
+          class="nav-group"
         >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-        </a>
+          <div class="nav-group-label">{{ group.label }}</div>
+          <a
+            v-for="item in group.items"
+            :key="item.id"
+            href="#"
+            class="nav-item"
+            :class="{ 'nav-item--active': isNavItemActive(item.id) }"
+            :data-testid="`nav-${item.id}`"
+            @click.prevent="onNavClick(item.id)"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </div>
       </nav>
       <SidebarWsDisconnectedBanner />
-      <SidebarCostBanner :status="status" data-testid="ws-status" /> <!-- Phase 8.11 + 8.45.3 ws-status testid (Vue 3.5 inherit fallthrough) -->
+      <SidebarCostBanner v-if="!isReviewer" :status="status" data-testid="ws-status" />
     </aside>
 
     <!-- Main Content -->
     <div class="main-wrapper">
       <header class="main-header pixel-card">
         <div class="header-row">
-          <h1 class="header-title">追读力 Dashboard</h1>
-          <ProjectSwitcher />
+          <h1 class="header-title">{{ isReviewer ? '审阅 Dashboard' : '追读力 Dashboard' }}</h1>
+          <div class="header-actions">
+            <span
+              v-if="isReviewer"
+              class="reviewer-badge pixel-border"
+              data-testid="reviewer-mode-badge"
+            >
+              审阅模式
+            </span>
+            <CreationModeHint v-if="!isReviewer" />
+            <ProjectSwitcher />
+          </div>
         </div>
       </header>
       <main class="main-content">
-        <CreatorPage v-if="activeNav === 'creator'" />
-        <StudioPage v-if="activeNav === 'studio'" />
-        <OverviewPage v-if="activeNav === 'overview'" />
-        <DecisionsPage v-else-if="activeNav === 'decisions'" />
-        <WorkflowsPage v-else-if="activeNav === 'workflows'" />
-        <RipplesPage v-else-if="activeNav === 'ripples'" /> <!-- Phase 9.13 -->
-        <CascadeRunsPage v-else-if="activeNav === 'cascade-runs'" /> <!-- Phase 9.46 F35 -->
-        <ChaptersPage v-else-if="activeNav === 'chapters'" /> <!-- Phase 9.71 F63 -->
-        <AnalyticsPage v-else-if="activeNav === 'analytics'" /> <!-- Phase 9.77 F67 -->
-        <SettingsPage v-else-if="activeNav === 'settings'" /> <!-- Phase 9.78 F68 -->
+        <TodayPage v-if="activeNav === 'today'" />
+        <CreatorPage v-else-if="activeNav === 'creator'" />
+        <ProducePage v-else-if="isProduceNav(activeNav)" />
+        <InboxPage v-else-if="isInboxNav(activeNav)" />
+        <InsightPage v-else-if="isInsightNav(activeNav)" />
+        <CascadeRunsPage v-else-if="activeNav === 'cascade-runs'" />
+        <SettingsPage v-else-if="activeNav === 'settings'" />
       </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import OverviewPage from './pages/OverviewPage.vue'
+import TodayPage from './pages/TodayPage.vue'
 import CreatorPage from './pages/CreatorPage.vue'
-import StudioPage from './pages/StudioPage.vue'
-import DecisionsPage from './pages/DecisionsPage.vue'
-import WorkflowsPage from './pages/WorkflowsPage.vue'
-import RipplesPage from './pages/RipplesPage.vue' // Phase 9.13
-import CascadeRunsPage from './pages/CascadeRunsPage.vue' // Phase 9.46 F35
-import ChaptersPage from './pages/ChaptersPage.vue' // Phase 9.71 F63
-import AnalyticsPage from './pages/AnalyticsPage.vue' // Phase 9.77 F67
-import SettingsPage from './pages/SettingsPage.vue' // Phase 9.78 F68
-import SidebarCostBanner from './components/SidebarCostBanner.vue' // Phase 8.11
-import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue' // Phase 9.26 F10
-import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue' // Phase 9.27 F11
-import ProjectSwitcher from './components/ProjectSwitcher.vue' // Phase 10.04
-import { useWorkflowSocket } from './composables/useWorkflowSocket.js' // Phase 8.11
-import { useDashboardNav } from './composables/useDashboardNav.js' // Phase 9.83 F75
-import { fetchStudioSummary } from './api/index.js'
-import { onMounted } from 'vue'
+import ProducePage from './pages/ProducePage.vue'
+import InboxPage from './pages/InboxPage.vue'
+import InsightPage from './pages/InsightPage.vue'
+import CascadeRunsPage from './pages/CascadeRunsPage.vue'
+import SettingsPage from './pages/SettingsPage.vue'
+import SidebarCostBanner from './components/SidebarCostBanner.vue'
+import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue'
+import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue'
+import ProjectSwitcher from './components/ProjectSwitcher.vue'
+import CreationModeHint from './components/CreationModeHint.vue'
+import { DASHBOARD_NAV_GROUPS, REVIEWER_NAV_GROUPS } from './config/dashboardNav.js'
+import { useWorkflowSocket } from './composables/useWorkflowSocket.js'
+import { useDashboardNav } from './composables/useDashboardNav.js'
+import { useDashboardRole } from './composables/useDashboardRole.js'
+import { computed, onMounted, provide } from 'vue'
 
-const { activeNav, navigateTo } = useDashboardNav()
-const { status } = useWorkflowSocket() // Phase 8.11
+const { activeNav, navigateTo, isProduceNav, isInboxNav, isInsightNav } = useDashboardNav()
+const { status } = useWorkflowSocket()
+const { isReviewer, isReadonlyInsight } = useDashboardRole()
 
-onMounted(async () => {
+provide('isReadonlyInsight', isReadonlyInsight)
+provide('isReviewer', isReviewer)
+
+const visibleNavGroups = computed(() => (
+  isReviewer.value ? REVIEWER_NAV_GROUPS : DASHBOARD_NAV_GROUPS
+))
+
+onMounted(() => {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
+  if (isReviewer.value && (params.get('nav') === 'creator' || params.get('nav') === 'produce')) {
+    navigateTo('inbox', { tab: 'decisions', clearFocus: false })
+    return
+  }
   if ((params.get('wizard') === '1' || params.get('step') || params.get('done') || params.get('notes')) && params.get('nav') !== 'creator') {
     const doneRaw = params.get('done')
     const wizardDone = doneRaw ? doneRaw.split(',').map((s) => s.trim()).filter(Boolean) : []
@@ -92,35 +118,31 @@ onMounted(async () => {
       wizardDone,
       wizardNotes,
     })
-    return
-  }
-  if (params.get('nav')) return
-  try {
-    const summary = await fetchStudioSummary()
-    if (summary.creation_mode === 'companion' || summary.creation_mode === 'advance') {
-      navigateTo('creator')
-    }
-  } catch {
-    /* active project optional */
   }
 })
 
-function onNavClick(itemId) {
-  navigateTo(itemId, { clearFocus: true })
+function isNavItemActive(itemId) {
+  if (itemId === 'produce') return isProduceNav(activeNav.value)
+  if (itemId === 'inbox') return isInboxNav(activeNav.value)
+  if (itemId === 'insight') return isInsightNav(activeNav.value)
+  return activeNav.value === itemId
 }
 
-const navItems = [
-  { id: 'creator', label: '创作', icon: '✍️' },
-  { id: 'studio', label: '工作室', icon: '🏭' },
-  { id: 'overview', label: '总览', icon: '📊' },
-  { id: 'decisions', label: '决策', icon: '⚡' },
-  { id: 'workflows', label: '工作流', icon: '🔀' },
-  { id: 'chapters', label: '章节', icon: '📖' },
-  { id: 'analytics', label: '分析', icon:'📈' },
-  { id: 'ripples', label: '涟漪', icon: '🌀' },
-  { id: 'cascade-runs', label: 'Cascade', icon: '🔁' },
-  { id: 'settings', label: '设置', icon: '⚙️' }
-]
+function onNavClick(itemId) {
+  if (itemId === 'produce') {
+    navigateTo('produce', { tab: 'studio', clearFocus: true })
+    return
+  }
+  if (itemId === 'inbox') {
+    navigateTo('inbox', { tab: 'decisions', clearFocus: true })
+    return
+  }
+  if (itemId === 'insight') {
+    navigateTo('insight', { tab: 'overview', clearFocus: true })
+    return
+  }
+  navigateTo(itemId, { clearFocus: true })
+}
 </script>
 
 <style scoped>
@@ -130,9 +152,8 @@ const navItems = [
   background-color: var(--bg-primary);
 }
 
-/* Sidebar */
 .sidebar {
-  width: 200px;
+  width: var(--sidebar-width);
   flex-shrink: 0;
   background-color: var(--bg-secondary);
   padding: var(--space-md);
@@ -148,14 +169,15 @@ const navItems = [
 }
 
 .sidebar-title {
-  font-size: 16px;
+  font-size: var(--text-lg);
   color: var(--color-accent);
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-display);
 }
 
 .sidebar-subtitle {
-  font-size: 8px;
-  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-family: var(--font-ui);
+  color: var(--color-text-dim);
   display: block;
   margin-top: var(--space-xs);
 }
@@ -163,18 +185,36 @@ const navItems = [
 .nav-menu {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-group-label {
+  font-size: var(--text-xs);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 var(--space-sm);
+  margin-bottom: 2px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
+  padding: 10px var(--space-md);
   text-decoration: none;
   color: var(--color-text);
-  font-size: 8px;
-  font-family: 'Press Start 2P', monospace;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  font-weight: 500;
   border: 2px solid transparent;
   transition: all 0.1s;
 }
@@ -199,7 +239,6 @@ const navItems = [
   flex: 1;
 }
 
-/* Main Wrapper */
 .main-wrapper {
   flex: 1;
   display: flex;
@@ -213,9 +252,9 @@ const navItems = [
 }
 
 .header-title {
-  font-size: 14px;
+  font-size: var(--text-lg);
   color: var(--color-accent);
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-display);
 }
 
 .header-row {
@@ -226,21 +265,21 @@ const navItems = [
   flex-wrap: wrap;
 }
 
-.main-content {
-  flex: 1;
-}
-
-.placeholder-view {
+.header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 300px;
+  gap: var(--space-md);
+  flex-wrap: wrap;
 }
 
-.pixel-text {
-  font-size: 10px;
-  font-family: 'Press Start 2P', monospace;
-  color: var(--color-text);
-  opacity: 0.6;
+.reviewer-badge {
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  padding: 6px 10px;
+  background: var(--bg-primary);
+}
+
+.main-content {
+  flex: 1;
 }
 </style>
