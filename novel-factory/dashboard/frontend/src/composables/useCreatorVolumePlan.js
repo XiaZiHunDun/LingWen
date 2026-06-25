@@ -1,62 +1,15 @@
 /**
  * useCreatorVolumePlan — 卷纲编辑、模板库、diff 导出与审批逻辑（从 CreatorPage 抽出）
  */
-import { computed, nextTick, ref, watch } from 'vue';
+import { ref } from 'vue';
 import {
   fetchCreatorVolumePlan,
-  previewCreatorVolumePlanDiff,
   saveCreatorVolumePlan,
   mergeCreatorVolumePlan,
   splitCreatorVolumePlan,
-  fetchCreatorVolumeTemplates,
-  applyCreatorVolumeTemplate,
-  saveCreatorVolumeTemplate,
-  deleteCreatorVolumeTemplate,
-  renameCreatorVolumeTemplate,
-  exportCreatorVolumeTemplates,
-  importCreatorVolumeTemplates,
-  fetchCreatorVolumeTemplateSyncSources,
-  syncCreatorVolumeTemplates,
-  publishCreatorVolumeTemplateToFactory,
-  pullCreatorFactoryVolumeTemplates,
-  deleteCreatorFactoryVolumeTemplate,
-  fetchCreatorDiffCollabNotes,
-  saveCreatorDiffCollabNotes,
-  setCreatorVolumeTemplateVersion,
-  fetchCreatorVolumeTemplateChangelog,
-  rollbackCreatorVolumeTemplate,
-  fetchCreatorTemplateApprovals,
-  submitCreatorTemplateVersionApproval,
-  approveCreatorTemplateApproval,
-  rejectCreatorTemplateApproval,
-  fetchCreatorTemplateApprovalChainConfig,
-  saveCreatorTemplateApprovalChainConfig,
-  fetchCreatorTemplateApprovalHistory,
-  exportCreatorTemplateApprovalAudit,
-  fetchCreatorTemplateApprovalSlaConfig,
-  saveCreatorTemplateApprovalSlaConfig,
-  fetchCreatorTemplateApprovalOverdue,
-  transferCreatorTemplateApproval,
-  fetchCreatorTemplateApprovalSnapshotDiff,
-  batchApproveCreatorTemplateApprovals,
-  batchRejectCreatorTemplateApprovals,
 } from '../api/index.js';
-
-import {
-  buildMinimalTextPdf,
-  buildMinimalZip,
-  buildVolumePlanDiffExportPayload,
-  buildVolumePlanDiffMailto,
-  buildVolumePlanDiffMarkdown,
-  decodeVolumePlanDiffShareToken,
-  detectShareVolumeMergeConflicts as detectShareVolumeMergeConflictsUtil,
-  downloadBinaryExport,
-  downloadJsonExport,
-  downloadTextExport,
-  encodeVolumePlanDiffShareToken,
-  parseVolumePlanDiffShareHash,
-} from './volumePlanDiffExportUtils.js';
-
+import { useCreatorVolumePlanDiff } from './useCreatorVolumePlanDiff.js';
+import { useCreatorVolumePlanTemplates } from './useCreatorVolumePlanTemplates.js';
 
 /**
  * @param {
@@ -92,1225 +45,257 @@ export function useCreatorVolumePlan(deps) {
     onAfterVolumePlanSave,
   } = deps;
 
-const editableVolumes = ref([]);
+  const editableVolumes = ref([]);
 
-const savedVolumeSnapshot = ref([]);
+  const savedVolumeSnapshot = ref([]);
 
-const showVolumePlanDiffPrintPreview = ref(false);
+  const dragVolumeIndex = ref(null);
 
-const volumePlanDiffShareLinkPreview = ref(null);
+  const volumePlanRevision = ref('');
 
-const pendingShareApply = ref(null);
+  const mergeStartIdx = ref(0);
 
-const pendingShareMerge = ref(null);
+  const mergeEndIdx = ref(1);
 
-const shareE2eApplyDone = ref(false);
+  const mergeLabel = ref('');
 
-const diffCollabNotes = ref({});
+  const mergePreview = ref(null);
 
-const volumePlanDiffPrintPreviewText = ref('');
+  const mergeApplying = ref(false);
 
-const volumePlanSaveConfirmOpen = ref(false);
+  const splitVolumeIdx = ref(0);
 
-const volumePlanDiffPreview = ref(null);
+  const splitAtChapter = ref(2);
 
-const volumePlanDiffExpanded = ref(false);
+  const splitPreview = ref(null);
 
-const volumePlanDiffTypeFilter = ref('');
+  const splitApplying = ref(false);
 
-const volumePlanDiffVolumeFilter = ref('');
-
-const dragVolumeIndex = ref(null);
-
-const volumePlanRevision = ref('');
-
-const mergeStartIdx = ref(0);
-
-const mergeEndIdx = ref(1);
-
-const mergeLabel = ref('');
-
-const mergePreview = ref(null);
-
-const mergeApplying = ref(false);
-
-const splitVolumeIdx = ref(0);
-
-const splitAtChapter = ref(2);
-
-const splitPreview = ref(null);
-
-const splitApplying = ref(false);
-
-const volumeTemplates = ref([]);
-
-const selectedTemplateId = ref('three_act');
-
-const templateApplying = ref(false);
-
-const customTemplateName = ref('');
-
-const templateSaving = ref(false);
-
-const templateDeleting = ref(false);
-
-const templateRenaming = ref(false);
-
-const renameTemplateName = ref('');
-
-const showImportTemplates = ref(false);
-
-const importTemplatesJson = ref('');
-
-const templateImporting = ref(false);
-
-const templateSyncSources = ref([]);
-
-const templateSyncing = ref(false);
-
-const templatePublishing = ref(false);
-
-const factoryPulling = ref(false);
-
-const factoryDeleting = ref(false);
-
-const templateVersionLabel = ref('');
-
-const templateVersionSaving = ref(false);
-
-const templateVersionChangelog = ref([]);
-
-const expandedChangelogVisual = ref(null);
-
-const templateApprovals = ref([]);
-
-const templateApprovalHistory = ref([]);
-
-const overdueTemplateApprovals = ref([]);
-
-const templateApprovalChainSteps = ref(2);
-
-const templateApprovalStepAssignees = ref('');
-
-const templateApprovalOrGroups = ref('');
-
-const templateApprovalSnapshotDiff = ref(null);
-
-const templateApprovalSlaHours = ref(72);
-
-const templateApprovalEmailOnSubmit = ref(true);
-
-const templateApprovalEmailOnReject = ref(true);
-
-const templateApprovalEmailOnOverdue = ref(true);
-
-const templateApprovalSubmitting = ref(false);
-
-const templateRollbackSaving = ref(false);
-
-const versionSemverPattern = /^v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9][a-zA-Z0-9.-]*)?$/i;
-
-const volumePlanDiffChangeCount = computed(
-  () => volumePlanDiffPreview.value?.changes?.length || 0,
-);
-
-const volumePlanDiffTypeOptions = computed(() => {
-  const types = new Set();
-  for (const row of volumePlanDiffPreview.value?.changes || []) {
-    if (row?.type) types.add(String(row.type));
+  function syncSplitChapterFromVolume() {
+    const vol = editableVolumes.value[splitVolumeIdx.value];
+    if (!vol) return;
+    const mid = vol.start_chapter + Math.floor((vol.end_chapter - vol.start_chapter) / 2);
+    splitAtChapter.value = Math.min(vol.end_chapter, Math.max(vol.start_chapter + 1, mid));
   }
-  return [...types].sort();
-});
 
-const volumePlanDiffVolumeOptions = computed(() => {
-  const labels = new Set();
-  for (const row of volumePlanDiffPreview.value?.changes || []) {
-    if (row?.label) labels.add(String(row.label));
-  }
-  return [...labels].sort();
-});
-
-const filteredVolumePlanDiffChanges = computed(() => {
-  let rows = volumePlanDiffPreview.value?.changes || [];
-  if (uiProfile.value.volume_plan_diff_type_filter && volumePlanDiffTypeFilter.value) {
-    rows = rows.filter((row) => String(row.type) === volumePlanDiffTypeFilter.value);
-  }
-  if (uiProfile.value.volume_plan_diff_volume_filter && volumePlanDiffVolumeFilter.value) {
-    rows = rows.filter((row) => String(row.label) === volumePlanDiffVolumeFilter.value);
-  }
-  return rows;
-});
-
-const volumePlanDiffCollabRows = computed(() => {
-  if (!uiProfile.value.volume_plan_diff_share_collab_v2) return [];
-  const rows = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value?.changes || [];
-  const seen = new Set();
-  return rows.filter((row) => {
-    const label = String(row?.label || '').trim();
-    if (!label || seen.has(label)) return false;
-    seen.add(label);
-    return true;
+  const diffHub = useCreatorVolumePlanDiff({
+    uiProfile,
+    saveMessage,
+    wizardEmailTo,
+    globalOutlineEditorRef,
+    editableVolumes,
+    saving,
   });
-});
 
-const selectedTemplateHint = computed(() => {
-  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
-  return row?.description || '';
-});
-
-const selectedTemplateProject = computed(() => {
-  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
-  return row?.scope === 'project';
-});
-
-const selectedTemplateFactory = computed(() => {
-  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
-  return row?.scope === 'factory';
-});
-
-const factoryTemplateCount = computed(() => volumeTemplates.value.filter((t) => t.scope === 'factory').length);
-
-const pendingTemplateApprovals = computed(() =>
-  templateApprovals.value.filter((row) => row.status === 'pending'),
-);
-
-const selectedTemplateCustom = computed(() => selectedTemplateProject.value);
-
-watch(
-  () => volumePlanDiffPreview.value?.has_changes,
-  (hasChanges) => {
-    if (!uiProfile.value.volume_plan_diff_auto_collapse) return;
-    volumePlanDiffExpanded.value = Boolean(hasChanges);
-    if (!hasChanges) {
-      volumePlanDiffTypeFilter.value = '';
-      volumePlanDiffVolumeFilter.value = '';
-    }
-  },
-);
-
-watch(volumePlanDiffPreview, () => {
-  if (volumePlanDiffTypeFilter.value) {
-    const types = new Set((volumePlanDiffPreview.value?.changes || []).map((row) => row.type));
-    if (!types.has(volumePlanDiffTypeFilter.value)) {
-      volumePlanDiffTypeFilter.value = '';
-    }
-  }
-  if (volumePlanDiffVolumeFilter.value) {
-    const labels = new Set((volumePlanDiffPreview.value?.changes || []).map((row) => row.label));
-    if (!labels.has(volumePlanDiffVolumeFilter.value)) {
-      volumePlanDiffVolumeFilter.value = '';
-    }
-  }
-});
-
-watch(selectedTemplateId, () => {
-  const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
-  renameTemplateName.value = row?.name || '';
-  templateVersionLabel.value = row?.version_label || '';
-  templateVersionChangelog.value = row?.version_changelog || [];
-  loadTemplateVersionChangelog();
-});
-
-function syncSplitChapterFromVolume() {
-  const vol = editableVolumes.value[splitVolumeIdx.value];
-  if (!vol) return;
-  const mid = vol.start_chapter + Math.floor((vol.end_chapter - vol.start_chapter) / 2);
-  splitAtChapter.value = Math.min(vol.end_chapter, Math.max(vol.start_chapter + 1, mid));
-}
-
-function syncBatchRangeFromVolumes() {
-  const locked = editableVolumes.value.filter((v) => v.locked);
-  if (!locked.length) return;
-  const vol = locked[0];
-  batchStart.value = vol.start_chapter;
-  batchEnd.value = Math.min(vol.end_chapter, overview.value?.max_chapter || vol.end_chapter);
-}
-
-function toggleChangelogVisual(index) {
-  expandedChangelogVisual.value = expandedChangelogVisual.value === index ? null : index;
-}
-
-function formatTemplateOption(template) {
-  if (template.version_label) {
-    const prefix = template.version_semver_valid === false ? '!' : '';
-    return `${prefix}[${template.version_label}] ${template.name}`;
-  }
-  return template.name;
-}
-
-function isSemverVersionLabel(label) {
-  return versionSemverPattern.test(String(label || '').trim());
-}
-
-function formatHistoryTime(iso) {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false });
-  } catch {
-    return iso;
-  }
-}
-
-function addVolume() {
-  const nextStart = editableVolumes.value.length
-    ? editableVolumes.value[editableVolumes.value.length - 1].end_chapter + 1
-    : 1;
-  editableVolumes.value.push({
-    label: `卷${editableVolumes.value.length + 1}`,
-    start_chapter: nextStart,
-    end_chapter: Math.min(nextStart + 9, overview.value?.max_chapter || nextStart + 9),
-    core_conflict: '',
-    locked: false,
+  const templatesHub = useCreatorVolumePlanTemplates({
+    uiProfile,
+    overview,
+    error,
+    saveMessage,
+    editableVolumes,
+    handleSaveError,
+    onAfterApplyTemplate: () => {
+      mergePreview.value = null;
+      splitPreview.value = null;
+      syncSplitChapterFromVolume();
+    },
   });
-}
 
-function toggleLock(idx) {
-  editableVolumes.value[idx].locked = !editableVolumes.value[idx].locked;
-}
-
-function moveVolume(from, to) {
-  if (from === to || to < 0 || to >= editableVolumes.value.length) return;
-  const items = [...editableVolumes.value];
-  const [item] = items.splice(from, 1);
-  items.splice(to, 0, item);
-  editableVolumes.value = items;
-}
-
-function onVolumeDragStart(idx, event) {
-  dragVolumeIndex.value = idx;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', String(idx));
+  function syncBatchRangeFromVolumes() {
+    const locked = editableVolumes.value.filter((v) => v.locked);
+    if (!locked.length) return;
+    const vol = locked[0];
+    batchStart.value = vol.start_chapter;
+    batchEnd.value = Math.min(vol.end_chapter, overview.value?.max_chapter || vol.end_chapter);
   }
-}
 
-function onVolumeDrop(idx) {
-  if (dragVolumeIndex.value === null || dragVolumeIndex.value === idx) {
+  function addVolume() {
+    const nextStart = editableVolumes.value.length
+      ? editableVolumes.value[editableVolumes.value.length - 1].end_chapter + 1
+      : 1;
+    editableVolumes.value.push({
+      label: `卷${editableVolumes.value.length + 1}`,
+      start_chapter: nextStart,
+      end_chapter: Math.min(nextStart + 9, overview.value?.max_chapter || nextStart + 9),
+      core_conflict: '',
+      locked: false,
+    });
+  }
+
+  function toggleLock(idx) {
+    editableVolumes.value[idx].locked = !editableVolumes.value[idx].locked;
+  }
+
+  function moveVolume(from, to) {
+    if (from === to || to < 0 || to >= editableVolumes.value.length) return;
+    const items = [...editableVolumes.value];
+    const [item] = items.splice(from, 1);
+    items.splice(to, 0, item);
+    editableVolumes.value = items;
+  }
+
+  function onVolumeDragStart(idx, event) {
+    dragVolumeIndex.value = idx;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(idx));
+    }
+  }
+
+  function onVolumeDrop(idx) {
+    if (dragVolumeIndex.value === null || dragVolumeIndex.value === idx) {
+      dragVolumeIndex.value = null;
+      return;
+    }
+    moveVolume(dragVolumeIndex.value, idx);
     dragVolumeIndex.value = null;
-    return;
   }
-  moveVolume(dragVolumeIndex.value, idx);
-  dragVolumeIndex.value = null;
-}
 
-async function loadVolumePlan() {
-  const plan = await fetchCreatorVolumePlan();
-  editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
-  savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
-  volumePlanRevision.value = plan.revision || '';
-  mergeStartIdx.value = 0;
-  mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
-  mergePreview.value = null;
-  splitVolumeIdx.value = 0;
-  splitPreview.value = null;
-  syncSplitChapterFromVolume();
-  syncBatchRangeFromVolumes();
-}
-
-async function refreshVolumePlanDiffPreview() {
-  if (!uiProfile.value.volume_plan_diff_preview || !editableVolumes.value.length) {
-    volumePlanDiffPreview.value = null;
-    return;
-  }
-  try {
-    volumePlanDiffPreview.value = await previewCreatorVolumePlanDiff(editableVolumes.value);
-    if (uiProfile.value.volume_plan_diff_auto_collapse) {
-      volumePlanDiffExpanded.value = Boolean(volumePlanDiffPreview.value?.has_changes);
-    }
-  } catch {
-    volumePlanDiffPreview.value = null;
-    if (uiProfile.value.volume_plan_diff_auto_collapse) {
-      volumePlanDiffExpanded.value = false;
-    }
-  }
-}
-
-function onVolumePlanDiffToggle(event) {
-  if (!uiProfile.value.volume_plan_diff_auto_collapse) return;
-  volumePlanDiffExpanded.value = Boolean(event.target?.open);
-}
-
-async function jumpToGlobalOutlineEdit() {
-  if (!uiProfile.value.volume_plan_diff_jump_outline_edit) return;
-  await nextTick();
-  try {
-    globalOutlineEditorRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-    globalOutlineEditorRef.value?.focus?.();
-  } catch {
-    /* jsdom */
-  }
-  saveMessage.value = '已跳转全局大纲编辑';
-}
-
-function exportVolumePlanDiff() {
-  if (!uiProfile.value.volume_plan_diff_export || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  const payload = buildVolumePlanDiffExportPayload(changes, volumePlanDiffPreview.value, uiProfile.value);
-  downloadJsonExport('creator-volume-plan-diff.json', payload);
-  const outlineNote = uiProfile.value.volume_plan_diff_export_outline ? '（含大纲摘录）' : '';
-  const highlightNote = uiProfile.value.volume_plan_diff_export_highlight ? '（含变更高亮）' : '';
-  saveMessage.value = `已导出卷纲 diff（${changes.length} 条变更）${outlineNote}${highlightNote}`;
-}
-
-async function shareVolumePlanDiffEmail() {
-  if (!uiProfile.value.volume_plan_diff_export_email_share || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  const recipient = wizardEmailTo.value
-    .split(/[,\s;]+/)
-    .map((item) => item.trim())
-    .find(Boolean) || '';
-  const mailtoUrl = buildVolumePlanDiffMailto(changes, volumePlanDiffPreview.value, uiProfile.value, recipient);
-  window.open(mailtoUrl, '_blank');
-  saveMessage.value = recipient
-    ? `已打开邮件分享（${recipient}）`
-    : '已打开邮件分享';
-}
-
-function parseVolumePlanDiffShareHashWithValidation(hash = window.location.hash) {
-  const parsed = parseVolumePlanDiffShareHash(hash);
-  if (!parsed) return null;
-  if (!uiProfile.value.volume_plan_diff_share_token_validation) return parsed;
-  if (parsed.valid === false) return parsed;
-  return parsed;
-}
-
-function tryLoadVolumePlanDiffShareLinkPreview() {
-  if (!uiProfile.value.volume_plan_diff_share_link_preview) {
-    volumePlanDiffShareLinkPreview.value = null;
-    return;
-  }
-  const parsed = parseVolumePlanDiffShareHashWithValidation();
-  volumePlanDiffShareLinkPreview.value = parsed;
-  if (parsed?.valid === false) {
-    saveMessage.value = parsed.error_label;
-    return;
-  }
-  if (parsed?.change_count) {
-    saveMessage.value = `已解析分享链接（${parsed.change_count} 条变更）`;
-  }
-}
-
-function dismissVolumePlanDiffShareLinkPreview() {
-  volumePlanDiffShareLinkPreview.value = null;
-  shareE2eApplyDone.value = false;
-  if (window.location.hash.includes('creator-diff=')) {
-    const nextHash = window.location.hash.replace(/#?creator-diff=[^&]*/g, '').replace(/^#/, '');
-    window.history.replaceState(null, '', nextHash ? `#${nextHash}` : window.location.pathname + window.location.search);
-  }
-}
-
-function buildVolumePlanDiffShareDraft() {
-  return editableVolumes.value.map((vol) => ({
-    label: vol.label,
-    start_chapter: vol.start_chapter,
-    end_chapter: vol.end_chapter,
-    core_conflict: vol.core_conflict,
-    locked: Boolean(vol.locked),
-  }));
-}
-
-async function applyVolumePlanDiffShareLinkDirect(parsed) {
-  if (!parsed?.draft_volumes?.length) return;
-  editableVolumes.value = parsed.draft_volumes.map((vol) => ({ ...vol }));
-  await refreshVolumePlanDiffPreview();
-  if (parsed.collab_notes) {
-    await mergeIncomingDiffCollabNotes(parsed.collab_notes);
-  }
-  pendingShareApply.value = null;
-  pendingShareMerge.value = null;
-  shareE2eApplyDone.value = true;
-  if (!uiProfile.value.volume_plan_diff_share_link_e2e) {
-    dismissVolumePlanDiffShareLinkPreview();
-  }
-  saveMessage.value = `已应用分享卷纲（${parsed.draft_volumes.length} 卷）`;
-}
-
-function requestApplyVolumePlanDiffShareLink() {
-  if (!uiProfile.value.volume_plan_diff_share_link_apply) return;
-  const parsed = volumePlanDiffShareLinkPreview.value;
-  if (!parsed?.can_apply) return;
-  if (uiProfile.value.volume_plan_diff_share_link_apply_confirm) {
-    pendingShareApply.value = parsed;
-    return;
-  }
-  proceedApplyVolumePlanDiffShareLink(parsed);
-}
-
-function confirmApplyVolumePlanDiffShareLink() {
-  const parsed = pendingShareApply.value;
-  pendingShareApply.value = null;
-  if (!parsed) return;
-  proceedApplyVolumePlanDiffShareLink(parsed);
-}
-
-function cancelApplyVolumePlanDiffShareLink() {
-  pendingShareApply.value = null;
-}
-
-async function proceedApplyVolumePlanDiffShareLink(parsed) {
-  if (uiProfile.value.volume_plan_diff_share_link_merge) {
-    const conflicts = detectShareVolumeMergeConflictsUtil(parsed, editableVolumes.value);
-    if (conflicts.length) {
-      pendingShareMerge.value = { parsed, conflicts };
-      return;
-    }
-  }
-  await applyVolumePlanDiffShareLinkDirect(parsed);
-}
-
-async function confirmShareMergeUseShare() {
-  const pending = pendingShareMerge.value;
-  pendingShareMerge.value = null;
-  if (!pending?.parsed) return;
-  await applyVolumePlanDiffShareLinkDirect(pending.parsed);
-}
-
-function cancelShareMerge() {
-  pendingShareMerge.value = null;
-  saveMessage.value = '已保留本地卷纲，未应用分享变更';
-}
-
-async function applyVolumePlanDiffShareLink() {
-  requestApplyVolumePlanDiffShareLink();
-}
-
-function buildVolumePlanDiffShareCollabNotes(changes) {
-  if (!uiProfile.value.volume_plan_diff_share_collab_v2) return null;
-  const labels = [...new Set(changes.map((row) => String(row?.label || '').trim()).filter(Boolean))];
-  const notes = {};
-  for (const label of labels) {
-    const note = String(diffCollabNotes.value[label] || '').trim();
-    if (note) notes[label] = note;
-  }
-  return Object.keys(notes).length ? notes : null;
-}
-
-function setDiffCollabNote(label, value) {
-  diffCollabNotes.value = {
-    ...diffCollabNotes.value,
-    [label]: String(value || ''),
-  };
-}
-
-async function loadDiffCollabNotes() {
-  if (!uiProfile.value.volume_plan_diff_share_collab_v2) {
-    diffCollabNotes.value = {};
-    return;
-  }
-  try {
-    const payload = await fetchCreatorDiffCollabNotes();
-    diffCollabNotes.value = { ...(payload?.notes || {}) };
-  } catch {
-    diffCollabNotes.value = {};
-  }
-}
-
-async function mergeIncomingDiffCollabNotes(collabNotes) {
-  if (!uiProfile.value.volume_plan_diff_share_collab_v2 || !collabNotes) return;
-  const entries = Object.entries(collabNotes).filter(([, note]) => String(note).trim());
-  if (!entries.length) return;
-  const merged = { ...diffCollabNotes.value };
-  for (const [label, note] of entries) {
-    merged[label] = String(note).trim();
-  }
-  const saved = await saveCreatorDiffCollabNotes({ notes: merged });
-  diffCollabNotes.value = { ...(saved?.notes || merged) };
-}
-
-function buildVolumePlanDiffShareLink(changes) {
-  const payload = buildVolumePlanDiffExportPayload(changes, volumePlanDiffPreview.value, uiProfile.value);
-  const draft = uiProfile.value.volume_plan_diff_share_link_apply
-    ? buildVolumePlanDiffShareDraft()
-    : null;
-  const collabNotes = buildVolumePlanDiffShareCollabNotes(changes);
-  const token = encodeVolumePlanDiffShareToken(payload, draft, collabNotes);
-  return `${window.location.origin}${window.location.pathname}#creator-diff=${token}`;
-}
-
-async function shareVolumePlanDiffLink() {
-  if (!uiProfile.value.volume_plan_diff_export_share_link || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  const link = buildVolumePlanDiffShareLink(changes);
-  try {
-    await navigator.clipboard.writeText(link);
-    saveMessage.value = `已复制卷纲 diff 分享链接（${changes.length} 条变更）`;
-  } catch {
-    saveMessage.value = link;
-  }
-}
-
-function exportVolumePlanDiffMarkdown() {
-  if (!uiProfile.value.volume_plan_diff_export_markdown || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  downloadTextExport(
-    'creator-volume-plan-diff.md',
-    buildVolumePlanDiffMarkdown(changes, volumePlanDiffPreview.value, uiProfile.value),
-    'text/markdown',
-  );
-  saveMessage.value = `已导出卷纲 diff Markdown（${changes.length} 条变更）`;
-}
-
-function exportVolumePlanDiffPdf() {
-  if (!uiProfile.value.volume_plan_diff_export_pdf || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  const pdf = buildMinimalTextPdf(buildVolumePlanDiffMarkdown(changes, volumePlanDiffPreview.value, uiProfile.value).split('\n'));
-  downloadTextExport('creator-volume-plan-diff.pdf', pdf, 'application/pdf');
-  saveMessage.value = `已导出卷纲 diff PDF（${changes.length} 条变更）`;
-}
-
-function openVolumePlanDiffPrintPreview() {
-  if (!uiProfile.value.volume_plan_diff_export_print_preview || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  volumePlanDiffPrintPreviewText.value = buildVolumePlanDiffMarkdown(changes, volumePlanDiffPreview.value, uiProfile.value);
-  showVolumePlanDiffPrintPreview.value = true;
-  saveMessage.value = '已打开卷纲 diff 打印预览';
-}
-
-function closeVolumePlanDiffPrintPreview() {
-  showVolumePlanDiffPrintPreview.value = false;
-}
-
-function printVolumePlanDiffPrintPreview() {
-  if (!showVolumePlanDiffPrintPreview.value) return;
-  const printWindow = window.open('', '_blank', 'noopener');
-  if (!printWindow) return;
-  printWindow.document.write(`<pre>${volumePlanDiffPrintPreviewText.value.replace(/</g, '&lt;')}</pre>`);
-  printWindow.document.close();
-  printWindow.print();
-}
-
-function exportVolumePlanDiffZip() {
-  if (!uiProfile.value.volume_plan_diff_export_zip || !volumePlanDiffPreview.value?.has_changes) return;
-  const changes = filteredVolumePlanDiffChanges.value.length
-    ? filteredVolumePlanDiffChanges.value
-    : volumePlanDiffPreview.value.changes || [];
-  const payload = buildVolumePlanDiffExportPayload(changes, volumePlanDiffPreview.value, uiProfile.value);
-  const markdown = buildVolumePlanDiffMarkdown(changes, volumePlanDiffPreview.value, uiProfile.value);
-  const pdf = buildMinimalTextPdf(markdown.split('\n'));
-  const zip = buildMinimalZip([
-    { name: 'creator-volume-plan-diff.json', content: JSON.stringify(payload, null, 2) },
-    { name: 'creator-volume-plan-diff.md', content: markdown },
-    { name: 'creator-volume-plan-diff.pdf', content: pdf },
-  ]);
-  downloadBinaryExport('creator-volume-plan-diff.zip', zip, 'application/zip');
-  saveMessage.value = `已导出卷纲 diff ZIP（${changes.length} 条变更）`;
-}
-
-async function loadTemplateVersionChangelog() {
-  if (!selectedTemplateProject.value && !selectedTemplateFactory.value) {
-    templateVersionChangelog.value = [];
-    return;
-  }
-  try {
-    const data = await fetchCreatorVolumeTemplateChangelog(selectedTemplateId.value);
-    templateVersionChangelog.value = data.entries || [];
-  } catch {
-    const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
-    templateVersionChangelog.value = row?.version_changelog || [];
-  }
-}
-
-async function rollbackTemplateVersion(entry, changelogIndex) {
-  if (!selectedTemplateId.value) return;
-  templateRollbackSaving.value = true;
-  error.value = null;
-  try {
-    await rollbackCreatorVolumeTemplate(selectedTemplateId.value, {
-      version_label: entry.version_label || undefined,
-      changelog_index: changelogIndex,
-    });
-    saveMessage.value = `已回滚到 ${entry.version_label || '选定版本'}`;
-    await loadVolumeTemplates();
-    await loadTemplateVersionChangelog();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateRollbackSaving.value = false;
-  }
-}
-
-async function loadTemplateApprovalChainConfig() {
-  try {
-    const data = await fetchCreatorTemplateApprovalChainConfig();
-    templateApprovalChainSteps.value = data.required_steps || 2;
-    templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
-    if (data.step_assignee_groups?.length) {
-      templateApprovalOrGroups.value = data.step_assignee_groups
-        .map((group) => group.join('|'))
-        .join(',');
-    }
-    const sla = await fetchCreatorTemplateApprovalSlaConfig();
-    templateApprovalSlaHours.value = sla.timeout_hours || 72;
-    templateApprovalEmailOnSubmit.value = Boolean(sla.email_on_submit);
-    templateApprovalEmailOnReject.value = Boolean(sla.email_on_reject);
-    templateApprovalEmailOnOverdue.value = Boolean(sla.email_on_overdue);
-    const overdue = await fetchCreatorTemplateApprovalOverdue();
-    overdueTemplateApprovals.value = overdue.approvals || [];
-  } catch {
-    templateApprovalChainSteps.value = 2;
-    templateApprovalSlaHours.value = 72;
-    overdueTemplateApprovals.value = [];
-  }
-}
-
-async function saveTemplateApprovalSlaConfig() {
-  try {
-    await saveCreatorTemplateApprovalSlaConfig({
-      timeout_hours: templateApprovalSlaHours.value,
-      email_on_submit: templateApprovalEmailOnSubmit.value,
-      email_on_reject: templateApprovalEmailOnReject.value,
-      email_on_overdue: templateApprovalEmailOnOverdue.value,
-    });
-    saveMessage.value = `已保存审批 SLA（${templateApprovalSlaHours.value}h）`;
-    await loadTemplateApprovalChainConfig();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function saveTemplateApprovalChainConfig() {
-  try {
-    const assignees = templateApprovalStepAssignees.value
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const orGroups = templateApprovalOrGroups.value
-      .split(',')
-      .map((step) => step.split('|').map((s) => s.trim()).filter(Boolean))
-      .filter((group) => group.length);
-    const data = await saveCreatorTemplateApprovalChainConfig({
-      required_steps: templateApprovalChainSteps.value,
-      step_assignees: assignees,
-      step_assignee_groups: orGroups.length ? orGroups : undefined,
-    });
-    templateApprovalChainSteps.value = data.required_steps || 2;
-    templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
-    saveMessage.value = `已保存审批链（${templateApprovalChainSteps.value} 步）`;
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function loadTemplateApprovals() {
-  try {
-    const data = await fetchCreatorTemplateApprovals({ status: 'pending' });
-    templateApprovals.value = data.approvals || [];
-    const history = await fetchCreatorTemplateApprovalHistory();
-    templateApprovalHistory.value = history.approvals || [];
-    await loadTemplateApprovalChainConfig();
-  } catch {
-    templateApprovals.value = [];
-    templateApprovalHistory.value = [];
-  }
-}
-
-async function exportTemplateApprovalAudit() {
-  try {
-    const data = await exportCreatorTemplateApprovalAudit();
-    const text = JSON.stringify(data, null, 2);
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      saveMessage.value = `已导出 ${data.count} 条审批审计`;
-    } else {
-      saveMessage.value = `已导出 ${data.count} 条审批审计（无剪贴板）`;
-    }
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function deleteSelectedVolumeTemplate() {
-  if (!selectedTemplateCustom.value) return;
-  templateDeleting.value = true;
-  error.value = null;
-  try {
-    const deletedId = selectedTemplateId.value;
-    await deleteCreatorVolumeTemplate(deletedId);
-    saveMessage.value = '已删除自定义模板';
-    await loadVolumeTemplates();
-    if (!volumeTemplates.value.some((t) => t.id === deletedId)) {
-      selectedTemplateId.value = volumeTemplates.value[0]?.id || 'three_act';
-    }
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateDeleting.value = false;
-  }
-}
-
-async function renameSelectedVolumeTemplate() {
-  if (!selectedTemplateCustom.value || !renameTemplateName.value.trim()) return;
-  templateRenaming.value = true;
-  error.value = null;
-  try {
-    const renamed = await renameCreatorVolumeTemplate(selectedTemplateId.value, {
-      name: renameTemplateName.value.trim(),
-    });
-    saveMessage.value = `已重命名为「${renamed.name}」`;
-    await loadVolumeTemplates();
-    selectedTemplateId.value = renamed.id;
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateRenaming.value = false;
-  }
-}
-
-async function saveTemplateVersionLabel() {
-  if (!selectedTemplateProject.value && !selectedTemplateFactory.value) return;
-  if (templateVersionLabel.value.trim() && !isSemverVersionLabel(templateVersionLabel.value)) {
-    saveMessage.value = '版本标签需符合 semver（如 v1.2.0）';
-    return;
-  }
-  templateVersionSaving.value = true;
-  error.value = null;
-  try {
-    await setCreatorVolumeTemplateVersion(selectedTemplateId.value, {
-      version_label: templateVersionLabel.value.trim() || null,
-    });
-    saveMessage.value = '已更新版本标签';
-    await loadVolumeTemplates();
-    await loadTemplateVersionChangelog();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateVersionSaving.value = false;
-  }
-}
-
-async function submitTemplateVersionApproval() {
-  if (!selectedTemplateId.value) return;
-  if (templateVersionLabel.value.trim() && !isSemverVersionLabel(templateVersionLabel.value)) {
-    saveMessage.value = '版本标签需符合 semver（如 v1.2.0）';
-    return;
-  }
-  templateApprovalSubmitting.value = true;
-  error.value = null;
-  try {
-    await submitCreatorTemplateVersionApproval(selectedTemplateId.value, {
-      version_label: templateVersionLabel.value.trim() || null,
-    });
-    saveMessage.value = '已提交版本变更审批';
-    await loadTemplateApprovals();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateApprovalSubmitting.value = false;
-  }
-}
-
-async function approveTemplateVersion(approvalId) {
-  try {
-    const drift = await fetchCreatorTemplateApprovalSnapshotDrift(approvalId);
-    let force = false;
-    if (drift.drifted) {
-      const ok = window.confirm('审批快照与当前卷纲不一致，仍要批准？');
-      if (!ok) {
-        saveMessage.value = '已取消批准（快照漂移）';
-        return;
-      }
-      force = true;
-    }
-    const result = await approveCreatorTemplateApproval(approvalId, { force });
-    saveMessage.value = result.chain_advanced
-      ? `审批链进度 ${result.chain_progress}`
-      : '已批准版本变更';
-    await loadTemplateApprovals();
-    if (!result.chain_advanced) {
-      await loadVolumeTemplates();
-      await loadTemplateVersionChangelog();
-    }
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function batchApproveTemplateVersions() {
-  const ids = pendingTemplateApprovals.value.map((row) => row.id);
-  if (!ids.length) return;
-  try {
-    const force = window.confirm('批量批准全部待审批项？若存在快照漂移将自动 force。');
-    if (!force) return;
-    const result = await batchApproveCreatorTemplateApprovals({
-      approval_ids: ids,
-      force: true,
-    });
-    saveMessage.value = `批量批准：${result.approved}/${result.total}`;
-    await loadTemplateApprovals();
-    await loadVolumeTemplates();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function batchRejectTemplateVersions() {
-  const ids = pendingTemplateApprovals.value.map((row) => row.id);
-  if (!ids.length) return;
-  try {
-    const result = await batchRejectCreatorTemplateApprovals({
-      approval_ids: ids,
-      reason: '批量驳回',
-    });
-    saveMessage.value = `批量驳回：${result.rejected}/${result.total}`;
-    await loadTemplateApprovals();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function rejectTemplateVersion(approvalId) {
-  try {
-    await rejectCreatorTemplateApproval(approvalId, { reason: '驳回' });
-    saveMessage.value = '已驳回版本变更';
-    await loadTemplateApprovals();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function transferTemplateApproval(approvalId) {
-  const toAssignee = window.prompt('转交给（审批人 ID）');
-  if (!toAssignee?.trim()) return;
-  try {
-    await transferCreatorTemplateApproval(approvalId, {
-      to_assignee: toAssignee.trim(),
-      note: '委派转交',
-    });
-    saveMessage.value = `已转交给 ${toAssignee.trim()}`;
-    await loadTemplateApprovals();
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function previewApprovalSnapshotDiff(approvalId) {
-  try {
-    templateApprovalSnapshotDiff.value = await fetchCreatorTemplateApprovalSnapshotDiff(approvalId);
-    const summary = templateApprovalSnapshotDiff.value?.diff_summary;
-    saveMessage.value = summary?.changed
-      ? `快照 diff：+${summary.lines_added} / -${summary.lines_removed}`
-      : '快照与当前卷纲一致';
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function syncTemplatesFromProjects() {
-  templateSyncing.value = true;
-  error.value = null;
-  try {
-    if (!templateSyncSources.value.length) {
-      await loadTemplateSyncSources();
-    }
-    const slugs = templateSyncSources.value.map((s) => s.slug);
-    if (!slugs.length) {
-      saveMessage.value = '没有其他项目的自定义模板';
-      return;
-    }
-    const result = await syncCreatorVolumeTemplates({ source_slugs: slugs });
-    saveMessage.value = `已从 ${result.sources.length} 个项目同步 ${result.imported} 个模板`;
-    await loadVolumeTemplates();
-    await loadTemplateSyncSources();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateSyncing.value = false;
-  }
-}
-
-async function publishSelectedTemplateToFactory() {
-  if (!selectedTemplateProject.value) return;
-  templatePublishing.value = true;
-  error.value = null;
-  try {
-    await publishCreatorVolumeTemplateToFactory({ template_id: selectedTemplateId.value });
-    saveMessage.value = '已发布到工厂模板库';
-    await loadVolumeTemplates();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templatePublishing.value = false;
-  }
-}
-
-async function pullFactoryTemplates() {
-  const ids = volumeTemplates.value.filter((t) => t.scope === 'factory').map((t) => t.id);
-  if (!ids.length) return;
-  factoryPulling.value = true;
-  error.value = null;
-  try {
-    const result = await pullCreatorFactoryVolumeTemplates({ template_ids: ids });
-    saveMessage.value = `已从工厂库拉取 ${result.imported} 个模板`;
-    await loadVolumeTemplates();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    factoryPulling.value = false;
-  }
-}
-
-async function deleteSelectedFactoryTemplate() {
-  if (!selectedTemplateFactory.value) return;
-  factoryDeleting.value = true;
-  error.value = null;
-  try {
-    await deleteCreatorFactoryVolumeTemplate(selectedTemplateId.value);
-    saveMessage.value = '已从工厂库删除模板';
-    await loadVolumeTemplates();
-    selectedTemplateId.value = volumeTemplates.value[0]?.id || 'three_act';
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    factoryDeleting.value = false;
-  }
-}
-
-async function exportCustomTemplates() {
-  error.value = null;
-  try {
-    const data = await exportCreatorVolumeTemplates();
-    const text = JSON.stringify(data, null, 2);
-    importTemplatesJson.value = text;
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      saveMessage.value = `已导出 ${data.count} 个模板并复制到剪贴板`;
-    } else {
-      saveMessage.value = `已导出 ${data.count} 个模板（见导入框）`;
-      showImportTemplates.value = true;
-    }
-  } catch (e) {
-    handleSaveError(e);
-  }
-}
-
-async function importCustomTemplates() {
-  templateImporting.value = true;
-  error.value = null;
-  try {
-    const payload = JSON.parse(importTemplatesJson.value);
-    const templates = payload.templates || payload;
-    const result = await importCreatorVolumeTemplates({
-      templates: Array.isArray(templates) ? templates : [],
-      replace: false,
-    });
-    saveMessage.value = `已导入 ${result.imported} 个模板（共 ${result.total} 个）`;
-    importTemplatesJson.value = '';
-    showImportTemplates.value = false;
-    await loadVolumeTemplates();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    templateImporting.value = false;
-  }
-}
-
-async function saveCustomVolumeTemplate() {
-  if (!customTemplateName.value.trim() || !editableVolumes.value.length) return;
-  templateSaving.value = true;
-  error.value = null;
-  try {
-    const saved = await saveCreatorVolumeTemplate({
-      name: customTemplateName.value.trim(),
-      volumes: editableVolumes.value,
-      max_chapter: overview.value?.max_chapter,
-    });
-    saveMessage.value = `已保存模板「${saved.name}」`;
-    customTemplateName.value = '';
-    await loadVolumeTemplates();
-    selectedTemplateId.value = saved.id;
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateSaving.value = false;
-  }
-}
-
-async function loadVolumeTemplates() {
-  try {
-    const data = await fetchCreatorVolumeTemplates();
-    volumeTemplates.value = data.templates || [];
-    if (volumeTemplates.value.length && !volumeTemplates.value.some((t) => t.id === selectedTemplateId.value)) {
-      selectedTemplateId.value = volumeTemplates.value[0].id;
-    }
-  } catch {
-    volumeTemplates.value = [];
-  }
-}
-
-async function loadTemplateSyncSources() {
-  try {
-    const data = await fetchCreatorVolumeTemplateSyncSources();
-    templateSyncSources.value = data.sources || [];
-  } catch {
-    templateSyncSources.value = [];
-  }
-}
-
-async function applyVolumeTemplate() {
-  templateApplying.value = true;
-  error.value = null;
-  try {
-    const result = await applyCreatorVolumeTemplate({
-      template_id: selectedTemplateId.value,
-      max_chapter: overview.value?.max_chapter,
-    });
-    editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
-    mergePreview.value = null;
-    splitPreview.value = null;
-    saveMessage.value = `已套用模板「${result.template_name}」，请保存卷纲`;
-    syncSplitChapterFromVolume();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    templateApplying.value = false;
-  }
-}
-
-async function applyVolumeSplit() {
-  splitApplying.value = true;
-  error.value = null;
-  try {
-    const result = await splitCreatorVolumePlan({
-      volumes: editableVolumes.value,
-      volume_index: splitVolumeIdx.value,
-      split_at_chapter: splitAtChapter.value,
-    });
-    editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
-    splitPreview.value = {
-      first_label: result.first_label,
-      second_label: result.second_label,
-      first_range: result.first_range,
-      second_range: result.second_range,
-    };
-    mergePreview.value = null;
-    saveMessage.value = `已拆为「${result.first_label}」与「${result.second_label}」，请保存卷纲`;
-    syncSplitChapterFromVolume();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    splitApplying.value = false;
-  }
-}
-
-async function applyVolumeMerge() {
-  if (mergeStartIdx.value > mergeEndIdx.value) return;
-  mergeApplying.value = true;
-  error.value = null;
-  try {
-    const result = await mergeCreatorVolumePlan({
-      volumes: editableVolumes.value,
-      start_index: mergeStartIdx.value,
-      end_index: mergeEndIdx.value,
-      label: mergeLabel.value.trim() || undefined,
-    });
-    editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
-    mergePreview.value = {
-      merged_label: result.merged_label,
-      merged_range: result.merged_range,
-    };
+  async function loadVolumePlan() {
+    const plan = await fetchCreatorVolumePlan();
+    editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
+    savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
+    volumePlanRevision.value = plan.revision || '';
     mergeStartIdx.value = 0;
     mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
-    mergeLabel.value = '';
-    saveMessage.value = `已合并为「${result.merged_label}」，请保存卷纲`;
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    mergeApplying.value = false;
+    mergePreview.value = null;
+    splitVolumeIdx.value = 0;
+    splitPreview.value = null;
+    syncSplitChapterFromVolume();
+    syncBatchRangeFromVolumes();
   }
-}
 
-function requestSaveVolumePlan() {
-  if (
-    uiProfile.value.volume_plan_diff_save_confirm
-    && volumePlanDiffPreview.value?.has_changes
-  ) {
-    volumePlanSaveConfirmOpen.value = true;
-    return;
-  }
-  saveVolumePlan();
-}
-
-function cancelVolumePlanSave() {
-  volumePlanSaveConfirmOpen.value = false;
-}
-
-async function confirmSaveVolumePlan() {
-  await saveVolumePlan();
-}
-
-async function saveVolumePlan() {
-  saving.value = true;
-  saveMessage.value = '';
-  error.value = null;
-  try {
-    await saveCreatorVolumePlan(editableVolumes.value, volumePlanRevision.value);
-    if (uiProfile.value.volume_plan_diff_refresh_on_save) {
-      savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
-      await refreshVolumePlanDiffPreview();
+  async function applyVolumeSplit() {
+    splitApplying.value = true;
+    error.value = null;
+    try {
+      const result = await splitCreatorVolumePlan({
+        volumes: editableVolumes.value,
+        volume_index: splitVolumeIdx.value,
+        split_at_chapter: splitAtChapter.value,
+      });
+      editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+      splitPreview.value = {
+        first_label: result.first_label,
+        second_label: result.second_label,
+        first_range: result.first_range,
+        second_range: result.second_range,
+      };
+      mergePreview.value = null;
+      saveMessage.value = `已拆为「${result.first_label}」与「${result.second_label}」，请保存卷纲`;
+      syncSplitChapterFromVolume();
+    } catch (e) {
+      handleSaveError(e);
+    } finally {
+      splitApplying.value = false;
     }
-    saveMessage.value = uiProfile.value.volume_plan_diff_refresh_on_save
-      ? '卷纲已保存并同步到全局大纲 · diff 已刷新'
-      : '卷纲已保存并同步到全局大纲';
-    conflictMessage.value = '';
-    volumePlanSaveConfirmOpen.value = false;
-    if (uiProfile.value.volume_plan_diff_share_link_e2e && volumePlanDiffShareLinkPreview.value) {
-      dismissVolumePlanDiffShareLinkPreview();
-    }
-    await onAfterVolumePlanSave();
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    saving.value = false;
   }
-}
+
+  async function applyVolumeMerge() {
+    if (mergeStartIdx.value > mergeEndIdx.value) return;
+    mergeApplying.value = true;
+    error.value = null;
+    try {
+      const result = await mergeCreatorVolumePlan({
+        volumes: editableVolumes.value,
+        start_index: mergeStartIdx.value,
+        end_index: mergeEndIdx.value,
+        label: mergeLabel.value.trim() || undefined,
+      });
+      editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+      mergePreview.value = {
+        merged_label: result.merged_label,
+        merged_range: result.merged_range,
+      };
+      mergeStartIdx.value = 0;
+      mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
+      mergeLabel.value = '';
+      saveMessage.value = `已合并为「${result.merged_label}」，请保存卷纲`;
+    } catch (e) {
+      handleSaveError(e);
+    } finally {
+      mergeApplying.value = false;
+    }
+  }
+
+  function requestSaveVolumePlan() {
+    if (
+      uiProfile.value.volume_plan_diff_save_confirm
+      && diffHub.volumePlanDiffPreview.value?.has_changes
+    ) {
+      diffHub.volumePlanSaveConfirmOpen.value = true;
+      return;
+    }
+    saveVolumePlan();
+  }
+
+  function cancelVolumePlanSave() {
+    diffHub.volumePlanSaveConfirmOpen.value = false;
+  }
+
+  async function confirmSaveVolumePlan() {
+    await saveVolumePlan();
+  }
+
+  async function saveVolumePlan() {
+    saving.value = true;
+    saveMessage.value = '';
+    error.value = null;
+    try {
+      await saveCreatorVolumePlan(editableVolumes.value, volumePlanRevision.value);
+      if (uiProfile.value.volume_plan_diff_refresh_on_save) {
+        savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
+        await diffHub.refreshVolumePlanDiffPreview();
+      }
+      saveMessage.value = uiProfile.value.volume_plan_diff_refresh_on_save
+        ? '卷纲已保存并同步到全局大纲 · diff 已刷新'
+        : '卷纲已保存并同步到全局大纲';
+      conflictMessage.value = '';
+      diffHub.volumePlanSaveConfirmOpen.value = false;
+      if (uiProfile.value.volume_plan_diff_share_link_e2e && diffHub.volumePlanDiffShareLinkPreview.value) {
+        diffHub.dismissVolumePlanDiffShareLinkPreview();
+      }
+      await onAfterVolumePlanSave();
+    } catch (e) {
+      handleSaveError(e);
+    } finally {
+      saving.value = false;
+    }
+  }
 
   const panelContext = {
     addVolume,
     applyVolumeMerge,
     applyVolumeSplit,
-    applyVolumeTemplate,
-    approveTemplateVersion,
-    batchApproveTemplateVersions,
-    batchRejectTemplateVersions,
+    applyVolumeTemplate: templatesHub.applyVolumeTemplate,
+    approveTemplateVersion: templatesHub.approveTemplateVersion,
+    batchApproveTemplateVersions: templatesHub.batchApproveTemplateVersions,
+    batchRejectTemplateVersions: templatesHub.batchRejectTemplateVersions,
     cancelVolumePlanSave,
     confirmSaveVolumePlan,
-    customTemplateName,
-    deleteSelectedFactoryTemplate,
-    deleteSelectedVolumeTemplate,
-    diffCollabNotes,
+    customTemplateName: templatesHub.customTemplateName,
+    deleteSelectedFactoryTemplate: templatesHub.deleteSelectedFactoryTemplate,
+    deleteSelectedVolumeTemplate: templatesHub.deleteSelectedVolumeTemplate,
+    diffCollabNotes: diffHub.diffCollabNotes,
     dragVolumeIndex,
     editableVolumes,
-    expandedChangelogVisual,
-    exportCustomTemplates,
-    exportTemplateApprovalAudit,
-    exportVolumePlanDiff,
-    exportVolumePlanDiffMarkdown,
-    exportVolumePlanDiffPdf,
-    exportVolumePlanDiffZip,
-    factoryDeleting,
-    factoryPulling,
-    factoryTemplateCount,
-    filteredVolumePlanDiffChanges,
-    formatHistoryTime,
-    formatTemplateOption,
-    importCustomTemplates,
-    importTemplatesJson,
-    isSemverVersionLabel,
-    jumpToGlobalOutlineEdit,
+    expandedChangelogVisual: templatesHub.expandedChangelogVisual,
+    exportCustomTemplates: templatesHub.exportCustomTemplates,
+    exportTemplateApprovalAudit: templatesHub.exportTemplateApprovalAudit,
+    exportVolumePlanDiff: diffHub.exportVolumePlanDiff,
+    exportVolumePlanDiffMarkdown: diffHub.exportVolumePlanDiffMarkdown,
+    exportVolumePlanDiffPdf: diffHub.exportVolumePlanDiffPdf,
+    exportVolumePlanDiffZip: diffHub.exportVolumePlanDiffZip,
+    factoryDeleting: templatesHub.factoryDeleting,
+    factoryPulling: templatesHub.factoryPulling,
+    factoryTemplateCount: templatesHub.factoryTemplateCount,
+    filteredVolumePlanDiffChanges: diffHub.filteredVolumePlanDiffChanges,
+    formatHistoryTime: templatesHub.formatHistoryTime,
+    formatTemplateOption: templatesHub.formatTemplateOption,
+    importCustomTemplates: templatesHub.importCustomTemplates,
+    importTemplatesJson: templatesHub.importTemplatesJson,
+    isSemverVersionLabel: templatesHub.isSemverVersionLabel,
+    jumpToGlobalOutlineEdit: diffHub.jumpToGlobalOutlineEdit,
     mergeApplying,
     mergeEndIdx,
     mergeLabel,
@@ -1319,112 +304,112 @@ async function saveVolumePlan() {
     moveVolume,
     onVolumeDragStart,
     onVolumeDrop,
-    onVolumePlanDiffToggle,
-    openVolumePlanDiffPrintPreview,
-    overdueTemplateApprovals,
-    pendingTemplateApprovals,
-    previewApprovalSnapshotDiff,
-    publishSelectedTemplateToFactory,
-    pullFactoryTemplates,
-    rejectTemplateVersion,
-    renameSelectedVolumeTemplate,
-    renameTemplateName,
+    onVolumePlanDiffToggle: diffHub.onVolumePlanDiffToggle,
+    openVolumePlanDiffPrintPreview: diffHub.openVolumePlanDiffPrintPreview,
+    overdueTemplateApprovals: templatesHub.overdueTemplateApprovals,
+    pendingTemplateApprovals: templatesHub.pendingTemplateApprovals,
+    previewApprovalSnapshotDiff: templatesHub.previewApprovalSnapshotDiff,
+    publishSelectedTemplateToFactory: templatesHub.publishSelectedTemplateToFactory,
+    pullFactoryTemplates: templatesHub.pullFactoryTemplates,
+    rejectTemplateVersion: templatesHub.rejectTemplateVersion,
+    renameSelectedVolumeTemplate: templatesHub.renameSelectedVolumeTemplate,
+    renameTemplateName: templatesHub.renameTemplateName,
     requestSaveVolumePlan,
-    rollbackTemplateVersion,
-    saveCustomVolumeTemplate,
-    saveTemplateApprovalChainConfig,
-    saveTemplateApprovalSlaConfig,
-    saveTemplateVersionLabel,
+    rollbackTemplateVersion: templatesHub.rollbackTemplateVersion,
+    saveCustomVolumeTemplate: templatesHub.saveCustomVolumeTemplate,
+    saveTemplateApprovalChainConfig: templatesHub.saveTemplateApprovalChainConfig,
+    saveTemplateApprovalSlaConfig: templatesHub.saveTemplateApprovalSlaConfig,
+    saveTemplateVersionLabel: templatesHub.saveTemplateVersionLabel,
     saving,
-    selectedTemplateFactory,
-    selectedTemplateHint,
-    selectedTemplateId,
-    selectedTemplateProject,
-    setDiffCollabNote,
-    shareVolumePlanDiffEmail,
-    shareVolumePlanDiffLink,
-    showImportTemplates,
+    selectedTemplateFactory: templatesHub.selectedTemplateFactory,
+    selectedTemplateHint: templatesHub.selectedTemplateHint,
+    selectedTemplateId: templatesHub.selectedTemplateId,
+    selectedTemplateProject: templatesHub.selectedTemplateProject,
+    setDiffCollabNote: diffHub.setDiffCollabNote,
+    shareVolumePlanDiffEmail: diffHub.shareVolumePlanDiffEmail,
+    shareVolumePlanDiffLink: diffHub.shareVolumePlanDiffLink,
+    showImportTemplates: templatesHub.showImportTemplates,
     splitApplying,
     splitAtChapter,
     splitPreview,
     splitVolumeIdx,
-    submitTemplateVersionApproval,
-    syncTemplatesFromProjects,
-    templateApplying,
-    templateApprovalEmailOnOverdue,
-    templateApprovalEmailOnReject,
-    templateApprovalEmailOnSubmit,
-    templateApprovalHistory,
-    templateApprovalOrGroups,
-    templateApprovalSlaHours,
-    templateApprovalStepAssignees,
-    templateApprovalSubmitting,
-    templateDeleting,
-    templateImporting,
-    templatePublishing,
-    templateRenaming,
-    templateRollbackSaving,
-    templateSaving,
-    templateSyncSources,
-    templateSyncing,
-    templateVersionChangelog,
-    templateVersionLabel,
-    templateVersionSaving,
-    toggleChangelogVisual,
+    submitTemplateVersionApproval: templatesHub.submitTemplateVersionApproval,
+    syncTemplatesFromProjects: templatesHub.syncTemplatesFromProjects,
+    templateApplying: templatesHub.templateApplying,
+    templateApprovalEmailOnOverdue: templatesHub.templateApprovalEmailOnOverdue,
+    templateApprovalEmailOnReject: templatesHub.templateApprovalEmailOnReject,
+    templateApprovalEmailOnSubmit: templatesHub.templateApprovalEmailOnSubmit,
+    templateApprovalHistory: templatesHub.templateApprovalHistory,
+    templateApprovalOrGroups: templatesHub.templateApprovalOrGroups,
+    templateApprovalSlaHours: templatesHub.templateApprovalSlaHours,
+    templateApprovalStepAssignees: templatesHub.templateApprovalStepAssignees,
+    templateApprovalSubmitting: templatesHub.templateApprovalSubmitting,
+    templateDeleting: templatesHub.templateDeleting,
+    templateImporting: templatesHub.templateImporting,
+    templatePublishing: templatesHub.templatePublishing,
+    templateRenaming: templatesHub.templateRenaming,
+    templateRollbackSaving: templatesHub.templateRollbackSaving,
+    templateSaving: templatesHub.templateSaving,
+    templateSyncSources: templatesHub.templateSyncSources,
+    templateSyncing: templatesHub.templateSyncing,
+    templateVersionChangelog: templatesHub.templateVersionChangelog,
+    templateVersionLabel: templatesHub.templateVersionLabel,
+    templateVersionSaving: templatesHub.templateVersionSaving,
+    toggleChangelogVisual: templatesHub.toggleChangelogVisual,
     toggleLock,
-    transferTemplateApproval,
+    transferTemplateApproval: templatesHub.transferTemplateApproval,
     uiProfile,
-    volumePlanDiffChangeCount,
-    volumePlanDiffCollabRows,
-    volumePlanDiffExpanded,
-    volumePlanDiffPreview,
-    volumePlanDiffShareLinkPreview,
-    shareE2eApplyDone,
-    pendingShareApply,
-    pendingShareMerge,
-    showVolumePlanDiffPrintPreview,
-    volumePlanDiffPrintPreviewText,
-    dismissVolumePlanDiffShareLinkPreview,
-    requestApplyVolumePlanDiffShareLink,
-    confirmApplyVolumePlanDiffShareLink,
-    cancelApplyVolumePlanDiffShareLink,
-    confirmShareMergeUseShare,
-    cancelShareMerge,
-    printVolumePlanDiffPrintPreview,
-    closeVolumePlanDiffPrintPreview,
-    volumePlanDiffTypeFilter,
-    volumePlanDiffTypeOptions,
-    volumePlanDiffVolumeFilter,
-    volumePlanDiffVolumeOptions,
-    volumePlanSaveConfirmOpen,
-    volumeTemplates,
+    volumePlanDiffChangeCount: diffHub.volumePlanDiffChangeCount,
+    volumePlanDiffCollabRows: diffHub.volumePlanDiffCollabRows,
+    volumePlanDiffExpanded: diffHub.volumePlanDiffExpanded,
+    volumePlanDiffPreview: diffHub.volumePlanDiffPreview,
+    volumePlanDiffShareLinkPreview: diffHub.volumePlanDiffShareLinkPreview,
+    shareE2eApplyDone: diffHub.shareE2eApplyDone,
+    pendingShareApply: diffHub.pendingShareApply,
+    pendingShareMerge: diffHub.pendingShareMerge,
+    showVolumePlanDiffPrintPreview: diffHub.showVolumePlanDiffPrintPreview,
+    volumePlanDiffPrintPreviewText: diffHub.volumePlanDiffPrintPreviewText,
+    dismissVolumePlanDiffShareLinkPreview: diffHub.dismissVolumePlanDiffShareLinkPreview,
+    requestApplyVolumePlanDiffShareLink: diffHub.requestApplyVolumePlanDiffShareLink,
+    confirmApplyVolumePlanDiffShareLink: diffHub.confirmApplyVolumePlanDiffShareLink,
+    cancelApplyVolumePlanDiffShareLink: diffHub.cancelApplyVolumePlanDiffShareLink,
+    confirmShareMergeUseShare: diffHub.confirmShareMergeUseShare,
+    cancelShareMerge: diffHub.cancelShareMerge,
+    printVolumePlanDiffPrintPreview: diffHub.printVolumePlanDiffPrintPreview,
+    closeVolumePlanDiffPrintPreview: diffHub.closeVolumePlanDiffPrintPreview,
+    volumePlanDiffTypeFilter: diffHub.volumePlanDiffTypeFilter,
+    volumePlanDiffTypeOptions: diffHub.volumePlanDiffTypeOptions,
+    volumePlanDiffVolumeFilter: diffHub.volumePlanDiffVolumeFilter,
+    volumePlanDiffVolumeOptions: diffHub.volumePlanDiffVolumeOptions,
+    volumePlanSaveConfirmOpen: diffHub.volumePlanSaveConfirmOpen,
+    volumeTemplates: templatesHub.volumeTemplates,
   };
 
   return {
     panelContext,
     editableVolumes,
-    showVolumePlanDiffPrintPreview,
-    volumePlanDiffShareLinkPreview,
-    pendingShareApply,
-    pendingShareMerge,
-    shareE2eApplyDone,
-    volumePlanDiffPrintPreviewText,
+    showVolumePlanDiffPrintPreview: diffHub.showVolumePlanDiffPrintPreview,
+    volumePlanDiffShareLinkPreview: diffHub.volumePlanDiffShareLinkPreview,
+    pendingShareApply: diffHub.pendingShareApply,
+    pendingShareMerge: diffHub.pendingShareMerge,
+    shareE2eApplyDone: diffHub.shareE2eApplyDone,
+    volumePlanDiffPrintPreviewText: diffHub.volumePlanDiffPrintPreviewText,
     loadVolumePlan,
-    loadVolumeTemplates,
-    loadTemplateSyncSources,
-    loadTemplateApprovals,
-    loadDiffCollabNotes,
-    refreshVolumePlanDiffPreview,
-    tryLoadVolumePlanDiffShareLinkPreview,
-    dismissVolumePlanDiffShareLinkPreview,
-    requestApplyVolumePlanDiffShareLink,
-    confirmApplyVolumePlanDiffShareLink,
-    cancelApplyVolumePlanDiffShareLink,
-    confirmShareMergeUseShare,
-    cancelShareMerge,
-    closeVolumePlanDiffPrintPreview,
-    printVolumePlanDiffPrintPreview,
-    applyVolumePlanDiffShareLink,
-    formatHistoryTime,
+    loadVolumeTemplates: templatesHub.loadVolumeTemplates,
+    loadTemplateSyncSources: templatesHub.loadTemplateSyncSources,
+    loadTemplateApprovals: templatesHub.loadTemplateApprovals,
+    loadDiffCollabNotes: diffHub.loadDiffCollabNotes,
+    refreshVolumePlanDiffPreview: diffHub.refreshVolumePlanDiffPreview,
+    tryLoadVolumePlanDiffShareLinkPreview: diffHub.tryLoadVolumePlanDiffShareLinkPreview,
+    dismissVolumePlanDiffShareLinkPreview: diffHub.dismissVolumePlanDiffShareLinkPreview,
+    requestApplyVolumePlanDiffShareLink: diffHub.requestApplyVolumePlanDiffShareLink,
+    confirmApplyVolumePlanDiffShareLink: diffHub.confirmApplyVolumePlanDiffShareLink,
+    cancelApplyVolumePlanDiffShareLink: diffHub.cancelApplyVolumePlanDiffShareLink,
+    confirmShareMergeUseShare: diffHub.confirmShareMergeUseShare,
+    cancelShareMerge: diffHub.cancelShareMerge,
+    closeVolumePlanDiffPrintPreview: diffHub.closeVolumePlanDiffPrintPreview,
+    printVolumePlanDiffPrintPreview: diffHub.printVolumePlanDiffPrintPreview,
+    applyVolumePlanDiffShareLink: diffHub.applyVolumePlanDiffShareLink,
+    formatHistoryTime: templatesHub.formatHistoryTime,
   };
 }
