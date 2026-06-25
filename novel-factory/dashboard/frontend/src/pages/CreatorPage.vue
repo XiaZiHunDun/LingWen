@@ -450,551 +450,25 @@
           @deviation-click="handleDeviationClick"
         />
 
-        <div
-          v-if="showAdvanceBatch && showAdvanceBatchOnCreator"
-          class="advance-batch-panel pixel-border"
-          data-testid="advance-batch-panel"
-        >
-          <h3 class="subsection-title">推进 batch</h3>
-          <div class="batch-range">
-            <label>
-              起
-              <input
-                v-model.number="batchStart"
-                type="number"
-                min="1"
-                class="vol-input vol-num"
-                data-testid="batch-start-input"
-              />
-            </label>
-            <label>
-              止
-              <input
-                v-model.number="batchEnd"
-                type="number"
-                min="1"
-                class="vol-input vol-num"
-                data-testid="batch-end-input"
-              />
-            </label>
-            <label>
-              预算 $
-              <input
-                v-model.number="batchBudget"
-                type="number"
-                min="0"
-                step="0.01"
-                class="vol-input vol-num"
-                data-testid="batch-budget-input"
-              />
-            </label>
-          </div>
-          <p
-            v-if="uiProfile.batch_history_budget_hint && batchHistoryBudgetHint"
-            class="meta-line batch-history-budget-hint"
-            data-testid="batch-history-budget-hint"
-          >
-            {{ batchHistoryBudgetHint }}
-          </p>
-          <div class="batch-actions">
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="advance-preflight-btn"
-              :disabled="batchRunning"
-              @click="runAdvancePreflight"
-            >
-              Preflight
-            </button>
-            <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="advance-batch-btn"
-              :disabled="batchRunning || !preflightOk"
-              @click="runAdvanceBatch"
-            >
-              {{ batchRunning ? '运行中…' : '启动 Batch' }}
-            </button>
-          </div>
-          <p v-if="batchCommand" class="meta-line"><code>{{ batchCommand }}</code></p>
-          <p v-if="batchError" class="batch-error">{{ batchError }}</p>
-          <p v-if="batchJob" class="meta-line" data-testid="batch-job-status">
-            任务 {{ batchJob.job_id }} · {{ batchJob.status }}
-          </p>
-        </div>
+        <CreatorAdvanceBatchPanel
+          :show-advance-batch="showAdvanceBatch"
+          :show-advance-batch-on-creator="showAdvanceBatchOnCreator"
+          v-model:batch-start="batchStart"
+          v-model:batch-end="batchEnd"
+          v-model:batch-budget="batchBudget"
+          :ui-profile="uiProfile"
+          :batch-history-budget-hint="batchHistoryBudgetHint"
+          :batch-running="batchRunning"
+          :preflight-ok="preflightOk"
+          :batch-command="batchCommand"
+          :batch-error="batchError"
+          :batch-job="batchJob"
+          @preflight="runAdvancePreflight"
+          @run-batch="runAdvanceBatch"
+          @go-produce="goProduceConsole"
+        />
 
-        <div
-          v-else-if="showAdvanceBatch"
-          class="advance-produce-cta pixel-border"
-          data-testid="advance-produce-cta"
-        >
-          <h3 class="subsection-title">批量产章</h3>
-          <p class="meta-line">
-            Preflight、Batch 与生产记录已合并到「生产」页，避免与工作室重复操作。
-          </p>
-          <button
-            type="button"
-            class="save-btn pixel-border"
-            data-testid="advance-go-produce-btn"
-            @click="goProduceConsole"
-          >
-            去生产控制台
-          </button>
-        </div>
-
-        <div
-          v-if="uiProfile.batch_history_panel && batchHistory.length"
-          class="batch-history-panel pixel-border"
-          data-testid="batch-history-panel"
-        >
-          <h3 class="subsection-title">Batch 历史</h3>
-          <button
-            v-if="uiProfile.batch_history_ops_summary"
-            type="button"
-            class="mini-btn pixel-border batch-history-ops-summary-toggle"
-            data-testid="batch-history-ops-summary-toggle"
-            @click="toggleBatchHistoryOpsSummary"
-          >
-            运维摘要{{ batchHistoryOpsSummaryOpen ? '（收起）' : '（展开）' }}
-            <span class="batch-history-ops-summary-line">{{ batchHistoryOpsSummaryLine }}</span>
-          </button>
-          <div
-            v-show="!uiProfile.batch_history_ops_summary || batchHistoryOpsSummaryOpen"
-            class="batch-history-ops-summary-body"
-            data-testid="batch-history-ops-summary-body"
-          >
-          <p
-            v-if="batchHistorySuccessRate"
-            class="meta-line batch-history-success-rate"
-            data-testid="batch-history-success-rate"
-          >
-            成功率 {{ batchHistorySuccessRate.pct }}%（{{ batchHistorySuccessRate.completed }}/{{ batchHistorySuccessRate.total }} 已完成）
-          </p>
-          <div
-            v-if="batchHistorySuccessRateChart"
-            class="batch-history-success-rate-chart"
-            data-testid="batch-history-success-rate-chart"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistorySuccessRateChart.width} ${batchHistorySuccessRateChart.height}`"
-              class="batch-history-success-rate-chart-svg"
-              role="img"
-              aria-label="batch 历史成功率折线图"
-            >
-              <polyline
-                :points="batchHistorySuccessRateChart.polyline"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              />
-            </svg>
-            <p class="meta-line batch-history-success-rate-chart-label">
-              累计成功率趋势（{{ batchHistorySuccessRateChart.points.length }} 次）
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryStatusStackChart"
-            class="batch-history-status-stack-chart"
-            data-testid="batch-history-status-stack-chart"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryStatusStackChart.width} ${batchHistoryStatusStackChart.height}`"
-              class="batch-history-status-stack-chart-svg"
-              role="img"
-              aria-label="batch 历史状态堆叠图"
-            >
-              <rect
-                v-for="segment in batchHistoryStatusStackChart.segments"
-                :key="`batch-stack-${segment.status}`"
-                :x="segment.x"
-                y="0"
-                :width="segment.width"
-                :height="batchHistoryStatusStackChart.height"
-                :class="`batch-history-stack-segment batch-history-stack-segment--${segment.status}`"
-                :data-testid="`batch-history-stack-${segment.status}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-status-stack-label">
-              状态分布：
-              <span
-                v-for="segment in batchHistoryStatusStackChart.segments"
-                :key="`batch-stack-label-${segment.status}`"
-              >
-                {{ segment.status }} {{ segment.count }}
-              </span>
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryDurationDistribution"
-            class="batch-history-duration-distribution"
-            data-testid="batch-history-duration-distribution"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryDurationDistribution.width} ${batchHistoryDurationDistribution.height}`"
-              class="batch-history-duration-distribution-svg"
-              role="img"
-              aria-label="batch 历史耗时分布图"
-            >
-              <rect
-                v-for="bar in batchHistoryDurationDistribution.bars"
-                :key="`duration-bar-${bar.id}`"
-                :x="bar.x"
-                :y="bar.y"
-                :width="bar.barWidth"
-                :height="bar.barHeight"
-                class="batch-history-duration-bar"
-                :data-testid="`batch-history-duration-${bar.id}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-duration-distribution-label">
-              耗时分布：
-              <span
-                v-for="bar in batchHistoryDurationDistribution.bars"
-                :key="`duration-label-${bar.id}`"
-              >
-                {{ bar.label }} {{ bar.count }}
-              </span>
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryConcurrencyChart"
-            class="batch-history-concurrency-chart"
-            data-testid="batch-history-concurrency-chart"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryConcurrencyChart.width} ${batchHistoryConcurrencyChart.height}`"
-              class="batch-history-concurrency-chart-svg"
-              role="img"
-              aria-label="batch 历史并发运行图"
-            >
-              <rect
-                v-for="bar in batchHistoryConcurrencyChart.bars"
-                :key="`concurrency-bar-${bar.id}`"
-                :x="bar.x"
-                :y="bar.y"
-                :width="bar.barWidth"
-                :height="bar.barHeight"
-                class="batch-history-concurrency-bar"
-                :data-testid="`batch-history-concurrency-${bar.id}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-concurrency-chart-label">
-              并发运行：峰值 {{ batchHistoryConcurrencyChart.peak }}
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryQueueDepthChart"
-            class="batch-history-queue-depth-chart"
-            data-testid="batch-history-queue-depth-chart"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryQueueDepthChart.width} ${batchHistoryQueueDepthChart.height}`"
-              class="batch-history-queue-depth-chart-svg"
-              role="img"
-              aria-label="batch 历史队列深度图"
-            >
-              <rect
-                v-for="bar in batchHistoryQueueDepthChart.bars"
-                :key="`queue-depth-bar-${bar.id}`"
-                :x="bar.x"
-                :y="bar.y"
-                :width="bar.barWidth"
-                :height="bar.barHeight"
-                class="batch-history-queue-depth-bar"
-                :data-testid="`batch-history-queue-depth-${bar.id}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-queue-depth-chart-label">
-              队列深度：峰值 {{ batchHistoryQueueDepthChart.peak }}
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryThroughputChart"
-            class="batch-history-throughput-chart"
-            data-testid="batch-history-throughput-chart"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryThroughputChart.width} ${batchHistoryThroughputChart.height}`"
-              class="batch-history-throughput-chart-svg"
-              role="img"
-              aria-label="batch 历史吞吐率图"
-            >
-              <rect
-                v-for="bar in batchHistoryThroughputChart.bars"
-                :key="`throughput-bar-${bar.id}`"
-                :x="bar.x"
-                :y="bar.y"
-                :width="bar.barWidth"
-                :height="bar.barHeight"
-                class="batch-history-throughput-bar"
-                :data-testid="`batch-history-throughput-${bar.id}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-throughput-chart-label">
-              吞吐率：均值 {{ batchHistoryThroughputChart.avg }} 章/分 · 峰值 {{ batchHistoryThroughputChart.peak }}
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryCostEfficiencyChart"
-            class="batch-history-cost-efficiency-chart"
-            data-testid="batch-history-cost-efficiency-chart"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryCostEfficiencyChart.width} ${batchHistoryCostEfficiencyChart.height}`"
-              class="batch-history-cost-efficiency-chart-svg"
-              role="img"
-              aria-label="batch 历史成本效率图"
-            >
-              <rect
-                v-for="bar in batchHistoryCostEfficiencyChart.bars"
-                :key="`cost-bar-${bar.id}`"
-                :x="bar.x"
-                :y="bar.y"
-                :width="bar.barWidth"
-                :height="bar.barHeight"
-                class="batch-history-cost-efficiency-bar"
-                :data-testid="`batch-history-cost-${bar.id}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-cost-efficiency-chart-label">
-              成本效率：均值 ${{ batchHistoryCostEfficiencyChart.avg }} /章
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryRetryRateStack"
-            class="batch-history-retry-rate-stack"
-            data-testid="batch-history-retry-rate-stack"
-          >
-            <svg
-              :viewBox="`0 0 ${batchHistoryRetryRateStack.width} ${batchHistoryRetryRateStack.height}`"
-              class="batch-history-retry-rate-stack-svg"
-              role="img"
-              aria-label="batch 历史重试成功率堆叠图"
-            >
-              <rect
-                v-for="segment in batchHistoryRetryRateStack.segments"
-                :key="`retry-seg-${segment.id}`"
-                :x="segment.x"
-                y="0"
-                :width="segment.width"
-                :height="batchHistoryRetryRateStack.height"
-                :class="`batch-history-retry-seg batch-history-retry-seg--${segment.id}`"
-                :data-testid="`batch-history-retry-${segment.id}`"
-              />
-            </svg>
-            <p class="meta-line batch-history-retry-rate-stack-label">
-              重试分布：首次成功 {{ batchHistoryRetryRateStack.firstSuccess }}
-              · 重试成功 {{ batchHistoryRetryRateStack.retriedSuccess }}
-              · 失败 {{ batchHistoryRetryRateStack.failed }}
-            </p>
-          </div>
-          <div
-            v-if="batchHistoryChapterFailureHeatmap"
-            class="batch-history-chapter-failure-heatmap"
-            data-testid="batch-history-chapter-failure-heatmap"
-          >
-            <div class="batch-history-chapter-failure-grid">
-              <span
-                v-for="cell in batchHistoryChapterFailureHeatmap.cells"
-                :key="`heat-ch-${cell.chapter}`"
-                class="batch-history-chapter-failure-cell"
-                :class="{ 'batch-history-chapter-failure-cell--failed': cell.failed }"
-                :data-testid="`batch-history-heat-ch${cell.chapter}`"
-                :title="`ch${String(cell.chapter).padStart(3, '0')}`"
-              />
-            </div>
-            <p class="meta-line batch-history-chapter-failure-heatmap-label">
-              章节失败热力：{{ batchHistoryChapterFailureHeatmap.failedCount }} / {{ batchHistoryChapterFailureHeatmap.cells.length }}
-            </p>
-          </div>
-          <p
-            v-if="batchHistoryAvgDuration != null"
-            class="meta-line batch-history-avg-duration"
-            data-testid="batch-history-avg-duration"
-          >
-            平均耗时 {{ batchHistoryAvgDuration }} 分钟
-          </p>
-          <p
-            v-if="batchHistoryFailureTrend"
-            class="meta-line batch-history-failure-trend"
-            data-testid="batch-history-failure-trend"
-          >
-            失败率 {{ batchHistoryFailureTrend.failurePct }}%（{{ batchHistoryFailureTrend.failed }}/{{ batchHistoryFailureTrend.total }}）
-            · 近期趋势{{ batchHistoryFailureTrend.trendLabel }}
-          </p>
-          </div>
-          <ul
-            v-if="uiProfile.batch_history_weekly_summary && batchHistoryWeeklySummary.length"
-            class="batch-history-weekly-summary"
-            data-testid="batch-history-weekly-summary"
-          >
-            <li
-              v-for="week in batchHistoryWeeklySummary"
-              :key="`batch-week-${week.weekKey}`"
-              class="meta-line batch-history-weekly-item"
-              :data-testid="`batch-history-week-${week.weekKey}`"
-            >
-              {{ week.weekLabel }} · {{ week.total }} 次
-              · 成功 {{ week.completed }} · 失败 {{ week.failed }}
-            </li>
-          </ul>
-          <ul
-            v-if="uiProfile.batch_history_monthly_summary && batchHistoryMonthlySummary.length"
-            class="batch-history-monthly-summary"
-            data-testid="batch-history-monthly-summary"
-          >
-            <li
-              v-for="month in batchHistoryMonthlySummary"
-              :key="`batch-month-${month.monthKey}`"
-              class="meta-line batch-history-monthly-item"
-              :data-testid="`batch-history-month-${month.monthKey}`"
-            >
-              {{ month.monthLabel }} · {{ month.total }} 次
-              · 成功 {{ month.completed }} · 失败 {{ month.failed }}
-            </li>
-          </ul>
-          <div class="batch-history-actions">
-            <button
-              v-if="uiProfile.batch_history_export"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="export-batch-history-btn"
-              @click="exportBatchHistory"
-            >
-              导出 JSON
-            </button>
-          </div>
-          <label
-            v-if="uiProfile.batch_history_status_filter"
-            class="meta-line batch-history-filter"
-            data-testid="batch-history-filter-label"
-          >
-            状态筛选
-            <select
-              v-model="batchHistoryStatusFilter"
-              class="vol-input"
-              data-testid="batch-history-status-filter"
-            >
-              <option value="">全部</option>
-              <option
-                v-for="status in batchHistoryStatusOptions"
-                :key="status"
-                :value="status"
-              >
-                {{ status }}
-              </option>
-            </select>
-          </label>
-          <p
-            v-if="!filteredBatchHistory.length"
-            class="meta-line"
-            data-testid="batch-history-empty"
-          >
-            无匹配任务
-          </p>
-          <div
-            v-else-if="uiProfile.batch_history_date_group"
-            class="batch-history-groups"
-            data-testid="batch-history-date-groups"
-          >
-            <section
-              v-for="group in batchHistoryDateGroups"
-              :key="`batch-date-${group.date}`"
-              class="batch-history-date-group"
-              :data-testid="`batch-history-date-${group.date}`"
-            >
-              <p class="meta-line batch-history-date-label">{{ group.date }}</p>
-              <ul class="batch-history-list" data-testid="batch-history-list">
-                <li
-                  v-for="job in group.jobs"
-                  :key="job.job_id"
-                  class="batch-history-item"
-                  :class="{
-                    'batch-history-item--clickable': uiProfile.batch_history_replay_range,
-                    'batch-history-item--active': highlightedBatchHistoryId === job.job_id,
-                    ...batchHistoryStatusClass(job),
-                  }"
-                  :role="uiProfile.batch_history_replay_range ? 'button' : undefined"
-                  :tabindex="uiProfile.batch_history_replay_range ? 0 : undefined"
-                  :data-testid="`batch-history-${job.job_id}`"
-                  @click="applyBatchHistoryRange(job)"
-                  @keydown.enter="applyBatchHistoryRange(job)"
-                >
-                  ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
-                  · {{ job.status }}
-                  <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
-                  <span
-                    v-if="batchJobDurationLabel(job)"
-                    class="meta-line batch-history-duration"
-                    :data-testid="`batch-history-duration-${job.job_id}`"
-                  >
-                    · {{ batchJobDurationLabel(job) }}
-                  </span>
-                  <span
-                    v-if="batchHistoryFailureReasonLabel(job)"
-                    class="meta-line batch-history-failure-reason"
-                    :data-testid="`batch-history-failure-reason-${job.job_id}`"
-                  >
-                    · {{ batchHistoryFailureReasonLabel(job) }}
-                  </span>
-                  <button
-                    v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
-                    type="button"
-                    class="mini-btn pixel-border batch-history-retry-btn"
-                    :data-testid="`batch-history-retry-${job.job_id}`"
-                    @click.stop="retryBatchHistoryJob(job)"
-                  >
-                    重试
-                  </button>
-                </li>
-              </ul>
-            </section>
-          </div>
-          <ul v-else class="batch-history-list" data-testid="batch-history-list">
-            <li
-              v-for="job in filteredBatchHistory"
-              :key="job.job_id"
-              class="batch-history-item"
-              :class="{
-                'batch-history-item--clickable': uiProfile.batch_history_replay_range,
-                'batch-history-item--active': highlightedBatchHistoryId === job.job_id,
-                ...batchHistoryStatusClass(job),
-              }"
-              :role="uiProfile.batch_history_replay_range ? 'button' : undefined"
-              :tabindex="uiProfile.batch_history_replay_range ? 0 : undefined"
-              :data-testid="`batch-history-${job.job_id}`"
-              @click="applyBatchHistoryRange(job)"
-              @keydown.enter="applyBatchHistoryRange(job)"
-            >
-              ch{{ String(job.start_chapter).padStart(3, '0') }}–ch{{ String(job.end_chapter).padStart(3, '0') }}
-              · {{ job.status }}
-              <span v-if="job.finished_at" class="meta-line">· {{ job.finished_at }}</span>
-              <span
-                v-if="batchJobDurationLabel(job)"
-                class="meta-line batch-history-duration"
-                :data-testid="`batch-history-duration-${job.job_id}`"
-              >
-                · {{ batchJobDurationLabel(job) }}
-              </span>
-              <span
-                v-if="batchHistoryFailureReasonLabel(job)"
-                class="meta-line batch-history-failure-reason"
-                :data-testid="`batch-history-failure-reason-${job.job_id}`"
-              >
-                · {{ batchHistoryFailureReasonLabel(job) }}
-              </span>
-              <button
-                v-if="uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
-                type="button"
-                class="mini-btn pixel-border batch-history-retry-btn"
-                :data-testid="`batch-history-retry-${job.job_id}`"
-                @click.stop="retryBatchHistoryJob(job)"
-              >
-                重试
-              </button>
-            </li>
-          </ul>
-        </div>
+        <CreatorBatchHistoryPanel />
 
         <div
           v-if="batchSummaryPrompt"
@@ -2498,6 +1972,9 @@ import HubTabBar from '../components/HubTabBar.vue';
 import CreatorPulseIntro from '../components/creator/CreatorPulseIntro.vue';
 import CreatorDeviationList from '../components/creator/CreatorDeviationList.vue';
 import CreatorVolumePlanPanel from '../components/creator/CreatorVolumePlanPanel.vue';
+import CreatorAdvanceBatchPanel from '../components/creator/CreatorAdvanceBatchPanel.vue';
+import CreatorBatchHistoryPanel from '../components/creator/CreatorBatchHistoryPanel.vue';
+import { CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext } from '../components/creator/creatorBatchHistoryKey.js';
 import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
 
 const { projectRevision } = useStudioProject();
@@ -6775,6 +6252,43 @@ provide(
     volumePlanDiffVolumeOptions,
     volumePlanSaveConfirmOpen,
     volumeTemplates,
+  }),
+);
+
+
+provide(
+  CREATOR_BATCH_HISTORY_KEY,
+  createCreatorBatchHistoryContext({
+    uiProfile,
+    batchHistory,
+    batchHistoryOpsSummaryOpen,
+    toggleBatchHistoryOpsSummary,
+    batchHistoryOpsSummaryLine,
+    batchHistorySuccessRate,
+    batchHistorySuccessRateChart,
+    batchHistoryStatusStackChart,
+    batchHistoryDurationDistribution,
+    batchHistoryConcurrencyChart,
+    batchHistoryQueueDepthChart,
+    batchHistoryThroughputChart,
+    batchHistoryCostEfficiencyChart,
+    batchHistoryRetryRateStack,
+    batchHistoryChapterFailureHeatmap,
+    batchHistoryAvgDuration,
+    batchHistoryFailureTrend,
+    batchHistoryWeeklySummary,
+    batchHistoryMonthlySummary,
+    exportBatchHistory,
+    batchHistoryStatusFilter,
+    batchHistoryStatusOptions,
+    filteredBatchHistory,
+    batchHistoryDateGroups,
+    highlightedBatchHistoryId,
+    batchHistoryStatusClass,
+    applyBatchHistoryRange,
+    batchJobDurationLabel,
+    batchHistoryFailureReasonLabel,
+    retryBatchHistoryJob,
   }),
 );
 
