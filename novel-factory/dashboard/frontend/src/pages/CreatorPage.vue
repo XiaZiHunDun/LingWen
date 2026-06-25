@@ -440,1058 +440,7 @@
           </button>
         </div>
 
-        <div class="volume-plan-panel" data-testid="volume-plan-panel">
-          <div class="volume-plan-header">
-            <h3 class="subsection-title">卷纲</h3>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="add-volume-btn"
-              @click="addVolume"
-            >
-              + 卷
-            </button>
-          </div>
-          <component
-            :is="uiProfile.creator_simplified_mode_ops ? 'details' : 'div'"
-            v-if="volumeTemplates.length"
-            class="volume-template-panel pixel-border"
-            data-testid="volume-template-panel"
-          >
-            <summary v-if="uiProfile.creator_simplified_mode_ops" class="subsection-title">模板库（进阶）</summary>
-            <h3 v-else class="subsection-title">模板库</h3>
-            <div class="merge-range">
-              <select v-model="selectedTemplateId" class="vol-input" data-testid="volume-template-select">
-                <option v-for="t in volumeTemplates" :key="t.id" :value="t.id">
-                  {{ formatTemplateOption(t) }}
-                </option>
-              </select>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="apply-template-btn"
-                :disabled="templateApplying"
-                @click="applyVolumeTemplate"
-              >
-                {{ templateApplying ? '套用中…' : '套用模板' }}
-              </button>
-              <button
-                v-if="selectedTemplateProject"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="delete-template-btn"
-                :disabled="templateDeleting"
-                @click="deleteSelectedVolumeTemplate"
-              >
-                {{ templateDeleting ? '删除中…' : '删除模板' }}
-              </button>
-              <button
-                v-if="selectedTemplateProject && uiProfile.show_factory_presets"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="publish-factory-template-btn"
-                :disabled="templatePublishing"
-                @click="publishSelectedTemplateToFactory"
-              >
-                {{ templatePublishing ? '发布中…' : '发布到工厂库' }}
-              </button>
-              <button
-                v-if="selectedTemplateFactory && uiProfile.show_factory_presets"
-                type="button"
-                class="mini-btn mini-btn--danger pixel-border"
-                data-testid="delete-factory-template-btn"
-                :disabled="factoryDeleting"
-                @click="deleteSelectedFactoryTemplate"
-              >
-                {{ factoryDeleting ? '删除中…' : '从工厂库删除' }}
-              </button>
-            </div>
-            <div v-if="(selectedTemplateProject || selectedTemplateFactory) && uiProfile.show_template_version_ops" class="merge-range">
-              <input
-                v-model="templateVersionLabel"
-                class="vol-input vol-conflict"
-                data-testid="template-version-input"
-                placeholder="版本标签（semver，如 v1.2.0）"
-              />
-              <p
-                v-if="templateVersionLabel && !isSemverVersionLabel(templateVersionLabel)"
-                class="meta-line version-semver-warn"
-                data-testid="template-version-semver-warn"
-              >
-                版本标签需符合 semver（如 v1.2.0）
-              </p>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="set-template-version-btn"
-                :disabled="templateVersionSaving"
-                @click="saveTemplateVersionLabel"
-              >
-                {{ templateVersionSaving ? '保存中…' : '设版本标签' }}
-              </button>
-              <button
-                v-if="uiProfile.show_studio_workflow && (selectedTemplateProject || selectedTemplateFactory)"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="submit-template-version-approval-btn"
-                :disabled="templateApprovalSubmitting"
-                @click="submitTemplateVersionApproval"
-              >
-                {{ templateApprovalSubmitting ? '提交中…' : '提交审批' }}
-              </button>
-            </div>
-            <div
-              v-if="uiProfile.show_studio_workflow"
-              class="template-approval-chain-config"
-              data-testid="template-approval-chain-config"
-            >
-              <p class="meta-line">审批链步数</p>
-              <input
-                v-model.number="templateApprovalChainSteps"
-                type="number"
-                min="1"
-                max="5"
-                class="vol-input"
-                data-testid="template-approval-chain-steps"
-              />
-              <input
-                v-model="templateApprovalStepAssignees"
-                type="text"
-                class="vol-input"
-                data-testid="template-approval-step-assignees"
-                placeholder="审批人（逗号分步）"
-              />
-              <input
-                v-model="templateApprovalOrGroups"
-                type="text"
-                class="vol-input"
-                data-testid="template-approval-or-groups"
-                placeholder="OR 签：alice|bob,carol"
-              />
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="save-template-approval-chain-btn"
-                @click="saveTemplateApprovalChainConfig"
-              >
-                保存审批链
-              </button>
-            </div>
-            <div
-              v-if="uiProfile.show_studio_workflow"
-              class="template-approval-sla-config"
-              data-testid="template-approval-sla-config"
-            >
-              <p class="meta-line">审批 SLA（{{ templateApprovalSlaHours }} 小时）</p>
-              <input
-                v-model.number="templateApprovalSlaHours"
-                type="number"
-                min="1"
-                max="720"
-                class="vol-input"
-                data-testid="template-approval-sla-hours"
-              />
-              <label class="meta-line">
-                <input v-model="templateApprovalEmailOnSubmit" type="checkbox" data-testid="template-approval-email-submit" />
-                提交时发邮件
-              </label>
-              <label class="meta-line">
-                <input v-model="templateApprovalEmailOnReject" type="checkbox" data-testid="template-approval-email-reject" />
-                驳回时发邮件
-              </label>
-              <label class="meta-line">
-                <input v-model="templateApprovalEmailOnOverdue" type="checkbox" data-testid="template-approval-email-overdue" />
-                超时时发邮件
-              </label>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="save-template-approval-sla-btn"
-                @click="saveTemplateApprovalSlaConfig"
-              >
-                保存 SLA
-              </button>
-            </div>
-            <div
-              v-if="uiProfile.show_studio_workflow && overdueTemplateApprovals.length"
-              class="template-approval-overdue"
-              data-testid="template-approval-overdue-panel"
-            >
-              <p class="meta-line">超时待审批（{{ overdueTemplateApprovals.length }}）</p>
-              <ul>
-                <li
-                  v-for="approval in overdueTemplateApprovals"
-                  :key="approval.id"
-                  data-testid="template-approval-overdue-row"
-                >
-                  {{ approval.template_id }} · {{ approval.hours_pending }}h
-                </li>
-              </ul>
-            </div>
-            <div
-              v-if="uiProfile.show_studio_workflow && pendingTemplateApprovals.length"
-              class="template-approvals"
-              data-testid="template-approvals-panel"
-            >
-              <p class="meta-line">待审批版本变更</p>
-              <div v-if="pendingTemplateApprovals.length > 1" class="batch-actions">
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="batch-approve-template-versions-btn"
-                  @click="batchApproveTemplateVersions"
-                >
-                  批量批准
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="batch-reject-template-versions-btn"
-                  @click="batchRejectTemplateVersions"
-                >
-                  批量驳回
-                </button>
-              </div>
-              <ul>
-                <li
-                  v-for="approval in pendingTemplateApprovals"
-                  :key="approval.id"
-                  class="template-approval-row"
-                  data-testid="template-approval-row"
-                >
-                  <span>{{ approval.previous_label || '—' }} → {{ approval.version_label || '（清除）' }}</span>
-                  <span class="meta-line" data-testid="template-approval-chain-progress">{{ approval.chain_progress }}</span>
-                  <span
-                    v-if="approval.or_signing && approval.current_assignees?.length"
-                    class="meta-line"
-                    data-testid="template-approval-or-assignees"
-                  >
-                    OR 签：{{ approval.current_assignees.join(' / ') }}
-                  </span>
-                  <span
-                    v-else-if="approval.current_assignee"
-                    class="meta-line"
-                    data-testid="template-approval-current-assignee"
-                  >
-                    指派：{{ approval.current_assignee }}
-                  </span>
-                  <span
-                    v-if="approval.submit_note"
-                    class="meta-line"
-                    data-testid="template-approval-submit-note"
-                  >
-                    备注：{{ approval.submit_note }}
-                  </span>
-                  <button
-                    type="button"
-                    class="mini-btn pixel-border"
-                    data-testid="preview-approval-snapshot-diff-btn"
-                    @click="previewApprovalSnapshotDiff(approval.id)"
-                  >
-                    快照 diff
-                  </button>
-                  <button
-                    type="button"
-                    class="mini-btn pixel-border"
-                    data-testid="transfer-template-approval-btn"
-                    @click="transferTemplateApproval(approval.id)"
-                  >
-                    转交
-                  </button>
-                  <button
-                    type="button"
-                    class="mini-btn pixel-border"
-                    data-testid="approve-template-version-btn"
-                    @click="approveTemplateVersion(approval.id)"
-                  >
-                    批准
-                  </button>
-                  <button
-                    type="button"
-                    class="mini-btn pixel-border"
-                    data-testid="reject-template-version-btn"
-                    @click="rejectTemplateVersion(approval.id)"
-                  >
-                    驳回
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div
-              v-if="uiProfile.show_studio_workflow && templateApprovalHistory.length"
-              class="template-approval-history"
-              data-testid="template-approval-history-panel"
-            >
-              <p class="meta-line">
-                审批历史
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="export-template-approval-audit-btn"
-                  @click="exportTemplateApprovalAudit"
-                >
-                  导出审计
-                </button>
-              </p>
-              <ul>
-                <li
-                  v-for="row in templateApprovalHistory"
-                  :key="row.id"
-                  class="template-approval-row"
-                  data-testid="template-approval-history-row"
-                >
-                  <span>{{ row.template_id }} · {{ row.status }}</span>
-                  <span class="meta-line">{{ row.previous_label || '—' }} → {{ row.version_label || '（清除）' }}</span>
-                  <span
-                    v-if="row.chain_log?.length"
-                    class="meta-line"
-                    data-testid="template-approval-chain-log"
-                  >
-                    链 {{ row.chain_log.length }} 步
-                  </span>
-                </li>
-              </ul>
-            </div>
-            <div
-              v-if="(selectedTemplateProject || selectedTemplateFactory) && templateVersionChangelog.length"
-              class="template-changelog"
-              data-testid="template-version-changelog"
-            >
-              <p class="meta-line">版本变更日志</p>
-              <ul>
-                <li
-                  v-for="(entry, idx) in templateVersionChangelog"
-                  :key="`${entry.changed_at}-${idx}`"
-                  class="changelog-row"
-                  data-testid="template-changelog-row"
-                >
-                  <span v-if="entry.previous_label">{{ entry.previous_label }} → </span>
-                  <strong>{{ entry.version_label || '（清除）' }}</strong>
-                  <span v-if="entry.changed_at" class="meta-line"> · {{ formatHistoryTime(entry.changed_at) }}</span>
-                  <span
-                    v-if="entry.diff_summary?.changed"
-                    class="meta-line changelog-diff"
-                    data-testid="template-changelog-diff"
-                  >
-                    · 卷纲 +{{ entry.diff_summary.lines_added }}/-{{ entry.diff_summary.lines_removed }}
-                  </span>
-                  <button
-                    v-if="entry.visual_diff?.lines?.length"
-                    type="button"
-                    class="mini-btn pixel-border changelog-visual-btn"
-                    data-testid="template-changelog-visual-btn"
-                    @click="toggleChangelogVisual(idx)"
-                  >
-                    {{ expandedChangelogVisual === idx ? '收起对比' : '可视化对比' }}
-                  </button>
-                  <button
-                    v-if="entry.can_rollback"
-                    type="button"
-                    class="mini-btn pixel-border"
-                    data-testid="template-changelog-rollback-btn"
-                    :disabled="templateRollbackSaving"
-                    @click="rollbackTemplateVersion(entry, idx)"
-                  >
-                    {{ templateRollbackSaving ? '回滚中…' : '回滚到此版本' }}
-                  </button>
-                  <pre
-                    v-if="expandedChangelogVisual === idx && entry.visual_diff?.lines?.length"
-                    class="changelog-visual-diff"
-                    data-testid="template-changelog-visual-diff"
-                  ><span
-                    v-for="(line, lineIdx) in entry.visual_diff.lines"
-                    :key="`${idx}-${lineIdx}`"
-                    :class="`visual-diff-line visual-diff-line--${line.type}`"
-                  >{{ line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ' }}{{ line.text }}
-</span></pre>
-                </li>
-              </ul>
-            </div>
-            <div v-if="selectedTemplateProject" class="merge-range">
-              <input
-                v-model="renameTemplateName"
-                class="vol-input vol-conflict"
-                data-testid="rename-template-name-input"
-                placeholder="重命名模板"
-              />
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="rename-template-btn"
-                :disabled="templateRenaming || !renameTemplateName.trim()"
-                @click="renameSelectedVolumeTemplate"
-              >
-                {{ templateRenaming ? '重命名中…' : '重命名' }}
-              </button>
-            </div>
-            <p v-if="selectedTemplateHint" class="meta-line">{{ selectedTemplateHint }}</p>
-            <div v-if="editableVolumes.length" class="merge-range">
-              <input
-                v-model="customTemplateName"
-                class="vol-input vol-conflict"
-                data-testid="save-template-name-input"
-                placeholder="自定义模板名"
-              />
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="save-template-btn"
-                :disabled="templateSaving || !customTemplateName.trim()"
-                @click="saveCustomVolumeTemplate"
-              >
-                {{ templateSaving ? '保存中…' : '存为模板' }}
-              </button>
-            </div>
-            <div class="merge-range">
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="export-templates-btn"
-                @click="exportCustomTemplates"
-              >
-                导出 JSON
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="toggle-import-templates-btn"
-                @click="showImportTemplates = !showImportTemplates"
-              >
-                {{ showImportTemplates ? '收起导入' : '导入 JSON' }}
-              </button>
-              <button
-                v-if="templateSyncSources.length"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="sync-templates-btn"
-                :disabled="templateSyncing"
-                @click="syncTemplatesFromProjects"
-              >
-                {{ templateSyncing ? '同步中…' : '跨项目同步' }}
-              </button>
-              <button
-                v-if="factoryTemplateCount && uiProfile.show_factory_presets"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="pull-factory-templates-btn"
-                :disabled="factoryPulling"
-                @click="pullFactoryTemplates"
-              >
-                {{ factoryPulling ? '拉取中…' : '从工厂库拉取' }}
-              </button>
-            </div>
-            <div v-if="showImportTemplates" class="import-templates-panel" data-testid="import-templates-panel">
-              <textarea
-                v-model="importTemplatesJson"
-                class="vol-input import-templates-json"
-                data-testid="import-templates-json"
-                placeholder='{"templates":[...]}'
-                rows="4"
-              />
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="import-templates-btn"
-                :disabled="templateImporting || !importTemplatesJson.trim()"
-                @click="importCustomTemplates"
-              >
-                {{ templateImporting ? '导入中…' : '确认导入' }}
-              </button>
-            </div>
-          </component>
-          <div v-if="!editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」或套用模板。</div>
-          <div
-            v-for="(vol, idx) in editableVolumes"
-            :key="`${idx}-${vol.label}`"
-            class="volume-edit-row pixel-border"
-            :class="{
-              'volume-edit-row--locked': vol.locked,
-              'volume-edit-row--dragging': dragVolumeIndex === idx,
-            }"
-            draggable="true"
-            :data-testid="`volume-row-${idx}`"
-            @dragstart="onVolumeDragStart(idx, $event)"
-            @dragover.prevent
-            @drop.prevent="onVolumeDrop(idx)"
-          >
-            <div class="volume-reorder">
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`volume-move-up-${idx}`"
-                :disabled="idx === 0"
-                title="上移"
-                @click="moveVolume(idx, idx - 1)"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`volume-move-down-${idx}`"
-                :disabled="idx === editableVolumes.length - 1"
-                title="下移"
-                @click="moveVolume(idx, idx + 1)"
-              >
-                ↓
-              </button>
-              <span class="drag-handle" data-testid="volume-drag-handle" title="拖拽排序">⋮⋮</span>
-            </div>
-            <input v-model="vol.label" class="vol-input vol-label" placeholder="卷名" />
-            <div class="vol-range">
-              <input v-model.number="vol.start_chapter" type="number" min="1" class="vol-input vol-num" />
-              <span>–</span>
-              <input v-model.number="vol.end_chapter" type="number" min="1" class="vol-input vol-num" />
-            </div>
-            <input
-              v-model="vol.core_conflict"
-              class="vol-input vol-conflict"
-              placeholder="核心冲突"
-            />
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              :data-testid="`lock-volume-${idx}`"
-              @click="toggleLock(idx)"
-            >
-              {{ vol.locked ? '已锁' : '锁定' }}
-            </button>
-          </div>
-          <button
-            v-if="editableVolumes.length"
-            type="button"
-            class="save-btn pixel-border"
-            data-testid="save-volume-plan-btn"
-            :disabled="saving"
-            @click="requestSaveVolumePlan"
-          >
-            {{ saving ? '保存中…' : '保存卷纲' }}
-          </button>
-          <label
-            v-if="uiProfile.volume_plan_diff_type_filter && volumePlanDiffPreview?.has_changes && volumePlanDiffTypeOptions.length"
-            class="meta-line volume-plan-diff-type-filter"
-            data-testid="volume-plan-diff-type-filter-label"
-          >
-            变更类型
-            <select
-              v-model="volumePlanDiffTypeFilter"
-              class="vol-input"
-              data-testid="volume-plan-diff-type-filter"
-            >
-              <option value="">全部</option>
-              <option
-                v-for="diffType in volumePlanDiffTypeOptions"
-                :key="`vol-diff-type-${diffType}`"
-                :value="diffType"
-              >
-                {{ diffType }}
-              </option>
-            </select>
-          </label>
-          <label
-            v-if="uiProfile.volume_plan_diff_volume_filter && volumePlanDiffPreview?.has_changes && volumePlanDiffVolumeOptions.length"
-            class="meta-line volume-plan-diff-volume-filter"
-            data-testid="volume-plan-diff-volume-filter-label"
-          >
-            变更卷
-            <select
-              v-model="volumePlanDiffVolumeFilter"
-              class="vol-input"
-              data-testid="volume-plan-diff-volume-filter"
-            >
-              <option value="">全部卷</option>
-              <option
-                v-for="volLabel in volumePlanDiffVolumeOptions"
-                :key="`vol-diff-volume-${volLabel}`"
-                :value="volLabel"
-              >
-                卷{{ volLabel }}
-              </option>
-            </select>
-          </label>
-          <div
-            v-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview?.has_changes && !uiProfile.volume_plan_diff_auto_collapse"
-            class="volume-plan-diff-panel pixel-border"
-            data-testid="volume-plan-diff-panel"
-          >
-            <p class="meta-line">
-              卷纲未保存变更
-              <span
-                v-if="uiProfile.volume_plan_diff_change_count && volumePlanDiffChangeCount"
-                class="volume-plan-diff-count"
-                data-testid="volume-plan-diff-change-count"
-              >
-                {{ volumePlanDiffChangeCount }} 处
-              </span>
-            </p>
-            <button
-              v-if="uiProfile.volume_plan_diff_jump_outline_edit"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="jump-global-outline-edit-btn"
-              @click="jumpToGlobalOutlineEdit"
-            >
-              编辑全局大纲
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="export-volume-plan-diff-btn"
-              @click="exportVolumePlanDiff"
-            >
-              导出 diff JSON
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export_markdown && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="export-volume-plan-diff-markdown-btn"
-              @click="exportVolumePlanDiffMarkdown"
-            >
-              导出 diff Markdown
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export_email_share && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="share-volume-plan-diff-email-btn"
-              @click="shareVolumePlanDiffEmail"
-            >
-              邮件分享 diff
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export_pdf && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="export-volume-plan-diff-pdf-btn"
-              @click="exportVolumePlanDiffPdf"
-            >
-              导出 diff PDF
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export_print_preview && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="preview-volume-plan-diff-print-btn"
-              @click="openVolumePlanDiffPrintPreview"
-            >
-              打印预览
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export_zip && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="export-volume-plan-diff-zip-btn"
-              @click="exportVolumePlanDiffZip"
-            >
-              导出 ZIP
-            </button>
-            <button
-              v-if="uiProfile.volume_plan_diff_export_share_link && volumePlanDiffPreview?.has_changes"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="share-volume-plan-diff-link-btn"
-              @click="shareVolumePlanDiffLink"
-            >
-              复制分享链接
-            </button>
-            <div
-              v-if="uiProfile.volume_plan_diff_share_collab_v2 && volumePlanDiffCollabRows.length"
-              class="volume-plan-diff-collab-panel pixel-border"
-              data-testid="volume-plan-diff-collab-panel"
-            >
-              <p class="meta-line">协作批注（分享链接 v3 附带，按卷联动 diff）</p>
-              <label
-                v-for="row in volumePlanDiffCollabRows"
-                :key="`collab-edit-${row.label}`"
-                class="volume-plan-diff-collab-row"
-              >
-                卷 {{ row.label }}
-                <input
-                  class="vol-input volume-plan-diff-collab-input"
-                  :data-testid="`diff-collab-note-input-${row.label}`"
-                  :value="diffCollabNotes[row.label] || ''"
-                  placeholder="@reviewer 请确认"
-                  @input="setDiffCollabNote(row.label, $event.target.value)"
-                />
-              </label>
-            </div>
-            <div
-              class="volume-plan-diff-body"
-              :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
-            >
-              <div class="volume-plan-diff-main">
-                <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
-                  <li
-                    v-for="(row, idx) in filteredVolumePlanDiffChanges"
-                    :key="`vol-diff-${row.label}-${idx}`"
-                    class="volume-plan-diff-item"
-                    :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
-                  >
-                    <details
-                      v-if="uiProfile.volume_plan_diff_expand_detail && row.details?.length"
-                      class="volume-plan-diff-details"
-                      :data-testid="`volume-plan-diff-details-${row.type}-${row.label}`"
-                    >
-                      <summary>
-                        <span class="diff-type">{{ row.type }}</span> {{ row.message }}
-                      </summary>
-                      <ul class="volume-plan-diff-detail-list">
-                        <li
-                          v-for="(line, detailIdx) in row.details"
-                          :key="`vol-diff-detail-${row.label}-${detailIdx}`"
-                          :data-testid="`volume-plan-diff-detail-${row.label}-${detailIdx}`"
-                        >
-                          {{ line }}
-                        </li>
-                      </ul>
-                    </details>
-                    <template v-else>
-                      <span class="diff-type">{{ row.type }}</span> {{ row.message }}
-                    </template>
-                  </li>
-                </ul>
-              </div>
-              <aside
-                v-if="uiProfile.volume_plan_diff_outline_side_by_side && volumePlanDiffPreview.global_outline_excerpt"
-                class="volume-plan-diff-outline-col pixel-border"
-                data-testid="volume-plan-diff-outline-side-by-side"
-              >
-                <p class="meta-line">全局大纲摘录</p>
-                <pre
-                  v-if="!uiProfile.volume_plan_diff_outline_row_highlight || !volumePlanDiffPreview.global_outline_lines?.length"
-                  class="volume-plan-outline-excerpt"
-                >{{ volumePlanDiffPreview.global_outline_excerpt }}</pre>
-                <ul
-                  v-else
-                  class="volume-plan-outline-lines"
-                  data-testid="volume-plan-diff-outline-lines"
-                >
-                  <li
-                    v-for="(line, lineIdx) in volumePlanDiffPreview.global_outline_lines"
-                    :key="`outline-line-${lineIdx}`"
-                    class="volume-plan-outline-line"
-                    :class="{ 'volume-plan-outline-line--highlight': line.highlighted }"
-                    :data-testid="line.highlighted ? `volume-plan-outline-line-highlight-${lineIdx}` : `volume-plan-outline-line-${lineIdx}`"
-                  >
-                    {{ line.text }}
-                  </li>
-                </ul>
-                <code class="path-line">{{ volumePlanDiffPreview.global_outline_path }}</code>
-              </aside>
-            </div>
-            <div
-              v-if="volumePlanSaveConfirmOpen"
-              class="volume-plan-save-confirm pixel-border"
-              data-testid="volume-plan-save-confirm-panel"
-            >
-              <p class="meta-line">确认保存以上卷纲变更？</p>
-              <div class="batch-actions">
-                <button
-                  type="button"
-                  class="save-btn pixel-border"
-                  data-testid="confirm-volume-plan-save-btn"
-                  :disabled="saving"
-                  @click="confirmSaveVolumePlan"
-                >
-                  {{ saving ? '保存中…' : '确认保存' }}
-                </button>
-                <button
-                  type="button"
-                  class="mini-btn pixel-border"
-                  data-testid="cancel-volume-plan-save-btn"
-                  :disabled="saving"
-                  @click="cancelVolumePlanSave"
-                >
-                  取消
-                </button>
-              </div>
-            </div>
-          </div>
-          <details
-            v-else-if="uiProfile.volume_plan_diff_preview && volumePlanDiffPreview && uiProfile.volume_plan_diff_auto_collapse"
-            class="volume-plan-diff-panel pixel-border"
-            :open="volumePlanDiffExpanded"
-            data-testid="volume-plan-diff-panel"
-            @toggle="onVolumePlanDiffToggle"
-          >
-            <summary class="volume-plan-diff-summary" data-testid="volume-plan-diff-summary">
-              {{ volumePlanDiffPreview?.has_changes ? '卷纲未保存变更' : '卷纲与已保存一致' }}
-              <span
-                v-if="uiProfile.volume_plan_diff_change_count && volumePlanDiffPreview?.has_changes && volumePlanDiffChangeCount"
-                class="volume-plan-diff-count"
-                data-testid="volume-plan-diff-change-count"
-              >
-                {{ volumePlanDiffChangeCount }} 处
-              </span>
-            </summary>
-            <template v-if="volumePlanDiffPreview?.has_changes">
-              <button
-                v-if="uiProfile.volume_plan_diff_jump_outline_edit"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="jump-global-outline-edit-btn"
-                @click="jumpToGlobalOutlineEdit"
-              >
-                编辑全局大纲
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="export-volume-plan-diff-btn"
-                @click="exportVolumePlanDiff"
-              >
-                导出 diff JSON
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export_markdown && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="export-volume-plan-diff-markdown-btn"
-                @click="exportVolumePlanDiffMarkdown"
-              >
-                导出 diff Markdown
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export_email_share && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="share-volume-plan-diff-email-btn"
-                @click="shareVolumePlanDiffEmail"
-              >
-                邮件分享 diff
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export_pdf && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="export-volume-plan-diff-pdf-btn"
-                @click="exportVolumePlanDiffPdf"
-              >
-                导出 diff PDF
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export_print_preview && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="preview-volume-plan-diff-print-btn"
-                @click="openVolumePlanDiffPrintPreview"
-              >
-                打印预览
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export_zip && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="export-volume-plan-diff-zip-btn"
-                @click="exportVolumePlanDiffZip"
-              >
-                导出 ZIP
-              </button>
-              <button
-                v-if="uiProfile.volume_plan_diff_export_share_link && volumePlanDiffPreview?.has_changes"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="share-volume-plan-diff-link-btn"
-                @click="shareVolumePlanDiffLink"
-              >
-                复制分享链接
-              </button>
-              <div
-                class="volume-plan-diff-body"
-                :class="{ 'volume-plan-diff-side-by-side': uiProfile.volume_plan_diff_outline_side_by_side }"
-              >
-                <div class="volume-plan-diff-main">
-                  <ul class="volume-plan-diff-list" data-testid="volume-plan-diff-list">
-                    <li
-                      v-for="(row, idx) in filteredVolumePlanDiffChanges"
-                      :key="`vol-diff-collapse-${row.label}-${idx}`"
-                      class="volume-plan-diff-item"
-                      :data-testid="`volume-plan-diff-${row.type}-${row.label}`"
-                    >
-                      <details
-                        v-if="uiProfile.volume_plan_diff_expand_detail && row.details?.length"
-                        class="volume-plan-diff-details"
-                        :data-testid="`volume-plan-diff-details-${row.type}-${row.label}`"
-                      >
-                        <summary>
-                          <span class="diff-type">{{ row.type }}</span> {{ row.message }}
-                        </summary>
-                        <ul class="volume-plan-diff-detail-list">
-                          <li
-                            v-for="(line, detailIdx) in row.details"
-                            :key="`vol-diff-detail-collapse-${row.label}-${detailIdx}`"
-                            :data-testid="`volume-plan-diff-detail-${row.label}-${detailIdx}`"
-                          >
-                            {{ line }}
-                          </li>
-                        </ul>
-                      </details>
-                      <template v-else>
-                        <span class="diff-type">{{ row.type }}</span> {{ row.message }}
-                      </template>
-                    </li>
-                  </ul>
-                </div>
-                <aside
-                  v-if="uiProfile.volume_plan_diff_outline_side_by_side && volumePlanDiffPreview.global_outline_excerpt"
-                  class="volume-plan-diff-outline-col pixel-border"
-                  data-testid="volume-plan-diff-outline-side-by-side"
-                >
-                  <p class="meta-line">全局大纲摘录</p>
-                  <pre
-                    v-if="!uiProfile.volume_plan_diff_outline_row_highlight || !volumePlanDiffPreview.global_outline_lines?.length"
-                    class="volume-plan-outline-excerpt"
-                  >{{ volumePlanDiffPreview.global_outline_excerpt }}</pre>
-                  <ul
-                    v-else
-                    class="volume-plan-outline-lines"
-                    data-testid="volume-plan-diff-outline-lines"
-                  >
-                    <li
-                      v-for="(line, lineIdx) in volumePlanDiffPreview.global_outline_lines"
-                      :key="`outline-line-collapse-${lineIdx}`"
-                      class="volume-plan-outline-line"
-                      :class="{ 'volume-plan-outline-line--highlight': line.highlighted }"
-                      :data-testid="line.highlighted ? `volume-plan-outline-line-highlight-${lineIdx}` : `volume-plan-outline-line-${lineIdx}`"
-                    >
-                      {{ line.text }}
-                    </li>
-                  </ul>
-                  <code class="path-line">{{ volumePlanDiffPreview.global_outline_path }}</code>
-                </aside>
-              </div>
-              <div
-                v-if="volumePlanSaveConfirmOpen"
-                class="volume-plan-save-confirm pixel-border"
-                data-testid="volume-plan-save-confirm-panel"
-              >
-                <p class="meta-line">确认保存以上卷纲变更？</p>
-                <div class="batch-actions">
-                  <button
-                    type="button"
-                    class="save-btn pixel-border"
-                    data-testid="confirm-volume-plan-save-btn"
-                    :disabled="saving"
-                    @click="confirmSaveVolumePlan"
-                  >
-                    {{ saving ? '保存中…' : '确认保存' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="mini-btn pixel-border"
-                    data-testid="cancel-volume-plan-save-btn"
-                    :disabled="saving"
-                    @click="cancelVolumePlanSave"
-                  >
-                    取消
-                  </button>
-                </div>
-              </div>
-            </template>
-            <p v-else class="meta-line" data-testid="volume-plan-diff-no-changes">
-              当前编辑与已保存卷纲一致
-            </p>
-          </details>
-          <div
-            v-if="editableVolumes.length >= 2"
-            class="volume-merge-panel pixel-border"
-            data-testid="volume-merge-panel"
-          >
-            <h3 class="subsection-title">合并向导</h3>
-            <div class="merge-range">
-              <label>
-                从
-                <select v-model.number="mergeStartIdx" class="vol-input" data-testid="merge-start-select">
-                  <option v-for="(vol, idx) in editableVolumes" :key="`s-${idx}`" :value="idx">
-                    {{ vol.label || `卷${idx + 1}` }}
-                  </option>
-                </select>
-              </label>
-              <label>
-                到
-                <select v-model.number="mergeEndIdx" class="vol-input" data-testid="merge-end-select">
-                  <option
-                    v-for="(vol, idx) in editableVolumes"
-                    :key="`e-${idx}`"
-                    :value="idx"
-                    :disabled="idx < mergeStartIdx"
-                  >
-                    {{ vol.label || `卷${idx + 1}` }}
-                  </option>
-                </select>
-              </label>
-              <input
-                v-model="mergeLabel"
-                class="vol-input vol-conflict"
-                data-testid="merge-label-input"
-                placeholder="合并后卷名（可选）"
-              />
-            </div>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="apply-merge-btn"
-              :disabled="mergeApplying || mergeStartIdx > mergeEndIdx"
-              @click="applyVolumeMerge"
-            >
-              {{ mergeApplying ? '合并中…' : '应用合并' }}
-            </button>
-          </div>
-          <p
-            v-if="mergePreview"
-            class="meta-line"
-            data-testid="merge-preview-line"
-          >
-            已合并为「{{ mergePreview.merged_label }}」· {{ mergePreview.merged_range }} · 请保存卷纲
-          </p>
-          <div
-            v-if="editableVolumes.length >= 1"
-            class="volume-split-panel pixel-border"
-            data-testid="volume-split-panel"
-          >
-            <h3 class="subsection-title">拆分向导</h3>
-            <div class="merge-range">
-              <label>
-                卷
-                <select v-model.number="splitVolumeIdx" class="vol-input" data-testid="split-volume-select">
-                  <option v-for="(vol, idx) in editableVolumes" :key="`split-${idx}`" :value="idx">
-                    {{ vol.label || `卷${idx + 1}` }} ({{ vol.start_chapter }}–{{ vol.end_chapter }})
-                  </option>
-                </select>
-              </label>
-              <label>
-                从章
-                <input
-                  v-model.number="splitAtChapter"
-                  type="number"
-                  min="1"
-                  class="vol-input vol-num"
-                  data-testid="split-at-chapter"
-                />
-              </label>
-            </div>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="apply-split-btn"
-              :disabled="splitApplying"
-              @click="applyVolumeSplit"
-            >
-              {{ splitApplying ? '拆分中…' : '应用拆分' }}
-            </button>
-          </div>
-          <p
-            v-if="splitPreview"
-            class="meta-line"
-            data-testid="split-preview-line"
-          >
-            已拆为「{{ splitPreview.first_label }}」{{ splitPreview.first_range }}
-            与「{{ splitPreview.second_label }}」{{ splitPreview.second_range }} · 请保存卷纲
-          </p>
-        </div>
+        <CreatorVolumePlanPanel />
 
         <CreatorDeviationList
           :deviations="visibleDeviations"
@@ -3441,7 +2390,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import {
   fetchCreatorOverview,
   runCreatorLogicCheck,
@@ -3548,6 +2497,8 @@ import { useCreatorWorkspace } from '../composables/useCreatorWorkspace.js';
 import HubTabBar from '../components/HubTabBar.vue';
 import CreatorPulseIntro from '../components/creator/CreatorPulseIntro.vue';
 import CreatorDeviationList from '../components/creator/CreatorDeviationList.vue';
+import CreatorVolumePlanPanel from '../components/creator/CreatorVolumePlanPanel.vue';
+import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
 
 const { projectRevision } = useStudioProject();
 const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo, focusCreatorWorkspace, setCreatorWorkspace } = useDashboardNav();
@@ -7715,6 +6666,117 @@ async function refresh() {
     loading.value = false;
   }
 }
+
+provide(
+  CREATOR_VOLUME_PLAN_KEY,
+  createCreatorVolumePlanContext({
+    addVolume,
+    applyVolumeMerge,
+    applyVolumeSplit,
+    applyVolumeTemplate,
+    approveTemplateVersion,
+    batchApproveTemplateVersions,
+    batchRejectTemplateVersions,
+    cancelVolumePlanSave,
+    confirmSaveVolumePlan,
+    customTemplateName,
+    deleteSelectedFactoryTemplate,
+    deleteSelectedVolumeTemplate,
+    diffCollabNotes,
+    dragVolumeIndex,
+    editableVolumes,
+    expandedChangelogVisual,
+    exportCustomTemplates,
+    exportTemplateApprovalAudit,
+    exportVolumePlanDiff,
+    exportVolumePlanDiffMarkdown,
+    exportVolumePlanDiffPdf,
+    exportVolumePlanDiffZip,
+    factoryDeleting,
+    factoryPulling,
+    factoryTemplateCount,
+    filteredVolumePlanDiffChanges,
+    formatHistoryTime,
+    formatTemplateOption,
+    importCustomTemplates,
+    importTemplatesJson,
+    isSemverVersionLabel,
+    jumpToGlobalOutlineEdit,
+    mergeApplying,
+    mergeEndIdx,
+    mergeLabel,
+    mergePreview,
+    mergeStartIdx,
+    moveVolume,
+    onVolumeDragStart,
+    onVolumeDrop,
+    onVolumePlanDiffToggle,
+    openVolumePlanDiffPrintPreview,
+    overdueTemplateApprovals,
+    pendingTemplateApprovals,
+    previewApprovalSnapshotDiff,
+    publishSelectedTemplateToFactory,
+    pullFactoryTemplates,
+    rejectTemplateVersion,
+    renameSelectedVolumeTemplate,
+    renameTemplateName,
+    requestSaveVolumePlan,
+    rollbackTemplateVersion,
+    saveCustomVolumeTemplate,
+    saveTemplateApprovalChainConfig,
+    saveTemplateApprovalSlaConfig,
+    saveTemplateVersionLabel,
+    saving,
+    selectedTemplateFactory,
+    selectedTemplateHint,
+    selectedTemplateId,
+    selectedTemplateProject,
+    setDiffCollabNote,
+    shareVolumePlanDiffEmail,
+    shareVolumePlanDiffLink,
+    showImportTemplates,
+    splitApplying,
+    splitAtChapter,
+    splitPreview,
+    splitVolumeIdx,
+    submitTemplateVersionApproval,
+    syncTemplatesFromProjects,
+    templateApplying,
+    templateApprovalEmailOnOverdue,
+    templateApprovalEmailOnReject,
+    templateApprovalEmailOnSubmit,
+    templateApprovalHistory,
+    templateApprovalOrGroups,
+    templateApprovalSlaHours,
+    templateApprovalStepAssignees,
+    templateApprovalSubmitting,
+    templateDeleting,
+    templateImporting,
+    templatePublishing,
+    templateRenaming,
+    templateRollbackSaving,
+    templateSaving,
+    templateSyncSources,
+    templateSyncing,
+    templateVersionChangelog,
+    templateVersionLabel,
+    templateVersionSaving,
+    toggleChangelogVisual,
+    toggleLock,
+    transferTemplateApproval,
+    uiProfile,
+    volumePlanDiffChangeCount,
+    volumePlanDiffCollabRows,
+    volumePlanDiffExpanded,
+    volumePlanDiffPreview,
+    volumePlanDiffTypeFilter,
+    volumePlanDiffTypeOptions,
+    volumePlanDiffVolumeFilter,
+    volumePlanDiffVolumeOptions,
+    volumePlanSaveConfirmOpen,
+    volumeTemplates,
+  }),
+);
 
 onMounted(() => {
   refresh();
