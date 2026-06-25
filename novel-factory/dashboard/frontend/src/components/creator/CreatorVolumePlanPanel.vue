@@ -3,88 +3,21 @@
 -->
 <template>
   <div class="volume-plan-panel" data-testid="volume-plan-panel">
-          <div class="volume-plan-header">
-            <h3 class="subsection-title">卷纲</h3>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="add-volume-btn"
-              @click="vp.addVolume"
-            >
-              + 卷
-            </button>
-          </div>
-          <CreatorVolumePlanTemplatesPanel />
-          <div v-if="!vp.editableVolumes.length" class="meta-line">暂无卷纲，点击「+ 卷」或套用模板。</div>
-          <div
-            v-for="(vol, idx) in vp.editableVolumes"
-            :key="`${idx}-${vol.label}`"
-            class="volume-edit-row pixel-border"
-            :class="{
-              'volume-edit-row--locked': vol.locked,
-              'volume-edit-row--dragging': vp.dragVolumeIndex === idx,
-            }"
-            draggable="true"
-            :data-testid="`volume-row-${idx}`"
-            @dragstart="vp.onVolumeDragStart(idx, $event)"
-            @dragover.prevent
-            @drop.prevent="vp.onVolumeDrop(idx)"
-          >
-            <div class="volume-reorder">
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`volume-move-up-${idx}`"
-                :disabled="idx === 0"
-                title="上移"
-                @click="vp.moveVolume(idx, idx - 1)"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                :data-testid="`volume-move-down-${idx}`"
-                :disabled="idx === vp.editableVolumes.length - 1"
-                title="下移"
-                @click="vp.moveVolume(idx, idx + 1)"
-              >
-                ↓
-              </button>
-              <span class="drag-handle" data-testid="volume-drag-handle" title="拖拽排序">⋮⋮</span>
-            </div>
-            <input v-model="vol.label" class="vol-input vol-label" placeholder="卷名" />
-            <div class="vol-range">
-              <input v-model.number="vol.start_chapter" type="number" min="1" class="vol-input vol-num" />
-              <span>–</span>
-              <input v-model.number="vol.end_chapter" type="number" min="1" class="vol-input vol-num" />
-            </div>
-            <input
-              v-model="vol.core_conflict"
-              class="vol-input vol-conflict"
-              placeholder="核心冲突"
-            />
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              :data-testid="`lock-volume-${idx}`"
-              @click="vp.toggleLock(idx)"
-            >
-              {{ vol.locked ? '已锁' : '锁定' }}
-            </button>
-          </div>
-          <button
-            v-if="vp.editableVolumes.length"
-            type="button"
-            class="save-btn pixel-border"
-            data-testid="save-volume-plan-btn"
-            :disabled="vp.saving"
-            @click="vp.requestSaveVolumePlan"
-          >
-            {{ vp.saving ? '保存中…' : '保存卷纲' }}
-          </button>
-          <CreatorVolumePlanDiffPanel />
-          <CreatorVolumePlanMergeSplitPanel />
+    <div class="volume-plan-header">
+      <h3 class="subsection-title">卷纲</h3>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="add-volume-btn"
+        @click="vp.addVolume"
+      >
+        + 卷
+      </button>
+    </div>
+    <CreatorVolumePlanTemplatesPanel />
+    <CreatorVolumePlanEditPanel />
+    <CreatorVolumePlanDiffPanel />
+    <CreatorVolumePlanMergeSplitPanel />
   </div>
 </template>
 
@@ -92,6 +25,7 @@
 import { inject } from 'vue';
 import { CREATOR_VOLUME_PLAN_KEY } from './creatorVolumePlanKey.js';
 import CreatorVolumePlanTemplatesPanel from './CreatorVolumePlanTemplatesPanel.vue';
+import CreatorVolumePlanEditPanel from './CreatorVolumePlanEditPanel.vue';
 import CreatorVolumePlanDiffPanel from './CreatorVolumePlanDiffPanel.vue';
 import CreatorVolumePlanMergeSplitPanel from './CreatorVolumePlanMergeSplitPanel.vue';
 
@@ -102,138 +36,6 @@ if (!vp) {
 </script>
 
 <style scoped>
-.volume-plan-diff-count {
-  margin-left: var(--space-xs);
-  padding: 1px 4px;
-  border-radius: 2px;
-  color: #a60;
-  background: rgba(255, 200, 80, 0.35);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 6px;
-}
-
-
-
-
-
-
-
-
-.volume-plan-diff-volume-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-  margin-left: var(--space-sm);
-}
-
-.volume-plan-diff-type-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
-
-.volume-plan-diff-summary {
-  cursor: pointer;
-  font-family: 'Press Start 2P', monospace;
-  font-size: var(--text-xs);
-}
-
-.volume-plan-outline-lines {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0;
-  font-size: var(--text-xs);
-  line-height: 1.5;
-  max-height: 220px;
-  overflow: auto;
-}
-
-.volume-plan-outline-line {
-  padding: 2px 0;
-  white-space: pre-wrap;
-}
-
-.volume-plan-outline-line--highlight {
-  background: rgba(255, 220, 100, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(200, 180, 80, 0.65);
-}
-
-.volume-plan-diff-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-xs);
-  background: rgba(200, 160, 80, 0.1);
-}
-
-.volume-plan-diff-side-by-side {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--space-sm);
-  align-items: start;
-}
-
-.volume-plan-diff-outline-col {
-  padding: var(--space-xs);
-  background: rgba(100, 140, 200, 0.08);
-  max-height: 220px;
-  overflow: auto;
-}
-
-.volume-plan-outline-excerpt {
-  margin: var(--space-xs) 0;
-  white-space: pre-wrap;
-  font-size: var(--text-xs);
-  line-height: 1.5;
-}
-
-.volume-plan-diff-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-sm);
-}
-
-.volume-plan-diff-item .diff-type {
-  font-family: 'Press Start 2P', monospace;
-  font-size: var(--text-xs);
-  margin-right: var(--space-xs);
-  text-transform: uppercase;
-}
-
-.volume-plan-diff-details summary {
-  cursor: pointer;
-  list-style: none;
-}
-
-.volume-plan-diff-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.volume-plan-diff-detail-list {
-  list-style: none;
-  padding: var(--space-xs) 0 0 var(--space-sm);
-  margin: 0;
-  font-size: var(--text-xs);
-  opacity: 0.9;
-}
-
-.volume-plan-save-confirm {
-  margin-top: var(--space-xs);
-  padding: var(--space-xs);
-  background: rgba(200, 120, 80, 0.1);
-}
-
-.link-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  color: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-  font: inherit;
-}
-
 .subsection-title {
   font-size: var(--text-sm);
   margin: var(--space-md) 0 var(--space-xs);
@@ -245,177 +47,9 @@ if (!vp) {
   align-items: center;
 }
 
-.volume-edit-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 6px;
-  margin-bottom: 6px;
-  font-size: var(--text-sm);
-}
-
-.volume-edit-row--locked {
-  border-color: var(--color-accent);
-  background: rgba(100, 140, 200, 0.08);
-}
-
-.volume-edit-row--dragging {
-  opacity: 0.55;
-}
-
-.volume-reorder {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: center;
-}
-
-.drag-handle {
-  cursor: grab;
-  font-size: var(--text-sm);
-  opacity: 0.6;
-  user-select: none;
-}
-
-.vol-input {
-  font-size: var(--text-sm);
-  padding: 2px 4px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--color-text);
-}
-
-.vol-label { width: 3em; }
-
-.vol-num { width: 3em; }
-
-.vol-conflict { flex: 1; min-width: 80px; }
-
-.vol-range { display: flex; align-items: center; gap: 2px; }
-
-.mini-btn,
-.save-btn {
+.mini-btn {
   font-size: var(--text-xs);
   padding: 2px 6px;
   cursor: pointer;
-}
-
-.save-btn {
-  margin-top: var(--space-xs);
-}
-
-.batch-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.path-line,
-.cmd-block code {
-  font-size: var(--text-xs);
-  word-break: break-all;
-  display: block;
-}
-
-.meta-line {
-  font-size: var(--text-sm);
-  opacity: 0.75;
-}
-
-.mini-btn--danger {
-  color: #c44;
-}
-
-.template-changelog ul {
-  margin: 4px 0 0;
-  padding-left: 1.2em;
-  font-size: var(--text-sm);
-}
-
-.changelog-row {
-  margin-bottom: 2px;
-}
-
-.changelog-diff {
-  color: var(--color-accent);
-}
-
-.changelog-visual-diff {
-  margin-top: 4px;
-  font-size: var(--text-xs);
-  white-space: pre-wrap;
-  max-height: 120px;
-  overflow: auto;
-  background: rgba(127, 127, 127, 0.08);
-  padding: 4px;
-}
-
-.visual-diff-line--add {
-  color: #4a4;
-}
-
-.visual-diff-line--remove {
-  color: #c44;
-}
-
-.template-approvals {
-  margin-top: var(--space-sm);
-}
-
-.template-approval-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  align-items: center;
-  margin-bottom: var(--space-xs);
-}
-
-.version-semver-warn {
-  color: var(--color-warn, #c90);
-}
-
-.import-templates-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
-
-.import-templates-json {
-  width: 100%;
-  min-height: 72px;
-  font-family: monospace;
-}
-
-.volume-template-panel {
-  margin-bottom: var(--space-sm);
-  padding: var(--space-sm);
-}
-
-.pulse-empty-guide .meta-line {
-  margin: var(--space-xs) 0 var(--space-sm);
-}
-
-.companion-logic-check-write .subsection-title {
-  margin-bottom: var(--space-xs);
-}
-
-.volume-merge-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-sm);
-}
-
-.volume-split-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-sm);
-}
-
-.merge-range {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: var(--text-sm);
-  margin-bottom: 6px;
-  align-items: center;
 }
 </style>
