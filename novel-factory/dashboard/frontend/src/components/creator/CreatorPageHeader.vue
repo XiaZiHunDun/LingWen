@@ -1,63 +1,54 @@
 <!--
-  CreatorPageHeader.vue — 创作页顶栏（从 CreatorPage 拆出）
+  CreatorPageHeader.vue — 创作页顶栏（inject 页级 chrome 上下文）
 -->
 <template>
   <header class="page-header">
     <h1 class="page-title" data-testid="page-title">创作伴侣</h1>
     <div class="header-actions">
       <span
-        v-if="overview"
+        v-if="c.overview"
         class="mode-badge pixel-border"
         :class="{
-          'mode-badge--hintable': modeBadgeHintEnabled && creationModeBadgeHintText,
-          'mode-badge--companion-tint': uiProfile.companion_creation_mode_badge_tint && overview.creation_mode === 'companion',
-          'mode-badge--advance-tint': uiProfile.advance_creation_mode_badge_tint && overview.creation_mode === 'advance',
-          'mode-badge--studio-tint': uiProfile.studio_creation_mode_badge_tint && overview.creation_mode === 'studio',
+          'mode-badge--hintable': c.modeBadgeHintEnabled && c.creationModeBadgeHintText,
+          'mode-badge--companion-tint': c.uiProfile.companion_creation_mode_badge_tint && c.overview.creation_mode === 'companion',
+          'mode-badge--advance-tint': c.uiProfile.advance_creation_mode_badge_tint && c.overview.creation_mode === 'advance',
+          'mode-badge--studio-tint': c.uiProfile.studio_creation_mode_badge_tint && c.overview.creation_mode === 'studio',
         }"
         data-testid="creation-mode-badge"
-        :title="modeBadgeHintEnabled ? creationModeBadgeHintText : undefined"
-        @click="$emit('mode-badge-hint')"
+        :title="c.modeBadgeHintEnabled ? c.creationModeBadgeHintText : undefined"
+        @click="c.showCreationModeBadgeHint"
       >
-        {{ modeLabel }}
+        {{ c.modeLabel }}
       </span>
       <span
-        v-if="overview && displayDeviationBadge"
+        v-if="c.overview && c.displayDeviationBadge"
         class="deviation-badge pixel-border deviation-badge--clickable"
         data-testid="deviation-badge"
         role="button"
         tabindex="0"
-        :title="workspaceTabsEnabled ? '查看脉络与偏离' : undefined"
-        @click="$emit('deviation-badge-click')"
-        @keydown.enter="$emit('deviation-badge-click')"
+        :title="c.workspaceTabsEnabled ? '查看脉络与偏离' : undefined"
+        @click="c.onDeviationBadgeClick"
+        @keydown.enter="c.onDeviationBadgeClick"
       >
-        偏离 {{ displayDeviationCount }}
+        偏离 {{ c.displayDeviationCount }}
       </span>
       <button
         class="refresh-btn pixel-border"
         data-testid="refresh-btn"
-        :disabled="loading"
-        @click="$emit('refresh')"
+        :disabled="c.loading"
+        @click="c.refresh"
       >
-        {{ loading ? '加载中…' : '刷新' }}
+        {{ c.loading ? '加载中…' : '刷新' }}
       </button>
     </div>
   </header>
 </template>
 
 <script setup>
-defineProps({
-  overview: { type: Object, default: null },
-  loading: { type: Boolean, required: true },
-  uiProfile: { type: Object, required: true },
-  modeLabel: { type: String, default: '' },
-  creationModeBadgeHintText: { type: String, default: '' },
-  modeBadgeHintEnabled: { type: Boolean, default: false },
-  displayDeviationBadge: { type: Boolean, default: false },
-  displayDeviationCount: { type: Number, default: 0 },
-  workspaceTabsEnabled: { type: Boolean, default: false },
-});
+import { inject } from 'vue';
+import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
 
-defineEmits(['refresh', 'deviation-badge-click', 'mode-badge-hint']);
+const c = inject(CREATOR_PAGE_CHROME_KEY);
 </script>
 
 <style scoped>

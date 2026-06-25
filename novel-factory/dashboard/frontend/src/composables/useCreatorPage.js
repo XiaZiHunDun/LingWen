@@ -1,7 +1,7 @@
 /**
  * useCreatorPage — 创作页 hub 编排、refresh 与 provide（从 CreatorPage 抽出）
  */
-import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { fetchCreatorOverview, runCreatorLogicCheck } from '../api/index.js';
 import { creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
 import { useStudioProject } from './useStudioProject.js';
@@ -16,14 +16,8 @@ import { useCreatorWrite } from './useCreatorWrite.js';
 import { useCreatorPageHeader } from './useCreatorPageHeader.js';
 import { useCreatorAdvanceBatch } from './useCreatorAdvanceBatch.js';
 import { useCreatorPulse } from './useCreatorPulse.js';
-import { CREATOR_MODE_GUIDE_KEY, createCreatorModeGuideContext } from '../components/creator/creatorModeGuideKey.js';
-import { CREATOR_ONBOARDING_KEY, createCreatorOnboardingContext } from '../components/creator/creatorOnboardingKey.js';
-import { CREATOR_SETTINGS_KEY, createCreatorSettingsContext } from '../components/creator/creatorSettingsKey.js';
-import { CREATOR_WRITE_KEY, createCreatorWriteContext } from '../components/creator/creatorWriteKey.js';
-import { CREATOR_PULSE_KEY, createCreatorPulseContext } from '../components/creator/creatorPulseKey.js';
-import { CREATOR_ADVANCE_BATCH_KEY, createCreatorAdvanceBatchContext } from '../components/creator/creatorAdvanceBatchKey.js';
-import { CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext } from '../components/creator/creatorBatchHistoryKey.js';
-import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
+import { createCreatorPageRefresh } from './useCreatorPageRefresh.js';
+import { useCreatorPageProviders } from './useCreatorPageProviders.js';
 
 export function useCreatorPage() {
   const { projectRevision } = useStudioProject();
@@ -286,22 +280,22 @@ export function useCreatorPage() {
   });
   const { panelContext: settingsPanelContext, loadSettingsDocs, loadSettingsHistory, loadMergePreferences, loadMergePresetPackages } = settingsHub;
 
-  async function refresh() {
-    loading.value = true;
-    error.value = null;
-    conflictMessage.value = '';
-    try {
-      const [ov] = await Promise.all([
-        fetchCreatorOverview(),
-        loadVolumePlan(),
-        loadSettingsDocs(),
-        loadSettingsHistory(),
-        loadVolumeTemplates(),
-        loadTemplateSyncSources(),
-        loadOnboardingWizard(),
-        pollBatchJob(),
-      ]);
-      overview.value = ov;
+  const refresh = createCreatorPageRefresh({
+    overview,
+    loading,
+    error,
+    conflictMessage,
+    fetchOverview: fetchCreatorOverview,
+    loaders: {
+      loadVolumePlan,
+      loadSettingsDocs,
+      loadSettingsHistory,
+      loadVolumeTemplates,
+      loadTemplateSyncSources,
+      loadOnboardingWizard,
+      pollBatchJob,
+    },
+    afterOverview: async () => {
       maybeAutoSelectWritingChapter();
       syncWizardPanelOpen();
       loadCreationModeSwitchHistory();
@@ -313,23 +307,43 @@ export function useCreatorPage() {
       await loadDiffCollabNotes();
       tryLoadVolumePlanDiffShareLinkPreview();
       resumeBatchPollingIfNeeded();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      loading.value = false;
-    }
-  }
+    },
+  });
 
   refreshRef.fn = refresh;
 
-  provide(CREATOR_PULSE_KEY, createCreatorPulseContext(pulsePanelContext));
-  provide(CREATOR_ADVANCE_BATCH_KEY, createCreatorAdvanceBatchContext(advanceBatchPanelContext));
-  provide(CREATOR_WRITE_KEY, createCreatorWriteContext(writePanelContext));
-  provide(CREATOR_SETTINGS_KEY, createCreatorSettingsContext(settingsPanelContext));
-  provide(CREATOR_ONBOARDING_KEY, createCreatorOnboardingContext(onboardingPanelContext));
-  provide(CREATOR_MODE_GUIDE_KEY, createCreatorModeGuideContext(modeGuidePanelContext));
-  provide(CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext(batchHistoryPanelContext));
-  provide(CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext(volumePlanPanelContext));
+  const chromeContext = {
+    overview,
+    loading,
+    uiProfile,
+    modeLabel,
+    creationModeBadgeHintText,
+    modeBadgeHintEnabled,
+    displayDeviationBadge,
+    displayDeviationCount,
+    showCreationModeBadgeHint,
+    workspaceActiveTab,
+    workspaceTabsEnabled,
+    workspaceTabs,
+    workspaceTabBadges,
+    onDeviationBadgeClick,
+    error,
+    conflictMessage,
+    saveMessage,
+    refresh,
+  };
+
+  useCreatorPageProviders({
+    chromeContext,
+    pulsePanelContext,
+    advanceBatchPanelContext,
+    writePanelContext,
+    settingsPanelContext,
+    onboardingPanelContext,
+    modeGuidePanelContext,
+    batchHistoryPanelContext,
+    volumePlanPanelContext,
+  });
 
   onMounted(() => {
     refresh();

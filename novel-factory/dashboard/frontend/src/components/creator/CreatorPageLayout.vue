@@ -1,46 +1,17 @@
 <!--
-  CreatorPageLayout.vue — 创作页完整布局（从 CreatorPage 拆出）
+  CreatorPageLayout.vue — 创作页完整布局
 -->
 <template>
   <div class="creator-page">
-    <CreatorPageHeader
-      :overview="overview"
-      :loading="loading"
-      :ui-profile="uiProfile"
-      :mode-label="modeLabel"
-      :creation-mode-badge-hint-text="creationModeBadgeHintText"
-      :mode-badge-hint-enabled="modeBadgeHintEnabled"
-      :display-deviation-badge="displayDeviationBadge"
-      :display-deviation-count="displayDeviationCount"
-      :workspace-tabs-enabled="workspaceTabsEnabled"
-      @refresh="refresh"
-      @deviation-badge-click="onDeviationBadgeClick"
-      @mode-badge-hint="showCreationModeBadgeHint"
-    />
-
-    <CreatorPageBanners
-      :error="error"
-      :conflict-message="conflictMessage"
-      :save-message="saveMessage"
-      @reload="refresh"
-    />
-
-    <CreatorWorkspaceShell
-      v-model:active-tab="workspaceActiveTab"
-      :overview="overview"
-      :tabs-enabled="workspaceTabsEnabled"
-      :workspace-tabs="workspaceTabs"
-      :tab-badges="workspaceTabBadges"
-    >
+    <CreatorPageHeader />
+    <CreatorPageBanners />
+    <CreatorWorkspaceShell>
       <CreatorWritePanel />
       <CreatorPulsePanel />
       <CreatorSettingsPanel />
     </CreatorWorkspaceShell>
-
     <CreatorModeGuidePanel />
-
     <CreatorVolumePlanShareModals />
-
     <CreatorOnboardingWizardPanel />
   </div>
 </template>
@@ -57,26 +28,7 @@ import CreatorSettingsPanel from './CreatorSettingsPanel.vue';
 import CreatorWritePanel from './CreatorWritePanel.vue';
 import { useCreatorPage } from '../../composables/useCreatorPage.js';
 
-const {
-  overview,
-  loading,
-  uiProfile,
-  modeLabel,
-  creationModeBadgeHintText,
-  modeBadgeHintEnabled,
-  displayDeviationBadge,
-  displayDeviationCount,
-  showCreationModeBadgeHint,
-  workspaceActiveTab,
-  workspaceTabsEnabled,
-  workspaceTabs,
-  workspaceTabBadges,
-  onDeviationBadgeClick,
-  error,
-  conflictMessage,
-  saveMessage,
-  refresh,
-} = useCreatorPage();
+useCreatorPage();
 </script>
 
 <style scoped>

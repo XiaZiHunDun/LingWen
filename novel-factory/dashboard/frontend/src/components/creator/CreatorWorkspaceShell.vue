@@ -1,22 +1,21 @@
 <!--
-  CreatorWorkspaceShell.vue — 工作区标签栏 + 三栏网格（从 CreatorPage 拆出）
+  CreatorWorkspaceShell.vue — 工作区标签栏 + 三栏网格（inject 页级 chrome 上下文）
 -->
 <template>
   <HubTabBar
-    v-if="overview && tabsEnabled"
-    :model-value="activeTab"
-    :tabs="workspaceTabs"
-    :badges="tabBadges"
+    v-if="c.overview && c.workspaceTabsEnabled"
+    v-model="c.workspaceActiveTab"
+    :tabs="c.workspaceTabs"
+    :badges="c.workspaceTabBadges"
     test-id="creator-workspace-tab"
     class="creator-workspace-tabs"
     data-testid="creator-workspace-tabs"
-    @update:model-value="$emit('update:activeTab', $event)"
   />
 
   <div
-    v-if="overview"
+    v-if="c.overview"
     class="creator-grid"
-    :class="{ 'creator-grid--tabbed': tabsEnabled }"
+    :class="{ 'creator-grid--tabbed': c.workspaceTabsEnabled }"
     data-testid="creator-grid"
   >
     <slot />
@@ -24,17 +23,11 @@
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import HubTabBar from '../HubTabBar.vue';
+import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
 
-defineProps({
-  overview: { type: Object, default: null },
-  tabsEnabled: { type: Boolean, required: true },
-  activeTab: { type: String, required: true },
-  workspaceTabs: { type: Array, required: true },
-  tabBadges: { type: Object, default: null },
-});
-
-defineEmits(['update:activeTab']);
+const c = inject(CREATOR_PAGE_CHROME_KEY);
 </script>
 
 <style scoped>

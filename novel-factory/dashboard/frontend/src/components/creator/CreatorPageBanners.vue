@@ -1,29 +1,26 @@
 <!--
-  CreatorPageBanners.vue — 创作页全局状态横幅（从 CreatorPage 拆出）
+  CreatorPageBanners.vue — 创作页全局状态横幅（inject 页级 chrome 上下文）
 -->
 <template>
-  <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
-    {{ error }}
+  <div v-if="c.error" class="error-banner pixel-border" data-testid="error-banner">
+    {{ c.error }}
   </div>
-  <div v-if="conflictMessage" class="conflict-banner pixel-border" data-testid="conflict-banner">
-    {{ conflictMessage }}
-    <button type="button" class="mini-btn pixel-border" data-testid="conflict-reload-btn" @click="$emit('reload')">
+  <div v-if="c.conflictMessage" class="conflict-banner pixel-border" data-testid="conflict-banner">
+    {{ c.conflictMessage }}
+    <button type="button" class="mini-btn pixel-border" data-testid="conflict-reload-btn" @click="c.refresh">
       重新加载
     </button>
   </div>
-  <div v-if="saveMessage" class="save-banner pixel-border" data-testid="save-banner">
-    {{ saveMessage }}
+  <div v-if="c.saveMessage" class="save-banner pixel-border" data-testid="save-banner">
+    {{ c.saveMessage }}
   </div>
 </template>
 
 <script setup>
-defineProps({
-  error: { type: [String, Object], default: null },
-  conflictMessage: { type: String, default: '' },
-  saveMessage: { type: String, default: '' },
-});
+import { inject } from 'vue';
+import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
 
-defineEmits(['reload']);
+const c = inject(CREATOR_PAGE_CHROME_KEY);
 </script>
 
 <style scoped>
