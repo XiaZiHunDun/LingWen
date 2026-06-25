@@ -1064,27 +1064,6 @@ if (!vp) {
 
 
 
-.volume-plan-diff-collab-panel {
-  margin: var(--space-xs) 0;
-  padding: var(--space-sm);
-}
-
-.volume-plan-diff-collab-row {
-  display: block;
-  margin: var(--space-xs) 0;
-  font-size: var(--text-md);
-}
-
-.volume-plan-diff-collab-input {
-  display: block;
-  width: 100%;
-  margin-top: 2px;
-}
-
-
-
-
-
 .volume-plan-diff-volume-filter {
   display: inline-flex;
   align-items: center;
