@@ -109,7 +109,7 @@
             >
               <p class="meta-line">审批链步数</p>
               <input
-                v-model.number="templateApprovalChainSteps"
+                v-model.number="vp.templateApprovalChainSteps"
                 type="number"
                 min="1"
                 max="5"
@@ -146,7 +146,7 @@
             >
               <p class="meta-line">审批 SLA（{{ vp.templateApprovalSlaHours }} 小时）</p>
               <input
-                v-model.number="templateApprovalSlaHours"
+                v-model.number="vp.templateApprovalSlaHours"
                 type="number"
                 min="1"
                 max="720"

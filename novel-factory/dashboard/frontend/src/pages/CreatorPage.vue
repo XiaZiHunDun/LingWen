@@ -74,305 +74,7 @@
       data-testid="creator-grid"
     >
       <!-- 写 -->
-      <section
-        v-show="isWorkspaceColumnVisible('write')"
-        class="creator-column pixel-card"
-        data-testid="column-write"
-      >
-        <h2 class="column-title">写</h2>
-        <p class="column-hint">章节状态 · 偏离章高亮</p>
-        <ul class="chapter-list">
-          <li
-            v-for="ch in visibleChapters"
-            :key="ch.chapter"
-            class="chapter-row"
-            :class="[chapterRowClass(ch.chapter), { 'chapter-row--selected': selectedChapter === ch.chapter }]"
-            role="button"
-            tabindex="0"
-            :data-testid="`chapter-row-${ch.chapter}`"
-            @click="selectChapter(ch.chapter)"
-            @keydown.enter="selectChapter(ch.chapter)"
-          >
-            <span class="ch-label">ch{{ String(ch.chapter).padStart(3, '0') }}</span>
-            <span class="ch-status">
-              {{ ch.has_body ? `${ch.word_count} 字` : (ch.has_outline ? '仅大纲' : '空') }}
-            </span>
-          </li>
-        </ul>
-        <div
-          v-if="showCompanionLogicCheckInWrite"
-          class="companion-logic-check-write pixel-border"
-          data-testid="companion-logic-check-write"
-        >
-          <p class="subsection-title">逻辑审查</p>
-          <p class="meta-line">写完一章后，可一键检查 P0 逻辑问题。</p>
-          <button
-            type="button"
-            class="save-btn pixel-border"
-            data-testid="run-companion-logic-check-btn"
-            :disabled="logicCheckRunning"
-            @click="runCompanionLogicCheck"
-          >
-            {{ logicCheckRunning ? '检查中…' : '一键逻辑审查' }}
-          </button>
-          <p v-if="logicCheckResult" class="meta-line" data-testid="companion-logic-check-write-result">
-            {{ logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ logicCheckResult.p0_count }}
-            <span v-if="logicCheckResult.total_issues != null"> · 共 {{ logicCheckResult.total_issues }} 条</span>
-            <span v-if="logicCheckResult.p0_only">（仅展示 P0）</span>
-          </p>
-          <ul
-            v-if="uiProfile.logic_check_inline_issues && logicCheckResult?.issues?.length"
-            class="logic-check-issues"
-            data-testid="logic-check-issues"
-          >
-            <li
-              v-for="(issue, idx) in logicCheckResult.issues"
-              :key="`write-${issue.chapter}-${idx}`"
-              class="logic-check-issue"
-              :class="{
-                'logic-check-issue--clickable': Boolean(issue.chapter),
-                'logic-check-issue--active': !uiProfile.issue_paragraph_highlight_unified
-                  && uiProfile.logic_check_issue_highlight
-                  && activeLogicCheckIssueIdx === idx,
-                'issue-line--active': uiProfile.issue_paragraph_highlight_unified
-                  && activeLogicCheckIssueIdx === idx,
-              }"
-              role="button"
-              tabindex="0"
-              :data-testid="`logic-check-issue-${idx}`"
-              @click="handleLogicCheckIssueClick(issue, idx)"
-              @keydown.enter="handleLogicCheckIssueClick(issue, idx)"
-              @keydown="onLogicCheckIssueKeydown($event, issue, idx)"
-            >
-              <span class="issue-severity">{{ issue.severity }}</span>
-              <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
-              {{ issue.title || issue.message }}
-            </li>
-          </ul>
-        </div>
-        <div
-          v-if="uiProfile.batch_deviation_inline_summary && batchDeviationInlineSummary?.items?.length"
-          class="batch-deviation-inline-summary pixel-border"
-          data-testid="batch-deviation-inline-summary"
-        >
-          <p class="meta-line" data-testid="batch-deviation-inline-summary-title">
-            Batch ch{{ String(batchDeviationInlineSummary.start).padStart(3, '0') }}–ch{{
-              String(batchDeviationInlineSummary.end).padStart(3, '0')
-            }} · {{ batchDeviationInlineSummary.items.length }} 条偏离
-          </p>
-          <ul class="batch-deviation-inline-list" data-testid="batch-deviation-inline-list">
-            <li
-              v-for="(d, i) in batchDeviationInlineSummary.items"
-              :key="`batch-dev-${d.chapter}-${i}`"
-              class="batch-deviation-inline-item"
-              :class="[
-                `deviation-${d.severity}`,
-                {
-                  'deviation-item--clickable': uiProfile.deviation_chapter_jump && d.chapter,
-                  'deviation-item--active': deviationHighlightEnabled && highlightedDeviationChapter === d.chapter,
-                },
-              ]"
-              role="button"
-              tabindex="0"
-              :data-testid="`batch-deviation-inline-ch${d.chapter}`"
-              @click="handleDeviationClick(d)"
-              @keydown.enter="handleDeviationClick(d)"
-            >
-              <span v-if="d.chapter" class="deviation-chapter">ch{{ String(d.chapter).padStart(3, '0') }}</span>
-              {{ d.message }}
-            </li>
-          </ul>
-          <div v-if="uiProfile.batch_deviation_summary_link || uiProfile.batch_deviation_inline_dismiss" class="batch-deviation-inline-actions">
-            <button
-              v-if="uiProfile.batch_deviation_summary_link"
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="batch-deviation-open-summary-btn"
-              @click="openVolumeSummaryForRange(batchDeviationInlineSummary.start, batchDeviationInlineSummary.end)"
-            >
-              查看卷摘要
-            </button>
-            <button
-              v-if="uiProfile.batch_deviation_inline_dismiss"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="dismiss-batch-deviation-inline-btn"
-              @click="dismissBatchDeviationInlineSummary"
-            >
-              知道了
-            </button>
-          </div>
-        </div>
-        <div
-          v-if="chapterPreview"
-          class="chapter-preview pixel-border"
-          data-testid="chapter-preview-panel"
-        >
-          <h3 class="subsection-title">
-            ch{{ String(chapterPreview.chapter).padStart(3, '0') }} 预览
-            <span v-if="chapterPreview.word_count">（{{ chapterPreview.word_count }} 字）</span>
-          </h3>
-          <p v-if="previewLoading" class="meta-line">加载中…</p>
-          <template v-else>
-            <div
-              v-if="uiProfile.chapter_outline_inline_edit"
-              class="chapter-dual-edit"
-              data-testid="chapter-dual-edit"
-            >
-              <div class="chapter-outline-edit">
-                <label class="meta-line">分章大纲</label>
-                <textarea
-                  v-model="chapterOutlineDraft"
-                  class="settings-textarea chapter-outline-textarea"
-                  rows="10"
-                  data-testid="chapter-outline-textarea"
-                />
-                <button
-                  type="button"
-                  class="save-btn pixel-border"
-                  data-testid="save-chapter-outline-btn"
-                  :disabled="chapterOutlineSaving"
-                  @click="saveChapterOutline"
-                >
-                  {{ chapterOutlineSaving ? '保存中…' : '保存大纲' }}
-                </button>
-              </div>
-              <div
-                v-if="uiProfile.chapter_inline_edit"
-                class="chapter-inline-edit"
-                data-testid="chapter-inline-edit"
-              >
-                <label class="meta-line">正文（内嵌编辑）</label>
-                <textarea
-                  ref="chapterBodyTextareaRef"
-                  v-model="chapterBodyDraft"
-                  class="settings-textarea chapter-body-textarea"
-                  :class="{ 'chapter-body-textarea--highlight': chapterBodyHighlightActive }"
-                  rows="12"
-                  data-testid="chapter-body-textarea"
-                />
-                <button
-                  type="button"
-                  class="save-btn pixel-border"
-                  data-testid="save-chapter-body-btn"
-                  :disabled="chapterBodySaving"
-                  @click="saveChapterBody"
-                >
-                  {{ chapterBodySaving ? '保存中…' : '保存正文' }}
-                </button>
-              </div>
-            </div>
-            <div
-              v-if="uiProfile.chapter_outline_read_preview && chapterPreview.has_outline"
-              class="chapter-outline-read-preview"
-              data-testid="chapter-outline-read-preview"
-            >
-              <label class="meta-line">分章大纲（只读）</label>
-              <pre class="preview-text chapter-outline-full-text">{{
-                chapterPreview.outline_text || chapterPreview.outline_preview || '（空）'
-              }}</pre>
-            </div>
-            <details v-else-if="chapterPreview.has_outline && !uiProfile.chapter_outline_read_preview" open>
-              <summary>分章大纲</summary>
-              <pre class="preview-text">{{ chapterPreview.outline_preview || '（空）' }}</pre>
-            </details>
-            <div
-              v-if="!uiProfile.chapter_outline_inline_edit && uiProfile.chapter_inline_edit"
-              class="chapter-inline-edit"
-              data-testid="chapter-inline-edit"
-            >
-              <label class="meta-line">正文（内嵌编辑）</label>
-              <textarea
-                ref="chapterBodyTextareaRef"
-                v-model="chapterBodyDraft"
-                class="settings-textarea chapter-body-textarea"
-                :class="{ 'chapter-body-textarea--highlight': chapterBodyHighlightActive }"
-                rows="12"
-                data-testid="chapter-body-textarea"
-              />
-              <button
-                type="button"
-                class="save-btn pixel-border"
-                data-testid="save-chapter-body-btn"
-                :disabled="chapterBodySaving"
-                @click="saveChapterBody"
-              >
-                {{ chapterBodySaving ? '保存中…' : '保存正文' }}
-              </button>
-            </div>
-            <div
-              v-if="
-                uiProfile.chapter_recheck_inline
-                  && chapterRecheckResult
-                  && chapterRecheckResult.chapter === selectedChapter
-              "
-              class="chapter-recheck-panel pixel-border"
-              data-testid="chapter-recheck-inline-panel"
-            >
-              <p class="meta-line" data-testid="chapter-recheck-inline-summary">
-                保存后复查 · {{ chapterRecheckResult.passed ? '通过' : '未通过' }}
-                · P0 {{ chapterRecheckResult.p0_count }}
-              </p>
-              <ul
-                v-if="chapterRecheckResult.issues?.length"
-                class="logic-check-issues"
-                data-testid="chapter-recheck-inline-issues"
-              >
-                <li
-                  v-for="(issue, idx) in chapterRecheckResult.issues"
-                  :key="`recheck-${issue.chapter}-${idx}`"
-                  class="logic-check-issue"
-                  :class="{
-                    'logic-check-issue--clickable': uiProfile.recheck_issue_paragraph_jump && issue.paragraph,
-                    'logic-check-issue--active': !uiProfile.issue_paragraph_highlight_unified
-                      && uiProfile.recheck_issue_highlight
-                      && activeRecheckIssueIdx === idx,
-                    'issue-line--active': uiProfile.issue_paragraph_highlight_unified
-                      && activeRecheckIssueIdx === idx,
-                  }"
-                  role="button"
-                  tabindex="0"
-                  :data-testid="`chapter-recheck-issue-${idx}`"
-                  @click="focusIssueParagraph(issue, idx)"
-                  @keydown.enter="focusIssueParagraph(issue, idx)"
-                  @keydown="onRecheckIssueKeydown($event, issue, idx)"
-                >
-                  <span class="issue-severity">{{ issue.severity }}</span>
-                  {{ issue.title || issue.message }}
-                </li>
-              </ul>
-            </div>
-            <div
-              v-else-if="uiProfile.chapter_full_preview && chapterPreview.has_body"
-              class="chapter-read-preview"
-              data-testid="chapter-read-preview"
-            >
-              <label class="meta-line">正文（只读全文）</label>
-              <pre class="preview-text chapter-full-text">{{ chapterPreview.body_text || chapterPreview.body_preview }}</pre>
-            </div>
-            <details v-else-if="chapterPreview.has_body" :open="!chapterPreview.has_outline">
-              <summary>正文</summary>
-              <pre class="preview-text">{{ chapterPreview.body_preview || '（空）' }}</pre>
-              <p v-if="chapterPreview.body_truncated" class="meta-line">正文已截断 · 完整内容请在编辑器查看</p>
-            </details>
-            <p
-              v-if="!uiProfile.chapter_inline_edit && !chapterPreview.has_body && !chapterPreview.has_outline"
-              class="meta-line"
-            >
-              本章尚无大纲与正文
-            </p>
-            <p
-              v-if="uiProfile.chapter_inline_edit && !chapterPreview.has_body && !chapterPreview.has_outline"
-              class="meta-line"
-            >
-              本章尚无大纲，可直接在上方编写正文
-            </p>
-          </template>
-        </div>
-        <p v-if="overview.chapters.length > 15" class="meta-line">
-          显示前 15 章 · 共 {{ overview.max_chapter }} 章上限
-        </p>
-      </section>
+      <CreatorWritePanel />
 
       <!-- 脉络 -->
       <section
@@ -643,38 +345,25 @@ import CreatorVolumePlanShareModals from '../components/creator/CreatorVolumePla
 import CreatorModeGuidePanel from '../components/creator/CreatorModeGuidePanel.vue';
 import CreatorOnboardingWizardPanel from '../components/creator/CreatorOnboardingWizardPanel.vue';
 import CreatorSettingsPanel from '../components/creator/CreatorSettingsPanel.vue';
+import CreatorWritePanel from '../components/creator/CreatorWritePanel.vue';
 import { useCreatorModeGuide } from '../composables/useCreatorModeGuide.js';
 import { useCreatorOnboarding } from '../composables/useCreatorOnboarding.js';
 import { useCreatorSettings } from '../composables/useCreatorSettings.js';
+import { useCreatorWrite } from '../composables/useCreatorWrite.js';
 import { CREATOR_MODE_GUIDE_KEY, createCreatorModeGuideContext } from '../components/creator/creatorModeGuideKey.js';
 import { CREATOR_ONBOARDING_KEY, createCreatorOnboardingContext } from '../components/creator/creatorOnboardingKey.js';
 import { CREATOR_SETTINGS_KEY, createCreatorSettingsContext } from '../components/creator/creatorSettingsKey.js';
+import { CREATOR_WRITE_KEY, createCreatorWriteContext } from '../components/creator/creatorWriteKey.js';
 import { CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext } from '../components/creator/creatorBatchHistoryKey.js';
 import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
 
 const { projectRevision } = useStudioProject();
 const { focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes, setWizardDeepLink, buildWizardShareUrl, navigateTo, focusCreatorWorkspace, setCreatorWorkspace } = useDashboardNav();
 const overview = ref(null);
-const selectedChapter = ref(null);
-const chapterPreview = ref(null);
-const chapterBodyDraft = ref('');
-const chapterOutlineDraft = ref('');
-const chapterBodySaving = ref(false);
-const chapterOutlineSaving = ref(false);
-const chapterBodyTextareaRef = ref(null);
-const chapterBodyHighlightActive = ref(false);
-const activeRecheckIssueIdx = ref(null);
-const activeLogicCheckIssueIdx = ref(null);
 const highlightedDeviationChapter = ref(null);
-let chapterBodyHighlightTimer = null;
-let logicCheckIssueHighlightTimer = null;
-let deviationHighlightTimer = null;
 const batchSummaryPrompt = ref(null);
-const batchDeviationInlineSummary = ref(null);
-const chapterRecheckResult = ref(null);
 const openVolumeSummaryName = ref(null);
 const highlightedVolumeLabel = ref(null);
-const previewLoading = ref(false);
 const loading = ref(false);
 const saving = ref(false);
 const globalOutlineText = ref('');
@@ -849,16 +538,6 @@ watch(
   { immediate: true },
 );
 
-function maybeAutoSelectWritingChapter() {
-  if (!workspaceTabsEnabled.value || selectedChapter.value) return;
-  const ov = overview.value;
-  if (!ov || ov.creation_mode !== 'companion') return;
-  const chapters = ov.chapters || [];
-  const target = chapters.find((ch) => !ch.has_body) || chapters[0];
-  if (target?.chapter) {
-    selectChapter(target.chapter);
-  }
-}
 
 
 const deviationHighlightEnabled = computed(
@@ -885,9 +564,6 @@ const workspaceTabBadges = computed(() => {
   return { pulse: displayDeviationCount.value };
 });
 
-const showCompanionLogicCheckInWrite = computed(
-  () => uiProfile.value.primary_action === 'logic_check' && workspaceTabsEnabled.value,
-);
 
 const showPulseCompanionEmpty = computed(() => {
   if (overview.value?.creation_mode !== 'companion') return false;
@@ -942,25 +618,8 @@ const modeBadgeHintEnabled = computed(
 
 
 
-const deviationChapters = computed(() => {
-  const set = new Set();
-  for (const d of overview.value?.deviations || []) {
-    if (d.chapter) set.add(d.chapter);
-  }
-  return set;
-});
 
-const alertChapters = computed(() => {
-  const set = new Set();
-  for (const d of overview.value?.deviations || []) {
-    if (d.severity === 'alert' && d.chapter) set.add(d.chapter);
-  }
-  return set;
-});
 
-const visibleChapters = computed(() =>
-  (overview.value?.chapters || []).filter((ch) => ch.chapter <= 15),
-);
 
 const showAdvanceBatch = computed(
   () => overview.value?.creation_mode === 'advance' || overview.value?.advance_volume_summary,
@@ -982,53 +641,8 @@ function goProduceConsole() {
 
 
 
-function chapterRowClass(chapter) {
-  if (alertChapters.value.has(chapter)) return 'chapter-row--alert';
-  if (deviationChapters.value.has(chapter)) return 'chapter-row--warn';
-  const ch = overview.value?.chapters?.find((c) => c.chapter === chapter);
-  if (ch?.has_body) return 'chapter-row--done';
-  return '';
-}
 
-async function selectChapter(chapter) {
-  selectedChapter.value = chapter;
-  previewLoading.value = true;
-  chapterPreview.value = null;
-  chapterBodyDraft.value = '';
-  chapterOutlineDraft.value = '';
-  if (chapterRecheckResult.value?.chapter !== chapter) {
-    chapterRecheckResult.value = null;
-  }
-  try {
-    const full = Boolean(
-      uiProfile.value.chapter_inline_edit
-        || uiProfile.value.chapter_full_preview
-        || uiProfile.value.chapter_outline_inline_edit
-        || uiProfile.value.chapter_outline_read_preview,
-    );
-    chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
-    chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterPreview.value.body_preview ?? '';
-    chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterPreview.value.outline_preview ?? '';
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    previewLoading.value = false;
-  }
-}
 
-async function jumpToChapter(chapter) {
-  if (!chapter) return;
-  await selectChapter(chapter);
-  await nextTick();
-  try {
-    document.querySelector('[data-testid="chapter-preview-panel"]')?.scrollIntoView?.({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  } catch {
-    /* jsdom */
-  }
-}
 
 async function jumpToVolume(row) {
   if (!row) return;
@@ -1112,248 +726,23 @@ async function generateVolumeSummaryForRow(row) {
   }
 }
 
-async function recheckChapterP0(chapter) {
-  logicCheckRunning.value = true;
-  try {
-    const result = await runCreatorLogicCheck({ chapter });
-    if (uiProfile.value.chapter_recheck_inline) {
-      chapterRecheckResult.value = { ...result, chapter };
-    } else {
-      logicCheckResult.value = result;
-    }
-    if (result.p0_count > 0) {
-      saveMessage.value = `ch${String(chapter).padStart(3, '0')} 保存后复查：发现 ${result.p0_count} 条 P0`;
-    }
-  } catch (e) {
-    handleSaveError(e);
-  } finally {
-    logicCheckRunning.value = false;
-  }
-}
 
-async function saveChapterBody() {
-  if (!selectedChapter.value) return;
-  chapterBodySaving.value = true;
-  saveMessage.value = '';
-  try {
-    chapterPreview.value = await saveCreatorChapterBody(selectedChapter.value, chapterBodyDraft.value);
-    chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
-    chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterOutlineDraft.value;
-    saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
-    await refresh();
-    if (uiProfile.value.chapter_save_p0_recheck) {
-      await recheckChapterP0(selectedChapter.value);
-    }
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    chapterBodySaving.value = false;
-  }
-}
 
-async function saveChapterOutline() {
-  if (!selectedChapter.value) return;
-  chapterOutlineSaving.value = true;
-  saveMessage.value = '';
-  try {
-    chapterPreview.value = await saveCreatorChapterOutline(selectedChapter.value, chapterOutlineDraft.value);
-    chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterOutlineDraft.value;
-    chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
-    saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 大纲已保存`;
-    await refresh();
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    chapterOutlineSaving.value = false;
-  }
-}
 
-function pulseChapterBodyHighlight(issueIdx, source = 'recheck') {
-  const bodyHighlight = uiProfile.value.recheck_issue_highlight
-    || (uiProfile.value.issue_paragraph_highlight_unified && source === 'logic');
-  if (bodyHighlight) {
-    if (source === 'recheck') {
-      activeRecheckIssueIdx.value = issueIdx ?? null;
-    }
-    chapterBodyHighlightActive.value = true;
-    if (chapterBodyHighlightTimer) {
-      clearTimeout(chapterBodyHighlightTimer);
-    }
-    chapterBodyHighlightTimer = setTimeout(() => {
-      chapterBodyHighlightActive.value = false;
-      if (source === 'recheck') {
-        activeRecheckIssueIdx.value = null;
-      }
-      chapterBodyHighlightTimer = null;
-    }, 1200);
-  } else if (source === 'recheck') {
-    activeRecheckIssueIdx.value = issueIdx ?? null;
-    if (chapterBodyHighlightTimer) {
-      clearTimeout(chapterBodyHighlightTimer);
-    }
-    chapterBodyHighlightTimer = setTimeout(() => {
-      activeRecheckIssueIdx.value = null;
-      chapterBodyHighlightTimer = null;
-    }, 1200);
-  }
-}
 
-function focusIssueParagraph(issue, issueIdx, source = 'recheck') {
-  if (!uiProfile.value.recheck_issue_paragraph_jump || !issue?.paragraph) return;
-  const textarea = chapterBodyTextareaRef.value;
-  if (!textarea) return;
-  const paragraphs = chapterBodyDraft.value.split(/\n\s*\n/);
-  const idx = Math.max(0, Number(issue.paragraph) - 1);
-  const target = paragraphs[idx] ?? '';
-  if (!target) return;
-  const offset = chapterBodyDraft.value.indexOf(target);
-  if (offset < 0) return;
-  textarea.focus();
-  textarea.setSelectionRange(offset, offset + target.length);
-  try {
-    const lineHeight = 16;
-    textarea.scrollTop = Math.max(0, (offset / Math.max(chapterBodyDraft.value.length, 1)) * textarea.scrollHeight - lineHeight * 2);
-  } catch {
-    /* jsdom */
-  }
-  pulseChapterBodyHighlight(issueIdx, source);
-}
 
-function pulseLogicCheckIssueHighlight(issueIdx) {
-  if (!uiProfile.value.logic_check_issue_highlight && !uiProfile.value.issue_paragraph_highlight_unified) {
-    return;
-  }
-  activeLogicCheckIssueIdx.value = issueIdx ?? null;
-  if (logicCheckIssueHighlightTimer) {
-    clearTimeout(logicCheckIssueHighlightTimer);
-  }
-  logicCheckIssueHighlightTimer = setTimeout(() => {
-    activeLogicCheckIssueIdx.value = null;
-    logicCheckIssueHighlightTimer = null;
-  }, 1200);
-}
 
-function pulseDeviationHighlight(chapter) {
-  if (!deviationHighlightEnabled.value || !chapter) return;
-  highlightedDeviationChapter.value = chapter;
-  if (deviationHighlightTimer) {
-    clearTimeout(deviationHighlightTimer);
-  }
-  deviationHighlightTimer = setTimeout(() => {
-    highlightedDeviationChapter.value = null;
-    deviationHighlightTimer = null;
-  }, 1200);
-}
 
-function batchDeviationsInRange(start, end) {
-  return visibleDeviations.value
-    .filter((row) => row.chapter && row.chapter >= start && row.chapter <= end)
-    .sort((a, b) => a.chapter - b.chapter);
-}
 
-async function handleLogicCheckIssueClick(issue, issueIdx) {
-  if (!issue?.chapter) return;
-  pulseLogicCheckIssueHighlight(issueIdx);
-  await jumpToChapter(issue.chapter);
-  if (uiProfile.value.recheck_issue_paragraph_jump && issue.paragraph) {
-    await nextTick();
-    focusIssueParagraph(issue, issueIdx, 'logic');
-  }
-}
 
-async function handleDeviationClick(deviation) {
-  if (!deviation?.chapter || !uiProfile.value.deviation_chapter_jump) return;
-  pulseDeviationHighlight(deviation.chapter);
-  await jumpToChapter(deviation.chapter);
-}
 
-function updateBatchDeviationInlineSummary(start, end) {
-  if (!uiProfile.value.batch_deviation_inline_summary) {
-    batchDeviationInlineSummary.value = null;
-    return;
-  }
-  const items = batchDeviationsInRange(start, end);
-  batchDeviationInlineSummary.value = items.length
-    ? { start, end, items }
-    : null;
-}
 
-async function linkBatchDeviationInlineSummary(start, end) {
-  if (
-    !batchDeviationInlineSummary.value
-    || !uiProfile.value.batch_deviation_summary_link
-    || !overview.value?.volume_summaries?.length
-  ) {
-    return;
-  }
-  await nextTick();
-  openVolumeSummaryForRange(start, end);
-}
 
-function dismissBatchDeviationInlineSummary() {
-  batchDeviationInlineSummary.value = null;
-}
 
-function navigateIssueList(event, issues, currentIdx, onSelect, testIdPrefix) {
-  if (!uiProfile.value.issue_keyboard_navigation || !issues?.length) return;
-  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-  event.preventDefault();
-  const delta = event.key === 'ArrowDown' ? 1 : -1;
-  const nextIdx = Math.max(0, Math.min(issues.length - 1, currentIdx + delta));
-  if (nextIdx === currentIdx) return;
-  onSelect(issues[nextIdx], nextIdx);
-  nextTick(() => {
-    try {
-      document.querySelector(`[data-testid="${testIdPrefix}-${nextIdx}"]`)?.focus?.();
-    } catch {
-      /* jsdom */
-    }
-  });
-}
 
-function onRecheckIssueKeydown(event, issue, idx) {
-  navigateIssueList(
-    event,
-    chapterRecheckResult.value?.issues,
-    idx,
-    (item, newIdx) => focusIssueParagraph(item, newIdx),
-    'chapter-recheck-issue',
-  );
-}
 
-function onLogicCheckIssueKeydown(event, issue, idx) {
-  navigateIssueList(
-    event,
-    logicCheckResult.value?.issues,
-    idx,
-    (item, newIdx) => handleLogicCheckIssueClick(item, newIdx),
-    'logic-check-issue',
-  );
-}
 
-async function scrollToBatchDeviationList(start, end) {
-  if (!uiProfile.value.batch_scroll_deviation_list) return;
-  const rows = batchDeviationsInRange(start, end);
-  if (!rows.length) return;
-  pulseDeviationHighlight(rows[0].chapter);
-  await nextTick();
-  try {
-    document.querySelector('[data-testid="deviation-list"]')?.scrollIntoView?.({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  } catch {
-    /* jsdom */
-  }
-}
 
-async function openFirstBatchDeviationChapter(start, end) {
-  if (!uiProfile.value.batch_open_first_deviation) return;
-  const rows = batchDeviationsInRange(start, end);
-  if (!rows.length) return;
-  pulseDeviationHighlight(rows[0].chapter);
-  await jumpToChapter(rows[0].chapter);
-}
 
 function isConflictError(err) {
   return err instanceof Error && err.message.includes('409');
@@ -1659,6 +1048,41 @@ async function runCompanionLogicCheck() {
 }
 
 
+
+const writeHub = useCreatorWrite({
+  uiProfile,
+  overview,
+  error,
+  saveMessage,
+  handleSaveError,
+  onAfterChapterSave: async () => refresh(),
+  isWorkspaceColumnVisible,
+  workspaceTabsEnabled,
+  visibleDeviations,
+  deviationHighlightEnabled,
+  highlightedDeviationChapter,
+  logicCheckRunning,
+  logicCheckResult,
+  runCompanionLogicCheck,
+  openVolumeSummaryForRange,
+});
+const {
+  panelContext: writePanelContext,
+  selectedChapter,
+  jumpToChapter,
+  handleDeviationClick,
+  handleLogicCheckIssueClick,
+  scrollToBatchDeviationList,
+  openFirstBatchDeviationChapter,
+  updateBatchDeviationInlineSummary,
+  linkBatchDeviationInlineSummary,
+  dismissBatchDeviationInlineSummary,
+  maybeAutoSelectWritingChapter,
+  onRecheckIssueKeydown,
+  onLogicCheckIssueKeydown,
+  activeLogicCheckIssueIdx,
+} = writeHub;
+
 const settingsHub = useCreatorSettings({
   uiProfile,
   overview,
@@ -1727,6 +1151,10 @@ async function refresh() {
 
 
 provide(
+  CREATOR_WRITE_KEY,
+  createCreatorWriteContext(writePanelContext),
+);
+provide(
   CREATOR_SETTINGS_KEY,
   createCreatorSettingsContext(settingsPanelContext),
 );
@@ -1757,18 +1185,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', onCreationModeSwitchHotkey);
   stopBatchPolling();
-  if (chapterBodyHighlightTimer) {
-    clearTimeout(chapterBodyHighlightTimer);
-    chapterBodyHighlightTimer = null;
-  }
-  if (logicCheckIssueHighlightTimer) {
-    clearTimeout(logicCheckIssueHighlightTimer);
-    logicCheckIssueHighlightTimer = null;
-  }
-  if (deviationHighlightTimer) {
-    clearTimeout(deviationHighlightTimer);
-    deviationHighlightTimer = null;
-  }
 });
 
 watch(projectRevision, () => {
@@ -1872,63 +1288,15 @@ watch(
   margin-bottom: var(--space-md);
 }
 
-.chapter-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
-.chapter-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--text-sm);
-  padding: 4px 6px;
-  border: 1px solid var(--border-color);
-}
 
-.chapter-row--done {
-  background: rgba(100, 200, 100, 0.08);
-}
 
-.chapter-row {
-  cursor: pointer;
-}
 
-.chapter-row--selected {
-  outline: 2px solid var(--color-accent);
-}
 
-.chapter-preview {
-  margin-top: var(--space-md);
-  padding: var(--space-sm);
-  max-height: 320px;
-  overflow: auto;
-}
 
-.chapter-dual-edit {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
 
-.chapter-outline-textarea {
-  width: 100%;
-  min-height: 160px;
-}
 
-.logic-check-issue--clickable {
-  cursor: pointer;
-  text-decoration: underline;
-}
 
-.logic-check-issue--active {
-  animation: recheck-issue-flash 1.2s ease-out;
-  background: rgba(255, 220, 100, 0.35);
-}
 
 .issue-line--active {
   animation: issue-line-flash 1.2s ease-out;
@@ -1936,29 +1304,9 @@ watch(
   box-shadow: inset 0 0 0 1px rgba(200, 180, 80, 0.65);
 }
 
-.batch-deviation-inline-summary {
-  margin: var(--space-sm) 0;
-  padding: var(--space-xs);
-  background: rgba(200, 80, 80, 0.08);
-}
 
-.batch-deviation-inline-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-sm);
-}
 
-.batch-deviation-inline-item {
-  padding: 4px 0;
-}
 
-.batch-deviation-inline-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-top: var(--space-xs);
-}
 
 
 .mode-badge--hintable {
@@ -2211,52 +1559,19 @@ watch(
   background: rgba(200, 120, 80, 0.1);
 }
 
-.logic-check-issue:focus-visible {
-  outline: 2px solid rgba(200, 180, 80, 0.85);
-  outline-offset: 1px;
-}
 
 @keyframes issue-line-flash {
   0% { background: rgba(255, 220, 100, 0.55); }
   100% { background: rgba(255, 220, 100, 0.35); }
 }
 
-.chapter-body-textarea--highlight {
-  animation: chapter-body-highlight-pulse 1.2s ease-out;
-  box-shadow: 0 0 0 2px rgba(200, 180, 80, 0.75);
-}
 
-.chapter-outline-read-preview {
-  margin-bottom: var(--space-sm);
-}
 
-@keyframes recheck-issue-flash {
-  0% { background: rgba(255, 220, 100, 0.55); }
-  100% { background: rgba(255, 220, 100, 0.35); }
-}
 
-@keyframes chapter-body-highlight-pulse {
-  0% { background: rgba(255, 220, 100, 0.4); }
-  100% { background: transparent; }
-}
 
-.chapter-inline-edit {
-  margin-top: var(--space-sm);
-}
 
-.chapter-body-textarea {
-  width: 100%;
-  min-height: 180px;
-}
 
-.chapter-read-preview {
-  margin-top: var(--space-sm);
-}
 
-.chapter-full-text {
-  max-height: 280px;
-  overflow: auto;
-}
 
 .volume-pulse-row {
   cursor: pointer;
@@ -2293,17 +1608,7 @@ watch(
   font-size: var(--text-xs);
 }
 
-.logic-check-issues {
-  margin: var(--space-sm) 0 0;
-  padding: 0;
-  list-style: none;
-}
 
-.logic-check-issue {
-  cursor: pointer;
-  margin-bottom: var(--space-xs);
-  font-size: var(--text-sm);
-}
 
 .issue-severity {
   display: inline-block;
@@ -2322,11 +1627,6 @@ watch(
   font: inherit;
 }
 
-.chapter-recheck-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-xs);
-  background: rgba(200, 180, 80, 0.1);
-}
 
 .batch-alert-volumes {
   color: #c44;
@@ -2345,15 +1645,7 @@ watch(
   margin: var(--space-xs) 0;
 }
 
-.chapter-row--warn {
-  background: rgba(200, 180, 80, 0.15);
-  border-color: #aa8;
-}
 
-.chapter-row--alert {
-  background: rgba(200, 80, 80, 0.15);
-  border-color: #c66;
-}
 
 .progress-bar {
   height: 12px;
@@ -2595,14 +1887,7 @@ watch(
   margin: var(--space-xs) 0 var(--space-sm);
 }
 
-.companion-logic-check-write {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-}
 
-.companion-logic-check-write .subsection-title {
-  margin-bottom: var(--space-xs);
-}
 
 .volume-merge-panel {
   margin-top: var(--space-sm);
