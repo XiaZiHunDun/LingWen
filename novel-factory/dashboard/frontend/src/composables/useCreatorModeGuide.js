@@ -35,10 +35,11 @@ const CREATION_MODE_SWITCH_HISTORY_KEY = 'creator_mode_switch_history';
  *   saveMessage: import('vue').Ref<string>,
  *   onboardingWizard: import('vue').Ref<object|null>,
  *   linkModeToOnboardingStep: (mode: string) => Promise<void>,
+ *   modeLabel: import('vue').ComputedRef<string>,
  * } deps
  */
 export function useCreatorModeGuide(deps) {
-  const { uiProfile, overview, saveMessage, onboardingWizard, linkModeToOnboardingStep } = deps;
+  const { uiProfile, overview, saveMessage, onboardingWizard, linkModeToOnboardingStep, modeLabel } = deps;
 
 const pendingModeSwitch = ref(null);
 const creationModeSwitchHistory = ref([]);
@@ -308,6 +309,7 @@ function openModeSwitchDoc(link, fromClick = false) {
 
 const panelContext = {
   uiProfile,
+  modeLabel,
   modeGuideExpanded,
   creationModeSwitchHintText,
   creationModeSwitchDocLinks,

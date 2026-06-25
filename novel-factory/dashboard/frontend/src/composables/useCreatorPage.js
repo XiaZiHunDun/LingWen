@@ -188,6 +188,7 @@ export function useCreatorPage() {
     saveMessage,
     onboardingWizard: onboardingHub.onboardingWizard,
     linkModeToOnboardingStep: onboardingHub.linkModeToOnboardingStep,
+    modeLabel,
   });
   const { panelContext: modeGuidePanelContext, loadCreationModeSwitchHistory, onCreationModeSwitchHotkey } = modeGuideHub;
 

@@ -8,7 +8,7 @@
       :open="mg.modeGuideExpanded"
     >
       <summary class="creator-mode-guide-summary">
-        模式说明与能力对照<span v-if="props.modeLabel"> · {{ props.modeLabel }}</span>
+        模式说明与能力对照<span v-if="mg.modeLabel"> · {{ mg.modeLabel }}</span>
       </summary>
     <p
       v-if="mg.uiProfile.creation_mode_badge_legend && !mg.uiProfile.creator_simplified_mode_ops"
@@ -277,10 +277,6 @@
 <script setup>
 import { inject } from 'vue';
 import { CREATOR_MODE_GUIDE_KEY } from './creatorModeGuideKey.js';
-
-const props = defineProps({
-  modeLabel: { type: String, default: '' },
-});
 
 const mg = inject(CREATOR_MODE_GUIDE_KEY);
 </script>
