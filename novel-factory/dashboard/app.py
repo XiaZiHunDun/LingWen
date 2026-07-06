@@ -2282,6 +2282,33 @@ def _ripple_to_list_item(r: CrossVolumeRipple, storage: RippleStorage) -> Ripple
     )
 
 
+def _ripple_list_items(
+    ripples: list[CrossVolumeRipple], storage: RippleStorage
+) -> list[RippleListItemResponse]:
+    """List items with batched cascade/child lookups (avoids N+1 SQLite round-trips)."""
+    if not ripples:
+        return []
+    ids = [r.id for r in ripples]
+    cascades = storage.batch_latest_cascades(ids)
+    child_counts = storage.batch_child_counts(ids)
+    return [
+        RippleListItemResponse(
+            ripple_id=r.id,
+            dimension="unknown",
+            relationship_type="mentions",
+            source_chapter=r.trigger_chapter,
+            target_chapter=r.trigger_chapter,
+            status=r.status,
+            confidence=r.payload.get("confidence", 1),
+            created_at=r.created_at,
+            impact_score=compute_impact_score(r, cascades.get(r.id)),
+            parent_ripple_id=r.parent_ripple_id,
+            child_count=child_counts.get(r.id, 0),
+        )
+        for r in ripples
+    ]
+
+
 def _ripple_to_detail(r: CrossVolumeRipple, storage: RippleStorage) -> RippleDetailResponse:
     """Phase 9.13: helper to convert CrossVolumeRipple → RippleDetailResponse."""
     return RippleDetailResponse(
@@ -2745,7 +2772,7 @@ def create_app(
         ripples = storage.get_ripples(
             status=status_filter, volume=volume, limit=limit, offset=offset
         )
-        items = [_ripple_to_list_item(r, storage) for r in ripples]
+        items = _ripple_list_items(ripples, storage)
         if min_score is not None:
             items = [i for i in items if i.impact_score >= min_score]
         if sort_by == "impact_score":

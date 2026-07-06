@@ -821,6 +821,46 @@ class RippleStorage:
                 generated_at=row["created_at"],
             )
 
+    def batch_child_counts(self, ripple_ids: list[str]) -> dict[str, int]:
+        """Batch count direct child ripples (list endpoint enrichment)."""
+        if not ripple_ids:
+            return {}
+        placeholders = ",".join("?" * len(ripple_ids))
+        with self._connect() as conn:
+            rows = conn.execute(
+                f"SELECT parent_ripple_id, COUNT(*) AS n FROM reference_ripples "
+                f"WHERE parent_ripple_id IN ({placeholders}) GROUP BY parent_ripple_id",
+                ripple_ids,
+            ).fetchall()
+        return {row["parent_ripple_id"]: int(row["n"]) for row in rows}
+
+    def batch_latest_cascades(self, ripple_ids: list[str]) -> dict[str, "CascadedRipple | None"]:
+        """Latest cascade row per ripple_id in one query."""
+        if not ripple_ids:
+            return {}
+        placeholders = ",".join("?" * len(ripple_ids))
+        with self._connect() as conn:
+            rows = conn.execute(
+                f"SELECT rc.* FROM ripple_cascade rc "
+                f"INNER JOIN ("
+                f"  SELECT trigger_ripple_id, MAX(id) AS max_id FROM ripple_cascade "
+                f"  WHERE trigger_ripple_id IN ({placeholders}) "
+                f"  GROUP BY trigger_ripple_id"
+                f") latest ON rc.id = latest.max_id",
+                ripple_ids,
+            ).fetchall()
+        out: dict[str, CascadedRipple | None] = {rid: None for rid in ripple_ids}
+        for row in rows:
+            out[row["trigger_ripple_id"]] = CascadedRipple(
+                trigger_ripple_id=row["trigger_ripple_id"],
+                cascade_nodes=tuple(self._dict_to_node(n) for n in json.loads(row["cascade_nodes_json"])),
+                cascade_edges=tuple(self._dict_to_edge(e) for e in json.loads(row["cascade_edges_json"])),
+                cascade_actions=tuple(json.loads(row["cascade_actions_json"])),
+                depth_reached=row["depth_reached"],
+                generated_at=row["created_at"],
+            )
+        return out
+
     def preview_cascade(
         self,
         ripple_id: str,

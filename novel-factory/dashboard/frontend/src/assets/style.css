@@ -286,6 +286,15 @@ body {
   box-shadow: var(--shadow-card);
 }
 
+#app .library-page .l1-page__body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#app .library-page__grid {
+  flex-shrink: 0;
+}
+
 #app .l1-lead-row {
   display: flex;
   align-items: center;

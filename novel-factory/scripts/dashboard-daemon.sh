@@ -17,9 +17,11 @@ mkdir -p "$RUN_DIR" "$LOG_DIR"
 unset LINGWEN_PROJECT_ROOT
 
 api_url() { echo "http://127.0.0.1:${API_PORT}/api/health"; }
+cvg_url() { echo "http://127.0.0.1:${API_PORT}/api/cvg/ripples?limit=1"; }
 vite_url() { echo "http://127.0.0.1:${VITE_PORT}/"; }
 
 is_api_up() { curl -sf "$(api_url)" >/dev/null 2>&1; }
+is_cvg_up() { curl -sf --max-time 5 "$(cvg_url)" >/dev/null 2>&1; }
 is_vite_up() { curl -sf "$(vite_url)" >/dev/null 2>&1; }
 
 pid_alive() {
@@ -132,6 +134,11 @@ cmd_status() {
   vite_pid="$(read_pid "$VITE_PID_FILE" 2>/dev/null || echo "-")"
   if is_api_up; then
     echo "API  : UP   :${API_PORT} (pid ${api_pid})"
+    if is_cvg_up; then
+      echo "CVG  : UP   ripples"
+    else
+      echo "CVG  : DOWN ripples (try: bash scripts/dashboard-daemon.sh restart)"
+    fi
   else
     echo "API  : DOWN :${API_PORT} (pid ${api_pid})"
   fi

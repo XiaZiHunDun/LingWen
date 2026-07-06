@@ -33,12 +33,13 @@
 
         <div
           v-if="p.isPulseSubpanelVisible('volumePulse') && p.overview.volume_pulse?.volume_count"
-          class="pulse-desk__section volume-pulse-panel pixel-border"
+          class="pulse-desk__section volume-pulse-panel pixel-border pulse-desk__section--collapsible"
           :class="`volume-pulse-panel--${p.overview.volume_pulse.overall_status}`"
           data-testid="volume-pulse-panel"
         >
-          <h3 class="pulse-desk__section-title">卷级脉络</h3>
-          <p class="meta-line" data-testid="volume-pulse-overall">
+          <details :open="!p.isPulseSubpanelCollapsed('volumePulse')">
+            <summary class="pulse-desk__section-title pulse-desk__section-summary">卷级脉络</summary>
+            <p class="meta-line" data-testid="volume-pulse-overall">
             <template v-if="p.overview.volume_pulse.alerts_only">
               {{ p.overview.volume_pulse.alert_count ? `${p.overview.volume_pulse.alert_count} 卷需关注` : '暂无 alert 级偏离' }}
             </template>
@@ -83,10 +84,17 @@
           >
             最新摘要：{{ formatDisplayLabel(p.overview.volume_pulse.latest_summary.name) }}
           </button>
+          </details>
         </div>
 
-        <div v-if="p.isPulseSubpanelVisible('volumePlan')" class="pulse-desk__section">
-          <CreatorVolumePlanPanel />
+        <div
+          v-if="p.isPulseSubpanelVisible('volumePlan')"
+          class="pulse-desk__section pulse-desk__section--collapsible"
+        >
+          <details :open="!p.isPulseSubpanelCollapsed('volumePlan')">
+            <summary class="pulse-desk__section-title pulse-desk__section-summary">卷纲</summary>
+            <CreatorVolumePlanPanel hide-title />
+          </details>
         </div>
 
         <div v-if="p.isPulseSubpanelVisible('deviationList')" class="pulse-desk__section">

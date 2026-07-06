@@ -3,8 +3,8 @@
 -->
 <template>
   <div class="volume-plan-panel" data-testid="volume-plan-panel">
-    <div class="volume-plan-header">
-      <h3 class="subsection-title">卷纲</h3>
+    <div class="volume-plan-header" :class="{ 'volume-plan-header--inline': hideTitle }">
+      <h3 v-if="!hideTitle" class="subsection-title">卷纲</h3>
       <button
         type="button"
         class="mini-btn pixel-border"
@@ -29,6 +29,10 @@ import CreatorVolumePlanEditPanel from './CreatorVolumePlanEditPanel.vue';
 import CreatorVolumePlanDiffPanel from './CreatorVolumePlanDiffPanel.vue';
 import CreatorVolumePlanMergeSplitPanel from './CreatorVolumePlanMergeSplitPanel.vue';
 
+defineProps({
+  hideTitle: { type: Boolean, default: false },
+});
+
 const vp = inject(CREATOR_VOLUME_PLAN_KEY);
 if (!vp) {
   throw new Error('CreatorVolumePlanPanel requires CREATOR_VOLUME_PLAN_KEY provide');
@@ -45,6 +49,11 @@ if (!vp) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.volume-plan-header--inline {
+  justify-content: flex-end;
+  margin-bottom: var(--space-xs);
 }
 
 .mini-btn {

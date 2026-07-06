@@ -62,8 +62,8 @@ export const CREATOR_WORKSPACE_DEFAULT_TAB = {
  */
 export const CREATOR_PULSE_SUBPANEL_MATRIX = {
   structureGraph: { companion: 'optional_collapsed', advance: 'required', studio: 'required' },
-  volumePulse: { companion: 'optional', advance: 'required', studio: 'required' },
-  volumePlan: { companion: 'optional', advance: 'required', studio: 'required' },
+  volumePulse: { companion: 'optional_collapsed', advance: 'required', studio: 'required' },
+  volumePlan: { companion: 'optional_collapsed', advance: 'required', studio: 'required' },
   deviationList: { companion: 'optional', advance: 'required', studio: 'required' },
   advanceBatch: { companion: 'hidden', advance: 'required', studio: 'hidden' },
   batchHistory: { companion: 'hidden', advance: 'optional', studio: 'optional' },

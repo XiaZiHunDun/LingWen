@@ -39,4 +39,44 @@ test.describe('Visual regression baselines', () => {
     });
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
+
+  test('ask_viewport', async ({ page }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/?nav=ask', { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-testid="ask-page"]').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.waitForTimeout(400);
+    await expect(page).toHaveScreenshot('ask-1280x720.png', {
+      maxDiffPixelRatio: 0.02,
+      animations: 'disabled',
+    });
+  });
+
+  test('library_viewport', async ({ page }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/?nav=library', { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-testid="library-page"]').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('[data-testid="library-grid"]').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.waitForTimeout(400);
+    await expect(page).toHaveScreenshot('library-1280x720.png', {
+      maxDiffPixelRatio: 0.02,
+      animations: 'disabled',
+    });
+  });
+
+  test('settings_viewport', async ({ page }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/?nav=settings', { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-testid="settings-page"]').waitFor({ state: 'visible', timeout: 30_000 });
+    await page.waitForTimeout(400);
+    await expect(page).toHaveScreenshot('settings-1280x720.png', {
+      maxDiffPixelRatio: 0.02,
+      animations: 'disabled',
+    });
+  });
 });

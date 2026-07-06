@@ -5,6 +5,7 @@ import {
   isChapterTaskCardsVisible,
   isHubProduceTabVisible,
   isPanelVisible,
+  isPanelDefaultCollapsed,
   isPulseSubpanelVisible,
   isWriteWorkbenchLayoutEnabled,
   isWriteWorkbenchPanelVisible,
@@ -78,5 +79,10 @@ describe('creatorPanelMatrix', () => {
 
   it('pulse matrix covers structure graph for advance', () => {
     expect(isPanelVisible(CREATOR_PULSE_SUBPANEL_MATRIX, 'advance', 'structureGraph')).toBe(true);
+  });
+
+  it('companion pulse collapses volume plan and volume pulse by default', () => {
+    expect(isPanelDefaultCollapsed(CREATOR_PULSE_SUBPANEL_MATRIX, 'companion', 'volumePlan')).toBe(true);
+    expect(isPanelDefaultCollapsed(CREATOR_PULSE_SUBPANEL_MATRIX, 'companion', 'volumePulse')).toBe(true);
   });
 });

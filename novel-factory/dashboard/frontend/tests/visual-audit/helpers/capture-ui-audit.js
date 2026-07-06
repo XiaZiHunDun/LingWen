@@ -46,6 +46,7 @@ export async function collectUiMetrics(page) {
       '.pulse-desk',
       '.pulse-desk__scroll',
       '.l1-page__body',
+      '.library-page .l1-page__body',
       '.ask-page__panel',
     ];
 
@@ -83,14 +84,16 @@ export async function collectUiMetrics(page) {
     /** Large interactive blocks whose bottom extends below viewport without internal scroll */
     const clippedBelowFold = [];
     document.querySelectorAll('[data-testid]').forEach((el) => {
+      if (el.closest('details:not([open])') && !el.matches('summary')) return;
       const rect = el.getBoundingClientRect();
       if (rect.height < 48) return;
       if (rect.top >= viewport.height) return;
       if (rect.bottom <= viewport.height + 4) return;
       const style = getComputedStyle(el);
       const parentScrollable = el.closest(
-        '[style*="overflow"], .pulse-desk__scroll, .write-workbench__editor-slot--primary, .write-workbench__main, .main-wrapper',
+        '.pulse-desk__scroll, .write-workbench__editor-slot--primary, .write-workbench__main, .main-wrapper, .l1-page__body',
       );
+      if (parentScrollable) return;
       clippedBelowFold.push({
         testId: el.getAttribute('data-testid'),
         tag: el.tagName.toLowerCase(),
@@ -98,7 +101,6 @@ export async function collectUiMetrics(page) {
         viewportHeight: viewport.height,
         overflowBelow: Math.round(rect.bottom - viewport.height),
         overflowY: style.overflowY,
-        hasScrollParent: Boolean(parentScrollable),
       });
     });
 
