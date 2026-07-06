@@ -7,7 +7,7 @@ MiniMax Provider实现
 
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 import anthropic
 
@@ -225,6 +225,44 @@ class MiniMaxProvider(AIProvider):
                 raise last_error
 
         raise last_error or AIProviderError("Max retries exceeded")
+
+    def stream_generate(self, prompt: str, **kwargs) -> Iterator[str]:
+        model = kwargs.pop("model", self._model)
+        system = kwargs.pop("system", None)
+        temperature = kwargs.pop("temperature", 0.7)
+        max_tokens = kwargs.pop("max_tokens", 4096)
+        messages = [{"role": "user", "content": prompt}]
+
+        last_error = None
+        for attempt in range(self.config.max_retries):
+            try:
+                with self._client.messages.stream(
+                    model=model,
+                    system=system,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs,
+                ) as stream:
+                    for text in stream.text_stream:
+                        if text:
+                            yield text
+                return
+            except anthropic.APITimeoutError:
+                last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
+            except anthropic.APIConnectionError as e:
+                last_error = NetworkError(f"Connection failed: {e}")
+            except anthropic.RateLimitError as e:
+                last_error = APIError(f"Rate limit exceeded: {e}")
+            except anthropic.APIError as e:
+                last_error = APIError(f"MiniMax API error: {e}")
+            except Exception as e:
+                last_error = AIProviderError(f"Unexpected error: {e}")
+                raise last_error
+            if attempt < self.config.max_retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise last_error or AIProviderError("Max retries exceeded")
 
     def embed(self, text: str) -> List[float]:
         """生成嵌入向量

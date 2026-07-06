@@ -6,7 +6,7 @@ OpenAI Provider实现
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 import openai
 
@@ -116,6 +116,49 @@ class OpenAIProvider(AIProvider):
                 raise last_error
 
         raise last_error or AIProviderError("Max retries exceeded")
+
+    def stream_generate(self, prompt: str, **kwargs) -> Iterator[str]:
+        model = kwargs.pop("model", self.config.model)
+        system = kwargs.pop("system", None)
+        temperature = kwargs.pop("temperature", 0.7)
+        max_tokens = kwargs.pop("max_tokens", 4096)
+
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        last_error = None
+        for attempt in range(self.config.max_retries):
+            try:
+                stream = self._client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    stream=True,
+                    **kwargs,
+                )
+                for chunk in stream:
+                    delta = chunk.choices[0].delta.content if chunk.choices else None
+                    if delta:
+                        yield delta
+                return
+            except openai.APITimeoutError:
+                last_error = TimeoutError(f"Request timed out after {self.config.timeout}s")
+            except openai.APIConnectionError as e:
+                last_error = NetworkError(f"Connection failed: {e}")
+            except openai.RateLimitError as e:
+                last_error = APIError(f"Rate limit exceeded: {e}")
+            except openai.APIError as e:
+                last_error = APIError(f"OpenAI API error: {e}")
+            except Exception as e:
+                last_error = AIProviderError(f"Unexpected error: {e}")
+                raise last_error
+            if attempt < self.config.max_retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise last_error or AIProviderError("Max retries exceeded")
 
     def generate_with_usage(
         self, prompt: str, **kwargs

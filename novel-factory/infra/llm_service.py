@@ -15,7 +15,7 @@ import os
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +181,30 @@ class LLMService:
                 continue
 
         raise RuntimeError(f"所有 LLM provider 均失败: {last_error}")
+
+    def execute_stream(self, task: LLMTask) -> Iterator[str]:
+        """流式执行 LLM 任务，逐段 yield 文本增量。"""
+        if not self._provider:
+            raise RuntimeError("No LLM provider available")
+
+        config = self.TASK_CONFIGS.get(task.task_type, {})
+        last_error: Optional[Exception] = None
+        for provider_name, provider in self._providers:
+            try:
+                yield from provider.stream_generate(
+                    prompt=task.prompt,
+                    system=task.system,
+                    max_tokens=task.max_tokens or config.get("max_tokens", 2000),
+                    temperature=task.temperature or config.get("temperature", 0.3),
+                )
+                self._provider_name, self._provider = provider_name, provider
+                return
+            except Exception as e:
+                logger.warning(f"{provider_name} 流式调用失败，尝试下一个 provider: {e}")
+                last_error = e
+                continue
+
+        raise RuntimeError(f"所有 LLM provider 流式调用均失败: {last_error}")
 
     def parse_json_response(self, response: str) -> Any:
         """

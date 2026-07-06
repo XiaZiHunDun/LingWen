@@ -114,3 +114,36 @@ class TestCreatorAgent:
         assert "chunk" in types
         assert types[-1] == "done"
         assert events[-1]["plan"]["candidates"]
+
+    def test_stream_llm_tokens_when_provider_streams(self, project_root: Path, monkeypatch) -> None:
+        payload = (
+            '{"advice_only": false, "candidates": ['
+            '{"id": "steady", "label": "稳健", "text": "流式正文"}, '
+            '{"id": "balanced", "label": "平衡", "text": "二"}, '
+            '{"id": "bold", "label": "大胆", "text": "三"}], '
+            '"advice": [], "annotations": []}'
+        )
+
+        def fake_stream(_self, _task):
+            yield payload[:20]
+            yield payload[20:]
+
+        monkeypatch.setattr("infra.creator_agent._has_llm_api_key", lambda: True)
+        monkeypatch.setattr("infra.llm_service.LLMService.execute_stream", fake_stream)
+
+        events = list(
+            iter_creator_agent_plan_stream(
+                project_root,
+                action="path:faster",
+                action_label="加快节奏",
+                scope={"type": "chapter", "chapter": 1},
+                body_draft="第一段\n\n第二段正文",
+                style_strength=2,
+                provider_mode="llm",
+            ),
+        )
+        llm_chunks = [e for e in events if e.get("type") == "chunk" and e.get("source") == "llm"]
+        assert len(llm_chunks) >= 2
+        assert events[-1]["type"] == "done"
+        assert events[-1]["plan"]["stream_mode"] == "llm_token"
+        assert events[-1]["plan"]["candidates"][0]["text"] == "流式正文"

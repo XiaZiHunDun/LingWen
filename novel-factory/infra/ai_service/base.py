@@ -7,7 +7,7 @@ AI服务提供商抽象层
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Iterator, List, Optional, Type
 
 
 class AIProviderError(Exception):
@@ -102,6 +102,12 @@ class AIProvider(ABC):
             AIProviderError: 如果发生错误
         """
         pass
+
+    def stream_generate(self, prompt: str, **kwargs) -> Iterator[str]:
+        """流式生成文本增量（默认降级为单次 generate）。"""
+        text = self.generate(prompt, **kwargs)
+        if text:
+            yield text
 
     def generate_with_usage(
         self, prompt: str, **kwargs

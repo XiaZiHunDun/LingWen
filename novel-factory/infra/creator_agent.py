@@ -6,7 +6,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from infra.paths import ProjectPaths
 
@@ -244,6 +244,21 @@ def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
     return parsed
 
 
+def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> Iterator[str]:
+    from infra.llm_service import LLMService, LLMTask, TaskType
+
+    service = LLMService.get()
+    yield from service.execute_stream(
+        LLMTask(
+            task_type=TaskType.REPAIR if not advice_only else TaskType.QUALITY_ANALYSIS,
+            system=_AGENT_SYSTEM,
+            prompt=prompt,
+            max_tokens=2800,
+            temperature=0.45,
+        ),
+    )
+
+
 def _coerce_plan_payload(
     payload: dict[str, Any],
     *,
@@ -347,6 +362,59 @@ def _mock_plan(
     }
 
 
+def _assemble_plan_result(
+    coerced: dict[str, Any],
+    *,
+    base: str,
+    memory_hints: list[str],
+    lens_norm: str,
+    execution_mode: str,
+    provider: str,
+    stream_mode: str,
+) -> dict[str, Any]:
+    preview = execution_mode == "preview"
+    status = coerced.get("status_line") or (
+        "导演建议已就绪（只建议模式）" if coerced["advice_only"]
+        else ("候选已就绪（预览模式）" if preview else "请确认后应用")
+    )
+    return {
+        **coerced,
+        "status_line": str(status) + _LENS_STATUS_SUFFIX.get(lens_norm, ""),
+        "provider": provider,
+        "base_excerpt": _excerpt(base),
+        "memory_hints": memory_hints,
+        "lens": lens_norm,
+        "stream_mode": stream_mode,
+    }
+
+
+def _yield_plan_preview_events(plan: dict[str, Any], *, chunk_source: str = "mock") -> Iterator[dict[str, Any]]:
+    if plan.get("advice_only"):
+        for row in plan.get("advice") or []:
+            text = str(row.get("text") or "").strip()
+            if text:
+                yield {"type": "advice", "text": text}
+        return
+
+    candidates = plan.get("candidates") or []
+    primary = candidates[0] if candidates else None
+    if primary:
+        label = str(primary.get("label") or "候选")
+        yield {"type": "preview_label", "label": label}
+        for piece in _chunk_text(str(primary.get("text") or "")):
+            yield {"type": "chunk", "text": piece, "source": chunk_source}
+
+
+def _validate_agent_scope(scope: dict[str, Any]) -> None:
+    scope_type = scope.get("type") or "none"
+    if scope_type not in {"selection", "chapter"}:
+        raise ValueError("scope.type must be selection or chapter")
+    if scope_type == "chapter" and not scope.get("chapter"):
+        raise ValueError("scope.chapter required for chapter scope")
+    if scope_type == "selection" and not (scope.get("selection_text") or "").strip():
+        raise ValueError("scope.selection_text required for selection scope")
+
+
 def run_creator_agent_plan(
     project_root: Path | str,
     *,
@@ -365,15 +433,7 @@ def run_creator_agent_plan(
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     lens_norm = _normalize_lens(lens)
     mode = _normalize_provider_mode(provider_mode)
-    scope_type = scope.get("type") or "none"
-    if scope_type not in {"selection", "chapter"}:
-        raise ValueError("scope.type must be selection or chapter")
-
-    if scope_type == "chapter" and not scope.get("chapter"):
-        raise ValueError("scope.chapter required for chapter scope")
-
-    if scope_type == "selection" and not (scope.get("selection_text") or "").strip():
-        raise ValueError("scope.selection_text required for selection scope")
+    _validate_agent_scope(scope)
 
     base = _resolve_base_text(root, scope=scope, body_draft=body_draft)
     memory_hints = _memory_character_hints(root)
@@ -398,21 +458,17 @@ def run_creator_agent_plan(
             coerced = _coerce_plan_payload(parsed, fallback_advice_only=advice_only)
             if not coerced["advice_only"] and not coerced["candidates"] and not coerced["annotations"]:
                 raise ValueError("LLM returned empty plan")
-            preview = execution_mode == "preview"
-            status = coerced.get("status_line") or (
-                "导演建议已就绪（只建议模式）" if coerced["advice_only"]
-                else ("候选已就绪（预览模式）" if preview else "请确认后应用")
-            )
             from infra.llm_service import LLMService
 
-            return {
-                **coerced,
-                "status_line": str(status) + _LENS_STATUS_SUFFIX.get(lens_norm, ""),
-                "provider": LLMService.get().provider_name,
-                "base_excerpt": _excerpt(base),
-                "memory_hints": memory_hints,
-                "lens": lens_norm,
-            }
+            return _assemble_plan_result(
+                coerced,
+                base=base,
+                memory_hints=memory_hints,
+                lens_norm=lens_norm,
+                execution_mode=execution_mode,
+                provider=LLMService.get().provider_name,
+                stream_mode="sync",
+            )
         except Exception as exc:
             logger.warning("creator agent LLM failed, fallback to mock: %s", exc)
             if mode == "llm":
@@ -429,6 +485,7 @@ def run_creator_agent_plan(
         execution_mode=execution_mode,
         lens=lens_norm,
     )
+    result["stream_mode"] = "mock"
     return result
 
 
@@ -452,12 +509,79 @@ def iter_creator_agent_plan_stream(
     execution_mode: str = "preview",
     lens: str | None = "author",
     provider_mode: str | None = "auto",
-) -> Any:
-    """Yield SSE-friendly event dicts: status | preview_label | chunk | advice | done."""
+) -> Iterator[dict[str, Any]]:
+    """Yield SSE-friendly events: status | preview_label | chunk | advice | done."""
+    root = project_root if isinstance(project_root, Path) else Path(project_root)
+    lens_norm = _normalize_lens(lens)
+    mode = _normalize_provider_mode(provider_mode)
+    _validate_agent_scope(scope)
+
+    base = _resolve_base_text(root, scope=scope, body_draft=body_draft)
+    memory_hints = _memory_character_hints(root)
+    advice_only = int(style_strength) <= 0
+    use_llm = mode == "llm" or (mode == "auto" and _has_llm_api_key())
+
     yield {"type": "status", "message": "正在分析写作范围…"}
+
+    if use_llm and mode != "mock":
+        yield {"type": "status", "message": "正在连接模型…"}
+        yield {"type": "preview_label", "label": "LLM 生成中…"}
+        prompt = _build_llm_prompt(
+            action=action,
+            action_label=action_label,
+            base=base,
+            lens=lens_norm,
+            style_strength=style_strength,
+            allow_fill=allow_worldbuilding_fill,
+            goal_tag=goal_tag,
+            memory_hints=memory_hints,
+            execution_mode=execution_mode,
+        )
+        try:
+            parts: list[str] = []
+            for delta in _llm_agent_plan_stream_tokens(prompt, advice_only=advice_only):
+                if not delta:
+                    continue
+                parts.append(delta)
+                yield {"type": "chunk", "text": delta, "source": "llm"}
+            raw = "".join(parts)
+            from infra.llm_service import LLMService
+
+            service = LLMService.get()
+            parsed = service.parse_json_response(raw)
+            if not isinstance(parsed, dict):
+                raise ValueError("LLM response is not a JSON object")
+            coerced = _coerce_plan_payload(parsed, fallback_advice_only=advice_only)
+            if not coerced["advice_only"] and not coerced["candidates"] and not coerced["annotations"]:
+                raise ValueError("LLM returned empty plan")
+            plan = _assemble_plan_result(
+                coerced,
+                base=base,
+                memory_hints=memory_hints,
+                lens_norm=lens_norm,
+                execution_mode=execution_mode,
+                provider=service.provider_name,
+                stream_mode="llm_token",
+            )
+            if plan.get("advice_only"):
+                for row in plan.get("advice") or []:
+                    text = str(row.get("text") or "").strip()
+                    if text:
+                        yield {"type": "advice", "text": text}
+            elif plan.get("candidates"):
+                primary = plan["candidates"][0]
+                yield {"type": "preview_label", "label": str(primary.get("label") or "候选")}
+            yield {"type": "done", "plan": plan}
+            return
+        except Exception as exc:
+            logger.warning("creator agent LLM stream failed, fallback to mock: %s", exc)
+            if mode == "llm":
+                yield {"type": "error", "message": str(exc)}
+                return
+
     yield {"type": "status", "message": "正在生成候选…"}
     plan = run_creator_agent_plan(
-        project_root,
+        root,
         action=action,
         action_label=action_label,
         scope=scope,
@@ -467,19 +591,8 @@ def iter_creator_agent_plan_stream(
         goal_tag=goal_tag,
         execution_mode=execution_mode,
         lens=lens,
-        provider_mode=provider_mode,
+        provider_mode="mock",
     )
-    if plan.get("advice_only"):
-        for row in plan.get("advice") or []:
-            text = str(row.get("text") or "").strip()
-            if text:
-                yield {"type": "advice", "text": text}
-    else:
-        candidates = plan.get("candidates") or []
-        primary = candidates[0] if candidates else None
-        if primary:
-            label = str(primary.get("label") or "候选")
-            yield {"type": "preview_label", "label": label}
-            for piece in _chunk_text(str(primary.get("text") or "")):
-                yield {"type": "chunk", "text": piece}
+    plan["stream_mode"] = plan.get("stream_mode") or "mock_chunk"
+    yield from _yield_plan_preview_events(plan, chunk_source="mock")
     yield {"type": "done", "plan": plan}
