@@ -85,16 +85,17 @@ watch(
 <style scoped>
 .sidebar-tier-budget-alerts {
   padding: var(--space-sm);
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  font-family: 'Press Start 2P', monospace;
+  border: var(--border-width) solid #e8c468;
+  border-radius: var(--radius-sm);
+  background: #fffaf0;
+  font-family: var(--font-ui);
 }
 
 .sidebar-tier-budget-alerts-title {
-  font-size: 7px;
-  color: var(--color-text-dim);
-  margin-bottom: 6px;
-  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: #7a4b00;
+  margin-bottom: var(--space-xs);
 }
 
 .sidebar-tier-budget-alerts-list {
@@ -103,43 +104,44 @@ watch(
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .sidebar-tier-budget-alert-item {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  font-size: 6px;
-  line-height: 1.4;
-  padding: 3px 4px;
-  border-radius: 2px;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
 }
 
 .sidebar-tier-budget-alert-warning {
-  background: #fff8e1;
-  color: #856404;
-  border: 1px solid #ffc107;
+  background: #fff8e8;
+  color: #5c3d00;
+  border: var(--border-width) solid #e8c468;
 }
 
 .sidebar-tier-budget-alert-exceeded {
-  background: #fdecea;
-  color: #c0392b;
-  border: 1px solid #f56c6c;
+  background: #fef2f2;
+  color: #7f1d1d;
+  border: var(--border-width) solid #f0a8a8;
 }
 
 .sidebar-tier-budget-alert-icon {
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
-  font-size: var(--text-sm);
+  display: none;
 }
 
 .sidebar-tier-budget-alert-text {
   flex: 1;
+  font-weight: 600;
 }
 
 .sidebar-tier-budget-alert-time {
-  font-size: 6px;
+  font-size: var(--text-xs);
   color: var(--color-text-dim);
+  width: 100%;
 }
 </style>

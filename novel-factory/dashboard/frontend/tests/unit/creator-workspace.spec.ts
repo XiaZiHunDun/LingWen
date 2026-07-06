@@ -33,6 +33,24 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
     fetchCreatorBatchHistory: vi.fn().mockResolvedValue({ items: [] }),
     fetchCreatorDiffCollabNotes: vi.fn().mockResolvedValue({ notes: {} }),
     previewCreatorVolumePlanDiff: vi.fn().mockResolvedValue({ changes: [] }),
+    fetchCreatorPreferences: vi.fn().mockResolvedValue({
+      default_model: 'minimax-abab6.5',
+      temperature: 0.7,
+      max_tokens: 8000,
+      memory_rag_enabled: true,
+      memory_rag_top_k: 8,
+      task_models: {},
+      companion_lightweight: true,
+    }),
+    fetchCreatorMemoryAssets: vi.fn().mockResolvedValue({
+      memory_available: true,
+      memory_rag_enabled: true,
+      items: [],
+    }),
+    fetchCreatorModels: vi.fn().mockResolvedValue({
+      models: [{ id: 'local-mock', label: '本地 Mock', provider: 'mock', available: true }],
+      default_model: 'local-mock',
+    }),
   }
 })
 
@@ -101,6 +119,104 @@ describe('Creator workspace tabs (Phase C)', () => {
     expect(wrapper.find(byTestid('column-settings')).isVisible()).toBe(false)
   })
 
+  test('studio mode opens pulse tab and hides write tab', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...companionOverview,
+      creation_mode: 'studio',
+      ui_profile: {
+        ...companionOverview.ui_profile,
+        creation_mode: 'studio',
+        show_studio_workflow: true,
+        volume_pulse_enabled: true,
+      },
+      volume_pulse: {
+        volume_count: 1,
+        alert_count: 0,
+        overall_status: 'ok',
+        alerts_only: true,
+        volumes: [{
+          label: '一',
+          start_chapter: 1,
+          end_chapter: 5,
+          written: 0,
+          total_chapters: 5,
+          progress_pct: 0,
+          locked: false,
+          status: 'ok',
+          deviation_count: 0,
+          headline: '未开始',
+        }],
+      },
+    })
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('creator-workspace-tabs')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('creator-workspace-tab-write')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('column-pulse')).isVisible()).toBe(true)
+    expect(wrapper.find(byTestid('column-write')).isVisible()).toBe(false)
+  })
+
+  test('advance mode defaults to write tab with workbench', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValue({
+      ...companionOverview,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...companionOverview.ui_profile,
+        creation_mode: 'advance',
+        volume_pulse_enabled: true,
+        chapter_inline_edit: true,
+        chapter_outline_inline_edit: true,
+        creator_write_workbench: true,
+      },
+      volume_pulse: {
+        volume_count: 1,
+        alert_count: 0,
+        overall_status: 'ok',
+        alerts_only: true,
+        volumes: [{
+          label: '一',
+          start_chapter: 1,
+          end_chapter: 5,
+          written: 0,
+          total_chapters: 5,
+          progress_pct: 0,
+          locked: false,
+          status: 'ok',
+          deviation_count: 0,
+          headline: '未开始',
+        }],
+      },
+    })
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('column-write')).isVisible()).toBe(true)
+    expect(wrapper.find(byTestid('column-pulse')).isVisible()).toBe(false)
+    expect(wrapper.find(byTestid('creator-write-workbench')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('write-chapter-rail')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('write-advanced-tools')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('creation-mode-badge')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('creator-workspace-secondary-tabs')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('export-btn')).exists()).toBe(false)
+  })
+
+  test('human-first desk hides duplicate page title and preferences', async () => {
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('page-title')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('creator-preferences-summary')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('creator-workspace-secondary-tabs')).exists()).toBe(true)
+  })
+
+  test('settings advanced section is collapsed by default', async () => {
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    await wrapper.find(byTestid('creator-workspace-tab-settings')).trigger('click')
+    await flushPromises()
+    const advanced = wrapper.find(byTestid('settings-advanced-section'))
+    expect(advanced.exists()).toBe(true)
+    expect((advanced.element as HTMLDetailsElement).open).toBe(false)
+  })
+
   test('pulse tab reveals volume plan area for advance profile', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...companionOverview,
@@ -141,7 +257,7 @@ describe('Creator workspace tabs (Phase C)', () => {
     expect(wrapper.find(byTestid('volume-plan-panel')).exists()).toBe(true)
   })
 
-  test('companion hides capability matrix until advanced panel opened', async () => {
+  test('companion hides mode guide and capability matrix chrome', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...companionOverview,
       ui_profile: {
@@ -153,7 +269,8 @@ describe('Creator workspace tabs (Phase C)', () => {
     const wrapper = mount(CreatorPage)
     await flushPromises()
     expect(wrapper.find('[data-testid="creation-mode-capability-matrix"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="creator-advanced-ops"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="creator-mode-guide-panel"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="creator-advanced-ops"]').exists()).toBe(false)
   })
 
   test('companion shows logic check in write tab when primary_action is logic_check', async () => {
@@ -200,6 +317,14 @@ describe('Creator workspace tabs (Phase C)', () => {
   })
 
   test('mode guide panel follows creator grid in DOM order', async () => {
+    creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
+      ...companionOverview,
+      creation_mode: 'advance',
+      ui_profile: {
+        ...companionOverview.ui_profile,
+        creation_mode: 'advance',
+      },
+    })
     const wrapper = mount(CreatorPage)
     await flushPromises()
     const grid = wrapper.find(byTestid('creator-grid')).element

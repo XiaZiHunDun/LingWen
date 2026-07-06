@@ -1,4 +1,6 @@
 # Byte-compiled / optimized / DLL files
+.run/
+logs/dashboard/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -136,6 +138,7 @@ dashboard/frontend/.husky/_/
 # Phase 9.15: Playwright e2e artifacts (T4 followup: untracked after test run)
 dashboard/frontend/test-results/
 dashboard/frontend/playwright-report/
+dashboard/frontend/tests/visual-audit/output/
 
 # Playwright live e2e ephemeral advance-mode fixture (e2e_seed)
 projects/e2e-live-creator/

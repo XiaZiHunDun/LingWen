@@ -20,6 +20,7 @@ import {
   parseVolumePlanDiffShareHash,
   detectShareVolumeMergeConflicts as detectShareVolumeMergeConflictsUtil,
 } from './volumePlanDiffExportUtils.js';
+import { normalizeVolumePlanVolumes } from '../utils/displayProjectName.js';
 
 function activeDiffChanges(filtered, preview) {
   return filtered.length ? filtered : preview?.changes || [];
@@ -245,7 +246,7 @@ export function useCreatorVolumePlanDiff(deps) {
 
   async function applyVolumePlanDiffShareLinkDirect(parsed) {
     if (!parsed?.draft_volumes?.length) return;
-    editableVolumes.value = parsed.draft_volumes.map((vol) => ({ ...vol }));
+    editableVolumes.value = normalizeVolumePlanVolumes(parsed.draft_volumes);
     await refreshVolumePlanDiffPreview();
     if (parsed.collab_notes) {
       await mergeIncomingDiffCollabNotes(parsed.collab_notes);

@@ -35,6 +35,7 @@ import {
   batchApproveCreatorTemplateApprovals,
   batchRejectCreatorTemplateApprovals,
 } from '../api/index.js';
+import { formatDisplayLabel, normalizeVolumePlanVolumes } from '../utils/displayProjectName.js';
 
 /**
  * @param {
@@ -640,7 +641,7 @@ export function useCreatorVolumePlanTemplates(deps) {
         template_id: selectedTemplateId.value,
         max_chapter: overview.value?.max_chapter,
       });
-      editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+      editableVolumes.value = normalizeVolumePlanVolumes(result.volumes);
       onAfterApplyTemplate?.();
       saveMessage.value = `已套用模板「${result.template_name}」，请保存卷纲`;
     } catch (e) {

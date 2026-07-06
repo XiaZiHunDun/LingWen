@@ -25,6 +25,7 @@ import {
   fetchCreatorOnboardingEmail,
   saveCreatorOnboardingEmail,
 } from '../api/index.js';
+import { isCreatorChromeVisible, isHumanFirstDeskMode } from '../config/creatorPanelMatrix.js';
 
 const CREATION_MODE_ONBOARDING_STEPS = {
   companion: ['init', 'pillars', 'dashboard', 'write', 'check'],
@@ -115,6 +116,11 @@ function syncWizardPanelOpen() {
   }
   if (wizardUnreadMentions.value > 0) {
     wizardPanelOpen.value = true;
+    return;
+  }
+  // 伴侣书桌：默认收起向导，避免挡住写作区（URL ?wizard= 或 @提及 仍展开）
+  if (isHumanFirstDeskMode(overview.value?.creation_mode)) {
+    wizardPanelOpen.value = false;
     return;
   }
   const progress = onboardingWizard.value?.progress_pct ?? 100;
@@ -485,8 +491,13 @@ watch(onboardingWizard, () => {
   }
 });
 
+const showOnboardingChrome = computed(
+  () => isCreatorChromeVisible(overview.value?.creation_mode, 'onboardingWizard'),
+);
+
 const panelContext = {
   uiProfile,
+  showOnboardingChrome,
   wizardPanelRef,
   wizardPanelOpen,
   onboardingWizard,

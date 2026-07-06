@@ -6,7 +6,7 @@
 -->
 <template>
   <div class="analytics-page">
-    <header class="page-header">
+    <header v-if="!embedded" class="page-header">
       <div>
         <h1 class="page-title" data-testid="page-title">数据分析</h1>
         <p v-if="activeSlug" class="project-hint" data-testid="active-project-hint">
@@ -23,8 +23,12 @@
       </button>
     </header>
 
-    <div v-if="errorMessage" class="error-banner pixel-border" data-testid="error-banner">
-      {{ errorMessage }}
+    <p v-else-if="activeSlug" class="project-hint embedded-hint" data-testid="active-project-hint">
+      当前项目：{{ activeSlug }}
+    </p>
+
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+      {{ displayError }}
     </div>
 
     <section class="kpi-section" data-testid="production-kpi">
@@ -169,6 +173,11 @@ import {
   productionSummaryLines,
   resolveProductionSummary,
 } from '../utils/productionSummary.js';
+import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+});
 
 const isReadonlyInsight = inject('isReadonlyInsight', computed(() => false));
 
@@ -190,6 +199,7 @@ const errorMessage = computed(() =>
   || rippleStore.lastError.value
   || null,
 );
+const displayError = useFilteredPageError(errorMessage);
 
 const chartData = computed(() =>
   overviewStore.chapters.value.map((ch) => ({

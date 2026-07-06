@@ -20,8 +20,13 @@ test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
     await page.goto('/?nav=inbox&tab=decisions', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('page-title')).toHaveText('待办');
-    await expect(page.getByTestId('decision-card').or(page.getByTestId('count-badge'))).toBeVisible();
+    await expect(page.getByTestId('inbox-page')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('header-l1-page-name')).toHaveText('待办');
+    await expect(page.getByTestId('inbox-tabs')).toBeVisible();
+    await expect(
+      page.getByTestId('decision-card')
+        .or(page.locator('.decisions-page .empty-state')),
+    ).toBeVisible({ timeout: 30_000 });
   });
 
   test('resolve_pending_decision_shows_readonly_state', async ({ page }) => {

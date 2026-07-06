@@ -13,6 +13,7 @@ import {
   fetchStudioSummary,
 } from '../api/index.js';
 import { resolveTodayPrimaryAction } from '../utils/creationModeHint.js';
+import { buildTodaySecondaryLinks } from '../utils/todaySecondaryLinks.js';
 
 function pendingRippleCount(stats) {
   if (!stats?.by_status) return 0;
@@ -98,6 +99,8 @@ async function loadTodaySnapshot(options = {}) {
     },
   ].filter((card) => !isReviewer || ['decisions', 'ripples'].includes(card.id));
 
+  const secondaryLinks = buildTodaySecondaryLinks(todoCards, primaryAction);
+
   const health = {
     chaptersWritten,
     maxChapter,
@@ -111,7 +114,7 @@ async function loadTodaySnapshot(options = {}) {
     projectName,
     creationMode,
     primaryAction,
-    todoCards,
+    secondaryLinks,
     health,
     wizardProgressPct,
   };

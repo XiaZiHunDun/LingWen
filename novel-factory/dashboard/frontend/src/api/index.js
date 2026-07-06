@@ -12,8 +12,12 @@
  * @typedef {{id:number, action:string, actor:string, origin:string, reason:string|null, created_at:string}} AuditEntryResponse
  */
 
+import { markApiOffline, markApiOnline } from './connectivity.js';
+
 // Same-origin when UI is served by FastAPI (LINGWEN_SERVE_UI=1) or via Vite proxy.
 const BASE_URL = import.meta.env.VITE_API_BASE || '/api';
+
+export { apiConnectivity, markApiOffline, markApiOnline } from './connectivity.js';
 
 /**
  * Make a request to the API with error handling
@@ -39,10 +43,14 @@ async function request(path, opts = {}) {
       throw new Error(`API Error ${response.status}: ${response.statusText}. Details: ${errorText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    markApiOnline();
+    return data;
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error(`Network error: Unable to connect to ${BASE_URL}. Is the server running?`);
+      const message = `Network error: Unable to connect to ${BASE_URL}. Is the server running?`;
+      markApiOffline(message);
+      throw new Error(message);
     }
     throw error;
   }
@@ -543,6 +551,27 @@ export async function fetchCreatorOverview() {
 export async function runCreatorLogicCheck({ chapter } = {}) {
   const query = chapter != null ? `?chapter=${chapter}` : '';
   return request(`/creator/logic-check${query}`, { method: 'POST' });
+}
+
+/**
+ * @param {{
+ *   action: string,
+ *   action_label: string,
+ *   scope: { type: string, chapter?: number|null, selection_text?: string|null },
+ *   body_draft?: string|null,
+ *   style_strength?: number,
+ *   allow_worldbuilding_fill?: boolean,
+ *   goal_tag?: string|null,
+ *   execution_mode?: string,
+ *   lens?: string,
+ *   provider_mode?: 'auto'|'mock'|'llm',
+ * }} body
+ */
+export async function runCreatorAgentPlan(body) {
+  return request('/creator/agent/plan', {
+    method: 'POST',
+    body,
+  });
 }
 
 export async function fetchCreatorVolumePlan() {
@@ -1114,6 +1143,88 @@ export async function restoreCreatorSettingsSnapshot(snapshotId) {
     method: 'POST',
     body: { snapshot_id: snapshotId },
   });
+}
+
+export async function fetchCreatorPreferences() {
+  return request('/creator/preferences');
+}
+
+export async function fetchCreatorModels() {
+  return request('/creator/models');
+}
+
+/** @param {Record<string, unknown>} body */
+export async function saveCreatorPreferencesApi(body) {
+  return request('/creator/preferences', {
+    method: 'PUT',
+    body,
+  });
+}
+
+export async function fetchCreatorMemoryAssets() {
+  return request('/creator/memory-assets');
+}
+
+/** @param {string} assetId @param {{ note?: string, pinned?: boolean }} body */
+export async function saveCreatorMemoryAnnotation(assetId, body) {
+  return request(`/creator/memory-assets/${encodeURIComponent(assetId)}/annotation`, {
+    method: 'PUT',
+    body,
+  });
+}
+
+/**
+ * @param {{ mode?: string, start_chapter?: number, end_chapter?: number, title?: string }} body
+ * @returns {Promise<Blob>}
+ */
+export async function exportCreatorEpub(body = {}) {
+  const res = await fetch(`${BASE_URL}/creator/export/epub`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => 'Unknown error');
+    throw new Error(`API Error ${res.status}: ${text}`);
+  }
+  return res.blob();
+}
+
+/**
+ * @param {{ mode?: string, start_chapter?: number, end_chapter?: number, title?: string, author?: string, description?: string }} body
+ * @returns {Promise<Blob>}
+ */
+export async function exportCreatorDocx(body = {}) {
+  const res = await fetch(`${BASE_URL}/creator/export/docx`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => 'Unknown error');
+    throw new Error(`API Error ${res.status}: ${text}`);
+  }
+  return res.blob();
+}
+
+/** @param {{ query: string, scope?: string, top_k?: number }} body */
+export async function queryCreatorMemory(body) {
+  return request('/creator/memory/query', { method: 'POST', body });
+}
+
+/** @param {{ platform: string, include_outline?: boolean, intro?: string, mode?: string }} body */
+export async function submitCreatorPublish(body) {
+  return request('/creator/publish', { method: 'POST', body });
+}
+
+/** @param {number} [limit] */
+export async function fetchCreatorPublishHistory(limit = 10) {
+  const q = limit != null ? `?limit=${limit}` : '';
+  return request(`/creator/publish/history${q}`);
+}
+
+export async function fetchCreatorPublishPlatforms() {
+  return request('/creator/publish/platforms');
 }
 
 /**

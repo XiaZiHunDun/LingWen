@@ -4,6 +4,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { fetchCreatorOverview, runCreatorLogicCheck } from '../api/index.js';
 import { creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
+import { getModeUiProfileDefaults, isHumanFirstDeskMode } from '../config/creatorPanelMatrix.js';
 import { useStudioProject } from './useStudioProject.js';
 import { useDashboardNav } from './useDashboardNav.js';
 import { useCreatorWorkspace } from './useCreatorWorkspace.js';
@@ -18,6 +19,7 @@ import { useCreatorAdvanceBatch } from './useCreatorAdvanceBatch.js';
 import { useCreatorPulse } from './useCreatorPulse.js';
 import { createCreatorPageRefresh } from './useCreatorPageRefresh.js';
 import { useCreatorPageProviders } from './useCreatorPageProviders.js';
+import { useCreatorProductTools } from './useCreatorProductTools.js';
 
 export function useCreatorPage() {
   const { projectRevision } = useStudioProject();
@@ -45,12 +47,32 @@ export function useCreatorPage() {
   const logicCheckRunning = ref(false);
   const logicCheckResult = ref(null);
 
-  const uiProfile = computed(() => overview.value?.ui_profile || creatorDefaultUiProfile);
+  const uiProfile = computed(() => {
+    const mode = overview.value?.creation_mode;
+    const modeDefaults = mode ? getModeUiProfileDefaults(mode) : {};
+    const serverProfile = overview.value?.ui_profile || {};
+    const merged = { ...creatorDefaultUiProfile, ...modeDefaults, ...serverProfile };
+    if (!isHumanFirstDeskMode(mode)) return merged;
+    return {
+      ...merged,
+      creator_write_workbench: merged.creator_write_workbench !== false,
+      chapter_inline_edit: true,
+      chapter_outline_inline_edit: true,
+      chapter_outline_read_preview: false,
+      chapter_full_preview: false,
+    };
+  });
 
   const {
     modeLabel,
     creationModeBadgeHintText,
     modeBadgeHintEnabled,
+    showCreationModeBadge,
+    showPageTitle,
+    showHeaderPreferences,
+    showHeaderPublishExport,
+    showHeaderRefresh,
+    showHeaderActionsRow,
     displayDeviationBadge,
     displayDeviationCount,
     showCreationModeBadgeHint,
@@ -60,6 +82,8 @@ export function useCreatorPage() {
     activeTab: workspaceActiveTab,
     tabsEnabled: workspaceTabsEnabled,
     workspaceTabs,
+    workspacePrimaryTabs,
+    workspaceSecondaryTabs,
     isColumnVisible: isWorkspaceColumnVisible,
     setWorkspaceTab,
     workspaceTabBadges,
@@ -132,6 +156,8 @@ export function useCreatorPage() {
     batchStart,
     batchEnd,
     batchBudget,
+    batchRunning,
+    batchJob,
     pollBatchJob,
     resumeBatchPollingIfNeeded,
   } = advanceBatchHub;
@@ -278,7 +304,39 @@ export function useCreatorPage() {
     handleLogicCheckIssueClick,
     onLogicCheckIssueKeydown,
   });
-  const { panelContext: settingsPanelContext, loadSettingsDocs, loadSettingsHistory, loadMergePreferences, loadMergePresetPackages } = settingsHub;
+  const { panelContext: settingsPanelContext, pillarsText, settingsHasUnsavedChanges, loadSettingsDocs, loadSettingsHistory, loadMergePreferences, loadMergePresetPackages } = settingsHub;
+
+  const productToolsHub = useCreatorProductTools({
+    overview,
+    error,
+    saveMessage,
+    visibleDeviations,
+    editableVolumes,
+    pillarsText,
+    globalOutlineText,
+    logicCheckResult,
+    batchJob,
+    batchRunning,
+    isWorkspaceColumnVisible,
+    setWorkspaceTab,
+    jumpToChapter: (...args) => writeRef.hub.jumpToChapter(...args),
+    navigateTo,
+    settingsHasUnsavedChanges,
+  });
+  const {
+    panelContext: productToolsPanelContext,
+    loadPreferencesFromServer,
+    loadMemoryAssets,
+    loadCreatorModels,
+  } = productToolsHub;
+
+  watch(
+    () => productToolsPanelContext.memoryAssets,
+    (assets) => {
+      writeHub.syncMemoryAssets?.(assets);
+    },
+    { immediate: true },
+  );
 
   const refresh = createCreatorPageRefresh({
     overview,
@@ -307,10 +365,19 @@ export function useCreatorPage() {
       await loadDiffCollabNotes();
       tryLoadVolumePlanDiffShareLinkPreview();
       resumeBatchPollingIfNeeded();
+      await Promise.all([loadPreferencesFromServer(), loadMemoryAssets(), loadCreatorModels()]);
     },
   });
 
   refreshRef.fn = refresh;
+
+  const workspaceTabBadgesMerged = computed(() => {
+    const badges = { ...(workspaceTabBadges.value || {}) };
+    if (settingsHasUnsavedChanges.value || productToolsPanelContext.preferencesDirty) {
+      badges.settings = '!';
+    }
+    return Object.keys(badges).length ? badges : null;
+  });
 
   const chromeContext = {
     overview,
@@ -319,18 +386,30 @@ export function useCreatorPage() {
     modeLabel,
     creationModeBadgeHintText,
     modeBadgeHintEnabled,
+    showCreationModeBadge,
+    showPageTitle,
+    showHeaderPreferences,
+    showHeaderPublishExport,
+    showHeaderRefresh,
+    showHeaderActionsRow,
     displayDeviationBadge,
     displayDeviationCount,
     showCreationModeBadgeHint,
     workspaceActiveTab,
     workspaceTabsEnabled,
     workspaceTabs,
-    workspaceTabBadges,
+    workspacePrimaryTabs,
+    workspaceSecondaryTabs,
+    workspaceTabBadges: workspaceTabBadgesMerged,
+    setWorkspaceTab,
     onDeviationBadgeClick,
     error,
     conflictMessage,
     saveMessage,
     refresh,
+    preferencesSummary: productToolsPanelContext.preferencesSummary,
+    openExportModal: (...args) => productToolsPanelContext.openExportModal(...args),
+    openPublishWizard: () => productToolsPanelContext.openPublishWizard(),
   };
 
   useCreatorPageProviders({
@@ -343,6 +422,7 @@ export function useCreatorPage() {
     modeGuidePanelContext,
     batchHistoryPanelContext,
     volumePlanPanelContext,
+    productToolsPanelContext,
   });
 
   onMounted(() => {
@@ -373,6 +453,12 @@ export function useCreatorPage() {
     modeLabel,
     creationModeBadgeHintText,
     modeBadgeHintEnabled,
+    showCreationModeBadge,
+    showPageTitle,
+    showHeaderPreferences,
+    showHeaderPublishExport,
+    showHeaderRefresh,
+    showHeaderActionsRow,
     displayDeviationBadge,
     displayDeviationCount,
     showCreationModeBadgeHint,

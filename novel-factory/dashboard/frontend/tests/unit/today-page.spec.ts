@@ -77,10 +77,10 @@ describe('TodayPage (Phase A)', () => {
     useTodayHub().snapshot.value = null
   })
 
-  test('renders title and primary CTA for companion mode', async () => {
+  test('renders lead bar and primary CTA for companion mode', async () => {
     const wrapper = mount(TodayPage)
     await flushPromises()
-    expect(wrapper.find(byTestid('page-title')).text()).toBe('今日')
+    expect(wrapper.find(byTestid('page-lead-bar-today')).exists()).toBe(true)
     expect(wrapper.find(byTestid('today-primary-cta')).text()).toBe('继续创作')
     expect(wrapper.find(byTestid('today-project-line')).text()).toContain('暗夜信标')
   })
@@ -99,14 +99,27 @@ describe('TodayPage (Phase A)', () => {
     expect(wrapper.find(byTestid('today-primary-cta')).text()).toBe('处理 2 条待决策')
   })
 
-  test('todo card click navigates', async () => {
+  test('no todo grid; secondary links hidden when nothing pending', async () => {
     const wrapper = mount(TodayPage)
     await flushPromises()
-    await wrapper.find(byTestid('today-todo-decisions')).trigger('click')
-    expect(mocks.navigateTo).toHaveBeenCalledWith('inbox', expect.objectContaining({ tab: 'decisions', clearFocus: true }))
+    expect(wrapper.find(byTestid('today-todo-section')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('today-secondary-links')).exists()).toBe(false)
   })
 
-  test('reviewer mode shows banner and hides author quick links', async () => {
+  test('secondary link navigates for non-primary pending items', async () => {
+    mocks.fetchPendingDecisions.mockResolvedValue([{ id: 'd1' }, { id: 'd2' }])
+    mocks.fetchRippleStats.mockResolvedValue({ by_status: { pending: 1 } })
+    const wrapper = mount(TodayPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('today-primary-cta')).text()).toBe('处理 2 条待决策')
+    const rippleLink = wrapper.find(byTestid('today-secondary-ripples'))
+    expect(rippleLink.exists()).toBe(true)
+    expect(rippleLink.text()).toContain('一致性变更')
+    await rippleLink.trigger('click')
+    expect(mocks.navigateTo).toHaveBeenCalledWith('inbox', expect.objectContaining({ tab: 'ripples', clearFocus: true }))
+  })
+
+  test('reviewer mode shows banner without quick links section', async () => {
     const wrapper = mount(TodayPage, {
       global: {
         provide: { isReviewer: computed(() => true) },
@@ -114,8 +127,8 @@ describe('TodayPage (Phase A)', () => {
     })
     await flushPromises()
     expect(wrapper.find(byTestid('today-reviewer-banner')).exists()).toBe(true)
-    expect(wrapper.find(byTestid('today-quick-creator')).exists()).toBe(false)
-    expect(wrapper.find(byTestid('today-quick-inbox')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('today-quick-links')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('today-health-section')).exists()).toBe(true)
   })
 
   test('reviewer share link copies inbox URL', async () => {

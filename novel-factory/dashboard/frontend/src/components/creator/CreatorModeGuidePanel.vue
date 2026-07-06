@@ -3,6 +3,7 @@
 -->
 <template>
     <details
+      v-if="mg.showModeGuidePanel"
       class="creator-mode-guide-panel pixel-border"
       data-testid="creator-mode-guide-panel"
       :open="mg.modeGuideExpanded"

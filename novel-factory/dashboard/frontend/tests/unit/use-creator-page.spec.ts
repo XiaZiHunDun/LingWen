@@ -121,6 +121,7 @@ vi.mock('../../src/composables/useCreatorWrite.js', () => ({
     linkBatchDeviationInlineSummary: vi.fn(),
     handleDeviationClick: vi.fn(),
     jumpToChapter: vi.fn(),
+    syncMemoryAssets: vi.fn(),
   }),
 }));
 

@@ -1,13 +1,33 @@
 // Creator workspace live e2e (Phase creator v1.4)
 import { test, expect } from '@playwright/test';
-import { LIVE_E2E_ENABLED, clickNav, skipUnlessLive } from './helpers/live-backend.js';
+import { skipUnlessLive } from './helpers/live-backend.js';
+
+/** 断言区域可滚动（overflow + 必要时 scrollTop 变化） */
+async function expectScrollableRegion(locator) {
+  const metrics = await locator.evaluate((el) => ({
+    scrollHeight: el.scrollHeight,
+    clientHeight: el.clientHeight,
+    overflowY: getComputedStyle(el).overflowY,
+  }));
+  expect(metrics.overflowY).toMatch(/auto|scroll/);
+  expect(metrics.clientHeight).toBeGreaterThan(0);
+  if (metrics.scrollHeight <= metrics.clientHeight + 8) {
+    return;
+  }
+  const before = await locator.evaluate((el) => el.scrollTop);
+  await locator.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  const after = await locator.evaluate((el) => el.scrollTop);
+  expect(after).toBeGreaterThan(before);
+}
 
 test.describe('Creator workspace live e2e', () => {
   test('creator_nav_shows_three_columns', async ({ page }) => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
-    await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('page-title')).toHaveText('创作伴侣');
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('header-l1-page-name')).toHaveText('书桌');
     await expect(page.getByTestId('creator-workspace-tabs')).toBeVisible();
     await expect(page.getByTestId('column-write')).toBeVisible();
     await expect(page.getByTestId('creator-workspace-tab-pulse')).toBeVisible();
@@ -17,11 +37,12 @@ test.describe('Creator workspace live e2e', () => {
   test('creator_volume_plan_panel_visible', async ({ page }) => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
-    await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('creator-workspace-tab-pulse').click();
     await expect(page.getByTestId('volume-plan-panel')).toBeVisible();
     await expect(page.getByTestId('pillars-textarea')).toBeHidden();
     await page.getByTestId('creator-workspace-tab-settings').click();
+    await page.getByTestId('settings-pillars-block').locator('summary').click();
     await expect(page.getByTestId('pillars-textarea')).toBeVisible();
   });
 
@@ -29,7 +50,7 @@ test.describe('Creator workspace live e2e', () => {
     skipUnlessLive(test);
     test.setTimeout(90_000);
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
-    await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('companion-logic-check-write')).toBeVisible({ timeout: 30_000 });
     await page.getByTestId('creator-workspace-tab-pulse').click();
     await expect(page.getByTestId('column-write')).toBeHidden();
@@ -41,7 +62,7 @@ test.describe('Creator workspace live e2e', () => {
     skipUnlessLive(test);
     test.setTimeout(90_000);
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
-    await page.goto('/?nav=creator', { waitUntil: 'domcontentloaded' });
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
     const badge = page.getByTestId('creator-workspace-tab-pulse').locator('.hub-tab-badge');
     await expect(badge).toBeVisible({ timeout: 30_000 });
     await page.getByTestId('creator-workspace-tab-pulse').click();
@@ -52,14 +73,61 @@ test.describe('Creator workspace live e2e', () => {
   test('creator_workspace_deep_link_opens_pulse_tab', async ({ page }) => {
     skipUnlessLive(test);
     test.setTimeout(60_000);
-    await page.goto('/?nav=creator&workspace=pulse', { waitUntil: 'domcontentloaded' });
+    await page.goto('/?nav=write&workspace=pulse', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('column-pulse')).toBeVisible();
     await expect(page.getByTestId('column-write')).toBeHidden();
   });
 
-  test('creator_share_link_apply_save_flow', async ({ page }) => {
+  test('creator_write_and_pulse_scroll_regions', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
+
+    const pageBody = page.locator('.creator-page__body');
+    await expect(pageBody).toBeVisible();
+    const bodyOverflow = await pageBody.evaluate((el) => getComputedStyle(el).overflow);
+    expect(bodyOverflow).toBe('hidden');
+
+    const workbench = page.getByTestId('creator-write-workbench');
+    const isHumanFirst = await workbench.evaluate((el) =>
+      el.classList.contains('write-workbench--human-first'),
+    );
+
+    if (isHumanFirst) {
+      const editorSlot = page.locator('.write-workbench__editor-slot--primary');
+      await expect(editorSlot).toBeVisible();
+      await expectScrollableRegion(editorSlot);
+
+      const chapterRail = page.locator('.write-workbench__stack--chapters');
+      await expect(chapterRail).toBeVisible();
+      await expectScrollableRegion(chapterRail);
+    } else {
+      const writeMain = page.locator('.write-workbench__main');
+      await expect(writeMain).toBeVisible();
+      await expectScrollableRegion(writeMain);
+
+      const writeLeft = page.locator('.write-workbench__left');
+      await expect(writeLeft).toBeVisible();
+      const leftOverflow = await writeLeft.evaluate((el) => getComputedStyle(el).overflowY);
+      expect(leftOverflow).toMatch(/auto|scroll/);
+    }
+
+    await page.getByTestId('creator-workspace-tab-pulse').click();
+    await expect(page.getByTestId('column-pulse')).toBeVisible();
+    const pulseScroll = page.locator('.pulse-desk__scroll');
+    await expect(pulseScroll).toBeVisible();
+    await expectScrollableRegion(pulseScroll);
+
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
+  });
+
+  test('creator_share_link_apply_save_flow', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
     const token = await page.evaluate(() => {
       const payload = {
         v: 2,
@@ -78,7 +146,7 @@ test.describe('Creator workspace live e2e', () => {
         .replace(/\//g, '_')
         .replace(/=+$/, '');
     });
-    await page.goto(`/?nav=creator#creator-diff=${token}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`/?nav=write#creator-diff=${token}`, { waitUntil: 'domcontentloaded' });
     const preview = page.getByTestId('volume-plan-diff-share-link-preview');
     await expect(preview).toBeVisible({ timeout: 30_000 });
     const applyBtn = page.getByTestId('apply-volume-plan-diff-share-btn');
@@ -93,7 +161,10 @@ test.describe('Creator workspace live e2e', () => {
         await mergeShare.click();
       }
     }
-    await page.getByTestId('save-volume-plan-btn').click();
+    await page.getByTestId('creator-workspace-tab-pulse').click();
+    const saveBtn = page.getByTestId('save-volume-plan-btn');
+    await expect(saveBtn).toBeVisible({ timeout: 30_000 });
+    await saveBtn.click();
     await expect(page.getByTestId('save-banner')).toBeVisible({ timeout: 20_000 });
   });
 });

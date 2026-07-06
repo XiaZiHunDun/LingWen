@@ -5,7 +5,7 @@
 -->
 <template>
   <div class="chapters-page">
-    <header class="page-header">
+    <header v-if="!embedded" class="page-header">
       <h1 class="page-title" data-testid="page-title">章节管理</h1>
       <div class="header-actions">
         <label class="range-label">
@@ -31,8 +31,23 @@
       </div>
     </header>
 
-    <div v-if="error || rollupError" class="error-banner pixel-border" data-testid="error-banner">
-      {{ error || rollupError }}
+    <div v-else class="embedded-toolbar">
+      <label class="range-label">
+        范围
+        <select
+          v-model="range"
+          class="range-select pixel-border"
+          data-testid="chapter-range-select"
+        >
+          <option v-for="opt in rangeOptions" :key="opt" :value="opt">
+            {{ opt }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+      {{ displayError }}
     </div>
 
     <p
@@ -133,6 +148,11 @@ import { fetchChapters, fetchProductionRecords, fetchProductionRollup } from '..
 import { useStudioProject } from '../composables/useStudioProject.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+});
 import {
   formatIncrementalBackfill,
   productionSummaryLines,
@@ -158,6 +178,8 @@ const chapters = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const rollupError = ref(null);
+const rawPageError = computed(() => error.value || rollupError.value);
+const displayError = useFilteredPageError(rawPageError);
 const productionRollup = ref(null);
 const productionRecords = ref([]);
 const recordsLoading = ref(false);
@@ -275,6 +297,11 @@ watch(projectRevision, () => {
   loadProductionRecords();
   loadProductionRollup();
 });
+
+defineExpose({
+  loading,
+  refreshAll,
+});
 </script>
 
 <style scoped>
@@ -283,6 +310,12 @@ watch(projectRevision, () => {
   flex-direction: column;
   gap: var(--space-md);
   padding: var(--space-md);
+}
+
+.embedded-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--space-md) var(--space-sm);
 }
 
 .page-header {

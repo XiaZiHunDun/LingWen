@@ -6,6 +6,7 @@ import {
   mergeCreatorVolumePlan,
   splitCreatorVolumePlan,
 } from '../api/index.js';
+import { formatDisplayLabel, normalizeVolumePlanVolumes } from '../utils/displayProjectName.js';
 
 /**
  * @param {
@@ -69,15 +70,15 @@ export function useCreatorVolumePlanMergeSplit(deps) {
         volume_index: splitVolumeIdx.value,
         split_at_chapter: splitAtChapter.value,
       });
-      editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+      editableVolumes.value = normalizeVolumePlanVolumes(result.volumes);
       splitPreview.value = {
-        first_label: result.first_label,
-        second_label: result.second_label,
+        first_label: formatDisplayLabel(result.first_label),
+        second_label: formatDisplayLabel(result.second_label),
         first_range: result.first_range,
         second_range: result.second_range,
       };
       mergePreview.value = null;
-      saveMessage.value = `已拆为「${result.first_label}」与「${result.second_label}」，请保存卷纲`;
+      saveMessage.value = `已拆为「${formatDisplayLabel(result.first_label)}」与「${formatDisplayLabel(result.second_label)}」，请保存卷纲`;
       syncSplitChapterFromVolume();
     } catch (e) {
       handleSaveError(e);
@@ -97,15 +98,15 @@ export function useCreatorVolumePlanMergeSplit(deps) {
         end_index: mergeEndIdx.value,
         label: mergeLabel.value.trim() || undefined,
       });
-      editableVolumes.value = (result.volumes || []).map((v) => ({ ...v }));
+      editableVolumes.value = normalizeVolumePlanVolumes(result.volumes);
       mergePreview.value = {
-        merged_label: result.merged_label,
+        merged_label: formatDisplayLabel(result.merged_label),
         merged_range: result.merged_range,
       };
       mergeStartIdx.value = 0;
       mergeEndIdx.value = Math.min(1, Math.max(0, editableVolumes.value.length - 1));
       mergeLabel.value = '';
-      saveMessage.value = `已合并为「${result.merged_label}」，请保存卷纲`;
+      saveMessage.value = `已合并为「${formatDisplayLabel(result.merged_label)}」，请保存卷纲`;
     } catch (e) {
       handleSaveError(e);
     } finally {

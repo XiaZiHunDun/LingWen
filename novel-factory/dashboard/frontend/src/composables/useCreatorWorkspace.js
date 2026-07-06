@@ -1,12 +1,20 @@
 /**
- * Phase C: Creator workspace — task-focused tabs (写 / 脉络 / 设定).
+ * useCreatorWorkspace — Phase C + 面板矩阵：按 creation_mode 裁剪 Tab 与默认页
  */
 import { computed, ref, watch } from 'vue';
+import {
+  buildCreatorWorkspaceTabs,
+  resolveDefaultWorkspaceTab,
+  splitHumanFirstDeskTabs,
+} from '../config/creatorPanelMatrix.js';
+import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 
+/** @deprecated 使用 creatorPanelMatrix.CREATOR_WORKSPACE_TAB_DEFS */
 export const CREATOR_WORKSPACE_TABS = [
   { id: 'write', label: '写作', icon: '✍️' },
   { id: 'pulse', label: '脉络', icon: '🗺️' },
-  { id: 'settings', label: '设定', icon: '📋' },
+  { id: 'memory', label: '记忆', icon: '🧠' },
+  { id: 'settings', label: '本书设定', icon: '📋' },
 ];
 
 /**
@@ -22,13 +30,58 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
   const { focusCreatorWorkspace, setCreatorWorkspace, displayDeviationCount } = nav;
   const activeTab = ref('write');
 
+  const creationMode = useEffectiveCreationMode(
+    computed(() => overview.value?.creation_mode ?? null),
+    computed(() => (overview.value
+      ? { slug: overview.value.slug, name: overview.value.name }
+      : null)),
+  );
+
   const tabsEnabled = computed(() => {
     const profile = uiProfile.value;
     if (profile?.creator_workspace_tabs === false) return false;
-    if (profile?.creator_workspace_tabs === true) return true;
-    const mode = overview.value?.creation_mode;
-    return mode === 'companion' || mode === 'advance';
+    return true;
   });
+
+  const workspaceTabs = computed(() => {
+    if (!tabsEnabled.value) return [...CREATOR_WORKSPACE_TABS];
+    return buildCreatorWorkspaceTabs(creationMode.value);
+  });
+
+  const workspacePrimaryTabs = computed(() =>
+    splitHumanFirstDeskTabs(creationMode.value).primary,
+  );
+
+  const workspaceSecondaryTabs = computed(() =>
+    splitHumanFirstDeskTabs(creationMode.value).secondary,
+  );
+
+  function syncActiveTabToMatrix() {
+    if (!tabsEnabled.value || !overview.value) return;
+    const ids = workspaceTabs.value.map((t) => t.id);
+    if (!ids.includes(activeTab.value)) {
+      activeTab.value = resolveDefaultWorkspaceTab(creationMode.value);
+    }
+  }
+
+  watch(
+    () => creationMode.value,
+    (mode, prevMode) => {
+      if (!tabsEnabled.value || !mode) return;
+      if (focusCreatorWorkspace?.value) return;
+      if (prevMode == null || mode !== prevMode) {
+        activeTab.value = resolveDefaultWorkspaceTab(mode);
+      }
+    },
+  );
+
+  watch(
+    () => [creationMode.value, tabsEnabled.value, workspaceTabs.value.map((t) => t.id).join(',')],
+    () => {
+      syncActiveTabToMatrix();
+    },
+    { immediate: true },
+  );
 
   function isColumnVisible(columnId) {
     if (!tabsEnabled.value) return true;
@@ -36,7 +89,7 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
   }
 
   function setWorkspaceTab(tabId) {
-    if (CREATOR_WORKSPACE_TABS.some((t) => t.id === tabId)) {
+    if (workspaceTabs.value.some((t) => t.id === tabId)) {
       activeTab.value = tabId;
     }
   }
@@ -65,8 +118,14 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
       watch(
         () => [focusCreatorWorkspace.value, tabsEnabled.value, overview.value],
         () => {
-          if (!tabsEnabled.value || !focusCreatorWorkspace.value) return;
-          setWorkspaceTab(focusCreatorWorkspace.value);
+          if (!tabsEnabled.value) return;
+          if (focusCreatorWorkspace.value) {
+            setWorkspaceTab(focusCreatorWorkspace.value);
+            return;
+          }
+          if (overview.value) {
+            activeTab.value = resolveDefaultWorkspaceTab(creationMode.value);
+          }
         },
         { immediate: true },
       );
@@ -76,7 +135,9 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
   return {
     activeTab,
     tabsEnabled,
-    workspaceTabs: CREATOR_WORKSPACE_TABS,
+    workspaceTabs,
+    workspacePrimaryTabs,
+    workspaceSecondaryTabs,
     isColumnVisible,
     setWorkspaceTab,
     workspaceTabBadges,

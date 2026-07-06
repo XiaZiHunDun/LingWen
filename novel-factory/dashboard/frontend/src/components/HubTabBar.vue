@@ -1,10 +1,14 @@
 <template>
-  <nav class="hub-tab-bar" :data-testid="testId">
+  <nav
+    class="hub-tab-bar"
+    :class="{ 'hub-tab-bar--segmented': variant === 'segmented' }"
+    :data-testid="testId"
+  >
     <button
       v-for="tab in tabs"
       :key="tab.id"
       type="button"
-      class="hub-tab pixel-border"
+      class="hub-tab"
       :class="{ 'hub-tab--active': modelValue === tab.id }"
       :data-testid="`${testId}-${tab.id}`"
       @click="$emit('update:modelValue', tab.id)"
@@ -22,6 +26,8 @@ defineProps({
   modelValue: { type: String, required: true },
   testId: { type: String, default: 'hub-tabs' },
   badges: { type: Object, default: null },
+  /** @type {'default' | 'segmented'} */
+  variant: { type: String, default: 'default' },
 });
 
 defineEmits(['update:modelValue']);
@@ -39,26 +45,31 @@ defineEmits(['update:modelValue']);
   font-family: var(--font-ui);
   font-weight: 500;
   padding: 10px 16px;
-  background: var(--bg-secondary);
+  background: var(--bg-elevated);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .hub-tab:hover:not(.hub-tab--active) {
-  background: var(--bg-primary);
-  transform: translateY(-1px);
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+  transform: none;
 }
 
 .hub-tab--active {
   background: var(--color-accent);
   color: white;
+  border-color: transparent;
 }
 
 .hub-tab-icon {
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .hub-tab-badge {

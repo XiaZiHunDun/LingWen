@@ -118,7 +118,8 @@ export const creatorDefaultUiProfile = {
   studio_wizard_collapse_memory: false,
   deviation_min_severity: null,
   primary_action: 'studio_quality',
-  creator_workspace_tabs: false,
+  creator_workspace_tabs: true,
+  creator_write_workbench: false,
   creator_mode_guide_default_collapsed: false,
   creator_simplified_mode_ops: false,
 };

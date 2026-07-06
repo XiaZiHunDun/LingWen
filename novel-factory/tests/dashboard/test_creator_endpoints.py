@@ -1652,3 +1652,150 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert "completed_step_ids" in data
         assert "progress_pct" in data
+
+    def test_creator_models(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/models")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["models"]) >= 1
+        assert any(m["id"] == "local-mock" for m in data["models"])
+
+    def test_creator_preferences_get_put(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/preferences")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "anye-xinbiao"
+        assert "default_model" in data
+        assert data["task_models"]["body"] == "inherit"
+
+        put = client.put(
+            "/api/creator/preferences",
+            json={"temperature": 0.4, "memory_rag_top_k": 6},
+        )
+        assert put.status_code == 200
+        updated = put.json()
+        assert updated["temperature"] == 0.4
+        assert updated["memory_rag_top_k"] == 6
+
+    def test_creator_memory_assets(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/memory-assets")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "anye-xinbiao"
+        assert "items" in data
+        assert isinstance(data["items"], list)
+
+    def test_creator_export_epub(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/export/epub",
+            json={"mode": "full", "title": "测试导出"},
+        )
+        assert resp.status_code == 200
+        assert resp.headers["content-type"].startswith("application/epub")
+        assert resp.content[:2] == b"PK"
+
+    def test_creator_memory_query(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/memory/query",
+            json={"query": "主角", "scope": "all", "top_k": 5},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["query"] == "主角"
+        assert "results" in data
+
+    def test_creator_export_docx(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/export/docx",
+            json={"mode": "full", "title": "测试", "author": "作者"},
+        )
+        assert resp.status_code == 200
+        assert "wordprocessingml" in resp.headers["content-type"]
+        assert resp.content[:2] == b"PK"
+
+    def test_creator_publish(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/publish",
+            json={
+                "platform": "fanqie",
+                "include_outline": True,
+                "intro": "测试简介",
+                "mode": "submission",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["platform"] == "fanqie"
+        assert data["status"] in {"queued", "adapter_stub"}
+        assert data.get("adapter_id") == "fanqie"
+
+        hist = client.get("/api/creator/publish/history")
+        assert hist.status_code == 200
+        assert len(hist.json()["entries"]) >= 1
+
+    def test_creator_publish_platforms(self, client: TestClient) -> None:
+        resp = client.get("/api/creator/publish/platforms")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["slug"] == "anye-xinbiao"
+        assert len(data["platforms"]) >= 4
+        assert data["platforms"][0]["capabilities"]["oauth_required"] is True
+
+    def test_creator_memory_query_citation(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/memory/query",
+            json={"query": "支柱", "scope": "all"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        if data["results"]:
+            assert "citation" in data["results"][0]
+
+    def test_creator_memory_annotation(self, client: TestClient) -> None:
+        resp = client.put(
+            "/api/creator/memory-assets/memory-ch-1/annotation",
+            json={"note": "测试备注", "pinned": True},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["asset_id"] == "memory-ch-1"
+        assert data["pinned"] is True
+        assert data["note"] == "测试备注"
+
+        assets = client.get("/api/creator/memory-assets")
+        assert assets.status_code == 200
+        items = {i["id"]: i for i in assets.json()["items"]}
+        if "memory-ch-1" in items:
+            assert items["memory-ch-1"].get("note") == "测试备注"
+
+    def test_agent_plan_endpoint(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/agent/plan",
+            json={
+                "action": "path:restrained",
+                "action_label": "更克制",
+                "scope": {"type": "chapter", "chapter": 1},
+                "style_strength": 2,
+                "execution_mode": "preview",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["advice_only"] is False
+        assert len(data["candidates"]) == 3
+        assert data["provider"] == "mock"
+
+    def test_agent_plan_advice_only(self, client: TestClient) -> None:
+        resp = client.post(
+            "/api/creator/agent/plan",
+            json={
+                "action": "rewrite:concrete",
+                "action_label": "更具体",
+                "scope": {"type": "selection", "selection_text": "测试选区"},
+                "style_strength": 0,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["advice_only"] is True
+        assert len(data["advice"]) >= 1

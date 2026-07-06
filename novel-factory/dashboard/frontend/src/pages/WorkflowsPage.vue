@@ -7,7 +7,7 @@
 -->
 <template>
   <div class="workflows-page">
-    <header class="page-header">
+    <header v-if="!embedded" class="page-header">
       <h1 class="page-title" data-testid="page-title">工作流</h1>
       <div class="header-actions">
         <span
@@ -23,7 +23,7 @@
       </div>
     </header>
 
-    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">{{ error }}</div>
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">{{ displayError }}</div>
 
     <div class="workflows-layout">
       <!-- Left: workflow list -->
@@ -131,6 +131,11 @@ import {
 } from '../api/index.js';
 import { useWorkflowListStore } from '../composables/useWorkflowListStore.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+});
 
 // Phase 8.34: 拆分为 module-level singleton stores
 //   useWorkflowListStore 管 workflows 列表 (REST 拉) + loading + lastError
@@ -152,6 +157,7 @@ const loading = computed(() => listStore.loading.value);
 // error 合并 store (workflow 列表拉) + localError (run/resume/loadGraph)
 const localError = ref(null);
 const error = computed(() => listStore.lastError.value || localError.value);
+const displayError = useFilteredPageError(error);
 
 // 页面 UI state
 const selected = ref(null);
@@ -240,6 +246,11 @@ async function loadGraph() {
     graphLoading.value = false;
   }
 }
+
+defineExpose({
+  loading,
+  refresh,
+});
 </script>
 
 <style scoped>

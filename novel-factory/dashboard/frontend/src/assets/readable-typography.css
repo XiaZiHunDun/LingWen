@@ -46,9 +46,23 @@
   font-size: var(--text-sm) !important;
 }
 
-#app .switcher-select {
+#app .switcher-select:not(.switcher-select--sidebar):not(.switcher-select--compact) {
   padding: 8px 12px;
   min-width: 220px;
+}
+
+#app .switcher-select--sidebar,
+#app .project-switcher--sidebar .switcher-select {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+#app .project-switcher--sidebar {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* —— 通用页面元素 —— */

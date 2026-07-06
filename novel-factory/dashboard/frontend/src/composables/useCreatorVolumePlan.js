@@ -6,6 +6,7 @@ import {
   fetchCreatorVolumePlan,
   saveCreatorVolumePlan,
 } from '../api/index.js';
+import { normalizeVolumePlanVolumes } from '../utils/displayProjectName.js';
 import { useCreatorVolumePlanDiff } from './useCreatorVolumePlanDiff.js';
 import { useCreatorVolumePlanTemplates } from './useCreatorVolumePlanTemplates.js';
 import { useCreatorVolumePlanMergeSplit } from './useCreatorVolumePlanMergeSplit.js';
@@ -133,7 +134,7 @@ export function useCreatorVolumePlan(deps) {
 
   async function loadVolumePlan() {
     const plan = await fetchCreatorVolumePlan();
-    editableVolumes.value = (plan.volumes || []).map((v) => ({ ...v }));
+    editableVolumes.value = normalizeVolumePlanVolumes(plan.volumes);
     savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
     volumePlanRevision.value = plan.revision || '';
     mergeSplitHub.resetAfterLoad(editableVolumes.value.length);

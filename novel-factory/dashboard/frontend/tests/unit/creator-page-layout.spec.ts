@@ -17,10 +17,15 @@ const layoutStubs = {
   CreatorWorkspaceShell: { template: '<div data-testid="stub-creator-workspace"><slot /></div>' },
   CreatorWritePanel: { template: '<div data-testid="stub-write-panel" />' },
   CreatorPulsePanel: { template: '<div data-testid="stub-pulse-panel" />' },
+  CreatorMemoryPanel: { template: '<div data-testid="stub-memory-panel" />' },
   CreatorSettingsPanel: { template: '<div data-testid="stub-settings-panel" />' },
   CreatorModeGuidePanel: { template: '<div data-testid="stub-mode-guide" />' },
   CreatorVolumePlanShareModals: { template: '<div data-testid="stub-volume-share-modals" />' },
   CreatorOnboardingWizardPanel: { template: '<div data-testid="stub-onboarding" />' },
+  CreatorInterventionBanner: { template: '<div data-testid="stub-intervention" />' },
+  CreatorExportModal: { template: '<div data-testid="stub-export-modal" />' },
+  CreatorPublishWizardModal: { template: '<div data-testid="stub-publish-modal" />' },
+  CreatorPublishHistoryModal: { template: '<div data-testid="stub-publish-history-modal" />' },
 };
 
 describe('CreatorPageLayout', () => {
@@ -32,10 +37,14 @@ describe('CreatorPageLayout', () => {
     expect(wrapper.find(byTestid('stub-creator-workspace')).exists()).toBe(true);
     expect(wrapper.find(byTestid('stub-write-panel')).exists()).toBe(true);
     expect(wrapper.find(byTestid('stub-pulse-panel')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-memory-panel')).exists()).toBe(true);
     expect(wrapper.find(byTestid('stub-settings-panel')).exists()).toBe(true);
     expect(wrapper.find(byTestid('stub-mode-guide')).exists()).toBe(true);
     expect(wrapper.find(byTestid('stub-volume-share-modals')).exists()).toBe(true);
     expect(wrapper.find(byTestid('stub-onboarding')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-intervention')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-export-modal')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-publish-modal')).exists()).toBe(true);
   });
 
   test('invokes useCreatorPage on setup', () => {

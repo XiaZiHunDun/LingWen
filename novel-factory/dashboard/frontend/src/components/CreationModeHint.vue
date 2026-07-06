@@ -1,14 +1,10 @@
 <template>
-  <span
-    v-if="meta.label"
-    class="creation-mode-hint pixel-border"
-    data-testid="creation-mode-hint"
-    :title="meta.audience"
-  >
-    <strong>{{ meta.label }}</strong>
-    <span v-if="meta.tagline" class="hint-sep">·</span>
-    <span class="hint-tagline">{{ meta.tagline }}</span>
-  </span>
+  <details class="creation-mode-hint-compact" data-testid="creation-mode-hint">
+    <summary :title="meta.audience">{{ meta.label }}</summary>
+    <p v-if="meta.tagline" class="creation-mode-hint-compact__body">
+      {{ meta.tagline }}
+    </p>
+  </details>
 </template>
 
 <script setup>
@@ -37,26 +33,3 @@ const meta = computed(() => {
   return creationModeMeta(mode);
 });
 </script>
-
-<style scoped>
-.creation-mode-hint {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  background: var(--bg-primary);
-  max-width: 420px;
-}
-
-.hint-sep {
-  opacity: 0.5;
-}
-
-.hint-tagline {
-  color: var(--color-text-dim);
-  font-weight: 400;
-}
-</style>

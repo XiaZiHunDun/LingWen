@@ -2,8 +2,8 @@
   CreatorPageBanners.vue — 创作页全局状态横幅（inject 页级 chrome 上下文）
 -->
 <template>
-  <div v-if="c.error" class="error-banner pixel-border" data-testid="error-banner">
-    {{ c.error }}
+  <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+    {{ displayError }}
   </div>
   <div v-if="c.conflictMessage" class="conflict-banner pixel-border" data-testid="conflict-banner">
     {{ c.conflictMessage }}
@@ -17,10 +17,12 @@
 </template>
 
 <script setup>
-import { inject } from 'vue';
+import { computed, inject } from 'vue';
 import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
+import { useFilteredPageError } from '../../composables/useFilteredPageError.js';
 
 const c = inject(CREATOR_PAGE_CHROME_KEY);
+const displayError = useFilteredPageError(computed(() => c?.error ?? ''));
 </script>
 
 <style scoped>

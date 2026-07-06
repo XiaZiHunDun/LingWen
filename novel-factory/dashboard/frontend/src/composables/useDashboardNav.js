@@ -13,6 +13,10 @@ import {
   INBOX_TABS,
   INSIGHT_TABS,
 } from '../config/dashboardNav.js';
+import {
+  activeNavToUrlParam,
+  resolveHumanNavToActive,
+} from '../config/humanFirstNav.js';
 
 const PRODUCE_TAB_IDS = PRODUCE_TABS.map((t) => t.id);
 const INBOX_TAB_IDS = INBOX_TABS.map((t) => t.id);
@@ -21,6 +25,10 @@ const INSIGHT_TAB_IDS = INSIGHT_TABS.map((t) => t.id);
 export const CREATOR_WORKSPACE_IDS = ['write', 'pulse', 'settings'];
 
 const VALID_NAV = [
+  'ask',
+  'write',
+  'library',
+  'more',
   'today',
   'creator',
   'produce',
@@ -37,10 +45,14 @@ const VALID_NAV = [
   'settings',
 ];
 
-const REVIEWER_BLOCKED_NAV = new Set(['creator', 'produce', 'settings', 'cascade-runs', 'studio', 'chapters', 'workflows']);
+const REVIEWER_BLOCKED_NAV = new Set([
+  'write', 'creator', 'produce', 'library', 'more', 'settings', 'cascade-runs',
+  'studio', 'chapters', 'workflows',
+]);
 
 function canonicalNav(nav) {
-  if (!nav) return 'today';
+  if (!nav) return 'ask';
+  if (nav === 'write' || nav === 'creator') return 'creator';
   if (LEGACY_PRODUCE_NAV_IDS.includes(nav)) return 'produce';
   if (LEGACY_INBOX_NAV_IDS.includes(nav)) return 'inbox';
   if (LEGACY_INSIGHT_NAV_IDS.includes(nav)) return 'insight';
@@ -95,12 +107,15 @@ function normalizeCreatorWorkspace(tab) {
 }
 
 function readNavFromUrl() {
-  if (typeof window === 'undefined') return 'today';
+  if (typeof window === 'undefined') return 'ask';
   const raw = readRawNavFromUrl();
-  if (!raw) return isReviewerUrl() ? 'inbox' : 'today';
-  if (!VALID_NAV.includes(raw)) return isReviewerUrl() ? 'inbox' : 'today';
+  if (!raw) return isReviewerUrl() ? 'inbox' : null;
+  if (!VALID_NAV.includes(raw)) return isReviewerUrl() ? 'inbox' : 'ask';
   const canonical = canonicalNav(raw);
   if (isReviewerUrl() && REVIEWER_BLOCKED_NAV.has(canonical)) {
+    return 'inbox';
+  }
+  if (isReviewerUrl() && REVIEWER_BLOCKED_NAV.has(raw)) {
     return 'inbox';
   }
   return canonical;
@@ -196,8 +211,11 @@ function syncNavUrl(
 ) {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  if (activeNav && activeNav !== 'today') {
-    url.searchParams.set('nav', activeNav);
+  const urlNav = activeNavToUrlParam(activeNav);
+  if (urlNav && urlNav !== 'ask') {
+    url.searchParams.set('nav', urlNav);
+  } else if (urlNav === 'ask') {
+    url.searchParams.set('nav', 'ask');
   } else {
     url.searchParams.delete('nav');
   }
@@ -256,7 +274,8 @@ function syncNavUrl(
 }
 
 const rawNavOnLoad = readRawNavFromUrl();
-const activeNav = ref(readNavFromUrl());
+const initialNav = readNavFromUrl();
+const activeNav = ref(initialNav ?? 'ask');
 const produceTab = ref(readProduceTab(rawNavOnLoad));
 const inboxTab = ref(readInboxTab(rawNavOnLoad));
 const insightTab = ref(readInsightTab(rawNavOnLoad));
@@ -269,6 +288,9 @@ const focusWizardNotes = ref(readWizardNotesFromUrl());
 const focusCreatorWorkspace = ref(readCreatorWorkspaceFromUrl());
 
 function resolveNavTarget(nav) {
+  if (nav === 'write' || nav === 'creator') {
+    return { nav: 'creator' };
+  }
   if (LEGACY_PRODUCE_NAV_IDS.includes(nav)) {
     return { nav: 'produce', produceTab: nav };
   }
@@ -278,7 +300,7 @@ function resolveNavTarget(nav) {
   if (LEGACY_INSIGHT_NAV_IDS.includes(nav)) {
     return { nav: 'insight', insightTab: nav };
   }
-  return { nav };
+  return { nav: resolveHumanNavToActive(nav) };
 }
 
 function guardReviewerNav(nav) {
@@ -295,7 +317,9 @@ function guardReviewerNav(nav) {
 function navigateTo(nav, opts = {}) {
   const target = resolveNavTarget(nav);
   const resolved = guardReviewerNav(target.nav);
-  activeNav.value = VALID_NAV.includes(nav) ? resolved : (isReviewerUrl() ? 'inbox' : 'today');
+  activeNav.value = VALID_NAV.includes(nav) || nav === 'write' || nav === 'creator'
+    ? resolved
+    : (isReviewerUrl() ? 'inbox' : 'ask');
   if (opts.tab) {
     if (activeNav.value === 'produce' && PRODUCE_TAB_IDS.includes(opts.tab)) {
       produceTab.value = opts.tab;
@@ -446,7 +470,7 @@ function setWizardDeepLink(open, wizardStep, wizardDone, wizardNotes) {
 function buildWizardShareUrl(completedStepIds, wizardStep, stepNotes) {
   if (typeof window === 'undefined') return '';
   const url = new URL(window.location.href);
-  url.searchParams.set('nav', 'creator');
+  url.searchParams.set('nav', 'write');
   url.searchParams.set('wizard', '1');
   const done = (completedStepIds || []).filter(Boolean);
   if (done.length) {
@@ -516,6 +540,10 @@ export function isInsightNav(nav) {
   return nav === 'insight' || LEGACY_INSIGHT_NAV_IDS.includes(nav);
 }
 
+export function isWriteNav(nav) {
+  return nav === 'creator' || nav === 'write';
+}
+
 export function useDashboardNav() {
   return {
     activeNav,
@@ -538,6 +566,7 @@ export function useDashboardNav() {
     isProduceNav,
     isInboxNav,
     isInsightNav,
+    isWriteNav,
     setWizardDeepLink,
     buildWizardShareUrl,
     clearDecisionFocus,

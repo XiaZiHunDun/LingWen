@@ -8,6 +8,7 @@ import {
   studioProductionRun,
   fetchStudioActiveBatchJob,
 } from '../api/index.js';
+import { isPulseSubpanelVisible } from '../config/creatorPanelMatrix.js';
 
 /**
  * @param {{
@@ -47,7 +48,8 @@ export function useCreatorAdvanceBatch(deps) {
   let batchPollTimer = null;
 
   const showAdvanceBatch = computed(
-    () => overview.value?.creation_mode === 'advance' || overview.value?.advance_volume_summary,
+    () => isPulseSubpanelVisible(overview.value?.creation_mode, 'advanceBatch')
+      || overview.value?.advance_volume_summary,
   );
 
   const showAdvanceBatchOnCreator = computed(
@@ -185,6 +187,7 @@ export function useCreatorAdvanceBatch(deps) {
     batchStart,
     batchEnd,
     batchBudget,
+    batchRunning,
     batchJob,
     pollBatchJob,
     stopBatchPolling,

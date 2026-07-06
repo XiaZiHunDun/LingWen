@@ -3,6 +3,7 @@
  */
 import { computed, nextTick, ref } from 'vue';
 import { generateCreatorVolumeSummary } from '../api/index.js';
+import { isPulseSubpanelVisible, isPanelDefaultCollapsed, CREATOR_PULSE_SUBPANEL_MATRIX } from '../config/creatorPanelMatrix.js';
 
 /**
  * @param {{
@@ -160,9 +161,22 @@ export function useCreatorPulse(deps) {
     }
   }
 
+  function pulseSubpanelVisible(subpanelId) {
+    return isPulseSubpanelVisible(overview.value?.creation_mode, subpanelId);
+  }
+
+  function pulseSubpanelCollapsed(subpanelId) {
+    return isPanelDefaultCollapsed(
+      CREATOR_PULSE_SUBPANEL_MATRIX,
+      overview.value?.creation_mode,
+      subpanelId,
+    );
+  }
+
   const panelContext = {
     overview,
     uiProfile,
+    workspaceTabsEnabled,
     isWorkspaceColumnVisible,
     setWorkspaceTab,
     showPulseCompanionEmpty,
@@ -178,6 +192,8 @@ export function useCreatorPulse(deps) {
     openVolumeSummaryByName,
     openVolumeSummaryForRange,
     dismissBatchSummaryPrompt,
+    isPulseSubpanelVisible: pulseSubpanelVisible,
+    isPulseSubpanelCollapsed: pulseSubpanelCollapsed,
   };
 
   return {

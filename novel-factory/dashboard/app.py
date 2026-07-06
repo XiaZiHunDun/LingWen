@@ -21,6 +21,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+from infra.agent_system.agent_config import load_project_env
+
+load_project_env()
+
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -425,6 +429,56 @@ class CreatorLogicCheckResponse(BaseModel):
     p0_only: bool = False
     chapter: Optional[int] = None
     issues: list[CreatorLogicCheckIssue] = []
+
+
+class CreatorAgentScope(BaseModel):
+    type: str
+    chapter: Optional[int] = None
+    selection_text: Optional[str] = None
+
+
+class CreatorAgentPlanRequest(BaseModel):
+    action: str
+    action_label: str
+    scope: CreatorAgentScope
+    body_draft: Optional[str] = None
+    style_strength: int = 1
+    allow_worldbuilding_fill: bool = False
+    goal_tag: Optional[str] = None
+    execution_mode: str = "preview"
+    lens: str = "author"
+    provider_mode: str = "auto"
+
+
+class CreatorAgentCandidate(BaseModel):
+    id: str
+    label: str
+    direction: str
+    text: str
+
+
+class CreatorAgentAdviceItem(BaseModel):
+    id: str
+    text: str
+
+
+class CreatorAgentAnnotation(BaseModel):
+    id: str
+    level: str = "info"
+    text: str
+    paragraph: Optional[int] = None
+
+
+class CreatorAgentPlanResponse(BaseModel):
+    advice_only: bool = False
+    candidates: list[CreatorAgentCandidate] = Field(default_factory=list)
+    advice: list[CreatorAgentAdviceItem] = Field(default_factory=list)
+    annotations: list[CreatorAgentAnnotation] = Field(default_factory=list)
+    status_line: str = ""
+    provider: str = "mock"
+    base_excerpt: str = ""
+    memory_hints: list[str] = Field(default_factory=list)
+    lens: str = "author"
 
 
 class CreatorOverviewResponse(BaseModel):
@@ -891,6 +945,182 @@ class CreatorSettingsDocsSaveRequest(BaseModel):
     merge_snapshot_id: Optional[str] = None
     pillars_merge_snapshot_id: Optional[str] = None
     global_outline_merge_snapshot_id: Optional[str] = None
+
+
+class CreatorTaskModelsPreferences(BaseModel):
+    outline: str = "inherit"
+    body: str = "inherit"
+    review: str = "inherit"
+    memory: str = "inherit"
+
+
+class CreatorInterventionRules(BaseModel):
+    deviation_alerts: bool = True
+    batch_progress: bool = True
+    logic_p0: bool = True
+    settings_unsaved: bool = True
+    preferences_unsaved: bool = True
+    memory_offline: bool = True
+    empty_write_hint: bool = True
+
+
+class CreatorModelOption(BaseModel):
+    id: str
+    label: str
+    provider: str
+    available: bool = True
+
+
+class CreatorModelsResponse(BaseModel):
+    models: list[CreatorModelOption]
+    default_model: str
+
+
+class CreatorPreferencesResponse(BaseModel):
+    slug: str
+    default_model: str
+    temperature: float
+    max_tokens: int
+    memory_rag_enabled: bool
+    memory_rag_top_k: int
+    task_models: CreatorTaskModelsPreferences
+    companion_lightweight: bool
+    intervention_rules: CreatorInterventionRules
+    updated_at: Optional[str] = None
+
+
+class CreatorPreferencesSaveRequest(BaseModel):
+    default_model: Optional[str] = None
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    memory_rag_enabled: Optional[bool] = None
+    memory_rag_top_k: Optional[int] = None
+    task_models: Optional[CreatorTaskModelsPreferences] = None
+    companion_lightweight: Optional[bool] = None
+    intervention_rules: Optional[CreatorInterventionRules] = None
+
+
+class CreatorMemoryAssetItem(BaseModel):
+    id: str
+    kind: str
+    name: str
+    excerpt: str
+    chapters: list[int] = Field(default_factory=list)
+    editable: bool = False
+    placeholder: bool = False
+    source: str = "settings"
+    note: Optional[str] = None
+    pinned: bool = False
+
+
+class CreatorMemoryAnnotationRequest(BaseModel):
+    note: Optional[str] = None
+    pinned: Optional[bool] = None
+
+
+class CreatorMemoryAnnotationResponse(BaseModel):
+    asset_id: str
+    note: Optional[str] = None
+    pinned: bool = False
+    updated_at: Optional[str] = None
+
+
+class CreatorMemoryAssetsResponse(BaseModel):
+    slug: str
+    memory_available: bool
+    memory_rag_enabled: bool
+    items: list[CreatorMemoryAssetItem]
+
+
+class CreatorEpubExportRequest(BaseModel):
+    mode: str = "full"
+    start_chapter: Optional[int] = None
+    end_chapter: Optional[int] = None
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+    submission_sample_count: Optional[int] = 3
+
+
+class CreatorDocxExportRequest(BaseModel):
+    mode: str = "full"
+    start_chapter: Optional[int] = None
+    end_chapter: Optional[int] = None
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+    submission_sample_count: Optional[int] = 3
+
+
+class CreatorMemoryQueryRequest(BaseModel):
+    query: str
+    scope: str = "all"
+    top_k: Optional[int] = None
+
+
+class CreatorMemoryQueryResult(BaseModel):
+    id: str
+    snippet: str
+    score: float = 0.0
+    chapter: Optional[int] = None
+    kind: str = "segment"
+    source: str = "local"
+    citation: Optional[str] = None
+    asset_name: Optional[str] = None
+    matched_terms: list[str] = Field(default_factory=list)
+
+
+class CreatorMemoryQueryResponse(BaseModel):
+    query: str
+    memory_available: bool
+    used_fallback: bool
+    results: list[CreatorMemoryQueryResult]
+
+
+class CreatorPublishRequest(BaseModel):
+    platform: str
+    include_outline: bool = True
+    intro: str = ""
+    mode: str = "submission"
+
+
+class CreatorPublishEntry(BaseModel):
+    id: str
+    platform: str
+    include_outline: bool
+    intro: str = ""
+    mode: str
+    status: str
+    message: str
+    created_at: str
+    adapter_id: Optional[str] = None
+    connection: Optional[str] = None
+    external_url: Optional[str] = None
+    package_hint: Optional[str] = None
+
+
+class CreatorPublishPlatformCapabilities(BaseModel):
+    supports_submission_pack: bool = True
+    supports_full_book: bool = False
+    oauth_required: bool = True
+    max_intro_chars: int = 2000
+
+
+class CreatorPublishPlatform(BaseModel):
+    id: str
+    label: str
+    connection: str
+    capabilities: CreatorPublishPlatformCapabilities
+
+
+class CreatorPublishPlatformsResponse(BaseModel):
+    slug: str
+    platforms: list[CreatorPublishPlatform]
+
+
+class CreatorPublishHistoryResponse(BaseModel):
+    slug: str
+    entries: list[CreatorPublishEntry]
 
 
 class CreatorOnboardingStep(BaseModel):
@@ -3303,6 +3533,34 @@ def create_app(
             raise HTTPException(400, str(exc)) from exc
         return CreatorLogicCheckResponse(**result)
 
+    @app.post("/api/creator/agent/plan", response_model=CreatorAgentPlanResponse)
+    def creator_agent_plan_endpoint(
+        body: CreatorAgentPlanRequest,
+    ) -> CreatorAgentPlanResponse:
+        from infra.creator_agent import run_creator_agent_plan
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        try:
+            result = run_creator_agent_plan(
+                project.root,
+                action=body.action,
+                action_label=body.action_label,
+                scope=body.scope.model_dump(),
+                body_draft=body.body_draft,
+                style_strength=body.style_strength,
+                allow_worldbuilding_fill=body.allow_worldbuilding_fill,
+                goal_tag=body.goal_tag,
+                execution_mode=body.execution_mode,
+                lens=body.lens,
+                provider_mode=body.provider_mode,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorAgentPlanResponse(**result)
+
     @app.get("/api/creator/batch-history", response_model=CreatorBatchHistoryResponse)
     def creator_batch_history_endpoint() -> CreatorBatchHistoryResponse:
         from infra.studio_batch_runner import list_batch_jobs_for_slug
@@ -4625,6 +4883,215 @@ def create_app(
         )
         rel = out.relative_to(project.root).as_posix()
         return CreatorVolumeSummaryGenerateResponse(path=rel, written=True)
+
+    @app.get("/api/creator/models", response_model=CreatorModelsResponse)
+    def creator_models_get() -> CreatorModelsResponse:
+        from infra.creator_models import list_creator_models_payload
+
+        return CreatorModelsResponse(**list_creator_models_payload())
+
+    @app.get("/api/creator/preferences", response_model=CreatorPreferencesResponse)
+    def creator_preferences_get() -> CreatorPreferencesResponse:
+        from infra.creator_preferences import creator_preferences_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorPreferencesResponse(**creator_preferences_payload(project))
+
+    @app.put("/api/creator/preferences", response_model=CreatorPreferencesResponse)
+    def creator_preferences_put(
+        req: CreatorPreferencesSaveRequest,
+    ) -> CreatorPreferencesResponse:
+        from infra.creator_preferences import (
+            creator_preferences_payload,
+            load_creator_preferences,
+            save_creator_preferences,
+        )
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        current = load_creator_preferences(project.root)
+        patch = req.model_dump(exclude_unset=True)
+        if patch.get("task_models") is not None:
+            patch["task_models"] = {
+                **current.get("task_models", {}),
+                **patch["task_models"],
+            }
+        if patch.get("intervention_rules") is not None:
+            patch["intervention_rules"] = {
+                **current.get("intervention_rules", {}),
+                **patch["intervention_rules"],
+            }
+        merged = {**current, **patch}
+        save_creator_preferences(project.root, merged)
+        return CreatorPreferencesResponse(**creator_preferences_payload(project))
+
+    @app.get("/api/creator/memory-assets", response_model=CreatorMemoryAssetsResponse)
+    def creator_memory_assets_get() -> CreatorMemoryAssetsResponse:
+        from infra.creator_memory_assets import creator_memory_assets_payload
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorMemoryAssetsResponse(**creator_memory_assets_payload(project))
+
+    @app.put(
+        "/api/creator/memory-assets/{asset_id}/annotation",
+        response_model=CreatorMemoryAnnotationResponse,
+    )
+    def creator_memory_annotation_put(
+        asset_id: str,
+        req: CreatorMemoryAnnotationRequest,
+    ) -> CreatorMemoryAnnotationResponse:
+        from infra.creator_memory_annotations import upsert_memory_annotation
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        if req.note is None and req.pinned is None:
+            raise HTTPException(400, "note or pinned required")
+        try:
+            result = upsert_memory_annotation(
+                project.root,
+                asset_id,
+                note=req.note,
+                pinned=req.pinned,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return CreatorMemoryAnnotationResponse(
+            asset_id=result["asset_id"],
+            note=result.get("note"),
+            pinned=bool(result.get("pinned")),
+            updated_at=result.get("updated_at"),
+        )
+
+    @app.post("/api/creator/memory/query", response_model=CreatorMemoryQueryResponse)
+    def creator_memory_query_endpoint(
+        req: CreatorMemoryQueryRequest,
+    ) -> CreatorMemoryQueryResponse:
+        from infra.creator_memory_query import creator_memory_query
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        if not req.query.strip():
+            raise HTTPException(400, "query required")
+        return CreatorMemoryQueryResponse(
+            **creator_memory_query(
+                project,
+                query=req.query,
+                scope=req.scope,
+                top_k=req.top_k,
+            ),
+        )
+
+    @app.post("/api/creator/export/epub")
+    def creator_export_epub(req: CreatorEpubExportRequest) -> Response:
+        from infra.creator_export_epub import build_creator_epub_bytes
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        mode = req.mode if req.mode in {"full", "range", "submission"} else "full"
+        try:
+            data = build_creator_epub_bytes(
+                project,
+                mode=mode,
+                start_chapter=req.start_chapter,
+                end_chapter=req.end_chapter,
+                title=req.title,
+                author=req.author,
+                description=req.description,
+                submission_sample_count=req.submission_sample_count or 3,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        filename = f"{project.slug}-{mode}.epub"
+        return Response(
+            content=data,
+            media_type="application/epub+zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @app.post("/api/creator/export/docx")
+    def creator_export_docx(req: CreatorDocxExportRequest) -> Response:
+        from infra.creator_export_docx import build_creator_docx_bytes
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        mode = req.mode if req.mode in {"full", "range", "submission"} else "full"
+        try:
+            data = build_creator_docx_bytes(
+                project,
+                mode=mode,
+                start_chapter=req.start_chapter,
+                end_chapter=req.end_chapter,
+                title=req.title,
+                author=req.author,
+                description=req.description,
+                submission_sample_count=req.submission_sample_count or 3,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        filename = f"{project.slug}-{mode}.docx"
+        return Response(
+            content=data,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @app.post("/api/creator/publish", response_model=CreatorPublishEntry)
+    def creator_publish_submit(req: CreatorPublishRequest) -> CreatorPublishEntry:
+        from infra.creator_publish import submit_creator_publish
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        entry = submit_creator_publish(
+            project,
+            platform=req.platform,
+            include_outline=req.include_outline,
+            intro=req.intro,
+            mode=req.mode,
+        )
+        return CreatorPublishEntry(**entry)
+
+    @app.get("/api/creator/publish/platforms", response_model=CreatorPublishPlatformsResponse)
+    def creator_publish_platforms() -> CreatorPublishPlatformsResponse:
+        from infra.creator_publish import list_publish_platforms
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorPublishPlatformsResponse(
+            slug=project.slug,
+            platforms=list_publish_platforms(project),
+        )
+
+    @app.get("/api/creator/publish/history", response_model=CreatorPublishHistoryResponse)
+    def creator_publish_history(
+        limit: int = Query(10, ge=1, le=30),
+    ) -> CreatorPublishHistoryResponse:
+        from infra.creator_publish import list_creator_publish_history
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+        return CreatorPublishHistoryResponse(**list_creator_publish_history(project, limit=limit))
 
     @app.get("/api/creator/settings-docs", response_model=CreatorSettingsDocsResponse)
     def creator_settings_docs_get() -> CreatorSettingsDocsResponse:

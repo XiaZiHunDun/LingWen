@@ -2,6 +2,8 @@
  * useCreatorPageHeader — 创作页顶栏徽章与偏离计数（从 CreatorPage 抽出）
  */
 import { computed } from 'vue';
+import { isHumanFirstDeskMode } from '../config/creatorPanelMatrix.js';
+import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 
 /**
  * @param {{
@@ -12,6 +14,15 @@ import { computed } from 'vue';
  */
 export function useCreatorPageHeader(deps) {
   const { uiProfile, overview, saveMessage } = deps;
+
+  const creationMode = useEffectiveCreationMode(
+    computed(() => overview.value?.creation_mode ?? null),
+    computed(() => (overview.value
+      ? { slug: overview.value.slug, name: overview.value.name }
+      : null)),
+  );
+
+  const humanFirstDesk = computed(() => isHumanFirstDeskMode(creationMode.value));
 
   const modeLabel = computed(() => {
     if (!overview.value) return '';
@@ -50,6 +61,27 @@ export function useCreatorPageHeader(deps) {
 
   const displayDeviationBadge = computed(() => displayDeviationCount.value > 0);
 
+  const showCreationModeBadge = computed(() => {
+    if (!overview.value || humanFirstDesk.value) return false;
+    return true;
+  });
+
+  const showPageTitle = computed(() => !humanFirstDesk.value);
+
+  const showHeaderPreferences = computed(() => !humanFirstDesk.value);
+
+  const showHeaderPublishExport = computed(() => !humanFirstDesk.value);
+
+  const showHeaderRefresh = computed(() => !humanFirstDesk.value);
+
+  const showHeaderActionsRow = computed(() => {
+    if (!overview.value) return false;
+    if (showHeaderPreferences.value || showHeaderPublishExport.value || showHeaderRefresh.value) {
+      return true;
+    }
+    return false;
+  });
+
   function showCreationModeBadgeHint() {
     if (!creationModeBadgeHintText.value) return;
     saveMessage.value = creationModeBadgeHintText.value;
@@ -59,6 +91,12 @@ export function useCreatorPageHeader(deps) {
     modeLabel,
     creationModeBadgeHintText,
     modeBadgeHintEnabled,
+    showCreationModeBadge,
+    showPageTitle,
+    showHeaderPreferences,
+    showHeaderPublishExport,
+    showHeaderRefresh,
+    showHeaderActionsRow,
     displayDeviationCount,
     displayDeviationBadge,
     showCreationModeBadgeHint,

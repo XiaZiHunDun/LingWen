@@ -4,31 +4,21 @@
 <template>
       <section
         v-show="w.isWorkspaceColumnVisible('write')"
-        class="creator-column pixel-card"
+        class="creator-column"
+        :class="w.wb.workbenchEnabled ? 'creator-column--workbench creator-column--write-desk' : 'pixel-card'"
         data-testid="column-write"
       >
-        <h2 class="column-title">写</h2>
-        <p class="column-hint">章节状态 · 偏离章高亮</p>
-        <ul class="chapter-list">
-          <li
-            v-for="ch in w.visibleChapters"
-            :key="ch.chapter"
-            class="chapter-row"
-            :class="[w.chapterRowClass(ch.chapter), { 'chapter-row--selected': w.selectedChapter === ch.chapter }]"
-            role="button"
-            tabindex="0"
-            :data-testid="`chapter-row-${ch.chapter}`"
-            @click="w.selectChapter(ch.chapter)"
-            @keydown.enter="w.selectChapter(ch.chapter)"
-          >
-            <span class="ch-label">ch{{ String(ch.chapter).padStart(3, '0') }}</span>
-            <span class="ch-status">
-              {{ ch.has_body ? `${ch.word_count} 字` : (ch.has_outline ? '仅大纲' : '空') }}
-            </span>
-          </li>
-        </ul>
+        <h2 v-if="!w.wb.workbenchEnabled" class="column-title">写</h2>
+        <p v-if="!w.wb.workbenchEnabled" class="column-hint">章节状态 · 偏离章高亮</p>
+
+        <component :is="w.wb.workbenchEnabled ? CreatorWriteWorkbench : 'div'">
+        <template v-if="w.wb.workbenchEnabled" #chapters>
+          <CreatorChapterList compact />
+        </template>
+
+        <CreatorChapterList v-if="!w.wb.workbenchEnabled" />
         <div
-          v-if="w.showCompanionLogicCheckInWrite"
+          v-if="w.showCompanionLogicCheckInWrite && !w.wb?.humanFirstDesk"
           class="companion-logic-check-write pixel-border"
           data-testid="companion-logic-check-write"
         >
@@ -133,10 +123,14 @@
         </div>
         <div
           v-if="w.chapterPreview"
-          class="chapter-preview pixel-border"
+          class="chapter-preview"
+          :class="{
+            'chapter-preview--workbench': w.wb.workbenchEnabled,
+            'pixel-border': !w.wb.workbenchEnabled,
+          }"
           data-testid="chapter-preview-panel"
         >
-          <h3 class="subsection-title">
+          <h3 v-if="!w.wb?.humanFirstDesk" class="subsection-title">
             ch{{ String(w.chapterPreview.chapter).padStart(3, '0') }} 预览
             <span v-if="w.chapterPreview.word_count">（{{ w.chapterPreview.word_count }} 字）</span>
           </h3>
@@ -145,9 +139,32 @@
             <div
               v-if="w.uiProfile.chapter_outline_inline_edit"
               class="chapter-dual-edit"
+              :class="{ 'chapter-dual-edit--human': w.wb?.humanFirstDesk }"
               data-testid="chapter-dual-edit"
             >
-              <div class="chapter-outline-edit">
+              <details
+                v-if="w.wb?.humanFirstDesk"
+                class="chapter-outline-edit chapter-outline-edit--collapsible"
+                data-testid="chapter-outline-details"
+              >
+                <summary class="meta-line chapter-outline-edit__summary">分章大纲</summary>
+                <textarea
+                  v-model="w.chapterOutlineDraft"
+                  class="settings-textarea chapter-outline-textarea"
+                  rows="8"
+                  data-testid="chapter-outline-textarea"
+                />
+                <button
+                  type="button"
+                  class="mini-btn"
+                  data-testid="save-chapter-outline-btn"
+                  :disabled="w.chapterOutlineSaving"
+                  @click="w.saveChapterOutline"
+                >
+                  {{ w.chapterOutlineSaving ? '保存中…' : '保存大纲' }}
+                </button>
+              </details>
+              <div v-else class="chapter-outline-edit">
                 <label class="meta-line">分章大纲</label>
                 <textarea
                   v-model="w.chapterOutlineDraft"
@@ -171,27 +188,35 @@
                 data-testid="chapter-inline-edit"
               >
                 <label class="meta-line">正文（内嵌编辑）</label>
-                <textarea
-                  :ref="w.bindChapterBodyTextareaRef"
-                  v-model="w.chapterBodyDraft"
-                  class="settings-textarea chapter-body-textarea"
-                  :class="{ 'chapter-body-textarea--highlight': w.chapterBodyHighlightActive }"
-                  rows="12"
-                  data-testid="chapter-body-textarea"
-                />
-                <button
-                  type="button"
-                  class="save-btn pixel-border"
-                  data-testid="save-chapter-body-btn"
-                  :disabled="w.chapterBodySaving"
-                  @click="w.saveChapterBody"
+                <CreatorChapterBodyEditor
+                  :show-gutter="Boolean(w.wb?.showInlineConflictGutter)"
+                  :markers="w.wb?.inlineConflictMarkers || []"
+                  :active-marker-id="w.wb?.activeInlineConflictId"
+                  @focus-marker="w.wb?.focusInlineConflict"
                 >
-                  {{ w.chapterBodySaving ? '保存中…' : '保存正文' }}
-                </button>
+                  <textarea
+                    :ref="w.bindChapterBodyTextareaRef"
+                    v-model="w.chapterBodyDraft"
+                    class="settings-textarea chapter-body-textarea"
+                    :class="bodyTextareaClass"
+                    rows="12"
+                    data-testid="chapter-body-textarea"
+                    @mouseup="onBodyTextareaInteraction"
+                    @keyup="onBodyTextareaInteraction"
+                    @select="onBodyTextareaInteraction"
+                  />
+                </CreatorChapterBodyEditor>
+                <CreatorChapterBodySaveFooter
+                  :status-label="w.bodySaveStatusLabel"
+                  :auto-save-status="w.bodyAutoSaveStatus"
+                  :saving="w.chapterBodySaving"
+                  :human-first="Boolean(w.wb?.humanFirstDesk)"
+                  @save="w.saveChapterBody"
+                />
               </div>
             </div>
             <div
-              v-if="w.uiProfile.chapter_outline_read_preview && w.chapterPreview.has_outline"
+              v-if="w.uiProfile.chapter_outline_read_preview && w.chapterPreview.has_outline && !w.uiProfile.chapter_outline_inline_edit"
               class="chapter-outline-read-preview"
               data-testid="chapter-outline-read-preview"
             >
@@ -200,7 +225,10 @@
                 w.chapterPreview.outline_text || w.chapterPreview.outline_preview || '（空）'
               }}</pre>
             </div>
-            <details v-else-if="w.chapterPreview.has_outline && !w.uiProfile.chapter_outline_read_preview" open>
+            <details
+              v-else-if="w.chapterPreview.has_outline && !w.uiProfile.chapter_outline_read_preview && !w.uiProfile.chapter_outline_inline_edit"
+              open
+            >
               <summary>分章大纲</summary>
               <pre class="preview-text">{{ w.chapterPreview.outline_preview || '（空）' }}</pre>
             </details>
@@ -210,23 +238,31 @@
               data-testid="chapter-inline-edit"
             >
               <label class="meta-line">正文（内嵌编辑）</label>
-              <textarea
-                :ref="w.bindChapterBodyTextareaRef"
-                v-model="w.chapterBodyDraft"
-                class="settings-textarea chapter-body-textarea"
-                :class="{ 'chapter-body-textarea--highlight': w.chapterBodyHighlightActive }"
-                rows="12"
-                data-testid="chapter-body-textarea"
-              />
-              <button
-                type="button"
-                class="save-btn pixel-border"
-                data-testid="save-chapter-body-btn"
-                :disabled="w.chapterBodySaving"
-                @click="w.saveChapterBody"
+              <CreatorChapterBodyEditor
+                :show-gutter="Boolean(w.wb?.showInlineConflictGutter)"
+                :markers="w.wb?.inlineConflictMarkers || []"
+                :active-marker-id="w.wb?.activeInlineConflictId"
+                @focus-marker="w.wb?.focusInlineConflict"
               >
-                {{ w.chapterBodySaving ? '保存中…' : '保存正文' }}
-              </button>
+                <textarea
+                  :ref="w.bindChapterBodyTextareaRef"
+                  v-model="w.chapterBodyDraft"
+                  class="settings-textarea chapter-body-textarea"
+                  :class="bodyTextareaClass"
+                  rows="12"
+                  data-testid="chapter-body-textarea"
+                  @mouseup="onBodyTextareaInteraction"
+                  @keyup="onBodyTextareaInteraction"
+                  @select="onBodyTextareaInteraction"
+                />
+              </CreatorChapterBodyEditor>
+              <CreatorChapterBodySaveFooter
+                :status-label="w.bodySaveStatusLabel"
+                :auto-save-status="w.bodyAutoSaveStatus"
+                :saving="w.chapterBodySaving"
+                :human-first="Boolean(w.wb?.humanFirstDesk)"
+                @save="w.saveChapterBody"
+              />
             </div>
             <div
               v-if="
@@ -297,56 +333,57 @@
             </p>
           </template>
         </div>
-        <p v-if="w.overview.chapters.length > 15" class="meta-line">
-          显示前 15 章 · 共 {{ w.overview.max_chapter }} 章上限
-        </p>
+        </component>
       </section>
 
 </template>
 
 <script setup>
-import { inject } from 'vue';
+import { computed, inject } from 'vue';
+import CreatorWriteWorkbench from './CreatorWriteWorkbench.vue';
+import CreatorChapterList from './CreatorChapterList.vue';
+import CreatorChapterBodyEditor from './CreatorChapterBodyEditor.vue';
+import CreatorChapterBodySaveFooter from './CreatorChapterBodySaveFooter.vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 
 const w = inject(CREATOR_WRITE_KEY);
+
+const bodyTextareaClass = computed(() => ({
+  'chapter-body-textarea--highlight': w.chapterBodyHighlightActive,
+  'chapter-body-textarea--conflict': w.wb?.chapterBodyConflictHighlightActive,
+}));
+
+function onBodyTextareaInteraction(event) {
+  w.wb?.captureBodySelection?.(event.target);
+}
 </script>
 
 <style scoped>
-.chapter-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.chapter-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--text-sm);
-  padding: 4px 6px;
-  border: 1px solid var(--border-color);
-}
-.chapter-row--done {
-  background: rgba(100, 200, 100, 0.08);
-}
-.chapter-row {
-  cursor: pointer;
-}
-.chapter-row--selected {
-  outline: 2px solid var(--color-accent);
-}
 .chapter-preview {
   margin-top: var(--space-md);
   padding: var(--space-sm);
   max-height: 320px;
   overflow: auto;
 }
+
+.chapter-preview--workbench {
+  margin-top: 0;
+  max-height: none;
+  flex: 1;
+  min-height: 240px;
+}
+
 .chapter-dual-edit {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-sm);
   margin-top: var(--space-sm);
+}
+
+@media (max-width: 960px) {
+  .chapter-dual-edit {
+    grid-template-columns: 1fr;
+  }
 }
 .chapter-outline-textarea {
   width: 100%;
@@ -388,6 +425,17 @@ const w = inject(CREATOR_WRITE_KEY);
   animation: chapter-body-highlight-pulse 1.2s ease-out;
   box-shadow: 0 0 0 2px rgba(200, 180, 80, 0.75);
 }
+.chapter-body-textarea--conflict {
+  animation: chapter-body-conflict-pulse 1.4s ease-out;
+  box-shadow: 0 0 0 2px rgba(200, 80, 80, 0.55);
+  background-image: linear-gradient(
+    transparent 90%,
+    rgba(200, 80, 80, 0.35) 90%,
+    rgba(200, 80, 80, 0.35) 95%,
+    transparent 95%
+  );
+  background-size: 100% 1.4em;
+}
 .chapter-outline-read-preview {
   margin-bottom: var(--space-sm);
 }
@@ -399,8 +447,32 @@ const w = inject(CREATOR_WRITE_KEY);
   0% { background: rgba(255, 220, 100, 0.4); }
   100% { background: transparent; }
 }
+@keyframes chapter-body-conflict-pulse {
+  0% { background-color: rgba(255, 200, 200, 0.35); }
+  100% { background-color: transparent; }
+}
 .chapter-inline-edit {
   margin-top: var(--space-sm);
+}
+.chapter-dual-edit--human {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.chapter-outline-edit--collapsible {
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-elevated);
+}
+.chapter-outline-edit__summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+  user-select: none;
+}
+.chapter-outline-edit__summary::-webkit-details-marker {
+  display: none;
 }
 .chapter-body-textarea {
   width: 100%;
@@ -439,6 +511,37 @@ const w = inject(CREATOR_WRITE_KEY);
 .companion-logic-check-write {
   margin-top: var(--space-md);
   padding: var(--space-md);
+}
+
+.companion-logic-check-write--compact {
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.companion-logic-check-write--compact details {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+}
+
+.companion-logic-check-write__summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+
+.companion-logic-check-write__summary::-webkit-details-marker {
+  display: none;
+}
+
+.creator-column--write-desk {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .companion-logic-check-write .subsection-title {
   margin-bottom: var(--space-xs);

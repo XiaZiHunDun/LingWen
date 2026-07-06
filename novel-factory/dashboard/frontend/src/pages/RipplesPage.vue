@@ -1,7 +1,7 @@
 <!-- dashboard/frontend/src/pages/RipplesPage.vue — Phase 9.13 + 9.41 F30 ImpactGraph -->
 <template>
   <div class="ripples-page" data-testid="ripples-page">
-    <h1 class="page-title">涟漪变更</h1>
+    <h1 v-if="!embedded" class="page-title">涟漪变更</h1>
     <ImpactGraph
       :graph="referenceGraph"
       data-testid="ripples-page-impact-graph"
@@ -32,6 +32,10 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import RippleFilter from '../components/RippleFilter.vue';
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+});
 import RippleList from '../components/RippleList.vue';
 import RippleDrawer from '../components/RippleDrawer.vue';
 import ImpactGraph from '../components/ImpactGraph.vue';

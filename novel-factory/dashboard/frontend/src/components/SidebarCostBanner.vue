@@ -268,51 +268,52 @@ const tierAlarm = computed(() => {
 
 <style scoped>
 .sidebar-cost-banner {
-  margin-top: var(--space-sm);
+  margin-top: 0;
   padding: var(--space-sm);
-  border-top: 2px solid var(--border-color);
-  background: var(--bg-primary);
+  border-top: none;
+  background: var(--bg-elevated);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-family: 'Press Start 2P', monospace;
+  gap: 8px;
+  font-family: var(--font-ui);
 }
 
 .sidebar-cost-row {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: var(--text-sm);
-  line-height: 1.5;
+  font-size: var(--text-xs);
+  line-height: 1.45;
 }
 
 .sidebar-cost-icon {
-  font-size: var(--text-md);
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
-  margin-right: 4px;
+  display: none;
 }
 
 .sidebar-cost-total-text {
   flex: 1;
-  color: var(--color-accent);
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 .sidebar-cost-budget-text {
   flex: 1;
-  color: var(--color-text-dim);
+  color: var(--color-text-secondary);
 }
 
 .progress-bar {
   width: 100%;
-  height: 4px;
-  background: #e0e0e0;
-  border: 1px solid var(--border-color);
+  height: 6px;
+  background: #dde3de;
+  border: none;
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
   transition: width 0.2s ease-out;
+  border-radius: 999px;
 }
 
 .progress-bar-fill.ok {
@@ -320,56 +321,60 @@ const tierAlarm = computed(() => {
 }
 
 .progress-bar-fill.warning {
-  background: #e6a23c;
+  background: #c9920a;
 }
 
 .progress-bar-fill.exceeded {
-  background: #f56c6c;
+  background: var(--color-danger);
 }
 
-/* Phase 8.15 NEW: per-tier budget row (跟 .sidebar-cost-row 同 layout,
-   独立 class for data-testid selector). 0 改 .sidebar-cost-row 旧 layout. */
 .sidebar-cost-tier-row {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: var(--text-sm);
-  line-height: 1.5;
+  font-size: var(--text-xs);
+  line-height: 1.45;
 }
 
 .sidebar-cost-tier-text {
   flex: 1;
-  color: var(--color-text-dim);
+  color: var(--color-text-secondary);
 }
 
-/* Phase 8.16 NEW: .time-window-tabs 跟 .time-window-tab (跟 WorkflowStatus 同 pattern,
-   scoped CSS 不冲突 — 独立 component). */
 .time-window-tabs {
   display: flex;
-  gap: var(--space-xs);
-}
-.time-window-tab {
-  font-size: var(--text-sm);
-  font-family: 'Press Start 2P', monospace;
-  padding: 4px 8px;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  cursor: pointer;
-}
-.time-window-tab:hover { transform: translate(-1px, -1px); }
-.time-window-tab.active {
-  background: var(--color-accent);
-  color: var(--bg-primary);
+  gap: 4px;
 }
 
-/* Phase 8.21 NEW: tier 维度 alarm icon (7d/30d 选时, 3 tier row 旁显 ⚠️/🚨)
-   复用 sidebar 8px font + Press Start 2P, 不破坏 pixel art 风格 (emoji 例外
-   跟 Phase 8.11 💰 icon 同 pattern). 颜色变量: 红 = exceeded, 橙 = warning. */
+.time-window-tab {
+  font-size: var(--text-xs);
+  font-family: var(--font-ui);
+  padding: 5px 10px;
+  background: var(--bg-elevated);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.time-window-tab:hover {
+  border-color: var(--border-strong);
+  color: var(--color-text);
+}
+
+.time-window-tab.active {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: transparent;
+}
+
 .tier-alarm {
   margin-left: 4px;
-  font-size: var(--text-md);
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  font-size: var(--text-xs);
+  font-family: var(--font-ui);
+  font-weight: 700;
 }
-.tier-alarm-exceeded { color: #f56c6c; }
-.tier-alarm-warning { color: #ff9800; }
+
+.tier-alarm-exceeded { color: var(--color-danger); }
+.tier-alarm-warning { color: #9a6700; }
 </style>

@@ -128,7 +128,11 @@ if (!vp) {
   color: var(--color-text);
 }
 
-.vol-label { width: 3em; }
+.vol-label {
+  flex: 1 1 6em;
+  min-width: 5.5em;
+  max-width: 10em;
+}
 
 .vol-num { width: 3em; }
 

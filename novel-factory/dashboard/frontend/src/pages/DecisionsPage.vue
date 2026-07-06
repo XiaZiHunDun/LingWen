@@ -8,7 +8,7 @@
 -->
 <template>
   <div class="decisions-page">
-    <header class="page-header">
+    <header v-if="!embedded" class="page-header">
       <h1 class="page-title" data-testid="page-title">决策中心</h1>
       <div class="header-actions">
         <span class="count-badge" data-testid="count-badge">
@@ -38,8 +38,8 @@
       <span v-if="highlightedDecisionId"> · 决策 {{ highlightedDecisionId }}</span>
     </div>
 
-    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
-      {{ error }}
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+      {{ displayError }}
     </div>
 
     <div v-if="loading && !displayList.length" class="loading">
@@ -70,9 +70,17 @@
     </div>
 
     <!-- pending tab 空状态 (沿用原版提示) -->
-    <div v-else-if="!displayList.length" class="empty-state pixel-card">
+    <div v-else-if="!displayList.length" class="empty-state pixel-card empty-state--compact">
       <p class="pixel-text">🎉 当前没有待处理决策</p>
-      <p class="hint">启动一个工作流后,系统会扫描 DECISION 节点并创建待审核决策</p>
+      <p class="hint">启动工作流后，系统会扫描 DECISION 节点并列出待审核决策。</p>
+      <button
+        type="button"
+        class="empty-cta-btn empty-cta-btn--primary pixel-border"
+        data-testid="decisions-go-produce-btn"
+        @click="goProduce"
+      >
+        去生产页启动工作流
+      </button>
     </div>
 
     <div v-else class="decision-grid">
@@ -96,6 +104,11 @@ import { useDecisionStore } from '../composables/useDecisionStore.js';
 import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
 import { resolveFocusedDecisionId } from '../utils/chapterDecisionLink.js';
+import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+});
 
 // Phase 8.34: 拆分为 module-level singleton stores
 //   useDecisionStore 管 all 历史 + 4 mutations (refresh/resolve/defer/cancel)
@@ -103,7 +116,7 @@ import { resolveFocusedDecisionId } from '../utils/chapterDecisionLink.js';
 //   页面 UI state (activeTab / expanded) 仍 page-local
 const store = useDecisionStore();
 const ws = useWorkflowSocket();
-const { focusChapter, focusDecisionId } = useDashboardNav();
+const { focusChapter, focusDecisionId, navigateTo } = useDashboardNav();
 
 // pending 仍走 WS 权威源 (Phase 6.4+ 契约, per 主公 Phase 8.34 决策)
 // ws.pendingDecisions 是 array of decisions (status 任意), 过滤 pending 状态
@@ -114,6 +127,7 @@ const all = computed(() => store.all.value);
 const loading = computed(() => store.loading.value);
 // error 合并 store (REST 拉) + ws (WS 连) 错误源
 const error = computed(() => store.lastError.value || ws.lastError.value);
+const displayError = useFilteredPageError(error);
 
 // Phase 6.6.A: resolved / closed tab 默认折叠, 用户点 "▸ 展开" 切换
 const activeTab = ref('pending');
@@ -167,6 +181,10 @@ function toggleExpand(tabId) {
   if (tabId === 'resolved' || tabId === 'closed') {
     expanded.value = { ...expanded.value, [tabId]: !expanded.value[tabId] };
   }
+}
+
+function goProduce() {
+  navigateTo('produce', { tab: 'workflows', clearFocus: true });
 }
 
 // Phase 8.34: handleResolve/Defer/Cancel 改为 thin wrapper, 调 store.* mutation

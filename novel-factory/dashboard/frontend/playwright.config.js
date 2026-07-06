@@ -34,6 +34,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: 'list',
+  snapshotPathTemplate: '{testDir}/{testFileDir}/snapshots/{arg}{ext}',
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'retain-on-failure',
@@ -47,6 +48,18 @@ export default defineConfig({
     {
       name: 'live-backend',
       testMatch: /(ripples-audit|decisions-resolve|creator-workspace)\.spec\.js/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'visual-capture',
+      testDir: './tests/visual-audit',
+      testMatch: /capture\.spec\.js/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'visual-regression',
+      testDir: './tests/visual-audit',
+      testMatch: /regression\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
   ],

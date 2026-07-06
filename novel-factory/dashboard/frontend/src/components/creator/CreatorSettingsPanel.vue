@@ -8,7 +8,11 @@
         data-testid="column-settings"
       >
         <h2 class="column-title">设定</h2>
-        <details class="settings-block" open>
+
+        <section class="settings-creator-zone" data-testid="settings-creator-zone">
+        <CreatorPreferencesSection />
+        <CreatorMemoryAssetsPanel compact />
+        <details class="settings-block" data-testid="settings-pillars-block">
           <summary>创作支柱</summary>
           <textarea
             v-model="st.pillarsText"
@@ -18,7 +22,7 @@
           />
           <code class="path-line">{{ st.settingsDocs?.pillars_path || st.overview.pillars_path }}</code>
         </details>
-        <details class="settings-block" open>
+        <details class="settings-block" data-testid="settings-outline-block">
           <summary>全局大纲</summary>
           <textarea
             :ref="st.bindGlobalOutlineEditorRef"
@@ -79,12 +83,16 @@
                 / -{{ st.settingsDiffPreview.editor_vs_history.pillars.lines_removed }}
               </p>
             </template>
-            <div
+            <details
               v-if="st.showMergeStrategy"
-              class="merge-strategy-panel"
-              data-testid="merge-strategy-panel"
+              class="merge-strategy-details"
+              data-testid="merge-strategy-details"
             >
-              <p class="diff-line">合并策略（三路冲突时选择保留来源）</p>
+              <summary>合并策略（三路冲突时选择保留来源）</summary>
+              <div
+                class="merge-strategy-panel"
+                data-testid="merge-strategy-panel"
+              >
               <p
                 v-if="st.usesGlobalMergeDefault"
                 class="meta-line"
@@ -471,6 +479,7 @@
                 </button>
               </div>
             </div>
+            </details>
           </template>
           <div class="batch-actions">
             <button
@@ -492,6 +501,10 @@
             </button>
           </div>
         </div>
+        </section>
+
+        <details class="settings-block settings-block--advanced" data-testid="settings-advanced-section">
+          <summary>高级设定</summary>
         <details v-if="st.settingsHistory.length" class="settings-block" data-testid="settings-history-panel">
           <summary>版本历史（{{ st.settingsHistory.length }}）</summary>
           <ul class="history-list">
@@ -576,6 +589,7 @@
           <p class="subsection-title">守门命令</p>
           <code>{{ st.overview.companion_check_cmd }}</code>
         </div>
+        </details>
       </section>
 
 </template>
@@ -583,11 +597,27 @@
 <script setup>
 import { inject } from 'vue';
 import { CREATOR_SETTINGS_KEY } from './creatorSettingsKey.js';
+import CreatorPreferencesSection from './CreatorPreferencesSection.vue';
+import CreatorMemoryAssetsPanel from './CreatorMemoryAssetsPanel.vue';
 
 const st = inject(CREATOR_SETTINGS_KEY);
 </script>
 
 <style scoped>
+.settings-creator-zone {
+  margin-bottom: var(--space-sm);
+}
+
+.settings-block--advanced {
+  margin-top: var(--space-sm);
+  font-size: var(--text-sm);
+}
+
+.settings-block--advanced > summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .settings-textarea {
   width: 100%;
   font-size: var(--text-sm);
@@ -627,6 +657,12 @@ const st = inject(CREATOR_SETTINGS_KEY);
 }
 .p0-line.ok { color: #4a4; }
 .p0-line.warn { color: #c44; }
+.merge-strategy-details > summary {
+  font-weight: 600;
+  cursor: pointer;
+  margin: var(--space-xs) 0;
+}
+
 .merge-strategy-panel {
   margin-top: var(--space-xs);
   display: flex;

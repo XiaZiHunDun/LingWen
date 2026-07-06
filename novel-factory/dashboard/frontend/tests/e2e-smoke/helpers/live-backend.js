@@ -34,6 +34,12 @@ export async function clickNav(page, label) {
   await page.getByRole('link', { name: label }).click();
 }
 
+/** 伴侣壳侧栏无「待办」入口时，用 deep link 打开 Inbox */
+export async function gotoInbox(page, tab = 'decisions') {
+  await page.goto(`/?nav=inbox&tab=${tab}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByTestId('inbox-page')).toBeVisible({ timeout: 30_000 });
+}
+
 export async function waitForPendingDecisionCard(page, timeout = 30_000) {
   await page.getByTestId('decision-card').waitFor({ state: 'visible', timeout });
 }

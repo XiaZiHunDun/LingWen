@@ -2,17 +2,7 @@
  * useCreatorModeGuide — 三模式说明与切换逻辑（从 CreatorPage 抽出）
  */
 import { computed, ref } from 'vue';
-
-const CREATION_MODE_CAPABILITY_ROWS = [
-  { id: 'human-writing', label: '人主笔', companion: true, advance: false, studio: false },
-  { id: 'p0-guard', label: 'P0 守门', companion: true, advance: false, studio: false },
-  { id: 'inline-chapter-edit', label: '章内嵌编辑', companion: true, advance: false, studio: false },
-  { id: 'volume-plan-edit', label: '卷纲编辑', companion: true, advance: true, studio: false },
-  { id: 'volume-pulse', label: '脉络预警', companion: false, advance: true, studio: true },
-  { id: 'batch-generate', label: 'Batch 产章', companion: false, advance: true, studio: true },
-  { id: 'factory-pipeline', label: '工厂流水线', companion: false, advance: false, studio: true },
-  { id: 'digest-ops', label: 'Digest 运维', companion: false, advance: false, studio: true },
-];
+import { CREATION_MODE_CAPABILITY_ROWS, isCreatorChromeVisible } from '../config/creatorPanelMatrix.js';
 
 const CREATION_MODE_ONBOARDING_LABELS = {
   companion: '陪伴',
@@ -127,6 +117,10 @@ const studioCreationEntryHintText = computed(() => {
 
 const modeGuideExpanded = computed(
   () => !uiProfile.value.creator_mode_guide_default_collapsed,
+);
+
+const showModeGuidePanel = computed(
+  () => isCreatorChromeVisible(overview.value?.creation_mode, 'modeGuide'),
 );
 
 function loadCreationModeSwitchHistory() {
@@ -311,6 +305,7 @@ const panelContext = {
   uiProfile,
   modeLabel,
   modeGuideExpanded,
+  showModeGuidePanel,
   creationModeSwitchHintText,
   creationModeSwitchDocLinks,
   creationModeSwitchAriaMessage,

@@ -11,10 +11,10 @@ describe('useDashboardNav workspace deep link', () => {
     return import('../../src/composables/useDashboardNav.js').then((m) => m.useDashboardNav());
   }
 
-  test('navigateTo creator with workspace=pulse updates URL', async () => {
+  test('navigateTo write with workspace=pulse updates URL', async () => {
     const { navigateTo, focusCreatorWorkspace } = await loadNav();
-    navigateTo('creator', { workspace: 'pulse', clearFocus: true });
-    expect(window.location.search).toContain('nav=creator');
+    navigateTo('write', { workspace: 'pulse', clearFocus: true });
+    expect(window.location.search).toContain('nav=write');
     expect(window.location.search).toContain('workspace=pulse');
     expect(focusCreatorWorkspace.value).toBe('pulse');
   });
@@ -51,9 +51,18 @@ describe('useDashboardNav workspace deep link', () => {
     expect(window.location.search).not.toContain('workspace=');
   });
 
+  test('navigateTo write with clearFocus clears workspace deep link', async () => {
+    const { navigateTo, focusCreatorWorkspace } = await loadNav();
+    navigateTo('creator', { workspace: 'pulse' });
+    navigateTo('write', { clearFocus: true });
+    expect(focusCreatorWorkspace.value).toBeNull();
+    expect(window.location.search).toContain('nav=write');
+    expect(window.location.search).not.toContain('workspace=');
+  });
+
   test('popstate restores workspace from URL', async () => {
     const { syncNavFromBrowserUrl, focusCreatorWorkspace, activeNav } = await loadNav();
-    window.history.replaceState({}, '', '/?nav=creator&workspace=pulse');
+    window.history.replaceState({}, '', '/?nav=write&workspace=pulse');
     syncNavFromBrowserUrl();
     expect(activeNav.value).toBe('creator');
     expect(focusCreatorWorkspace.value).toBe('pulse');

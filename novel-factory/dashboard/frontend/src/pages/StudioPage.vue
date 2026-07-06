@@ -6,7 +6,7 @@
 -->
 <template>
   <div class="studio-page">
-    <header class="page-header">
+    <header v-if="!embedded" class="page-header">
       <h1 class="page-title" data-testid="page-title">灵文工作室</h1>
       <button
         class="refresh-btn pixel-border"
@@ -18,28 +18,22 @@
       </button>
     </header>
 
-    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
-      {{ error }}
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+      {{ displayError }}
     </div>
 
-    <section
+    <HubEmptyGuide
       v-if="showStudioEmptyGuide"
-      class="studio-empty-guide pixel-card"
-      data-testid="studio-empty-guide"
-    >
-      <p class="studio-empty-title">本书尚未开始正文生产</p>
-      <p class="studio-empty-hint">
-        建议先在下方<strong>生产控制台</strong>跑 Preflight，确认环境无误后再 Batch 产章；若做人主笔，可去创作页写 ch001。
-      </p>
-      <div class="studio-empty-actions">
-        <button type="button" class="empty-cta-btn pixel-border" data-testid="studio-scroll-production-btn" @click="scrollToProduction">
-          去 Preflight
-        </button>
-        <button type="button" class="empty-cta-btn pixel-border" data-testid="studio-go-creator-btn" @click="goCreator">
-          去创作页
-        </button>
-      </div>
-    </section>
+      title="本书尚未开始正文生产"
+      hint="建议先跑 Preflight 确认环境，再 Batch 产章；若做人主笔，可去创作页写 ch001。"
+      primary-label="去 Preflight"
+      secondary-label="去创作页"
+      primary-test-id="studio-scroll-production-btn"
+      secondary-test-id="studio-go-creator-btn"
+      test-id="studio-empty-guide"
+      @primary="scrollToProduction"
+      @secondary="goCreator"
+    />
 
     <section v-if="summary" class="studio-section pixel-card" data-testid="project-summary">
       <h2 class="section-title">{{ summary.name }}</h2>
@@ -55,8 +49,8 @@
       </details>
     </section>
 
-    <section v-if="quality" class="studio-section pixel-card" data-testid="quality-panel">
-      <h2 class="section-title">质量仪表盘</h2>
+    <details v-if="quality" class="studio-section pixel-card quality-collapsible" data-testid="quality-panel">
+      <summary class="section-title">质量仪表盘</summary>
       <ul class="quality-list">
         <li :class="quality.pillars_ok ? 'ok' : 'warn'">
           支柱文件：{{ quality.pillars_ok ? '✓' : '✗' }}
@@ -78,7 +72,7 @@
           <code v-if="quality.golden_set_status === 'ready'">{{ quality.golden_regression_cmd }}</code>
         </li>
       </ul>
-    </section>
+    </details>
 
     <section v-if="qualityReport" class="studio-section pixel-card" data-testid="quality-report-panel">
       <h2 class="section-title">Full-check 质检报告</h2>
@@ -335,6 +329,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 import StatCard from '../components/StatCard.vue';
+import HubEmptyGuide from '../components/HubEmptyGuide.vue';
 import {
   studioProductionPreflight,
   studioProductionRun,
@@ -343,8 +338,14 @@ import {
 } from '../api/index.js';
 import { useStudioProject } from '../composables/useStudioProject.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+});
 
 const { summary, quality, qualityReport, proseDiff, proseJudge, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
+const displayError = useFilteredPageError(error);
 const { navigateTo } = useDashboardNav();
 const productionSectionRef = ref(null);
 

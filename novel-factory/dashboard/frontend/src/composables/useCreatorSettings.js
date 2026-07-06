@@ -118,6 +118,11 @@ const settingsDiffSnippet = computed(() => {
   return lines.slice(0, 12);
 });
 
+const settingsHasUnsavedChanges = computed(
+  () => pillarsText.value !== settingsBaseline.value.pillars
+    || globalOutlineText.value !== settingsBaseline.value.outline,
+);
+
 const factoryMergePresetCount = computed(
   () => mergePresetPackages.value.filter((pkg) => pkg.scope === 'factory').length,
 );
@@ -626,6 +631,7 @@ const panelContext = {
   globalOutlineText,
   settingsDocs,
   settingsSaving,
+  settingsHasUnsavedChanges,
   requestSaveSettings,
   showSettingsDiff,
   settingsDiffPreview,
@@ -695,6 +701,8 @@ const panelContext = {
 
 return {
   panelContext,
+  pillarsText,
+  settingsHasUnsavedChanges,
   loadSettingsDocs,
   loadSettingsHistory,
   loadMergePreferences,

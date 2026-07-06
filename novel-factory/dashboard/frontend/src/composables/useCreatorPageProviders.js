@@ -11,6 +11,7 @@ import { CREATOR_ADVANCE_BATCH_KEY, createCreatorAdvanceBatchContext } from '../
 import { CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext } from '../components/creator/creatorBatchHistoryKey.js';
 import { CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext } from '../components/creator/creatorVolumePlanKey.js';
 import { CREATOR_PAGE_CHROME_KEY, createCreatorPageChromeContext } from '../components/creator/creatorPageChromeKey.js';
+import { CREATOR_PRODUCT_TOOLS_KEY, createCreatorProductToolsContext } from '../components/creator/creatorProductToolsKey.js';
 
 /**
  * @param {{
@@ -23,6 +24,7 @@ import { CREATOR_PAGE_CHROME_KEY, createCreatorPageChromeContext } from '../comp
  *   modeGuidePanelContext: Record<string, unknown>,
  *   batchHistoryPanelContext: Record<string, unknown>,
  *   volumePlanPanelContext: Record<string, unknown>,
+ *   productToolsPanelContext: Record<string, unknown>,
  * }} contexts
  */
 export function useCreatorPageProviders(contexts) {
@@ -35,4 +37,5 @@ export function useCreatorPageProviders(contexts) {
   provide(CREATOR_MODE_GUIDE_KEY, createCreatorModeGuideContext(contexts.modeGuidePanelContext));
   provide(CREATOR_BATCH_HISTORY_KEY, createCreatorBatchHistoryContext(contexts.batchHistoryPanelContext));
   provide(CREATOR_VOLUME_PLAN_KEY, createCreatorVolumePlanContext(contexts.volumePlanPanelContext));
+  provide(CREATOR_PRODUCT_TOOLS_KEY, createCreatorProductToolsContext(contexts.productToolsPanelContext));
 }

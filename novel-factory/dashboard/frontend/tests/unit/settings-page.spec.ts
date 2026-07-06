@@ -1,8 +1,12 @@
 // tests/unit/settings-page.spec.ts — Phase 9.78 F68 + Phase 9.86 F78
 import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import SettingsPage from '../../src/pages/SettingsPage.vue'
 import { byTestid } from '../helpers/by-testid'
+import { apiConnectivity } from '../../src/api/connectivity.js'
+
+const studioSummary = ref({ creation_mode: 'advance' })
 
 const mocks = vi.hoisted(() => ({
   fetchBudgets: vi.fn(),
@@ -17,6 +21,14 @@ const mocks = vi.hoisted(() => ({
       },
     },
   },
+}))
+
+vi.mock('../../src/composables/useStudioProject.js', () => ({
+  useStudioProject: () => ({
+    summary: studioSummary,
+    projects: ref([]),
+    activeSlug: ref(null),
+  }),
 }))
 
 vi.mock('../../src/api/index.js', async (importOriginal) => {
@@ -40,6 +52,8 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
 
 describe('SettingsPage (F68/F78)', () => {
   beforeEach(() => {
+    studioSummary.value = { creation_mode: 'advance' }
+    apiConnectivity.value = { offline: false, message: '', checking: false }
     mocks.fetchBudgets.mockResolvedValue({
       per_run: { budget_usd: 1, used_usd: 0.2, used_pct: 20, status: 'ok' },
       per_day: { budget_usd: 0.5, used_usd: 0.1, used_pct: 20, status: 'ok' },
@@ -54,10 +68,13 @@ describe('SettingsPage (F68/F78)', () => {
     mocks.setBudgetByTier.mockResolvedValue({ ok: true, tier: 'sonnet', usd: 1.0 })
   })
 
-  test('renders title, budget tables, edit panel, and env docs', async () => {
+  test('renders system status, budget tables, edit panel, and env docs', async () => {
     const wrapper = mount(SettingsPage)
     await flushPromises()
-    expect(wrapper.find(byTestid('page-title')).text()).toBe('系统设置')
+    expect(wrapper.find(byTestid('settings-page')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('page-lead-bar-settings')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('system-status-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('sidebar-system-status-body')).exists()).toBe(true)
     expect(wrapper.find(byTestid('budget-panel')).exists()).toBe(true)
     expect(wrapper.find(byTestid('budget-edit-panel')).exists()).toBe(true)
     expect(wrapper.find(byTestid('window-budget-table')).exists()).toBe(true)
@@ -94,5 +111,38 @@ describe('SettingsPage (F68/F78)', () => {
     await wrapper.find('form.budget-edit-form').trigger('submit.prevent')
     await flushPromises()
     expect(mocks.setBudgetByTier).toHaveBeenCalledWith('sonnet', 2.5)
+  })
+
+  test('companion mode uses basic + collapsed advanced with read-only budget', async () => {
+    studioSummary.value = { creation_mode: 'companion' }
+    mocks.fetchBudgets.mockClear()
+    const wrapper = mount(SettingsPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('settings-basic-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('system-status-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('display-settings-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('settings-advanced-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('settings-advanced-panel')).element.hasAttribute('open')).toBe(false)
+    expect(wrapper.find(byTestid('budget-edit-panel')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('env-panel')).exists()).toBe(false)
+    expect(mocks.fetchBudgets).not.toHaveBeenCalled()
+
+    const advancedPanel = wrapper.find(byTestid('settings-advanced-panel'))
+    const detailsEl = advancedPanel.element
+    detailsEl.open = true
+    detailsEl.dispatchEvent(new Event('toggle'))
+    await flushPromises()
+    expect(mocks.fetchBudgets).toHaveBeenCalled()
+    expect(wrapper.find(byTestid('budget-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('settings-advanced-companion-hint')).exists()).toBe(true)
+  })
+
+  test('advance mode opens advanced panel with edit controls', async () => {
+    studioSummary.value = { creation_mode: 'advance' }
+    const wrapper = mount(SettingsPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('settings-advanced-panel')).element.hasAttribute('open')).toBe(true)
+    expect(wrapper.find(byTestid('budget-edit-panel')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('env-panel')).exists()).toBe(true)
   })
 })

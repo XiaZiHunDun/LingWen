@@ -101,6 +101,16 @@ const creatorMocks = vi.hoisted(() => ({
   previewCreatorVolumePlanDiff: vi.fn(),
   fetchCreatorBatchHistory: vi.fn(),
   exportCreatorBatchHistory: vi.fn(),
+  fetchCreatorPreferences: vi.fn(),
+  saveCreatorPreferencesApi: vi.fn(),
+  fetchCreatorMemoryAssets: vi.fn(),
+  exportCreatorEpub: vi.fn(),
+  exportCreatorDocx: vi.fn(),
+  queryCreatorMemory: vi.fn(),
+  submitCreatorPublish: vi.fn(),
+  fetchCreatorPublishHistory: vi.fn(),
+  fetchCreatorPublishPlatforms: vi.fn(),
+  fetchCreatorModels: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
@@ -202,6 +212,16 @@ vi.mock('../../src/api/index.js', () => ({
   previewCreatorVolumePlanDiff: creatorMocks.previewCreatorVolumePlanDiff,
   fetchCreatorBatchHistory: creatorMocks.fetchCreatorBatchHistory,
   exportCreatorBatchHistory: creatorMocks.exportCreatorBatchHistory,
+  fetchCreatorPreferences: creatorMocks.fetchCreatorPreferences,
+  saveCreatorPreferencesApi: creatorMocks.saveCreatorPreferencesApi,
+  fetchCreatorMemoryAssets: creatorMocks.fetchCreatorMemoryAssets,
+  exportCreatorEpub: creatorMocks.exportCreatorEpub,
+  exportCreatorDocx: creatorMocks.exportCreatorDocx,
+  queryCreatorMemory: creatorMocks.queryCreatorMemory,
+  submitCreatorPublish: creatorMocks.submitCreatorPublish,
+  fetchCreatorPublishHistory: creatorMocks.fetchCreatorPublishHistory,
+  fetchCreatorPublishPlatforms: creatorMocks.fetchCreatorPublishPlatforms,
+  fetchCreatorModels: creatorMocks.fetchCreatorModels,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', async () => {
@@ -209,6 +229,7 @@ vi.mock('../../src/composables/useStudioProject.js', async () => {
   return {
     useStudioProject: () => ({
       projectRevision: ref(0),
+      activeSlug: ref('anye-xinbiao'),
     }),
   };
 });
@@ -361,6 +382,43 @@ describe('CreatorPage', () => {
     navMocks.focusWizardNotes.value = {};
     navMocks.setWizardDeepLink.mockClear();
     creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
+    creatorMocks.fetchCreatorPreferences.mockResolvedValue({
+      slug: 'anye-xinbiao',
+      default_model: 'minimax-abab6.5',
+      temperature: 0.7,
+      max_tokens: 8000,
+      memory_rag_enabled: true,
+      memory_rag_top_k: 8,
+      task_models: { outline: 'inherit', body: 'inherit', review: 'inherit', memory: 'inherit' },
+      companion_lightweight: true,
+      intervention_rules: {
+        deviation_alerts: true,
+        batch_progress: true,
+        logic_p0: true,
+        settings_unsaved: true,
+        preferences_unsaved: true,
+        memory_offline: true,
+        empty_write_hint: true,
+      },
+    });
+    creatorMocks.fetchCreatorModels.mockResolvedValue({
+      models: [{ id: 'minimax-abab6.5', label: 'MiniMax', provider: 'minimax', available: true }],
+      default_model: 'minimax-abab6.5',
+    });
+    creatorMocks.fetchCreatorMemoryAssets.mockResolvedValue({
+      slug: 'anye-xinbiao',
+      memory_available: false,
+      memory_rag_enabled: true,
+      items: [],
+    });
+    creatorMocks.fetchCreatorPublishHistory.mockResolvedValue({ slug: 'anye-xinbiao', entries: [] });
+    creatorMocks.fetchCreatorPublishPlatforms.mockResolvedValue({
+      slug: 'anye-xinbiao',
+      platforms: [
+        { id: 'fanqie', label: '番茄小说', connection: 'stub', capabilities: { oauth_required: true, max_intro_chars: 500, supports_submission_pack: true, supports_full_book: false } },
+        { id: 'qidian', label: '起点中文网', connection: 'stub', capabilities: { oauth_required: true, max_intro_chars: 2000, supports_submission_pack: true, supports_full_book: true } },
+      ],
+    });
     creatorMocks.fetchCreatorVolumePlan.mockResolvedValue({
       volumes: [
         {
@@ -961,7 +1019,7 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="volume-plan-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="deviation-badge"]').text()).toContain('偏离');
     expect(wrapper.find('[data-testid="deviation-list"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="creation-mode-badge"]').text()).toContain('推进');
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').exists()).toBe(false);
   });
 
   it('saves volume plan on button click', async () => {
@@ -1739,17 +1797,61 @@ describe('CreatorPage', () => {
     expect(wizard.element.open).toBe(false);
     expect(wrapper.find('[data-testid="wizard-webhook-panel"]').exists()).toBe(false);
 
+    // 人类习惯模式隐藏顶栏刷新；用 studio 验证偏离刷新
+    creatorMocks.fetchCreatorOnboarding.mockResolvedValueOnce({
+      mode_label: '工作室',
+      max_chapter: 12,
+      steps: [{ id: 'init', title: '初始化' }],
+      completed_step_ids: [],
+      auto_completed_step_ids: [],
+      step_notes: {},
+      unread_mention_count: 0,
+      progress_pct: 0,
+    });
+    creatorMocks.fetchCreatorOnboardingNotifications.mockResolvedValueOnce({
+      unread: 0,
+      handles: [],
+      notifications: [],
+    });
     creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
       ...overviewFixture,
+      creation_mode: 'studio',
+      deviations: [{ type: 'x', severity: 'alert', chapter: 8, message: '越界' }],
+      deviation_count: 1,
+      deviation_total_count: 2,
+      ui_profile: {
+        creation_mode: 'studio',
+        quality_profile: 'creator_relaxed',
+        primary_action: 'logic_check',
+        show_studio_workflow: false,
+        show_digest_ops: false,
+        show_factory_presets: false,
+        show_template_version_ops: true,
+        show_merge_preset_advanced: false,
+        simplified_notifications: true,
+        volume_pulse_enabled: false,
+        wizard_default_collapsed: true,
+        wizard_expand_if_incomplete: false,
+        chapter_inline_edit: true,
+        deviation_min_severity: null,
+      },
+      volume_pulse: null,
+    });
+    const studioWrapper = mount(CreatorPage);
+    await flushPromises();
+
+    creatorMocks.fetchCreatorOverview.mockResolvedValueOnce({
+      ...overviewFixture,
+      creation_mode: 'studio',
       deviations: [{ type: 'x', severity: 'alert', chapter: 8, message: '越界' }],
       deviation_count: 1,
       deviation_total_count: 2,
     });
-    await wrapper.find('[data-testid="refresh-btn"]').trigger('click');
+    await studioWrapper.find('[data-testid="refresh-btn"]').trigger('click');
     await flushPromises();
-    const items = wrapper.findAll('[data-testid="deviation-list"] .deviation-item');
+    const items = studioWrapper.findAll('[data-testid="deviation-list"] .deviation-item');
     expect(items.length).toBe(1);
-    expect(wrapper.find('[data-testid="deviation-badge"]').text()).toContain('1');
+    expect(studioWrapper.find('[data-testid="deviation-badge"]').text()).toContain('1');
   });
 
   it('v4.0 companion inline chapter edit and wizard expand when incomplete', async () => {
@@ -1797,7 +1899,7 @@ describe('CreatorPage', () => {
     });
     const wrapper = mount(CreatorPage);
     await flushPromises();
-    expect(wrapper.find('[data-testid="onboarding-wizard-panel"]').element.open).toBe(true);
+    expect(wrapper.find('[data-testid="onboarding-wizard-panel"]').element.open).toBe(false);
 
     await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
     await flushPromises();
@@ -1809,7 +1911,7 @@ describe('CreatorPage', () => {
     expect(creatorMocks.saveCreatorChapterBody).toHaveBeenCalledWith(1, '新正文');
   });
 
-  it('v4.1 advance full read preview and pulse jump', async () => {
+  it('v4.1 advance desk inline edit and pulse jump', async () => {
     creatorMocks.fetchCreatorChapterPreview.mockResolvedValueOnce({
       chapter: 1,
       has_body: true,
@@ -1826,8 +1928,8 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="volume-pulse-row-一"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: true });
-    expect(wrapper.find('[data-testid="chapter-read-preview"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain('推进模式全文正文');
+    expect(wrapper.find('[data-testid="chapter-body-textarea"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="chapter-body-textarea"]').element.value).toContain('推进模式全文正文');
   });
 
   it('v4.1 companion logic check inline issues jump to chapter', async () => {
@@ -2151,7 +2253,7 @@ describe('CreatorPage', () => {
     );
   });
 
-  it('v4.6 advance outline read preview', async () => {
+  it('v4.6 advance outline inline edit on desk', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       ui_profile: {
@@ -2176,9 +2278,9 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="chapter-row-1"]').trigger('click');
     await flushPromises();
     expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(1, { full: true });
-    expect(wrapper.find('[data-testid="chapter-outline-read-preview"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain('推进模式章纲全文');
-    expect(wrapper.find('[data-testid="chapter-read-preview"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="chapter-outline-textarea"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="chapter-outline-textarea"]').element.value).toContain('推进模式章纲全文');
+    expect(wrapper.find('[data-testid="chapter-body-textarea"]').exists()).toBe(true);
   });
 
   it('v4.6 advance batch scrolls to deviation list', async () => {
@@ -2548,10 +2650,10 @@ describe('CreatorPage', () => {
   it('v5.0 companion creation mode switch hint', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
-      creation_mode: 'companion',
+      creation_mode: 'advance',
       ui_profile: {
         ...overviewFixture.ui_profile,
-        creation_mode: 'companion',
+        creation_mode: 'advance',
         primary_action: 'logic_check',
         creation_mode_switch_hint: true,
       },
@@ -2560,8 +2662,8 @@ describe('CreatorPage', () => {
     await flushPromises();
     const hint = wrapper.find('[data-testid="creation-mode-switch-hint"]');
     expect(hint.exists()).toBe(true);
-    expect(hint.text()).toContain('陪伴模式');
-    expect(hint.text()).toContain('creation_mode: advance');
+    expect(hint.text()).toContain('推进模式');
+    expect(hint.text()).toContain('creation_mode: companion');
   });
 
   it('v5.0 volume plan diff panel on unsaved edits', async () => {
@@ -2757,10 +2859,10 @@ describe('CreatorPage', () => {
   it('v5.2 companion mode switch doc links', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
-      creation_mode: 'companion',
+      creation_mode: 'advance',
       ui_profile: {
         ...overviewFixture.ui_profile,
-        creation_mode: 'companion',
+        creation_mode: 'advance',
         primary_action: 'logic_check',
         creation_mode_switch_doc_link: true,
       },
@@ -2768,9 +2870,9 @@ describe('CreatorPage', () => {
     const wrapper = mount(CreatorPage);
     await flushPromises();
     expect(wrapper.find('[data-testid="creation-mode-switch-doc-links"]').exists()).toBe(true);
-    await wrapper.find('[data-testid="mode-switch-doc-advance-checklist"]').trigger('click');
+    await wrapper.find('[data-testid="mode-switch-doc-companion-checklist"]').trigger('click');
     await flushPromises();
-    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('advance-walkthrough-checklist');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('companion-walkthrough-checklist');
   });
 
   it('v5.3 volume plan diff shows global outline side by side', async () => {
@@ -2937,24 +3039,24 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="batch-history-date-2026-06-21"]').exists()).toBe(true);
   });
 
-  it('v5.4 companion mode badge hint on click', async () => {
+  it('v5.4 studio mode badge hint on click', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
-      creation_mode: 'companion',
+      creation_mode: 'studio',
       ui_profile: {
         ...overviewFixture.ui_profile,
-        creation_mode: 'companion',
-        primary_action: 'logic_check',
-        creation_mode_badge_hint: true,
+        creation_mode: 'studio',
+        primary_action: 'studio_quality',
+        studio_creation_mode_badge_hint: true,
       },
     });
     const wrapper = mount(CreatorPage);
     await flushPromises();
     const badge = wrapper.find('[data-testid="creation-mode-badge"]');
-    expect(badge.attributes('title')).toContain('人主笔');
+    expect(badge.attributes('title')).toContain('工厂');
     await badge.trigger('click');
     await flushPromises();
-    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('陪伴');
+    expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('工作室');
   });
 
   it('v5.5 jump from volume diff to global outline editor', async () => {
@@ -3098,7 +3200,7 @@ describe('CreatorPage', () => {
     );
   });
 
-  it('v5.6 companion mode badge tint class', async () => {
+  it('v5.6 companion mode hides mode badge (human-first desk)', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       creation_mode: 'companion',
@@ -3111,9 +3213,7 @@ describe('CreatorPage', () => {
     });
     const wrapper = mount(CreatorPage);
     await flushPromises();
-    expect(wrapper.find('[data-testid="creation-mode-badge"]').classes()).toContain(
-      'mode-badge--companion-tint',
-    );
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').exists()).toBe(false);
   });
 
   it('v5.7 collapses volume plan diff when no changes', async () => {
@@ -3188,7 +3288,7 @@ describe('CreatorPage', () => {
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('失败任务');
   });
 
-  it('v5.7 advance mode badge tint class', async () => {
+  it('v5.7 advance mode hides mode badge on human-first desk', async () => {
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       creation_mode: 'advance',
@@ -3201,9 +3301,7 @@ describe('CreatorPage', () => {
     });
     const wrapper = mount(CreatorPage);
     await flushPromises();
-    expect(wrapper.find('[data-testid="creation-mode-badge"]').classes()).toContain(
-      'mode-badge--advance-tint',
-    );
+    expect(wrapper.find('[data-testid="creation-mode-badge"]').exists()).toBe(false);
   });
 
   it('v5.8 shows volume plan diff change count badge', async () => {
@@ -3585,17 +3683,17 @@ describe('CreatorPage', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
-      creation_mode: 'companion',
+      creation_mode: 'advance',
       ui_profile: {
         ...overviewFixture.ui_profile,
-        creation_mode: 'companion',
+        creation_mode: 'advance',
         creation_mode_switch_doc_link: true,
         creation_mode_switch_doc_open: true,
       },
     });
     const wrapper = mount(CreatorPage);
     await flushPromises();
-    await wrapper.find('[data-testid="mode-switch-doc-advance-checklist"]').trigger('click');
+    await wrapper.find('[data-testid="mode-switch-doc-companion-checklist"]').trigger('click');
     await flushPromises();
     expect(openSpy).toHaveBeenCalled();
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('已打开文档');

@@ -2,44 +2,80 @@
   CreatorPageHeader.vue — 创作页顶栏（inject 页级 chrome 上下文）
 -->
 <template>
-  <header class="page-header">
-    <h1 class="page-title" data-testid="page-title">创作伴侣</h1>
-    <div class="header-actions">
-      <span
-        v-if="c.overview"
-        class="mode-badge pixel-border"
-        :class="{
-          'mode-badge--hintable': c.modeBadgeHintEnabled && c.creationModeBadgeHintText,
-          'mode-badge--companion-tint': c.uiProfile.companion_creation_mode_badge_tint && c.overview.creation_mode === 'companion',
-          'mode-badge--advance-tint': c.uiProfile.advance_creation_mode_badge_tint && c.overview.creation_mode === 'advance',
-          'mode-badge--studio-tint': c.uiProfile.studio_creation_mode_badge_tint && c.overview.creation_mode === 'studio',
-        }"
-        data-testid="creation-mode-badge"
-        :title="c.modeBadgeHintEnabled ? c.creationModeBadgeHintText : undefined"
-        @click="c.showCreationModeBadgeHint"
-      >
-        {{ c.modeLabel }}
-      </span>
-      <span
-        v-if="c.overview && c.displayDeviationBadge"
-        class="deviation-badge pixel-border deviation-badge--clickable"
-        data-testid="deviation-badge"
-        role="button"
-        tabindex="0"
-        :title="c.workspaceTabsEnabled ? '查看脉络与偏离' : undefined"
-        @click="c.onDeviationBadgeClick"
-        @keydown.enter="c.onDeviationBadgeClick"
-      >
-        偏离 {{ c.displayDeviationCount }}
-      </span>
-      <button
-        class="refresh-btn pixel-border"
-        data-testid="refresh-btn"
-        :disabled="c.loading"
-        @click="c.refresh"
-      >
-        {{ c.loading ? '加载中…' : '刷新' }}
-      </button>
+  <header class="page-header creator-page-header">
+    <div v-if="c.showPageTitle || c.displayDeviationBadge" class="creator-page-header__row">
+      <h1 v-if="c.showPageTitle" class="page-title" data-testid="page-title">书桌</h1>
+      <div v-if="c.overview" class="creator-page-header__badges">
+        <span
+          v-if="c.showCreationModeBadge"
+          class="mode-badge creator-badge pixel-border"
+          :class="{
+            'mode-badge--hintable': c.modeBadgeHintEnabled && c.creationModeBadgeHintText,
+            'mode-badge--companion-tint': c.uiProfile.companion_creation_mode_badge_tint && c.overview.creation_mode === 'companion',
+            'mode-badge--advance-tint': c.uiProfile.advance_creation_mode_badge_tint && c.overview.creation_mode === 'advance',
+            'mode-badge--studio-tint': c.uiProfile.studio_creation_mode_badge_tint && c.overview.creation_mode === 'studio',
+          }"
+          data-testid="creation-mode-badge"
+          :title="c.modeBadgeHintEnabled ? c.creationModeBadgeHintText : undefined"
+          @click="c.showCreationModeBadgeHint"
+        >
+          {{ c.modeLabel }}
+        </span>
+        <span
+          v-if="c.displayDeviationBadge"
+          class="deviation-badge creator-badge pixel-border deviation-badge--clickable"
+          data-testid="deviation-badge"
+          role="button"
+          tabindex="0"
+          :title="c.workspaceTabsEnabled ? '查看脉络与偏离' : undefined"
+          @click="c.onDeviationBadgeClick"
+          @keydown.enter="c.onDeviationBadgeClick"
+        >
+          偏离 {{ c.displayDeviationCount }}
+        </span>
+      </div>
+    </div>
+
+    <div
+      v-if="c.overview && c.showHeaderActionsRow"
+      class="creator-page-header__row creator-page-header__row--prefs"
+      :class="{ 'creator-page-header__row--actions-only': !c.showHeaderPreferences && !c.showHeaderPublishExport }"
+    >
+      <CreatorPreferencesSummary
+        v-if="c.overview && c.showHeaderPreferences"
+        compact
+        :show-edit-link="true"
+        class="header-prefs-summary"
+      />
+      <div class="creator-page-header__actions">
+        <button
+          v-if="c.showHeaderPublishExport"
+          class="action-btn pixel-border"
+          data-testid="export-btn"
+          :disabled="!c.overview"
+          @click="c.openExportModal('full')"
+        >
+          导出
+        </button>
+        <button
+          v-if="c.showHeaderPublishExport"
+          class="action-btn pixel-border"
+          data-testid="publish-btn"
+          :disabled="!c.overview"
+          @click="c.openPublishWizard"
+        >
+          发布
+        </button>
+        <button
+          v-if="c.showHeaderRefresh"
+          class="refresh-btn pixel-border"
+          data-testid="refresh-btn"
+          :disabled="c.loading"
+          @click="c.refresh"
+        >
+          {{ c.loading ? '加载中…' : '刷新' }}
+        </button>
+      </div>
     </div>
   </header>
 </template>
@@ -47,36 +83,31 @@
 <script setup>
 import { inject } from 'vue';
 import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
+import CreatorPreferencesSummary from './CreatorPreferencesSummary.vue';
 
 const c = inject(CREATOR_PAGE_CHROME_KEY);
 </script>
 
 <style scoped>
-.page-header {
-  display: flex;
-  justify-content: space-between;
+.creator-page-header__row--actions-only {
+  justify-content: flex-end;
+}
+
+.creator-page-header__row--prefs {
   align-items: center;
+}
+
+.creator-page-header__badges {
+  display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
-.page-title {
-  font-size: 14px;
-  color: var(--color-accent);
-  font-family: 'Press Start 2P', monospace;
-}
-
-.header-actions {
-  display: flex;
+  gap: var(--space-xs);
   align-items: center;
-  gap: var(--space-sm);
 }
 
-.mode-badge,
-.deviation-badge {
-  font-size: var(--text-sm);
-  padding: var(--space-xs) var(--space-sm);
-  font-family: 'Press Start 2P', monospace;
+.header-prefs-summary {
+  flex: 1;
+  min-width: min(320px, 100%);
+  max-width: 100%;
 }
 
 .deviation-badge {
@@ -96,9 +127,9 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
 }
 
 .mode-badge--companion-tint {
-  color: #2a6;
-  background: rgba(80, 180, 120, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(60, 140, 90, 0.45);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  box-shadow: inset 0 0 0 1px rgba(61, 95, 138, 0.35);
 }
 
 .mode-badge--advance-tint {
@@ -113,9 +144,9 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   box-shadow: inset 0 0 0 1px rgba(160, 110, 60, 0.45);
 }
 
-.refresh-btn {
-  font-size: var(--text-sm);
-  padding: var(--space-xs) var(--space-sm);
+.refresh-btn,
+.action-btn {
+  padding: 6px 12px;
   cursor: pointer;
 }
 </style>

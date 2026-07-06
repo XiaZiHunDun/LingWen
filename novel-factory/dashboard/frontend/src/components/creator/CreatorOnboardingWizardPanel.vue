@@ -3,7 +3,7 @@
 -->
 <template>
     <details
-      v-if="ob.onboardingWizard"
+      v-if="ob.onboardingWizard && ob.showOnboardingChrome"
       ref="wizardPanelRef"
       class="onboarding-wizard pixel-border"
       data-testid="onboarding-wizard-panel"

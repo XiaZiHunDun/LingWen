@@ -2,13 +2,19 @@
   InsightPage.vue — Phase D: 洞察统一入口（追读力 + 分析，只读诊断）
 -->
 <template>
-  <div class="insight-page" data-testid="insight-page">
-    <header class="hub-header">
-      <div>
-        <h1 class="page-title" data-testid="page-title">洞察</h1>
-        <p class="hub-subtitle">{{ insightSubtitle }}</p>
-      </div>
-    </header>
+  <div class="insight-page l1-page" data-testid="insight-page">
+    <div class="l1-page__body l1-panel-enter hub-l1__panel">
+      <PageLeadBar
+        page-id="insight"
+        inline
+        text="追读力与健康度诊断——只读查看，不可发起生产"
+      />
+    <HubPageHeader
+      title="洞察"
+      :subtitle="insightSubtitle"
+      :loading="hubLoading"
+      @refresh="refreshActiveTab"
+    />
 
     <div
       v-if="isReadonlyInsight"
@@ -22,27 +28,36 @@
     <HubTabBar
       v-model="activeTab"
       :tabs="INSIGHT_TABS"
+      variant="segmented"
       test-id="insight-tabs"
+      class="insight-tabs"
       @update:model-value="onTabChange"
     />
 
     <div class="hub-panel">
-      <OverviewPage v-if="activeTab === 'overview'" />
-      <AnalyticsPage v-else-if="activeTab === 'analytics'" />
+      <OverviewPage v-if="activeTab === 'overview'" embedded />
+      <AnalyticsPage v-else-if="activeTab === 'analytics'" embedded />
+    </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, inject } from 'vue';
+import PageLeadBar from '../components/PageLeadBar.vue';
+import HubPageHeader from '../components/HubPageHeader.vue';
 import HubTabBar from '../components/HubTabBar.vue';
 import OverviewPage from './OverviewPage.vue';
 import AnalyticsPage from './AnalyticsPage.vue';
 import { INSIGHT_TABS } from '../config/dashboardNav.js';
 import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useOverviewStore } from '../composables/useOverviewStore.js';
+import { useRippleStore } from '../composables/useRippleStore.js';
 
 const isReadonlyInsight = inject('isReadonlyInsight', computed(() => false));
 const { insightTab, setInsightTab } = useDashboardNav();
+const overviewStore = useOverviewStore();
+const rippleStore = useRippleStore();
 
 const activeTab = computed({
   get: () => insightTab.value,
@@ -60,40 +75,44 @@ const insightSubtitle = computed(() => {
     : '追读力趋势 · 钩子与爽点';
 });
 
+const hubLoading = computed(() => {
+  if (activeTab.value === 'overview') return overviewStore.loading.value;
+  return rippleStore.loading.value;
+});
+
 function onTabChange(tab) {
   setInsightTab(tab);
+}
+
+async function refreshActiveTab() {
+  if (activeTab.value === 'overview') {
+    await overviewStore.refresh();
+    return;
+  }
+  await Promise.all([
+    overviewStore.refresh(),
+    rippleStore.refresh(),
+  ]);
 }
 </script>
 
 <style scoped>
 .insight-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  flex: 1;
+  min-height: 0;
 }
 
-.hub-header {
-  padding: 0 var(--space-md);
-}
-
-.page-title {
-  font-size: var(--text-xl);
-  font-family: var(--font-ui);
-  font-weight: 700;
-}
-
-.hub-subtitle {
-  margin-top: var(--space-xs);
-  font-size: var(--text-sm);
-  color: var(--color-text-dim);
+.insight-tabs {
+  padding: 0;
 }
 
 .readonly-banner {
-  margin: 0 var(--space-md);
+  margin: 0;
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-sm);
-  background: var(--bg-primary);
+  background: var(--bg-muted);
   color: var(--color-text);
+  border-radius: var(--radius-md);
   border-left: 4px solid var(--color-accent);
   display: flex;
   align-items: center;
@@ -107,9 +126,5 @@ function onTabChange(tab) {
 .hub-panel :deep(.overview-page),
 .hub-panel :deep(.analytics-page) {
   padding-top: 0;
-}
-
-.hub-panel :deep(.page-header .page-title) {
-  display: none;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="overview-page">
-    <header class="page-header">
+    <header v-if="!embedded" class="page-header">
       <h1 class="page-title" data-testid="page-title">追读力总览</h1>
       <button
         class="refresh-btn pixel-border"
@@ -12,31 +12,24 @@
       </button>
     </header>
 
-    <div v-if="error" class="error-banner pixel-border" data-testid="error-banner">
-      {{ error }}
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+      {{ displayError }}
     </div>
 
-    <section
+    <HubEmptyGuide
       v-if="showOverviewEmptyGuide"
-      class="overview-empty-guide pixel-card"
-      data-testid="overview-empty-guide"
-    >
-      <p class="overview-empty-title">本书尚无追读力数据</p>
-      <p v-if="isReadonlyInsight" class="overview-empty-hint" data-testid="overview-empty-reviewer-hint">
-        审阅模式下无法代您发起写作或生产。请联系作者更新正文后，再回来看钩子与爽点趋势。
-      </p>
-      <p v-else class="overview-empty-hint">
-        追读力统计来自已发布正文。可先写 ch001，或在「生产」页跑 Preflight / Batch 产章后再回来看钩子与爽点趋势。
-      </p>
-      <div class="overview-empty-actions" v-if="!isReadonlyInsight">
-        <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-creator-btn" @click="goCreator">
-          去创作页
-        </button>
-        <button type="button" class="empty-cta-btn pixel-border" data-testid="overview-go-produce-btn" @click="goProduce">
-          去生产
-        </button>
-      </div>
-    </section>
+      :title="isReadonlyInsight ? '本书尚无追读力数据' : '本书尚无追读力数据'"
+      :hint="isReadonlyInsight
+        ? '审阅模式下无法代您发起写作或生产。请联系作者更新正文后再查看。'
+        : '追读力统计来自已发布正文。可先写 ch001，或在生产页跑 Preflight / Batch 后再回来。'"
+      :primary-label="isReadonlyInsight ? '' : '去创作页'"
+      :secondary-label="isReadonlyInsight ? '' : '去生产'"
+      primary-test-id="overview-go-creator-btn"
+      secondary-test-id="overview-go-produce-btn"
+      test-id="overview-empty-guide"
+      @primary="goCreator"
+      @secondary="goProduce"
+    />
 
     <template v-if="!showOverviewEmptyGuide">
     <section class="stats-section">
@@ -74,11 +67,17 @@
 //   store.chapters 派生 (store 已做 envelope 解包, chapters 是 bare array)
 import { computed, inject } from 'vue'
 import StatCard from '../components/StatCard.vue'
+import HubEmptyGuide from '../components/HubEmptyGuide.vue'
 import HookTrendChart from '../components/HookTrendChart.vue'
 import CoolpointChart from '../components/CoolpointChart.vue'
 import ChapterTable from '../components/ChapterTable.vue'
 import { useOverviewStore } from '../composables/useOverviewStore.js'
 import { useDashboardNav } from '../composables/useDashboardNav.js'
+import { useFilteredPageError } from '../composables/useFilteredPageError.js'
+
+defineProps({
+  embedded: { type: Boolean, default: false },
+})
 
 const store = useOverviewStore()
 const { navigateTo } = useDashboardNav()
@@ -92,6 +91,7 @@ const isReadonlyInsight = inject('isReadonlyInsight', computed(() => false))
 // refs 仍 reactive.
 const { loading, chapters, refresh } = store
 const error = store.lastError
+const displayError = useFilteredPageError(error)
 
 const showOverviewEmptyGuide = computed(() => {
   if (loading.value || error.value) return false

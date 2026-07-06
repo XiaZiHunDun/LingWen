@@ -1,13 +1,16 @@
 /**
  * useCreatorWrite — 写栏章节预览与内嵌编辑（从 CreatorPage 抽出）
  */
-import { computed, nextTick, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import {
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
   runCreatorLogicCheck,
 } from '../api/index.js';
+import { useCreatorWriteWorkbench } from './useCreatorWriteWorkbench.js';
+import { extractMentionedEntityNames } from '../utils/creatorChapterEntityUtils.js';
+import { saveWriteResume } from '../utils/writeResumeStorage.js';
 
 /**
  * @param {
@@ -44,6 +47,10 @@ const chapterOutlineDraft = ref('');
 const chapterBodySaving = ref(false);
 const chapterOutlineSaving = ref(false);
 const chapterBodyTextareaRef = ref(null);
+const bodyLastSavedAt = ref(null);
+const bodyAutoSaveStatus = ref('idle');
+let lastPersistedBody = '';
+let autoSaveTimer = null;
 const chapterBodyHighlightActive = ref(false);
 const activeRecheckIssueIdx = ref(null);
 const activeLogicCheckIssueIdx = ref(null);
@@ -78,6 +85,89 @@ const showCompanionLogicCheckInWrite = computed(
   () => uiProfile.value.primary_action === 'logic_check' && workspaceTabsEnabled.value,
 );
 
+let memoryAssetsCache = [];
+
+function syncMemoryAssets(items) {
+  memoryAssetsCache = Array.isArray(items) ? items : [];
+}
+
+const wb = useCreatorWriteWorkbench({
+  uiProfile,
+  overview,
+  chapterBodyDraft,
+  selectedChapter,
+  saveMessage,
+  logicCheckResult,
+  visibleDeviations,
+  getMemoryAssets: () => memoryAssetsCache,
+  focusParagraphByIndex: (paragraph, source = 'inline') => {
+    focusIssueParagraph({ paragraph }, null, source);
+  },
+});
+
+watch(logicCheckResult, (result) => {
+  wb.syncQualityFromLogicCheck(result);
+});
+
+function formatBodySaveTime(date) {
+  if (!date) return '';
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+const bodySaveStatusLabel = computed(() => {
+  if (chapterBodySaving.value || bodyAutoSaveStatus.value === 'saving') return '保存中…';
+  if (bodyAutoSaveStatus.value === 'error') return '自动保存失败，请手动保存';
+  if (bodyLastSavedAt.value) return `已自动保存 · ${formatBodySaveTime(bodyLastSavedAt.value)}`;
+  if (bodyAutoSaveStatus.value === 'pending') return '编辑中…';
+  if (
+    selectedChapter.value
+    && uiProfile.value.chapter_inline_edit
+    && !previewLoading.value
+  ) {
+    return '输入后自动保存';
+  }
+  return '';
+});
+
+watch(chapterBodyDraft, (draft) => {
+  if (!uiProfile.value.chapter_inline_edit) return;
+  if (!selectedChapter.value || previewLoading.value) return;
+  if (draft === lastPersistedBody) {
+    bodyAutoSaveStatus.value = bodyLastSavedAt.value ? 'saved' : 'idle';
+    return;
+  }
+  bodyAutoSaveStatus.value = 'pending';
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    autoSaveChapterBody();
+  }, 2000);
+});
+
+async function autoSaveChapterBody() {
+  if (!selectedChapter.value || chapterBodySaving.value) return;
+  if (chapterBodyDraft.value === lastPersistedBody) return;
+  chapterBodySaving.value = true;
+  bodyAutoSaveStatus.value = 'saving';
+  try {
+    chapterPreview.value = await saveCreatorChapterBody(selectedChapter.value, chapterBodyDraft.value);
+    lastPersistedBody = chapterBodyDraft.value;
+    bodyLastSavedAt.value = new Date();
+    bodyAutoSaveStatus.value = 'saved';
+    const slug = overview.value?.slug;
+    if (slug) {
+      saveWriteResume(slug, {
+        chapter: selectedChapter.value,
+        projectName: overview.value?.name,
+      });
+    }
+    await onAfterChapterSave();
+  } catch {
+    bodyAutoSaveStatus.value = 'error';
+  } finally {
+    chapterBodySaving.value = false;
+  }
+}
+
 function bindChapterBodyTextareaRef(el) {
   chapterBodyTextareaRef.value = el;
 }
@@ -85,7 +175,7 @@ function bindChapterBodyTextareaRef(el) {
 function maybeAutoSelectWritingChapter() {
   if (!workspaceTabsEnabled.value || selectedChapter.value) return;
   const ov = overview.value;
-  if (!ov || ov.creation_mode !== 'companion') return;
+  if (!ov || (ov.creation_mode !== 'companion' && ov.creation_mode !== 'advance')) return;
   const chapters = ov.chapters || [];
   const target = chapters.find((ch) => !ch.has_body) || chapters[0];
   if (target?.chapter) {
@@ -99,6 +189,20 @@ function chapterRowClass(chapter) {
   const ch = overview.value?.chapters?.find((c) => c.chapter === chapter);
   if (ch?.has_body) return 'chapter-row--done';
   return '';
+}
+
+function chapterVolumeLabel(chapter) {
+  const hit = visibleDeviations.value.find((d) => d.chapter === chapter);
+  return hit?.volume_label || '';
+}
+
+function chapterRowTitle(chapter) {
+  const hit = visibleDeviations.value.find((d) => d.chapter === chapter);
+  if (hit?.message) return hit.message;
+  const ch = overview.value?.chapters?.find((c) => c.chapter === chapter);
+  if (ch?.has_body) return `已写 ${ch.word_count || 0} 字`;
+  if (ch?.has_outline) return '仅有大纲';
+  return '尚未开始';
 }
 
 async function selectChapter(chapter) {
@@ -120,6 +224,13 @@ async function selectChapter(chapter) {
     chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterPreview.value.body_preview ?? '';
     chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterPreview.value.outline_preview ?? '';
+    lastPersistedBody = chapterBodyDraft.value;
+    bodyLastSavedAt.value = null;
+    bodyAutoSaveStatus.value = 'idle';
+    const slug = overview.value?.slug;
+    if (slug) {
+      saveWriteResume(slug, { chapter, projectName: overview.value?.name });
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -168,7 +279,20 @@ async function saveChapterBody() {
     chapterPreview.value = await saveCreatorChapterBody(selectedChapter.value, chapterBodyDraft.value);
     chapterBodyDraft.value = chapterPreview.value.body_text ?? chapterBodyDraft.value;
     chapterOutlineDraft.value = chapterPreview.value.outline_text ?? chapterOutlineDraft.value;
-    saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
+    lastPersistedBody = chapterBodyDraft.value;
+    bodyLastSavedAt.value = new Date();
+    bodyAutoSaveStatus.value = 'saved';
+    const mentioned = extractMentionedEntityNames(chapterBodyDraft.value, memoryAssetsCache);
+    saveMessage.value = mentioned.length
+      ? `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存 · 涉及：${mentioned.join('、')}`
+      : `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
+    const slug = overview.value?.slug;
+    if (slug) {
+      saveWriteResume(slug, {
+        chapter: selectedChapter.value,
+        projectName: overview.value?.name,
+      });
+    }
     await onAfterChapterSave();
     if (uiProfile.value.chapter_save_p0_recheck) {
       await recheckChapterP0(selectedChapter.value);
@@ -199,7 +323,8 @@ async function saveChapterOutline() {
 
 function pulseChapterBodyHighlight(issueIdx, source = 'recheck') {
   const bodyHighlight = uiProfile.value.recheck_issue_highlight
-    || (uiProfile.value.issue_paragraph_highlight_unified && source === 'logic');
+    || (uiProfile.value.issue_paragraph_highlight_unified && (source === 'logic' || source === 'inline'))
+    || source === 'inline';
   if (bodyHighlight) {
     if (source === 'recheck') {
       activeRecheckIssueIdx.value = issueIdx ?? null;
@@ -390,6 +515,8 @@ const panelContext = {
   isWorkspaceColumnVisible,
   visibleChapters,
   chapterRowClass,
+  chapterVolumeLabel,
+  chapterRowTitle,
   selectedChapter,
   selectChapter,
   showCompanionLogicCheckInWrite,
@@ -415,13 +542,20 @@ const panelContext = {
   bindChapterBodyTextareaRef,
   chapterBodySaving,
   saveChapterBody,
+  bodySaveStatusLabel,
+  bodyAutoSaveStatus,
   chapterRecheckResult,
   activeRecheckIssueIdx,
   focusIssueParagraph,
   onRecheckIssueKeydown,
+  wb,
 };
 
 onUnmounted(() => {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
+  }
   if (chapterBodyHighlightTimer) {
     clearTimeout(chapterBodyHighlightTimer);
     chapterBodyHighlightTimer = null;
@@ -451,6 +585,7 @@ return {
   onRecheckIssueKeydown,
   onLogicCheckIssueKeydown,
   focusIssueParagraph,
+  syncMemoryAssets,
   activeLogicCheckIssueIdx,
 };
 }
