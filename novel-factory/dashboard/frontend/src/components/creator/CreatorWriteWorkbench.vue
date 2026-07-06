@@ -358,6 +358,13 @@
             @focus="wb.agent.focusAnnotation"
           />
 
+          <CreatorAgentStreamPreview
+            v-if="wb.agent.generating && (wb.agent.streamPreviewText || wb.agent.streamAdvicePreview.length)"
+            :preview-text="wb.agent.streamPreviewText"
+            :preview-label="wb.agent.streamPreviewLabel"
+            :advice-lines="wb.agent.streamAdvicePreview"
+          />
+
           <div
             v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
             class="write-workbench__plan-card"
@@ -507,6 +514,13 @@
           @focus="wb.agent.focusAnnotation"
         />
 
+        <CreatorAgentStreamPreview
+          v-if="wb.agent.generating && (wb.agent.streamPreviewText || wb.agent.streamAdvicePreview.length)"
+          :preview-text="wb.agent.streamPreviewText"
+          :preview-label="wb.agent.streamPreviewLabel"
+          :advice-lines="wb.agent.streamAdvicePreview"
+        />
+
         <div
           v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
           class="write-workbench__plan-card"
@@ -577,6 +591,7 @@
 <script setup>
 import { inject, ref } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
+import CreatorAgentStreamPreview from './CreatorAgentStreamPreview.vue';
 import CreatorWriteScopeBar from './CreatorWriteScopeBar.vue';
 import CreatorWriteMicroTaskBar from './CreatorWriteMicroTaskBar.vue';
 import CreatorDirectorPaths from './CreatorDirectorPaths.vue';

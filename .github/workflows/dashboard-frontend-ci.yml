@@ -68,3 +68,48 @@ jobs:
 
       - name: Build (smoke test)
         run: pnpm build
+
+  visual-regression:
+    name: Playwright visual regression (live)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: lint-and-test
+
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install Python dependencies
+        working-directory: novel-factory
+        run: pip install -r requirements.txt
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run visual regression
+        run: pnpm e2e:visual-regression
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'

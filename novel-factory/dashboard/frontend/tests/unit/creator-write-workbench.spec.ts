@@ -16,10 +16,11 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   return {
     ...actual,
     runCreatorAgentPlan: vi.fn(),
+    runCreatorAgentPlanStream: vi.fn(),
   };
 });
 
-import { runCreatorAgentPlan } from '../../src/api/index.js';
+import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../../src/api/index.js';
 
 describe('creator write workbench matrix', () => {
   it('enables workbench layout for companion by default', () => {
@@ -119,6 +120,7 @@ describe('useCreatorWriteWorkbench', () => {
 describe('useCreatorAgent', () => {
   beforeEach(() => {
     vi.mocked(runCreatorAgentPlan).mockReset();
+    vi.mocked(runCreatorAgentPlanStream).mockReset();
   });
 
   function makeAgent(overrides = {}) {
@@ -144,6 +146,7 @@ describe('useCreatorAgent', () => {
     let applied = '';
     const checkpoints = [];
 
+    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('offline'));
     vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
 
     const agent = makeAgent({
@@ -164,6 +167,7 @@ describe('useCreatorAgent', () => {
   });
 
   it('advice-only when style strength is zero', async () => {
+    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('offline'));
     vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
     const agent = makeAgent({
       getControls: () => ({
@@ -181,7 +185,7 @@ describe('useCreatorAgent', () => {
   });
 
   it('uses API plan when available', async () => {
-    vi.mocked(runCreatorAgentPlan).mockResolvedValue({
+    const apiPlan = {
       advice_only: false,
       candidates: [
         { id: 'steady', label: '稳健', direction: '稳', text: 'API 候选' },
@@ -191,12 +195,19 @@ describe('useCreatorAgent', () => {
       status_line: '候选已就绪',
       provider: 'mock',
       lens: 'editor',
+    };
+    vi.mocked(runCreatorAgentPlanStream).mockImplementation(async (_body, onEvent) => {
+      onEvent?.({ type: 'status', message: '正在生成候选…' });
+      onEvent?.({ type: 'chunk', text: 'API' });
+      onEvent?.({ type: 'done', plan: apiPlan });
+      return apiPlan;
     });
     const agent = makeAgent();
     agent.setAgentLens('editor');
     await agent.runRewritePreset('concrete');
-    expect(runCreatorAgentPlan).toHaveBeenCalledWith(
+    expect(runCreatorAgentPlanStream).toHaveBeenCalledWith(
       expect.objectContaining({ lens: 'editor', provider_mode: 'auto' }),
+      expect.any(Function),
     );
     expect(agent.planProvider.value).toBe('mock');
     expect(agent.candidates.value[0].text).toBe('API 候选');
@@ -205,6 +216,7 @@ describe('useCreatorAgent', () => {
   });
 
   it('local fallback produces editor annotations', async () => {
+    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('offline'));
     vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
     const agent = makeAgent();
     agent.setAgentLens('editor');

@@ -430,3 +430,56 @@ def run_creator_agent_plan(
         lens=lens_norm,
     )
     return result
+
+
+def _chunk_text(text: str, size: int = 24) -> list[str]:
+    compact = text or ""
+    if not compact:
+        return []
+    return [compact[i : i + size] for i in range(0, len(compact), size)]
+
+
+def iter_creator_agent_plan_stream(
+    project_root: Path | str,
+    *,
+    action: str,
+    action_label: str,
+    scope: dict[str, Any],
+    body_draft: str | None = None,
+    style_strength: int = 1,
+    allow_worldbuilding_fill: bool = False,
+    goal_tag: str | None = None,
+    execution_mode: str = "preview",
+    lens: str | None = "author",
+    provider_mode: str | None = "auto",
+) -> Any:
+    """Yield SSE-friendly event dicts: status | preview_label | chunk | advice | done."""
+    yield {"type": "status", "message": "正在分析写作范围…"}
+    yield {"type": "status", "message": "正在生成候选…"}
+    plan = run_creator_agent_plan(
+        project_root,
+        action=action,
+        action_label=action_label,
+        scope=scope,
+        body_draft=body_draft,
+        style_strength=style_strength,
+        allow_worldbuilding_fill=allow_worldbuilding_fill,
+        goal_tag=goal_tag,
+        execution_mode=execution_mode,
+        lens=lens,
+        provider_mode=provider_mode,
+    )
+    if plan.get("advice_only"):
+        for row in plan.get("advice") or []:
+            text = str(row.get("text") or "").strip()
+            if text:
+                yield {"type": "advice", "text": text}
+    else:
+        candidates = plan.get("candidates") or []
+        primary = candidates[0] if candidates else None
+        if primary:
+            label = str(primary.get("label") or "候选")
+            yield {"type": "preview_label", "label": label}
+            for piece in _chunk_text(str(primary.get("text") or "")):
+                yield {"type": "chunk", "text": piece}
+    yield {"type": "done", "plan": plan}

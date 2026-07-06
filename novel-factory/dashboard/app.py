@@ -26,7 +26,7 @@ from infra.agent_system.agent_config import load_project_env
 load_project_env()
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -3587,6 +3587,43 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         return CreatorAgentPlanResponse(**result)
+
+    @app.post("/api/creator/agent/plan/stream")
+    def creator_agent_plan_stream_endpoint(
+        body: CreatorAgentPlanRequest,
+    ) -> StreamingResponse:
+        from infra.creator_agent import iter_creator_agent_plan_stream
+        from infra.studio_registry import active_project
+
+        project = active_project()
+        if project is None:
+            raise HTTPException(404, "no active project")
+
+        def event_stream():
+            try:
+                for event in iter_creator_agent_plan_stream(
+                    project.root,
+                    action=body.action,
+                    action_label=body.action_label,
+                    scope=body.scope.model_dump(),
+                    body_draft=body.body_draft,
+                    style_strength=body.style_strength,
+                    allow_worldbuilding_fill=body.allow_worldbuilding_fill,
+                    goal_tag=body.goal_tag,
+                    execution_mode=body.execution_mode,
+                    lens=body.lens,
+                    provider_mode=body.provider_mode,
+                ):
+                    yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            except ValueError as exc:
+                payload = {"type": "error", "message": str(exc)}
+                yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     @app.get("/api/creator/batch-history", response_model=CreatorBatchHistoryResponse)
     def creator_batch_history_endpoint() -> CreatorBatchHistoryResponse:

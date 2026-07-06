@@ -208,11 +208,14 @@ idle → plan（scope + action）→ generating → candidates
 
 **API**：`POST /api/creator/agent/plan` — 请求含 `action`、`scope`、`style_strength`、`lens`、`provider_mode`（`auto` | `mock` | `llm`）等；响应 `candidates` / `advice` / `annotations` + `provider` + `lens`。`auto` 有 LLM API key 时走 `LLMService`，失败降级 mock；无 key 或 `mock` 时 `provider: mock`。前端 API 失败时降级本地 mock。
 
+**流式预览**：`POST /api/creator/agent/plan/stream`（SSE）— 推送 `status` / `chunk` / `advice` 事件，最终以 `done.plan` 返回完整计划；前端 `CreatorAgentStreamPreview` 在生成中展示。
+
 ## 9. 后续（矩阵外 P0）
 
 | 能力 | 状态 |
 |------|------|
-| 续写/改写/插入 + diff 采纳 | **MVP**（选区改写 + mock 候选，无服务端流式） |
+| 续写/改写/插入 + diff 采纳 | **MVP**（选区改写 + 候选 diff 采纳） |
+| **Agent 流式预览** | **MVP**（SSE `/api/creator/agent/plan/stream` + `agent-stream-preview`） |
 | 微任务条（再写 N 字） | **MVP**（伴侣/推进写栏进度条） |
 | 轻量校验条 | **部分**（质量条 + 逻辑检查同步） |
 | 章节生成队列卡片 | **MVP**（脉络章节任务卡） |

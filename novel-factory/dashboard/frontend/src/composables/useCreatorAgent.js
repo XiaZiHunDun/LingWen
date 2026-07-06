@@ -3,7 +3,7 @@
  * 计划生成对接 POST /api/creator/agent/plan，失败时降级本地 mock
  */
 import { computed, ref } from 'vue';
-import { runCreatorAgentPlan } from '../api/index.js';
+import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../api/index.js';
 import { AGENT_EXECUTION_MODES } from '../config/creatorPanelMatrix.js';
 
 const REWRITE_LABELS = {
@@ -83,6 +83,10 @@ export function useCreatorAgent(deps) {
   const planProvider = ref('local');
   const agentLens = ref(uiProfile.value.agent_lens_default || 'author');
   const annotations = ref([]);
+
+  const streamPreviewText = ref('');
+  const streamPreviewLabel = ref('');
+  const streamAdvicePreview = ref([]);
 
   const hasPendingPlan = computed(() => Boolean(pendingPlan.value));
   const isPreviewMode = computed(() => executionMode.value === AGENT_EXECUTION_MODES.preview);
@@ -252,6 +256,46 @@ export function useCreatorAgent(deps) {
     annotations.value = [];
   }
 
+  function resetStreamPreview() {
+    streamPreviewText.value = '';
+    streamPreviewLabel.value = '';
+    streamAdvicePreview.value = [];
+  }
+
+  function handleStreamEvent(evt) {
+    if (!evt || typeof evt !== 'object') return;
+    if (evt.type === 'status' && evt.message) {
+      statusLine.value = evt.message;
+      return;
+    }
+    if (evt.type === 'preview_label' && evt.label) {
+      streamPreviewLabel.value = evt.label;
+      return;
+    }
+    if (evt.type === 'chunk' && evt.text) {
+      streamPreviewText.value += evt.text;
+      return;
+    }
+    if (evt.type === 'advice' && evt.text) {
+      streamAdvicePreview.value = [...streamAdvicePreview.value, evt.text];
+    }
+  }
+
+  function buildPlanRequestBody(action, actionLabel, scope, controls) {
+    return {
+      action,
+      action_label: actionLabel,
+      scope: scopeToApiPayload(scope),
+      body_draft: getBodyDraft(),
+      style_strength: controls.styleStrength,
+      allow_worldbuilding_fill: controls.allowWorldbuildingFill,
+      goal_tag: controls.goalTag || null,
+      execution_mode: executionMode.value,
+      lens: agentLens.value,
+      provider_mode: 'auto',
+    };
+  }
+
   async function runPlan(action, actionLabel, pathMeta = null) {
     const scope = buildScope();
     const controls = getControls();
@@ -265,26 +309,23 @@ export function useCreatorAgent(deps) {
     }
 
     generating.value = true;
+    resetStreamPreview();
     statusLine.value = '生成中…';
+    const body = buildPlanRequestBody(action, actionLabel, scope, controls);
     try {
-      const result = await runCreatorAgentPlan({
-        action,
-        action_label: actionLabel,
-        scope: scopeToApiPayload(scope),
-        body_draft: getBodyDraft(),
-        style_strength: controls.styleStrength,
-        allow_worldbuilding_fill: controls.allowWorldbuildingFill,
-        goal_tag: controls.goalTag || null,
-        execution_mode: executionMode.value,
-        lens: agentLens.value,
-        provider_mode: 'auto',
-      });
+      const result = await runCreatorAgentPlanStream(body, handleStreamEvent);
       applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
     } catch {
-      applyLocalPlan(action, actionLabel, scope, pathMeta, controls);
-      statusLine.value = `${statusLine.value}（已降级本地）`;
+      try {
+        const result = await runCreatorAgentPlan(body);
+        applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
+      } catch {
+        applyLocalPlan(action, actionLabel, scope, pathMeta, controls);
+        statusLine.value = `${statusLine.value}（已降级本地）`;
+      }
     } finally {
       generating.value = false;
+      resetStreamPreview();
     }
   }
 
@@ -411,6 +452,9 @@ export function useCreatorAgent(deps) {
     planProvider,
     agentLens,
     annotations,
+    streamPreviewText,
+    streamPreviewLabel,
+    streamAdvicePreview,
     hasPendingPlan,
     isPreviewMode,
     rewritePresets: REWRITE_LABELS,

@@ -574,6 +574,26 @@ export async function runCreatorAgentPlan(body) {
   });
 }
 
+/**
+ * Stream agent plan via SSE; invokes onEvent for status/chunk/advice, returns final plan.
+ * @param {Parameters<typeof runCreatorAgentPlan>[0]} body
+ * @param {(event: object) => void} [onEvent]
+ */
+export async function runCreatorAgentPlanStream(body, onEvent) {
+  const { readCreatorAgentPlanStream } = await import('../utils/creatorAgentStreamUtils.js');
+  const response = await fetch(`${BASE_URL}/creator/agent/plan/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    },
+    body: JSON.stringify(body),
+  });
+  const plan = await readCreatorAgentPlanStream(response, onEvent);
+  markApiOnline();
+  return plan;
+}
+
 export async function fetchCreatorVolumePlan() {
   return request('/creator/volume-plan');
 }

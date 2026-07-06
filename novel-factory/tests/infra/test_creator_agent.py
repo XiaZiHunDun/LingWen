@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.creator_agent import run_creator_agent_plan
+from infra.creator_agent import iter_creator_agent_plan_stream, run_creator_agent_plan
 
 
 @pytest.fixture
@@ -26,6 +26,7 @@ class TestCreatorAgent:
             scope={"type": "chapter", "chapter": 1},
             body_draft="第一段\n\n第二段正文",
             style_strength=2,
+            provider_mode="mock",
         )
         assert result["advice_only"] is False
         assert len(result["candidates"]) == 3
@@ -39,6 +40,7 @@ class TestCreatorAgent:
             action_label="更克制",
             scope={"type": "selection", "selection_text": "选区文字"},
             style_strength=0,
+            provider_mode="mock",
         )
         assert result["advice_only"] is True
         assert result["candidates"] == []
@@ -61,6 +63,7 @@ class TestCreatorAgent:
             scope={"type": "selection", "selection_text": "x"},
             style_strength=0,
             goal_tag="suspense",
+            provider_mode="mock",
         )
         texts = " ".join(a["text"] for a in result["advice"])
         assert "悬疑" in texts
@@ -93,3 +96,21 @@ class TestCreatorAgent:
         assert result["lens"] == "reviewer"
         texts = " ".join(a["text"] for a in result["advice"])
         assert "读者" in texts or "信息" in texts
+
+    def test_stream_yields_chunks_and_done(self, project_root: Path) -> None:
+        events = list(
+            iter_creator_agent_plan_stream(
+                project_root,
+                action="path:faster",
+                action_label="加快节奏",
+                scope={"type": "chapter", "chapter": 1},
+                body_draft="第一段\n\n第二段正文",
+                style_strength=2,
+                provider_mode="mock",
+            ),
+        )
+        types = [e["type"] for e in events]
+        assert types[0] == "status"
+        assert "chunk" in types
+        assert types[-1] == "done"
+        assert events[-1]["plan"]["candidates"]

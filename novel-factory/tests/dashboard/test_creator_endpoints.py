@@ -1799,3 +1799,22 @@ class TestCreatorEndpoints:
         data = resp.json()
         assert data["advice_only"] is True
         assert len(data["advice"]) >= 1
+
+    def test_agent_plan_stream_endpoint(self, client: TestClient) -> None:
+        with client.stream(
+            "POST",
+            "/api/creator/agent/plan/stream",
+            json={
+                "action": "path:restrained",
+                "action_label": "更克制",
+                "scope": {"type": "chapter", "chapter": 1},
+                "style_strength": 2,
+                "execution_mode": "preview",
+                "provider_mode": "mock",
+            },
+        ) as resp:
+            assert resp.status_code == 200
+            assert "text/event-stream" in resp.headers.get("content-type", "")
+            body = "".join(resp.iter_text())
+        assert '"type": "done"' in body
+        assert '"candidates"' in body or '"advice"' in body
