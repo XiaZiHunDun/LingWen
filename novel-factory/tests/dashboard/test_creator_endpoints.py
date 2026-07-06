@@ -1777,6 +1777,7 @@ class TestCreatorEndpoints:
                 "scope": {"type": "chapter", "chapter": 1},
                 "style_strength": 2,
                 "execution_mode": "preview",
+                "provider_mode": "mock",
             },
         )
         assert resp.status_code == 200
@@ -1793,6 +1794,7 @@ class TestCreatorEndpoints:
                 "action_label": "更具体",
                 "scope": {"type": "selection", "selection_text": "测试选区"},
                 "style_strength": 0,
+                "provider_mode": "mock",
             },
         )
         assert resp.status_code == 200
