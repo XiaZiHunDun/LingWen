@@ -211,6 +211,13 @@
         :creation-mode="w.overview?.creation_mode || 'companion'"
       />
 
+      <CreatorLightValidationBar
+        v-if="wb.isPanelVisible('lightValidationBar') && w.selectedChapter"
+        :issues="wb.lightValidationIssues"
+        :running="wb.lightValidationRunning"
+        @focus="wb.focusLightValidationIssue"
+      />
+
       <div
         v-if="wb.humanFirstDesk && w.showCompanionLogicCheckInWrite"
         class="write-desk-toolbar"
@@ -594,6 +601,7 @@ import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 import CreatorAgentStreamPreview from './CreatorAgentStreamPreview.vue';
 import CreatorWriteScopeBar from './CreatorWriteScopeBar.vue';
 import CreatorWriteMicroTaskBar from './CreatorWriteMicroTaskBar.vue';
+import CreatorLightValidationBar from './CreatorLightValidationBar.vue';
 import CreatorDirectorPaths from './CreatorDirectorPaths.vue';
 import CreatorWriteControlStrip from './CreatorWriteControlStrip.vue';
 import CreatorAgentAnnotations from './CreatorAgentAnnotations.vue';

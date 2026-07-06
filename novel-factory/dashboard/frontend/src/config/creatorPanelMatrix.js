@@ -114,6 +114,7 @@ export const CREATOR_WRITE_WORKBENCH_MATRIX = {
   directorPaths: { companion: 'optional_collapsed', advance: 'optional_collapsed', studio: 'hidden' },
   controlStrip: { companion: 'required', advance: 'optional', studio: 'hidden' },
   microTaskBar: { companion: 'required', advance: 'optional', studio: 'hidden' },
+  lightValidationBar: { companion: 'required', advance: 'optional', studio: 'hidden' },
   consistencyRail: { companion: 'optional_collapsed', advance: 'optional_collapsed', studio: 'hidden' },
   checkpointDiff: { companion: 'required', advance: 'required', studio: 'hidden' },
   chapterEntityRail: { companion: 'optional_collapsed', advance: 'optional_collapsed', studio: 'hidden' },

@@ -189,4 +189,57 @@ test.describe('Creator workspace live e2e', () => {
     await saveBtn.click();
     await expect(page.getByTestId('save-banner')).toBeVisible({ timeout: 20_000 });
   });
+
+  test('companion_light_validation_bar', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('chapter-row-1').click();
+    await expect(page.getByTestId('write-light-validation-bar')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('chapter-body-textarea').evaluate((el) => {
+      el.value = '角色说"未完待续';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.getByTestId('light-validation-unclosed_quote')).toBeVisible({ timeout: 5_000 });
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
+  });
+
+  test('companion_agent_stream_preview', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-companion' } });
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"status","message":"生成中…"}\n\n',
+        'data: {"type":"preview_label","label":"候选预览 1/3"}\n\n',
+        'data: {"type":"chunk","text":"流式预览测试"}\n\n',
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"段一"},{"id":"c2","label":"B","text":"段二"},{"id":"c3","label":"C","text":"段三"}],"provider":"mock","annotations":[]}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('chapter-row-1').click();
+    await page.getByTestId('write-advanced-tools').locator('summary').click();
+    await page.getByTestId('write-agent-strip').locator('summary').click();
+    await page.getByTestId('write-agent-input').fill('加快节奏');
+    const [streamResponse] = await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes('/api/creator/agent/plan/stream') && resp.ok(),
+      ),
+      page.getByTestId('write-agent-send-btn').click(),
+    ]);
+    expect(streamResponse.headers()['content-type'] || '').toContain('text/event-stream');
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-candidate-c1')).toBeVisible();
+    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
+  });
 });

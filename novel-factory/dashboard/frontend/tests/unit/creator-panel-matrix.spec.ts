@@ -57,6 +57,11 @@ describe('creatorPanelMatrix', () => {
     expect(isWriteWorkbenchPanelVisible('studio', 'microTaskBar')).toBe(false);
   });
 
+  it('companion enables light validation bar by default', () => {
+    expect(isWriteWorkbenchPanelVisible('companion', 'lightValidationBar')).toBe(true);
+    expect(isWriteWorkbenchPanelVisible('studio', 'lightValidationBar')).toBe(false);
+  });
+
   it('studio hides write tab and defaults to pulse', () => {
     const tabs = buildCreatorWorkspaceTabs('studio');
     expect(tabs.map((t) => t.id)).not.toContain('write');

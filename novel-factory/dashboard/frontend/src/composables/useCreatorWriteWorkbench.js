@@ -1,7 +1,7 @@
 /**
  * useCreatorWriteWorkbench — 左栈工作台状态、选区、checkpoint、导演控制（Human Comfort P0）
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   isWriteWorkbenchLayoutEnabled,
   isWriteWorkbenchPanelVisible,
@@ -12,6 +12,7 @@ import {
 import { computeLineDiff, countDiffChanges } from '../utils/textDiffUtils.js';
 import { resolveChapterEntities } from '../utils/creatorChapterEntityUtils.js';
 import { buildInlineConflictMarkers } from '../utils/creatorInlineConflictUtils.js';
+import { runLightValidation, summarizeLightValidation } from '../utils/creatorLightValidationUtils.js';
 import { useCreatorAgent } from './useCreatorAgent.js';
 import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 
@@ -48,6 +49,9 @@ export function useCreatorWriteWorkbench(deps) {
   const bodySelection = ref({ start: 0, end: 0, text: '' });
   const checkpoints = ref([]);
   const qualityHints = ref([]);
+  const lightValidationIssues = ref([]);
+  const lightValidationRunning = ref(false);
+  let lightValidationTimer = null;
   const generateIntensity = ref('balanced');
   const generateRunning = ref(false);
 
@@ -101,7 +105,12 @@ export function useCreatorWriteWorkbench(deps) {
       chapter: selectedChapter.value,
       deviations: visibleDeviations?.value || overview.value?.deviations || [],
       logicIssues: logicCheckResult?.value?.issues || [],
+      lightIssues: lightValidationIssues.value,
     }),
+  );
+
+  const lightValidationSummary = computed(() =>
+    summarizeLightValidation(lightValidationIssues.value),
   );
 
   const showInlineConflictGutter = computed(
@@ -291,23 +300,77 @@ export function useCreatorWriteWorkbench(deps) {
     agent.statusLine.value = '已停止';
   }
 
+  function syncQualityFromLightValidation(issues) {
+    if (!isPanelVisible('lightValidationBar')) return;
+    const summary = summarizeLightValidation(issues);
+    if (summary.status === 'ok') {
+      const kept = qualityHints.value.filter((h) => h.source !== 'light');
+      qualityHints.value = [
+        { level: 'ok', text: '轻量校验通过', source: 'light' },
+        ...kept,
+      ].slice(0, 3);
+      return;
+    }
+    const hints = issues.slice(0, 2).map((issue) => ({
+      level: issue.level === 'warn' ? 'warn' : 'info',
+      text: issue.label,
+      source: 'light',
+      markerId: issue.id,
+    }));
+    const kept = qualityHints.value.filter((h) => h.source !== 'light');
+    qualityHints.value = [...hints, ...kept].slice(0, 3);
+  }
+
+  function runLightValidationNow() {
+    if (!isPanelVisible('lightValidationBar')) {
+      lightValidationIssues.value = [];
+      return;
+    }
+    lightValidationRunning.value = true;
+    const issues = runLightValidation({
+      body: chapterBodyDraft.value,
+      chapter: selectedChapter.value,
+    });
+    lightValidationIssues.value = issues;
+    syncQualityFromLightValidation(issues);
+    lightValidationRunning.value = false;
+  }
+
+  function scheduleLightValidation() {
+    if (!isPanelVisible('lightValidationBar')) return;
+    if (lightValidationTimer) clearTimeout(lightValidationTimer);
+    lightValidationTimer = setTimeout(() => {
+      runLightValidationNow();
+      lightValidationTimer = null;
+    }, 1200);
+  }
+
+  watch(chapterBodyDraft, () => {
+    scheduleLightValidation();
+  });
+
+  watch(selectedChapter, () => {
+    runLightValidationNow();
+  });
+
   function dismissQualityHint(index) {
     qualityHints.value = qualityHints.value.filter((_, i) => i !== index);
   }
 
   function syncQualityFromLogicCheck(result) {
+    const lightKept = qualityHints.value.filter((h) => h.source === 'light');
     if (!result) {
-      qualityHints.value = [];
+      qualityHints.value = lightKept;
       return;
     }
     const hints = [];
-    if (result.passed) hints.push({ level: 'ok', text: '逻辑审查通过' });
-    else hints.push({ level: 'warn', text: `P0 问题 ${result.p0_count} 条` });
+    if (result.passed) hints.push({ level: 'ok', text: '逻辑审查通过', source: 'logic' });
+    else hints.push({ level: 'warn', text: `P0 问题 ${result.p0_count} 条`, source: 'logic' });
     const issues = (result.issues || []).slice(0, 2);
     for (const issue of issues) {
-      hints.push({ level: 'info', text: issue.title || issue.message });
+      hints.push({ level: 'info', text: issue.title || issue.message, source: 'logic' });
     }
-    qualityHints.value = hints.slice(0, 3);
+    qualityHints.value = [...hints, ...lightKept].slice(0, 4);
   }
 
   function toggleSelectionLock() {
@@ -331,6 +394,19 @@ export function useCreatorWriteWorkbench(deps) {
     activeInlineConflictId.value = marker.id;
     if (marker.paragraph && focusParagraphByIndex) {
       focusParagraphByIndex(marker.paragraph, 'inline');
+      pulseInlineConflictHighlight();
+    }
+  }
+
+  function focusLightValidationIssue(issue) {
+    if (!issue) return;
+    const marker = inlineConflictMarkers.value.find((m) => m.id === issue.id);
+    if (marker) {
+      focusInlineConflict(marker);
+      return;
+    }
+    if (issue.paragraph && focusParagraphByIndex) {
+      focusParagraphByIndex(issue.paragraph, 'inline');
       pulseInlineConflictHighlight();
     }
   }
@@ -364,8 +440,14 @@ export function useCreatorWriteWorkbench(deps) {
     activeInlineConflictId,
     chapterBodyConflictHighlightActive,
     showInlineConflictGutter,
+    lightValidationIssues,
+    lightValidationSummary,
+    lightValidationRunning,
     focusInlineConflict,
+    focusLightValidationIssue,
     clearInlineConflictFocus,
+    runLightValidationNow,
+    scheduleLightValidation,
     goalCardLines,
     humanFirstDesk,
     isPanelVisible,

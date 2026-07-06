@@ -161,6 +161,7 @@ async function autoSaveChapterBody() {
       });
     }
     await onAfterChapterSave();
+    wb.runLightValidationNow();
   } catch {
     bodyAutoSaveStatus.value = 'error';
   } finally {

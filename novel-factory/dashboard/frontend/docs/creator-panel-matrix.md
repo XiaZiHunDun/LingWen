@@ -217,7 +217,7 @@ idle → plan（scope + action）→ generating → candidates
 | 续写/改写/插入 + diff 采纳 | **MVP**（选区改写 + 候选 diff 采纳） |
 | **Agent 流式预览** | **MVP**（SSE `/api/creator/agent/plan/stream` + `agent-stream-preview`） |
 | 微任务条（再写 N 字） | **MVP**（伴侣/推进写栏进度条） |
-| 轻量校验条 | **部分**（质量条 + 逻辑检查同步） |
+| 轻量校验条 | **MVP**（写中规则扫描 + gutter 联动 + `write-light-validation-bar`） |
 | 章节生成队列卡片 | **MVP**（脉络章节任务卡） |
 | 文风滑条控制器 | **MVP**（`style-strength-slider` + 四级标签） |
 | 脉络书内抽屉 | **MVP**（伴侣/推进：脉络·记忆侧滑，写作主屏常驻） |

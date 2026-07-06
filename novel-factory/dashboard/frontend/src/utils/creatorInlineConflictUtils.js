@@ -7,10 +7,11 @@
  *   chapter?: number|null,
  *   deviations?: Array<{ chapter?: number, severity?: string, message?: string, paragraph?: number }>,
  *   logicIssues?: Array<{ chapter?: number, severity?: string, title?: string, message?: string, paragraph?: number }>,
+ *   lightIssues?: Array<{ id?: string, level?: string, label?: string, paragraph?: number | null, kind?: string }>,
  * }} input
  */
 export function buildInlineConflictMarkers(input) {
-  const { chapter, deviations = [], logicIssues = [] } = input;
+  const { chapter, deviations = [], logicIssues = [], lightIssues = [] } = input;
   if (chapter == null) return [];
 
   const markers = [];
@@ -37,7 +38,17 @@ export function buildInlineConflictMarkers(input) {
     });
   }
 
-  return markers.slice(0, 8);
+  for (const issue of lightIssues) {
+    markers.push({
+      id: issue.id || `light-${chapter}-${markers.length}`,
+      kind: issue.kind || 'light',
+      level: issue.level === 'warn' ? 'warn' : 'info',
+      label: issue.label || '写作提示',
+      paragraph: issue.paragraph ?? null,
+    });
+  }
+
+  return markers.slice(0, 10);
 }
 
 /**
