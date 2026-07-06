@@ -8,7 +8,7 @@
 1. **默认帮用户选**：冷启动不问字数、不问 companion/advance/studio。
 2. **一级 ≤ 4 项**：聊聊 / 书桌 / 书架 / 工具箱
 3. **对话 ≠ 写作**：L1「聊聊」负责搞明白与导航；正文只落在「书桌」编辑器。
-4. **脉络是书内抽屉**（后续）：单书内 write 为主，pulse/memory 按需滑出（见 creator-panel-matrix）。
+4. **脉络是书内抽屉**（伴侣/推进默认）：单书内 write 为主，pulse/memory 侧滑（`creator_desk_drawer` + `CreatorWorkspaceShell` 抽屉触发器）。
 
 ## 2. 一级导航
 

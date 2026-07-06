@@ -5,9 +5,16 @@
   <section
     v-show="pt.isWorkspaceColumnVisible('memory')"
     class="creator-column pixel-card"
+    :class="{ 'creator-column--desk-drawer': pt.deskDrawerActive?.() }"
     data-testid="column-memory"
   >
-    <h2 class="column-title">记忆库</h2>
+    <div v-if="pt.deskDrawerActive?.()" class="desk-drawer-chrome" data-testid="desk-drawer-chrome-memory">
+      <h2 class="desk-drawer-chrome__title">记忆库</h2>
+      <button type="button" class="mini-btn pixel-border" data-testid="desk-drawer-close-memory" @click="pt.closeDeskDrawer()">
+        关闭
+      </button>
+    </div>
+    <h2 v-else class="column-title">记忆库</h2>
 
     <div class="memory-status pixel-border" data-testid="memory-status-bar">
       <span class="meta-line">

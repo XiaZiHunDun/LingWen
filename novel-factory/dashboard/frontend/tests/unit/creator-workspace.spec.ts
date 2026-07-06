@@ -250,7 +250,7 @@ describe('Creator workspace tabs (Phase C)', () => {
     const wrapper = mount(CreatorPage)
     await flushPromises()
 
-    await wrapper.find(byTestid('creator-workspace-tab-pulse')).trigger('click')
+    await wrapper.find(byTestid('creator-desk-drawer-pulse')).trigger('click')
     await flushPromises()
 
     expect(wrapper.find(byTestid('column-pulse')).isVisible()).toBe(true)
@@ -288,10 +288,19 @@ describe('Creator workspace tabs (Phase C)', () => {
     expect(wrapper.find(byTestid('run-companion-logic-check-btn')).exists()).toBe(true)
   })
 
+  test('companion shows desk drawer triggers and micro task bar', async () => {
+    const wrapper = mount(CreatorPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('creator-desk-drawer-triggers')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('creator-desk-drawer-pulse')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('write-micro-task-bar')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('creator-workspace-tab-pulse')).exists()).toBe(false)
+  })
+
   test('companion pulse tab shows empty guide when no volumes or deviations', async () => {
     const wrapper = mount(CreatorPage)
     await flushPromises()
-    await wrapper.find(byTestid('creator-workspace-tab-pulse')).trigger('click')
+    await wrapper.find(byTestid('creator-desk-drawer-pulse')).trigger('click')
     await flushPromises()
     expect(wrapper.find(byTestid('pulse-empty-guide')).exists()).toBe(true)
   })
@@ -311,7 +320,7 @@ describe('Creator workspace tabs (Phase C)', () => {
     })
     const wrapper = mount(CreatorPage)
     await flushPromises()
-    const badge = wrapper.find(byTestid('creator-workspace-tab-pulse')).find('.hub-tab-badge')
+    const badge = wrapper.find(byTestid('creator-desk-drawer-pulse')).find('.hub-tab-badge')
     expect(badge.exists()).toBe(true)
     expect(badge.text()).toBe('2')
   })

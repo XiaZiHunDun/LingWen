@@ -17,19 +17,25 @@
         {{ mode.label }}
       </button>
     </div>
-    <div class="write-control-strip__group">
-      <span class="write-control-strip__label">风格强度</span>
-      <button
-        v-for="lvl in strengthLevels"
-        :key="lvl.level"
-        type="button"
-        class="write-workbench__chip"
-        :class="{ 'write-workbench__chip--active': styleStrength === lvl.level }"
-        :data-testid="`style-strength-${lvl.level}`"
-        @click="$emit('update:styleStrength', lvl.level)"
-      >
-        {{ lvl.label }}
-      </button>
+    <div class="write-control-strip__group write-control-strip__group--strength">
+      <span class="write-control-strip__label">文风</span>
+      <span class="write-control-strip__strength-label" data-testid="style-strength-label">
+        {{ currentStrengthLabel }}
+      </span>
+      <input
+        type="range"
+        min="0"
+        max="3"
+        step="1"
+        class="write-control-strip__slider"
+        data-testid="style-strength-slider"
+        :value="styleStrength"
+        :aria-valuetext="currentStrengthLabel"
+        @input="$emit('update:styleStrength', Number($event.target.value))"
+      />
+      <div class="write-control-strip__strength-ticks" aria-hidden="true">
+        <span v-for="lvl in strengthLevels" :key="lvl.level">{{ lvl.label }}</span>
+      </div>
     </div>
     <div class="write-control-strip__group">
       <button
@@ -69,9 +75,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { AGENT_GOAL_TAGS, AGENT_LENS_MODES, STYLE_STRENGTH_LEVELS } from '../../config/creatorPanelMatrix.js';
 
-defineProps({
+const props = defineProps({
   styleStrength: { type: Number, default: 1 },
   selectionLocked: { type: Boolean, default: false },
   allowWorldbuildingFill: { type: Boolean, default: false },
@@ -91,6 +98,10 @@ defineEmits([
 const strengthLevels = STYLE_STRENGTH_LEVELS;
 const goalTags = AGENT_GOAL_TAGS;
 const lensModes = AGENT_LENS_MODES;
+
+const currentStrengthLabel = computed(() =>
+  strengthLevels.find((lvl) => lvl.level === props.styleStrength)?.label || '轻改',
+);
 </script>
 
 <style scoped>
@@ -112,5 +123,24 @@ const lensModes = AGENT_LENS_MODES;
 .write-control-strip__label {
   color: var(--color-text-dim);
   margin-right: 4px;
+}
+.write-control-strip__group--strength {
+  flex-direction: column;
+  align-items: stretch;
+}
+.write-control-strip__strength-label {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+.write-control-strip__slider {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+.write-control-strip__strength-ticks {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--color-text-dim);
+  font-size: 10px;
 }
 </style>

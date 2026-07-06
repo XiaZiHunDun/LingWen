@@ -205,6 +205,12 @@
         :human-first="wb.humanFirstDesk"
       />
 
+      <CreatorWriteMicroTaskBar
+        v-if="wb.isPanelVisible('microTaskBar') && wb.humanFirstDesk"
+        :draft="w.chapterBodyDraft"
+        :creation-mode="w.overview?.creation_mode || 'companion'"
+      />
+
       <div
         v-if="wb.humanFirstDesk && w.showCompanionLogicCheckInWrite"
         class="write-desk-toolbar"
@@ -572,6 +578,7 @@
 import { inject, ref } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 import CreatorWriteScopeBar from './CreatorWriteScopeBar.vue';
+import CreatorWriteMicroTaskBar from './CreatorWriteMicroTaskBar.vue';
 import CreatorDirectorPaths from './CreatorDirectorPaths.vue';
 import CreatorWriteControlStrip from './CreatorWriteControlStrip.vue';
 import CreatorAgentAnnotations from './CreatorAgentAnnotations.vue';

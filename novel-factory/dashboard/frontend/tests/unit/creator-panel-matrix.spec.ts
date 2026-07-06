@@ -10,6 +10,7 @@ import {
   isWriteWorkbenchLayoutEnabled,
   isWriteWorkbenchPanelVisible,
   isHumanFirstDeskMode,
+  isDeskDrawerEnabled,
   splitHumanFirstDeskTabs,
   resolveDefaultWorkspaceTab,
   STYLE_STRENGTH_LEVELS,
@@ -39,6 +40,21 @@ describe('creatorPanelMatrix', () => {
     const { primary, secondary } = splitHumanFirstDeskTabs('advance');
     expect(primary.map((t) => t.id)).toEqual(['write', 'pulse']);
     expect(secondary.map((t) => t.id)).toEqual(['memory', 'settings']);
+  });
+
+  it('desk drawer mode keeps write primary and moves pulse/memory to drawer', () => {
+    const split = splitHumanFirstDeskTabs('companion', { deskDrawer: true });
+    expect(split.primary.map((t) => t.id)).toEqual(['write']);
+    expect(split.drawerTabs.map((t) => t.id)).toEqual(['pulse', 'memory']);
+    expect(split.secondary.map((t) => t.id)).toEqual(['settings']);
+    expect(isDeskDrawerEnabled('companion', { creator_desk_drawer: true })).toBe(true);
+    expect(isDeskDrawerEnabled('companion', {})).toBe(true);
+    expect(isDeskDrawerEnabled('studio', { creator_desk_drawer: true })).toBe(false);
+  });
+
+  it('companion enables micro task bar by default', () => {
+    expect(isWriteWorkbenchPanelVisible('companion', 'microTaskBar')).toBe(true);
+    expect(isWriteWorkbenchPanelVisible('studio', 'microTaskBar')).toBe(false);
   });
 
   it('studio hides write tab and defaults to pulse', () => {

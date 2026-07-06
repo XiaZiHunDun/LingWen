@@ -5,9 +5,18 @@
   <section
     v-show="p.isWorkspaceColumnVisible('pulse')"
     class="creator-column"
-    :class="p.workspaceTabsEnabled ? 'creator-column--pulse-desk' : 'pixel-card'"
+    :class="{
+      'creator-column--pulse-desk': p.workspaceTabsEnabled,
+      'creator-column--desk-drawer': p.deskDrawerActive?.(),
+    }"
     data-testid="column-pulse"
   >
+    <div v-if="p.deskDrawerActive?.()" class="desk-drawer-chrome" data-testid="desk-drawer-chrome-pulse">
+      <h2 class="desk-drawer-chrome__title">脉络</h2>
+      <button type="button" class="mini-btn pixel-border" data-testid="desk-drawer-close-pulse" @click="p.closeDeskDrawer()">
+        关闭
+      </button>
+    </div>
     <div class="pulse-desk" :class="{ 'pulse-desk--legacy': !p.workspaceTabsEnabled }">
       <div class="pulse-desk__hero">
         <CreatorPulseIntro

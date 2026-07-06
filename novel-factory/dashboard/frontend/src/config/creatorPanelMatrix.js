@@ -46,7 +46,10 @@ export const CREATOR_WORKSPACE_TAB_MATRIX = {
   settings: { companion: 'required', advance: 'optional_collapsed', studio: 'optional_collapsed' },
 };
 
-/** 人类习惯书桌：记忆/设定收进次要 Tab 行 */
+/** 书内抽屉：脉络 / 记忆从 Tab 移入侧滑层 */
+export const HUMAN_FIRST_DESK_DRAWER_TAB_IDS = ['pulse', 'memory'];
+
+/** 人类习惯书桌：设定收进次要 Tab 行（记忆在抽屉模式走侧滑） */
 export const HUMAN_FIRST_DESK_SECONDARY_TAB_IDS = ['memory', 'settings'];
 
 /** @type {Record<string, string>} */
@@ -110,6 +113,7 @@ export const CREATOR_WRITE_WORKBENCH_MATRIX = {
   scopeBar: { companion: 'required', advance: 'optional', studio: 'hidden' },
   directorPaths: { companion: 'optional_collapsed', advance: 'optional_collapsed', studio: 'hidden' },
   controlStrip: { companion: 'required', advance: 'optional', studio: 'hidden' },
+  microTaskBar: { companion: 'required', advance: 'optional', studio: 'hidden' },
   consistencyRail: { companion: 'optional_collapsed', advance: 'optional_collapsed', studio: 'hidden' },
   checkpointDiff: { companion: 'required', advance: 'required', studio: 'hidden' },
   chapterEntityRail: { companion: 'optional_collapsed', advance: 'optional_collapsed', studio: 'hidden' },
@@ -192,6 +196,7 @@ export const MODE_UI_PROFILE_DEFAULTS = {
     write_chapter_entity_rail: true,
     agent_lens_default: 'author',
     wizard_default_collapsed: true,
+    creator_desk_drawer: true,
   },
   advance: {
     creator_mode_guide_default_collapsed: true,
@@ -207,6 +212,7 @@ export const MODE_UI_PROFILE_DEFAULTS = {
     write_chapter_entity_rail: true,
     agent_lens_default: 'author',
     wizard_default_collapsed: true,
+    creator_desk_drawer: true,
   },
   studio: {
     creator_mode_guide_default_collapsed: true,
@@ -345,13 +351,30 @@ export function isHumanFirstDeskMode(creationMode) {
 
 /**
  * @param {string | null | undefined} creationMode
+ * @param {{ deskDrawer?: boolean }} [options]
  */
-export function splitHumanFirstDeskTabs(creationMode) {
+export function splitHumanFirstDeskTabs(creationMode, options = {}) {
   const tabs = buildCreatorWorkspaceTabs(creationMode);
   if (!isHumanFirstDeskMode(creationMode)) {
-    return { primary: tabs, secondary: [] };
+    return { primary: tabs, secondary: [], drawerTabs: [] };
+  }
+  if (options.deskDrawer) {
+    const primary = tabs.filter((t) => t.id === 'write');
+    const drawerTabs = tabs.filter((t) => HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(t.id));
+    const secondary = tabs.filter((t) => t.id === 'settings');
+    return { primary, secondary, drawerTabs };
   }
   const primary = tabs.filter((t) => !HUMAN_FIRST_DESK_SECONDARY_TAB_IDS.includes(t.id));
   const secondary = tabs.filter((t) => HUMAN_FIRST_DESK_SECONDARY_TAB_IDS.includes(t.id));
-  return { primary, secondary };
+  return { primary, secondary, drawerTabs: [] };
+}
+
+/**
+ * @param {string | null | undefined} creationMode
+ * @param {object} [uiProfile]
+ */
+export function isDeskDrawerEnabled(creationMode, uiProfile = {}) {
+  if (!isHumanFirstDeskMode(creationMode)) return false;
+  if (uiProfile.creator_desk_drawer === false) return false;
+  return true;
 }

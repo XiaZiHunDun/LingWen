@@ -481,3 +481,78 @@
   display: flex;
   flex-direction: column;
 }
+
+/* —— 书内抽屉：脉络 / 记忆侧滑，写作主屏常驻 —— */
+#app .creator-desk-drawer-triggers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-left: auto;
+}
+
+#app .hub-tab--drawer {
+  font-size: var(--text-xs);
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-dim);
+}
+
+#app .hub-tab--drawer.hub-tab--active {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  border-color: transparent;
+}
+
+#app .desk-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 18, 28, 0.28);
+  z-index: 180;
+}
+
+#app .creator-column--desk-drawer {
+  position: fixed;
+  top: 72px;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 94vw);
+  z-index: 190;
+  margin: 0;
+  padding: var(--space-md);
+  background: var(--bg-primary);
+  border-left: 2px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#app .desk-drawer-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  flex-shrink: 0;
+}
+
+#app .desk-drawer-chrome__title {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+#app .creator-column--desk-drawer .pulse-desk,
+#app .creator-column--desk-drawer.pixel-card {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  overflow: hidden;
+}

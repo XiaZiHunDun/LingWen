@@ -13,6 +13,8 @@ import { isPulseSubpanelVisible, isPanelDefaultCollapsed, CREATOR_PULSE_SUBPANEL
  *   saveMessage: import('vue').Ref<string>,
  *   workspaceTabsEnabled: import('vue').ComputedRef<boolean>,
  *   isWorkspaceColumnVisible: (col: string) => boolean,
+ *   isDeskDrawerColumn?: (col: string) => boolean,
+ *   closeDeskDrawer?: () => void,
  *   setWorkspaceTab: (tab: string) => void,
  *   editableVolumes: import('vue').Ref<object[]>,
  *   visibleDeviations: import('vue').ComputedRef<object[]>,
@@ -31,6 +33,8 @@ export function useCreatorPulse(deps) {
     saveMessage,
     workspaceTabsEnabled,
     isWorkspaceColumnVisible,
+    isDeskDrawerColumn = () => false,
+    closeDeskDrawer = () => {},
     setWorkspaceTab,
     editableVolumes,
     visibleDeviations,
@@ -178,6 +182,8 @@ export function useCreatorPulse(deps) {
     uiProfile,
     workspaceTabsEnabled,
     isWorkspaceColumnVisible,
+    isDeskDrawerColumn,
+    closeDeskDrawer,
     setWorkspaceTab,
     showPulseCompanionEmpty,
     highlightedVolumeLabel,
@@ -194,6 +200,8 @@ export function useCreatorPulse(deps) {
     dismissBatchSummaryPrompt,
     isPulseSubpanelVisible: pulseSubpanelVisible,
     isPulseSubpanelCollapsed: pulseSubpanelCollapsed,
+    deskDrawerActive: () => isDeskDrawerColumn('pulse'),
+    closeDeskDrawer,
   };
 
   return {

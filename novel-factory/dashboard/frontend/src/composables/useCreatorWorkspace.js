@@ -6,6 +6,8 @@ import {
   buildCreatorWorkspaceTabs,
   resolveDefaultWorkspaceTab,
   splitHumanFirstDeskTabs,
+  isDeskDrawerEnabled,
+  HUMAN_FIRST_DESK_DRAWER_TAB_IDS,
 } from '../config/creatorPanelMatrix.js';
 import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 
@@ -29,12 +31,21 @@ export const CREATOR_WORKSPACE_TABS = [
 export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
   const { focusCreatorWorkspace, setCreatorWorkspace, displayDeviationCount } = nav;
   const activeTab = ref('write');
+  const deskDrawerPanel = ref(null);
 
   const creationMode = useEffectiveCreationMode(
     computed(() => overview.value?.creation_mode ?? null),
     computed(() => (overview.value
       ? { slug: overview.value.slug, name: overview.value.name }
       : null)),
+  );
+
+  const deskDrawerEnabled = computed(() =>
+    isDeskDrawerEnabled(creationMode.value, uiProfile.value),
+  );
+
+  const splitTabs = computed(() =>
+    splitHumanFirstDeskTabs(creationMode.value, { deskDrawer: deskDrawerEnabled.value }),
   );
 
   const tabsEnabled = computed(() => {
@@ -48,19 +59,23 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
     return buildCreatorWorkspaceTabs(creationMode.value);
   });
 
-  const workspacePrimaryTabs = computed(() =>
-    splitHumanFirstDeskTabs(creationMode.value).primary,
-  );
+  const workspacePrimaryTabs = computed(() => splitTabs.value.primary);
 
-  const workspaceSecondaryTabs = computed(() =>
-    splitHumanFirstDeskTabs(creationMode.value).secondary,
-  );
+  const workspaceSecondaryTabs = computed(() => splitTabs.value.secondary);
+
+  const workspaceDrawerTabs = computed(() => splitTabs.value.drawerTabs || []);
+
+  const deskDrawerOpen = computed(() => Boolean(deskDrawerPanel.value));
 
   function syncActiveTabToMatrix() {
     if (!tabsEnabled.value || !overview.value) return;
     const ids = workspaceTabs.value.map((t) => t.id);
     if (!ids.includes(activeTab.value)) {
       activeTab.value = resolveDefaultWorkspaceTab(creationMode.value);
+    }
+    if (deskDrawerEnabled.value && HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(activeTab.value)) {
+      deskDrawerPanel.value = activeTab.value;
+      activeTab.value = 'write';
     }
   }
 
@@ -71,27 +86,62 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
       if (focusCreatorWorkspace?.value) return;
       if (prevMode == null || mode !== prevMode) {
         activeTab.value = resolveDefaultWorkspaceTab(mode);
+        deskDrawerPanel.value = null;
       }
     },
   );
 
   watch(
-    () => [creationMode.value, tabsEnabled.value, workspaceTabs.value.map((t) => t.id).join(',')],
+    () => [creationMode.value, tabsEnabled.value, deskDrawerEnabled.value, workspaceTabs.value.map((t) => t.id).join(',')],
     () => {
       syncActiveTabToMatrix();
     },
     { immediate: true },
   );
 
+  watch(deskDrawerEnabled, (enabled) => {
+    if (!enabled || !tabsEnabled.value) return;
+    if (HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(activeTab.value)) {
+      openDeskDrawer(activeTab.value);
+    }
+  });
+
   function isColumnVisible(columnId) {
     if (!tabsEnabled.value) return true;
+    if (deskDrawerEnabled.value) {
+      if (columnId === 'write') return true;
+      if (HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(columnId)) {
+        return deskDrawerPanel.value === columnId;
+      }
+    }
     return activeTab.value === columnId;
   }
 
+  function isDeskDrawerColumn(columnId) {
+    return deskDrawerEnabled.value && HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(columnId);
+  }
+
+  function openDeskDrawer(tabId) {
+    if (!HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(tabId)) return;
+    if (!workspaceTabs.value.some((t) => t.id === tabId)) return;
+    deskDrawerPanel.value = tabId;
+    activeTab.value = 'write';
+    if (setCreatorWorkspace) setCreatorWorkspace(tabId);
+  }
+
+  function closeDeskDrawer() {
+    deskDrawerPanel.value = null;
+    if (setCreatorWorkspace) setCreatorWorkspace('write');
+  }
+
   function setWorkspaceTab(tabId) {
-    if (workspaceTabs.value.some((t) => t.id === tabId)) {
-      activeTab.value = tabId;
+    if (!workspaceTabs.value.some((t) => t.id === tabId)) return;
+    if (deskDrawerEnabled.value && HUMAN_FIRST_DESK_DRAWER_TAB_IDS.includes(tabId)) {
+      openDeskDrawer(tabId);
+      return;
     }
+    deskDrawerPanel.value = null;
+    activeTab.value = tabId;
   }
 
   const workspaceTabBadges = displayDeviationCount
@@ -102,14 +152,16 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
     : computed(() => null);
 
   function onDeviationBadgeClick() {
-    if (!tabsEnabled.value || !setCreatorWorkspace) return;
+    if (!tabsEnabled.value) return;
     setWorkspaceTab('pulse');
-    setCreatorWorkspace('pulse');
+    if (setCreatorWorkspace && !deskDrawerEnabled.value) {
+      setCreatorWorkspace('pulse');
+    }
   }
 
   if (setCreatorWorkspace) {
     watch(activeTab, (tab) => {
-      if (tabsEnabled.value) {
+      if (tabsEnabled.value && !deskDrawerOpen.value) {
         setCreatorWorkspace(tab);
       }
     });
@@ -125,6 +177,7 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
           }
           if (overview.value) {
             activeTab.value = resolveDefaultWorkspaceTab(creationMode.value);
+            deskDrawerPanel.value = null;
           }
         },
         { immediate: true },
@@ -138,7 +191,14 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
     workspaceTabs,
     workspacePrimaryTabs,
     workspaceSecondaryTabs,
+    workspaceDrawerTabs,
+    deskDrawerEnabled,
+    deskDrawerPanel,
+    deskDrawerOpen,
     isColumnVisible,
+    isDeskDrawerColumn,
+    openDeskDrawer,
+    closeDeskDrawer,
     setWorkspaceTab,
     workspaceTabBadges,
     onDeviationBadgeClick,

@@ -40,7 +40,34 @@
         <span v-if="c.workspaceTabBadges?.[tab.id]" class="hub-tab-badge">{{ c.workspaceTabBadges[tab.id] }}</span>
       </button>
     </nav>
+
+    <nav
+      v-if="c.deskDrawerEnabled && c.workspaceDrawerTabs?.length"
+      class="creator-desk-drawer-triggers"
+      data-testid="creator-desk-drawer-triggers"
+    >
+      <button
+        v-for="tab in c.workspaceDrawerTabs"
+        :key="tab.id"
+        type="button"
+        class="hub-tab hub-tab--drawer"
+        :class="{ 'hub-tab--active': c.deskDrawerPanel === tab.id }"
+        :data-testid="`creator-desk-drawer-${tab.id}`"
+        @click="c.openDeskDrawer(tab.id)"
+      >
+        <span v-if="tab.icon" class="hub-tab-icon">{{ tab.icon }}</span>
+        {{ tab.label }}
+        <span v-if="c.workspaceTabBadges?.[tab.id]" class="hub-tab-badge">{{ c.workspaceTabBadges[tab.id] }}</span>
+      </button>
+    </nav>
   </div>
+
+  <div
+    v-if="c.deskDrawerEnabled && c.deskDrawerOpen"
+    class="desk-drawer-backdrop"
+    data-testid="creator-desk-drawer-backdrop"
+    @click="c.closeDeskDrawer()"
+  />
 
   <div
     v-if="c.overview"
