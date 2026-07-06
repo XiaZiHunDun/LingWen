@@ -183,8 +183,76 @@
   min-height: 240px;
 }
 
+#app .write-workbench--human-first .write-workbench__editor-slot--primary {
+  min-height: 0;
+  flex: 1;
+}
+
+#app .write-workbench--human-first .write-workbench__editor-slot--primary .chapter-preview {
+  min-height: 0;
+  overflow: hidden;
+}
+
+#app .write-workbench--human-first .write-workbench__editor-slot--primary .chapter-dual-edit--human {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: var(--space-sm);
+}
+
+#app .write-workbench--human-first .write-workbench__editor-slot--primary .chapter-inline-edit {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#app .write-workbench--human-first .chapter-body-editor {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+#app .write-workbench--human-first .chapter-body-editor__main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 #app .write-workbench--human-first .write-workbench__editor-slot--primary .chapter-body-textarea {
-  min-height: 280px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+#app .write-workbench--human-first .chapter-outline-edit--collapsible {
+  flex-shrink: 0;
+}
+
+#app .write-workbench--human-first .chapter-body-save-footer {
+  flex-shrink: 0;
+  margin-top: var(--space-sm);
+}
+
+#app .pulse-desk__hero {
+  padding: var(--space-sm) var(--space-md);
+}
+
+#app .pulse-desk__scroll {
+  padding: var(--space-sm) var(--space-md);
+  gap: var(--space-sm);
+}
+
+#app .pulse-desk__section {
+  padding: var(--space-sm) var(--space-md);
+}
+
+#app .creator-pulse-intro--tabbed .column-hint--tabbed {
+  display: none;
+}
+
+#app .creator-pulse-intro--tabbed .progress-bar {
+  height: 8px;
 }
 
 #app .onboarding-wizard {
@@ -216,9 +284,13 @@
 }
 
 #app .write-workbench__editor-slot--primary {
-  min-height: 420px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+#app .write-workbench:not(.write-workbench--human-first) .write-workbench__editor-slot--primary {
+  min-height: 420px;
 }
 
 #app .write-workbench__editor-slot--primary .chapter-preview {
@@ -260,6 +332,11 @@
   font-size: var(--text-base);
   line-height: var(--leading-relaxed);
   color: var(--color-text);
+}
+
+#app .write-workbench--human-first .write-workbench__editor-slot--primary .chapter-body-textarea,
+#app .write-workbench--human-first .write-workbench__editor-slot--primary .settings-textarea {
+  min-height: 0;
 }
 
 #app .write-workbench__editor-slot--primary .chapter-body-textarea:focus,

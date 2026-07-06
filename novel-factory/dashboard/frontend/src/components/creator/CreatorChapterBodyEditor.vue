@@ -32,9 +32,13 @@ defineEmits(['focus-marker']);
   display: flex;
   gap: var(--space-xs);
   align-items: flex-start;
+  min-height: 0;
 }
 .chapter-body-editor__main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 </style>

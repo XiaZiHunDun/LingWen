@@ -151,7 +151,7 @@
                 <textarea
                   v-model="w.chapterOutlineDraft"
                   class="settings-textarea chapter-outline-textarea"
-                  rows="8"
+                  :rows="w.wb?.humanFirstDesk ? 4 : 8"
                   data-testid="chapter-outline-textarea"
                 />
                 <button
@@ -199,7 +199,7 @@
                     v-model="w.chapterBodyDraft"
                     class="settings-textarea chapter-body-textarea"
                     :class="bodyTextareaClass"
-                    rows="12"
+                    :rows="w.wb?.humanFirstDesk ? 4 : 12"
                     data-testid="chapter-body-textarea"
                     @mouseup="onBodyTextareaInteraction"
                     @keyup="onBodyTextareaInteraction"
