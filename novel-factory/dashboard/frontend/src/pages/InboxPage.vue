@@ -106,7 +106,9 @@ const hubLoading = computed(() => {
 });
 
 onMounted(() => {
-  rippleStore.refresh().catch(() => {});
+  if (activeTab.value !== 'ripples') {
+    rippleStore.refresh().catch(() => {});
+  }
 });
 
 function onTabChange(tab) {

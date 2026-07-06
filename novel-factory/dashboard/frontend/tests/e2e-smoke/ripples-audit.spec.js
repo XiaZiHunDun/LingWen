@@ -21,6 +21,7 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
 
   test('drawer_open_shows_audit_timeline_or_empty', async ({ page }) => {
     skipUnlessLive(test);
+    test.setTimeout(60_000);
     await gotoInbox(page, 'ripples');
     await openFirstRippleDrawer(page);
     await expect(

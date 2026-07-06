@@ -267,9 +267,10 @@
         v-if="wb.humanFirstDesk"
         class="write-workbench__advanced"
         data-testid="write-advanced-tools"
+        @toggle="onAdvancedToggle"
       >
         <summary class="write-workbench__advanced-summary">写作工具（透镜 · 生成 · 候选）</summary>
-        <div class="write-workbench__advanced-body">
+        <div v-if="advancedToolsOpen" class="write-workbench__advanced-body">
           <CreatorWriteControlStrip
             v-if="wb.isPanelVisible('controlStrip')"
             :style-strength="wb.styleStrength"
@@ -568,7 +569,7 @@
 </template>
 
 <script setup>
-import { inject } from 'vue';
+import { inject, ref } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 import CreatorWriteScopeBar from './CreatorWriteScopeBar.vue';
 import CreatorDirectorPaths from './CreatorDirectorPaths.vue';
@@ -582,8 +583,13 @@ import '../../assets/creator-write-workbench.css';
 
 const w = inject(CREATOR_WRITE_KEY);
 const wb = w.wb;
+const advancedToolsOpen = ref(false);
 
 const moodTags = ['克制', '戏剧', '幽默', '抒情'];
+
+function onAdvancedToggle(event) {
+  advancedToolsOpen.value = event.target.open;
+}
 
 function onAgentToggle(event) {
   wb.agent.agentExpanded = event.target.open;

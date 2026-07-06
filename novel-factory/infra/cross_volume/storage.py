@@ -214,6 +214,7 @@ class RippleStorage:
         # synchronous=FULL + journal_mode=WAL are per-database (persistent in
         # the DB file), so they only need to be set once at init.
         conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA busy_timeout=5000")
         try:
             yield conn
         finally:

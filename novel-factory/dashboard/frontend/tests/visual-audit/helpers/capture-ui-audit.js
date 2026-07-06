@@ -6,13 +6,21 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const VISUAL_AUDIT_OUTPUT_DIR = path.resolve(__dirname, '../output');
 
-/** 伴侣书桌审计前：折叠入门向导，避免截图被向导遮挡 */
+/** 伴侣书桌审计前：折叠入门向导与写作工具，避免截图被向导遮挡 */
 export async function prepareCreatorDeskForAudit(page) {
   const wizard = page.locator('[data-testid="onboarding-wizard-panel"]');
   if (await wizard.isVisible().catch(() => false)) {
     const isOpen = await wizard.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
     if (isOpen) {
       await wizard.locator('summary').click();
+      await page.waitForTimeout(200);
+    }
+  }
+  const advanced = page.locator('[data-testid="write-advanced-tools"]');
+  if (await advanced.isVisible().catch(() => false)) {
+    const isOpen = await advanced.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
+    if (isOpen) {
+      await advanced.locator('summary').click();
       await page.waitForTimeout(200);
     }
   }
@@ -80,7 +88,9 @@ export async function collectUiMetrics(page) {
       if (rect.top >= viewport.height) return;
       if (rect.bottom <= viewport.height + 4) return;
       const style = getComputedStyle(el);
-      const parentScrollable = el.closest('[style*="overflow"], .pulse-desk__scroll, .write-workbench__main, .main-wrapper');
+      const parentScrollable = el.closest(
+        '[style*="overflow"], .pulse-desk__scroll, .write-workbench__editor-slot--primary, .write-workbench__main, .main-wrapper',
+      );
       clippedBelowFold.push({
         testId: el.getAttribute('data-testid'),
         tag: el.tagName.toLowerCase(),

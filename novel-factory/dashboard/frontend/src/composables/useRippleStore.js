@@ -37,12 +37,14 @@ async function refresh(filters = {}) {
     if (filters.sort_by) params.set('sort_by', filters.sort_by)
     if (filters.min_score != null) params.set('min_score', String(filters.min_score))
     ripples.value = await fetchRipples(params)
-    stats.value = await fetchRippleStats()
   } catch (e) {
     lastError.value = e?.message || String(e)
   } finally {
     loading.value = false
   }
+  fetchRippleStats()
+    .then((s) => { stats.value = s })
+    .catch(() => {})
 }
 
 async function apply(rippleId) {

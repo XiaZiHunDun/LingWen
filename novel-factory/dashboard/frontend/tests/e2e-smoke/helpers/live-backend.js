@@ -44,17 +44,16 @@ export async function waitForPendingDecisionCard(page, timeout = 30_000) {
   await page.getByTestId('decision-card').waitFor({ state: 'visible', timeout });
 }
 
-/** Wait until ripple list finished initial fetch (loading hidden). */
+/** Wait until ripple list finished initial fetch (cards/empty visible, not loading). */
 export async function waitForRippleListReady(page, timeout = 30_000) {
-  const loading = page.getByTestId('ripple-list-loading');
-  if (await loading.isVisible().catch(() => false)) {
-    await loading.waitFor({ state: 'hidden', timeout });
-  }
-  await page
-    .getByTestId('ripple-card')
-    .first()
-    .or(page.getByTestId('ripple-list-empty'))
-    .waitFor({ timeout });
+  await expect
+    .poll(async () => {
+      const hasCards = await page.getByTestId('ripple-card').first().isVisible().catch(() => false);
+      const hasEmpty = await page.getByTestId('ripple-list-empty').isVisible().catch(() => false);
+      const loading = await page.getByTestId('ripple-list-loading').isVisible().catch(() => false);
+      return (hasCards || hasEmpty) && !loading;
+    }, { timeout })
+    .toBe(true);
 }
 
 /** Open first ripple drawer after list + detail fetch complete. */

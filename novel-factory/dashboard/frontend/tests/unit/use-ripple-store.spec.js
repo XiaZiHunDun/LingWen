@@ -25,6 +25,7 @@ describe('useRippleStore', () => {
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
     await store.refresh();
+    await Promise.resolve();
     expect(store.ripples.value).toEqual(mockRipples);
     expect(store.stats.value).toEqual(mockStats);
     expect(store.loading.value).toBe(false);

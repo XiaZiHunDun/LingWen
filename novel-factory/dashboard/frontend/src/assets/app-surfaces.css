@@ -234,6 +234,14 @@
   margin-top: var(--space-sm);
 }
 
+#app .write-workbench--human-first .write-workbench__advanced {
+  flex-shrink: 0;
+}
+
+#app .write-workbench--human-first .write-workbench__advanced-summary {
+  padding: var(--space-xs) 0;
+}
+
 #app .pulse-desk__hero {
   padding: var(--space-sm) var(--space-md);
 }
