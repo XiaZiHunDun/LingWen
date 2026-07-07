@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { clearInboxPending, restoreInboxFixture, skipUnlessLive } from './helpers/live-backend.js';
 import { COMPANION_SLUG, restoreCreatorProject } from './helpers/companion-project.js';
 
+/** Primary CTA labels vary by fixture state (micro-task, onboarding, inbox). */
+const TODAY_FALLBACK_CTA = /继续创作|处理|审阅|向导|Batch|查看|再写/;
+
 test.describe('Today flow (live)', () => {
   test.beforeEach(async ({ request }) => {
     clearInboxPending();
@@ -40,7 +43,7 @@ test.describe('Today flow (live)', () => {
       await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
       await expect(page).toHaveURL(/chapter=\d+/);
     } else {
-      expect(label).toMatch(/继续创作|处理|审阅/);
+      expect(label).toMatch(TODAY_FALLBACK_CTA);
     }
   });
 

@@ -1,7 +1,7 @@
 // Pixel-level visual regression (opt-in baseline update: pnpm e2e:visual-update)
 import { test, expect } from '@playwright/test';
 import { LIVE_E2E_ENABLED } from '../e2e-smoke/helpers/live-backend.js';
-import { prepareCreatorDeskForAudit, prepareCreatorDeskAdvancedOpen, openCreatorPulseDrawerForAudit, prepareChapterEntityPanelForAudit, prepareDirectorPathsPanelForAudit, waitForPaintSettle } from './helpers/capture-ui-audit.js';
+import { prepareCreatorDeskForAudit, prepareCreatorDeskAdvancedOpen, openCreatorPulseDrawerForAudit, prepareChapterEntityPanelForAudit, prepareDirectorPathsPanelForAudit, waitForPaintSettle, visualShotOptions } from './helpers/capture-ui-audit.js';
 import { mockDelayedAgentPlanStream } from '../e2e-smoke/helpers/mock-agent-stream.js';
 import { openAdvancedTools, selectChapter } from '../e2e-smoke/helpers/companion-project.js';
 
@@ -19,10 +19,7 @@ test.describe('Visual regression baselines', () => {
     await page.locator('[data-testid="creator-write-workbench"]').waitFor({ state: 'visible', timeout: 30_000 });
     await prepareCreatorDeskForAudit(page);
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('creator-write-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('creator-write-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -35,10 +32,7 @@ test.describe('Visual regression baselines', () => {
     await page.locator('.pulse-desk__scroll').waitFor({ state: 'visible', timeout: 30_000 });
     await prepareCreatorDeskForAudit(page);
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('creator-pulse-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('creator-pulse-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -49,10 +43,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=ask', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="ask-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('ask-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('ask-1280x720.png', visualShotOptions());
   });
 
   test('library_viewport', async ({ page }) => {
@@ -63,10 +54,7 @@ test.describe('Visual regression baselines', () => {
     await page.locator('[data-testid="library-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await page.locator('[data-testid="library-grid"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('library-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('library-1280x720.png', visualShotOptions());
   });
 
   test('settings_viewport', async ({ page }) => {
@@ -76,10 +64,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=settings', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="settings-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('settings-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('settings-1280x720.png', visualShotOptions());
   });
 
   test('creator_write_advanced_open_viewport', async ({ page, request }) => {
@@ -92,10 +77,7 @@ test.describe('Visual regression baselines', () => {
     await page.locator('[data-testid="chapter-row-1"]').click();
     await prepareCreatorDeskAdvancedOpen(page);
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('creator-write-advanced-open-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('creator-write-advanced-open-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -107,10 +89,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="creator-write-workbench"]').waitFor({ state: 'visible', timeout: 30_000 });
     await openCreatorPulseDrawerForAudit(page);
-    await expect(page).toHaveScreenshot('creator-desk-drawer-pulse-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('creator-desk-drawer-pulse-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -121,10 +100,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=more', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="more-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('more-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('more-1280x720.png', visualShotOptions());
   });
 
   test('today_viewport', async ({ page }) => {
@@ -134,10 +110,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=today', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="today-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('today-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('today-1280x720.png', visualShotOptions());
   });
 
   test('inbox_viewport', async ({ page }) => {
@@ -147,10 +120,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=inbox&tab=decisions', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="inbox-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('inbox-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('inbox-1280x720.png', visualShotOptions());
   });
 
   test('write_light_validation_bar_component', async ({ page, request }) => {
@@ -165,10 +135,7 @@ test.describe('Visual regression baselines', () => {
     const bar = page.locator('[data-testid="write-light-validation-bar"]');
     await bar.waitFor({ state: 'visible', timeout: 15_000 });
     await waitForPaintSettle(page);
-    await expect(bar).toHaveScreenshot('write-light-validation-bar.png', {
-      maxDiffPixelRatio: 0.03,
-      animations: 'disabled',
-    });
+    await expect(bar).toHaveScreenshot('write-light-validation-bar.png', visualShotOptions(0.03));
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -190,10 +157,7 @@ test.describe('Visual regression baselines', () => {
     await preview.waitFor({ state: 'visible', timeout: 15_000 });
     await waitForPaintSettle(page);
 
-    await expect(preview).toHaveScreenshot('agent-stream-preview.png', {
-      maxDiffPixelRatio: 0.04,
-      animations: 'disabled',
-    });
+    await expect(preview).toHaveScreenshot('agent-stream-preview.png', visualShotOptions(0.04));
 
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
@@ -206,10 +170,7 @@ test.describe('Visual regression baselines', () => {
     await page.goto('/?nav=produce', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-testid="produce-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('produce-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('produce-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -226,10 +187,7 @@ test.describe('Visual regression baselines', () => {
       timeout: 30_000,
     });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('insight-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('insight-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -242,10 +200,7 @@ test.describe('Visual regression baselines', () => {
     await page.locator('[data-testid="cascade-runs-page"]').waitFor({ state: 'visible', timeout: 30_000 });
     await page.locator('[data-testid="cascade-runs-panel"]').waitFor({ state: 'visible', timeout: 30_000 });
     await waitForPaintSettle(page);
-    await expect(page).toHaveScreenshot('cascade-runs-1280x720.png', {
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
+    await expect(page).toHaveScreenshot('cascade-runs-1280x720.png', visualShotOptions());
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -287,10 +242,7 @@ test.describe('Visual regression baselines', () => {
     await expect(page.getByTestId('chapter-entity-memory-char-李逍遥')).toBeVisible({ timeout: 15_000 });
     const panel = page.locator('[data-testid="write-chapter-entity-rail"]');
     await waitForPaintSettle(page);
-    await expect(panel).toHaveScreenshot('write-chapter-entity-panel.png', {
-      maxDiffPixelRatio: 0.04,
-      animations: 'disabled',
-    });
+    await expect(panel).toHaveScreenshot('write-chapter-entity-panel.png', visualShotOptions(0.04));
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -304,10 +256,7 @@ test.describe('Visual regression baselines', () => {
     await selectChapter(page);
     await prepareDirectorPathsPanelForAudit(page);
     const panel = page.locator('[data-testid="write-director-paths-panel-main"]');
-    await expect(panel).toHaveScreenshot('write-director-paths-panel.png', {
-      maxDiffPixelRatio: 0.03,
-      animations: 'disabled',
-    });
+    await expect(panel).toHaveScreenshot('write-director-paths-panel.png', visualShotOptions(0.03));
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 
@@ -340,10 +289,7 @@ test.describe('Visual regression baselines', () => {
     const diff = page.locator('[data-testid="write-checkpoint-diff"]');
     await diff.waitFor({ state: 'visible', timeout: 15_000 });
     await waitForPaintSettle(page);
-    await expect(diff).toHaveScreenshot('write-checkpoint-diff.png', {
-      maxDiffPixelRatio: 0.04,
-      animations: 'disabled',
-    });
+    await expect(diff).toHaveScreenshot('write-checkpoint-diff.png', visualShotOptions(0.04));
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
 });

@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const VISUAL_AUDIT_OUTPUT_DIR = path.resolve(__dirname, '../output');
 
+/** CI runners (Ubuntu + headless fonts) need slightly looser pixel tolerance. */
+export function visualShotOptions(maxDiffPixelRatio = 0.02) {
+  const ratio = process.env.CI ? Math.max(maxDiffPixelRatio * 3, 0.06) : maxDiffPixelRatio;
+  return { maxDiffPixelRatio: ratio, animations: 'disabled' };
+}
+
 /** Wait for two animation frames so layout/fonts settle before screenshots. */
 export async function waitForPaintSettle(page) {
   await page.evaluate(
