@@ -51,6 +51,25 @@
   min-width: 220px;
 }
 
+/* —— L1 页面正文可读性 —— */
+#app .l1-page__body {
+  font-size: var(--text-base) !important;
+  line-height: var(--leading-normal) !important;
+  color: var(--color-text);
+}
+
+#app .l1-page__body .meta-line {
+  font-size: var(--text-sm) !important;
+  line-height: var(--leading-normal) !important;
+  color: var(--color-text-dim) !important;
+}
+
+#app .l1-page__body .page-lead-bar,
+#app .l1-page__body .page-lead-bar__text {
+  font-size: var(--text-sm) !important;
+  line-height: var(--leading-relaxed) !important;
+}
+
 #app .switcher-select--sidebar,
 #app .project-switcher--sidebar .switcher-select {
   min-width: 0 !important;

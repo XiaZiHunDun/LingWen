@@ -23,6 +23,7 @@ import { isPulseSubpanelVisible, isPanelDefaultCollapsed, CREATOR_PULSE_SUBPANEL
  *   handleDeviationClick: (deviation: object) => Promise<void>,
  *   jumpToChapter: (chapter: number) => Promise<void>,
  *   onAfterVolumeSummarySave: () => Promise<void>,
+ *   batchJob?: import('vue').Ref<object|null>,
  * }} deps
  */
 export function useCreatorPulse(deps) {
@@ -43,6 +44,7 @@ export function useCreatorPulse(deps) {
     handleDeviationClick,
     jumpToChapter,
     onAfterVolumeSummarySave,
+    batchJob,
   } = deps;
 
   const batchSummaryPrompt = ref(null);
@@ -202,6 +204,7 @@ export function useCreatorPulse(deps) {
     isPulseSubpanelCollapsed: pulseSubpanelCollapsed,
     deskDrawerActive: () => isDeskDrawerColumn('pulse'),
     closeDeskDrawer,
+    batchJob,
   };
 
   return {

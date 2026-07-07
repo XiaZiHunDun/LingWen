@@ -679,6 +679,17 @@ export function useCreatorProductTools(deps) {
     }
   }
 
+  function focusMemoryEntity(entity) {
+    if (!entity) {
+      setWorkspaceTab('memory');
+      return;
+    }
+    const kind = entity.kind;
+    memoryFilter.value = kind === 'foreshadow' ? 'foreshadow' : kind === 'character' ? 'character' : 'all';
+    memorySearchQuery.value = (entity.name || '').replace(/^伏笔：/, '').trim();
+    setWorkspaceTab('memory');
+  }
+
   const panelContext = {
     preferences,
     preferencesDirty,
@@ -761,6 +772,7 @@ export function useCreatorProductTools(deps) {
     goToSettingsForAsset,
     jumpToChapter,
     setWorkspaceTab,
+    focusMemoryEntity,
   };
 
   return {

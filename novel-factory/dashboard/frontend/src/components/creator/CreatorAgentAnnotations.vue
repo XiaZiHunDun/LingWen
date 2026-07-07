@@ -72,7 +72,7 @@ const lensLabel = computed(() => {
   border-bottom: 1px solid var(--border-color);
 }
 .agent-annotations__item--warn { color: #a60; }
-.agent-annotations__item--error { color: #c33; }
+.agent-annotations__item--error { color: var(--color-danger); }
 .agent-annotations__item--info { color: var(--color-text-dim); }
 .agent-annotations__btn {
   width: 100%;

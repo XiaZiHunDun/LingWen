@@ -6,6 +6,15 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const VISUAL_AUDIT_OUTPUT_DIR = path.resolve(__dirname, '../output');
 
+/** Wait for two animation frames so layout/fonts settle before screenshots. */
+export async function waitForPaintSettle(page) {
+  await page.evaluate(
+    () => new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    }),
+  );
+}
+
 /** 伴侣书桌审计前：折叠入门向导与写作工具，避免截图被向导遮挡 */
 export async function prepareCreatorDeskForAudit(page) {
   const wizard = page.locator('[data-testid="onboarding-wizard-panel"]');
@@ -13,7 +22,7 @@ export async function prepareCreatorDeskForAudit(page) {
     const isOpen = await wizard.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
     if (isOpen) {
       await wizard.locator('summary').click();
-      await page.waitForTimeout(200);
+      await waitForPaintSettle(page);
     }
   }
   const advanced = page.locator('[data-testid="write-advanced-tools"]');
@@ -21,12 +30,90 @@ export async function prepareCreatorDeskForAudit(page) {
     const isOpen = await advanced.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
     if (isOpen) {
       await advanced.locator('summary').click();
-      await page.waitForTimeout(200);
+      await waitForPaintSettle(page);
     }
   }
 }
 
+/** 审计：展开写作高级工具（Agent 区可见） */
+export async function prepareCreatorDeskAdvancedOpen(page) {
+  await prepareCreatorDeskForAudit(page);
+  const advanced = page.locator('[data-testid="write-advanced-tools"]');
+  if (await advanced.isVisible().catch(() => false)) {
+    const isOpen = await advanced.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
+    if (!isOpen) {
+      await advanced.locator('summary').click();
+      await waitForPaintSettle(page);
+    }
+  }
+  const agentStrip = page.locator('[data-testid="write-agent-strip"]');
+  if (await agentStrip.isVisible().catch(() => false)) {
+    const isOpen = await agentStrip.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
+    if (!isOpen) {
+      await agentStrip.locator('summary').click();
+      await waitForPaintSettle(page);
+    }
+  }
+}
+
+/** 审计：展开 human-first 本章实体面板 */
+export async function prepareChapterEntityPanelForAudit(page) {
+  await prepareCreatorDeskForAudit(page);
+  const panel = page.locator('[data-testid="write-chapter-entity-panel"]');
+  await panel.waitFor({ state: 'visible', timeout: 30_000 });
+  const isOpen = await panel.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
+  if (!isOpen) {
+    await panel.locator('summary').click();
+    await waitForPaintSettle(page);
+  }
+}
+
+/** 审计：human-first 导演路径面板可见（需展开高级工具 + 章节焦点） */
+export async function prepareDirectorPathsPanelForAudit(page) {
+  await prepareCreatorDeskForAudit(page);
+  const advanced = page.locator('[data-testid="write-advanced-tools"]');
+  if (await advanced.isVisible().catch(() => false)) {
+    const isOpen = await advanced.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
+    if (!isOpen) {
+      await advanced.locator('summary').click();
+      await waitForPaintSettle(page);
+    }
+  }
+  await page.locator('[data-testid="write-director-paths-panel-main"]').waitFor({
+    state: 'visible',
+    timeout: 30_000,
+  });
+  await waitForPaintSettle(page);
+}
+
+/** 审计：打开书内脉络抽屉 */
+export async function openCreatorPulseDrawerForAudit(page) {
+  await prepareCreatorDeskForAudit(page);
+  const drawer = page.locator('[data-testid="creator-desk-drawer-pulse"]');
+  const tab = page.locator('[data-testid="creator-workspace-tab-pulse"]');
+  if (await drawer.isVisible().catch(() => false)) {
+    await drawer.click();
+  } else if (await tab.isVisible().catch(() => false)) {
+    await tab.click();
+  }
+  await page.locator('[data-testid="column-pulse"]').waitFor({ state: 'visible', timeout: 30_000 });
+  await waitForPaintSettle(page);
+}
+
 /** @typedef {{ pageId: string, url: string, capturedAt: string, viewport: { width: number, height: number } | null, screenshot: string, metrics: object }} VisualAuditEntry */
+
+/**
+ * Fail when interactive blocks clip below viewport without a scroll parent.
+ * @param {Awaited<ReturnType<typeof collectUiMetrics>>} metrics
+ * @param {{ maxOverflowBelow?: number, allowTestIds?: string[] }} [opts]
+ */
+export function findCriticalClipping(metrics, opts = {}) {
+  const maxOverflowBelow = opts.maxOverflowBelow ?? 12;
+  const allow = new Set(opts.allowTestIds ?? []);
+  return (metrics.clippedBelowFold || []).filter(
+    (item) => item.overflowBelow > maxOverflowBelow && !allow.has(item.testId),
+  );
+}
 
 /**
  * Collect scroll/overflow/layout metrics from key shell selectors.
@@ -134,7 +221,7 @@ export async function capturePageAudit(page, pageId, options = {}) {
   const { fullPage = false, note = '' } = options;
   fs.mkdirSync(VISUAL_AUDIT_OUTPUT_DIR, { recursive: true });
 
-  await page.waitForTimeout(350);
+  await waitForPaintSettle(page);
 
   const metrics = await collectUiMetrics(page);
   const screenshotFile = `${pageId}.png`;

@@ -7,7 +7,10 @@
     :class="{ 'chapter-entity-rail--nested': hideTitle }"
     data-testid="write-chapter-entity-rail"
   >
-    <p v-if="!hideTitle" class="chapter-entity-rail__title">本章实体</p>
+    <p v-if="!hideTitle" class="chapter-entity-rail__title">
+      本章实体
+      <span v-if="entities.length" class="chapter-entity-rail__count">{{ entities.length }}</span>
+    </p>
     <p v-if="!entities.length" class="meta-line">选章后显示相关角色 / 伏笔 / 记忆片段</p>
     <ul v-else class="chapter-entity-rail__list">
       <li
@@ -28,7 +31,7 @@
           type="button"
           class="link-btn meta-line"
           data-testid="chapter-entity-goto-memory"
-          @click="goMemoryTab"
+          @click="goMemoryTab(entity)"
         >
           记忆库 →
         </button>
@@ -54,8 +57,12 @@ function kindLabel(kind) {
   return '记忆';
 }
 
-function goMemoryTab() {
-  pt.setWorkspaceTab('memory');
+function goMemoryTab(entity) {
+  if (entity && pt?.focusMemoryEntity) {
+    pt.focusMemoryEntity(entity);
+    return;
+  }
+  pt?.setWorkspaceTab?.('memory');
 }
 </script>
 
@@ -75,6 +82,14 @@ function goMemoryTab() {
 .chapter-entity-rail__title {
   font-weight: 600;
   margin: 0 0 var(--space-xs);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+.chapter-entity-rail__count {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-dim);
 }
 .chapter-entity-rail__list {
   list-style: none;

@@ -3,6 +3,7 @@
  */
 import { ref } from 'vue';
 import {
+  fetchCreatorChapterPreview,
   fetchCreatorOnboarding,
   fetchCreatorOverview,
   fetchPendingDecisions,
@@ -12,8 +13,10 @@ import {
   fetchStudioQualityReport,
   fetchStudioSummary,
 } from '../api/index.js';
+import { buildMicroTaskProgress } from '../utils/creatorMicroTaskUtils.js';
 import { resolveTodayPrimaryAction } from '../utils/creationModeHint.js';
 import { buildTodaySecondaryLinks } from '../utils/todaySecondaryLinks.js';
+import { getWriteResume } from '../utils/writeResumeStorage.js';
 
 function pendingRippleCount(stats) {
   if (!stats?.by_status) return 0;
@@ -43,6 +46,7 @@ async function loadTodaySnapshot(options = {}) {
   ]);
 
   const creationMode = creator?.creation_mode || summary?.creation_mode || 'companion';
+  const slug = creator?.slug || summary?.slug || null;
   const projectName = creator?.name || summary?.name || summary?.slug || '当前项目';
   const chaptersWritten = quality?.chapters_written ?? creator?.chapters_written ?? 0;
   const maxChapter = quality?.max_chapter ?? creator?.max_chapter ?? 0;
@@ -52,6 +56,36 @@ async function loadTodaySnapshot(options = {}) {
   const batchActive = Boolean(batchJob?.active || batchJob?.job_id);
   const wizardProgressPct = onboarding?.progress_pct ?? 100;
   const p0Count = qualityReport?.p0 ?? creator?.p0_count ?? 0;
+
+  let microTask = null;
+  let activeChapter = null;
+  if (!isReviewer && slug && (creationMode === 'companion' || creationMode === 'advance')) {
+    const resume = getWriteResume(slug);
+    const fallbackChapter = chaptersWritten > 0
+      ? Math.min(chaptersWritten, maxChapter || chaptersWritten)
+      : null;
+    activeChapter = resume?.chapter ?? fallbackChapter;
+    if (activeChapter != null && maxChapter > 0) {
+      activeChapter = Math.min(activeChapter, maxChapter);
+    }
+    if (activeChapter) {
+      try {
+        const preview = await Promise.race([
+          fetchCreatorChapterPreview(activeChapter, { full: true }),
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('chapter preview timeout')), 8_000);
+          }),
+        ]);
+        const draft = preview?.body_text ?? preview?.body_preview ?? '';
+        microTask = {
+          ...buildMicroTaskProgress({ draft, creationMode }),
+          chapter: activeChapter,
+        };
+      } catch {
+        microTask = null;
+      }
+    }
+  }
 
   const primaryAction = resolveTodayPrimaryAction({
     creationMode,
@@ -63,6 +97,8 @@ async function loadTodaySnapshot(options = {}) {
     coveragePct,
     alertCount: creator?.alert_count ?? 0,
     isReviewer,
+    microTask,
+    activeChapter,
   });
 
   const todoCards = [
@@ -108,6 +144,7 @@ async function loadTodaySnapshot(options = {}) {
     batchActive,
     batchStatus: batchJob?.status || (batchActive ? 'running' : 'idle'),
     qualityReportReady: Boolean(qualityReport?.available),
+    microTask,
   };
 
   return {

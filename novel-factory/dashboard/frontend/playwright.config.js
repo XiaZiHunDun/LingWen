@@ -10,7 +10,10 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../..')
 
+import { QUARANTINE_ONLY } from './tests/e2e-smoke/helpers/quarantine.js'
+
 const liveE2E = process.env.LINGWEN_E2E_LIVE === '1'
+const a11yE2E = process.env.LINGWEN_E2E_LIVE === '1'
 
 const viteServer = {
   command: 'pnpm dev --port 5173 --strictPort',
@@ -47,7 +50,16 @@ export default defineConfig({
     },
     {
       name: 'live-backend',
-      testMatch: /(ripples-audit|decisions-resolve|creator-workspace)\.spec\.js/,
+      testMatch: QUARANTINE_ONLY
+        ? /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow)\.spec\.js/
+        : /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow)\.spec\.js/,
+      grep: QUARANTINE_ONLY ? /@quarantine/ : undefined,
+      grepInvert: QUARANTINE_ONLY ? undefined : /@quarantine/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'a11y-l1',
+      testMatch: /a11y-l1\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -62,6 +74,12 @@ export default defineConfig({
       testMatch: /regression\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'ui-metrics',
+      testDir: './tests/visual-audit',
+      testMatch: /ui-metrics\.spec\.js/,
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
-  webServer: liveE2E ? [dashboardServer, viteServer] : viteServer,
+  webServer: (liveE2E || a11yE2E) ? [dashboardServer, viteServer] : viteServer,
 })

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   fetchStudioQualityReport: vi.fn(),
   fetchStudioActiveBatchJob: vi.fn(),
   fetchCreatorOnboarding: vi.fn(),
+  fetchCreatorChapterPreview: vi.fn(),
 }))
 
 vi.mock('../../src/utils/shareLink.js', () => ({
@@ -37,6 +38,7 @@ vi.mock('../../src/api/index.js', () => ({
   fetchStudioQualityReport: mocks.fetchStudioQualityReport,
   fetchStudioActiveBatchJob: mocks.fetchStudioActiveBatchJob,
   fetchCreatorOnboarding: mocks.fetchCreatorOnboarding,
+  fetchCreatorChapterPreview: mocks.fetchCreatorChapterPreview,
 }))
 
 import TodayPage from '../../src/pages/TodayPage.vue'
@@ -67,6 +69,9 @@ function defaultApiMocks() {
   mocks.fetchStudioQualityReport.mockResolvedValue({ available: true, p0: 0 })
   mocks.fetchStudioActiveBatchJob.mockResolvedValue({ active: false })
   mocks.fetchCreatorOnboarding.mockResolvedValue({ progress_pct: 100 })
+  mocks.fetchCreatorChapterPreview.mockResolvedValue({
+    body_text: '字'.repeat(1500),
+  })
 }
 
 describe('TodayPage (Phase A)', () => {
@@ -90,6 +95,21 @@ describe('TodayPage (Phase A)', () => {
     await flushPromises()
     await wrapper.find(byTestid('today-primary-cta')).trigger('click')
     expect(mocks.navigateTo).toHaveBeenCalledWith('creator', expect.objectContaining({ clearFocus: true }))
+  })
+
+  test('companion micro task CTA when chapter below goal', async () => {
+    mocks.fetchCreatorChapterPreview.mockResolvedValue({
+      body_text: '字'.repeat(200),
+    })
+    const wrapper = mount(TodayPage)
+    await flushPromises()
+    expect(wrapper.find(byTestid('today-primary-cta')).text()).toMatch(/^再写 \d+ 字$/)
+    expect(wrapper.find(byTestid('today-micro-task-stat')).exists()).toBe(true)
+    await wrapper.find(byTestid('today-primary-cta')).trigger('click')
+    expect(mocks.navigateTo).toHaveBeenCalledWith('creator', expect.objectContaining({
+      clearFocus: false,
+      chapter: 3,
+    }))
   })
 
   test('pending decisions take priority in primary CTA', async () => {
@@ -164,6 +184,19 @@ describe('resolveTodayPrimaryAction', () => {
       chaptersWritten: 0,
     })
     expect(action.label).toContain('ch001')
+    expect(action.chapter).toBe(1)
+  })
+
+  test('companion micro task takes priority over generic write CTA', () => {
+    const action = resolveTodayPrimaryAction({
+      creationMode: 'companion',
+      chaptersWritten: 3,
+      microTask: { remaining: 120, current: 1380, goal: 1500 },
+      activeChapter: 2,
+    })
+    expect(action.id).toBe('write-micro')
+    expect(action.label).toBe('再写 120 字')
+    expect(action.chapter).toBe(2)
   })
 
   test('reviewer prioritizes decisions then insight', () => {

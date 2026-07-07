@@ -223,6 +223,7 @@ export function useCreatorVolumePlan(deps) {
     mergeEndIdx: mergeSplitHub.mergeEndIdx,
     mergeLabel: mergeSplitHub.mergeLabel,
     mergePreview: mergeSplitHub.mergePreview,
+    mergeConflictPreview: mergeSplitHub.mergeConflictPreview,
     mergeStartIdx: mergeSplitHub.mergeStartIdx,
     moveVolume,
     onVolumeDragStart,

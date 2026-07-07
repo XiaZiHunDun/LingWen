@@ -45,6 +45,7 @@ export function buildInlineConflictMarkers(input) {
       level: issue.level === 'warn' ? 'warn' : 'info',
       label: issue.label || '写作提示',
       paragraph: issue.paragraph ?? null,
+      fixHint: issue.fixHint || null,
     });
   }
 

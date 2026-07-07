@@ -44,7 +44,7 @@
         <StatCard label="上限" :value="String(summary.max_chapter)" />
       </div>
       <details class="studio-path-details">
-        <summary class="meta-line">项目路径（运维）</summary>
+        <summary class="meta-line studio-path-summary">项目路径（运维）</summary>
         <p class="meta-line"><code>{{ summary.root }}</code></p>
       </details>
     </section>
@@ -238,23 +238,51 @@
       <h2 class="section-title">生产控制台</h2>
       <form class="prod-form" @submit.prevent="runPreflight">
         <div class="form-row">
-          <label>起始章</label>
-          <input v-model.number="startChapter" type="number" min="1" class="form-input pixel-border" data-testid="start-chapter" />
+          <label for="studio-start-chapter">起始章</label>
+          <input
+            id="studio-start-chapter"
+            v-model.number="startChapter"
+            type="number"
+            min="1"
+            class="form-input pixel-border"
+            data-testid="start-chapter"
+          />
         </div>
         <div class="form-row">
-          <label>结束章</label>
-          <input v-model.number="endChapter" type="number" min="1" class="form-input pixel-border" data-testid="end-chapter" />
+          <label for="studio-end-chapter">结束章</label>
+          <input
+            id="studio-end-chapter"
+            v-model.number="endChapter"
+            type="number"
+            min="1"
+            class="form-input pixel-border"
+            data-testid="end-chapter"
+          />
         </div>
         <div class="form-row">
-          <label>模式</label>
-          <select v-model="mode" class="form-input pixel-border" data-testid="production-mode">
+          <label for="studio-production-mode">模式</label>
+          <select
+            id="studio-production-mode"
+            v-model="mode"
+            class="form-input pixel-border"
+            data-testid="production-mode"
+          >
             <option value="canon">canon</option>
             <option value="pilot">pilot</option>
           </select>
         </div>
         <div class="form-row">
-          <label>预算 (USD)</label>
-          <input v-model.number="budgetUsd" type="number" min="0" max="100" step="0.01" class="form-input pixel-border" data-testid="budget-usd" />
+          <label for="studio-budget-usd">预算 (USD)</label>
+          <input
+            id="studio-budget-usd"
+            v-model.number="budgetUsd"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            class="form-input pixel-border"
+            data-testid="budget-usd"
+          />
         </div>
         <button type="submit" class="run-btn pixel-border" data-testid="preflight-btn" :disabled="preflightLoading">
           {{ preflightLoading ? '检查中…' : 'Preflight 检查' }}
@@ -575,6 +603,11 @@ onUnmounted(() => {
   font-family: monospace;
   margin-top: var(--space-sm);
   opacity: 0.85;
+}
+
+.studio-path-summary {
+  color: var(--color-text-secondary);
+  opacity: 1;
 }
 
 .quality-list {

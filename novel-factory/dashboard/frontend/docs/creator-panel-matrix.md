@@ -224,3 +224,21 @@ idle → plan（scope + action）→ generating → candidates
 | Agent 后端 API | **已接** `POST /api/creator/agent/plan`（Lens + auto/mock/llm provider，失败降级本地） |
 
 详见 [creator-page-architecture.md](./creator-page-architecture.md)。
+
+## 10. Playwright 本地跑法
+
+在 `novel-factory/dashboard/frontend` 目录：
+
+| 命令 | 说明 |
+|------|------|
+| `pnpm e2e:smoke` | Vite-only：`app-root.spec.js`（无后端） |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:live` | Live 行为 E2E（50 项，需 `dashboard/e2e_entry.py`） |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:a11y` | L1 可访问性抽检（axe critical/serious/moderate，CI blocking） |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` | 视觉回归（对比 `tests/visual-audit/snapshots/`） |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-update` | 有意变更时更新视觉基线 |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:ui-metrics` | 1280×720 布局指标（`clippedBelowFold` 门禁） |
+| `LINGWEN_E2E_LIVE=1 PLAYWRIGHT_QUARANTINE=only pnpm e2e:quarantine` | 仅跑 `@quarantine` 标记的 flake 用例 |
+
+默认前端 CI（`dashboard-frontend-ci.yml`）：`lint-and-test` → 并行 `visual-regression` + `e2e-live` + `a11y-l1` + `ui-metrics`（blocking）。`grepInvert @quarantine` 用于隔离已知 flake；手动轨见 `dashboard-frontend-quarantine.yml`。
+
+**当前基线（2026-07-07）**：Vitest **779** · Live E2E **52** · 视觉回归 **18** · a11y L1 **7** · UI metrics **10** · Vite smoke **1**。

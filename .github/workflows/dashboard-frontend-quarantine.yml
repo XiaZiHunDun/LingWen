@@ -1,0 +1,63 @@
+# Opt-in / scheduled Playwright quarantine lane (@quarantine tagged tests).
+name: Dashboard Frontend Quarantine E2E
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: dashboard-frontend-quarantine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quarantine-e2e:
+    name: Playwright quarantine E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install Python dependencies
+        working-directory: novel-factory
+        run: pip install -r requirements.txt
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run quarantine e2e
+        run: pnpm e2e:quarantine
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'
+          PLAYWRIGHT_QUARANTINE: 'only'
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-quarantine-trace
+          path: test-results/
+          if-no-files-found: ignore

@@ -723,7 +723,7 @@ if (!bh) {
 }
 
 .batch-history-item--status-failed {
-  border-left: 3px solid #c44;
+  border-left: 3px solid var(--color-danger);
 }
 
 .batch-history-item--status-running {
@@ -828,7 +828,7 @@ if (!bh) {
 }
 
 .batch-error {
-  color: #c44;
+  color: var(--color-danger);
   font-size: var(--text-sm);
   margin-top: 4px;
 }
@@ -839,7 +839,7 @@ if (!bh) {
 }
 
 .mini-btn--danger {
-  color: #c44;
+  color: var(--color-danger);
 }
 
 .pulse-empty-guide .meta-line {

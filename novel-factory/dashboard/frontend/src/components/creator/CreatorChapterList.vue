@@ -27,22 +27,24 @@
       <li
         v-for="ch in w.visibleChapters"
         :key="ch.chapter"
-        class="chapter-row"
-        :class="[w.chapterRowClass(ch.chapter), { 'chapter-row--selected': w.selectedChapter === ch.chapter }]"
-        role="button"
-        tabindex="0"
-        :data-testid="`chapter-row-${ch.chapter}`"
-        :title="w.chapterRowTitle(ch.chapter)"
-        @click="w.selectChapter(ch.chapter)"
-        @keydown.enter="w.selectChapter(ch.chapter)"
+        class="chapter-list__item"
       >
-        <span class="ch-label">
-          <span v-if="w.chapterVolumeLabel(ch.chapter)" class="ch-vol">{{ w.chapterVolumeLabel(ch.chapter) }} · </span>
-          ch{{ String(ch.chapter).padStart(3, '0') }}
-        </span>
-        <span class="ch-status">
-          {{ ch.has_body ? `${ch.word_count} 字` : (ch.has_outline ? '仅大纲' : '空') }}
-        </span>
+        <button
+          type="button"
+          class="chapter-row"
+          :class="[w.chapterRowClass(ch.chapter), { 'chapter-row--selected': w.selectedChapter === ch.chapter }]"
+          :data-testid="`chapter-row-${ch.chapter}`"
+          :title="w.chapterRowTitle(ch.chapter)"
+          @click="w.selectChapter(ch.chapter)"
+        >
+          <span class="ch-label">
+            <span v-if="w.chapterVolumeLabel(ch.chapter)" class="ch-vol">{{ w.chapterVolumeLabel(ch.chapter) }} · </span>
+            ch{{ String(ch.chapter).padStart(3, '0') }}
+          </span>
+          <span class="ch-status">
+            {{ ch.has_body ? `${ch.word_count} 字` : (ch.has_outline ? '仅大纲' : '空') }}
+          </span>
+        </button>
       </li>
     </ul>
     <p v-if="w.overview?.chapters?.length > 15" class="meta-line chapter-list__more">
@@ -93,14 +95,25 @@ const w = inject(CREATOR_WRITE_KEY);
   gap: 2px;
 }
 
+.chapter-list__item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .chapter-row {
   display: flex;
   justify-content: space-between;
+  width: 100%;
   font-size: var(--text-sm);
+  font-family: inherit;
+  text-align: left;
   padding: 8px 10px;
   min-height: 40px;
   align-items: center;
   border: 1px solid var(--border-color);
+  background: var(--surface-elevated, var(--bg-elevated));
+  color: var(--color-text);
   cursor: pointer;
 }
 
@@ -125,7 +138,7 @@ const w = inject(CREATOR_WRITE_KEY);
 
 .chapter-row--warn .ch-label::before {
   content: '● ';
-  color: var(--color-warning, #aa8);
+  color: var(--color-warning);
 }
 
 .ch-vol {

@@ -30,6 +30,14 @@ export function resetE2eDecision() {
   runE2eSeed('reset-decision');
 }
 
+export function clearInboxPending() {
+  runE2eSeed('clear-inbox-pending');
+}
+
+export function restoreInboxFixture() {
+  runE2eSeed('restore-inbox-fixture');
+}
+
 export async function clickNav(page, label) {
   await page.getByRole('link', { name: label }).click();
 }

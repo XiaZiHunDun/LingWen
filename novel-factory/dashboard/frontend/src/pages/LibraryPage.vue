@@ -23,27 +23,26 @@
         </button>
       </div>
       <div v-if="projects.length" class="library-page__grid" data-testid="library-grid">
-        <article
+        <button
           v-for="p in projects"
           :key="p.slug"
+          type="button"
           class="library-card"
           :class="{ 'library-card--active': p.slug === activeSlug }"
           :data-testid="`library-card-${p.slug}`"
-          role="button"
-          tabindex="0"
+          :aria-current="p.slug === activeSlug ? 'true' : undefined"
           @click="openBook(p.slug)"
-          @keydown.enter="openBook(p.slug)"
         >
-          <div class="library-card__cover">
+          <span class="library-card__cover" aria-hidden="true">
             {{ (p.name || p.slug || '?').slice(0, 1) }}
-          </div>
-          <div class="library-card__body">
-            <h2 class="library-card__title">{{ displayProjectName(p) }}</h2>
-            <p class="meta-line">{{ projectSubtitle(p) }}</p>
-            <p v-if="p.slug === activeSlug && qualityLine" class="library-card__stats">{{ qualityLine }}</p>
+          </span>
+          <span class="library-card__body">
+            <span class="library-card__title">{{ displayProjectName(p) }}</span>
+            <span class="library-card__subtitle meta-line">{{ projectSubtitle(p) }}</span>
+            <span v-if="p.slug === activeSlug && qualityLine" class="library-card__stats">{{ qualityLine }}</span>
             <span v-if="p.slug === activeSlug" class="library-card__badge">当前</span>
-          </div>
-        </article>
+          </span>
+        </button>
       </div>
 
       <div
@@ -81,8 +80,10 @@ const projects = computed(() => studio.projects.value || []);
 const activeSlug = computed(() => studio.activeSlug.value);
 
 function projectSubtitle(project) {
-  const labels = { projects: '书库', root: '仓库' };
-  return labels[project?.location] || '本地';
+  const written = project?.chapter_count ?? project?.chapters_written;
+  if (written != null && Number(written) > 0) return `已写 ${written} 章`;
+  if (project?.has_body || project?.has_outline) return '进行中';
+  return '尚未开写';
 }
 
 function displayProjectName(project) {
@@ -165,8 +166,13 @@ onMounted(load);
 }
 .library-page__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-md);
+}
+@media (min-width: 1280px) {
+  .library-page__grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }
 .library-card {
   display: grid;
@@ -174,13 +180,25 @@ onMounted(load);
   gap: var(--space-sm);
   padding: var(--space-md);
   position: relative;
-  background: var(--bg-elevated);
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--surface-elevated, var(--bg-elevated));
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
   text-align: left;
+}
+.library-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .library-card {
+    transition: none;
+  }
 }
 .library-card:hover {
   border-color: var(--border-strong);
@@ -198,14 +216,28 @@ onMounted(load);
   justify-content: center;
   font-size: 24px;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-on-accent, #fff);
   border: none;
   border-radius: var(--radius-sm);
   background: linear-gradient(145deg, var(--color-accent), var(--color-accent-gradient-end));
 }
+.library-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
 .library-card__title {
+  display: block;
   margin: 0;
   font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+.library-card__subtitle {
+  display: block;
 }
 .library-card__stats {
   margin: 4px 0 0;
@@ -218,17 +250,17 @@ onMounted(load);
   font-size: 10px;
   padding: 3px 8px;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent, #fff);
   border-radius: 999px;
   font-weight: 600;
 }
 .meta-line {
   margin: 0;
   font-size: var(--text-xs);
-  color: var(--color-text-dim);
+  color: var(--color-text-secondary);
 }
 .error-line {
-  color: #c33;
+  color: var(--color-danger);
   font-size: var(--text-sm);
 }
 </style>

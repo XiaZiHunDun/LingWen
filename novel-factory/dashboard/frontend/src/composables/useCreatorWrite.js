@@ -29,6 +29,7 @@ import { saveWriteResume } from '../utils/writeResumeStorage.js';
  *   logicCheckResult: import('vue').Ref<object|null>,
  *   runCompanionLogicCheck: () => Promise<void>,
  *   openVolumeSummaryForRange: (start: number, end: number) => void,
+ *   focusChapter?: import('vue').Ref<number|null>,
  * } deps
  */
 export function useCreatorWrite(deps) {
@@ -37,7 +38,7 @@ export function useCreatorWrite(deps) {
     isWorkspaceColumnVisible, workspaceTabsEnabled, visibleDeviations,
     deviationHighlightEnabled, highlightedDeviationChapter,
     logicCheckRunning, logicCheckResult, runCompanionLogicCheck,
-    openVolumeSummaryForRange,
+    openVolumeSummaryForRange, focusChapter,
   } = deps;
 
 const selectedChapter = ref(null);
@@ -85,10 +86,10 @@ const showCompanionLogicCheckInWrite = computed(
   () => uiProfile.value.primary_action === 'logic_check' && workspaceTabsEnabled.value,
 );
 
-let memoryAssetsCache = [];
+const memoryAssetsCache = ref([]);
 
 function syncMemoryAssets(items) {
-  memoryAssetsCache = Array.isArray(items) ? items : [];
+  memoryAssetsCache.value = Array.isArray(items) ? items : [];
 }
 
 const wb = useCreatorWriteWorkbench({
@@ -99,7 +100,8 @@ const wb = useCreatorWriteWorkbench({
   saveMessage,
   logicCheckResult,
   visibleDeviations,
-  getMemoryAssets: () => memoryAssetsCache,
+  memoryAssets: memoryAssetsCache,
+  getMemoryAssets: () => memoryAssetsCache.value,
   focusParagraphByIndex: (paragraph, source = 'inline') => {
     focusIssueParagraph({ paragraph }, null, source);
   },
@@ -178,6 +180,11 @@ function maybeAutoSelectWritingChapter() {
   const ov = overview.value;
   if (!ov || (ov.creation_mode !== 'companion' && ov.creation_mode !== 'advance')) return;
   const chapters = ov.chapters || [];
+  const focus = focusChapter?.value;
+  if (focus != null && chapters.some((ch) => ch.chapter === focus)) {
+    selectChapter(focus);
+    return;
+  }
   const target = chapters.find((ch) => !ch.has_body) || chapters[0];
   if (target?.chapter) {
     selectChapter(target.chapter);
@@ -283,7 +290,7 @@ async function saveChapterBody() {
     lastPersistedBody = chapterBodyDraft.value;
     bodyLastSavedAt.value = new Date();
     bodyAutoSaveStatus.value = 'saved';
-    const mentioned = extractMentionedEntityNames(chapterBodyDraft.value, memoryAssetsCache);
+    const mentioned = extractMentionedEntityNames(chapterBodyDraft.value, memoryAssetsCache.value);
     saveMessage.value = mentioned.length
       ? `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存 · 涉及：${mentioned.join('、')}`
       : `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;

@@ -41,6 +41,8 @@ export function resolveTodayPrimaryAction(ctx) {
     coveragePct = 0,
     alertCount = 0,
     isReviewer = false,
+    microTask = null,
+    activeChapter = null,
   } = ctx;
 
   if (isReviewer) {
@@ -113,7 +115,18 @@ export function resolveTodayPrimaryAction(ctx) {
         id: 'write-first',
         label: '去写作页写 ch001',
         nav: 'creator',
+        chapter: 1,
         reason: '从第一章开始人主笔创作',
+      };
+    }
+    if (microTask?.remaining > 0 && activeChapter) {
+      const chLabel = `ch${String(activeChapter).padStart(3, '0')}`;
+      return {
+        id: 'write-micro',
+        label: `再写 ${microTask.remaining} 字`,
+        nav: 'creator',
+        chapter: activeChapter,
+        reason: `${chLabel} 还差 ${microTask.remaining} 字达标（${microTask.current}/${microTask.goal}）`,
       };
     }
     return {

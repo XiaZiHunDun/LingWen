@@ -187,7 +187,7 @@
                 class="chapter-inline-edit"
                 data-testid="chapter-inline-edit"
               >
-                <label class="meta-line">正文（内嵌编辑）</label>
+                <label class="meta-line" for="chapter-body-textarea">正文（内嵌编辑）</label>
                 <CreatorChapterBodyEditor
                   :show-gutter="Boolean(w.wb?.showInlineConflictGutter)"
                   :markers="w.wb?.inlineConflictMarkers || []"
@@ -200,6 +200,7 @@
                     class="settings-textarea chapter-body-textarea"
                     :class="bodyTextareaClass"
                     :rows="w.wb?.humanFirstDesk ? 4 : 12"
+                    id="chapter-body-textarea"
                     data-testid="chapter-body-textarea"
                     @mouseup="onBodyTextareaInteraction"
                     @keyup="onBodyTextareaInteraction"
@@ -237,7 +238,7 @@
               class="chapter-inline-edit"
               data-testid="chapter-inline-edit"
             >
-              <label class="meta-line">正文（内嵌编辑）</label>
+              <label class="meta-line" for="chapter-body-textarea">正文（内嵌编辑）</label>
               <CreatorChapterBodyEditor
                 :show-gutter="Boolean(w.wb?.showInlineConflictGutter)"
                 :markers="w.wb?.inlineConflictMarkers || []"
@@ -395,7 +396,7 @@ function onBodyTextareaInteraction(event) {
 }
 .logic-check-issue--active {
   animation: recheck-issue-flash 1.2s ease-out;
-  background: rgba(255, 220, 100, 0.35);
+  background: var(--color-highlight-soft);
 }
 .batch-deviation-inline-summary {
   margin: var(--space-sm) 0;
@@ -423,15 +424,15 @@ function onBodyTextareaInteraction(event) {
 }
 .chapter-body-textarea--highlight {
   animation: chapter-body-highlight-pulse 1.2s ease-out;
-  box-shadow: 0 0 0 2px rgba(200, 180, 80, 0.75);
+  box-shadow: 0 0 0 2px var(--color-highlight-soft);
 }
 .chapter-body-textarea--conflict {
   animation: chapter-body-conflict-pulse 1.4s ease-out;
-  box-shadow: 0 0 0 2px rgba(200, 80, 80, 0.55);
+  box-shadow: 0 0 0 2px var(--color-conflict-outline);
   background-image: linear-gradient(
     transparent 90%,
-    rgba(200, 80, 80, 0.35) 90%,
-    rgba(200, 80, 80, 0.35) 95%,
+    var(--color-conflict-bg-stripe) 90%,
+    var(--color-conflict-bg-stripe) 95%,
     transparent 95%
   );
   background-size: 100% 1.4em;
@@ -448,8 +449,16 @@ function onBodyTextareaInteraction(event) {
   100% { background: transparent; }
 }
 @keyframes chapter-body-conflict-pulse {
-  0% { background-color: rgba(255, 200, 200, 0.35); }
+  0% { background-color: var(--color-danger-soft); }
   100% { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logic-check-issue--active,
+  .chapter-body-textarea--highlight,
+  .chapter-body-textarea--conflict {
+    animation: none;
+  }
 }
 .chapter-inline-edit {
   margin-top: var(--space-sm);
@@ -502,7 +511,7 @@ function onBodyTextareaInteraction(event) {
 }
 .chapter-row--warn {
   background: rgba(200, 180, 80, 0.15);
-  border-color: #aa8;
+  border-color: var(--color-warning);
 }
 .chapter-row--alert {
   background: rgba(200, 80, 80, 0.15);

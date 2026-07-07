@@ -2,9 +2,9 @@
  * useCreatorAgent — 写作导演（预览 A / 确认应用 B2）
  * 计划生成对接 POST /api/creator/agent/plan，失败时降级本地 mock
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../api/index.js';
-import { AGENT_EXECUTION_MODES } from '../config/creatorPanelMatrix.js';
+import { AGENT_EXECUTION_MODES, AGENT_LENS_MODES } from '../config/creatorPanelMatrix.js';
 
 const REWRITE_LABELS = {
   concrete: '更具体',
@@ -82,10 +82,16 @@ export function useCreatorAgent(deps) {
   const statusLine = ref('');
   const planProvider = ref('local');
   const agentLens = ref(uiProfile.value.agent_lens_default || 'author');
+
+  const agentLensLabel = computed(() => {
+    const found = AGENT_LENS_MODES.find((m) => m.id === agentLens.value);
+    return found?.label || agentLens.value;
+  });
   const annotations = ref([]);
 
   const streamPreviewText = ref('');
   const streamPreviewLabel = ref('');
+  const streamSource = ref(null);
   const streamAdvicePreview = ref([]);
 
   const hasPendingPlan = computed(() => Boolean(pendingPlan.value));
@@ -259,8 +265,23 @@ export function useCreatorAgent(deps) {
   function resetStreamPreview() {
     streamPreviewText.value = '';
     streamPreviewLabel.value = '';
+    streamSource.value = null;
     streamAdvicePreview.value = [];
   }
+
+  function looksLikeJsonStream(text) {
+    const t = (text || '').trimStart();
+    return t.startsWith('{') || t.startsWith('[') || /^"?(candidates|advice|annotations)"/.test(t);
+  }
+
+  const streamDisplayText = computed(() => {
+    const raw = streamPreviewText.value;
+    if (streamSource.value === 'llm' && looksLikeJsonStream(raw)) {
+      const len = raw.length;
+      return len < 20 ? '模型输出中…' : `模型输出中…（已接收 ${len} 字）`;
+    }
+    return raw;
+  });
 
   function handleStreamEvent(evt) {
     if (!evt || typeof evt !== 'object') return;
@@ -269,10 +290,11 @@ export function useCreatorAgent(deps) {
       return;
     }
     if (evt.type === 'preview_label' && evt.label) {
-      streamPreviewLabel.value = evt.label;
+      streamPreviewLabel.value = `${evt.label} · ${agentLensLabel.value}`;
       return;
     }
     if (evt.type === 'chunk' && evt.text) {
+      if (evt.source) streamSource.value = evt.source;
       streamPreviewText.value += evt.text;
       return;
     }
@@ -397,8 +419,8 @@ export function useCreatorAgent(deps) {
       applyTextToSelection(cand.text);
     }
 
-    pushMessage('agent', `已应用「${cand.label}」· 可撤销到版本 ${cpId.slice(0, 8)}`);
-    statusLine.value = '已应用，可撤销';
+    pushMessage('agent', `已应用「${cand.label}」· ${agentLensLabel.value} · 可撤销到版本 ${cpId.slice(0, 8)}`);
+    statusLine.value = `已应用（${agentLensLabel.value}）`;
     clearPlan();
   }
 
@@ -428,7 +450,20 @@ export function useCreatorAgent(deps) {
 
   function setAgentLens(lensId) {
     agentLens.value = lensId;
+    if (pendingPlan.value && !pendingPlan.value.adviceOnly && annotations.value.length) {
+      annotations.value = mockAnnotations(lensId, pendingPlan.value.actionLabel || '改写');
+    }
+    if (generating.value) {
+      statusLine.value = `生成中…（${agentLensLabel.value}）`;
+    }
   }
+
+  watch(agentLens, (lens) => {
+    if (!pendingPlan.value || pendingPlan.value.adviceOnly) return;
+    if (annotations.value.length) {
+      annotations.value = mockAnnotations(lens, pendingPlan.value.actionLabel || '改写');
+    }
+  });
 
   function focusAnnotation(annotation) {
     if (annotation?.paragraph && onAnnotationFocus) {
@@ -451,9 +486,12 @@ export function useCreatorAgent(deps) {
     statusLine,
     planProvider,
     agentLens,
+    agentLensLabel,
     annotations,
     streamPreviewText,
     streamPreviewLabel,
+    streamSource,
+    streamDisplayText,
     streamAdvicePreview,
     hasPendingPlan,
     isPreviewMode,

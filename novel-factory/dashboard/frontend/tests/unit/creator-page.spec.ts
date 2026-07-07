@@ -1088,6 +1088,8 @@ describe('CreatorPage', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="volume-merge-panel"]').exists()).toBe(true);
+    await wrapper.find('[data-testid="merge-wizard-next-btn"]').trigger('click');
+    await wrapper.find('[data-testid="merge-wizard-confirm-btn"]').trigger('click');
     await wrapper.find('[data-testid="apply-merge-btn"]').trigger('click');
     await flushPromises();
 

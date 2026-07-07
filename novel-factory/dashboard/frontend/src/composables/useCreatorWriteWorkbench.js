@@ -26,6 +26,7 @@ import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
  *   logicCheckResult?: import('vue').Ref<object|null>,
  *   visibleDeviations?: import('vue').ComputedRef<object[]>,
  *   getMemoryAssets?: () => object[],
+ *   memoryAssets?: import('vue').Ref<object[]>,
  *   focusParagraphByIndex?: (paragraph: number, source?: string) => void,
  * }} deps
  */
@@ -92,13 +93,14 @@ export function useCreatorWriteWorkbench(deps) {
     return isPanelDefaultCollapsed(CREATOR_WRITE_WORKBENCH_MATRIX, creationMode.value, panelId);
   }
 
-  const chapterEntities = computed(() =>
-    resolveChapterEntities({
-      memoryAssets: getMemoryAssets(),
+  const chapterEntities = computed(() => {
+    const assets = deps.memoryAssets?.value ?? getMemoryAssets();
+    return resolveChapterEntities({
+      memoryAssets: assets,
       chapter: selectedChapter.value,
       bodyText: chapterBodyDraft.value,
-    }),
-  );
+    });
+  });
 
   const inlineConflictMarkers = computed(() =>
     buildInlineConflictMarkers({

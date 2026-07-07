@@ -120,9 +120,10 @@
 }
 
 .write-workbench__stack--chapters {
-  max-height: 220px;
+  max-height: 140px;
   overflow-y: auto;
   flex-shrink: 0;
+  opacity: 0.92;
 }
 
 .write-workbench__rail-label {
@@ -140,16 +141,17 @@
 }
 
 .write-workbench__advanced {
-  border: none;
+  border: 1px dashed var(--border-color);
   border-radius: var(--radius-sm);
-  background: var(--bg-muted);
+  background: transparent;
 }
 
 .write-workbench__advanced-summary {
   cursor: pointer;
-  padding: var(--space-sm);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-dim);
   list-style: none;
 }
 

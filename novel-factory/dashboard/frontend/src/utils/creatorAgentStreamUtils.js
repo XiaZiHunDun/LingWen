@@ -27,6 +27,12 @@ export async function readCreatorAgentPlanStream(response, onEvent) {
       if (!line.startsWith('data: ')) continue;
       const evt = JSON.parse(line.slice(6));
       onEvent?.(evt);
+      if (evt.type === 'chunk' || evt.type === 'advice' || evt.type === 'preview_label') {
+        // Yield so stream preview can paint before `done` clears generating state.
+        await new Promise((resolve) => {
+          requestAnimationFrame(() => resolve());
+        });
+      }
       if (evt.type === 'done') plan = evt.plan;
       if (evt.type === 'error') throw new Error(evt.message || 'stream error');
     }

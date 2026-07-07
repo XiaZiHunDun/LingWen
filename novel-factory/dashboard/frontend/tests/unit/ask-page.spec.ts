@@ -33,12 +33,23 @@ describe('AskPage', () => {
     expect(w.text()).toContain('问进度');
   });
 
-  it('sends message on submit', async () => {
+  test('sends message on submit', async () => {
     const w = mount(AskPage);
     await flushPromises();
     await w.find('[data-testid="ask-input"]').setValue('这本书进度如何');
     await w.find('[data-testid="ask-send-btn"]').trigger('click');
     await flushPromises();
     expect(w.find('[data-testid="ask-messages"]').text()).toContain('进度');
+  });
+
+  it('shows long draft hint and disables send', async () => {
+    const w = mount(AskPage);
+    await flushPromises();
+    const long = '字'.repeat(281);
+    await w.find('[data-testid="ask-input"]').setValue(long);
+    await flushPromises();
+    expect(w.find('[data-testid="ask-long-draft-hint"]').exists()).toBe(true);
+    const send = w.find('[data-testid="ask-send-btn"]');
+    expect(send.attributes('disabled')).toBeDefined();
   });
 });

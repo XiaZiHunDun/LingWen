@@ -8,7 +8,11 @@
     }"
     data-testid="project-switcher"
   >
-    <span v-if="sidebar || showCurrentWorkLabel" class="project-switcher__sidebar-label">当前作品</span>
+    <span
+      v-if="sidebar || showCurrentWorkLabel"
+      id="studio-project-select-label"
+      class="project-switcher__sidebar-label"
+    >当前作品</span>
     <label v-else-if="!compact" class="switcher-label" for="studio-project-select">项目</label>
     <select
       id="studio-project-select"
@@ -18,6 +22,8 @@
         'switcher-select--sidebar': sidebar,
       }"
       data-testid="project-select"
+      :aria-labelledby="sidebar || showCurrentWorkLabel ? 'studio-project-select-label' : undefined"
+      :aria-label="compact && !sidebar && !showCurrentWorkLabel ? '当前作品' : undefined"
       :value="activeSlug || ''"
       :disabled="loading || !projects.length"
       @change="onChange"

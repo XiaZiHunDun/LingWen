@@ -146,7 +146,7 @@ defineEmits(['preflight', 'run-batch', 'go-produce']);
 }
 
 .batch-error {
-  color: #c44;
+  color: var(--color-danger);
   font-size: var(--text-sm);
   margin-top: 4px;
 }

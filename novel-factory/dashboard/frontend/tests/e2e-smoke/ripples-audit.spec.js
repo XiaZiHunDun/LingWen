@@ -6,7 +6,7 @@ import {
   gotoInbox,
   openFirstRippleDrawer,
   resetRipple,
-  runE2eSeed,
+  restoreInboxFixture,
   skipUnlessLive,
   waitForRippleListReady,
 } from './helpers/live-backend.js';
@@ -16,7 +16,7 @@ const PENDING_ID = 'rip-pending-1';
 test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
   test.beforeAll(() => {
     if (!LIVE_E2E_ENABLED) return;
-    runE2eSeed('ensure');
+    restoreInboxFixture();
   });
 
   test('drawer_open_shows_audit_timeline_or_empty', async ({ page }) => {
@@ -32,6 +32,7 @@ test.describe('Ripples audit live e2e (Phase 9.65 F56)', () => {
   test('apply_then_rollback_updates_audit_timeline', async ({ page }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);
+    restoreInboxFixture();
     resetRipple(PENDING_ID, 'pending');
     page.on('dialog', (dialog) => dialog.accept('e2e rollback reason'));
 

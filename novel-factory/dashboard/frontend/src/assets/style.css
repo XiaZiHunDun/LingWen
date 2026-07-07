@@ -5,6 +5,8 @@
   --bg-secondary: #ffffff;
   --bg-elevated: #ffffff;
   --bg-muted: #ebe9e5;
+  --surface-elevated: var(--bg-elevated);
+  --border-subtle: rgba(15, 23, 42, 0.08);
 
   /* 墨蓝主色 — 低饱和，偏书写感 */
   --color-accent: #3d5f8a;
@@ -18,6 +20,15 @@
   --color-danger-soft: rgba(180, 35, 24, 0.1);
   --color-success: #2e7d5a;
   --color-success-soft: rgba(46, 125, 90, 0.12);
+  --color-advance: #2f5f9a;
+  --color-advance-soft: rgba(47, 95, 154, 0.12);
+  --color-advance-border: rgba(47, 95, 154, 0.45);
+  --color-on-accent: #ffffff;
+  --color-highlight-soft: rgba(200, 180, 80, 0.35);
+  --color-conflict-outline: rgba(200, 80, 80, 0.55);
+  --color-conflict-bg-stripe: rgba(200, 80, 80, 0.35);
+  --color-advance-bg-subtle: rgba(47, 95, 154, 0.08);
+  --color-advance-bg-soft: rgba(47, 95, 154, 0.12);
   --color-text: #1a1c22;
   --color-text-secondary: #2e3340;
   --color-text-dim: #5c6370;
@@ -78,6 +89,18 @@ html[data-text-scale="xlarge"] {
   --text-xl: 26px;
   --text-2xl: 32px;
   --sidebar-width: 244px;
+}
+
+/* Dark theme token layer (reserved — not wired to UI toggle) */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: #12141a;
+  --bg-elevated: #1c1f28;
+  --surface-elevated: var(--bg-elevated);
+  --color-text: #eceef2;
+  --color-text-dim: #a8b0bd;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -263,6 +286,12 @@ body {
 
 .l1-panel-enter {
   animation: l1-panel-enter 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .l1-panel-enter {
+    animation: none;
+  }
 }
 
 #app .l1-page {

@@ -683,7 +683,7 @@ if (!vp) {
 }
 
 .mini-btn--danger {
-  color: #c44;
+  color: var(--color-danger);
 }
 
 .template-changelog ul {
@@ -715,7 +715,7 @@ if (!vp) {
 }
 
 .visual-diff-line--remove {
-  color: #c44;
+  color: var(--color-danger);
 }
 
 .template-approvals {

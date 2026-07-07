@@ -656,7 +656,7 @@ const st = inject(CREATOR_SETTINGS_KEY);
   display: block;
 }
 .p0-line.ok { color: #4a4; }
-.p0-line.warn { color: #c44; }
+.p0-line.warn { color: var(--color-danger); }
 .merge-strategy-details > summary {
   font-weight: 600;
   cursor: pointer;
@@ -702,7 +702,7 @@ const st = inject(CREATOR_SETTINGS_KEY);
   color: #4a4;
 }
 .visual-diff-line--remove {
-  color: #c44;
+  color: var(--color-danger);
 }
 .template-approvals {
   margin-top: var(--space-sm);

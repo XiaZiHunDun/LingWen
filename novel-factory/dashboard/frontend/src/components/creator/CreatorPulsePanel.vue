@@ -300,15 +300,15 @@ function onChapterTaskConfirm(chapter) {
 }
 
 .volume-pulse-row--alert {
-  border-left: 3px solid #c66;
+  border-left: 3px solid var(--color-danger);
 }
 
 .volume-pulse-row--warn {
-  border-left: 3px solid #aa8;
+  border-left: 3px solid var(--color-warning);
 }
 
 .volume-pulse-row--ok {
-  border-left: 3px solid #6a6;
+  border-left: 3px solid var(--color-success);
 }
 
 .volume-pulse-panel--alert {
@@ -316,7 +316,7 @@ function onChapterTaskConfirm(chapter) {
 }
 
 .volume-pulse-panel--warn {
-  border-color: #aa8;
+  border-color: var(--color-warning);
 }
 
 .volume-pulse-row--active {
@@ -339,7 +339,7 @@ function onChapterTaskConfirm(chapter) {
 }
 
 .volume-block--alert summary {
-  color: #c44;
+  color: var(--color-danger);
 }
 
 .volume-block--warn summary {

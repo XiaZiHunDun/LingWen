@@ -113,3 +113,170 @@ jobs:
         env:
           CI: 'true'
           LINGWEN_E2E_LIVE: '1'
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-trace
+          path: test-results/
+          if-no-files-found: ignore
+
+  e2e-live:
+    name: Playwright live-backend E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: lint-and-test
+
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install Python dependencies
+        working-directory: novel-factory
+        run: pip install -r requirements.txt
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run live-backend e2e
+        run: pnpm e2e:live
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-live-trace
+          path: test-results/
+          if-no-files-found: ignore
+
+  a11y-l1:
+    name: Playwright a11y L1
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-and-test
+
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install Python dependencies
+        working-directory: novel-factory
+        run: pip install -r requirements.txt
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run L1 axe smoke
+        run: pnpm e2e:a11y
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-a11y-trace
+          path: test-results/
+          if-no-files-found: ignore
+
+  ui-metrics:
+    name: Playwright UI metrics (1280×720)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-and-test
+
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install Python dependencies
+        working-directory: novel-factory
+        run: pip install -r requirements.txt
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run UI metrics audit
+        run: pnpm e2e:ui-metrics
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-ui-metrics-trace
+          path: test-results/
+          if-no-files-found: ignore

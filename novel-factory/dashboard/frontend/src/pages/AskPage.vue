@@ -67,6 +67,21 @@
             </button>
           </div>
           <form class="ask-composer" @submit.prevent="sendMessage()">
+            <p
+              v-if="isLongDraft"
+              class="ask-composer__long-hint"
+              data-testid="ask-long-draft-hint"
+            >
+              长文续写请在「书桌」进行。
+              <button
+                type="button"
+                class="ask-page__text-link"
+                data-testid="ask-long-go-write-btn"
+                @click="goWrite()"
+              >
+                去书桌
+              </button>
+            </p>
             <div class="ask-composer__card">
               <textarea
                 v-model="draft"
@@ -81,7 +96,7 @@
                   type="submit"
                   class="ask-composer__send"
                   data-testid="ask-send-btn"
-                  :disabled="loading || !draft.trim()"
+                  :disabled="loading || !draft.trim() || isLongDraft"
                   aria-label="发送"
                 >
                   <svg class="ask-composer__send-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -168,6 +183,7 @@ const {
   noteDraft,
   notes,
   loading,
+  isLongDraft,
   suggestions,
   bootstrap,
   sendMessage,
@@ -256,8 +272,19 @@ onMounted(() => {
   border-radius: var(--radius-md);
   color: var(--color-text);
 }
+.ask-page__panel--thread {
+  padding-bottom: var(--space-md);
+}
+.ask-page__panel--thread .ask-page__chat-stack {
+  flex: 1;
+  min-height: 0;
+}
 .ask-page__msg--assistant .ask-page__msg-text {
-  color: var(--color-text-secondary);
+  background: var(--bg-muted);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  border: 1px solid var(--border-color);
 }
 .ask-page__footer {
   display: flex;
@@ -374,6 +401,14 @@ onMounted(() => {
 }
 .ask-composer__send:active:not(:disabled) {
   transform: scale(0.96);
+}
+.ask-composer__long-hint {
+  margin: 0 0 var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+  border-radius: var(--radius-sm);
 }
 .ask-composer__send:disabled {
   opacity: 0.4;

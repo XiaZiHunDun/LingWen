@@ -43,19 +43,19 @@ const pt = inject(CREATOR_PRODUCT_TOOLS_KEY);
   margin: 0 0 var(--space-sm);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--text-xs);
-  background: rgba(80, 140, 220, 0.08);
+  background: var(--color-advance-bg-subtle);
 }
 
 .prefs-summary--compact {
   margin: 0;
   padding: 2px 8px;
   border: none;
-  background: rgba(80, 140, 220, 0.12);
+  background: var(--color-advance-bg-soft);
 }
 
 .prefs-summary__label {
   font-weight: 600;
-  color: #36a;
+  color: var(--color-advance);
 }
 
 .prefs-summary__text {

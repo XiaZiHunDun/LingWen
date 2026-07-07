@@ -62,17 +62,23 @@ describe('write workbench P1 panels', () => {
   });
 
   it('computes chapter entities from memory cache', () => {
+    const assets = ref([
+      { id: 'c1', kind: 'character', name: '林默', chapters: [1], excerpt: '主角' },
+    ]);
     const wb = useCreatorWriteWorkbench({
       uiProfile: computed(() => ({ write_chapter_entity_rail: true })),
       overview: ref({ creation_mode: 'companion' }),
       chapterBodyDraft: ref('林默抬头'),
       selectedChapter: ref(1),
       saveMessage: ref(''),
-      getMemoryAssets: () => [
-        { id: 'c1', kind: 'character', name: '林默', chapters: [1], excerpt: '主角' },
-      ],
+      memoryAssets: assets,
     });
     expect(wb.chapterEntities.value[0]?.name).toBe('林默');
+    assets.value = [
+      ...assets.value,
+      { id: 'c2', kind: 'character', name: '苏晚', chapters: [1], excerpt: '配角' },
+    ];
+    expect(wb.chapterEntities.value.some((e) => e.name === '苏晚')).toBe(true);
   });
 
   it('focuses inline conflict when paragraph present', () => {

@@ -1,7 +1,7 @@
 /**
  * useCreatorVolumePlanMergeSplit — 卷纲合并/拆分逻辑（从 useCreatorVolumePlan 抽出）
  */
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import {
   mergeCreatorVolumePlan,
   splitCreatorVolumePlan,
@@ -87,6 +87,24 @@ export function useCreatorVolumePlanMergeSplit(deps) {
     }
   }
 
+  function previewMergeConflicts() {
+    const vols = editableVolumes.value || [];
+    const start = mergeStartIdx.value;
+    const end = mergeEndIdx.value;
+    if (start > end || !vols.length) return [];
+    const slice = vols.slice(start, end + 1);
+    const conflicts = [];
+    const cores = [...new Set(slice.map((v) => (v.core_conflict || '').trim()).filter(Boolean))];
+    if (cores.length > 1) {
+      conflicts.push(`核心冲突不一致：${cores.join(' · ')}`);
+    }
+    const labels = slice.map((v) => v.label || '未命名').join('、');
+    conflicts.push(`将合并 ${slice.length} 卷（${labels}）`);
+    return conflicts;
+  }
+
+  const mergeConflictPreview = computed(() => previewMergeConflicts());
+
   async function applyVolumeMerge() {
     if (mergeStartIdx.value > mergeEndIdx.value) return;
     mergeApplying.value = true;
@@ -127,6 +145,7 @@ export function useCreatorVolumePlanMergeSplit(deps) {
     syncSplitChapterFromVolume,
     resetAfterLoad,
     clearMergeSplitPreviews,
+    mergeConflictPreview,
     applyVolumeSplit,
     applyVolumeMerge,
   };

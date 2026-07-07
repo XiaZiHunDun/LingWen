@@ -2,7 +2,7 @@
  * Ask assistant — L1 聊聊（frontend-ia-v1）.
  * Orchestrates memory query + overview snippets; offline-safe fallbacks.
  */
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import {
   fetchCreatorOverview,
   fetchStudioSummary,
@@ -16,6 +16,9 @@ const sharedAskTab = ref('chat');
 export function useAskPageTab() {
   return { tab: sharedAskTab };
 }
+
+/** 超过此长度视为「长文续写」，聊聊不代写，引导去书桌 */
+export const ASK_LONG_DRAFT_CHAR_LIMIT = 280;
 
 const NEW_USER_SUGGESTIONS = [
   { id: 'new-book', label: '我想新开一本书', prompt: '我想新开一本书，该怎么开始？' },
@@ -98,6 +101,10 @@ export function useAskAssistant(hooks = {}) {
   const loading = ref(false);
   const context = ref({ overview: null, summary: null });
 
+  const isLongDraft = computed(
+    () => draft.value.trim().length > ASK_LONG_DRAFT_CHAR_LIMIT,
+  );
+
   async function bootstrap() {
     const [overview, summary] = await Promise.all([
       fetchCreatorOverview().catch(() => null),
@@ -112,6 +119,19 @@ export function useAskAssistant(hooks = {}) {
   async function sendMessage(text) {
     const content = (text ?? draft.value).trim();
     if (!content || loading.value) return;
+    if (content.length > ASK_LONG_DRAFT_CHAR_LIMIT) {
+      messages.value = [
+        ...messages.value,
+        { role: 'user', text: content.slice(0, 120) + (content.length > 120 ? '…' : ''), at: Date.now() },
+        {
+          role: 'assistant',
+          text: '这段内容较长，适合在「书桌」续写与改稿。点击下方「去书桌」即可继续。',
+          at: Date.now(),
+        },
+      ];
+      draft.value = '';
+      return;
+    }
     draft.value = '';
     messages.value = [...messages.value, { role: 'user', text: content, at: Date.now() }];
     loading.value = true;
@@ -152,6 +172,7 @@ export function useAskAssistant(hooks = {}) {
     noteDraft,
     notes,
     loading,
+    isLongDraft,
     suggestions: NEW_USER_SUGGESTIONS,
     bootstrap,
     sendMessage,

@@ -5,6 +5,7 @@ import {
   LIVE_E2E_ENABLED,
   clickNav,
   resetE2eDecision,
+  restoreInboxFixture,
   runE2eSeed,
   skipUnlessLive,
   waitForPendingDecisionCard,
@@ -13,7 +14,7 @@ import {
 test.describe('Decisions resolve live e2e (Phase 9.65 F56)', () => {
   test.beforeAll(() => {
     if (!LIVE_E2E_ENABLED) return;
-    runE2eSeed('ensure');
+    restoreInboxFixture();
   });
 
   test('decisions_page_renders_title', async ({ page }) => {

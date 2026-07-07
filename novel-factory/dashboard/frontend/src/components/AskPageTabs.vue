@@ -2,11 +2,13 @@
   AskPageTabs — 聊聊顶栏：问答 / 速记（与「当前作品」同一行）
 -->
 <template>
-  <div class="ask-page-tabs" role="tablist" data-testid="ask-page-tabs">
+  <div class="ask-page-tabs" role="tablist" aria-label="聊聊分区" data-testid="ask-page-tabs">
     <button
       type="button"
+      role="tab"
       class="ask-page-tabs__tab"
       :class="{ 'ask-page-tabs__tab--active': tab === 'chat' }"
+      :aria-selected="tab === 'chat'"
       data-testid="ask-tab-chat"
       @click="tab = 'chat'"
     >
@@ -14,8 +16,10 @@
     </button>
     <button
       type="button"
+      role="tab"
       class="ask-page-tabs__tab"
       :class="{ 'ask-page-tabs__tab--active': tab === 'note' }"
+      :aria-selected="tab === 'note'"
       data-testid="ask-tab-note"
       @click="tab = 'note'"
     >

@@ -124,15 +124,16 @@
         </div>
 
         <details
-          v-if="wb.isLeftRailPanelVisible('chapterEntityRail')"
+          v-if="!wb.humanFirstDesk && wb.isPanelVisible('chapterEntityRail')"
           class="write-workbench__stack write-workbench__card"
           data-testid="write-chapter-entity-panel"
           :open="!wb.isPanelCollapsed('chapterEntityRail')"
         >
-          <summary class="write-workbench__card-title">
-            <FieldHint label="本章实体" hint="本章正文中出现的人物、地点与道具，便于对照设定。" test-id="hint-chapter-entity">
-              本章实体
-            </FieldHint>
+          <summary
+            class="write-workbench__card-title"
+            title="本章正文中出现的人物、地点与道具，便于对照设定。"
+          >
+            本章实体
           </summary>
           <CreatorChapterEntityRail :entities="wb.chapterEntities" hide-title />
         </details>
@@ -143,10 +144,11 @@
           data-testid="write-consistency-panel"
           :open="wb.consistencyPanelOpen"
         >
-          <summary class="write-workbench__card-title">
-            <FieldHint label="本章一致性" hint="与设定、时间线或前文冲突的预警，有项时会自动展开。" test-id="hint-consistency">
-              本章一致性
-            </FieldHint>
+          <summary
+            class="write-workbench__card-title"
+            title="与设定、时间线或前文冲突的预警，有项时会自动展开。"
+          >
+            本章一致性
           </summary>
           <CreatorConsistencyRail :items="wb.consistencyItems" hide-title />
         </details>
@@ -210,6 +212,21 @@
         :draft="w.chapterBodyDraft"
         :creation-mode="w.overview?.creation_mode || 'companion'"
       />
+
+      <details
+        v-if="wb.humanFirstDesk && wb.isPanelVisible('chapterEntityRail')"
+        class="write-workbench__stack write-workbench__card"
+        data-testid="write-chapter-entity-panel"
+        :open="!wb.isPanelCollapsed('chapterEntityRail')"
+      >
+        <summary
+          class="write-workbench__card-title"
+          title="本章正文中出现的人物、地点与道具，便于对照设定。"
+        >
+          本章实体
+        </summary>
+        <CreatorChapterEntityRail :entities="wb.chapterEntities" hide-title />
+      </details>
 
       <CreatorLightValidationBar
         v-if="wb.isPanelVisible('lightValidationBar') && w.selectedChapter"
@@ -366,9 +383,11 @@
           />
 
           <CreatorAgentStreamPreview
-            v-if="wb.agent.generating && (wb.agent.streamPreviewText || wb.agent.streamAdvicePreview.length)"
+            v-if="showAgentStreamPreview"
             :preview-text="wb.agent.streamPreviewText"
+            :display-text="wb.agent.streamDisplayText"
             :preview-label="wb.agent.streamPreviewLabel"
+            :stream-source="wb.agent.streamSource"
             :advice-lines="wb.agent.streamAdvicePreview"
           />
 
@@ -433,6 +452,65 @@
               {{ hint.text }}
               <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
             </span>
+          </div>
+
+          <details
+            v-if="wb.isPanelVisible('directorPaths') && wb.agent.directorPaths.length"
+            class="write-workbench__card"
+            data-testid="write-director-paths-panel-main"
+            open
+          >
+            <summary class="write-workbench__card-title">下一步路径</summary>
+            <CreatorDirectorPaths
+              hide-title
+              :paths="wb.agent.directorPaths"
+              :advice="wb.agent.directorAdvice"
+              :generating="wb.agent.generating"
+              @run="wb.agent.runDirectorPath"
+              @dismiss-advice="wb.agent.dismissAdvice"
+            />
+          </details>
+
+          <div
+            v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
+            class="write-workbench__card"
+            data-testid="write-version-stack-main"
+          >
+            <p class="write-workbench__card-title">版本 / 回滚</p>
+            <ul v-if="wb.checkpoints.length" class="write-workbench__version-list">
+              <li
+                v-for="cp in wb.checkpoints"
+                :key="cp.id"
+                class="write-workbench__version-item"
+              >
+                <span>{{ cp.label }}</span>
+                <div class="write-workbench__version-actions">
+                  <button
+                    v-if="wb.isPanelVisible('checkpointDiff')"
+                    type="button"
+                    class="mini-btn pixel-border"
+                    :data-testid="`checkpoint-diff-${cp.id}`"
+                    @click="wb.openCheckpointDiff(cp.id)"
+                  >
+                    对比
+                  </button>
+                </div>
+              </li>
+            </ul>
+            <CreatorCheckpointDiff
+              v-if="wb.isPanelVisible('checkpointDiff') && wb.diffView"
+              :diff-view="wb.diffView"
+              @close="wb.closeCheckpointDiff"
+            />
+            <button
+              v-if="wb.agent.lastCheckpointId"
+              type="button"
+              class="mini-btn pixel-border"
+              data-testid="write-undo-last-btn"
+              @click="wb.agent.undoLastApply()"
+            >
+              撤销上次应用
+            </button>
           </div>
         </div>
       </details>
@@ -522,9 +600,11 @@
         />
 
         <CreatorAgentStreamPreview
-          v-if="wb.agent.generating && (wb.agent.streamPreviewText || wb.agent.streamAdvicePreview.length)"
+          v-if="showAgentStreamPreview"
           :preview-text="wb.agent.streamPreviewText"
+          :display-text="wb.agent.streamDisplayText"
           :preview-label="wb.agent.streamPreviewLabel"
+          :stream-source="wb.agent.streamSource"
           :advice-lines="wb.agent.streamAdvicePreview"
         />
 
@@ -596,7 +676,7 @@
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { computed, inject, ref } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 import CreatorAgentStreamPreview from './CreatorAgentStreamPreview.vue';
 import CreatorWriteScopeBar from './CreatorWriteScopeBar.vue';
@@ -608,12 +688,19 @@ import CreatorAgentAnnotations from './CreatorAgentAnnotations.vue';
 import CreatorConsistencyRail from './CreatorConsistencyRail.vue';
 import CreatorCheckpointDiff from './CreatorCheckpointDiff.vue';
 import CreatorChapterEntityRail from './CreatorChapterEntityRail.vue';
-import FieldHint from '../FieldHint.vue';
 import '../../assets/creator-write-workbench.css';
 
 const w = inject(CREATOR_WRITE_KEY);
 const wb = w.wb;
 const advancedToolsOpen = ref(false);
+
+const showAgentStreamPreview = computed(() => {
+  const agent = wb.agent;
+  const previewText = agent.streamPreviewText?.value ?? agent.streamPreviewText ?? '';
+  const advice = agent.streamAdvicePreview?.value ?? agent.streamAdvicePreview ?? [];
+  const generating = agent.generating?.value ?? agent.generating ?? false;
+  return Boolean(generating && (previewText || advice.length));
+});
 
 const moodTags = ['克制', '戏剧', '幽默', '抒情'];
 

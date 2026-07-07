@@ -44,6 +44,7 @@ export function runLightValidation(input) {
       label: '本章正文为空，可直接开写',
       paragraph: null,
       rule: 'empty_body',
+      fixHint: '在正文区落第一段即可',
     });
     return issues;
   }
@@ -56,6 +57,7 @@ export function runLightValidation(input) {
       label: '篇幅较短，可继续扩写',
       paragraph: 1,
       rule: 'stub_chapter',
+      fixHint: '再写一两段或补一句场景描写',
     });
   }
 
@@ -71,6 +73,7 @@ export function runLightValidation(input) {
         label: `第 ${paraIndex} 段偏长，可考虑分段`,
         paragraph: paraIndex,
         rule: 'long_paragraph',
+        fixHint: '在句号或对话处换段',
       });
     }
 
@@ -108,6 +111,7 @@ export function runLightValidation(input) {
       label: '英文引号可能未闭合',
       paragraph: null,
       rule: 'unclosed_quote',
+      fixHint: '补全缺失的引号或改用中文引号',
     });
   }
   if (ldquote !== rdquote) {

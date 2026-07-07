@@ -98,6 +98,19 @@
           <span class="health-stat__label">入门向导</span>
           <strong class="health-stat__value">{{ snapshot.wizardProgressPct }}%</strong>
         </div>
+        <div
+          v-if="snapshot.health.microTask && !snapshot.health.microTask.met"
+          class="health-stat"
+          data-testid="today-micro-task-stat"
+        >
+          <span class="health-stat__label">本章字数</span>
+          <strong class="health-stat__value">
+            还差 {{ snapshot.health.microTask.remaining }}
+          </strong>
+          <span class="health-stat__hint">
+            {{ snapshot.health.microTask.current }}/{{ snapshot.health.microTask.goal }}
+          </span>
+        </div>
       </div>
     </section>
 
@@ -151,7 +164,8 @@ function onPrimaryAction() {
   const action = snapshot.value?.primaryAction;
   if (!action) return;
   navigateTo(action.nav, {
-    clearFocus: true,
+    clearFocus: action.chapter == null,
+    chapter: action.chapter,
     wizard: Boolean(action.wizard),
     tab: action.tab,
   });

@@ -28,7 +28,7 @@ const displayError = useFilteredPageError(computed(() => c?.error ?? ''));
 <style scoped>
 .error-banner {
   padding: var(--space-sm);
-  color: #c44;
+  color: var(--color-danger);
   font-size: var(--text-sm);
 }
 

@@ -78,12 +78,30 @@ const collapsedByDefault = computed(() => {
 
 const cards = computed(() => {
   const chapters = p.overview?.chapters || [];
+  const job = p.batchJob?.value ?? p.batchJob ?? null;
+  const jobRunning = job?.status === 'running';
+  const jobStart = job?.start_chapter ?? job?.chapter_start;
+  const jobEnd = job?.end_chapter ?? job?.chapter_end;
+  const jobCurrent = job?.current_chapter ?? job?.chapter_num;
+
   return chapters
     .filter((ch) => ch.chapter <= 20)
     .map((ch) => {
       let status = 'empty';
       let statusLabel = '未开始';
-      if (ch.has_body) {
+      if (jobRunning && jobStart != null && jobEnd != null
+        && ch.chapter >= jobStart && ch.chapter <= jobEnd) {
+        if (jobCurrent === ch.chapter) {
+          status = 'generating';
+          statusLabel = '生成中';
+        } else if (ch.chapter < jobCurrent) {
+          status = 'ready';
+          statusLabel = '批次已完成';
+        } else {
+          status = 'queued';
+          statusLabel = '排队中';
+        }
+      } else if (ch.has_body) {
         status = 'ready';
         statusLabel = '已生成';
       } else if (ch.has_outline) {
@@ -95,7 +113,7 @@ const cards = computed(() => {
         status,
         statusLabel,
         goal: ch.has_outline ? '按大纲产正文' : '先补大纲或直写',
-        summary: ch.has_body ? `${ch.word_count} 字` : null,
+        summary: ch.has_body ? `${ch.word_count} 字` : (jobRunning ? job?.message : null),
       };
     });
 });
@@ -134,6 +152,13 @@ const cards = computed(() => {
   padding: var(--space-sm);
   border: 1px solid var(--border-color);
   background: var(--bg-primary);
+}
+.chapter-task-card--generating {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.chapter-task-card--queued {
+  opacity: 0.85;
 }
 .chapter-task-card__head {
   display: flex;

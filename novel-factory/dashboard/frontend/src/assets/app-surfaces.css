@@ -180,7 +180,12 @@
 }
 
 #app .write-workbench__editor-slot--primary .chapter-body-textarea {
-  min-height: 240px;
+  min-height: 280px;
+}
+
+#app .write-workbench--human-first .write-micro-task,
+#app .write-workbench--human-first .write-light-validation {
+  flex-shrink: 0;
 }
 
 #app .write-workbench--human-first .write-workbench__editor-slot--primary {
@@ -492,15 +497,17 @@
 
 #app .hub-tab--drawer {
   font-size: var(--text-xs);
-  padding: 6px 12px;
+  padding: 5px 10px;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px dashed var(--border-color);
   border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   color: var(--color-text-dim);
+  opacity: 0.92;
+  box-shadow: none;
 }
 
 #app .hub-tab--drawer.hub-tab--active {

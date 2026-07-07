@@ -220,13 +220,13 @@ function chapterTitle(ch) {
 }
 
 .lock-tag {
-  color: #36a;
+  color: var(--color-advance);
 }
 
 .summary-hint {
   padding: 1px 4px;
-  background: rgba(80, 140, 220, 0.15);
-  border: 1px dashed #36a;
+  background: var(--color-advance-soft);
+  border: 1px dashed var(--color-advance);
 }
 
 .structure-chapters,

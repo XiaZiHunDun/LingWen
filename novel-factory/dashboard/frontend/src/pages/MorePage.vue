@@ -63,14 +63,16 @@ function open(link) {
 }
 .more-page__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-lg);
 }
 .more-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-md);
+  row-gap: 4px;
+  align-items: start;
   padding: var(--space-lg);
   text-align: left;
   cursor: pointer;
@@ -91,6 +93,7 @@ function open(link) {
   justify-content: center;
   width: 36px;
   height: 36px;
+  grid-row: 1 / span 2;
   font-size: var(--text-sm);
   font-weight: 700;
   color: #fff;
@@ -100,9 +103,11 @@ function open(link) {
 .more-card__label {
   font-weight: 600;
   font-size: var(--text-sm);
+  align-self: end;
 }
 .more-card__desc {
   font-size: var(--text-xs);
   color: var(--color-text-dim);
+  grid-column: 2;
 }
 </style>

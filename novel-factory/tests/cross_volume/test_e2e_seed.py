@@ -59,3 +59,23 @@ class TestE2EDecisionSeed:
         reset_e2e_decision()
         queue2 = HumanDecisionQueue(state_dir=str(state_dir))
         assert queue2.get(E2E_DECISION_ID).status.value == "pending"
+
+
+class TestE2ECascadeRunSeed:
+    def test_ensure_e2e_cascade_run_idempotent(self, tmp_path, monkeypatch):
+        from infra.cross_volume.e2e_seed import ensure_e2e_cascade_run
+
+        db = tmp_path / "cross_volume.db"
+        monkeypatch.setattr(
+            "infra.cross_volume.e2e_seed._cvg_db_path",
+            lambda state_dir=None: db,
+        )
+        first = ensure_e2e_cascade_run()
+        second = ensure_e2e_cascade_run()
+        assert first == second
+        from infra.cross_volume.storage import RippleStorage
+
+        storage = RippleStorage(db_path=db, graph=None)
+        runs = storage.get_cascade_runs(E2E_PENDING_RIPPLE_ID)
+        assert len(runs) == 1
+        assert runs[0].status == "completed"

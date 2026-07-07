@@ -1,6 +1,19 @@
 // Creator workspace live e2e (Phase creator v1.4)
 import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
+import {
+  COMPANION_SLUG,
+  CREATOR_SLUG,
+  closePulseDrawer,
+  clickStable,
+  dismissDeskDrawerIfOpen,
+  openAdvancedTools,
+  openCompanionProject,
+  openPulseDrawer,
+  restoreCreatorProject,
+  selectChapter,
+} from './helpers/companion-project.js';
+import { mockDelayedAgentPlanStream } from './helpers/mock-agent-stream.js';
 
 /** 断言区域可滚动（overflow + 必要时 scrollTop 变化） */
 async function expectScrollableRegion(locator) {
@@ -20,19 +33,6 @@ async function expectScrollableRegion(locator) {
   });
   const after = await locator.evaluate((el) => el.scrollTop);
   expect(after).toBeGreaterThan(before);
-}
-
-async function openPulseDrawer(page) {
-  const drawerTrigger = page.getByTestId('creator-desk-drawer-pulse');
-  const tabPulse = page.getByTestId('creator-workspace-tab-pulse');
-  try {
-    await drawerTrigger.waitFor({ state: 'visible', timeout: 30_000 });
-    await drawerTrigger.click();
-    return;
-  } catch {
-    await tabPulse.waitFor({ state: 'visible', timeout: 10_000 });
-    await tabPulse.click();
-  }
 }
 
 test.describe('Creator workspace live e2e', () => {
@@ -188,6 +188,88 @@ test.describe('Creator workspace live e2e', () => {
     await expect(saveBtn).toBeVisible({ timeout: 30_000 });
     await saveBtn.click();
     await expect(page.getByTestId('save-banner')).toBeVisible({ timeout: 20_000 });
+    await restoreCreatorProject(request);
+  });
+
+  test('creator_volume_merge_wizard_three_steps', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: CREATOR_SLUG } });
+    await request.put('/api/creator/volume-plan', {
+      data: {
+        volumes: [
+          { label: '一', start_chapter: 1, end_chapter: 6, core_conflict: 'E2E 卷一', locked: false },
+          { label: '二', start_chapter: 7, end_chapter: 12, core_conflict: 'E2E 卷二', locked: false },
+        ],
+      },
+    });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await openPulseDrawer(page);
+    await expect(page.getByTestId('volume-plan-panel')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('merge-wizard-steps')).toBeVisible({ timeout: 15_000 });
+
+    await page.getByTestId('merge-wizard-next-btn').click();
+    await expect(page.getByTestId('merge-conflict-preview')).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId('merge-wizard-confirm-btn').click();
+    await expect(page.getByTestId('apply-merge-btn')).toBeVisible({ timeout: 10_000 });
+
+    await restoreCreatorProject(request);
+  });
+
+  test('creator_share_merge_wizard_on_conflict', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: CREATOR_SLUG } });
+    await request.put('/api/creator/volume-plan', {
+      data: {
+        volumes: [
+          { label: '一', start_chapter: 1, end_chapter: 6, core_conflict: '本地卷一冲突', locked: false },
+          { label: '二', start_chapter: 7, end_chapter: 12, core_conflict: '本地卷二冲突', locked: false },
+        ],
+      },
+    });
+    const token = await page.evaluate(() => {
+      const payload = {
+        v: 2,
+        c: 2,
+        changes: [
+          { type: 'changed', label: '一', message: '冲突：核心冲突变更' },
+          { type: 'changed', label: '二', message: '冲突：章范围变更' },
+        ],
+        d: [
+          { label: '一', start_chapter: 1, end_chapter: 6, core_conflict: '分享冲突卷一', locked: false },
+          { label: '二', start_chapter: 7, end_chapter: 12, core_conflict: '分享冲突卷二', locked: false },
+        ],
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    });
+
+    await page.goto(`/?nav=write&workspace=pulse#creator-diff=${token}`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('volume-plan-panel')).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-testid="volume-row-0"] .vol-conflict')).toHaveValue(/本地卷一冲突/, {
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId('volume-plan-diff-share-link-preview')).toBeVisible({ timeout: 30_000 });
+    await dismissDeskDrawerIfOpen(page);
+    await clickStable(page.getByTestId('apply-volume-plan-diff-share-btn'));
+
+    await expect(page.getByTestId('confirm-share-apply-btn')).toBeVisible({ timeout: 10_000 });
+    await clickStable(page.getByTestId('confirm-share-apply-btn'));
+
+    const mergeWizard = page.getByTestId('volume-plan-diff-share-merge-wizard');
+    await expect(mergeWizard).toBeVisible({ timeout: 15_000 });
+    await expect(mergeWizard).toContainText(/冲突|分享/);
+    await clickStable(page.getByTestId('share-merge-use-share-btn'));
+    await openPulseDrawer(page);
+    await expect(page.locator('[data-testid="volume-row-0"] .vol-conflict')).toHaveValue(/分享冲突卷一/, {
+      timeout: 15_000,
+    });
+
+    await restoreCreatorProject(request);
   });
 
   test('companion_light_validation_bar', async ({ page, request }) => {
@@ -240,6 +322,153 @@ test.describe('Creator workspace live e2e', () => {
     expect(streamResponse.headers()['content-type'] || '').toContain('text/event-stream');
     await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('write-candidate-c1')).toBeVisible();
-    await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_agent_stream_preview_ui_visible_during_sse', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: COMPANION_SLUG } });
+    await mockDelayedAgentPlanStream(page, { chunkText: '流式预览可见性', chunkDelayMs: 1500 });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await selectChapter(page);
+    await openAdvancedTools(page);
+    await page.getByTestId('write-agent-input').fill('测试流式可见性');
+
+    const preview = page.getByTestId('agent-stream-preview');
+    await Promise.all([
+      expect(preview).toBeVisible({ timeout: 15_000 }),
+      page.getByTestId('write-agent-send-btn').click(),
+    ]);
+    await expect(preview).toContainText(/流式预览可见性|候选预览/);
+
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_desk_drawer_pulse_open_close', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await openPulseDrawer(page);
+    await expect(page.getByTestId('column-pulse')).toBeVisible();
+    await closePulseDrawer(page);
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_agent_candidate_confirms_body_change', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: COMPANION_SLUG } });
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"E2E确认替换正文"}],"provider":"mock","annotations":[],"scope":{"type":"chapter","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await selectChapter(page);
+    await openAdvancedTools(page);
+    await page.getByTestId('write-agent-input').fill('测试确认流');
+    await page.getByTestId('write-agent-send-btn').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('write-candidate-c1').click();
+    await page.getByTestId('write-director-confirm-btn').click();
+    await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/E2E确认替换正文/, {
+      timeout: 10_000,
+    });
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_agent_multi_candidate_pick_c2_confirms_body', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: COMPANION_SLUG } });
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"E2E候选一段正文"},{"id":"c2","label":"B","text":"E2E候选二段正文"},{"id":"c3","label":"C","text":"E2E候选三段正文"}],"provider":"mock","annotations":[],"scope":{"type":"chapter","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await selectChapter(page);
+    await openAdvancedTools(page);
+    await page.getByTestId('write-agent-input').fill('多候选对比测试');
+    await page.getByTestId('write-agent-send-btn').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-candidate-dock')).toBeVisible();
+    await page.getByTestId('write-candidate-c2').click();
+    await page.getByTestId('write-director-confirm-btn').click();
+    await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/E2E候选二段正文/, {
+      timeout: 10_000,
+    });
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_agent_confirm_checkpoint_diff_and_undo', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: COMPANION_SLUG } });
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"E2E checkpoint 替换正文"}],"provider":"mock","annotations":[],"scope":{"type":"chapter","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await selectChapter(page);
+    const beforeBody = await page.getByTestId('chapter-body-textarea').inputValue();
+    await openAdvancedTools(page);
+    await page.getByTestId('write-agent-input').fill('checkpoint 测试');
+    await page.getByTestId('write-agent-send-btn').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('write-candidate-c1').click();
+    await page.getByTestId('write-director-confirm-btn').click();
+    await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/E2E checkpoint 替换正文/, {
+      timeout: 10_000,
+    });
+
+    await expect(page.getByTestId('write-undo-last-btn')).toBeVisible({ timeout: 10_000 });
+    const diffBtn = page.locator('[data-testid^="checkpoint-diff-"]').first();
+    await diffBtn.click();
+    await expect(page.getByTestId('write-checkpoint-diff')).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId('write-undo-last-btn').click();
+    await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(beforeBody, { timeout: 10_000 });
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_light_validation_pill_focuses_editor', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await page.getByTestId('chapter-body-textarea').evaluate((el) => {
+      el.value = '角色说"未完待续';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const pill = page.getByTestId('light-validation-stub_chapter');
+    await expect(pill).toBeVisible({ timeout: 5_000 });
+    await pill.click();
+    await expect(page.getByTestId('chapter-body-textarea')).toHaveClass(/chapter-body-textarea--conflict/);
+    await restoreCreatorProject(request);
   });
 });

@@ -8,9 +8,12 @@
     "preview": "vite preview",
     "e2e:smoke": "playwright test --project=smoke",
     "e2e:live": "LINGWEN_E2E_LIVE=1 playwright test --project=live-backend",
+    "e2e:a11y": "LINGWEN_E2E_LIVE=1 playwright test --project=a11y-l1",
     "e2e:visual-capture": "LINGWEN_E2E_LIVE=1 playwright test --project=visual-capture",
     "e2e:visual-regression": "LINGWEN_E2E_LIVE=1 playwright test --project=visual-regression",
     "e2e:visual-update": "LINGWEN_E2E_LIVE=1 playwright test --project=visual-regression --update-snapshots",
+    "e2e:ui-metrics": "LINGWEN_E2E_LIVE=1 playwright test --project=ui-metrics",
+    "e2e:quarantine": "LINGWEN_E2E_LIVE=1 PLAYWRIGHT_QUARANTINE=only playwright test --project=live-backend",
     "lint": "pnpm lint:all",
     "lint:testid": "eslint --config eslint.config.js tests/unit/**/*.spec.ts tests/fixtures/lint-testid/*.spec.ts --no-error-on-unmatched-pattern",
     "lint:testid-sync": "eslint --config eslint.config.js src/**/*.vue",
@@ -30,6 +33,7 @@
     "vue": "^3.5.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.49.0",
     "@types/node": "^25.9.2",
     "@typescript-eslint/parser": "^8.0.0",

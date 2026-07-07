@@ -111,7 +111,7 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
 }
 
 .deviation-badge {
-  color: #c44;
+  color: var(--color-danger);
 }
 
 .deviation-badge--clickable {
@@ -133,9 +133,9 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
 }
 
 .mode-badge--advance-tint {
-  color: #36a;
-  background: rgba(80, 140, 220, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(60, 110, 180, 0.45);
+  color: var(--color-advance);
+  background: var(--color-advance-soft);
+  box-shadow: inset 0 0 0 1px var(--color-advance-border);
 }
 
 .mode-badge--studio-tint {

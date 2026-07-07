@@ -57,4 +57,9 @@ describe('resolveDefaultLandingNav', () => {
     saveWriteResume('demo', { chapter: 2 });
     expect(resolveDefaultLandingNav({ slug: 'demo', chaptersWritten: 0 })).toBe('write');
   });
+
+  it('returns inbox for reviewer regardless of progress', () => {
+    expect(resolveDefaultLandingNav({ isReviewer: true, chaptersWritten: 5 })).toBe('inbox');
+    expect(resolveDefaultLandingNav({ isReviewer: true, slug: 'demo', chaptersWritten: 0 })).toBe('inbox');
+  });
 });

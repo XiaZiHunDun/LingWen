@@ -8,20 +8,24 @@
       <li
         v-for="marker in markers"
         :key="marker.id"
-        class="inline-conflict-gutter__item"
-        :class="[
-          `inline-conflict-gutter__item--${marker.level}`,
-          { 'inline-conflict-gutter__item--active': marker.id === activeId },
-        ]"
-        :data-testid="`inline-conflict-${marker.kind}`"
-        role="button"
-        tabindex="0"
-        @click="$emit('focus', marker)"
-        @keydown.enter="$emit('focus', marker)"
+        class="inline-conflict-gutter__item-wrap"
       >
-        <span class="inline-conflict-gutter__badge">{{ marker.kind === 'logic' ? '逻辑' : '偏离' }}</span>
-        <span class="inline-conflict-gutter__label">{{ marker.label }}</span>
-        <span v-if="marker.paragraph" class="inline-conflict-gutter__para">¶{{ marker.paragraph }}</span>
+        <button
+          type="button"
+          class="inline-conflict-gutter__item"
+          :class="[
+            `inline-conflict-gutter__item--${marker.level}`,
+            { 'inline-conflict-gutter__item--active': marker.id === activeId },
+          ]"
+          :data-testid="`inline-conflict-${marker.kind}`"
+          :title="markerTooltip(marker)"
+          @click="$emit('focus', marker)"
+        >
+          <span class="inline-conflict-gutter__icon" aria-hidden="true">{{ kindIcon(marker.kind) }}</span>
+          <span class="inline-conflict-gutter__badge">{{ kindBadge(marker.kind) }}</span>
+          <span class="inline-conflict-gutter__label">{{ marker.label }}</span>
+          <span v-if="marker.paragraph" class="inline-conflict-gutter__para">¶{{ marker.paragraph }}</span>
+        </button>
       </li>
     </ul>
   </aside>
@@ -34,6 +38,27 @@ defineProps({
 });
 
 defineEmits(['focus']);
+
+function kindIcon(kind) {
+  if (kind === 'logic') return '⊘';
+  if (kind === 'deviation') return '↗';
+  if (kind === 'light') return '✎';
+  return '·';
+}
+
+function kindBadge(kind) {
+  if (kind === 'logic') return '逻辑';
+  if (kind === 'deviation') return '偏离';
+  if (kind === 'light') return '提示';
+  return '冲突';
+}
+
+function markerTooltip(marker) {
+  const parts = [marker.label];
+  if (marker.fixHint) parts.push(marker.fixHint);
+  if (marker.paragraph) parts.push(`段落 ${marker.paragraph}`);
+  return parts.join(' · ');
+}
 </script>
 
 <style scoped>
@@ -42,7 +67,7 @@ defineEmits(['focus']);
   flex-shrink: 0;
   padding: var(--space-xs);
   border: 1px solid var(--border-color);
-  background: rgba(200, 80, 80, 0.04);
+  background: var(--color-danger-soft);
   font-size: 10px;
   max-height: 220px;
   overflow-y: auto;
@@ -57,19 +82,35 @@ defineEmits(['focus']);
   margin: 0;
   padding: 0;
 }
+.inline-conflict-gutter__item-wrap {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .inline-conflict-gutter__item {
+  width: 100%;
   padding: 4px 2px;
-  border-bottom: 1px dashed var(--border-color);
+  border: none;
+  border-bottom: 1px dashed var(--border-subtle, var(--border-color));
   cursor: pointer;
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
   align-items: baseline;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
 }
-.inline-conflict-gutter__item--error { border-left: 2px solid #c44; }
-.inline-conflict-gutter__item--warn { border-left: 2px solid #aa8; }
+.inline-conflict-gutter__item--error { border-left: 2px solid var(--color-danger); }
+.inline-conflict-gutter__item--warn { border-left: 2px solid var(--color-warning); }
 .inline-conflict-gutter__item--active {
-  background: rgba(255, 220, 100, 0.35);
+  background: var(--color-warning-soft);
+}
+.inline-conflict-gutter__icon {
+  font-size: 10px;
+  opacity: 0.75;
+  width: 1em;
 }
 .inline-conflict-gutter__badge {
   font-size: 9px;
@@ -82,5 +123,11 @@ defineEmits(['focus']);
 }
 .inline-conflict-gutter__para {
   opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-conflict-gutter__item--active {
+    transition: none;
+  }
 }
 </style>

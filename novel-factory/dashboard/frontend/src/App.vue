@@ -11,7 +11,13 @@
           </div>
         </div>
         <span
-          v-if="!isHumanFirstShell"
+          v-if="isHumanFirstShell"
+          class="sidebar-subtitle sidebar-subtitle--human"
+          data-testid="sidebar-book-name"
+          :title="sidebarModeHint"
+        >{{ sidebarModeHint }}</span>
+        <span
+          v-else
           class="sidebar-subtitle"
           data-testid="sidebar-mode-hint"
         >{{ sidebarModeHint }}</span>
@@ -427,6 +433,24 @@ function onNavClick(itemId) {
   padding: var(--space-xs) var(--space-sm);
   background: var(--bg-muted);
   border-radius: var(--radius-sm);
+}
+
+.sidebar-subtitle--human {
+  background: transparent;
+  padding: 0;
+  margin-top: var(--space-xs);
+  padding-left: calc(28px + var(--space-sm));
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+}
+
+.sidebar--human .nav-item--active {
+  background: color-mix(in srgb, var(--color-accent-soft) 85%, var(--bg-elevated));
+  color: var(--color-accent-hover);
 }
 
 .nav-menu {

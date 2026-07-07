@@ -33,6 +33,7 @@ export function useCreatorPage() {
     navigateTo,
     focusCreatorWorkspace,
     setCreatorWorkspace,
+    focusChapter,
   } = useDashboardNav();
 
   const overview = ref(null);
@@ -251,6 +252,7 @@ export function useCreatorPage() {
     logicCheckResult,
     runCompanionLogicCheck,
     openVolumeSummaryForRange: (...args) => pulseRef.hub?.openVolumeSummaryForRange(...args),
+    focusChapter,
   });
   writeRef.hub = writeHub;
   const {
@@ -278,6 +280,7 @@ export function useCreatorPage() {
     handleDeviationClick: (...args) => writeRef.hub.handleDeviationClick(...args),
     jumpToChapter: (...args) => writeRef.hub.jumpToChapter(...args),
     onAfterVolumeSummarySave: async () => refresh(),
+    batchJob,
   });
   pulseRef.hub = pulseHub;
   const { panelContext: pulsePanelContext } = pulseHub;
@@ -342,7 +345,19 @@ export function useCreatorPage() {
   } = productToolsHub;
 
   watch(
-    () => productToolsPanelContext.memoryAssets,
+    () => {
+      const ma = productToolsPanelContext.memoryAssets;
+      if (!ma || typeof ma !== 'object') return [];
+      if ('value' in ma) {
+        try {
+          const resolved = ma.value;
+          return Array.isArray(resolved) ? resolved : [];
+        } catch {
+          return [];
+        }
+      }
+      return Array.isArray(ma) ? ma : [];
+    },
     (assets) => {
       writeHub.syncMemoryAssets?.(assets);
     },

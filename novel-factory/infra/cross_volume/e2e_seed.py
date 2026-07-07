@@ -22,6 +22,7 @@ E2E_REJECTED_RIPPLE_ID = "rip-rejected-1"
 E2E_DECISION_ID = "e2e-dec1"
 E2E_CREATOR_SLUG = "e2e-live-creator"
 E2E_COMPANION_SLUG = "e2e-live-companion"
+E2E_STUDIO_SLUG = "e2e-live-studio"
 
 _DEFAULT_STATE_DIR = Path(__file__).resolve().parents[2] / "infra" / ".state"
 
@@ -110,6 +111,162 @@ def reset_e2e_decision(state_dir: Path | None = None) -> None:
         queue.add(_make_e2e_decision())
 
 
+def clear_inbox_pending(
+    db_path: Path | None = None,
+    state_dir: Path | None = None,
+) -> None:
+    """No pending ripples/decisions — for Today hub / companion-only smoke."""
+    from infra.agent_system.decision_queue import DecisionStatus
+
+    reset_e2e_ripple(E2E_PENDING_RIPPLE_ID, "applied", db_path)
+    directory = _state_dir(state_dir)
+    queue = HumanDecisionQueue(state_dir=str(directory))
+    with queue.with_lock():
+        if E2E_DECISION_ID in queue._decisions:
+            dec = queue._decisions[E2E_DECISION_ID]
+            if dec.status == DecisionStatus.PENDING:
+                queue.resolve(E2E_DECISION_ID, "approve", resolved_by="e2e-seed")
+
+
+def restore_inbox_fixture(db_path: Path | None = None, state_dir: Path | None = None) -> None:
+    """Ensure pending ripple + decision for inbox/ripples live e2e."""
+    ensure_e2e_ripples(db_path)
+    ensure_e2e_decision(state_dir)
+    reset_e2e_ripple(E2E_PENDING_RIPPLE_ID, "pending", db_path)
+    reset_e2e_decision(state_dir)
+
+
+_E2E_CREATOR_DISPLAY_NAME = "E2E 推进创作"
+_E2E_COMPANION_DISPLAY_NAME = "E2E 陪伴创作"
+_E2E_STUDIO_DISPLAY_NAME = "E2E 工厂模式"
+_E2E_COMPANION_MAX_CHAPTER = 5
+
+
+def _repair_e2e_creator_project_yaml(root: Path) -> None:
+    """Keep advance fixture out of companion-branded UI (name must not contain 创作伴侣)."""
+    import yaml
+
+    cfg_path = root / "config" / "project.yaml"
+    if not cfg_path.is_file():
+        return
+    data = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    project = dict(data.get("project") or {})
+    changed = False
+    if project.get("name") != _E2E_CREATOR_DISPLAY_NAME:
+        project["name"] = _E2E_CREATOR_DISPLAY_NAME
+        changed = True
+    if project.get("creation_mode") != "advance":
+        project["creation_mode"] = "advance"
+        changed = True
+    if not changed:
+        return
+    data["project"] = project
+    cfg_path.write_text(
+        yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False),
+        encoding="utf-8",
+    )
+
+
+def _repair_e2e_studio_project_yaml(root: Path) -> None:
+    import yaml
+
+    cfg_path = root / "config" / "project.yaml"
+    if not cfg_path.is_file():
+        return
+    data = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    project = dict(data.get("project") or {})
+    changed = False
+    if project.get("name") != _E2E_STUDIO_DISPLAY_NAME:
+        project["name"] = _E2E_STUDIO_DISPLAY_NAME
+        changed = True
+    if project.get("creation_mode") != "studio":
+        project["creation_mode"] = "studio"
+        changed = True
+    if not changed:
+        return
+    data["project"] = project
+    cfg_path.write_text(
+        yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False),
+        encoding="utf-8",
+    )
+
+
+def _repair_e2e_companion_project_yaml(root: Path) -> None:
+    """Keep companion fixture aligned with Today / chapter-preview live e2e."""
+    import yaml
+
+    cfg_path = root / "config" / "project.yaml"
+    if not cfg_path.is_file():
+        return
+    data = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    project = dict(data.get("project") or {})
+    changed = False
+    if project.get("name") != _E2E_COMPANION_DISPLAY_NAME:
+        project["name"] = _E2E_COMPANION_DISPLAY_NAME
+        changed = True
+    if project.get("creation_mode") != "companion":
+        project["creation_mode"] = "companion"
+        changed = True
+    if project.get("max_chapter") != _E2E_COMPANION_MAX_CHAPTER:
+        project["max_chapter"] = _E2E_COMPANION_MAX_CHAPTER
+        changed = True
+    if not changed:
+        return
+    data["project"] = project
+    cfg_path.write_text(
+        yaml.dump(data, allow_unicode=True, sort_keys=False, default_flow_style=False),
+        encoding="utf-8",
+    )
+
+
+def ensure_e2e_cascade_run(db_path: Path | None = None) -> int:
+    """Idempotent completed cascade run for rip-pending-1 (replay live e2e)."""
+    from infra.cross_volume.reference_graph import CascadedRipple
+
+    path = db_path or _cvg_db_path()
+    ensure_e2e_ripples(path)
+    storage = RippleStorage(db_path=path, graph=None)
+    for run in storage.get_cascade_runs(E2E_PENDING_RIPPLE_ID, limit=10):
+        if run.status == "completed":
+            return run.id
+    cascaded = CascadedRipple(
+        trigger_ripple_id=E2E_PENDING_RIPPLE_ID,
+        cascade_nodes=(),
+        cascade_edges=(),
+        cascade_actions=({"kind": "e2e", "label": "seed"},),
+        depth_reached=1,
+        generated_at=datetime.now(timezone.utc).isoformat(),
+        bfs_algorithm_version="e2e",
+    )
+    return storage.record_cascade_run(
+        E2E_PENDING_RIPPLE_ID,
+        cascaded,
+        max_depth=2,
+        status="completed",
+    )
+
+
+def ensure_e2e_studio_project() -> Path:
+    """Studio-mode project for factory produce-hub live e2e."""
+    from infra.project_init import init_minimal_short_project
+    from infra.studio_registry import factory_root, get_project_by_slug
+
+    factory = factory_root()
+    existing = get_project_by_slug(E2E_STUDIO_SLUG)
+    if existing is None:
+        init_minimal_short_project(
+            slug=E2E_STUDIO_SLUG,
+            title=_E2E_STUDIO_DISPLAY_NAME,
+            factory_root=factory,
+            creation_mode="studio",
+            chapter_count=10,
+        )
+    project = get_project_by_slug(E2E_STUDIO_SLUG)
+    assert project is not None
+    _repair_e2e_studio_project_yaml(project.root)
+    return project.root
+
+
 def ensure_e2e_creator_project() -> Path:
     """Advance-mode project for creator share-link live e2e."""
     from infra.project_init import init_minimal_short_project
@@ -120,7 +277,7 @@ def ensure_e2e_creator_project() -> Path:
     if existing is None:
         init_minimal_short_project(
             slug=E2E_CREATOR_SLUG,
-            title="E2E 推进创作",
+            title=_E2E_CREATOR_DISPLAY_NAME,
             factory_root=factory,
             creation_mode="advance",
             chapter_count=12,
@@ -128,6 +285,7 @@ def ensure_e2e_creator_project() -> Path:
     activate_project(E2E_CREATOR_SLUG)
     project = get_project_by_slug(E2E_CREATOR_SLUG)
     assert project is not None
+    _repair_e2e_creator_project_yaml(project.root)
     return project.root
 
 
@@ -177,14 +335,17 @@ def ensure_e2e_companion_project() -> Path:
     )
     project = get_project_by_slug(E2E_COMPANION_SLUG)
     assert project is not None
+    _repair_e2e_companion_project_yaml(project.root)
     return project.root
 
 
 def ensure_e2e_fixtures() -> None:
     ensure_e2e_ripples()
     ensure_e2e_decision()
+    ensure_e2e_cascade_run()
     ensure_e2e_companion_project()
     ensure_e2e_creator_project()
+    ensure_e2e_studio_project()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -199,6 +360,9 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("reset-decision", help="Reset e2e decision to pending")
 
+    sub.add_parser("clear-inbox-pending", help="Resolve pending ripple/decision for Today smoke")
+    sub.add_parser("restore-inbox-fixture", help="Reset pending ripple + decision for inbox e2e")
+
     args = parser.parse_args(argv)
     if args.command == "ensure":
         ensure_e2e_fixtures()
@@ -208,6 +372,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "reset-decision":
         reset_e2e_decision()
+        return 0
+    if args.command == "clear-inbox-pending":
+        clear_inbox_pending()
+        return 0
+    if args.command == "restore-inbox-fixture":
+        restore_inbox_fixture()
         return 0
     return 1
 

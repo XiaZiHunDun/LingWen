@@ -64,7 +64,7 @@ const summary = computed(() => summarizeLightValidation(props.issues));
 }
 
 .write-light-validation--warn {
-  border-color: color-mix(in srgb, var(--color-warn, #c9a227) 45%, var(--border-color));
+  border-color: color-mix(in srgb, var(--color-warning) 45%, var(--border-color));
 }
 
 .write-light-validation__head {
@@ -97,7 +97,7 @@ const summary = computed(() => summarizeLightValidation(props.issues));
 }
 
 .write-light-validation__item--warn .write-light-validation__pill {
-  border-color: color-mix(in srgb, var(--color-warn, #c9a227) 55%, var(--border-color));
+  border-color: color-mix(in srgb, var(--color-warning) 55%, var(--border-color));
 }
 
 .meta-line {
