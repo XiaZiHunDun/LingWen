@@ -32,6 +32,9 @@ const dashboardServer = {
   url: 'http://localhost:8765/api/health',
   reuseExistingServer: !process.env.CI,
   timeout: 120_000,
+  env: {
+    PYTHONPATH: NOVEL_FACTORY_ROOT,
+  },
 }
 
 export default defineConfig({
