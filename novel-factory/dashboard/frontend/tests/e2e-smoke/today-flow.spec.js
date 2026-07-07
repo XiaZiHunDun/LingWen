@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clearInboxPending, skipUnlessLive } from './helpers/live-backend.js';
+import { clearInboxPending, restoreInboxFixture, skipUnlessLive } from './helpers/live-backend.js';
 import { COMPANION_SLUG, restoreCreatorProject } from './helpers/companion-project.js';
 
 test.describe('Today flow (live)', () => {
@@ -42,5 +42,24 @@ test.describe('Today flow (live)', () => {
     } else {
       expect(label).toMatch(/继续创作|处理|审阅/);
     }
+  });
+
+  test('today_prioritizes_pending_decisions_over_micro_task', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+
+    restoreInboxFixture();
+    await request.put('/api/studio/active', { data: { slug: COMPANION_SLUG } });
+
+    await page.goto('/?nav=today', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('today-loading')).toBeHidden({ timeout: 45_000 });
+
+    const cta = page.getByTestId('today-primary-cta');
+    await expect(cta).toBeVisible({ timeout: 15_000 });
+    await expect(cta).toContainText(/待决策/);
+    await expect(page.getByTestId('today-secondary-ripples')).toBeVisible();
+    await cta.click();
+    await expect(page.getByTestId('inbox-page')).toBeVisible({ timeout: 30_000 });
+    await expect(page).toHaveURL(/nav=inbox/);
   });
 });
