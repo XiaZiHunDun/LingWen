@@ -103,7 +103,7 @@ describe('ChaptersPage (F63/F88)', () => {
         total_count: 2,
         elapsed_s: 0.1,
       },
-    } as typeof mocks.status.value
+    } as unknown as typeof mocks.status.value;
     const wrapper = mount(ChaptersPage)
     await flushPromises()
     expect(wrapper.find(byTestid('chapter-production-summary')).exists()).toBe(true)

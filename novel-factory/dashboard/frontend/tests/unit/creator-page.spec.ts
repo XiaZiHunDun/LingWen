@@ -1,6 +1,7 @@
 // tests/unit/creator-page.spec.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
+import type { VolumePlanDiffPreview } from '../helpers/strict-test-types.js';
 
 const creatorMocks = vi.hoisted(() => ({
   fetchCreatorOverview: vi.fn(),
@@ -378,10 +379,10 @@ const overviewFixture = {
 
 describe('CreatorPage', () => {
   beforeEach(() => {
-    navMocks.focusWizard.value = false;
-    navMocks.focusWizardStep.value = null;
-    navMocks.focusWizardDone.value = [];
-    navMocks.focusWizardNotes.value = {};
+    navMocks.focusWizard!.value = false;
+    navMocks.focusWizardStep!.value = null;
+    navMocks.focusWizardDone!.value = [];
+    navMocks.focusWizardNotes!.value = {};
     navMocks.setWizardDeepLink.mockClear();
     creatorMocks.fetchCreatorOverview.mockResolvedValue(overviewFixture);
     creatorMocks.fetchCreatorPreferences.mockResolvedValue({
@@ -1156,7 +1157,7 @@ describe('CreatorPage', () => {
   });
 
   it('opens onboarding wizard when wizard deep-link is active', async () => {
-    navMocks.focusWizard.value = true;
+    navMocks.focusWizard!.value = true;
     const wrapper = mount(CreatorPage);
     await flushPromises();
 
@@ -1166,8 +1167,8 @@ describe('CreatorPage', () => {
   });
 
   it('highlights wizard step from step deep-link', async () => {
-    navMocks.focusWizard.value = true;
-    navMocks.focusWizardStep.value = 'volume';
+    navMocks.focusWizard!.value = true;
+    navMocks.focusWizardStep!.value = 'volume';
     const wrapper = mount(CreatorPage);
     await flushPromises();
 
@@ -1324,7 +1325,7 @@ describe('CreatorPage', () => {
   });
 
   it('applies wizard share done from url', async () => {
-    navMocks.focusWizardDone.value = ['volume'];
+    navMocks.focusWizardDone!.value = ['volume'];
     mount(CreatorPage);
     await flushPromises();
 
@@ -1755,8 +1756,8 @@ describe('CreatorPage', () => {
   });
 
   it('v3.9 collapses wizard for companion and hides warn deviations for advance', async () => {
-    navMocks.focusWizard.value = false;
-    navMocks.focusWizardStep.value = null;
+    navMocks.focusWizard!.value = false;
+    navMocks.focusWizardStep!.value = null;
     creatorMocks.fetchCreatorOnboarding.mockResolvedValueOnce({
       mode_label: '陪伴',
       max_chapter: 12,
@@ -1859,8 +1860,8 @@ describe('CreatorPage', () => {
   });
 
   it('v4.0 companion inline chapter edit and wizard expand when incomplete', async () => {
-    navMocks.focusWizard.value = false;
-    navMocks.focusWizardStep.value = null;
+    navMocks.focusWizard!.value = false;
+    navMocks.focusWizardStep!.value = null;
     creatorMocks.fetchCreatorOnboarding.mockResolvedValueOnce({
       mode_label: '陪伴',
       max_chapter: 12,
@@ -2128,7 +2129,7 @@ describe('CreatorPage', () => {
     await wrapper.find('[data-testid="chapter-recheck-issue-0"]').trigger('click');
     await flushPromises();
     expect(selectSpy).toHaveBeenCalled();
-    const [start, end] = selectSpy.mock.calls[0];
+    const [start, end] = selectSpy.mock.calls[0] as [number, number];
     expect(end).toBeGreaterThan(start);
   });
 
@@ -3613,18 +3614,18 @@ describe('CreatorPage', () => {
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    let exportedPayload = null;
+    let exportedPayload: VolumePlanDiffPreview | null = null;
     const originalBlob = globalThis.Blob;
     globalThis.Blob = class extends originalBlob {
-      constructor(parts, options) {
+      constructor(parts: BlobPart[] = [], options?: BlobPropertyBag) {
         super(parts, options);
         try {
-          exportedPayload = JSON.parse(String(parts[0]));
+          exportedPayload = JSON.parse(String(parts[0])) as VolumePlanDiffPreview;
         } catch {
           exportedPayload = null;
         }
       }
-    };
+    } as typeof Blob;
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       ui_profile: {
@@ -3650,8 +3651,8 @@ describe('CreatorPage', () => {
     await flushPromises();
     await wrapper.find('[data-testid="export-volume-plan-diff-btn"]').trigger('click');
     await flushPromises();
-    expect(exportedPayload?.global_outline_excerpt).toBe('大纲摘录内容');
-    expect(exportedPayload?.global_outline_lines?.length).toBe(1);
+    expect((exportedPayload as VolumePlanDiffPreview | null)?.global_outline_excerpt).toBe('大纲摘录内容');
+    expect((exportedPayload as VolumePlanDiffPreview | null)?.global_outline_lines?.length).toBe(1);
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('含大纲摘录');
     globalThis.Blob = originalBlob;
     createObjectURL.mockRestore();
@@ -3708,18 +3709,18 @@ describe('CreatorPage', () => {
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    let exportedPayload = null;
+    let exportedPayload: VolumePlanDiffPreview | null = null;
     const originalBlob = globalThis.Blob;
     globalThis.Blob = class extends originalBlob {
-      constructor(parts, options) {
+      constructor(parts: BlobPart[] = [], options?: BlobPropertyBag) {
         super(parts, options);
         try {
-          exportedPayload = JSON.parse(String(parts[0]));
+          exportedPayload = JSON.parse(String(parts[0])) as VolumePlanDiffPreview;
         } catch {
           exportedPayload = null;
         }
       }
-    };
+    } as typeof Blob;
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       ui_profile: {
@@ -3746,8 +3747,8 @@ describe('CreatorPage', () => {
     await flushPromises();
     await wrapper.find('[data-testid="export-volume-plan-diff-btn"]').trigger('click');
     await flushPromises();
-    expect(exportedPayload?.highlighted_changes?.[0]?.highlighted).toBe(true);
-    expect(exportedPayload?.highlighted_outline_lines?.length).toBe(1);
+    expect((exportedPayload as VolumePlanDiffPreview | null)?.highlighted_changes?.[0]?.highlighted).toBe(true);
+    expect((exportedPayload as VolumePlanDiffPreview | null)?.highlighted_outline_lines?.length).toBe(1);
     expect(wrapper.find('[data-testid="save-banner"]').text()).toContain('含变更高亮');
     globalThis.Blob = originalBlob;
     createObjectURL.mockRestore();
@@ -3820,11 +3821,11 @@ describe('CreatorPage', () => {
     let exportedMarkdown = '';
     const originalBlob = globalThis.Blob;
     globalThis.Blob = class extends originalBlob {
-      constructor(parts, options) {
+      constructor(parts: BlobPart[] = [], options?: BlobPropertyBag) {
         super(parts, options);
         exportedMarkdown = String(parts[0]);
       }
-    };
+    } as typeof Blob;
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       ui_profile: {
@@ -4022,11 +4023,11 @@ describe('CreatorPage', () => {
     let exportedPdf = '';
     const originalBlob = globalThis.Blob;
     globalThis.Blob = class extends originalBlob {
-      constructor(parts, options) {
+      constructor(parts: BlobPart[] = [], options?: BlobPropertyBag) {
         super(parts, options);
         exportedPdf = String(parts[0]);
       }
-    };
+    } as typeof Blob;
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       ui_profile: {
@@ -4186,14 +4187,14 @@ describe('CreatorPage', () => {
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    let exportedZip = null;
+    let exportedZip: Uint8Array | null = null;
     const originalBlob = globalThis.Blob;
     globalThis.Blob = class extends originalBlob {
-      constructor(parts, options) {
+      constructor(parts: BlobPart[] = [], options?: BlobPropertyBag) {
         super(parts, options);
-        exportedZip = parts[0];
+        exportedZip = parts[0] as Uint8Array;
       }
-    };
+    } as typeof Blob;
     creatorMocks.fetchCreatorOverview.mockResolvedValue({
       ...overviewFixture,
       ui_profile: {
@@ -4836,11 +4837,13 @@ describe('CreatorPage', () => {
     expect(toggle.exists()).toBe(true);
     expect(toggle.text()).toContain('展开');
     const body = wrapper.find('[data-testid="batch-history-ops-summary-body"]');
-    expect(body.element.style.display).toBe('none');
+    const bodyEl = body.element as HTMLElement;
+    const bodyStyle = bodyEl.style as CSSStyleDeclaration;
+    expect(bodyStyle.display).toBe('none');
     await toggle.trigger('click');
     await flushPromises();
     expect(toggle.text()).toContain('收起');
-    expect(body.element.style.display).not.toBe('none');
+    expect(bodyStyle.display).not.toBe('none');
     expect(wrapper.find('[data-testid="batch-history-success-rate"]').text()).toContain('100%');
   });
 

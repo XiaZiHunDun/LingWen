@@ -5,6 +5,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import CreatorPreferencesSection from '../../src/components/creator/CreatorPreferencesSection.vue';
 import CreatorStructureGraph from '../../src/components/creator/CreatorStructureGraph.vue';
 import CreatorExportModal from '../../src/components/creator/CreatorExportModal.vue';
+import CreatorInterventionBanner from '../../src/components/creator/CreatorInterventionBanner.vue';
 import { CREATOR_PRODUCT_TOOLS_KEY, createCreatorProductToolsContext } from '../../src/components/creator/creatorProductToolsKey.js';
 import { useCreatorProductTools } from '../../src/composables/useCreatorProductTools.js';
 import { byTestid } from '../helpers/by-testid';
@@ -53,7 +54,7 @@ function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
     pillars_excerpt: '支柱',
     global_outline_excerpt: '大纲',
   });
-  const isWorkspaceColumnVisible = (col) => col === 'memory' || col === 'settings';
+  const isWorkspaceColumnVisible = (col: string) => col === 'memory' || col === 'settings';
   const { panelContext } = useCreatorProductTools({
     overview,
     error: ref(null),
@@ -73,7 +74,7 @@ function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
     ...overrides,
   });
   return createCreatorProductToolsContext(panelContext) as ReturnType<typeof createCreatorProductToolsContext> & {
-    preferences: { taskModels: { body: string }; memoryRagEnabled: boolean; interventionRules: Record<string, boolean> };
+    preferences: { defaultModel?: string; taskModels: { body: string }; memoryRagEnabled: boolean; interventionRules: Record<string, boolean> };
     preferencesSummary: string;
     interventionItems: Array<{ id: string }>;
     loadMemoryAssets: () => Promise<void>;
@@ -82,11 +83,30 @@ function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
     memorySearchResults: unknown[];
     memorySearchRan: boolean;
     toggleMemoryPin: (asset: { id: string; pinned: boolean; placeholder: boolean }) => Promise<void>;
+    refreshExportPreview: () => Promise<void>;
     exportPreview: string;
+    focusMemoryEntity: (entity: { id?: string; kind?: string; name?: string } | null) => void;
+    goToSettingsForAsset: (item: { editable?: boolean }) => void;
+    nextPublishStep: () => void;
+    prevPublishStep: () => void;
+    publishStep: number;
     preferencesSavedHint: string;
     prefillPublishFromSubmission: () => Promise<void>;
     publishPackPreview: string;
     publishSubmissionChapters: number[];
+    handleInterventionAction: (item: { action: string; chapter?: number }) => Promise<void>;
+    loadPreferencesFromServer: () => Promise<void>;
+    loadCreatorModels: () => Promise<void>;
+    creatorModelOptions: Array<{ id: string; label: string }>;
+    structureGraph: { volumes: unknown[] };
+    runExportEpub: () => Promise<void>;
+    runExportDocx: () => Promise<void>;
+    openPublishWizard: () => Promise<void>;
+    submitPublish: () => Promise<void>;
+    savePreferences: () => Promise<void>;
+    memoryAssetsFiltered: unknown[];
+    memoryFilter: string;
+    exportMode: string;
   };
 }
 
@@ -126,6 +146,28 @@ describe('creator product tools', () => {
     expect(pt.preferencesSavedHint).toContain('同步');
   });
 
+  it('CreatorStructureGraph switches to timeline view', async () => {
+    const pt = makeProductToolsContext();
+    const wrapper = mount(CreatorStructureGraph, {
+      global: { provide: { [CREATOR_PRODUCT_TOOLS_KEY]: pt } },
+    });
+    await wrapper.find(byTestid('structure-view-timeline')).trigger('click');
+    expect(wrapper.find(byTestid('structure-timeline')).exists()).toBe(true);
+    await wrapper.find(byTestid('structure-view-tree')).trigger('click');
+    expect(wrapper.find(byTestid('structure-chapter-1')).exists()).toBe(true);
+  });
+
+  it('CreatorPreferencesSection toggles intervention rule', async () => {
+    const pt = makeProductToolsContext();
+    const wrapper = mount(CreatorPreferencesSection, {
+      global: { provide: { [CREATOR_PRODUCT_TOOLS_KEY]: pt } },
+    });
+    const logicRule = wrapper.find(byTestid('pref-intervention-logicP0'));
+    expect(logicRule.exists()).toBe(true);
+    await logicRule.setValue(false);
+    expect(pt.preferences.interventionRules.logicP0).toBe(false);
+  });
+
   it('CreatorStructureGraph renders volume chapters', () => {
     const pt = makeProductToolsContext();
     const wrapper = mount(CreatorStructureGraph, {
@@ -153,6 +195,74 @@ describe('creator product tools', () => {
     await flushPromises();
     expect(pt.exportPreview).toContain('第一章');
     expect(pt.exportPreview).toContain('正文');
+  });
+
+  it('interventionItems surfaces batch progress and logic p0', () => {
+    const pt = makeProductToolsContext({
+      batchRunning: ref(true),
+      batchJob: ref({ status: 'running', message: '批量中' }),
+      logicCheckResult: ref({
+        chapter: 2,
+        issues: [{ severity: 'P0', message: '时间线' }],
+      }),
+    });
+    expect(pt.interventionItems.some((i) => i.id === 'batch-running')).toBe(true);
+    expect(pt.interventionItems.some((i) => i.id === 'logic-p0')).toBe(true);
+  });
+
+  it('interventionItems surfaces preferences unsaved', () => {
+    const pt = makeProductToolsContext();
+    pt.preferencesDirty = true;
+    expect(pt.interventionItems.some((i) => i.id === 'preferences-unsaved')).toBe(true);
+  });
+
+  it('handleInterventionAction routes to workspace tabs', async () => {
+    const setWorkspaceTab = vi.fn();
+    const jumpToChapter = vi.fn(async () => undefined);
+    const navigateTo = vi.fn();
+    const pt = makeProductToolsContext({ setWorkspaceTab, jumpToChapter, navigateTo });
+    await pt.handleInterventionAction({ action: 'pulse', chapter: 3 });
+    await pt.handleInterventionAction({ action: 'write', chapter: 1 });
+    await pt.handleInterventionAction({ action: 'memory' });
+    await pt.handleInterventionAction({ action: 'settings' });
+    await pt.handleInterventionAction({ action: 'decisions' });
+    expect(setWorkspaceTab).toHaveBeenCalledWith('pulse');
+    expect(jumpToChapter).toHaveBeenCalledWith(3);
+    expect(navigateTo).toHaveBeenCalledWith('decisions', { clearFocus: true });
+  });
+
+  it('CreatorInterventionBanner renders items and handles action click', async () => {
+    const pt = makeProductToolsContext();
+    pt.handleInterventionAction = vi.fn();
+    const wrapper = mount(CreatorInterventionBanner, {
+      global: { provide: { [CREATOR_PRODUCT_TOOLS_KEY]: pt } },
+    });
+    expect(wrapper.find(byTestid('creator-intervention-banner')).exists()).toBe(true);
+    await wrapper.find(byTestid('intervention-action-deviation-alerts')).trigger('click');
+    expect(pt.handleInterventionAction).toHaveBeenCalled();
+  });
+
+  it('loadPreferencesFromServer hydrates from API', async () => {
+    apiMocks.fetchCreatorPreferences.mockResolvedValue({
+      default_model: 'gpt-4o',
+      intervention_rules: { logic_p0: false },
+    });
+    const pt = makeProductToolsContext();
+    await pt.loadPreferencesFromServer();
+    expect(pt.preferences.defaultModel).toBe('gpt-4o');
+    expect(pt.preferences.interventionRules.logicP0).toBe(false);
+  });
+
+  it('loadCreatorModels falls back when API fails', async () => {
+    apiMocks.fetchCreatorModels.mockRejectedValueOnce(new Error('down'));
+    const pt = makeProductToolsContext();
+    await pt.loadCreatorModels();
+    expect(pt.creatorModelOptions.length).toBeGreaterThan(0);
+  });
+
+  it('structureGraph exposes volume nodes from overview', () => {
+    const pt = makeProductToolsContext();
+    expect(pt.structureGraph.volumes.length).toBeGreaterThan(0);
   });
 
   it('interventionItems surfaces alert deviations', () => {
@@ -231,5 +341,106 @@ describe('creator product tools', () => {
     await pt.prefillPublishFromSubmission();
     expect(pt.publishPackPreview).toContain('投稿包');
     expect(pt.publishSubmissionChapters).toEqual([1]);
+  });
+
+  it('runExportEpub and runExportDocx download blobs', async () => {
+    const pt = makeProductToolsContext();
+    pt.exportModalOpen = true;
+    const blob = new Blob(['x']);
+    apiMocks.exportCreatorEpub.mockResolvedValue(blob);
+    apiMocks.exportCreatorDocx.mockResolvedValue(blob);
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    await pt.runExportEpub();
+    await pt.runExportDocx();
+    expect(apiMocks.exportCreatorEpub).toHaveBeenCalled();
+    expect(apiMocks.exportCreatorDocx).toHaveBeenCalled();
+    clickSpy.mockRestore();
+  });
+
+  it('savePreferences falls back to local when API fails', async () => {
+    apiMocks.saveCreatorPreferencesApi.mockRejectedValueOnce(new Error('offline'));
+    const pt = makeProductToolsContext();
+    await pt.savePreferences();
+    expect(pt.preferencesSavedHint).toContain('本机');
+  });
+
+  it('openPublishWizard and submitPublish update status', async () => {
+    apiMocks.submitCreatorPublish.mockResolvedValue({
+      message: '已提交',
+      status: 'queued',
+    });
+    const pt = makeProductToolsContext();
+    await pt.openPublishWizard();
+    await pt.submitPublish();
+    expect(pt.publishMessage).toContain('已提交');
+  });
+
+  it('memoryAssetsFiltered respects memory filter', async () => {
+    const pt = makeProductToolsContext();
+    apiMocks.fetchCreatorMemoryAssets.mockResolvedValue({
+      memory_available: true,
+      items: [
+        { id: '1', kind: 'memory', name: 'a', excerpt: 'x' },
+        { id: '2', kind: 'character', name: 'b', excerpt: 'y' },
+      ],
+    });
+    await pt.loadMemoryAssets();
+    pt.memoryFilter = 'character';
+    expect(pt.memoryAssetsFiltered).toHaveLength(1);
+  });
+
+  it('runMemorySearch records API errors', async () => {
+    const pt = makeProductToolsContext();
+    pt.memorySearchQuery = '主角';
+    apiMocks.queryCreatorMemory.mockRejectedValueOnce(new Error('search down'));
+    await pt.runMemorySearch();
+    expect(pt.memorySearchRan).toBe(true);
+    expect(pt.memorySearchResults).toEqual([]);
+  });
+
+  it('interventionItems shows empty write hint for studio mode', () => {
+    const pt = makeProductToolsContext({
+      overview: ref({
+        max_chapter: 5,
+        chapters_written: 0,
+        creation_mode: 'studio',
+        chapters: [],
+      }),
+      visibleDeviations: computed(() => []),
+    });
+    expect(pt.interventionItems.some((i) => i.id === 'onboarding-write')).toBe(true);
+  });
+
+  it('refreshExportPreview supports range export mode', async () => {
+    const pt = makeProductToolsContext();
+    pt.exportMode = 'range';
+    pt.exportRangeStart = 1;
+    pt.exportRangeEnd = 1;
+    apiMocks.fetchCreatorChapterPreview.mockResolvedValue({
+      title: '第一章',
+      body_text: '正文',
+    });
+    await pt.refreshExportPreview();
+    expect(pt.exportPreview).toContain('第一章');
+  });
+
+  it('focusMemoryEntity and goToSettingsForAsset switch tabs', () => {
+    const setWorkspaceTab = vi.fn();
+    const pt = makeProductToolsContext({ setWorkspaceTab });
+    pt.focusMemoryEntity({ id: 'e1', kind: 'foreshadow', name: '伏笔：测试' });
+    expect(setWorkspaceTab).toHaveBeenCalledWith('memory');
+    pt.goToSettingsForAsset({ editable: true });
+    expect(setWorkspaceTab).toHaveBeenCalledWith('settings');
+  });
+
+  it('publish wizard steps advance and retreat', async () => {
+    const pt = makeProductToolsContext();
+    apiMocks.fetchChapters.mockResolvedValue({ chapters: [{ chapter: 1, has_body: true }] });
+    apiMocks.fetchCreatorChapterPreview.mockResolvedValue({ title: '第一章', body_text: '正文' });
+    await pt.openPublishWizard();
+    pt.nextPublishStep();
+    expect(pt.publishStep).toBeGreaterThan(0);
+    pt.prevPublishStep();
+    expect(pt.publishStep).toBe(0);
   });
 });

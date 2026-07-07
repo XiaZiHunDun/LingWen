@@ -6,7 +6,7 @@ import {
   suggestNavFallback,
 } from '../../src/config/dashboardNavByMode.js';
 import { isHumanNavItemActive } from '../../src/config/humanFirstNav.js';
-import { resolveDefaultLandingNav } from '../../src/utils/resolveDefaultLanding.js';
+import { resolveDefaultLandingNav, resolveDefaultLandingNavAsync } from '../../src/utils/resolveDefaultLanding.js';
 import { saveWriteResume } from '../../src/utils/writeResumeStorage.js';
 
 describe('dashboardNavByMode (human-first)', () => {
@@ -61,5 +61,31 @@ describe('resolveDefaultLandingNav', () => {
   it('returns inbox for reviewer regardless of progress', () => {
     expect(resolveDefaultLandingNav({ isReviewer: true, chaptersWritten: 5 })).toBe('inbox');
     expect(resolveDefaultLandingNav({ isReviewer: true, slug: 'demo', chaptersWritten: 0 })).toBe('inbox');
+  });
+});
+
+describe('resolveDefaultLandingNavAsync', () => {
+  it('returns inbox for reviewer without fetching', async () => {
+    const nav = await resolveDefaultLandingNavAsync({
+      isReviewer: true,
+      fetchSummary: async () => ({ slug: 'x', chapter_count: 9 }),
+    });
+    expect(nav).toBe('inbox');
+  });
+
+  it('merges summary and overview chapter counts', async () => {
+    const nav = await resolveDefaultLandingNavAsync({
+      fetchSummary: async () => ({ slug: 'demo', chapter_count: 0 }),
+      fetchOverview: async () => ({ slug: 'demo', chapters_written: 2 }),
+    });
+    expect(nav).toBe('write');
+  });
+
+  it('ignores rejected fetches', async () => {
+    const nav = await resolveDefaultLandingNavAsync({
+      fetchSummary: async () => { throw new Error('down'); },
+      fetchOverview: async () => { throw new Error('down'); },
+    });
+    expect(nav).toBe('ask');
   });
 });

@@ -1,6 +1,7 @@
 // tests/unit/use-creator-page.spec.ts — useCreatorPage refresh 编排
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { CreatorOverviewSnapshot } from '../helpers/strict-test-types.js';
 import { defineComponent, ref } from 'vue';
 import { mount, flushPromises } from '@vue/test-utils';
 
@@ -211,7 +212,7 @@ describe('useCreatorPage', () => {
     const page = await mountPageHost();
     expect(page.loading.value).toBe(false);
     await page.refresh();
-    expect(page.overview.value?.creation_mode).toBe('companion');
+    expect((page.overview.value as CreatorOverviewSnapshot | null)?.creation_mode).toBe('companion');
     expect(page.loading.value).toBe(false);
     expect(page.error.value).toBeNull();
   });

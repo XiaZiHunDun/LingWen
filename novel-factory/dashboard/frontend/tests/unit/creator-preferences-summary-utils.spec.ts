@@ -17,4 +17,15 @@ describe('creatorPreferencesSummaryUtils', () => {
     const off = buildCreatorPreferencesSummary(prefs, { memoryRagEnabled: false });
     expect(off).toContain('记忆 RAG 关');
   });
+
+  it('buildCreatorPreferencesSummary uses custom model options', () => {
+    const prefs = defaultCreatorPreferences();
+    prefs.taskModels.body = 'custom';
+    const summary = buildCreatorPreferencesSummary(prefs, {
+      modelOptions: [{ id: 'custom', label: '自定义' }],
+      memoryRagEnabled: true,
+    });
+    expect(summary).toContain('自定义');
+    expect(summary).toContain('温度');
+  });
 });

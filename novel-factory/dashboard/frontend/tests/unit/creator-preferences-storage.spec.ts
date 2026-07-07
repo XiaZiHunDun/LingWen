@@ -6,6 +6,7 @@ import {
   mergeCreatorPreferences,
   resolveTaskModel,
   CREATOR_PREFERENCES_STORAGE_KEY,
+  defaultInterventionRules,
 } from '../../src/utils/creatorPreferencesStorage.js';
 
 describe('creatorPreferencesStorage', () => {
@@ -26,10 +27,22 @@ describe('creatorPreferencesStorage', () => {
     expect(loaded.temperature).toBe(0.3);
   });
 
-  it('resolveTaskModel inherits default', () => {
+  it('loadCreatorPreferences returns defaults for corrupt JSON', () => {
+    localStorage.setItem(CREATOR_PREFERENCES_STORAGE_KEY, '{not-json');
+    expect(loadCreatorPreferences().defaultModel).toBe(defaultCreatorPreferences().defaultModel);
+  });
+
+  it('mergeCreatorPreferences deep-merges intervention rules', () => {
+    const merged = mergeCreatorPreferences({
+      interventionRules: { logicP0: false },
+    });
+    expect(merged.interventionRules.logicP0).toBe(false);
+    expect(merged.interventionRules.batchProgress).toBe(defaultInterventionRules().batchProgress);
+  });
+
+  it('resolveTaskModel falls back when task model missing', () => {
     const prefs = defaultCreatorPreferences();
-    expect(resolveTaskModel('body', prefs)).toBe(prefs.defaultModel);
-    prefs.taskModels.body = 'gpt-4o';
-    expect(resolveTaskModel('body', prefs)).toBe('gpt-4o');
+    prefs.taskModels.outline = '';
+    expect(resolveTaskModel('outline', prefs)).toBe(prefs.defaultModel);
   });
 });

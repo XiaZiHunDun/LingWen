@@ -2,6 +2,7 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { computed, ref } from 'vue';
+import { asEditableVolumes } from '../helpers/strict-test-types.js';
 
 const templateMocks = vi.hoisted(() => ({
   fetchCreatorVolumeTemplates: vi.fn(),
@@ -103,7 +104,7 @@ describe('useCreatorVolumePlanTemplates', () => {
       max_chapter: 100,
     });
     expect(editableVolumes.value).toHaveLength(1);
-    expect(editableVolumes.value[0].end_chapter).toBe(20);
+    expect(asEditableVolumes(editableVolumes).value[0].end_chapter).toBe(20);
     expect(onAfterApplyTemplate).toHaveBeenCalledTimes(1);
   });
 });

@@ -11,6 +11,15 @@ describe('analyticsKpi (F67)', () => {
     expect(cards.find((c) => c.label === '工作流状态')?.value).toBe('空闲')
   })
 
+  test('buildProductionKpiCards paused workflow', () => {
+    const cards = buildProductionKpiCards({
+      is_active: true,
+      paused: true,
+      workflow_name: 'novel_writing',
+    })
+    expect(cards.find((c) => c.label === '工作流状态')?.value).toContain('暂停')
+  })
+
   test('buildProductionKpiCards active with summary', () => {
     const cards = buildProductionKpiCards({
       is_active: true,

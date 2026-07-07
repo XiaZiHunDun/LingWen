@@ -2,6 +2,7 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { computed, ref } from 'vue';
+import { asVolumePlanDiffPreviewRef } from '../helpers/strict-test-types.js';
 
 const diffMocks = vi.hoisted(() => ({
   previewCreatorVolumePlanDiff: vi.fn(),
@@ -63,7 +64,7 @@ describe('useCreatorVolumePlanDiff', () => {
     const hub = await mountDiff();
     await hub.refreshVolumePlanDiffPreview();
     expect(diffMocks.previewCreatorVolumePlanDiff).toHaveBeenCalledTimes(1);
-    expect(hub.volumePlanDiffPreview.value?.has_changes).toBe(true);
+    expect(asVolumePlanDiffPreviewRef(hub.volumePlanDiffPreview).value?.has_changes).toBe(true);
     expect(hub.volumePlanDiffChangeCount.value).toBe(2);
   });
 

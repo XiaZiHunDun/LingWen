@@ -42,7 +42,7 @@ describe('normalizeVolumePlanVolumes', () => {
     });
     expect(row.label).toBe('卷一');
     expect(row.core_conflict).toBe('冲突');
-    expect(row.locked).toBe(true);
+    expect((row as { locked?: boolean }).locked).toBe(true);
   });
 
   it('strips E2E/EZE from core_conflict on load', () => {

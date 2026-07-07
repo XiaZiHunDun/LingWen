@@ -2,6 +2,12 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { computed, ref } from 'vue';
+import {
+  asEditableVolumes,
+  asMergePreviewRef,
+  asSplitPreviewRef,
+  asVolumePlanDiffPreviewRef,
+} from '../helpers/strict-test-types.js';
 
 const planMocks = vi.hoisted(() => ({
   fetchCreatorVolumePlan: vi.fn(),
@@ -118,7 +124,7 @@ describe('useCreatorVolumePlan', () => {
     const { hub } = await mountVolumePlan();
     await hub.loadVolumePlan();
     hub.panelContext.addVolume();
-    const last = hub.editableVolumes.value.at(-1);
+    const last = asEditableVolumes(hub.editableVolumes).value.at(-1);
     expect(last?.label).toBe('卷3');
     expect(last?.start_chapter).toBe(21);
     expect(last?.end_chapter).toBe(30);
@@ -128,8 +134,8 @@ describe('useCreatorVolumePlan', () => {
     const { hub } = await mountVolumePlan();
     await hub.loadVolumePlan();
     hub.panelContext.moveVolume(0, 1);
-    expect(hub.editableVolumes.value[0].label).toBe('第二卷');
-    expect(hub.editableVolumes.value[1].label).toBe('第一卷');
+    expect(asEditableVolumes(hub.editableVolumes).value[0].label).toBe('第二卷');
+    expect(asEditableVolumes(hub.editableVolumes).value[1].label).toBe('第一卷');
   });
 
   test('requestSaveVolumePlan opens confirm when diff has changes', async () => {
@@ -159,11 +165,11 @@ describe('useCreatorVolumePlan', () => {
   test('applyVolumeTemplate clears merge preview via orchestration callback', async () => {
     const { hub, panel } = await mountVolumePlan();
     await hub.loadVolumePlan();
-    panel.mergePreview.value = { merged_label: 'x', merged_range: '1-2' };
-    panel.splitPreview.value = { first_label: 'a', second_label: 'b', first_range: '1', second_range: '2' };
+    asMergePreviewRef(panel.mergePreview).value = { merged_label: 'x', merged_range: '1-2' };
+    asSplitPreviewRef(panel.splitPreview).value = { first_label: 'a', second_label: 'b', first_range: '1', second_range: '2' };
     await panel.applyVolumeTemplate();
     expect(planMocks.applyCreatorVolumeTemplate).toHaveBeenCalled();
-    expect(hub.editableVolumes.value[0].label).toBe('套用卷');
+    expect(asEditableVolumes(hub.editableVolumes).value[0].label).toBe('套用卷');
     expect(panel.mergePreview.value).toBeNull();
     expect(panel.splitPreview.value).toBeNull();
   });
@@ -176,6 +182,6 @@ describe('useCreatorVolumePlan', () => {
     await panel.applyVolumeMerge();
     expect(planMocks.mergeCreatorVolumePlan).toHaveBeenCalled();
     expect(hub.editableVolumes.value).toHaveLength(1);
-    expect(hub.editableVolumes.value[0].label).toBe('合并卷');
+    expect(asEditableVolumes(hub.editableVolumes).value[0].label).toBe('合并卷');
   });
 });

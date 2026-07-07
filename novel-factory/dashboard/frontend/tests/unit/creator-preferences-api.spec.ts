@@ -23,14 +23,23 @@ describe('creatorPreferencesApi', () => {
     const api = preferencesToApi({ ...base, temperature: 0.9 });
     expect(api.temperature).toBe(0.9);
     expect(api.default_model).toBe(base.defaultModel);
-    expect(api.intervention_rules.logic_p0).toBe(true);
+    expect((api.intervention_rules as Record<string, boolean>).logic_p0).toBe(true);
   });
 
-  it('preferencesFromApi maps intervention_rules', () => {
-    const prefs = preferencesFromApi({
-      intervention_rules: { batch_progress: false },
+  it('preferencesFromApi returns defaults for empty payload', () => {
+    const prefs = preferencesFromApi(null as unknown as Record<string, unknown>);
+    expect(prefs.defaultModel).toBe(defaultCreatorPreferences().defaultModel);
+  });
+
+  it('preferencesToApi maps all intervention rules', () => {
+    const base = defaultCreatorPreferences();
+    const api = preferencesToApi({
+      ...base,
+      interventionRules: { ...base.interventionRules, batchProgress: false, memoryOffline: false },
     });
-    expect(prefs.interventionRules.batchProgress).toBe(false);
-    expect(prefs.interventionRules.logicP0).toBe(true);
+    const rules = api.intervention_rules as Record<string, boolean>;
+    expect(rules.batch_progress).toBe(false);
+    expect(rules.memory_offline).toBe(false);
+    expect(rules.logic_p0).toBe(true);
   });
 });

@@ -201,7 +201,7 @@ describe('App smoke (Phase 9.31 F15)', () => {
     expect(wrapper.find(byTestid('ask-page')).exists()).toBe(true)
   })
 
-  async function openMoreLink(wrapper, linkId) {
+  async function openMoreLink(wrapper: ReturnType<typeof mount>, linkId: string) {
     await wrapper.find(byTestid('nav-more')).trigger('click')
     await flushPromises()
     await wrapper.find(byTestid(`more-link-${linkId}`)).trigger('click')

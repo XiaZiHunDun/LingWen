@@ -69,7 +69,7 @@ describe('light validation workbench integration', () => {
     chapterBodyDraft.value = '他说"未完';
     await nextTick();
     await vi.advanceTimersByTimeAsync(1300);
-    expect(wb.lightValidationIssues.value.some((i) => i.rule === 'unclosed_quote')).toBe(true);
+    expect(wb.lightValidationIssues.value.some((i: { rule: string }) => i.rule === 'unclosed_quote')).toBe(true);
     vi.useRealTimers();
   });
 });

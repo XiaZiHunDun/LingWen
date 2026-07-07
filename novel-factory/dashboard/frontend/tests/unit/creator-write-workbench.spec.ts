@@ -1,3 +1,4 @@
+import type { AgentCandidate, AgentPendingPlan, QualityHint } from '../helpers/strict-test-types.js';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ref, computed } from 'vue';
 import {
@@ -113,7 +114,7 @@ describe('useCreatorWriteWorkbench', () => {
       issues: [{ severity: 'P0', title: '时间线冲突' }],
     });
     expect(wb.qualityHints.value.length).toBeGreaterThan(0);
-    expect(wb.qualityHints.value[0].level).toBe('warn');
+    expect((wb.qualityHints.value[0] as QualityHint).level).toBe('warn');
   });
 });
 
@@ -150,8 +151,8 @@ describe('useCreatorAgent', () => {
     vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
 
     const agent = makeAgent({
-      applyTextToSelection: (text) => { applied = text; },
-      createCheckpoint: (label) => {
+      applyTextToSelection: (text: string) => { applied = text; },
+      createCheckpoint: (label: string) => {
         const id = `cp-${checkpoints.length}`;
         checkpoints.push({ id, label });
         return id;
@@ -181,7 +182,7 @@ describe('useCreatorAgent', () => {
     await agent.runDirectorPath('faster');
     expect(agent.directorAdvice.value.length).toBeGreaterThan(0);
     expect(agent.candidates.value).toHaveLength(0);
-    expect(agent.pendingPlan.value?.adviceOnly).toBe(true);
+    expect((agent.pendingPlan.value as AgentPendingPlan | null)?.adviceOnly).toBe(true);
   });
 
   it('uses API plan when available', async () => {
@@ -210,7 +211,7 @@ describe('useCreatorAgent', () => {
       expect.any(Function),
     );
     expect(agent.planProvider.value).toBe('mock');
-    expect(agent.candidates.value[0].text).toBe('API 候选');
+    expect((agent.candidates.value[0] as AgentCandidate).text).toBe('API 候选');
     expect(agent.annotations.value).toHaveLength(1);
     expect(agent.agentLens.value).toBe('editor');
   });

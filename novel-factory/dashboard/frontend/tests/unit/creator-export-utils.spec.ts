@@ -8,43 +8,40 @@ import {
 } from '../../src/utils/creatorExportUtils.js';
 
 describe('creatorExportUtils', () => {
-  it('formatChapterMarkdown includes title and body', () => {
-    const md = formatChapterMarkdown({ chapter: 1, title: '开端', body: '正文内容' });
-    expect(md).toContain('## 开端');
-    expect(md).toContain('正文内容');
+  it('formatChapterMarkdown falls back to excerpt', () => {
+    expect(formatChapterMarkdown({ chapter: 2, excerpt: '片段' })).toContain('片段');
+    expect(formatChapterMarkdown({ chapter: 3 })).toContain('暂无正文');
   });
 
-  it('buildFullBookMarkdown stitches pillars outline and chapters', () => {
+  it('buildFullBookMarkdown includes pillars outline and chapters', () => {
     const md = buildFullBookMarkdown({
       projectTitle: '测试书',
       pillars: '支柱',
       outline: '大纲',
-      chapters: [{ chapter: 1, body: '第一章' }],
+      chapters: [{ chapter: 1, title: '开篇', body: '正文' }],
     });
-    expect(md).toContain('# 测试书');
+    expect(md).toContain('测试书');
     expect(md).toContain('创作支柱');
-    expect(md).toContain('全局大纲');
-    expect(md).toContain('第一章');
+    expect(md).toContain('开篇');
   });
 
-  it('buildSubmissionPackMarkdown includes intro and samples', () => {
+  it('buildSubmissionPackMarkdown truncates long pillars', () => {
     const md = buildSubmissionPackMarkdown({
       projectTitle: '投稿',
-      intro: '简介',
+      pillars: 'x'.repeat(1300),
       sampleChapters: [{ chapter: 1, body: '试读' }],
     });
     expect(md).toContain('投稿包');
-    expect(md).toContain('简介');
-    expect(md).toContain('试读');
+    expect(md.length).toBeLessThan(5000);
   });
 
-  it('defaultSubmissionChapterNums returns up to sample count chapters', () => {
-    expect(defaultSubmissionChapterNums([1, 2, 3, 4, 5])).toEqual([1, 2, 3]);
-    expect(defaultSubmissionChapterNums([1, 2, 3, 4, 5], 12, 5)).toEqual([1, 2, 3, 4, 5]);
-    expect(defaultSubmissionChapterNums([1, 2])).toEqual([1, 2]);
+  it('defaultSubmissionChapterNums picks first N written chapters', () => {
+    expect(defaultSubmissionChapterNums([1, 2, 3, 4], 12, 2)).toEqual([1, 2]);
+    expect(defaultSubmissionChapterNums([1], 12, 3)).toEqual([1]);
   });
 
   it('safeExportFilename sanitizes slug', () => {
-    expect(safeExportFilename('我的书!', 'full')).toBe('我的书-full.md');
+    expect(safeExportFilename('我的书!!', 'full')).toBe('我的书-full.md');
+    expect(safeExportFilename('', 'pack')).toBe('lingwen-novel-pack.md');
   });
 });

@@ -1,5 +1,6 @@
 // tests/unit/use-cost-window.spec.ts — Phase 9.57 F48
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { CostWindowSnapshot } from '../helpers/strict-test-types.js'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 
@@ -53,7 +54,7 @@ describe('useCostWindow (F48 coverage)', () => {
     const wrapper = await mountHook()
     wrapper.vm.setTimeWindow('7d')
     await flushPromises()
-    expect(wrapper.vm.windowedCost?.total_cost_usd).toBe(4.2)
+    expect((wrapper.vm.windowedCost as CostWindowSnapshot | null)?.total_cost_usd).toBe(4.2)
   })
 
   test('AbortError from fetch is ignored', async () => {

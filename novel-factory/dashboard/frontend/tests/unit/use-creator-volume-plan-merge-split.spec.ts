@@ -2,6 +2,7 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { ref } from 'vue';
+import { asMergePreviewRef, asSplitPreviewRef } from '../helpers/strict-test-types.js';
 
 const mergeSplitMocks = vi.hoisted(() => ({
   mergeCreatorVolumePlan: vi.fn(),
@@ -63,26 +64,26 @@ describe('useCreatorVolumePlanMergeSplit', () => {
     await hub.applyVolumeMerge();
     expect(mergeSplitMocks.mergeCreatorVolumePlan).toHaveBeenCalled();
     expect(editableVolumes.value).toHaveLength(1);
-    expect(hub.mergePreview.value?.merged_label).toBe('合并卷');
+    expect(asMergePreviewRef(hub.mergePreview).value?.merged_label).toBe('合并卷');
     expect(saveMessage.value).toContain('合并卷');
   });
 
   test('applyVolumeSplit clears merge preview and sets split preview', async () => {
     const { hub, editableVolumes } = await mountMergeSplit();
-    hub.mergePreview.value = { merged_label: 'x', merged_range: '1-2' };
+    asMergePreviewRef(hub.mergePreview).value = { merged_label: 'x', merged_range: '1-2' };
     hub.splitVolumeIdx.value = 0;
     hub.splitAtChapter.value = 6;
     await hub.applyVolumeSplit();
     expect(mergeSplitMocks.splitCreatorVolumePlan).toHaveBeenCalled();
     expect(editableVolumes.value).toHaveLength(2);
     expect(hub.mergePreview.value).toBeNull();
-    expect(hub.splitPreview.value?.first_label).toBe('卷A');
+    expect(asSplitPreviewRef(hub.splitPreview).value?.first_label).toBe('卷A');
   });
 
   test('resetAfterLoad resets indices and previews', async () => {
     const { hub } = await mountMergeSplit();
-    hub.mergePreview.value = { merged_label: 'x', merged_range: '1-2' };
-    hub.splitPreview.value = { first_label: 'a', second_label: 'b', first_range: '1', second_range: '2' };
+    asMergePreviewRef(hub.mergePreview).value = { merged_label: 'x', merged_range: '1-2' };
+    asSplitPreviewRef(hub.splitPreview).value = { first_label: 'a', second_label: 'b', first_range: '1', second_range: '2' };
     hub.resetAfterLoad(3);
     expect(hub.mergeStartIdx.value).toBe(0);
     expect(hub.mergeEndIdx.value).toBe(1);

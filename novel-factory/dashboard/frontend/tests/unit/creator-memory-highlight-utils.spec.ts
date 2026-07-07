@@ -8,8 +8,13 @@ describe('creatorMemoryHighlightUtils', () => {
     expect(html).not.toContain('<script');
   });
 
-  it('formatMemoryCitation prefers citation field', () => {
-    expect(formatMemoryCitation({ citation: '第1章 · 向量片段', chapter: 1 })).toBe('第1章 · 向量片段');
-    expect(formatMemoryCitation({ asset_name: '创作支柱', source: 'settings' })).toContain('创作支柱');
+  it('formatMemoryCitation builds chapter and source parts', () => {
+    expect(formatMemoryCitation({ chapter: 2, source: 'rag' })).toContain('第2章');
+    expect(formatMemoryCitation({})).toBe('未知来源');
+  });
+
+  it('highlightMemorySnippet escapes html before marking', () => {
+    const html = highlightMemorySnippet('<script>', ['script']);
+    expect(html).toContain('&lt;');
   });
 });

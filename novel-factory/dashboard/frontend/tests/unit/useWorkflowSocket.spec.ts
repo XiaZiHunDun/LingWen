@@ -2,6 +2,7 @@
  * useWorkflowSocket.spec.ts — Phase 9.17 + 9.40 F25 TS strict pilot + F48 branches
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { WorkflowSocketVm } from '../helpers/strict-test-types.js';
 import { mount, flushPromises } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 
@@ -103,8 +104,9 @@ describe('useWorkflowSocket message branches (F48)', () => {
         pending_decisions: [{ decision_id: 'd1', status: 'pending' }],
       }),
     });
-    expect(w2.vm.status?.workflow_name).toBe('wf');
-    expect(w2.vm.pendingDecisions.length).toBe(1);
+    const w2Vm = w2.vm as WorkflowSocketVm;
+    expect(w2Vm.status?.workflow_name).toBe('wf');
+    expect(w2Vm.pendingDecisions.length).toBe(1);
   });
 
   it('workflow.status and decision.snapshot update refs', async () => {
@@ -125,8 +127,9 @@ describe('useWorkflowSocket message branches (F48)', () => {
     const sock = instances[0];
     sock.onmessage?.({ data: JSON.stringify({ type: 'workflow.status', payload: { workflow_name: 'x' } }) });
     sock.onmessage?.({ data: JSON.stringify({ type: 'decision.snapshot', payload: [{ decision_id: 'd2' }] }) });
-    expect(wrapper.vm.status?.workflow_name).toBe('x');
-    expect(wrapper.vm.pendingDecisions[0].decision_id).toBe('d2');
+    const vm = wrapper.vm as WorkflowSocketVm;
+    expect(vm.status?.workflow_name).toBe('x');
+    expect(vm.pendingDecisions[0].decision_id).toBe('d2');
   });
 
   it('cascade.update notifies handler', async () => {
