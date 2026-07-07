@@ -40,7 +40,7 @@ jobs:
           cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
+        working-directory: novel-factory/dashboard
         run: pip install -r requirements.txt
 
       - name: Install dependencies
