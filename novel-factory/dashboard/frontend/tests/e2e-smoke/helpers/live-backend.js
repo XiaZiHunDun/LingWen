@@ -8,9 +8,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../../../../..');
 
 export const LIVE_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE === '1';
+export const LIVE_LLM_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE_LLM === '1';
 
 export function skipUnlessLive(test) {
   test.skip(!LIVE_E2E_ENABLED, 'set LINGWEN_E2E_LIVE=1 to run live-backend e2e');
+}
+
+export function skipUnlessLiveLlm(test) {
+  const hasApiKey = Boolean(
+    process.env.MINIMAX_API_KEY?.trim()
+    || process.env.ANTHROPIC_API_KEY?.trim()
+    || process.env.OPENAI_API_KEY?.trim(),
+  );
+  test.skip(
+    !LIVE_E2E_ENABLED || !LIVE_LLM_E2E_ENABLED || !hasApiKey,
+    'set LINGWEN_E2E_LIVE=1 LINGWEN_E2E_LIVE_LLM=1 and an LLM API key to run live LLM e2e',
+  );
 }
 
 export function runE2eSeed(args) {

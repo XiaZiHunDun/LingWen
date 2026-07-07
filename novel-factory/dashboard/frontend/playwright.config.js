@@ -13,7 +13,11 @@ const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../..')
 import { QUARANTINE_ONLY } from './tests/e2e-smoke/helpers/quarantine.js'
 
 const liveE2E = process.env.LINGWEN_E2E_LIVE === '1'
+const liveLlmE2E = process.env.LINGWEN_E2E_LIVE_LLM === '1'
 const a11yE2E = process.env.LINGWEN_E2E_LIVE === '1'
+
+const liveBackendSpecPattern =
+  /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow|memory-gateway-flow)\.spec\.js/
 
 const viteServer = {
   command: 'pnpm dev --port 5173 --strictPort',
@@ -51,10 +55,16 @@ export default defineConfig({
     {
       name: 'live-backend',
       testMatch: QUARANTINE_ONLY
-        ? /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow)\.spec\.js/
-        : /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow)\.spec\.js/,
+        ? liveBackendSpecPattern
+        : liveBackendSpecPattern,
       grep: QUARANTINE_ONLY ? /@quarantine/ : undefined,
       grepInvert: QUARANTINE_ONLY ? undefined : /@quarantine/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'live-llm',
+      testMatch: /agent-plan-llm-flow\.spec\.js/,
+      grep: /@live-llm/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -81,5 +91,5 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: (liveE2E || a11yE2E) ? [dashboardServer, viteServer] : viteServer,
+  webServer: (liveE2E || liveLlmE2E || a11yE2E) ? [dashboardServer, viteServer] : viteServer,
 })

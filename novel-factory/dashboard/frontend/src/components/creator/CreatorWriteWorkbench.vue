@@ -293,6 +293,71 @@
         <slot />
       </div>
 
+      <template v-if="wb.humanFirstDesk">
+        <details
+          v-if="wb.isPanelVisible('directorPaths') && wb.agent.directorPaths.length"
+          class="write-workbench__stack write-workbench__card"
+          data-testid="write-director-paths-panel-main"
+          open
+        >
+          <summary class="write-workbench__card-title">下一步路径（可选）</summary>
+          <CreatorDirectorPaths
+            hide-title
+            :paths="wb.agent.directorPaths"
+            :advice="wb.agent.directorAdvice"
+            :generating="wb.agent.generating"
+            @run="wb.agent.runDirectorPath"
+            @dismiss-advice="wb.agent.dismissAdvice"
+          />
+        </details>
+
+        <div
+          v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
+          class="write-workbench__plan-card"
+          data-testid="write-director-plan-card"
+        >
+          <p class="meta-line">
+            将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
+            执行：{{ wb.agent.pendingPlan.actionLabel }}
+          </p>
+          <p class="meta-line">{{ wb.agent.statusLine }}</p>
+          <div class="write-workbench__toolbar-group">
+            <button
+              type="button"
+              class="save-btn pixel-border"
+              data-testid="write-director-confirm-btn"
+              :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+              @click="wb.agent.confirmApply()"
+            >
+              确认应用
+            </button>
+            <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
+          </div>
+        </div>
+
+        <div
+          v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
+          class="write-workbench__card"
+          data-testid="write-candidate-dock"
+        >
+          <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
+          <div class="write-workbench__candidates">
+            <button
+              v-for="cand in wb.agent.candidates"
+              :key="cand.id"
+              type="button"
+              class="write-workbench__candidate"
+              :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
+              :data-testid="`write-candidate-${cand.id}`"
+              @click="wb.agent.selectCandidate(cand.id)"
+            >
+              <strong>{{ cand.label }}</strong> · {{ cand.direction }}
+              <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
+            </button>
+          </div>
+        </div>
+      </template>
+
       <details
         v-if="wb.humanFirstDesk"
         class="write-workbench__advanced"
@@ -392,52 +457,6 @@
           />
 
           <div
-            v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
-            class="write-workbench__plan-card"
-            data-testid="write-director-plan-card"
-          >
-            <p class="meta-line">
-              将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
-              执行：{{ wb.agent.pendingPlan.actionLabel }}
-            </p>
-            <p class="meta-line">{{ wb.agent.statusLine }}</p>
-            <div class="write-workbench__toolbar-group">
-              <button
-                type="button"
-                class="save-btn pixel-border"
-                data-testid="write-director-confirm-btn"
-                :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-                @click="wb.agent.confirmApply()"
-              >
-                确认应用
-              </button>
-              <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
-            </div>
-          </div>
-
-          <div
-            v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
-            class="write-workbench__card"
-            data-testid="write-candidate-dock"
-          >
-            <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
-            <div class="write-workbench__candidates">
-              <button
-                v-for="cand in wb.agent.candidates"
-                :key="cand.id"
-                type="button"
-                class="write-workbench__candidate"
-                :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
-                :data-testid="`write-candidate-${cand.id}`"
-                @click="wb.agent.selectCandidate(cand.id)"
-              >
-                <strong>{{ cand.label }}</strong> · {{ cand.direction }}
-                <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
-              </button>
-            </div>
-          </div>
-
-          <div
             v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
             class="write-workbench__quality"
             data-testid="write-quality-bar"
@@ -453,23 +472,6 @@
               <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
             </span>
           </div>
-
-          <details
-            v-if="wb.isPanelVisible('directorPaths') && wb.agent.directorPaths.length"
-            class="write-workbench__card"
-            data-testid="write-director-paths-panel-main"
-            open
-          >
-            <summary class="write-workbench__card-title">下一步路径</summary>
-            <CreatorDirectorPaths
-              hide-title
-              :paths="wb.agent.directorPaths"
-              :advice="wb.agent.directorAdvice"
-              :generating="wb.agent.generating"
-              @run="wb.agent.runDirectorPath"
-              @dismiss-advice="wb.agent.dismissAdvice"
-            />
-          </details>
 
           <div
             v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"

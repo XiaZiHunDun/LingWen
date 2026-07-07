@@ -1,0 +1,66 @@
+# Optional live LLM agent E2E — manual / scheduled only (not blocking default CI).
+name: Dashboard Frontend LLM E2E
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * 0'
+
+concurrency:
+  group: dashboard-frontend-llm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-live-llm:
+    name: Playwright live LLM agent E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: novel-factory/dashboard/frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      - name: Install Python dependencies
+        working-directory: novel-factory
+        run: pip install -r requirements.txt
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run live LLM e2e
+        run: pnpm e2e:live-llm
+        env:
+          CI: 'true'
+          LINGWEN_E2E_LIVE: '1'
+          LINGWEN_E2E_LIVE_LLM: '1'
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-live-llm-trace
+          path: test-results/
+          if-no-files-found: ignore

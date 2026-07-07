@@ -19,13 +19,6 @@ def main() -> None:
 
     app = create_app(master_controller=E2EStubController(state_dir=str(state_dir)))
 
-    from dashboard import app as app_module
-    from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-
-    storage = app_module._default_storage()
-    if storage._graph is None:
-        storage._graph = CrossVolumeReferenceGraph(storage)
-
     import uvicorn
 
     host = os.environ.get("DASHBOARD_HOST", "127.0.0.1")

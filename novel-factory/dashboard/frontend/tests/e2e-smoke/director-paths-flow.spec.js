@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
 import {
   COMPANION_SLUG,
-  openAdvancedTools,
   openCompanionProject,
   restoreCreatorProject,
   selectChapter,
@@ -30,7 +29,6 @@ test.describe('Director paths flow (live)', () => {
 
     await openCompanionProject(page, request, COMPANION_SLUG);
     await selectChapter(page);
-    await openAdvancedTools(page);
 
     await expect(page.getByTestId('write-director-paths-panel-main')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('write-director-paths')).toBeVisible();
@@ -57,7 +55,6 @@ test.describe('Director paths flow (live)', () => {
 
     await openCompanionProject(page, request, COMPANION_SLUG);
     await selectChapter(page);
-    await openAdvancedTools(page);
 
     await expect(page.getByTestId('write-director-paths-panel-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('director-path-run-faster').click();

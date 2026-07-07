@@ -2250,7 +2250,12 @@ def _default_storage() -> RippleStorage:
     """
     global _default_storage_instance
     if _default_storage_instance is None:
-        _default_storage_instance = RippleStorage(db_path=_DEFAULT_CVG_DB_PATH)
+        from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+
+        storage = RippleStorage(db_path=_DEFAULT_CVG_DB_PATH)
+        if storage._graph is None:
+            storage._graph = CrossVolumeReferenceGraph(storage)
+        _default_storage_instance = storage
     return _default_storage_instance
 
 

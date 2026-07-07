@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "e2e:smoke": "playwright test --project=smoke",
     "e2e:live": "LINGWEN_E2E_LIVE=1 playwright test --project=live-backend",
+    "e2e:live-llm": "LINGWEN_E2E_LIVE=1 LINGWEN_E2E_LIVE_LLM=1 playwright test --project=live-llm",
     "e2e:a11y": "LINGWEN_E2E_LIVE=1 playwright test --project=a11y-l1",
     "e2e:visual-capture": "LINGWEN_E2E_LIVE=1 playwright test --project=visual-capture",
     "e2e:visual-regression": "LINGWEN_E2E_LIVE=1 playwright test --project=visual-regression",

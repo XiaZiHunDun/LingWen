@@ -85,7 +85,7 @@
 | 维度 | 数量 | 命令 |
 |------|------|------|
 | Vitest | 779 | `pnpm vitest run` |
-| Live E2E | 52 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
+| Live E2E | 55 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
 | 视觉回归 | 18 | `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` |
 | a11y L1 | 7 | `LINGWEN_E2E_LIVE=1 pnpm e2e:a11y`（critical / serious / moderate） |
 | UI metrics | 10 | `LINGWEN_E2E_LIVE=1 pnpm e2e:ui-metrics`（1280×720 `clippedBelowFold`） |

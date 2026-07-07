@@ -68,17 +68,9 @@ export async function prepareChapterEntityPanelForAudit(page) {
   }
 }
 
-/** 审计：human-first 导演路径面板可见（需展开高级工具 + 章节焦点） */
+/** 审计：human-first 导演路径面板可见（主区默认展开，无需高级工具） */
 export async function prepareDirectorPathsPanelForAudit(page) {
   await prepareCreatorDeskForAudit(page);
-  const advanced = page.locator('[data-testid="write-advanced-tools"]');
-  if (await advanced.isVisible().catch(() => false)) {
-    const isOpen = await advanced.evaluate((el) => /** @type {HTMLDetailsElement} */ (el).open);
-    if (!isOpen) {
-      await advanced.locator('summary').click();
-      await waitForPaintSettle(page);
-    }
-  }
   await page.locator('[data-testid="write-director-paths-panel-main"]').waitFor({
     state: 'visible',
     timeout: 30_000,

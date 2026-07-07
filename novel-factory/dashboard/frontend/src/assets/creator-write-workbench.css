@@ -137,7 +137,7 @@
 }
 
 .write-workbench--human-first .write-workbench__editor-slot--primary {
-  min-height: 0;
+  min-height: 160px;
 }
 
 .write-workbench__advanced {

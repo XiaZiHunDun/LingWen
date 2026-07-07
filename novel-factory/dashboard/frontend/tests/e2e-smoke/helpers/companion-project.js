@@ -73,6 +73,20 @@ export async function closePulseDrawer(page) {
   }
 }
 
+/** Open memory via desk drawer or legacy tab; wait for column. */
+export async function openMemoryDrawer(page) {
+  const drawerTrigger = page.getByTestId('creator-desk-drawer-memory');
+  const tabMemory = page.getByTestId('creator-workspace-tab-memory');
+  try {
+    await drawerTrigger.waitFor({ state: 'visible', timeout: 30_000 });
+    await drawerTrigger.click();
+  } catch {
+    await tabMemory.waitFor({ state: 'visible', timeout: 10_000 });
+    await tabMemory.click();
+  }
+  await expect(page.getByTestId('column-memory')).toBeVisible({ timeout: 15_000 });
+}
+
 /** Restore default active project after companion tests. */
 export async function restoreCreatorProject(request, slug = CREATOR_SLUG) {
   await request.put('/api/studio/active', { data: { slug } });
