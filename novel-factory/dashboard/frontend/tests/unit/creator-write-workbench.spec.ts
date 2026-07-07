@@ -116,6 +116,60 @@ describe('useCreatorWriteWorkbench', () => {
     expect(wb.qualityHints.value.length).toBeGreaterThan(0);
     expect((wb.qualityHints.value[0] as QualityHint).level).toBe('warn');
   });
+
+  it('runs light validation and dismisses hints', () => {
+    const uiProfile = computed(() => ({}));
+    const overview = ref({ creation_mode: 'companion' });
+    const chapterBodyDraft = ref('段落一\n段落二');
+    const wb = useCreatorWriteWorkbench({
+      uiProfile,
+      overview,
+      chapterBodyDraft,
+      selectedChapter: ref(1),
+      saveMessage: ref(''),
+    });
+    wb.runLightValidationNow();
+    expect(wb.lightValidationSummary.value).toBeTruthy();
+    wb.syncQualityFromLogicCheck({
+      passed: false,
+      issues: [{ severity: 'P0', title: '节奏偏慢' }],
+    });
+    const before = wb.qualityHints.value.length;
+    expect(before).toBeGreaterThan(0);
+    wb.dismissQualityHint(0);
+    expect(wb.qualityHints.value.length).toBe(before - 1);
+  });
+
+  it('restores checkpoints after draft edits', () => {
+    const uiProfile = computed(() => ({}));
+    const overview = ref({ creation_mode: 'companion' });
+    const chapterBodyDraft = ref('hello world');
+    const saveMessage = ref('');
+    const wb = useCreatorWriteWorkbench({
+      uiProfile,
+      overview,
+      chapterBodyDraft,
+      selectedChapter: ref(1),
+      saveMessage,
+    });
+    const cpId = wb.createCheckpoint('before');
+    chapterBodyDraft.value = 'mutated';
+    wb.restoreCheckpoint(cpId);
+    expect(chapterBodyDraft.value).toBe('hello world');
+    expect(saveMessage.value).toContain('恢复');
+  });
+
+  it('studio desk uses factory-oriented goal copy', () => {
+    const wb = useCreatorWriteWorkbench({
+      uiProfile: computed(() => ({ creator_write_workbench: true })),
+      overview: ref({ creation_mode: 'studio', name: 'Studio' }),
+      chapterBodyDraft: ref(''),
+      selectedChapter: ref(2),
+      saveMessage: ref(''),
+    });
+    expect(wb.goalCardLines.value.line2).toBe('工厂模式');
+    expect(wb.humanFirstDesk.value).toBe(false);
+  });
 });
 
 describe('useCreatorAgent', () => {
@@ -237,6 +291,111 @@ describe('useCreatorAgent', () => {
     });
     expect(agent.directorPaths.value.length).toBe(3);
     expect(agent.directorPaths.value[0].consequence).toBeTruthy();
+  });
+
+  it('blocks plan when selection locked', async () => {
+    const agent = makeAgent({
+      getSelection: () => ({ text: '锁定', start: 0, end: 2 }),
+      getControls: () => ({
+        styleStrength: 2,
+        selectionLocked: true,
+        allowWorldbuildingFill: false,
+        goalTag: '',
+      }),
+    });
+    await agent.runRewritePreset('concrete');
+    expect(agent.candidates.value).toHaveLength(0);
+    expect(agent.statusLine.value).toContain('锁定');
+  });
+
+  it('falls back to non-stream API plan', async () => {
+    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('stream down'));
+    vi.mocked(runCreatorAgentPlan).mockResolvedValue({
+      advice_only: false,
+      candidates: [{ id: 'steady', label: '稳健', direction: '稳', text: 'REST 候选' }],
+      advice: [],
+      annotations: [],
+      status_line: 'REST 就绪',
+      provider: 'rest',
+      lens: 'reviewer',
+    });
+    const agent = makeAgent();
+    agent.setAgentLens('reviewer');
+    await agent.runRewritePreset('dramatic');
+    expect(runCreatorAgentPlan).toHaveBeenCalled();
+    expect(agent.planProvider.value).toBe('rest');
+    expect((agent.candidates.value[0] as AgentCandidate).text).toBe('REST 候选');
+  });
+
+  it('cancels pending plan and undoes last apply', async () => {
+    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('offline'));
+    vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
+    let body = '原始正文';
+    const agent = makeAgent({
+      getBodyDraft: () => body,
+      applyTextToSelection: (text: string) => { body = text; },
+      createCheckpoint: () => 'cp-undo',
+      restoreCheckpoint: () => { body = '原始正文'; },
+    });
+    await agent.runRewritePreset('concrete');
+    agent.selectCandidate('steady');
+    agent.confirmApply();
+    expect(body).toContain('稳健候选');
+    agent.undoLastApply();
+    expect(body).toBe('原始正文');
+    await agent.runRewritePreset('lyrical');
+    agent.cancelPlan();
+    expect(agent.pendingPlan.value).toBeNull();
+    expect(agent.statusLine.value).toContain('取消');
+  });
+
+  it('skips empty prompt submit and none scope', async () => {
+    const agent = makeAgent({
+      getChapterNum: () => null,
+      getSelection: () => ({ text: '', start: 0, end: 0 }),
+    });
+    await agent.submitPrompt();
+    expect(runCreatorAgentPlanStream).not.toHaveBeenCalled();
+    await agent.runPlan('noop', '空操作');
+    expect(agent.statusLine.value).toContain('请先选中段落');
+  });
+
+  it('toggles execution mode and dismisses advice', async () => {
+    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('offline'));
+    vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
+    const agent = makeAgent({
+      getControls: () => ({
+        styleStrength: 0,
+        selectionLocked: false,
+        allowWorldbuildingFill: false,
+        goalTag: '',
+      }),
+    });
+    await agent.runDirectorPath('faster');
+    expect(agent.directorAdvice.value.length).toBeGreaterThan(0);
+    const adviceId = (agent.directorAdvice.value[0] as { id: string }).id;
+    agent.dismissAdvice(adviceId);
+    expect(agent.directorAdvice.value.find((a) => (a as { id: string }).id === adviceId)).toBeUndefined();
+    agent.toggleExecutionMode();
+    expect(agent.isPreviewMode.value).toBe(false);
+    agent.toggleExecutionMode();
+    expect(agent.isPreviewMode.value).toBe(true);
+  });
+
+  it('focuses annotation paragraph via callback', () => {
+    const onFocus = vi.fn();
+    const agent = makeAgent({ onAnnotationFocus: onFocus });
+    agent.focusAnnotation({ id: 'x', level: 'warn', text: '标注', paragraph: 2 });
+    expect(onFocus).toHaveBeenCalledWith(2);
+  });
+
+  it('masks JSON stream preview while llm streams', () => {
+    const agent = makeAgent();
+    (agent.streamSource as { value: string | null }).value = 'llm';
+    agent.streamPreviewText.value = '{"candidates":';
+    expect(agent.streamDisplayText.value).toContain('模型输出中');
+    agent.streamPreviewText.value = 'plain text chunk';
+    expect(agent.streamDisplayText.value).toBe('plain text chunk');
   });
 });
 

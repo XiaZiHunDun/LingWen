@@ -74,7 +74,7 @@ function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
     ...overrides,
   });
   return createCreatorProductToolsContext(panelContext) as ReturnType<typeof createCreatorProductToolsContext> & {
-    preferences: { defaultModel?: string; taskModels: { body: string }; memoryRagEnabled: boolean; interventionRules: Record<string, boolean> };
+    preferences: { defaultModel?: string; temperature?: number; taskModels: { body: string }; memoryRagEnabled: boolean; interventionRules: Record<string, boolean> };
     preferencesSummary: string;
     interventionItems: Array<{ id: string }>;
     loadMemoryAssets: () => Promise<void>;
@@ -89,6 +89,13 @@ function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
     goToSettingsForAsset: (item: { editable?: boolean }) => void;
     nextPublishStep: () => void;
     prevPublishStep: () => void;
+    resetPreferences: () => void;
+    preferencesDirty: boolean;
+    saveMemoryNote: (item: { id?: string; placeholder?: boolean }, note: string) => Promise<void>;
+    publishStatus: string;
+    publishHistoryModalOpen: boolean;
+    runExportDownload: () => Promise<void>;
+    openPublishHistoryModal: () => Promise<void>;
     publishStep: number;
     preferencesSavedHint: string;
     prefillPublishFromSubmission: () => Promise<void>;
@@ -106,6 +113,7 @@ function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
     savePreferences: () => Promise<void>;
     memoryAssetsFiltered: unknown[];
     memoryFilter: string;
+    memoryFocusAssetId: string | null;
     exportMode: string;
   };
 }
@@ -117,6 +125,8 @@ describe('creator product tools', () => {
     apiMocks.fetchCreatorPreferences.mockReset();
     apiMocks.saveCreatorPreferencesApi.mockReset();
     apiMocks.fetchCreatorMemoryAssets.mockReset();
+    apiMocks.saveCreatorMemoryAnnotation.mockReset();
+    apiMocks.queryCreatorMemory.mockReset();
     apiMocks.exportCreatorEpub.mockReset();
     apiMocks.fetchCreatorPublishHistory.mockResolvedValue({ slug: 'demo-novel', entries: [] });
     apiMocks.fetchCreatorPublishPlatforms.mockResolvedValue({
@@ -442,5 +452,74 @@ describe('creator product tools', () => {
     expect(pt.publishStep).toBeGreaterThan(0);
     pt.prevPublishStep();
     expect(pt.publishStep).toBe(0);
+  });
+
+  it('runExportDownload saves markdown file', async () => {
+    const pt = makeProductToolsContext();
+    pt.exportModalOpen = true;
+    apiMocks.fetchChapters.mockResolvedValue({ chapters: [{ chapter: 1, has_body: true }] });
+    apiMocks.fetchCreatorChapterPreview.mockResolvedValue({ title: '第一章', body_text: '正文' });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    await pt.runExportDownload();
+    expect(clickSpy).toHaveBeenCalled();
+    clickSpy.mockRestore();
+  });
+
+  it('resetPreferences marks dirty and restores defaults', () => {
+    const pt = makeProductToolsContext();
+    pt.preferences.temperature = 0.1;
+    pt.resetPreferences();
+    expect(pt.preferencesDirty).toBe(true);
+    expect(pt.preferences.temperature).toBe(0.7);
+  });
+
+  it('saveMemoryNote skips placeholder assets', async () => {
+    const pt = makeProductToolsContext();
+    await pt.saveMemoryNote({ id: 'x', placeholder: true }, 'note');
+    expect(apiMocks.saveCreatorMemoryAnnotation).not.toHaveBeenCalled();
+  });
+
+  it('submitPublish records API errors', async () => {
+    apiMocks.submitCreatorPublish.mockRejectedValueOnce(new Error('publish failed'));
+    const pt = makeProductToolsContext();
+    await pt.submitPublish();
+    expect(pt.publishStatus).toBe('idle');
+  });
+
+  it('refreshExportPreview uses overview excerpt when preview fails', async () => {
+    const pt = makeProductToolsContext({
+      overview: ref({
+        max_chapter: 1,
+        chapters: [{ chapter: 1, excerpt: '本地摘录' }],
+      }),
+    });
+    pt.exportMode = 'range';
+    pt.exportRangeStart = 1;
+    pt.exportRangeEnd = 1;
+    apiMocks.fetchCreatorChapterPreview.mockRejectedValueOnce(new Error('down'));
+    await pt.refreshExportPreview();
+    expect(pt.exportPreview).toContain('本地摘录');
+  });
+
+  it('openPublishHistoryModal loads history entries', async () => {
+    const pt = makeProductToolsContext();
+    await pt.openPublishHistoryModal();
+    expect(pt.publishHistoryModalOpen).toBe(true);
+    expect(apiMocks.fetchCreatorPublishHistory).toHaveBeenCalled();
+  });
+
+  it('runMemorySearch ignores empty query', async () => {
+    const pt = makeProductToolsContext();
+    pt.memorySearchQuery = '   ';
+    await pt.runMemorySearch();
+    expect(apiMocks.queryCreatorMemory).not.toHaveBeenCalled();
+  });
+
+  it('focusMemoryEntity clears focus when entity missing', () => {
+    const setWorkspaceTab = vi.fn();
+    const pt = makeProductToolsContext({ setWorkspaceTab });
+    pt.focusMemoryEntity(null);
+    expect(pt.memoryFocusAssetId).toBeNull();
+    expect(setWorkspaceTab).toHaveBeenCalledWith('memory');
   });
 });

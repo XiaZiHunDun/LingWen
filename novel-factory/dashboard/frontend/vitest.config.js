@@ -28,7 +28,7 @@ export default mergeConfig(viteConfig, defineConfig({
       include: ['src/**/*.{js,ts,vue}'],
       exclude: ['src/**/*.spec.{js,ts}', 'src/main.ts', 'src/**/index.ts'],
       // Phase 9.57 F48: lines/functions stepped toward 80%; branches/statements follow measured baseline
-      thresholds: { lines: 80, branches: 68, functions: 70, statements: 79 },
+      thresholds: { lines: 80, branches: 70, functions: 70, statements: 80 },
     },
   },
 }))

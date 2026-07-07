@@ -84,7 +84,7 @@
 
 | 维度 | 数量 | 命令 |
 |------|------|------|
-| Vitest | 872 | `pnpm vitest run` |
+| Vitest | 924 | `pnpm vitest run` |
 | 测试 typecheck（relaxed + strict） | — | `pnpm typecheck` / `pnpm typecheck:tests:strict`（CI 门禁） |
 | Live E2E | 58 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
 | 视觉回归 | 18 | `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` |
