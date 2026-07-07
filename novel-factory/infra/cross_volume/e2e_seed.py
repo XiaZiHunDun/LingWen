@@ -23,6 +23,9 @@ E2E_DECISION_ID = "e2e-dec1"
 E2E_CREATOR_SLUG = "e2e-live-creator"
 E2E_COMPANION_SLUG = "e2e-live-companion"
 E2E_STUDIO_SLUG = "e2e-live-studio"
+E2E_CVG_ROOT_NODE = "e2e-cvg-root"
+E2E_CVG_CHILD_NODE = "e2e-cvg-child"
+E2E_CVG_EDGE_ID = "e2e-cvg-edge"
 
 _DEFAULT_STATE_DIR = Path(__file__).resolve().parents[2] / "infra" / ".state"
 
@@ -132,6 +135,7 @@ def restore_inbox_fixture(db_path: Path | None = None, state_dir: Path | None = 
     """Ensure pending ripple + decision for inbox/ripples live e2e."""
     ensure_e2e_ripples(db_path)
     ensure_e2e_decision(state_dir)
+    ensure_e2e_cvg_graph(db_path)
     reset_e2e_ripple(E2E_PENDING_RIPPLE_ID, "pending", db_path)
     reset_e2e_decision(state_dir)
 
@@ -219,25 +223,78 @@ def _repair_e2e_companion_project_yaml(root: Path) -> None:
     )
 
 
-def ensure_e2e_cascade_run(db_path: Path | None = None) -> int:
-    """Idempotent completed cascade run for rip-pending-1 (replay live e2e)."""
-    from infra.cross_volume.reference_graph import CascadedRipple
+def ensure_e2e_cvg_graph(db_path: Path | None = None) -> None:
+    """Minimal CVG nodes + link rip-pending-1 for live cascade replay BFS."""
+    import json
+
+    from infra.cross_volume.reference_graph import (
+        CrossVolumeReferenceGraph,
+        ReferenceEdge,
+        ReferenceNode,
+    )
 
     path = db_path or _cvg_db_path()
-    ensure_e2e_ripples(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     storage = RippleStorage(db_path=path, graph=None)
+    graph = CrossVolumeReferenceGraph(storage)
+    storage._graph = graph
+
+    if storage.load_node_by_id(E2E_CVG_ROOT_NODE) is None:
+        graph.add_node(
+            ReferenceNode(
+                id=E2E_CVG_ROOT_NODE,
+                volume=1,
+                chapter=2,
+                dimension="character",
+                title="E2E",
+                description="cascade root",
+            )
+        )
+    if storage.load_node_by_id(E2E_CVG_CHILD_NODE) is None:
+        graph.add_node(
+            ReferenceNode(
+                id=E2E_CVG_CHILD_NODE,
+                volume=1,
+                chapter=3,
+                dimension="character",
+                title="E2E",
+                description="cascade child",
+            )
+        )
+    has_edge = any(edge.id == E2E_CVG_EDGE_ID for edge in storage.load_all_edges())
+    if not has_edge:
+        graph.add_edge(
+            ReferenceEdge(
+                id=E2E_CVG_EDGE_ID,
+                from_node_id=E2E_CVG_ROOT_NODE,
+                to_node_id=E2E_CVG_CHILD_NODE,
+            )
+        )
+
+    ensure_e2e_ripples(path)
+    with storage._connect() as conn:
+        conn.execute(
+            "UPDATE reference_ripples SET affected_nodes = ? WHERE id = ?",
+            (json.dumps([E2E_CVG_ROOT_NODE]), E2E_PENDING_RIPPLE_ID),
+        )
+        conn.commit()
+
+
+def ensure_e2e_cascade_run(db_path: Path | None = None) -> int:
+    """Idempotent completed cascade run for rip-pending-1 (replay live e2e)."""
+    path = db_path or _cvg_db_path()
+    ensure_e2e_cvg_graph(path)
+    storage = RippleStorage(db_path=path, graph=None)
+    from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+
+    graph = CrossVolumeReferenceGraph(storage)
+    storage._graph = graph
+
     for run in storage.get_cascade_runs(E2E_PENDING_RIPPLE_ID, limit=10):
         if run.status == "completed":
             return run.id
-    cascaded = CascadedRipple(
-        trigger_ripple_id=E2E_PENDING_RIPPLE_ID,
-        cascade_nodes=(),
-        cascade_edges=(),
-        cascade_actions=({"kind": "e2e", "label": "seed"},),
-        depth_reached=1,
-        generated_at=datetime.now(timezone.utc).isoformat(),
-        bfs_algorithm_version="e2e",
-    )
+
+    cascaded = storage.preview_cascade(E2E_PENDING_RIPPLE_ID, max_depth=2)
     return storage.record_cascade_run(
         E2E_PENDING_RIPPLE_ID,
         cascaded,
@@ -342,6 +399,7 @@ def ensure_e2e_companion_project() -> Path:
 def ensure_e2e_fixtures() -> None:
     ensure_e2e_ripples()
     ensure_e2e_decision()
+    ensure_e2e_cvg_graph()
     ensure_e2e_cascade_run()
     ensure_e2e_companion_project()
     ensure_e2e_creator_project()

@@ -95,28 +95,6 @@ test.describe('Cascade runs flow (live)', () => {
     test.setTimeout(90_000);
     await request.put('/api/studio/active', { data: { slug: CREATOR_SLUG } });
 
-    // Runs list is live (e2e_seed.ensure_e2e_cascade_run). Replay read uses BFS;
-    // e2e harness has no CVG graph — mock persist=false only.
-    await page.route('**/api/ripples/cascade/**', async (route) => {
-      if (!route.request().url().includes('persist=false')) {
-        await route.continue();
-        return;
-      }
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          trigger_ripple_id: 'rip-pending-1',
-          cascade_nodes: [{ id: 'n1', label: 'E2E live' }],
-          cascade_edges: [],
-          cascade_actions: [],
-          depth_reached: 1,
-          generated_at: '2026-07-07T00:00:00Z',
-          bfs_algorithm_version: 'e2e',
-        }),
-      });
-    });
-
     await page.goto('/?nav=cascade-runs', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('cascade-runs-table')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('cascade-run-row').first()).toBeVisible();

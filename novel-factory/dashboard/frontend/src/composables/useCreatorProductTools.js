@@ -100,6 +100,7 @@ export function useCreatorProductTools(deps) {
   const memoryAssetsLoading = ref(false);
   const memoryAssetsLoadedOnce = ref(false);
   const memoryFilter = ref('all');
+  const memoryFocusAssetId = ref(null);
 
   const exportModalOpen = ref(false);
   const exportMode = ref('full');
@@ -681,9 +682,11 @@ export function useCreatorProductTools(deps) {
 
   function focusMemoryEntity(entity) {
     if (!entity) {
+      memoryFocusAssetId.value = null;
       setWorkspaceTab('memory');
       return;
     }
+    memoryFocusAssetId.value = entity.id || null;
     const kind = entity.kind;
     memoryFilter.value = kind === 'foreshadow' ? 'foreshadow' : kind === 'character' ? 'character' : 'all';
     memorySearchQuery.value = (entity.name || '').replace(/^伏笔：/, '').trim();
@@ -706,6 +709,7 @@ export function useCreatorProductTools(deps) {
     memoryAssetsFiltered,
     memoryAssetsLoading,
     memoryFilter,
+    memoryFocusAssetId,
     memoryAvailable,
     memoryRagEnabled,
     loadMemoryAssets,

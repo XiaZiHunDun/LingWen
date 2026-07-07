@@ -79,3 +79,28 @@ class TestE2ECascadeRunSeed:
         runs = storage.get_cascade_runs(E2E_PENDING_RIPPLE_ID)
         assert len(runs) == 1
         assert runs[0].status == "completed"
+
+
+class TestE2ECvgGraphSeed:
+    def test_ensure_e2e_cvg_graph_links_pending_ripple(self, tmp_path, monkeypatch):
+        import json
+
+        from infra.cross_volume.e2e_seed import (
+            E2E_CVG_ROOT_NODE,
+            E2E_PENDING_RIPPLE_ID,
+            ensure_e2e_cvg_graph,
+        )
+
+        db = tmp_path / "cross_volume.db"
+        monkeypatch.setattr(
+            "infra.cross_volume.e2e_seed._cvg_db_path",
+            lambda state_dir=None: db,
+        )
+        ensure_e2e_cvg_graph()
+        from infra.cross_volume.storage import RippleStorage
+
+        storage = RippleStorage(db_path=db, graph=None)
+        ripple = storage.get_ripple_by_id(E2E_PENDING_RIPPLE_ID)
+        assert ripple is not None
+        assert E2E_CVG_ROOT_NODE in ripple.affected_nodes
+        assert storage.load_node_by_id(E2E_CVG_ROOT_NODE) is not None

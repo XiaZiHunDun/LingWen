@@ -67,10 +67,16 @@ test.describe('Entity rail → memory tab (live)', () => {
 
     await page.getByTestId('chapter-entity-goto-memory').first().click();
 
-    const memoryColumn = page.getByTestId('column-memory');
-    const memoryTab = page.getByTestId('creator-workspace-tab-memory');
-    await expect(memoryColumn.or(memoryTab)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('column-memory').getByTestId('creator-memory-assets')).toBeVisible({
+    await expect(
+      page.getByTestId('desk-drawer-chrome-memory').or(page.getByTestId('creator-workspace-tab-memory')),
+    ).toBeVisible({ timeout: 15_000 });
+
+    const memoryRoot = page.getByTestId('column-memory');
+    await expect(memoryRoot).toBeVisible({ timeout: 15_000 });
+    const focusedAsset = memoryRoot.getByTestId('memory-asset-memory-char-李逍遥');
+    await expect(focusedAsset).toBeVisible({ timeout: 15_000 });
+    await expect(focusedAsset).toHaveClass(/asset-row--focused/);
+    await expect(memoryRoot.getByTestId('creator-memory-assets')).toBeVisible({
       timeout: 15_000,
     });
   });

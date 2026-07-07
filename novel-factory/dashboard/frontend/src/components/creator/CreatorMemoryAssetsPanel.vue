@@ -23,6 +23,7 @@
         :class="{
           'asset-row--placeholder': item.placeholder,
           'asset-row--pinned': item.pinned,
+          'asset-row--focused': item.id === pt.memoryFocusAssetId,
         }"
         :data-testid="`memory-asset-${item.id}`"
       >
@@ -108,7 +109,7 @@
 </template>
 
 <script setup>
-import { computed, inject, reactive } from 'vue';
+import { computed, inject, reactive, watch, nextTick } from 'vue';
 import { CREATOR_PRODUCT_TOOLS_KEY } from './creatorProductToolsKey.js';
 
 const props = defineProps({
@@ -161,6 +162,16 @@ function saveNote(item) {
   const note = draftNotes[item.id] ?? item.note ?? '';
   pt.saveMemoryNote(item, note);
 }
+
+watch(
+  () => pt.memoryFocusAssetId,
+  async (assetId) => {
+    if (!assetId || !props.full) return;
+    await nextTick();
+    const row = document.querySelector(`[data-testid="memory-asset-${assetId}"]`);
+    row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  },
+);
 </script>
 
 <style scoped>
@@ -194,6 +205,12 @@ function saveNote(item) {
 .asset-row--pinned {
   border-color: #f9a825;
   background: rgba(255, 249, 196, 0.2);
+}
+
+.asset-row--focused {
+  border-color: var(--color-accent, #5c6bc0);
+  background: var(--color-accent-soft, rgba(92, 107, 192, 0.12));
+  box-shadow: 0 0 0 1px var(--color-accent, #5c6bc0);
 }
 
 .asset-head {
