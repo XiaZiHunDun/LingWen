@@ -37,7 +37,7 @@ describe('CostTrendChart branches (F48)', () => {
   test('prop update clears empty state', async () => {
     const wrapper = mount(CostTrendChart, { props: { costByDay: {} } })
     await flushPromises()
-    await wrapper.setProps({ costByDay: { '2026-06-03': 0.05 } })
+    await wrapper.setProps({ costByDay: { '2026-06-03': 0.05 } } as never)
     await flushPromises()
     expect(wrapper.find(byTestid('cost-trend-chart-empty')).exists()).toBe(false)
   })

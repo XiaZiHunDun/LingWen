@@ -27,7 +27,7 @@ describe('ImpactGraph chart branches (F48b)', () => {
   test('updates when graph prop changes to empty', async () => {
     const wrapper = mount(ImpactGraph, { props: { graph } })
     await flushPromises()
-    await wrapper.setProps({ graph: { nodes: [], edges: [], total_node_count: 0, truncated: false } })
+    await wrapper.setProps({ graph: { nodes: [], edges: [], total_node_count: 0, truncated: false } } as never)
     await flushPromises()
     expect(wrapper.find(byTestid('impact-graph-empty')).exists()).toBe(true)
   })

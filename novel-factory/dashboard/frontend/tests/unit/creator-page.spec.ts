@@ -235,10 +235,12 @@ vi.mock('../../src/composables/useStudioProject.js', async () => {
 });
 
 const navMocks = vi.hoisted(() => ({
-  focusWizard: null,
-  focusWizardStep: null,
-  focusWizardDone: null,
-  focusWizardNotes: null,
+  focusWizard: null as import('vue').Ref<boolean> | null,
+  focusWizardStep: null as import('vue').Ref<string | null> | null,
+  focusWizardDone: null as import('vue').Ref<string[]> | null,
+  focusWizardNotes: null as import('vue').Ref<Record<string, string>> | null,
+  focusCreatorWorkspace: null as import('vue').Ref<string | null> | null,
+  setCreatorWorkspace: null as import('vitest').Mock | null,
   setWizardDeepLink: vi.fn(),
   buildWizardShareUrl: vi.fn(() => 'http://localhost/?nav=creator&wizard=1&done=init'),
 }));
@@ -2290,7 +2292,7 @@ describe('CreatorPage', () => {
     const deviationListScroll = vi.fn();
     const querySpy = vi.spyOn(document, 'querySelector').mockImplementation((selector) => {
       if (selector === '[data-testid="deviation-list"]') {
-        return { scrollIntoView: deviationListScroll };
+        return { scrollIntoView: deviationListScroll } as unknown as Element;
       }
       return null;
     });
@@ -4442,8 +4444,10 @@ describe('CreatorPage', () => {
     const speak = vi.fn();
     const cancel = vi.fn();
     vi.stubGlobal('speechSynthesis', { speak, cancel });
-    vi.stubGlobal('SpeechSynthesisUtterance', class {
-      constructor(text) {
+    vi.stubGlobal('SpeechSynthesisUtterance', class SpeechSynthesisUtterance {
+      text: string;
+      lang: string;
+      constructor(text: string) {
         this.text = text;
         this.lang = '';
       }

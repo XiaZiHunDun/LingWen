@@ -103,7 +103,7 @@ describe('ChaptersPage (F63/F88)', () => {
         total_count: 2,
         elapsed_s: 0.1,
       },
-    }
+    } as typeof mocks.status.value
     const wrapper = mount(ChaptersPage)
     await flushPromises()
     expect(wrapper.find(byTestid('chapter-production-summary')).exists()).toBe(true)
@@ -173,7 +173,7 @@ describe('ChaptersPage (F63/F88)', () => {
     mocks.pendingDecisions.value = [
       { decision_id: 'd5', status: 'pending', context: { chapter_num: 5 } },
     ]
-    mocks.status.value = { is_active: true, paused: true, production_summary: { chapter_num: 5 } }
+    mocks.status.value = { is_active: true, paused: true, production_summary: { chapter_num: 5 } } as unknown as typeof mocks.status.value
     const wrapper = mount(ChaptersPage)
     await flushPromises()
     const link = wrapper.find('[data-testid="chapter-decision-link"]')

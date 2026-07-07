@@ -23,7 +23,8 @@
     "lint:staged": "lint-staged",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.tests-relaxed.json --noEmit",
+    "typecheck:tests:strict": "tsc -p tsconfig.json --noEmit",
     "typecheck:app": "vue-tsc -p tsconfig.app.json --noEmit",
     "test:rule": "node --test eslint-rules/*.test.js tests/eslint-rules/*.test.cjs",
     "prepare": "husky"

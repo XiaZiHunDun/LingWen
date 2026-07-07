@@ -242,4 +242,4 @@ idle → plan（scope + action）→ generating → candidates
 
 默认前端 CI（`dashboard-frontend-ci.yml`）：`lint-and-test` → 并行 `visual-regression` + `e2e-live` + `a11y-l1` + `ui-metrics`（blocking）。`grepInvert @quarantine` 用于隔离已知 flake；手动轨见 `dashboard-frontend-quarantine.yml`。
 
-**当前基线（2026-07-07）**：Vitest **779** · Live E2E **56** · 可选 LLM E2E **1** · 视觉回归 **18** · a11y L1 **7** · UI metrics **10** · Vite smoke **1**。
+**当前基线（2026-07-07）**：Vitest **810** · Live E2E **56** · 可选 LLM E2E **1** · 视觉回归 **18** · a11y L1 **7** · UI metrics **10** · Vite smoke **1** · 测试 `typecheck`（relaxed）**CI 门禁**。

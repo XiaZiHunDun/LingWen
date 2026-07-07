@@ -50,7 +50,10 @@ jobs:
       - name: Run lint suite (testid / testid-sync / vue)
         run: pnpm lint:all
 
-      # Test strict tsc (pnpm typecheck) is local-only until vitest mocks are typed; app gate below.
+      # Relaxed test tsc (pnpm typecheck); strict gate: pnpm typecheck:tests:strict
+      - name: Typecheck tests (relaxed)
+        run: pnpm typecheck
+
       - name: Typecheck app (vue-tsc src/**/*.vue)
         run: pnpm typecheck:app
 

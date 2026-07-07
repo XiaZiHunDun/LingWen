@@ -27,8 +27,8 @@ export default mergeConfig(viteConfig, defineConfig({
       reporter: ['text', 'lcov', 'html'],
       include: ['src/**/*.{js,ts,vue}'],
       exclude: ['src/**/*.spec.{js,ts}', 'src/main.ts', 'src/**/index.ts'],
-      // Phase 9.57 F48: thresholds track measured baseline (raise incrementally)
-      thresholds: { lines: 79, branches: 66, functions: 69, statements: 77 },
+      // Phase 9.57 F48: lines/functions stepped toward 80%; branches/statements follow measured baseline
+      thresholds: { lines: 80, branches: 67, functions: 70, statements: 77 },
     },
   },
 }))

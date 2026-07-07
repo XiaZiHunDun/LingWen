@@ -157,7 +157,7 @@ describe('api/index.js request paths (F48)', () => {
       status: 404,
       statusText: 'Not Found',
       text: async () => 'missing',
-    } as Response)
+    } as unknown as Response)
     const api = await import('../../src/api/index.js')
     await expect(api.fetchHealth()).rejects.toThrow('API Error 404')
   })
@@ -209,7 +209,7 @@ describe('api/index.js request paths (F48)', () => {
       status: 500,
       statusText: 'Err',
       text: async () => { throw new Error('no body') },
-    } as Response)
+    } as unknown as Response)
     const api = await import('../../src/api/index.js')
     await expect(api.fetchOverview()).rejects.toThrow('Unknown error')
   })

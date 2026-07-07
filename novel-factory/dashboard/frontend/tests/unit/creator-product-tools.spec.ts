@@ -45,7 +45,7 @@ vi.mock('../../src/composables/useStudioProject.js', () => ({
   useStudioProject: () => ({ activeSlug: ref('demo-novel') }),
 }));
 
-function makeProductToolsContext(overrides = {}) {
+function makeProductToolsContext(overrides: Record<string, unknown> = {}) {
   const overview = ref({
     max_chapter: 5,
     chapters_written: 1,
@@ -72,7 +72,22 @@ function makeProductToolsContext(overrides = {}) {
     settingsHasUnsavedChanges: computed(() => false),
     ...overrides,
   });
-  return createCreatorProductToolsContext(panelContext);
+  return createCreatorProductToolsContext(panelContext) as ReturnType<typeof createCreatorProductToolsContext> & {
+    preferences: { taskModels: { body: string }; memoryRagEnabled: boolean; interventionRules: Record<string, boolean> };
+    preferencesSummary: string;
+    interventionItems: Array<{ id: string }>;
+    loadMemoryAssets: () => Promise<void>;
+    runMemorySearch: () => Promise<void>;
+    memorySearchQuery: string;
+    memorySearchResults: unknown[];
+    memorySearchRan: boolean;
+    toggleMemoryPin: (asset: { id: string; pinned: boolean; placeholder: boolean }) => Promise<void>;
+    exportPreview: string;
+    preferencesSavedHint: string;
+    prefillPublishFromSubmission: () => Promise<void>;
+    publishPackPreview: string;
+    publishSubmissionChapters: number[];
+  };
 }
 
 describe('creator product tools', () => {
