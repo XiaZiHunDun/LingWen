@@ -14,7 +14,7 @@ import { useCreatorWriteWorkbench } from '../../src/composables/useCreatorWriteW
 vi.mock('../../src/api/index.js', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as object),
     runCreatorAgentPlan: vi.fn(),
     runCreatorAgentPlanStream: vi.fn(),
   };

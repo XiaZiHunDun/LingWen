@@ -13,7 +13,7 @@ const creatorMocks = vi.hoisted(() => ({
 vi.mock('../../src/api/index.js', async (importOriginal) => {
   const actual = await importOriginal()
   return {
-    ...actual,
+    ...(actual as object),
     fetchCreatorOverview: creatorMocks.fetchCreatorOverview,
     fetchCreatorVolumePlan: vi.fn().mockResolvedValue({ volumes: [] }),
     fetchCreatorSettingsDocs: vi.fn().mockResolvedValue({

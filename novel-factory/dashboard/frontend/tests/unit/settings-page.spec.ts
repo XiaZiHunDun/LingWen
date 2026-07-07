@@ -128,7 +128,7 @@ describe('SettingsPage (F68/F78)', () => {
     expect(mocks.fetchBudgets).not.toHaveBeenCalled()
 
     const advancedPanel = wrapper.find(byTestid('settings-advanced-panel'))
-    const detailsEl = advancedPanel.element
+    const detailsEl = advancedPanel.element as HTMLDetailsElement
     detailsEl.open = true
     detailsEl.dispatchEvent(new Event('toggle'))
     await flushPromises()

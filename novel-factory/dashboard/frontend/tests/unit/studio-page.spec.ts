@@ -20,7 +20,7 @@ const studioMocks = vi.hoisted(() => ({
 vi.mock('../../src/api/index.js', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as object),
     fetchStudioProjects: studioMocks.fetchStudioProjects,
     fetchStudioSummary: studioMocks.fetchStudioSummary,
   fetchStudioQuality: studioMocks.fetchStudioQuality,

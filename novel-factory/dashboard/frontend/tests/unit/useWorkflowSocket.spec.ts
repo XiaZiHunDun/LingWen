@@ -74,7 +74,7 @@ describe('useWorkflowSocket message branches (F48)', () => {
     const ws = (wrapper.vm as { ws?: MockWebSocket }).ws;
     // access internal via reconnect
     wrapper.vm.reconnect();
-    const socket = (globalThis as { WebSocket: typeof MockWebSocket }).WebSocket;
+    const socket = (globalThis as unknown as { WebSocket: typeof MockWebSocket }).WebSocket;
     // get last created ws from module - use onMounted connect
     await flushPromises();
     const mod = await import('../../src/composables/useWorkflowSocket.js');
