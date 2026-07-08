@@ -41,6 +41,20 @@ test.describe('Creator product tools live e2e', () => {
     await expect(logicRule).toBeChecked({ checked: before });
   });
 
+  test('companion_export_modal_open_preview', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await expect(page.getByTestId('export-btn')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('export-btn').click();
+    await expect(page.getByTestId('creator-export-modal')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('export-preview-btn').click();
+    await expect(page.getByTestId('export-preview-text')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('export-modal-close').click();
+    await expect(page.getByTestId('creator-export-modal')).toBeHidden({ timeout: 10_000 });
+    await restoreCreatorProject(request);
+  });
+
   test('companion_micro_task_bar_on_write_desk', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);

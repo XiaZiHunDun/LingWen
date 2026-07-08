@@ -70,7 +70,7 @@ export function useCreatorPageHeader(deps) {
 
   const showHeaderPreferences = computed(() => !humanFirstDesk.value);
 
-  const showHeaderPublishExport = computed(() => !humanFirstDesk.value);
+  const showHeaderPublishExport = computed(() => Boolean(overview.value));
 
   const showHeaderRefresh = computed(() => !humanFirstDesk.value);
 

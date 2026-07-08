@@ -39,7 +39,7 @@
     <div
       v-if="c.overview && c.showHeaderActionsRow"
       class="creator-page-header__row creator-page-header__row--prefs"
-      :class="{ 'creator-page-header__row--actions-only': !c.showHeaderPreferences && !c.showHeaderPublishExport }"
+      :class="{ 'creator-page-header__row--actions-only': !c.showHeaderPreferences && !c.showHeaderRefresh }"
     >
       <CreatorPreferencesSummary
         v-if="c.overview && c.showHeaderPreferences"

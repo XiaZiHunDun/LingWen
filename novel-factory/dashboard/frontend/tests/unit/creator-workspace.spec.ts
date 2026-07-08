@@ -196,7 +196,8 @@ describe('Creator workspace tabs (Phase C)', () => {
     expect(wrapper.find(byTestid('write-advanced-tools')).exists()).toBe(true)
     expect(wrapper.find(byTestid('creation-mode-badge')).exists()).toBe(false)
     expect(wrapper.find(byTestid('creator-workspace-secondary-tabs')).exists()).toBe(true)
-    expect(wrapper.find(byTestid('export-btn')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('export-btn')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('publish-btn')).exists()).toBe(true)
   })
 
   test('human-first desk hides duplicate page title and preferences', async () => {
@@ -204,6 +205,7 @@ describe('Creator workspace tabs (Phase C)', () => {
     await flushPromises()
     expect(wrapper.find(byTestid('page-title')).exists()).toBe(false)
     expect(wrapper.find(byTestid('creator-preferences-summary')).exists()).toBe(false)
+    expect(wrapper.find(byTestid('export-btn')).exists()).toBe(true)
     expect(wrapper.find(byTestid('creator-workspace-secondary-tabs')).exists()).toBe(true)
   })
 
