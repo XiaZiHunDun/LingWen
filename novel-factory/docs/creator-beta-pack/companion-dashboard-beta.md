@@ -9,7 +9,7 @@ http://localhost:8765/?nav=write
 ```
 
 - [ ] 顶部导航：**今日** / **创作** / **工具箱**（Human-first IA；创作即书桌）
-- [ ] **导出 / 发布**：human-first 书桌顶栏 `export-btn` / `publish-btn` 可见；发布向导可进入「格式与内容」步
+- [ ] **导出 / 发布**：顶栏入口 → 发布 step 1「打开导出弹窗」为投稿包 · 确认预览 → stub 提交成功
 - [ ] 模式徽章显示 **陪伴**
 - [ ] 向导默认折叠；首次未完成步骤时自动展开（`wizard_expand_if_incomplete`）
 

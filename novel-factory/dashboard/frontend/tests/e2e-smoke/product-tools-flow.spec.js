@@ -70,6 +70,42 @@ test.describe('Creator product tools live e2e', () => {
     await restoreCreatorProject(request);
   });
 
+  test('companion_publish_wizard_open_export_submission', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await page.getByTestId('publish-btn').click();
+    await expect(page.getByTestId('creator-publish-modal')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-next-btn').click();
+    await expect(page.getByTestId('publish-step-format')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-open-export').click();
+    await expect(page.getByTestId('creator-publish-modal')).toBeHidden({ timeout: 10_000 });
+    await expect(page.getByTestId('creator-export-modal')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('export-mode-submission').locator('input')).toBeChecked();
+    await page.getByTestId('export-modal-close').click();
+    await restoreCreatorProject(request);
+  });
+
+  test('companion_publish_wizard_stub_submit_success', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await page.getByTestId('publish-btn').click();
+    await expect(page.getByTestId('creator-publish-modal')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-next-btn').click();
+    await expect(page.getByTestId('publish-step-format')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-intro').fill('E2E 投稿简介');
+    await page.getByTestId('publish-next-btn').click();
+    await expect(page.getByTestId('publish-step-confirm')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-next-btn').click();
+    await expect(page.getByTestId('publish-step-submit')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-submit-btn').click();
+    await expect(page.getByTestId('publish-success-msg')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-modal-close').click();
+    await expect(page.getByTestId('creator-publish-modal')).toBeHidden({ timeout: 10_000 });
+    await restoreCreatorProject(request);
+  });
+
   test('companion_micro_task_bar_on_write_desk', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);

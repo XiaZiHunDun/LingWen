@@ -18,7 +18,7 @@ class TestE2eLive1113:
     def test_live_backend_project_eight_specs(self):
         stems, total = count_live_backend_tests()
         assert len(stems) >= 21, f"expected >=21 live-backend spec files, got {len(stems)}"
-        assert total >= 64, f"expected >=64 live-backend tests, got {total}"
+        assert total >= 66, f"expected >=66 live-backend tests, got {total}"
 
     def test_live_backend_stems_match_playwright_config(self):
         stems = parse_live_backend_spec_stems()

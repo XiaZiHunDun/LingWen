@@ -32,6 +32,6 @@ class TestE2eLiveF70:
         """live-backend project matches Human-first e2e-smoke suite."""
         stems, total = count_live_backend_tests()
         assert len(stems) >= 21
-        assert total >= 64
+        assert total >= 66
         assert "companion-full-path-flow" in stems
         assert "companion-selection-agent-flow" in stems
