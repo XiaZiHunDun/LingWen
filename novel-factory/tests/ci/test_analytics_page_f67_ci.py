@@ -22,8 +22,8 @@ class TestAnalyticsPageF67:
         assert "buildProductionKpiCards" in util.read_text(encoding="utf-8")
 
     def test_app_wires_analytics_page(self):
-        app = FRONTEND / "src" / "App.vue"
-        text = app.read_text(encoding="utf-8")
+        page = FRONTEND / "src" / "pages" / "InsightPage.vue"
+        text = page.read_text(encoding="utf-8")
         assert "AnalyticsPage" in text
         assert "数据分析 - 开发中" not in text
 

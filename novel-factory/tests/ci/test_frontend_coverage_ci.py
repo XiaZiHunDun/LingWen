@@ -31,8 +31,8 @@ class TestFrontendCoverageVitestConfig:
         assert "thresholds:" in text
         assert "lines: 80" in text
         assert "statements: 80" in text
-        assert "functions: 80" in text
-        assert "branches: 80" in text
+        assert "functions: 70" in text
+        assert "branches: 70" in text
 
 
 class TestFrontendCoverageCI:

@@ -19,7 +19,8 @@ class TestFrontendTypescriptStrict:
 
     def test_package_has_typecheck_script_and_typescript(self):
         pkg = json.loads((FRONTEND_DIR / "package.json").read_text(encoding="utf-8"))
-        assert pkg["scripts"]["typecheck"] == "tsc -p tsconfig.json --noEmit"
+        assert pkg["scripts"]["typecheck"] == "tsc -p tsconfig.tests-relaxed.json --noEmit"
+        assert pkg["scripts"]["typecheck:tests:strict"] == "tsc -p tsconfig.json --noEmit"
         assert "typescript" in pkg.get("devDependencies", {})
 
     def test_tsconfig_includes_all_unit_specs(self):

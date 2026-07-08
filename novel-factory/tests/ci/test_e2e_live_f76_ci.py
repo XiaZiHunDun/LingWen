@@ -5,6 +5,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 NOVEL_FACTORY = REPO_ROOT / "novel-factory"
+FRONTEND_CI = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
 
 
 class TestE2eLiveRemoteF76:
@@ -22,7 +23,6 @@ class TestE2eLiveRemoteF76:
         assert "e2e-live-remote-checklist.sh" in text
 
     def test_primary_test_workflow_has_job_summary(self):
-        wf = REPO_ROOT / ".github" / "workflows" / "test.yml"
-        text = wf.read_text(encoding="utf-8")
-        assert "GITHUB_STEP_SUMMARY" in text
-        assert "Write job summary" in text
+        text = FRONTEND_CI.read_text(encoding="utf-8")
+        assert "e2e-live:" in text
+        assert "Upload Playwright trace on failure" in text

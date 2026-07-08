@@ -5,6 +5,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 NOVEL_FACTORY = REPO_ROOT / "novel-factory"
+FRONTEND_CI = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
 
 
 class TestE2eLiveF70:
@@ -17,9 +18,8 @@ class TestE2eLiveF70:
         assert "playwright install" in text
 
     def test_workflow_matches_local_verify_env(self):
-        wf = REPO_ROOT / ".github" / "workflows" / "test.yml"
-        text = wf.read_text(encoding="utf-8")
-        assert "python-version: \"3.13\"" in text or "python-version: '3.13'" in text
+        text = FRONTEND_CI.read_text(encoding="utf-8")
+        assert "python-version: \"3.12\"" in text or "python-version: '3.12'" in text
         assert "node-version: \"20\"" in text or "node-version: '20'" in text
         assert "LINGWEN_E2E_LIVE" in text
         assert "playwright install --with-deps chromium" in text
@@ -27,10 +27,11 @@ class TestE2eLiveF70:
         assert "timeout-minutes: 25" in text
 
     def test_live_backend_spec_count(self):
-        """live-backend project runs 7 tests (3 files × multi-test)."""
+        """live-backend project matches Human-first e2e-smoke suite."""
         cfg = NOVEL_FACTORY / "dashboard" / "frontend" / "playwright.config.js"
         text = cfg.read_text(encoding="utf-8")
         assert "live-backend" in text
         assert "ripples-audit" in text
         assert "decisions-resolve" in text
         assert "creator-workspace" in text
+        assert "companion-full-path-flow" in text

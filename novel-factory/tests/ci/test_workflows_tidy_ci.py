@@ -28,7 +28,7 @@ class TestWorkflowsTidy1208:
         assert "push" not in triggers
 
     def test_primary_test_has_e2e_live_blocking_job(self):
-        text = (WORKFLOWS / "test.yml").read_text(encoding="utf-8")
+        text = (WORKFLOWS / "dashboard-frontend-ci.yml").read_text(encoding="utf-8")
         assert "e2e-live:" in text
         assert "pnpm e2e:live" in text
-        assert "GITHUB_STEP_SUMMARY" in text
+        assert "Upload Playwright trace on failure" in text

@@ -16,8 +16,8 @@ class TestChaptersPageF63Contract:
         assert "incremental_backfill" in text or "chapter-backfill-badge" in text
 
     def test_app_wires_chapters_page(self):
-        app = NOVEL_FACTORY / "dashboard" / "frontend" / "src" / "App.vue"
-        text = app.read_text(encoding="utf-8")
+        page = NOVEL_FACTORY / "dashboard" / "frontend" / "src" / "pages" / "ProducePage.vue"
+        text = page.read_text(encoding="utf-8")
         assert "ChaptersPage" in text
         assert "章节管理 - 开发中" not in text
 
