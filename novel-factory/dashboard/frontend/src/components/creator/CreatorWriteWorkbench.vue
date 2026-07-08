@@ -216,13 +216,16 @@
           :show-lens="wb.isPanelVisible('agentLensSwitcher')"
           :show-strength="true"
           :show-toggles="false"
+          :show-worldbuilding-toggle="true"
           :show-goal-tags="true"
           :style-strength="wb.styleStrength"
           :goal-tag="wb.goalTag"
           :agent-lens="wb.agent.agentLens"
+          :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
           @update:style-strength="wb.styleStrength = $event"
           @update:goal-tag="wb.goalTag = $event"
           @update:agent-lens="wb.agent.setAgentLens($event)"
+          @update:allow-worldbuilding-fill="wb.allowWorldbuildingFill = $event"
         />
       </div>
 

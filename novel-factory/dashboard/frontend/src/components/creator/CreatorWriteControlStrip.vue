@@ -46,8 +46,13 @@
         <span v-for="lvl in strengthLevels" :key="lvl.level">{{ lvl.label }}</span>
       </div>
     </div>
-    <div v-if="showToggles" class="write-control-strip__group">
+    <div
+      v-if="showToggles || showWorldbuildingToggle"
+      class="write-control-strip__group"
+      :data-testid="mainBar && showWorldbuildingToggle ? 'write-worldbuilding-toggle-main' : undefined"
+    >
       <button
+        v-if="showToggles"
         type="button"
         class="write-workbench__chip"
         :class="{ 'write-workbench__chip--active': selectionLocked }"
@@ -57,6 +62,7 @@
         {{ selectionLocked ? '🔒 已锁定' : '锁定选区' }}
       </button>
       <button
+        v-if="showToggles || showWorldbuildingToggle"
         type="button"
         class="write-workbench__chip"
         :class="{ 'write-workbench__chip--active': allowWorldbuildingFill }"
@@ -100,8 +106,10 @@ const props = defineProps({
   showLens: { type: Boolean, default: false },
   showStrength: { type: Boolean, default: true },
   showToggles: { type: Boolean, default: true },
+  /** 仅展示「允许补全设定」（human-first 主区，不含锁定选区） */
+  showWorldbuildingToggle: { type: Boolean, default: false },
   showGoalTags: { type: Boolean, default: true },
-  /** human-first 主区紧凑条（透镜 · 文风 · 目标），避免进 advanced-tools */
+  /** human-first 主区紧凑条（透镜 · 文风 · 目标 · 补全设定），避免进 advanced-tools */
   mainBar: { type: Boolean, default: false },
   /** @deprecated 使用 mainBar；保留别名以免旧调用失效 */
   strengthOnly: { type: Boolean, default: false },

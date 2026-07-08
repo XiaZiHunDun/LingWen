@@ -112,6 +112,9 @@ export function useCreatorAgent(deps) {
       if (goal === 'restraint' && path.id === 'conflict') {
         consequence = '与「克制」目标冲突，冲突升级需更精准的台词';
       }
+      if (goal === 'pace' && path.id === 'restrained') {
+        consequence = '节奏目标下留白增多，当前节拍可能偏慢';
+      }
       return { ...path, consequence, scopeLabel: scope.label };
     });
   });

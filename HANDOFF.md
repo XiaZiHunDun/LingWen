@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`62977964`**（批次 16 双绿） |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`62977964`**（批次 16）→ 批次 17 待 push |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -57,7 +57,8 @@
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | `11aa9ab4`/`01582d95` 主区 checkpoint diff · 锁定 preset · 视觉快照 · Live E2E **69** |
 | **Human-first 批次 12（锁定主区 + 导演路径选区 E2E）** | ✅ | `d83b35f5` 选区工具栏锁定 · director path+选区确认 · Live E2E **70** |
-| **Human-first 批次 16（克制↔冲突文案 + 标注主区 E2E）** | ✅ | 主区 `write-agent-annotations-main` · restraint→冲突路径 · Live E2E **78** |
+| **Human-first 批次 17（补全设定主区 + 节奏克制文案 E2E）** | ✅ | 主区 `write-worldbuilding-toggle-main` · pace→克制路径 · Live E2E **81** |
+| **Human-first 批次 16（克制↔冲突文案 + 标注主区 E2E）** | ✅ | `62977964` 主区 `write-agent-annotations-main` · restraint→冲突路径 · Live E2E **78** |
 | **Human-first 批次 15（透镜主区 + plan lens E2E）** | ✅ | `6e07e097`/`1e854efd` 主区 `write-agent-lens-main` · 编辑透镜写入 plan · Live E2E **76** |
 | **Human-first 批次 14（目标标签主区 + 导演文案联动 E2E）** | ✅ | `d4a5f71f`/`38440cb5` 主区 `write-goal-tags-main` · suspense→导演文案 · 视觉基线 · Live E2E **74** |
 | **Human-first 批次 13（文风主区 + 锁定导演路径 E2E）** | ✅ | `1452963d`/`abb5f503` 主区 `write-style-bar-main` · 导演路径+锁定拦截 · a11y label · Live E2E **72** |
@@ -90,7 +91,7 @@
 | pytest×3 · vitest · lint · build | 每次 push blocking |
 | golden×8 | 七 Studio + 星陨 testbed |
 | **llm×7** | **路径过滤**；改 `projects/**`/`infra/**` 或 PR label `llm-check` 才跑 |
-| e2e-live | Playwright live-backend **78** 项 · 在 `dashboard-frontend-ci.yml` blocking |
+| e2e-live | Playwright live-backend **81** 项 · 在 `dashboard-frontend-ci.yml` blocking |
 | 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
 
 文档地图：`novel-factory/docs/ci-quality-gates.md`

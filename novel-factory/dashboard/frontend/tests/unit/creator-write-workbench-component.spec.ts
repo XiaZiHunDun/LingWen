@@ -215,6 +215,15 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wrapper.find(byTestid('agent-annotation-e1')).exists()).toBe(true);
   });
 
+  test('toggles worldbuilding fill on human-first main area', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    expect(wrapper.find(byTestid('write-worldbuilding-toggle-main')).exists()).toBe(true);
+    const toggle = wrapper.find(byTestid('allow-worldbuilding-toggle'));
+    expect(toggle.exists()).toBe(true);
+    await toggle.trigger('click');
+    expect(writeCtx.wb.allowWorldbuildingFill).toBe(true);
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,
