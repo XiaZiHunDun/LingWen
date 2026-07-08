@@ -213,13 +213,16 @@
       >
         <CreatorWriteControlStrip
           main-bar
+          :show-lens="wb.isPanelVisible('agentLensSwitcher')"
           :show-strength="true"
           :show-toggles="false"
           :show-goal-tags="true"
           :style-strength="wb.styleStrength"
           :goal-tag="wb.goalTag"
+          :agent-lens="wb.agent.agentLens"
           @update:style-strength="wb.styleStrength = $event"
           @update:goal-tag="wb.goalTag = $event"
+          @update:agent-lens="wb.agent.setAgentLens($event)"
         />
       </div>
 
@@ -474,7 +477,7 @@
             :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
             :goal-tag="wb.goalTag"
             :agent-lens="wb.agent.agentLens"
-            :show-lens="wb.isPanelVisible('agentLensSwitcher')"
+            :show-lens="false"
             @update:style-strength="wb.styleStrength = $event"
             @update:allow-worldbuilding-fill="wb.allowWorldbuildingFill = $event"
             @update:goal-tag="wb.goalTag = $event"

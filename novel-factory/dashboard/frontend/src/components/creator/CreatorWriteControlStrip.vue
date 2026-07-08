@@ -7,7 +7,11 @@
     :class="{ 'write-control-strip--main': mainBar }"
     :data-testid="mainBar ? 'write-style-bar-main' : 'write-control-strip'"
   >
-    <div v-if="showLens" class="write-control-strip__group" data-testid="write-agent-lens-switcher">
+    <div
+      v-if="showLens"
+      class="write-control-strip__group"
+      :data-testid="mainBar ? 'write-agent-lens-main' : 'write-agent-lens-switcher'"
+    >
       <span class="write-control-strip__label">透镜</span>
       <button
         v-for="mode in lensModes"
@@ -97,7 +101,7 @@ const props = defineProps({
   showStrength: { type: Boolean, default: true },
   showToggles: { type: Boolean, default: true },
   showGoalTags: { type: Boolean, default: true },
-  /** human-first 主区紧凑条（文风 ± 目标），避免进 advanced-tools */
+  /** human-first 主区紧凑条（透镜 · 文风 · 目标），避免进 advanced-tools */
   mainBar: { type: Boolean, default: false },
   /** @deprecated 使用 mainBar；保留别名以免旧调用失效 */
   strengthOnly: { type: Boolean, default: false },

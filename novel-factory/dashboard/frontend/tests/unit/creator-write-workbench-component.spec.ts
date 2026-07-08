@@ -197,6 +197,15 @@ describe('CreatorWriteWorkbench component', () => {
     expect(writeCtx.wb.goalTag).toBe('suspense');
   });
 
+  test('switches agent lens on human-first main area', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    expect(wrapper.find(byTestid('write-agent-lens-main')).exists()).toBe(true);
+    const editorLens = wrapper.find(byTestid('agent-lens-editor'));
+    expect(editorLens.exists()).toBe(true);
+    await editorLens.trigger('click');
+    expect(writeCtx.wb.agent.agentLens).toBe('editor');
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,
