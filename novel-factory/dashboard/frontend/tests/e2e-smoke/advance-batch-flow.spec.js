@@ -65,4 +65,26 @@ test.describe('Advance batch flow (live)', () => {
     await expect(page.getByTestId('chapter-task-1')).toContainText(/已完成|已生成/, { timeout: 15_000 });
     await expect(page.getByTestId('chapter-task-3')).toContainText('排队', { timeout: 15_000 });
   });
+
+  test('advance_chapter_task_confirm_navigates_inbox', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await request.put('/api/studio/active', { data: { slug: CREATOR_SLUG } });
+
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await openPulseDrawer(page);
+    await expect(page.getByTestId('chapter-task-cards')).toBeVisible({ timeout: 30_000 });
+
+    const summary = page.locator('[data-testid="chapter-task-cards"] summary');
+    const isOpen = await summary.evaluate((el) => /** @type {HTMLDetailsElement} */ (el.parentElement).open);
+    if (!isOpen) {
+      await summary.click();
+    }
+
+    const confirmBtn = page.getByTestId('chapter-task-confirm-1');
+    await expect(confirmBtn).toBeEnabled({ timeout: 15_000 });
+    await confirmBtn.click();
+    await expect(page.getByTestId('inbox-page')).toBeVisible({ timeout: 30_000 });
+    await expect(page).toHaveURL(/nav=inbox/);
+  });
 });

@@ -12,8 +12,10 @@
 ## Human-first 书桌 + 工程质量（2026-07）
 
 - **写作工作台组件单测**：`CreatorWriteWorkbench.vue` 挂载覆盖（折叠/选区改写/候选确认/微任务条）
+- **发布向导组件单测**：`CreatorPublishWizardModal.vue` 步骤流 / 提交 / 导出联动
+- **脉络书内抽屉 a11y**：`role="dialog"` · `aria-expanded` 触发器 · 关闭按钮 `aria-label`
 - **覆盖率门禁**：Vitest branches **70%** / statements **80%**（`vitest.config.js` 阈值）
-- **§9 产品 MVP 收口**：微任务条、轻量校验、任务卡、文风滑条标 **已接**；Live E2E +1（`companion_micro_task_bar_on_write_desk`）
+- **§9 产品 MVP 收口**：微任务条、轻量校验、任务卡、文风滑条、脉络抽屉标 **已接**；Live E2E +2（微任务条 / 任务卡确认流）
 
 ## v7.0 里程碑（2026-06）
 

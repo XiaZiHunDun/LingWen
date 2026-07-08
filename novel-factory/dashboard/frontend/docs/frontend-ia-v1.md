@@ -84,9 +84,9 @@
 
 | 维度 | 数量 | 命令 |
 |------|------|------|
-| Vitest | 934 | `pnpm vitest run` |
+| Vitest | 941 | `pnpm vitest run` |
 | 测试 typecheck（relaxed + strict） | — | `pnpm typecheck` / `pnpm typecheck:tests:strict`（CI 门禁） |
-| Live E2E | 59 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
+| Live E2E | 60 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
 | 视觉回归 | 18 | `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` |
 | a11y L1 | 7 | `LINGWEN_E2E_LIVE=1 pnpm e2e:a11y`（critical / serious / moderate） |
 | UI metrics | 10 | `LINGWEN_E2E_LIVE=1 pnpm e2e:ui-metrics`（1280×720 `clippedBelowFold`） |

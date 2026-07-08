@@ -53,6 +53,9 @@
         class="hub-tab hub-tab--drawer"
         :class="{ 'hub-tab--active': c.deskDrawerPanel === tab.id }"
         :data-testid="`creator-desk-drawer-${tab.id}`"
+        :aria-expanded="c.deskDrawerPanel === tab.id"
+        :aria-controls="`creator-desk-drawer-panel-${tab.id}`"
+        :aria-label="`${tab.label}侧滑抽屉`"
         @click="c.openDeskDrawer(tab.id)"
       >
         <span v-if="tab.icon" class="hub-tab-icon">{{ tab.icon }}</span>
@@ -66,6 +69,7 @@
     v-if="c.deskDrawerEnabled && c.deskDrawerOpen"
     class="desk-drawer-backdrop"
     data-testid="creator-desk-drawer-backdrop"
+    aria-hidden="true"
     @click="c.closeDeskDrawer()"
   />
 

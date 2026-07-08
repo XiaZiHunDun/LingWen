@@ -7,10 +7,20 @@
     class="creator-column pixel-card"
     :class="{ 'creator-column--desk-drawer': pt.deskDrawerActive?.() }"
     data-testid="column-memory"
+    :id="pt.deskDrawerActive?.() ? 'creator-desk-drawer-panel-memory' : undefined"
+    :role="pt.deskDrawerActive?.() ? 'dialog' : undefined"
+    :aria-modal="pt.deskDrawerActive?.() ? 'true' : undefined"
+    :aria-labelledby="pt.deskDrawerActive?.() ? 'desk-drawer-title-memory' : undefined"
   >
     <div v-if="pt.deskDrawerActive?.()" class="desk-drawer-chrome" data-testid="desk-drawer-chrome-memory">
-      <h2 class="desk-drawer-chrome__title">记忆库</h2>
-      <button type="button" class="mini-btn pixel-border" data-testid="desk-drawer-close-memory" @click="pt.closeDeskDrawer()">
+      <h2 id="desk-drawer-title-memory" class="desk-drawer-chrome__title">记忆库</h2>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="desk-drawer-close-memory"
+        aria-label="关闭记忆库抽屉"
+        @click="pt.closeDeskDrawer()"
+      >
         关闭
       </button>
     </div>

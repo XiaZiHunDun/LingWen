@@ -46,7 +46,8 @@
 
 | 主题 | 状态 | 证据 / commit |
 |------|------|----------------|
-| **Human-first 书桌 + 工程质量（P0–P1）** | ✅ | `CreatorWriteWorkbench.vue` 组件单测 10 项 · Vitest **934** · Live E2E **59** · §9 MVP 文档收口 |
+| **Human-first 书桌 + 工程质量（P0–P1）** | ✅ | `bc9163a1` 组件单测 · §9 收口 · Vitest **934** · Live E2E **59** |
+| **Human-first 深化（P1 续）** | ✅ | 发布向导单测 · 脉络抽屉 a11y · Today↔写栏 E2E · 推进任务卡确认 E2E |
 | **Dashboard 产品壳 IA（Phase A–D）** | ✅ | 今日 / 生产 / 待办 / 洞察 hub；创作 Tab；审阅深链；顶栏字号三档 |
 | **七书 LLM judge 全 ≥4.0** | ✅ | `9008115` 黄沙 · `174f9a0` 四书 polish |
 | 七样章 prose polish 两轮 | ✅ | `5906e77` → `9008115` |

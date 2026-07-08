@@ -41,6 +41,7 @@ test.describe('Today flow (live)', () => {
       await expect(page.getByTestId('today-micro-task-stat')).toBeVisible();
       await cta.click();
       await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByTestId('write-micro-task-bar')).toBeVisible({ timeout: 15_000 });
       await expect(page).toHaveURL(/chapter=\d+/);
     } else {
       expect(label).toMatch(TODAY_FALLBACK_CTA);

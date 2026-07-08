@@ -255,6 +255,11 @@ describe('Creator workspace tabs (Phase C)', () => {
 
     expect(wrapper.find(byTestid('column-pulse')).isVisible()).toBe(true)
     expect(wrapper.find(byTestid('volume-plan-panel')).exists()).toBe(true)
+    const pulseTrigger = wrapper.find(byTestid('creator-desk-drawer-pulse'))
+    expect(pulseTrigger.attributes('aria-expanded')).toBe('true')
+    const pulsePanel = wrapper.find(byTestid('column-pulse'))
+    expect(pulsePanel.attributes('role')).toBe('dialog')
+    expect(pulsePanel.attributes('aria-modal')).toBe('true')
   })
 
   test('companion hides mode guide and capability matrix chrome', async () => {
@@ -292,7 +297,10 @@ describe('Creator workspace tabs (Phase C)', () => {
     const wrapper = mount(CreatorPage)
     await flushPromises()
     expect(wrapper.find(byTestid('creator-desk-drawer-triggers')).exists()).toBe(true)
-    expect(wrapper.find(byTestid('creator-desk-drawer-pulse')).exists()).toBe(true)
+    const pulseTrigger = wrapper.find(byTestid('creator-desk-drawer-pulse'))
+    expect(pulseTrigger.exists()).toBe(true)
+    expect(pulseTrigger.attributes('aria-expanded')).toBe('false')
+    expect(pulseTrigger.attributes('aria-controls')).toBe('creator-desk-drawer-panel-pulse')
     expect(wrapper.find(byTestid('write-micro-task-bar')).exists()).toBe(true)
     expect(wrapper.find(byTestid('creator-workspace-tab-pulse')).exists()).toBe(false)
   })

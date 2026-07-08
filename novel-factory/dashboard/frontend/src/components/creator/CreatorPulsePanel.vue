@@ -10,10 +10,20 @@
       'creator-column--desk-drawer': p.deskDrawerActive?.(),
     }"
     data-testid="column-pulse"
+    :id="p.deskDrawerActive?.() ? 'creator-desk-drawer-panel-pulse' : undefined"
+    :role="p.deskDrawerActive?.() ? 'dialog' : undefined"
+    :aria-modal="p.deskDrawerActive?.() ? 'true' : undefined"
+    :aria-labelledby="p.deskDrawerActive?.() ? 'desk-drawer-title-pulse' : undefined"
   >
     <div v-if="p.deskDrawerActive?.()" class="desk-drawer-chrome" data-testid="desk-drawer-chrome-pulse">
-      <h2 class="desk-drawer-chrome__title">脉络</h2>
-      <button type="button" class="mini-btn pixel-border" data-testid="desk-drawer-close-pulse" @click="p.closeDeskDrawer()">
+      <h2 id="desk-drawer-title-pulse" class="desk-drawer-chrome__title">脉络</h2>
+      <button
+        type="button"
+        class="mini-btn pixel-border"
+        data-testid="desk-drawer-close-pulse"
+        aria-label="关闭脉络抽屉"
+        @click="p.closeDeskDrawer()"
+      >
         关闭
       </button>
     </div>

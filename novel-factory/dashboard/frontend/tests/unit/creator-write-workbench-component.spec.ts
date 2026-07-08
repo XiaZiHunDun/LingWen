@@ -44,7 +44,7 @@ type WriteOverrides = {
   logicCheckResult?: Record<string, unknown> | null;
 };
 
-function buildWriteContext(overrides: WriteOverrides = {}): WriteContext {
+function buildWriteContext(overrides: WriteOverrides = {}): { ctx: WriteContext; wb: WriteWorkbench } {
   const uiProfile = computed(() => ({
     creator_write_workbench: true,
     chapter_inline_edit: true,
@@ -75,7 +75,7 @@ function buildWriteContext(overrides: WriteOverrides = {}): WriteContext {
     ]),
   });
 
-  return createCreatorWriteContext({
+  const ctx = createCreatorWriteContext({
     wb,
     overview,
     chapterBodyDraft,
@@ -89,6 +89,8 @@ function buildWriteContext(overrides: WriteOverrides = {}): WriteContext {
     onLogicCheckIssueKeydown: vi.fn(),
     activeLogicCheckIssueIdx: ref(null),
   }) as WriteContext;
+
+  return { ctx, wb };
 }
 
 const productToolsStub = createCreatorProductToolsContext({
@@ -97,11 +99,11 @@ const productToolsStub = createCreatorProductToolsContext({
 });
 
 function mountWorkbench(overrides: WriteOverrides = {}) {
-  const writeCtx = buildWriteContext(overrides);
+  const { ctx, wb } = buildWriteContext(overrides);
   const wrapper = mount(CreatorWriteWorkbench, {
     global: {
       provide: {
-        [CREATOR_WRITE_KEY]: writeCtx,
+        [CREATOR_WRITE_KEY]: ctx,
         [CREATOR_PRODUCT_TOOLS_KEY]: productToolsStub,
       },
     },
@@ -110,7 +112,7 @@ function mountWorkbench(overrides: WriteOverrides = {}) {
       chapters: '<div data-testid="chapter-slot">章节列表</div>',
     },
   });
-  return { wrapper, writeCtx };
+  return { wrapper, writeCtx: ctx, wb };
 }
 
 async function openAdvancedTools(wrapper: ReturnType<typeof mount>) {
@@ -154,14 +156,14 @@ describe('CreatorWriteWorkbench component', () => {
   });
 
   test('studio layout uses non-human-first branch without advanced drawer', async () => {
-    const { wrapper, writeCtx } = mountWorkbench({
+    const { wrapper, wb } = mountWorkbench({
       overview: { creation_mode: 'studio', name: '工厂书' },
     });
     expect(wrapper.find(byTestid('creator-write-workbench')).classes()).not.toContain('write-workbench--human-first');
     expect(wrapper.find(byTestid('write-advanced-tools')).exists()).toBe(false);
-    await writeCtx.wb.agent.runRewritePreset('concrete');
+    await wb.agent.runRewritePreset('concrete');
     await flushPromises();
-    expect(writeCtx.wb.agent.candidates.value.length).toBeGreaterThan(0);
+    expect(wb.agent.candidates.value.length).toBeGreaterThan(0);
     expect(wrapper.find(byTestid('write-micro-task-bar')).exists()).toBe(false);
   });
 
@@ -216,8 +218,8 @@ describe('CreatorWriteWorkbench component', () => {
   });
 
   test('dismisses quality hint inside advanced tools', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    writeCtx.wb.syncQualityFromLogicCheck({
+    const { wrapper, wb } = mountWorkbench();
+    wb.syncQualityFromLogicCheck({
       passed: false,
       issues: [{ severity: 'P0', title: '节奏偏慢' }],
     });
@@ -226,9 +228,9 @@ describe('CreatorWriteWorkbench component', () => {
       bar.findAll('button').filter((b) => b.text() === '忽略'),
     );
     expect(dismiss.length).toBeGreaterThan(0);
-    const before = writeCtx.wb.qualityHints.value.length;
+    const before = wb.qualityHints.value.length;
     await dismiss[0].trigger('click');
-    expect(writeCtx.wb.qualityHints.value.length).toBe(before - 1);
+    expect(wb.qualityHints.value.length).toBe(before - 1);
   });
 
   test('runs director path from main panel button', async () => {
