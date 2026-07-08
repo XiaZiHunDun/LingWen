@@ -234,7 +234,7 @@ idle → plan（scope + action）→ generating → candidates
 | 命令 | 说明 |
 |------|------|
 | `pnpm e2e:smoke` | Vite-only：`app-root.spec.js`（无后端） |
-| `LINGWEN_E2E_LIVE=1 pnpm e2e:live` | Live 行为 E2E（68 项，需 `dashboard/e2e_entry.py`） |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:live` | Live 行为 E2E（69 项，需 `dashboard/e2e_entry.py`） |
 | `LINGWEN_E2E_LIVE=1 LINGWEN_E2E_LIVE_LLM=1 pnpm e2e:live-llm` | 可选 LLM 真连轨（1 项，需 API key，非默认 CI） |
 | `LINGWEN_E2E_LIVE=1 pnpm e2e:a11y` | L1 可访问性抽检（axe critical/serious/moderate，CI blocking） |
 | `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` | 视觉回归（对比 `tests/visual-audit/snapshots/`） |

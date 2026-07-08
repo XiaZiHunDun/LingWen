@@ -79,7 +79,7 @@ LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh tiedao-dang
 
 | Workflow | 触发 | 说明 |
 |----------|------|------|
-| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（68）** · a11y · visual · ui-metrics |
+| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（69）** · a11y · visual · ui-metrics |
 | **Frontend Coverage Pages** | **仅手动** | GitHub Pages HTML 报告（Codecov 仍由 Frontend CI 上传） |
 | **Prose Judge LLM** | 仅手动 | 七书 `--llm` + artifact |
 | **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec 轻量调试 |

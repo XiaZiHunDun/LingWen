@@ -55,6 +55,7 @@
 | **Human-first 批次 8（Agent 单测）** | ✅ | `cfa8c168` `use-creator-agent.spec.ts` **11** · scope/流式/预览确认 · Vitest **1013** · Live E2E **66** |
 | **Human-first 批次 9（Agent E2E 加深）** | ✅ | `d62af6ca` human-first 主区选区 preset · preset→确认→undo E2E · Live E2E **67** |
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
+| **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | 主区 checkpoint diff · 选区锁定拦截 preset · Live E2E **69** |
 | **Human-first 批次 6（发布 E2E + 文档）** | ✅ | `7e34133f` 发布向导 Live E2E · `nav=write` 文档扫尾 · Live E2E **64** |
 | **Human-first 批次 5（导出入口）** | ✅ | `3df37369` human-first 顶栏导出/发布 · Live E2E **63** · Vitest **1002** |
 | **Human-first 工程收尾** | ✅ | `8b9a8041` Pulse/Batch + Modal 单测 **38** · E2E helper 统一 · CI 契约自动解析 · Vitest **998** · Live E2E **62** |
@@ -84,7 +85,7 @@
 | pytest×3 · vitest · lint · build | 每次 push blocking |
 | golden×8 | 七 Studio + 星陨 testbed |
 | **llm×7** | **路径过滤**；改 `projects/**`/`infra/**` 或 PR label `llm-check` 才跑 |
-| e2e-live | Playwright live-backend **68** 项 · 在 `dashboard-frontend-ci.yml` blocking |
+| e2e-live | Playwright live-backend **69** 项 · 在 `dashboard-frontend-ci.yml` blocking |
 | 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
 
 文档地图：`novel-factory/docs/ci-quality-gates.md`
