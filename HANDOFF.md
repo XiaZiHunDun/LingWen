@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`2c146d79`**（批次 7） |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`4458d951`**（批次 7 文档）→ 批次 8 待 push |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -52,6 +52,7 @@
 | **CI 契约对齐** | ✅ | `40f9d7e6` pytest 契约迁 `dashboard-frontend-ci.yml` |
 | **Human-first 批次 4（P1）** | ✅ | `77e639e1` useCreatorWrite 单测 **11** · 选区 Agent E2E · Vitest **960** · Live E2E **62** |
 | **Human-first 批次 7（发布链路 E2E）** | ✅ | `2c146d79` 发布→导出 submission · stub 提交成功 · Live E2E **66** |
+| **Human-first 批次 8（Agent 单测）** | ✅ | `use-creator-agent.spec.ts` **11** · scope/流式/预览确认 · Vitest **1013** · Live E2E **66** |
 | **Human-first 批次 6（发布 E2E + 文档）** | ✅ | `7e34133f` 发布向导 Live E2E · `nav=write` 文档扫尾 · Live E2E **64** |
 | **Human-first 批次 5（导出入口）** | ✅ | `3df37369` human-first 顶栏导出/发布 · Live E2E **63** · Vitest **1002** |
 | **Human-first 工程收尾** | ✅ | `8b9a8041` Pulse/Batch + Modal 单测 **38** · E2E helper 统一 · CI 契约自动解析 · Vitest **998** · Live E2E **62** |
