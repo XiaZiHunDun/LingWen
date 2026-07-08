@@ -416,6 +416,14 @@
           </div>
         </div>
 
+        <CreatorAgentAnnotations
+          v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
+          main-bar
+          :annotations="wb.agent.annotations"
+          :lens="wb.agent.agentLens"
+          @focus="wb.agent.focusAnnotation"
+        />
+
         <div
           v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
           class="write-workbench__card write-workbench__version-bar"
@@ -545,7 +553,7 @@
           </details>
 
           <CreatorAgentAnnotations
-            v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
+            v-if="!wb.humanFirstDesk && wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
             :annotations="wb.agent.annotations"
             :lens="wb.agent.agentLens"
             @focus="wb.agent.focusAnnotation"

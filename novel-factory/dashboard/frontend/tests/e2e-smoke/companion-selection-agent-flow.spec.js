@@ -238,6 +238,50 @@ test.describe('Companion selection agent (live)', () => {
     await expect(fasterCard).toContainText('悬疑感可能减弱', { timeout: 10_000 });
   });
 
+  test('companion_goal_restraint_rewrites_conflict_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const conflictCard = page.getByTestId('director-path-conflict');
+    await expect(conflictCard).toBeVisible({ timeout: 10_000 });
+    await expect(conflictCard).toContainText('对立加深');
+
+    await page.getByTestId('goal-tag-restraint').click();
+    await expect(conflictCard).toContainText('与「克制」目标冲突', { timeout: 10_000 });
+  });
+
+  test('companion_agent_annotations_main_after_editor_lens_plan', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"' + REPLACED + '"}],"provider":"mock","annotations":[{"id":"e1","level":"warn","text":"铺垫略长，进入「更具体」前可删 1 句","paragraph":1}],"scope":{"type":"selection","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await page.getByTestId('agent-lens-editor').click();
+    await page.getByTestId('rewrite-preset-concrete').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-agent-annotations-main')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('agent-annotation-e1')).toContainText('铺垫略长');
+  });
+
   test('companion_agent_lens_main_visible', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(60_000);

@@ -5,7 +5,7 @@
   <div
     v-if="annotations.length"
     class="agent-annotations pixel-border"
-    data-testid="write-agent-annotations"
+    :data-testid="mainBar ? 'write-agent-annotations-main' : 'write-agent-annotations'"
   >
     <p class="agent-annotations__title">
       透镜标注
@@ -39,6 +39,8 @@ import { AGENT_LENS_MODES } from '../../config/creatorPanelMatrix.js';
 const props = defineProps({
   annotations: { type: Array, default: () => [] },
   lens: { type: String, default: 'author' },
+  /** human-first 主区展示，与 advanced-tools 内条区分 testid */
+  mainBar: { type: Boolean, default: false },
 });
 
 defineEmits(['focus']);

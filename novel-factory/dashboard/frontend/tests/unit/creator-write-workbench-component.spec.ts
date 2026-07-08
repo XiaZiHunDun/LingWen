@@ -206,6 +206,15 @@ describe('CreatorWriteWorkbench component', () => {
     expect(writeCtx.wb.agent.agentLens).toBe('editor');
   });
 
+  test('shows agent annotations on human-first main area after local plan', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    writeCtx.wb.agent.setAgentLens('editor');
+    await writeCtx.wb.agent.runRewritePreset('concrete');
+    await flushPromises();
+    expect(wrapper.find(byTestid('write-agent-annotations-main')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('agent-annotation-e1')).exists()).toBe(true);
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,
