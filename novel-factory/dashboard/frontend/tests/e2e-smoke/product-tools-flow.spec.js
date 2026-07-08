@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
 import {
   COMPANION_SLUG,
+  CREATOR_SLUG,
+  STUDIO_SLUG,
   dismissDeskDrawerIfOpen,
   openCompanionProject,
   openPulseDrawer,
