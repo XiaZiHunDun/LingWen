@@ -22,11 +22,12 @@
       </button>
     </div>
     <div v-if="showStrength" class="write-control-strip__group write-control-strip__group--strength">
-      <span class="write-control-strip__label">文风</span>
+      <label class="write-control-strip__label" for="style-strength-slider">文风</label>
       <span class="write-control-strip__strength-label" data-testid="style-strength-label">
         {{ currentStrengthLabel }}
       </span>
       <input
+        id="style-strength-slider"
         type="range"
         min="0"
         max="3"
