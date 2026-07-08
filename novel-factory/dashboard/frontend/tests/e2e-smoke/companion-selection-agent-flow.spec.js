@@ -19,6 +19,22 @@ const EXPECTED = '开头段落。\n\n中间已润色。\n\n结尾。';
 const INSERTED = 'E2E插入的新段落。';
 const INSERT_EXPECTED = `${EXPECTED}\n\n${INSERTED}`;
 
+function mockAgentPlanStream(page, { selectionText = REPLACED, chapterText = INSERTED } = {}) {
+  return page.route('**/api/creator/agent/plan/stream', async (route) => {
+    const payload = route.request().postDataJSON?.() ?? {};
+    const isSelection = payload.scope?.type === 'selection';
+    const text = isSelection ? selectionText : chapterText;
+    const sse = [
+      'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"' + text + '"}],"provider":"mock","annotations":[],"scope":{"type":"' + (isSelection ? 'selection' : 'chapter') + '","chapter":1}}}\n\n',
+    ].join('');
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream; charset=utf-8',
+      body: sse,
+    });
+  });
+}
+
 test.describe('Companion selection agent (live)', () => {
   test.afterEach(async ({ request }) => {
     await restoreCreatorProject(request);
@@ -28,19 +44,7 @@ test.describe('Companion selection agent (live)', () => {
     skipUnlessLive(test);
     test.setTimeout(120_000);
 
-    await page.route('**/api/creator/agent/plan/stream', async (route) => {
-      const payload = route.request().postDataJSON?.() ?? {};
-      const isSelection = payload.scope?.type === 'selection';
-      const text = isSelection ? REPLACED : INSERTED;
-      const sse = [
-        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"' + text + '"}],"provider":"mock","annotations":[],"scope":{"type":"' + (isSelection ? 'selection' : 'chapter') + '","chapter":1}}}\n\n',
-      ].join('');
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream; charset=utf-8',
-        body: sse,
-      });
-    });
+    await mockAgentPlanStream(page);
 
     await openCompanionProject(page, request, COMPANION_SLUG);
     await selectChapter(page);
@@ -64,5 +68,43 @@ test.describe('Companion selection agent (live)', () => {
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(INSERT_EXPECTED);
+  });
+
+  test('companion_selection_preset_confirm_undo', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    let capturedPayload = null;
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      capturedPayload = route.request().postDataJSON?.() ?? {};
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"稳健","text":"' + REPLACED + '"},{"id":"c2","label":"大胆","text":"中间更大胆"}],"provider":"mock","annotations":[],"scope":{"type":"selection","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await expect(page.getByTestId('write-scope-bar')).toContainText('选中', { timeout: 10_000 });
+    await expect(page.getByTestId('write-selection-tools')).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId('rewrite-preset-concrete').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    expect(capturedPayload?.action).toBe('rewrite:concrete');
+    expect(capturedPayload?.scope?.type).toBe('selection');
+
+    await page.getByTestId('write-candidate-c1').click();
+    await page.getByTestId('write-director-confirm-btn').click();
+    await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED);
+
+    await expect(page.getByTestId('write-undo-last-btn')).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId('write-undo-last-btn').click();
+    await expect.poll(async () => getBodyDraft(page)).toBe(BODY);
   });
 });
