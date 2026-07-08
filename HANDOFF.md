@@ -48,6 +48,7 @@
 |------|------|----------------|
 | **Human-first 书桌 + 工程质量（P0–P1）** | ✅ | `bc9163a1` 组件单测 · §9 收口 · Vitest **934** · Live E2E **59** |
 | **Human-first 深化（P1 续）** | ✅ | `63dec001` 发布向导单测 · 脉络抽屉 a11y · Vitest **941** · Live E2E **60** |
+| **Human-first 验收（P1）** | ✅ | `CreatorWritePanel` 单测 · 陪伴全路径 E2E · 修复微任务条 CI flake |
 | **Dashboard 产品壳 IA（Phase A–D）** | ✅ | 今日 / 生产 / 待办 / 洞察 hub；创作 Tab；审阅深链；顶栏字号三档 |
 | **七书 LLM judge 全 ≥4.0** | ✅ | `9008115` 黄沙 · `174f9a0` 四书 polish |
 | 七样章 prose polish 两轮 | ✅ | `5906e77` → `9008115` |

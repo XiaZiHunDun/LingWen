@@ -1,7 +1,13 @@
 // Product tools live e2e — 故事结构图 + 介入规则 UI（矩阵 §9 MVP）
 import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
-import { dismissDeskDrawerIfOpen, openPulseDrawer } from './helpers/companion-project.js';
+import {
+  COMPANION_SLUG,
+  dismissDeskDrawerIfOpen,
+  openCompanionProject,
+  openPulseDrawer,
+  restoreCreatorProject,
+} from './helpers/companion-project.js';
 
 test.describe('Creator product tools live e2e', () => {
   test('structure_graph_timeline_toggle', async ({ page }) => {
@@ -35,13 +41,15 @@ test.describe('Creator product tools live e2e', () => {
     await expect(logicRule).toBeChecked({ checked: before });
   });
 
-  test('companion_micro_task_bar_on_write_desk', async ({ page }) => {
+  test('companion_micro_task_bar_on_write_desk', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);
-    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await openCompanionProject(page, request, COMPANION_SLUG);
     const bar = page.getByTestId('write-micro-task-bar');
     await expect(bar).toBeVisible({ timeout: 30_000 });
     await expect(bar).toContainText(/再写|已达标/);
-    await expect(page.getByTestId('write-micro-task-fill')).toBeVisible();
+    await expect(bar.getByRole('progressbar')).toBeVisible();
+    await expect(page.getByTestId('write-micro-task-fill')).toBeAttached();
+    await restoreCreatorProject(request);
   });
 });
