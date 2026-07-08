@@ -35,9 +35,9 @@ test.describe('Creator product tools live e2e', () => {
     const logicRule = page.getByTestId('pref-intervention-logicP0');
     await expect(logicRule).toBeVisible();
     const before = await logicRule.isChecked();
-    await logicRule.click();
+    await logicRule.setChecked(!before);
     await expect(logicRule).toBeChecked({ checked: !before });
-    await logicRule.click();
+    await logicRule.setChecked(before);
     await expect(logicRule).toBeChecked({ checked: before });
   });
 
