@@ -131,13 +131,48 @@ test.describe('Companion selection agent (live)', () => {
     await setBodyDraft(page, BODY);
     await selectBodyRange(page, SELECTED);
 
-    await openAdvancedTools(page);
     await page.getByTestId('selection-lock-toggle').click();
     await page.getByTestId('rewrite-preset-concrete').click();
 
     await expect(page.getByTestId('write-director-plan-card')).toBeHidden();
-    await expect(page.getByTestId('write-quality-bar')).toContainText('锁定', { timeout: 10_000 });
+    await expect(page.getByTestId('write-agent-status-main')).toContainText('锁定', { timeout: 10_000 });
     expect(streamCalls).toBe(0);
+  });
+
+  test('companion_selection_director_path_confirm_apply', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    const PATH_REPLACED = '加快节奏后的段落';
+    const PATH_EXPECTED = `开头段落。\n\n${PATH_REPLACED}\n\n结尾。`;
+    let capturedPayload = null;
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      capturedPayload = route.request().postDataJSON?.() ?? {};
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"' + PATH_REPLACED + '"}],"provider":"mock","annotations":[],"scope":{"type":"selection","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await expect(page.getByTestId('write-scope-bar')).toContainText('选中', { timeout: 10_000 });
+    await page.getByTestId('director-path-run-faster').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    expect(capturedPayload?.action).toBe('path:faster');
+    expect(capturedPayload?.scope?.type).toBe('selection');
+
+    await page.getByTestId('write-candidate-c1').click();
+    await page.getByTestId('write-director-confirm-btn').click();
+    await expect.poll(async () => getBodyDraft(page)).toBe(PATH_EXPECTED);
   });
 
   test('companion_selection_preset_pick_c2_confirms_body', async ({ page, request }) => {

@@ -63,6 +63,17 @@
   font-size: var(--text-sm);
 }
 
+.write-workbench__selection-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.write-workbench__selection-toolbar .write-workbench__card-title {
+  margin: 0;
+}
+
 .write-workbench__chips {
   display: flex;
   flex-wrap: wrap;

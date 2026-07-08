@@ -212,7 +212,19 @@
         class="write-workbench__card"
         data-testid="write-selection-tools"
       >
-        <p class="write-workbench__card-title">选区微调</p>
+        <div class="write-workbench__selection-toolbar">
+          <p class="write-workbench__card-title">选区微调</p>
+          <button
+            v-if="wb.isPanelVisible('controlStrip')"
+            type="button"
+            class="write-workbench__chip"
+            :class="{ 'write-workbench__chip--active': wb.selectionLocked }"
+            data-testid="selection-lock-toggle"
+            @click="wb.toggleSelectionLock()"
+          >
+            {{ wb.selectionLocked ? '🔒 已锁定' : '锁定选区' }}
+          </button>
+        </div>
         <div class="write-workbench__chips">
           <button
             v-for="(label, id) in wb.agent.rewritePresets"
@@ -220,12 +232,19 @@
             type="button"
             class="write-workbench__chip"
             :data-testid="`rewrite-preset-${id}`"
-            :disabled="wb.agent.generating"
+            :disabled="wb.agent.generating || wb.selectionLocked"
             @click="wb.agent.runRewritePreset(id)"
           >
             {{ label }}
           </button>
         </div>
+        <p
+          v-if="wb.agent.statusLine"
+          class="meta-line"
+          data-testid="write-agent-status-main"
+        >
+          {{ wb.agent.statusLine }}
+        </p>
       </div>
 
       <CreatorWriteMicroTaskBar
