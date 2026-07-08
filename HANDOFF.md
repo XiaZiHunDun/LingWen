@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`abb5f503`**（批次 13 双绿） |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`abb5f503`**（批次 13）→ 批次 14 待 push |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -57,6 +57,7 @@
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | `11aa9ab4`/`01582d95` 主区 checkpoint diff · 锁定 preset · 视觉快照 · Live E2E **69** |
 | **Human-first 批次 12（锁定主区 + 导演路径选区 E2E）** | ✅ | `d83b35f5` 选区工具栏锁定 · director path+选区确认 · Live E2E **70** |
+| **Human-first 批次 14（目标标签主区 + 导演文案联动 E2E）** | ✅ | 主区 `write-goal-tags-main` · suspense→导演路径文案 · Live E2E **74** |
 | **Human-first 批次 13（文风主区 + 锁定导演路径 E2E）** | ✅ | `1452963d`/`abb5f503` 主区 `write-style-bar-main` · 导演路径+锁定拦截 · a11y label · Live E2E **72** |
 | **Human-first 批次 6（发布 E2E + 文档）** | ✅ | `7e34133f` 发布向导 Live E2E · `nav=write` 文档扫尾 · Live E2E **64** |
 | **Human-first 批次 5（导出入口）** | ✅ | `3df37369` human-first 顶栏导出/发布 · Live E2E **63** · Vitest **1002** |
@@ -87,7 +88,7 @@
 | pytest×3 · vitest · lint · build | 每次 push blocking |
 | golden×8 | 七 Studio + 星陨 testbed |
 | **llm×7** | **路径过滤**；改 `projects/**`/`infra/**` 或 PR label `llm-check` 才跑 |
-| e2e-live | Playwright live-backend **72** 项 · 在 `dashboard-frontend-ci.yml` blocking |
+| e2e-live | Playwright live-backend **74** 项 · 在 `dashboard-frontend-ci.yml` blocking |
 | 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
 
 文档地图：`novel-factory/docs/ci-quality-gates.md`
@@ -1107,6 +1108,7 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 **维护模式（v12 后默认）**：
 
 - [x] 样章维护例行（2026-06-24）→ `verify-studio-maintenance-run.sh` · 七样章 zip 已重打
+- [x] 样章维护例行（2026-07-08）→ `verify-studio-maintenance-run.sh` PASS · 七样章 zip 重打 · track PASS
 - [ ] 样章正文改动 → `prepare-studio-samples-zip.sh` + 必要时 `prose-judge-llm` workflow
 - [ ] 改 Python/frontend → 本地最小验证（见 `ci-quality-gates.md` §本地最小验证）
 - [ ] push 后扫 **GitHub Actions → test**（纯文档可跳过 llm×7）

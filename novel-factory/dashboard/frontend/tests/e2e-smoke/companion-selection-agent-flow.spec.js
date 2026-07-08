@@ -211,6 +211,33 @@ test.describe('Companion selection agent (live)', () => {
     await expect(page.getByTestId('style-strength-label')).toBeVisible();
   });
 
+  test('companion_goal_tags_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await expect(page.getByTestId('write-goal-tags-main')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('goal-tag-suspense')).toBeVisible();
+  });
+
+  test('companion_goal_suspense_rewrites_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const fasterCard = page.getByTestId('director-path-faster');
+    await expect(fasterCard).toBeVisible({ timeout: 10_000 });
+    await expect(fasterCard).toContainText('信息披露前移');
+
+    await page.getByTestId('goal-tag-suspense').click();
+    await expect(fasterCard).toContainText('悬疑感可能减弱', { timeout: 10_000 });
+  });
+
   test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(120_000);

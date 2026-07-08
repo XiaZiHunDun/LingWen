@@ -212,12 +212,14 @@
         class="write-workbench__card"
       >
         <CreatorWriteControlStrip
-          strength-only
+          main-bar
           :show-strength="true"
           :show-toggles="false"
-          :show-goal-tags="false"
+          :show-goal-tags="true"
           :style-strength="wb.styleStrength"
+          :goal-tag="wb.goalTag"
           @update:style-strength="wb.styleStrength = $event"
+          @update:goal-tag="wb.goalTag = $event"
         />
       </div>
 
@@ -466,6 +468,7 @@
             v-if="wb.isPanelVisible('controlStrip')"
             :show-strength="false"
             :show-toggles="false"
+            :show-goal-tags="false"
             :style-strength="wb.styleStrength"
             :selection-locked="wb.selectionLocked"
             :allow-worldbuilding-fill="wb.allowWorldbuildingFill"

@@ -188,6 +188,15 @@ describe('CreatorWriteWorkbench component', () => {
     expect(writeCtx.wb.styleStrength).toBe(1);
   });
 
+  test('toggles goal tag on human-first main area', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    expect(wrapper.find(byTestid('write-goal-tags-main')).exists()).toBe(true);
+    const tag = wrapper.find(byTestid('goal-tag-suspense'));
+    expect(tag.exists()).toBe(true);
+    await tag.trigger('click');
+    expect(writeCtx.wb.goalTag).toBe('suspense');
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,
