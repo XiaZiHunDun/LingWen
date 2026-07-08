@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`d62af6ca`**（批次 9） |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`d62af6ca`**（批次 9）→ 批次 10 待 push |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -53,7 +53,8 @@
 | **Human-first 批次 4（P1）** | ✅ | `77e639e1` useCreatorWrite 单测 **11** · 选区 Agent E2E · Vitest **960** · Live E2E **62** |
 | **Human-first 批次 7（发布链路 E2E）** | ✅ | `2c146d79` 发布→导出 submission · stub 提交成功 · Live E2E **66** |
 | **Human-first 批次 8（Agent 单测）** | ✅ | `cfa8c168` `use-creator-agent.spec.ts` **11** · scope/流式/预览确认 · Vitest **1013** · Live E2E **66** |
-| **Human-first 批次 9（Agent E2E 加深）** | ✅ | human-first 主区选区 preset · preset→确认→undo E2E · Live E2E **67** |
+| **Human-first 批次 9（Agent E2E 加深）** | ✅ | `d62af6ca` human-first 主区选区 preset · preset→确认→undo E2E · Live E2E **67** |
+| **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 6（发布 E2E + 文档）** | ✅ | `7e34133f` 发布向导 Live E2E · `nav=write` 文档扫尾 · Live E2E **64** |
 | **Human-first 批次 5（导出入口）** | ✅ | `3df37369` human-first 顶栏导出/发布 · Live E2E **63** · Vitest **1002** |
 | **Human-first 工程收尾** | ✅ | `8b9a8041` Pulse/Batch + Modal 单测 **38** · E2E helper 统一 · CI 契约自动解析 · Vitest **998** · Live E2E **62** |
@@ -83,7 +84,7 @@
 | pytest×3 · vitest · lint · build | 每次 push blocking |
 | golden×8 | 七 Studio + 星陨 testbed |
 | **llm×7** | **路径过滤**；改 `projects/**`/`infra/**` 或 PR label `llm-check` 才跑 |
-| e2e-live | Playwright live-backend **67** 项 · 在 `dashboard-frontend-ci.yml` blocking |
+| e2e-live | Playwright live-backend **68** 项 · 在 `dashboard-frontend-ci.yml` blocking |
 | 手动 | `prose-judge-llm` · `real-llm-tests` · `e2e-smoke` · `coverage-pages` |
 
 文档地图：`novel-factory/docs/ci-quality-gates.md`

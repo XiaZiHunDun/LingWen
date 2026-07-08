@@ -377,6 +377,21 @@
             </button>
           </div>
         </div>
+
+        <div
+          v-if="wb.isPanelVisible('versionCheckpointList') && wb.agent.lastCheckpointId"
+          class="write-workbench__card write-workbench__undo-bar"
+          data-testid="write-undo-bar-main"
+        >
+          <button
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="write-undo-last-btn"
+            @click="wb.agent.undoLastApply()"
+          >
+            撤销上次应用
+          </button>
+        </div>
       </template>
 
       <details
@@ -525,15 +540,6 @@
               :diff-view="wb.diffView"
               @close="wb.closeCheckpointDiff"
             />
-            <button
-              v-if="wb.agent.lastCheckpointId"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="write-undo-last-btn"
-              @click="wb.agent.undoLastApply()"
-            >
-              撤销上次应用
-            </button>
           </div>
         </div>
       </details>

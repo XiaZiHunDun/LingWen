@@ -15,7 +15,9 @@ import {
 const BODY = '开头段落。\n\n中间待改。\n\n结尾。';
 const SELECTED = '中间待改';
 const REPLACED = '中间已润色';
+const REPLACED_C2 = '中间更大胆';
 const EXPECTED = '开头段落。\n\n中间已润色。\n\n结尾。';
+const EXPECTED_C2 = '开头段落。\n\n中间更大胆。\n\n结尾。';
 const INSERTED = 'E2E插入的新段落。';
 const INSERT_EXPECTED = `${EXPECTED}\n\n${INSERTED}`;
 
@@ -103,9 +105,35 @@ test.describe('Companion selection agent (live)', () => {
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED);
 
-    await openAdvancedTools(page);
-    await expect(page.getByTestId('write-undo-last-btn')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('write-undo-bar-main')).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('write-undo-last-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(BODY);
+  });
+
+  test('companion_selection_preset_pick_c2_confirms_body', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"稳健","text":"' + REPLACED + '"},{"id":"c2","label":"大胆","text":"' + REPLACED_C2 + '"}],"provider":"mock","annotations":[],"scope":{"type":"selection","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await page.getByTestId('rewrite-preset-dramatic').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('write-candidate-c2').click();
+    await page.getByTestId('write-director-confirm-btn').click();
+    await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED_C2);
   });
 });
