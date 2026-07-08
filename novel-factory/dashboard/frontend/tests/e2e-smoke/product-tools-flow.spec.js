@@ -35,10 +35,10 @@ test.describe('Creator product tools live e2e', () => {
     const logicRule = page.getByTestId('pref-intervention-logicP0');
     await expect(logicRule).toBeVisible();
     const before = await logicRule.isChecked();
-    await logicRule.setChecked(!before);
+    await logicRule.click();
     await expect(logicRule).toBeChecked({ checked: !before });
-    await logicRule.setChecked(before);
-    await expect(logicRule).toBeChecked({ checked: before });
+    await logicRule.click();
+    await expect.poll(async () => logicRule.isChecked()).toBe(before);
   });
 
   test('companion_export_modal_open_preview', async ({ page, request }) => {
