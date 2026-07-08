@@ -16,11 +16,11 @@ grep creation_mode config/project.yaml
 # 应为 studio + quality_profile: studio_full（或默认）
 ```
 
-## 2. 创作页（`?nav=creator`）
+## 2. 创作页（`?nav=write`）
 
-- [ ] **脉络**：套用卷纲模板（三幕/五卷）→ 锁定 → 保存
-- [ ] **设定**：编辑 → 三路 diff（磁盘 / 编辑器 / 历史）→ 确认保存
-- [ ] **写**：章预览只读（工厂正文仍以 batch 产出为主）
+- [ ] **脉络**：侧滑抽屉或 Tab → 套用卷纲模板（三幕/五卷）→ 锁定 → 保存
+- [ ] **设定**：Tab 打开 → 编辑 → 三路 diff（磁盘 / 编辑器 / 历史）→ 确认保存
+- [ ] **写**：human-first 书桌；顶栏 **导出 / 发布**；工厂正文仍以 batch 产出为主
 
 ## 3. Studio 生产
 

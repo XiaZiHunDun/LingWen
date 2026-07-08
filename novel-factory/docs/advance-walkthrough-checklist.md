@@ -25,7 +25,7 @@ export LINGWEN_PROJECT_ROOT="$(pwd)/projects/my-saga"
 
 ## 2. 锁定卷纲
 
-在 Dashboard `?nav=creator` **脉络** 栏，或编辑全局大纲卷纲表：
+在 Dashboard `?nav=write` **脉络**（侧滑抽屉或 Tab），或编辑全局大纲卷纲表：
 
 - [ ] 每卷填写章范围 + 核心冲突
 - [ ] 首批要写的卷 → **锁定**

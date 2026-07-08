@@ -55,6 +55,21 @@ test.describe('Creator product tools live e2e', () => {
     await restoreCreatorProject(request);
   });
 
+  test('companion_publish_wizard_open_format_step', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await expect(page.getByTestId('publish-btn')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('publish-btn').click();
+    await expect(page.getByTestId('creator-publish-modal')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('publish-step-platform')).toBeVisible();
+    await page.getByTestId('publish-next-btn').click();
+    await expect(page.getByTestId('publish-step-format')).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('publish-modal-close').click();
+    await expect(page.getByTestId('creator-publish-modal')).toBeHidden({ timeout: 10_000 });
+    await restoreCreatorProject(request);
+  });
+
   test('companion_micro_task_bar_on_write_desk', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);

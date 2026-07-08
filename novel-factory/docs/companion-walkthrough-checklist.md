@@ -43,10 +43,11 @@ bash scripts/run-companion-check.sh
 
 ## 5. Dashboard 创作页（可选）
 
-打开 `http://localhost:8765/?nav=creator`（需 `LINGWEN_SERVE_UI=1` 或 Vite dev）
+打开 `http://localhost:8765/?nav=write`（`nav=creator` 仍兼容；需 `LINGWEN_SERVE_UI=1` 或 Vite dev）
 
-- [ ] **写** 栏：ch001 显示「已写 / 字数」
-- [ ] **脉络** 栏：可添加卷纲、锁定、保存
+- [ ] 顶部 **今日 / 创作 / 工具箱**；默认进入 human-first 书桌
+- [ ] **写**：ch001 显示「已写 / 字数」；顶栏 **导出 / 发布** 可见
+- [ ] **脉络**：侧滑抽屉或设定 Tab 打开；可添加卷纲、锁定、保存
 - [ ] **设定** 栏：编辑支柱 → 变更预览 → 确认保存
 - [ ] 若提示「已在别处修改」→ 点 **重新加载**
 

@@ -13,7 +13,7 @@
 | 5 | `prose-judge-llm.yml` | Prose Judge LLM | **仅手动** | 否 | 七书六维 judge + artifact |
 | 6 | `real-llm-tests.yml` | real-llm-tests | **仅手动** | 否 | MiniMax agent 写作链路 |
 
-\* 主门已含 vitest + lint + build；**Playwright live-backend（63 项）** 在 `dashboard-frontend-ci.yml`（`e2e-live` job）blocking；Frontend CI 另含 typecheck + **coverage** + a11y/visual/ui-metrics。
+\* 主门已含 vitest + lint + build；**Playwright live-backend（64 项）** 在 `dashboard-frontend-ci.yml`（`e2e-live` job）blocking；Frontend CI 另含 typecheck + **coverage** + a11y/visual/ui-metrics。
 
 **覆盖率叙事**：pytest **50%** global 为 CI 硬门；frontend `vitest --coverage` 阈值 lines/statements **80%**、branches/functions **70%**（见 `vitest.config.js`），在 `dashboard-frontend-ci.yml` 与本地 `pnpm test:coverage`。
 
@@ -79,7 +79,7 @@ LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh tiedao-dang
 
 | Workflow | 触发 | 说明 |
 |----------|------|------|
-| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（63）** · a11y · visual · ui-metrics |
+| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（64）** · a11y · visual · ui-metrics |
 | **Frontend Coverage Pages** | **仅手动** | GitHub Pages HTML 报告（Codecov 仍由 Frontend CI 上传） |
 | **Prose Judge LLM** | 仅手动 | 七书 `--llm` + artifact |
 | **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec 轻量调试 |

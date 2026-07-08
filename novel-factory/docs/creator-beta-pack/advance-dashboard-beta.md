@@ -5,9 +5,11 @@
 ## 打开创作页
 
 ```
-http://localhost:8765/?nav=creator
+http://localhost:8765/?nav=write
 ```
 
+- [ ] 顶部导航：**今日** / **创作** / **工具箱**
+- [ ] 顶栏 **导出 / 发布** 可见（human-first 书桌）
 - [ ] 模式徽章显示 **推进**
 - [ ] 卷级 **pulse** 仅 alert 偏离；可一键生成卷摘要
 

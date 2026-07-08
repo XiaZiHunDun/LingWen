@@ -16,7 +16,7 @@
 
 ## Beta 范围（v7.0 基线）
 
-- **三模式**：companion / advance / studio 创作页 `?nav=creator`
+- **三模式**：companion / advance / studio 创作页 `?nav=write`（`nav=creator` 仍兼容）
 - **v7.0 里程碑**：分享闭环 E2E · batch 运维摘要折叠 · 无障碍验收清单
 - **v7.0+ 产品级**：分享协作 v2（diff × 卷级批注）· 本 beta 文档包 · Studio/Creator changelog 解耦
 
