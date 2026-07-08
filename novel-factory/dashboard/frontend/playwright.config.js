@@ -17,7 +17,7 @@ const liveLlmE2E = process.env.LINGWEN_E2E_LIVE_LLM === '1'
 const a11yE2E = process.env.LINGWEN_E2E_LIVE === '1'
 
 const liveBackendSpecPattern =
-  /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow|memory-gateway-flow|product-tools-flow|companion-full-path-flow)\.spec\.js/
+  /(ripples-audit|decisions-resolve|creator-workspace|ask-flow|library-flow|more-hub|landing-nav|advance-produce|today-flow|insight-flow|studio-flow|settings-flow|workflows-flow|advance-batch-flow|cascade-runs-flow|entity-memory-flow|director-paths-flow|memory-gateway-flow|product-tools-flow|companion-full-path-flow|companion-selection-agent-flow)\.spec\.js/
 
 const viteServer = {
   command: 'pnpm dev --port 5173 --strictPort',

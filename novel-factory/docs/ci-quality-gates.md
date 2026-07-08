@@ -13,11 +13,11 @@
 | 5 | `prose-judge-llm.yml` | Prose Judge LLM | **仅手动** | 否 | 七书六维 judge + artifact |
 | 6 | `real-llm-tests.yml` | real-llm-tests | **仅手动** | 否 | MiniMax agent 写作链路 |
 
-\* 主门已含 vitest + lint + build；Frontend CI 额外提供 typecheck + **coverage 80%** + Codecov。
+\* 主门已含 vitest + lint + build；**Playwright live-backend（62 项）** 在 `dashboard-frontend-ci.yml`（`e2e-live` job）blocking；Frontend CI 另含 typecheck + **coverage** + a11y/visual/ui-metrics。
 
-**覆盖率叙事**：pytest **50%** global 为 CI 硬门；frontend `vitest --coverage` **80%** 阈值在 `dashboard-frontend-ci.yml`（改 frontend 时）与本地 `pnpm test:coverage`。
+**覆盖率叙事**：pytest **50%** global 为 CI 硬门；frontend `vitest --coverage` 阈值 lines/statements **80%**、branches/functions **70%**（见 `vitest.config.js`），在 `dashboard-frontend-ci.yml` 与本地 `pnpm test:coverage`。
 
-**已删除（12.08）**：`dashboard-e2e-live.yml`（与 `test` 内 `e2e-live` 重复）、`novel-factory/.github/workflows/*.yml` 废弃副本。
+**已删除（12.08）**：`dashboard-e2e-live.yml`（与 Frontend CI `e2e-live` 重复）、`novel-factory/.github/workflows/*.yml` 废弃副本。
 
 ---
 
@@ -31,7 +31,8 @@
 | onboarding | `verify-onboarding.sh ci-smoke` | init → preflight → dry-run |
 | ruff | `ruff check .` | **blocking** |
 | **llm-golden-primary** | `run-llm-golden-check.sh <slug>` ×**7** | **路径过滤** · label `llm-check` 强制 · 需 `MINIMAX_API_KEY` |
-| **e2e-live** | `pnpm e2e:live` (5 specs) | **blocking** · 本地 `verify-e2e-live-ci.sh` |
+
+> **Playwright live-backend** 不在主门内，见 §旁路 workflow · `dashboard-frontend-ci.yml` · 本地 `verify-e2e-live-ci.sh`。
 
 Golden Set **不再** `|| true` 吞掉 full-check 失败；仅 P0 会挡 CI，P1/P2 仍打印但不 fail。
 
@@ -52,7 +53,7 @@ pytest CI **排除**（需真 API / 非主门）：
 |------------|------------|-------------|
 | **纯正文** `projects/*/03_内容仓库` | `bash scripts/run-prose-calibration.sh <slug>` | pytest · vitest · golden · e2e |
 | **Python / infra** | `pytest tests/<相关目录> -q` | 三版本矩阵 + cov 50% |
-| **Dashboard 前端** | `cd dashboard/frontend && pnpm vitest run`（~8s） | vitest + e2e-live |
+| **Dashboard 前端** | `cd dashboard/frontend && pnpm vitest run`（~8s） | vitest + Frontend CI（含 e2e-live） |
 | **改 workflow / CI 契约** | `pytest tests/ci/ -q` | 同上 |
 | **发版前（可选）** | `bash scripts/verify-studio-release.sh` | 与 CI 大量重叠 |
 
@@ -78,7 +79,7 @@ LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh tiedao-dang
 
 | Workflow | 触发 | 说明 |
 |----------|------|------|
-| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build（比主门 vitest 更深） |
+| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（62）** · a11y · visual · ui-metrics |
 | **Frontend Coverage Pages** | **仅手动** | GitHub Pages HTML 报告（Codecov 仍由 Frontend CI 上传） |
 | **Prose Judge LLM** | 仅手动 | 七书 `--llm` + artifact |
 | **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec 轻量调试 |
@@ -169,7 +170,7 @@ cd novel-factory
 bash scripts/verify-studio-release.sh          # doctor + golden×8（与 CI 重叠）
 bash scripts/run-primary-revision-verify.sh <slug>
 bash scripts/sync-handoff-baseline.sh        # 全绿后更新 HANDOFF 数字
-bash scripts/verify-e2e-live-ci.sh           # 对齐 test.yml e2e-live job
+bash scripts/verify-e2e-live-ci.sh           # 对齐 dashboard-frontend-ci.yml e2e-live job
 ```
 
 主修书改稿：[`primary-revision-book.md`](primary-revision-book.md) · [`prose-rubric-v1.md`](prose-rubric-v1.md) · [`prose-rubric-v2.md`](prose-rubric-v2.md)

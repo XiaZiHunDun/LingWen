@@ -35,3 +35,4 @@ class TestE2eLiveF70:
         assert "decisions-resolve" in text
         assert "creator-workspace" in text
         assert "companion-full-path-flow" in text
+        assert "companion-selection-agent-flow" in text

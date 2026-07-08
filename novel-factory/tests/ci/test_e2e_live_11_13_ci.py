@@ -27,6 +27,7 @@ LIVE_BACKEND_SPEC_STEMS = (
     "memory-gateway-flow",
     "product-tools-flow",
     "companion-full-path-flow",
+    "companion-selection-agent-flow",
 )
 
 
@@ -42,7 +43,7 @@ class TestE2eLive1113:
             path = specs_dir / f"{stem}.spec.js"
             assert path.is_file(), f"missing live-backend spec: {path.name}"
             total += path.read_text(encoding="utf-8").count("test(")
-        assert total >= 61, f"expected >=61 live-backend tests, got {total}"
+        assert total >= 62, f"expected >=62 live-backend tests, got {total}"
 
     def test_verify_script_playwright_fallback(self):
         script = NOVEL_FACTORY / "scripts" / "verify-e2e-live-ci.sh"
