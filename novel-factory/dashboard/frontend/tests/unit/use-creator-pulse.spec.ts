@@ -64,7 +64,7 @@ function mountPulse(overrides: Record<string, unknown> = {}) {
     jumpToChapter,
     onAfterVolumeSummarySave,
     batchJob: ref(null),
-    ...overrides.deps,
+    ...(overrides.deps as object | undefined),
   };
 
   let api!: PulseApi;
