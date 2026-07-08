@@ -19,6 +19,58 @@ export async function selectChapter(page, rowTestId = 'chapter-row-1') {
   await expect(page.getByTestId('chapter-body-textarea')).toBeAttached({ timeout: 15_000 });
 }
 
+/** Select entire chapter body. */
+export async function selectAllBody(page) {
+  const textarea = page.getByTestId('chapter-body-textarea');
+  await textarea.scrollIntoViewIfNeeded();
+  await textarea.evaluate((el) => {
+    el.focus();
+    el.setSelectionRange(0, el.value.length);
+    el.dispatchEvent(new Event('select', { bubbles: true }));
+    el.dispatchEvent(new Event('mouseup', { bubbles: true }));
+  });
+}
+
+/** Human-first desk: set chapter body via DOM (textarea may be attached but not visible to fill()). */
+export async function setBodyDraft(page, text) {
+  const textarea = page.getByTestId('chapter-body-textarea');
+  await textarea.scrollIntoViewIfNeeded();
+  await textarea.evaluate((el, value) => {
+    el.value = String(value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, text);
+}
+
+/** Select a substring in the chapter body textarea and notify Vue. */
+export async function selectBodyRange(page, needle) {
+  const textarea = page.getByTestId('chapter-body-textarea');
+  await textarea.scrollIntoViewIfNeeded();
+  await textarea.evaluate((el, part) => {
+    el.focus();
+    const start = el.value.indexOf(String(part));
+    if (start < 0) throw new Error(`selection needle not found: ${part}`);
+    el.setSelectionRange(start, start + String(part).length);
+    el.dispatchEvent(new Event('select', { bubbles: true }));
+    el.dispatchEvent(new Event('mouseup', { bubbles: true }));
+  }, needle);
+}
+
+/** Clear body selection (caret at end). */
+export async function clearBodySelection(page) {
+  const textarea = page.getByTestId('chapter-body-textarea');
+  await textarea.evaluate((el) => {
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+    el.dispatchEvent(new Event('select', { bubbles: true }));
+    el.dispatchEvent(new Event('mouseup', { bubbles: true }));
+  });
+}
+
+/** Read chapter body textarea value (works when not visible). */
+export async function getBodyDraft(page) {
+  return page.getByTestId('chapter-body-textarea').inputValue();
+}
+
 /** Expand advanced tools + agent strip for agent input. */
 export async function openAdvancedTools(page) {
   await page.getByTestId('write-advanced-tools').locator('summary').click();

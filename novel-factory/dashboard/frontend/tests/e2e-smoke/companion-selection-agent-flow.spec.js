@@ -2,10 +2,14 @@ import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
 import {
   COMPANION_SLUG,
+  clearBodySelection,
+  getBodyDraft,
   openAdvancedTools,
   openCompanionProject,
   restoreCreatorProject,
+  selectBodyRange,
   selectChapter,
+  setBodyDraft,
 } from './helpers/companion-project.js';
 
 const BODY = '开头段落。\n\n中间待改。\n\n结尾。';
@@ -14,28 +18,6 @@ const REPLACED = '中间已润色';
 const EXPECTED = '开头段落。\n\n中间已润色。\n\n结尾。';
 const INSERTED = 'E2E插入的新段落。';
 const INSERT_EXPECTED = `${EXPECTED}\n\n${INSERTED}`;
-
-async function setBodyDraft(page, text) {
-  const textarea = page.getByTestId('chapter-body-textarea');
-  await textarea.scrollIntoViewIfNeeded();
-  await textarea.evaluate((el, value) => {
-    el.value = String(value);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }, text);
-}
-
-async function selectBodyRange(page, needle) {
-  const textarea = page.getByTestId('chapter-body-textarea');
-  await textarea.scrollIntoViewIfNeeded();
-  await textarea.evaluate((el, part) => {
-    el.focus();
-    const start = el.value.indexOf(String(part));
-    if (start < 0) throw new Error(`selection needle not found: ${part}`);
-    el.setSelectionRange(start, start + String(part).length);
-    el.dispatchEvent(new Event('select', { bubbles: true }));
-    el.dispatchEvent(new Event('mouseup', { bubbles: true }));
-  }, needle);
-}
 
 test.describe('Companion selection agent (live)', () => {
   test.afterEach(async ({ request }) => {
@@ -72,21 +54,15 @@ test.describe('Companion selection agent (live)', () => {
     await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
-    await expect.poll(async () => page.getByTestId('chapter-body-textarea').inputValue()).toBe(EXPECTED);
+    await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED);
 
-    const textarea = page.getByTestId('chapter-body-textarea');
-    await textarea.evaluate((el) => {
-      el.focus();
-      el.setSelectionRange(el.value.length, el.value.length);
-      el.dispatchEvent(new Event('select', { bubbles: true }));
-      el.dispatchEvent(new Event('mouseup', { bubbles: true }));
-    });
+    await clearBodySelection(page);
 
     await page.getByTestId('write-agent-input').fill('在章末插入一段');
     await page.getByTestId('write-agent-send-btn').click();
     await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
-    await expect.poll(async () => page.getByTestId('chapter-body-textarea').inputValue()).toBe(INSERT_EXPECTED);
+    await expect.poll(async () => getBodyDraft(page)).toBe(INSERT_EXPECTED);
   });
 });

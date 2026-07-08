@@ -2,10 +2,13 @@ import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
 import {
   COMPANION_SLUG,
+  getBodyDraft,
   openAdvancedTools,
   openCompanionProject,
   restoreCreatorProject,
+  selectAllBody,
   selectChapter,
+  setBodyDraft,
 } from './helpers/companion-project.js';
 
 const HANDWRITTEN = '林默在雨里写下第一段，灯影摇晃。';
@@ -33,9 +36,9 @@ test.describe('Companion full path (live)', () => {
 
     await openCompanionProject(page, request, COMPANION_SLUG);
     await selectChapter(page);
-
-    await page.getByTestId('chapter-body-textarea').fill(HANDWRITTEN);
-    await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(HANDWRITTEN);
+    await setBodyDraft(page, HANDWRITTEN);
+    await expect.poll(async () => getBodyDraft(page)).toBe(HANDWRITTEN);
+    await selectAllBody(page);
 
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('润色这一段');
@@ -43,7 +46,7 @@ test.describe('Companion full path (live)', () => {
     await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
-    await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(AGENT_TEXT, { timeout: 10_000 });
+    await expect.poll(async () => getBodyDraft(page)).toBe(AGENT_TEXT);
 
     const saveResponse = page.waitForResponse(
       (resp) =>

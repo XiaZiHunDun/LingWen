@@ -167,8 +167,8 @@ def creator_memory_assets_payload(project: StudioProject) -> dict[str, Any]:
             },
         )
 
-    from infra.creator_preferences import load_creator_preferences
     from infra.creator_memory_annotations import apply_memory_annotations, load_memory_annotations
+    from infra.creator_preferences import load_creator_preferences
 
     prefs = load_creator_preferences(project.root)
     annotations = load_memory_annotations(project.root)
