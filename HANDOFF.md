@@ -50,7 +50,7 @@
 | **Human-first 深化（P1 续）** | ✅ | `63dec001` 发布向导单测 · 脉络抽屉 a11y · Vitest **941** · Live E2E **60** |
 | **Human-first 验收（P1）** | ✅ | `df8b2912` WritePanel 单测 · 陪伴全路径 E2E · Vitest **949** · Live E2E **61** |
 | **CI 契约对齐** | ✅ | `40f9d7e6` pytest 契约迁 `dashboard-frontend-ci.yml` |
-| **Human-first 批次 4（P1）** | ✅ | useCreatorWrite 单测 **11** · 选区 Agent E2E · Vitest **960** · Live E2E **62** |
+| **Human-first 批次 4（P1）** | ✅ | `77e639e1` useCreatorWrite 单测 **11** · 选区 Agent E2E · Vitest **960** · Live E2E **62** |
 | **Dashboard 产品壳 IA（Phase A–D）** | ✅ | 今日 / 生产 / 待办 / 洞察 hub；创作 Tab；审阅深链；顶栏字号三档 |
 | **七书 LLM judge 全 ≥4.0** | ✅ | `9008115` 黄沙 · `174f9a0` 四书 polish |
 | 七样章 prose polish 两轮 | ✅ | `5906e77` → `9008115` |
