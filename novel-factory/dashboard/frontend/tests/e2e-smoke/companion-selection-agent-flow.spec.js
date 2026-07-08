@@ -103,6 +103,7 @@ test.describe('Companion selection agent (live)', () => {
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED);
 
+    await openAdvancedTools(page);
     await expect(page.getByTestId('write-undo-last-btn')).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('write-undo-last-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(BODY);
