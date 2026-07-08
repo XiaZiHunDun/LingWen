@@ -106,8 +106,38 @@ test.describe('Companion selection agent (live)', () => {
     await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED);
 
     await expect(page.getByTestId('write-undo-bar-main')).toBeVisible({ timeout: 10_000 });
+    await page.locator('[data-testid^="checkpoint-diff-"]').first().click();
+    await expect(page.getByTestId('write-checkpoint-diff')).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('write-undo-last-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(BODY);
+  });
+
+  test('companion_selection_preset_blocked_when_locked', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    let streamCalls = 0;
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      streamCalls += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: 'data: {"type":"done","plan":{"advice_only":false,"candidates":[],"provider":"mock"}}\n\n',
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await openAdvancedTools(page);
+    await page.getByTestId('selection-lock-toggle').click();
+    await page.getByTestId('rewrite-preset-concrete').click();
+
+    await expect(page.getByTestId('write-director-plan-card')).toBeHidden();
+    await expect(page.getByTestId('write-quality-bar')).toContainText('锁定', { timeout: 10_000 });
+    expect(streamCalls).toBe(0);
   });
 
   test('companion_selection_preset_pick_c2_confirms_body', async ({ page, request }) => {

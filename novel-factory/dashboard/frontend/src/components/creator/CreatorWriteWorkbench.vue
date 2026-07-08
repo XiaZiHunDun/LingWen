@@ -379,11 +379,38 @@
         </div>
 
         <div
-          v-if="wb.isPanelVisible('versionCheckpointList') && wb.agent.lastCheckpointId"
-          class="write-workbench__card write-workbench__undo-bar"
+          v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
+          class="write-workbench__card write-workbench__version-bar"
           data-testid="write-undo-bar-main"
         >
+          <p class="write-workbench__card-title">版本 / 回滚</p>
+          <ul v-if="wb.checkpoints.length" class="write-workbench__version-list">
+            <li
+              v-for="cp in wb.checkpoints"
+              :key="cp.id"
+              class="write-workbench__version-item"
+            >
+              <span>{{ cp.label }}</span>
+              <div class="write-workbench__version-actions">
+                <button
+                  v-if="wb.isPanelVisible('checkpointDiff')"
+                  type="button"
+                  class="mini-btn pixel-border"
+                  :data-testid="`checkpoint-diff-${cp.id}`"
+                  @click="wb.openCheckpointDiff(cp.id)"
+                >
+                  对比
+                </button>
+              </div>
+            </li>
+          </ul>
+          <CreatorCheckpointDiff
+            v-if="wb.isPanelVisible('checkpointDiff') && wb.diffView"
+            :diff-view="wb.diffView"
+            @close="wb.closeCheckpointDiff"
+          />
           <button
+            v-if="wb.agent.lastCheckpointId"
             type="button"
             class="mini-btn pixel-border"
             data-testid="write-undo-last-btn"
@@ -509,38 +536,6 @@
             </span>
           </div>
 
-          <div
-            v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
-            class="write-workbench__card"
-            data-testid="write-version-stack-main"
-          >
-            <p class="write-workbench__card-title">版本 / 回滚</p>
-            <ul v-if="wb.checkpoints.length" class="write-workbench__version-list">
-              <li
-                v-for="cp in wb.checkpoints"
-                :key="cp.id"
-                class="write-workbench__version-item"
-              >
-                <span>{{ cp.label }}</span>
-                <div class="write-workbench__version-actions">
-                  <button
-                    v-if="wb.isPanelVisible('checkpointDiff')"
-                    type="button"
-                    class="mini-btn pixel-border"
-                    :data-testid="`checkpoint-diff-${cp.id}`"
-                    @click="wb.openCheckpointDiff(cp.id)"
-                  >
-                    对比
-                  </button>
-                </div>
-              </li>
-            </ul>
-            <CreatorCheckpointDiff
-              v-if="wb.isPanelVisible('checkpointDiff') && wb.diffView"
-              :diff-view="wb.diffView"
-              @close="wb.closeCheckpointDiff"
-            />
-          </div>
         </div>
       </details>
 
