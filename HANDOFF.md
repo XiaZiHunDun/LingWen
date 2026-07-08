@@ -53,7 +53,7 @@
 | **Human-first 批次 4（P1）** | ✅ | `77e639e1` useCreatorWrite 单测 **11** · 选区 Agent E2E · Vitest **960** · Live E2E **62** |
 | **Human-first 批次 7（发布链路 E2E）** | ✅ | `2c146d79` 发布→导出 submission · stub 提交成功 · Live E2E **66** |
 | **Human-first 批次 8（Agent 单测）** | ✅ | `cfa8c168` `use-creator-agent.spec.ts` **11** · scope/流式/预览确认 · Vitest **1013** · Live E2E **66** |
-| **Human-first 批次 9（Agent E2E 加深）** | ✅ | 选区 preset→确认→undo · Live E2E **67** |
+| **Human-first 批次 9（Agent E2E 加深）** | ✅ | human-first 主区选区 preset · preset→确认→undo E2E · Live E2E **67** |
 | **Human-first 批次 6（发布 E2E + 文档）** | ✅ | `7e34133f` 发布向导 Live E2E · `nav=write` 文档扫尾 · Live E2E **64** |
 | **Human-first 批次 5（导出入口）** | ✅ | `3df37369` human-first 顶栏导出/发布 · Live E2E **63** · Vitest **1002** |
 | **Human-first 工程收尾** | ✅ | `8b9a8041` Pulse/Batch + Modal 单测 **38** · E2E helper 统一 · CI 契约自动解析 · Vitest **998** · Live E2E **62** |

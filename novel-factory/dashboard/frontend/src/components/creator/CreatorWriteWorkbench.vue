@@ -207,6 +207,27 @@
         :human-first="wb.humanFirstDesk"
       />
 
+      <div
+        v-if="wb.humanFirstDesk && wb.isPanelVisible('selectionRewriteToolbar') && wb.hasBodySelection"
+        class="write-workbench__card"
+        data-testid="write-selection-tools"
+      >
+        <p class="write-workbench__card-title">选区微调</p>
+        <div class="write-workbench__chips">
+          <button
+            v-for="(label, id) in wb.agent.rewritePresets"
+            :key="id"
+            type="button"
+            class="write-workbench__chip"
+            :data-testid="`rewrite-preset-${id}`"
+            :disabled="wb.agent.generating"
+            @click="wb.agent.runRewritePreset(id)"
+          >
+            {{ label }}
+          </button>
+        </div>
+      </div>
+
       <CreatorWriteMicroTaskBar
         v-if="wb.isPanelVisible('microTaskBar') && wb.humanFirstDesk"
         :draft="w.chapterBodyDraft"
