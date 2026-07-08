@@ -132,9 +132,7 @@ test.describe('Companion selection agent (live)', () => {
     await selectBodyRange(page, SELECTED);
 
     await page.getByTestId('selection-lock-toggle').click();
-    await page.getByTestId('rewrite-preset-concrete').click();
-
-    await expect(page.getByTestId('write-director-plan-card')).toBeHidden();
+    await expect(page.getByTestId('rewrite-preset-concrete')).toBeDisabled();
     await expect(page.getByTestId('write-agent-status-main')).toContainText('锁定', { timeout: 10_000 });
     expect(streamCalls).toBe(0);
   });
@@ -144,7 +142,7 @@ test.describe('Companion selection agent (live)', () => {
     test.setTimeout(120_000);
 
     const PATH_REPLACED = '加快节奏后的段落';
-    const PATH_EXPECTED = `开头段落。\n\n${PATH_REPLACED}\n\n结尾。`;
+    const PATH_EXPECTED = `开头段落。\n\n${PATH_REPLACED}。\n\n结尾。`;
     let capturedPayload = null;
 
     await page.route('**/api/creator/agent/plan/stream', async (route) => {
