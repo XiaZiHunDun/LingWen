@@ -179,10 +179,9 @@ describe('CreatorWriteWorkbench component', () => {
     expect(String(writeCtx.chapterBodyDraft)).toContain('稳健候选');
   });
 
-  test('opens advanced tools and toggles style strength slider', async () => {
+  test('toggles style strength slider on human-first main area', async () => {
     const { wrapper, writeCtx } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-advanced-tools')).exists()).toBe(true);
-    await openAdvancedTools(wrapper);
+    expect(wrapper.find(byTestid('write-style-bar-main')).exists()).toBe(true);
     const slider = wrapper.find(byTestid('style-strength-slider'));
     expect(slider.exists()).toBe(true);
     await slider.setValue('1');

@@ -199,4 +199,42 @@ test.describe('Companion selection agent (live)', () => {
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED_C2);
   });
+
+  test('companion_style_strength_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await expect(page.getByTestId('write-style-bar-main')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('style-strength-slider')).toBeVisible();
+    await expect(page.getByTestId('style-strength-label')).toBeVisible();
+  });
+
+  test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    let streamCalls = 0;
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      streamCalls += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: 'data: {"type":"done","plan":{"advice_only":false,"candidates":[],"provider":"mock"}}\n\n',
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await page.getByTestId('selection-lock-toggle').click();
+    await page.getByTestId('director-path-run-faster').click();
+
+    await expect(page.getByTestId('write-director-plan-card')).toBeHidden();
+    await expect(page.getByTestId('write-agent-status-main')).toContainText('锁定', { timeout: 10_000 });
+    expect(streamCalls).toBe(0);
+  });
 });

@@ -2,7 +2,11 @@
   CreatorWriteControlStrip.vue — 风格强度 / 锁定 / 补全开关 / 目标标签 / 透镜
 -->
 <template>
-  <div class="write-control-strip" data-testid="write-control-strip">
+  <div
+    class="write-control-strip"
+    :class="{ 'write-control-strip--strength-only': strengthOnly }"
+    :data-testid="strengthOnly ? 'write-style-bar-main' : 'write-control-strip'"
+  >
     <div v-if="showLens" class="write-control-strip__group" data-testid="write-agent-lens-switcher">
       <span class="write-control-strip__label">透镜</span>
       <button
@@ -17,7 +21,7 @@
         {{ mode.label }}
       </button>
     </div>
-    <div class="write-control-strip__group write-control-strip__group--strength">
+    <div v-if="showStrength" class="write-control-strip__group write-control-strip__group--strength">
       <span class="write-control-strip__label">文风</span>
       <span class="write-control-strip__strength-label" data-testid="style-strength-label">
         {{ currentStrengthLabel }}
@@ -37,7 +41,7 @@
         <span v-for="lvl in strengthLevels" :key="lvl.level">{{ lvl.label }}</span>
       </div>
     </div>
-    <div class="write-control-strip__group">
+    <div v-if="showToggles" class="write-control-strip__group">
       <button
         type="button"
         class="write-workbench__chip"
@@ -57,7 +61,7 @@
         允许补全设定
       </button>
     </div>
-    <div class="write-control-strip__group">
+    <div v-if="showGoalTags" class="write-control-strip__group">
       <span class="write-control-strip__label">目标</span>
       <button
         v-for="tag in goalTags"
@@ -85,6 +89,10 @@ const props = defineProps({
   goalTag: { type: String, default: '' },
   agentLens: { type: String, default: 'author' },
   showLens: { type: Boolean, default: false },
+  showStrength: { type: Boolean, default: true },
+  showToggles: { type: Boolean, default: true },
+  showGoalTags: { type: Boolean, default: true },
+  strengthOnly: { type: Boolean, default: false },
 });
 
 defineEmits([
@@ -114,6 +122,13 @@ const currentStrengthLabel = computed(() =>
   background: var(--bg-secondary);
   font-size: var(--text-xs);
 }
+
+.write-control-strip--strength-only {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
 .write-control-strip__group {
   display: flex;
   flex-wrap: wrap;

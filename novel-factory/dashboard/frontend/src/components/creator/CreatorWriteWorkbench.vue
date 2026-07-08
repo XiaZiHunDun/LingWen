@@ -208,6 +208,20 @@
       />
 
       <div
+        v-if="wb.humanFirstDesk && wb.isPanelVisible('controlStrip')"
+        class="write-workbench__card"
+      >
+        <CreatorWriteControlStrip
+          strength-only
+          :show-strength="true"
+          :show-toggles="false"
+          :show-goal-tags="false"
+          :style-strength="wb.styleStrength"
+          @update:style-strength="wb.styleStrength = $event"
+        />
+      </div>
+
+      <div
         v-if="wb.humanFirstDesk && wb.isPanelVisible('selectionRewriteToolbar') && wb.hasBodySelection"
         class="write-workbench__card"
         data-testid="write-selection-tools"
@@ -450,6 +464,8 @@
         <div v-if="advancedToolsOpen" class="write-workbench__advanced-body">
           <CreatorWriteControlStrip
             v-if="wb.isPanelVisible('controlStrip')"
+            :show-strength="false"
+            :show-toggles="false"
             :style-strength="wb.styleStrength"
             :selection-locked="wb.selectionLocked"
             :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
