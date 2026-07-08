@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`d83b35f5`**（批次 12）→ 批次 13 待 push |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`abb5f503`**（批次 13 双绿） |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -57,7 +57,7 @@
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | `11aa9ab4`/`01582d95` 主区 checkpoint diff · 锁定 preset · 视觉快照 · Live E2E **69** |
 | **Human-first 批次 12（锁定主区 + 导演路径选区 E2E）** | ✅ | `d83b35f5` 选区工具栏锁定 · director path+选区确认 · Live E2E **70** |
-| **Human-first 批次 13（文风主区 + 锁定导演路径 E2E）** | ✅ | `write-style-bar-main` · 导演路径+锁定拦截 · Live E2E **72** |
+| **Human-first 批次 13（文风主区 + 锁定导演路径 E2E）** | ✅ | `1452963d`/`abb5f503` 主区 `write-style-bar-main` · 导演路径+锁定拦截 · a11y label · Live E2E **72** |
 | **Human-first 批次 6（发布 E2E + 文档）** | ✅ | `7e34133f` 发布向导 Live E2E · `nav=write` 文档扫尾 · Live E2E **64** |
 | **Human-first 批次 5（导出入口）** | ✅ | `3df37369` human-first 顶栏导出/发布 · Live E2E **63** · Vitest **1002** |
 | **Human-first 工程收尾** | ✅ | `8b9a8041` Pulse/Batch + Modal 单测 **38** · E2E helper 统一 · CI 契约自动解析 · Vitest **998** · Live E2E **62** |
