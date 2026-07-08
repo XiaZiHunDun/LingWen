@@ -70,13 +70,14 @@ docs/volume-summary-ch001-010.md
 
 4. 有疑点再 `run-companion-check.sh`
 
-### Dashboard（`?nav=creator`）
+### Dashboard（`?nav=write` · Human-first 书桌）
 
-- **写**：点击章节行 → 只读预览大纲/正文
-- **脉络**：编辑卷纲 → **模板库** → 拖拽/合并/拆分 → 锁定 → 保存
+- **导航**：顶部 **今日** / **创作** / **工具箱**；默认进入创作即书桌（`creator-write-workbench`）
+- **写**：点击章节行 → 正文编辑；脉络 / 记忆可从侧滑抽屉打开
+- **脉络**：编辑卷纲 → **模板库** → 拖拽/合并/拆分 → 锁定 → 保存（抽屉或 Tab）
 - **推进**：Preflight + 启动 Batch；完成后自动刷新卷摘要
 - **设定**：变更预览 · **三路 diff（磁盘/编辑器/历史）** · 版本历史可恢复
-- companion/advance 项目打开 Dashboard 默认进创作页
+- companion/advance 项目打开 Dashboard 默认进创作页（`nav=write`）
 
 ## 4. 和工作室线的关系
 

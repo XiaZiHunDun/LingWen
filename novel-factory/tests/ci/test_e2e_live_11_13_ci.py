@@ -3,32 +3,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from playwright_live_specs import count_live_backend_tests, parse_live_backend_spec_stems
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 NOVEL_FACTORY = REPO_ROOT / "novel-factory"
 FRONTEND_CI = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
-LIVE_BACKEND_SPEC_STEMS = (
-    "decisions-resolve",
-    "ripples-audit",
-    "creator-workspace",
-    "ask-flow",
-    "library-flow",
-    "more-hub",
-    "landing-nav",
-    "advance-produce",
-    "today-flow",
-    "insight-flow",
-    "studio-flow",
-    "settings-flow",
-    "workflows-flow",
-    "advance-batch-flow",
-    "cascade-runs-flow",
-    "entity-memory-flow",
-    "director-paths-flow",
-    "memory-gateway-flow",
-    "product-tools-flow",
-    "companion-full-path-flow",
-    "companion-selection-agent-flow",
-)
 
 
 class TestE2eLive1113:
@@ -37,13 +16,16 @@ class TestE2eLive1113:
         assert "uvicorn[standard]" in text
 
     def test_live_backend_project_eight_specs(self):
-        specs_dir = NOVEL_FACTORY / "dashboard" / "frontend" / "tests" / "e2e-smoke"
-        total = 0
-        for stem in LIVE_BACKEND_SPEC_STEMS:
-            path = specs_dir / f"{stem}.spec.js"
-            assert path.is_file(), f"missing live-backend spec: {path.name}"
-            total += path.read_text(encoding="utf-8").count("test(")
-        assert total >= 62, f"expected >=62 live-backend tests, got {total}"
+        stems, total = count_live_backend_tests()
+        assert len(stems) >= 21, f"expected >=21 live-backend spec files, got {len(stems)}"
+        assert total >= 63, f"expected >=63 live-backend tests, got {total}"
+
+    def test_live_backend_stems_match_playwright_config(self):
+        stems = parse_live_backend_spec_stems()
+        assert "creator-workspace" in stems
+        assert "companion-full-path-flow" in stems
+        assert "companion-selection-agent-flow" in stems
+        assert "product-tools-flow" in stems
 
     def test_verify_script_playwright_fallback(self):
         script = NOVEL_FACTORY / "scripts" / "verify-e2e-live-ci.sh"

@@ -8,10 +8,12 @@ import {
   clickStable,
   dismissDeskDrawerIfOpen,
   openAdvancedTools,
+  getBodyDraft,
   openCompanionProject,
   openPulseDrawer,
   restoreCreatorProject,
   selectChapter,
+  setBodyDraft,
 } from './helpers/companion-project.js';
 import { mockDelayedAgentPlanStream } from './helpers/mock-agent-stream.js';
 
@@ -280,10 +282,7 @@ test.describe('Creator workspace live e2e', () => {
     await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
     await page.getByTestId('chapter-row-1').click();
     await expect(page.getByTestId('write-light-validation-bar')).toBeVisible({ timeout: 15_000 });
-    await page.getByTestId('chapter-body-textarea').evaluate((el) => {
-      el.value = '角色说"未完待续';
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await setBodyDraft(page, '角色说"未完待续');
     await expect(page.getByTestId('light-validation-unclosed_quote')).toBeVisible({ timeout: 5_000 });
     await request.put('/api/studio/active', { data: { slug: 'e2e-live-creator' } });
   });
@@ -436,7 +435,7 @@ test.describe('Creator workspace live e2e', () => {
 
     await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
     await selectChapter(page);
-    const beforeBody = await page.getByTestId('chapter-body-textarea').inputValue();
+    const beforeBody = await getBodyDraft(page);
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('checkpoint 测试');
     await page.getByTestId('write-agent-send-btn').click();
@@ -461,10 +460,7 @@ test.describe('Creator workspace live e2e', () => {
     test.setTimeout(60_000);
     await openCompanionProject(page, request, COMPANION_SLUG);
     await selectChapter(page);
-    await page.getByTestId('chapter-body-textarea').evaluate((el) => {
-      el.value = '角色说"未完待续';
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await setBodyDraft(page, '角色说"未完待续');
     const pill = page.getByTestId('light-validation-stub_chapter');
     await expect(pill).toBeVisible({ timeout: 5_000 });
     await pill.click();

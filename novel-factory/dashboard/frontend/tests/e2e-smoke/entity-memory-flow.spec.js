@@ -5,6 +5,7 @@ import {
   openCompanionProject,
   restoreCreatorProject,
   selectChapter,
+  setBodyDraft,
 } from './helpers/companion-project.js';
 
 async function expandChapterEntityPanel(page) {
@@ -55,10 +56,7 @@ test.describe('Entity rail → memory tab (live)', () => {
     await memoryReady;
     await selectChapter(page);
 
-    await page.getByTestId('chapter-body-textarea').evaluate((el) => {
-      el.value = '李逍遥在雨夜里停下脚步。';
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await setBodyDraft(page, '李逍遥在雨夜里停下脚步。');
 
     await expandChapterEntityPanel(page);
     await expect(page.getByTestId('chapter-entity-memory-char-李逍遥')).toBeVisible({

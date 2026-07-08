@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from playwright_live_specs import count_live_backend_tests, parse_live_backend_spec_stems
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 NOVEL_FACTORY = REPO_ROOT / "novel-factory"
 FRONTEND_CI = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
@@ -28,11 +30,8 @@ class TestE2eLiveF70:
 
     def test_live_backend_spec_count(self):
         """live-backend project matches Human-first e2e-smoke suite."""
-        cfg = NOVEL_FACTORY / "dashboard" / "frontend" / "playwright.config.js"
-        text = cfg.read_text(encoding="utf-8")
-        assert "live-backend" in text
-        assert "ripples-audit" in text
-        assert "decisions-resolve" in text
-        assert "creator-workspace" in text
-        assert "companion-full-path-flow" in text
-        assert "companion-selection-agent-flow" in text
+        stems, total = count_live_backend_tests()
+        assert len(stems) >= 21
+        assert total >= 63
+        assert "companion-full-path-flow" in stems
+        assert "companion-selection-agent-flow" in stems

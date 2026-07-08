@@ -5,19 +5,21 @@
 ## 打开创作页
 
 ```
-http://localhost:8765/?nav=creator
+http://localhost:8765/?nav=write
 ```
 
+- [ ] 顶部导航：**今日** / **创作** / **工具箱**（Human-first IA；创作即书桌）
 - [ ] 模式徽章显示 **陪伴**
 - [ ] 向导默认折叠；首次未完成步骤时自动展开（`wizard_expand_if_incomplete`）
 
-## 写栏
+## 写栏（书桌）
 
 - [ ] ch001 显示字数 / 已写状态
 - [ ] **正文内嵌编辑**（`chapter_inline_edit`）保存后触发单章 P0 复查
 - [ ] 复查问题可点击定位段落；支持键盘导航（↑↓）
+- [ ] **脉络 / 记忆** 可通过侧滑抽屉打开（`creator-desk-drawer-pulse` / `creator-desk-drawer-memory`），不必切 Tab
 
-## 脉络栏
+## 脉络（抽屉或 Tab）
 
 - [ ] 可添加 / 锁定 / 保存卷纲
 - [ ] 卷纲未保存时出现 **diff 预览**（推进同款，陪伴可选使用）
