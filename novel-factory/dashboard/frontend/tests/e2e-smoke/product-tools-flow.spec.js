@@ -43,17 +43,20 @@ test.describe('Creator product tools live e2e', () => {
     await expect(logicRule).toBeChecked({ checked: before });
   });
 
-  test('companion_export_modal_open_preview', async ({ page, request }) => {
+  test('studio_export_modal_open_preview', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(90_000);
-    await openCompanionProject(page, request, COMPANION_SLUG);
+    // Human-first 书桌隐藏顶栏 export-btn；studio 模式仍暴露导出入口
+    await request.put('/api/studio/active', { data: { slug: STUDIO_SLUG } });
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('export-btn')).toBeVisible({ timeout: 30_000 });
     await page.getByTestId('export-btn').click();
     await expect(page.getByTestId('creator-export-modal')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('export-preview-btn').click();
     await expect(page.getByTestId('export-preview-text')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('export-modal-close').click();
     await expect(page.getByTestId('creator-export-modal')).toBeHidden({ timeout: 10_000 });
-    await restoreCreatorProject(request);
+    await restoreCreatorProject(request, CREATOR_SLUG);
   });
 
   test('companion_micro_task_bar_on_write_desk', async ({ page, request }) => {
