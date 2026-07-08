@@ -214,12 +214,12 @@ idle → plan（scope + action）→ generating → candidates
 
 | 能力 | 状态 |
 |------|------|
-| 续写/改写/插入 + diff 采纳 | **MVP**（选区改写 + 候选 diff 采纳） |
+| 续写/改写/插入 + diff 采纳 | **已接**（选区改写 + 候选 diff 采纳 + checkpoint） |
 | **Agent 流式预览** | **已接**（mock 分块 + LLM token 级 `source: llm` chunk） |
-| 微任务条（再写 N 字） | **MVP**（伴侣/推进写栏进度条） |
-| 轻量校验条 | **MVP**（写中规则扫描 + gutter 联动 + `write-light-validation-bar`） |
-| 章节生成队列卡片 | **MVP**（脉络章节任务卡） |
-| 文风滑条控制器 | **MVP**（`style-strength-slider` + 四级标签） |
+| 微任务条（再写 N 字） | **已接**（伴侣写栏 `write-micro-task-bar` + Live E2E） |
+| 轻量校验条 | **已接**（写中规则扫描 + gutter 联动 + `write-light-validation-bar`） |
+| 章节生成队列卡片 | **已接**（脉络章节任务卡 + `advance-batch-flow` Live E2E） |
+| 文风滑条控制器 | **已接**（`style-strength-slider` + 四级标签） |
 | 脉络书内抽屉 | **MVP**（伴侣/推进：脉络·记忆侧滑，写作主屏常驻） |
 | 故事结构图 | **已接**（脉络卷章树 + 时间线双视图，`creator-structure-graph`） |
 | 介入提醒规则 UI | **已接**（设定 → 创作偏好 → `intervention-rules-block` 逐项开关） |
@@ -234,7 +234,7 @@ idle → plan（scope + action）→ generating → candidates
 | 命令 | 说明 |
 |------|------|
 | `pnpm e2e:smoke` | Vite-only：`app-root.spec.js`（无后端） |
-| `LINGWEN_E2E_LIVE=1 pnpm e2e:live` | Live 行为 E2E（58 项，需 `dashboard/e2e_entry.py`） |
+| `LINGWEN_E2E_LIVE=1 pnpm e2e:live` | Live 行为 E2E（59 项，需 `dashboard/e2e_entry.py`） |
 | `LINGWEN_E2E_LIVE=1 LINGWEN_E2E_LIVE_LLM=1 pnpm e2e:live-llm` | 可选 LLM 真连轨（1 项，需 API key，非默认 CI） |
 | `LINGWEN_E2E_LIVE=1 pnpm e2e:a11y` | L1 可访问性抽检（axe critical/serious/moderate，CI blocking） |
 | `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` | 视觉回归（对比 `tests/visual-audit/snapshots/`） |
@@ -244,4 +244,4 @@ idle → plan（scope + action）→ generating → candidates
 
 默认前端 CI（`dashboard-frontend-ci.yml`）：`lint-and-test` → 并行 `visual-regression` + `e2e-live` + `a11y-l1` + `ui-metrics`（blocking）。`grepInvert @quarantine` 用于隔离已知 flake；手动轨见 `dashboard-frontend-quarantine.yml`。
 
-**当前基线（2026-07-07）**：Vitest **924** · Live E2E **58** · 可选 LLM E2E **1** · 视觉回归 **18** · a11y L1 **7** · UI metrics **10** · Vite smoke **1** · 测试 `typecheck`（relaxed + **strict 清零**）**CI 门禁** · 覆盖率 lines **80%** / branches **70%** / statements **80%**。
+**当前基线（2026-07-08）**：Vitest **934** · Live E2E **59** · 可选 LLM E2E **1** · 视觉回归 **18** · a11y L1 **7** · UI metrics **10** · Vite smoke **1** · 测试 `typecheck`（relaxed + **strict 清零**）**CI 门禁** · 覆盖率 lines **80%** / branches **70%** / statements **80%**。

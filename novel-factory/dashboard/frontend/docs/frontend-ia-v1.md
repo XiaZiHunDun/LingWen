@@ -80,13 +80,13 @@
 | 陪伴 / 推进模式 | 隐藏模式徽章、偏好摘要、导出/发布、重复页标题；启用写栏工作台；记忆/设定收进次要 Tab 行；不弹「尚未开始写作」黄条 |
 | 书桌打磨 | 章节列表在左栏；编辑器首屏优先；写作工具默认折叠；目标卡用人话文案；书架卡片不显示 production 角色；无重复只读大纲；路径卡默认折叠；作用域显示「正在写：第 N 章」 |
 
-## 9. 测试基线（2026-07-07）
+## 9. 测试基线（2026-07-08）
 
 | 维度 | 数量 | 命令 |
 |------|------|------|
-| Vitest | 924 | `pnpm vitest run` |
+| Vitest | 934 | `pnpm vitest run` |
 | 测试 typecheck（relaxed + strict） | — | `pnpm typecheck` / `pnpm typecheck:tests:strict`（CI 门禁） |
-| Live E2E | 58 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
+| Live E2E | 59 | `LINGWEN_E2E_LIVE=1 pnpm e2e:live` |
 | 视觉回归 | 18 | `LINGWEN_E2E_LIVE=1 pnpm e2e:visual-regression` |
 | a11y L1 | 7 | `LINGWEN_E2E_LIVE=1 pnpm e2e:a11y`（critical / serious / moderate） |
 | UI metrics | 10 | `LINGWEN_E2E_LIVE=1 pnpm e2e:ui-metrics`（1280×720 `clippedBelowFold`） |

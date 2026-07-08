@@ -34,4 +34,14 @@ test.describe('Creator product tools live e2e', () => {
     await logicRule.click();
     await expect(logicRule).toBeChecked({ checked: before });
   });
+
+  test('companion_micro_task_bar_on_write_desk', async ({ page }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+    await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
+    const bar = page.getByTestId('write-micro-task-bar');
+    await expect(bar).toBeVisible({ timeout: 30_000 });
+    await expect(bar).toContainText(/再写|已达标/);
+    await expect(page.getByTestId('write-micro-task-fill')).toBeVisible();
+  });
 });

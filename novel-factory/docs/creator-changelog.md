@@ -9,6 +9,12 @@
 - **分享协作 v2**：卷纲 diff 分享 token v3 · 卷级批注 `n` · `diff-collab-notes` API
 - **changelog 解耦**：本文件与 Studio changelog 分轨维护
 
+## Human-first 书桌 + 工程质量（2026-07）
+
+- **写作工作台组件单测**：`CreatorWriteWorkbench.vue` 挂载覆盖（折叠/选区改写/候选确认/微任务条）
+- **覆盖率门禁**：Vitest branches **70%** / statements **80%**（`vitest.config.js` 阈值）
+- **§9 产品 MVP 收口**：微任务条、轻量校验、任务卡、文风滑条标 **已接**；Live E2E +1（`companion_micro_task_bar_on_write_desk`）
+
 ## v7.0 里程碑（2026-06）
 
 - 分享闭环 Playwright E2E（解析→应用→保存）
