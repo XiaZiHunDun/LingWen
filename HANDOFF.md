@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`62977964`**（批次 16）→ 批次 17 待 push |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`0750a632`**（批次 17 双绿） |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -57,7 +57,7 @@
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | `11aa9ab4`/`01582d95` 主区 checkpoint diff · 锁定 preset · 视觉快照 · Live E2E **69** |
 | **Human-first 批次 12（锁定主区 + 导演路径选区 E2E）** | ✅ | `d83b35f5` 选区工具栏锁定 · director path+选区确认 · Live E2E **70** |
-| **Human-first 批次 17（补全设定主区 + 节奏克制文案 E2E）** | ✅ | 主区 `write-worldbuilding-toggle-main` · pace→克制路径 · Live E2E **81** |
+| **Human-first 批次 17（补全设定主区 + 节奏克制文案 E2E）** | ✅ | `0750a632` 主区 `write-worldbuilding-toggle-main` · pace→克制路径 · Live E2E **81** |
 | **Human-first 批次 16（克制↔冲突文案 + 标注主区 E2E）** | ✅ | `62977964` 主区 `write-agent-annotations-main` · restraint→冲突路径 · Live E2E **78** |
 | **Human-first 批次 15（透镜主区 + plan lens E2E）** | ✅ | `6e07e097`/`1e854efd` 主区 `write-agent-lens-main` · 编辑透镜写入 plan · Live E2E **76** |
 | **Human-first 批次 14（目标标签主区 + 导演文案联动 E2E）** | ✅ | `d4a5f71f`/`38440cb5` 主区 `write-goal-tags-main` · suspense→导演文案 · 视觉基线 · Live E2E **74** |
