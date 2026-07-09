@@ -309,8 +309,7 @@ test.describe('Creator workspace live e2e', () => {
     await page.goto('/?nav=write', { waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
     await page.getByTestId('chapter-row-1').click();
-    await page.getByTestId('write-advanced-tools').locator('summary').click();
-    await page.getByTestId('write-agent-strip').locator('summary').click();
+    await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('加快节奏');
     const [streamResponse] = await Promise.all([
       page.waitForResponse(
