@@ -5,7 +5,6 @@ import {
   COMPANION_SLUG,
   clearBodySelection,
   getBodyDraft,
-  openAdvancedTools,
   openCompanionProject,
   restoreCreatorProject,
   selectBodyRange,
@@ -54,7 +53,6 @@ test.describe('Companion selection agent (live)', () => {
     await setBodyDraft(page, BODY);
     await selectBodyRange(page, SELECTED);
 
-    await openAdvancedTools(page);
     await expect(page.getByTestId('write-scope-bar')).toContainText('选中', { timeout: 10_000 });
     await page.getByTestId('write-agent-input').fill('润色选中段落');
     await page.getByTestId('write-agent-send-btn').click();
@@ -416,6 +414,65 @@ test.describe('Companion selection agent (live)', () => {
     ]);
     await expect(preview).toContainText(/主区流式预览|候选预览/);
     await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('companion_agent_prompt_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await expect(page.getByTestId('write-agent-prompt-main')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('write-agent-input')).toBeVisible();
+    await expect(page.getByTestId('write-agent-send-btn')).toBeVisible();
+  });
+
+  test('companion_agent_prompt_main_submits_plan', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    const planBodies = [];
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const body = route.request().postDataJSON?.() ?? {};
+      planBodies.push(body);
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"A","text":"' + REPLACED + '"}],"provider":"mock","annotations":[],"scope":{"type":"selection","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    await page.getByTestId('write-agent-input').fill('主区补充指令');
+    await page.getByTestId('write-agent-send-btn').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    expect(planBodies.length).toBeGreaterThan(0);
+    expect(planBodies.at(-1)?.action).toBe('prompt');
+    expect(planBodies.at(-1)?.action_label).toBe('主区补充指令');
+  });
+
+  test('companion_goal_conflict_rewrites_restrained_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const restrainedCard = page.getByTestId('director-path-restrained');
+    await expect(restrainedCard).toBeVisible({ timeout: 10_000 });
+    await expect(restrainedCard).toContainText('情绪降温');
+
+    await page.getByTestId('goal-tag-conflict').click();
+    await expect(restrainedCard).toContainText('冲突目标下情绪降温', { timeout: 10_000 });
   });
 
   test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {

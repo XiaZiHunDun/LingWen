@@ -233,6 +233,13 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wrapper.find(byTestid('write-agent-stream-preview-main')).text()).toContain('主区预览');
   });
 
+  test('shows agent prompt on human-first main area', async () => {
+    const { wrapper } = mountWorkbench();
+    expect(wrapper.find(byTestid('write-agent-prompt-main')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-agent-input')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-agent-send-btn')).exists()).toBe(true);
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,

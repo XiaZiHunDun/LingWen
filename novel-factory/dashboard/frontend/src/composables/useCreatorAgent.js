@@ -118,6 +118,9 @@ export function useCreatorAgent(deps) {
       if (goal === 'conflict' && path.id === 'faster') {
         consequence = '冲突目标下加快披露，对抗张力可能尚未铺足';
       }
+      if (goal === 'conflict' && path.id === 'restrained') {
+        consequence = '冲突目标下情绪降温，对抗张力可能被人为压低';
+      }
       return { ...path, consequence, scopeLabel: scope.label };
     });
   });

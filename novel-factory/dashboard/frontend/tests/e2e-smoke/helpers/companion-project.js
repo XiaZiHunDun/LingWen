@@ -71,8 +71,13 @@ export async function getBodyDraft(page) {
   return page.getByTestId('chapter-body-textarea').inputValue();
 }
 
-/** Expand advanced tools + agent strip for agent input. */
+/** Expand agent input — human-first 主区优先，否则展开 advanced-tools 内 agent strip. */
 export async function openAdvancedTools(page) {
+  const mainPrompt = page.getByTestId('write-agent-prompt-main');
+  if (await mainPrompt.isVisible().catch(() => false)) {
+    await expect(page.getByTestId('write-agent-input')).toBeVisible({ timeout: 10_000 });
+    return;
+  }
   await page.getByTestId('write-advanced-tools').locator('summary').click();
   await page.getByTestId('write-agent-strip').locator('summary').click();
   await expect(page.getByTestId('write-agent-input')).toBeVisible({ timeout: 10_000 });

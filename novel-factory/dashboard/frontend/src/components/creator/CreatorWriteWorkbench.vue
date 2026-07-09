@@ -438,6 +438,24 @@
         />
 
         <div
+          v-if="wb.isPanelVisible('agentSessionStrip')"
+          class="write-workbench__card"
+          data-testid="write-agent-prompt-main"
+        >
+          <p class="write-workbench__card-title">补充指令</p>
+          <form class="write-workbench__toolbar-group" @submit.prevent="wb.agent.submitPrompt()">
+            <input
+              v-model="wb.agent.promptInput"
+              type="text"
+              class="form-input pixel-border"
+              placeholder="补充指令，例如：信息披露再晚一句…"
+              data-testid="write-agent-input"
+            />
+            <button type="submit" class="mini-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
+          </form>
+        </div>
+
+        <div
           v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
           class="write-workbench__card write-workbench__version-bar"
           data-testid="write-undo-bar-main"
@@ -544,7 +562,7 @@
           </div>
 
           <details
-            v-if="wb.isPanelVisible('agentSessionStrip')"
+            v-if="!wb.humanFirstDesk && wb.isPanelVisible('agentSessionStrip')"
             class="write-workbench__agent"
             data-testid="write-agent-strip"
             :open="wb.agent.agentExpanded"
