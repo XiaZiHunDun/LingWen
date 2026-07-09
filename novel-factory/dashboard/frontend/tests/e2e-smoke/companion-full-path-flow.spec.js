@@ -43,7 +43,7 @@ test.describe('Companion full path (live)', () => {
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('润色这一段');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(AGENT_TEXT);

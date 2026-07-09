@@ -276,20 +276,39 @@ describe('CreatorWriteWorkbench component', () => {
     expect(writeCtx.wb.agent.statusLine).toContain('恢复');
   });
 
-  test('dismisses quality hint inside advanced tools', async () => {
+  test('dismisses quality hint on human-first main area', async () => {
     const { wrapper, wb } = mountWorkbench();
     wb.syncQualityFromLogicCheck({
       passed: false,
       issues: [{ severity: 'P0', title: '节奏偏慢' }],
     });
-    await openAdvancedTools(wrapper);
-    const dismiss = wrapper.findAll(byTestid('write-quality-bar')).flatMap((bar) =>
+    await flushPromises();
+    const dismiss = wrapper.findAll(byTestid('write-quality-bar-main')).flatMap((bar) =>
       bar.findAll('button').filter((b) => b.text() === '忽略'),
     );
     expect(dismiss.length).toBeGreaterThan(0);
     const before = wb.qualityHints.value.length;
     await dismiss[0].trigger('click');
     expect(wb.qualityHints.value.length).toBe(before - 1);
+  });
+
+  test('shows director plan card on human-first main area after preset', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    await writeCtx.wb.agent.runRewritePreset('concrete');
+    await flushPromises();
+    const planCard = wrapper.find(byTestid('write-director-plan-card-main'));
+    expect(planCard.exists()).toBe(true);
+    expect(planCard.text()).toContain('确认应用');
+    expect(wrapper.find(byTestid('write-director-confirm-btn')).exists()).toBe(true);
+  });
+
+  test('shows quality bar on human-first main area when hints present', async () => {
+    const { wrapper, wb } = mountWorkbench();
+    wb.qualityHints.value = [{ level: 'warn', text: '测试质量提示' }];
+    await flushPromises();
+    const qualityBar = wrapper.find(byTestid('write-quality-bar-main'));
+    expect(qualityBar.exists()).toBe(true);
+    expect(qualityBar.text()).toContain('测试质量提示');
   });
 
   test('shows candidate dock on human-first main area after plan', async () => {

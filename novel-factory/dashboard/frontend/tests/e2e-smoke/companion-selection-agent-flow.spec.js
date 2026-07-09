@@ -56,7 +56,7 @@ test.describe('Companion selection agent (live)', () => {
     await expect(page.getByTestId('write-scope-bar')).toContainText('选中', { timeout: 10_000 });
     await page.getByTestId('write-agent-input').fill('润色选中段落');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED);
@@ -65,7 +65,7 @@ test.describe('Companion selection agent (live)', () => {
 
     await page.getByTestId('write-agent-input').fill('在章末插入一段');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(INSERT_EXPECTED);
@@ -96,7 +96,7 @@ test.describe('Companion selection agent (live)', () => {
     await expect(page.getByTestId('write-scope-bar')).toContainText('选中', { timeout: 10_000 });
     await expect(page.getByTestId('write-selection-tools')).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('rewrite-preset-concrete').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     expect(capturedPayload?.action).toBe('rewrite:concrete');
     expect(capturedPayload?.scope?.type).toBe('selection');
 
@@ -163,7 +163,7 @@ test.describe('Companion selection agent (live)', () => {
 
     await expect(page.getByTestId('write-scope-bar')).toContainText('选中', { timeout: 10_000 });
     await page.getByTestId('director-path-run-faster').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     expect(capturedPayload?.action).toBe('path:faster');
     expect(capturedPayload?.scope?.type).toBe('selection');
 
@@ -193,7 +193,7 @@ test.describe('Companion selection agent (live)', () => {
     await selectBodyRange(page, SELECTED);
 
     await page.getByTestId('rewrite-preset-dramatic').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c2').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect.poll(async () => getBodyDraft(page)).toBe(EXPECTED_C2);
@@ -276,7 +276,7 @@ test.describe('Companion selection agent (live)', () => {
 
     await page.getByTestId('agent-lens-editor').click();
     await page.getByTestId('rewrite-preset-concrete').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('write-agent-annotations-main')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('agent-annotation-e1')).toContainText('铺垫略长');
   });
@@ -317,7 +317,7 @@ test.describe('Companion selection agent (live)', () => {
 
     await page.getByTestId('agent-lens-editor').click();
     await page.getByTestId('rewrite-preset-concrete').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     expect(planLenses.length).toBeGreaterThan(0);
     expect(planLenses.at(-1)).toBe('editor');
   });
@@ -357,7 +357,7 @@ test.describe('Companion selection agent (live)', () => {
 
     await page.getByTestId('allow-worldbuilding-toggle').click();
     await page.getByTestId('rewrite-preset-concrete').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     expect(fillFlags.length).toBeGreaterThan(0);
     expect(fillFlags.at(-1)).toBe(true);
   });
@@ -413,7 +413,7 @@ test.describe('Companion selection agent (live)', () => {
       page.getByTestId('rewrite-preset-concrete').click(),
     ]);
     await expect(preview).toContainText(/主区流式预览|候选预览/);
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
   });
 
   test('companion_agent_prompt_main_visible', async ({ page, request }) => {
@@ -452,7 +452,7 @@ test.describe('Companion selection agent (live)', () => {
 
     await page.getByTestId('write-agent-input').fill('主区补充指令');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     expect(planBodies.length).toBeGreaterThan(0);
     expect(planBodies.at(-1)?.action).toBe('prompt');
     expect(planBodies.at(-1)?.action_label).toBe('主区补充指令');
@@ -524,7 +524,7 @@ test.describe('Companion selection agent (live)', () => {
     await setBodyDraft(page, BODY);
     await selectBodyRange(page, SELECTED);
     await page.getByTestId('rewrite-preset-concrete').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     const dock = page.getByTestId('write-candidate-dock-main');
     await expect(dock).toBeVisible({ timeout: 10_000 });
     await expect(dock).toContainText('候选预览（2）');
@@ -566,6 +566,70 @@ test.describe('Companion selection agent (live)', () => {
     await expect(fasterCard).toContainText('节奏目标下推进加速', { timeout: 10_000 });
   });
 
+  test('companion_director_plan_card_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await mockAgentPlanStream(page);
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+    await page.getByTestId('rewrite-preset-concrete').click();
+
+    const planCard = page.getByTestId('write-director-plan-card-main');
+    await expect(planCard).toBeVisible({ timeout: 15_000 });
+    await expect(planCard).toContainText('确认应用');
+    await expect(planCard).toContainText('更具体');
+    await expect(page.getByTestId('write-director-confirm-btn')).toBeVisible();
+  });
+
+  test('companion_quality_bar_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await page.getByTestId('write-generate-btn').click();
+    const qualityBar = page.getByTestId('write-quality-bar-main');
+    await expect(qualityBar).toBeVisible({ timeout: 10_000 });
+    await expect(qualityBar).toContainText('可先输入一句话意图');
+  });
+
+  test('companion_goal_restraint_rewrites_faster_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const fasterCard = page.getByTestId('director-path-faster');
+    await expect(fasterCard).toBeVisible({ timeout: 10_000 });
+    await expect(fasterCard).toContainText('信息披露前移');
+
+    await page.getByTestId('goal-tag-restraint').click();
+    await expect(fasterCard).toContainText('克制目标下推进加速', { timeout: 10_000 });
+  });
+
+  test('companion_goal_pace_rewrites_conflict_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const conflictCard = page.getByTestId('director-path-conflict');
+    await expect(conflictCard).toBeVisible({ timeout: 10_000 });
+    await expect(conflictCard).toContainText('对立加深');
+
+    await page.getByTestId('goal-tag-pace').click();
+    await expect(conflictCard).toContainText('节奏目标下冲突升级', { timeout: 10_000 });
+  });
+
   test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(120_000);
@@ -588,7 +652,7 @@ test.describe('Companion selection agent (live)', () => {
     await page.getByTestId('selection-lock-toggle').click();
     await page.getByTestId('director-path-run-faster').click();
 
-    await expect(page.getByTestId('write-director-plan-card')).toBeHidden();
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeHidden();
     await expect(page.getByTestId('write-agent-status-main')).toContainText('锁定', { timeout: 10_000 });
     expect(streamCalls).toBe(0);
   });

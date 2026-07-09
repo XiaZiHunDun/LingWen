@@ -318,7 +318,7 @@ test.describe('Creator workspace live e2e', () => {
       page.getByTestId('write-agent-send-btn').click(),
     ]);
     expect(streamResponse.headers()['content-type'] || '').toContain('text/event-stream');
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('write-candidate-c1')).toBeVisible();
     await restoreCreatorProject(request);
   });
@@ -341,7 +341,7 @@ test.describe('Creator workspace live e2e', () => {
     ]);
     await expect(preview).toContainText(/流式预览可见性|候选预览/);
 
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await restoreCreatorProject(request);
   });
 
@@ -376,7 +376,7 @@ test.describe('Creator workspace live e2e', () => {
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('测试确认流');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/E2E确认替换正文/, {
@@ -406,7 +406,7 @@ test.describe('Creator workspace live e2e', () => {
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('多候选对比测试');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('write-candidate-dock-main')).toBeVisible();
     await page.getByTestId('write-candidate-c2').click();
     await page.getByTestId('write-director-confirm-btn').click();
@@ -438,7 +438,7 @@ test.describe('Creator workspace live e2e', () => {
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('checkpoint 测试');
     await page.getByTestId('write-agent-send-btn').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/E2E checkpoint 替换正文/, {

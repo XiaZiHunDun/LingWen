@@ -118,11 +118,17 @@ export function useCreatorAgent(deps) {
       if (goal === 'restraint' && path.id === 'conflict') {
         consequence = '与「克制」目标冲突，冲突升级需更精准的台词';
       }
+      if (goal === 'restraint' && path.id === 'faster') {
+        consequence = '克制目标下推进加速，情绪表达可能被压缩';
+      }
       if (goal === 'pace' && path.id === 'restrained') {
         consequence = '节奏目标下留白增多，当前节拍可能偏慢';
       }
       if (goal === 'pace' && path.id === 'faster') {
         consequence = '节奏目标下推进加速，段落密度可能过高';
+      }
+      if (goal === 'pace' && path.id === 'conflict') {
+        consequence = '节奏目标下冲突升级，收束节拍需同步规划';
       }
       if (goal === 'conflict' && path.id === 'faster') {
         consequence = '冲突目标下加快披露，对抗张力可能尚未铺足';

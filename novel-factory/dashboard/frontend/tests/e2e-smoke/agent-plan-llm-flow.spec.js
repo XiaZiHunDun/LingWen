@@ -33,7 +33,7 @@ test.describe('Agent plan LLM track (live)', () => {
     const hasLlmProvider = /"provider"\s*:\s*"llm"/.test(body);
     expect(hasLlmChunk || hasLlmProvider).toBe(true);
 
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('write-candidate-steady').or(page.getByTestId('write-candidate-c1'))).toBeVisible({
       timeout: 15_000,
     });

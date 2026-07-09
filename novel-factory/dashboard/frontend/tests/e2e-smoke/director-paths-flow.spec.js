@@ -34,7 +34,7 @@ test.describe('Director paths flow (live)', () => {
     await expect(page.getByTestId('write-director-paths')).toBeVisible();
     await page.getByTestId('director-path-run-faster').click();
 
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('write-candidate-c1')).toBeVisible();
   });
 
@@ -58,7 +58,7 @@ test.describe('Director paths flow (live)', () => {
 
     await expect(page.getByTestId('write-director-paths-panel-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('director-path-run-faster').click();
-    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('write-director-plan-card-main')).toBeVisible({ timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/导演路径确认替换正文/, {

@@ -375,9 +375,10 @@
 
         <div
           v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
-          class="write-workbench__plan-card"
-          data-testid="write-director-plan-card"
+          class="write-workbench__plan-card write-workbench__card"
+          data-testid="write-director-plan-card-main"
         >
+          <p class="write-workbench__card-title">确认应用</p>
           <p class="meta-line">
             将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
             执行：{{ wb.agent.pendingPlan.actionLabel }}
@@ -493,6 +494,24 @@
             />
             <button type="submit" class="mini-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
           </form>
+        </div>
+
+        <div
+          v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
+          class="write-workbench__card write-workbench__quality"
+          data-testid="write-quality-bar-main"
+        >
+          <p class="write-workbench__card-title">质量反馈</p>
+          <span v-if="wb.agent.statusLine" class="meta-line">{{ wb.agent.statusLine }}</span>
+          <span
+            v-for="(hint, idx) in wb.qualityHints"
+            :key="idx"
+            class="write-workbench__quality-item"
+            :class="`write-workbench__quality-item--${hint.level}`"
+          >
+            {{ hint.text }}
+            <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
+          </span>
         </div>
 
         <div
@@ -640,7 +659,7 @@
           />
 
           <div
-            v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
+            v-if="!wb.humanFirstDesk && wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
             class="write-workbench__quality"
             data-testid="write-quality-bar"
           >

@@ -229,6 +229,26 @@ describe('useCreatorAgent', () => {
     expect(faster?.consequence).toContain('节奏目标下推进加速');
     const restrained = api.directorPaths.value.find((p) => p.id === 'restrained');
     expect(restrained?.consequence).toContain('节奏目标下留白增多');
+    const conflict = api.directorPaths.value.find((p) => p.id === 'conflict');
+    expect(conflict?.consequence).toContain('节奏目标下冲突升级');
+  });
+
+  test('director paths adjust consequence for restraint goal', () => {
+    const { api } = mountAgent({
+      deps: {
+        getSelection: () => ({ text: '选区', start: 0, end: 2 }),
+        getControls: () => ({
+          styleStrength: 1,
+          selectionLocked: false,
+          allowWorldbuildingFill: false,
+          goalTag: 'restraint',
+        }),
+      },
+    });
+    const faster = api.directorPaths.value.find((p) => p.id === 'faster');
+    expect(faster?.consequence).toContain('克制目标下推进加速');
+    const conflict = api.directorPaths.value.find((p) => p.id === 'conflict');
+    expect(conflict?.consequence).toContain('与「克制」目标冲突');
   });
 
   test('setAgentLens refreshes editor annotations when plan has annotations', async () => {

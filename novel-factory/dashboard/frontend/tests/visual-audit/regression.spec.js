@@ -283,7 +283,7 @@ test.describe('Visual regression baselines', () => {
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('checkpoint 视觉');
     await page.getByTestId('write-agent-send-btn').click();
-    await page.getByTestId('write-director-plan-card').waitFor({ state: 'visible', timeout: 15_000 });
+    await page.getByTestId('write-director-plan-card-main').waitFor({ state: 'visible', timeout: 15_000 });
     await page.getByTestId('write-candidate-c1').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await page.locator('[data-testid^="checkpoint-diff-"]').first().click();
