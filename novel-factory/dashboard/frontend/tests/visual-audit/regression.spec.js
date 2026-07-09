@@ -155,6 +155,7 @@ test.describe('Visual regression baselines', () => {
     const preview = page.locator('[data-testid="write-agent-stream-preview-main"]');
     await page.getByTestId('write-agent-send-btn').click();
     await preview.waitFor({ state: 'visible', timeout: 15_000 });
+    await expect(preview).toContainText('视觉回归流式', { timeout: 15_000 });
     await waitForPaintSettle(page);
 
     await expect(preview).toHaveScreenshot('agent-stream-preview.png', visualShotOptions(0.04));
