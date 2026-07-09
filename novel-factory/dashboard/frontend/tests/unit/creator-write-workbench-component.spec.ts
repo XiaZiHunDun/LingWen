@@ -292,10 +292,18 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wb.qualityHints.value.length).toBe(before - 1);
   });
 
+  test('shows candidate dock on human-first main area after plan', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    await writeCtx.wb.agent.runRewritePreset('concrete');
+    await flushPromises();
+    expect(wrapper.find(byTestid('write-candidate-dock-main')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-candidate-steady')).exists()).toBe(true);
+  });
+
   test('runs director path from main panel button', async () => {
     const { wrapper } = mountWorkbench();
     await wrapper.find(byTestid('director-path-run-faster')).trigger('click');
     await flushPromises();
-    expect(wrapper.find(byTestid('write-candidate-dock')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-candidate-dock-main')).exists()).toBe(true);
   });
 });

@@ -407,7 +407,7 @@ test.describe('Creator workspace live e2e', () => {
     await page.getByTestId('write-agent-input').fill('多候选对比测试');
     await page.getByTestId('write-agent-send-btn').click();
     await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('write-candidate-dock')).toBeVisible();
+    await expect(page.getByTestId('write-candidate-dock-main')).toBeVisible();
     await page.getByTestId('write-candidate-c2').click();
     await page.getByTestId('write-director-confirm-btn').click();
     await expect(page.getByTestId('chapter-body-textarea')).toHaveValue(/E2E候选二段正文/, {

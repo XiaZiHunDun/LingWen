@@ -504,6 +504,68 @@ test.describe('Companion selection agent (live)', () => {
     await expect(restrainedCard).toContainText('悬疑目标下留白增加', { timeout: 10_000 });
   });
 
+  test('companion_candidate_dock_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await page.route('**/api/creator/agent/plan/stream', async (route) => {
+      const sse = [
+        'data: {"type":"done","plan":{"advice_only":false,"candidates":[{"id":"c1","label":"稳健","text":"' + REPLACED + '"},{"id":"c2","label":"大胆","text":"' + REPLACED_C2 + '"}],"provider":"mock","annotations":[],"scope":{"type":"selection","chapter":1}}}\n\n',
+      ].join('');
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream; charset=utf-8',
+        body: sse,
+      });
+    });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+    await page.getByTestId('rewrite-preset-concrete').click();
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
+    const dock = page.getByTestId('write-candidate-dock-main');
+    await expect(dock).toBeVisible({ timeout: 10_000 });
+    await expect(dock).toContainText('候选预览（2）');
+    await expect(page.getByTestId('write-candidate-c1')).toBeVisible();
+    await expect(page.getByTestId('write-candidate-c2')).toBeVisible();
+  });
+
+  test('companion_goal_suspense_rewrites_conflict_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const conflictCard = page.getByTestId('director-path-conflict');
+    await expect(conflictCard).toBeVisible({ timeout: 10_000 });
+    await expect(conflictCard).toContainText('对立加深');
+
+    await page.getByTestId('goal-tag-suspense').click();
+    await expect(conflictCard).toContainText('悬疑目标下冲突升级', { timeout: 10_000 });
+  });
+
+  test('companion_goal_pace_rewrites_faster_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const fasterCard = page.getByTestId('director-path-faster');
+    await expect(fasterCard).toBeVisible({ timeout: 10_000 });
+    await expect(fasterCard).toContainText('信息披露前移');
+
+    await page.getByTestId('goal-tag-pace').click();
+    await expect(fasterCard).toContainText('节奏目标下推进加速', { timeout: 10_000 });
+  });
+
   test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(120_000);

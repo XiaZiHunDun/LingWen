@@ -112,11 +112,17 @@ export function useCreatorAgent(deps) {
       if (goal === 'suspense' && path.id === 'restrained') {
         consequence = '悬疑目标下留白增加，未解信息可能更难留存';
       }
+      if (goal === 'suspense' && path.id === 'conflict') {
+        consequence = '悬疑目标下冲突升级，关键信息可能被过早暴露';
+      }
       if (goal === 'restraint' && path.id === 'conflict') {
         consequence = '与「克制」目标冲突，冲突升级需更精准的台词';
       }
       if (goal === 'pace' && path.id === 'restrained') {
         consequence = '节奏目标下留白增多，当前节拍可能偏慢';
+      }
+      if (goal === 'pace' && path.id === 'faster') {
+        consequence = '节奏目标下推进加速，段落密度可能过高';
       }
       if (goal === 'conflict' && path.id === 'faster') {
         consequence = '冲突目标下加快披露，对抗张力可能尚未铺足';

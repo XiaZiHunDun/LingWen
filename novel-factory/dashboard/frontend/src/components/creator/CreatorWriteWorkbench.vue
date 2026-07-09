@@ -400,7 +400,7 @@
         <div
           v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
           class="write-workbench__card"
-          data-testid="write-candidate-dock"
+          data-testid="write-candidate-dock-main"
         >
           <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
           <div class="write-workbench__candidates">
