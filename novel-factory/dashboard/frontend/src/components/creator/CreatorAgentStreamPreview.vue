@@ -53,6 +53,7 @@ const titleText = computed(() => {
   padding: var(--space-sm);
   background: var(--bg-secondary);
   border-radius: 8px;
+  min-height: 80px;
 }
 
 .agent-stream-preview--llm {
