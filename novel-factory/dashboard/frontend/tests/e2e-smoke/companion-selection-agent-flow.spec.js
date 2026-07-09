@@ -475,6 +475,35 @@ test.describe('Companion selection agent (live)', () => {
     await expect(restrainedCard).toContainText('冲突目标下情绪降温', { timeout: 10_000 });
   });
 
+  test('companion_generate_toolbar_main_visible', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(60_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await expect(page.getByTestId('write-generate-toolbar-main')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('write-generate-btn')).toBeVisible();
+    await expect(page.getByTestId('write-stop-btn')).toBeVisible();
+    await expect(page.getByTestId('write-agent-mode-toggle')).toBeVisible();
+  });
+
+  test('companion_goal_suspense_rewrites_restrained_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const restrainedCard = page.getByTestId('director-path-restrained');
+    await expect(restrainedCard).toBeVisible({ timeout: 10_000 });
+    await expect(restrainedCard).toContainText('情绪降温');
+
+    await page.getByTestId('goal-tag-suspense').click();
+    await expect(restrainedCard).toContainText('悬疑目标下留白增加', { timeout: 10_000 });
+  });
+
   test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {
     skipUnlessLive(test);
     test.setTimeout(120_000);

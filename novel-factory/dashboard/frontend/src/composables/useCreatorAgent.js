@@ -109,6 +109,9 @@ export function useCreatorAgent(deps) {
       if (goal === 'suspense' && path.id === 'faster') {
         consequence = '悬疑感可能减弱，建议保留 1 处未解信息';
       }
+      if (goal === 'suspense' && path.id === 'restrained') {
+        consequence = '悬疑目标下留白增加，未解信息可能更难留存';
+      }
       if (goal === 'restraint' && path.id === 'conflict') {
         consequence = '与「克制」目标冲突，冲突升级需更精准的台词';
       }

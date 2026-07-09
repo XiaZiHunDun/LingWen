@@ -438,6 +438,46 @@
         />
 
         <div
+          v-if="wb.isPanelVisible('generateToolbar')"
+          class="write-workbench__card"
+          data-testid="write-generate-toolbar-main"
+        >
+          <p class="write-workbench__card-title">生成</p>
+          <div class="write-workbench__toolbar">
+            <div class="write-workbench__toolbar-group">
+              <button
+                type="button"
+                class="save-btn pixel-border"
+                data-testid="write-generate-btn"
+                :disabled="wb.generateRunning || wb.agent.generating"
+                @click="wb.startQuickWrite()"
+              >
+                生成
+              </button>
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="write-stop-btn"
+                :disabled="!wb.generateRunning && !wb.agent.generating"
+                @click="wb.stopGenerate()"
+              >
+                停止
+              </button>
+            </div>
+            <div class="write-workbench__toolbar-group">
+              <button
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="write-agent-mode-toggle"
+                @click="wb.agent.toggleExecutionMode()"
+              >
+                {{ wb.agent.isPreviewMode ? '预览(A)' : '应用(B2)' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
           v-if="wb.isPanelVisible('agentSessionStrip')"
           class="write-workbench__card"
           data-testid="write-agent-prompt-main"
@@ -525,7 +565,7 @@
           />
 
           <div
-            v-if="wb.isPanelVisible('generateToolbar')"
+            v-if="!wb.humanFirstDesk && wb.isPanelVisible('generateToolbar')"
             class="write-workbench__toolbar"
             data-testid="write-generate-toolbar"
           >

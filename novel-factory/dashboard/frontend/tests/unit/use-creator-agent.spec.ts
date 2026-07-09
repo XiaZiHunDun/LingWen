@@ -207,6 +207,8 @@ describe('useCreatorAgent', () => {
     });
     const faster = api.directorPaths.value.find((p) => p.id === 'faster');
     expect(faster?.consequence).toContain('悬疑');
+    const restrained = api.directorPaths.value.find((p) => p.id === 'restrained');
+    expect(restrained?.consequence).toContain('悬疑目标下留白增加');
   });
 
   test('setAgentLens refreshes editor annotations when plan has annotations', async () => {

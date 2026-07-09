@@ -240,6 +240,14 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wrapper.find(byTestid('write-agent-send-btn')).exists()).toBe(true);
   });
 
+  test('shows generate toolbar on human-first main area', async () => {
+    const { wrapper } = mountWorkbench();
+    expect(wrapper.find(byTestid('write-generate-toolbar-main')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-generate-btn')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-stop-btn')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-agent-mode-toggle')).exists()).toBe(true);
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,
