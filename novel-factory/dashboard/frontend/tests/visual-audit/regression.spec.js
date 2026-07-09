@@ -152,7 +152,7 @@ test.describe('Visual regression baselines', () => {
     await prepareCreatorDeskAdvancedOpen(page);
     await page.getByTestId('write-agent-input').fill('视觉快照');
 
-    const preview = page.locator('[data-testid="agent-stream-preview"]');
+    const preview = page.locator('[data-testid="write-agent-stream-preview-main"]');
     await page.getByTestId('write-agent-send-btn').click();
     await preview.waitFor({ state: 'visible', timeout: 15_000 });
     await waitForPaintSettle(page);

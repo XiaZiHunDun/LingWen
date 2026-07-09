@@ -115,6 +115,9 @@ export function useCreatorAgent(deps) {
       if (goal === 'pace' && path.id === 'restrained') {
         consequence = '节奏目标下留白增多，当前节拍可能偏慢';
       }
+      if (goal === 'conflict' && path.id === 'faster') {
+        consequence = '冲突目标下加快披露，对抗张力可能尚未铺足';
+      }
       return { ...path, consequence, scopeLabel: scope.label };
     });
   });

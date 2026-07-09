@@ -5,7 +5,7 @@
   <div
     class="agent-stream-preview pixel-border"
     :class="{ 'agent-stream-preview--llm': streamSource === 'llm' }"
-    data-testid="agent-stream-preview"
+    :data-testid="mainBar ? 'write-agent-stream-preview-main' : 'agent-stream-preview'"
   >
     <div class="agent-stream-preview__head">
       <span class="agent-stream-preview__title">{{ titleText }}</span>
@@ -31,6 +31,8 @@ const props = defineProps({
   previewLabel: { type: String, default: '' },
   adviceLines: { type: Array, default: () => [] },
   streamSource: { type: String, default: null },
+  /** human-first 主区展示，与 advanced-tools 内预览区分 testid */
+  mainBar: { type: Boolean, default: false },
 });
 
 const bodyText = computed(() => props.displayText || props.previewText);

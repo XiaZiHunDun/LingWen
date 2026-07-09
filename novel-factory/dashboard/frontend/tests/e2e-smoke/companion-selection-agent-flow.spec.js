@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { skipUnlessLive } from './helpers/live-backend.js';
+import { mockDelayedAgentPlanStream } from './helpers/mock-agent-stream.js';
 import {
   COMPANION_SLUG,
   clearBodySelection,
@@ -378,6 +379,43 @@ test.describe('Companion selection agent (live)', () => {
 
     await page.getByTestId('goal-tag-pace').click();
     await expect(restrainedCard).toContainText('节奏目标下留白增多', { timeout: 10_000 });
+  });
+
+  test('companion_goal_conflict_rewrites_faster_director_path_copy', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(90_000);
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const fasterCard = page.getByTestId('director-path-faster');
+    await expect(fasterCard).toBeVisible({ timeout: 10_000 });
+    await expect(fasterCard).toContainText('信息披露前移');
+
+    await page.getByTestId('goal-tag-conflict').click();
+    await expect(fasterCard).toContainText('冲突目标下加快披露', { timeout: 10_000 });
+  });
+
+  test('companion_agent_stream_preview_main_visible_during_sse', async ({ page, request }) => {
+    skipUnlessLive(test);
+    test.setTimeout(120_000);
+
+    await mockDelayedAgentPlanStream(page, { chunkText: '主区流式预览', chunkDelayMs: 1500 });
+
+    await openCompanionProject(page, request, COMPANION_SLUG);
+    await selectChapter(page);
+    await setBodyDraft(page, BODY);
+    await selectBodyRange(page, SELECTED);
+
+    const preview = page.getByTestId('write-agent-stream-preview-main');
+    await Promise.all([
+      expect(preview).toBeVisible({ timeout: 15_000 }),
+      page.getByTestId('rewrite-preset-concrete').click(),
+    ]);
+    await expect(preview).toContainText(/主区流式预览|候选预览/);
+    await expect(page.getByTestId('write-director-plan-card')).toBeVisible({ timeout: 15_000 });
   });
 
   test('companion_selection_director_path_blocked_when_locked', async ({ page, request }) => {

@@ -427,6 +427,16 @@
           @focus="wb.agent.focusAnnotation"
         />
 
+        <CreatorAgentStreamPreview
+          v-if="showAgentStreamPreview"
+          main-bar
+          :preview-text="wb.agent.streamPreviewText"
+          :display-text="wb.agent.streamDisplayText"
+          :preview-label="wb.agent.streamPreviewLabel"
+          :stream-source="wb.agent.streamSource"
+          :advice-lines="wb.agent.streamAdvicePreview"
+        />
+
         <div
           v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
           class="write-workbench__card write-workbench__version-bar"
@@ -563,7 +573,7 @@
           />
 
           <CreatorAgentStreamPreview
-            v-if="showAgentStreamPreview"
+            v-if="!wb.humanFirstDesk && showAgentStreamPreview"
             :preview-text="wb.agent.streamPreviewText"
             :display-text="wb.agent.streamDisplayText"
             :preview-label="wb.agent.streamPreviewLabel"

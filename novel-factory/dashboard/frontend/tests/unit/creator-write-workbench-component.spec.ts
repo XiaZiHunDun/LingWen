@@ -224,6 +224,15 @@ describe('CreatorWriteWorkbench component', () => {
     expect(writeCtx.wb.allowWorldbuildingFill).toBe(true);
   });
 
+  test('shows stream preview on human-first main area while generating', async () => {
+    const { wrapper, writeCtx } = mountWorkbench();
+    writeCtx.wb.agent.generating = true;
+    writeCtx.wb.agent.streamPreviewText = '主区预览';
+    await flushPromises();
+    expect(wrapper.find(byTestid('write-agent-stream-preview-main')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-agent-stream-preview-main')).text()).toContain('主区预览');
+  });
+
   test('shows companion logic check toolbar when enabled', async () => {
     const { wrapper } = mountWorkbench({
       showLogicCheck: true,

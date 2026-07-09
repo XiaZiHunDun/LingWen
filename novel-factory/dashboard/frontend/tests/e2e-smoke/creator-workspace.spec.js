@@ -335,7 +335,7 @@ test.describe('Creator workspace live e2e', () => {
     await openAdvancedTools(page);
     await page.getByTestId('write-agent-input').fill('测试流式可见性');
 
-    const preview = page.getByTestId('agent-stream-preview');
+    const preview = page.getByTestId('write-agent-stream-preview-main');
     await Promise.all([
       expect(preview).toBeVisible({ timeout: 15_000 }),
       page.getByTestId('write-agent-send-btn').click(),
