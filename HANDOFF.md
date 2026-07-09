@@ -19,7 +19,7 @@
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
 | **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`197904b7`**（批次 20） |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`d6851269`**（批次 21） |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](novel-factory/docs/top-tier-studio-gap-v1.md) |
@@ -57,7 +57,7 @@
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | `11aa9ab4`/`01582d95` 主区 checkpoint diff · 锁定 preset · 视觉快照 · Live E2E **69** |
 | **Human-first 批次 12（锁定主区 + 导演路径选区 E2E）** | ✅ | `d83b35f5` 选区工具栏锁定 · director path+选区确认 · Live E2E **70** |
-| **Human-first 批次 21（候选 dock 主区 + 悬疑冲突/节奏加快文案 E2E）** | 🔄 | 主区 `write-candidate-dock-main` · suspense→冲突 · pace→加快 · Live E2E **91** |
+| **Human-first 批次 21（候选 dock 主区 + 悬疑冲突/节奏加快文案 E2E）** | ✅ | `d6851269` 主区 `write-candidate-dock-main` · suspense→冲突 · pace→加快 · Live E2E **91** |
 | **Human-first 批次 20（生成工具栏主区 + 悬疑克制文案 E2E）** | ✅ | `197904b7` 主区 `write-generate-toolbar-main` · suspense→克制路径 · Live E2E **88** |
 | **Human-first 批次 19（Agent 输入主区 + 冲突克制文案 E2E）** | ✅ | `c2e477fa`/`fbda73d7` 主区 `write-agent-prompt-main` · conflict→克制路径 · 视觉快照 · Live E2E **86** |
 | **Human-first 批次 18（冲突加快文案 + 流式预览主区 E2E）** | ✅ | `a52ca354`/`8693e9ae` 主区 `write-agent-stream-preview-main` · conflict→加快路径 · Live E2E **83** |
