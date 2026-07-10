@@ -7,14 +7,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException
-
-from infra.cross_volume.ripple import CrossVolumeRipple
-from infra.cross_volume.storage import AuditEntry, RippleStorage
-from infra.cross_volume.scoring import compute_impact_score
 
 from dashboard.cvg_ws import CvgConnectionManager
 from dashboard.protocols import (
@@ -30,34 +25,12 @@ from dashboard.protocols import (
     RippleListItemResponse,
     RippleStatsResponse,
 )
-
-
-# Module-level singleton (跟 _default_decision_queue 1:1 pattern);test fixture override
-# via monkeypatch.setattr(app_module, "_default_storage", ...)。
-
-_DEFAULT_CVG_DB_PATH = Path(__file__).parent.parent / ".state" / "cross_volume.db"
-_default_storage_instance: RippleStorage | None = None
+from infra.cross_volume.ripple import CrossVolumeRipple
+from infra.cross_volume.scoring import compute_impact_score
+from infra.cross_volume.storage import AuditEntry, RippleStorage
 
 # Phase 9.13: CVG WebSocket connection manager (跟 /api/ws/workflows ConnectionManager 1:1 模式)
 cvg_manager = CvgConnectionManager()
-
-
-def _default_storage() -> RippleStorage:
-    """Phase 9.13: singleton RippleStorage for cvg endpoints.
-
-    Lazy init: first call creates RippleStorage, subsequent calls return cached.
-    跟 dashboard 内部 _default_decision_queue 1:1 pattern (但 decisions 是 queue,
-    CVG 是 SQLite-backed RippleStorage)。
-    """
-    global _default_storage_instance
-    if _default_storage_instance is None:
-        from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
-
-        storage = RippleStorage(db_path=_DEFAULT_CVG_DB_PATH)
-        if storage._graph is None:
-            storage._graph = CrossVolumeReferenceGraph(storage)
-        _default_storage_instance = storage
-    return _default_storage_instance
 
 
 def _ripple_impact_score(storage: RippleStorage, r: CrossVolumeRipple) -> float:
@@ -166,7 +139,6 @@ def _node_to_dict_for_response(node: Any) -> dict:
     can bind the fields it knows and ignore extras (created_at / created_by
     / confidence are 0 改 ReferenceNode 既有字段, schema 不需要它们).
     """
-    from dataclasses import asdict, is_dataclass
     if is_dataclass(node):
         d = asdict(node)
         if isinstance(d.get("created_at"), datetime):
@@ -177,7 +149,6 @@ def _node_to_dict_for_response(node: Any) -> dict:
 
 def _edge_to_dict_for_response(edge: Any) -> dict:
     """Phase 9.15 T4: ReferenceEdge → dict for CascadeEdgeResponse(**)."""
-    from dataclasses import asdict, is_dataclass
     if is_dataclass(edge):
         d = asdict(edge)
         if isinstance(d.get("created_at"), datetime):

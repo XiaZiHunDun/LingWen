@@ -18,7 +18,7 @@ def _maybe_mount_dashboard_ui(app: FastAPI) -> None:
     flag = os.environ.get("LINGWEN_SERVE_UI", "").strip().lower()
     if flag not in ("1", "true", "yes"):
         return
-    dist = Path(__file__).resolve().parent / "frontend" / "dist"
+    dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
     if not dist.is_dir():
         return
     assets_dir = dist / "assets"

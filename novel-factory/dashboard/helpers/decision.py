@@ -7,6 +7,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from dashboard.models import DecisionResponse
+
+
 def _decision_to_response(d: Any) -> DecisionResponse:
     """HumanDecision / dict → DecisionResponse"""
     if hasattr(d, "to_dict"):

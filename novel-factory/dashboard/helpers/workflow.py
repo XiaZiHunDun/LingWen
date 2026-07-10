@@ -10,6 +10,7 @@ from typing import Any
 
 from dashboard.models import WorkflowListItem, WorkflowStatusResponse
 
+
 def _list_workflow_yamls() -> list[WorkflowListItem]:
     """扫描 infra/got/workflows/*.yaml → WorkflowListItem 列表
 
@@ -17,7 +18,7 @@ def _list_workflow_yamls() -> list[WorkflowListItem]:
     - node_count: text 中 `- id:` 出现次数
     - has_decision_nodes: text 中是否含 `type: decision`
     """
-    wf_dir = Path(__file__).parent.parent / "infra" / "got" / "workflows"
+    wf_dir = Path(__file__).parent.parent.parent / "infra" / "got" / "workflows"
     if not wf_dir.exists():
         return []
     items: list[WorkflowListItem] = []
@@ -37,29 +38,6 @@ def _list_workflow_yamls() -> list[WorkflowListItem]:
             )
         )
     return items
-
-
-def _decision_to_response(d: Any) -> DecisionResponse:
-    """HumanDecision / dict → DecisionResponse"""
-    if hasattr(d, "to_dict"):
-        d = d.to_dict()
-    return DecisionResponse(
-        decision_id=d.get("decision_id", ""),
-        kind=d.get("decision_kind") or d.get("kind", ""),
-        node_id=d.get("node_id", ""),
-        prompt=d.get("prompt", ""),
-        options=list(d.get("options", [])),
-        priority=d.get("priority", 0),
-        status=d.get("status", "pending"),
-        context=d.get("context", {}) or {},
-        created_at=d.get("created_at"),
-        resolution=d.get("resolution"),
-        resolved_at=d.get("resolved_at"),
-        resolved_by=d.get("resolved_by"),
-        reason=d.get("reason"),
-    )
-
-
 
 
 def _workflow_result_to_response(

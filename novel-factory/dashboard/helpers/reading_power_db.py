@@ -11,10 +11,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+
 class ReadingPowerDB:
     """Database handler for reading power data."""
 
-    DB_PATH = Path(__file__).parent.parent / ".state" / "reading_power.db"
+    DB_PATH = Path(__file__).parent.parent.parent / ".state" / "reading_power.db"
 
     def __init__(self, db_path: Optional[Path] = None, init_if_missing: bool = True):
         self.db_path = db_path or self.DB_PATH

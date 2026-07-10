@@ -89,7 +89,7 @@ from dashboard.models import *  # noqa: F401,F403
 # app.py / create_app closure references these helpers — re-export them here
 # so the existing top-level call sites (e.g. _default_storage in tests) keep working.
 from dashboard.helpers.cvg import (  # noqa: F401
-    _default_storage,
+    cvg_manager,
     _ripple_impact_score,
     _ripple_to_list_item,
     _ripple_list_items,
@@ -109,6 +109,29 @@ from dashboard.helpers.workflow import (  # noqa: F401
     _list_workflow_yamls,
     _workflow_result_to_response,
 )
+
+# Phase 15.0 T1.3: CVG storage singleton stays module-level in dashboard.app so tests
+# can monkeypatch app_module._default_storage / _default_storage_instance / _DEFAULT_CVG_DB_PATH
+# (reader + globals must be co-located for setattr to take effect).
+_DEFAULT_CVG_DB_PATH = Path(__file__).parent.parent / ".state" / "cross_volume.db"
+_default_storage_instance: "RippleStorage | None" = None
+
+
+def _default_storage() -> "RippleStorage":
+    """Phase 9.13: singleton RippleStorage for cvg endpoints.
+
+    Lazy init: first call creates RippleStorage, subsequent calls return cached.
+    """
+    global _default_storage_instance
+    if _default_storage_instance is None:
+        from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
+        from infra.cross_volume.storage import RippleStorage
+
+        storage = RippleStorage(db_path=_DEFAULT_CVG_DB_PATH)
+        if storage._graph is None:
+            storage._graph = CrossVolumeReferenceGraph(storage)
+        _default_storage_instance = storage
+    return _default_storage_instance
 
 
 def create_app(
