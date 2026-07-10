@@ -11,6 +11,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 chmod +x scripts/*.sh 2>/dev/null || true
 
+# Phase 13.0 T5: 默认 LINGWEN_PROJECT_ROOT=ROOT (此 runbook 是 novel-factory/ 根调用)
+# 调用方如另设 env 仍以调用方为准
+export LINGWEN_PROJECT_ROOT="${LINGWEN_PROJECT_ROOT:-$ROOT}"
+
 echo "=== Studio maintenance run ==="
 
 echo "[1/5] prose calibration (golden 七样章)"
