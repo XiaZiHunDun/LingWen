@@ -46,6 +46,7 @@
 
 | 主题 | 状态 | 证据 / commit |
 |------|------|----------------|
+| **Phase 13.0 P1 止血（T1–T5）** | ✅ | `4da70b6b`/`7aaaaa5e`/`bbfc8b5d`/`02af6787`/`ed753a20` api 15s 超时 · slowapi 限流 · ripple list bulk · CLI path env · shell slug guard · Vitest **1029** · ruff clean · 5 spec new |
 | **Human-first 书桌 + 工程质量（P0–P1）** | ✅ | `bc9163a1` 组件单测 · §9 收口 · Vitest **934** · Live E2E **59** |
 | **Human-first 深化（P1 续）** | ✅ | `63dec001` 发布向导单测 · 脉络抽屉 a11y · Vitest **941** · Live E2E **60** |
 | **Human-first 验收（P1）** | ✅ | `df8b2912` WritePanel 单测 · 陪伴全路径 E2E · Vitest **949** · Live E2E **61** |
@@ -57,7 +58,8 @@
 | **Human-first 批次 10（撤销 UX + 多候选 E2E）** | ✅ | `15c0989f` 主区 `write-undo-bar-main` · preset 选 c2 E2E · Live E2E **68** |
 | **Human-first 批次 11（checkpoint 主区 + 锁定 E2E）** | ✅ | `11aa9ab4`/`01582d95` 主区 checkpoint diff · 锁定 preset · 视觉快照 · Live E2E **69** |
 | **Human-first 批次 12（锁定主区 + 导演路径选区 E2E）** | ✅ | `d83b35f5` 选区工具栏锁定 · director path+选区确认 · Live E2E **70** |
-| **Human-first 批次 22（计划卡/质量条主区 + 克制加快/节奏冲突文案 E2E）** | 🔄 | 主区 `write-director-plan-card-main` · `write-quality-bar-main` · Live E2E **95** |
+| **Human-first 批次 22（计划卡/质量条主区 + 克制加快/节奏冲突文案 E2E）** | ✅ | `4b7fa498` 主区 `write-director-plan-card-main` · `write-quality-bar-main` · Live E2E **95** |
+| **Human-first 批次 21（候选 dock 主区 + 悬疑冲突/节奏加快文案 E2E）** | ✅ | `d6851269` 主区 `write-candidate-dock-main` · suspense→冲突 · pace→加快 · Live E2E **91** |
 | **Human-first 批次 20（生成工具栏主区 + 悬疑克制文案 E2E）** | ✅ | `197904b7` 主区 `write-generate-toolbar-main` · suspense→克制路径 · Live E2E **88** |
 | **Human-first 批次 19（Agent 输入主区 + 冲突克制文案 E2E）** | ✅ | `c2e477fa`/`fbda73d7` 主区 `write-agent-prompt-main` · conflict→克制路径 · 视觉快照 · Live E2E **86** |
 | **Human-first 批次 18（冲突加快文案 + 流式预览主区 E2E）** | ✅ | `a52ca354`/`8693e9ae` 主区 `write-agent-stream-preview-main` · conflict→加快路径 · Live E2E **83** |
