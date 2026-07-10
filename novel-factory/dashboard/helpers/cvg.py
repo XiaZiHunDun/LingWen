@@ -17,6 +17,19 @@ from infra.cross_volume.storage import AuditEntry, RippleStorage
 from infra.cross_volume.scoring import compute_impact_score
 
 from dashboard.cvg_ws import CvgConnectionManager
+from dashboard.protocols import (
+    CascadeEdgeResponse,
+    CascadeNodeResponse,
+    CascadePreviewResponse,
+    CascadeResponse,
+    CascadeRunResponse,
+    ReferenceGraphResponse,
+    RippleActionResponse,
+    RippleAuditEntryResponse,
+    RippleDetailResponse,
+    RippleListItemResponse,
+    RippleStatsResponse,
+)
 
 
 # Module-level singleton (跟 _default_decision_queue 1:1 pattern);test fixture override

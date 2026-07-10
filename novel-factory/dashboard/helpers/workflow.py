@@ -8,6 +8,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from dashboard.models import WorkflowListItem, WorkflowStatusResponse
+
 def _list_workflow_yamls() -> list[WorkflowListItem]:
     """扫描 infra/got/workflows/*.yaml → WorkflowListItem 列表
 
