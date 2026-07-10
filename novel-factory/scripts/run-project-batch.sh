@@ -21,7 +21,7 @@ export LINGWEN_EMIT_CHAPTER="${LINGWEN_EMIT_CHAPTER:-1}"
 export LINGWEN_PRODUCTION_MODE="${LINGWEN_PRODUCTION_MODE:-canon}"
 export LINGWEN_CHAPTER_WORD_TARGET="${LINGWEN_CHAPTER_WORD_TARGET:-2500}"
 
-PROJECT_ROOT="${LINGWEN_PROJECT_ROOT:?set LINGWEN_PROJECT_ROOT to project directory}"
+source "${ROOT}/scripts/_slug_guard.sh"
 START_CH="${1:?start chapter}"
 END_CH="${2:?end chapter}"
 MAX_CHAPTERS="${3:-$((END_CH - START_CH + 1))}"

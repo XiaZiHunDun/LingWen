@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
 # Zip Studio dist folders: 七样章 (default) or 五样章 (legacy subset).
 # Usage:
+#   export LINGWEN_PROJECT_ROOT=/path/to/novel-factory  # 或 projects 父目录
 #   bash scripts/prepare-studio-samples-zip.sh           # 七样章（默认）
 #   STUDIO_SAMPLES=5 bash scripts/prepare-studio-samples-zip.sh
+#
+# SLUGS 数组显式维护 (第 9 本/未来 wave 加进数组), 父目录由 env 驱动。
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+source "${ROOT}/scripts/_slug_guard.sh"
+
+# 父目录推断: env 指向 novel-factory 或 novel-factory/projects 都可
+PARENT_DIR="${PROJECT_ROOT}"
+if [[ "$(basename "$PARENT_DIR")" == "projects" ]]; then
+  PROJECTS_ROOT="$PARENT_DIR"
+else
+  PROJECTS_ROOT="${PARENT_DIR}/projects"
+fi
 
 STUDIO_SAMPLES="${STUDIO_SAMPLES:-7}"
 
@@ -39,7 +51,7 @@ else
 fi
 
 for i in "${!SLUGS[@]}"; do
-  if [[ ! -d "${ROOT}/projects/${SLUGS[$i]}/dist" ]] || [[ -z "$(ls -A "${ROOT}/projects/${SLUGS[$i]}/dist" 2>/dev/null || true)" ]]; then
+  if [[ ! -d "${PROJECTS_ROOT}/${SLUGS[$i]}/dist" ]] || [[ -z "$(ls -A "${PROJECTS_ROOT}/${SLUGS[$i]}/dist" 2>/dev/null || true)" ]]; then
     echo "Building dist: ${SLUGS[$i]}"
     LINGWEN_POST_CHECK_LLM=0 bash "scripts/${PREPARE[$i]}"
   else
@@ -55,7 +67,7 @@ rm -rf "${STAGE}"
 mkdir -p "${STAGE}"
 
 for i in "${!SLUGS[@]}"; do
-  cp -a "${ROOT}/projects/${SLUGS[$i]}/dist" "${STAGE}/${LABELS[$i]}"
+  cp -a "${PROJECTS_ROOT}/${SLUGS[$i]}/dist" "${STAGE}/${LABELS[$i]}"
 done
 cp "${ROOT}/docs/trial-read-index.md" "${STAGE}/trial-read-index.md"
 

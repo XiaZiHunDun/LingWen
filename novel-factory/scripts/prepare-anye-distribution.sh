@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Build 暗夜对外分发目录
-# Usage: bash scripts/prepare-anye-distribution.sh
+# Usage:
+#   export LINGWEN_PROJECT_ROOT=/path/to/projects/anye-xinbiao
+#   bash scripts/prepare-anye-distribution.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+source "${ROOT}/scripts/_slug_guard.sh"
 
-SLUG=anye-xinbiao
-PROJ="${ROOT}/projects/${SLUG}"
+PROJ="${PROJECT_ROOT}"
 DIST="${PROJ}/dist"
 
 echo "=== Prepare ${SLUG} distribution ==="

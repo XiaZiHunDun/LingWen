@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Build 黄沙对外分发目录：试读包 + 纯文本摘要 + 最新质检
-# Usage: bash scripts/prepare-huangsha-distribution.sh
+# Usage:
+#   export LINGWEN_PROJECT_ROOT=/path/to/projects/huangsha-dangan
+#   bash scripts/prepare-huangsha-distribution.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+source "${ROOT}/scripts/_slug_guard.sh"
 
-SLUG=huangsha-dangan
-PROJ="${ROOT}/projects/${SLUG}"
+PROJ="${PROJECT_ROOT}"
 DIST="${PROJ}/dist"
 
 echo "=== Prepare ${SLUG} distribution ==="
