@@ -93,6 +93,8 @@ class CrossVolumeReferenceGraph:
         self._index_by_volume: dict[int, set[str]] = {}
         self._index_by_dimension: dict[DimensionT, set[str]] = {}
         self._index_by_node_edges: dict[str, set[str]] = {}
+        # Phase 14.0 T1: O(1) neighbor→edge lookup for trigger_cascade
+        self._adjacency_by_node: dict[str, dict[str, str]] = {}
         self._impact_cache = QueryImpactCache()
         self._loaded_volumes: set[int] = set()
         if lazy:
@@ -145,8 +147,18 @@ class CrossVolumeReferenceGraph:
         if edge.from_node_id not in self._nodes or edge.to_node_id not in self._nodes:
             return
         self._edges[edge.id] = edge
+        self._register_edge_in_indexes(edge)
+
+    def _register_edge_in_indexes(self, edge: ReferenceEdge) -> None:
+        """Phase 14.0 T1: atomic write to both old set + new dict adjacency index.
+
+        Used by ingest_edge (lazy load, no storage write) and add_edge
+        (eager + storage write). Keep both indexes synchronized.
+        """
         self._index_by_node_edges.setdefault(edge.from_node_id, set()).add(edge.id)
         self._index_by_node_edges.setdefault(edge.to_node_id, set()).add(edge.id)
+        self._adjacency_by_node.setdefault(edge.from_node_id, {})[edge.to_node_id] = edge.id
+        self._adjacency_by_node.setdefault(edge.to_node_id, {})[edge.from_node_id] = edge.id
 
     def query_impact(self, node_id: str, from_volume: int) -> list[ReferenceEdge]:
         """Edges incident to node_id whose opposite endpoint is in volume < from_volume."""
@@ -211,8 +223,7 @@ class CrossVolumeReferenceGraph:
         if edge.to_node_id not in self._nodes:
             raise ValueError(f"to_node_id not found: {edge.to_node_id}")
         self._edges[edge.id] = edge
-        self._index_by_node_edges.setdefault(edge.from_node_id, set()).add(edge.id)
-        self._index_by_node_edges.setdefault(edge.to_node_id, set()).add(edge.id)
+        self._register_edge_in_indexes(edge)
         self._storage.append_edge(edge)
         self._impact_cache.invalidate()
         logger.debug("add_edge: id=%s %s->%s", edge.id, edge.from_node_id, edge.to_node_id)
@@ -322,16 +333,11 @@ class CrossVolumeReferenceGraph:
                     break
                 visited.add(neighbor.id)
                 collected_nodes.append(neighbor)
-                # Collect edges for the hop (both source + target side)
-                edge_ids = self._index_by_node_edges.get(current_id, set())
-                edge_obj: ReferenceEdge | None = None
-                for eid in edge_ids:
-                    e = self._edges[eid]
-                    if (e.from_node_id == current_id and e.to_node_id == neighbor.id) or \
-                       (e.to_node_id == current_id and e.from_node_id == neighbor.id):
-                        collected_edges.append(e)
-                        edge_obj = e
-                        break
+                # Phase 14.0 T1: O(1) edge lookup via adjacency index (replaces linear scan)
+                edge_id = self._adjacency_by_node.get(current_id, {}).get(neighbor.id)
+                edge_obj = self._edges.get(edge_id) if edge_id else None
+                if edge_obj is not None:
+                    collected_edges.append(edge_obj)
                 # Phase 9.16: weight 走 edge.weight (优先) 而非 neighbor.payload
                 hop_weight = edge_obj.weight if edge_obj is not None else 0.5
                 # 1 proposed_action per hop
