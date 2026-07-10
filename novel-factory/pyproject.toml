@@ -42,6 +42,8 @@ dependencies = [
     "anthropic>=0.30",
     "PyYAML>=6.0",
     "qdrant-client>=1.7",
+    # Phase 13.0 T2 H2: FastAPI 中间件 — mutation 限流 + CORS + GZip
+    "slowapi>=0.1.9",
 ]
 
 [project.optional-dependencies]

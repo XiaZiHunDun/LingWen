@@ -25,10 +25,18 @@ from infra.agent_system.agent_config import load_project_env
 
 load_project_env()
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+# Phase 13.0 T2 H2: middleware — CORS + GZip + slowapi 限流 (100/min default, 10/min mutation)
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 
 from dashboard.cascade_notifier import (
     notify_cascade_cancel,  # Phase 9.21: cascade cancel WS push
@@ -68,6 +76,11 @@ from dashboard.ws import (
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.scoring import compute_impact_score
 from infra.cross_volume.storage import AuditEntry, ConflictError, RippleStorage
+
+# ==================== Middleware / Rate Limiter ====================
+# Phase 13.0 T2 H2: slowapi Limiter singleton (module-level, key=IP, default 100/min)
+# Per-endpoint stricter limits applied via @limiter.limit("10/minute") on mutation routes
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 # ==================== Pydantic Models ====================
 
@@ -2522,6 +2535,28 @@ def create_app(
         lifespan=lifespan,
     )
 
+    # Phase 13.0 T2 H2/H4 dedupe: slowapi 的 _route_limits 是 module-level global
+    # 但 apply_ripple 等 mutation routes 在本函数内部 def → 每次 create_app() 重新装饰 → 累计路由 limit
+    # → 一次请求 hit() 多次 → 限流数字错乱。生产环境 create_app 只调一次 (影响 0),测试 / 反复 init 安全。
+    limiter._route_limits.clear()
+    limiter._Limiter__marked_for_limiting.clear()
+    limiter._dynamic_route_limits.clear()
+
+    # Phase 13.0 T2 H2: middleware stack — CORS (本地全开) + GZip ≥1KB + slowapi rate limit
+    # add_middleware 是 reverse-stack:LIFO — 越后注册越外层;CORS 最外层 (响应所有 cross-origin)
+    # 注: allow_credentials=False (CORS 规范禁 *+credentials);本地 Studio 无 cookie/auth,不需要 credentials
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
+
     # Use init_if_missing=False to avoid trying to create directories for non-existent paths
     db = ReadingPowerDB(db_path, init_if_missing=False)
 
@@ -2828,7 +2863,9 @@ def create_app(
         return _ripple_to_detail(ripple, storage)
 
     @app.post("/api/cvg/ripples/{ripple_id}/apply", response_model=RippleActionResponse)
+    @limiter.limit("10/minute")  # Phase 13.0 T2 H4: mutation 限流 10/min (slowapi introspects Request)
     def apply_ripple(
+        request: Request,  # injected by FastAPI; required for slowapi key_func (IP-based)
         ripple_id: str,
         body: RippleActionRequest | None = None,
     ) -> RippleActionResponse:
