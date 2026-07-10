@@ -17,20 +17,54 @@ import { markApiOffline, markApiOnline } from './connectivity.js';
 // Same-origin when UI is served by FastAPI (LINGWEN_SERVE_UI=1) or via Vite proxy.
 const BASE_URL = import.meta.env.VITE_API_BASE || '/api';
 
+// Phase 13.0 H10: 前端 API 默认 15s timeout，避免后端死时浏览器永远 spinner。
+// 所有 fetch* 调用自动获得；上层可传 opts.signal 进一步链式取消。
+const DEFAULT_TIMEOUT_MS = 15_000;
+
+/**
+ * Combine multiple AbortSignals into one (any-source fires → signal aborts).
+ * Phase 13.0 H10: 让外部 signal + 内置 timeout 同时生效。
+ * @param {AbortSignal[]} signals
+ * @returns {AbortSignal}
+ */
+function anySignal(signals) {
+  const controller = new AbortController();
+  for (const sig of signals) {
+    if (sig.aborted) {
+      controller.abort(sig.reason);
+      return controller.signal;
+    }
+    sig.addEventListener('abort', () => controller.abort(sig.reason), { once: true });
+  }
+  return controller.signal;
+}
+
 export { apiConnectivity, markApiOffline, markApiOnline } from './connectivity.js';
 
 /**
- * Make a request to the API with error handling
+ * Make a request to the API with error handling.
+ *
+ * Phase 13.0 H10 变更：
+ * - 默认 15s timeout（AbortSignal.timeout），后端死时浏览器不再 spinner 永远。
+ * - 接受 opts.signal：与 timeout signal 用 anySignal 合并，任一触发即 abort。
+ * - AbortError 区分用户主动取消 vs 超时：用户取消透传原 error，timeout 包成"Request timeout"友好文案。
+ *
  * @param {string} path - API endpoint path
- * @param {object} [opts] - { method, body }
+ * @param {object} [opts] - { method, body, signal }
  * @returns {Promise<any>} Response JSON
  * @throws {Error} Descriptive error on failure
  */
 async function request(path, opts = {}) {
-  const { method = 'GET', body } = opts;
+  const { method = 'GET', body, signal: externalSignal } = opts;
+  const timeoutSignal = AbortSignal.timeout(DEFAULT_TIMEOUT_MS);
+  const fetchSignal = externalSignal
+    ? anySignal([externalSignal, timeoutSignal])
+    : timeoutSignal;
+
   const fetchOpts = {
     method,
     headers: { 'Content-Type': 'application/json' },
+    signal: fetchSignal,
   };
   if (body !== undefined) {
     fetchOpts.body = typeof body === 'string' ? body : JSON.stringify(body);
@@ -47,6 +81,14 @@ async function request(path, opts = {}) {
     markApiOnline();
     return data;
   } catch (error) {
+    // 用户主动取消 (opts.signal.aborted): 透传原 error，保留取消语义。
+    if (externalSignal?.aborted) {
+      throw error;
+    }
+    // 内置 timeout (或其它 AbortError): 包成"Request timeout"友好文案，便于 UI 区分。
+    if (error?.name === 'AbortError') {
+      throw new Error(`Request timeout after ${DEFAULT_TIMEOUT_MS}ms: ${path}`);
+    }
     if (error instanceof TypeError && error.message.includes('fetch')) {
       const message = `Network error: Unable to connect to ${BASE_URL}. Is the server running?`;
       markApiOffline(message);
