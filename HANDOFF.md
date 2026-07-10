@@ -47,6 +47,7 @@
 | 主题 | 状态 | 证据 / commit |
 |------|------|----------------|
 | **Phase 13.0 P1 止血（T1–T5）** | ✅ | `4da70b6b`/`7aaaaa5e`/`bbfc8b5d`/`02af6787`/`ed753a20` api 15s 超时 · slowapi 限流 · ripple list bulk · CLI path env · shell slug guard · Vitest **1029** · ruff clean · 5 spec new |
+| **Phase 14.0 P2 性能（T1–T3）** | ✅ | `70202c0c`/`acc8b834`/`546cc9a5` cascade 邻接表 O(1) (7.0×) · Qdrant async wrap to_thread (4.89×) · `_LRUCache` TTL 300s 防 stale (100% effective) · verify-p2 5/5 · bench-p2 3/3 · ruff clean · 12 new tests |
 | **Human-first 书桌 + 工程质量（P0–P1）** | ✅ | `bc9163a1` 组件单测 · §9 收口 · Vitest **934** · Live E2E **59** |
 | **Human-first 深化（P1 续）** | ✅ | `63dec001` 发布向导单测 · 脉络抽屉 a11y · Vitest **941** · Live E2E **60** |
 | **Human-first 验收（P1）** | ✅ | `df8b2912` WritePanel 单测 · 陪伴全路径 E2E · Vitest **949** · Live E2E **61** |
