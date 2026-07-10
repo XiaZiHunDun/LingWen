@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -587,3 +588,40 @@ class QdrantClientWrapper:
             "size": len(self._search_cache),
             "max_size": self._cache_size,
         }
+
+    async def search_async(
+        self,
+        collection_name: str,
+        query_vector: list[float],
+        top_k: Optional[int] = None,
+        query_filter: Optional[Filter] = None,
+    ) -> list[dict]:
+        """Phase 14.0 T2: async 包装 sync search(), 释放 FastAPI event loop.
+
+        主路径仍 sync `search()` (6+ callers 0 改); async 仅供 FastAPI endpoint 用。
+        用 `asyncio.to_thread()` 把 sync Qdrant 阻塞调用送到 thread pool。
+        """
+        return await asyncio.to_thread(
+            self.search,
+            collection_name,
+            list(query_vector),
+            top_k=top_k,
+            query_filter=query_filter,
+        )
+
+    async def _raw_vector_search_async(
+        self,
+        collection_name: str,
+        query_vector: list[float],
+        *,
+        limit: int = 10,
+        query_filter: Optional[Filter] = None,
+    ) -> list[Any]:
+        """Phase 14.0 T2: async 包装 sync `_raw_vector_search()`. 同样 to_thread."""
+        return await asyncio.to_thread(
+            self._raw_vector_search,
+            collection_name,
+            list(query_vector),
+            limit=limit,
+            query_filter=query_filter,
+        )
