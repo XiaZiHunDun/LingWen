@@ -861,6 +861,35 @@ class RippleStorage:
             )
         return out
 
+    def get_ripple_impact_scores_bulk(
+        self, ripple_ids: list[str]
+    ) -> dict[str, float]:
+        """Phase 13.0 T3 H4: bulk compute impact_score for many ripples in 2 queries.
+
+        Replaces N+1 `get_cascade_by_ripple_id` + `compute_impact_score` per ripple.
+        200 rows: 1 query for cascades + 1 query for ripples (IN list) + 1 Python pass.
+        Returns dict mapping ripple_id → impact_score (float, rounded 2dp).
+        """
+        if not ripple_ids:
+            return {}
+        cascades = self.batch_latest_cascades(ripple_ids)
+        placeholders = ",".join("?" * len(ripple_ids))
+        with self._connect() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM reference_ripples WHERE id IN ({placeholders})",
+                ripple_ids,
+            ).fetchall()
+        ripples_by_id = {row["id"]: self._row_to_ripple(row) for row in rows}
+        from infra.cross_volume.scoring import compute_impact_score
+        out: dict[str, float] = {}
+        for rid in ripple_ids:
+            r = ripples_by_id.get(rid)
+            if r is None:
+                out[rid] = 0.0
+                continue
+            out[rid] = compute_impact_score(r, cascade=cascades.get(rid))
+        return out
+
     def preview_cascade(
         self,
         ripple_id: str,
