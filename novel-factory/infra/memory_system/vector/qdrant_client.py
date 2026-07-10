@@ -75,30 +75,47 @@ def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
 
 
 class _LRUCache:
-    """简单的 LRU 缓存实现，线程安全"""
+    """简单的 LRU 缓存实现，线程安全
 
-    def __init__(self, max_size: int = 1000):
+    Phase 14.0 T3: 加 `ttl_seconds: float = 300.0` 防 chapter 新 embedding 写入后
+    旧 entry 占用 LRU slot。`get()` 时若 `time.monotonic() - ts > ttl` 即视为 stale
+    移除。`ttl_seconds <= 0` 等价禁用缓存（每次 get 都返回 None，put 不写入）。
+    """
+
+    def __init__(self, max_size: int = 1000, ttl_seconds: float = 300.0):
         self._max_size = max_size
-        self._cache: OrderedDict[str, Any] = OrderedDict()
+        self._ttl_seconds = ttl_seconds
+        self._cache: OrderedDict[str, tuple[Any, float]] = OrderedDict()
         self._lock = threading.RLock()
 
     def get(self, key: str) -> Optional[Any]:
-        """获取缓存值，如果存在则移动到末尾"""
+        """获取缓存值，过期则移除并返回 None。"""
         with self._lock:
-            if key in self._cache:
-                self._cache.move_to_end(key)
-                return self._cache[key]
-            return None
+            if key not in self._cache:
+                return None
+            value, ts = self._cache[key]
+            if self._ttl_seconds > 0 and time.monotonic() - ts > self._ttl_seconds:
+                del self._cache[key]
+                return None
+            self._cache.move_to_end(key)
+            return value
 
-    def put(self, key: str, value: Any) -> None:
-        """存入缓存，超限时移除最旧的项"""
+    def put(self, key: str, value: Any, ts: Optional[float] = None) -> None:
+        """存入缓存，超限时移除最旧的项。同 key 重 put 时保留原 ts，避免人为延长 TTL。"""
+        if ts is None:
+            ts = time.monotonic()
         with self._lock:
+            if self._ttl_seconds <= 0:
+                return  # TTL=0 等价禁用
             if key in self._cache:
+                # 同 key: 只更新 value, 保留原 ts
+                _, old_ts = self._cache[key]
+                self._cache[key] = (value, old_ts)
                 self._cache.move_to_end(key)
             else:
-                if len(self._cache) >= self._max_size:
+                self._cache[key] = (value, ts)
+                if len(self._cache) > self._max_size:
                     self._cache.popitem(last=False)
-            self._cache[key] = value
 
     def clear(self) -> None:
         """清空所有缓存"""
@@ -178,6 +195,8 @@ class QdrantClientWrapper:
         retrieval_config = memory_config["retrieval"]
         self.default_top_k = retrieval_config["default_top_k"]
         self.hybrid_alpha = retrieval_config["hybrid_alpha"]
+        # Phase 14.0 T3: cache_ttl_seconds 配置 (默认 300s)
+        cache_ttl_seconds = float(retrieval_config.get("cache_ttl_seconds", 300.0))
 
         # 集合配置
         self.collections = collections_config["collections"]
@@ -195,7 +214,8 @@ class QdrantClientWrapper:
         # 缓存配置
         self._cache_size = cache_size
         self._default_batch_size = default_batch_size
-        self._search_cache = _LRUCache(max_size=cache_size)
+        # Phase 14.0 T3: TTL 注入 cache
+        self._search_cache = _LRUCache(max_size=cache_size, ttl_seconds=cache_ttl_seconds)
 
     @property
     def client(self) -> QdrantClient:
