@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from infra.cli.options import UnifiedOptions
+from infra.cli.path_utils import resolve_project_db_path
 from infra.cross_volume.storage import RippleStorage
 
 from .base import Command
@@ -22,8 +23,12 @@ MAX_AUDIT_LIMIT = 1000
 
 
 def _get_storage() -> RippleStorage:
-    """Phase 9.14: 1:1 with Phase 9.11 backfill pattern (lazy import)."""
-    return RippleStorage(db_path=DEFAULT_RIPPLE_DB)
+    """Phase 9.14: 1:1 with Phase 9.11 backfill pattern (lazy import).
+
+    Phase 13.0 T4 M4: db path resolves via $LINGWEN_PROJECT_ROOT (preferred)
+    or CWD fallback with WARNING (1-version deprecation).
+    """
+    return RippleStorage(db_path=resolve_project_db_path())
 
 
 def _sanitize_reason(reason: str) -> str:

@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from infra.cli.options import CascadeOptions
+from infra.cli.path_utils import resolve_project_db_path
 from infra.cross_volume.storage import RippleStorage
 
 from .base import Command
@@ -10,7 +11,8 @@ DEFAULT_RIPPLE_DB = Path(".state/ripple.db")
 
 
 def _get_storage() -> RippleStorage:
-    return RippleStorage(db_path=DEFAULT_RIPPLE_DB)
+    # Phase 13.0 T4 M4: resolve via $LINGWEN_PROJECT_ROOT (preferred) or CWD fallback
+    return RippleStorage(db_path=resolve_project_db_path())
 
 
 class CascadeCommand(Command):
