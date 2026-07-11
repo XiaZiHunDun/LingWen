@@ -194,6 +194,19 @@ def _build_reference_graph_response(
     )
 
 
+def _validate_max_depth(max_depth: int | None) -> int | None:
+    """Phase 9.19: validate max_depth. Returns depth int if live BFS needed, None if persisted.
+
+    Raises HTTPException 400 if max_depth is out of range.
+    Phase 15.0 T1.4: hoisted from create_app closure (was inline at app.py line 656).
+    """
+    if max_depth is not None and max_depth != 0:
+        if max_depth < 0 or max_depth > 10:
+            raise HTTPException(400, "max_depth must be 0 (persisted) or 1..10")
+        return max_depth
+    return None  # use persisted path
+
+
 def _validate_max_depth_v9_20(max_depth: int | None) -> int:
     """Phase 9.20: validate max_depth for persist=true path. Returns validated int.
 

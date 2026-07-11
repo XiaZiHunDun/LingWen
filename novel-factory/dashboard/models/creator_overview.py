@@ -9,6 +9,19 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+# Phase 15.0 T1.4: Pydantic v2 + `from __future__ import annotations` means these
+# type annotations resolve to strings. Pydantic looks them up in the LOCAL
+# module namespace when validating, so we must import the referenced classes
+# directly (the dashboard.models package re-exports are not enough on their own).
+from dashboard.models.creator import (
+    CreatorChapterRow,
+    CreatorUiProfile,
+    CreatorVolumeDeviation,
+    CreatorVolumePlanEntry,
+    CreatorVolumeSummary,
+)
+from dashboard.models.creator_pulse import CreatorVolumePulse
+
 
 class CreatorOverviewResponse(BaseModel):
     slug: str

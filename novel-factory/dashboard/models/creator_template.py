@@ -9,6 +9,11 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+# Phase 15.0 T1.4: forward ref to CreatorVolumePlanEntry (defined in creator.py).
+# Pydantic v2 + `from __future__ import annotations` resolves at validation time
+# against this module's namespace, so the parent re-export is not sufficient.
+from dashboard.models.creator import CreatorVolumePlanEntry
+
 
 class CreatorVolumeTemplateInfo(BaseModel):
     id: str

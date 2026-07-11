@@ -15,12 +15,14 @@ from dashboard.helpers.cvg import (
     _ripple_list_items,
     _ripple_to_detail,
     _ripple_to_list_item,
+    _validate_max_depth,
     _validate_max_depth_v9_20,
     _validate_max_nodes_cap,
     cvg_manager,
 )
 from dashboard.helpers.decision import _decision_to_response
 from dashboard.helpers.misc import _maybe_mount_dashboard_ui
+from dashboard.helpers.production_records import production_records_root
 from dashboard.helpers.reading_power_db import ReadingPowerDB
 from dashboard.helpers.time_window import _parse_time_window
 from dashboard.helpers.workflow import (
