@@ -1,4 +1,6 @@
 /* Creator write workbench — left stack + main editor (Human Comfort P0) */
+/* 功能区域：写作核心区、AI辅助区、检查反馈区、版本管理区 */
+
 .write-workbench {
   display: flex;
   gap: var(--space-md);
@@ -151,37 +153,6 @@
   min-height: 160px;
 }
 
-.write-workbench__advanced {
-  border: 1px dashed var(--border-color);
-  border-radius: var(--radius-sm);
-  background: transparent;
-}
-
-.write-workbench__advanced-summary {
-  cursor: pointer;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--color-text-dim);
-  list-style: none;
-}
-
-.write-workbench__advanced-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  padding: 0 var(--space-sm) var(--space-sm);
-}
-
-.write-workbench__paths-details summary {
-  cursor: pointer;
-  list-style: none;
-}
-
-.write-workbench__paths-details summary::-webkit-details-marker {
-  display: none;
-}
-
 .write-workbench__editor-slot {
   flex: 1;
   min-width: 0;
@@ -204,19 +175,6 @@
 .write-workbench__quality-item--ok { color: #2a7; }
 .write-workbench__quality-item--warn { color: #a60; }
 .write-workbench__quality-item--info { color: var(--color-text-dim); }
-
-.write-workbench__agent {
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--bg-muted);
-}
-
-.write-workbench__agent-summary {
-  cursor: pointer;
-  padding: var(--space-sm);
-  font-size: var(--text-sm);
-  list-style: none;
-}
 
 .write-workbench__agent-body {
   padding: 0 var(--space-sm) var(--space-sm);
@@ -277,6 +235,10 @@
   align-items: center;
 }
 
+.write-workbench__version-item:last-child {
+  border-bottom: none;
+}
+
 .write-control-strip .write-workbench__chip {
   font-size: var(--text-xs);
   padding: 2px 8px;
@@ -288,6 +250,29 @@
 .write-control-strip .write-workbench__chip--active {
   background: var(--color-accent);
   color: #fff;
+}
+
+details.write-workbench__card > summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+details.write-workbench__card > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.write-workbench__card > summary::before {
+  content: '▶';
+  display: inline-block;
+  font-size: 10px;
+  margin-right: 6px;
+  transition: transform 0.2s ease;
+  color: var(--color-text-dim);
+}
+
+details[open].write-workbench__card > summary::before {
+  transform: rotate(90deg);
 }
 
 @media (max-width: 960px) {
