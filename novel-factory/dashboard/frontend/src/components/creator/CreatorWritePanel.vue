@@ -362,9 +362,13 @@ function onBodyTextareaInteraction(event) {
 <style scoped>
 .chapter-preview {
   margin-top: var(--space-md);
-  padding: var(--space-sm);
+  padding: var(--space-md);
   max-height: 320px;
   overflow: auto;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--shadow-soft);
 }
 
 .chapter-preview--workbench {
@@ -372,12 +376,16 @@ function onBodyTextareaInteraction(event) {
   max-height: none;
   flex: 1;
   min-height: 240px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 .chapter-dual-edit {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   margin-top: var(--space-sm);
 }
 
@@ -386,46 +394,72 @@ function onBodyTextareaInteraction(event) {
     grid-template-columns: 1fr;
   }
 }
+
 .chapter-outline-textarea {
   width: 100%;
   min-height: 160px;
+  border-radius: var(--radius-sm);
 }
+
 .logic-check-issue--clickable {
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  transition: background-color 0.15s ease;
 }
+
+.logic-check-issue--clickable:hover {
+  background: var(--bg-muted);
+}
+
 .logic-check-issue--active {
   animation: recheck-issue-flash 1.2s ease-out;
   background: var(--color-highlight-soft);
 }
+
 .batch-deviation-inline-summary {
   margin: var(--space-sm) 0;
-  padding: var(--space-xs);
-  background: rgba(200, 80, 80, 0.08);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(200, 80, 80, 0.06);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-danger);
 }
+
 .batch-deviation-inline-list {
   list-style: none;
   padding: 0;
   margin: var(--space-xs) 0 0;
   font-size: var(--text-sm);
 }
+
 .batch-deviation-inline-item {
-  padding: 4px 0;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border-color);
 }
+
+.batch-deviation-inline-item:last-child {
+  border-bottom: none;
+}
+
 .batch-deviation-inline-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
-  margin-top: var(--space-xs);
+  margin-top: var(--space-sm);
 }
+
 .logic-check-issue:focus-visible {
-  outline: 2px solid rgba(200, 180, 80, 0.85);
-  outline-offset: 1px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
+
 .chapter-body-textarea--highlight {
   animation: chapter-body-highlight-pulse 1.2s ease-out;
   box-shadow: 0 0 0 2px var(--color-highlight-soft);
 }
+
 .chapter-body-textarea--conflict {
   animation: chapter-body-conflict-pulse 1.4s ease-out;
   box-shadow: 0 0 0 2px var(--color-conflict-outline);
@@ -437,17 +471,21 @@ function onBodyTextareaInteraction(event) {
   );
   background-size: 100% 1.4em;
 }
+
 .chapter-outline-read-preview {
   margin-bottom: var(--space-sm);
 }
+
 @keyframes recheck-issue-flash {
   0% { background: rgba(255, 220, 100, 0.55); }
   100% { background: rgba(255, 220, 100, 0.35); }
 }
+
 @keyframes chapter-body-highlight-pulse {
   0% { background: rgba(255, 220, 100, 0.4); }
   100% { background: transparent; }
 }
+
 @keyframes chapter-body-conflict-pulse {
   0% { background-color: var(--color-danger-soft); }
   100% { background-color: transparent; }
@@ -460,66 +498,116 @@ function onBodyTextareaInteraction(event) {
     animation: none;
   }
 }
+
 .chapter-inline-edit {
   margin-top: var(--space-sm);
 }
+
 .chapter-dual-edit--human {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
 }
+
 .chapter-outline-edit--collapsible {
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-elevated);
+  transition: box-shadow 0.2s ease;
 }
+
+.chapter-outline-edit--collapsible:hover {
+  box-shadow: var(--shadow-soft);
+}
+
 .chapter-outline-edit__summary {
   cursor: pointer;
   font-weight: 600;
   list-style: none;
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
+
+.chapter-outline-edit__summary::after {
+  content: '▼';
+  font-size: 10px;
+  color: var(--color-text-dim);
+  transition: transform 0.2s ease;
+}
+
+details[open] .chapter-outline-edit__summary::after {
+  transform: rotate(180deg);
+}
+
 .chapter-outline-edit__summary::-webkit-details-marker {
   display: none;
 }
+
 .chapter-body-textarea {
   width: 100%;
   min-height: 180px;
+  border-radius: var(--radius-sm);
 }
+
 .chapter-read-preview {
   margin-top: var(--space-sm);
 }
+
 .chapter-full-text {
   max-height: 280px;
   overflow: auto;
+  padding: var(--space-sm);
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
 }
+
 .logic-check-issues {
   margin: var(--space-sm) 0 0;
   padding: 0;
   list-style: none;
 }
+
 .logic-check-issue {
   cursor: pointer;
   margin-bottom: var(--space-xs);
   font-size: var(--text-sm);
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  transition: background-color 0.15s ease;
 }
+
+.logic-check-issue:hover {
+  background: var(--bg-muted);
+}
+
 .chapter-recheck-panel {
   margin-top: var(--space-sm);
-  padding: var(--space-xs);
-  background: rgba(200, 180, 80, 0.1);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(200, 180, 80, 0.08);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-warning);
 }
+
 .chapter-row--warn {
   background: rgba(200, 180, 80, 0.15);
   border-color: var(--color-warning);
 }
+
 .chapter-row--alert {
   background: rgba(200, 80, 80, 0.15);
   border-color: #c66;
 }
+
 .companion-logic-check-write {
   margin-top: var(--space-md);
   padding: var(--space-md);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--shadow-soft);
 }
 
 .companion-logic-check-write--compact {
@@ -527,6 +615,7 @@ function onBodyTextareaInteraction(event) {
   padding: 0;
   border: none;
   background: transparent;
+  box-shadow: none;
 }
 
 .companion-logic-check-write--compact details {
@@ -552,6 +641,7 @@ function onBodyTextareaInteraction(event) {
   flex-direction: column;
   overflow: hidden;
 }
+
 .companion-logic-check-write .subsection-title {
   margin-bottom: var(--space-xs);
 }

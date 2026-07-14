@@ -5,7 +5,10 @@
   <section
     v-show="pt.isWorkspaceColumnVisible('memory')"
     class="creator-column pixel-card"
-    :class="{ 'creator-column--desk-drawer': pt.deskDrawerActive?.() }"
+    :class="{ 
+      'creator-column--desk-drawer': pt.deskDrawerActive?.(),
+      'creator-column--desk-drawer--open': pt.deskDrawerActive?.(),
+    }"
     data-testid="column-memory"
     :id="pt.deskDrawerActive?.() ? 'creator-desk-drawer-panel-memory' : undefined"
     :role="pt.deskDrawerActive?.() ? 'dialog' : undefined"
@@ -90,36 +93,83 @@ const filters = [
   justify-content: space-between;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm);
-  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
   font-size: var(--text-sm);
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
 }
 
 .memory-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: var(--space-sm);
+  gap: 6px;
+  margin-bottom: var(--space-md);
 }
 
 .filter-btn {
   font-size: var(--text-xs);
-  padding: 2px 8px;
+  padding: 6px 14px;
   cursor: pointer;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--color-text-secondary);
+  transition: all 0.18s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 
 .filter-btn--active {
-  background: var(--color-accent-soft);
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+  font-weight: 600;
 }
 
 .memory-hint {
   margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
 }
 
 .mini-btn {
   font-size: var(--text-xs);
-  padding: 2px 8px;
+  padding: 4px 12px;
   cursor: pointer;
   white-space: nowrap;
+  border-radius: var(--radius-xs);
+  transition: all 0.15s ease;
+}
+
+.mini-btn:hover:not(:disabled) {
+  background: var(--bg-muted);
+}
+
+.mini-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.desk-drawer-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.desk-drawer-chrome__title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
 }
 </style>

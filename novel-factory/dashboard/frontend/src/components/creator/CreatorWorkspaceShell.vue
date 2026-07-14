@@ -67,7 +67,7 @@
 
   <div
     v-if="c.deskDrawerEnabled && c.deskDrawerOpen"
-    class="desk-drawer-backdrop"
+    class="desk-drawer-backdrop desk-drawer-backdrop--visible"
     data-testid="creator-desk-drawer-backdrop"
     aria-hidden="true"
     @click="c.closeDeskDrawer()"
@@ -100,6 +100,7 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  gap: var(--space-md);
 }
 
 .creator-workspace-shell--tabbed .creator-workspace-tab-row {
@@ -113,7 +114,7 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   justify-content: space-between;
   gap: var(--space-sm);
   padding: 0;
-  margin-bottom: var(--space-sm);
+  margin-bottom: 0;
 }
 
 .creator-workspace-tabs {
@@ -130,9 +131,9 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
 
 .hub-tab--secondary {
   font-size: var(--text-xs);
-  padding: 6px 12px;
+  padding: 6px 14px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
@@ -140,12 +141,13 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   gap: 4px;
   color: var(--color-text-dim);
   font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: all 0.18s ease;
 }
 
 .hub-tab--secondary:hover {
   background: var(--bg-muted);
   color: var(--color-text);
+  border-color: var(--border-color);
 }
 
 .hub-tab--secondary.hub-tab--active {
@@ -153,13 +155,16 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   color: var(--color-accent);
   opacity: 1;
   font-weight: 600;
+  border-color: var(--color-accent);
 }
 
 .creator-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-md);
+  gap: var(--space-lg);
   align-items: start;
+  flex: 1;
+  min-height: 0;
 }
 
 .creator-grid--tabbed {
@@ -171,9 +176,16 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   flex-direction: column;
 }
 
+@media (max-width: 1200px) {
+  .creator-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .creator-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-md);
   }
 
   .creator-workspace-tab-row {
@@ -183,6 +195,7 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
 
   .creator-workspace-secondary-tabs {
     margin-left: 0;
+    justify-content: center;
   }
 }
 </style>
