@@ -12,13 +12,15 @@
         class="refresh-btn pixel-border"
         data-testid="refresh-btn"
         :disabled="loading"
+        :aria-label="loading ? '正在加载，请稍后' : '刷新页面'"
+        :aria-busy="loading"
         @click="refresh"
       >
         {{ loading ? '加载中…' : '刷新' }}
       </button>
     </header>
 
-    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner">
+    <div v-if="displayError" class="error-banner pixel-border" data-testid="error-banner" role="alert" aria-live="polite">
       {{ displayError }}
     </div>
 
@@ -99,6 +101,8 @@
           v-if="qualityReport.prose_heatmap?.chapters?.length"
           class="prose-heatmap"
           data-testid="prose-heatmap"
+          role="img"
+          aria-label="章节质量热力图，显示各章节的Prose问题密度"
         >
           <h3 class="subsection-title">Prose 热力图</h3>
           <p class="meta-line">
@@ -160,6 +164,8 @@
             class="diff-status"
             :class="proseDiff.has_regression ? 'diff-regressed' : 'diff-ok'"
             data-testid="prose-diff-status"
+            role="status"
+            aria-live="polite"
           >
             {{ proseDiff.has_regression ? '⚠ 检测到 prose 回归' : '✓ 无 prose 回归' }}
             · prose P1 Δ {{ formatDelta(proseDiff.net_prose_p1_delta) }}
@@ -284,19 +290,19 @@
             data-testid="budget-usd"
           />
         </div>
-        <button type="submit" class="run-btn pixel-border" data-testid="preflight-btn" :disabled="preflightLoading">
+        <button type="submit" class="run-btn pixel-border" data-testid="preflight-btn" :disabled="preflightLoading" :aria-label="preflightLoading ? '正在进行预飞检查' : '执行预飞检查'" :aria-busy="preflightLoading">
           {{ preflightLoading ? '检查中…' : 'Preflight 检查' }}
         </button>
       </form>
 
-      <div v-if="preflightError" class="preflight-error" data-testid="preflight-error">{{ preflightError }}</div>
+      <div v-if="preflightError" class="preflight-error" data-testid="preflight-error" role="alert" aria-live="polite">{{ preflightError }}</div>
 
-      <table v-if="preflightRows.length" class="preflight-table" data-testid="preflight-table">
+      <table v-if="preflightRows.length" class="preflight-table" data-testid="preflight-table" aria-label="预飞检查结果">
         <thead>
           <tr>
-            <th>章</th>
-            <th>状态</th>
-            <th>说明</th>
+            <th scope="col">章</th>
+            <th scope="col">状态</th>
+            <th scope="col">说明</th>
           </tr>
         </thead>
         <tbody>
@@ -312,7 +318,7 @@
         <h3 class="subsection-title">Batch 命令</h3>
         <pre class="command-pre">{{ batchCommand }}</pre>
         <div class="command-actions">
-          <button type="button" class="copy-btn pixel-border" data-testid="copy-command-btn" @click="copyCommand">
+          <button type="button" class="copy-btn pixel-border" data-testid="copy-command-btn" aria-label="复制批处理命令到剪贴板" @click="copyCommand">
             复制命令
           </button>
           <button
@@ -320,13 +326,16 @@
             class="run-btn pixel-border"
             data-testid="run-batch-btn"
             :disabled="batchRunning || !preflightAllOk"
+            :aria-label="batchRunning ? '批处理任务正在运行中' : '在后台启动批处理任务'"
+            :aria-busy="batchRunning"
+            :aria-disabled="!preflightAllOk"
             @click="startBatch"
           >
             {{ batchRunning ? 'Batch 运行中…' : '后台启动 Batch' }}
           </button>
         </div>
         <p v-if="copyMessage" class="copy-msg">{{ copyMessage }}</p>
-        <p v-if="batchRunError" class="batch-error" data-testid="batch-run-error">{{ batchRunError }}</p>
+        <p v-if="batchRunError" class="batch-error" data-testid="batch-run-error" role="alert" aria-live="polite">{{ batchRunError }}</p>
       </div>
 
       <div v-if="batchJob" class="job-block pixel-card" data-testid="batch-job-panel">

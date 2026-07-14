@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard" data-testid="app-root">
     <!-- Sidebar -->
-    <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }">
+    <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
       <div class="sidebar-header" :class="{ 'sidebar-header--human': isHumanFirstShell }">
         <div class="sidebar-brand">
           <span class="sidebar-mark" aria-hidden="true" />
@@ -38,6 +38,7 @@
             class="nav-item"
             :class="{ 'nav-item--active': isNavItemActive(item.id) }"
             :data-testid="`nav-${item.id}`"
+            :aria-current="isNavItemActive(item.id) ? 'page' : undefined"
             @click.prevent="onNavClick(item.id)"
           >
             <span v-if="item.icon" class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
@@ -102,7 +103,7 @@
         :checking="connectivity.checking"
         @retry="retryApiCheck"
       />
-      <main class="main-content" :class="{ 'main-content--centered': isCenteredL1Page }">
+      <main class="main-content" :class="{ 'main-content--centered': isCenteredL1Page }" role="main">
         <AskPage v-if="activeNav === 'ask'" />
         <CreatorPage v-else-if="isWriteNav(activeNav)" />
         <LibraryPage v-else-if="activeNav === 'library'" />

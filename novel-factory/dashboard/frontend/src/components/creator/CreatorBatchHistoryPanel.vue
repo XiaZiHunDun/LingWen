@@ -315,14 +315,15 @@
           </ul>
           <div class="batch-history-actions">
             <button
-              v-if="bh.uiProfile.batch_history_export"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="export-batch-history-btn"
-              @click="bh.exportBatchHistory"
-            >
-              导出 JSON
-            </button>
+            v-if="bh.uiProfile.batch_history_export"
+            type="button"
+            class="mini-btn pixel-border"
+            data-testid="export-batch-history-btn"
+            aria-label="导出批量历史记录为 JSON 文件"
+            @click="bh.exportBatchHistory"
+          >
+            导出 JSON
+          </button>
           </div>
           <label
             v-if="bh.uiProfile.batch_history_status_filter"
@@ -334,6 +335,7 @@
               v-model="bh.batchHistoryStatusFilter"
               class="vol-input"
               data-testid="batch-history-status-filter"
+              aria-label="按状态筛选批量历史"
             >
               <option value="">全部</option>
               <option
@@ -398,14 +400,15 @@
                     · {{ bh.batchHistoryFailureReasonLabel(job) }}
                   </span>
                   <button
-                    v-if="bh.uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
-                    type="button"
-                    class="mini-btn pixel-border batch-history-retry-btn"
-                    :data-testid="`batch-history-retry-${job.job_id}`"
-                    @click.stop="bh.retryBatchHistoryJob(job)"
-                  >
-                    重试
-                  </button>
+              v-if="bh.uiProfile.batch_history_failed_retry && String(job.status).toLowerCase() === 'failed'"
+              type="button"
+              class="mini-btn pixel-border batch-history-retry-btn"
+              :data-testid="`batch-history-retry-${job.job_id}`"
+              :aria-label="`重试任务 ch${String(job.start_chapter).padStart(3, '0')}–ch${String(job.end_chapter).padStart(3, '0')}`"
+              @click.stop="bh.retryBatchHistoryJob(job)"
+            >
+              重试
+            </button>
                 </li>
               </ul>
             </section>

@@ -15,6 +15,8 @@
         type="button"
         class="write-workbench__collapse-btn"
         data-testid="write-workbench-collapse-btn"
+        :aria-label="wb.leftPanelCollapsed ? '展开左侧面板' : '折叠左侧面板'"
+        :aria-expanded="!wb.leftPanelCollapsed"
         @click="wb.leftPanelCollapsed = !wb.leftPanelCollapsed"
       >
         {{ wb.leftPanelCollapsed ? '»' : '«' }}
@@ -70,16 +72,18 @@
             <p class="write-workbench__card-title">选区微调</p>
             <div class="write-workbench__chips">
               <button
-                v-for="(label, id) in wb.agent.rewritePresets"
-                :key="id"
-                type="button"
-                class="write-workbench__chip"
-                :data-testid="`rewrite-preset-${id}`"
-                :disabled="wb.agent.generating"
-                @click="wb.agent.runRewritePreset(id)"
-              >
-                {{ label }}
-              </button>
+          v-for="(label, id) in wb.agent.rewritePresets"
+          :key="id"
+          type="button"
+          class="write-workbench__chip"
+          :data-testid="`rewrite-preset-${id}`"
+          :disabled="wb.agent.generating"
+          :aria-label="`应用${label}改写预设`"
+          :aria-busy="wb.agent.generating"
+          @click="wb.agent.runRewritePreset(id)"
+        >
+          {{ label }}
+        </button>
             </div>
           </div>
 
@@ -96,6 +100,8 @@
               class="form-input pixel-border"
               placeholder="一句话描述本章要写什么…"
               data-testid="write-intent-input"
+              aria-label="本章写作意图输入框"
+              aria-describedby="write-intent-hint"
             />
             <div v-if="!wb.humanFirstDesk" class="write-workbench__chips">
               <button
@@ -116,6 +122,8 @@
               style="margin-top: 8px"
               data-testid="write-quick-start-btn"
               :disabled="wb.generateRunning"
+              aria-label="一键开写，根据当前意图生成章节内容"
+              :aria-busy="wb.generateRunning"
               @click="wb.startQuickWrite()"
             >
               一键开写
@@ -242,6 +250,8 @@
             class="write-workbench__chip"
             :class="{ 'write-workbench__chip--active': wb.selectionLocked }"
             data-testid="selection-lock-toggle"
+            :aria-label="wb.selectionLocked ? '解锁选区，允许编辑' : '锁定当前选区'"
+            :aria-pressed="wb.selectionLocked"
             @click="wb.toggleSelectionLock()"
           >
             {{ wb.selectionLocked ? '🔒 已锁定' : '锁定选区' }}
@@ -249,21 +259,26 @@
         </div>
         <div class="write-workbench__chips">
           <button
-            v-for="(label, id) in wb.agent.rewritePresets"
-            :key="id"
-            type="button"
-            class="write-workbench__chip"
-            :data-testid="`rewrite-preset-${id}`"
-            :disabled="wb.agent.generating || wb.selectionLocked"
-            @click="wb.agent.runRewritePreset(id)"
-          >
-            {{ label }}
-          </button>
+          v-for="(label, id) in wb.agent.rewritePresets"
+          :key="id"
+          type="button"
+          class="write-workbench__chip"
+          :data-testid="`rewrite-preset-${id}`"
+          :disabled="wb.agent.generating || wb.selectionLocked"
+          :aria-label="`应用${label}改写预设`"
+          :aria-busy="wb.agent.generating"
+          :aria-disabled="wb.selectionLocked"
+          @click="wb.agent.runRewritePreset(id)"
+        >
+          {{ label }}
+        </button>
         </div>
         <p
           v-if="wb.agent.statusLine"
           class="meta-line"
           data-testid="write-agent-status-main"
+          role="status"
+          aria-live="polite"
         >
           {{ wb.agent.statusLine }}
         </p>
@@ -386,14 +401,16 @@
           <p class="meta-line">{{ wb.agent.statusLine }}</p>
           <div class="write-workbench__toolbar-group">
             <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="write-director-confirm-btn"
-              :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-              @click="wb.agent.confirmApply()"
-            >
-              确认应用
-            </button>
+          type="button"
+          class="save-btn pixel-border"
+          data-testid="write-director-confirm-btn"
+          :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+          aria-label="确认应用导演计划"
+          :aria-disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+          @click="wb.agent.confirmApply()"
+        >
+          确认应用
+        </button>
             <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
           </div>
         </div>
@@ -406,17 +423,19 @@
           <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
           <div class="write-workbench__candidates">
             <button
-              v-for="cand in wb.agent.candidates"
-              :key="cand.id"
-              type="button"
-              class="write-workbench__candidate"
-              :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
-              :data-testid="`write-candidate-${cand.id}`"
-              @click="wb.agent.selectCandidate(cand.id)"
-            >
-              <strong>{{ cand.label }}</strong> · {{ cand.direction }}
-              <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
-            </button>
+          v-for="cand in wb.agent.candidates"
+          :key="cand.id"
+          type="button"
+          class="write-workbench__candidate"
+          :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
+          :data-testid="`write-candidate-${cand.id}`"
+          :aria-label="`选择候选方案：${cand.label}，方向：${cand.direction}`"
+          :aria-pressed="wb.agent.pendingPlan?.selectedCandidateId === cand.id"
+          @click="wb.agent.selectCandidate(cand.id)"
+        >
+          <strong>{{ cand.label }}</strong> · {{ cand.direction }}
+          <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
+        </button>
           </div>
         </div>
 
@@ -783,14 +802,16 @@
           <p class="meta-line">{{ wb.agent.statusLine }}</p>
           <div class="write-workbench__toolbar-group">
             <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="write-director-confirm-btn"
-              :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-              @click="wb.agent.confirmApply()"
-            >
-              确认应用
-            </button>
+          type="button"
+          class="save-btn pixel-border"
+          data-testid="write-director-confirm-btn"
+          :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+          aria-label="确认应用导演计划"
+          :aria-disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+          @click="wb.agent.confirmApply()"
+        >
+          确认应用
+        </button>
             <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
           </div>
         </div>
@@ -803,17 +824,19 @@
           <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
           <div class="write-workbench__candidates">
             <button
-              v-for="cand in wb.agent.candidates"
-              :key="cand.id"
-              type="button"
-              class="write-workbench__candidate"
-              :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
-              :data-testid="`write-candidate-${cand.id}`"
-              @click="wb.agent.selectCandidate(cand.id)"
-            >
-              <strong>{{ cand.label }}</strong> · {{ cand.direction }}
-              <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
-            </button>
+          v-for="cand in wb.agent.candidates"
+          :key="cand.id"
+          type="button"
+          class="write-workbench__candidate"
+          :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
+          :data-testid="`write-candidate-${cand.id}`"
+          :aria-label="`选择候选方案：${cand.label}，方向：${cand.direction}`"
+          :aria-pressed="wb.agent.pendingPlan?.selectedCandidateId === cand.id"
+          @click="wb.agent.selectCandidate(cand.id)"
+        >
+          <strong>{{ cand.label }}</strong> · {{ cand.direction }}
+          <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
+        </button>
           </div>
         </div>
 
