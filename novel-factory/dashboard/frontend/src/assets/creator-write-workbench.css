@@ -1,5 +1,5 @@
 /* Creator write workbench — left stack + main editor (Human Comfort P0) */
-/* 功能区域：写作核心区、AI辅助区、检查反馈区、版本管理区 */
+/* 布局结构：左侧面板（固定）+ 主区域（顶部栏 → 编辑区 → AI工具栏） */
 
 .write-workbench {
   display: flex;
@@ -110,19 +110,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
   overflow-y: auto;
-}
-
-.write-workbench__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  align-items: center;
-  padding: var(--space-sm) var(--space-md);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--bg-muted);
 }
 
 .write-workbench__toolbar-group {
@@ -147,10 +135,6 @@
   flex: 1;
   min-height: 280px;
   max-width: none;
-}
-
-.write-workbench--human-first .write-workbench__editor-slot--primary {
-  min-height: 160px;
 }
 
 .write-workbench__editor-slot {

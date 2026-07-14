@@ -1,6 +1,8 @@
 <!--
   CreatorWriteWorkbench.vue — 写作导演工作台（左栈 + 右编辑器 · P0）
-  功能区域划分：写作核心区、AI辅助区、检查反馈区、版本管理区
+  布局结构：
+    左侧面板：写作核心 / AI辅助 / 一致性检查 / 版本管理
+    主区域：顶部上下文栏 → 编辑区 → 底部AI工具栏（可折叠）
 -->
 <template>
   <div
@@ -155,64 +157,6 @@
               </button>
             </div>
           </div>
-
-          <details
-            v-if="wb.isPanelVisible('agentSessionStrip') && !wb.humanFirstDesk"
-            class="write-workbench__card"
-            data-testid="write-agent-strip"
-            :open="wb.agent.agentExpanded"
-            @toggle="onAgentToggle"
-          >
-            <summary class="write-workbench__card-title">补充指令</summary>
-            <div class="write-workbench__agent-body">
-              <form class="write-workbench__toolbar-group" @submit.prevent="wb.agent.submitPrompt()">
-                <input
-                  v-model="wb.agent.promptInput"
-                  type="text"
-                  class="form-input pixel-border"
-                  placeholder="补充指令，例如：信息披露再晚一句…"
-                  data-testid="write-agent-input"
-                />
-                <button type="submit" class="mini-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
-              </form>
-            </div>
-          </details>
-
-          <div
-            v-if="wb.isPanelVisible('generateToolbar') && !wb.humanFirstDesk"
-            class="write-workbench__card"
-            data-testid="write-generate-toolbar"
-          >
-            <p class="write-workbench__card-title">生成控制</p>
-            <div class="write-workbench__toolbar-group">
-              <button
-                type="button"
-                class="save-btn pixel-border"
-                data-testid="write-generate-btn"
-                :disabled="wb.generateRunning || wb.agent.generating"
-                @click="wb.startQuickWrite()"
-              >
-                生成
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="write-stop-btn"
-                :disabled="!wb.generateRunning && !wb.agent.generating"
-                @click="wb.stopGenerate()"
-              >
-                停止
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="write-agent-mode-toggle"
-                @click="wb.agent.toggleExecutionMode()"
-              >
-                {{ wb.agent.isPreviewMode ? '预览(A)' : '应用(B2)' }}
-              </button>
-            </div>
-          </div>
         </div>
 
         <div class="write-workbench__section" data-testid="write-section-consistency">
@@ -289,159 +233,155 @@
     </aside>
 
     <div class="write-workbench__main">
-      <CreatorWriteScopeBar
-        v-if="wb.isPanelVisible('scopeBar')"
-        :scope="wb.agent.currentScope"
-        :human-first="wb.humanFirstDesk"
-      />
+      <div class="write-workbench__top-bar">
+        <CreatorWriteScopeBar
+          v-if="wb.isPanelVisible('scopeBar')"
+          :scope="wb.agent.currentScope"
+          :human-first="wb.humanFirstDesk"
+        />
 
-      <CreatorWriteControlStrip
-        v-if="wb.isPanelVisible('controlStrip')"
-        main-bar
-        :show-lens="wb.isPanelVisible('agentLensSwitcher')"
-        :show-strength="true"
-        :show-toggles="false"
-        :show-worldbuilding-toggle="true"
-        :show-goal-tags="true"
-        :style-strength="wb.styleStrength"
-        :goal-tag="wb.goalTag"
-        :agent-lens="wb.agent.agentLens"
-        :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
-        :selection-locked="wb.selectionLocked"
-        @update:style-strength="wb.styleStrength = $event"
-        @update:goal-tag="wb.goalTag = $event"
-        @update:agent-lens="wb.agent.setAgentLens($event)"
-        @update:allow-worldbuilding-fill="wb.allowWorldbuildingFill = $event"
-        @toggle-lock="wb.toggleSelectionLock()"
-      />
+        <CreatorWriteControlStrip
+          v-if="wb.isPanelVisible('controlStrip')"
+          main-bar
+          :show-lens="wb.isPanelVisible('agentLensSwitcher')"
+          :show-strength="true"
+          :show-toggles="false"
+          :show-worldbuilding-toggle="true"
+          :show-goal-tags="true"
+          :style-strength="wb.styleStrength"
+          :goal-tag="wb.goalTag"
+          :agent-lens="wb.agent.agentLens"
+          :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
+          :selection-locked="wb.selectionLocked"
+          @update:style-strength="wb.styleStrength = $event"
+          @update:goal-tag="wb.goalTag = $event"
+          @update:agent-lens="wb.agent.setAgentLens($event)"
+          @update:allow-worldbuilding-fill="wb.allowWorldbuildingFill = $event"
+          @toggle-lock="wb.toggleSelectionLock()"
+        />
 
-      <div
-        v-if="wb.isPanelVisible('selectionRewriteToolbar') && wb.hasBodySelection && wb.humanFirstDesk"
-        class="write-workbench__card"
-        data-testid="write-selection-tools-main"
-      >
-        <div class="write-workbench__selection-toolbar">
-          <p class="write-workbench__card-title">选区微调</p>
-          <button
-            type="button"
-            class="write-workbench__chip"
-            :class="{ 'write-workbench__chip--active': wb.selectionLocked }"
-            data-testid="selection-lock-toggle"
-            :aria-label="wb.selectionLocked ? '解锁选区，允许编辑' : '锁定当前选区'"
-            :aria-pressed="wb.selectionLocked"
-            @click="wb.toggleSelectionLock()"
-          >
-            {{ wb.selectionLocked ? '🔒 已锁定' : '锁定选区' }}
-          </button>
-        </div>
-        <div class="write-workbench__chips">
-          <button
-            v-for="(label, id) in wb.agent.rewritePresets"
-            :key="id"
-            type="button"
-            class="write-workbench__chip"
-            :data-testid="`rewrite-preset-${id}`"
-            :disabled="wb.agent.generating || wb.selectionLocked"
-            :aria-label="`应用${label}改写预设`"
-            :aria-busy="wb.agent.generating"
-            :aria-disabled="wb.selectionLocked"
-            @click="wb.agent.runRewritePreset(id)"
-          >
-            {{ label }}
-          </button>
-        </div>
-      </div>
-
-      <CreatorWriteMicroTaskBar
-        v-if="wb.isPanelVisible('microTaskBar') && wb.humanFirstDesk"
-        :draft="w.chapterBodyDraft"
-        :creation-mode="w.overview?.creation_mode || 'companion'"
-      />
-
-      <CreatorLightValidationBar
-        v-if="wb.isPanelVisible('lightValidationBar') && w.selectedChapter"
-        :issues="wb.lightValidationIssues"
-        :running="wb.lightValidationRunning"
-        @focus="wb.focusLightValidationIssue"
-      />
-
-      <div
-        v-if="w.showCompanionLogicCheckInWrite"
-        class="write-workbench__section write-workbench__section--main"
-        data-testid="write-section-check-main"
-      >
-        <div class="write-workbench__section-header">
-          <span class="write-workbench__section-icon">🔍</span>
-          <span class="write-workbench__section-title">检查反馈</span>
-        </div>
-
-        <div class="write-desk-toolbar" data-testid="companion-logic-check-write">
-          <button
-            type="button"
-            class="write-desk-toolbar__pill"
-            data-testid="run-companion-logic-check-btn"
-            :disabled="w.logicCheckRunning"
-            @click="w.runCompanionLogicCheck"
-          >
-            {{ w.logicCheckRunning ? '检查中…' : '逻辑审查' }}
-          </button>
-          <span
-            v-if="w.logicCheckResult"
-            class="write-desk-toolbar__status meta-line"
-            data-testid="companion-logic-check-write-result"
-          >
-            {{ w.logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ w.logicCheckResult.p0_count }}
-          </span>
-          <details
-            v-if="w.uiProfile.logic_check_inline_issues && w.logicCheckResult?.issues?.length"
-            class="write-desk-toolbar__issues"
-          >
-            <summary class="meta-line">{{ w.logicCheckResult.issues.length }} 条问题</summary>
-            <ul class="logic-check-issues" data-testid="logic-check-issues">
-              <li
-                v-for="(issue, idx) in w.logicCheckResult.issues"
-                :key="`write-${issue.chapter}-${idx}`"
-                class="logic-check-issue"
-                :class="{
-                  'logic-check-issue--clickable': Boolean(issue.chapter),
-                  'logic-check-issue--active': !w.uiProfile.issue_paragraph_highlight_unified
-                    && w.uiProfile.logic_check_issue_highlight
-                    && w.activeLogicCheckIssueIdx === idx,
-                  'issue-line--active': w.uiProfile.issue_paragraph_highlight_unified
-                    && w.activeLogicCheckIssueIdx === idx,
-                }"
-                role="button"
-                tabindex="0"
-                :data-testid="`logic-check-issue-${idx}`"
-                @click="w.handleLogicCheckIssueClick(issue, idx)"
-                @keydown.enter="w.handleLogicCheckIssueClick(issue, idx)"
-                @keydown="w.onLogicCheckIssueKeydown($event, issue, idx)"
-              >
-                <span class="issue-severity">{{ issue.severity }}</span>
-                <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
-                {{ issue.title || issue.message }}
-              </li>
-            </ul>
-          </details>
-        </div>
-      </div>
-
-      <div
-        v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
-        class="write-workbench__card write-workbench__quality"
-        data-testid="write-quality-bar-main"
-      >
-        <p class="write-workbench__card-title">质量反馈</p>
-        <span v-if="wb.agent.statusLine" class="meta-line">{{ wb.agent.statusLine }}</span>
-        <span
-          v-for="(hint, idx) in wb.qualityHints"
-          :key="idx"
-          class="write-workbench__quality-item"
-          :class="`write-workbench__quality-item--${hint.level}`"
+        <div
+          v-if="wb.isPanelVisible('selectionRewriteToolbar') && wb.hasBodySelection && wb.humanFirstDesk"
+          class="write-workbench__card write-workbench__selection-tools"
+          data-testid="write-selection-tools-main"
         >
-          {{ hint.text }}
-          <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
-        </span>
+          <div class="write-workbench__selection-toolbar">
+            <p class="write-workbench__card-title">选区微调</p>
+            <button
+              type="button"
+              class="write-workbench__chip"
+              :class="{ 'write-workbench__chip--active': wb.selectionLocked }"
+              data-testid="selection-lock-toggle"
+              :aria-label="wb.selectionLocked ? '解锁选区，允许编辑' : '锁定当前选区'"
+              :aria-pressed="wb.selectionLocked"
+              @click="wb.toggleSelectionLock()"
+            >
+              {{ wb.selectionLocked ? '🔒 已锁定' : '锁定选区' }}
+            </button>
+          </div>
+          <div class="write-workbench__chips">
+            <button
+              v-for="(label, id) in wb.agent.rewritePresets"
+              :key="id"
+              type="button"
+              class="write-workbench__chip"
+              :data-testid="`rewrite-preset-${id}`"
+              :disabled="wb.agent.generating || wb.selectionLocked"
+              :aria-label="`应用${label}改写预设`"
+              :aria-busy="wb.agent.generating"
+              :aria-disabled="wb.selectionLocked"
+              @click="wb.agent.runRewritePreset(id)"
+            >
+              {{ label }}
+            </button>
+          </div>
+        </div>
+
+        <CreatorWriteMicroTaskBar
+          v-if="wb.isPanelVisible('microTaskBar') && wb.humanFirstDesk"
+          :draft="w.chapterBodyDraft"
+          :creation-mode="w.overview?.creation_mode || 'companion'"
+        />
+
+        <CreatorLightValidationBar
+          v-if="wb.isPanelVisible('lightValidationBar') && w.selectedChapter"
+          :issues="wb.lightValidationIssues"
+          :running="wb.lightValidationRunning"
+          @focus="wb.focusLightValidationIssue"
+        />
+
+        <div
+          v-if="w.showCompanionLogicCheckInWrite"
+          class="write-workbench__logic-check"
+          data-testid="write-section-check-main"
+        >
+          <div class="write-desk-toolbar" data-testid="companion-logic-check-write">
+            <button
+              type="button"
+              class="write-desk-toolbar__pill"
+              data-testid="run-companion-logic-check-btn"
+              :disabled="w.logicCheckRunning"
+              @click="w.runCompanionLogicCheck"
+            >
+              {{ w.logicCheckRunning ? '检查中…' : '逻辑审查' }}
+            </button>
+            <span
+              v-if="w.logicCheckResult"
+              class="write-desk-toolbar__status meta-line"
+              data-testid="companion-logic-check-write-result"
+            >
+              {{ w.logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ w.logicCheckResult.p0_count }}
+            </span>
+            <details
+              v-if="w.uiProfile.logic_check_inline_issues && w.logicCheckResult?.issues?.length"
+              class="write-desk-toolbar__issues"
+            >
+              <summary class="meta-line">{{ w.logicCheckResult.issues.length }} 条问题</summary>
+              <ul class="logic-check-issues" data-testid="logic-check-issues">
+                <li
+                  v-for="(issue, idx) in w.logicCheckResult.issues"
+                  :key="`write-${issue.chapter}-${idx}`"
+                  class="logic-check-issue"
+                  :class="{
+                    'logic-check-issue--clickable': Boolean(issue.chapter),
+                    'logic-check-issue--active': !w.uiProfile.issue_paragraph_highlight_unified
+                      && w.uiProfile.logic_check_issue_highlight
+                      && w.activeLogicCheckIssueIdx === idx,
+                    'issue-line--active': w.uiProfile.issue_paragraph_highlight_unified
+                      && w.activeLogicCheckIssueIdx === idx,
+                  }"
+                  role="button"
+                  tabindex="0"
+                  :data-testid="`logic-check-issue-${idx}`"
+                  @click="w.handleLogicCheckIssueClick(issue, idx)"
+                  @keydown.enter="w.handleLogicCheckIssueClick(issue, idx)"
+                  @keydown="w.onLogicCheckIssueKeydown($event, issue, idx)"
+                >
+                  <span class="issue-severity">{{ issue.severity }}</span>
+                  <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
+                  {{ issue.title || issue.message }}
+                </li>
+              </ul>
+            </details>
+          </div>
+        </div>
+
+        <div
+          v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
+          class="write-workbench__quality"
+          data-testid="write-quality-bar-main"
+        >
+          <span v-if="wb.agent.statusLine" class="meta-line">{{ wb.agent.statusLine }}</span>
+          <span
+            v-for="(hint, idx) in wb.qualityHints"
+            :key="idx"
+            class="write-workbench__quality-item"
+            :class="`write-workbench__quality-item--${hint.level}`"
+          >
+            {{ hint.text }}
+            <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
+          </span>
+        </div>
       </div>
 
       <div class="write-workbench__editor-slot write-workbench__editor-slot--primary">
@@ -450,181 +390,214 @@
 
       <template v-if="wb.humanFirstDesk">
         <details
-          v-if="wb.isPanelVisible('directorPaths') && wb.agent.directorPaths.length"
-          class="write-workbench__card"
-          data-testid="write-director-paths-panel-main"
-          open
+          class="write-workbench__ai-tools"
+          data-testid="write-advanced-tools"
+          :open="aiToolsOpen"
+          @toggle="onAiToolsToggle"
         >
-          <summary class="write-workbench__card-title">下一步路径（可选）</summary>
-          <CreatorDirectorPaths
-            hide-title
-            :paths="wb.agent.directorPaths"
-            :advice="wb.agent.directorAdvice"
-            :generating="wb.agent.generating"
-            @run="wb.agent.runDirectorPath"
-            @dismiss-advice="wb.agent.dismissAdvice"
-          />
-        </details>
-
-        <div
-          v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
-          class="write-workbench__plan-card write-workbench__card"
-          data-testid="write-director-plan-card-main"
-        >
-          <p class="write-workbench__card-title">确认应用</p>
-          <p class="meta-line">
-            将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
-            执行：{{ wb.agent.pendingPlan.actionLabel }}
-          </p>
-          <p class="meta-line">{{ wb.agent.statusLine }}</p>
-          <div class="write-workbench__toolbar-group">
-            <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="write-director-confirm-btn"
-              :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-              aria-label="确认应用导演计划"
-              :aria-disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-              @click="wb.agent.confirmApply()"
+          <summary class="write-workbench__ai-tools-summary">
+            <span class="write-workbench__ai-tools-icon">🤖</span>
+            <span class="write-workbench__ai-tools-title">AI 工具</span>
+            <span class="write-workbench__ai-tools-hint">{{ aiToolsOpen ? '收起' : '展开' }}</span>
+          </summary>
+          <div class="write-workbench__ai-tools-body">
+            <div
+              v-if="wb.isPanelVisible('generateToolbar')"
+              class="write-workbench__card write-workbench__generate-toolbar"
+              data-testid="write-generate-toolbar-main"
             >
-              确认应用
-            </button>
-            <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
-          </div>
-        </div>
+              <p class="write-workbench__card-title">生成控制</p>
+              <div class="write-workbench__toolbar-group">
+                <button
+                  type="button"
+                  class="save-btn pixel-border"
+                  data-testid="write-generate-btn"
+                  :disabled="wb.generateRunning || wb.agent.generating"
+                  @click="wb.startQuickWrite()"
+                >
+                  生成
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="write-stop-btn"
+                  :disabled="!wb.generateRunning && !wb.agent.generating"
+                  @click="wb.stopGenerate()"
+                >
+                  停止
+                </button>
+                <button
+                  type="button"
+                  class="mini-btn pixel-border"
+                  data-testid="write-agent-mode-toggle"
+                  @click="wb.agent.toggleExecutionMode()"
+                >
+                  {{ wb.agent.isPreviewMode ? '预览(A)' : '应用(B2)' }}
+                </button>
+              </div>
+            </div>
 
-        <div
-          v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
-          class="write-workbench__card"
-          data-testid="write-candidate-dock-main"
-        >
-          <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
-          <div class="write-workbench__candidates">
-            <button
-              v-for="cand in wb.agent.candidates"
-              :key="cand.id"
-              type="button"
-              class="write-workbench__candidate"
-              :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
-              :data-testid="`write-candidate-${cand.id}`"
-              :aria-label="`选择候选方案：${cand.label}，方向：${cand.direction}`"
-              :aria-pressed="wb.agent.pendingPlan?.selectedCandidateId === cand.id"
-              @click="wb.agent.selectCandidate(cand.id)"
+            <details
+              v-if="wb.isPanelVisible('agentSessionStrip')"
+              class="write-workbench__card"
+              data-testid="write-agent-prompt-main"
+              :open="wb.agent.agentExpanded"
+              @toggle="onAgentToggle"
             >
-              <strong>{{ cand.label }}</strong> · {{ cand.direction }}
-              <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
-            </button>
-          </div>
-        </div>
+              <summary class="write-workbench__card-title">补充指令</summary>
+              <div class="write-workbench__agent-body">
+                <form class="write-workbench__toolbar-group" @submit.prevent="wb.agent.submitPrompt()">
+                  <input
+                    v-model="wb.agent.promptInput"
+                    type="text"
+                    class="form-input pixel-border"
+                    placeholder="补充指令，例如：信息披露再晚一句…"
+                    data-testid="write-agent-input"
+                  />
+                  <button type="submit" class="mini-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
+                </form>
+              </div>
+            </details>
 
-        <CreatorAgentAnnotations
-          v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
-          main-bar
-          :annotations="wb.agent.annotations"
-          :lens="wb.agent.agentLens"
-          @focus="wb.agent.focusAnnotation"
-        />
+            <details
+              v-if="wb.isPanelVisible('directorPaths') && wb.agent.directorPaths.length"
+              class="write-workbench__card"
+              data-testid="write-director-paths-panel-main"
+              :open="!wb.isPanelCollapsed('directorPaths')"
+            >
+              <summary class="write-workbench__card-title">下一步路径</summary>
+              <CreatorDirectorPaths
+                hide-title
+                :paths="wb.agent.directorPaths"
+                :advice="wb.agent.directorAdvice"
+                :generating="wb.agent.generating"
+                @run="wb.agent.runDirectorPath"
+                @dismiss-advice="wb.agent.dismissAdvice"
+              />
+            </details>
 
-        <CreatorAgentStreamPreview
-          v-if="showAgentStreamPreview"
-          main-bar
-          :preview-text="wb.agent.streamPreviewText"
-          :display-text="wb.agent.streamDisplayText"
-          :preview-label="wb.agent.streamPreviewLabel"
-          :stream-source="wb.agent.streamSource"
-          :advice-lines="wb.agent.streamAdvicePreview"
-        />
-
-        <div
-          v-if="wb.isPanelVisible('generateToolbar')"
-          class="write-workbench__card"
-          data-testid="write-generate-toolbar-main"
-        >
-          <p class="write-workbench__card-title">生成</p>
-          <div class="write-workbench__toolbar">
-            <div class="write-workbench__toolbar-group">
-              <button
-                type="button"
-                class="save-btn pixel-border"
-                data-testid="write-generate-btn"
-                :disabled="wb.generateRunning || wb.agent.generating"
-                @click="wb.startQuickWrite()"
-              >
-                生成
-              </button>
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="write-stop-btn"
-                :disabled="!wb.generateRunning && !wb.agent.generating"
-                @click="wb.stopGenerate()"
-              >
-                停止
-              </button>
+            <div
+              v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
+              class="write-workbench__plan-card write-workbench__card"
+              data-testid="write-director-plan-card-main"
+            >
+              <p class="write-workbench__card-title">确认应用</p>
+              <p class="meta-line">
+                将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
+                执行：{{ wb.agent.pendingPlan.actionLabel }}
+              </p>
+              <p class="meta-line">{{ wb.agent.statusLine }}</p>
+              <div class="write-workbench__toolbar-group">
+                <button
+                  type="button"
+                  class="save-btn pixel-border"
+                  data-testid="write-director-confirm-btn"
+                  :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+                  aria-label="确认应用导演计划"
+                  :aria-disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+                  @click="wb.agent.confirmApply()"
+                >
+                  确认应用
+                </button>
+                <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
+              </div>
             </div>
-            <div class="write-workbench__toolbar-group">
-              <button
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="write-agent-mode-toggle"
-                @click="wb.agent.toggleExecutionMode()"
-              >
-                {{ wb.agent.isPreviewMode ? '预览(A)' : '应用(B2)' }}
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <div
-          v-if="wb.isPanelVisible('agentSessionStrip')"
-          class="write-workbench__card"
-          data-testid="write-agent-prompt-main"
-        >
-          <p class="write-workbench__card-title">补充指令</p>
-          <form class="write-workbench__toolbar-group" @submit.prevent="wb.agent.submitPrompt()">
-            <input
-              v-model="wb.agent.promptInput"
-              type="text"
-              class="form-input pixel-border"
-              placeholder="补充指令，例如：信息披露再晚一句…"
-              data-testid="write-agent-input"
+            <div
+              v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
+              class="write-workbench__card"
+              data-testid="write-candidate-dock-main"
+            >
+              <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
+              <div class="write-workbench__candidates">
+                <button
+                  v-for="cand in wb.agent.candidates"
+                  :key="cand.id"
+                  type="button"
+                  class="write-workbench__candidate"
+                  :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
+                  :data-testid="`write-candidate-${cand.id}`"
+                  :aria-label="`选择候选方案：${cand.label}，方向：${cand.direction}`"
+                  :aria-pressed="wb.agent.pendingPlan?.selectedCandidateId === cand.id"
+                  @click="wb.agent.selectCandidate(cand.id)"
+                >
+                  <strong>{{ cand.label }}</strong> · {{ cand.direction }}
+                  <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
+                </button>
+              </div>
+            </div>
+
+            <CreatorAgentAnnotations
+              v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
+              main-bar
+              :annotations="wb.agent.annotations"
+              :lens="wb.agent.agentLens"
+              @focus="wb.agent.focusAnnotation"
             />
-            <button type="submit" class="mini-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
-          </form>
-        </div>
+
+            <CreatorAgentStreamPreview
+              v-if="showAgentStreamPreview"
+              main-bar
+              :preview-text="wb.agent.streamPreviewText"
+              :display-text="wb.agent.streamDisplayText"
+              :preview-label="wb.agent.streamPreviewLabel"
+              :stream-source="wb.agent.streamSource"
+              :advice-lines="wb.agent.streamAdvicePreview"
+            />
+
+            <div
+              v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
+              class="write-workbench__card"
+              data-testid="write-undo-bar-main"
+            >
+              <p class="write-workbench__card-title">版本 / 回滚</p>
+              <ul v-if="wb.checkpoints.length" class="write-workbench__version-list">
+                <li
+                  v-for="cp in wb.checkpoints"
+                  :key="cp.id"
+                  class="write-workbench__version-item"
+                >
+                  <span>{{ cp.label }}</span>
+                  <div class="write-workbench__version-actions">
+                    <button
+                      v-if="wb.isPanelVisible('checkpointDiff')"
+                      type="button"
+                      class="mini-btn pixel-border"
+                      :data-testid="`checkpoint-diff-${cp.id}`"
+                      @click="wb.openCheckpointDiff(cp.id)"
+                    >
+                      对比
+                    </button>
+                  </div>
+                </li>
+              </ul>
+              <CreatorCheckpointDiff
+                v-if="wb.isPanelVisible('checkpointDiff') && wb.diffView"
+                :diff-view="wb.diffView"
+                @close="wb.closeCheckpointDiff"
+              />
+              <button
+                v-if="wb.agent.lastCheckpointId"
+                type="button"
+                class="mini-btn pixel-border"
+                data-testid="write-undo-last-btn"
+                @click="wb.agent.undoLastApply()"
+              >
+                撤销上次应用
+              </button>
+            </div>
+          </div>
+        </details>
       </template>
 
-      <details
-        v-if="wb.humanFirstDesk"
-        class="write-workbench__advanced"
-        data-testid="write-advanced-tools"
-        @toggle="onAdvancedToggle"
-      >
-        <summary class="write-workbench__advanced-summary">写作工具（透镜 · 生成 · 候选）</summary>
-        <div v-if="advancedToolsOpen" class="write-workbench__advanced-body">
-          <CreatorWriteControlStrip
-            v-if="wb.isPanelVisible('controlStrip')"
-            :show-strength="false"
-            :show-toggles="false"
-            :show-goal-tags="false"
-            :style-strength="wb.styleStrength"
-            :selection-locked="wb.selectionLocked"
-            :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
-            :goal-tag="wb.goalTag"
-            :agent-lens="wb.agent.agentLens"
-            :show-lens="false"
-            @update:style-strength="wb.styleStrength = $event"
-            @update:allow-worldbuilding-fill="wb.allowWorldbuildingFill = $event"
-            @update:goal-tag="wb.goalTag = $event"
-            @update:agent-lens="wb.agent.setAgentLens($event)"
-            @toggle-lock="wb.toggleSelectionLock()"
-          />
-
+      <template v-else>
+        <div class="write-workbench__ai-tools-body write-workbench__ai-tools-body--studio">
           <div
             v-if="wb.isPanelVisible('generateToolbar')"
-            class="write-workbench__toolbar"
-            data-testid="write-generate-toolbar"
+            class="write-workbench__card write-workbench__generate-toolbar"
+            data-testid="write-generate-toolbar-main"
           >
+            <p class="write-workbench__card-title">生成控制</p>
             <div class="write-workbench__toolbar-group">
               <button
                 type="button"
@@ -644,8 +617,6 @@
               >
                 停止
               </button>
-            </div>
-            <div class="write-workbench__toolbar-group">
               <button
                 type="button"
                 class="mini-btn pixel-border"
@@ -659,12 +630,12 @@
 
           <details
             v-if="wb.isPanelVisible('agentSessionStrip')"
-            class="write-workbench__agent"
-            data-testid="write-agent-strip"
+            class="write-workbench__card"
+            data-testid="write-agent-prompt-main"
             :open="wb.agent.agentExpanded"
             @toggle="onAgentToggle"
           >
-            <summary class="write-workbench__agent-summary">高级指令（可选）</summary>
+            <summary class="write-workbench__card-title">补充指令</summary>
             <div class="write-workbench__agent-body">
               <form class="write-workbench__toolbar-group" @submit.prevent="wb.agent.submitPrompt()">
                 <input
@@ -679,8 +650,77 @@
             </div>
           </details>
 
+          <details
+            v-if="wb.isPanelVisible('directorPaths') && wb.agent.directorPaths.length"
+            class="write-workbench__card"
+            data-testid="write-director-paths-panel-main"
+            :open="!wb.isPanelCollapsed('directorPaths')"
+          >
+            <summary class="write-workbench__card-title">下一步路径</summary>
+            <CreatorDirectorPaths
+              hide-title
+              :paths="wb.agent.directorPaths"
+              :advice="wb.agent.directorAdvice"
+              :generating="wb.agent.generating"
+              @run="wb.agent.runDirectorPath"
+              @dismiss-advice="wb.agent.dismissAdvice"
+            />
+          </details>
+
+          <div
+            v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
+            class="write-workbench__plan-card write-workbench__card"
+            data-testid="write-director-plan-card-main"
+          >
+            <p class="write-workbench__card-title">确认应用</p>
+            <p class="meta-line">
+              将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
+              执行：{{ wb.agent.pendingPlan.actionLabel }}
+            </p>
+            <p class="meta-line">{{ wb.agent.statusLine }}</p>
+            <div class="write-workbench__toolbar-group">
+              <button
+                type="button"
+                class="save-btn pixel-border"
+                data-testid="write-director-confirm-btn"
+                :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+                aria-label="确认应用导演计划"
+                :aria-disabled="!wb.agent.pendingPlan?.selectedCandidateId"
+                @click="wb.agent.confirmApply()"
+              >
+                确认应用
+              </button>
+              <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
+            </div>
+          </div>
+
+          <div
+            v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
+            class="write-workbench__card"
+            data-testid="write-candidate-dock-main"
+          >
+            <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
+            <div class="write-workbench__candidates">
+              <button
+                v-for="cand in wb.agent.candidates"
+                :key="cand.id"
+                type="button"
+                class="write-workbench__candidate"
+                :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
+                :data-testid="`write-candidate-${cand.id}`"
+                :aria-label="`选择候选方案：${cand.label}，方向：${cand.direction}`"
+                :aria-pressed="wb.agent.pendingPlan?.selectedCandidateId === cand.id"
+                @click="wb.agent.selectCandidate(cand.id)"
+              >
+                <strong>{{ cand.label }}</strong> · {{ cand.direction }}
+                <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
+              </button>
+            </div>
+          </div>
+
           <CreatorAgentAnnotations
             v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
+            main-bar
             :annotations="wb.agent.annotations"
             :lens="wb.agent.agentLens"
             @focus="wb.agent.focusAnnotation"
@@ -688,6 +728,7 @@
 
           <CreatorAgentStreamPreview
             v-if="showAgentStreamPreview"
+            main-bar
             :preview-text="wb.agent.streamPreviewText"
             :display-text="wb.agent.streamDisplayText"
             :preview-label="wb.agent.streamPreviewLabel"
@@ -696,25 +737,8 @@
           />
 
           <div
-            v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
-            class="write-workbench__quality"
-            data-testid="write-quality-bar"
-          >
-            <span v-if="wb.agent.statusLine" class="meta-line">{{ wb.agent.statusLine }}</span>
-            <span
-              v-for="(hint, idx) in wb.qualityHints"
-              :key="idx"
-              class="write-workbench__quality-item"
-              :class="`write-workbench__quality-item--${hint.level}`"
-            >
-              {{ hint.text }}
-              <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
-            </span>
-          </div>
-
-          <div
             v-if="wb.isPanelVisible('versionCheckpointList') && (wb.checkpoints.length || wb.agent.lastCheckpointId)"
-            class="write-workbench__card write-workbench__version-bar"
+            class="write-workbench__card"
             data-testid="write-undo-bar-main"
           >
             <p class="write-workbench__card-title">版本 / 回滚</p>
@@ -754,167 +778,6 @@
             </button>
           </div>
         </div>
-      </details>
-
-      <template v-else>
-        <CreatorWriteControlStrip
-          v-if="wb.isPanelVisible('controlStrip')"
-          :style-strength="wb.styleStrength"
-          :selection-locked="wb.selectionLocked"
-          :allow-worldbuilding-fill="wb.allowWorldbuildingFill"
-          :goal-tag="wb.goalTag"
-          :agent-lens="wb.agent.agentLens"
-          :show-lens="wb.isPanelVisible('agentLensSwitcher')"
-          @update:style-strength="wb.styleStrength = $event"
-          @update:allow-worldbuilding-fill="wb.allowWorldbuildingFill = $event"
-          @update:goal-tag="wb.goalTag = $event"
-          @update:agent-lens="wb.agent.setAgentLens($event)"
-          @toggle-lock="wb.toggleSelectionLock()"
-        />
-
-        <div
-          v-if="wb.isPanelVisible('generateToolbar')"
-          class="write-workbench__toolbar"
-          data-testid="write-generate-toolbar"
-        >
-          <div class="write-workbench__toolbar-group">
-            <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="write-generate-btn"
-              :disabled="wb.generateRunning || wb.agent.generating"
-              @click="wb.startQuickWrite()"
-            >
-              生成
-            </button>
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="write-stop-btn"
-              :disabled="!wb.generateRunning && !wb.agent.generating"
-              @click="wb.stopGenerate()"
-            >
-              停止
-            </button>
-          </div>
-          <div class="write-workbench__toolbar-group">
-            <button
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="write-agent-mode-toggle"
-              @click="wb.agent.toggleExecutionMode()"
-            >
-              {{ wb.agent.isPreviewMode ? '预览(A)' : '应用(B2)' }}
-            </button>
-          </div>
-        </div>
-
-        <details
-          v-if="wb.isPanelVisible('agentSessionStrip')"
-          class="write-workbench__agent"
-          data-testid="write-agent-strip"
-          :open="wb.agent.agentExpanded"
-          @toggle="onAgentToggle"
-        >
-          <summary class="write-workbench__agent-summary">高级指令（可选）</summary>
-          <div class="write-workbench__agent-body">
-            <form class="write-workbench__toolbar-group" @submit.prevent="wb.agent.submitPrompt()">
-              <input
-                v-model="wb.agent.promptInput"
-                type="text"
-                class="form-input pixel-border"
-                placeholder="补充指令，例如：信息披露再晚一句…"
-                data-testid="write-agent-input"
-              />
-              <button type="submit" class="mini-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
-            </form>
-          </div>
-        </details>
-      </template>
-
-      <template v-if="!wb.humanFirstDesk">
-        <CreatorAgentAnnotations
-          v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
-          :annotations="wb.agent.annotations"
-          :lens="wb.agent.agentLens"
-          @focus="wb.agent.focusAnnotation"
-        />
-
-        <CreatorAgentStreamPreview
-          v-if="showAgentStreamPreview"
-          :preview-text="wb.agent.streamPreviewText"
-          :display-text="wb.agent.streamDisplayText"
-          :preview-label="wb.agent.streamPreviewLabel"
-          :stream-source="wb.agent.streamSource"
-          :advice-lines="wb.agent.streamAdvicePreview"
-        />
-
-        <div
-          v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly"
-          class="write-workbench__plan-card"
-          data-testid="write-director-plan-card"
-        >
-          <p class="meta-line">
-            将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong>
-            执行：{{ wb.agent.pendingPlan.actionLabel }}
-          </p>
-          <p class="meta-line">{{ wb.agent.statusLine }}</p>
-          <div class="write-workbench__toolbar-group">
-            <button
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="write-director-confirm-btn"
-              :disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-              aria-label="确认应用导演计划"
-              :aria-disabled="!wb.agent.pendingPlan?.selectedCandidateId"
-              @click="wb.agent.confirmApply()"
-            >
-              确认应用
-            </button>
-            <button type="button" class="mini-btn pixel-border" @click="wb.agent.cancelPlan()">取消</button>
-          </div>
-        </div>
-
-        <div
-          v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length"
-          class="write-workbench__card"
-          data-testid="write-candidate-dock"
-        >
-          <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
-          <div class="write-workbench__candidates">
-            <button
-              v-for="cand in wb.agent.candidates"
-              :key="cand.id"
-              type="button"
-              class="write-workbench__candidate"
-              :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
-              :data-testid="`write-candidate-${cand.id}`"
-              :aria-label="`选择候选方案：${cand.label}，方向：${cand.direction}`"
-              :aria-pressed="wb.agent.pendingPlan?.selectedCandidateId === cand.id"
-              @click="wb.agent.selectCandidate(cand.id)"
-            >
-              <strong>{{ cand.label }}</strong> · {{ cand.direction }}
-              <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
-            </button>
-          </div>
-        </div>
-
-        <div
-          v-if="wb.isPanelVisible('qualityFeedbackBar')"
-          class="write-workbench__quality"
-          data-testid="write-quality-bar"
-        >
-          <span v-if="wb.agent.statusLine" class="meta-line">{{ wb.agent.statusLine }}</span>
-          <span
-            v-for="(hint, idx) in wb.qualityHints"
-            :key="idx"
-            class="write-workbench__quality-item"
-            :class="`write-workbench__quality-item--${hint.level}`"
-          >
-            {{ hint.text }}
-            <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
-          </span>
-        </div>
       </template>
     </div>
   </div>
@@ -937,7 +800,7 @@ import '../../assets/creator-write-workbench.css';
 
 const w = inject(CREATOR_WRITE_KEY);
 const wb = w.wb;
-const advancedToolsOpen = ref(false);
+const aiToolsOpen = ref(true);
 
 const showAgentStreamPreview = computed(() => {
   const agent = wb.agent;
@@ -949,8 +812,8 @@ const showAgentStreamPreview = computed(() => {
 
 const moodTags = ['克制', '戏剧', '幽默', '抒情'];
 
-function onAdvancedToggle(event) {
-  advancedToolsOpen.value = event.target.open;
+function onAiToolsToggle(event) {
+  aiToolsOpen.value = event.target.open;
 }
 
 function onAgentToggle(event) {
@@ -1017,16 +880,16 @@ function onAgentToggle(event) {
   flex: 1;
 }
 
-.write-workbench__section--main {
-  border: none;
-  background: transparent;
+.write-workbench__top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
-.write-workbench__section--main .write-workbench__section-header {
-  background: transparent;
-  border-bottom: none;
-  padding-left: 0;
-  margin-bottom: var(--space-sm);
+.write-workbench__logic-check {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
 }
 
 .write-desk-toolbar {
@@ -1041,7 +904,7 @@ function onAgentToggle(event) {
   padding: 6px 14px;
   border: none;
   border-radius: 999px;
-  background: var(--bg-muted);
+  background: var(--bg-elevated);
   cursor: pointer;
 }
 
@@ -1056,38 +919,52 @@ function onAgentToggle(event) {
   margin-bottom: 4px;
 }
 
-.write-workbench__advanced {
+.write-workbench__ai-tools {
   border: 1px dashed var(--border-color);
   border-radius: var(--radius-sm);
   background: transparent;
+  margin-top: var(--space-sm);
 }
 
-.write-workbench__advanced-summary {
+.write-workbench__ai-tools-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--color-text-dim);
+  color: var(--color-text-secondary);
   list-style: none;
 }
 
-.write-workbench__advanced-body {
+.write-workbench__ai-tools-summary::-webkit-details-marker {
+  display: none;
+}
+
+.write-workbench__ai-tools-icon {
+  font-size: var(--text-xs);
+}
+
+.write-workbench__ai-tools-title {
+  flex: 1;
+}
+
+.write-workbench__ai-tools-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+}
+
+.write-workbench__ai-tools-body {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
   padding: 0 var(--space-sm) var(--space-sm);
 }
 
-.write-workbench__agent {
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--bg-muted);
-}
-
-.write-workbench__agent-summary {
-  cursor: pointer;
-  padding: var(--space-sm);
-  font-size: var(--text-sm);
-  list-style: none;
+.write-workbench__selection-tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 </style>
