@@ -68,7 +68,7 @@
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
 | P4-A11Y | Vue SFC无障碍 | >800行组件拆分 + a11y优化 | 待认领 | ⏳ 待规划 | 2026-07-13 |
-| P4-DETECTOR | AI检测器合并 | 重复检测器/loader合并 | 待认领 | ⏳ 待规划 | 2026-07-13 |
+| P4-DETECTOR | AI检测器合并 | CoreForeshadowChecker → ForeshadowChecker | Local-A | ✅ 已完成 | 2026-07-14 |
 
 ---
 
@@ -127,3 +127,4 @@
 |------|--------|------|
 | 2026-07-13 10:00 | Local-A | 验证黑板，更新P1-H10为已完成 |
 | 2026-07-13 11:00 | Local-A | 将黑板从 novel-factory/ 移至 LingWen/ 根目录 |
+| 2026-07-14 17:00 | Local-A | P4-DETECTOR AI检测器合并完成（CoreForeshadowChecker合并到ForeshadowChecker） |
