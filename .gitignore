@@ -7,18 +7,107 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+*~
 
-# Python
+# Python - Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 .Python
-venv/
-.venv/
 **/__pycache__/
 **/.pytest_cache/
 **/*.pyc
 **/*.pyo
+.run/
+
+# Python - C extensions
+*.so
+
+# Python - Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django / Flask / Scrapy stuff
+*.log
+local_settings.py
+instance/
+.webassets-cache
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder / Rope project settings
+.spyderproject
+.spyproject
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
 
 # Node
 node_modules/
@@ -26,7 +115,6 @@ npm-debug.log
 yarn-error.log
 
 # 敏感文件
-.env
 *.local
 credentials.json
 
@@ -43,36 +131,92 @@ credentials.json
 # 系统文件
 *.bak
 *.tmp
+
 # reference/ 整体脱管（已 git rm --cached 移除所有 tracked 文件）
 reference/
 
 # Worktrees
 .worktrees/
-novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/一致性检查报告/
-novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/审核报告/
-novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/工作流备份/
-novel-factory/08_已发布/归档/星陨纪元_v5.0_20260518/避坑指南/
+.claude/worktrees/
+
+# 发布归档 - 运行时产物
+08_已发布/归档/星陨纪元_v5.0_20260518/一致性检查报告/
+08_已发布/归档/星陨纪元_v5.0_20260518/审核报告/
+08_已发布/归档/星陨纪元_v5.0_20260518/工作流备份/
+08_已发布/归档/星陨纪元_v5.0_20260518/避坑指南/
 
 # 运行时/测试产物（不进入版本控制）
-novel-factory/.locks/
-novel-factory/projects/**/.state/volume_plan.json
-novel-factory/projects/**/.state/creator_settings_history.json
-novel-factory/projects/**/.state/custom_volume_templates.json
-novel-factory/projects/**/.state/creator_onboarding_progress.json
-novel-factory/projects/**/.state/creator_merge_preferences.json
-novel-factory/infra/.state/factory_volume_templates.json
-novel-factory/infra/.state/creator_merge_preferences_global.json
+.locks/
+projects/**/.state/volume_plan.json
+projects/**/.state/creator_settings_history.json
+projects/**/.state/custom_volume_templates.json
+projects/**/.state/creator_onboarding_progress.json
+projects/**/.state/creator_merge_preferences.json
+infra/.state/factory_volume_templates.json
+infra/.state/creator_merge_preferences_global.json
+
 # State DBs are runtime artifacts — except the canonical workflow.db
-novel-factory/.state/*.db
-!novel-factory/.state/workflow.db
-novel-factory/.state/test*.db
-novel-factory/.test_json_backend.json
-novel-factory/.test_json_backend.lock
-novel-factory/.story-system/
-novel-factory/config/api_config.yaml
-novel-factory/context/checker_performance.json
-novel-factory/logs/lingwen.json
-# Social engine runtime state (relationship network snapshot)
-novel-factory/infra/agent_system/social_engine/relationship_network.json
+.state/*.db
+!.state/workflow.db
+.state/test*.db
+
+# Phase 8.12 followup: workflow.db de-track (cbca7b5 claimed but missed)
+infra/.state/workflow.db
+infra/.state/workflow.db-*
+
+# Phase 9.10: cross-volume ripple (Phase 10: data model + persistence)
+infra/.state/ripple.db
+infra/.state/ripple.db-*
+
+# Phase 8.7: CostTracker SQLite 持久化 (R2-013: cost tracking)
+infra/.state/cost_tracker.db
+infra/.state/cost_tracker.db-*
+
+# Phase 9.98 F90: CI run records (gitignored JSON under infra/.state/ci_records/)
+infra/.state/ci_records/
+infra/.state/pilot_records/
+
+# Runtime artifacts (R2-012: 社交引擎)
+infra/agent_system/social_engine/relationship_network.db
+infra/agent_system/social_engine/relationship_network.db-*
+infra/agent_system/social_engine/relationship_network.json
+
 # Orphan agent_system/ from historical bug — should not be recreated
-novel-factory/agent_system/
+/agent_system/
+
+# 测试 JSON backend 临时文件
+.test_json_backend.json
+.test_json_backend.lock
+.story-system/
+
+# 配置 & context 运行时文件
+config/api_config.yaml
+context/checker_performance.json
+
+# 日志
+logs/dashboard/
+logs/lingwen.json
+
+# Phase 15.0 T1: dashboard + project .state directories are runtime artifacts
+dashboard/.state/
+infra/.state/*.json
+projects/**/.state/*.json
+projects/e2e-live-companion/.state/
+
+# Phase 8.40: husky 9 internal shim dir
+dashboard/frontend/.husky/_/
+
+# Phase 9.15: Playwright e2e artifacts (T4 followup: untracked after test run)
+dashboard/frontend/test-results/
+dashboard/frontend/playwright-report/
+dashboard/frontend/tests/visual-audit/output/
+
+# Playwright live e2e ephemeral advance-mode fixture (e2e_seed)
+projects/e2e-live-creator/
+
+# Phase 9.24: legacy memory/ superseded by auto-memory path
+# (active path: ~/.claude/projects/.../memory/, see CLAUDE.md)
+memory/
+
+# Collaboration blackboard (tracked - shared across dev assistants)
+# collaboration/
