@@ -58,7 +58,7 @@
 | P3-E9 | HTTPException整改 | 全局handler统一错误处理 | 待认领 | ⏳ 待规划 | 2026-07-13 |
 | P3-SPLIT | 大文件拆分 | `dashboard/app.py`/`master_controller.py`拆分 | 待认领 | ⏳ 待规划 | 2026-07-13 |
 | P15-T2 | SQLite整合spec | SQLite 8类 → `infra/persistence/` | Local-A | ✅ 已完成 | 2026-07-14 |
-| P15-T3 | dashboard singleton | dashboard singleton走`get("ripple")` | 待认领 | ⏳ 待规划 | 2026-07-13 |
+| P15-T3 | dashboard singleton | dashboard singleton走`get("ripple")` | Local-A | ✅ 已完成 | 2026-07-14 |
 | P15-T4 | 删除截断副本 | 删除`reading_power_db.py`截断副本 | 待认领 | ⏳ 待规划 | 2026-07-13 |
 
 ---
