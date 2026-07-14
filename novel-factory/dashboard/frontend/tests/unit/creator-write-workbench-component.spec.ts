@@ -304,7 +304,7 @@ describe('CreatorWriteWorkbench component', () => {
 
   test('shows quality bar on human-first main area when hints present', async () => {
     const { wrapper, wb } = mountWorkbench();
-    wb.qualityHints.value = [{ level: 'warn', text: '测试质量提示' }];
+    (wb.qualityHints as unknown as { value: Array<{ level: string; text: string; source?: string }> }).value = [{ level: 'warn', text: '测试质量提示', source: 'test' }];
     await flushPromises();
     const qualityBar = wrapper.find(byTestid('write-quality-bar-main'));
     expect(qualityBar.exists()).toBe(true);

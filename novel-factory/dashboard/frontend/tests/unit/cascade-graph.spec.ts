@@ -79,7 +79,7 @@ describe('CascadeGraph.vue', () => {
   });
 
   it('handles empty cascade gracefully (no crash)', async () => {
-    const wrapper = mount(CascadeGraph, { props: { cascade: null } });
+    const wrapper = mount(CascadeGraph, { props: { cascade: undefined } });
     await flushPromises();
     expect(wrapper.find('[data-testid="cascade-graph-empty"]').exists()).toBe(true);
   });

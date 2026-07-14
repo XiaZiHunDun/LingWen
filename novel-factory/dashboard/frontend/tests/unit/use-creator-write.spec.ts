@@ -157,7 +157,7 @@ describe('useCreatorWrite', () => {
 
   test('visibleChapters caps companion list at chapter 15', () => {
     const { api } = mountWrite();
-    expect(api.panelContext.visibleChapters.value.map((ch) => ch.chapter)).toEqual([1, 2]);
+    expect(api.panelContext.visibleChapters.value.map((ch: any) => ch.chapter)).toEqual([1, 2]);
   });
 
   test('maybeAutoSelectWritingChapter picks first chapter without body', async () => {
@@ -219,14 +219,14 @@ describe('useCreatorWrite', () => {
     await flushPromises();
     await api.panelContext.saveChapterBody();
     expect(writeMocks.runCreatorLogicCheck).toHaveBeenCalledWith({ chapter: 1 });
-    expect(api.panelContext.chapterRecheckResult.value?.chapter).toBe(1);
+    expect((api.panelContext.chapterRecheckResult.value as any)?.chapter).toBe(1);
     expect(saveMessage.value).toContain('P0');
   });
 
   test('batch deviation inline summary can be built and dismissed', () => {
     const { api } = mountWrite();
     api.updateBatchDeviationInlineSummary(1, 3);
-    expect(api.panelContext.batchDeviationInlineSummary.value?.items).toHaveLength(2);
+    expect((api.panelContext.batchDeviationInlineSummary.value as any)?.items).toHaveLength(2);
     api.dismissBatchDeviationInlineSummary();
     expect(api.panelContext.batchDeviationInlineSummary.value).toBeNull();
   });

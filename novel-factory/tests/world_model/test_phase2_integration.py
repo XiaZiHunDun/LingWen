@@ -5,7 +5,7 @@
 2. RippleEngine: register / propagate / resolve
 3. SnapshotDiff: 比较两章的世界快照
 4. PacingChecker.check_ripple_density: 密度检测
-5. CoreForeshadowChecker.check_ripple_alignment: 状态机对齐
+5. ForeshadowChecker.check_ripple_alignment: 状态机对齐
 6. apply_ripple_resolution: 联动 subplot 状态
 
 镜像 Phase 1.5 test_ripple_integration 风格。
@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
+from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
 from infra.consistency.checkers.pacing_checker import PacingChecker
 from infra.consistency.engine.data_structures import IssueSeverity
 from infra.prompt_engineering import (
@@ -208,14 +208,14 @@ class TestE2E_CheckerIntegration:
         assert any(i.severity == IssueSeverity.P2 for i in issues)
 
     def test_foreshadow_detects_overdue(self, tmp_path):
-        """register 1 overdue ripple → CoreForeshadowChecker 检测 P1"""
+        """register 1 overdue ripple → ForeshadowChecker 检测 P1"""
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(Ripple(
             ripple_id="r1", origin_event="e", origin_ch=10,
             state=RippleState.OPEN, planned_resolve_ch=10,
         ))
 
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         # current=100, planned=10, 差 90 > 5 → P1
         assert any(i.severity == IssueSeverity.P1 for i in issues)

@@ -61,7 +61,7 @@ describe('CostTrendChart: single-line baseline (Phase 8.24)', () => {
 
   test('costByDayPerTier=null falls back to single-line baseline (no regression)', async () => {
     const wrapper = mount(CostTrendChart, {
-      props: { costByDay: dayData, costByDayPerTier: null },
+      props: { costByDay: dayData, costByDayPerTier: undefined },
     })
     await flushPromises()
     expect(wrapper.find(byTestid('cost-trend-chart')).exists()).toBe(true)

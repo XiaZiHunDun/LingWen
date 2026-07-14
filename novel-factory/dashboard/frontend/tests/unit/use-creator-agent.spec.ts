@@ -106,7 +106,7 @@ describe('useCreatorAgent', () => {
     const { api } = mountAgent();
     api.promptInput.value = '加快信息披露';
     await api.submitPrompt();
-    expect(api.messages.value.some((m) => m.role === 'user' && m.text.includes('加快'))).toBe(true);
+    expect(api.messages.value.some((m: any) => m.role === 'user' && m.text.includes('加快'))).toBe(true);
     expect(api.promptInput.value).toBe('');
     expect(api.candidates.value.length).toBeGreaterThan(0);
   });
@@ -116,8 +116,8 @@ describe('useCreatorAgent', () => {
     await api.runRewritePreset('concrete');
     api.selectCandidate('steady');
     expect(applyTextToSelection).not.toHaveBeenCalled();
-    expect(api.pendingPlan.value?.selectedCandidateId).toBe('steady');
-    expect(api.pendingPlan.value?.confirmReplace).toBe(true);
+    expect((api.pendingPlan.value as any)?.selectedCandidateId).toBe('steady');
+    expect((api.pendingPlan.value as any)?.confirmReplace).toBe(true);
   });
 
   test('confirmApply blocked when adviceOnly', async () => {
@@ -159,7 +159,7 @@ describe('useCreatorAgent', () => {
     await api.runPlan('prompt', '测试');
     expect(api.directorAdvice.value).toHaveLength(1);
     expect(api.candidates.value).toHaveLength(0);
-    expect(api.pendingPlan.value?.adviceOnly).toBe(true);
+    expect((api.pendingPlan.value as any)?.adviceOnly).toBe(true);
     expect(api.planProvider.value).toBe('mock');
   });
 
@@ -190,7 +190,7 @@ describe('useCreatorAgent', () => {
     expect(api.streamAdvicePreview.value).toContain('可先缩短铺垫');
     releasePlan();
     await runPromise;
-    expect(api.candidates.value[0]?.text).toBe('流式结果');
+    expect((api.candidates.value[0] as any)?.text).toBe('流式结果');
   });
 
   test('director paths adjust consequence for suspense goal', () => {
@@ -263,7 +263,7 @@ describe('useCreatorAgent', () => {
     expect(api.annotations.value).toHaveLength(1);
     api.setAgentLens('editor');
     expect(api.annotations.value.length).toBeGreaterThan(0);
-    expect(api.annotations.value[0]?.level).toBe('warn');
+    expect((api.annotations.value[0] as any)?.level).toBe('warn');
     expect(api.agentLensLabel.value).toBeTruthy();
   });
 

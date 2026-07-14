@@ -9,7 +9,6 @@ from .chapter_redundancy_checker import ChapterRedundancyChecker
 from .character_agency import CharacterAgencyChecker
 from .character_checker import CharacterChecker
 from .character_state import CharacterStateChecker
-from .core_foreshadow_checker import CoreForeshadowChecker
 from .core_props_checker import CorePropsChecker
 from .cross_chapter_logic_checker import CrossChapterLogicChecker
 from .dialogue_action_checker import DialogueActionChecker

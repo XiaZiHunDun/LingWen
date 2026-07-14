@@ -15,7 +15,7 @@ describe('ImpactGraph branches (F48)', () => {
   })
 
   test('null graph shows empty state', () => {
-    const wrapper = mount(ImpactGraph, { props: { graph: null } })
+    const wrapper = mount(ImpactGraph, { props: { graph: undefined } })
     expect(wrapper.find(byTestid('impact-graph-empty')).exists()).toBe(true)
   })
 

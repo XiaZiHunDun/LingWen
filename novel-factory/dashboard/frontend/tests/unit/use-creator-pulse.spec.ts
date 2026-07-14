@@ -158,7 +158,7 @@ describe('useCreatorPulse', () => {
   test('setBatchSummaryPrompt and dismissBatchSummaryPrompt', () => {
     const { api } = mountPulse();
     api.setBatchSummaryPrompt({ start: 1, end: 5, alert_volume_labels: [] });
-    expect(api.batchSummaryPrompt.value?.start).toBe(1);
+    expect((api.batchSummaryPrompt.value as any)?.start).toBe(1);
     api.panelContext.dismissBatchSummaryPrompt();
     expect(api.batchSummaryPrompt.value).toBeNull();
   });
@@ -167,7 +167,7 @@ describe('useCreatorPulse', () => {
     const { api } = mountPulse();
     api.setBatchSummaryPrompt({ start: 1, end: 5, alert_volume_labels: [] });
     await api.onBatchCompleted(1, 5);
-    expect(api.batchSummaryPrompt.value?.alert_volume_labels).toEqual(['卷一']);
+    expect((api.batchSummaryPrompt.value as any)?.alert_volume_labels).toEqual(['卷一']);
     expect(api.panelContext.highlightedVolumeLabel.value).toBe('卷一');
   });
 

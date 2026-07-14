@@ -7,13 +7,13 @@ import pytest
 
 def test_core_foreshadow_checker_init():
     """Test checker initialization"""
-    from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
-    checker = CoreForeshadowChecker()
+    from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
+    checker = ForeshadowChecker()
     assert checker.chapters_dir.exists()
 
 def test_foreshadow_issue_dataclass():
     """Test ForeshadowIssue dataclass"""
-    from infra.consistency.checkers.core_foreshadow_checker import ForeshadowIssue
+    from infra.consistency.checkers.foreshadow_checker import ForeshadowIssue
     issue = ForeshadowIssue(
         chapter='ch001',
         foreshadow_text='万剑宗',
@@ -34,23 +34,23 @@ class TestChapterContentCache:
 
     def _make_checker(self, tmp_path):
         """创建一个指向 tmp_path/chapters 的 checker"""
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
         chapters_dir = tmp_path / "chapters"
         chapters_dir.mkdir()
         return CoreForeshadowChecker(chapters_dir=str(chapters_dir))
 
     def test_cache_initially_empty(self, tmp_path):
         """新 checker 缓存应为空 dict"""
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
-        checker = CoreForeshadowChecker(chapters_dir=str(tmp_path))
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
+        checker = ForeshadowChecker(chapters_dir=str(tmp_path))
         assert checker._chapter_content_cache == {}
 
     def test_get_chapter_content_caches_existing_file(self, tmp_path):
         """文件存在 → 第二次调用命中缓存 (通过修改文件可验证)"""
         ch_file = tmp_path / "ch001.md"
         ch_file.write_text("初始内容 万剑宗", encoding="utf-8")
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
-        checker = CoreForeshadowChecker(chapters_dir=str(tmp_path))
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
+        checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # 第一次:写入缓存
         c1 = checker._get_chapter_content(1)
@@ -63,8 +63,8 @@ class TestChapterContentCache:
 
     def test_get_chapter_content_caches_missing_as_none(self, tmp_path):
         """文件不存在 → 缓存 None,不会反复 stat"""
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
-        checker = CoreForeshadowChecker(chapters_dir=str(tmp_path))
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
+        checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # 文件不存在
         assert checker._get_chapter_content(999) is None
@@ -76,8 +76,8 @@ class TestChapterContentCache:
         """clear_chapter_cache() 应清空缓存"""
         ch_file = tmp_path / "ch001.md"
         ch_file.write_text("test", encoding="utf-8")
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
-        checker = CoreForeshadowChecker(chapters_dir=str(tmp_path))
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
+        checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         checker._get_chapter_content(1)
         assert 1 in checker._chapter_content_cache
@@ -89,7 +89,7 @@ class TestChapterContentCache:
 
         通过 monkeypatch 替换 Path.read_text 为计数器,验证调用次数。
         """
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
 
         # 准备: ch027-ch029 三个章节,每个含一个关键词
         for i in [27, 28, 29]:
@@ -97,7 +97,7 @@ class TestChapterContentCache:
                 f"这是第{i}章 包含 token{i}", encoding="utf-8"
             )
 
-        checker = CoreForeshadowChecker(chapters_dir=str(tmp_path))
+        checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # Monkey-patch Path.read_text:每章只应被读一次
         from pathlib import Path
@@ -127,7 +127,7 @@ class TestChapterContentCache:
         修复前:5 个伏笔 × 3 章 = 15 次 read_text
         修复后:1 次预缓存 + 5 次 dict 查找 = 1 次 read_text
         """
-        from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
+        from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
 
         # 准备 5 个目标章节
         for i in [27, 28, 29, 30, 31]:
@@ -146,7 +146,7 @@ class TestChapterContentCache:
         )
         (tmp_path / "ch001.md").write_text(ch001_content, encoding="utf-8")
 
-        checker = CoreForeshadowChecker(chapters_dir=str(tmp_path))
+        checker = ForeshadowChecker(chapters_dir=str(tmp_path))
 
         # 计数 read_text
         from pathlib import Path

@@ -40,7 +40,7 @@ describe('CreatorCheckpointDiff', () => {
 
   it('renders nothing when diffView is null', () => {
     const wrapper = mount(CreatorCheckpointDiff, {
-      props: { diffView: null },
+      props: { diffView: undefined },
     });
     expect(wrapper.find(byTestid('write-checkpoint-diff')).exists()).toBe(false);
   });

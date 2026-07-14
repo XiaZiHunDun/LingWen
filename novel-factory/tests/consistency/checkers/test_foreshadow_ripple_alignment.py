@@ -1,4 +1,4 @@
-"""Tests for CoreForeshadowChecker.check_ripple_alignment (Phase 2.5).
+"""Tests for ForeshadowChecker.check_ripple_alignment (Phase 2.5).
 
 Doc 1 §3.4 + Doc 4 联动:伏笔检测器对齐 Ripple 状态机。
 
@@ -17,7 +17,7 @@ from typing import Optional, Protocol
 
 import pytest
 
-from infra.consistency.checkers.core_foreshadow_checker import CoreForeshadowChecker
+from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
 from infra.consistency.engine.data_structures import (
     CheckerType,
     Issue,
@@ -58,14 +58,14 @@ class TestEmptyCases:
 
     def test_zero_ripples_no_issue(self, tmp_path):
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=200)
         assert issues == []
 
     def test_only_resolved_no_issue(self, tmp_path):
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.RESOLVED, resolved_ch=200))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=200)
         assert issues == []
 
@@ -79,14 +79,14 @@ class TestOverdueDetection:
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         # planned_resolve_ch=10, current_ch=100 → overdue (100 - 10 > 5)
         reg.add_ripple(_ripple("r1", RippleState.OPEN, planned_resolve_ch=10))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         assert any(i.severity == IssueSeverity.P1 for i in issues)
 
     def test_propagating_overdue_p1_issue(self, tmp_path):
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.PROPAGATING, planned_resolve_ch=10))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         assert any(i.severity == IssueSeverity.P1 for i in issues)
 
@@ -94,7 +94,7 @@ class TestOverdueDetection:
         """正在平复但已超 planned_resolve_ch → P1"""
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.RESOLVING, planned_resolve_ch=10))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         assert any(i.severity == IssueSeverity.P1 for i in issues)
 
@@ -103,7 +103,7 @@ class TestOverdueDetection:
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         # current_ch=100, planned=98, 差 2 ≤ grace=5
         reg.add_ripple(_ripple("r1", RippleState.OPEN, planned_resolve_ch=98))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         assert issues == []
 
@@ -116,7 +116,7 @@ class TestPlannedMissing:
     def test_open_no_planned_p3_warning(self, tmp_path):
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.OPEN, planned_resolve_ch=None))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         # 至少 1 P3 (warning)
         assert any(i.severity == IssueSeverity.P3 for i in issues)
@@ -124,7 +124,7 @@ class TestPlannedMissing:
     def test_propagating_no_planned_p3_warning(self, tmp_path):
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.PROPAGATING, planned_resolve_ch=None))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=100)
         assert any(i.severity == IssueSeverity.P3 for i in issues)
 
@@ -137,7 +137,7 @@ class TestResolvedRecent:
     def test_resolved_at_current_no_issue(self, tmp_path):
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.RESOLVED, resolved_ch=200))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=200)
         assert issues == []
 
@@ -145,7 +145,7 @@ class TestResolvedRecent:
         """resolved_ch = current_ch - 3, 在 5 章内 → 无 issue"""
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r1", RippleState.RESOLVED, resolved_ch=197))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=200)
         assert issues == []
 
@@ -160,7 +160,7 @@ class TestMultipleIssues:
         reg = RippleRegistry(base_dir=tmp_path / "ripples")
         reg.add_ripple(_ripple("r_resolved", RippleState.RESOLVED, resolved_ch=200))
         reg.add_ripple(_ripple("r_overdue", RippleState.OPEN, planned_resolve_ch=10))
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(reg, current_ch=200)
         # 1 P1 (overdue)
         p1_issues = [i for i in issues if i.severity == IssueSeverity.P1]
@@ -184,7 +184,7 @@ class TestProtocolDecoupling:
             def get_ripple(self, ripple_id: str) -> Optional[Ripple]:
                 return ripples.get(ripple_id)
 
-        checker = CoreForeshadowChecker(chapters_dir=tmp_path)
+        checker = ForeshadowChecker(chapters_dir=tmp_path)
         issues = checker.check_ripple_alignment(StubReg(), current_ch=100)
         assert any(i.severity == IssueSeverity.P1 for i in issues)
 

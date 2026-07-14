@@ -35,7 +35,7 @@ describe('CostTrendChart cumulative line (Phase 9.29 F13)', () => {
     vi.mocked(echarts.init).mockReturnValueOnce(createMockEChartsInstance(setOptionSpy))
 
     const wrapper = mount(CostTrendChart, {
-      props: { costByDay: dayData, costByDayPerTier: null },
+      props: { costByDay: dayData, costByDayPerTier: undefined },
     })
     await flushPromises()
 

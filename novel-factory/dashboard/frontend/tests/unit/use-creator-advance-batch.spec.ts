@@ -130,21 +130,21 @@ describe('useCreatorAdvanceBatch', () => {
     const { api } = mountBatch();
     await api.panelContext.runAdvanceBatch();
     expect(batchMocks.studioProductionRun).toHaveBeenCalled();
-    expect(api.batchJob.value?.status).toBe('running');
+    expect((api.batchJob.value as any)?.status).toBe('running');
     expect(api.batchRunning.value).toBe(false);
   });
 
   test('pollBatchJob updates running state from API', async () => {
     const { api } = mountBatch();
     await api.pollBatchJob();
-    expect(api.batchJob.value?.id).toBe('job-1');
+    expect((api.batchJob.value as any)?.id).toBe('job-1');
     expect(api.batchRunning.value).toBe(true);
   });
 
   test('polling completion triggers refresh and onBatchCompleted', async () => {
     batchMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
     const { api, saveMessage, onAfterBatchRefresh, onBatchCompleted, loadBatchHistory, setBatchSummaryPrompt } = mountBatch();
-    api.batchJob.value = { status: 'running', id: 'job-1' };
+    (api.batchJob.value as any) = { status: 'running', id: 'job-1' };
     api.resumeBatchPollingIfNeeded();
     await vi.advanceTimersByTimeAsync(3000);
     await flushPromises();
@@ -163,7 +163,7 @@ describe('useCreatorAdvanceBatch', () => {
 
   test('resumeBatchPollingIfNeeded restarts polling for running job', async () => {
     const { api } = mountBatch();
-    api.batchJob.value = { status: 'running', id: 'job-1' };
+    (api.batchJob.value as any) = { status: 'running', id: 'job-1' };
     api.resumeBatchPollingIfNeeded();
     await vi.advanceTimersByTimeAsync(3000);
     await flushPromises();
