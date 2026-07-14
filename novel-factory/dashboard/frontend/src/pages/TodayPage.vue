@@ -3,6 +3,15 @@
 -->
 <template>
   <div class="today-page l1-page" data-testid="today-page">
+    <div class="today-hero">
+      <img src="../assets/images/hero_1280x720.jpg" alt="墨灵创作封面" class="today-hero__image">
+      <div class="today-hero__overlay"></div>
+      <div class="today-hero__content">
+        <span class="today-hero__tag">AI创作助手</span>
+        <h1 class="today-hero__title">墨灵</h1>
+        <p class="today-hero__subtitle">让每个故事，都有人陪你写完</p>
+      </div>
+    </div>
     <div class="l1-page__body l1-panel-enter">
       <div class="l1-lead-row">
         <PageLeadBar
@@ -176,6 +185,74 @@ function onPrimaryAction() {
 .today-page {
   flex: 1;
   min-height: 0;
+}
+
+.today-hero {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-lg);
+}
+
+.today-hero__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.65;
+}
+
+.today-hero__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(43, 35, 24, 0.3) 0%, rgba(43, 35, 24, 0.65) 100%);
+}
+
+.today-hero__content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #fffdf8;
+  padding: 1rem;
+}
+
+.today-hero__tag {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  padding: 4px 14px;
+  border: 1px solid rgba(255, 253, 248, 0.6);
+  border-radius: 2px;
+  margin-bottom: 1rem;
+}
+
+.today-hero__title {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.04em;
+}
+
+.today-hero__subtitle {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-style: italic;
+  opacity: 0.9;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .header-actions {

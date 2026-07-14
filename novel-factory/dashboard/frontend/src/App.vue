@@ -394,7 +394,7 @@ function onNavClick(itemId) {
 }
 
 .sidebar-mark::after {
-  content: '灵';
+  content: '墨';
   display: flex;
   align-items: center;
   justify-content: center;
@@ -404,6 +404,7 @@ function onNavClick(itemId) {
   font-weight: 800;
   color: #fff;
   line-height: 1;
+  font-family: var(--font-heading);
 }
 
 .sidebar-brand-text {
@@ -411,11 +412,11 @@ function onNavClick(itemId) {
 }
 
 .sidebar-title {
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   color: var(--color-text);
-  font-family: var(--font-ui);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  letter-spacing: 0.04em;
   line-height: 1.2;
 }
 
