@@ -4,7 +4,7 @@
     <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
       <div class="sidebar-header" :class="{ 'sidebar-header--human': isHumanFirstShell }">
         <div class="sidebar-brand">
-          <span class="sidebar-mark" aria-hidden="true" />
+          <img src="/assets/brand/moling-logo.jpg" alt="墨灵Logo" class="sidebar-logo" aria-hidden="true" />
           <div class="sidebar-brand-text">
             <h2 class="sidebar-title" data-testid="sidebar-product-name">{{ BRAND_PRODUCT_NAME }}</h2>
             <p v-if="!isHumanFirstShell" class="sidebar-tagline">{{ BRAND_PRODUCT_TAGLINE }}</p>
@@ -384,27 +384,12 @@ function onNavClick(itemId) {
   margin-bottom: var(--space-sm);
 }
 
-.sidebar-mark {
-  position: relative;
-  width: 32px;
-  height: 32px;
+.sidebar-logo {
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(145deg, var(--color-accent), var(--color-accent-gradient-end));
   flex-shrink: 0;
-}
-
-.sidebar-mark::after {
-  content: '墨';
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1;
-  font-family: var(--font-heading);
+  object-fit: cover;
 }
 
 .sidebar-brand-text {

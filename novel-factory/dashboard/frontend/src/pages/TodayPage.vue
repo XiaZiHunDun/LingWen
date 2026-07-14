@@ -4,7 +4,7 @@
 <template>
   <div class="today-page l1-page" data-testid="today-page">
     <div class="today-hero">
-      <img src="../assets/images/hero_1280x720.jpg" alt="墨灵创作封面" class="today-hero__image">
+      <img src="/assets/illustrations/creation-scene.jpg" alt="创作场景" class="today-hero__image">
       <div class="today-hero__overlay"></div>
       <div class="today-hero__content">
         <span class="today-hero__tag">AI创作助手</span>
@@ -125,6 +125,15 @@
 
     <div v-if="loading && !snapshot" class="loading-state" data-testid="today-loading">
       加载今日任务…
+    </div>
+
+    <div v-if="!loading && !snapshot" class="empty-state" data-testid="today-empty-state">
+      <img src="/assets/illustrations/empty-state-no-task.jpg" alt="今日无事" class="empty-state__image" />
+      <h3 class="empty-state__title">今日无事</h3>
+      <p class="empty-state__desc">享受悠闲时光，灵感总会不期而至</p>
+      <button type="button" class="l1-pill l1-pill--primary" @click="go('creator', 'write')">
+        开始创作 →
+      </button>
     </div>
     </div>
   </div>
@@ -325,6 +334,32 @@ function onPrimaryAction() {
 
 .today-secondary-link:hover {
   opacity: 0.85;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+.empty-state__image {
+  max-width: 320px;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  opacity: 0.9;
+}
+
+.empty-state__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  margin-bottom: var(--space-xs);
+}
+
+.empty-state__desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+  margin-bottom: var(--space-md);
 }
 
 .section-title {

@@ -50,6 +50,7 @@
         class="library-page__empty"
         data-testid="library-empty"
       >
+        <img src="/assets/illustrations/empty-state-no-project.jpg" alt="书架为空" class="library-page__empty-image" />
         <p class="library-page__empty-title">书架还是空的</p>
         <p class="meta-line">点「新建」开第一本，或在「聊聊」里说说你想写什么。</p>
         <button type="button" class="l1-pill l1-pill--primary" data-testid="library-empty-new-btn" @click="startNew">
@@ -159,10 +160,18 @@ onMounted(load);
   align-items: center;
   gap: var(--space-sm);
 }
+.library-page__empty-image {
+  max-width: 280px;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  opacity: 0.9;
+}
 .library-page__empty-title {
   margin: 0;
   font-size: var(--text-md);
   font-weight: 600;
+  font-family: var(--font-heading);
 }
 .library-page__grid {
   display: grid;
