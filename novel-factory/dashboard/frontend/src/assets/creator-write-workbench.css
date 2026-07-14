@@ -1,6 +1,3 @@
-/* Creator write workbench — left stack + main editor (Human Comfort P0) */
-/* 布局结构：左侧面板（固定）+ 主区域（顶部栏 → 编辑区 → AI工具栏） */
-
 .write-workbench {
   display: flex;
   gap: var(--space-md);
@@ -51,11 +48,41 @@
   overflow-y: auto;
 }
 
+.write-workbench__section {
+  margin-bottom: var(--space-md);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.write-workbench__section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-muted);
+  border-bottom: var(--border-width) solid var(--border-color);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.write-workbench__section-icon {
+  font-size: var(--text-md);
+}
+
+.write-workbench__section-title {
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
+}
+
 .write-workbench__card {
   padding: var(--space-sm) var(--space-md);
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--bg-muted);
+  background: var(--bg-elevated);
   font-size: var(--text-sm);
 }
 
@@ -63,6 +90,8 @@
   font-weight: 600;
   margin: 0 0 var(--space-xs);
   font-size: var(--text-sm);
+  font-family: var(--font-heading);
+  letter-spacing: 0.01em;
 }
 
 .write-workbench__selection-toolbar {
@@ -86,7 +115,7 @@
 .write-workbench__chip {
   font-size: var(--text-xs);
   padding: 4px 10px;
-  border: none;
+  border: var(--border-width) solid var(--border-color);
   border-radius: 999px;
   background: var(--bg-elevated);
   cursor: pointer;
@@ -95,13 +124,13 @@
 }
 
 .write-workbench__chip:hover {
-  background: var(--bg-secondary);
+  background: var(--bg-muted);
   color: var(--color-text);
 }
 
 .write-workbench__chip--active {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
 }
 
 .write-workbench__main {
@@ -156,8 +185,8 @@
   font-size: var(--text-xs);
 }
 
-.write-workbench__quality-item--ok { color: #2a7; }
-.write-workbench__quality-item--warn { color: #a60; }
+.write-workbench__quality-item--ok { color: var(--color-success); }
+.write-workbench__quality-item--warn { color: var(--color-warning); }
 .write-workbench__quality-item--info { color: var(--color-text-dim); }
 
 .write-workbench__agent-body {
@@ -178,7 +207,7 @@
 .write-workbench__plan-card {
   padding: var(--space-sm);
   border: 1px dashed var(--border-color);
-  background: rgba(100, 140, 200, 0.06);
+  background: rgba(156, 74, 42, 0.06);
 }
 
 .write-workbench__candidates {
@@ -233,7 +262,7 @@
 
 .write-control-strip .write-workbench__chip--active {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
 }
 
 details.write-workbench__card > summary {

@@ -1,54 +1,101 @@
-/* LingWen Dashboard — ink & paper UI */
+@font-face {
+  font-family: 'YoungSerif';
+  src: url('./fonts/YoungSerif-Regular.ttf') format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'CrimsonPro';
+  src: url('./fonts/CrimsonPro-Regular.ttf') format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'CrimsonPro';
+  src: url('./fonts/CrimsonPro-Bold.ttf') format('truetype');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'CrimsonPro';
+  src: url('./fonts/CrimsonPro-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'IBMPlexMono';
+  src: url('./fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+}
 
 :root {
-  --bg-primary: #f7f6f4;
-  --bg-secondary: #ffffff;
-  --bg-elevated: #ffffff;
-  --bg-muted: #ebe9e5;
+  --bg-primary: #f5f0e8;
+  --bg-secondary: #fffdf8;
+  --bg-elevated: #fffdf8;
+  --bg-muted: #ebe6dc;
   --surface-elevated: var(--bg-elevated);
-  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-subtle: rgba(43, 35, 24, 0.08);
 
-  /* 墨蓝主色 — 低饱和，偏书写感 */
-  --color-accent: #3d5f8a;
-  --color-accent-hover: #324f74;
-  --color-accent-muted: #5a7a9e;
-  --color-accent-soft: rgba(61, 95, 138, 0.1);
-  --color-accent-gradient-end: #4a6a88;
-  --color-warning: #9a6700;
-  --color-warning-soft: rgba(154, 103, 0, 0.12);
-  --color-danger: #b42318;
-  --color-danger-soft: rgba(180, 35, 24, 0.1);
-  --color-success: #2e7d5a;
-  --color-success-soft: rgba(46, 125, 90, 0.12);
-  --color-advance: #2f5f9a;
-  --color-advance-soft: rgba(47, 95, 154, 0.12);
-  --color-advance-border: rgba(47, 95, 154, 0.45);
-  --color-on-accent: #ffffff;
-  --color-highlight-soft: rgba(200, 180, 80, 0.35);
-  --color-conflict-outline: rgba(200, 80, 80, 0.55);
-  --color-conflict-bg-stripe: rgba(200, 80, 80, 0.35);
-  --color-advance-bg-subtle: rgba(47, 95, 154, 0.08);
-  --color-advance-bg-soft: rgba(47, 95, 154, 0.12);
-  --color-text: #1a1c22;
-  --color-text-secondary: #2e3340;
-  --color-text-dim: #5c6370;
-  --text-muted: #5c6370;
+  --color-accent: #9c4a2a;
+  --color-accent-hover: #853f25;
+  --color-accent-muted: #b86b4a;
+  --color-accent-soft: rgba(156, 74, 42, 0.1);
+  --color-accent-gradient-end: #a85a3a;
+  --color-accent2: #c89b3c;
+  --color-warning: #9c6a2a;
+  --color-warning-soft: rgba(156, 106, 42, 0.12);
+  --color-danger: #a83a2a;
+  --color-danger-soft: rgba(168, 58, 42, 0.1);
+  --color-success: #3a7a5a;
+  --color-success-soft: rgba(58, 122, 90, 0.12);
+  --color-advance: #5a6a8a;
+  --color-advance-soft: rgba(90, 106, 138, 0.12);
+  --color-advance-border: rgba(90, 106, 138, 0.45);
+  --color-on-accent: #fffdf8;
+  --color-highlight-soft: rgba(200, 155, 60, 0.35);
+  --color-conflict-outline: rgba(168, 58, 42, 0.55);
+  --color-conflict-bg-stripe: rgba(168, 58, 42, 0.35);
+  --color-advance-bg-subtle: rgba(90, 106, 138, 0.08);
+  --color-advance-bg-soft: rgba(90, 106, 138, 0.12);
+  --color-text: #2b2318;
+  --color-text-secondary: #4a4035;
+  --color-text-dim: #7a6b5a;
+  --text-muted: #7a6b5a;
 
-  --border-color: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.16);
+  --border-color: rgba(43, 35, 24, 0.1);
+  --border-strong: rgba(43, 35, 24, 0.2);
   --border-width: 1px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.05), 0 8px 28px rgba(15, 23, 42, 0.06);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(43, 35, 24, 0.04);
+  --shadow-md: 0 4px 16px rgba(43, 35, 24, 0.06);
+  --shadow-card: 0 1px 3px rgba(43, 35, 24, 0.05), 0 8px 28px rgba(43, 35, 24, 0.06);
 
-  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
-    "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
-  --font-display: var(--font-ui);
-  --font-mono: ui-monospace, "Cascadia Code", "Source Han Sans SC", monospace;
+  --font-heading: 'YoungSerif', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-body: 'CrimsonPro', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-ui: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  --font-display: var(--font-heading);
+  --font-mono: 'IBMPlexMono', monospace;
 
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 19px;
+  --text-xl: 23px;
+  --text-2xl: 27px;
+
+  --leading-normal: 1.65;
+  --leading-relaxed: 1.8;
+
+  --sidebar-width: 220px;
+
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 18px;
+  --space-lg: 26px;
+  --space-xl: 38px;
+}
+
+html[data-text-scale="large"] {
   --text-xs: 14px;
   --text-sm: 15px;
   --text-base: 16px;
@@ -56,20 +103,10 @@
   --text-lg: 20px;
   --text-xl: 24px;
   --text-2xl: 28px;
-
-  --leading-normal: 1.55;
-  --leading-relaxed: 1.65;
-
-  --sidebar-width: 220px;
-
-  --space-xs: 6px;
-  --space-sm: 10px;
-  --space-md: 20px;
-  --space-lg: 28px;
-  --space-xl: 40px;
+  --sidebar-width: 232px;
 }
 
-html[data-text-scale="large"] {
+html[data-text-scale="xlarge"] {
   --text-xs: 15px;
   --text-sm: 16px;
   --text-base: 17px;
@@ -77,30 +114,18 @@ html[data-text-scale="large"] {
   --text-lg: 21px;
   --text-xl: 25px;
   --text-2xl: 30px;
-  --sidebar-width: 232px;
-}
-
-html[data-text-scale="xlarge"] {
-  --text-xs: 16px;
-  --text-sm: 17px;
-  --text-base: 18px;
-  --text-md: 19px;
-  --text-lg: 22px;
-  --text-xl: 26px;
-  --text-2xl: 32px;
   --sidebar-width: 244px;
 }
 
-/* Dark theme token layer (reserved — not wired to UI toggle) */
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg-primary: #12141a;
-  --bg-elevated: #1c1f28;
+  --bg-primary: #1a1510;
+  --bg-elevated: #251f18;
   --surface-elevated: var(--bg-elevated);
-  --color-text: #eceef2;
-  --color-text-dim: #a8b0bd;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.08);
+  --color-text: #f5f0e8;
+  --color-text-dim: #9a8a7a;
+  --border-color: rgba(245, 240, 232, 0.1);
+  --border-subtle: rgba(245, 240, 232, 0.08);
 }
 
 * {
@@ -119,7 +144,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Legacy utility names — softened surfaces */
 .pixel-border {
   border: var(--border-width) solid var(--border-color);
   box-shadow: none;
@@ -161,7 +185,7 @@ body {
 
 .pixel-btn--primary {
   background-color: var(--color-accent);
-  color: white;
+  color: var(--color-on-accent);
   border-color: transparent;
 }
 
@@ -171,13 +195,13 @@ body {
 
 .pixel-btn--danger {
   background-color: var(--color-danger);
-  color: white;
+  color: var(--color-on-accent);
   border-color: transparent;
 }
 
 .pixel-btn--success {
   background-color: var(--color-success);
-  color: white;
+  color: var(--color-on-accent);
   border-color: transparent;
 }
 
@@ -197,7 +221,6 @@ body {
   box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
-/* Utility classes */
 .text-accent { color: var(--color-accent); }
 .text-warning { color: var(--color-warning); }
 .text-danger { color: var(--color-danger); }
@@ -207,10 +230,11 @@ body {
 .bg-secondary { background-color: var(--bg-secondary); }
 
 .page-title {
+  font-family: var(--font-heading);
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: 400;
   color: var(--color-text);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
 }
 
 .meta-line {
@@ -228,13 +252,12 @@ body {
   max-width: 52em;
 }
 
-/* —— 全局主按钮 / 次按钮 —— */
 .save-btn {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: 600;
   padding: 10px 18px;
-  color: #fff;
+  color: var(--color-on-accent);
   background: var(--color-accent);
   border: var(--border-width) solid transparent;
   border-radius: var(--radius-sm);
@@ -361,7 +384,7 @@ body {
 }
 
 #app .l1-pill--primary {
-  color: #fff;
+  color: var(--color-on-accent);
   background: var(--color-accent);
 }
 
