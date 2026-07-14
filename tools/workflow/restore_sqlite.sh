@@ -7,7 +7,7 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 WORKFLOW_FILE="$PROJECT_ROOT/workflow_state.json"
 DB_PATH="$PROJECT_ROOT/.state/workflow.db"
-HOOKS_FILE="$PROJECT_ROOT/novel-factory/hooks.yaml"
+HOOKS_FILE="$PROJECT_ROOT/hooks.yaml"
 
 echo "=========================================="
 echo "  恢复SQLite主控模式"
@@ -20,8 +20,8 @@ echo "  hooks.yaml已更新为SQLite模式"
 
 echo ""
 echo "[2/3] 运行迁移脚本..."
-if [ -f "$PROJECT_ROOT/novel-factory/infra/tools/migrate_to_sqlite.py" ]; then
-    python3 "$PROJECT_ROOT/novel-factory/infra/tools/migrate_to_sqlite.py"
+if [ -f "$PROJECT_ROOT/infra/tools/migrate_to_sqlite.py" ]; then
+    python3 "$PROJECT_ROOT/infra/tools/migrate_to_sqlite.py"
     echo "  迁移完成"
 else
     echo "  迁移脚本不存在，跳过"

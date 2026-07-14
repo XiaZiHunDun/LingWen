@@ -1,5 +1,5 @@
 # Phase 9.37 F22: moved to repo root — GitHub Actions reads /.github/workflows/ only.
-# See novel-factory/.github/workflows/dashboard-frontend-ci.yml (deprecated copy).
+# See .github/workflows/dashboard-frontend-ci.yml (deprecated copy).
 
 name: Dashboard Frontend CI
 
@@ -7,12 +7,12 @@ on:
   push:
     branches: [master]
     paths:
-      - 'novel-factory/dashboard/frontend/**'
+      - 'dashboard/frontend/**'
       - '.github/workflows/dashboard-frontend-ci.yml'
   pull_request:
     branches: [master]
     paths:
-      - 'novel-factory/dashboard/frontend/**'
+      - 'dashboard/frontend/**'
       - '.github/workflows/dashboard-frontend-ci.yml'
 
 concurrency:
@@ -26,7 +26,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -64,7 +64,7 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v5
         with:
-          files: ./novel-factory/dashboard/frontend/coverage/lcov.info
+          files: ./dashboard/frontend/coverage/lcov.info
           flags: frontend
           fail_ci_if_error: false
           verbose: false
@@ -80,7 +80,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -101,10 +101,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
         run: pip install -e . -r dashboard/requirements.txt
 
       - name: Install dependencies
@@ -135,7 +134,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -156,10 +155,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
         run: pip install -e . -r dashboard/requirements.txt
 
       - name: Install dependencies
@@ -190,7 +188,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -211,10 +209,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
         run: pip install -e . -r dashboard/requirements.txt
 
       - name: Install dependencies
@@ -245,7 +242,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -266,10 +263,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
         run: pip install -e . -r dashboard/requirements.txt
 
       - name: Install dependencies

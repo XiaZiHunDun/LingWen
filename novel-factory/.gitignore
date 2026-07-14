@@ -146,3 +146,5 @@ projects/e2e-live-creator/
 # Phase 9.24: legacy memory/ superseded by auto-memory path
 # (active path: ~/.claude/projects/.../memory/, see CLAUDE.md)
 memory/
+
+

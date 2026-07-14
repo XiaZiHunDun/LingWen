@@ -101,7 +101,6 @@ from dashboard.helpers.cvg import (  # noqa: F401
 )
 from dashboard.helpers.decision import _decision_to_response  # noqa: F401
 from dashboard.helpers.misc import _maybe_mount_dashboard_ui  # noqa: F401
-from dashboard.helpers.reading_power_db import ReadingPowerDB  # noqa: F401
 from dashboard.helpers.time_window import _parse_time_window  # noqa: F401
 from dashboard.helpers.workflow import (  # noqa: F401
     _list_workflow_yamls,
@@ -115,6 +114,7 @@ from dashboard.models import *  # noqa: F401,F403
 # dependencies (db, master_controller, manager, limiter, production_records_root,
 # cvg_storage).
 from dashboard.routes import RoutesContext, register_all_routes  # noqa: E402
+from infra.reading_power.db import ReadingPowerDB  # noqa: F401
 
 # Phase 15.0 T1.3: CVG storage singleton stays module-level in dashboard.app so tests
 # can monkeypatch app_module._default_storage / _default_storage_instance / _DEFAULT_CVG_DB_PATH

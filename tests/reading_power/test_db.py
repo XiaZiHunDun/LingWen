@@ -1,6 +1,7 @@
 """Tests for ReadingPowerDB."""
 
 import pytest
+
 from infra.reading_power.db import ReadingPowerDB
 
 

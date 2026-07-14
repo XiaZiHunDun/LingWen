@@ -24,9 +24,9 @@ from typing import TYPE_CHECKING, Callable, Optional
 from fastapi import HTTPException
 from slowapi import Limiter
 
-from dashboard.helpers.reading_power_db import ReadingPowerDB
 from dashboard.protocols import MasterControllerLike
 from dashboard.ws import ConnectionManager
+from infra.reading_power.db import ReadingPowerDB
 
 if TYPE_CHECKING:
     from infra.cross_volume.storage import RippleStorage

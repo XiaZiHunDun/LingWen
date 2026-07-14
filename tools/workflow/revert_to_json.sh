@@ -43,7 +43,7 @@ echo "  已恢复: $LATEST_BACKUP -> $WORKFLOW_FILE"
 
 echo ""
 echo "[4/4] 更新hooks.yaml为JSON模式..."
-sed -i 's|sqlite://.state/workflow.db|workflow_state.json|g' "$PROJECT_ROOT/novel-factory/hooks.yaml" 2>/dev/null || true
+sed -i 's|sqlite://.state/workflow.db|workflow_state.json|g' "$PROJECT_ROOT/hooks.yaml" 2>/dev/null || true
 echo "  hooks.yaml已更新为JSON模式"
 
 echo ""

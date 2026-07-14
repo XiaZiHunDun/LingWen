@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -63,7 +63,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -84,10 +84,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
         run: pip install -e . -r dashboard/requirements.txt
 
       - name: Install dependencies
@@ -107,5 +106,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-trace
-          path: novel-factory/dashboard/frontend/test-results/
+          path: dashboard/frontend/test-results/
           if-no-files-found: ignore

@@ -13,7 +13,7 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-NF="${REPO_ROOT}/novel-factory"
+NF="${REPO_ROOT}"
 
 PASS=0
 FAIL=0
@@ -38,7 +38,7 @@ echo ""
 # Check 1: T1 — 前端 api/request 15s timeout
 echo "Check 1: T1 — Frontend API timeout (15s) impl"
 T1_OK=FAIL
-if grep -qE "DEFAULT_TIMEOUT_MS\s*=\s*15_?000" "${REPO_ROOT}/novel-factory/dashboard/frontend/src/api/index.js" 2>/dev/null; then
+if grep -qE "DEFAULT_TIMEOUT_MS\s*=\s*15_?000" "${REPO_ROOT}/dashboard/frontend/src/api/index.js" 2>/dev/null; then
   T1_OK=PASS
 fi
 assert_check "T1 api/request DEFAULT_TIMEOUT_MS=15_000" "$T1_OK"

@@ -12,8 +12,6 @@ concurrency:
 
 defaults:
   run:
-    working-directory: novel-factory
-
 jobs:
   real-llm-tests:
     name: Real LLM tests (MiniMax, Python 3.13)
@@ -40,7 +38,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-          cache-dependency-path: novel-factory/pyproject.toml
+          cache-dependency-path: pyproject.toml
 
       - name: Install (editable + dev)
         run: |
@@ -67,7 +65,7 @@ jobs:
         with:
           name: real-llm-tests-output
           path: |
-            novel-factory/.pytest_cache/
-            novel-factory/pytest.log
+            .pytest_cache/
+            pytest.log
           retention-days: 14
           if-no-files-found: ignore

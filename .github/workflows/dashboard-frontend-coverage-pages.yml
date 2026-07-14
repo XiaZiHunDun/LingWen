@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -48,7 +48,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: novel-factory/dashboard/frontend/coverage/html
+          path: dashboard/frontend/coverage/html
 
   deploy:
     name: Deploy to GitHub Pages

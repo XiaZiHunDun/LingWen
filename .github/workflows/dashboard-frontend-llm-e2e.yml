@@ -18,7 +18,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: novel-factory/dashboard/frontend
+        working-directory: dashboard/frontend
 
     steps:
       - name: Checkout
@@ -39,10 +39,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: novel-factory/dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        working-directory: novel-factory
         run: pip install -e . -r dashboard/requirements.txt
 
       - name: Install dependencies

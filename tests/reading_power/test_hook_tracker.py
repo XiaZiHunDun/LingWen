@@ -1,7 +1,8 @@
 """Tests for HookTracker."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from infra.reading_power.hook_tracker import HookTracker
 

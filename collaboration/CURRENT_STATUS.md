@@ -43,7 +43,7 @@
 | P15-T1 | dashboard/app.py 6265→296行 | ✅ 已完成 | 历史 | - |
 | P15-T2 | SQLite consolidation | ✅ **已完成**（68 tests passed, ruff 0 errors） | Local-A | 2026-07-14 |
 | P15-T3 | dashboard singleton走get("ripple") | ✅ **已完成**（移除 fallback，68 tests passed） | Local-A | 2026-07-14 |
-| P15-T4 | 删除reading_power_db.py截断副本 | ⏳ 待启动 | 待认领 | 2026-07-20 |
+| P15-T4 | 删除reading_power_db.py截断副本 | ✅ **已完成**（删除 shim，64 tests passed） | Local-A | 2026-07-14 |
 
 ## ✅ 已完成任务详情
 

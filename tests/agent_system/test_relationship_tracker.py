@@ -1,12 +1,14 @@
 # tests/agent_system/test_relationship_tracker.py
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../novel-factory'))
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from agent_system.social_engine.relationship_tracker import RelationshipTracker
+
 
 def test_relationship_tracker_init():
     """测试关系追踪器初始化"""

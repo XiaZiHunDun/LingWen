@@ -23,12 +23,12 @@ from dashboard.helpers.cvg import (
 from dashboard.helpers.decision import _decision_to_response
 from dashboard.helpers.misc import _maybe_mount_dashboard_ui
 from dashboard.helpers.production_records import production_records_root
-from dashboard.helpers.reading_power_db import ReadingPowerDB
 from dashboard.helpers.time_window import _parse_time_window
 from dashboard.helpers.workflow import (
     _list_workflow_yamls,
     _workflow_result_to_response,
 )
+from infra.reading_power.db import ReadingPowerDB
 
 __all__ = [
     "_parse_time_window",

@@ -1,7 +1,8 @@
 """Tests for CoolPointTracker."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from infra.reading_power.coolpoint_tracker import CoolPointTracker
 

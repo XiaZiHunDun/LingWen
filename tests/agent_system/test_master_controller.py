@@ -1,10 +1,11 @@
 # tests/agent_system/test_master_controller.py
-import pytest
-from unittest.mock import Mock, patch
 import os
 import sys
+from unittest.mock import Mock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../novel-factory'))
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 def test_master_controller_init():
     """测试主控调度器初始化"""

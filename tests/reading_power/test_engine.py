@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from infra.reading_power.engine import ReadingPowerEngine
+
 
 def test_analyze_chapter_with_rule_matcher():
     mock_db = MagicMock()

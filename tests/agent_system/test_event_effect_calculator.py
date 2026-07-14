@@ -1,12 +1,14 @@
 # tests/agent_system/test_event_effect_calculator.py
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../novel-factory'))
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from agent_system.social_engine.event_effect_calculator import EventEffectCalculator
+
 
 def test_event_effect_calculator_init():
     """测试事件效果计算器初始化"""
