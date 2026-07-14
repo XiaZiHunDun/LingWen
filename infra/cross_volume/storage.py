@@ -18,6 +18,7 @@ from typing import Iterator
 
 from infra.cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
+from infra.persistence.sqlite_config import apply_sqlite_pragmas
 
 logger = logging.getLogger(__name__)
 
@@ -186,9 +187,7 @@ class RippleStorage:
         if str(db_path) != ":memory:":
             db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
-            conn.execute("PRAGMA synchronous=FULL")
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA foreign_keys=ON")
+            apply_sqlite_pragmas(conn)
             conn.executescript(_SCHEMA_SQL)
             self._apply_schema_migrations(conn)
             conn.commit()
@@ -212,12 +211,7 @@ class RippleStorage:
     def _connect(self) -> Iterator[sqlite3.Connection]:
         conn = sqlite3.connect(str(self._db_path))
         conn.row_factory = sqlite3.Row
-        # PRAGMA foreign_keys=ON is per-connection (not per-database),
-        # so it MUST be set on every new connection for FK enforcement.
-        # synchronous=FULL + journal_mode=WAL are per-database (persistent in
-        # the DB file), so they only need to be set once at init.
-        conn.execute("PRAGMA foreign_keys=ON")
-        conn.execute("PRAGMA busy_timeout=5000")
+        apply_sqlite_pragmas(conn)
         try:
             yield conn
         finally:
