@@ -351,7 +351,7 @@ function onNavClick(itemId) {
 .sidebar {
   width: var(--sidebar-width);
   flex-shrink: 0;
-  background-color: var(--bg-elevated);
+  background: var(--bg-secondary);
   border-right: var(--border-width) solid var(--border-color);
   padding: var(--space-md) var(--space-sm);
   display: flex;
@@ -502,7 +502,7 @@ function onNavClick(itemId) {
 }
 
 .nav-item--active {
-  background-color: var(--color-accent-soft);
+  background: var(--color-accent-soft);
   color: var(--color-accent);
   font-weight: 600;
 }
@@ -515,7 +515,8 @@ function onNavClick(itemId) {
   bottom: 8px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--color-accent);
+  background: var(--gradient-accent);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
 }
 
 .nav-icon {
