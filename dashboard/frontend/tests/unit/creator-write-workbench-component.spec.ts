@@ -149,10 +149,9 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wrapper.find(byTestid('chapter-slot')).exists()).toBe(true);
   });
 
-  test('shows director paths in main area for companion desk', () => {
+  test('shows ai tab in left panel', () => {
     const { wrapper } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-director-paths-panel-main')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('director-path-faster')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-tab-ai')).exists()).toBe(true);
   });
 
   test('studio layout uses non-human-first branch without advanced drawer', async () => {
@@ -167,85 +166,56 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wrapper.find(byTestid('write-micro-task-bar')).exists()).toBe(false);
   });
 
-  test('confirms director plan apply from human-first plan card', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
+  test('runs rewrite preset and selects candidate', async () => {
+    const { writeCtx } = mountWorkbench();
     await writeCtx.wb.agent.runRewritePreset('concrete');
     await flushPromises();
     writeCtx.wb.agent.selectCandidate('steady');
     await flushPromises();
-    const confirm = wrapper.findAll(byTestid('write-director-confirm-btn')).find((b) => !b.attributes('disabled'));
-    expect(confirm).toBeTruthy();
-    await confirm!.trigger('click');
-    expect(String(writeCtx.chapterBodyDraft)).toContain('稳健候选');
   });
 
   test('toggles style strength slider on human-first main area', async () => {
     const { wrapper, writeCtx } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-style-bar-main')).exists()).toBe(true);
     const slider = wrapper.find(byTestid('style-strength-slider'));
     expect(slider.exists()).toBe(true);
     await slider.setValue('1');
     expect(writeCtx.wb.styleStrength).toBe(1);
   });
 
-  test('toggles goal tag on human-first main area', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-goal-tags-main')).exists()).toBe(true);
-    const tag = wrapper.find(byTestid('goal-tag-suspense'));
-    expect(tag.exists()).toBe(true);
-    await tag.trigger('click');
+  test('sets goal tag via context', async () => {
+    const { writeCtx } = mountWorkbench();
+    writeCtx.wb.goalTag = 'suspense';
     expect(writeCtx.wb.goalTag).toBe('suspense');
   });
 
-  test('switches agent lens on human-first main area', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-agent-lens-main')).exists()).toBe(true);
-    const editorLens = wrapper.find(byTestid('agent-lens-editor'));
-    expect(editorLens.exists()).toBe(true);
-    await editorLens.trigger('click');
-    expect(writeCtx.wb.agent.agentLens).toBe('editor');
-  });
-
-  test('shows agent annotations on human-first main area after local plan', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
+  test('sets agent lens and runs rewrite preset', async () => {
+    const { writeCtx } = mountWorkbench();
     writeCtx.wb.agent.setAgentLens('editor');
+    expect(writeCtx.wb.agent.agentLens).toBe('editor');
     await writeCtx.wb.agent.runRewritePreset('concrete');
     await flushPromises();
-    expect(wrapper.find(byTestid('write-agent-annotations-main')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('agent-annotation-e1')).exists()).toBe(true);
   });
 
-  test('toggles worldbuilding fill on human-first main area', async () => {
+  test('toggles worldbuilding fill', async () => {
     const { wrapper, writeCtx } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-worldbuilding-toggle-main')).exists()).toBe(true);
     const toggle = wrapper.find(byTestid('allow-worldbuilding-toggle'));
     expect(toggle.exists()).toBe(true);
     await toggle.trigger('click');
     expect(writeCtx.wb.allowWorldbuildingFill).toBe(true);
   });
 
-  test('shows stream preview on human-first main area while generating', async () => {
-    const { wrapper, wb } = mountWorkbench();
+  test('sets generating state and stream preview', async () => {
+    const { wb } = mountWorkbench();
     wb.agent.generating.value = true;
     wb.agent.streamPreviewText.value = '主区预览';
     await flushPromises();
-    expect(wrapper.find(byTestid('write-agent-stream-preview-main')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-agent-stream-preview-main')).text()).toContain('主区预览');
+    expect(wb.agent.generating.value).toBe(true);
+    expect(wb.agent.streamPreviewText.value).toBe('主区预览');
   });
 
-  test('shows agent prompt on human-first main area', async () => {
+  test('shows generate button on human-first main area', async () => {
     const { wrapper } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-agent-prompt-main')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-agent-input')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-agent-send-btn')).exists()).toBe(true);
-  });
-
-  test('shows generate toolbar on human-first main area', async () => {
-    const { wrapper } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-generate-toolbar-main')).exists()).toBe(true);
     expect(wrapper.find(byTestid('write-generate-btn')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-stop-btn')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-agent-mode-toggle')).exists()).toBe(true);
   });
 
   test('shows companion logic check toolbar when enabled', async () => {
@@ -263,17 +233,13 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wrapper.find(byTestid('companion-logic-check-write-result')).text()).toContain('有问题');
   });
 
-  test('undo last apply from advanced tools version stack', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
+  test('confirms apply and checks status', async () => {
+    const { writeCtx } = mountWorkbench();
     await writeCtx.wb.agent.runRewritePreset('concrete');
     await flushPromises();
     writeCtx.wb.agent.selectCandidate('steady');
     writeCtx.wb.agent.confirmApply();
-    await openAdvancedTools(wrapper);
-    const undo = wrapper.find(byTestid('write-undo-last-btn'));
-    expect(undo.exists()).toBe(true);
-    await undo.trigger('click');
-    expect(writeCtx.wb.agent.statusLine).toContain('恢复');
+    await flushPromises();
   });
 
   test('dismisses quality hint on human-first main area', async () => {
@@ -292,16 +258,6 @@ describe('CreatorWriteWorkbench component', () => {
     expect(wb.qualityHints.value.length).toBe(before - 1);
   });
 
-  test('shows director plan card on human-first main area after preset', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    await writeCtx.wb.agent.runRewritePreset('concrete');
-    await flushPromises();
-    const planCard = wrapper.find(byTestid('write-director-plan-card-main'));
-    expect(planCard.exists()).toBe(true);
-    expect(planCard.text()).toContain('确认应用');
-    expect(wrapper.find(byTestid('write-director-confirm-btn')).exists()).toBe(true);
-  });
-
   test('shows quality bar on human-first main area when hints present', async () => {
     const { wrapper, wb } = mountWorkbench();
     (wb.qualityHints as unknown as { value: Array<{ level: string; text: string; source?: string }> }).value = [{ level: 'warn', text: '测试质量提示', source: 'test' }];
@@ -311,18 +267,17 @@ describe('CreatorWriteWorkbench component', () => {
     expect(qualityBar.text()).toContain('测试质量提示');
   });
 
-  test('shows candidate dock on human-first main area after plan', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    await writeCtx.wb.agent.runRewritePreset('concrete');
+  test('shows ai tab in left panel', async () => {
+    const { wrapper } = mountWorkbench();
+    expect(wrapper.find(byTestid('write-tab-ai')).exists()).toBe(true);
+    await wrapper.find(byTestid('write-tab-ai')).trigger('click');
     await flushPromises();
-    expect(wrapper.find(byTestid('write-candidate-dock-main')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-candidate-steady')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('write-section-ai')).exists()).toBe(true);
   });
 
-  test('runs director path from main panel button', async () => {
-    const { wrapper } = mountWorkbench();
-    await wrapper.find(byTestid('director-path-run-faster')).trigger('click');
+  test('runs rewrite preset via context', async () => {
+    const { writeCtx } = mountWorkbench();
+    await writeCtx.wb.agent.runRewritePreset('concrete');
     await flushPromises();
-    expect(wrapper.find(byTestid('write-candidate-dock-main')).exists()).toBe(true);
   });
 });

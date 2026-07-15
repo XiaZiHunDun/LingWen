@@ -193,7 +193,7 @@ describe('Creator workspace tabs (Phase C)', () => {
     expect(wrapper.find(byTestid('column-pulse')).isVisible()).toBe(false)
     expect(wrapper.find(byTestid('creator-write-workbench')).exists()).toBe(true)
     expect(wrapper.find(byTestid('write-chapter-rail')).exists()).toBe(true)
-    expect(wrapper.find(byTestid('write-advanced-tools')).exists()).toBe(true)
+    expect(wrapper.find(byTestid('write-section-ai')).exists()).toBe(true)
     expect(wrapper.find(byTestid('creation-mode-badge')).exists()).toBe(false)
     expect(wrapper.find(byTestid('creator-workspace-secondary-tabs')).exists()).toBe(true)
     expect(wrapper.find(byTestid('export-btn')).exists()).toBe(true)

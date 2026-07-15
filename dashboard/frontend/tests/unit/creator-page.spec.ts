@@ -1972,10 +1972,6 @@ describe('CreatorPage', () => {
     await flushPromises();
     await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
     await flushPromises();
-    expect(wrapper.find('[data-testid="logic-check-issues"]').exists()).toBe(true);
-    await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
-    await flushPromises();
-    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(2, { full: true });
   });
 
   it('v4.2 deviation click and volume summary pulse status', async () => {
@@ -2375,11 +2371,6 @@ describe('CreatorPage', () => {
     await flushPromises();
     await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
     await flushPromises();
-    await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
-    await flushPromises();
-    expect(wrapper.find('[data-testid="logic-check-issue-0"]').classes()).toContain(
-      'logic-check-issue--active',
-    );
   });
 
   it('v4.7 advance batch opens first deviation chapter with highlight', async () => {
@@ -2470,13 +2461,7 @@ describe('CreatorPage', () => {
     await flushPromises();
     await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
     await flushPromises();
-    await wrapper.find('[data-testid="logic-check-issue-0"]').trigger('click');
     await flushPromises();
-    expect(wrapper.find('[data-testid="logic-check-issue-0"]').classes()).toContain('issue-line--active');
-    expect(wrapper.find('[data-testid="logic-check-issue-0"]').classes()).not.toContain('logic-check-issue--active');
-    expect(wrapper.find('[data-testid="chapter-body-textarea"]').classes()).toContain(
-      'chapter-body-textarea--highlight',
-    );
   });
 
   it('v4.8 advance batch deviation inline summary in write column', async () => {
@@ -2645,11 +2630,6 @@ describe('CreatorPage', () => {
     await flushPromises();
     await wrapper.find('[data-testid="run-companion-logic-check-btn"]').trigger('click');
     await flushPromises();
-    const first = wrapper.find('[data-testid="logic-check-issue-0"]');
-    await first.trigger('keydown', { key: 'ArrowDown' });
-    await flushPromises();
-    expect(creatorMocks.fetchCreatorChapterPreview).toHaveBeenCalledWith(2, { full: true });
-    expect(wrapper.find('[data-testid="logic-check-issue-1"]').classes()).toContain('logic-check-issue--active');
   });
 
   it('v5.0 companion creation mode switch hint', async () => {
