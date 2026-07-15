@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 defaults:
-  run:
+  run: {}
 jobs:
   llm-paths:
     name: Detect LLM-relevant changes
