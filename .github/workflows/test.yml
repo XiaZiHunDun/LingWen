@@ -133,7 +133,7 @@ jobs:
       matrix:
         slug: [anye-xinbiao, huiyu-dangan, xingyun-jiyuan, jinghai-rizhi, xuexian-dangan, huangsha-dangan, anhe-dangan, tiedao-dangan]
     defaults:
-      run:
+      run: {}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -152,7 +152,7 @@ jobs:
     name: onboarding smoke (init → preflight → dry-run)
     runs-on: ubuntu-latest
     defaults:
-      run:
+      run: {}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -199,7 +199,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.run_llm_golden_set == true) ||
       (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'llm-check'))
     defaults:
-      run:
+      run: {}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -244,7 +244,7 @@ jobs:
       matrix:
         slug: [jinghai-rizhi, huiyu-dangan, tiedao-dangan, anye-xinbiao, xuexian-dangan, huangsha-dangan, anhe-dangan]
     defaults:
-      run:
+      run: {}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
