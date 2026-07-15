@@ -1,0 +1,117 @@
+# 角色一致性修复规则
+# 版本: 1.0
+# 描述: 基于角色设定的行为/对话一致性修复
+
+version: "1.0"
+description: "角色一致性修复规则 - 基于角色设定档案"
+
+rules:
+  # 冷静角色相关规则
+  - type: "character_behavior"
+    source: "疯狂"
+    target: "保持冷静"
+    character_trait: "冷静"
+    description: "冷静角色不应出现疯狂行为"
+
+  - type: "character_behavior"
+    source: "暴怒"
+    target: "压抑怒火"
+    character_trait: "冷静"
+    description: "冷静角色不应暴怒"
+
+  - type: "character_behavior"
+    source: "失控"
+    target: "控制情绪"
+    character_trait: "冷静"
+    description: "冷静角色不应失控"
+
+  # 热血角色相关规则
+  - type: "character_behavior"
+    source: "冷漠"
+    target: "热血回应"
+    character_trait: "热血"
+    description: "热血角色不应冷漠"
+
+  - type: "character_behavior"
+    source: "退缩"
+    target: "勇往直前"
+    character_trait: "热血"
+    description: "热血角色不应退缩"
+
+  - type: "character_behavior"
+    source: "放弃"
+    target: "坚持到底"
+    character_trait: "热血"
+    description: "热血角色不应放弃"
+
+  # 正直角色相关规则
+  - type: "character_behavior"
+    source: "欺骗"
+    target: "坦诚相告"
+    character_trait: "正直"
+    description: "正直角色不应欺骗"
+
+  - type: "character_behavior"
+    source: "背叛"
+    target: "坚守信任"
+    character_trait: "正直"
+    description: "正直角色不应背叛"
+
+  # 谨慎角色相关规则
+  - type: "character_behavior"
+    source: "鲁莽"
+    target: "深思熟虑"
+    character_trait: "谨慎"
+    description: "谨慎角色不应鲁莽"
+
+  - type: "character_behavior"
+    source: "冲动"
+    target: "冷静分析"
+    character_trait: "谨慎"
+    description: "谨慎角色不应冲动"
+
+  # 乐观角色相关规则
+  - type: "character_behavior"
+    source: "绝望"
+    target: "保持希望"
+    character_trait: "乐观"
+    description: "乐观角色不应绝望"
+
+  - type: "character_behavior"
+    source: "悲观"
+    target: "积极面对"
+    character_trait: "乐观"
+    description: "乐观角色不应悲观"
+
+  # 坚强角色相关规则
+  - type: "character_behavior"
+    source: "崩溃"
+    target: "坚强面对"
+    character_trait: "坚强"
+    description: "坚强角色不应崩溃"
+
+  - type: "character_behavior"
+    source: "脆弱"
+    target: "坚韧不屈"
+    character_trait: "坚强"
+    description: "坚强角色不应脆弱"
+
+  # 狡猾角色相关规则
+  - type: "character_behavior"
+    source: "轻信"
+    target: "保持警惕"
+    character_trait: "狡猾"
+    description: "狡猾角色不应轻信"
+
+  # 温柔角色相关规则
+  - type: "character_behavior"
+    source: "粗暴"
+    target: "温和对待"
+    character_trait: "温柔"
+    description: "温柔角色不应粗暴"
+
+  - type: "character_behavior"
+    source: "残忍"
+    target: "心存善念"
+    character_trait: "温柔"
+    description: "温柔角色不应残忍"

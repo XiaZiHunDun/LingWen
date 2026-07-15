@@ -1,0 +1,105 @@
+%% 灵文 · 5 Agent + GoT Router 编排细节图 · landscape 版（PPT 第 2 页用）
+%% 用法: 粘贴到 mermaid.live 渲染 → 截图 → 插入 PPT
+%% 配套文字说明见 project/04-deep-dives.md §4.1 + whiteboard/agent-flow.txt
+
+graph LR
+    subgraph IN["<b>用户输入</b>"]
+        direction TB
+        U1["题材 · 类型"]
+        U2["角色名 · 数量"]
+        U3["章数"]
+    end
+
+    subgraph MC["<b>MasterController · 3 铁律守门</b>"]
+        direction TB
+        R1["<b>铁律 1</b><br/>max_iterations<br/><i>防 Agent 死循环</i>"]
+        R2["<b>铁律 2</b><br/>cost cap 单章 $X<br/><i>超预算降级 cheap</i>"]
+        R3["<b>铁律 3</b><br/>checkpoint 落库<br/><i>崩溃可恢复</i>"]
+    end
+
+    subgraph ROUTER["<b>GoT Router · 12 SCENARIOS 解耦</b><br/><i>预定义图 · 不用 ReAct 推理循环</i>"]
+        direction LR
+        subgraph W["<b>write 类 · 4</b>"]
+            direction TB
+            S1["chapter_writing"]
+            S2["chapter_outline"]
+            S3["character_design"]
+            S4["world_snapshot_update"]
+        end
+        subgraph A["<b>audit 类 · 4</b>"]
+            direction TB
+            S5["consistency_check"]
+            S6["continuity_review"]
+            S7["cross_vol_ripple"]
+            S8["faceless_review"]
+        end
+        subgraph P["<b>polish 类 · 4</b>"]
+            direction TB
+            S9["polish_pass"]
+            S10["rewrite_suggestion"]
+            S11["volume_summary"]
+            S12["publish_check"]
+        end
+    end
+
+    subgraph AGENTS["<b>5 核心 Agent · 职责分离</b><br/><i>独立可测 · 独立替换 · 独立观测</i>"]
+        direction LR
+        OM["<b>outline_master</b><br/>卷-章-节 3 级<br/>卷主题 · 章钩子"]
+        CD["<b>character_designer</b><br/>6 维角色卡<br/>性格·语气·能力·<br/>知识·禁忌·反差"]
+        CW["<b>content_writer</b><br/>作家 A-J ×10<br/>switch_role 切风格"]
+        AU["<b>auditor</b><br/>审核员 A-J ×10<br/>S1-S11 评分"]
+        PO["<b>polisher</b><br/>读者 A-T ×20<br/>多版本投票"]
+    end
+
+    subgraph CAPS["<b>能力层 · 横切共用</b>"]
+        direction LR
+        QC["<b>11 维质量门</b><br/>S1-S8 规则<br/>+ S9-S11 LLM"]
+        MEM["<b>Qdrant RAG</b><br/>记忆检索<br/>NoOp 降级"]
+        WS["<b>WorldSnapshot</b><br/>矛盾检测<br/>0.03ms/scan"]
+        CVG["<b>CVG 跨卷</b><br/>cascade 传播"]
+    end
+
+    subgraph OUT["<b>输出层</b>"]
+        direction LR
+        CH["合格章节正文"]
+        RP["评分报告"]
+        BILL["成本账单"]
+    end
+
+    IN --> MC
+    MC --> ROUTER
+    ROUTER -->|W 写| CW
+    ROUTER -->|A 审| AU
+    ROUTER -->|P 润| PO
+    ROUTER -->|W| OM
+    ROUTER -->|W| CD
+
+    CW -.调用.-> QC
+    AU -.调用.-> CVG
+    PO -.调用.-> CVG
+    QC -.调用.-> MEM
+    QC -.调用.-> WS
+
+    AGENTS --> CAPS
+    CAPS --> OUT
+
+    classDef input fill:#7F8C8D,color:#fff,stroke:#34495E,stroke-width:2px
+    classDef primary fill:#4A90E2,color:#fff,stroke:#2E5C8A,stroke-width:2px
+    classDef router fill:#9B59B6,color:#fff,stroke:#5B2C6F,stroke-width:2px
+    classDef agent fill:#F5A623,color:#fff,stroke:#B07516,stroke-width:2px
+    classDef quality fill:#E94B6A,color:#fff,stroke:#A52A2A,stroke-width:2px
+    classDef output fill:#50C878,color:#fff,stroke:#2D7A4D,stroke-width:2px
+
+    class U1,U2,U3 input
+    class MC,R1,R2,R3 primary
+    class ROUTER,W,A,P,S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11,S12 router
+    class OM,CD,CW,AU,PO agent
+    class QC,MEM,WS,CVG quality
+    class CH,RP,BILL output
+
+    %% 关键设计标注（PPT 讲到这里时口头解释）
+    %% [1] 5 Agent 独立可替换 · 职责分离 > 数量堆叠
+    %% [2] 12 SCENARIOS 分 3 类: write / audit / polish · 每类独立 handler
+    %% [3] MasterController 3 铁律 = 状态机 + cost cap + checkpoint
+    %% [4] switch_role 同 Agent 不同角色卡 · 上下文不爆炸
+    %% [5] 能力层横切 · 多 Agent 共用 · 不复制实现

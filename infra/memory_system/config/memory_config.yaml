@@ -1,0 +1,24 @@
+qdrant:
+  host: "localhost"
+  port: 6333
+  grpc_port: 6334
+  check_compatibility: false
+
+embedding:
+  provider: auto
+  model: "text-embedding-3-small"
+  dimension: 1536
+  openai:
+    model: "text-embedding-3-small"
+  minimax:
+    model: "embo-01"
+    base_url: "https://api.minimaxi.com"
+
+storage:
+  state_file: "state/state_tracker.json"
+  plot_threads_file: "state/plot_threads.yaml"
+  timeline_file: "state/timeline.json"
+
+retrieval:
+  default_top_k: 5
+  hybrid_alpha: 0.7  # 向量权重

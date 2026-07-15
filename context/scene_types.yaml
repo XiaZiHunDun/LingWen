@@ -1,0 +1,47 @@
+# 场景类型注册表 - 用于检测器上下文增强
+# 检测器使用 context["scene_type"] 或 scene_types.yaml 判断场景类型
+# 特殊场景（宇宙/游戏/梦境）应跳过某些时间线检测
+
+scene_registry:
+  # 卷1: 现实世界/成长篇 (ch001-ch120)
+  ch001: { type: "real_world", time_flow: "normal", description: "林家村童年" }
+  ch010: { type: "real_world", time_flow: "normal", description: "青云宗入门" }
+  ch050: { type: "real_world", time_flow: "normal", description: "宗门修炼" }
+  ch100: { type: "real_world", time_flow: "normal", description: "宗门大比" }
+
+  # 卷2: 星际探索篇 (ch121-ch240)
+  ch121: { type: "cosmic", time_flow: "distorted", description: "星际战场" }
+  ch150: { type: "cosmic", time_flow: "distorted", description: "虚空探索" }
+  ch180: { type: "cosmic", time_flow: "distorted", description: "星陨纪元核心" }
+
+  # 卷3: 终极挑战篇 (ch241-ch360)
+  ch241: { type: "mixed", time_flow: "normal", description: "回归现实" }
+  ch300: { type: "cosmic", time_flow: "distorted", description: "最终决战" }
+  ch350: { type: "real_world", time_flow: "normal", description: "和平结局" }
+
+# 场景类型说明
+scene_types:
+  real_world:
+    time_flow: "normal"  # 时间正常流逝
+    skip_timeline_check: false
+    description: "现实世界/正常时间流场景"
+
+  cosmic:
+    time_flow: "distorted"  # 时间可能扭曲
+    skip_timeline_check: true  # 跳过时间线合理性检测
+    description: "宇宙级场景/星际战场"
+
+  game_world:
+    time_flow: "virtual"  # 虚拟时间
+    skip_timeline_check: true
+    description: "虚拟游戏世界/意识空间"
+
+  dream:
+    time_flow: "distorted"
+    skip_timeline_check: true
+    description: "梦境/潜意识场景"
+
+  mixed:
+    time_flow: "normal"
+    skip_timeline_check: false
+    description: "混合场景"

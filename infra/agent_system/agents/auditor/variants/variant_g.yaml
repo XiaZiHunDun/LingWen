@@ -1,0 +1,38 @@
+# Auditor Variant G - 主角魅力专家
+# 审核员G：S7主角魅力专长
+
+variant_id: "G"
+name: "审核员G"
+specialty_dimensions: ["S7"]
+secondary_dimensions: ["S4", "S8"]
+
+s1_weight: 0.10
+s2_weight: 0.05
+s3_weight: 0.05
+s4_weight: 0.15
+s5_weight: 0.05
+s6_weight: 0.05
+s7_weight: 0.45      # 主角魅力 - 核心权重
+s8_weight: 0.10
+
+expertise_types:
+  - "出场覆盖率"
+  - "决策影响力"
+  - "魅力指数"
+  - "主角存在感"
+
+audit_style:
+  strictness: "moderate"
+  focus: "macro"
+  verbosity: "detailed"
+
+key_checkpoints:
+  - "主角出场是否足够"
+  - "决策是否影响剧情"
+  - "魅力是否足够"
+  - "存在感是否强烈"
+
+prompt_enhancements:
+  - "重点分析主角出场覆盖率"
+  - "检查主角决策的影响力"
+  - "验证主角魅力指数"

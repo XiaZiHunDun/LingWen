@@ -1,0 +1,214 @@
+# 模板元数据 Schema
+# 定义提示词模板的标准化元数据结构
+
+schema_version: "v1.0"
+
+TemplateMetadata:
+  id:
+    type: string
+    description: "模板唯一标识符，格式：{category}_{name}_v{version}"
+    pattern: "^[a-z_]+_[a-z_]+_v\\d+\\.\\d+\\.\\d+$"
+    example: "continuation_standard_v1.0.0"
+
+  name:
+    type: string
+    description: "模板显示名称"
+    max_length: 50
+
+  category:
+    type: enum
+    description: "模板分类"
+    allowed_values:
+      - outline        # 大纲生成
+      - continuation   # 正文续写
+      - description    # 描写增强
+      - review         # 审核辅助
+      - polish         # 润色修改
+
+  version:
+    type: string
+    description: "语义化版本号"
+    pattern: "^v\\d+\\.\\d+\\.\\d+$"
+    example: "v1.0.0"
+
+  status:
+    type: enum
+    description: "模板状态"
+    allowed_values:
+      - draft      # 草稿，尚未完善
+      - active     # 当前活跃版本
+      - deprecated # 已废弃（6个月过渡期）
+
+  description:
+    type: string
+    description: "模板功能描述"
+    max_length: 200
+
+  # CARE 四要素定义
+  care_elements:
+    type: object
+    required: [context, action, result]
+    properties:
+      context:
+        type: object
+        description: "C - Context 背景要素"
+        properties:
+          required_fields:
+            type: array
+            items: { type: string }
+            description: "必须提供的上下文字段"
+            example: ["world_setting", "character_status", "scene_location"]
+          optional_fields:
+            type: array
+            items: { type: string }
+            description: "可选的上下文字段"
+            example: ["previous_summary", "foreshadowing"]
+
+      action:
+        type: object
+        description: "A - Action 行动要素"
+        properties:
+          output_type:
+            type: enum
+            description: "输出类型"
+            allowed_values:
+              - outline          # 大纲
+              - prose           # 正文
+              - enhanced_prose  # 增强正文
+              - dialogue        # 对话
+              - analysis        # 分析报告
+          constraints:
+            type: object
+            properties:
+              min_words: { type: integer }
+              max_words: { type: integer }
+              format: { type: enum, allowed_values: ["markdown", "yaml", "json", "plain"] }
+          must_advance:
+            type: array
+            items: { type: string }
+            description: "必须推进的元素"
+          must_maintain:
+            type: array
+            items: { type: string }
+            description: "必须保持的元素"
+          prohibited:
+            type: array
+            items: { type: string }
+            description: "禁止出现的元素"
+
+      result:
+        type: object
+        description: "R - Result 结果要素"
+        properties:
+          quality_metrics:
+            type: object
+            description: "质量指标要求 (S1-S8)"
+            properties:
+              S1: { type: integer, minimum: 1, maximum: 5, description: "剧情完整性" }
+              S2: { type: integer, minimum: 1, maximum: 5, description: "逻辑自洽" }
+              S3: { type: integer, minimum: 1, maximum: 5, description: "文笔风格" }
+              S4: { type: integer, minimum: 1, maximum: 5, description: "情感共鸣" }
+              S5: { type: integer, minimum: 1, maximum: 5, description: "节奏控制" }
+              S6: { type: integer, minimum: 1, maximum: 5, description: "可读性" }
+              S7: { type: integer, minimum: 1, maximum: 5, description: "主角魅力" }
+              S8: { type: integer, minimum: 1, maximum: 5, description: "人物弧光" }
+          word_count:
+            type: object
+            properties:
+              min: { type: integer }
+              target: { type: integer }
+              max: { type: integer }
+          checklist:
+            type: array
+            items: { type: string }
+            description: "输出检查清单"
+
+      example:
+        type: object
+        description: "E - Example 示例要素"
+        properties:
+          example_type:
+            type: enum
+            allowed_values: ["annotated", "raw", "contrast"]
+            description: "示例类型：注解型/原始型/对比型"
+          location:
+            type: string
+            description: "示例位置或内容"
+          style_references:
+            type: array
+            items: { type: string }
+            description: "风格参考"
+
+  # 温度参数
+  temperature:
+    type: object
+    description: "推荐温度参数"
+    properties:
+      recommended:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+      range:
+        type: array
+        items: { type: number }
+        minItems: 2
+        maxItems: 2
+        description: "温度有效范围 [min, max]"
+      top_p:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        default: 0.9
+      max_tokens:
+        type: integer
+        description: "最大输出 token 数"
+
+  # 使用统计
+  usage_stats:
+    type: object
+    properties:
+      use_count:
+        type: integer
+        default: 0
+      success_rate:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        default: 0.0
+      avg_score:
+        type: number
+        minimum: 0.0
+        maximum: 5.0
+        default: 0.0
+      last_used:
+        type: string
+        format: date-time
+        nullable: true
+
+  # 依赖关系
+  dependencies:
+    type: object
+    description: "模板依赖关系"
+    properties:
+      requires_templates:
+        type: array
+        items: { type: string }
+        description: "依赖的模板ID列表"
+      requires_config:
+        type: array
+        items: { type: string }
+        description: "依赖的配置文件"
+      provides_context:
+        type: array
+        items: { type: string }
+        description: "提供的上下文字段"
+
+  # 变更历史
+  changelog:
+    type: array
+    items:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        version: { type: string }
+        changes: { type: array, items: { type: string } }

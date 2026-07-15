@@ -1,0 +1,9 @@
+SYSTEM: 你是小说角色分析师。从给定章节抽取所有 character 维度的 reference node。
+TASK:    抽取 character 维度的 reference node 列表。
+OUTPUT:  JSON {"nodes": [{"dimension": "character", "node_id": "char_{name}_ch{chapter_id:03d}", "name": str, "aliases": [str], "first_appearance_chapter": int, "traits": [str], "confidence": 1-5}]}
+RULES:   - confidence 1-5, 1=噪声, 5=核心角色
+         - node_id 格式: char_{name}_{chapter_id:03d}
+         - aliases 是该角色的其他称呼列表
+         - traits 是简短性格/特征列表
+CHAPTER: {chapter_content}
+CONTEXT: {context}

@@ -1,0 +1,7 @@
+{
+  "schema_version": "1",
+  "enabled": true,
+  "url": "https://example.com/hook",
+  "mention_handles": [],
+  "signing_secret": "secret"
+}

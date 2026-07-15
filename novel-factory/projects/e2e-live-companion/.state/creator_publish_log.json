@@ -1,0 +1,19 @@
+{
+  "schema_version": "1",
+  "entries": [
+    {
+      "id": "fed50cfb3fcc",
+      "platform": "fanqie",
+      "include_outline": true,
+      "intro": "E2E 投稿简介",
+      "mode": "submission",
+      "status": "adapter_stub",
+      "message": "「番茄小说」适配器为占位实现：已校验投稿包（submission，含大纲节选）。接入 OAuth 后将自动上传至平台。",
+      "adapter_id": "fanqie",
+      "connection": "stub",
+      "external_url": null,
+      "package_hint": "projects/e2e-live-companion/export/submission",
+      "created_at": "2026-07-10T15:11:16+00:00"
+    }
+  ]
+}

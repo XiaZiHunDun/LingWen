@@ -1,0 +1,220 @@
+{
+  "schema_version": "1",
+  "templates": [
+    {
+      "id": "factory_v2-b74eba",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-61fcf2"
+    },
+    {
+      "id": "factory_v2-9b335a",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-a23203"
+    },
+    {
+      "id": "factory_v2-c891de",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-7fe26b"
+    },
+    {
+      "id": "factory_v2-ba7701",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-ad6e92"
+    },
+    {
+      "id": "factory_v2-dc16d7",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-dc952b"
+    },
+    {
+      "id": "factory_v2-bbae62",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-62f5d3"
+    },
+    {
+      "id": "factory_v2-d28201",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-543919"
+    },
+    {
+      "id": "factory_v2-5032a4",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "version_label": null,
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-df6fbc"
+    },
+    {
+      "id": "factory_v2-f072ae",
+      "name": "向导结构 v2",
+      "description": "保存自当前卷纲",
+      "source_max_chapter": 12,
+      "volumes": [
+        {
+          "label": "上",
+          "start_chapter": 1,
+          "end_chapter": 6,
+          "core_conflict": "a",
+          "locked": false
+        },
+        {
+          "label": "下",
+          "start_chapter": 7,
+          "end_chapter": 12,
+          "core_conflict": "b",
+          "locked": false
+        }
+      ],
+      "published_from": "custom_-060c54"
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+%% 灵文 · 章节状态机 + 3 铁律图（PPT 第 5 页用 · 进阶话题）
+%% 用法: 粘贴到 mermaid.live 渲染 → 截图 → 插入 PPT
+%% 配套文字说明见 project/02-architecture.md + project/04-deep-dives.md
+
+stateDiagram-v2
+    [*] --> INIT: 接收章节任务
+
+    INIT --> OUTLINE: GoT(S2 chapter_outline)
+    OUTLINE --> CHARACTER: GoT(S3 character_design)
+    CHARACTER --> WRITE: GoT(S1 chapter_writing)
+    WRITE --> AUDIT: GoT(S5 continuity_review + S6)
+    AUDIT --> POLISH: GoT(S7 polish_pass)
+    POLISH --> DONE: 评分通过
+
+    AUDIT --> WRITE: Layer1 硬错 · 返工 P0
+    AUDIT --> POLISH: Layer2 软伤 · 仅告警 P1
+    POLISH --> WRITE: 套话/AI味未达标
+    OUTLINE --> OUTLINE: 大纲冲突 · 重生成
+    CHARACTER --> CHARACTER: 6 维不全 · 重设计
+
+    WRITE --> WRITE: max_iterations 熔断<br/>铁律 1 · 防 Agent 死循环
+    WRITE --> POLISH: cost cap 触发<br/>铁律 2 · 降级 cheap tier
+
+    INIT --> DB1: checkpoint 落库<br/>铁律 3 · workflow.db
+    OUTLINE --> DB1: checkpoint
+    CHARACTER --> DB1: checkpoint
+    WRITE --> DB1: checkpoint +<br/>cost_tracker.db 记录
+    AUDIT --> DB1: checkpoint
+    POLISH --> DB1: checkpoint
+    DONE --> DB1: 终态
+    DONE --> DB2: ripple.db<br/>触发跨卷涟漪扫描
+
+    WRITE --> FB: LLM 服务挂<br/>Fallback 触发
+    FB --> POLISH: 仅跑 Layer1<br/>规则引擎继续
+    POLISH --> DONE
+
+    DONE --> [*]: 入库 + polisher 下游
+
+    note right of WRITE
+        <b>3 铁律守门</b>
+        ─────────────
+        <b>铁律 1</b> max_iterations
+        Agent 单章迭代上限 · 防死循环
+
+        <b>铁律 2</b> cost cap
+        单章 $X 熔断 · 超 → 降级 cheap
+
+        <b>铁律 3</b> checkpoint
+        每状态转换强制落库 · 崩溃可恢复
+    end note
+
+    note right of DB1
+        <b>workflow.db</b>
+        ─────────────
+        state_transitions 表
+        ─ scenario · 状态名
+        ─ timestamp · 耗时
+        ─ token_used · cost
+        ─ chapter_id
+
+        崩溃后重放 · 不丢章节
+    end note
+
+    note left of POLISH
+        <b>质量门层级</b>
+        ─────────────
+        Layer 1: S1-S8 规则 (<500ms)
+        Layer 2: S9-S11 LLM (~3s)
+        Fallback: LLM 挂切规则引擎
+    end note
+
+    classDef initState fill:#7F8C8D,color:#fff,stroke:#34495E
+    classDef happyPath fill:#3498DB,color:#fff,stroke:#1F618D
+    classDef rework fill:#E74C3C,color:#fff,stroke:#922B21
+    classDef ironRule fill:#F39C12,color:#fff,stroke:#9C640D
+    classDef fallback fill:#9B59B6,color:#fff,stroke:#5B2C6F
+    classDef done fill:#50C878,color:#fff,stroke:#2D7A4D
+
+    class INIT initState
+    class OUTLINE,CHARACTER,WRITE,AUDIT happyPath
+    class DB1,DB2 happyPath
+    class POLISH,DONE done
+    class FB fallback
+    %% rework + ironRule 配色通过 stateDiagram-v2 渲染自动生效
+
+    %% 关键设计标注（PPT 讲到这里时口头解释）
+    %% [1] 状态机显式建模 · 不靠 Agent 自己推理判断下一步
+    %% [2] 3 铁律 = 状态机的护栏 · 不是 Agent 的 features
+    %% [3] 返工 vs 告警分离 · P0 硬错退 Layer1 · P1 软伤不返工
+    %% [4] checkpoint 强制 · 崩溃后从最近 checkpoint 重放 · 不丢章节
+    %% [5] Fallback 触发后跳过 LLM 质量门 · 生产可用性 > 单章质量

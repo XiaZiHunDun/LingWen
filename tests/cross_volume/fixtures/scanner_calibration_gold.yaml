@@ -1,0 +1,14 @@
+# Gold labels for ripple-scan --calibrate (Phase 9.34 F19 fixture).
+# Keys match node_key(): "{dimension}:{title}" from LLM scanner output.
+
+chapters:
+  1:
+    gold_nodes:
+      - character:林轩
+      - character:林雨
+      - foreshadow:神秘玉佩
+      - setting:青云宗
+      - setting:林家堡
+      - setting:灵气复苏
+      - plot_point:林雨离家出走
+      - plot_point:林轩林雨初遇

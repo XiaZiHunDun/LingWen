@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "slug": "anhe-dangan",
+  "source": "llm",
+  "judged_at": "2026-06-22 07:49 UTC",
+  "golden_chapters": [
+    1,
+    5,
+    10
+  ],
+  "chapters": [
+    {
+      "chapter": 1,
+      "ratings": [
+        {
+          "dimension": "imagery",
+          "score": 5,
+          "evidence": "「松脂和湿泥的气味」「右舵角浅凹痕的木牌」「钟乳水水渍凝结在纸纤维里」等细节高度具体，触觉嗅觉视觉交错，洞穴夜境画面完整。",
+          "action": "keep"
+        },
+        {
+          "dimension": "hook",
+          "score": 4,
+          "evidence": "开篇「不是水」即设疑，观测本发现、对折宣绘图涂黑块、坐标偏移层层加码，末段「屏住呼吸，等着他」收束有力。",
+          "action": "keep"
+        },
+        {
+          "dimension": "agency",
+          "score": 4,
+          "evidence": "沈渡主动熄火、拧增益、取观测本、发动摩托离开，每一步皆由其判断驱动，「他自己也说不清」的反问保留其行动的心理真实。",
+          "action": "keep"
+        },
+        {
+          "dimension": "vitality",
+          "score": 2,
+          "evidence": "句式检测P1触发：长定语从句与「——」破折号插说占主导，单句式占比54%超阈值，节奏趋单调。",
+          "action": "rewrite"
+        },
+        {
+          "dimension": "dialogue",
+          "score": 4,
+          "evidence": "「看看水尺」「出什么事了？」贴合值守员与工程师身份，越剧+情感热线作背景声写得有层次，对话简短但功能性足。",
+          "action": "keep"
+        },
+        {
+          "dimension": "genre",
+          "score": 4,
+          "evidence": "暗河悬疑类型要素齐备：废弃支脉、封存观测本、被涂黑剖面图、规律波形呼应「呼吸」节律，类型氛围成型。",
+          "action": "keep"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "ratings": [
+        {
+          "dimension": "imagery",
+          "score": 5,
+          "evidence": "「舌根黏在上颚、连口水都咽不下去」「胶合剂被挤开细缝，水袋瘪下去大半，剩水全积在最底部，沉甸甸坠着」等细节极度具象，缺氧、渗水、铁锈味层层堆叠出井下窒息感",
+          "action": "keep"
+        },
+        {
+          "dimension": "hook",
+          "score": 4,
+          "evidence": "开篇渴醒、林湄回忆闪回、「这个坑道里，有东西」「上一个查的人已经出了事」、地震仪仍在工作并播放旧录音——多重悬念叠钩，结尾「得靠自己把录音和日志带出去」留扣",
+          "action": "keep"
+        },
+        {
+          "dimension": "agency",
+          "score": 4,
+          "evidence": "沈渡主动摸水袋、拨号、关自动锤、掐断录音、收数据卡、决定独自带录音和日志出坑——能动性贯穿，主导求生与抉择",
+          "action": "keep"
+        },
+        {
+          "dimension": "vitality",
+          "score": 2,
+          "evidence": "P1检测单一句式占比58%超40%，正文大量短句陈述连缀（时间—动作—状态），节奏平稳但句式变化不足，读感偏单调",
+          "action": "rewrite"
+        },
+        {
+          "dimension": "dialogue",
+          "score": 5,
+          "evidence": "「传什么。」「谁说的。」「你不需要理由。」短促交锋贴合井下压抑情绪与两人多年同事的疏离感，潜台词饱满",
+          "action": "keep"
+        },
+        {
+          "dimension": "genre",
+          "score": 4,
+          "evidence": "探险/生存类型要素齐全：脱水、坠落、塌方、断联、诡异录音、循环播放的旧声线、丰水日禁令——类型氛围完成度高",
+          "action": "keep"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "ratings": [
+        {
+          "dimension": "imagery",
+          "score": 5,
+          "evidence": "钟乳滴水敲铁盆的细响、GPS在掌心闪旧坐标、喀斯特地下风与含水层呼吸，视听触觉交织，样章级画面感。",
+          "action": "keep"
+        },
+        {
+          "dimension": "hook",
+          "score": 4,
+          "evidence": "开篇录音交付、井口GPS偏移告警、结尾坐标又挪两百米三处悬念钩子，密度高且层层递进。",
+          "action": "keep"
+        },
+        {
+          "dimension": "agency",
+          "score": 4,
+          "evidence": "沈渡主动移交工牌与测绘图、明确回应\"不进暗河\"、保留未删告警，决策链清晰且承担后果。",
+          "action": "keep"
+        },
+        {
+          "dimension": "vitality",
+          "score": 2,
+          "evidence": "短句单句式占比约56%（远超40%阈值），省流句与破折号长句穿插不足，节奏趋同略单调。",
+          "action": "rewrite"
+        },
+        {
+          "dimension": "dialogue",
+          "score": 5,
+          "evidence": "\"疼吗？\"\"他在井里把坐标留下来了\"\"不进\"——极简对白承载情感与情节转承，符合人物语态。",
+          "action": "keep"
+        },
+        {
+          "dimension": "genre",
+          "score": 5,
+          "evidence": "悬疑+地理测绘类型元素齐备：旧坐标、GPS偏移、暗河改道、禁入公告、频道3告警，类型完成度高。",
+          "action": "keep"
+        }
+      ]
+    }
+  ]
+}

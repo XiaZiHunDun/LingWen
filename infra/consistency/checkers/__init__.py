@@ -1,0 +1,35 @@
+# checkers package
+# 显式导入所有检查器模块，触发 BaseChecker.__init_subclass__ 自动注册到 CheckerRegistry
+# 新增检查器只需在此追加一行（无 _checker_type 跳过注册，但本包约定所有检查器都注册）
+from .ability_checker import AbilityChecker
+from .ai_gloss_checker import AIGlossChecker
+from .battle_visualization import BattleVisualizationChecker
+from .causal_chain_checker import CausalChainChecker
+from .chapter_redundancy_checker import ChapterRedundancyChecker
+from .character_agency import CharacterAgencyChecker
+from .character_checker import CharacterChecker
+from .character_state import CharacterStateChecker
+
+from .core_props_checker import CorePropsChecker
+from .cross_chapter_logic_checker import CrossChapterLogicChecker
+from .dialogue_action_checker import DialogueActionChecker
+from .dialogue_authenticity_checker import DialogueAuthenticityChecker
+from .foreshadow_checker import ForeshadowChecker
+from .foreshadow_quality import ForeshadowQualityChecker
+from .gender_consistency_checker import GenderConsistencyChecker
+from .item_checker import ItemChecker
+from .knowledge_tracker import KnowledgeTracker
+from .llm_causal_reasoning_checker import LLMCausalReasoningChecker
+from .narrative_perspective_checker import NarrativePerspectiveChecker
+from .outline_checker import OutlineChecker
+from .pacing_checker import PacingChecker
+from .personality_checker import PersonalityChecker
+from .relationship_state_checker import RelationshipStateChecker
+from .repair_trace_checker import RepairTraceChecker
+from .repetitive_phrase_checker import RepetitivePhraseChecker
+from .scene_pattern_repeat import ScenePatternRepeatChecker
+from .scene_transition_checker import SceneTransitionChecker
+from .sentence_diversity_checker import SentenceDiversityChecker
+from .spatial_transition_checker import SpatialTransitionChecker
+from .timeline_age import TimelineAgeConsistencyChecker
+from .timeline_checker import TimelineChecker

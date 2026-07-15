@@ -1,0 +1,108 @@
+# State Ownership Registry
+# Defines which agent "owns" each state field and who can modify it.
+
+version: "v1.0"
+created: "2026-05-19"
+
+# Top-level state fields and their ownership
+state_fields:
+  version:
+    owner: "main_controller"
+    read_access: ["any_agent"]
+    write_access: ["main_controller"]
+    validation: "semver"
+
+  current_phase:
+    owner: "main_controller"
+    read_access: ["any_agent"]
+    write_access: ["main_controller"]
+    validation: "enum:PHASE_*"
+
+  current_step:
+    owner: "main_controller"
+    read_access: ["any_agent"]
+    write_access: ["main_controller"]
+    validation: "enum:STEP_*"
+
+  project_status:
+    owner: "main_controller"
+    read_access: ["any_agent"]
+    write_access: ["main_controller"]
+    sub_fields:
+      name:
+        owner: "inspiration_dept"
+      total_chapters:
+        owner: "writer_dept"
+      emotion_quality:
+        owner: "reviewer_dept"
+
+  review_queue:
+    owner: "reviewer_dept"
+    read_access: ["writer_dept", "reader_dept", "main_controller"]
+    write_access: ["reviewer_dept", "main_controller"]
+
+  phases:
+    owner: "main_controller"
+    read_access: ["inspiration_dept", "writer_dept", "reviewer_dept"]
+    write_access: ["main_controller"]
+    sub_fields:
+      PHASE_1_LAUNCH:
+        owner: "inspiration_dept"
+      PHASE_2_OUTLINE:
+        owner: "writer_dept"
+      PHASE_3_VOLUME:
+        owner: "writer_dept"
+      PHASE_4_STAGE:
+        owner: "writer_dept"
+      PHASE_5_BODY:
+        owner: "writer_dept"
+      PHASE_6_SUMMARY:
+        owner: "summary_dept"
+      PHASE_7_CLOSE:
+        owner: "main_controller"
+
+  agent_tasks:
+    owner: "main_controller"
+    read_access: ["any_agent"]
+    write_access: ["main_controller", "dispatched_agent"]
+
+# Forbidden state transitions
+forbidden_transitions:
+  - from: "PHASE_5_BODY"
+    to: "PHASE_3_VOLUME"
+    reason: "Cannot regress to outline after body writing has started"
+
+  - from: "PHASE_7_CLOSE"
+    to: "PHASE_5_BODY"
+    reason: "Cannot reopen closed project"
+
+  - trigger: "step_status: completed"
+    without: "agent_tasks.*.status: verified"
+    reason: "Cannot mark step complete without verified agent task"
+
+# File ownership
+file_ownership:
+  "03_内容仓库/04_正文/ch*.md":
+    owner: "writer_dept"
+    read_access: ["reviewer_dept", "reader_dept", "summary_dept"]
+    write_access: ["writer_dept", "main_controller"]
+
+  "01_灵感库/*/基础层.yaml":
+    owner: "inspiration_dept"
+    read_access: ["writer_dept", "main_controller"]
+    write_access: ["inspiration_dept"]
+
+  "01_灵感库/*/深度层.md":
+    owner: "inspiration_dept"
+    read_access: ["writer_dept", "reviewer_dept", "summary_dept"]
+    write_access: ["inspiration_dept"]
+
+  "06_意见仓库/*":
+    owner: "reviewer_dept"
+    read_access: ["writer_dept", "main_controller"]
+    write_access: ["reviewer_dept", "writer_dept"]
+
+  "07_汇总仓库/*":
+    owner: "summary_dept"
+    read_access: ["main_controller"]
+    write_access: ["summary_dept"]

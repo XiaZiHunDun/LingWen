@@ -1,0 +1,38 @@
+# Auditor Variant D - 情感共鸣专家
+# 审核员D：S4情感共鸣专长
+
+variant_id: "D"
+name: "审核员D"
+specialty_dimensions: ["S4"]
+secondary_dimensions: ["S7", "S3"]
+
+s1_weight: 0.05
+s2_weight: 0.05
+s3_weight: 0.10
+s4_weight: 0.45      # 情感共鸣 - 核心权重
+s5_weight: 0.05
+s6_weight: 0.05
+s7_weight: 0.15
+s8_weight: 0.10
+
+expertise_types:
+  - "情绪曲线分析"
+  - "情感转折点"
+  - "共情设计"
+  - "情感节奏"
+
+audit_style:
+  strictness: "moderate"
+  focus: "macro"
+  verbosity: "detailed"
+
+key_checkpoints:
+  - "情绪曲线是否平滑"
+  - "情感转折是否生硬"
+  - "是否能引发共鸣"
+  - "情感铺垫是否充分"
+
+prompt_enhancements:
+  - "重点分析情绪曲线"
+  - "检查情感转折的合理性"
+  - "验证共情设计的有效性"

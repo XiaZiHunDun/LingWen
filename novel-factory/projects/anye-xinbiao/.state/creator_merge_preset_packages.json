@@ -1,0 +1,54 @@
+{
+  "schema_version": "1",
+  "packages": [
+    {
+      "id": "factory_publish_me",
+      "name": "待发布",
+      "description": "",
+      "pillars_merge_source": "disk",
+      "global_outline_merge_source": "editor",
+      "updated_at": "2026-07-11T05:01:29.092786+00:00"
+    },
+    {
+      "id": "batch_fix_me",
+      "name": "批量修",
+      "description": "",
+      "pillars_merge_source": "disk",
+      "global_outline_merge_source": "editor",
+      "updated_at": "2026-07-11T05:01:28.936206+00:00"
+    },
+    {
+      "id": "fix_me",
+      "name": "待修复",
+      "description": "",
+      "pillars_merge_source": "disk",
+      "global_outline_merge_source": "editor",
+      "updated_at": "2026-07-11T05:01:28.748071+00:00"
+    },
+    {
+      "id": "conflict_pkg",
+      "name": "冲突包",
+      "description": "",
+      "pillars_merge_source": "disk",
+      "global_outline_merge_source": "editor",
+      "updated_at": "2026-07-11T05:01:27.148231+00:00"
+    },
+    {
+      "id": "semver_pkg",
+      "name": "Semver 包",
+      "description": "",
+      "pillars_merge_source": "disk",
+      "global_outline_merge_source": "editor",
+      "updated_at": "2026-07-11T05:01:25.931653+00:00",
+      "version_label": "v2.0.0"
+    },
+    {
+      "id": "imported_combo",
+      "name": "导入组合",
+      "description": "",
+      "pillars_merge_source": "disk",
+      "global_outline_merge_source": "editor",
+      "updated_at": "2026-07-11T05:01:25.159892+00:00"
+    }
+  ]
+}

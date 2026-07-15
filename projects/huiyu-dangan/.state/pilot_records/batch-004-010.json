@@ -1,0 +1,82 @@
+{
+  "batch_id": "batch-ch4-4",
+  "start_chapter": 4,
+  "max_chapters": 7,
+  "budget_usd": 0.55,
+  "stopped_reason": "chapter_failed",
+  "total_cost_usd": 0.072556,
+  "chapters_attempted": 1,
+  "chapters_succeeded": 0,
+  "chapters": [
+    {
+      "chapter_num": 4,
+      "workflow_name": "novel_writing",
+      "provider": "minimax",
+      "preflight_ok": true,
+      "preflight_checks": [
+        {
+          "name": "real_llm_gate",
+          "passed": true,
+          "message": "LINGWEN_REAL_LLM=1 set",
+          "required": true
+        },
+        {
+          "name": "api_key",
+          "passed": true,
+          "message": "provider=minimax key present",
+          "required": true
+        },
+        {
+          "name": "state_dir",
+          "passed": true,
+          "message": "state_dir writable: /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/novel-factory/infra/agent_system",
+          "required": true
+        },
+        {
+          "name": "workflow_yaml",
+          "passed": true,
+          "message": "found novel_writing.yaml",
+          "required": true
+        },
+        {
+          "name": "master_controller_config",
+          "passed": true,
+          "message": "primary_provider=minimax",
+          "required": true
+        },
+        {
+          "name": "memory_rag_mode",
+          "passed": true,
+          "message": "LINGWEN_MEMORY_RAG=stub (stub recommended for first pilot)",
+          "required": false
+        },
+        {
+          "name": "incremental_backfill",
+          "passed": true,
+          "message": "LINGWEN_INCREMENTAL_BACKFILL enabled",
+          "required": false
+        },
+        {
+          "name": "project_production_gate",
+          "passed": true,
+          "message": "outline ok: ch004_大纲.md",
+          "required": true
+        }
+      ],
+      "paused": false,
+      "pending_count": 0,
+      "completed": 5,
+      "failed": 1,
+      "emit_chapter_completed": false,
+      "total_cost_usd": 0.072556,
+      "incremental_backfill": null,
+      "memory_context_source": "stub",
+      "memory_rag_mode": "stub",
+      "incremental_backfill_enabled": true,
+      "real_llm_gate": true,
+      "preflight_only": false,
+      "error": null
+    }
+  ],
+  "recorded_at": "2026-06-18T02:34:30+00:00"
+}

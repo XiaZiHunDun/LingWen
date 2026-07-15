@@ -1,0 +1,8 @@
+# Human prose calibration overrides (留/删/疑).
+# Keys: <slug>:chNNN:<issue_type>
+# Example:
+# overrides:
+#   huiyu-dangan:ch003:sentence_diversity_low:
+#     verdict: 删
+#     note: 人工复核确认为误报
+overrides: {}

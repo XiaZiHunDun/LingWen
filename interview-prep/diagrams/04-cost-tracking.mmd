@@ -1,0 +1,89 @@
+%% 灵文 · 5 层 token 成本闭环图 · landscape 版（PPT 第 4 页用）
+%% 用法: 粘贴到 mermaid.live 渲染 → 截图 → 插入 PPT
+%% 配套文字说明见 project/03-tech-stack.md §2.2 + whiteboard/cost-loop.txt
+
+%%{init: {'flowchart': {'nodeSpacing': 30, 'rankSpacing': 60, 'wrappingWidth': 200}}}%%
+
+graph LR
+    subgraph L1["<b>Layer 1 · LLM Provider</b>"]
+        direction TB
+        P1["OpenAI<br/>GPT-4 · GPT-4o"]
+        P2["Anthropic<br/>Claude 4 Sonnet/Opus"]
+        P3["MiniMax<br/><b>默认 · 中文性价比</b>"]
+    end
+
+    subgraph L2["<b>Layer 2 · LLM Router</b>"]
+        direction TB
+        ROUTE["按 tier 路由<br/>cheap / mid / premium"]
+        BUD["per-tier budget<br/>每 tier 单独预算"]
+    end
+
+    subgraph L3["<b>Layer 3 · AgentBase</b>"]
+        direction TB
+        MIX["LLM 调用 Mixin"]
+        ITER["max_iterations 熔断<br/><i>防 Agent 死循环</i>"]
+    end
+
+    subgraph L4["<b>Layer 4 · MasterController</b>"]
+        direction TB
+        ST["状态机驱动场景路由"]
+        CAP["cost cap 触发即<br/>降级 cheap tier"]
+    end
+
+    subgraph L5["<b>Layer 5 · got_bridge</b>"]
+        direction TB
+        BR["12 SCENARIOS handler<br/><i>chapter_writing · audit · polish</i>"]
+        PER["每场景独立 cost 记录"]
+    end
+
+    subgraph DB["<b>持久化层</b>"]
+        direction TB
+        COST["cost_tracker.db<br/><i>SQLite · gitignored</i>"]
+        SCHEMA["<b>cost_records 表</b><br/>timestamp · scenario · tier<br/>prompt_tokens · completion_tokens<br/>cost_usd"]
+    end
+
+    subgraph DASH["<b>Dashboard 成本可视化</b>"]
+        direction TB
+        AGG["聚合查询"]
+        T1["7d / 30d / all 时间窗"]
+        T2["per-tier multi-series<br/>cheap / mid / premium"]
+        T3["cost by day · cost by scenario"]
+    end
+
+    L1 -->|usage.prompt + completion| L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5
+    L5 -->|全部记录| COST
+    AGG --> T1
+    AGG --> T2
+    AGG --> T3
+    COST --> AGG
+
+    classDef provider fill:#3498DB,color:#fff,stroke:#1F618D,stroke-width:2px
+    classDef router fill:#9B59B6,color:#fff,stroke:#5B2C6F,stroke-width:2px
+    classDef agent fill:#F5A623,color:#fff,stroke:#B07516,stroke-width:2px
+    classDef db fill:#50C878,color:#fff,stroke:#2D7A4D,stroke-width:2px
+    classDef dash fill:#E94B6A,color:#fff,stroke:#A52A2A,stroke-width:2px
+
+    class P1,P2,P3,L1 provider
+    class ROUTE,BUD,L2 router
+    class MIX,ITER,L3,ST,CAP,L4,BR,PER,L5 agent
+    class COST,SCHEMA,DB db
+    class AGG,T1,T2,T3,DASH dash
+
+    %% 控制回路（不画跨层箭头，避免视觉杂音 · 改为注释表达）
+    %% ───────────────────────────────────────────────
+    %% 3 道关:
+    %%  L2 BUD 触发 → 降级 ROUTE 到 cheap tier
+    %%  L3 ITER 触发 → 阻塞 MIX 调用
+    %%  L4 CAP 触发 → 降级 ROUTE 到 cheap tier
+    %% （详见 project/03-tech-stack.md §2.2）
+    %% ───────────────────────────────────────────────
+
+    %% 关键设计标注（PPT 讲到这里时口头解释）
+    %% [1] 真实跟踪 > 估算 · Provider 返回 usage
+    %% [2] per-tier budget · cheap/mid/premium 各自预算 + 熔断
+    %% [3] cost cap → 自动降级 cheap · 生产不中断
+    %% [4] gitignored · 单机零运维 · CI 自动 init
+    %% [5] 数字：MiniMax 单章 ~$0.063 · GPT-4 ~$0.3+ · 便宜 5×

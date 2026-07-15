@@ -1,0 +1,23 @@
+{
+  "schema_version": "1",
+  "enabled": true,
+  "interval_hours": 24,
+  "last_sent_at": "2026-07-11T05:01:27.588030+00:00",
+  "channels": [
+    "webhook"
+  ],
+  "handle_channels": {},
+  "quiet_hours_start": null,
+  "quiet_hours_end": null,
+  "handle_quiet_hours": {},
+  "channel_retry_config": {
+    "webhook": {
+      "max_attempts": 3,
+      "base_backoff_sec": 45
+    },
+    "email": {
+      "max_attempts": 5,
+      "base_backoff_sec": 60
+    }
+  }
+}

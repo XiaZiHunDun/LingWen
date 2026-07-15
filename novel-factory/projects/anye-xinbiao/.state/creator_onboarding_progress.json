@@ -1,0 +1,19 @@
+{
+  "schema_version": "3",
+  "completed_step_ids": [],
+  "dismissed_auto_step_ids": [
+    "check",
+    "dashboard"
+  ],
+  "step_notes": {
+    "volume": "先锁卷纲 @batch"
+  },
+  "step_mentions": {
+    "volume": [
+      "batch"
+    ]
+  },
+  "wizard_panel_dismissed": true,
+  "wizard_panel_collapsed": false,
+  "updated_at": "2026-07-11T05:01:37.715499+00:00"
+}

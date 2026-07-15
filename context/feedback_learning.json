@@ -1,0 +1,23 @@
+{
+  "feedback_entries": [
+    {
+      "timestamp": "2026-05-24T12:01:05.881859",
+      "issue_type": "manual_feedback",
+      "checker_type": "timeline_checker",
+      "severity": "P1",
+      "is_false_positive": true,
+      "content_snippet": ""
+    }
+  ],
+  "statistics": {
+    "total_confirmations": 0,
+    "total_false_positives": 1,
+    "accuracy_rate": 0.0
+  },
+  "learned_patterns": {
+    "scene_types_to_skip": [],
+    "characters_to_skip": [],
+    "vocabulary_exceptions": []
+  },
+  "last_updated": "2026-05-24T12:01:05.881890"
+}

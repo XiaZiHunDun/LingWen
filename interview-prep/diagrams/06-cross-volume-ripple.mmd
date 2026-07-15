@@ -1,0 +1,92 @@
+%% 灵文 · 跨卷涟漪 CVG 系统图（PPT 进阶页用 · 高级话题）
+%% 用法: 粘贴到 mermaid.live 渲染 → 截图 → 插入 PPT
+%% 配套文字说明见 project/04-deep-dives.md §4.6 (ch241-300 跨章一致性崩坏) + novel-factory/docs/superpowers/plans/
+
+graph TB
+    subgraph Change["<b>触发事件 · 某卷某章的变更</b>"]
+        EVT["📝 角色 '陆沉' 在 V2 ch045<br/>性格标签变更<br/><i>从 '冷静克制' 改为 '冷静而内敛'</i>"]
+    end
+
+    subgraph CVG["<b>CVG · Cross-Volume Graph</b><br/><i>4 维实体节点 + 边关系</i>"]
+        N1["V1 节点<br/>陆沉 = 冷静克制"]
+        N2["V2 节点<br/>陆沉 = 冷静而内敛 <b>← 变更</b>"]
+        N3["V3 节点<br/>陆沉 = ?"]
+        N4["V4 节点<br/>陆沉 = ?"]
+    end
+
+    subgraph Backfill["<b>Phase 9.11 · 4 维规则反推 Backfill</b>"]
+        R1["characters<br/>角色一致性"]
+        R2["events<br/>事件一致性"]
+        R3["locations<br/>地点一致性"]
+        R4["timeline<br/>时间线一致性"]
+    end
+
+    subgraph Cascade["<b>Cascade 传播</b>"]
+        C1["ch046-100<br/>同卷下游章节"]
+        C2["ch101-200<br/>V2→V3 跨卷"]
+        C3["ch201-300<br/>V3→V4 跨卷"]
+        C4["<b>ch241-300</b><br/>⚠ 历史灾难段<br/>一致性崩坏"]
+    end
+
+    subgraph Audit["<b>Phase 9.14 · 审计日志 + 真回滚</b>"]
+        LOG["ripple_audit_log 表<br/>谁 · 何时 · 改了什么 · 影响范围"]
+        RB["回滚点<br/>snapshot_id"]
+        DIFF["diff 视图<br/>原文 ↔ 新文"]
+    end
+
+    subgraph DB["<b>ripple.db · gitignored</b>"]
+        TBL1["cvg_nodes<br/>vol · chapter · entity · attr"]
+        TBL2["cvg_edges<br/>from · to · weight · type"]
+        TBL3["ripple_events<br/>src · targets · severity"]
+        TBL4["snapshots<br/>chapter_snapshot · JSON"]
+        TBL5["ripple_audit_log<br/>actor · ts · diff"]
+    end
+
+    subgraph Fix["<b>回滚 vs 接受</b>"]
+        ROLL["回滚到 snapshot<br/>恢复原文"]
+        ACC["接受变更<br/>级联到下游章节"]
+        MAN["标 P0 人工<br/>类似 ch241-300 的跨章崩坏"]
+    end
+
+    EVT --> N2
+    N1 -->|<i>演化 V1</i>| N2
+    N2 -->|<i>演化 V2</i>| N3
+    N3 -->|<i>演化 V3</i>| N4
+
+    EVT --> Backfill
+    Backfill --> Cascade
+    Cascade --> Audit
+
+    N2 -.evt 写入.-> TBL1
+    N2 -.edge 写入.-> TBL2
+
+    Cascade --> TBL3
+    Audit --> TBL5
+    RB --> TBL4
+
+    Audit --> Fix
+    ROLL -.修复.-> Cascade
+    ACC -.继续.-> Cascade
+    MAN -.人工介入.-> Cascade
+
+    classDef trigger fill:#E94B6A,color:#fff,stroke:#A52A2A,stroke-width:2px
+    classDef node fill:#F5A623,color:#fff,stroke:#B07516,stroke-width:2px
+    classDef cascade fill:#9B59B6,color:#fff,stroke:#5B2C6F,stroke-width:2px
+    classDef audit fill:#3498DB,color:#fff,stroke:#1F618D,stroke-width:2px
+    classDef db fill:#50C878,color:#fff,stroke:#2D7A4D,stroke-width:2px
+    classDef fix fill:#F39C12,color:#fff,stroke:#9C640D,stroke-width:2px
+
+    class EVT trigger
+    class N1,N2,N3,N4 node
+    class R1,R2,R3,R4,C1,C2,C3,C4 cascade
+    class LOG,RB,DIFF audit
+    class TBL1,TBL2,TBL3,TBL4,TBL5,DB db
+    class ROLL,ACC,MAN fix
+
+    %% 关键设计标注（PPT 讲到这里时口头解释）
+    %% [1] 4 维实体节点 + 边关系 · 跨卷一致性可视化
+    %% [2] Backfill 自动反推 · 不靠手工补全 (16 tests · 4 Extractor + 1 Backfiller)
+    %% [3] Cascade 自动传播 · 不用人工找出所有受影响章节
+    %% [4] 审计日志 + 真回滚 · snapshot_id 不只是日志是恢复点
+    %% [5] 历史教训: ch241-300 跨章一致性崩坏 → 推动了整个 CVG 的诞生
+    %% [6] 数字: 31 net new tests · 16 backfill · ripple_audit_log + real rollback

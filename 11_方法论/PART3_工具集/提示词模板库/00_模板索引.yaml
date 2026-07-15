@@ -1,0 +1,236 @@
+# 模板索引清单
+# 版本: v1.0.0
+# 更新日期: 2026-05-19
+
+templates:
+  # ==================== 大纲生成类 ====================
+  - id: outline_full_novel_v1
+    name: 全文大纲
+    category: outline
+    version: v1.0.0
+    status: active
+    file: 01_大纲生成/全文大纲_CARE.md
+    description: 生成整本小说的完整大纲（多卷结构）
+    temperature:
+      recommended: 0.6
+      range: [0.5, 0.7]
+    care_elements:
+      context_required: [world_setting, project_info, milestones]
+      action_output: outline
+      result_metrics: [S1, S2, S6, S7]
+    version_info:
+      current_version: v1.0.0
+      created_date: 2026-05-19
+      modified_date: 2026-05-19
+      history:
+        - version: v1.0.0
+          date: 2026-05-19
+          changes: [初始版本]
+    is_locked: false
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  - id: outline_volume_v1
+    name: 卷大纲
+    category: outline
+    version: v1.0.0
+    status: active
+    file: 01_大纲生成/卷大纲_CARE.md
+    description: 生成单卷的详细大纲
+    temperature:
+      recommended: 0.6
+      range: [0.5, 0.7]
+    care_elements:
+      context_required: [world_setting, volume_theme, main_plot]
+      action_output: outline
+      result_metrics: [S1, S2, S6, S7]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  # ==================== 正文续写类 ====================
+  - id: continuation_standard_v1
+    name: 标准续写
+    category: continuation
+    version: v1.0.0
+    status: active
+    file: 02_正文续写/标准续写_CARE.md
+    description: 标准章节续写，保持视角、风格、节奏一致
+    temperature:
+      recommended: 0.7
+      range: [0.6, 0.8]
+    care_elements:
+      context_required: [scene_info, character_status, world_constraints]
+      action_output: prose
+      result_metrics: [S1, S2, S3, S5, S6]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  - id: continuation_high_stakes_v1
+    name: 高潮场景
+    category: continuation
+    version: v1.0.0
+    status: active
+    file: 02_正文续写/高潮场景_CARE.md
+    description: 关键情节高潮场景的写作
+    temperature:
+      recommended: 0.7
+      range: [0.65, 0.75]
+    care_elements:
+      context_required: [scene_info, dramatic_requirements, emotional_arc]
+      action_output: prose
+      result_metrics: [S1, S2, S3, S4, S5]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  - id: continuation_dialogue_v1
+    name: 对话场景
+    category: continuation
+    version: v1.0.0
+    status: active
+    file: 02_正文续写/对话场景_CARE.md
+    description: 以对话为主推进剧情的场景
+    temperature:
+      recommended: 0.65
+      range: [0.55, 0.75]
+    care_elements:
+      context_required: [scene_info, speaker_status, conversation_goal]
+      action_output: prose
+      result_metrics: [S1, S3, S6, S7]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  # ==================== 描写增强类 ====================
+  - id: description_five_senses_v1
+    name: 五感描写
+    category: description
+    version: v1.0.0
+    status: active
+    file: 03_描写增强/五感描写_CARE.md
+    description: 运用视觉、听觉、嗅觉、触觉、味觉进行场景增强
+    temperature:
+      recommended: 0.65
+      range: [0.6, 0.7]
+    care_elements:
+      context_required: [target_type, target_name, writing_style]
+      action_output: enhanced_prose
+      result_metrics: [S3, S6]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  - id: description_metaphor_v1
+    name: 隐喻描写
+    category: description
+    version: v1.0.0
+    status: active
+    file: 03_描写增强/隐喻描写_CARE.md
+    description: 使用隐喻增强表达的层次感和艺术性
+    temperature:
+      recommended: 0.65
+      range: [0.6, 0.7]
+    care_elements:
+      context_required: [target_element, metaphor_source, theme_alignment]
+      action_output: enhanced_prose
+      result_metrics: [S3, S4]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  # ==================== 审核辅助类 ====================
+  - id: review_logic_v1
+    name: 逻辑检查
+    category: review
+    version: v1.0.0
+    status: active
+    file: 04_审核辅助/逻辑检查_CARE.md
+    description: 检查逻辑漏洞、时间线矛盾、因果关系
+    temperature:
+      recommended: 0.4
+      range: [0.3, 0.5]
+    care_elements:
+      context_required: [chapter_content, context_summary]
+      action_output: analysis
+      result_metrics: [S1, S2]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  - id: review_character_consistency_v1
+    name: 角色一致性
+    category: review
+    version: v1.0.0
+    status: active
+    file: 04_审核辅助/角色一致性_CARE.md
+    description: 检查角色行为、性格、语言是否一致
+    temperature:
+      recommended: 0.4
+      range: [0.3, 0.5]
+    care_elements:
+      context_required: [chapter_content, character_profiles]
+      action_output: analysis
+      result_metrics: [S2, S7]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  # ==================== 润色修改类 ====================
+  - id: polish_language_v1
+    name: 语言润色
+    category: polish
+    version: v1.0.0
+    status: active
+    file: 05_润色修改/语言润色_CARE.md
+    description: 优化语言表达、句式结构、用词准确性
+    temperature:
+      recommended: 0.35
+      range: [0.3, 0.5]
+    care_elements:
+      context_required: [original_text, style_guide]
+      action_output: polished_prose
+      result_metrics: [S3, S6]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+  - id: polish_emotional_v1
+    name: 情感强化
+    category: polish
+    version: v1.0.0
+    status: active
+    file: 05_润色修改/情感强化_CARE.md
+    description: 增强情感表达、情绪感染力
+    temperature:
+      recommended: 0.35
+      range: [0.3, 0.5]
+    care_elements:
+      context_required: [original_text, target_emotion, emotional_arc]
+      action_output: enhanced_prose
+      result_metrics: [S3, S4]
+    use_count: 0
+    success_rate: 0.0
+    avg_score: 0.0
+
+# ==================== 统计信息 ====================
+stats:
+  total_templates: 11
+  active_templates: 11
+  deprecated_templates: 0
+  categories:
+    outline: 2
+    continuation: 3
+    description: 2
+    review: 2
+    polish: 2
+
+# ==================== 版本历史 ====================
+version_history:
+  - version: v1.0.0
+    date: 2026-05-19
+    changes:
+      - 初始版本，包含11个核心模板
+    templates_added: 11

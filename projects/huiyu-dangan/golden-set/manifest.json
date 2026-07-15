@@ -1,0 +1,35 @@
+{
+  "project_slug": "huiyu-dangan",
+  "title": "灰域档案",
+  "purpose": "第三本书 onboarding Golden Set 基线",
+  "frozen_at": "2026-06-22",
+  "review_status": "human_review_pass_v1+sync",
+  "chapters": [
+    {
+      "num": 1,
+      "role": "opening_hook",
+      "file": "chapters/ch001.md",
+      "char_count": 2372,
+      "full_check_issues_baseline": 5
+    },
+    {
+      "num": 3,
+      "role": "act1_threshold",
+      "file": "chapters/ch003.md",
+      "char_count": 1840,
+      "full_check_issues_baseline": 5
+    },
+    {
+      "num": 10,
+      "role": "finale",
+      "file": "chapters/ch010.md",
+      "char_count": 3161,
+      "full_check_issues_baseline": 1
+    }
+  ],
+  "regression": {
+    "ci": "scripts/verify-golden-set.sh huiyu-dangan",
+    "llm": "scripts/run-golden-set-check.sh huiyu-dangan",
+    "pass_criteria": "结构校验通过；full check 无 crash"
+  }
+}

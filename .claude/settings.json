@@ -1,0 +1,61 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/hooks/*)",
+      "Bash(python3 -m json.tool *)",
+      "Bash(find * -name \"*_temp*\")",
+      "Read(**/workflow_state.json)",
+      "Read(**/03_内容仓库/**/*.md)"
+    ],
+    "deny": [
+      "Bash(rm -rf 03_内容仓库)",
+      "Bash(*.tmp)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-stop.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/quality/pre-write-check.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/quality/post-write-repair.py"
+          }
+        ]
+      }
+    ]
+  }
+}

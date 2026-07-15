@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "updated_at": "2026-07-11T05:01:21.407499+00:00",
+  "volumes": [
+    {
+      "label": "自定义A",
+      "start_chapter": 1,
+      "end_chapter": 5,
+      "core_conflict": "x",
+      "locked": false,
+      "locked_at": null
+    }
+  ]
+}

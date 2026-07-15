@@ -1,0 +1,150 @@
+# AI痕迹规则配置
+# 版本: 1.0
+# 描述: 消除小说中的AI模板句式
+
+version: "1.0"
+description: "AI痕迹消除规则 - 套路句式替换/删除"
+
+rules:
+  # 连接词替换
+  - type: "replacement"
+    source: "首先"
+    target: "第一"
+    priority: 100
+    description: "连接词"
+
+  - type: "replacement"
+    source: "其次"
+    target: "接着"
+    priority: 90
+    description: "连接词"
+
+  - type: "replacement"
+    source: "最后"
+    target: "最终"
+    priority: 80
+    description: "连接词"
+
+  - type: "replacement"
+    source: "于是乎"
+    target: ""
+    priority: 70
+    description: "删除"
+
+  - type: "replacement"
+    source: "紧接着"
+    target: "随即"
+    priority: 60
+    description: "连接词"
+
+  # 时间词替换
+  - type: "replacement"
+    source: "那一刻"
+    target: "那一瞬"
+    priority: 100
+    description: "时间词"
+
+  - type: "replacement"
+    source: "突然"
+    target: "骤然"
+    priority: 90
+    description: "时间词"
+
+  - type: "replacement"
+    source: "霎时"
+    target: "瞬息"
+    priority: 80
+    description: "时间词"
+
+  - type: "replacement"
+    source: "刹那"
+    target: "瞬间"
+    priority: 70
+    description: "时间词"
+
+  # 模板句式删除
+  - type: "deletion"
+    source: "可以看出"
+    target: ""
+    priority: 80
+    description: "模板句"
+
+  - type: "deletion"
+    source: "值得注意的是"
+    target: ""
+    priority: 70
+    description: "模板句"
+
+  - type: "deletion"
+    source: "实际上"
+    target: ""
+    priority: 60
+    description: "模板句"
+
+  - type: "deletion"
+    source: "显然"
+    target: ""
+    priority: 50
+    description: "模板句"
+
+  - type: "deletion"
+    source: "明显地"
+    target: ""
+    priority: 50
+    description: "模板句"
+
+  - type: "deletion"
+    source: "显而易见"
+    target: ""
+    priority: 40
+    description: "模板句"
+
+  # 因果词简化
+  - type: "replacement"
+    source: "因此"
+    target: "于是"
+    priority: 60
+    description: "因果词"
+
+  - type: "replacement"
+    source: "所以"
+    target: "便"
+    priority: 50
+    description: "因果词"
+
+  - type: "replacement"
+    source: "由于"
+    target: "因"
+    priority: 40
+    description: "因果词"
+
+  # 副词简化
+  - type: "replacement"
+    source: "不断地"
+    target: ""
+    priority: 50
+    description: "重复词"
+
+  - type: "replacement"
+    source: "持续地"
+    target: ""
+    priority: 50
+    description: "重复词"
+
+  - type: "replacement"
+    source: "缓缓地"
+    target: "缓慢地"
+    priority: 30
+    description: "副词"
+
+  - type: "replacement"
+    source: "慢慢地"
+    target: "缓慢地"
+    priority: 30
+    description: "副词"
+
+  - type: "replacement"
+    source: "渐渐地"
+    target: "逐渐地"
+    priority: 30
+    description: "副词"

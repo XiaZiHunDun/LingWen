@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0",
+  "description": "《星陨纪元》角色设定档案 - 基于小说大纲和正文分析生成",
+  "created": "2026-05-21",
+  "characters": [
+    {
+      "name": "林夜",
+      "role": "男主",
+      "personality_tags": ["冷静", "坚强", "热血", "果断"],
+      "speech_style": "直接坚定，简短有力",
+      "abilities": ["星辰战体"],
+      "knowledge": ["修真", "星辰能量"],
+      "forbids": [],
+      "opposites": {
+        "冷静": ["暴怒", "疯狂", "失控", "歇斯底里"],
+        "坚强": ["崩溃", "瓦解", "脆弱"],
+        "热血": ["冷漠", "退缩", "放弃"]
+      },
+      "description": "废土少年，父母被暗域杀害后觉醒星辰战体。经历从复仇到守护的思想转变。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "苏琳",
+      "role": "女主",
+      "personality_tags": ["温柔", "智慧", "预言", "坚强"],
+      "speech_style": "柔和细腻，富有情感",
+      "abilities": ["预言能力"],
+      "knowledge": ["星辰推演"],
+      "forbids": [],
+      "opposites": {
+        "温柔": ["粗暴", "冷漠", "残忍"],
+        "智慧": ["愚钝", "轻信", "盲目"],
+        "预言": ["武断", "鲁莽"]
+      },
+      "description": "林夜的青梅竹马，拥有预言能力。在第三卷牺牲化为星光。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "星月",
+      "role": "配角/盟友",
+      "personality_tags": ["智慧", "冷静", "正直"],
+      "speech_style": "沉稳内敛，有条理",
+      "abilities": ["星辰会术法"],
+      "knowledge": ["情报网络", "星际政治"],
+      "forbids": [],
+      "opposites": {
+        "智慧": ["愚钝", "轻信"],
+        "冷静": ["冲动", "暴躁"]
+      },
+      "description": "星辰会成员，在ch041-ch060牺牲，为联盟成立做出贡献。性别已统一为女性。",
+      "first_appearance": "ch003"
+    },
+    {
+      "name": "铁蛋",
+      "role": "配角/伙伴",
+      "personality_tags": ["忠诚", "热血", "乐观"],
+      "speech_style": "直率豪爽",
+      "abilities": [],
+      "knowledge": [],
+      "forbids": [],
+      "opposites": {
+        "忠诚": ["背叛", "出卖"],
+        "乐观": ["绝望", "悲观"]
+      },
+      "description": "林夜的伙伴，性格乐观，曾有生死状态矛盾（ch091-ch100需统一）。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "小九",
+      "role": "配角/灵体",
+      "personality_tags": ["神秘", "智慧"],
+      "speech_style": "空灵飘渺",
+      "abilities": ["星灵形态", "人类形态"],
+      "knowledge": [],
+      "forbids": [],
+      "opposites": {},
+      "description": "形态变化的角色，有星灵形态（声音、光环、灵体状态，可飘浮）和人类形态（实体、有尾巴）。在ch247-ch254等章节有形态不一致问题需修复。",
+      "first_appearance": "ch091"
+    },
+    {
+      "name": "暗皇",
+      "role": "反派/三卷反派第一阶段",
+      "personality_tags": ["残忍", "阴险", "强大"],
+      "speech_style": "威严阴沉",
+      "abilities": ["暗域能量"],
+      "knowledge": [],
+      "forbids": [],
+      "opposites": {
+        "残忍": ["仁慈", "温和"]
+      },
+      "description": "三卷反派演化链第一阶段反派。暗皇记忆在ch291-ch300融合。",
+      "first_appearance": "ch011"
+    },
+    {
+      "name": "父亲",
+      "role": "配角/林夜之父",
+      "personality_tags": ["坚强", "果断", "牺牲"],
+      "speech_style": "简短有力",
+      "abilities": [],
+      "knowledge": [],
+      "forbids": [],
+      "opposites": {
+        "坚强": ["怯懦", "退缩"]
+      },
+      "description": "林夜父亲，在ch001被暗域杀害。临终前注入能量给林夜（伏笔ch024，回收第三卷）。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "母亲",
+      "role": "配角/林夜之母",
+      "personality_tags": ["温柔", "坚强"],
+      "speech_style": "柔和",
+      "abilities": [],
+      "knowledge": [],
+      "forbids": [],
+      "opposites": {
+        "温柔": ["粗暴"]
+      },
+      "description": "林夜母亲，保护林夜进入地窖。",
+      "first_appearance": "ch001"
+    },
+    {
+      "name": "莫言",
+      "role": "配角/盟友",
+      "personality_tags": ["神秘", "智慧"],
+      "speech_style": "沉稳",
+      "abilities": [],
+      "knowledge": [],
+      "forbids": [],
+      "opposites": {},
+      "description": "小队成员之一，在ch021-ch040阶段加入。",
+      "first_appearance": "ch021"
+    }
+  ]
+}

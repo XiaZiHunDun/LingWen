@@ -1,0 +1,77 @@
+%% 灵文系统全景图 · 主图（PPT 首页用）
+%% 用法: 粘贴到 mermaid.live 渲染 → 截图 → 插入 PPT
+%% 配套文字说明见 project/02-architecture.md
+
+graph TB
+    subgraph Entry["<b>入口层 Entry</b>"]
+        CLI["lingwen.py<br/><i>CLI 统一入口</i>"]
+        DASH["Dashboard<br/><i>FastAPI + Vue 3 + ECharts</i>"]
+    end
+
+    subgraph Orch["<b>编排层 Orchestration</b>"]
+        MC["MasterController<br/><i>3 铁律守门</i>"]
+        GBR["GoT Router<br/><i>12 SCENARIOS 解耦</i>"]
+    end
+
+    subgraph Agents["<b>执行层 5 核心 Agent + 角色池</b>"]
+        direction LR
+        OM["<b>outline_master</b><br/>大纲生成"]
+        CD["<b>character_designer</b><br/>角色卡"]
+        CW["<b>content_writer</b><br/>作家 A-J ×10"]
+        AU["<b>auditor</b><br/>审核员 A-J ×10"]
+        PO["<b>polisher</b><br/>读者 A-T ×20"]
+    end
+
+    subgraph Caps["<b>能力层 Capabilities</b>"]
+        QC["<b>质量检测</b><br/>S1-S11 规则+LLM"]
+        MEM["<b>记忆系统</b><br/>Qdrant RAG"]
+        WS["<b>WorldSnapshot</b><br/>矛盾检测"]
+        CVG["<b>跨卷涟漪</b><br/>CVG cascade"]
+    end
+
+    subgraph Infra["<b>基础设施层 Infrastructure</b>"]
+        AIS["<b>AI Service</b><br/>OpenAI / Anthropic / MiniMax"]
+        SQL["<b>SQLite ×3</b><br/>workflow · cost · ripple"]
+    end
+
+    Entry --> MC
+    MC --> GBR
+    GBR --> OM
+    GBR --> CD
+    GBR --> CW
+    GBR --> AU
+    GBR --> PO
+
+    CW -.质检.-> QC
+    AU -.质检.-> QC
+    PO -.质检.-> QC
+    QC -.使用.-> MEM
+    QC -.使用.-> WS
+    QC -.使用.-> CVG
+
+    OM -.LLM 调用.-> AIS
+    CD -.LLM 调用.-> AIS
+    CW -.LLM 调用.-> AIS
+    AU -.LLM 调用.-> AIS
+    PO -.LLM 调用.-> AIS
+
+    MC --> SQL
+    QC --> SQL
+    CVG --> SQL
+
+    classDef primary fill:#4A90E2,color:#fff,stroke:#2E5C8A,stroke-width:2px
+    classDef quality fill:#E94B6A,color:#fff,stroke:#A52A2A,stroke-width:2px
+    classDef infra fill:#50C878,color:#fff,stroke:#2D7A4D,stroke-width:2px
+    classDef agent fill:#F5A623,color:#fff,stroke:#B07516,stroke-width:2px
+
+    class MC,GBR primary
+    class QC quality
+    class AIS,SQL infra
+    class OM,CD,CW,AU,PO agent
+
+    %% 关键设计标注（PPT 讲到这里时口头解释）
+    %% [1] 5 Agent 职责分离，单 Agent 上下文会爆炸
+    %% [2] GoT Router 12 SCENARIOS，每场景独立 handler
+    %% [3] 混合质量门：规则硬 + LLM 软 + Fallback 熔断
+    %% [4] 5 层 token 真实跟踪 + per-tier budget
+    %% [5] 状态机 3 铁律 + 3 SQLite 隔离

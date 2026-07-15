@@ -1,0 +1,7 @@
+{
+  "schema_version": "1",
+  "timeout_hours": 48,
+  "email_on_submit": true,
+  "email_on_reject": true,
+  "email_on_overdue": true
+}

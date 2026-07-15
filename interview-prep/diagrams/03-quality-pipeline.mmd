@@ -1,0 +1,90 @@
+%% 灵文 · 11 维质量门流水线图 · landscape 版（PPT 第 3 页用）
+%% 用法: 粘贴到 mermaid.live 渲染 → 截图 → 插入 PPT
+%% 配套文字说明见 project/04-deep-dives.md §4.4 + whiteboard/quality-gate.txt
+
+graph LR
+    subgraph IN["<b>输入</b>"]
+        CW_OUT["content_writer<br/>初稿 ~3-5 千字"]
+    end
+
+    subgraph L1["<b>Layer 1 · 规则硬验证</b><br/><i>速度 <500ms · 0 误报 · 确定性</i>"]
+        direction TB
+        subgraph R12["<b>剧情 / 逻辑</b>"]
+            direction LR
+            S1["S1<br/>剧情<br/>完整"]
+            S2["S2<br/>逻辑<br/>自洽"]
+        end
+        subgraph R34["<b>文笔 / 情感</b>"]
+            direction LR
+            S3["S3<br/>文笔<br/>风格"]
+            S4["S4<br/>情感<br/>共鸣"]
+        end
+        subgraph R56["<b>节奏 / 可读</b>"]
+            direction LR
+            S5["S5<br/>节奏<br/>控制"]
+            S6["S6<br/>可读<br/>性"]
+        end
+        subgraph R78["<b>角色 / 弧光</b>"]
+            direction LR
+            S7["S7<br/>主角<br/>魅力"]
+            S8["S8<br/>人物<br/>弧光"]
+        end
+    end
+
+    D1{"<b>0 硬错?</b>"}
+
+    subgraph L2["<b>Layer 2 · LLM 软评分</b><br/><i>速度 ~3s · 不返工 · 软评分</i>"]
+        direction LR
+        S9["S9<br/>角色一致性"]
+        S10["S10<br/>逻辑自洽度"]
+        S11["S11<br/>伏笔回收率"]
+    end
+
+    D2{"<b>≥ 阈值?</b>"}
+
+    subgraph OUT["<b>输出</b>"]
+        PASS["<b>入库 + 下游</b><br/>polisher 入口"]
+        WARN["<b>软伤告警 P1</b><br/>不返工 · 进告警池"]
+        FAIL["<b>硬错返工 P0</b><br/>退回 content_writer"]
+    end
+
+    subgraph FB["<b>⚠ Fallback (LLM 服务挂)</b>"]
+        SKIP["跳过 Layer 2"]
+        ONLYL1["仅跑 Layer 1 规则"]
+        GOFB["<b>入库 · 生产不中断 ✓</b>"]
+    end
+
+    CW_OUT --> L1
+    L1 --> D1
+    D1 -->|No| FAIL
+    D1 -->|Yes| L2
+    L2 --> D2
+    D2 -->|Yes| PASS
+    D2 -->|No| WARN
+
+    CW_OUT -.LLM 服务挂.-> SKIP
+    SKIP --> ONLYL1
+    ONLYL1 --> GOFB
+
+    classDef input fill:#7F8C8D,color:#fff,stroke:#34495E,stroke-width:2px
+    classDef rule fill:#3498DB,color:#fff,stroke:#1F618D,stroke-width:2px
+    classDef llm fill:#E94B6A,color:#fff,stroke:#A52A2A,stroke-width:2px
+    classDef decision fill:#F39C12,color:#fff,stroke:#9C640D,stroke-width:2px
+    classDef pass fill:#50C878,color:#fff,stroke:#2D7A4D,stroke-width:2px
+    classDef fail fill:#E74C3C,color:#fff,stroke:#922B21,stroke-width:2px
+    classDef fallback fill:#9B59B6,color:#fff,stroke:#5B2C6F,stroke-width:2px
+
+    class CW_OUT input
+    class L1,R12,R34,R56,R78,S1,S2,S3,S4,S5,S6,S7,S8 rule
+    class L2,S9,S10,S11 llm
+    class D1,D2 decision
+    class PASS,GOFB pass
+    class FAIL,WARN fail
+    class FB,SKIP,ONLYL1 fallback
+
+    %% 关键设计标注（PPT 讲到这里时口头解释）
+    %% [1] 8 规则硬底线 · 确定性 · 0 误报 · 全部并跑 <500ms 完
+    %% [2] 任意 1 规则不过 → 返工 content_writer
+    %% [3] 3 LLM 软评分 · 不返工只警告 · 不阻塞生产
+    %% [4] LLM 服务挂 → 自动 Fallback 切规则引擎 · 8 本样章 P0=0 的工程保障
+    %% [5] 数字: 规则 <500ms · LLM ~3s · Fallback <5% 章节触发
