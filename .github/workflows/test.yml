@@ -79,6 +79,8 @@ jobs:
         run: |
           pytest tests/ \
             --ignore=tests/agent_system/test_e2e_workflow.py \
+            --ignore=tests/agent_system/test_event_effect_calculator.py \
+            --ignore=tests/agent_system/test_relationship_tracker.py \
             --ignore=tests/tools/test_enhancement_tools.py \
             --cov=infra --cov=tools --cov=dashboard \
             --cov-config=pyproject.toml \

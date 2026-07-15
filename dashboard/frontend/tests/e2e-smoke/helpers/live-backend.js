@@ -1,0 +1,101 @@
+// Phase 9.65 F56: helpers for Playwright live-backend e2e (opt-in).
+import { execSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { expect } from '@playwright/test';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../../../../..');
+
+export const LIVE_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE === '1';
+export const LIVE_LLM_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE_LLM === '1';
+
+export function skipUnlessLive(test) {
+  test.skip(!LIVE_E2E_ENABLED, 'set LINGWEN_E2E_LIVE=1 to run live-backend e2e');
+}
+
+export function skipUnlessLiveLlm(test) {
+  const hasApiKey = Boolean(
+    process.env.MINIMAX_API_KEY?.trim()
+    || process.env.ANTHROPIC_API_KEY?.trim()
+    || process.env.OPENAI_API_KEY?.trim(),
+  );
+  test.skip(
+    !LIVE_E2E_ENABLED || !LIVE_LLM_E2E_ENABLED || !hasApiKey,
+    'set LINGWEN_E2E_LIVE=1 LINGWEN_E2E_LIVE_LLM=1 and an LLM API key to run live LLM e2e',
+  );
+}
+
+export function runE2eSeed(args) {
+  execSync(`python -m infra.cross_volume.e2e_seed ${args}`, {
+    cwd: NOVEL_FACTORY_ROOT,
+    stdio: 'pipe',
+    timeout: 30_000,
+    env: { ...process.env },
+  });
+}
+
+export function resetRipple(rippleId, toStatus) {
+  runE2eSeed(`reset-ripple ${rippleId} ${toStatus}`);
+}
+
+export function resetE2eDecision() {
+  runE2eSeed('reset-decision');
+}
+
+export function clearInboxPending() {
+  runE2eSeed('clear-inbox-pending');
+}
+
+export function restoreInboxFixture() {
+  runE2eSeed('restore-inbox-fixture');
+}
+
+export async function clickNav(page, label) {
+  await page.getByRole('link', { name: label }).click();
+}
+
+/** 伴侣壳侧栏无「待办」入口时，用 deep link 打开 Inbox */
+export async function gotoInbox(page, tab = 'decisions') {
+  await page.goto(`/?nav=inbox&tab=${tab}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByTestId('inbox-page')).toBeVisible({ timeout: 30_000 });
+}
+
+export async function waitForPendingDecisionCard(page, timeout = 30_000) {
+  await page.getByTestId('decision-card').waitFor({ state: 'visible', timeout });
+}
+
+/** Wait until ripple list finished initial fetch (cards/empty visible, not loading). */
+export async function waitForRippleListReady(page, timeout = 30_000) {
+  await expect
+    .poll(async () => {
+      const hasCards = await page.getByTestId('ripple-card').first().isVisible().catch(() => false);
+      const hasEmpty = await page.getByTestId('ripple-list-empty').isVisible().catch(() => false);
+      const loading = await page.getByTestId('ripple-list-loading').isVisible().catch(() => false);
+      return (hasCards || hasEmpty) && !loading;
+    }, { timeout })
+    .toBe(true);
+}
+
+/** Open first ripple drawer after list + detail fetch complete. */
+export async function openFirstRippleDrawer(page) {
+  await waitForRippleListReady(page);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const detailResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/api/cvg/ripples/') &&
+        resp.request().method() === 'GET' &&
+        resp.status() === 200,
+      { timeout: 30_000 },
+    );
+    await page.getByTestId('ripple-card').first().click();
+    try {
+      await detailResponse;
+      await expect(page.getByTestId('ripple-drawer')).toBeVisible({ timeout: 15_000 });
+      return;
+    } catch (err) {
+      if (attempt === 1) throw err;
+      await page.keyboard.press('Escape').catch(() => {});
+    }
+  }
+}
