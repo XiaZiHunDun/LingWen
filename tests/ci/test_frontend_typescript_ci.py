@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
 

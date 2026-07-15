@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
 PRE_COMMIT_HOOK = (
     NOVEL_FACTORY / "dashboard" / "frontend" / ".husky" / "pre-commit"

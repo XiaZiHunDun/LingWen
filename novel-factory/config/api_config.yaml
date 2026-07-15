@@ -1,7 +1,0 @@
-# API配置
-MINIMAX_API_KEY=
-MINIMAX_API_HOST=https://api.minimaxi.com
-
-# Claude/其他AI Provider（预留）
-ANTHROPIC_API_KEY=
-OPENAI_API_KEY=

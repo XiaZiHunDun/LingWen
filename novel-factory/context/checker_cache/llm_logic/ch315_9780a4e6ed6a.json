@@ -1,1 +1,0 @@
-{"chapter": 315, "checker": "llm_logic", "content_hash": "9780a4e6ed6a", "timestamp": 1779797442.0438416, "ttl": 604800, "result": {"chapter": 315, "checker": "LogicContradictionLLMChecker", "issues": [], "score": 0.85, "llm_calls": 1, "timestamp": "2026-05-26T20:10:32.506484"}}

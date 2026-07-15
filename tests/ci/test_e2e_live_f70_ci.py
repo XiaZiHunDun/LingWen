@@ -5,7 +5,7 @@ from pathlib import Path
 
 from playwright_live_specs import count_live_backend_tests, parse_live_backend_spec_stems
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
 FRONTEND_CI = REPO_ROOT / ".github" / "workflows" / "dashboard-frontend-ci.yml"
 

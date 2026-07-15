@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
 DECISION_CARD = FRONTEND_DIR / "src" / "components" / "DecisionCard.vue"
 WORKFLOW_GRAPH = FRONTEND_DIR / "src" / "components" / "WorkflowGraph.vue"

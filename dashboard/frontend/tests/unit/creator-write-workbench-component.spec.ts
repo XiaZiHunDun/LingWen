@@ -260,7 +260,7 @@ describe('CreatorWriteWorkbench component', () => {
     });
     expect(wrapper.find(byTestid('companion-logic-check-write')).exists()).toBe(true);
     expect(wrapper.find(byTestid('run-companion-logic-check-btn')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('companion-logic-check-write-result')).text()).toContain('未通过');
+    expect(wrapper.find(byTestid('companion-logic-check-write-result')).text()).toContain('有问题');
   });
 
   test('undo last apply from advanced tools version stack', async () => {

@@ -1,1 +1,0 @@
-{"chapter": 20, "checker": "llm_emotion", "content_hash": "b0fe490d9eb2", "timestamp": 1779790197.8315678, "ttl": 604800, "result": {"chapter": 20, "checker": "EmotionalRhythmChecker", "issues": [], "score": 0.5, "llm_calls": 1, "timestamp": "2026-05-26T18:09:09.818824"}}

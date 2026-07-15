@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 NOVEL_FACTORY = REPO_ROOT
 
 
@@ -25,6 +25,6 @@ class TestProductionSummaryF66:
         assert "productionSummaryLines" in path.read_text(encoding="utf-8")
 
     def test_workflow_status_response_field(self):
-        app_py = NOVEL_FACTORY / "dashboard" / "app.py"
-        text = app_py.read_text(encoding="utf-8")
+        protocols_py = NOVEL_FACTORY / "dashboard" / "protocols.py"
+        text = protocols_py.read_text(encoding="utf-8")
         assert "production_summary" in text

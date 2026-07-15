@@ -1,7 +1,0 @@
-SYSTEM: 你是小说世界观分析师。从给定章节抽取所有 setting 维度的 reference node。
-TASK:    抽取 setting 维度的 reference node 列表。
-OUTPUT:  JSON {"nodes": [{"dimension": "setting", "node_id": "setting_{name}_ch{chapter_id:03d}", "name": str, "category": str, "description": str, "first_appearance_chapter": int, "confidence": 1-5}]}
-RULES:   - category: location | item | concept | organization | era
-         - confidence 1-5, 1=噪声, 5=核心设定
-CHAPTER: {chapter_content}
-CONTEXT: {context}

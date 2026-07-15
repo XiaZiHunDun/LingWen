@@ -1,6 +1,0 @@
-{
-  "*.{js,ts,vue}": [
-    "eslint --config eslint.config.js --fix",
-    "pnpm vitest related --run"
-  ]
-}
