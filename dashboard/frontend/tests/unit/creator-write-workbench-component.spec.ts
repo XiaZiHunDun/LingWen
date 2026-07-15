@@ -184,7 +184,7 @@ describe('CreatorWriteWorkbench component', () => {
 
   test('sets goal tag via context', async () => {
     const { writeCtx } = mountWorkbench();
-    writeCtx.wb.goalTag = 'suspense';
+    (writeCtx.wb.goalTag as unknown as string) = 'suspense';
     expect(writeCtx.wb.goalTag).toBe('suspense');
   });
 
