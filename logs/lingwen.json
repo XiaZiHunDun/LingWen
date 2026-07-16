@@ -6461,3 +6461,66 @@
 {"timestamp": "2026-07-15T05:21:31.975500+00:00", "level": "INFO", "logger": "infra.cross_volume.storage", "message": "ripple.db initialized at /tmp/pytest-of-ailearn/pytest-9213/test_adjacency_index_bidirecti0/ripple.db", "module": "storage", "function": "__init__", "line": 194}
 {"timestamp": "2026-07-15T05:21:32.060602+00:00", "level": "INFO", "logger": "infra.cross_volume.storage", "message": "ripple.db initialized at /tmp/pytest-of-ailearn/pytest-9213/test_adjacency_lookup_used_by_0/ripple.db", "module": "storage", "function": "__init__", "line": 194}
 {"timestamp": "2026-07-15T05:21:32.167481+00:00", "level": "INFO", "logger": "infra.cross_volume.storage", "message": "ripple.db initialized at /tmp/pytest-of-ailearn/pytest-9213/test_register_edge_in_indexes_0/ripple.db", "module": "storage", "function": "__init__", "line": 194}
+{"timestamp": "2026-07-15T09:49:18.501486+00:00", "level": "INFO", "logger": "httpx", "message": "HTTP Request: GET http://localhost:6333/collections \"HTTP/1.1 200 OK\"", "module": "_client", "function": "_send_single_request", "line": 1025}
+{"timestamp": "2026-07-15T09:49:18.506447+00:00", "level": "INFO", "logger": "lingwen", "message": "MemoryGateway \u521d\u59cb\u5316\u6210\u529f", "module": "memory_service", "function": "get_memory_gateway", "line": 277}
+{"timestamp": "2026-07-15T10:27:01.163103+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T10:27:06.248602+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T10:32:49.789573+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T10:32:54.886330+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T10:33:24.293252+00:00", "level": "INFO", "logger": "infra.consistency.checkers.narrative_perspective_checker", "message": "narrative_perspective: \u4ece /home/ailearn/projects/LingWen/tools/rules/narrative_perspective_rules.yaml \u52a0\u8f7d 23 \u6761\u89c4\u5219", "module": "narrative_perspective_checker", "function": "_load_patterns", "line": 184}
+{"timestamp": "2026-07-15T10:37:12.772103+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T10:37:17.869593+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T10:49:22.628421+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T10:49:27.719160+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T10:59:31.832924+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T11:02:37.813684+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T11:07:32.672808+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T11:07:37.766269+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T11:08:05.773978+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T11:08:10.856274+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T11:15:30.584674+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T11:15:35.677669+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T11:30:01.204848+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T11:30:06.264776+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:04:24.235443+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:13:52.734839+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:15:01.590806+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:15:56.537498+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:15:56.544244+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:15:57.565487+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:16:00.747306+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:16:01.763491+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:16:12.778189+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:17:00.652903+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:17:29.230980+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:17:29.255383+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:17:29.584812+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T12:28:07.636371+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:28:07.637818+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-15T12:28:12.744936+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-15T19:29:11.395028+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:11:01.373023+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:14:29.752058+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:17:50.159526+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:17:50.893672+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:28:40.383352+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:28:40.391257+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:28:40.662842+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:30:42.084747+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:30:43.792794+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:32:03.471316+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=4)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:32:03.811326+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=3)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:35:59.415186+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:35:59.971553+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:36:36.542114+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:36:36.542465+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:36:41.661719+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T01:49:06.119013+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T01:49:07.366247+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=2)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T05:18:49.957475+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=3)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T05:19:03.720542+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=2)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T05:19:10.163917+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=1)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T06:51:54.371426+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T06:51:57.513547+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}
+{"timestamp": "2026-07-16T06:52:03.023882+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws disconnected (total=0)", "module": "ws", "function": "disconnect", "line": 54}
+{"timestamp": "2026-07-16T09:15:20.753816+00:00", "level": "INFO", "logger": "dashboard.ws", "message": "ws connected (total=1)", "module": "ws", "function": "connect", "line": 49}

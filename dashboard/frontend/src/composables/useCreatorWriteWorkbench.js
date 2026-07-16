@@ -43,7 +43,7 @@ export function useCreatorWriteWorkbench(deps) {
     focusParagraphByIndex,
   } = deps;
 
-  const leftPanelCollapsed = ref(false);
+  const leftPanelCollapsed = ref(true);
   const intentText = ref('');
   const intentGenre = ref('');
   const intentMood = ref('');

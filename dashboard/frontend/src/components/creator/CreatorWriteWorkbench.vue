@@ -1,614 +1,607 @@
 <template>
   <div
-    class="write-workbench"
+    class="writer-desk"
     :class="{
-      'write-workbench--collapsed': wb.leftPanelCollapsed,
-      'write-workbench--human-first': wb.humanFirstDesk,
+      'writer-desk--sidebar-collapsed': wb.leftPanelCollapsed,
+      'writer-desk--chat-open': showChatPanel,
     }"
-    data-testid="creator-write-workbench"
+    data-testid="writer-desk"
   >
-    <aside class="write-workbench__left" data-testid="write-workbench-left">
-      <button
-        type="button"
-        class="write-workbench__collapse-btn"
-        data-testid="write-workbench-collapse-btn"
-        :aria-label="wb.leftPanelCollapsed ? '展开左侧面板' : '折叠左侧面板'"
-        :aria-expanded="!wb.leftPanelCollapsed"
-        @click="wb.leftPanelCollapsed = !wb.leftPanelCollapsed"
-      >
-        {{ wb.leftPanelCollapsed ? '›' : '‹' }}
-      </button>
-
-      <template v-if="!wb.leftPanelCollapsed">
-        <div class="write-workbench__tabs" role="tablist">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            type="button"
-            class="write-workbench__tab"
-            :class="{ 'write-workbench__tab--active': activeTab === tab.id }"
-            role="tab"
-            :aria-selected="activeTab === tab.id"
-            :data-testid="`write-tab-${tab.id}`"
-            @click="activeTab = tab.id"
-          >
-            <span class="write-workbench__tab-icon">{{ tab.icon }}</span>
-            <span class="write-workbench__tab-label">{{ tab.label }}</span>
-          </button>
-        </div>
-
-        <div class="write-workbench__tab-content">
-          <div v-show="activeTab === 'write'" class="write-workbench__panel" data-testid="write-section-core">
-            <div
-              v-if="$slots.chapters"
-              class="write-workbench__stack write-workbench__stack--chapters"
-              data-testid="write-chapter-rail"
-            >
-              <p class="write-workbench__section-title">章节列表</p>
-              <slot name="chapters" />
-            </div>
-
-            <div class="write-workbench__card" data-testid="write-goal-card">
-              <p class="write-workbench__card-title">写作目标</p>
-              <p class="meta-line">{{ wb.goalCardLines.line1 }}</p>
-              <p class="meta-line">{{ wb.goalCardLines.line2 }}</p>
-              <p class="meta-line">{{ wb.goalCardLines.line3 }}</p>
-            </div>
-
-            <div class="write-workbench__card" data-testid="write-intent-card">
-              <p class="write-workbench__card-title">本章意图</p>
-              <input
-                v-model="wb.intentText"
-                type="text"
-                class="form-input pixel-border"
-                placeholder="一句话描述本章要写什么…"
-                data-testid="write-intent-input"
-                aria-label="本章写作意图输入框"
-                aria-describedby="write-intent-hint"
-              />
-              <div class="write-workbench__chips">
-                <button
-                  v-for="tag in moodTags"
-                  :key="tag"
-                  type="button"
-                  class="write-workbench__chip"
-                  :class="{ 'write-workbench__chip--active': wb.intentMood === tag }"
-                  @click="wb.intentMood = wb.intentMood === tag ? '' : tag"
-                >
-                  {{ tag }}
-                </button>
-              </div>
-              <button
-                type="button"
-                class="save-btn pixel-border"
-                style="margin-top: 10px; width: 100%"
-                data-testid="write-quick-start-btn"
-                :disabled="wb.generateRunning"
-                aria-label="一键开写，根据当前意图生成章节内容"
-                :aria-busy="wb.generateRunning"
-                @click="wb.startQuickWrite()"
-              >
-                开始写作
-              </button>
-            </div>
-
-            <div
-              v-if="wb.isPanelVisible('chapterEntityRail')"
-              class="write-workbench__card"
-              data-testid="write-chapter-entity-panel"
-            >
-              <p class="write-workbench__card-title">本章实体</p>
-              <CreatorChapterEntityRail :entities="wb.chapterEntities" hide-title />
-            </div>
-          </div>
-
-          <div v-show="activeTab === 'ai'" class="write-workbench__panel" data-testid="write-section-ai">
-            <div
-              v-if="wb.isLeftRailPanelVisible('directorPaths')"
-              class="write-workbench__card"
-              data-testid="write-director-paths-panel"
-            >
-              <p class="write-workbench__card-title">下一步路径</p>
-              <CreatorDirectorPaths
-                hide-title
-                :paths="wb.agent.directorPaths"
-                :advice="wb.agent.directorAdvice"
-                :generating="wb.agent.generating"
-                @run="wb.agent.runDirectorPath"
-                @dismiss-advice="wb.agent.dismissAdvice"
-              />
-            </div>
-
-            <div
-              v-if="wb.isPanelVisible('selectionRewriteToolbar') && wb.hasBodySelection"
-              class="write-workbench__card"
-              data-testid="write-selection-tools"
-            >
-              <p class="write-workbench__card-title">选区微调</p>
-              <div class="write-workbench__chips">
-                <button
-                  v-for="(label, id) in wb.agent.rewritePresets"
-                  :key="id"
-                  type="button"
-                  class="write-workbench__chip"
-                  :data-testid="`rewrite-preset-${id}`"
-                  :disabled="wb.agent.generating"
-                  :aria-label="`应用${label}改写预设`"
-                  :aria-busy="wb.agent.generating"
-                  @click="wb.agent.runRewritePreset(id)"
-                >
-                  {{ label }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-show="activeTab === 'check'" class="write-workbench__panel" data-testid="write-section-consistency">
-            <div
-              v-if="wb.isLeftRailPanelVisible('consistencyRail')"
-              class="write-workbench__card"
-              data-testid="write-consistency-panel"
-            >
-              <p class="write-workbench__card-title">一致性检查</p>
-              <CreatorConsistencyRail :items="wb.consistencyItems" hide-title />
-            </div>
-          </div>
-
-          <div v-show="activeTab === 'version'" class="write-workbench__panel" data-testid="write-section-version">
-            <div
-              v-if="wb.isLeftRailPanelVisible('versionCheckpointList')"
-              class="write-workbench__card"
-            >
-              <p class="write-workbench__card-title">版本历史</p>
-              <ul v-if="wb.checkpoints.length" class="write-workbench__version-list">
-                <li
-                  v-for="cp in wb.checkpoints"
-                  :key="cp.id"
-                  class="write-workbench__version-item"
-                >
-                  <span>{{ cp.label }}</span>
-                  <div class="write-workbench__version-actions">
-                    <button
-                      v-if="wb.isPanelVisible('checkpointDiff')"
-                      type="button"
-                      class="mini-btn pixel-border"
-                      :data-testid="`checkpoint-diff-${cp.id}`"
-                      @click="wb.openCheckpointDiff(cp.id)"
-                    >
-                      对比
-                    </button>
-                    <button type="button" class="mini-btn pixel-border" @click="wb.restoreCheckpoint(cp.id)">恢复</button>
-                  </div>
-                </li>
-              </ul>
-              <p v-else class="meta-line">确认应用后会在此记录回滚点</p>
-              <CreatorCheckpointDiff
-                v-if="wb.isPanelVisible('checkpointDiff')"
-                :diff-view="wb.diffView"
-                @close="wb.closeCheckpointDiff"
-              />
-              <button
-                v-if="wb.agent.lastCheckpointId"
-                type="button"
-                class="mini-btn pixel-border"
-                data-testid="write-undo-last-btn"
-                @click="wb.agent.undoLastApply()"
-              >
-                撤销上次应用
-              </button>
-            </div>
-          </div>
-        </div>
-      </template>
-    </aside>
-
-    <div class="write-workbench__main">
-      <div class="write-workbench__header">
-        <CreatorWriteScopeBar
-          v-if="wb.isPanelVisible('scopeBar')"
-          :scope="wb.agent.currentScope"
-          :human-first="wb.humanFirstDesk"
-        />
-
-        <div class="write-workbench__header-actions">
-          <div data-testid="companion-logic-check-write">
-            <button
-              type="button"
-              class="write-workbench__action-btn"
-              data-testid="run-companion-logic-check-btn"
-              :disabled="w.logicCheckRunning"
-              @click="w.runCompanionLogicCheck"
-            >
-              {{ w.logicCheckRunning ? '检查中…' : '逻辑审查' }}
-            </button>
-            <span
-              v-if="w.logicCheckResult"
-              class="write-workbench__header-status"
-              data-testid="companion-logic-check-write-result"
-            >
-              {{ w.logicCheckResult.passed ? '通过' : '有问题' }}
-            </span>
-          </div>
-        </div>
+    <header class="writer-desk__header">
+      <div class="writer-desk__header-left">
+        <button
+          type="button"
+          class="writer-desk__sidebar-toggle"
+          data-testid="sidebar-toggle"
+          @click="wb.leftPanelCollapsed = !wb.leftPanelCollapsed"
+        >
+          {{ wb.leftPanelCollapsed ? '☰' : '✕' }}
+        </button>
+        <span class="writer-desk__title">{{ w.overview?.name || '写作中' }}</span>
       </div>
+      <div class="writer-desk__header-center">
+        <span class="writer-desk__chapter-indicator">第 {{ w.selectedChapter }} 章</span>
+        <button
+          type="button"
+          class="writer-desk__action-btn"
+          :disabled="w.logicCheckRunning"
+          @click="w.runCompanionLogicCheck"
+        >
+          <span>✓</span>
+          <span>{{ w.logicCheckRunning ? '检查中…' : '逻辑检查' }}</span>
+        </button>
+        <span
+          v-if="w.logicCheckResult"
+          class="writer-desk__check-status"
+          :class="{ 'writer-desk__check-status--passed': w.logicCheckResult.passed }"
+        >
+          {{ w.logicCheckResult.passed ? '✓ 通过' : '✗ 有问题' }}
+        </span>
+      </div>
+      <div class="writer-desk__header-right">
+        <button
+          type="button"
+          class="writer-desk__chat-toggle"
+          :class="{ 'writer-desk__chat-toggle--active': showChatPanel }"
+          @click="showChatPanel = !showChatPanel"
+        >
+          <span>💬</span>
+          <span>{{ showChatPanel ? '收起对话' : 'AI对话' }}</span>
+        </button>
+      </div>
+    </header>
 
-      <div class="write-workbench__toolbar">
-        <div class="write-workbench__toolbar-group">
-          <span class="write-workbench__toolbar-label">文风</span>
+    <div class="writer-desk__body">
+      <aside class="writer-desk__sidebar" v-show="!wb.leftPanelCollapsed">
+        <section class="writer-desk__sidebar-section">
+          <h2 class="writer-desk__sidebar-title">章节列表</h2>
+          <div class="writer-desk__chapter-list">
+            <slot name="chapters" />
+          </div>
+        </section>
+
+        <section class="writer-desk__sidebar-section">
+          <h2 class="writer-desk__sidebar-title">本章意图</h2>
           <input
-            type="range"
-            min="0"
-            max="3"
-            step="1"
-            class="write-workbench__slider"
-            data-testid="style-strength-slider"
-            :value="wb.styleStrength"
-            @input="wb.styleStrength = Number($event.target.value)"
+            v-model="wb.intentText"
+            type="text"
+            class="writer-desk__intent-input"
+            placeholder="本章要写什么…"
           />
-          <span class="write-workbench__slider-label">{{ strengthLabels[wb.styleStrength] }}</span>
-        </div>
-        <div class="write-workbench__toolbar-group">
-          <button
-            type="button"
-            class="write-workbench__chip"
-            :class="{ 'write-workbench__chip--active': wb.allowWorldbuildingFill }"
-            data-testid="allow-worldbuilding-toggle"
-            @click="wb.allowWorldbuildingFill = !wb.allowWorldbuildingFill"
-          >
-            补全设定
-          </button>
-        </div>
-      </div>
+          <div class="writer-desk__mood-tags">
+            <button
+              v-for="tag in moodTags"
+              :key="tag"
+              type="button"
+              class="writer-desk__mood-tag"
+              :class="{ 'writer-desk__mood-tag--active': wb.intentMood === tag }"
+              @click="wb.intentMood = wb.intentMood === tag ? '' : tag"
+            >
+              {{ tag }}
+            </button>
+          </div>
+        </section>
 
-      <CreatorWriteMicroTaskBar
-        v-if="wb.isPanelVisible('microTaskBar') && wb.humanFirstDesk"
-        :draft="w.chapterBodyDraft"
-        :creation-mode="w.overview?.creation_mode || 'companion'"
-      />
+        <section class="writer-desk__sidebar-section">
+          <h2 class="writer-desk__sidebar-title">写作目标</h2>
+          <p class="writer-desk__goal-line">{{ wb.goalCardLines.line1 }}</p>
+          <p class="writer-desk__goal-line">{{ wb.goalCardLines.line2 }}</p>
+        </section>
+      </aside>
 
-      <CreatorLightValidationBar
-        v-if="wb.isPanelVisible('lightValidationBar') && w.selectedChapter"
-        :issues="wb.lightValidationIssues"
-        :running="wb.lightValidationRunning"
-        @focus="wb.focusLightValidationIssue"
-      />
-
-      <div class="write-workbench__editor-wrapper">
-        <div class="write-workbench__editor-slot write-workbench__editor-slot--primary">
+      <main class="writer-desk__editor">
+        <div class="writer-desk__editor-inner">
           <slot />
         </div>
-      </div>
+      </main>
 
-      <div class="write-workbench__footer">
-        <div
-          v-if="wb.isPanelVisible('qualityFeedbackBar') && (wb.agent.statusLine || wb.qualityHints.length)"
-          class="write-workbench__quality"
-          data-testid="write-quality-bar-main"
-        >
-          <span class="write-workbench__quality-label">写作反馈</span>
-          <span v-if="wb.agent.statusLine" class="meta-line">{{ wb.agent.statusLine }}</span>
-          <span
-            v-for="(hint, idx) in wb.qualityHints"
-            :key="idx"
-            class="write-workbench__quality-item"
-            :class="`write-workbench__quality-item--${hint.level}`"
-          >
-            {{ hint.text }}
-            <button type="button" class="mini-btn" @click="wb.dismissQualityHint(idx)">忽略</button>
-          </span>
+      <aside class="writer-desk__chat-panel" v-show="showChatPanel">
+        <div class="writer-desk__chat-header">
+          <h2 class="writer-desk__chat-title">AI 对话</h2>
+          <button type="button" class="writer-desk__chat-close" @click="showChatPanel = false">✕</button>
         </div>
-
-        <div class="write-workbench__action-bar">
+        <div class="writer-desk__chat-messages">
+          <div
+            v-for="(msg, idx) in chatMessages"
+            :key="idx"
+            class="writer-desk__chat-message"
+            :class="{ 'writer-desk__chat-message--user': msg.role === 'user' }"
+          >
+            <span class="writer-desk__chat-role">{{ msg.role === 'user' ? '你' : 'AI' }}</span>
+            <p class="writer-desk__chat-content">{{ msg.content }}</p>
+          </div>
+          <div v-if="wb.agent.generating" class="writer-desk__chat-typing">
+            AI 正在思考…
+          </div>
+        </div>
+        <div class="writer-desk__chat-input">
+          <input
+            v-model="chatInput"
+            type="text"
+            class="writer-desk__chat-textarea"
+            placeholder="和AI讨论你的想法…"
+            @keydown.enter="sendChatMessage"
+          />
           <button
             type="button"
-            class="write-workbench__btn-primary"
-            data-testid="write-generate-btn"
-            :disabled="wb.generateRunning || wb.agent.generating"
-            @click="wb.startQuickWrite()"
+            class="writer-desk__chat-send"
+            :disabled="!chatInput.trim() || wb.agent.generating"
+            @click="sendChatMessage"
           >
-            {{ wb.generateRunning ? '生成中…' : '✨ AI生成' }}
+            发送
           </button>
-
-          <div class="write-workbench__btn-group">
-            <button
-              type="button"
-              class="write-workbench__btn-secondary"
-              :disabled="!wb.agent.lastCheckpointId"
-              data-testid="write-undo-last-btn"
-              @click="wb.agent.undoLastApply()"
-            >
-              撤销
-            </button>
-            <button
-              type="button"
-              class="write-workbench__btn-secondary"
-              @click="showAdvancePanel = !showAdvancePanel"
-            >
-              {{ showAdvancePanel ? '收起' : '更多' }}
-            </button>
-          </div>
         </div>
-
-        <div v-if="showAdvancePanel" class="write-workbench__advance-panel">
-          <div class="write-workbench__advance-section">
-            <p class="write-workbench__advance-title">补充指令</p>
-            <form class="write-workbench__agent-form" @submit.prevent="wb.agent.submitPrompt()">
-              <input
-                v-model="wb.agent.promptInput"
-                type="text"
-                class="form-input pixel-border"
-                placeholder="输入补充指令…"
-                data-testid="write-agent-input"
-              />
-              <button type="submit" class="save-btn pixel-border" data-testid="write-agent-send-btn">发送</button>
-            </form>
-          </div>
-
-          <div v-if="wb.agent.pendingPlan && !wb.agent.pendingPlan.adviceOnly" class="write-workbench__plan-card">
-            <p class="write-workbench__card-title">确认应用</p>
-            <p class="meta-line">将对 <strong>{{ wb.agent.pendingPlan.scope?.label }}</strong> 执行：{{ wb.agent.pendingPlan.actionLabel }}</p>
-            <p class="meta-line">{{ wb.agent.statusLine }}</p>
-            <div class="write-workbench__toolbar-group">
-              <button type="button" class="save-btn pixel-border" data-testid="write-director-confirm-btn" :disabled="!wb.agent.pendingPlan?.selectedCandidateId" @click="wb.agent.confirmApply()">确认应用</button>
-              <button type="button" class="save-btn save-btn--secondary pixel-border" @click="wb.agent.cancelPlan()">取消</button>
-            </div>
-          </div>
-
-          <div v-if="wb.isPanelVisible('candidatePreviewDock') && wb.agent.candidates.length" class="write-workbench__card">
-            <p class="write-workbench__card-title">候选预览（{{ wb.agent.candidates.length }}）</p>
-            <div class="write-workbench__candidates">
-              <button
-                v-for="cand in wb.agent.candidates"
-                :key="cand.id"
-                type="button"
-                class="write-workbench__candidate"
-                :class="{ 'write-workbench__candidate--selected': wb.agent.pendingPlan?.selectedCandidateId === cand.id }"
-                :data-testid="`write-candidate-${cand.id}`"
-                @click="wb.agent.selectCandidate(cand.id)"
-              >
-                <strong>{{ cand.label }}</strong> · {{ cand.direction }}
-                <pre class="preview-text">{{ cand.text.slice(0, 120) }}…</pre>
-              </button>
-            </div>
-          </div>
-
-          <CreatorAgentAnnotations
-            v-if="wb.isPanelVisible('agentLensSwitcher') && wb.agent.annotations.length"
-            main-bar
-            :annotations="wb.agent.annotations"
-            :lens="wb.agent.agentLens"
-            @focus="wb.agent.focusAnnotation"
-          />
-
-          <CreatorAgentStreamPreview
-            v-if="showAgentStreamPreview"
-            main-bar
-            :preview-text="wb.agent.streamPreviewText"
-            :display-text="wb.agent.streamDisplayText"
-            :preview-label="wb.agent.streamPreviewLabel"
-            :stream-source="wb.agent.streamSource"
-            :advice-lines="wb.agent.streamAdvicePreview"
-          />
-        </div>
-      </div>
+      </aside>
     </div>
+
+    <footer class="writer-desk__footer">
+      <div class="writer-desk__footer-left">
+        <span class="writer-desk__progress">
+          已完成 {{ w.overview?.chapters_written || 0 }}/{{ w.overview?.max_chapter || 0 }} 章
+        </span>
+      </div>
+      <div class="writer-desk__footer-right">
+        <button
+          type="button"
+          class="writer-desk__generate-btn"
+          :disabled="wb.generateRunning || wb.agent.generating"
+          @click="wb.startQuickWrite()"
+        >
+          <span>✨</span>
+          <span>{{ wb.generateRunning ? '生成中…' : 'AI 生成' }}</span>
+        </button>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue';
+import { inject, ref } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
-import CreatorAgentStreamPreview from './CreatorAgentStreamPreview.vue';
-import CreatorWriteScopeBar from './CreatorWriteScopeBar.vue';
-import CreatorWriteMicroTaskBar from './CreatorWriteMicroTaskBar.vue';
-import CreatorLightValidationBar from './CreatorLightValidationBar.vue';
-import CreatorDirectorPaths from './CreatorDirectorPaths.vue';
-import CreatorAgentAnnotations from './CreatorAgentAnnotations.vue';
-import CreatorConsistencyRail from './CreatorConsistencyRail.vue';
-import CreatorCheckpointDiff from './CreatorCheckpointDiff.vue';
-import CreatorChapterEntityRail from './CreatorChapterEntityRail.vue';
 import '../../assets/creator-write-workbench.css';
 
 const w = inject(CREATOR_WRITE_KEY);
 const wb = w.wb;
-const showAdvancePanel = ref(false);
-const activeTab = ref('write');
-
-const tabs = [
-  { id: 'write', label: '写作', icon: '✎' },
-  { id: 'ai', label: 'AI', icon: '⚡' },
-  { id: 'check', label: '检查', icon: '✓' },
-  { id: 'version', label: '版本', icon: '◇' },
-];
-
-const strengthLabels = ['自然', '略强', '较强', '强烈'];
-
-const showAgentStreamPreview = computed(() => {
-  const agent = wb.agent;
-  const previewText = agent.streamPreviewText?.value ?? agent.streamPreviewText ?? '';
-  const advice = agent.streamAdvicePreview?.value ?? agent.streamAdvicePreview ?? [];
-  const generating = agent.generating?.value ?? agent.generating ?? false;
-  return Boolean(generating && (previewText || advice.length));
-});
 
 const moodTags = ['克制', '戏剧', '幽默', '抒情'];
+const showChatPanel = ref(false);
+const chatInput = ref('');
+const chatMessages = ref([
+  { role: 'assistant', content: '你好！我是你的写作助手。有什么可以帮你的吗？' },
+]);
+
+async function sendChatMessage() {
+  if (!chatInput.value.trim() || wb.agent.generating) return;
+  
+  const text = chatInput.value.trim();
+  chatMessages.value.push({ role: 'user', content: text });
+  chatInput.value = '';
+  
+  await wb.agent.submitPrompt(text);
+  
+  if (wb.agent.streamDisplayText) {
+    chatMessages.value.push({ role: 'assistant', content: wb.agent.streamDisplayText });
+  }
+}
 </script>
 
 <style scoped>
-.meta-line {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-}
-.form-input {
-  width: 100%;
-  font-size: var(--text-sm);
-  padding: 6px 8px;
-}
-.mini-btn {
-  font-size: var(--text-xs);
-  padding: 2px 6px;
-  cursor: pointer;
-}
-.save-btn {
-  font-size: var(--text-sm);
-  padding: 6px 14px;
-  cursor: pointer;
-}
-.preview-text {
-  white-space: pre-wrap;
-  font-size: 10px;
-  margin: 4px 0 0;
-}
-.write-workbench__version-actions {
+.writer-desk {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-primary);
 }
 
-.write-workbench__header {
+.writer-desk__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: var(--space-sm);
+  padding: 10px 20px;
+  background: var(--bg-secondary);
   border-bottom: var(--border-width) solid var(--border-color);
-  margin-bottom: var(--space-sm);
+  flex-shrink: 0;
+  height: 48px;
+  box-sizing: border-box;
 }
 
-.write-workbench__header-actions {
+.writer-desk__header-left {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 12px;
 }
 
-.write-workbench__action-btn {
+.writer-desk__sidebar-toggle {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.writer-desk__sidebar-toggle:hover {
+  background: var(--bg-muted);
+  color: var(--color-text);
+}
+
+.writer-desk__title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+}
+
+.writer-desk__header-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.writer-desk__chapter-indicator {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  padding: 4px 12px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+}
+
+.writer-desk__action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--text-sm);
   padding: 6px 14px;
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.writer-desk__action-btn:hover:not(:disabled) {
+  background: var(--bg-muted);
+  border-color: var(--color-accent-muted);
+  color: var(--color-text);
+}
+
+.writer-desk__action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.writer-desk__check-status {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(200, 80, 80, 0.1);
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.writer-desk__check-status--passed {
+  background: rgba(80, 180, 100, 0.1);
+  color: var(--color-success);
+}
+
+.writer-desk__header-right {
+  display: flex;
+  align-items: center;
+}
+
+.writer-desk__chat-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  padding: 6px 14px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.writer-desk__chat-toggle:hover {
+  background: var(--bg-muted);
+  border-color: var(--color-accent-muted);
+  color: var(--color-text);
+}
+
+.writer-desk__chat-toggle--active {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.writer-desk__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.writer-desk__sidebar {
+  width: 260px;
+  flex-shrink: 0;
   background: var(--bg-secondary);
+  border-right: var(--border-width) solid var(--border-color);
+  overflow-y: auto;
+  transition: width 0.3s ease;
+}
+
+.writer-desk--sidebar-collapsed .writer-desk__sidebar {
+  width: 0;
+  overflow: hidden;
+  border-right: none;
+}
+
+.writer-desk__sidebar-section {
+  padding: 16px;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.writer-desk__sidebar-section:last-child {
+  border-bottom: none;
+}
+
+.writer-desk__sidebar-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 12px;
+}
+
+.writer-desk__chapter-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.writer-desk__intent-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.writer-desk__intent-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.writer-desk__mood-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.writer-desk__mood-tag {
+  font-size: var(--text-xs);
+  padding: 5px 12px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-primary);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.writer-desk__mood-tag:hover {
+  border-color: var(--color-accent-muted);
+}
+
+.writer-desk__mood-tag--active {
+  background: var(--gradient-accent);
+  color: var(--color-on-accent);
+  border-color: transparent;
+}
+
+.writer-desk__goal-line {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.writer-desk__editor {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-primary);
+}
+
+.writer-desk__editor-inner {
+  width: 100%;
+  max-width: 900px;
+  min-height: 100%;
+}
+
+.writer-desk__chat-panel {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-left: var(--border-width) solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.writer-desk__chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: var(--border-width) solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.writer-desk__chat-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.writer-desk__chat-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.writer-desk__chat-close:hover {
+  background: var(--bg-muted);
+  color: var(--color-text);
+}
+
+.writer-desk__chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.writer-desk__chat-message {
+  margin-bottom: 16px;
+}
+
+.writer-desk__chat-message--user {
+  text-align: right;
+}
+
+.writer-desk__chat-role {
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.writer-desk__chat-content {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.6;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  margin: 0;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.writer-desk__chat-message--user .writer-desk__chat-content {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.writer-desk__chat-typing {
+  font-size: var(--text-sm);
+  color: var(--color-text-dim);
+  padding: 8px 12px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+}
+
+.writer-desk__chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: var(--border-width) solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.writer-desk__chat-textarea {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  box-sizing: border-box;
+}
+
+.writer-desk__chat-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.writer-desk__chat-send {
+  padding: 8px 16px;
+  font-size: var(--text-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-accent);
+  color: var(--color-on-accent);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.write-workbench__action-btn:hover:not(:disabled) {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  border-color: var(--color-accent-muted);
+.writer-desk__chat-send:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
-.write-workbench__header-status {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+.writer-desk__chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.write-workbench__toolbar {
+.writer-desk__footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--bg-muted);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-sm);
-}
-
-.write-workbench__toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.write-workbench__toolbar-label {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.write-workbench__slider {
-  width: 100px;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--border-color);
-  border-radius: 999px;
-  outline: none;
-}
-
-.write-workbench__slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--gradient-accent);
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(168, 90, 50, 0.3);
-}
-
-.write-workbench__slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--gradient-accent);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 6px rgba(168, 90, 50, 0.3);
-}
-
-.write-workbench__slider-label {
-  font-size: var(--text-xs);
-  color: var(--color-accent);
-  font-weight: 500;
-  min-width: 36px;
-}
-
-.write-workbench__editor-wrapper {
-  flex: 1;
-  min-height: 400px;
-  overflow-y: auto;
-}
-
-.write-workbench__footer {
-  margin-top: var(--space-md);
+  padding: 10px 20px;
+  background: var(--bg-secondary);
   border-top: var(--border-width) solid var(--border-color);
-  padding-top: var(--space-md);
+  flex-shrink: 0;
+  height: 48px;
+  box-sizing: border-box;
 }
 
-.write-workbench__quality {
+.writer-desk__footer-left {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.writer-desk__progress {
+  font-weight: 500;
+}
+
+.writer-desk__footer-right {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  align-items: center;
-  padding: var(--space-sm) var(--space-md);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-muted);
-  font-size: var(--text-xs);
-  margin-bottom: var(--space-md);
+  gap: 12px;
 }
 
-.write-workbench__quality-label {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--color-accent);
-  margin-right: var(--space-sm);
-}
-
-.write-workbench__quality-item--ok { color: var(--color-success); }
-.write-workbench__quality-item--warn { color: var(--color-warning); }
-.write-workbench__quality-item--info { color: var(--color-text-dim); }
-
-.write-workbench__action-bar {
+.writer-desk__generate-btn {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: var(--space-md);
-}
-
-.write-workbench__btn-primary {
+  gap: 8px;
   font-size: var(--text-base);
   font-weight: 600;
-  padding: 10px 24px;
+  padding: 8px 24px;
   background: var(--gradient-accent);
   color: var(--color-on-accent);
   border: none;
@@ -617,73 +610,68 @@ const moodTags = ['克制', '戏剧', '幽默', '抒情'];
   transition: all 0.2s ease;
 }
 
-.write-workbench__btn-primary:hover:not(:disabled) {
+.writer-desk__generate-btn:hover:not(:disabled) {
   filter: brightness(1.08);
-  box-shadow: 0 4px 16px rgba(168, 90, 50, 0.2);
+  box-shadow: 0 4px 16px rgba(168, 90, 50, 0.25);
+  transform: translateY(-1px);
 }
 
-.write-workbench__btn-primary:disabled {
+.writer-desk__generate-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.writer-desk__generate-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.write-workbench__btn-group {
-  display: flex;
-  gap: 8px;
-}
+@media (max-width: 768px) {
+  .writer-desk__header {
+    padding: 10px 12px;
+  }
 
-.write-workbench__btn-secondary {
-  font-size: var(--text-sm);
-  padding: 8px 16px;
-  background: var(--bg-muted);
-  color: var(--color-text-secondary);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+  .writer-desk__header-center {
+    gap: 8px;
+  }
 
-.write-workbench__btn-secondary:hover:not(:disabled) {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  border-color: var(--color-accent-muted);
-}
+  .writer-desk__chapter-indicator {
+    display: none;
+  }
 
-.write-workbench__btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+  .writer-desk__sidebar {
+    position: fixed;
+    left: 0;
+    top: 48px;
+    bottom: 48px;
+    z-index: 100;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+  }
 
-.write-workbench__advance-panel {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
+  .writer-desk--sidebar-collapsed .writer-desk__sidebar {
+    left: -260px;
+  }
 
-.write-workbench__advance-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+  .writer-desk__chat-panel {
+    position: fixed;
+    right: 0;
+    top: 48px;
+    bottom: 48px;
+    z-index: 100;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    width: 280px;
+  }
 
-.write-workbench__advance-title {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0;
-}
+  .writer-desk__editor {
+    padding: 16px;
+  }
 
-.write-workbench__agent-form {
-  display: flex;
-  gap: 8px;
-}
+  .writer-desk__footer {
+    padding: 10px 12px;
+  }
 
-.write-workbench__agent-form .form-input {
-  flex: 1;
+  .writer-desk__generate-btn {
+    padding: 8px 16px;
+    font-size: var(--text-sm);
+  }
 }
 </style>

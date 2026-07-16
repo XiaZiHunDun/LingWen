@@ -1,26 +1,16 @@
 <template>
-  <div class="dashboard" data-testid="app-root">
-    <!-- Sidebar -->
+  <NConfigProvider :theme-overrides="lingwenThemeConfig">
+    <div class="dashboard" data-testid="app-root">
+      <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
       <div class="sidebar-header" :class="{ 'sidebar-header--human': isHumanFirstShell }">
         <div class="sidebar-brand">
           <img src="/assets/brand/moling-logo.jpg" alt="墨灵Logo" class="sidebar-logo" aria-hidden="true" />
           <div class="sidebar-brand-text">
             <h2 class="sidebar-title" data-testid="sidebar-product-name">{{ BRAND_PRODUCT_NAME }}</h2>
-            <p v-if="!isHumanFirstShell" class="sidebar-tagline">{{ BRAND_PRODUCT_TAGLINE }}</p>
           </div>
         </div>
-        <span
-          v-if="isHumanFirstShell"
-          class="sidebar-subtitle sidebar-subtitle--human"
-          data-testid="sidebar-book-name"
-          :title="sidebarModeHint"
-        >{{ sidebarModeHint }}</span>
-        <span
-          v-else
-          class="sidebar-subtitle"
-          data-testid="sidebar-mode-hint"
-        >{{ sidebarModeHint }}</span>
+
       </div>
       <nav class="nav-menu">
         <div
@@ -117,9 +107,12 @@
       </main>
     </div>
   </div>
+  </NConfigProvider>
 </template>
 
 <script setup>
+import { NConfigProvider } from 'naive-ui'
+import { lingwenThemeConfig } from './config/naiveTheme.js'
 import TodayPage from './pages/TodayPage.vue'
 import AskPage from './pages/AskPage.vue'
 import AskPageTabs from './components/AskPageTabs.vue'
@@ -351,7 +344,7 @@ function onNavClick(itemId) {
 .sidebar {
   width: var(--sidebar-width);
   flex-shrink: 0;
-  background: var(--bg-secondary);
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
   border-right: var(--border-width) solid var(--border-color);
   padding: var(--space-md) var(--space-sm);
   display: flex;
@@ -360,6 +353,7 @@ function onNavClick(itemId) {
   min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.04);
 }
 
 .sidebar-header {
@@ -484,57 +478,74 @@ function onNavClick(itemId) {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 10px var(--space-md);
+  padding: 11px var(--space-md);
   text-decoration: none;
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
   font-family: var(--font-ui);
   font-weight: 500;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   position: relative;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  border-radius: 0 3px 3px 0;
+  transition: background var(--transition-normal);
 }
 
 .nav-item:hover {
   background-color: var(--bg-muted);
   color: var(--color-text);
+  transform: translateX(2px);
+}
+
+.nav-item:hover::after {
+  background: var(--color-accent);
 }
 
 .nav-item--active {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
+  background: linear-gradient(135deg, var(--color-accent-soft) 0%, var(--color-accent) 100%);
+  color: var(--color-on-accent);
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
 }
 
-.nav-item--active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--gradient-accent);
-  box-shadow: 0 0 8px rgba(156, 74, 42, 0.3);
+.nav-item--active::after {
+  background: var(--color-accent);
 }
 
 .nav-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text-dim);
   background: var(--bg-muted);
-  border-radius: 6px;
+  border-radius: 8px;
   flex-shrink: 0;
+  transition: all var(--transition-normal);
+}
+
+.nav-item:hover .nav-icon {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 
 .nav-item--active .nav-icon {
-  background: var(--color-accent);
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
@@ -669,6 +680,20 @@ function onNavClick(itemId) {
   min-height: 0;
   overflow: hidden;
   padding: 0;
+}
+
+.main-content {
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+.main-content.page-transition-enter {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.main-content.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .sidebar-footer {

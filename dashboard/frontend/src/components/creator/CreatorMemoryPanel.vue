@@ -1,11 +1,8 @@
-<!--
-  CreatorMemoryPanel.vue — 记忆库独立工作区 Tab
--->
 <template>
   <section
     v-show="pt.isWorkspaceColumnVisible('memory')"
-    class="creator-column pixel-card"
-    :class="{ 
+    class="creator-column"
+    :class="{
       'creator-column--desk-drawer': pt.deskDrawerActive?.(),
       'creator-column--desk-drawer--open': pt.deskDrawerActive?.(),
     }"
@@ -27,45 +24,35 @@
         关闭
       </button>
     </div>
-    <h2 v-else class="column-title">记忆库</h2>
+    <div class="memory-desk">
+      <div class="memory-desk__hero">
+        <p class="memory-desk__intro">查看和搜索故事中的人物、片段、伏笔等记忆</p>
+      </div>
 
-    <div class="memory-status pixel-border" data-testid="memory-status-bar">
-      <span class="meta-line">
-        RAG：{{ pt.memoryRagEnabled ? '已启用' : '已关闭' }}
-        · 记忆系统：{{ pt.memoryAvailable ? '已连接' : '离线/降级' }}
-      </span>
-      <button
-        type="button"
-        class="mini-btn pixel-border"
-        data-testid="memory-refresh-btn"
-        :disabled="pt.memoryAssetsLoading"
-        @click="pt.loadMemoryAssets"
-      >
-        {{ pt.memoryAssetsLoading ? '刷新中…' : '刷新' }}
-      </button>
+      <div class="memory-desk__content">
+        <div class="memory-search-wrapper">
+          <CreatorMemorySearch />
+        </div>
+
+        <div class="memory-filters">
+          <button
+            v-for="f in filters"
+            :key="f.id"
+            type="button"
+            class="filter-btn"
+            :class="{ 'filter-btn--active': pt.memoryFilter === f.id }"
+            :data-testid="`memory-filter-${f.id}`"
+            @click="pt.memoryFilter = f.id"
+          >
+            {{ f.icon }} {{ f.label }}
+          </button>
+        </div>
+
+        <div class="memory-assets-wrapper">
+          <CreatorMemoryAssetsPanel compact />
+        </div>
+      </div>
     </div>
-
-    <CreatorMemorySearch />
-
-    <div class="memory-filters" data-testid="memory-filters">
-      <button
-        v-for="f in filters"
-        :key="f.id"
-        type="button"
-        class="filter-btn pixel-border"
-        :class="{ 'filter-btn--active': pt.memoryFilter === f.id }"
-        :data-testid="`memory-filter-${f.id}`"
-        @click="pt.memoryFilter = f.id"
-      >
-        {{ f.label }}
-      </button>
-    </div>
-
-    <CreatorMemoryAssetsPanel full />
-
-    <p class="meta-line memory-hint">
-      在「设定 → 创作偏好」中调整记忆 Top-K；向量不可用时自动本地匹配。
-    </p>
   </section>
 </template>
 
@@ -78,43 +65,76 @@ import CreatorMemorySearch from './CreatorMemorySearch.vue';
 const pt = inject(CREATOR_PRODUCT_TOOLS_KEY);
 
 const filters = [
-  { id: 'all', label: '全部' },
-  { id: 'character', label: '角色' },
-  { id: 'memory', label: '片段' },
-  { id: 'foreshadow', label: '伏笔' },
-  { id: 'setting', label: '设定' },
-  { id: 'summary', label: '卷摘要' },
+  { id: 'all', label: '全部', icon: '📋' },
+  { id: 'character', label: '角色', icon: '👤' },
+  { id: 'memory', label: '片段', icon: '📝' },
+  { id: 'foreshadow', label: '伏笔', icon: '🔮' },
+  { id: 'setting', label: '设定', icon: '🌍' },
 ];
 </script>
 
 <style scoped>
-.memory-status {
+.creator-column {
+  padding: 0;
+  min-height: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.memory-desk {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  margin-bottom: var(--space-md);
-  font-size: var(--text-sm);
-  background: var(--bg-muted);
-  border-radius: var(--radius-sm);
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-elevated);
   border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.memory-desk__hero {
+  flex-shrink: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: var(--border-width) solid var(--border-color);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-elevated) 100%);
+}
+
+.memory-desk__intro {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.memory-desk__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.memory-search-wrapper {
+  flex-shrink: 0;
 }
 
 .memory-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: var(--space-md);
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .filter-btn {
   font-size: var(--text-xs);
-  padding: 6px 14px;
+  padding: 6px 12px;
   cursor: pointer;
   border: 1px solid var(--border-color);
   border-radius: 999px;
-  background: var(--bg-elevated);
+  background: var(--bg-primary);
   color: var(--color-text-secondary);
   transition: all 0.18s ease;
 }
@@ -122,7 +142,6 @@ const filters = [
 .filter-btn:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
-  background: var(--color-accent-soft);
 }
 
 .filter-btn--active {
@@ -132,30 +151,17 @@ const filters = [
   font-weight: 600;
 }
 
-.memory-hint {
-  margin-top: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--bg-muted);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
+.memory-assets-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .mini-btn {
   font-size: var(--text-xs);
-  padding: 4px 12px;
+  padding: 4px 10px;
   cursor: pointer;
-  white-space: nowrap;
   border-radius: var(--radius-xs);
-  transition: all 0.15s ease;
-}
-
-.mini-btn:hover:not(:disabled) {
-  background: var(--bg-muted);
-}
-
-.mini-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .desk-drawer-chrome {

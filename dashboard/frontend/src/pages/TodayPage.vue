@@ -4,7 +4,7 @@
 <template>
   <div class="today-page l1-page" data-testid="today-page">
     <div class="today-hero">
-      <img src="/assets/illustrations/creation-scene.jpg" alt="创作场景" class="today-hero__image">
+      <img src="/assets/illustrations/hero_1280x720.jpg" alt="创作场景" class="today-hero__image">
       <div class="today-hero__overlay"></div>
       <div class="today-hero__content">
         <span class="today-hero__tag">AI创作助手</span>
@@ -19,27 +19,7 @@
           inline
           text="任务、健康度与快捷入口——日常写作请回「书桌」"
         />
-        <div class="header-actions">
-          <button
-            v-if="isReviewer"
-            type="button"
-            class="l1-pill"
-            :class="{ 'l1-pill--primary': shareMessage === '已复制链接' }"
-            data-testid="today-share-link-btn"
-            @click="copyShareLink"
-          >
-            {{ shareMessage || '复制审阅链接' }}
-          </button>
-          <button
-            type="button"
-            class="l1-pill"
-            data-testid="refresh-btn"
-            :disabled="loading"
-            @click="reload"
-          >
-            {{ loading ? '加载中…' : '刷新' }}
-          </button>
-        </div>
+
       </div>
 
       <p v-if="snapshot" class="project-line" data-testid="today-project-line">
@@ -68,23 +48,6 @@
       >
         {{ snapshot.primaryAction.label }}
       </button>
-      <p
-        v-if="snapshot.secondaryLinks.length"
-        class="today-secondary-links"
-        data-testid="today-secondary-links"
-      >
-        <template v-for="(link, index) in snapshot.secondaryLinks" :key="link.id">
-          <span v-if="index > 0" class="today-secondary-links__sep" aria-hidden="true">·</span>
-          <button
-            type="button"
-            class="today-secondary-link"
-            :data-testid="`today-secondary-${link.id}`"
-            @click="go(link.nav, link.tab)"
-          >
-            {{ link.label }} →
-          </button>
-        </template>
-      </p>
     </section>
 
     <section v-if="snapshot" class="health-section" data-testid="today-health-section">
@@ -131,9 +94,6 @@
       <img src="/assets/illustrations/empty-state-no-task.jpg" alt="今日无事" class="empty-state__image" />
       <h3 class="empty-state__title">今日无事</h3>
       <p class="empty-state__desc">享受悠闲时光，灵感总会不期而至</p>
-      <button type="button" class="l1-pill l1-pill--primary" @click="go('creator', 'write')">
-        开始创作 →
-      </button>
     </div>
     </div>
   </div>

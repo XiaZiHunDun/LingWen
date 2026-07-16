@@ -1,649 +1,733 @@
-<!--
-  CreatorWritePanel.vue — 写栏（从 CreatorPage 拆出）
--->
 <template>
-      <section
-        v-show="w.isWorkspaceColumnVisible('write')"
-        class="creator-column"
-        :class="w.wb.workbenchEnabled ? 'creator-column--workbench creator-column--write-desk' : 'pixel-card'"
-        data-testid="column-write"
-      >
-        <h2 v-if="!w.wb.workbenchEnabled" class="column-title">写</h2>
-        <p v-if="!w.wb.workbenchEnabled" class="column-hint">章节状态 · 偏离章高亮</p>
+  <section
+    v-show="w.isWorkspaceColumnVisible('write')"
+    class="creator-column"
+    :class="{
+      'creator-column--workbench': w.wb.workbenchEnabled,
+      'creator-column--chat-open': showChatPanel,
+    }"
+    data-testid="column-write"
+  >
+    <div v-if="!w.wb.workbenchEnabled" class="creator-column__header">
+      <h2 class="column-title">写</h2>
+      <p class="column-hint">章节状态 · 偏离章高亮</p>
+    </div>
 
-        <component :is="w.wb.workbenchEnabled ? CreatorWriteWorkbench : 'div'">
-        <template v-if="w.wb.workbenchEnabled" #chapters>
-          <CreatorChapterList compact />
-        </template>
-
-        <CreatorChapterList v-if="!w.wb.workbenchEnabled" />
-        <div
-          v-if="w.showCompanionLogicCheckInWrite && !w.wb?.humanFirstDesk"
-          class="companion-logic-check-write pixel-border"
-          data-testid="companion-logic-check-write"
-        >
-          <p class="subsection-title">逻辑审查</p>
-          <p class="meta-line">写完一章后，可一键检查 P0 逻辑问题。</p>
+    <div v-if="w.wb.workbenchEnabled" class="write-workbench">
+      <div class="write-workbench__header">
+        <div class="write-workbench__header-left">
           <button
-            type="button"
-            class="save-btn pixel-border"
-            data-testid="run-companion-logic-check-btn"
-            :disabled="w.logicCheckRunning"
-            @click="w.runCompanionLogicCheck"
+            class="write-workbench__toggle-btn"
+            @click="w.wb.leftPanelCollapsed = !w.wb.leftPanelCollapsed"
+            :title="w.wb.leftPanelCollapsed ? '展开边栏' : '收起边栏'"
           >
-            {{ w.logicCheckRunning ? '检查中…' : '一键逻辑审查' }}
+            {{ w.wb.leftPanelCollapsed ? '☰' : '✕' }}
           </button>
-          <p v-if="w.logicCheckResult" class="meta-line" data-testid="companion-logic-check-write-result">
-            {{ w.logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ w.logicCheckResult.p0_count }}
-            <span v-if="w.logicCheckResult.total_issues != null"> · 共 {{ w.logicCheckResult.total_issues }} 条</span>
-            <span v-if="w.logicCheckResult.p0_only">（仅展示 P0）</span>
-          </p>
-          <ul
-            v-if="w.uiProfile.logic_check_inline_issues && w.logicCheckResult?.issues?.length"
-            class="logic-check-issues"
-            data-testid="logic-check-issues"
-          >
-            <li
-              v-for="(issue, idx) in w.logicCheckResult.issues"
-              :key="`write-${issue.chapter}-${idx}`"
-              class="logic-check-issue"
-              :class="{
-                'logic-check-issue--clickable': Boolean(issue.chapter),
-                'logic-check-issue--active': !w.uiProfile.issue_paragraph_highlight_unified
-                  && w.uiProfile.logic_check_issue_highlight
-                  && w.activeLogicCheckIssueIdx === idx,
-                'issue-line--active': w.uiProfile.issue_paragraph_highlight_unified
-                  && w.activeLogicCheckIssueIdx === idx,
-              }"
-              role="button"
-              tabindex="0"
-              :data-testid="`logic-check-issue-${idx}`"
-              @click="w.handleLogicCheckIssueClick(issue, idx)"
-              @keydown.enter="w.handleLogicCheckIssueClick(issue, idx)"
-              @keydown="w.onLogicCheckIssueKeydown($event, issue, idx)"
-            >
-              <span class="issue-severity">{{ issue.severity }}</span>
-              <span v-if="issue.chapter">ch{{ String(issue.chapter).padStart(3, '0') }}</span>
-              {{ issue.title || issue.message }}
-            </li>
-          </ul>
-        </div>
-        <div
-          v-if="w.uiProfile.batch_deviation_inline_summary && w.batchDeviationInlineSummary?.items?.length"
-          class="batch-deviation-inline-summary pixel-border"
-          data-testid="batch-deviation-inline-summary"
-        >
-          <p class="meta-line" data-testid="batch-deviation-inline-summary-title">
-            Batch ch{{ String(w.batchDeviationInlineSummary.start).padStart(3, '0') }}–ch{{
-              String(w.batchDeviationInlineSummary.end).padStart(3, '0')
-            }} · {{ w.batchDeviationInlineSummary.items.length }} 条偏离
-          </p>
-          <ul class="batch-deviation-inline-list" data-testid="batch-deviation-inline-list">
-            <li
-              v-for="(d, i) in w.batchDeviationInlineSummary.items"
-              :key="`batch-dev-${d.chapter}-${i}`"
-              class="batch-deviation-inline-item"
-              :class="[
-                `deviation-${d.severity}`,
-                {
-                  'deviation-item--clickable': w.uiProfile.deviation_chapter_jump && d.chapter,
-                  'deviation-item--active': w.deviationHighlightEnabled && w.highlightedDeviationChapter === d.chapter,
-                },
-              ]"
-              role="button"
-              tabindex="0"
-              :data-testid="`batch-deviation-inline-ch${d.chapter}`"
-              @click="w.handleDeviationClick(d)"
-              @keydown.enter="w.handleDeviationClick(d)"
-            >
-              <span v-if="d.chapter" class="deviation-chapter">ch{{ String(d.chapter).padStart(3, '0') }}</span>
-              {{ d.message }}
-            </li>
-          </ul>
-          <div v-if="w.uiProfile.batch_deviation_summary_link || w.uiProfile.batch_deviation_inline_dismiss" class="batch-deviation-inline-actions">
-            <button
-              v-if="w.uiProfile.batch_deviation_summary_link"
-              type="button"
-              class="save-btn pixel-border"
-              data-testid="batch-deviation-open-summary-btn"
-              @click="w.openVolumeSummaryForRange(w.batchDeviationInlineSummary.start, w.batchDeviationInlineSummary.end)"
-            >
-              查看卷摘要
-            </button>
-            <button
-              v-if="w.uiProfile.batch_deviation_inline_dismiss"
-              type="button"
-              class="mini-btn pixel-border"
-              data-testid="dismiss-batch-deviation-inline-btn"
-              @click="w.dismissBatchDeviationInlineSummary"
-            >
-              知道了
-            </button>
+          <div class="write-workbench__title-area">
+            <h1 class="write-workbench__title">{{ w.overview?.name || '写作中' }}</h1>
+            <span class="write-workbench__chapter">第 {{ w.selectedChapter }} 章</span>
           </div>
         </div>
-        <div
-          v-if="w.chapterPreview"
-          class="chapter-preview"
-          :class="{
-            'chapter-preview--workbench': w.wb.workbenchEnabled,
-            'pixel-border': !w.wb.workbenchEnabled,
-          }"
-          data-testid="chapter-preview-panel"
-        >
-          <h3 v-if="!w.wb?.humanFirstDesk" class="subsection-title">
-            ch{{ String(w.chapterPreview.chapter).padStart(3, '0') }} 预览
-            <span v-if="w.chapterPreview.word_count">（{{ w.chapterPreview.word_count }} 字）</span>
-          </h3>
-          <p v-if="w.previewLoading" class="meta-line">加载中…</p>
-          <template v-else>
-            <div
-              v-if="w.uiProfile.chapter_outline_inline_edit"
-              class="chapter-dual-edit"
-              :class="{ 'chapter-dual-edit--human': w.wb?.humanFirstDesk }"
-              data-testid="chapter-dual-edit"
-            >
-              <details
-                v-if="w.wb?.humanFirstDesk"
-                class="chapter-outline-edit chapter-outline-edit--collapsible"
-                data-testid="chapter-outline-details"
-              >
-                <summary class="meta-line chapter-outline-edit__summary">分章大纲</summary>
-                <textarea
-                  v-model="w.chapterOutlineDraft"
-                  class="settings-textarea chapter-outline-textarea"
-                  :rows="w.wb?.humanFirstDesk ? 4 : 8"
-                  data-testid="chapter-outline-textarea"
-                />
-                <button
-                  type="button"
-                  class="mini-btn"
-                  data-testid="save-chapter-outline-btn"
-                  :disabled="w.chapterOutlineSaving"
-                  @click="w.saveChapterOutline"
-                >
-                  {{ w.chapterOutlineSaving ? '保存中…' : '保存大纲' }}
-                </button>
-              </details>
-              <div v-else class="chapter-outline-edit">
-                <label class="meta-line">分章大纲</label>
-                <textarea
-                  v-model="w.chapterOutlineDraft"
-                  class="settings-textarea chapter-outline-textarea"
-                  rows="10"
-                  data-testid="chapter-outline-textarea"
-                />
-                <button
-                  type="button"
-                  class="save-btn pixel-border"
-                  data-testid="save-chapter-outline-btn"
-                  :disabled="w.chapterOutlineSaving"
-                  @click="w.saveChapterOutline"
-                >
-                  {{ w.chapterOutlineSaving ? '保存中…' : '保存大纲' }}
-                </button>
-              </div>
-              <div
-                v-if="w.uiProfile.chapter_inline_edit"
-                class="chapter-inline-edit"
-                data-testid="chapter-inline-edit"
-              >
-                <label class="meta-line" for="chapter-body-textarea">正文（内嵌编辑）</label>
-                <CreatorChapterBodyEditor
-                  :show-gutter="Boolean(w.wb?.showInlineConflictGutter)"
-                  :markers="w.wb?.inlineConflictMarkers || []"
-                  :active-marker-id="w.wb?.activeInlineConflictId"
-                  @focus-marker="w.wb?.focusInlineConflict"
-                >
-                  <textarea
-                    :ref="w.bindChapterBodyTextareaRef"
-                    v-model="w.chapterBodyDraft"
-                    class="settings-textarea chapter-body-textarea"
-                    :class="bodyTextareaClass"
-                    :rows="w.wb?.humanFirstDesk ? 4 : 12"
-                    id="chapter-body-textarea"
-                    data-testid="chapter-body-textarea"
-                    @mouseup="onBodyTextareaInteraction"
-                    @keyup="onBodyTextareaInteraction"
-                    @select="onBodyTextareaInteraction"
-                  />
-                </CreatorChapterBodyEditor>
-                <CreatorChapterBodySaveFooter
-                  :status-label="w.bodySaveStatusLabel"
-                  :auto-save-status="w.bodyAutoSaveStatus"
-                  :saving="w.chapterBodySaving"
-                  :human-first="Boolean(w.wb?.humanFirstDesk)"
-                  @save="w.saveChapterBody"
-                />
-              </div>
-            </div>
-            <div
-              v-if="w.uiProfile.chapter_outline_read_preview && w.chapterPreview.has_outline && !w.uiProfile.chapter_outline_inline_edit"
-              class="chapter-outline-read-preview"
-              data-testid="chapter-outline-read-preview"
-            >
-              <label class="meta-line">分章大纲（只读）</label>
-              <pre class="preview-text chapter-outline-full-text">{{
-                w.chapterPreview.outline_text || w.chapterPreview.outline_preview || '（空）'
-              }}</pre>
-            </div>
-            <details
-              v-else-if="w.chapterPreview.has_outline && !w.uiProfile.chapter_outline_read_preview && !w.uiProfile.chapter_outline_inline_edit"
-              open
-            >
-              <summary>分章大纲</summary>
-              <pre class="preview-text">{{ w.chapterPreview.outline_preview || '（空）' }}</pre>
-            </details>
-            <div
-              v-if="!w.uiProfile.chapter_outline_inline_edit && w.uiProfile.chapter_inline_edit"
-              class="chapter-inline-edit"
-              data-testid="chapter-inline-edit"
-            >
-              <label class="meta-line" for="chapter-body-textarea">正文（内嵌编辑）</label>
-              <CreatorChapterBodyEditor
-                :show-gutter="Boolean(w.wb?.showInlineConflictGutter)"
-                :markers="w.wb?.inlineConflictMarkers || []"
-                :active-marker-id="w.wb?.activeInlineConflictId"
-                @focus-marker="w.wb?.focusInlineConflict"
-              >
-                <textarea
-                  :ref="w.bindChapterBodyTextareaRef"
-                  v-model="w.chapterBodyDraft"
-                  class="settings-textarea chapter-body-textarea"
-                  :class="bodyTextareaClass"
-                  rows="12"
-                  data-testid="chapter-body-textarea"
-                  @mouseup="onBodyTextareaInteraction"
-                  @keyup="onBodyTextareaInteraction"
-                  @select="onBodyTextareaInteraction"
-                />
-              </CreatorChapterBodyEditor>
-              <CreatorChapterBodySaveFooter
-                :status-label="w.bodySaveStatusLabel"
-                :auto-save-status="w.bodyAutoSaveStatus"
-                :saving="w.chapterBodySaving"
-                :human-first="Boolean(w.wb?.humanFirstDesk)"
-                @save="w.saveChapterBody"
-              />
-            </div>
-            <div
-              v-if="
-                w.uiProfile.chapter_recheck_inline
-                  && w.chapterRecheckResult
-                  && w.chapterRecheckResult.chapter === w.selectedChapter
-              "
-              class="chapter-recheck-panel pixel-border"
-              data-testid="chapter-recheck-inline-panel"
-            >
-              <p class="meta-line" data-testid="chapter-recheck-inline-summary">
-                保存后复查 · {{ w.chapterRecheckResult.passed ? '通过' : '未通过' }}
-                · P0 {{ w.chapterRecheckResult.p0_count }}
-              </p>
-              <ul
-                v-if="w.chapterRecheckResult.issues?.length"
-                class="logic-check-issues"
-                data-testid="chapter-recheck-inline-issues"
-              >
-                <li
-                  v-for="(issue, idx) in w.chapterRecheckResult.issues"
-                  :key="`recheck-${issue.chapter}-${idx}`"
-                  class="logic-check-issue"
-                  :class="{
-                    'logic-check-issue--clickable': w.uiProfile.recheck_issue_paragraph_jump && issue.paragraph,
-                    'logic-check-issue--active': !w.uiProfile.issue_paragraph_highlight_unified
-                      && w.uiProfile.recheck_issue_highlight
-                      && w.activeRecheckIssueIdx === idx,
-                    'issue-line--active': w.uiProfile.issue_paragraph_highlight_unified
-                      && w.activeRecheckIssueIdx === idx,
-                  }"
-                  role="button"
-                  tabindex="0"
-                  :data-testid="`chapter-recheck-issue-${idx}`"
-                  @click="w.focusIssueParagraph(issue, idx)"
-                  @keydown.enter="w.focusIssueParagraph(issue, idx)"
-                  @keydown="w.onRecheckIssueKeydown($event, issue, idx)"
-                >
-                  <span class="issue-severity">{{ issue.severity }}</span>
-                  {{ issue.title || issue.message }}
-                </li>
-              </ul>
-            </div>
-            <div
-              v-else-if="w.uiProfile.chapter_full_preview && w.chapterPreview.has_body"
-              class="chapter-read-preview"
-              data-testid="chapter-read-preview"
-            >
-              <label class="meta-line">正文（只读全文）</label>
-              <pre class="preview-text chapter-full-text">{{ w.chapterPreview.body_text || w.chapterPreview.body_preview }}</pre>
-            </div>
-            <details v-else-if="w.chapterPreview.has_body" :open="!w.chapterPreview.has_outline">
-              <summary>正文</summary>
-              <pre class="preview-text">{{ w.chapterPreview.body_preview || '（空）' }}</pre>
-              <p v-if="w.chapterPreview.body_truncated" class="meta-line">正文已截断 · 完整内容请在编辑器查看</p>
-            </details>
-            <p
-              v-if="!w.uiProfile.chapter_inline_edit && !w.chapterPreview.has_body && !w.chapterPreview.has_outline"
-              class="meta-line"
-            >
-              本章尚无大纲与正文
-            </p>
-            <p
-              v-if="w.uiProfile.chapter_inline_edit && !w.chapterPreview.has_body && !w.chapterPreview.has_outline"
-              class="meta-line"
-            >
-              本章尚无大纲，可直接在上方编写正文
-            </p>
-          </template>
+        <div class="write-workbench__header-right">
+          <button
+            v-if="w.logicCheckResult"
+            class="write-workbench__status-badge"
+            :class="w.logicCheckResult.passed ? 'pass' : 'fail'"
+          >
+            {{ w.logicCheckResult.passed ? '✓ 通过' : '✗ 问题' }}
+          </button>
+          <button
+            class="write-workbench__action-btn"
+            :class="{ 'write-workbench__action-btn--loading': w.logicCheckRunning }"
+            @click="w.runCompanionLogicCheck"
+          >
+            {{ w.logicCheckRunning ? '检查中…' : '检查逻辑' }}
+          </button>
+          <button
+            class="write-workbench__action-btn write-workbench__action-btn--chat"
+            :class="{ 'write-workbench__action-btn--active': showChatPanel }"
+            @click="showChatPanel = !showChatPanel"
+          >
+            💬 {{ showChatPanel ? '收起' : '对话' }}
+          </button>
         </div>
-        </component>
-      </section>
+      </div>
 
+      <div class="write-workbench__body">
+        <aside
+          v-show="!w.wb.leftPanelCollapsed"
+          class="write-workbench__sidebar"
+        >
+          <div class="write-workbench__sidebar-section">
+            <h3 class="write-workbench__sidebar-title">📚 章节</h3>
+            <CreatorChapterList compact />
+          </div>
+          <div class="write-workbench__sidebar-section">
+            <h3 class="write-workbench__sidebar-title">🎯 意图</h3>
+            <input
+              v-model="w.wb.intentText"
+              class="write-workbench__intent-input"
+              placeholder="本章要写什么…"
+            />
+            <div class="write-workbench__mood-tags">
+              <button
+                v-for="tag in moodTags"
+                :key="tag"
+                class="write-workbench__mood-tag"
+                :class="{ 'write-workbench__mood-tag--active': w.wb.intentMood === tag }"
+                @click="w.wb.intentMood = w.wb.intentMood === tag ? '' : tag"
+              >
+                {{ tag }}
+              </button>
+            </div>
+          </div>
+          <div class="write-workbench__sidebar-section">
+            <h3 class="write-workbench__sidebar-title">📝 目标</h3>
+            <p class="write-workbench__goal-line">{{ w.wb.goalCardLines.line1 }}</p>
+            <p class="write-workbench__goal-line">{{ w.wb.goalCardLines.line2 }}</p>
+          </div>
+        </aside>
+
+        <main class="write-workbench__editor">
+          <div class="write-workbench__editor-inner">
+            <slot />
+          </div>
+        </main>
+
+        <aside
+          v-show="showChatPanel"
+          class="write-workbench__chat-panel"
+        >
+          <div class="write-workbench__chat-header">
+            <span class="write-workbench__chat-title">💬 AI 对话</span>
+            <button class="write-workbench__chat-close" @click="showChatPanel = false">✕</button>
+          </div>
+          <div class="write-workbench__chat-messages">
+            <div
+              v-for="(msg, idx) in chatMessages"
+              :key="idx"
+              class="write-workbench__chat-message"
+              :class="{ 'write-workbench__chat-message--user': msg.role === 'user' }"
+            >
+              <span class="write-workbench__chat-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</span>
+              <span class="write-workbench__chat-content">{{ msg.displayText || msg.content }}</span>
+            </div>
+            <div v-if="w.wb.agent.generating" class="write-workbench__chat-typing">
+              <span class="write-workbench__typing-dot"></span>
+              <span class="write-workbench__typing-dot"></span>
+              <span class="write-workbench__typing-dot"></span>
+              <span>AI 思考中…</span>
+            </div>
+          </div>
+          <div class="write-workbench__chat-input">
+            <input
+              v-model="chatInput"
+              class="write-workbench__chat-textarea"
+              placeholder="和AI讨论你的想法…"
+              @keydown.enter="sendChatMessage"
+            />
+            <button
+              class="write-workbench__chat-send"
+              :disabled="!chatInput.trim() || w.wb.agent.generating"
+              @click="sendChatMessage"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19V5m0 0l-6 6m6-6l6 6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="write-workbench__footer">
+        <div class="write-workbench__footer-left">
+          <span class="write-workbench__progress">📖 已完成 {{ w.overview?.chapters_written || 0 }}/{{ w.overview?.max_chapter || 0 }} 章</span>
+        </div>
+        <div class="write-workbench__footer-right">
+          <button
+            class="write-workbench__footer-btn write-workbench__footer-btn--primary"
+            :class="{ 'write-workbench__footer-btn--loading': w.wb.generateRunning || w.wb.agent.generating }"
+            @click="w.wb.startQuickWrite()"
+          >
+            ✨ {{ w.wb.generateRunning ? '生成中…' : 'AI 续写' }}
+          </button>
+          <button class="write-workbench__footer-btn" @click="c?.openExportModal('full')">
+            📥 导出
+          </button>
+          <button class="write-workbench__footer-btn" @click="c?.openPublishWizard">
+            🚀 发布
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { computed, inject } from 'vue';
-import CreatorWriteWorkbench from './CreatorWriteWorkbench.vue';
+import { inject, ref, watch, nextTick } from 'vue';
 import CreatorChapterList from './CreatorChapterList.vue';
-import CreatorChapterBodyEditor from './CreatorChapterBodyEditor.vue';
-import CreatorChapterBodySaveFooter from './CreatorChapterBodySaveFooter.vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
+import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
 
 const w = inject(CREATOR_WRITE_KEY);
+const c = inject(CREATOR_PAGE_CHROME_KEY);
 
-const bodyTextareaClass = computed(() => ({
-  'chapter-body-textarea--highlight': w.chapterBodyHighlightActive,
-  'chapter-body-textarea--conflict': w.wb?.chapterBodyConflictHighlightActive,
-}));
+const moodTags = ['克制', '戏剧', '幽默', '抒情'];
+const showChatPanel = ref(false);
+const chatInput = ref('');
+const chatMessages = ref([
+  { role: 'assistant', content: '你好！我是你的写作助手。有什么可以帮你的吗？', displayText: '你好！我是你的写作助手。有什么可以帮你的吗？' },
+]);
 
-function onBodyTextareaInteraction(event) {
-  w.wb?.captureBodySelection?.(event.target);
+let typingInterval = null;
+
+function startTypingEffect(message) {
+  if (typingInterval) {
+    clearInterval(typingInterval);
+  }
+  const newMsg = {
+    role: 'assistant',
+    content: message,
+    displayText: '',
+  };
+  chatMessages.value.push(newMsg);
+  nextTick(() => {
+    const chatContainer = document.querySelector('.write-workbench__chat-messages');
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  });
+  let index = 0;
+  typingInterval = setInterval(() => {
+    if (index < message.length) {
+      newMsg.displayText += message[index];
+      index++;
+      nextTick(() => {
+        const chatContainer = document.querySelector('.write-workbench__chat-messages');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      });
+    } else {
+      clearInterval(typingInterval);
+      typingInterval = null;
+    }
+  }, 50);
 }
+
+async function sendChatMessage() {
+  if (!chatInput.value.trim() || w.wb.agent.generating) return;
+  const userMsg = chatInput.value.trim();
+  chatMessages.value.push({ role: 'user', content: userMsg, displayText: userMsg });
+  chatInput.value = '';
+  nextTick(() => {
+    const chatContainer = document.querySelector('.write-workbench__chat-messages');
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  });
+  try {
+    const response = await w.wb.agent.ask(userMsg);
+    startTypingEffect(response);
+  } catch (error) {
+    chatMessages.value.push({ role: 'assistant', content: '抱歉，我遇到了一些问题。', displayText: '抱歉，我遇到了一些问题。' });
+  }
+}
+
+watch(() => w.wb.agent.generating, (generating) => {
+  if (!generating) {
+    nextTick(() => {
+      const chatContainer = document.querySelector('.write-workbench__chat-messages');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    });
+  }
+});
 </script>
 
 <style scoped>
-.chapter-preview {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  max-height: 320px;
-  overflow: auto;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  border: var(--border-width) solid var(--border-color);
-  box-shadow: var(--shadow-soft);
-}
-
-.chapter-preview--workbench {
-  margin-top: 0;
-  max-height: none;
-  flex: 1;
-  min-height: 240px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
-
-.chapter-dual-edit {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-  margin-top: var(--space-sm);
-}
-
-@media (max-width: 960px) {
-  .chapter-dual-edit {
-    grid-template-columns: 1fr;
-  }
-}
-
-.chapter-outline-textarea {
-  width: 100%;
-  min-height: 160px;
-  border-radius: var(--radius-sm);
-}
-
-.logic-check-issue--clickable {
-  cursor: pointer;
-  text-decoration: none;
-  padding: 6px 8px;
-  border-radius: var(--radius-xs);
-  transition: background-color 0.15s ease;
-}
-
-.logic-check-issue--clickable:hover {
-  background: var(--bg-muted);
-}
-
-.logic-check-issue--active {
-  animation: recheck-issue-flash 1.2s ease-out;
-  background: var(--color-highlight-soft);
-}
-
-.batch-deviation-inline-summary {
-  margin: var(--space-sm) 0;
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(200, 80, 80, 0.06);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--color-danger);
-}
-
-.batch-deviation-inline-list {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-sm);
-}
-
-.batch-deviation-inline-item {
-  padding: 6px 0;
-  border-bottom: 1px dashed var(--border-color);
-}
-
-.batch-deviation-inline-item:last-child {
-  border-bottom: none;
-}
-
-.batch-deviation-inline-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-top: var(--space-sm);
-}
-
-.logic-check-issue:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: var(--radius-xs);
-}
-
-.chapter-body-textarea--highlight {
-  animation: chapter-body-highlight-pulse 1.2s ease-out;
-  box-shadow: 0 0 0 2px var(--color-highlight-soft);
-}
-
-.chapter-body-textarea--conflict {
-  animation: chapter-body-conflict-pulse 1.4s ease-out;
-  box-shadow: 0 0 0 2px var(--color-conflict-outline);
-  background-image: linear-gradient(
-    transparent 90%,
-    var(--color-conflict-bg-stripe) 90%,
-    var(--color-conflict-bg-stripe) 95%,
-    transparent 95%
-  );
-  background-size: 100% 1.4em;
-}
-
-.chapter-outline-read-preview {
-  margin-bottom: var(--space-sm);
-}
-
-@keyframes recheck-issue-flash {
-  0% { background: rgba(255, 220, 100, 0.55); }
-  100% { background: rgba(255, 220, 100, 0.35); }
-}
-
-@keyframes chapter-body-highlight-pulse {
-  0% { background: rgba(255, 220, 100, 0.4); }
-  100% { background: transparent; }
-}
-
-@keyframes chapter-body-conflict-pulse {
-  0% { background-color: var(--color-danger-soft); }
-  100% { background-color: transparent; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .logic-check-issue--active,
-  .chapter-body-textarea--highlight,
-  .chapter-body-textarea--conflict {
-    animation: none;
-  }
-}
-
-.chapter-inline-edit {
-  margin-top: var(--space-sm);
-}
-
-.chapter-dual-edit--human {
+.write-workbench {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-}
-
-.chapter-outline-edit--collapsible {
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
+  height: 100%;
   background: var(--bg-elevated);
-  transition: box-shadow 0.2s ease;
-}
-
-.chapter-outline-edit--collapsible:hover {
-  box-shadow: var(--shadow-soft);
-}
-
-.chapter-outline-edit__summary {
-  cursor: pointer;
-  font-weight: 600;
-  list-style: none;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.chapter-outline-edit__summary::after {
-  content: '▼';
-  font-size: 10px;
-  color: var(--color-text-dim);
-  transition: transform 0.2s ease;
-}
-
-details[open] .chapter-outline-edit__summary::after {
-  transform: rotate(180deg);
-}
-
-.chapter-outline-edit__summary::-webkit-details-marker {
-  display: none;
-}
-
-.chapter-body-textarea {
-  width: 100%;
-  min-height: 180px;
-  border-radius: var(--radius-sm);
-}
-
-.chapter-read-preview {
-  margin-top: var(--space-sm);
-}
-
-.chapter-full-text {
-  max-height: 280px;
-  overflow: auto;
-  padding: var(--space-sm);
-  background: var(--bg-muted);
-  border-radius: var(--radius-sm);
-}
-
-.logic-check-issues {
-  margin: var(--space-sm) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.logic-check-issue {
-  cursor: pointer;
-  margin-bottom: var(--space-xs);
-  font-size: var(--text-sm);
-  padding: 6px 8px;
-  border-radius: var(--radius-xs);
-  transition: background-color 0.15s ease;
-}
-
-.logic-check-issue:hover {
-  background: var(--bg-muted);
-}
-
-.chapter-recheck-panel {
-  margin-top: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(200, 180, 80, 0.08);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--color-warning);
-}
-
-.chapter-row--warn {
-  background: rgba(200, 180, 80, 0.15);
-  border-color: var(--color-warning);
-}
-
-.chapter-row--alert {
-  background: rgba(200, 80, 80, 0.15);
-  border-color: #c66;
-}
-
-.companion-logic-check-write {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  border: var(--border-width) solid var(--border-color);
-  box-shadow: var(--shadow-soft);
-}
-
-.companion-logic-check-write--compact {
-  margin-top: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.companion-logic-check-write--compact details {
-  padding: var(--space-sm) var(--space-md);
-  background: var(--bg-muted);
-  border-radius: var(--radius-sm);
-}
-
-.companion-logic-check-write__summary {
-  cursor: pointer;
-  font-weight: 600;
-  list-style: none;
-}
-
-.companion-logic-check-write__summary::-webkit-details-marker {
-  display: none;
-}
-
-.creator-column--write-desk {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
-.companion-logic-check-write .subsection-title {
-  margin-bottom: var(--space-xs);
+.write-workbench__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
+  border-bottom: var(--border-width) solid var(--border-color);
 }
 
+.write-workbench__header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.write-workbench__toggle-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.write-workbench__toggle-btn:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+}
+
+.write-workbench__title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.write-workbench__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-family: var(--font-heading);
+  color: var(--color-text);
+}
+
+.write-workbench__chapter {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.write-workbench__header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.write-workbench__status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: none;
+  cursor: default;
+}
+
+.write-workbench__status-badge.pass {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.write-workbench__status-badge.fail {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.write-workbench__action-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.write-workbench__action-btn:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+}
+
+.write-workbench__action-btn--loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.write-workbench__action-btn--chat {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.write-workbench__action-btn--chat:hover,
+.write-workbench__action-btn--chat.write-workbench__action-btn--active {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.write-workbench__body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.write-workbench__sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-right: var(--border-width) solid var(--border-color);
+  overflow-y: auto;
+}
+
+.write-workbench__sidebar-section {
+  margin-bottom: 20px;
+  padding: 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+}
+
+.write-workbench__sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.write-workbench__sidebar-title {
+  margin: 0 0 12px 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.write-workbench__intent-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--bg-primary);
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.write-workbench__intent-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.write-workbench__mood-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.write-workbench__mood-tag {
+  padding: 4px 12px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 16px;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+}
+
+.write-workbench__mood-tag:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.write-workbench__mood-tag--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.write-workbench__goal-line {
+  margin: 6px 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.write-workbench__editor {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+.write-workbench__editor-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.write-workbench__chat-panel {
+  width: 360px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border-left: var(--border-width) solid var(--border-color);
+}
+
+.write-workbench__chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.write-workbench__chat-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.write-workbench__chat-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.write-workbench__chat-close:hover {
+  background: var(--bg-muted);
+}
+
+.write-workbench__chat-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.write-workbench__chat-message {
+  display: flex;
+  gap: 10px;
+}
+
+.write-workbench__chat-message--user {
+  flex-direction: row-reverse;
+}
+
+.write-workbench__chat-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-muted);
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.write-workbench__chat-message--user .write-workbench__chat-avatar {
+  background: var(--color-accent-soft);
+}
+
+.write-workbench__chat-content {
+  max-width: calc(100% - 42px);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  background: var(--bg-muted);
+  color: var(--color-text);
+}
+
+.write-workbench__chat-message--user .write-workbench__chat-content {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.write-workbench__chat-typing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.write-workbench__typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-secondary);
+  animation: typing-dot 1.4s infinite ease-in-out;
+}
+
+.write-workbench__typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.write-workbench__typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-dot {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.write-workbench__chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: var(--border-width) solid var(--border-color);
+}
+
+.write-workbench__chat-textarea {
+  flex: 1;
+  padding: 10px 14px;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--bg-primary);
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.write-workbench__chat-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.write-workbench__chat-send {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-on-accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.write-workbench__chat-send:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.write-workbench__chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.write-workbench__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  background: var(--bg-secondary);
+  border-top: var(--border-width) solid var(--border-color);
+}
+
+.write-workbench__footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.write-workbench__progress {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.write-workbench__footer-right {
+  display: flex;
+  gap: 12px;
+}
+
+.write-workbench__footer-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.write-workbench__footer-btn:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+}
+
+.write-workbench__footer-btn--primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-gradient-end) 100%);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.write-workbench__footer-btn--primary:hover {
+  background: linear-gradient(135deg, var(--color-accent-hover) 0%, var(--color-accent-gradient-end) 100%);
+}
+
+.write-workbench__footer-btn--loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .write-workbench__header {
+    padding: 12px 16px;
+  }
+
+  .write-workbench__header-right {
+    gap: 8px;
+  }
+
+  .write-workbench__action-btn {
+    padding: 6px 12px;
+    font-size: var(--text-xs);
+  }
+
+  .write-workbench__sidebar {
+    width: 240px;
+  }
+
+  .write-workbench__chat-panel {
+    width: 100%;
+    position: absolute;
+    right: 0;
+    top: 60px;
+    bottom: 60px;
+    z-index: 100;
+  }
+
+  .write-workbench__editor {
+    padding: 16px;
+  }
+
+  .write-workbench__footer {
+    padding: 12px 16px;
+  }
+
+  .write-workbench__footer-btn {
+    padding: 8px 14px;
+    font-size: var(--text-xs);
+  }
+}
 </style>

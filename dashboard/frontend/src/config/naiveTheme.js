@@ -1,0 +1,22 @@
+export const lingwenThemeConfig = {
+  common: {
+    primaryColor: '#a85a32',
+    primaryColorHover: '#c46d40',
+    primaryColorPressed: '#8a4a2a',
+    primaryColorSuppl: '#d4a080',
+    successColor: '#2e7d5a',
+    warningColor: '#9a6700',
+    errorColor: '#b42318',
+    infoColor: '#3b82f6',
+    textColor: '#1f2937',
+    textColorSecondary: '#6b7280',
+    textColorDisabled: '#9ca3af',
+    placeholderColor: '#9ca3af',
+    borderColor: '#e5e7eb',
+    borderColorLight: '#f3f4f6',
+    borderRadius: '8px',
+    borderRadiusSmall: '6px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+    boxShadowLight: '0 1px 2px rgba(0, 0, 0, 0.05)',
+  },
+};

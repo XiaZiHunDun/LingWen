@@ -49,7 +49,6 @@ export const DASHBOARD_NAV_GROUPS = [
     id: 'system',
     label: '系统',
     items: [
-      { id: 'cascade-runs', label: '级联', icon: '🔁' },
       { id: 'settings', label: '设置', icon: '⚙️' },
     ],
   },

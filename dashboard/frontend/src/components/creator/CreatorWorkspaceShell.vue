@@ -159,21 +159,19 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
 }
 
 .creator-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-lg);
-  align-items: start;
-  flex: 1;
-  min-height: 0;
-}
-
-.creator-grid--tabbed {
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+.creator-grid--tabbed {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 1200px) {

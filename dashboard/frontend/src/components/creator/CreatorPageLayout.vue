@@ -11,12 +11,9 @@
         <CreatorWritePanel />
         <CreatorPulsePanel />
         <CreatorMemoryPanel />
-        <CreatorSettingsPanel />
       </CreatorWorkspaceShell>
     </div>
-    <CreatorModeGuidePanel />
     <CreatorVolumePlanShareModals />
-    <CreatorOnboardingWizardPanel />
     <CreatorExportModal />
     <CreatorPublishWizardModal />
     <CreatorPublishHistoryModal />
