@@ -37,7 +37,7 @@
       @secondary="goCreator"
     />
 
-    <section v-if="summary" class="studio-section pixel-card" data-testid="project-summary">
+    <section v-if="summary" class="studio-section pixel-card project-summary" data-testid="project-summary">
       <h2 class="section-title">{{ summary.name }}</h2>
       <div class="stats-row">
         <StatCard label="角色" :value="summary.role" />
@@ -51,7 +51,7 @@
       </details>
     </section>
 
-    <details v-if="quality" class="studio-section pixel-card quality-collapsible" data-testid="quality-panel">
+    <details v-if="quality" class="studio-section pixel-card quality-collapsible quality-panel" data-testid="quality-panel">
       <summary class="section-title">质量仪表盘</summary>
       <ul class="quality-list">
         <li :class="quality.pillars_ok ? 'ok' : 'warn'">
@@ -76,14 +76,14 @@
       </ul>
     </details>
 
-    <section v-if="qualityReport" class="studio-section pixel-card" data-testid="quality-report-panel">
+    <section v-if="qualityReport" class="studio-section pixel-card quality-report-panel" data-testid="quality-report-panel">
       <h2 class="section-title">Full-check 质检报告</h2>
       <div v-if="!qualityReport.available" class="report-empty">
         <p>暂无质检报告。产章后可生成 full-check 报告查看 P0–P3 问题分布。</p>
         <p class="meta-line">
           CLI：<code>bash scripts/generate-full-check-report.sh {{ activeSlug || 'slug' }}</code>
         </p>
-        <button type="button" class="empty-cta-btn pixel-border" data-testid="report-empty-go-production-btn" @click="scrollToProduction">
+        <button type="button" class="empty-cta-btn pixel-border report-empty-go-production-btn" data-testid="report-empty-go-production-btn" @click="scrollToProduction">
           先去跑 Preflight / Batch
         </button>
       </div>
@@ -138,7 +138,7 @@
       </template>
       <div
         v-if="proseDiff"
-        class="prose-diff"
+        class="prose-diff prose-diff-panel"
         data-testid="prose-diff-panel"
       >
         <h3 class="subsection-title">Prose 改稿对比</h3>
@@ -161,7 +161,7 @@
             → 当前 {{ proseDiff.after_captured_at }}
           </p>
           <div
-            class="diff-status"
+            class="diff-status prose-diff-status"
             :class="proseDiff.has_regression ? 'diff-regressed' : 'diff-ok'"
             data-testid="prose-diff-status"
             role="status"
@@ -199,7 +199,7 @@
       </div>
       <div
         v-if="proseJudge"
-        class="prose-judge"
+        class="prose-judge prose-judge-panel"
         data-testid="prose-judge-panel"
       >
         <h3 class="subsection-title">Prose Judge（v2）</h3>
@@ -213,7 +213,7 @@
             · Golden ch{{ (proseJudge.golden_chapters || []).join(',') }}
             · 均分 {{ proseJudge.weighted_avg }}
           </p>
-          <div class="judge-signals meta-line" data-testid="prose-judge-signals">
+          <div class="judge-signals meta-line prose-judge-signals" data-testid="prose-judge-signals">
             高优先级 {{ proseJudge.high_priority_count }}
             · 误报候选 {{ proseJudge.false_positive_candidate_count }}
             · 待复核 {{ proseJudge.review_needed_count }}
@@ -240,7 +240,7 @@
       </div>
     </section>
 
-    <section ref="productionSectionRef" class="studio-section pixel-card" data-testid="production-console">
+    <section ref="productionSectionRef" class="studio-section pixel-card production-console" data-testid="production-console">
       <h2 class="section-title">生产控制台</h2>
       <form class="prod-form" @submit.prevent="runPreflight">
         <div class="form-row">
@@ -250,7 +250,7 @@
             v-model.number="startChapter"
             type="number"
             min="1"
-            class="form-input pixel-border"
+            class="form-input pixel-border start-chapter"
             data-testid="start-chapter"
           />
         </div>
@@ -261,7 +261,7 @@
             v-model.number="endChapter"
             type="number"
             min="1"
-            class="form-input pixel-border"
+            class="form-input pixel-border end-chapter"
             data-testid="end-chapter"
           />
         </div>
@@ -270,7 +270,7 @@
           <select
             id="studio-production-mode"
             v-model="mode"
-            class="form-input pixel-border"
+            class="form-input pixel-border production-mode"
             data-testid="production-mode"
           >
             <option value="canon">canon</option>
@@ -286,11 +286,11 @@
             min="0"
             max="100"
             step="0.01"
-            class="form-input pixel-border"
+            class="form-input pixel-border budget-usd"
             data-testid="budget-usd"
           />
         </div>
-        <button type="submit" class="run-btn pixel-border" data-testid="preflight-btn" :disabled="preflightLoading" :aria-label="preflightLoading ? '正在进行预飞检查' : '执行预飞检查'" :aria-busy="preflightLoading">
+        <button type="submit" class="run-btn pixel-border preflight-btn" data-testid="preflight-btn" :disabled="preflightLoading" :aria-label="preflightLoading ? '正在进行预飞检查' : '执行预飞检查'" :aria-busy="preflightLoading">
           {{ preflightLoading ? '检查中…' : 'Preflight 检查' }}
         </button>
       </form>
@@ -314,16 +314,16 @@
         </tbody>
       </table>
 
-      <div v-if="batchCommand" class="command-block" data-testid="batch-command">
+      <div v-if="batchCommand" class="command-block batch-command" data-testid="batch-command">
         <h3 class="subsection-title">Batch 命令</h3>
         <pre class="command-pre">{{ batchCommand }}</pre>
         <div class="command-actions">
-          <button type="button" class="copy-btn pixel-border" data-testid="copy-command-btn" aria-label="复制批处理命令到剪贴板" @click="copyCommand">
+          <button type="button" class="copy-btn pixel-border copy-command-btn" data-testid="copy-command-btn" aria-label="复制批处理命令到剪贴板" @click="copyCommand">
             复制命令
           </button>
           <button
             type="button"
-            class="run-btn pixel-border"
+            class="run-btn pixel-border run-batch-btn"
             data-testid="run-batch-btn"
             :disabled="batchRunning || !preflightAllOk"
             :aria-label="batchRunning ? '批处理任务正在运行中' : '在后台启动批处理任务'"
@@ -335,10 +335,10 @@
           </button>
         </div>
         <p v-if="copyMessage" class="copy-msg">{{ copyMessage }}</p>
-        <p v-if="batchRunError" class="batch-error" data-testid="batch-run-error" role="alert" aria-live="polite">{{ batchRunError }}</p>
+        <p v-if="batchRunError" class="batch-error batch-run-error" data-testid="batch-run-error" role="alert" aria-live="polite">{{ batchRunError }}</p>
       </div>
 
-      <div v-if="batchJob" class="job-block pixel-card" data-testid="batch-job-panel">
+      <div v-if="batchJob" class="job-block pixel-card batch-job-panel" data-testid="batch-job-panel">
         <h3 class="subsection-title">Batch 任务 {{ batchJob.job_id }}</h3>
         <p class="job-meta">
           状态：<strong :class="`job-status-${batchJob.status}`">{{ batchJob.status }}</strong>
@@ -349,7 +349,7 @@
       </div>
     </section>
 
-    <section class="studio-section pixel-card" data-testid="onboarding-panel">
+    <section class="studio-section pixel-card onboarding-panel" data-testid="onboarding-panel">
       <h2 class="section-title">快速上手</h2>
       <ol class="onboarding-steps">
         <li><code>python lingwen.py init-project &lt;slug&gt; --title "书名"</code></li>

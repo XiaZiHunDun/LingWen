@@ -5,7 +5,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_jump_outline_edit"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border jump-global-outline-edit-btn"
     data-testid="jump-global-outline-edit-btn"
     @click="vp.jumpToGlobalOutlineEdit"
   >
@@ -14,7 +14,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border export-volume-plan-diff-btn"
     data-testid="export-volume-plan-diff-btn"
     @click="vp.exportVolumePlanDiff"
   >
@@ -23,7 +23,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export_markdown && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border export-volume-plan-diff-markdown-btn"
     data-testid="export-volume-plan-diff-markdown-btn"
     @click="vp.exportVolumePlanDiffMarkdown"
   >
@@ -32,7 +32,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export_email_share && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border share-volume-plan-diff-email-btn"
     data-testid="share-volume-plan-diff-email-btn"
     @click="vp.shareVolumePlanDiffEmail"
   >
@@ -41,7 +41,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export_pdf && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border export-volume-plan-diff-pdf-btn"
     data-testid="export-volume-plan-diff-pdf-btn"
     @click="vp.exportVolumePlanDiffPdf"
   >
@@ -50,7 +50,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export_print_preview && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border preview-volume-plan-diff-print-btn"
     data-testid="preview-volume-plan-diff-print-btn"
     @click="vp.openVolumePlanDiffPrintPreview"
   >
@@ -59,7 +59,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export_zip && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border export-volume-plan-diff-zip-btn"
     data-testid="export-volume-plan-diff-zip-btn"
     @click="vp.exportVolumePlanDiffZip"
   >
@@ -68,7 +68,7 @@
   <button
     v-if="vp.uiProfile.volume_plan_diff_export_share_link && vp.volumePlanDiffPreview?.has_changes"
     type="button"
-    class="mini-btn pixel-border"
+    class="mini-btn pixel-border share-volume-plan-diff-link-btn"
     data-testid="share-volume-plan-diff-link-btn"
     @click="vp.shareVolumePlanDiffLink"
   >
@@ -113,7 +113,7 @@
     </div>
     <aside
       v-if="vp.uiProfile.volume_plan_diff_outline_side_by_side && vp.volumePlanDiffPreview.global_outline_excerpt"
-      class="volume-plan-diff-outline-col pixel-border"
+      class="volume-plan-diff-outline-col pixel-border volume-plan-diff-outline-side-by-side"
       data-testid="volume-plan-diff-outline-side-by-side"
     >
       <p class="meta-line">全局大纲摘录</p>
@@ -123,7 +123,7 @@
       >{{ vp.volumePlanDiffPreview.global_outline_excerpt }}</pre>
       <ul
         v-else
-        class="volume-plan-outline-lines"
+        class="volume-plan-outline-lines volume-plan-diff-outline-lines"
         data-testid="volume-plan-diff-outline-lines"
       >
         <li
@@ -141,14 +141,14 @@
   </div>
   <div
     v-if="vp.volumePlanSaveConfirmOpen"
-    class="volume-plan-save-confirm pixel-border"
+    class="volume-plan-save-confirm pixel-border volume-plan-save-confirm-panel"
     data-testid="volume-plan-save-confirm-panel"
   >
     <p class="meta-line">确认保存以上卷纲变更？</p>
     <div class="batch-actions">
       <button
         type="button"
-        class="save-btn pixel-border"
+        class="save-btn pixel-border confirm-volume-plan-save-btn"
         data-testid="confirm-volume-plan-save-btn"
         :disabled="vp.saving"
         @click="vp.confirmSaveVolumePlan"
@@ -157,7 +157,7 @@
       </button>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border cancel-volume-plan-save-btn"
         data-testid="cancel-volume-plan-save-btn"
         :disabled="vp.saving"
         @click="vp.cancelVolumePlanSave"

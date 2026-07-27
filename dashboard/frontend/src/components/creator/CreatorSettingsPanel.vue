@@ -4,7 +4,7 @@
 <template>
       <section
         v-show="st.isWorkspaceColumnVisible('settings')"
-        class="creator-column pixel-card"
+        class="creator-column pixel-card column-settings"
         data-testid="column-settings"
       >
         <h2 class="column-title">设定</h2>
@@ -12,22 +12,22 @@
         <section class="settings-creator-zone" data-testid="settings-creator-zone">
         <CreatorPreferencesSection />
         <CreatorMemoryAssetsPanel compact />
-        <details class="settings-block" data-testid="settings-pillars-block">
+        <details class="settings-block settings-pillars-block" data-testid="settings-pillars-block">
           <summary>创作支柱</summary>
           <textarea
             v-model="st.pillarsText"
-            class="settings-textarea"
+            class="settings-textarea pillars-textarea"
             data-testid="pillars-textarea"
             rows="6"
           />
           <code class="path-line">{{ st.settingsDocs?.pillars_path || st.overview.pillars_path }}</code>
         </details>
-        <details class="settings-block" data-testid="settings-outline-block">
+        <details class="settings-block settings-outline-block" data-testid="settings-outline-block">
           <summary>全局大纲</summary>
           <textarea
             :ref="st.bindGlobalOutlineEditorRef"
             v-model="st.globalOutlineText"
-            class="settings-textarea"
+            class="settings-textarea global-outline-textarea"
             data-testid="global-outline-textarea"
             rows="8"
           />
@@ -35,7 +35,7 @@
         </details>
         <button
           type="button"
-          class="save-btn pixel-border"
+          class="save-btn pixel-border save-settings-btn"
           data-testid="save-settings-btn"
           :disabled="st.settingsSaving"
           @click="st.requestSaveSettings"
@@ -60,12 +60,12 @@
             </p>
             <pre v-if="st.settingsDiffSnippet.length" class="preview-text">{{ st.settingsDiffSnippet.join('\n') }}</pre>
             <template v-if="st.settingsDiffPreview.has_history">
-              <p class="diff-line" data-testid="three-way-history-label">三路对比（含历史快照）</p>
+              <p class="diff-line three-way-history-label" data-testid="three-way-history-label">三路对比（含历史快照）</p>
               <label v-if="st.settingsHistory.length" class="meta-line">
                 对比快照
                 <select
                   v-model="st.compareSnapshotId"
-                  class="vol-input"
+                  class="vol-input compare-snapshot-select"
                   data-testid="compare-snapshot-select"
                   @change="st.refreshThreeWayPreview"
                 >
@@ -95,7 +95,7 @@
               >
               <p
                 v-if="st.usesGlobalMergeDefault"
-                class="meta-line"
+                class="meta-line merge-global-default-badge"
                 data-testid="merge-global-default-badge"
               >
                 当前使用全局默认合并策略
@@ -103,7 +103,7 @@
               <div class="merge-presets" data-testid="merge-presets">
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border merge-preset-disk"
                   data-testid="merge-preset-disk"
                   @click="st.applyMergePreset('disk')"
                 >
@@ -111,7 +111,7 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border merge-preset-history"
                   data-testid="merge-preset-history"
                   @click="st.applyMergePreset('history')"
                 >
@@ -119,7 +119,7 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border merge-preset-editor"
                   data-testid="merge-preset-editor"
                   @click="st.applyMergePreset('editor')"
                 >
@@ -130,7 +130,7 @@
                 预设包
                 <select
                   v-model="st.selectedMergePresetPackage"
-                  class="vol-input"
+                  class="vol-input merge-preset-package-select"
                   data-testid="merge-preset-package-select"
                   @change="st.onMergePresetPackageChange"
                 >
@@ -147,7 +147,7 @@
               <div class="merge-range">
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border export-merge-preset-packages-btn"
                   data-testid="export-merge-preset-packages-btn"
                   @click="st.exportMergePresetPackages"
                 >
@@ -155,7 +155,7 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border toggle-import-merge-preset-packages-btn"
                   data-testid="toggle-import-merge-preset-packages-btn"
                   @click="st.showImportMergePresetPackages = !st.showImportMergePresetPackages"
                 >
@@ -164,7 +164,7 @@
                 <button
                   v-if="st.uiProfile.show_factory_presets"
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border publish-merge-preset-factory-btn"
                   data-testid="publish-merge-preset-factory-btn"
                   :disabled="st.mergePresetFactoryPublishing || !st.selectedProjectMergePreset"
                   @click="st.publishMergePresetToFactory"
@@ -174,7 +174,7 @@
                 <button
                   v-if="st.uiProfile.show_factory_presets"
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border pull-merge-preset-factory-btn"
                   data-testid="pull-merge-preset-factory-btn"
                   :disabled="st.mergePresetFactoryPulling || !st.factoryMergePresetCount"
                   @click="st.pullFactoryMergePresets"
@@ -184,7 +184,7 @@
               </div>
               <div
                 v-if="st.uiProfile.show_merge_preset_advanced && st.mergePresetToposort.edges?.length"
-                class="merge-preset-toposort"
+                class="merge-preset-toposort merge-preset-toposort-panel"
                 data-testid="merge-preset-toposort-panel"
               >
                 <p class="meta-line">拓扑序（{{ st.mergePresetToposort.order?.join(' → ') }}）</p>
@@ -192,7 +192,7 @@
                   <li
                     v-for="edge in st.mergePresetToposort.edges"
                     :key="`${edge.from}-${edge.to}`"
-                    data-testid="merge-preset-toposort-edge"
+                    data-testid="merge-preset-toposort-edge" class="merge-preset-toposort-edge"
                   >
                     {{ edge.from }} → {{ edge.to }}
                   </li>
@@ -200,7 +200,7 @@
               </div>
               <div
                 v-if="st.mergePresetChangelog.entries?.length"
-                class="merge-preset-changelog"
+                class="merge-preset-changelog merge-preset-changelog-panel"
                 data-testid="merge-preset-changelog-panel"
               >
                 <p class="meta-line">预设变更（{{ st.mergePresetChangelog.entry_count }}）</p>
@@ -208,12 +208,12 @@
                   <li
                     v-for="(entry, idx) in st.mergePresetChangelog.entries"
                     :key="idx"
-                    data-testid="merge-preset-changelog-row"
+                    data-testid="merge-preset-changelog-row" class="merge-preset-changelog-row"
                   >
                     {{ entry.action }} · {{ entry.changed_fields?.join(', ') }}
                     <button
                       type="button"
-                      class="mini-btn pixel-border"
+                      class="mini-btn pixel-border merge-preset-changelog-diff-btn"
                       data-testid="merge-preset-changelog-diff-btn"
                       @click="st.previewMergePresetChangelogDiff(idx)"
                     >
@@ -223,7 +223,7 @@
                 </ul>
                 <p
                   v-if="st.mergePresetChangelogDiff.change_count"
-                  class="meta-line"
+                  class="meta-line merge-preset-changelog-diff-panel"
                   data-testid="merge-preset-changelog-diff-panel"
                 >
                   变更 {{ st.mergePresetChangelogDiff.change_count }} 项：
@@ -240,12 +240,12 @@
                   <li
                     v-for="(conflict, idx) in st.factoryMergePresetPullConflicts.conflicts"
                     :key="`${conflict.package_id}-${idx}`"
-                    data-testid="merge-preset-factory-pull-conflict-row"
+                    data-testid="merge-preset-factory-pull-conflict-row" class="merge-preset-factory-pull-conflict-row"
                   >
                     {{ conflict.message }}
                     <button
                       type="button"
-                      class="mini-btn pixel-border"
+                      class="mini-btn pixel-border merge-preset-factory-pull-prefer-factory-btn"
                       data-testid="merge-preset-factory-pull-prefer-factory-btn"
                       @click="st.pullFactoryMergePresetsWithStrategy(conflict.package_id, 'prefer_factory')"
                     >
@@ -253,7 +253,7 @@
                     </button>
                     <button
                       type="button"
-                      class="mini-btn pixel-border"
+                      class="mini-btn pixel-border merge-preset-factory-pull-prefer-project-btn"
                       data-testid="merge-preset-factory-pull-prefer-project-btn"
                       @click="st.pullFactoryMergePresetsWithStrategy(conflict.package_id, 'prefer_project')"
                     >
@@ -264,7 +264,7 @@
               </div>
               <div
                 v-if="st.uiProfile.show_merge_preset_advanced && st.mergePresetGraph.edges?.length"
-                class="merge-preset-graph"
+                class="merge-preset-graph merge-preset-graph-panel"
                 data-testid="merge-preset-graph-panel"
               >
                 <p class="meta-line">预设包依赖图（{{ st.mergePresetGraph.edge_count }} 条边）</p>
@@ -272,7 +272,7 @@
                   <li
                     v-for="edge in st.mergePresetGraph.edges"
                     :key="`${edge.from_pkg}-${edge.to}`"
-                    data-testid="merge-preset-graph-edge"
+                    data-testid="merge-preset-graph-edge" class="merge-preset-graph-edge"
                   >
                     {{ edge.from_pkg }} → {{ edge.to }}
                   </li>
@@ -280,7 +280,7 @@
               </div>
               <div
                 v-if="st.uiProfile.show_merge_preset_advanced && st.mergePresetConflicts.conflicts?.length"
-                class="merge-preset-conflicts"
+                class="merge-preset-conflicts merge-preset-conflicts-panel"
                 data-testid="merge-preset-conflicts-panel"
               >
                 <p class="meta-line">预设包冲突（{{ st.mergePresetConflicts.conflict_count }}）</p>
@@ -288,7 +288,7 @@
                   <li
                     v-for="(conflict, idx) in st.mergePresetConflicts.conflicts"
                     :key="`${conflict.type}-${idx}`"
-                    data-testid="merge-preset-conflict-row"
+                    data-testid="merge-preset-conflict-row" class="merge-preset-conflict-row"
                   >
                     {{ conflict.message }}
                   </li>
@@ -296,13 +296,13 @@
               </div>
               <div
                 v-if="st.uiProfile.show_merge_preset_advanced && st.mergePresetConflictFixes.fixes?.length"
-                class="merge-preset-conflict-fixes"
+                class="merge-preset-conflict-fixes merge-preset-conflict-fixes-panel"
                 data-testid="merge-preset-conflict-fixes-panel"
               >
                 <p class="meta-line">修复建议（{{ st.mergePresetConflictFixes.fix_count }}）</p>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border apply-all-merge-preset-fixes-btn"
                   data-testid="apply-all-merge-preset-fixes-btn"
                   @click="st.applyAllMergePresetConflictFixes"
                 >
@@ -312,14 +312,14 @@
                   <li
                     v-for="fix in st.mergePresetConflictFixes.fixes"
                     :key="fix.id"
-                    class="merge-preset-fix-row"
+                    class="merge-preset-fix-row merge-preset-conflict-fix-row"
                     data-testid="merge-preset-conflict-fix-row"
                   >
                     <span>{{ fix.label }}</span>
                     <button
                       v-if="fix.applicable"
                       type="button"
-                      class="mini-btn pixel-border"
+                      class="mini-btn pixel-border apply-merge-preset-fix-btn"
                       data-testid="apply-merge-preset-fix-btn"
                       @click="st.applyMergePresetConflictFix(fix)"
                     >
@@ -330,19 +330,19 @@
               </div>
               <div
                 v-if="st.showImportMergePresetPackages"
-                class="import-templates-panel"
+                class="import-templates-panel import-merge-preset-packages-panel"
                 data-testid="import-merge-preset-packages-panel"
               >
                 <textarea
                   v-model="st.importMergePresetPackagesJson"
-                  class="vol-input import-templates-json"
+                  class="vol-input import-templates-json import-merge-preset-packages-json"
                   data-testid="import-merge-preset-packages-json"
                   placeholder='{"packages":[...]}'
                   rows="3"
                 />
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border preview-merge-preset-import-diff-btn"
                   data-testid="preview-merge-preset-import-diff-btn"
                   :disabled="st.mergePresetPackagesImporting || !st.importMergePresetPackagesJson.trim()"
                   @click="st.previewMergePresetImportDiff"
@@ -351,7 +351,7 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border toposort-merge-preset-btn"
                   data-testid="toposort-merge-preset-btn"
                   @click="st.applyMergePresetToposort"
                 >
@@ -359,7 +359,7 @@
                 </button>
                 <p
                   v-if="st.mergePresetImportDiff.added?.length || st.mergePresetImportDiff.updated?.length"
-                  class="meta-line"
+                  class="meta-line merge-preset-import-diff-panel"
                   data-testid="merge-preset-import-diff-panel"
                 >
                   diff：新增 {{ st.mergePresetImportDiff.added?.length || 0 }} /
@@ -367,7 +367,7 @@
                 </p>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border preflight-merge-preset-import-btn"
                   data-testid="preflight-merge-preset-import-btn"
                   :disabled="st.mergePresetPackagesImporting || !st.importMergePresetPackagesJson.trim()"
                   @click="st.preflightMergePresetImport"
@@ -376,7 +376,7 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border import-merge-preset-packages-btn"
                   data-testid="import-merge-preset-packages-btn"
                   :disabled="st.mergePresetPackagesImporting || !st.importMergePresetPackagesJson.trim()"
                   @click="st.importMergePresetPackagesFromJson"
@@ -386,7 +386,7 @@
               </div>
               <label class="meta-line">
                 支柱
-                <select v-model="st.pillarsMergeSource" class="vol-input" data-testid="pillars-merge-source" @change="st.refreshMergeStrategyPreview">
+                <select v-model="st.pillarsMergeSource" class="vol-input pillars-merge-source" data-testid="pillars-merge-source" @change="st.refreshMergeStrategyPreview">
                   <option value="editor">编辑器</option>
                   <option value="disk">磁盘</option>
                   <option value="history">历史快照</option>
@@ -396,7 +396,7 @@
                 支柱历史快照
                 <select
                   v-model="st.pillarsSnapshotId"
-                  class="vol-input"
+                  class="vol-input pillars-snapshot-select"
                   data-testid="pillars-snapshot-select"
                   @change="st.refreshMergeStrategyPreview"
                 >
@@ -409,7 +409,7 @@
                 全局大纲
                 <select
                   v-model="st.outlineMergeSource"
-                  class="vol-input"
+                  class="vol-input outline-merge-source"
                   data-testid="outline-merge-source"
                   @change="st.refreshMergeStrategyPreview"
                 >
@@ -422,7 +422,7 @@
                 大纲历史快照
                 <select
                   v-model="st.outlineSnapshotId"
-                  class="vol-input"
+                  class="vol-input outline-snapshot-select"
                   data-testid="outline-snapshot-select"
                   @change="st.refreshMergeStrategyPreview"
                 >
@@ -438,14 +438,14 @@
                 </p>
                 <pre
                   v-if="st.mergeStrategySnippet.length"
-                  class="preview-text"
+                  class="preview-text merge-strategy-snippet"
                   data-testid="merge-strategy-snippet"
                 >{{ st.mergeStrategySnippet.join('\n') }}</pre>
               </div>
               <div class="merge-range">
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border export-merge-prefs-btn"
                   data-testid="export-merge-prefs-btn"
                   @click="st.exportMergePreferences"
                 >
@@ -453,24 +453,24 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border toggle-import-merge-prefs-btn"
                   data-testid="toggle-import-merge-prefs-btn"
                   @click="st.showImportMergePrefs = !st.showImportMergePrefs"
                 >
                   {{ st.showImportMergePrefs ? '收起导入' : '导入合并策略' }}
                 </button>
               </div>
-              <div v-if="st.showImportMergePrefs" class="import-templates-panel" data-testid="import-merge-prefs-panel">
+              <div v-if="st.showImportMergePrefs" class="import-templates-panel import-merge-prefs-panel" data-testid="import-merge-prefs-panel">
                 <textarea
                   v-model="st.importMergePrefsJson"
-                  class="vol-input import-templates-json"
+                  class="vol-input import-templates-json import-merge-prefs-json"
                   data-testid="import-merge-prefs-json"
                   placeholder='{"project":{...},"global":{...}}'
                   rows="4"
                 />
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border import-merge-prefs-btn"
                   data-testid="import-merge-prefs-btn"
                   :disabled="st.mergePrefsImporting || !st.importMergePrefsJson.trim()"
                   @click="st.importMergePreferencesFromJson"
@@ -484,7 +484,7 @@
           <div class="batch-actions">
             <button
               type="button"
-              class="save-btn pixel-border"
+              class="save-btn pixel-border confirm-settings-btn"
               data-testid="confirm-settings-btn"
               :disabled="st.settingsSaving || !st.settingsDiffPreview.has_changes"
               @click="st.confirmSaveSettings"
@@ -493,7 +493,7 @@
             </button>
             <button
               type="button"
-              class="mini-btn pixel-border"
+              class="mini-btn pixel-border cancel-settings-btn"
               data-testid="cancel-settings-btn"
               @click="st.cancelSettingsDiff"
             >
@@ -503,9 +503,9 @@
         </div>
         </section>
 
-        <details class="settings-block settings-block--advanced" data-testid="settings-advanced-section">
+        <details class="settings-block settings-block--advanced settings-advanced-section" data-testid="settings-advanced-section">
           <summary>高级设定</summary>
-        <details v-if="st.settingsHistory.length" class="settings-block" data-testid="settings-history-panel">
+        <details v-if="st.settingsHistory.length" class="settings-block settings-history-panel" data-testid="settings-history-panel">
           <summary>版本历史（{{ st.settingsHistory.length }}）</summary>
           <ul class="history-list">
             <li
@@ -536,21 +536,21 @@
         </details>
         <div
           v-if="st.uiProfile.primary_action === 'logic_check' && !st.workspaceTabsEnabled"
-          class="cmd-block companion-check-panel"
+          class="cmd-block companion-check-panel companion-logic-check-panel"
           data-testid="companion-logic-check-panel"
         >
           <p class="subsection-title">逻辑审查</p>
           <p class="meta-line">仅检查 P0 逻辑问题，不打 prose 分。</p>
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border run-companion-logic-check-btn"
             data-testid="run-companion-logic-check-btn"
             :disabled="st.logicCheckRunning"
             @click="st.runCompanionLogicCheck"
           >
             {{ st.logicCheckRunning ? '检查中…' : '一键逻辑审查' }}
           </button>
-          <p v-if="st.logicCheckResult" class="meta-line" data-testid="companion-logic-check-result">
+          <p v-if="st.logicCheckResult" class="meta-line companion-logic-check-result" data-testid="companion-logic-check-result">
             {{ st.logicCheckResult.passed ? '通过' : '未通过' }} · P0 {{ st.logicCheckResult.p0_count }} ·
             共 {{ st.logicCheckResult.total_issues }} 条
             <span v-if="st.logicCheckResult.p0_only">（仅展示 P0）</span>

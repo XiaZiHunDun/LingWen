@@ -4,13 +4,13 @@
 <template>
           <label
             v-if="vp.uiProfile.volume_plan_diff_type_filter && vp.volumePlanDiffPreview?.has_changes && vp.volumePlanDiffTypeOptions.length"
-            class="meta-line volume-plan-diff-type-filter"
+            class="meta-line volume-plan-diff-type-filter volume-plan-diff-type-filter-label"
             data-testid="volume-plan-diff-type-filter-label"
           >
             变更类型
             <select
               v-model="vp.volumePlanDiffTypeFilter"
-              class="vol-input"
+              class="vol-input volume-plan-diff-type-filter"
               data-testid="volume-plan-diff-type-filter"
             >
               <option value="">全部</option>
@@ -25,13 +25,13 @@
           </label>
           <label
             v-if="vp.uiProfile.volume_plan_diff_volume_filter && vp.volumePlanDiffPreview?.has_changes && vp.volumePlanDiffVolumeOptions.length"
-            class="meta-line volume-plan-diff-volume-filter"
+            class="meta-line volume-plan-diff-volume-filter volume-plan-diff-volume-filter-label"
             data-testid="volume-plan-diff-volume-filter-label"
           >
             变更卷
             <select
               v-model="vp.volumePlanDiffVolumeFilter"
-              class="vol-input"
+              class="vol-input volume-plan-diff-volume-filter"
               data-testid="volume-plan-diff-volume-filter"
             >
               <option value="">全部卷</option>
@@ -53,7 +53,7 @@
               卷纲未保存变更
               <span
                 v-if="vp.uiProfile.volume_plan_diff_change_count && vp.volumePlanDiffChangeCount"
-                class="volume-plan-diff-count"
+                class="volume-plan-diff-count volume-plan-diff-change-count"
                 data-testid="volume-plan-diff-change-count"
               >
                 {{ vp.volumePlanDiffChangeCount }} 处
@@ -72,7 +72,7 @@
               {{ vp.volumePlanDiffPreview?.has_changes ? '卷纲未保存变更' : '卷纲与已保存一致' }}
               <span
                 v-if="vp.uiProfile.volume_plan_diff_change_count && vp.volumePlanDiffPreview?.has_changes && vp.volumePlanDiffChangeCount"
-                class="volume-plan-diff-count"
+                class="volume-plan-diff-count volume-plan-diff-change-count"
                 data-testid="volume-plan-diff-change-count"
               >
                 {{ vp.volumePlanDiffChangeCount }} 处
@@ -81,7 +81,7 @@
             <template v-if="vp.volumePlanDiffPreview?.has_changes">
               <CreatorVolumePlanDiffContent key-prefix="collapse-" />
             </template>
-            <p v-else class="meta-line" data-testid="volume-plan-diff-no-changes">
+            <p v-else class="meta-line volume-plan-diff-no-changes" data-testid="volume-plan-diff-no-changes">
               当前编辑与已保存卷纲一致
             </p>
           </details>

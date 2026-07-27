@@ -6,7 +6,7 @@
     <button
       type="button"
       role="tab"
-      class="ask-page-tabs__tab"
+      class="ask-page-tabs__tab ask-tab-chat"
       :class="{ 'ask-page-tabs__tab--active': tab === 'chat' }"
       :aria-selected="tab === 'chat'"
       data-testid="ask-tab-chat"
@@ -17,7 +17,7 @@
     <button
       type="button"
       role="tab"
-      class="ask-page-tabs__tab"
+      class="ask-page-tabs__tab ask-tab-note"
       :class="{ 'ask-page-tabs__tab--active': tab === 'note' }"
       :aria-selected="tab === 'note'"
       data-testid="ask-tab-note"

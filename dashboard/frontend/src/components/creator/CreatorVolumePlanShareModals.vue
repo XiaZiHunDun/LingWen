@@ -9,7 +9,7 @@
   >
     <p
       v-if="vp.volumePlanDiffShareLinkPreview.valid === false"
-      class="meta-line volume-plan-diff-share-link-error"
+      class="meta-line volume-plan-diff-share-link-error volume-plan-diff-share-token-error"
       data-testid="volume-plan-diff-share-token-error"
     >
       {{ vp.volumePlanDiffShareLinkPreview.error_label }}
@@ -40,7 +40,7 @@
       <button
         v-if="vp.uiProfile.volume_plan_diff_share_link_apply && vp.volumePlanDiffShareLinkPreview.can_apply"
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border apply-volume-plan-diff-share-btn"
         data-testid="apply-volume-plan-diff-share-btn"
         @click="vp.requestApplyVolumePlanDiffShareLink"
       >
@@ -52,20 +52,20 @@
         data-testid="volume-plan-diff-share-e2e-steps"
       >
         <li
-          class="volume-plan-diff-share-e2e-step volume-plan-diff-share-e2e-step--done"
+          class="volume-plan-diff-share-e2e-step volume-plan-diff-share-e2e-step--done share-e2e-step-parse"
           data-testid="share-e2e-step-parse"
         >
           1. 解析分享链接
         </li>
         <li
-          class="volume-plan-diff-share-e2e-step"
+          class="volume-plan-diff-share-e2e-step share-e2e-step-apply"
           :class="{ 'volume-plan-diff-share-e2e-step--done': vp.shareE2eApplyDone }"
           data-testid="share-e2e-step-apply"
         >
           2. 应用卷纲
         </li>
         <li
-          class="volume-plan-diff-share-e2e-step"
+          class="volume-plan-diff-share-e2e-step share-e2e-step-save"
           data-testid="share-e2e-step-save"
         >
           3. 保存卷纲
@@ -74,7 +74,7 @@
     </template>
     <button
       type="button"
-      class="mini-btn pixel-border"
+      class="mini-btn pixel-border dismiss-volume-plan-diff-share-preview-btn"
       data-testid="dismiss-volume-plan-diff-share-preview-btn"
       @click="vp.dismissVolumePlanDiffShareLinkPreview"
     >
@@ -93,7 +93,7 @@
     <div class="mode-switch-confirm-actions">
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border confirm-share-apply-btn"
         data-testid="confirm-share-apply-btn"
         @click="vp.confirmApplyVolumePlanDiffShareLink"
       >
@@ -101,7 +101,7 @@
       </button>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border cancel-share-apply-btn"
         data-testid="cancel-share-apply-btn"
         @click="vp.cancelApplyVolumePlanDiffShareLink"
       >
@@ -128,7 +128,7 @@
     <div class="mode-switch-confirm-actions">
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border share-merge-use-share-btn"
         data-testid="share-merge-use-share-btn"
         @click="vp.confirmShareMergeUseShare"
       >
@@ -136,7 +136,7 @@
       </button>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border share-merge-keep-local-btn"
         data-testid="share-merge-keep-local-btn"
         @click="vp.cancelShareMerge"
       >
@@ -155,7 +155,7 @@
     <div class="volume-plan-diff-print-preview-actions">
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border print-volume-plan-diff-btn"
         data-testid="print-volume-plan-diff-btn"
         @click="vp.printVolumePlanDiffPrintPreview"
       >
@@ -163,7 +163,7 @@
       </button>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border close-volume-plan-diff-print-preview-btn"
         data-testid="close-volume-plan-diff-print-preview-btn"
         @click="vp.closeVolumePlanDiffPrintPreview"
       >

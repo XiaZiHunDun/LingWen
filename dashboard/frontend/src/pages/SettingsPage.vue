@@ -13,7 +13,7 @@
         <button
           v-if="!isCompanionShell"
           type="button"
-          class="l1-pill"
+          class="l1-pill refresh-btn"
           data-testid="refresh-btn"
           :disabled="loading"
           @click="loadBudgets"
@@ -25,14 +25,14 @@
     <div v-if="displayError" class="error-banner" data-testid="error-banner">
       {{ displayError }}
     </div>
-    <div v-if="saveMessage" class="success-banner" data-testid="save-banner">
+    <div v-if="saveMessage" class="success-banner save-banner" data-testid="save-banner">
       {{ saveMessage }}
     </div>
 
-    <section class="settings-group" data-testid="settings-basic-panel">
+    <section class="settings-group settings-basic-panel" data-testid="settings-basic-panel">
       <h2 class="group-title">基础</h2>
 
-      <div class="settings-block" data-testid="system-status-panel">
+      <div class="settings-block system-status-panel" data-testid="system-status-panel">
         <h3 class="section-title">运行状态</h3>
         <p class="empty-hint">接口与实时同步情况；成本与预算告警也会显示在这里。</p>
         <SidebarSystemStatusBody
@@ -44,7 +44,7 @@
         <SidebarCostBanner :status="workflowStatus" />
       </div>
 
-      <div class="settings-block settings-block--divider" data-testid="display-settings-panel">
+      <div class="settings-block settings-block--divider display-settings-panel" data-testid="display-settings-panel">
         <h3 class="section-title">界面</h3>
         <p class="empty-hint">调整全站字号，不影响正文排版宽度。</p>
         <TextScaleToggle />
@@ -52,20 +52,20 @@
     </section>
 
     <details
-      class="settings-advanced"
+      class="settings-advanced settings-advanced-panel"
       data-testid="settings-advanced-panel"
       :open="!isCompanionShell"
       @toggle="onAdvancedToggle"
     >
       <summary class="settings-advanced__summary">高级</summary>
       <div class="settings-advanced__body">
-        <p v-if="isCompanionShell" class="empty-hint" data-testid="settings-advanced-companion-hint">
+        <p v-if="isCompanionShell" class="empty-hint settings-advanced-companion-hint" data-testid="settings-advanced-companion-hint">
           伴侣模式可查看预算用量；修改预算与环境配置请切换到进阶模式。
         </p>
         <button
           v-if="isCompanionShell"
           type="button"
-          class="l1-pill settings-advanced__refresh"
+          class="l1-pill settings-advanced__refresh settings-advanced-refresh-btn"
           data-testid="settings-advanced-refresh-btn"
           :disabled="loading"
           @click="loadBudgets"
@@ -73,12 +73,12 @@
           {{ loading ? '加载中…' : '刷新预算' }}
         </button>
 
-        <section class="settings-block" data-testid="budget-panel">
+        <section class="settings-block budget-panel" data-testid="budget-panel">
           <h3 class="section-title">Token 预算</h3>
           <p v-if="!windowRows.length && !tierRows.length" class="empty-hint">
             {{ loading ? '加载预算中…' : '未配置预算阈值（per-run 仍随 workflow run 传参）' }}
           </p>
-          <table v-if="windowRows.length" class="settings-table" data-testid="window-budget-table">
+          <table v-if="windowRows.length" class="settings-table window-budget-table" data-testid="window-budget-table">
             <thead>
               <tr>
                 <th>窗口</th>
@@ -99,7 +99,7 @@
             </tbody>
           </table>
           <h4 v-if="tierRows.length" class="subsection-title">按模型 Tier</h4>
-          <table v-if="tierRows.length" class="settings-table" data-testid="tier-budget-table">
+          <table v-if="tierRows.length" class="settings-table tier-budget-table" data-testid="tier-budget-table">
             <thead>
               <tr>
                 <th>Tier</th>
@@ -123,14 +123,14 @@
         </section>
 
         <template v-if="!isCompanionShell">
-          <section class="settings-block settings-block--divider" data-testid="budget-edit-panel">
+          <section class="settings-block settings-block--divider budget-edit-panel" data-testid="budget-edit-panel">
             <h3 class="section-title">修改预算</h3>
             <form class="budget-edit-form" @submit.prevent="submitBudgetEdit">
               <label class="field-label" for="budget-target">目标</label>
               <select
                 id="budget-target"
                 v-model="editTargetId"
-                class="budget-select pixel-border"
+                class="budget-select pixel-border budget-target-select"
                 data-testid="budget-target-select"
                 @change="syncEditInputFromLoaded"
               >
@@ -146,25 +146,25 @@
                 min="0"
                 max="10000"
                 step="0.01"
-                class="budget-input pixel-border"
+                class="budget-input pixel-border budget-usd-input"
                 data-testid="budget-usd-input"
                 placeholder="例如 0.50"
               />
               <button
                 type="submit"
-                class="l1-pill l1-pill--primary"
+                class="l1-pill l1-pill--primary budget-save-btn"
                 data-testid="budget-save-btn"
                 :disabled="saving"
               >
                 {{ saving ? '保存中…' : '保存' }}
               </button>
             </form>
-            <p v-if="editError" class="edit-error" data-testid="budget-edit-error">{{ editError }}</p>
+            <p v-if="editError" class="edit-error budget-edit-error" data-testid="budget-edit-error">{{ editError }}</p>
           </section>
 
-          <section class="settings-block settings-block--divider" data-testid="env-panel">
+          <section class="settings-block settings-block--divider env-panel" data-testid="env-panel">
             <h3 class="section-title">生产环境变量</h3>
-            <table class="settings-table" data-testid="production-env-table">
+            <table class="settings-table production-env-table" data-testid="production-env-table">
               <thead>
                 <tr>
                   <th>变量</th>
@@ -182,9 +182,9 @@
             </table>
           </section>
 
-          <section class="settings-block settings-block--divider" data-testid="api-key-env-panel">
+          <section class="settings-block settings-block--divider api-key-env-panel" data-testid="api-key-env-panel">
             <h3 class="section-title">LLM Provider 密钥</h3>
-            <table class="settings-table" data-testid="api-key-env-table">
+            <table class="settings-table api-key-env-table" data-testid="api-key-env-table">
               <thead>
                 <tr>
                   <th>变量</th>

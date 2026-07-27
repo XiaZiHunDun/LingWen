@@ -2,7 +2,7 @@
   CreatorInlineConflictGutter.vue — 正文旁冲突标记（段落级跳转）
 -->
 <template>
-  <aside class="inline-conflict-gutter" data-testid="write-inline-conflict-gutter">
+  <aside class="inline-conflict-gutter write-inline-conflict-gutter" data-testid="write-inline-conflict-gutter">
     <p class="inline-conflict-gutter__title">冲突</p>
     <ul class="inline-conflict-gutter__list">
       <li

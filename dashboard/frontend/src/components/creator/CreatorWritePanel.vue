@@ -1,14 +1,14 @@
 <template>
   <section
     v-show="w.isWorkspaceColumnVisible('write')"
-    class="creator-column"
+    class="creator-column column-write"
     :class="{
       'creator-column--workbench': w.wb.workbenchEnabled,
       'creator-column--chat-open': showChatPanel,
     }"
     data-testid="column-write"
   >
-    <div v-if="!w.wb.workbenchEnabled" class="creator-column__header">
+    <div v-if="!w.wb.workbenchEnabled" class="creator-column__header column-write">
       <h2 class="column-title">写</h2>
       <p class="column-hint">章节状态 · 偏离章高亮</p>
     </div>

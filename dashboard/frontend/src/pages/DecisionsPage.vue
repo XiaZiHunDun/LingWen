@@ -33,7 +33,7 @@
       </button>
     </nav>
 
-    <div v-if="focusChapter != null" class="focus-banner pixel-border" data-testid="decision-focus-banner">
+    <div v-if="focusChapter != null" class="focus-banner pixel-border decision-focus-banner" data-testid="decision-focus-banner">
       来自章节 #{{ focusChapter }} 的跳转
       <span v-if="highlightedDecisionId"> · 决策 {{ highlightedDecisionId }}</span>
     </div>
@@ -75,7 +75,7 @@
       <p class="hint">启动工作流后，系统会扫描 DECISION 节点并列出待审核决策。</p>
       <button
         type="button"
-        class="empty-cta-btn empty-cta-btn--primary pixel-border"
+        class="empty-cta-btn empty-cta-btn--primary pixel-border decisions-go-produce-btn"
         data-testid="decisions-go-produce-btn"
         @click="goProduce"
       >

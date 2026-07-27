@@ -3,7 +3,7 @@
 -->
 <template>
   <div
-    class="chapter-entity-rail"
+    class="chapter-entity-rail write-chapter-entity-rail"
     :class="{ 'chapter-entity-rail--nested': hideTitle }"
     data-testid="write-chapter-entity-rail"
   >
@@ -29,7 +29,7 @@
         </p>
         <button
           type="button"
-          class="link-btn meta-line"
+          class="link-btn meta-line chapter-entity-goto-memory"
           data-testid="chapter-entity-goto-memory"
           @click="goMemoryTab(entity)"
         >

@@ -4,13 +4,13 @@
 <template>
   <div
     v-if="diffView"
-    class="checkpoint-diff pixel-border"
+    class="checkpoint-diff pixel-border write-checkpoint-diff"
     data-testid="write-checkpoint-diff"
   >
     <div class="checkpoint-diff__head">
       <strong>版本对比 · {{ diffView.checkpoint.label }}</strong>
       <span class="meta-line">{{ diffView.changeCount }} 处变化</span>
-      <button type="button" class="mini-btn pixel-border" data-testid="checkpoint-diff-close" @click="$emit('close')">
+      <button type="button" class="mini-btn pixel-border checkpoint-diff-close" data-testid="checkpoint-diff-close" @click="$emit('close')">
         关闭
       </button>
     </div>

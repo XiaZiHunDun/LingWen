@@ -67,7 +67,7 @@
 
     <div
       v-if="productionLines.length"
-      class="production-section"
+      class="production-section production-summary-badge"
       data-testid="production-summary-badge"
     >
       <h4 class="section-title">📝 本章生产摘要</h4>
@@ -78,7 +78,7 @@
 
     <div
       v-if="hasIncrementalBackfill && !productionLines.length"
-      class="backfill-section"
+      class="backfill-section incremental-backfill-badge"
       data-testid="incremental-backfill-badge"
     >
       <h4 class="section-title">📚 CVG 增量 Backfill</h4>

@@ -38,7 +38,7 @@
       >
         ↓
       </button>
-      <span class="drag-handle" data-testid="volume-drag-handle" title="拖拽排序">⋮⋮</span>
+      <span class="drag-handle volume-drag-handle" data-testid="volume-drag-handle" title="拖拽排序">⋮⋮</span>
     </div>
     <input v-model="vol.label" class="vol-input vol-label" placeholder="卷名" />
     <div class="vol-range">
@@ -63,7 +63,7 @@
   <button
     v-if="vp.editableVolumes.length"
     type="button"
-    class="save-btn pixel-border"
+    class="save-btn pixel-border save-volume-plan-btn"
     data-testid="save-volume-plan-btn"
     :disabled="vp.saving"
     @click="vp.requestSaveVolumePlan"

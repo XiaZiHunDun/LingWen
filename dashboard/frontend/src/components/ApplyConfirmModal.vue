@@ -10,19 +10,19 @@
     data-testid="apply-confirm-modal"
     @click.self="$emit('cancel')"
   >
-    <div class="apply-confirm-modal__panel" data-testid="apply-confirm-modal-panel">
+    <div class="apply-confirm-modal__panel apply-confirm-modal-panel" data-testid="apply-confirm-modal-panel">
       <h3>Confirm Apply</h3>
-      <div class="apply-confirm-modal__chips" data-testid="apply-confirm-chips">
-        <span class="chip apply-confirm-chip" data-testid="apply-confirm-chapter-count">
+      <div class="apply-confirm-modal__chips apply-confirm-chips" data-testid="apply-confirm-chips">
+        <span class="chip apply-confirm-chip apply-confirm-chapter-count" data-testid="apply-confirm-chapter-count">
           {{ totals.affected_chapter_count || 0 }} chapter(s)
         </span>
-        <span class="chip apply-confirm-chip" data-testid="apply-confirm-character-count">
+        <span class="chip apply-confirm-chip apply-confirm-character-count" data-testid="apply-confirm-character-count">
           {{ totals.affected_character_count || 0 }} character(s)
         </span>
-        <span class="chip apply-confirm-chip" data-testid="apply-confirm-setting-count">
+        <span class="chip apply-confirm-chip apply-confirm-setting-count" data-testid="apply-confirm-setting-count">
           {{ totals.affected_setting_count || 0 }} setting(s)
         </span>
-        <span class="chip apply-confirm-chip" data-testid="apply-confirm-change-count">
+        <span class="chip apply-confirm-chip apply-confirm-change-count" data-testid="apply-confirm-change-count">
           {{ totals.estimated_change_count || 0 }} change(s)
         </span>
       </div>

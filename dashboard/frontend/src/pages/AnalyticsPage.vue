@@ -9,7 +9,7 @@
     <header v-if="!embedded" class="page-header">
       <div>
         <h1 class="page-title" data-testid="page-title">数据分析</h1>
-        <p v-if="activeSlug" class="project-hint" data-testid="active-project-hint">
+        <p v-if="activeSlug" class="project-hint active-project-hint" data-testid="active-project-hint">
           当前项目：{{ activeSlug }}
         </p>
       </div>
@@ -23,7 +23,7 @@
       </button>
     </header>
 
-    <p v-else-if="activeSlug" class="project-hint embedded-hint" data-testid="active-project-hint">
+    <p v-else-if="activeSlug" class="project-hint embedded-hint active-project-hint" data-testid="active-project-hint">
       当前项目：{{ activeSlug }}
     </p>
 
@@ -31,7 +31,7 @@
       {{ displayError }}
     </div>
 
-    <section class="kpi-section" data-testid="production-kpi">
+    <section class="kpi-section production-kpi" data-testid="production-kpi">
       <h2 class="section-title">正文生产 KPI</h2>
       <div class="stats-row">
         <StatCard
@@ -43,18 +43,18 @@
       </div>
       <ul
         v-if="productionLines.length"
-        class="production-summary"
+        class="production-summary analytics-production-summary"
         data-testid="analytics-production-summary"
       >
         <li v-for="(line, idx) in productionLines" :key="idx">{{ line }}</li>
       </ul>
     </section>
 
-    <section class="kpi-section" data-testid="production-rollup-kpi">
+    <section class="kpi-section production-rollup-kpi" data-testid="production-rollup-kpi">
       <h2 class="section-title">生产记录汇总</h2>
       <div
         v-if="productionRecordsDir && !isReadonlyInsight"
-        class="records-dir-hint"
+        class="records-dir-hint production-records-dir"
         data-testid="production-records-dir"
       >
         <details class="records-dir-details">
@@ -72,14 +72,14 @@
       </div>
       <ul
         v-if="productionRollupLines.length"
-        class="production-summary"
+        class="production-summary analytics-production-rollup-summary"
         data-testid="analytics-production-rollup-summary"
       >
         <li v-for="(line, idx) in productionRollupLines" :key="idx">{{ line }}</li>
       </ul>
       <table
         v-if="batchRollupRows.length"
-        class="rollup-table"
+        class="rollup-table analytics-batch-rollup-table"
         data-testid="analytics-batch-rollup-table"
       >
         <thead>
@@ -99,16 +99,16 @@
           </tr>
         </tbody>
       </table>
-      <p v-else class="empty-hint" data-testid="analytics-batch-rollup-empty">
+      <p v-else class="empty-hint analytics-batch-rollup-empty" data-testid="analytics-batch-rollup-empty">
         暂无 batch 记录（切换顶栏项目后自动加载对应 pilot_records）
       </p>
     </section>
 
-    <section class="kpi-section" data-testid="production-cost-trend-kpi">
+    <section class="kpi-section production-cost-trend-kpi" data-testid="production-cost-trend-kpi">
       <h2 class="section-title">生产成本趋势</h2>
       <ul
         v-if="productionCostTrendLines.length"
-        class="production-summary"
+        class="production-summary analytics-production-cost-trend-summary"
         data-testid="analytics-production-cost-trend-summary"
       >
         <li v-for="(line, idx) in productionCostTrendLines" :key="idx">{{ line }}</li>
@@ -117,12 +117,12 @@
         v-if="hasProductionCostTrend"
         :trend="productionCostTrend"
       />
-      <p v-else class="empty-hint" data-testid="analytics-production-cost-trend-empty">
+      <p v-else class="empty-hint analytics-production-cost-trend-empty" data-testid="analytics-production-cost-trend-empty">
         暂无带时间的生产记录（写入 pilot/batch JSON 后按 recorded_at 展示）
       </p>
     </section>
 
-    <section class="kpi-section" data-testid="ripple-kpi">
+    <section class="kpi-section ripple-kpi" data-testid="ripple-kpi">
       <h2 class="section-title">涟漪 KPI</h2>
       <div class="stats-row">
         <StatCard

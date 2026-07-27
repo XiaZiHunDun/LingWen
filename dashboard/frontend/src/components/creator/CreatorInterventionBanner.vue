@@ -4,7 +4,7 @@
 <template>
   <div
     v-if="pt.interventionItems.length"
-    class="intervention-banner pixel-border"
+    class="intervention-banner pixel-border creator-intervention-banner"
     data-testid="creator-intervention-banner"
   >
     <h3 class="intervention-title">需要你关注</h3>

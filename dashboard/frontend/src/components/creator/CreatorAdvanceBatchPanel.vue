@@ -15,7 +15,7 @@
           v-model.number="batchStart"
           type="number"
           min="1"
-          class="vol-input vol-num"
+          class="vol-input vol-num batch-start-input"
           data-testid="batch-start-input"
         />
       </label>
@@ -25,7 +25,7 @@
           v-model.number="batchEnd"
           type="number"
           min="1"
-          class="vol-input vol-num"
+          class="vol-input vol-num batch-end-input"
           data-testid="batch-end-input"
         />
       </label>
@@ -36,7 +36,7 @@
           type="number"
           min="0"
           step="0.01"
-          class="vol-input vol-num"
+          class="vol-input vol-num batch-budget-input"
           data-testid="batch-budget-input"
         />
       </label>
@@ -51,7 +51,7 @@
     <div class="batch-actions">
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border advance-preflight-btn"
         data-testid="advance-preflight-btn"
         :disabled="batchRunning"
         @click="$emit('preflight')"
@@ -60,7 +60,7 @@
       </button>
       <button
         type="button"
-        class="save-btn pixel-border"
+        class="save-btn pixel-border advance-batch-btn"
         data-testid="advance-batch-btn"
         :disabled="batchRunning || !preflightOk"
         @click="$emit('run-batch')"
@@ -70,7 +70,7 @@
     </div>
     <p v-if="batchCommand" class="meta-line"><code>{{ batchCommand }}</code></p>
     <p v-if="batchError" class="batch-error">{{ batchError }}</p>
-    <p v-if="batchJob" class="meta-line" data-testid="batch-job-status">
+    <p v-if="batchJob" class="meta-line batch-job-status" data-testid="batch-job-status">
       任务 {{ batchJob.job_id }} · {{ batchJob.status }}
     </p>
   </div>
@@ -86,7 +86,7 @@
     </p>
     <button
       type="button"
-      class="save-btn pixel-border"
+      class="save-btn pixel-border advance-go-produce-btn"
       data-testid="advance-go-produce-btn"
       @click="$emit('go-produce')"
     >

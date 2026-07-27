@@ -1,6 +1,11 @@
+import { unref } from 'vue';
 import { useNavStore } from '../stores/useNavStore.js';
 
 export const CREATOR_WORKSPACE_IDS = ['write', 'pulse', 'settings'];
+
+function navValue(store, key) {
+  return unref(store[key]);
+}
 
 export function isProduceNav(nav) {
   return useNavStore().isProduceNav(nav);
@@ -21,17 +26,17 @@ export function isWriteNav(nav) {
 export function useDashboardNav() {
   const store = useNavStore();
   return {
-    activeNav: store.activeNav,
-    produceTab: store.produceTab,
-    inboxTab: store.inboxTab,
-    insightTab: store.insightTab,
-    focusChapter: store.focusChapter,
-    focusDecisionId: store.focusDecisionId,
-    focusWizard: store.focusWizard,
-    focusWizardStep: store.focusWizardStep,
-    focusWizardDone: store.focusWizardDone,
-    focusWizardNotes: store.focusWizardNotes,
-    focusCreatorWorkspace: store.focusCreatorWorkspace,
+    activeNav: navValue(store, 'activeNav'),
+    produceTab: navValue(store, 'produceTab'),
+    inboxTab: navValue(store, 'inboxTab'),
+    insightTab: navValue(store, 'insightTab'),
+    focusChapter: navValue(store, 'focusChapter'),
+    focusDecisionId: navValue(store, 'focusDecisionId'),
+    focusWizard: navValue(store, 'focusWizard'),
+    focusWizardStep: navValue(store, 'focusWizardStep'),
+    focusWizardDone: navValue(store, 'focusWizardDone'),
+    focusWizardNotes: navValue(store, 'focusWizardNotes'),
+    focusCreatorWorkspace: navValue(store, 'focusCreatorWorkspace'),
     navigateTo: store.navigateTo.bind(store),
     setProduceTab: store.setProduceTab.bind(store),
     setInboxTab: store.setInboxTab.bind(store),

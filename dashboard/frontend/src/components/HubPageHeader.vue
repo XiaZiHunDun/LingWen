@@ -25,7 +25,7 @@
       <button
         v-if="showRefresh"
         type="button"
-        class="l1-pill"
+        class="l1-pill refresh-btn"
         data-testid="refresh-btn"
         :disabled="loading"
         @click="$emit('refresh')"

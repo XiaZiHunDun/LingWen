@@ -3,7 +3,7 @@
 -->
 <template>
   <p
-    class="prefs-summary pixel-border"
+    class="prefs-summary pixel-border creator-preferences-summary"
     :class="{ 'prefs-summary--compact': compact }"
     data-testid="creator-preferences-summary"
     :title="pt.preferencesSummary"
@@ -13,7 +13,7 @@
     <button
       v-if="showEditLink"
       type="button"
-      class="link-btn prefs-summary__link"
+      class="link-btn prefs-summary__link prefs-summary-goto-settings"
       data-testid="prefs-summary-goto-settings"
       @click="pt.setWorkspaceTab('settings')"
     >

@@ -18,7 +18,7 @@
       </p>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border pulse-empty-go-write-btn"
         data-testid="pulse-empty-go-write-btn"
         @click="$emit('go-write')"
       >
@@ -31,7 +31,7 @@
           已写 <strong>{{ overview.chapters_written }}</strong> / {{ overview.max_chapter }} 章
           <span class="progress-text__pct">（{{ overview.coverage_pct }}%）</span>
         </p>
-        <p v-if="overview.chapters_written === 0" class="progress-hint meta-line" data-testid="pulse-progress-hint">
+        <p v-if="overview.chapters_written === 0" class="progress-hint meta-line pulse-progress-hint" data-testid="pulse-progress-hint">
           还没开始写第一章
         </p>
       </div>

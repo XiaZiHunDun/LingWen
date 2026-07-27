@@ -16,7 +16,7 @@
     <label v-else-if="!compact" class="switcher-label" for="studio-project-select">项目</label>
     <select
       id="studio-project-select"
-      class="switcher-select"
+      class="switcher-select project-select"
       :class="{
         'switcher-select--compact': compact && !sidebar,
         'switcher-select--sidebar': sidebar,

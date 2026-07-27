@@ -15,7 +15,7 @@
         role="tab"
         :class="['mode-tab', { active: mode === 'scenario' }]"
         :aria-selected="mode === 'scenario'"
-        data-testid="mode-tab-scenario"
+        data-testid="mode-tab-scenario" class="mode-tab-scenario"
         @click="switchMode('scenario')"
       >By Scenario</button>
       <button
@@ -23,7 +23,7 @@
         role="tab"
         :class="['mode-tab', { active: mode === 'tier' }]"
         :aria-selected="mode === 'tier'"
-        data-testid="mode-tab-tier"
+        data-testid="mode-tab-tier" class="mode-tab-tier"
         @click="switchMode('tier')"
       >By Tier</button>
     </div>

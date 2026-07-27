@@ -1,7 +1,7 @@
 <template>
   <NConfigProvider :theme-overrides="lingwenThemeConfig">
     <ErrorBoundary>
-      <div class="dashboard" data-testid="app-root">
+      <div class="dashboard app-root" data-testid="app-root">
         <ToastNotification />
       <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
@@ -9,7 +9,7 @@
         <div class="sidebar-brand">
           <img src="/assets/brand/moling-logo.jpg" alt="墨灵Logo" class="sidebar-logo" aria-hidden="true" />
           <div class="sidebar-brand-text">
-            <h2 class="sidebar-title" data-testid="sidebar-product-name">{{ BRAND_PRODUCT_NAME }}</h2>
+            <h2 class="sidebar-title sidebar-product-name" data-testid="sidebar-product-name">{{ BRAND_PRODUCT_NAME }}</h2>
           </div>
         </div>
 
@@ -67,14 +67,14 @@
             <AskPageTabs />
           </div>
           <div v-else class="header-titles header-titles--l1">
-            <span class="header-page-name header-page-name--l1" data-testid="header-l1-page-name">
+            <span class="header-page-name header-page-name--l1 header-l1-page-name" data-testid="header-l1-page-name">
               {{ contextTitle }}
             </span>
           </div>
           <div class="header-actions">
             <span
               v-if="isReviewer"
-              class="reviewer-badge"
+              class="reviewer-badge reviewer-mode-badge"
               data-testid="reviewer-mode-badge"
             >
               审阅模式

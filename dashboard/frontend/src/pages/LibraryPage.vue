@@ -15,14 +15,14 @@
         />
         <button
           type="button"
-          class="l1-pill l1-pill--primary"
+          class="l1-pill l1-pill--primary library-new-btn"
           data-testid="library-new-btn"
           @click="startNew"
         >
           新建
         </button>
       </div>
-      <div v-if="projects.length" class="library-page__grid" data-testid="library-grid">
+      <div v-if="projects.length" class="library-page__grid library-grid" data-testid="library-grid">
         <button
           v-for="p in projects"
           :key="p.slug"
@@ -47,13 +47,13 @@
 
       <div
         v-else
-        class="library-page__empty"
+        class="library-page__empty library-empty"
         data-testid="library-empty"
       >
         <img src="/assets/illustrations/empty-state-no-project.jpg" alt="书架为空" class="library-page__empty-image" />
         <p class="library-page__empty-title">书架还是空的</p>
         <p class="meta-line">点「新建」开第一本，或在「聊聊」里说说你想写什么。</p>
-        <button type="button" class="l1-pill l1-pill--primary" data-testid="library-empty-new-btn" @click="startNew">
+        <button type="button" class="l1-pill l1-pill--primary library-empty-new-btn" data-testid="library-empty-new-btn" @click="startNew">
           新建第一本书
         </button>
       </div>

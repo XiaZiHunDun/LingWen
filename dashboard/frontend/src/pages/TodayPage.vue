@@ -22,13 +22,13 @@
 
       </div>
 
-      <p v-if="snapshot" class="project-line" data-testid="today-project-line">
+      <p v-if="snapshot" class="project-line today-project-line" data-testid="today-project-line">
         {{ snapshot.projectName }}
       </p>
 
     <div
       v-if="isReviewer"
-      class="reviewer-banner"
+      class="reviewer-banner today-reviewer-banner"
       data-testid="today-reviewer-banner"
     >
       审阅视图：今日页仅展示待办与健康度摘要，不可发起创作或生产。
@@ -38,7 +38,7 @@
       {{ displayError }}
     </div>
 
-    <section v-if="snapshot" class="primary-card" data-testid="today-primary-action">
+    <section v-if="snapshot" class="primary-card today-primary-action" data-testid="today-primary-action">
       <p class="primary-reason">{{ snapshot.primaryAction.reason }}</p>
       <button
         type="button"
@@ -50,7 +50,7 @@
       </button>
     </section>
 
-    <section v-if="snapshot" class="health-section" data-testid="today-health-section">
+    <section v-if="snapshot" class="health-section today-health-section" data-testid="today-health-section">
       <h2 class="section-title">本书健康度</h2>
       <div class="health-grid">
         <div class="health-stat">
@@ -72,7 +72,7 @@
         </div>
         <div
           v-if="snapshot.health.microTask && !snapshot.health.microTask.met"
-          class="health-stat"
+          class="health-stat today-micro-task-stat"
           data-testid="today-micro-task-stat"
         >
           <span class="health-stat__label">本章字数</span>
@@ -86,11 +86,11 @@
       </div>
     </section>
 
-    <div v-if="loading && !snapshot" class="loading-state" data-testid="today-loading">
+    <div v-if="loading && !snapshot" class="loading-state today-loading" data-testid="today-loading">
       加载今日任务…
     </div>
 
-    <div v-if="!loading && !snapshot" class="empty-state" data-testid="today-empty-state">
+    <div v-if="!loading && !snapshot" class="empty-state today-empty-state" data-testid="today-empty-state">
       <img src="/assets/illustrations/empty-state-no-task.jpg" alt="今日无事" class="empty-state__image" />
       <h3 class="empty-state__title">今日无事</h3>
       <p class="empty-state__desc">享受悠闲时光，灵感总会不期而至</p>

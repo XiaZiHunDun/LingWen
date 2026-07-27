@@ -5,14 +5,14 @@
     <details
       v-if="ob.onboardingWizard && ob.showOnboardingChrome"
       ref="wizardPanelRef"
-      class="onboarding-wizard pixel-border"
+      class="onboarding-wizard pixel-border onboarding-wizard-panel"
       data-testid="onboarding-wizard-panel"
       :open="ob.wizardPanelOpen"
       @toggle="ob.onWizardToggle"
     >
       <summary>
         入门向导 · {{ ob.onboardingWizard.mode_label }}（{{ ob.onboardingWizard.max_chapter }} 章上限）
-        <span v-if="ob.onboardingWizard.progress_pct != null" class="wizard-progress-badge" data-testid="wizard-progress-label">
+        <span v-if="ob.onboardingWizard.progress_pct != null" class="wizard-progress-badge wizard-progress-label" data-testid="wizard-progress-label">
           · {{ ob.onboardingWizard.progress_pct }}%
         </span>
         <span
@@ -25,7 +25,7 @@
       </summary>
       <div
         v-if="ob.wizardNotifications.length"
-        class="wizard-notifications"
+        class="wizard-notifications wizard-notifications-panel"
         data-testid="wizard-notifications-panel"
       >
         <p class="meta-line">批注通知</p>
@@ -33,7 +33,7 @@
           按 handle 过滤
           <select
             v-model="ob.wizardNotificationHandleFilter"
-            class="vol-input"
+            class="vol-input wizard-notification-handle-filter"
             data-testid="wizard-notification-handle-filter"
             @change="ob.loadWizardNotifications"
           >
@@ -45,7 +45,7 @@
         </label>
         <div
           v-if="ob.wizardNotificationDigest.groups?.length"
-          class="wizard-digest-panel"
+          class="wizard-digest-panel wizard-notification-digest"
           data-testid="wizard-notification-digest"
         >
           <p class="meta-line">通知摘要（{{ ob.wizardNotificationDigest.unread }} 条未读）</p>
@@ -68,7 +68,7 @@
         >
           <p class="meta-line">定时 digest</p>
           <label class="meta-line">
-            <input v-model="ob.wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" />
+            <input v-model="ob.wizardDigestScheduleEnabled" type="checkbox" data-testid="wizard-digest-schedule-enabled" class="wizard-digest-schedule-enabled" />
             启用（每 {{ ob.wizardDigestScheduleHours }} 小时）
           </label>
           <input
@@ -76,12 +76,12 @@
             type="number"
             min="1"
             max="168"
-            class="vol-input"
+            class="vol-input wizard-digest-schedule-hours"
             data-testid="wizard-digest-schedule-hours"
           />
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border save-wizard-digest-schedule-btn"
             data-testid="save-wizard-digest-schedule-btn"
             @click="ob.saveWizardDigestSchedule"
           >
@@ -89,31 +89,31 @@
           </button>
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border dispatch-wizard-digest-btn"
             data-testid="dispatch-wizard-digest-btn"
             @click="ob.dispatchWizardDigest"
           >
             立即发送 digest
           </button>
-            <p class="meta-line" data-testid="wizard-digest-background-hint">
+            <p class="meta-line wizard-digest-background-hint" data-testid="wizard-digest-background-hint">
             Dashboard 后台每 15 分钟自动检查到期 digest
           </p>
           <p
             v-if="ob.wizardDigestStats.sent_total || ob.wizardDigestStats.failed_total"
-            class="meta-line"
+            class="meta-line wizard-digest-stats"
             data-testid="wizard-digest-stats"
           >
             发送统计：成功 {{ ob.wizardDigestStats.sent_total }} / 失败 {{ ob.wizardDigestStats.failed_total }}
           </p>
           <input
             v-model="ob.wizardDigestHandleChannelsJson"
-            class="vol-input"
+            class="vol-input wizard-digest-handle-channels"
             data-testid="wizard-digest-handle-channels"
             placeholder='handle 路由 JSON，如 {"batch":["webhook"],"*":["email"]}'
           />
           <input
             v-model="ob.wizardDigestHandleQuietJson"
-            class="vol-input"
+            class="vol-input wizard-digest-handle-quiet-hours"
             data-testid="wizard-digest-handle-quiet-hours"
             placeholder='handle 静默 JSON，如 {"batch":{"start":22,"end":6}}'
           />
@@ -124,7 +124,7 @@
               type="number"
               min="0"
               max="23"
-              class="vol-input"
+              class="vol-input wizard-digest-quiet-start"
               data-testid="wizard-digest-quiet-start"
               placeholder="起"
             />
@@ -134,20 +134,20 @@
               type="number"
               min="0"
               max="23"
-              class="vol-input"
+              class="vol-input wizard-digest-quiet-end"
               data-testid="wizard-digest-quiet-end"
               placeholder="止"
             />
           </label>
           <div
             v-if="ob.wizardDigestRetryQueue.item_count"
-            class="wizard-digest-retry"
+            class="wizard-digest-retry wizard-digest-retry-panel"
             data-testid="wizard-digest-retry-panel"
           >
             <p class="meta-line">重试队列 {{ ob.wizardDigestRetryQueue.item_count }} 条</p>
             <button
               type="button"
-              class="mini-btn pixel-border"
+              class="mini-btn pixel-border process-wizard-digest-retry-btn"
               data-testid="process-wizard-digest-retry-btn"
               @click="ob.processWizardDigestRetries"
             >
@@ -156,13 +156,13 @@
           </div>
           <div
             v-if="ob.wizardDigestDeadLetter.item_count"
-            class="wizard-digest-dead-letter"
+            class="wizard-digest-dead-letter wizard-digest-dead-letter-panel"
             data-testid="wizard-digest-dead-letter-panel"
           >
             <p class="meta-line">死信队列 {{ ob.wizardDigestDeadLetter.item_count }} 条</p>
             <button
               type="button"
-              class="mini-btn pixel-border"
+              class="mini-btn pixel-border replay-wizard-digest-dead-letter-btn"
               data-testid="replay-wizard-digest-dead-letter-btn"
               @click="ob.replayWizardDigestDeadLetter"
             >
@@ -184,7 +184,7 @@
         </ul>
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border wizard-ack-notifications-btn"
           data-testid="wizard-ack-notifications-btn"
           @click="ob.ackWizardNotifications"
         >
@@ -193,24 +193,24 @@
         <div v-if="!ob.uiProfile.simplified_notifications" class="wizard-webhook-panel" data-testid="wizard-webhook-panel">
           <p class="meta-line">通知 Webhook</p>
           <label class="meta-line">
-            <input v-model="ob.wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" />
+            <input v-model="ob.wizardWebhookEnabled" type="checkbox" data-testid="wizard-webhook-enabled" class="wizard-webhook-enabled" />
             启用
           </label>
           <input
             v-model="ob.wizardWebhookUrl"
-            class="vol-input"
+            class="vol-input wizard-webhook-url"
             data-testid="wizard-webhook-url"
             placeholder="https://example.com/hooks/mentions"
           />
           <input
             v-model="ob.wizardWebhookSigningSecret"
-            class="vol-input"
+            class="vol-input wizard-webhook-signing-secret"
             data-testid="wizard-webhook-signing-secret"
             placeholder="Webhook 签名密钥（可选）"
           />
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border save-wizard-webhook-btn"
             data-testid="save-wizard-webhook-btn"
             @click="ob.saveWizardWebhook"
           >
@@ -220,24 +220,24 @@
         <div v-if="!ob.uiProfile.simplified_notifications" class="wizard-email-panel" data-testid="wizard-email-panel">
           <p class="meta-line">通知邮件</p>
           <label class="meta-line">
-            <input v-model="ob.wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" />
+            <input v-model="ob.wizardEmailEnabled" type="checkbox" data-testid="wizard-email-enabled" class="wizard-email-enabled" />
             启用
           </label>
           <input
             v-model="ob.wizardEmailTo"
-            class="vol-input"
+            class="vol-input wizard-email-to"
             data-testid="wizard-email-to"
             placeholder="user@example.com"
           />
           <input
             v-model="ob.wizardEmailSmtpHost"
-            class="vol-input"
+            class="vol-input wizard-email-smtp-host"
             data-testid="wizard-email-smtp-host"
             placeholder="smtp.example.com"
           />
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border save-wizard-email-btn"
             data-testid="save-wizard-email-btn"
             @click="ob.saveWizardEmail"
           >
@@ -314,13 +314,13 @@
       <div class="merge-range">
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border wizard-share-link-btn"
           data-testid="wizard-share-link-btn"
           @click="ob.copyWizardShareLink"
         >
           复制分享链接
         </button>
-        <span v-if="ob.wizardShareMessage" class="meta-line" data-testid="wizard-share-message">{{ ob.wizardShareMessage }}</span>
+        <span v-if="ob.wizardShareMessage" class="meta-line wizard-share-message" data-testid="wizard-share-message">{{ ob.wizardShareMessage }}</span>
       </div>
     </details>
 

@@ -317,7 +317,7 @@
             <button
             v-if="bh.uiProfile.batch_history_export"
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border export-batch-history-btn"
             data-testid="export-batch-history-btn"
             aria-label="导出批量历史记录为 JSON 文件"
             @click="bh.exportBatchHistory"
@@ -327,13 +327,13 @@
           </div>
           <label
             v-if="bh.uiProfile.batch_history_status_filter"
-            class="meta-line batch-history-filter"
+            class="meta-line batch-history-filter batch-history-filter-label"
             data-testid="batch-history-filter-label"
           >
             状态筛选
             <select
               v-model="bh.batchHistoryStatusFilter"
-              class="vol-input"
+              class="vol-input batch-history-status-filter"
               data-testid="batch-history-status-filter"
               aria-label="按状态筛选批量历史"
             >
@@ -349,14 +349,14 @@
           </label>
           <p
             v-if="!bh.filteredBatchHistory.length"
-            class="meta-line"
+            class="meta-line batch-history-empty"
             data-testid="batch-history-empty"
           >
             无匹配任务
           </p>
           <div
             v-else-if="bh.uiProfile.batch_history_date_group"
-            class="batch-history-groups"
+            class="batch-history-groups batch-history-date-groups"
             data-testid="batch-history-date-groups"
           >
             <section

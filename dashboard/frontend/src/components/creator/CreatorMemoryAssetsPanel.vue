@@ -3,14 +3,14 @@
 -->
 <template>
   <section
-    class="memory-assets pixel-border"
+    class="memory-assets pixel-border creator-memory-assets"
     :class="{ 'memory-assets--compact': compact }"
     data-testid="creator-memory-assets"
   >
     <h3 v-if="!full" class="subsection-title">记忆与资产</h3>
     <p v-if="!full" class="meta-line">
       摘要预览；
-      <button type="button" class="link-btn" data-testid="memory-goto-tab" @click="pt.setWorkspaceTab('memory')">
+      <button type="button" class="link-btn memory-goto-tab" data-testid="memory-goto-tab" @click="pt.setWorkspaceTab('memory')">
         打开记忆 Tab →
       </button>
     </p>
@@ -30,7 +30,7 @@
         <div class="asset-head">
           <span class="asset-kind">{{ kindLabel(item.kind) }}</span>
           <strong>{{ item.name }}</strong>
-          <span v-if="item.pinned" class="pin-tag" data-testid="memory-asset-pinned">置顶</span>
+          <span v-if="item.pinned" class="pin-tag memory-asset-pinned" data-testid="memory-asset-pinned">置顶</span>
           <span v-if="item.source" class="asset-source">{{ sourceLabel(item.source) }}</span>
         </div>
         <p class="asset-excerpt">{{ item.excerpt }}</p>
@@ -101,10 +101,10 @@
         </div>
       </li>
     </ul>
-    <p v-else-if="!pt.memoryAssetsLoading" class="meta-line" data-testid="memory-assets-empty">
+    <p v-else-if="!pt.memoryAssetsLoading" class="meta-line memory-assets-empty" data-testid="memory-assets-empty">
       暂无资产，请先填写设定或撰写章节。
     </p>
-    <p v-else class="meta-line" data-testid="memory-assets-loading">加载中…</p>
+    <p v-else class="meta-line memory-assets-loading" data-testid="memory-assets-loading">加载中…</p>
   </section>
 </template>
 

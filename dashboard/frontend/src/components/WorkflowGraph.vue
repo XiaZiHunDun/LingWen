@@ -4,16 +4,16 @@
 -->
 <template>
   <div class="workflow-graph" data-testid="workflow-graph">
-    <div v-if="loading" class="loading-state pixel-card" data-testid="workflow-graph-loading">
+    <div v-if="loading" class="loading-state pixel-card workflow-graph-loading" data-testid="workflow-graph-loading">
       <p class="pixel-text">渲染图中…</p>
     </div>
 
-    <div v-else-if="error" class="error-state pixel-card" data-testid="workflow-graph-error">
+    <div v-else-if="error" class="error-state pixel-card workflow-graph-error" data-testid="workflow-graph-error">
       <p class="error-title">⚠ 渲染失败</p>
       <pre class="error-detail">{{ error }}</pre>
     </div>
 
-    <div v-else-if="svg" class="graph-container pixel-card" data-testid="workflow-graph-graph">
+    <div v-else-if="svg" class="graph-container pixel-card workflow-graph-graph" data-testid="workflow-graph-graph">
       <div class="graph-header">
         <span class="graph-title">{{ workflowName || '工作流图' }}</span>
         <button class="reset-zoom-btn pixel-border" data-testid="reset-zoom-btn" @click="resetZoom">⤢ 重置缩放</button>
@@ -26,14 +26,14 @@
       />
     </div>
 
-    <div v-else class="empty-state pixel-card" data-testid="workflow-graph-empty">
+    <div v-else class="empty-state pixel-card workflow-graph-empty" data-testid="workflow-graph-empty">
       <p class="pixel-text">未提供 mermaid 字符串</p>
     </div>
 
     <div v-if="svg" class="zoom-controls">
-      <button class="zoom-btn pixel-border" data-testid="zoom-in-btn" @click="zoomIn" :disabled="zoom >= 2">＋</button>
+      <button class="zoom-btn pixel-border zoom-in-btn" data-testid="zoom-in-btn" @click="zoomIn" :disabled="zoom >= 2">＋</button>
       <span class="zoom-display" data-testid="zoom-display">{{ (zoom * 100).toFixed(0) }}%</span>
-      <button class="zoom-btn pixel-border" data-testid="zoom-out-btn" @click="zoomOut" :disabled="zoom <= 0.4">－</button>
+      <button class="zoom-btn pixel-border zoom-out-btn" data-testid="zoom-out-btn" @click="zoomOut" :disabled="zoom <= 0.4">－</button>
     </div>
   </div>
 </template>

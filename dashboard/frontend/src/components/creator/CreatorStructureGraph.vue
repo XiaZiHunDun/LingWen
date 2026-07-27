@@ -2,14 +2,14 @@
   CreatorStructureGraph.vue — 卷—章结构图（树状 / 时间线 + 卷摘要 tooltip）
 -->
 <template>
-  <section class="structure-graph pixel-border" data-testid="creator-structure-graph">
+  <section class="structure-graph pixel-border creator-structure-graph" data-testid="creator-structure-graph">
     <div class="structure-graph__head">
       <h3 v-if="!hideTitle" class="subsection-title">故事结构图</h3>
       <div class="structure-graph__controls">
-        <div class="view-toggle" data-testid="structure-graph-view-toggle">
+        <div class="view-toggle structure-graph-view-toggle" data-testid="structure-graph-view-toggle">
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border structure-view-tree"
             :class="{ 'view-toggle--active': pt.structureGraphView === 'tree' }"
             data-testid="structure-view-tree"
             @click="pt.structureGraphView = 'tree'"
@@ -18,7 +18,7 @@
           </button>
           <button
             type="button"
-            class="mini-btn pixel-border"
+            class="mini-btn pixel-border structure-view-timeline"
             :class="{ 'view-toggle--active': pt.structureGraphView === 'timeline' }"
             data-testid="structure-view-timeline"
             @click="pt.structureGraphView = 'timeline'"
@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <p v-if="!graph.volumes.length" class="meta-line" data-testid="structure-graph-empty">
+    <p v-if="!graph.volumes.length" class="meta-line structure-graph-empty" data-testid="structure-graph-empty">
       暂无卷纲数据，请先在卷纲面板添加分卷。
     </p>
 

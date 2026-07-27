@@ -31,7 +31,7 @@
             <button
               v-if="showDecisionLink(chapter.chapter)"
               type="button"
-              class="decision-link-btn pixel-border"
+              class="decision-link-btn pixel-border chapter-decision-link"
               data-testid="chapter-decision-link"
               @click.stop="emitDecisionLink(chapter.chapter)"
             >
@@ -39,7 +39,7 @@
             </button>
             <span
               v-if="productionBadge(chapter.chapter)"
-              class="production-badge"
+              class="production-badge chapter-production-badge"
               data-testid="chapter-production-badge"
             >
               {{ productionBadge(chapter.chapter) }}

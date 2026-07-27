@@ -2,7 +2,7 @@
   <div class="mode-switch">
     <button
       type="button"
-      class="mode-switch__current"
+      class="mode-switch__current mode-switch-button"
       :class="`mode-switch__current--${currentMode}`"
       @click="togglePanel"
       data-testid="mode-switch-button"
@@ -13,7 +13,7 @@
     </button>
 
     <Transition name="slide">
-      <div v-if="isPanelOpen" class="mode-switch__panel" data-testid="mode-switch-panel">
+      <div v-if="isPanelOpen" class="mode-switch__panel mode-switch-panel" data-testid="mode-switch-panel">
         <div
           v-for="mode in modes"
           :key="mode.id"

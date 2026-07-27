@@ -4,14 +4,14 @@
 <template>
   <div
     v-if="pt.exportModalOpen"
-    class="creator-modal"
+    class="creator-modal creator-export-modal"
     data-testid="creator-export-modal"
     @click.self="pt.closeExportModal"
   >
-    <div class="creator-modal__panel pixel-card" data-testid="creator-export-panel">
+    <div class="creator-modal__panel pixel-card creator-export-panel" data-testid="creator-export-panel">
       <header class="creator-modal__header">
         <h2>导出作品</h2>
-        <button type="button" class="link-btn" data-testid="export-modal-close" @click="pt.closeExportModal">
+        <button type="button" class="link-btn export-modal-close" data-testid="export-modal-close" @click="pt.closeExportModal">
           关闭
         </button>
       </header>
@@ -34,14 +34,14 @@
       <div class="export-meta pixel-border">
         <label>
           作者
-          <input v-model="pt.exportAuthor" class="vol-input" data-testid="export-author">
+          <input v-model="pt.exportAuthor" class="vol-input export-author" data-testid="export-author">
         </label>
         <label>
           简介 / 描述（EPUB·DOCX 元数据）
           <textarea
             v-model="pt.exportDescription"
             rows="2"
-            class="settings-textarea"
+            class="settings-textarea export-description"
             data-testid="export-description"
           />
         </label>
@@ -50,11 +50,11 @@
       <div v-if="pt.exportMode === 'range'" class="export-range">
         <label>
           起始章
-          <input v-model.number="pt.exportRangeStart" type="number" min="1" class="vol-input" data-testid="export-range-start">
+          <input v-model.number="pt.exportRangeStart" type="number" min="1" class="vol-input export-range-start" data-testid="export-range-start">
         </label>
         <label>
           结束章
-          <input v-model.number="pt.exportRangeEnd" type="number" min="1" class="vol-input" data-testid="export-range-end">
+          <input v-model.number="pt.exportRangeEnd" type="number" min="1" class="vol-input export-range-end" data-testid="export-range-end">
         </label>
       </div>
 
@@ -66,7 +66,7 @@
             type="number"
             min="1"
             max="12"
-            class="vol-input vol-input--narrow"
+            class="vol-input vol-input--narrow export-submission-sample-count"
             data-testid="export-submission-sample-count"
           >
         </label>
@@ -75,7 +75,7 @@
           <textarea
             v-model="pt.exportIntro"
             rows="3"
-            class="settings-textarea"
+            class="settings-textarea export-submission-intro"
             data-testid="export-submission-intro"
             placeholder="一句话卖点 + 类型标签"
           />
@@ -85,7 +85,7 @@
       <div class="export-actions">
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border export-preview-btn"
           data-testid="export-preview-btn"
           :disabled="pt.exportBusy"
           @click="pt.refreshExportPreview"
@@ -94,7 +94,7 @@
         </button>
         <button
           type="button"
-          class="save-btn pixel-border"
+          class="save-btn pixel-border export-download-btn"
           data-testid="export-download-btn"
           :disabled="pt.exportBusy"
           @click="pt.runExportDownload"
@@ -103,7 +103,7 @@
         </button>
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border export-epub-btn"
           data-testid="export-epub-btn"
           :disabled="pt.exportBusy"
           @click="pt.runExportEpub"
@@ -112,7 +112,7 @@
         </button>
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border export-docx-btn"
           data-testid="export-docx-btn"
           :disabled="pt.exportBusy"
           @click="pt.runExportDocx"
@@ -123,7 +123,7 @@
 
       <pre
         v-if="pt.exportPreview"
-        class="export-preview"
+        class="export-preview export-preview-text"
         data-testid="export-preview-text"
       >{{ pt.exportPreview.slice(0, 2000) }}{{ pt.exportPreview.length > 2000 ? '\n…' : '' }}</pre>
     </div>

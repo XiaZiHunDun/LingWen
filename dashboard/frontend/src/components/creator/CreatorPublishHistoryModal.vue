@@ -4,23 +4,23 @@
 <template>
   <div
     v-if="pt.publishHistoryModalOpen"
-    class="creator-modal creator-modal--nested"
+    class="creator-modal creator-modal--nested creator-publish-history-modal"
     data-testid="creator-publish-history-modal"
     @click.self="pt.closePublishHistoryModal"
   >
-    <div class="creator-modal__panel pixel-card" data-testid="creator-publish-history-panel">
+    <div class="creator-modal__panel pixel-card creator-publish-history-panel" data-testid="creator-publish-history-panel">
       <header class="creator-modal__header">
         <h2>发布历史</h2>
-        <button type="button" class="link-btn" data-testid="publish-history-close" @click="pt.closePublishHistoryModal">
+        <button type="button" class="link-btn publish-history-close" data-testid="publish-history-close" @click="pt.closePublishHistoryModal">
           关闭
         </button>
       </header>
 
-      <p v-if="!pt.publishHistory.length" class="meta-line" data-testid="publish-history-empty">
+      <p v-if="!pt.publishHistory.length" class="meta-line publish-history-empty" data-testid="publish-history-empty">
         暂无发布记录。
       </p>
 
-      <ul v-else class="history-table" data-testid="publish-history-list">
+      <ul v-else class="history-table publish-history-list" data-testid="publish-history-list">
         <li
           v-for="row in pt.publishHistory"
           :key="row.id"

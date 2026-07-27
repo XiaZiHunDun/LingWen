@@ -13,21 +13,21 @@
       </summary>
     <p
       v-if="mg.uiProfile.creation_mode_badge_legend && !mg.uiProfile.creator_simplified_mode_ops"
-      class="mode-badge-legend meta-line pixel-border"
+      class="mode-badge-legend meta-line pixel-border creation-mode-badge-legend"
       data-testid="creation-mode-badge-legend"
     >
       徽章色标：陪伴=绿 · 推进=蓝 · 工作室=琥珀
     </p>
     <p
       v-if="mg.uiProfile.creation_mode_switch_hint && mg.creationModeSwitchHintText"
-      class="mode-switch-hint pixel-border"
+      class="mode-switch-hint pixel-border creation-mode-switch-hint"
       data-testid="creation-mode-switch-hint"
     >
       {{ mg.creationModeSwitchHintText }}
     </p>
     <div
       v-if="mg.uiProfile.creation_mode_switch_doc_link && mg.creationModeSwitchDocLinks.length"
-      class="mode-switch-doc-links pixel-border"
+      class="mode-switch-doc-links pixel-border creation-mode-switch-doc-links"
       data-testid="creation-mode-switch-doc-links"
     >
       <button
@@ -43,7 +43,7 @@
     </div>
     <div
       v-if="mg.uiProfile.creation_mode_switch_aria_live"
-      class="creation-mode-aria-live"
+      class="creation-mode-aria-live creation-mode-switch-aria-live"
       aria-live="polite"
       data-testid="creation-mode-switch-aria-live"
     >
@@ -120,7 +120,7 @@
     </div>
     <div
       v-if="mg.pendingModeSwitch"
-      class="mode-switch-confirm-dialog pixel-border"
+      class="mode-switch-confirm-dialog pixel-border creation-mode-switch-confirm-dialog"
       data-testid="creation-mode-switch-confirm-dialog"
     >
       <p class="meta-line">
@@ -130,7 +130,7 @@
       <div class="mode-switch-confirm-actions">
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border confirm-mode-switch-btn"
           data-testid="confirm-mode-switch-btn"
           @click="mg.confirmCreationModeSwitch"
         >
@@ -138,7 +138,7 @@
         </button>
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border cancel-mode-switch-btn"
           data-testid="cancel-mode-switch-btn"
           @click="mg.cancelCreationModeSwitch"
         >
@@ -162,7 +162,7 @@
     </ul>
     <div
       v-if="mg.uiProfile.creation_mode_switch_undo_hint && mg.lastModeSwitchUndo"
-      class="mode-switch-undo-hint pixel-border"
+      class="mode-switch-undo-hint pixel-border creation-mode-switch-undo-hint"
       data-testid="creation-mode-switch-undo-hint"
     >
       <p class="meta-line">
@@ -171,7 +171,7 @@
       </p>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border copy-mode-switch-undo-btn"
         data-testid="copy-mode-switch-undo-btn"
         @click="mg.applyModeSwitchUndoHint"
       >
@@ -180,7 +180,7 @@
     </div>
     <p
       v-if="mg.uiProfile.creation_mode_switch_hotkey"
-      class="meta-line creation-mode-hotkey-hint"
+      class="meta-line creation-mode-hotkey-hint creation-mode-switch-hotkey-hint"
       data-testid="creation-mode-switch-hotkey-hint"
     >
       快捷键 Alt+Shift+1/2/3 复制 companion / advance / studio YAML
@@ -236,7 +236,7 @@
       <summary class="creator-advanced-ops-summary">高级：三模式对照与运维</summary>
       <div
         v-if="mg.uiProfile.creation_mode_capability_matrix && mg.creationModeCapabilityRows.length"
-        class="creation-mode-capability-matrix pixel-border"
+        class="creation-mode-capability-matrix pixel-border creation-mode-capability-matrix-advanced"
         data-testid="creation-mode-capability-matrix-advanced"
       >
         <p class="meta-line">三模式能力对照</p>
@@ -266,7 +266,7 @@
     </details>
     <p
       v-if="mg.uiProfile.studio_creation_entry_hint && mg.studioCreationEntryHintText"
-      class="mode-switch-hint studio-entry-hint pixel-border"
+      class="mode-switch-hint studio-entry-hint pixel-border studio-creation-entry-hint"
       data-testid="studio-creation-entry-hint"
     >
       {{ mg.studioCreationEntryHintText }}

@@ -18,7 +18,7 @@
       <div class="merge-range">
         <label>
           从
-          <select v-model.number="vp.mergeStartIdx" class="vol-input" data-testid="merge-start-select">
+          <select v-model.number="vp.mergeStartIdx" class="vol-input merge-start-select" data-testid="merge-start-select">
             <option v-for="(vol, idx) in vp.editableVolumes" :key="`s-${idx}`" :value="idx">
               {{ vol.label || `卷${idx + 1}` }}
             </option>
@@ -26,7 +26,7 @@
         </label>
         <label>
           到
-          <select v-model.number="vp.mergeEndIdx" class="vol-input" data-testid="merge-end-select">
+          <select v-model.number="vp.mergeEndIdx" class="vol-input merge-end-select" data-testid="merge-end-select">
             <option
               v-for="(vol, idx) in vp.editableVolumes"
               :key="`e-${idx}`"
@@ -39,14 +39,14 @@
         </label>
         <input
           v-model="vp.mergeLabel"
-          class="vol-input vol-conflict"
+          class="vol-input vol-conflict merge-label-input"
           data-testid="merge-label-input"
           placeholder="合并后卷名（可选）"
         />
       </div>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border merge-wizard-next-btn"
         data-testid="merge-wizard-next-btn"
         :disabled="vp.mergeStartIdx > vp.mergeEndIdx"
         @click="mergeStep = 2"
@@ -61,7 +61,7 @@
       </ul>
       <div class="merge-wizard-actions">
         <button type="button" class="mini-btn" @click="mergeStep = 1">上一步</button>
-        <button type="button" class="mini-btn pixel-border" data-testid="merge-wizard-confirm-btn" @click="mergeStep = 3">
+        <button type="button" class="mini-btn pixel-border merge-wizard-confirm-btn" data-testid="merge-wizard-confirm-btn" @click="mergeStep = 3">
           确认继续
         </button>
       </div>
@@ -73,7 +73,7 @@
         <button type="button" class="mini-btn" @click="mergeStep = 2">返回预览</button>
         <button
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border apply-merge-btn"
           data-testid="apply-merge-btn"
           :disabled="vp.mergeApplying || vp.mergeStartIdx > vp.mergeEndIdx"
           @click="applyMerge"
@@ -85,7 +85,7 @@
   </div>
   <p
     v-if="vp.mergePreview"
-    class="meta-line"
+    class="meta-line merge-preview-line"
     data-testid="merge-preview-line"
   >
     已合并为「{{ vp.mergePreview.merged_label }}」· {{ vp.mergePreview.merged_range }} · 请保存卷纲
@@ -99,7 +99,7 @@
     <div class="merge-range">
       <label>
         卷
-        <select v-model.number="vp.splitVolumeIdx" class="vol-input" data-testid="split-volume-select">
+        <select v-model.number="vp.splitVolumeIdx" class="vol-input split-volume-select" data-testid="split-volume-select">
           <option v-for="(vol, idx) in vp.editableVolumes" :key="`split-${idx}`" :value="idx">
             {{ vol.label || `卷${idx + 1}` }} ({{ vol.start_chapter }}–{{ vol.end_chapter }})
           </option>
@@ -111,14 +111,14 @@
           v-model.number="vp.splitAtChapter"
           type="number"
           min="1"
-          class="vol-input vol-num"
+          class="vol-input vol-num split-at-chapter"
           data-testid="split-at-chapter"
         />
       </label>
     </div>
     <button
       type="button"
-      class="mini-btn pixel-border"
+      class="mini-btn pixel-border apply-split-btn"
       data-testid="apply-split-btn"
       :disabled="vp.splitApplying"
       @click="vp.applyVolumeSplit"
@@ -128,7 +128,7 @@
   </div>
   <p
     v-if="vp.splitPreview"
-    class="meta-line"
+    class="meta-line split-preview-line"
     data-testid="split-preview-line"
   >
     已拆为「{{ vp.splitPreview.first_label }}」{{ vp.splitPreview.first_range }}

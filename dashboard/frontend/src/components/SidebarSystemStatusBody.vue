@@ -2,13 +2,13 @@
   SidebarSystemStatusBody.vue — 人类习惯侧栏「系统状态」展开内容（始终有可读信息）
 -->
 <template>
-  <div class="sidebar-system-status" data-testid="sidebar-system-status-body">
+  <div class="sidebar-system-status sidebar-system-status-body" data-testid="sidebar-system-status-body">
     <dl class="sidebar-system-status__rows">
-      <div class="sidebar-system-status__row" data-testid="sidebar-system-api-row">
+      <div class="sidebar-system-status__row sidebar-system-api-row" data-testid="sidebar-system-api-row">
         <dt>接口</dt>
         <dd :class="apiStateClass">{{ apiLabel }}</dd>
       </div>
-      <div class="sidebar-system-status__row" data-testid="sidebar-system-ws-row">
+      <div class="sidebar-system-status__row sidebar-system-ws-row" data-testid="sidebar-system-ws-row">
         <dt>实时同步</dt>
         <dd :class="wsStateClass">{{ wsLabel }}</dd>
       </div>
@@ -19,7 +19,7 @@
 
     <p
       v-if="showHealthyHint"
-      class="sidebar-system-status__hint"
+      class="sidebar-system-status__hint sidebar-system-healthy-hint"
       data-testid="sidebar-system-healthy-hint"
     >
       暂无成本告警，可放心写作。

@@ -17,10 +17,10 @@
       data-testid="impact-graph"
       :data-node-count="graph.nodes.length"
     >
-      <div ref="chartEl" class="impact-graph__chart" data-testid="impact-graph-chart"></div>
+      <div ref="chartEl" class="impact-graph__chart impact-graph-chart" data-testid="impact-graph-chart"></div>
       <div
         v-if="graph.truncated"
-        class="impact-graph__warning"
+        class="impact-graph__warning impact-graph-warning"
         data-testid="impact-graph-warning"
       >
         Truncated to first {{ graph.nodes.length }} nodes

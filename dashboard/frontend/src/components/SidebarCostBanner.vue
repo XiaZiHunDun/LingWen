@@ -74,23 +74,22 @@
     </div>
     <!-- Phase 8.15 NEW: per-tier budget rows (haiku/sonnet/opus) -->
     <template v-for="tier in tierBudgets" :key="tier.name">
-      <div data-testid="sidebar-cost-tier-row">
-        <div
-          class="sidebar-cost-row sidebar-cost-tier-row"
-          role="status"
-          aria-live="polite"
-        >
-          <span class="sidebar-cost-tier-text" data-testid="sidebar-cost-tier-text">
-            {{ tier.label }} 预算: ${{ tier.used }} / ${{ tier.budget }} ({{ tier.pct }}%)
-            <!-- Phase 8.21: tier 维度 alarm (7d/30d 选时, windowed cost vs budget 比例) -->
-            <span
-              v-if="tierAlarm[tier.name]"
-              :class="['tier-alarm', `tier-alarm-${tierAlarm[tier.name]}`]"
-              :data-testid="`sidebar-tier-alarm-${tier.name}`"
-              :aria-label="`${tier.label} 预算告警: ${tierAlarm[tier.name] === 'exceeded' ? '已超预算' : '接近预算上限'}`"
-            >{{ tierAlarm[tier.name] === 'exceeded' ? '🚨' : '⚠️' }}</span>
-          </span>
-        </div>
+      <div
+        class="sidebar-cost-row sidebar-cost-tier-row"
+        data-testid="sidebar-cost-tier-row"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="sidebar-cost-tier-text" data-testid="sidebar-cost-tier-text">
+          {{ tier.label }} 预算: ${{ tier.used }} / ${{ tier.budget }} ({{ tier.pct }}%)
+          <!-- Phase 8.21: tier 维度 alarm (7d/30d 选时, windowed cost vs budget 比例) -->
+          <span
+            v-if="tierAlarm[tier.name]"
+            :class="['tier-alarm', `tier-alarm-${tierAlarm[tier.name]}`]"
+            :data-testid="`sidebar-tier-alarm-${tier.name}`"
+            :aria-label="`${tier.label} 预算告警: ${tierAlarm[tier.name] === 'exceeded' ? '已超预算' : '接近预算上限'}`"
+          >{{ tierAlarm[tier.name] === 'exceeded' ? '🚨' : '⚠️' }}</span>
+        </span>
         <div
           class="progress-bar"
           role="progressbar"

@@ -3,7 +3,7 @@
     <div class="writer-desk__header-left">
       <button
         type="button"
-        class="writer-desk__sidebar-toggle"
+        class="writer-desk__sidebar-toggle sidebar-toggle"
         data-testid="sidebar-toggle"
         @click="wb.leftPanelCollapsed = !wb.leftPanelCollapsed"
       >

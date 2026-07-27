@@ -3,7 +3,7 @@
 -->
 <template>
   <div
-    class="consistency-rail"
+    class="consistency-rail write-consistency-rail"
     :class="{ 'consistency-rail--nested': hideTitle }"
     data-testid="write-consistency-rail"
   >

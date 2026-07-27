@@ -1,7 +1,7 @@
 <template>
   <section
     v-show="pt.isWorkspaceColumnVisible('memory')"
-    class="creator-column"
+    class="creator-column column-memory"
     :class="{
       'creator-column--desk-drawer': pt.deskDrawerActive?.(),
       'creator-column--desk-drawer--open': pt.deskDrawerActive?.(),
@@ -12,11 +12,11 @@
     :aria-modal="pt.deskDrawerActive?.() ? 'true' : undefined"
     :aria-labelledby="pt.deskDrawerActive?.() ? 'desk-drawer-title-memory' : undefined"
   >
-    <div v-if="pt.deskDrawerActive?.()" class="desk-drawer-chrome" data-testid="desk-drawer-chrome-memory">
+    <div v-if="pt.deskDrawerActive?.()" class="desk-drawer-chrome desk-drawer-chrome-memory" data-testid="desk-drawer-chrome-memory">
       <h2 id="desk-drawer-title-memory" class="desk-drawer-chrome__title">记忆库</h2>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border desk-drawer-close-memory"
         data-testid="desk-drawer-close-memory"
         aria-label="关闭记忆库抽屉"
         @click="pt.closeDeskDrawer()"

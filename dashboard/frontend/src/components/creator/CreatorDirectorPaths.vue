@@ -2,7 +2,7 @@
   CreatorDirectorPaths.vue — 写作导演：下一步路径卡（非聊天）
 -->
 <template>
-  <div class="director-paths" data-testid="write-director-paths">
+  <div class="director-paths write-director-paths" data-testid="write-director-paths">
     <p v-if="!hideTitle" class="director-paths__title">下一步路径</p>
     <p v-if="!paths.length" class="meta-line">先选章或选中段落，再选写作路径</p>
     <ul v-else class="director-paths__list">
@@ -30,7 +30,7 @@
 
     <ul
       v-if="advice.length"
-      class="director-paths__advice"
+      class="director-paths__advice write-director-advice"
       data-testid="write-director-advice"
     >
       <li v-for="item in advice" :key="item.id" class="director-paths__advice-item">

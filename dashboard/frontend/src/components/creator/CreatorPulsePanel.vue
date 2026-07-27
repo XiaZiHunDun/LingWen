@@ -1,7 +1,7 @@
 <template>
   <section
     v-show="p.isWorkspaceColumnVisible('pulse')"
-    class="creator-column"
+    class="creator-column column-pulse"
     :class="{
       'creator-column--pulse-desk': p.workspaceTabsEnabled,
       'creator-column--desk-drawer': p.deskDrawerActive?.(),
@@ -13,11 +13,11 @@
     :aria-modal="p.deskDrawerActive?.() ? 'true' : undefined"
     :aria-labelledby="p.deskDrawerActive?.() ? 'desk-drawer-title-pulse' : undefined"
   >
-    <div v-if="p.deskDrawerActive?.()" class="desk-drawer-chrome" data-testid="desk-drawer-chrome-pulse">
+    <div v-if="p.deskDrawerActive?.()" class="desk-drawer-chrome desk-drawer-chrome-pulse" data-testid="desk-drawer-chrome-pulse">
       <h2 id="desk-drawer-title-pulse" class="desk-drawer-chrome__title">脉络</h2>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border desk-drawer-close-pulse"
         data-testid="desk-drawer-close-pulse"
         aria-label="关闭脉络抽屉"
         @click="p.closeDeskDrawer()"

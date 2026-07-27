@@ -5,7 +5,7 @@
         <div class="creator-page-header__badges">
           <span
             v-if="c.showCreationModeBadge"
-            class="mode-badge creator-badge pixel-border"
+            class="mode-badge creator-badge pixel-border creation-mode-badge"
             :class="{
               'mode-badge--hintable': c.modeBadgeHintEnabled && c.creationModeBadgeHintText,
               'mode-badge--companion-tint': c.uiProfile.companion_creation_mode_badge_tint && c.overview.creation_mode === 'companion',

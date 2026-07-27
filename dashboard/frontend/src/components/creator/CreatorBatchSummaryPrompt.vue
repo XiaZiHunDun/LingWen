@@ -13,14 +13,14 @@
     </p>
     <p
       v-if="uiProfile.batch_deviation_prompt && prompt.alert_volume_labels?.length"
-      class="meta-line batch-alert-volumes"
+      class="meta-line batch-alert-volumes batch-alert-volumes-line"
       data-testid="batch-alert-volumes-line"
     >
       以下卷需关注：{{ prompt.alert_volume_labels.join('、') }}
     </p>
     <button
       type="button"
-      class="save-btn pixel-border"
+      class="save-btn pixel-border open-batch-summary-btn"
       data-testid="open-batch-summary-btn"
       @click="$emit('open-summary', prompt.start, prompt.end)"
     >
@@ -28,7 +28,7 @@
     </button>
     <button
       type="button"
-      class="save-btn pixel-border"
+      class="save-btn pixel-border dismiss-batch-summary-prompt-btn"
       data-testid="dismiss-batch-summary-prompt-btn"
       @click="$emit('dismiss')"
     >

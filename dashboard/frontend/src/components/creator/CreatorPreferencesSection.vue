@@ -2,7 +2,7 @@
   CreatorPreferencesSection.vue — 创作偏好（模型 / 温度 / 记忆）
 -->
 <template>
-  <details class="settings-block creator-prefs" open data-testid="creator-preferences-section">
+  <details class="settings-block creator-prefs creator-preferences-section" open data-testid="creator-preferences-section">
     <summary>创作偏好</summary>
     <p class="meta-line">保存在项目服务器；离线时回退本机缓存。</p>
 
@@ -10,7 +10,7 @@
       默认模型
       <select
         v-model="pt.preferences.defaultModel"
-        class="vol-input"
+        class="vol-input pref-default-model"
         data-testid="pref-default-model"
         @change="pt.markPreferencesDirty"
       >
@@ -28,7 +28,7 @@
         min="0"
         max="1.5"
         step="0.1"
-        data-testid="pref-temperature"
+        data-testid="pref-temperature" class="pref-temperature"
         @input="pt.markPreferencesDirty"
       >
     </label>
@@ -41,7 +41,7 @@
         min="1000"
         max="32000"
         step="500"
-        class="vol-input vol-input--narrow"
+        class="vol-input vol-input--narrow pref-max-tokens"
         data-testid="pref-max-tokens"
         @input="pt.markPreferencesDirty"
       >
@@ -51,7 +51,7 @@
       <input
         v-model="pt.preferences.memoryRagEnabled"
         type="checkbox"
-        data-testid="pref-memory-rag"
+        data-testid="pref-memory-rag" class="pref-memory-rag"
         @change="pt.markPreferencesDirty"
       >
       启用记忆 RAG 检索
@@ -64,7 +64,7 @@
         type="number"
         min="1"
         max="20"
-        class="vol-input vol-input--narrow"
+        class="vol-input vol-input--narrow pref-memory-topk"
         data-testid="pref-memory-topk"
         @input="pt.markPreferencesDirty"
       >
@@ -96,7 +96,7 @@
       <input
         v-model="pt.preferences.companionLightweight"
         type="checkbox"
-        data-testid="pref-companion-lightweight"
+        data-testid="pref-companion-lightweight" class="pref-companion-lightweight"
         @change="pt.markPreferencesDirty"
       >
       陪伴模式优先轻量响应
@@ -123,7 +123,7 @@
     <div class="pref-actions">
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border pref-save-btn"
         data-testid="pref-save-btn"
         @click="pt.savePreferences"
       >
@@ -131,17 +131,17 @@
       </button>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border pref-reset-btn"
         data-testid="pref-reset-btn"
         @click="pt.resetPreferences"
       >
         恢复默认
       </button>
     </div>
-    <p v-if="pt.preferencesSavedHint" class="meta-line" data-testid="pref-saved-hint">
+    <p v-if="pt.preferencesSavedHint" class="meta-line pref-saved-hint" data-testid="pref-saved-hint">
       {{ pt.preferencesSavedHint }}
     </p>
-    <p v-else-if="pt.preferencesSyncSource === 'server'" class="meta-line" data-testid="pref-sync-server">
+    <p v-else-if="pt.preferencesSyncSource === 'server'" class="meta-line pref-sync-server" data-testid="pref-sync-server">
       已与项目同步
     </p>
   </details>

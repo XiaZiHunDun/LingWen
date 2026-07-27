@@ -34,14 +34,14 @@
       </span>
       <span
         v-if="ripple.parent_ripple_id"
-        class="ripple-card__parent"
+        class="ripple-card__parent ripple-parent-badge"
         data-testid="ripple-parent-badge"
       >
         child of {{ ripple.parent_ripple_id.slice(0, 8) }}
       </span>
       <span
         v-if="ripple.child_count > 0"
-        class="ripple-card__children"
+        class="ripple-card__children ripple-child-count"
         data-testid="ripple-child-count"
       >
         {{ ripple.child_count }} child{{ ripple.child_count === 1 ? '' : 'ren' }}

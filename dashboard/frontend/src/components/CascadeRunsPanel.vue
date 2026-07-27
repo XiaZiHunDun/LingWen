@@ -36,7 +36,7 @@
           :data-status="run.status"
           data-testid="cascade-run-row"
         >
-          <td v-if="globalMode" data-testid="cascade-run-ripple">{{ run.ripple_id }}</td>
+          <td v-if="globalMode" data-testid="cascade-run-ripple" class="cascade-run-ripple" >{{ run.ripple_id }}</td>
           <td>{{ run.id }}</td>
           <td>
             <span

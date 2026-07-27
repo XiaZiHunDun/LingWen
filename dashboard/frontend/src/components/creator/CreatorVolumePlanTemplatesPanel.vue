@@ -11,14 +11,14 @@
             <summary v-if="vp.uiProfile.creator_simplified_mode_ops" class="subsection-title">模板库（进阶）</summary>
             <h3 v-else class="subsection-title">模板库</h3>
             <div class="merge-range">
-              <select v-model="vp.selectedTemplateId" class="vol-input" data-testid="volume-template-select">
+              <select v-model="vp.selectedTemplateId" class="vol-input volume-template-select" data-testid="volume-template-select">
                 <option v-for="t in vp.volumeTemplates" :key="t.id" :value="t.id">
                   {{ vp.formatTemplateOption(t) }}
                 </option>
               </select>
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border apply-template-btn"
                 data-testid="apply-template-btn"
                 :disabled="vp.templateApplying"
                 @click="vp.applyVolumeTemplate"
@@ -28,7 +28,7 @@
               <button
                 v-if="vp.selectedTemplateProject"
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border delete-template-btn"
                 data-testid="delete-template-btn"
                 :disabled="vp.templateDeleting"
                 @click="vp.deleteSelectedVolumeTemplate"
@@ -38,7 +38,7 @@
               <button
                 v-if="vp.selectedTemplateProject && vp.uiProfile.show_factory_presets"
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border publish-factory-template-btn"
                 data-testid="publish-factory-template-btn"
                 :disabled="vp.templatePublishing"
                 @click="vp.publishSelectedTemplateToFactory"
@@ -48,7 +48,7 @@
               <button
                 v-if="vp.selectedTemplateFactory && vp.uiProfile.show_factory_presets"
                 type="button"
-                class="mini-btn mini-btn--danger pixel-border"
+                class="mini-btn mini-btn--danger pixel-border delete-factory-template-btn"
                 data-testid="delete-factory-template-btn"
                 :disabled="vp.factoryDeleting"
                 @click="vp.deleteSelectedFactoryTemplate"
@@ -59,20 +59,20 @@
             <div v-if="(vp.selectedTemplateProject || vp.selectedTemplateFactory) && vp.uiProfile.show_template_version_ops" class="merge-range">
               <input
                 v-model="vp.templateVersionLabel"
-                class="vol-input vol-conflict"
+                class="vol-input vol-conflict template-version-input"
                 data-testid="template-version-input"
                 placeholder="版本标签（semver，如 v1.2.0）"
               />
               <p
                 v-if="vp.templateVersionLabel && !vp.isSemverVersionLabel(vp.templateVersionLabel)"
-                class="meta-line version-semver-warn"
+                class="meta-line version-semver-warn template-version-semver-warn"
                 data-testid="template-version-semver-warn"
               >
                 版本标签需符合 semver（如 v1.2.0）
               </p>
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border set-template-version-btn"
                 data-testid="set-template-version-btn"
                 :disabled="vp.templateVersionSaving"
                 @click="vp.saveTemplateVersionLabel"
@@ -82,7 +82,7 @@
               <button
                 v-if="vp.uiProfile.show_studio_workflow && (vp.selectedTemplateProject || vp.selectedTemplateFactory)"
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border submit-template-version-approval-btn"
                 data-testid="submit-template-version-approval-btn"
                 :disabled="vp.templateApprovalSubmitting"
                 @click="vp.submitTemplateVersionApproval"
@@ -101,26 +101,26 @@
                 type="number"
                 min="1"
                 max="5"
-                class="vol-input"
+                class="vol-input template-approval-chain-steps"
                 data-testid="template-approval-chain-steps"
               />
               <input
                 v-model="vp.templateApprovalStepAssignees"
                 type="text"
-                class="vol-input"
+                class="vol-input template-approval-step-assignees"
                 data-testid="template-approval-step-assignees"
                 placeholder="审批人（逗号分步）"
               />
               <input
                 v-model="vp.templateApprovalOrGroups"
                 type="text"
-                class="vol-input"
+                class="vol-input template-approval-or-groups"
                 data-testid="template-approval-or-groups"
                 placeholder="OR 签：alice|bob,carol"
               />
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border save-template-approval-chain-btn"
                 data-testid="save-template-approval-chain-btn"
                 @click="vp.saveTemplateApprovalChainConfig"
               >
@@ -138,24 +138,24 @@
                 type="number"
                 min="1"
                 max="720"
-                class="vol-input"
+                class="vol-input template-approval-sla-hours"
                 data-testid="template-approval-sla-hours"
               />
               <label class="meta-line">
-                <input v-model="vp.templateApprovalEmailOnSubmit" type="checkbox" data-testid="template-approval-email-submit" />
+                <input v-model="vp.templateApprovalEmailOnSubmit" type="checkbox" data-testid="template-approval-email-submit" class="template-approval-email-submit" />
                 提交时发邮件
               </label>
               <label class="meta-line">
-                <input v-model="vp.templateApprovalEmailOnReject" type="checkbox" data-testid="template-approval-email-reject" />
+                <input v-model="vp.templateApprovalEmailOnReject" type="checkbox" data-testid="template-approval-email-reject" class="template-approval-email-reject" />
                 驳回时发邮件
               </label>
               <label class="meta-line">
-                <input v-model="vp.templateApprovalEmailOnOverdue" type="checkbox" data-testid="template-approval-email-overdue" />
+                <input v-model="vp.templateApprovalEmailOnOverdue" type="checkbox" data-testid="template-approval-email-overdue" class="template-approval-email-overdue" />
                 超时时发邮件
               </label>
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border save-template-approval-sla-btn"
                 data-testid="save-template-approval-sla-btn"
                 @click="vp.saveTemplateApprovalSlaConfig"
               >
@@ -164,7 +164,7 @@
             </div>
             <div
               v-if="vp.uiProfile.show_studio_workflow && vp.overdueTemplateApprovals.length"
-              class="template-approval-overdue"
+              class="template-approval-overdue template-approval-overdue-panel"
               data-testid="template-approval-overdue-panel"
             >
               <p class="meta-line">超时待审批（{{ vp.overdueTemplateApprovals.length }}）</p>
@@ -172,7 +172,7 @@
                 <li
                   v-for="approval in vp.overdueTemplateApprovals"
                   :key="approval.id"
-                  data-testid="template-approval-overdue-row"
+                  data-testid="template-approval-overdue-row" class="template-approval-overdue-row"
                 >
                   {{ approval.template_id }} · {{ approval.hours_pending }}h
                 </li>
@@ -180,14 +180,14 @@
             </div>
             <div
               v-if="vp.uiProfile.show_studio_workflow && vp.pendingTemplateApprovals.length"
-              class="template-approvals"
+              class="template-approvals template-approvals-panel"
               data-testid="template-approvals-panel"
             >
               <p class="meta-line">待审批版本变更</p>
               <div v-if="vp.pendingTemplateApprovals.length > 1" class="batch-actions">
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border batch-approve-template-versions-btn"
                   data-testid="batch-approve-template-versions-btn"
                   @click="vp.batchApproveTemplateVersions"
                 >
@@ -195,7 +195,7 @@
                 </button>
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border batch-reject-template-versions-btn"
                   data-testid="batch-reject-template-versions-btn"
                   @click="vp.batchRejectTemplateVersions"
                 >
@@ -210,31 +210,31 @@
                   data-testid="template-approval-row"
                 >
                   <span>{{ approval.previous_label || '—' }} → {{ approval.version_label || '（清除）' }}</span>
-                  <span class="meta-line" data-testid="template-approval-chain-progress">{{ approval.chain_progress }}</span>
+                  <span class="meta-line template-approval-chain-progress" data-testid="template-approval-chain-progress">{{ approval.chain_progress }}</span>
                   <span
                     v-if="approval.or_signing && approval.current_assignees?.length"
-                    class="meta-line"
+                    class="meta-line template-approval-or-assignees"
                     data-testid="template-approval-or-assignees"
                   >
                     OR 签：{{ approval.current_assignees.join(' / ') }}
                   </span>
                   <span
                     v-else-if="approval.current_assignee"
-                    class="meta-line"
+                    class="meta-line template-approval-current-assignee"
                     data-testid="template-approval-current-assignee"
                   >
                     指派：{{ approval.current_assignee }}
                   </span>
                   <span
                     v-if="approval.submit_note"
-                    class="meta-line"
+                    class="meta-line template-approval-submit-note"
                     data-testid="template-approval-submit-note"
                   >
                     备注：{{ approval.submit_note }}
                   </span>
                   <button
                     type="button"
-                    class="mini-btn pixel-border"
+                    class="mini-btn pixel-border preview-approval-snapshot-diff-btn"
                     data-testid="preview-approval-snapshot-diff-btn"
                     @click="vp.previewApprovalSnapshotDiff(approval.id)"
                   >
@@ -242,7 +242,7 @@
                   </button>
                   <button
                     type="button"
-                    class="mini-btn pixel-border"
+                    class="mini-btn pixel-border transfer-template-approval-btn"
                     data-testid="transfer-template-approval-btn"
                     @click="vp.transferTemplateApproval(approval.id)"
                   >
@@ -250,7 +250,7 @@
                   </button>
                   <button
                     type="button"
-                    class="mini-btn pixel-border"
+                    class="mini-btn pixel-border approve-template-version-btn"
                     data-testid="approve-template-version-btn"
                     @click="vp.approveTemplateVersion(approval.id)"
                   >
@@ -258,7 +258,7 @@
                   </button>
                   <button
                     type="button"
-                    class="mini-btn pixel-border"
+                    class="mini-btn pixel-border reject-template-version-btn"
                     data-testid="reject-template-version-btn"
                     @click="vp.rejectTemplateVersion(approval.id)"
                   >
@@ -269,14 +269,14 @@
             </div>
             <div
               v-if="vp.uiProfile.show_studio_workflow && vp.templateApprovalHistory.length"
-              class="template-approval-history"
+              class="template-approval-history template-approval-history-panel"
               data-testid="template-approval-history-panel"
             >
               <p class="meta-line">
                 审批历史
                 <button
                   type="button"
-                  class="mini-btn pixel-border"
+                  class="mini-btn pixel-border export-template-approval-audit-btn"
                   data-testid="export-template-approval-audit-btn"
                   @click="vp.exportTemplateApprovalAudit"
                 >
@@ -287,14 +287,14 @@
                 <li
                   v-for="row in vp.templateApprovalHistory"
                   :key="row.id"
-                  class="template-approval-row"
+                  class="template-approval-row template-approval-history-row"
                   data-testid="template-approval-history-row"
                 >
                   <span>{{ row.template_id }} · {{ row.status }}</span>
                   <span class="meta-line">{{ row.previous_label || '—' }} → {{ row.version_label || '（清除）' }}</span>
                   <span
                     v-if="row.chain_log?.length"
-                    class="meta-line"
+                    class="meta-line template-approval-chain-log"
                     data-testid="template-approval-chain-log"
                   >
                     链 {{ row.chain_log.length }} 步
@@ -304,7 +304,7 @@
             </div>
             <div
               v-if="(vp.selectedTemplateProject || vp.selectedTemplateFactory) && vp.templateVersionChangelog.length"
-              class="template-changelog"
+              class="template-changelog template-version-changelog"
               data-testid="template-version-changelog"
             >
               <p class="meta-line">版本变更日志</p>
@@ -312,7 +312,7 @@
                 <li
                   v-for="(entry, idx) in vp.templateVersionChangelog"
                   :key="`${entry.changed_at}-${idx}`"
-                  class="changelog-row"
+                  class="changelog-row template-changelog-row"
                   data-testid="template-changelog-row"
                 >
                   <span v-if="entry.previous_label">{{ entry.previous_label }} → </span>
@@ -320,7 +320,7 @@
                   <span v-if="entry.changed_at" class="meta-line"> · {{ vp.formatHistoryTime(entry.changed_at) }}</span>
                   <span
                     v-if="entry.diff_summary?.changed"
-                    class="meta-line changelog-diff"
+                    class="meta-line changelog-diff template-changelog-diff"
                     data-testid="template-changelog-diff"
                   >
                     · 卷纲 +{{ entry.diff_summary.lines_added }}/-{{ entry.diff_summary.lines_removed }}
@@ -328,7 +328,7 @@
                   <button
                     v-if="entry.visual_diff?.lines?.length"
                     type="button"
-                    class="mini-btn pixel-border changelog-visual-btn"
+                    class="mini-btn pixel-border changelog-visual-btn template-changelog-visual-btn"
                     data-testid="template-changelog-visual-btn"
                     @click="vp.toggleChangelogVisual(idx)"
                   >
@@ -337,7 +337,7 @@
                   <button
                     v-if="entry.can_rollback"
                     type="button"
-                    class="mini-btn pixel-border"
+                    class="mini-btn pixel-border template-changelog-rollback-btn"
                     data-testid="template-changelog-rollback-btn"
                     :disabled="vp.templateRollbackSaving"
                     @click="vp.rollbackTemplateVersion(entry, idx)"
@@ -346,7 +346,7 @@
                   </button>
                   <pre
                     v-if="vp.expandedChangelogVisual === idx && entry.visual_diff?.lines?.length"
-                    class="changelog-visual-diff"
+                    class="changelog-visual-diff template-changelog-visual-diff"
                     data-testid="template-changelog-visual-diff"
                   ><span
                     v-for="(line, lineIdx) in entry.visual_diff.lines"
@@ -360,13 +360,13 @@
             <div v-if="vp.selectedTemplateProject" class="merge-range">
               <input
                 v-model="vp.renameTemplateName"
-                class="vol-input vol-conflict"
+                class="vol-input vol-conflict rename-template-name-input"
                 data-testid="rename-template-name-input"
                 placeholder="重命名模板"
               />
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border rename-template-btn"
                 data-testid="rename-template-btn"
                 :disabled="vp.templateRenaming || !vp.renameTemplateName.trim()"
                 @click="vp.renameSelectedVolumeTemplate"
@@ -378,13 +378,13 @@
             <div v-if="vp.editableVolumes.length" class="merge-range">
               <input
                 v-model="vp.customTemplateName"
-                class="vol-input vol-conflict"
+                class="vol-input vol-conflict save-template-name-input"
                 data-testid="save-template-name-input"
                 placeholder="自定义模板名"
               />
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border save-template-btn"
                 data-testid="save-template-btn"
                 :disabled="vp.templateSaving || !vp.customTemplateName.trim()"
                 @click="vp.saveCustomVolumeTemplate"
@@ -395,7 +395,7 @@
             <div class="merge-range">
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border export-templates-btn"
                 data-testid="export-templates-btn"
                 @click="vp.exportCustomTemplates"
               >
@@ -403,7 +403,7 @@
               </button>
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border toggle-import-templates-btn"
                 data-testid="toggle-import-templates-btn"
                 @click="vp.showImportTemplates = !vp.showImportTemplates"
               >
@@ -412,7 +412,7 @@
               <button
                 v-if="vp.templateSyncSources.length"
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border sync-templates-btn"
                 data-testid="sync-templates-btn"
                 :disabled="vp.templateSyncing"
                 @click="vp.syncTemplatesFromProjects"
@@ -422,7 +422,7 @@
               <button
                 v-if="vp.factoryTemplateCount && vp.uiProfile.show_factory_presets"
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border pull-factory-templates-btn"
                 data-testid="pull-factory-templates-btn"
                 :disabled="vp.factoryPulling"
                 @click="vp.pullFactoryTemplates"
@@ -440,7 +440,7 @@
               />
               <button
                 type="button"
-                class="mini-btn pixel-border"
+                class="mini-btn pixel-border import-templates-btn"
                 data-testid="import-templates-btn"
                 :disabled="vp.templateImporting || !vp.importTemplatesJson.trim()"
                 @click="vp.importCustomTemplates"

@@ -12,7 +12,7 @@
     <span class="api-offline-banner__text">{{ message }}</span>
     <button
       type="button"
-      class="api-offline-banner__retry pixel-border"
+      class="api-offline-banner__retry pixel-border api-offline-retry-btn"
       data-testid="api-offline-retry-btn"
       :disabled="checking"
       @click="$emit('retry')"

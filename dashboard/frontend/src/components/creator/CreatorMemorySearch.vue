@@ -2,7 +2,7 @@
   CreatorMemorySearch.vue — 记忆语义搜索（高亮 + 引用溯源）
 -->
 <template>
-  <section class="memory-search pixel-border" data-testid="creator-memory-search">
+  <section class="memory-search pixel-border creator-memory-search" data-testid="creator-memory-search">
     <h3 class="subsection-title">语义搜索</h3>
     <form class="memory-search-form" @submit.prevent="pt.runMemorySearch">
       <input
@@ -14,7 +14,7 @@
       >
       <select
         v-model="pt.memorySearchScope"
-        class="vol-input"
+        class="vol-input memory-search-scope"
         data-testid="memory-search-scope"
       >
         <option value="all">全部</option>
@@ -24,14 +24,14 @@
       </select>
       <button
         type="submit"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border memory-search-btn"
         data-testid="memory-search-btn"
         :disabled="pt.memorySearchBusy || !pt.memorySearchQuery.trim()"
       >
         {{ pt.memorySearchBusy ? '搜索中…' : '搜索' }}
       </button>
     </form>
-    <p v-if="pt.memorySearchRan" class="meta-line" data-testid="memory-search-hint">
+    <p v-if="pt.memorySearchRan" class="meta-line memory-search-hint" data-testid="memory-search-hint">
       <template v-if="pt.memorySearchUsedFallback">向量检索不可用，已使用本地匹配。</template>
       <template v-else-if="pt.memoryAvailable">向量检索结果。</template>
       <template v-else>本地匹配结果。</template>
@@ -83,7 +83,7 @@
     </ul>
     <p
       v-else-if="pt.memorySearchRan && !pt.memorySearchBusy"
-      class="meta-line"
+      class="meta-line memory-search-empty"
       data-testid="memory-search-empty"
     >
       无匹配结果。

@@ -3,7 +3,7 @@
 -->
 <template>
   <div
-    class="write-light-validation"
+    class="write-light-validation write-light-validation-bar"
     :class="`write-light-validation--${summary.status}`"
     data-testid="write-light-validation-bar"
   >

@@ -10,7 +10,7 @@
     :data-view-mode="viewMode"
   >
     <div
-      class="cascade-graph__toolbar"
+      class="cascade-graph__toolbar cascade-view-toggle"
       data-testid="cascade-view-toggle"
       role="tablist"
       aria-label="Cascade graph view mode"

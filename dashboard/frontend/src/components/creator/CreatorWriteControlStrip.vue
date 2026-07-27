@@ -27,7 +27,7 @@
     </div>
     <div v-if="showStrength" class="write-control-strip__group write-control-strip__group--strength">
       <label class="write-control-strip__label" for="style-strength-slider">文风</label>
-      <span class="write-control-strip__strength-label" data-testid="style-strength-label">
+      <span class="write-control-strip__strength-label style-strength-label" data-testid="style-strength-label">
         {{ currentStrengthLabel }}
       </span>
       <input
@@ -36,7 +36,7 @@
         min="0"
         max="3"
         step="1"
-        class="write-control-strip__slider"
+        class="write-control-strip__slider style-strength-slider"
         data-testid="style-strength-slider"
         :value="styleStrength"
         :aria-valuetext="currentStrengthLabel"
@@ -54,7 +54,7 @@
       <button
         v-if="showToggles"
         type="button"
-        class="write-workbench__chip"
+        class="write-workbench__chip selection-lock-toggle"
         :class="{ 'write-workbench__chip--active': selectionLocked }"
         data-testid="selection-lock-toggle"
         @click="$emit('toggle-lock')"
@@ -64,7 +64,7 @@
       <button
         v-if="showToggles || showWorldbuildingToggle"
         type="button"
-        class="write-workbench__chip"
+        class="write-workbench__chip allow-worldbuilding-toggle"
         :class="{ 'write-workbench__chip--active': allowWorldbuildingFill }"
         data-testid="allow-worldbuilding-toggle"
         @click="$emit('update:allowWorldbuildingFill', !allowWorldbuildingFill)"

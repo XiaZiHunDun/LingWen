@@ -4,7 +4,7 @@
 <template>
   <div class="write-scope-bar" data-testid="write-scope-bar">
     <template v-if="humanFirst">
-      <strong class="write-scope-bar__value" data-testid="write-scope-human-label">{{ humanLabel }}</strong>
+      <strong class="write-scope-bar__value write-scope-human-label" data-testid="write-scope-human-label">{{ humanLabel }}</strong>
       <span v-if="humanHint" class="meta-line">{{ humanHint }}</span>
     </template>
     <template v-else>

@@ -67,7 +67,7 @@
 
   <div
     v-if="c.deskDrawerEnabled && c.deskDrawerOpen"
-    class="desk-drawer-backdrop desk-drawer-backdrop--visible"
+    class="desk-drawer-backdrop desk-drawer-backdrop--visible creator-desk-drawer-backdrop"
     data-testid="creator-desk-drawer-backdrop"
     aria-hidden="true"
     @click="c.closeDeskDrawer()"

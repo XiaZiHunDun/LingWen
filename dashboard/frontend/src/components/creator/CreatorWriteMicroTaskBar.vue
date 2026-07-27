@@ -2,7 +2,7 @@
   CreatorWriteMicroTaskBar.vue — 章内微任务条（再写 N 字）
 -->
 <template>
-  <div class="write-micro-task" data-testid="write-micro-task-bar">
+  <div class="write-micro-task write-micro-task-bar" data-testid="write-micro-task-bar">
     <div class="write-micro-task__row">
       <span class="write-micro-task__label">
         <template v-if="progress.met">本章字数已达标</template>
@@ -21,7 +21,7 @@
       :aria-label="progress.met ? '本章字数已达标' : `再写 ${progress.remaining} 字`"
     >
       <div
-        class="write-micro-task__fill"
+        class="write-micro-task__fill write-micro-task-fill"
         :style="{ width: `${progress.progress}%` }"
         data-testid="write-micro-task-fill"
       />

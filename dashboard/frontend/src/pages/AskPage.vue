@@ -15,7 +15,7 @@
             inline
             text="查进度、问设定、理思路——正文请在「书桌」上落字"
           />
-          <div class="ask-page__messages" data-testid="ask-messages">
+          <div class="ask-page__messages ask-messages" data-testid="ask-messages">
             <div
               v-for="(msg, idx) in messages"
               :key="idx"
@@ -29,7 +29,7 @@
               >
                 <button
                   type="button"
-                  class="ask-page__text-link"
+                  class="ask-page__text-link ask-copy-to-note-btn"
                   data-testid="ask-copy-to-note-btn"
                   @click="copyToNote(msg.text)"
                 >
@@ -37,7 +37,7 @@
                 </button>
                 <button
                   type="button"
-                  class="ask-page__text-link"
+                  class="ask-page__text-link ask-go-write-btn"
                   data-testid="ask-go-write-btn"
                   @click="goWrite()"
                 >
@@ -52,7 +52,7 @@
         <div class="ask-page__footer">
           <div
             v-if="suggestions.length && !hasUserMessages"
-            class="ask-composer__hints"
+            class="ask-composer__hints ask-topic-list"
             data-testid="ask-topic-list"
           >
             <button
@@ -69,13 +69,13 @@
           <form class="ask-composer" @submit.prevent="sendMessage()">
             <p
               v-if="isLongDraft"
-              class="ask-composer__long-hint"
+              class="ask-composer__long-hint ask-long-draft-hint"
               data-testid="ask-long-draft-hint"
             >
               长文续写请在「书桌」进行。
               <button
                 type="button"
-                class="ask-page__text-link"
+                class="ask-page__text-link ask-long-go-write-btn"
                 data-testid="ask-long-go-write-btn"
                 @click="goWrite()"
               >
@@ -85,16 +85,16 @@
             <div class="ask-composer__card">
               <textarea
                 v-model="draft"
-                class="ask-composer__input"
+                class="ask-composer__input ask-input"
                 rows="2"
                 placeholder="随便问：进度、人物、这章怎么写…"
                 data-testid="ask-input"
                 @keydown.enter.exact.prevent="sendMessage()"
               />
-              <div class="ask-composer__toolbar ask-composer__toolbar--send-only">
+              <div class="ask-composer__toolbar ask-composer__toolbar--send-only ask-input">
                 <button
                   type="submit"
-                  class="ask-composer__send"
+                  class="ask-composer__send ask-send-btn"
                   data-testid="ask-send-btn"
                   :disabled="loading || !draft.trim() || isLongDraft"
                   aria-label="发送"
@@ -116,10 +116,10 @@
             inline
             text="碎片灵感先记这里，凑齐再收成新书——长文写作请去「书桌」"
           />
-          <ul v-if="notes.length" class="ask-page__notes" data-testid="ask-notes">
+          <ul v-if="notes.length" class="ask-page__notes ask-notes" data-testid="ask-notes">
             <li v-for="n in notes" :key="n.id" class="ask-page__note-item">{{ n.text }}</li>
           </ul>
-          <p v-else class="ask-page__note-empty" data-testid="ask-notes-empty">
+          <p v-else class="ask-page__note-empty ask-notes-empty" data-testid="ask-notes-empty">
             <span class="ask-page__note-empty-title">速记是空的</span>
             碎片灵感先记在这里，稍后可收成新书。
           </p>
@@ -129,16 +129,16 @@
             <div class="ask-composer__card">
               <textarea
                 v-model="noteDraft"
-                class="ask-composer__input"
+                class="ask-composer__input ask-note-input"
                 rows="2"
                 placeholder="碎片灵感、一句对白…"
                 data-testid="ask-note-input"
               />
-              <div class="ask-composer__toolbar">
+              <div class="ask-composer__toolbar ask-note-input">
                 <div class="ask-composer__tools">
                   <button
                     type="button"
-                    class="ask-composer__pill"
+                    class="ask-composer__pill ask-new-project-btn"
                     data-testid="ask-new-project-btn"
                     @click="startNewProject()"
                   >
@@ -147,7 +147,7 @@
                 </div>
                 <button
                   type="submit"
-                  class="ask-composer__send"
+                  class="ask-composer__send ask-note-save-btn"
                   data-testid="ask-note-save-btn"
                   :disabled="!noteDraft.trim()"
                   aria-label="保存"

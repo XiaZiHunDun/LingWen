@@ -7,7 +7,7 @@
   </div>
   <div v-if="c.conflictMessage" class="conflict-banner pixel-border" data-testid="conflict-banner">
     {{ c.conflictMessage }}
-    <button type="button" class="mini-btn pixel-border" data-testid="conflict-reload-btn" @click="c.refresh">
+    <button type="button" class="mini-btn pixel-border conflict-reload-btn" data-testid="conflict-reload-btn" @click="c.refresh">
       重新加载
     </button>
   </div>

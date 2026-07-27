@@ -7,31 +7,31 @@
         <h2>{{ ripple.dimension }} — {{ ripple.relationship_type }}</h2>
         <button class="ripple-drawer-close" data-testid="ripple-drawer-close" @click="$emit('close')">×</button>
       </header>
-      <nav class="ripple-drawer__tabs" data-testid="ripple-drawer-tabs">
+      <nav class="ripple-drawer__tabs ripple-drawer-tabs" data-testid="ripple-drawer-tabs">
         <button :class="['tab', { active: activeTab === 'summary' }]"
-                data-testid="tab-summary"
+                data-testid="tab-summary" class="tab-summary"
                 @click="activeTab = 'summary'">Summary</button>
         <button :class="['tab', { active: activeTab === 'cascade' }]"
-                data-testid="tab-cascade"
+                data-testid="tab-cascade" class="tab-cascade"
                 @click="activeTab = 'cascade'">Cascade</button>
         <button :class="['tab', { active: activeTab === 'runs' }]"
-                data-testid="tab-cascade-runs"
+                data-testid="tab-cascade-runs" class="tab-cascade-runs"
                 @click="activeTab = 'runs'">Cascade runs</button>
       </nav>
       <section class="ripple-drawer__body">
         <!-- Summary tab (existing status rows + evidence + payload, Phase 9.13/9.14) -->
-        <div v-if="activeTab === 'summary'" class="drawer-section" data-testid="drawer-summary-section">
+        <div v-if="activeTab === 'summary'" class="drawer-section drawer-summary-section" data-testid="drawer-summary-section">
           <div class="ripple-drawer__row">
             <span class="ripple-drawer__label">Status:</span>
             <span :class="`ripple-drawer__status--${ripple.status} ripple-drawer-status`">{{ ripple.status }}</span>
           </div>
           <div class="ripple-drawer__row" v-if="ripple.parent_ripple_id">
             <span class="ripple-drawer__label">Parent ripple:</span>
-            <span data-testid="ripple-parent-id">{{ ripple.parent_ripple_id }}</span>
+            <span data-testid="ripple-parent-id" class="ripple-parent-id" >{{ ripple.parent_ripple_id }}</span>
           </div>
           <div class="ripple-drawer__row" v-if="ripple.child_count > 0">
             <span class="ripple-drawer__label">Child ripples:</span>
-            <span data-testid="ripple-child-count">{{ ripple.child_count }}</span>
+            <span data-testid="ripple-child-count" class="ripple-child-count" >{{ ripple.child_count }}</span>
           </div>
           <div class="ripple-drawer__row">
             <span class="ripple-drawer__label">Target chapter:</span> {{ ripple.target_chapter }}
@@ -81,28 +81,28 @@
         </div>
 
         <!-- Cascade tab (existing dry-run preview, Phase 9.15) -->
-        <div v-else-if="activeTab === 'cascade'" class="drawer-section" data-testid="drawer-cascade-section">
-          <section class="dryrun-section" data-testid="ripple-dryrun-section">
+        <div v-else-if="activeTab === 'cascade'" class="drawer-section drawer-cascade-section" data-testid="drawer-cascade-section">
+          <section class="dryrun-section ripple-dryrun-section" data-testid="ripple-dryrun-section">
             <header class="dryrun-header">
               <h4>Dry-run preview</h4>
               <button
                 type="button"
-                class="dryrun-toggle"
+                class="dryrun-toggle dry-run-toggle"
                 :aria-pressed="showDryRun"
                 data-testid="dry-run-toggle"
                 @click="onToggleDryRun"
               >{{ showDryRun ? 'Hide' : 'Show' }} cascade</button>
             </header>
             <div v-if="showDryRun && preview" class="dryrun-content">
-              <div class="summary-chips" data-testid="ripple-summary-chips">
-                <span class="chip" data-testid="dry-run-tag">Depth: {{ preview.max_depth }}</span>
-                <span class="chip" data-testid="dry-run-affected-chapters">
+              <div class="summary-chips ripple-summary-chips" data-testid="ripple-summary-chips">
+                <span class="chip dry-run-tag" data-testid="dry-run-tag">Depth: {{ preview.max_depth }}</span>
+                <span class="chip dry-run-affected-chapters" data-testid="dry-run-affected-chapters">
                   {{ preview.affected_chapter_count }} chapter(s)
                 </span>
-                <span class="chip" data-testid="dry-run-affected-characters">
+                <span class="chip dry-run-affected-characters" data-testid="dry-run-affected-characters">
                   {{ preview.affected_character_count }} character(s)
                 </span>
-                <span class="chip" data-testid="dry-run-affected-settings">
+                <span class="chip dry-run-affected-settings" data-testid="dry-run-affected-settings">
                   {{ preview.affected_setting_count }} setting(s)
                 </span>
               </div>
@@ -110,14 +110,14 @@
                 v-if="cascade"
                 :cascade="cascade"
                 :dry-run="true"
-                data-testid="cascade-graph"
+                data-testid="cascade-graph" class="cascade-graph"
               />
             </div>
           </section>
         </div>
 
         <!-- Cascade runs tab (Phase 9.22: historical cascade_runs list + Replay + Cancel) -->
-        <div v-else-if="activeTab === 'runs'" class="drawer-section" data-testid="cascade-runs-section">
+        <div v-else-if="activeTab === 'runs'" class="drawer-section cascade-runs-section" data-testid="cascade-runs-section">
           <CascadeRunsPanel :ripple-id="ripple.ripple_id" />
         </div>
       </section>

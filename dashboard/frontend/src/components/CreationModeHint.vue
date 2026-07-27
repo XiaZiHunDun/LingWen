@@ -1,5 +1,5 @@
 <template>
-  <details class="creation-mode-hint-compact" data-testid="creation-mode-hint">
+  <details class="creation-mode-hint-compact creation-mode-hint" data-testid="creation-mode-hint">
     <summary :title="meta.audience">{{ meta.label }}</summary>
     <p v-if="meta.tagline" class="creation-mode-hint-compact__body">
       {{ meta.tagline }}

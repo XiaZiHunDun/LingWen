@@ -7,7 +7,7 @@
       <h3 v-if="!hideTitle" class="subsection-title">卷纲</h3>
       <button
         type="button"
-        class="mini-btn pixel-border"
+        class="mini-btn pixel-border add-volume-btn"
         data-testid="add-volume-btn"
         @click="vp.addVolume"
       >

@@ -4,14 +4,14 @@
 <template>
   <div
     v-if="pt.publishModalOpen"
-    class="creator-modal"
+    class="creator-modal creator-publish-modal"
     data-testid="creator-publish-modal"
     @click.self="pt.closePublishWizard"
   >
-    <div class="creator-modal__panel creator-modal__panel--narrow pixel-card" data-testid="creator-publish-panel">
+    <div class="creator-modal__panel creator-modal__panel--narrow pixel-card creator-publish-panel" data-testid="creator-publish-panel">
       <header class="creator-modal__header">
         <h2>发布到平台</h2>
-        <button type="button" class="link-btn" data-testid="publish-modal-close" @click="pt.closePublishWizard">
+        <button type="button" class="link-btn publish-modal-close" data-testid="publish-modal-close" @click="pt.closePublishWizard">
           关闭
         </button>
       </header>
@@ -23,7 +23,7 @@
         <li :class="{ active: pt.publishStep >= 3 }">提交</li>
       </ol>
 
-      <div v-if="pt.publishStep === 0" class="publish-step" data-testid="publish-step-platform">
+      <div v-if="pt.publishStep === 0" class="publish-step publish-step-platform" data-testid="publish-step-platform">
         <p class="meta-line">各平台通过 PublishAdapter 统一接入；当前为占位适配器，OAuth 接入后可真实外发。</p>
         <label
           v-for="platform in pt.publishPlatforms"
@@ -52,7 +52,7 @@
           </ul>
           <button
             type="button"
-            class="link-btn"
+            class="link-btn publish-history-open-all"
             data-testid="publish-history-open-all"
             @click="pt.openPublishHistoryModal"
           >
@@ -61,15 +61,15 @@
         </div>
       </div>
 
-      <div v-else-if="pt.publishStep === 1" class="publish-step" data-testid="publish-step-format">
-        <p v-if="activePlatform?.capabilities" class="meta-line" data-testid="publish-platform-caps">
+      <div v-else-if="pt.publishStep === 1" class="publish-step publish-step-format" data-testid="publish-step-format">
+        <p v-if="activePlatform?.capabilities" class="meta-line publish-platform-caps" data-testid="publish-platform-caps">
           简介上限 {{ activePlatform.capabilities.max_intro_chars || 2000 }} 字
           · {{ activePlatform.capabilities.supports_submission_pack ? '支持投稿包' : '' }}
         </p>
-        <p v-if="pt.publishPackBusy" class="meta-line" data-testid="publish-pack-loading">正在生成投稿包预览…</p>
+        <p v-if="pt.publishPackBusy" class="meta-line publish-pack-loading" data-testid="publish-pack-loading">正在生成投稿包预览…</p>
         <p
           v-else-if="pt.publishSubmissionChapters.length"
-          class="meta-line"
+          class="meta-line publish-submission-chapters"
           data-testid="publish-submission-chapters"
         >
           试读章节：第 {{ pt.publishSubmissionChapters.join('、') }} 章
@@ -82,13 +82,13 @@
             type="number"
             min="1"
             max="12"
-            class="vol-input vol-input--narrow"
+            class="vol-input vol-input--narrow publish-submission-sample-count"
             data-testid="publish-submission-sample-count"
             @change="pt.prefillPublishFromSubmission"
           >
         </label>
         <label class="pref-row pref-row--checkbox">
-          <input v-model="pt.publishIncludeOutline" type="checkbox" data-testid="publish-include-outline">
+          <input v-model="pt.publishIncludeOutline" type="checkbox" data-testid="publish-include-outline" class="publish-include-outline" >
           附带全局大纲节选
         </label>
         <label>
@@ -96,16 +96,16 @@
           <textarea
             v-model="pt.publishIntro"
             rows="3"
-            class="settings-textarea"
+            class="settings-textarea publish-intro"
             data-testid="publish-intro"
             placeholder="投稿简介"
             :maxlength="activePlatform?.capabilities?.max_intro_chars || 2000"
           />
         </label>
-        <button type="button" class="link-btn" data-testid="publish-refresh-pack" @click="pt.prefillPublishFromSubmission">
+        <button type="button" class="link-btn publish-refresh-pack" data-testid="publish-refresh-pack" @click="pt.prefillPublishFromSubmission">
           刷新投稿包预览
         </button>
-        <button type="button" class="link-btn" data-testid="publish-open-export" @click="openExportFromPublish">
+        <button type="button" class="link-btn publish-open-export" data-testid="publish-open-export" @click="openExportFromPublish">
           打开导出弹窗
         </button>
         <pre
@@ -115,7 +115,7 @@
         >{{ pt.publishPackPreview.slice(0, 1200) }}{{ pt.publishPackPreview.length > 1200 ? '\n…' : '' }}</pre>
       </div>
 
-      <div v-else-if="pt.publishStep === 2" class="publish-step" data-testid="publish-step-confirm">
+      <div v-else-if="pt.publishStep === 2" class="publish-step publish-step-confirm" data-testid="publish-step-confirm">
         <ul class="publish-summary">
           <li>平台：{{ platformLabel }}</li>
           <li>适配器：{{ activePlatform?.id || pt.publishPlatform }}（{{ activePlatform?.connection || 'stub' }}）</li>
@@ -126,10 +126,10 @@
         </ul>
       </div>
 
-      <div v-else class="publish-step" data-testid="publish-step-submit">
+      <div v-else class="publish-step publish-step-submit" data-testid="publish-step-submit">
         <p v-if="pt.publishStatus === 'idle'" class="meta-line">确认后通过适配器提交至发布队列。</p>
         <p v-else-if="pt.publishStatus === 'submitting'" class="meta-line">提交中…</p>
-        <p v-else-if="pt.publishStatus === 'success'" class="save-hint" data-testid="publish-success-msg">
+        <p v-else-if="pt.publishStatus === 'success'" class="save-hint publish-success-msg" data-testid="publish-success-msg">
           {{ pt.publishMessage }}
         </p>
       </div>
@@ -138,7 +138,7 @@
         <button
           v-if="pt.publishStep > 0 && pt.publishStatus !== 'success'"
           type="button"
-          class="mini-btn pixel-border"
+          class="mini-btn pixel-border publish-prev-btn"
           data-testid="publish-prev-btn"
           @click="pt.prevPublishStep"
         >
@@ -147,7 +147,7 @@
         <button
           v-if="pt.publishStep < 3 && pt.publishStatus !== 'success'"
           type="button"
-          class="save-btn pixel-border"
+          class="save-btn pixel-border publish-next-btn"
           data-testid="publish-next-btn"
           @click="pt.nextPublishStep"
         >
@@ -156,7 +156,7 @@
         <button
           v-if="pt.publishStep === 3 && pt.publishStatus !== 'success'"
           type="button"
-          class="save-btn pixel-border"
+          class="save-btn pixel-border publish-submit-btn"
           data-testid="publish-submit-btn"
           :disabled="pt.publishStatus === 'submitting'"
           @click="pt.submitPublish"

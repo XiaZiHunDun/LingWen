@@ -12,7 +12,7 @@
           范围
           <select
             v-model="range"
-            class="range-select pixel-border"
+            class="range-select pixel-border chapter-range-select"
             data-testid="chapter-range-select"
           >
             <option v-for="opt in rangeOptions" :key="opt" :value="opt">
@@ -36,7 +36,7 @@
         范围
         <select
           v-model="range"
-          class="range-select pixel-border"
+          class="range-select pixel-border chapter-range-select"
           data-testid="chapter-range-select"
         >
           <option v-for="opt in rangeOptions" :key="opt" :value="opt">
@@ -59,7 +59,7 @@
     </p>
 
     <section
-      class="production-section pixel-card"
+      class="production-section pixel-card chapter-production-status"
       data-testid="chapter-production-status"
     >
       <h2 class="section-title">正文生产状态</h2>
@@ -73,14 +73,14 @@
         </p>
         <ul
           v-if="productionLines.length"
-          class="production-summary-list"
+          class="production-summary-list chapter-production-summary"
           data-testid="chapter-production-summary"
         >
           <li v-for="(line, idx) in productionLines" :key="idx">{{ line }}</li>
         </ul>
         <p
           v-else-if="hasIncrementalBackfill"
-          class="backfill-line"
+          class="backfill-line chapter-backfill-badge"
           data-testid="chapter-backfill-badge"
         >
           CVG 增量 Backfill：{{ incrementalBackfillLabel }}
@@ -89,16 +89,16 @@
     </section>
 
     <section
-      class="production-history pixel-card"
+      class="production-history pixel-card production-history-panel"
       data-testid="production-history-panel"
     >
       <h2 class="section-title">最近生产记录 (只读)</h2>
       <p v-if="recordsLoading" class="history-hint">加载记录…</p>
       <p v-else-if="recordsError" class="history-error">{{ recordsError }}</p>
-      <p v-else-if="!historyRows.length" class="history-hint" data-testid="production-history-empty">
+      <p v-else-if="!historyRows.length" class="history-hint production-history-empty" data-testid="production-history-empty">
         暂无 pilot/batch 记录（切换顶栏项目后自动加载对应 pilot_records）
       </p>
-      <table v-else class="history-table" data-testid="production-history-table">
+      <table v-else class="history-table production-history-table" data-testid="production-history-table">
         <thead>
           <tr>
             <th>章节</th>

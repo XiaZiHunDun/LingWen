@@ -11,7 +11,7 @@
     <p class="meta-line">从第一章开始写，灵文会自动跟上你的节奏。</p>
     <button
       type="button"
-      class="save-btn"
+      class="save-btn chapter-list-start-btn"
       data-testid="chapter-list-start-btn"
       @click="w.selectChapter(1)"
     >
@@ -20,7 +20,7 @@
   </div>
   <template v-else>
     <ul
-      class="chapter-list"
+      class="chapter-list creator-chapter-list"
       :class="{ 'chapter-list--compact': compact }"
       data-testid="creator-chapter-list"
     >

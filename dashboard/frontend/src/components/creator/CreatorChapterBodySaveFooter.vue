@@ -13,7 +13,7 @@
     <button
       v-if="humanFirst"
       type="button"
-      class="chapter-body-manual-save"
+      class="chapter-body-manual-save save-chapter-body-btn"
       data-testid="save-chapter-body-btn"
       :disabled="saving"
       @click="$emit('save')"
@@ -23,7 +23,7 @@
     <button
       v-else
       type="button"
-      class="save-btn pixel-border"
+      class="save-btn pixel-border save-chapter-body-btn"
       data-testid="save-chapter-body-btn"
       :disabled="saving"
       @click="$emit('save')"

@@ -67,16 +67,16 @@
     </div>
 
     <div v-if="showMetaInfo" class="meta-info" data-testid="meta-info">
-      <span v-if="decision.resolved_by" class="meta-field" data-testid="meta-resolved-by">
+      <span v-if="decision.resolved_by" class="meta-field meta-resolved-by" data-testid="meta-resolved-by">
         解决人: {{ decision.resolved_by }}
       </span>
-      <span v-if="decision.resolution" class="meta-field" data-testid="meta-resolution">
+      <span v-if="decision.resolution" class="meta-field meta-resolution" data-testid="meta-resolution">
         选项: {{ decision.resolution }}
       </span>
-      <span v-if="formattedResolvedAt" class="meta-field" data-testid="meta-resolved-at">
+      <span v-if="formattedResolvedAt" class="meta-field meta-resolved-at" data-testid="meta-resolved-at">
         时间: {{ formattedResolvedAt }}
       </span>
-      <span v-if="decision.reason" class="meta-field" data-testid="meta-reason">
+      <span v-if="decision.reason" class="meta-field meta-reason" data-testid="meta-reason">
         {{ reasonLabel }}: {{ decision.reason }}
       </span>
     </div>

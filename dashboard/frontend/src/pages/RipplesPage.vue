@@ -4,7 +4,7 @@
     <h1 v-if="!embedded" class="page-title">涟漪变更</h1>
     <ImpactGraph
       :graph="referenceGraph"
-      data-testid="ripples-page-impact-graph"
+      data-testid="ripples-page-impact-graph" class="ripples-page-impact-graph"
       @node-click="onImpactNodeClick"
     />
     <RippleFilter
