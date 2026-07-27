@@ -83,12 +83,16 @@ export function safeCall(fn, ...args) {
   if (typeof fn !== 'function') return null
   try {
     return fn(...args)
-  } catch {
+  } catch (err) {
+    logger.warn('[safeCall] function call failed:', err)
     return null
   }
 }
 
 export function safeAsyncCall(fn, ...args) {
   if (typeof fn !== 'function') return Promise.resolve(null)
-  return fn(...args).catch(() => null)
+  return fn(...args).catch(err => {
+    logger.warn('[safeAsyncCall] async call failed:', err)
+    return null
+  })
 }

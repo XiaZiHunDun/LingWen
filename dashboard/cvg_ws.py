@@ -47,7 +47,8 @@ def broadcast(event: dict[str, Any]) -> None:
             asyncio.ensure_future(manager.broadcast(event))
         else:
             loop.run_until_complete(manager.broadcast(event))
-    except Exception as e:  # noqa: BLE001
+    except (OSError, RuntimeError) as e:
+        # WS 广播失败 — 跳过本次
         logger.debug("cvg broadcast skipped: %s", e)
 
 
@@ -89,7 +90,8 @@ class CvgConnectionManager:
         for ws in targets:
             try:
                 await ws.send_json(event)
-            except Exception as e:  # noqa: BLE001
+            except (OSError, RuntimeError) as e:
+                # WS 连接断开 / 发送失败 — 清理死连接
                 logger.warning("cvg ws broadcast failed, removing: %s", e)
                 dead.append(ws)
         if dead:
@@ -101,6 +103,7 @@ class CvgConnectionManager:
         """单发(握手时用, 跟 ConnectionManager.send_to 1:1)."""
         try:
             await ws.send_json(event)
-        except Exception as e:  # noqa: BLE001
+        except (OSError, RuntimeError) as e:
+            # WS 发送失败 — 主动断开连接
             logger.warning("cvg ws send_to failed: %s", e)
             await self.disconnect(ws)

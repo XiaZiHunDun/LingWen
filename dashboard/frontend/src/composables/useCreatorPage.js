@@ -1,5 +1,6 @@
 /**
  * useCreatorPage — 创作页 hub 编排、refresh 与 provide（从 CreatorPage 抽出）
+ * @returns {import('../types/composables').CreatorPageReturn}
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { fetchCreatorOverview, runCreatorLogicCheck } from '../api/index.js';

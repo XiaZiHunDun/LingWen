@@ -1,5 +1,10 @@
 import { useStudioStore } from '../stores/useStudioStore.js';
 
+/**
+ * Composable for managing studio project state
+ * Wraps useStudioStore with bound action methods
+ * @returns {ReturnType<import('../stores/useStudioStore.js').useStudioStore>}
+ */
 export function useStudioProject() {
   const store = useStudioStore();
   return {

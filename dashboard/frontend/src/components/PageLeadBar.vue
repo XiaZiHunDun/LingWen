@@ -23,6 +23,14 @@
 <script setup>
 import { usePageLeadDismiss } from '../composables/index.js';
 
+/**
+ * @typedef {Object} PageLeadBarProps
+ * @property {string} pageId - Unique page identifier for dismiss persistence
+ * @property {string} text - Lead bar message text
+ * @property {boolean} [inline=false] - Inline card style variant
+ */
+
+/** @type {import('vue').ExtractPropTypes<PageLeadBarProps>} */
 const props = defineProps({
   pageId: { type: String, required: true },
   text: { type: String, required: true },

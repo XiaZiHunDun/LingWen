@@ -39,6 +39,18 @@
 <script setup>
 import { computed, inject } from 'vue';
 
+/**
+ * @typedef {Object} HubPageHeaderProps
+ * @property {string} [title=''] - Page title
+ * @property {string} [subtitle=''] - Page subtitle
+ * @property {string} [meta=''] - Meta information
+ * @property {string} [metaTestId=''] - Test ID for meta element
+ * @property {boolean} [loading=false] - Loading state
+ * @property {boolean} [showRefresh=true] - Show refresh button
+ * @property {string} [testId=''] - Test ID for component
+ */
+
+/** @type {import('vue').ExtractPropTypes<HubPageHeaderProps>} */
 const props = defineProps({
   title: { type: String, default: '' },
   subtitle: { type: String, default: '' },

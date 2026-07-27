@@ -18,12 +18,14 @@
         <span class="graph-title">{{ workflowName || '工作流图' }}</span>
         <button class="reset-zoom-btn pixel-border" data-testid="reset-zoom-btn" @click="resetZoom">⤢ 重置缩放</button>
       </div>
+      <!-- eslint-disable vue/no-v-html — svg 是 mermaid 库生成的受信任 SVG, 非用户输入 -->
       <div
         ref="containerRef"
         class="svg-wrapper"
         :style="{ transform: `scale(${zoom})` }"
         v-html="svg"
       />
+      <!-- eslint-enable vue/no-v-html -->
     </div>
 
     <div v-else class="empty-state pixel-card workflow-graph-empty" data-testid="workflow-graph-empty">

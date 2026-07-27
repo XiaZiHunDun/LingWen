@@ -47,6 +47,41 @@ const doubled = computed(() => count.value * 2)
 console.log(doubled.value)
       `,
     },
+    // reactive context 注入后属性直接访问 — 正确
+    {
+      code: `
+import { inject } from 'vue'
+import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey'
+const c = inject(CREATOR_PAGE_CHROME_KEY)
+console.log(c.workspaceActiveTab)
+      `,
+    },
+    // wrapper composable 返回值直接使用 — 正确
+    {
+      code: `
+import { useDashboardNav } from './composables/useDashboardNav'
+const nav = useDashboardNav()
+console.log(nav.activeNav)
+      `,
+    },
+    // 新增 reactive context 注入键：CREATOR_SETTINGS_KEY — 正确
+    {
+      code: `
+import { inject } from 'vue'
+import { CREATOR_SETTINGS_KEY } from './creatorSettingsKey'
+const st = inject(CREATOR_SETTINGS_KEY)
+console.log(st.currentMode)
+      `,
+    },
+    // 新增 reactive context 注入键：CREATOR_MODE_GUIDE_KEY — 正确
+    {
+      code: `
+import { inject } from 'vue'
+import { CREATOR_MODE_GUIDE_KEY } from './creatorModeGuideKey'
+const mg = inject(CREATOR_MODE_GUIDE_KEY)
+console.log(mg.isComplete)
+      `,
+    },
   ],
 
   invalid: [
@@ -74,6 +109,45 @@ console.log(activeNav?.value)
 import { useStudioStore } from './stores/useStudioStore'
 const studioStore = useStudioStore()
 console.log(studioStore.summary.value)
+      `,
+      errors: [{ messageId: 'nestedStoreValue' }],
+    },
+    // reactive context 注入后属性访问 .value — 错误
+    {
+      code: `
+import { inject } from 'vue'
+import { CREATOR_PRODUCT_TOOLS_KEY } from './creatorProductToolsKey'
+const pt = inject(CREATOR_PRODUCT_TOOLS_KEY)
+console.log(pt.currentMode.value)
+      `,
+      errors: [{ messageId: 'nestedStoreValue' }],
+    },
+    // wrapper composable 返回值访问 .value — 错误
+    {
+      code: `
+import { useDashboardNav } from './composables/useDashboardNav'
+const nav = useDashboardNav()
+console.log(nav.activeNav.value)
+      `,
+      errors: [{ messageId: 'nestedStoreValue' }],
+    },
+    // 新增: CREATOR_SETTINGS_KEY 注入后访问 .value — 错误
+    {
+      code: `
+import { inject } from 'vue'
+import { CREATOR_SETTINGS_KEY } from './creatorSettingsKey'
+const st = inject(CREATOR_SETTINGS_KEY)
+console.log(st.currentMode.value)
+      `,
+      errors: [{ messageId: 'nestedStoreValue' }],
+    },
+    // 新增: CREATOR_MODE_GUIDE_KEY 注入后访问 .value — 错误
+    {
+      code: `
+import { inject } from 'vue'
+import { CREATOR_MODE_GUIDE_KEY } from './creatorModeGuideKey'
+const mg = inject(CREATOR_MODE_GUIDE_KEY)
+console.log(mg.isComplete.value)
       `,
       errors: [{ messageId: 'nestedStoreValue' }],
     },

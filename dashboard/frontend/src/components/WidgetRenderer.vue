@@ -134,6 +134,7 @@ const isLoading = ref(true);
 const hasError = ref(false);
 const errorMessage = ref('');
 const localInstanceId = ref(props.instanceId || `widget-${props.widgetId}-${Date.now()}`);
+let _destroyed = false;
 
 // 获取 Widget 配置
 const widget = computed(() => getWidget(props.widgetId));
@@ -222,12 +223,14 @@ async function initWidget() {
     // 等待组件加载（针对懒加载）
     if (widgetComponent.value === null && typeof widget.value.component === 'object') {
       await new Promise(resolve => {
-        const checkInterval = setInterval(() => {
-          if (widgetComponent.value !== null) {
+        let checkInterval;
+        const checkAndResolve = () => {
+          if (_destroyed || widgetComponent.value !== null) {
             clearInterval(checkInterval);
             resolve();
           }
-        }, 100);
+        };
+        checkInterval = setInterval(checkAndResolve, 100);
         // 超时处理
         setTimeout(() => {
           clearInterval(checkInterval);
@@ -289,6 +292,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  _destroyed = true;
   cleanupWidget();
 });
 </script>

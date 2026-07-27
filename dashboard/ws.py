@@ -68,7 +68,8 @@ class ConnectionManager:
         for ws in targets:
             try:
                 await ws.send_json(event)
-            except Exception as e:
+            except (OSError, RuntimeError) as e:
+                # WS 连接断开 / 发送失败 — 清理死连接
                 logger.warning("ws broadcast failed, removing: %s", e)
                 dead.append(ws)
         if dead:
@@ -80,7 +81,8 @@ class ConnectionManager:
         """单发(握手时用)"""
         try:
             await ws.send_json(event)
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
+            # WS 发送失败 — 主动断开连接
             logger.warning("ws send_to failed: %s", e)
             await self.disconnect(ws)
 
@@ -145,7 +147,8 @@ async def _broadcast_loop(
             try:
                 cur_workflow = controller.get_active_workflow_status()
                 cur_decisions = controller.list_pending_decisions()
-            except Exception as e:
+            except (OSError, RuntimeError, ValueError) as e:
+                # controller 查询失败 — 跳过本轮,下次重试
                 logger.warning("ws poll controller failed: %s", e)
                 await asyncio.sleep(poll_interval)
                 continue

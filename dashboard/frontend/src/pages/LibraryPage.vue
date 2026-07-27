@@ -66,7 +66,8 @@ import { computed, onMounted, ref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
 import { useStudioProject, useDashboardNav } from '../composables/index.js';
 import { getWriteResume } from '../utils/writeResumeStorage.js';
-import { formatDisplayProjectName } from '../utils/displayProjectName.js';
+import { formatDisplayLabel } from '../utils/displayProjectName.js';
+import { logger } from '../utils/logger.js';
 
 const studio = useStudioProject();
 const { navigateTo, setWizardDeepLink } = useDashboardNav();
@@ -86,7 +87,7 @@ function projectSubtitle(project) {
 }
 
 function displayProjectName(project) {
-  return formatDisplayProjectName(project?.name || project?.slug) || project?.slug || '未命名';
+  return formatDisplayLabel(project?.name || project?.slug) || project?.slug || '未命名';
 }
 
 async function openBook(slug) {
@@ -97,18 +98,13 @@ async function openBook(slug) {
   navigateTo('write', { chapter: resume?.chapter ?? null, clearFocus: false });
 }
 
-/** @deprecated use openBook — kept for tests that import continueBook */
-async function continueBook(slug) {
-  await openBook(slug);
-}
-
 async function load() {
   loading.value = true;
   error.value = null;
   try {
     await studio.loadProjects();
     if (studio.activeSlug) {
-      const q = await fetchStudioQuality().catch(() => null);
+      const q = await fetchStudioQuality().catch(err => { logger.warn('fetchStudioQuality failed in LibraryPage', err); return null; });
       if (q) {
         qualityLine.value = `已写 ${q.chapters_written ?? 0} 章 · 覆盖 ${q.coverage_pct ?? 0}%`;
       }

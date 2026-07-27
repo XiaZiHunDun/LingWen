@@ -10,9 +10,6 @@ export function formatDisplayLabel(name) {
   return cleaned || raw;
 }
 
-/** @deprecated 使用 formatDisplayLabel */
-export const formatDisplayProjectName = formatDisplayLabel;
-
 /**
  * @param {Record<string, unknown>} vol
  */

@@ -111,11 +111,7 @@ const props = defineProps({
   showGoalTags: { type: Boolean, default: true },
   /** human-first 主区紧凑条（透镜 · 文风 · 目标 · 补全设定），避免进 advanced-tools */
   mainBar: { type: Boolean, default: false },
-  /** @deprecated 使用 mainBar；保留别名以免旧调用失效 */
-  strengthOnly: { type: Boolean, default: false },
 });
-
-const mainBar = computed(() => props.mainBar || props.strengthOnly);
 
 defineEmits([
   'update:styleStrength',

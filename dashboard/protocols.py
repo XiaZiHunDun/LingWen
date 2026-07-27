@@ -274,7 +274,8 @@ class MasterControllerAdapter:
         pending: list[dict[str, Any]] = []
         try:
             pending = self._controller._harvest_decision_specs(graph)
-        except Exception:
+        except (AttributeError, RuntimeError):
+            # controller 方法不存在 / 调用失败 — 降级为空列表
             pending = []
         summary_obj = getattr(scheduler, "_summary", None)
         steps = getattr(summary_obj, "steps", 0) if summary_obj else 0
@@ -356,7 +357,8 @@ def _extract_total_cost(
         return 0.0
     try:
         return float(cost_tracker.total_cost(since=since))
-    except Exception as exc:
+    except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
+        # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.total_cost() failed: %s", exc)
         return 0.0
 
@@ -379,7 +381,8 @@ def _extract_cost_by_scenario(
         return {}
     try:
         return dict(cost_tracker.cost_by_scenario(since=since))
-    except Exception as exc:
+    except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
+        # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.cost_by_scenario() failed: %s", exc)
         return {}
 
@@ -409,7 +412,8 @@ def _extract_cost_by_tier(
             tier.value: float(amt)
             for tier, amt in cost_tracker.cost_by_tier(since=since).items()
         }
-    except Exception as exc:  # noqa: BLE001 — silent degrade by design
+    except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
+        # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.cost_by_tier() failed: %s", exc)
         return {}
 
@@ -435,7 +439,8 @@ def _extract_cost_by_day(
         return {}
     try:
         return dict(cost_tracker.cost_by_day(since=since))
-    except Exception as exc:  # noqa: BLE001 — silent degrade by design
+    except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
+        # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.cost_by_day() failed: %s", exc)
         return {}
 
@@ -457,7 +462,8 @@ def _extract_cost_by_day_per_tier(
             day: {str(tier): float(amt) for tier, amt in tiers.items()}
             for day, tiers in raw.items()
         }
-    except Exception as exc:  # noqa: BLE001 — silent degrade by design
+    except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
+        # cost_tracker 方法不存在 / 调用失败 / 返回值异常
         logger.warning("cost_tracker.cost_by_day_per_tier() failed: %s", exc)
         return {}
 
@@ -494,7 +500,8 @@ def _extract_budget_status(controller: Any) -> dict[str, Any]:
             "used_usd": used,
             "used_pct": used_pct,
         }
-    except Exception as exc:
+    except (AttributeError, RuntimeError, ValueError, TypeError) as exc:
+        # cost_tracker 调用失败 / 属性缺失 / 类型异常
         logger.warning("_extract_budget_status 失败: %s", exc)
         return {}
 

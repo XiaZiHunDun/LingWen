@@ -26,6 +26,7 @@ import {
   saveCreatorOnboardingEmail,
 } from '../api/index.js';
 import { isCreatorChromeVisible, isHumanFirstDeskMode } from '../config/creatorPanelMatrix.js';
+import { logger } from '../utils/logger.js';
 
 const CREATION_MODE_ONBOARDING_STEPS = {
   companion: ['init', 'pillars', 'dashboard', 'write', 'check'],
@@ -175,16 +176,16 @@ function onWizardToggle(event) {
       .then((data) => {
         onboardingWizard.value = data;
       })
-      .catch(() => {
-        /* ignore collapse save errors */
+      .catch((err) => {
+        logger.warn('saveCreatorWizardPanelCollapsed failed', err);
       });
   } else if (!event.target.open && uiProfile.value.wizard_expand_if_incomplete) {
     dismissCreatorWizardPanel()
       .then((data) => {
         onboardingWizard.value = data;
       })
-      .catch(() => {
-        /* ignore dismiss errors */
+      .catch((err) => {
+        logger.warn('dismissCreatorWizardPanel failed', err);
       });
   }
   setWizardDeepLink(

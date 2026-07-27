@@ -85,4 +85,16 @@ export default [
       'vue/no-dupe-keys': 'warn',
     },
   },
+
+  // v-html 已审计豁免：WorkflowGraph (mermaid 生成的受信任 SVG),
+  // CreatorMemorySearch (highlightMemorySnippet 已 escapeHtml 转义)
+  {
+    files: [
+      'src/components/WorkflowGraph.vue',
+      'src/components/creator/CreatorMemorySearch.vue',
+    ],
+    rules: {
+      'vue/no-v-html': 'off',
+    },
+  },
 ]

@@ -8,6 +8,7 @@ import {
   fetchStudioSummary,
   queryCreatorMemory,
 } from '../api/index.js';
+import { logger } from '../utils/logger.js';
 
 /** @type {import('vue').Ref<'chat'|'note'>} */
 const sharedAskTab = ref('chat');
@@ -64,8 +65,8 @@ async function buildAssistantReply(text, ctx) {
   }
 
   if (/进度|写到哪|多少字|几章/.test(q)) {
-    const overview = ctx.overview || await fetchCreatorOverview().catch(() => null);
-    const summary = ctx.summary || await fetchStudioSummary().catch(() => null);
+    const overview = ctx.overview || await fetchCreatorOverview().catch(err => { logger.warn('fetchCreatorOverview failed in ask', err); return null; });
+    const summary = ctx.summary || await fetchStudioSummary().catch(err => { logger.warn('fetchStudioSummary failed in ask', err); return null; });
     return formatOverviewProgress(overview, summary);
   }
 
@@ -75,8 +76,9 @@ async function buildAssistantReply(text, ctx) {
     if (hits.length) {
       return `找到这些相关记忆：\n\n${formatMemoryHits(hits)}`;
     }
-  } catch {
+  } catch (err) {
     /* offline */
+    logger.warn('queryCreatorMemory failed in ask', err);
   }
 
   if (/人物|角色|伏笔|设定|时间线/.test(q)) {
@@ -107,8 +109,8 @@ export function useAskAssistant(hooks = {}) {
 
   async function bootstrap() {
     const [overview, summary] = await Promise.all([
-      fetchCreatorOverview().catch(() => null),
-      fetchStudioSummary().catch(() => null),
+      fetchCreatorOverview().catch(err => { logger.warn('fetchCreatorOverview failed in bootstrap', err); return null; }),
+      fetchStudioSummary().catch(err => { logger.warn('fetchStudioSummary failed in bootstrap', err); return null; }),
     ]);
     context.value = { overview, summary };
     if (!messages.value.length) {

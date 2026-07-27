@@ -37,7 +37,8 @@ def _register_health_checks(ctx: RoutesContext) -> None:
     def check_db_connection() -> bool:
         try:
             return ctx.db.exists()
-        except Exception:
+        except (OSError, RuntimeError, AttributeError):
+            # DB 文件不存在 / 连接失败 / 方法缺失
             return False
 
     db_check = DatabaseHealthCheck(check_db_connection, name="reading_power_db")
@@ -48,7 +49,8 @@ def _register_health_checks(ctx: RoutesContext) -> None:
         try:
             storage = ctx.cvg_storage()
             return storage is not None
-        except Exception:
+        except (OSError, RuntimeError, ImportError):
+            # CVG 存储初始化失败 / 依赖缺失
             return False
 
     cvg_check = DatabaseHealthCheck(check_cvg_storage, name="cvg_storage")
@@ -60,7 +62,8 @@ def _register_health_checks(ctx: RoutesContext) -> None:
             from infra.llm_service import LLMService
             llm = LLMService.get_instance()
             return llm.is_available()
-        except Exception:
+        except (OSError, RuntimeError, ImportError, AttributeError):
+            # LLM 服务不可用 / 依赖缺失 / 方法缺失
             return False
 
     llm_check = LLMHealthCheck(check_llm, name="llm_service")
@@ -89,7 +92,8 @@ def register_health(app: FastAPI, ctx: RoutesContext) -> None:
                 db_status.records = ctx.db.get_total_records() if hasattr(ctx.db, 'get_total_records') else 0
             else:
                 db_status.status = "not_found"
-        except Exception as e:
+        except (OSError, RuntimeError, AttributeError) as e:
+            # DB 查询失败
             db_status.status = "unhealthy"
             db_status.error = str(e)
 

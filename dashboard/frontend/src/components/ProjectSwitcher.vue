@@ -39,8 +39,17 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useStudioProject } from '../composables/index.js';
-import { formatDisplayProjectName } from '../utils/displayProjectName.js';
+import { formatDisplayLabel } from '../utils/displayProjectName.js';
+import { logger } from '../utils/logger.js';
 
+/**
+ * @typedef {Object} ProjectSwitcherProps
+ * @property {boolean} [compact=false] - Compact display mode
+ * @property {boolean} [sidebar=false] - Sidebar display mode
+ * @property {boolean} [showCurrentWorkLabel=false] - Show current work label
+ */
+
+/** @type {import('vue').ExtractPropTypes<ProjectSwitcherProps>} */
 defineProps({
   compact: { type: Boolean, default: false },
   sidebar: { type: Boolean, default: false },
@@ -50,7 +59,7 @@ defineProps({
 const { projects, activeSlug, loading, loadProjects, switchProject } = useStudioProject();
 
 function displayName(name) {
-  return formatDisplayProjectName(name) || name || '未命名';
+  return formatDisplayLabel(name) || name || '未命名';
 }
 
 async function onChange(event) {
@@ -60,7 +69,7 @@ async function onChange(event) {
 }
 
 onMounted(() => {
-  loadProjects().catch(() => {});
+  loadProjects().catch(err => { logger.warn('loadProjects failed', err); });
 });
 </script>
 

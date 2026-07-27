@@ -23,7 +23,7 @@
       <main class="writer-desk__editor">
         <div class="writer-desk__editor-inner">
           <slot />
-          <div v-if="!String(w.chapterBodyDraft).trim()" class="writer-desk__empty-state" :class="`writer-desk__empty-state--${wb.creationMode}`">
+          <div v-if="!String(w.chapterBodyDraft ?? '').trim()" class="writer-desk__empty-state" :class="`writer-desk__empty-state--${wb.creationMode}`">
             <div class="writer-desk__empty-state-icon">{{ emptyStateIcon }}</div>
             <h3 class="writer-desk__empty-state-title">{{ emptyStateTitle }}</h3>
             <p class="writer-desk__empty-state-desc">{{ emptyStateDesc }}</p>
@@ -59,6 +59,15 @@ import CreatorWriteFooter from './CreatorWriteFooter.vue';
 import { logger } from '../../utils/logger.js';
 import '../../assets/creator-write-workbench.css';
 
+/**
+ * @typedef {Object} CreatorWriteInjected
+ * @property {import('vue').Ref<import('vue').UnwrapRefSimple<object>>} wb
+ * @property {() => void} openOutline
+ * @property {() => void} openStats
+ * @property {(mode: string) => void} handleModeChange
+ */
+
+/** @type {CreatorWriteInjected} */
 const w = inject(CREATOR_WRITE_KEY);
 const wb = w.wb;
 

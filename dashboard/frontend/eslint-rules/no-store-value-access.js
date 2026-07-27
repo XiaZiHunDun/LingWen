@@ -62,6 +62,13 @@ const WRAPPER_COMPOSABLES = new Set([
 // Reactive-wrapped injection key symbols — 通过 inject() 获取的是 reactive 对象，ref 属性已解包
 const REACTIVE_INJECTION_KEYS = new Set([
   'CREATOR_WRITE_KEY',
+  'CREATOR_PAGE_CHROME_KEY',
+  'CREATOR_PRODUCT_TOOLS_KEY',
+  'CREATOR_VOLUME_PLAN_KEY',
+  'CREATOR_ONBOARDING_KEY',
+  'CREATOR_BATCH_HISTORY_KEY',
+  'CREATOR_SETTINGS_KEY',
+  'CREATOR_MODE_GUIDE_KEY',
 ])
 
 module.exports = {

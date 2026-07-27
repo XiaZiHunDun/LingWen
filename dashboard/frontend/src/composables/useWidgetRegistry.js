@@ -1,4 +1,5 @@
 import { ref, shallowRef, markRaw } from 'vue';
+import { logger } from '../utils/logger.js';
 
 const widgets = ref({});
 const widgetInstances = ref({});
@@ -40,7 +41,7 @@ const SIZE_PRESETS = {
  */
 export function defineWidget(id, options) {
   if (widgets.value[id]) {
-    console.warn(`Widget "${id}" already registered, overriding`);
+    logger.warn(`Widget "${id}" already registered, overriding`);
   }
 
   // 解析尺寸
@@ -254,7 +255,7 @@ export function emitWidgetEvent(eventName, data) {
     try {
       handler(data);
     } catch (e) {
-      console.error(`Error in widget event handler "${eventName}":`, e);
+      logger.error(`Error in widget event handler "${eventName}":`, e);
     }
   });
 }

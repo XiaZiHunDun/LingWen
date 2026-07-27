@@ -22,6 +22,7 @@ import {
   fetchRippleCascade,     // Phase 9.15
   fetchRipplePreview,     // Phase 9.15
 } from '../api/index.js'
+import { logger } from '../utils/logger.js'
 
 const ripples = ref([])
 const loading = ref(false)
@@ -48,7 +49,7 @@ async function refresh(filters = {}) {
   }
   fetchRippleStats()
     .then((s) => { stats.value = s })
-    .catch(() => {})
+    .catch((err) => { logger.warn('fetchRippleStats failed in refresh', err); })
 }
 
 async function apply(rippleId) {

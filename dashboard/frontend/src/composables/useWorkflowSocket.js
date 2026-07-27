@@ -210,6 +210,19 @@ function sendKeepAlive() {
   }
 }
 
+/**
+ * Composable for workflow WebSocket connection management
+ * Auto-connects on mount and disconnects on unmount
+ * @returns {{
+ *   status: import('vue').Ref<string>,
+ *   pendingDecisions: import('vue').Ref<Array>,
+ *   connected: import('vue').ComputedRef<boolean>,
+ *   lastError: import('vue').Ref<string|null>,
+ *   latestCascadeUpdates: import('vue').Ref<Array>,
+ *   sendKeepAlive: () => void,
+ *   reconnect: () => void
+ * }}
+ */
 export function useWorkflowSocket() {
   onMounted(() => {
     if (mountedCount === 0) {
@@ -236,8 +249,12 @@ export function useWorkflowSocket() {
   };
 }
 
-// Phase 9.16: cascade handler 注册 API (Set 自动去重; onBeforeUnmount 自动 cleanup)
-// Phase 9.17: 加 MAX_HANDLERS=50 guard 防止 leak
+/**
+ * Register a handler for cascade update events
+ * Auto-cleans up on component unmount (max 50 handlers)
+ * @param {(update: unknown) => void} handler
+ * @returns {() => void} Unsubscribe function
+ */
 export function onCascadeUpdate(handler) {
   if (registeredHandlers.cascade.size >= MAX_HANDLERS) {
     logger.warn(
@@ -261,6 +278,12 @@ export function onCascadeUpdate(handler) {
   });
 }
 
+/**
+ * Register a handler for audit created events
+ * Auto-cleans up on component unmount (max 50 handlers)
+ * @param {(audit: unknown) => void} handler
+ * @returns {() => void} Unsubscribe function
+ */
 export function onAuditCreated(handler) {
   if (registeredHandlers.audit.size >= MAX_HANDLERS) {
     logger.warn(

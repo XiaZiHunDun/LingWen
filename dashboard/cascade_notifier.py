@@ -18,6 +18,8 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
+from pydantic import ValidationError
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -79,7 +81,8 @@ def _broadcast_envelope(envelope: dict[str, Any]) -> None:
                 _schedule_coro(result)
             except RuntimeError as e:
                 logger.warning("cascade_notifier: broadcast failed: %s", e)
-    except Exception as e:
+    except (OSError, RuntimeError, ValueError) as e:
+        # WS 广播失败 / payload 错误
         logger.warning("cascade_notifier: broadcast failed: %s", e)
 
 
@@ -89,7 +92,8 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
     if not isinstance(payload, _CascadeUpdatePayload):
         try:
             payload = _CascadeUpdatePayload.model_validate(payload)
-        except Exception as e:
+        except ValidationError as e:
+            # Pydantic 验证失败 — 返回数据格式不正确
             logger.warning("cascade_notifier: invalid payload, skip: %s", e)
             return
     if payload.latency_ms is not None:
@@ -108,7 +112,8 @@ def notify_audit_created(payload: "AuditCreatedPayload") -> None:
     if not isinstance(payload, _AuditCreatedPayload):
         try:
             payload = _AuditCreatedPayload.model_validate(payload)
-        except Exception as e:
+        except ValidationError as e:
+            # Pydantic 验证失败 — 返回数据格式不正确
             logger.warning("cascade_notifier: invalid audit payload, skip: %s", e)
             return
     _broadcast_envelope(
@@ -122,7 +127,8 @@ def notify_cascade_cancel(payload: "CascadeCancelPayload") -> None:
     if not isinstance(payload, _CascadeCancelPayload):
         try:
             payload = _CascadeCancelPayload.model_validate(payload)
-        except Exception as e:
+        except ValidationError as e:
+            # Pydantic 验证失败 — 返回数据格式不正确
             logger.warning("cascade_notifier: invalid cancel payload, skip: %s", e)
             return
     _broadcast_envelope({"type": "cascade.cancel", "payload": payload.model_dump()})

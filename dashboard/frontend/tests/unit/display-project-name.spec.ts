@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatDisplayLabel,
-  formatDisplayProjectName,
   normalizeVolumePlanVolume,
   normalizeVolumePlanVolumes,
 } from '../../src/utils/displayProjectName.js';
@@ -19,10 +18,6 @@ describe('formatDisplayLabel', () => {
 
   it('handles empty', () => {
     expect(formatDisplayLabel('')).toBe('');
-  });
-
-  it('aliases formatDisplayProjectName', () => {
-    expect(formatDisplayProjectName('E2E 创作伴侣')).toBe('创作伴侣');
   });
 });
 

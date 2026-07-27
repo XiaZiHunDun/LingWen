@@ -17,6 +17,7 @@ import { buildMicroTaskProgress } from '../utils/creatorMicroTaskUtils.js';
 import { resolveTodayPrimaryAction } from '../utils/creationModeHint.js';
 import { buildTodaySecondaryLinks } from '../utils/todaySecondaryLinks.js';
 import { getWriteResume } from '../utils/writeResumeStorage.js';
+import { logger } from '../utils/logger.js';
 
 function pendingRippleCount(stats) {
   if (!stats?.by_status) return 0;
@@ -35,14 +36,14 @@ async function loadTodaySnapshot(options = {}) {
     batchJob,
     onboarding,
   ] = await Promise.all([
-    fetchStudioSummary().catch(() => null),
-    fetchCreatorOverview().catch(() => null),
-    fetchPendingDecisions().catch(() => []),
-    fetchRippleStats().catch(() => null),
-    fetchStudioQuality().catch(() => null),
-    fetchStudioQualityReport().catch(() => null),
-    fetchStudioActiveBatchJob().catch(() => null),
-    fetchCreatorOnboarding().catch(() => null),
+    fetchStudioSummary().catch(err => { logger.warn('fetchStudioSummary failed', err); return null; }),
+    fetchCreatorOverview().catch(err => { logger.warn('fetchCreatorOverview failed', err); return null; }),
+    fetchPendingDecisions().catch(err => { logger.warn('fetchPendingDecisions failed', err); return []; }),
+    fetchRippleStats().catch(err => { logger.warn('fetchRippleStats failed', err); return null; }),
+    fetchStudioQuality().catch(err => { logger.warn('fetchStudioQuality failed', err); return null; }),
+    fetchStudioQualityReport().catch(err => { logger.warn('fetchStudioQualityReport failed', err); return null; }),
+    fetchStudioActiveBatchJob().catch(err => { logger.warn('fetchStudioActiveBatchJob failed', err); return null; }),
+    fetchCreatorOnboarding().catch(err => { logger.warn('fetchCreatorOnboarding failed', err); return null; }),
   ]);
 
   const creationMode = creator?.creation_mode || summary?.creation_mode || 'companion';

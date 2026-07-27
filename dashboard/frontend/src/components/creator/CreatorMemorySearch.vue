@@ -49,11 +49,13 @@
           <span v-if="row.asset_name" class="asset-name">{{ row.asset_name }}</span>
           <span class="meta-line">score {{ row.score.toFixed(2) }}</span>
         </div>
+        <!-- eslint-disable vue/no-v-html — highlightMemorySnippet 已先 HTML-escape 用户输入, 仅注入 <mark> 标签 -->
         <p
           class="asset-excerpt"
           :data-testid="`memory-search-snippet-${row.id}`"
           v-html="pt.highlightMemorySnippet(row.snippet, row.matched_terms)"
         />
+        <!-- eslint-enable vue/no-v-html -->
         <p class="citation-line" :data-testid="`memory-search-citation-${row.id}`">
           <span class="citation-label">溯源</span>
           {{ pt.formatMemoryCitation(row) }}

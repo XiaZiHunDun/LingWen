@@ -11,8 +11,7 @@ import {
 } from '../config/creatorPanelMatrix.js';
 import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 
-/** @deprecated 使用 creatorPanelMatrix.CREATOR_WORKSPACE_TAB_DEFS */
-export const CREATOR_WORKSPACE_TABS = [
+const _DEFAULT_WORKSPACE_TABS = [
   { id: 'write', label: '写作', icon: '✍️' },
   { id: 'pulse', label: '脉络', icon: '🗺️' },
   { id: 'memory', label: '记忆', icon: '🧠' },
@@ -27,6 +26,7 @@ export const CREATOR_WORKSPACE_TABS = [
  *   setCreatorWorkspace?: (tab: string) => void,
  *   displayDeviationCount?: import('vue').ComputedRef<number>,
  * } | undefined} nav
+ * @returns {import('../types/composables').CreatorWorkspaceReturn}
  */
 export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
   const { focusCreatorWorkspace, setCreatorWorkspace, displayDeviationCount } = nav;
@@ -55,7 +55,7 @@ export function useCreatorWorkspace(uiProfile, overview, nav = {}) {
   });
 
   const workspaceTabs = computed(() => {
-    if (!tabsEnabled.value) return [...CREATOR_WORKSPACE_TABS];
+    if (!tabsEnabled.value) return [..._DEFAULT_WORKSPACE_TABS];
     return buildCreatorWorkspaceTabs(creationMode.value);
   });
 
