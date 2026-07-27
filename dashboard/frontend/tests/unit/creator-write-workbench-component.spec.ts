@@ -1,283 +1,196 @@
 // tests/unit/creator-write-workbench-component.spec.ts — CreatorWriteWorkbench.vue 挂载
 
-import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { ref, computed, type Ref } from 'vue';
+import { describe, test, expect, vi } from 'vitest';
+import { ref, reactive } from 'vue';
 import { mount, flushPromises } from '@vue/test-utils';
 import CreatorWriteWorkbench from '../../src/components/creator/CreatorWriteWorkbench.vue';
-import { CREATOR_WRITE_KEY, createCreatorWriteContext } from '../../src/components/creator/creatorWriteKey.js';
-import {
-  CREATOR_PRODUCT_TOOLS_KEY,
-  createCreatorProductToolsContext,
-} from '../../src/components/creator/creatorProductToolsKey.js';
-import { useCreatorWriteWorkbench } from '../../src/composables/useCreatorWriteWorkbench.js';
+import { CREATOR_WRITE_KEY } from '../../src/components/creator/creatorWriteKey.js';
 import { byTestid } from '../helpers/by-testid';
 
-type WriteWorkbench = ReturnType<typeof useCreatorWriteWorkbench>;
+// Mock child components
+vi.mock('../../src/components/creator/CreatorWriteHeader.vue', () => ({
+  default: {
+    name: 'CreatorWriteHeader',
+    template: `
+      <div data-testid="stub-header">
+        <button data-testid="stub-toggle-chat" @click="$emit('toggle-chat')">Chat</button>
+        <button data-testid="stub-mode-change" @click="$emit('mode-change', 'advance')">Mode</button>
+      </div>
+    `,
+  },
+}));
 
-type WriteContext = {
-  wb: WriteWorkbench;
-  chapterBodyDraft: Ref<string>;
-  overview: Ref<Record<string, unknown>>;
-  selectedChapter: Ref<number | null>;
-  uiProfile: Ref<Record<string, unknown>>;
-};
+vi.mock('../../src/components/creator/CreatorWriteSidebar.vue', () => ({
+  default: {
+    name: 'CreatorWriteSidebar',
+    template: `<div data-testid="stub-sidebar"><slot name="chapters" /></div>`,
+  },
+}));
 
-vi.mock('../../src/api/index.js', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...(actual as object),
-    runCreatorAgentPlan: vi.fn(),
-    runCreatorAgentPlanStream: vi.fn(),
-  };
-});
+vi.mock('../../src/components/creator/CreatorWriteChat.vue', () => ({
+  default: {
+    name: 'CreatorWriteChat',
+    props: ['showChatPanel'],
+    template: `<div data-testid="stub-chat" v-if="showChatPanel">Chat Panel</div>`,
+  },
+}));
 
-import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../../src/api/index.js';
+vi.mock('../../src/components/creator/CreatorWriteFooter.vue', () => ({
+  default: {
+    name: 'CreatorWriteFooter',
+    template: `
+      <div data-testid="stub-footer">
+        <button @click="$emit('open-outline')">Outline</button>
+        <button @click="$emit('open-stats')">Stats</button>
+      </div>
+    `,
+  },
+}));
 
-type WriteOverrides = {
-  uiProfile?: Record<string, unknown>;
-  overview?: Record<string, unknown>;
-  body?: string;
-  chapter?: number | null;
-  deviations?: Array<Record<string, unknown>>;
-  memoryAssets?: Array<Record<string, unknown>>;
-  showLogicCheck?: boolean;
-  logicCheckResult?: Record<string, unknown> | null;
-};
-
-function buildWriteContext(overrides: WriteOverrides = {}): { ctx: WriteContext; wb: WriteWorkbench } {
-  const uiProfile = computed(() => ({
-    creator_write_workbench: true,
-    chapter_inline_edit: true,
-    ...overrides.uiProfile,
-  }));
+function buildWorkbenchContext(overrides: Record<string, unknown> = {}) {
+  const chapterBodyDraft = ref('测试正文章节内容');
+  const selectedChapter = ref(1);
   const overview = ref({
-    creation_mode: 'companion',
-    name: '测试书',
-    chapters: [{ chapter: 1, has_body: false }],
-    deviations: [],
-    ...overrides.overview,
-  });
-  const chapterBodyDraft = ref(overrides.body ?? '林默走进雨里，望着远处的灯火。');
-  const selectedChapter = ref(overrides.chapter ?? 1);
-  const saveMessage = ref('');
-  const logicCheckResult = ref(overrides.logicCheckResult ?? null);
-
-  const wb = useCreatorWriteWorkbench({
-    uiProfile,
-    overview,
-    chapterBodyDraft,
-    selectedChapter,
-    saveMessage,
-    logicCheckResult,
-    visibleDeviations: computed(() => overrides.deviations ?? []),
-    memoryAssets: ref(overrides.memoryAssets ?? [
-      { id: 'c1', kind: 'character', name: '林默', chapters: [1], excerpt: '主角' },
-    ]),
+    name: '测试作品',
+    chapters_written: 5,
+    max_chapter: 20,
+    ...(overrides.overview as object || {}),
   });
 
-  const ctx = createCreatorWriteContext({
+  const wb = reactive({
+    leftPanelCollapsed: false,
+    creationMode: 'companion',
+    intentText: '',
+    intentMood: '',
+    goalCardLines: { line1: '目标1', line2: '目标2' },
+    generateRunning: false,
+    agent: { generating: false },
+    startQuickWrite: vi.fn(),
+    updateCreationMode: vi.fn().mockResolvedValue(undefined),
+    ...(overrides.wb as object || {}),
+  });
+
+  const ctx = reactive({
     wb,
-    overview,
     chapterBodyDraft,
     selectedChapter,
-    uiProfile,
-    showCompanionLogicCheckInWrite: computed(() => overrides.showLogicCheck ?? false),
-    logicCheckRunning: ref(false),
-    logicCheckResult,
-    runCompanionLogicCheck: vi.fn(),
-    handleLogicCheckIssueClick: vi.fn(),
-    onLogicCheckIssueKeydown: vi.fn(),
-    activeLogicCheckIssueIdx: ref(null),
-  }) as WriteContext;
+    overview,
+    openOutline: vi.fn(),
+    openStats: vi.fn(),
+  });
 
   return { ctx, wb };
 }
 
-const productToolsStub = createCreatorProductToolsContext({
-  focusMemoryEntity: vi.fn(),
-  goToSettingsForAsset: vi.fn(),
-});
-
-function mountWorkbench(overrides: WriteOverrides = {}) {
-  const { ctx, wb } = buildWriteContext(overrides);
+function mountWorkbench(overrides: Record<string, unknown> = {}) {
+  const { ctx, wb } = buildWorkbenchContext(overrides);
   const wrapper = mount(CreatorWriteWorkbench, {
     global: {
       provide: {
         [CREATOR_WRITE_KEY]: ctx,
-        [CREATOR_PRODUCT_TOOLS_KEY]: productToolsStub,
       },
     },
     slots: {
-      default: '<textarea data-testid="editor-slot">编辑区</textarea>',
+      default: '<div data-testid="editor-slot">编辑区</div>',
       chapters: '<div data-testid="chapter-slot">章节列表</div>',
     },
   });
-  return { wrapper, writeCtx: ctx, wb };
-}
-
-async function openAdvancedTools(wrapper: ReturnType<typeof mount>) {
-  const details = wrapper.find(byTestid('write-advanced-tools'));
-  const el = details.element as HTMLDetailsElement;
-  el.open = true;
-  await details.trigger('toggle');
-  await flushPromises();
+  return { wrapper, ctx, wb };
 }
 
 describe('CreatorWriteWorkbench component', () => {
-  beforeEach(() => {
-    vi.mocked(runCreatorAgentPlan).mockReset();
-    vi.mocked(runCreatorAgentPlanStream).mockReset();
-    vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('offline'));
-    vi.mocked(runCreatorAgentPlan).mockRejectedValue(new Error('offline'));
-  });
-
-  test('human-first desk shows micro task bar and editor slot', () => {
-    const { wrapper } = mountWorkbench({ body: '短稿' });
-    expect(wrapper.find(byTestid('creator-write-workbench')).classes()).toContain('write-workbench--human-first');
-    expect(wrapper.find(byTestid('write-micro-task-bar')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('write-micro-task-fill')).exists()).toBe(true);
+  test('renders workbench structure with all child components', () => {
+    const { wrapper } = mountWorkbench();
+    expect(wrapper.find(byTestid('writer-desk')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-header')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-sidebar')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('stub-footer')).exists()).toBe(true);
     expect(wrapper.find(byTestid('editor-slot')).exists()).toBe(true);
   });
 
-  test('collapses left chapter rail on human-first desk', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    expect(wrapper.find(byTestid('chapter-slot')).exists()).toBe(true);
-    await wrapper.find(byTestid('write-workbench-collapse-btn')).trigger('click');
-    expect(writeCtx.wb.leftPanelCollapsed).toBe(true);
-    expect(wrapper.find(byTestid('chapter-slot')).exists()).toBe(false);
-    await wrapper.find(byTestid('write-workbench-collapse-btn')).trigger('click');
-    expect(wrapper.find(byTestid('chapter-slot')).exists()).toBe(true);
-  });
-
-  test('shows ai tab in left panel', () => {
+  test('chat panel toggles visibility', async () => {
     const { wrapper } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-tab-ai')).exists()).toBe(true);
-  });
-
-  test('studio layout uses non-human-first branch without advanced drawer', async () => {
-    const { wrapper, wb } = mountWorkbench({
-      overview: { creation_mode: 'studio', name: '工厂书' },
-    });
-    expect(wrapper.find(byTestid('creator-write-workbench')).classes()).not.toContain('write-workbench--human-first');
-    expect(wrapper.find(byTestid('write-advanced-tools')).exists()).toBe(false);
-    await wb.agent.runRewritePreset('concrete');
+    // Initially chat should not be visible
+    expect(wrapper.find(byTestid('stub-chat')).exists()).toBe(false);
+    // Click toggle chat button
+    await wrapper.find(byTestid('stub-toggle-chat')).trigger('click');
     await flushPromises();
-    expect(wb.agent.candidates.value.length).toBeGreaterThan(0);
-    expect(wrapper.find(byTestid('write-micro-task-bar')).exists()).toBe(false);
-  });
-
-  test('runs rewrite preset and selects candidate', async () => {
-    const { writeCtx } = mountWorkbench();
-    await writeCtx.wb.agent.runRewritePreset('concrete');
+    // Chat should now be visible
+    expect(wrapper.find(byTestid('stub-chat')).exists()).toBe(true);
+    // Click again to close
+    await wrapper.find(byTestid('stub-toggle-chat')).trigger('click');
     await flushPromises();
-    writeCtx.wb.agent.selectCandidate('steady');
+    expect(wrapper.find(byTestid('stub-chat')).exists()).toBe(false);
+  });
+
+  test('handles mode change via header event', async () => {
+    const { wrapper, wb } = mountWorkbench();
+    await wrapper.find(byTestid('stub-mode-change')).trigger('click');
     await flushPromises();
+    expect(wb.updateCreationMode).toHaveBeenCalledWith('advance');
   });
 
-  test('toggles style strength slider on human-first main area', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    const slider = wrapper.find(byTestid('style-strength-slider'));
-    expect(slider.exists()).toBe(true);
-    await slider.setValue('1');
-    expect(writeCtx.wb.styleStrength).toBe(1);
-  });
-
-  test('sets goal tag via context', async () => {
-    const { writeCtx } = mountWorkbench();
-    (writeCtx.wb.goalTag as unknown as string) = 'suspense';
-    expect(writeCtx.wb.goalTag).toBe('suspense');
-  });
-
-  test('sets agent lens and runs rewrite preset', async () => {
-    const { writeCtx } = mountWorkbench();
-    writeCtx.wb.agent.setAgentLens('editor');
-    expect(writeCtx.wb.agent.agentLens).toBe('editor');
-    await writeCtx.wb.agent.runRewritePreset('concrete');
+  test('sidebar collapse toggles via CSS class', async () => {
+    const { wrapper, wb } = mountWorkbench();
+    // Initially not collapsed
+    expect(wrapper.find(byTestid('writer-desk')).classes()).not.toContain('writer-desk--sidebar-collapsed');
+    // Simulate collapse
+    wb.leftPanelCollapsed = true;
     await flushPromises();
+    expect(wrapper.find(byTestid('writer-desk')).classes()).toContain('writer-desk--sidebar-collapsed');
   });
 
-  test('toggles worldbuilding fill', async () => {
-    const { wrapper, writeCtx } = mountWorkbench();
-    const toggle = wrapper.find(byTestid('allow-worldbuilding-toggle'));
-    expect(toggle.exists()).toBe(true);
-    await toggle.trigger('click');
-    expect(writeCtx.wb.allowWorldbuildingFill).toBe(true);
-  });
-
-  test('sets generating state and stream preview', async () => {
-    const { wb } = mountWorkbench();
-    wb.agent.generating.value = true;
-    wb.agent.streamPreviewText.value = '主区预览';
-    await flushPromises();
-    expect(wb.agent.generating.value).toBe(true);
-    expect(wb.agent.streamPreviewText.value).toBe('主区预览');
-  });
-
-  test('shows generate button on human-first main area', async () => {
-    const { wrapper } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-generate-btn')).exists()).toBe(true);
-  });
-
-  test('shows companion logic check toolbar when enabled', async () => {
-    const { wrapper } = mountWorkbench({
-      showLogicCheck: true,
-      uiProfile: { primary_action: 'logic_check' },
-      logicCheckResult: {
-        passed: false,
-        p0_count: 1,
-        issues: [{ severity: 'P0', title: '时间线', chapter: 1 }],
+  test('shows empty state when no chapter body', async () => {
+    const { wrapper, ctx } = mountWorkbench({
+      wb: {
+        creationMode: 'companion',
       },
     });
-    expect(wrapper.find(byTestid('companion-logic-check-write')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('run-companion-logic-check-btn')).exists()).toBe(true);
-    expect(wrapper.find(byTestid('companion-logic-check-write-result')).text()).toContain('有问题');
+    // Set empty body directly on context
+    ctx.chapterBodyDraft = '';
+    await flushPromises();
+    // Empty state should show
+    expect(wrapper.text()).toContain('准备好开始写作了吗');
+    expect(wrapper.text()).toContain('开始写作');
   });
 
-  test('confirms apply and checks status', async () => {
-    const { writeCtx } = mountWorkbench();
-    await writeCtx.wb.agent.runRewritePreset('concrete');
+  test('empty state changes based on creation mode', async () => {
+    const { wrapper, ctx, wb } = mountWorkbench();
+    wb.creationMode = 'advance';
+    ctx.chapterBodyDraft = '';
     await flushPromises();
-    writeCtx.wb.agent.selectCandidate('steady');
-    writeCtx.wb.agent.confirmApply();
-    await flushPromises();
+    expect(wrapper.text()).toContain('按卷纲推进');
+    expect(wrapper.text()).toContain('推进章节');
   });
 
-  test('dismisses quality hint on human-first main area', async () => {
-    const { wrapper, wb } = mountWorkbench();
-    wb.syncQualityFromLogicCheck({
-      passed: false,
-      issues: [{ severity: 'P0', title: '节奏偏慢' }],
+  test('footer outline and stats actions work', async () => {
+    const { wrapper, ctx } = mountWorkbench();
+    await wrapper.findAll('button').find(b => b.text() === 'Outline')!.trigger('click');
+    expect(ctx.openOutline).toHaveBeenCalled();
+    await wrapper.findAll('button').find(b => b.text() === 'Stats')!.trigger('click');
+    expect(ctx.openStats).toHaveBeenCalled();
+  });
+
+  test('renders with studio mode configuration', async () => {
+    const { wrapper, ctx, wb } = mountWorkbench({
+      wb: {
+        creationMode: 'studio',
+      },
     });
+    wb.creationMode = 'studio';
+    ctx.chapterBodyDraft = '';
     await flushPromises();
-    const dismiss = wrapper.findAll(byTestid('write-quality-bar-main')).flatMap((bar) =>
-      bar.findAll('button').filter((b) => b.text() === '忽略'),
-    );
-    expect(dismiss.length).toBeGreaterThan(0);
-    const before = wb.qualityHints.value.length;
-    await dismiss[0].trigger('click');
-    expect(wb.qualityHints.value.length).toBe(before - 1);
+    expect(wrapper.text()).toContain('工厂模式就绪');
+    expect(wrapper.text()).toContain('启动产线');
   });
 
-  test('shows quality bar on human-first main area when hints present', async () => {
-    const { wrapper, wb } = mountWorkbench();
-    (wb.qualityHints as unknown as { value: Array<{ level: string; text: string; source?: string }> }).value = [{ level: 'warn', text: '测试质量提示', source: 'test' }];
-    await flushPromises();
-    const qualityBar = wrapper.find(byTestid('write-quality-bar-main'));
-    expect(qualityBar.exists()).toBe(true);
-    expect(qualityBar.text()).toContain('测试质量提示');
-  });
-
-  test('shows ai tab in left panel', async () => {
+  test('editor slot content renders correctly', () => {
     const { wrapper } = mountWorkbench();
-    expect(wrapper.find(byTestid('write-tab-ai')).exists()).toBe(true);
-    await wrapper.find(byTestid('write-tab-ai')).trigger('click');
-    await flushPromises();
-    expect(wrapper.find(byTestid('write-section-ai')).exists()).toBe(true);
+    expect(wrapper.find(byTestid('editor-slot')).text()).toContain('编辑区');
   });
 
-  test('runs rewrite preset via context', async () => {
-    const { writeCtx } = mountWorkbench();
-    await writeCtx.wb.agent.runRewritePreset('concrete');
-    await flushPromises();
+  test('chapter slot content renders in sidebar', async () => {
+    const { wrapper } = mountWorkbench();
+    expect(wrapper.find(byTestid('chapter-slot')).text()).toContain('章节列表');
   });
 });

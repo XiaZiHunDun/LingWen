@@ -3,6 +3,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { byTestid } from '../helpers/by-testid';
+import { useStudioStore } from '../../src/stores/useStudioStore.js';
 
 const studioMocks = vi.hoisted(() => ({
   fetchStudioProjects: vi.fn(),
@@ -159,6 +160,9 @@ describe('StudioPage (Phase 10.04)', () => {
       reason: 'no_baseline',
       save_command: 'bash scripts/run-prose-diff.sh huangsha-dangan --save',
     });
+    // Force store to refresh with the new mock
+    const store = useStudioStore();
+    await store.refresh(true);
     const wrapper = mount(StudioPage);
     await flushPromises();
     const panel = wrapper.find(byTestid('prose-diff-panel'));

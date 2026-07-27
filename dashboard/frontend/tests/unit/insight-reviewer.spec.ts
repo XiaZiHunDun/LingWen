@@ -2,15 +2,17 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { byTestid } from '../helpers/by-testid'
 
 const navMocks = vi.hoisted(() => {
   // ref must be created inside hoisted callback (vitest init order)
-  const { ref: vueRef } = require('vue') as typeof import('vue')
+  const { ref: vueRef, computed: vueComputed } = require('vue') as typeof import('vue')
+  const _insightTab = vueRef('overview')
   return {
-    insightTab: vueRef('overview'),
-    setInsightTab: vi.fn(),
+    _insightTab,
+    insightTab: vueComputed(() => _insightTab.value),
+    setInsightTab: vi.fn((tab: string) => { _insightTab.value = tab }),
   }
 })
 
@@ -33,7 +35,7 @@ import { buildDashboardShareUrl } from '../../src/utils/shareLink.js'
 
 describe('InsightPage (Phase D)', () => {
   beforeEach(() => {
-    navMocks.insightTab.value = 'overview'
+    navMocks._insightTab.value = 'overview'
     vi.clearAllMocks()
   })
 
@@ -59,7 +61,7 @@ describe('InsightPage (Phase D)', () => {
   })
 
   test('subtitle reflects active insight tab', async () => {
-    navMocks.insightTab.value = 'analytics'
+    navMocks._insightTab.value = 'analytics'
     const wrapper = mount(InsightPage, {
       global: {
         provide: { isReadonlyInsight: computed(() => false) },

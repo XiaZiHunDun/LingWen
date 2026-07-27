@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, unref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
 import HubPageHeader from '../components/HubPageHeader.vue';
 import HubTabBar from '../components/HubTabBar.vue';
@@ -52,7 +52,7 @@ const chaptersPanelRef = ref(null);
 const workflowsPanelRef = ref(null);
 
 const activeTab = computed({
-  get: () => produceTab,
+  get: () => unref(produceTab),
   set: (tab) => setProduceTab(tab),
 });
 

@@ -18,7 +18,7 @@
 
     <div
       v-if="isReadonlyInsight"
-      class="readonly-banner pixel-border"
+      class="readonly-banner pixel-border insight-readonly-banner"
       data-testid="insight-readonly-banner"
     >
       <span class="readonly-banner-icon" aria-hidden="true">👁</span>
@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { computed, inject } from 'vue';
+import { computed, inject, unref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
 import HubPageHeader from '../components/HubPageHeader.vue';
 import HubTabBar from '../components/HubTabBar.vue';
@@ -58,7 +58,7 @@ const overviewStore = useOverviewStore();
 const rippleStore = useRippleStore();
 
 const activeTab = computed({
-  get: () => insightTab,
+  get: () => unref(insightTab),
   set: (tab) => setInsightTab(tab),
 });
 

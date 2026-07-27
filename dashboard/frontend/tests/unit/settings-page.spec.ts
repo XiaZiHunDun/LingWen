@@ -53,7 +53,7 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
 
 describe('SettingsPage (F68/F78)', () => {
   beforeEach(() => {
-    studioSummary.value = { creation_mode: 'advance' }
+    studioSummary.creation_mode = 'advance'
     apiConnectivity.value = { offline: false, message: '', checking: false }
     mocks.fetchBudgets.mockResolvedValue({
       per_run: { budget_usd: 1, used_usd: 0.2, used_pct: 20, status: 'ok' },

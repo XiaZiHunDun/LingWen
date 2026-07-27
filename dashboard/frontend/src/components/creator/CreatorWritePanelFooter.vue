@@ -98,7 +98,7 @@ function handleContentChange() {
   contentChangeTimer = setTimeout(triggerAutoSave, 1500);
 }
 
-watch(w.chapterBodyDraft, () => {
+watch(() => w.chapterBodyDraft, () => {
   debouncedUpdateWordCount();
   handleContentChange();
 });

@@ -20,7 +20,7 @@
       <template #actions>
         <button
           type="button"
-          class="l1-pill"
+          class="l1-pill inbox-share-link-btn"
           :class="{ 'l1-pill--primary': shareMessage === '已复制链接' }"
           data-testid="inbox-share-link-btn"
           @click="copyShareLink"
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, unref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
 import HubPageHeader from '../components/HubPageHeader.vue';
 import HubTabBar from '../components/HubTabBar.vue';
@@ -68,7 +68,7 @@ const decisionsPanelRef = ref(null);
 const ripplesPanelRef = ref(null);
 
 const activeTab = computed({
-  get: () => inboxTab,
+  get: () => unref(inboxTab),
   set: (tab) => setInboxTab(tab),
 });
 
