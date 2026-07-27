@@ -13,12 +13,12 @@ export function useEffectiveCreationMode(rawModeSource, projectSource) {
     const injected = unref(projectSource);
     if (injected) return injected;
 
-    const slug = studio.activeSlug?.value;
-    const projects = studio.projects?.value ?? [];
+    const slug = studio.activeSlug;
+    const projects = studio.projects ?? [];
     const fromList = projects.find((p) => p.slug === slug);
     if (fromList) return fromList;
     if (slug) {
-      return { slug, name: studio.summary?.value?.name };
+      return { slug, name: studio.summary?.name };
     }
     return null;
   });

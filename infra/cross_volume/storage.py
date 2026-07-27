@@ -6,10 +6,13 @@
 + 3 PRAGMAs (synchronous=FULL fsync, journal_mode=WAL concurrent, foreign_keys=ON).
 
 Pattern 1:1 跟 infra/ai_service/cost_persistence.py::CostTrackerDB
+
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("ripple") singleton.
 """
 import json
 import logging
 import sqlite3
+import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
@@ -177,6 +180,8 @@ class RippleStorage:
       fsync on commit
     - load_all_nodes / load_all_edges / load_all_ripples: SELECT *, _row_to_*
       反序列化 (JSON payload + ISO 8601 datetime)
+
+    Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("ripple") singleton.
     """
 
     def __init__(self, db_path, graph=None) -> None:
@@ -184,6 +189,13 @@ class RippleStorage:
             db_path = Path(db_path)
         self._db_path = db_path
         self._graph = graph  # Phase 9.15: optional, for cascade hook in append_ripple
+        warnings.warn(
+            "Phase 15.0 T2.8: RippleStorage 直接实例化已弃用, "
+            "请使用 infra.persistence.registry.get('ripple') singleton. "
+            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if str(db_path) != ":memory:":
             db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:

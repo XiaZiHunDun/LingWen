@@ -2,10 +2,13 @@
 """
 SQLite-based workflow state management
 Provides atomic read-modify-write operations
+
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("workflow") singleton.
 """
 import fcntl
 import json
 import sqlite3
+import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -21,6 +24,13 @@ class WorkflowDB:
             db_path = project_root / '.state' / 'workflow.db'
 
         self.db_path = Path(db_path) if isinstance(db_path, str) and db_path != ":memory:" else db_path
+        warnings.warn(
+            "Phase 15.0 T2.8: WorkflowDB 直接实例化已弃用, "
+            "请使用 infra.persistence.registry.get('workflow') singleton. "
+            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if str(self.db_path) != ":memory:":
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             # R3-001: 与 state_manager.py 一致,使用 fcntl.flock 防止多进程写竞争

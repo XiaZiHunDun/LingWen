@@ -31,7 +31,7 @@
 import { computed } from 'vue';
 import SidebarCostBanner from './SidebarCostBanner.vue';
 import SidebarTierBudgetAlerts from './SidebarTierBudgetAlerts.vue';
-import { useTierBudgetAlerts } from '../composables/useTierBudgetAlerts.js';
+import { useTierBudgetAlerts } from '../composables/index.js';
 
 const props = defineProps({
   status: {

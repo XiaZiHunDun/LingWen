@@ -145,10 +145,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
 import { fetchChapters, fetchProductionRecords, fetchProductionRollup } from '../api/index.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+import { useStudioProject, useWorkflowSocket, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 
 defineProps({
   embedded: { type: Boolean, default: false },

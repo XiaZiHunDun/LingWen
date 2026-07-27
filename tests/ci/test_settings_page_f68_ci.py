@@ -27,10 +27,12 @@ class TestSettingsPageF68:
         assert "fetchBudgetsByTier" in api.read_text(encoding="utf-8")
 
     def test_app_wires_settings_page(self):
-        app = FRONTEND / "src" / "App.vue"
-        text = app.read_text(encoding="utf-8")
+        # Phase 15.0: App.vue 改用 router-view, SettingsPage 通过路由懒加载注册
+        router = FRONTEND / "src" / "router" / "index.js"
+        text = router.read_text(encoding="utf-8")
         assert "SettingsPage" in text
-        assert "系统设置 - 开发中" not in text
+        app = FRONTEND / "src" / "App.vue"
+        assert "系统设置 - 开发中" not in app.read_text(encoding="utf-8")
 
     def test_vitest_specs_exist(self):
         assert (FRONTEND / "tests" / "unit" / "settings-page.spec.ts").is_file()

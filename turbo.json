@@ -1,0 +1,87 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env"],
+  "globalEnv": ["NODE_ENV", "PYTHONPATH"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "build/**"],
+      "cache": true
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**", "test-results/**"],
+      "cache": true,
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "*.config.*",
+        "tsconfig*.json"
+      ]
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true,
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "*.config.*",
+        ".eslintrc.*",
+        "tsconfig*.json"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true,
+      "inputs": [
+        "src/**",
+        "*.config.*",
+        "tsconfig*.json"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false
+    },
+    "install": {
+      "cache": false
+    },
+    "build:frontend": {
+      "dependsOn": ["build:shared"],
+      "outputs": ["dashboard/frontend/dist/**"],
+      "cache": true
+    },
+    "build:backend": {
+      "dependsOn": ["build:shared"],
+      "outputs": [],
+      "cache": true
+    },
+    "build:shared": {
+      "outputs": ["packages/shared-types/dist/**"],
+      "cache": true
+    },
+    "test:frontend": {
+      "dependsOn": ["build:frontend"],
+      "outputs": ["dashboard/frontend/coverage/**"],
+      "cache": true
+    },
+    "test:backend": {
+      "dependsOn": ["build:backend"],
+      "outputs": ["test-results/**"],
+      "cache": true
+    },
+    "lint:frontend": {
+      "outputs": [],
+      "cache": true
+    },
+    "lint:backend": {
+      "outputs": [],
+      "cache": true
+    }
+  }
+}

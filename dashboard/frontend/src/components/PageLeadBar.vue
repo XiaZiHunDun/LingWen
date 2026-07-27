@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { usePageLeadDismiss } from '../composables/usePageLeadDismiss.js';
+import { usePageLeadDismiss } from '../composables/index.js';
 
 const props = defineProps({
   pageId: { type: String, required: true },

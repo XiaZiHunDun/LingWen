@@ -100,11 +100,8 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue';
 import DecisionCard from '../components/DecisionCard.vue';
-import { useDecisionStore } from '../composables/useDecisionStore.js';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useDecisionStore, useWorkflowSocket, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 import { resolveFocusedDecisionId } from '../utils/chapterDecisionLink.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
 
 defineProps({
   embedded: { type: Boolean, default: false },
@@ -214,14 +211,14 @@ async function handleCancel({ decisionId, reason }) {
 }
 
 function applyDecisionFocus() {
-  if (focusChapter.value == null && !focusDecisionId.value) {
+  if (focusChapter == null && !focusDecisionId) {
     highlightedDecisionId.value = null;
     return;
   }
   activeTab.value = 'pending';
   highlightedDecisionId.value = resolveFocusedDecisionId(
-    focusChapter.value,
-    focusDecisionId.value,
+    focusChapter,
+    focusDecisionId,
     pending.value,
   );
   if (!highlightedDecisionId.value) return;

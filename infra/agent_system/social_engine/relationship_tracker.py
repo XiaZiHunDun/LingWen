@@ -7,10 +7,13 @@
   - JSON (.json 后缀)        — 旧版后端,保留向后兼容
 
 公共 API 与迁移前一致 — 切换存储只需修改 state_file 后缀。
+
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("relationship") singleton.
 """
 import json
 import logging
 import sqlite3
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -30,10 +33,19 @@ class RelationshipTracker:
     通过 state_file 后缀自动选择存储后端:
       - .db → SQLite
       - .json → JSON (legacy,向后兼容)
+
+    Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("relationship") singleton.
     """
 
     def __init__(self, state_file: Optional[str] = None, db_path=None):
         self.state_file = db_path or state_file or DEFAULT_STATE_FILE
+        warnings.warn(
+            "Phase 15.0 T2.8: RelationshipTracker 直接实例化已弃用, "
+            "请使用 infra.persistence.registry.get('relationship') singleton. "
+            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if isinstance(self.state_file, Path):
             self.state_file = str(self.state_file)
         self._backend = self._detect_backend(self.state_file)

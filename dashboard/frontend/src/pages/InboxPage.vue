@@ -56,10 +56,7 @@ import HubTabBar from '../components/HubTabBar.vue';
 import DecisionsPage from './DecisionsPage.vue';
 import RipplesPage from './RipplesPage.vue';
 import { INBOX_TABS } from '../config/dashboardNav.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { useDecisionStore } from '../composables/useDecisionStore.js';
-import { useRippleStore } from '../composables/useRippleStore.js';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import { useDashboardNav, useDecisionStore, useRippleStore, useWorkflowSocket } from '../composables/index.js';
 import { copyDashboardShareUrl } from '../utils/shareLink.js';
 
 const { inboxTab, setInboxTab, focusChapter, focusDecisionId } = useDashboardNav();
@@ -71,7 +68,7 @@ const decisionsPanelRef = ref(null);
 const ripplesPanelRef = ref(null);
 
 const activeTab = computed({
-  get: () => inboxTab.value,
+  get: () => inboxTab,
   set: (tab) => setInboxTab(tab),
 });
 
@@ -127,8 +124,8 @@ async function copyShareLink() {
   const result = await copyDashboardShareUrl({
     nav: 'inbox',
     tab: activeTab.value,
-    decision: focusDecisionId.value,
-    chapter: focusChapter.value,
+    decision: focusDecisionId,
+    chapter: focusChapter,
     role: 'reviewer',
   });
   shareMessage.value = result.ok ? '已复制链接' : '复制失败';

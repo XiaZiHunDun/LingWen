@@ -1,7 +1,21 @@
 // dashboard/frontend/tests/unit/ripple-drawer.spec.js
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, it, expect, vi } from 'vitest';
+import { mount, flushPromises } from '@vue/test-utils';
 import RippleDrawer from '../../src/components/RippleDrawer.vue';
+
+vi.mock('../../src/composables/useRippleStore.js', () => ({
+  useRippleStore: () => ({
+    fetchAudit: vi.fn().mockResolvedValue([]),
+    rollback: vi.fn(),
+    loadCascade: vi.fn().mockResolvedValue({}),
+    loadCascadePreview: vi.fn().mockResolvedValue({
+      affected_chapter_count: 2,
+      affected_character_count: 1,
+      affected_setting_count: 0,
+      estimated_change_count: 5,
+    }),
+  }),
+}));
 
 const sample = {
   ripple_id: 'r1',
@@ -43,8 +57,7 @@ describe('RippleDrawer', () => {
     // apply is only emitted after the modal's confirm button is clicked.
     await wrapper.find('[data-testid="ripple-drawer-apply"]').trigger('click');
     // wait for the modal to appear + cascade preview load to resolve
-    await wrapper.vm.$nextTick();
-    await new Promise(r => setTimeout(r, 100));
+    await flushPromises();
     expect(wrapper.emitted('apply')).toBeFalsy();  // no apply yet — modal not confirmed
     await wrapper.find('[data-testid="apply-confirm-apply"]').trigger('click');
     expect(wrapper.emitted('apply')).toBeTruthy();

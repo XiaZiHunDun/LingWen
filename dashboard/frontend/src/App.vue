@@ -1,6 +1,8 @@
 <template>
   <NConfigProvider :theme-overrides="lingwenThemeConfig">
-    <div class="dashboard" data-testid="app-root">
+    <ErrorBoundary>
+      <div class="dashboard" data-testid="app-root">
+        <ToastNotification />
       <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'sidebar--human': isHumanFirstShell }" role="navigation" aria-label="主导航">
       <div class="sidebar-header" :class="{ 'sidebar-header--human': isHumanFirstShell }">
@@ -77,6 +79,14 @@
             >
               审阅模式
             </span>
+            <button
+              class="theme-toggle"
+              @click="toggleTheme"
+              :title="isDarkMode ? '切换到浅色模式' : '切换到深色模式'"
+              data-testid="theme-toggle"
+            >
+              {{ isDarkMode ? '☀️' : '🌙' }}
+            </button>
             <TextScaleToggle v-if="!isHumanFirstShell" />
             <ProjectSwitcher
               v-if="isHumanFirstShell"
@@ -94,58 +104,64 @@
         @retry="retryApiCheck"
       />
       <main class="main-content" :class="{ 'main-content--centered': isCenteredL1Page }" role="main">
-        <AskPage v-if="activeNav === 'ask'" />
-        <CreatorPage v-else-if="isWriteNav(activeNav)" />
-        <LibraryPage v-else-if="activeNav === 'library'" />
-        <MorePage v-else-if="activeNav === 'more'" />
-        <TodayPage v-else-if="activeNav === 'today'" />
-        <ProducePage v-else-if="isProduceNav(activeNav)" />
-        <InboxPage v-else-if="isInboxNav(activeNav)" />
-        <InsightPage v-else-if="isInsightNav(activeNav)" />
-        <CascadeRunsPage v-else-if="activeNav === 'cascade-runs'" />
-        <SettingsPage v-else-if="activeNav === 'settings'" />
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </main>
     </div>
-  </div>
+      </div>
+    </ErrorBoundary>
   </NConfigProvider>
 </template>
 
 <script setup>
 import { NConfigProvider } from 'naive-ui'
 import { lingwenThemeConfig } from './config/naiveTheme.js'
-import TodayPage from './pages/TodayPage.vue'
-import AskPage from './pages/AskPage.vue'
 import AskPageTabs from './components/AskPageTabs.vue'
-import CreatorPage from './pages/CreatorPage.vue'
-import LibraryPage from './pages/LibraryPage.vue'
-import MorePage from './pages/MorePage.vue'
-import ProducePage from './pages/ProducePage.vue'
-import InboxPage from './pages/InboxPage.vue'
-import InsightPage from './pages/InsightPage.vue'
-import CascadeRunsPage from './pages/CascadeRunsPage.vue'
-import SettingsPage from './pages/SettingsPage.vue'
+import ToastNotification from './components/ToastNotification.vue'
+import ErrorBoundary from './components/ErrorBoundary.vue'
 import ApiOfflineBanner from './components/ApiOfflineBanner.vue'
 import SidebarCostBanner from './components/SidebarCostBanner.vue'
 import SidebarWsDisconnectedBanner from './components/SidebarWsDisconnectedBanner.vue'
 import SidebarTierBudgetAlerts from './components/SidebarTierBudgetAlerts.vue'
 import ProjectSwitcher from './components/ProjectSwitcher.vue'
 import TextScaleToggle from './components/TextScaleToggle.vue'
-import { DASHBOARD_NAV_GROUPS, REVIEWER_NAV_GROUPS } from './config/dashboardNav.js'
 import { resolveNavContextTitle } from './config/dashboardNavTitles.js'
 import { buildVisibleNavGroups, suggestNavFallback } from './config/dashboardNavByMode.js'
 import { isHumanNavItemActive } from './config/humanFirstNav.js'
 import { resolveDefaultLandingNavAsync } from './utils/resolveDefaultLanding.js'
-import { fetchCreatorOverview } from './api/index.js'
-import { useWorkflowSocket } from './composables/useWorkflowSocket.js'
-import { useDashboardNav } from './composables/useDashboardNav.js'
-import { useDashboardRole } from './composables/useDashboardRole.js'
-import { useStudioProject } from './composables/useStudioProject.js'
-import { apiConnectivity } from './api/connectivity.js'
-import { fetchStudioSummary } from './api/index.js'
-import { useApiConnectivity } from './composables/useApiConnectivity.js'
+import { fetchCreatorOverview, fetchStudioSummary } from './api/index.js'
+import { useWorkflowSocket } from './composables/index.js'
+import { useNavStore, useRoleStore, useStudioStore, useConnectivityStore } from './stores/index.js'
 import { computed, onMounted, provide, ref, watch } from 'vue'
-import { BRAND_PRODUCT_NAME, BRAND_PRODUCT_TAGLINE } from './config/brand.js'
+import { useRouter } from 'vue-router'
+import { BRAND_PRODUCT_NAME } from './config/brand.js'
 import { resolveEffectiveCreationMode } from './utils/effectiveCreationMode.js'
+
+const isDarkMode = ref(false);
+
+function toggleTheme() {
+  isDarkMode.value = !isDarkMode.value;
+  if (isDarkMode.value) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('lingwen-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.removeItem('lingwen-theme');
+  }
+}
+
+const router = useRouter()
+
+const navStore = useNavStore()
+const roleStore = useRoleStore()
+const studioStore = useStudioStore()
+const connectivityStore = useConnectivityStore()
+
+const { status } = useWorkflowSocket()
+const navCreationMode = ref(null)
 
 const {
   activeNav,
@@ -153,24 +169,19 @@ const {
   isProduceNav,
   isInboxNav,
   isInsightNav,
-  isWriteNav,
   focusWizard,
-} = useDashboardNav()
-const { status } = useWorkflowSocket()
-const { isReviewer, isReadonlyInsight } = useDashboardRole()
-const studio = useStudioProject()
-const navCreationMode = ref(null)
+} = navStore
 
-const { retryCheck: retryApiCheck } = useApiConnectivity()
+const { isReviewer, isReadonlyInsight } = roleStore
 
-const rawCreationMode = computed(() => navCreationMode.value ?? studio.summary.value?.creation_mode ?? null)
+const rawCreationMode = computed(() => navCreationMode.value ?? studioStore?.summary?.creation_mode ?? null)
 
 const activeStudioProject = computed(() => {
-  const slug = studio.activeSlug.value
-  const fromList = studio.projects.value?.find((p) => p.slug === slug)
+  const slug = studioStore?.activeSlug
+  const fromList = studioStore?.projects?.find((p) => p.slug === slug)
   if (fromList) return fromList
   if (slug) {
-    return { slug, name: studio.summary.value?.name }
+    return { slug, name: studioStore?.summary?.name }
   }
   return null
 })
@@ -180,12 +191,12 @@ const creationMode = computed(() =>
 )
 
 const visibleNavGroups = computed(() => buildVisibleNavGroups(creationMode.value, {
-  isReviewer: isReviewer.value,
+  isReviewer: isReviewer ?? false,
 }))
 
 const isHumanFirstShell = computed(() => {
-  if (isReviewer.value) return false
-  return visibleNavGroups.value.some((g) => g.id === 'primary')
+  if (isReviewer) return false
+  return visibleNavGroups.value?.some((g) => g.id === 'primary') ?? false
 })
 
 provide('isReadonlyInsight', isReadonlyInsight)
@@ -193,14 +204,8 @@ provide('isReviewer', isReviewer)
 provide('creationMode', creationMode)
 provide('isHumanFirstShell', isHumanFirstShell)
 
-const sidebarModeHint = computed(() => {
-  if (isReviewer.value) return '审阅视图'
-  const name = studio.summary.value?.name || studio.projects.value?.find((p) => p.slug === studio.activeSlug.value)?.name
-  return name || '写作助手'
-})
-
-const contextTitle = computed(() => resolveNavContextTitle(activeNav.value, {
-  isReviewer: isReviewer.value,
+const contextTitle = computed(() => resolveNavContextTitle(activeNav, {
+  isReviewer: isReviewer ?? false,
 }))
 
 const CENTERED_L1_NAV = new Set([
@@ -215,20 +220,34 @@ const CENTERED_L1_NAV = new Set([
   'produce',
   'insight',
 ])
-const isCenteredL1Page = computed(() => CENTERED_L1_NAV.has(activeNav.value))
+const isCenteredL1Page = computed(() => CENTERED_L1_NAV.has(activeNav))
 const isCompactL1Chrome = computed(() => isHumanFirstShell.value && isCenteredL1Page.value)
 
-const isAskL1Header = computed(() => isCompactL1Chrome.value && activeNav.value === 'ask')
+const isAskL1Header = computed(() => isCompactL1Chrome.value && activeNav === 'ask')
 
-const connectivity = computed(() => apiConnectivity.value)
+const connectivity = computed(() => {
+  if (!connectivityStore) {
+    return { offline: false, message: '', checking: false }
+  }
+  const { offline, message, checking } = connectivityStore
+  return {
+    offline: offline ?? false,
+    message: message ?? '',
+    checking: checking ?? false,
+  }
+})
+
+function retryApiCheck() {
+  return connectivityStore?.retryCheck?.() ?? Promise.resolve(false)
+}
 
 async function loadNavCreationMode() {
-  if (isReviewer.value) return
+  if (isReviewer) return
   try {
     const sum = await fetchStudioSummary()
     navCreationMode.value = sum?.creation_mode || 'companion'
-    if (sum && !studio.summary.value) {
-      studio.summary.value = sum
+    if (sum && studioStore?.summary) {
+      studioStore.summary = sum
     }
   } catch {
     navCreationMode.value = 'companion'
@@ -236,21 +255,14 @@ async function loadNavCreationMode() {
 }
 
 function syncNavForCreationMode() {
-  if (isReviewer.value) return
+  if (isReviewer) return
   if (navCreationMode.value == null) return
-  const fallback = suggestNavFallback(activeNav.value, creationMode.value, {
-    allowCreatorWizard: focusWizard.value,
+  const fallback = suggestNavFallback(activeNav, creationMode.value, {
+    allowCreatorWizard: focusWizard,
   })
   if (!fallback) return
-  if (fallback === 'produce') {
-    navigateTo('produce', { tab: 'studio', clearFocus: false })
-    return
-  }
-  if (fallback === 'write' || fallback === 'creator') {
-    navigateTo('write', { clearFocus: false })
-    return
-  }
-  navigateTo(fallback, { clearFocus: false })
+  navigateTo?.(fallback, { clearFocus: false })
+  router.push(`/${fallback}`)
 }
 
 watch(navCreationMode, () => {
@@ -258,29 +270,38 @@ watch(navCreationMode, () => {
 })
 
 watch(
-  () => studio.summary.value?.creation_mode,
+  () => studioStore?.summary?.creation_mode,
   (mode) => {
     if (mode) navCreationMode.value = mode
   },
 )
 
 onMounted(async () => {
+  const savedTheme = localStorage.getItem('lingwen-theme');
+  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDarkMode.value = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  roleStore?.checkUrlRole?.()
   await loadNavCreationMode()
   syncNavForCreationMode()
 
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
-  if (isReviewer.value && (params.get('nav') === 'write' || params.get('nav') === 'creator' || params.get('nav') === 'produce')) {
-    navigateTo('inbox', { tab: 'decisions', clearFocus: false })
+  if (isReviewer && (params.get('nav') === 'write' || params.get('nav') === 'creator' || params.get('nav') === 'produce')) {
+    navigateTo?.('inbox', { tab: 'decisions', clearFocus: false })
+    router.push('/inbox')
     return
   }
-  if (!params.get('nav') && !isReviewer.value) {
+  if (!params.get('nav') && !isReviewer) {
     const landing = await resolveDefaultLandingNavAsync({
       isReviewer: false,
       fetchSummary: fetchStudioSummary,
       fetchOverview: fetchCreatorOverview,
     })
-    navigateTo(landing, { clearFocus: false })
+    navigateTo?.('landing', { clearFocus: false })
+    router.push(`/${landing}`)
   }
   if ((params.get('wizard') === '1' || params.get('step') || params.get('done') || params.get('notes')) && params.get('nav') !== 'write' && params.get('nav') !== 'creator') {
     const doneRaw = params.get('done')
@@ -294,41 +315,27 @@ onMounted(async () => {
         wizardNotes = {}
       }
     }
-    navigateTo('write', {
+    navigateTo?.('write', {
       wizard: true,
       wizardStep: params.get('step') || null,
       wizardDone,
       wizardNotes,
     })
+    router.push('/creator')
   }
 })
 
 function isNavItemActive(itemId) {
-  if (isHumanNavItemActive(itemId, activeNav.value)) return true
-  if (itemId === 'produce') return isProduceNav(activeNav.value)
-  if (itemId === 'inbox') return isInboxNav(activeNav.value)
-  if (itemId === 'insight') return isInsightNav(activeNav.value)
-  return activeNav.value === itemId
+  if (isHumanNavItemActive(itemId, activeNav)) return true
+  if (itemId === 'produce') return isProduceNav?.(activeNav) ?? false
+  if (itemId === 'inbox') return isInboxNav?.(activeNav) ?? false
+  if (itemId === 'insight') return isInsightNav?.(activeNav) ?? false
+  return activeNav === itemId
 }
 
 function onNavClick(itemId) {
-  if (itemId === 'write') {
-    navigateTo('write', { clearFocus: true })
-    return
-  }
-  if (itemId === 'produce') {
-    navigateTo('produce', { tab: 'studio', clearFocus: true })
-    return
-  }
-  if (itemId === 'inbox') {
-    navigateTo('inbox', { tab: 'decisions', clearFocus: true })
-    return
-  }
-  if (itemId === 'insight') {
-    navigateTo('insight', { tab: 'overview', clearFocus: true })
-    return
-  }
-  navigateTo(itemId, { clearFocus: true })
+  navigateTo?.(itemId, { clearFocus: true })
+  router.push(`/${itemId}`)
 }
 </script>
 
@@ -664,6 +671,26 @@ function onNavClick(itemId) {
   color: var(--color-text-dim);
 }
 
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-muted);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+
 .main-content {
   flex: 1;
   min-height: 0;
@@ -682,18 +709,19 @@ function onNavClick(itemId) {
   padding: 0;
 }
 
-.main-content {
+.page-enter-active,
+.page-leave-active {
   transition: opacity var(--transition-normal), transform var(--transition-normal);
 }
 
-.main-content.page-transition-enter {
+.page-enter-from {
   opacity: 0;
   transform: translateX(10px);
 }
 
-.main-content.page-transition-enter-active {
-  opacity: 1;
-  transform: translateX(0);
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 
 .sidebar-footer {

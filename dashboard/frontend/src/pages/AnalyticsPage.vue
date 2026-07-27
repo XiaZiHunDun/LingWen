@@ -152,10 +152,7 @@ import HookTrendChart from '../components/HookTrendChart.vue';
 import CoolpointChart from '../components/CoolpointChart.vue';
 import ProductionCostTrendChart from '../components/ProductionCostTrendChart.vue';
 import { fetchProductionCostTrend, fetchProductionRollup } from '../api/index.js';
-import { useOverviewStore } from '../composables/useOverviewStore.js';
-import { useRippleStore } from '../composables/useRippleStore.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import { useOverviewStore, useRippleStore, useStudioProject, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
 import {
   buildProductionKpiCards,
   buildRippleKpiCards,
@@ -173,7 +170,6 @@ import {
   productionSummaryLines,
   resolveProductionSummary,
 } from '../utils/productionSummary.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
 
 defineProps({
   embedded: { type: Boolean, default: false },

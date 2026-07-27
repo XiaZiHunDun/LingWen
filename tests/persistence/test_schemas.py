@@ -37,13 +37,14 @@ class TestApplySchema:
             conn.close()
 
     def test_apply_schema_ripple_creates_expected_tables(self):
-        """ripple 应该有 ripple_impact_scores + ripples 表."""
+        """ripple 应该有 reference_nodes + reference_edges + reference_ripples 表."""
         conn = get_connection(":memory:")
         try:
             apply_schema("ripple", conn)
             tables = _table_list(conn)
-            assert "ripple_impact_scores" in tables
-            assert "ripples" in tables
+            assert "reference_nodes" in tables
+            assert "reference_edges" in tables
+            assert "reference_ripples" in tables
         finally:
             conn.close()
 

@@ -16,7 +16,6 @@ Phase 15.0 P3-E8: 收敛3套SQLite包装的PRAGMA设置，确保一致性。
 """
 import sqlite3
 
-
 DEFAULT_PRAGMAS = {
     "journal_mode": "WAL",
     "synchronous": "FULL",

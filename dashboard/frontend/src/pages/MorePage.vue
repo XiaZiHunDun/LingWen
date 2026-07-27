@@ -32,7 +32,7 @@
 import { computed, inject } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
 import { buildMorePageLinks } from '../config/dashboardNavByMode.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useDashboardNav } from '../composables/index.js';
 
 const { navigateTo } = useDashboardNav();
 const creationMode = inject('creationMode', computed(() => 'companion'));

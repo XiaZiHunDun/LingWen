@@ -17,7 +17,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import * as echarts from 'echarts'
+import { logger } from '../utils/logger.js'
 
 const props = defineProps({
   scoresA: { type: Object, required: true },
@@ -30,6 +30,7 @@ const props = defineProps({
 
 const chartRef = ref(null)
 let chartInstance = null
+let echartsModule = null
 
 const S1_S8 = [
   { key: 'S1', name: 'S1 剧情', max: 10 },
@@ -92,11 +93,26 @@ function render() {
   })
 }
 
-onMounted(() => {
-  if (chartRef.value) {
-    chartInstance = echarts.init(chartRef.value)
-    render()
+async function initChart() {
+  try {
+    if (!echartsModule) {
+      echartsModule = await import('echarts')
+    }
+    if (!echartsModule?.default?.init) {
+      logger.warn('[ScoreRadarChart] ECharts module not properly loaded')
+      return
+    }
+    if (!chartInstance && chartRef.value) {
+      chartInstance = echartsModule.default.init(chartRef.value)
+    }
+  } catch (error) {
+    logger.warn('[ScoreRadarChart] Error initializing chart:', error)
   }
+}
+
+onMounted(async () => {
+  await initChart()
+  render()
 })
 
 onUnmounted(() => {
@@ -106,7 +122,10 @@ onUnmounted(() => {
   }
 })
 
-watch([() => props.scoresA, () => props.scoresB, () => props.winner], render, { deep: true })
+watch([() => props.scoresA, () => props.scoresB, () => props.winner], async () => {
+  await initChart()
+  render()
+}, { deep: true })
 </script>
 
 <style scoped>

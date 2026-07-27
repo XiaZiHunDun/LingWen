@@ -7,24 +7,42 @@
 // 不需真实 pixel 渲染. stub 让 chart 走空壳 init/setOption/dispose 即可.
 import { vi, afterEach } from 'vitest'
 import { enableAutoUnmount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+
+const pinia = createPinia()
+setActivePinia(pinia)
 
 // Phase 8.43.3: test-utils 2.4+ 已支持 enableAutoUnmount, afterEach 自动
 // unmount 全部 wrapper, 防 wrapper 泄漏 + 跟 Vue 3.5 onUnmounted 同步.
 // 0 改 16 spec 的 mount() 基础 API 签名.
 enableAutoUnmount(afterEach)
 
-vi.mock('echarts', () => ({
-  init: vi.fn(() => ({
-    setOption: vi.fn(),
-    clear: vi.fn(),
-    dispose: vi.fn(),
-    resize: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn(),
-  })),
-  // ECharts 5.x 还有 named export (getInstanceByDom / connect / disconnect) — 也 stub 防 import 报错
+const mockChartInstance = {
+  setOption: vi.fn(),
+  clear: vi.fn(),
+  dispose: vi.fn(),
+  resize: vi.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
+}
+
+const mockEcharts = {
+  init: vi.fn(() => mockChartInstance),
   getInstanceByDom: vi.fn(() => null),
   connect: vi.fn(),
   disconnect: vi.fn(),
   registerTheme: vi.fn(),
-}))
+}
+
+vi.mock('echarts', async () => {
+  const actual = await vi.importActual('echarts')
+  return {
+    ...actual,
+    default: mockEcharts,
+    init: mockEcharts.init,
+    getInstanceByDom: mockEcharts.getInstanceByDom,
+    connect: mockEcharts.connect,
+    disconnect: mockEcharts.disconnect,
+    registerTheme: mockEcharts.registerTheme,
+  }
+})

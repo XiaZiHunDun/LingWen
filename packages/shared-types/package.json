@@ -1,0 +1,10 @@
+{
+  "name": "@lingwen/shared-types",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "echo 'No build needed for shared types'"
+  }
+}

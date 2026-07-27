@@ -1,23 +1,40 @@
-"""Phase 15.0 T2.1: Persistence 子包入口。
-
-设计: 不在 import 时副作用 — caller 显式调 `register_all()` 绑定 storage。
-"""
+from infra.persistence.connection import connection_context, get_connection
+from infra.persistence.paths import (
+    COST_TRACKER_DB,
+    CROSS_VOLUME_DB,
+    READING_POWER_DB,
+    RELATIONSHIP_DB,
+    RIPPLE_DB,
+    WORKFLOW_DB,
+)
 from infra.persistence.registry import (
-    RegisteredStorage,
     get,
+    get_registration,
     is_registered,
+    list_registered,
     register,
-    registered_names,
     reset,
     reset_all,
 )
+from infra.persistence.schemas import SCHEMAS, apply_schema, get_schema
 
 __all__ = [
-    "RegisteredStorage",
-    "register",
     "get",
+    "register",
     "reset",
     "reset_all",
     "is_registered",
-    "registered_names",
+    "list_registered",
+    "get_registration",
+    "get_connection",
+    "connection_context",
+    "apply_schema",
+    "get_schema",
+    "SCHEMAS",
+    "RIPPLE_DB",
+    "COST_TRACKER_DB",
+    "WORKFLOW_DB",
+    "READING_POWER_DB",
+    "RELATIONSHIP_DB",
+    "CROSS_VOLUME_DB",
 ]

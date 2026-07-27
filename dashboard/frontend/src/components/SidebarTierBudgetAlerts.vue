@@ -43,10 +43,7 @@
 
 <script setup>
 import { watch } from 'vue';
-import { useCostWindow } from '../composables/useCostWindow.js';
-import {
-  useTierBudgetAlerts,
-} from '../composables/useTierBudgetAlerts.js';
+import { useCostWindow, useTierBudgetAlerts } from '../composables/index.js';
 
 const props = defineProps({
   status: {

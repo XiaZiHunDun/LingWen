@@ -16,6 +16,8 @@ GOT_BRIDGE_PATH = REPO_ROOT / "infra" / "agent_system" / "got_bridge.py"
 MASTER_CONTROLLER_PATH = (
     REPO_ROOT / "infra" / "agent_system" / "master_controller.py"
 )
+# Phase 15.0 P3-SPLIT: _impl_polish_merge_synthesis 迁到 mc_editing.py (EditingMixin)
+MC_EDITING_PATH = REPO_ROOT / "infra" / "agent_system" / "mc_editing.py"
 
 WITH_USAGE_VARIANTS = (
     "write_chapter_with_usage",
@@ -49,10 +51,9 @@ class TestPolishMergeWithUsageContract:
         )
 
     def test_impl_uses_chat_with_usage_when_record_usage_true(self):
-        source = MASTER_CONTROLLER_PATH.read_text(encoding="utf-8")
-        impl_block = source.split("def _impl_polish_merge_synthesis", 1)[1].split(
-            "\n    class _MergeParseError", 1
-        )[0]
+        source = MC_EDITING_PATH.read_text(encoding="utf-8")
+        # _impl_polish_merge_synthesis 是 mc_editing.py 最后一个方法, 取到文件末尾
+        impl_block = source.split("def _impl_polish_merge_synthesis", 1)[1]
         assert "if record_usage:" in impl_block
         assert "chat_with_usage" in impl_block
 

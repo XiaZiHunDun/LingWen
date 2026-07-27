@@ -39,8 +39,7 @@ defineProps({
 import RippleList from '../components/RippleList.vue';
 import RippleDrawer from '../components/RippleDrawer.vue';
 import ImpactGraph from '../components/ImpactGraph.vue';
-import { useRippleStore } from '../composables/useRippleStore.js';
-import { useRippleSocket } from '../composables/useRippleSocket.js';
+import { useRippleStore, useRippleSocket } from '../composables/index.js';
 import { fetchRippleDetail, fetchReferenceGraph } from '../api/index.js';
 
 const store = useRippleStore();

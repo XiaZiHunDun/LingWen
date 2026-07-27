@@ -64,10 +64,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
-import { useStudioProject } from '../composables/useStudioProject.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
+import { useStudioProject, useDashboardNav } from '../composables/index.js';
 import { getWriteResume } from '../utils/writeResumeStorage.js';
-import { fetchStudioQuality } from '../api/index.js';
 import { formatDisplayProjectName } from '../utils/displayProjectName.js';
 
 const studio = useStudioProject();
@@ -77,8 +75,8 @@ const loading = ref(false);
 const error = ref(null);
 const qualityLine = ref('');
 
-const projects = computed(() => studio.projects.value || []);
-const activeSlug = computed(() => studio.activeSlug.value);
+const projects = computed(() => studio.projects || []);
+const activeSlug = computed(() => studio.activeSlug);
 
 function projectSubtitle(project) {
   const written = project?.chapter_count ?? project?.chapters_written;
@@ -109,7 +107,7 @@ async function load() {
   error.value = null;
   try {
     await studio.loadProjects();
-    if (studio.activeSlug.value) {
+    if (studio.activeSlug) {
       const q = await fetchStudioQuality().catch(() => null);
       if (q) {
         qualityLine.value = `已写 ${q.chapters_written ?? 0} 章 · 覆盖 ${q.coverage_pct ?? 0}%`;

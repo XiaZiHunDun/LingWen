@@ -14,7 +14,7 @@ class TestAnalyticsProductionCostTrendF87:
         text = mod.read_text(encoding="utf-8")
         assert "production_cost_trend" in text
         assert "_record_label" in text
-        app = NOVEL_FACTORY / "dashboard" / "app.py"
+        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
         assert "/api/production-records/trend" in app.read_text(encoding="utf-8")
 
     def test_analytics_trend_util_and_chart(self):

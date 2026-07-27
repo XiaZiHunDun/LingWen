@@ -166,22 +166,17 @@ const c = inject(CREATOR_PAGE_CHROME_KEY);
   overflow: hidden;
 }
 
-.creator-grid--tabbed {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
 @media (max-width: 1200px) {
   .creator-grid {
+    display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
   }
 }
 
 @media (max-width: 960px) {
   .creator-grid {
+    display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-md);
   }

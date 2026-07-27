@@ -168,10 +168,7 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
-import { useAskAssistant } from '../composables/useAskAssistant.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { getWriteResume } from '../utils/writeResumeStorage.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
+import { useAskAssistant, useDashboardNav, useStudioProject } from '../composables/index.js';
 
 const { navigateTo } = useDashboardNav();
 const studio = useStudioProject();
@@ -193,7 +190,7 @@ const {
   startNewProject,
 } = useAskAssistant({
   onGoWrite(chapter) {
-    const slug = studio.activeSlug.value;
+    const slug = studio.activeSlug;
     const resume = getWriteResume(slug);
     const ch = chapter ?? resume?.chapter ?? null;
     navigateTo('write', { chapter: ch, clearFocus: false, workspace: 'write' });

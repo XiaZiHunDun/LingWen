@@ -66,8 +66,8 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
   useStudioProject: () => ({
-    activeSlug: { value: 'anye-xinbiao' },
-    projectRevision: { value: 0 },
+    activeSlug: 'anye-xinbiao',
+    projectRevision: 0,
   }),
 }))
 

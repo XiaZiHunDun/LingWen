@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from agent_system.social_engine.relationship_tracker import RelationshipTracker
+from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
 
 
 def test_relationship_tracker_init():

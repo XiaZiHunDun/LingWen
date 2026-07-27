@@ -32,28 +32,37 @@
     />
 
     <template v-if="!showOverviewEmptyGuide">
-    <section class="stats-section">
-      <StatCard
-        v-for="stat in statCards"
-        :key="stat.label"
-        :label="stat.label"
-        :value="stat.value"
-        :trend="stat.trend"
-      />
-    </section>
+      <!-- Widget 网格布局 -->
+      <div class="widget-grid">
+        <!-- 统计卡片 Widget -->
+        <div class="widget-cell">
+          <StatsWidget title="追读力概览" :stats="statCards" :refreshable="true" @refresh="refresh" />
+        </div>
 
-    <section class="chart-section">
-      <HookTrendChart :data="chartData" />
-    </section>
+        <!-- 钩子趋势图 Widget -->
+        <div class="widget-cell full-width">
+          <ChartWidget title="钩子趋势" chart-type="折线图">
+            <template #chart>
+              <HookTrendChart :data="chartData" />
+            </template>
+          </ChartWidget>
+        </div>
 
-       <section class="chart-section">
-      <CoolpointChart :data="chartData" />
-    </section>
+        <!-- 爽点分布图 Widget -->
+        <div class="widget-cell full-width">
+          <ChartWidget title="爽点分布" chart-type="柱状图">
+            <template #chart>
+              <CoolpointChart :data="chartData" />
+            </template>
+          </ChartWidget>
+        </div>
 
-    <section class="table-section">
-      <ChapterTable v-if="chapters.length > 0" :chapters="chapters" />
-      <p v-else class="chapters-empty" data-testid="chapters-empty">暂无章节</p>
-    </section>
+        <!-- 章节表格 Widget -->
+        <div class="widget-cell full-width">
+          <ChapterTable v-if="chapters.length > 0" :chapters="chapters" />
+          <p v-else class="chapters-empty" data-testid="chapters-empty">暂无章节</p>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -65,15 +74,16 @@
 //   page-local 4 个 ref + loadData + onMounted + fetchOverview/fetchChapters import
 // 页面 UI state (chartData / statCards computed) 仍 page-local, 从 store.overview /
 //   store.chapters 派生 (store 已做 envelope 解包, chapters 是 bare array)
-import { computed, inject } from 'vue'
+import { computed, inject, onMounted } from 'vue'
 import StatCard from '../components/StatCard.vue'
 import HubEmptyGuide from '../components/HubEmptyGuide.vue'
 import HookTrendChart from '../components/HookTrendChart.vue'
 import CoolpointChart from '../components/CoolpointChart.vue'
 import ChapterTable from '../components/ChapterTable.vue'
-import { useOverviewStore } from '../composables/useOverviewStore.js'
-import { useDashboardNav } from '../composables/useDashboardNav.js'
-import { useFilteredPageError } from '../composables/useFilteredPageError.js'
+import StatsWidget from '../components/widgets/StatsWidget.vue'
+import ChartWidget from '../components/widgets/ChartWidget.vue'
+import { useOverviewStore, useDashboardNav, useFilteredPageError } from '../composables/index.js'
+import { registerDashboardWidgets } from '../composables/useDashboardWidgets.js'
 
 defineProps({
   embedded: { type: Boolean, default: false },
@@ -107,6 +117,11 @@ function goCreator() {
 function goProduce() {
   navigateTo('produce', { tab: 'studio' })
 }
+
+// 注册 Dashboard Widgets
+onMounted(() => {
+  registerDashboardWidgets()
+})
 
 // chartData 派生 chapters (按 hook_count / coolpoint_count 投影)
 const chartData = computed(() => {
@@ -203,22 +218,17 @@ const statCards = computed(() => {
   font-family: var(--font-ui);
 }
 
-.stats-section {
+.widget-grid {
   display: flex;
+  flex-direction: column;
   gap: var(--space-md);
-  flex-wrap: wrap;
 }
 
-.stats-section > * {
-  flex: 1;
-  min-width: 120px;
-}
-
-.chart-section {
+.widget-cell {
   width: 100%;
 }
 
-.table-section {
+.widget-cell.full-width {
   width: 100%;
 }
 

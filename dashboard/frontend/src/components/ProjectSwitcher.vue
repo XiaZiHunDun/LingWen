@@ -38,7 +38,7 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { useStudioProject } from '../composables/useStudioProject.js';
+import { useStudioProject } from '../composables/index.js';
 import { formatDisplayProjectName } from '../utils/displayProjectName.js';
 
 defineProps({
@@ -55,7 +55,7 @@ function displayName(name) {
 
 async function onChange(event) {
   const slug = event.target.value;
-  if (!slug || slug === activeSlug.value) return;
+  if (!slug || slug === activeSlug) return;
   await switchProject(slug);
 }
 

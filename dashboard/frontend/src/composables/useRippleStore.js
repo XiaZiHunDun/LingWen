@@ -1,11 +1,15 @@
-// useRippleStore.js — Phase 9.13 module-level singleton composable
-// 管理 ripple 列表 + 统计 + 4 个 mutation actions (refresh/apply/reject/applySocketUpdate)
-// 镜像 useDecisionStore 模式: module-level refs + mountedCount lifecycle
-// ripple_created / ripple_status_changed 走 WS 推 (WS 权威源, per 主公 Phase 9.13 决策)
-// 决策点 (跟 useDecisionStore 1:1): 首个 mount 时 deferred 1 microtask 后调 refresh() —
-//   让 mount 后立即 sync 读 loading=false/ripples=[] 仍为真 (即 mount 不立即翻转 loading
-//   状态), 但 await flushPromises 后能看到初始 fetch 完成. 后续 mutation (apply/reject)
-//   内部用 optimistic update (不 await refresh, 用户期待 mutation 后立即看到新数据).
+/**
+ * 获取 ripple 列表 + 统计 + mutation actions。
+ *
+ * @returns {{
+ *   ripples: Array, loading: boolean, lastError: string|null,
+ *   stats: Object, cascadeByRippleId: Map, previewByRippleId: Map,
+ *   refresh: Function, apply: Function, reject: Function,
+ *   applySocketUpdate: Function, fetchAudit: Function, rollback: Function,
+ *   loadCascade: Function, loadCascadePreview: Function
+ * }}
+ * 注意：返回的属性是 ref 在 reactive context 中已自动解包，不需要 .value。
+ */
 
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import {

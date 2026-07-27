@@ -23,30 +23,24 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import * as echarts from 'echarts'
 import {
   computeCumulativeSeries,
   TIER_COLORS,
   TIER_ORDER,
 } from '../utils/costTrendChartUtils.js'
+import { logger } from '../utils/logger.js'
 
 const props = defineProps({
-  // Phase 8.24: costByDay from backend cost_by_day (Phase 8.23)
-  // shape: { "2026-06-01": 0.0105, "2026-06-02": 0.00525, ... }
   costByDay: {
     type: Object,
     required: true,
   },
-  // Phase 8.29: per-day-per-tier breakdown (additive, default null)
-  // shape: { "2026-06-01": { haiku: 0.005, sonnet: 0.015, opus: 0.020 }, ... }
-  // 当非空时, render multi-series (3 lines) + ECharts legend, 覆盖单线 baseline
   costByDayPerTier: {
     type: Object,
     default: null,
   },
 })
 
-// Phase 8.29: per-tier mode gate (costByDayPerTier 非空且有非零 value → multi-series)
 const hasMultiSeries = computed(() => {
   if (!props.costByDayPerTier) return false
   for (const dateKey of Object.keys(props.costByDayPerTier)) {
@@ -58,6 +52,7 @@ const hasMultiSeries = computed(() => {
 
 const chartRef = ref(null)
 let chartInstance = null
+let echartsModule = null
 
 // Phase 8.24: hasData 走 CostBarChart 同样 pattern; Phase 9.28 F12: OR hasMultiSeries
 const hasData = computed(() => {
@@ -66,6 +61,23 @@ const hasData = computed(() => {
   return Object.keys(data).length > 0 && Object.values(data).some((v) => v > 0)
 })
 
+async function initChart() {
+  try {
+    if (!echartsModule) {
+      echartsModule = await import('echarts')
+    }
+    if (!echartsModule?.default?.init) {
+      logger.warn('[CostTrendChart] ECharts module not properly loaded')
+      return
+    }
+    if (!chartInstance && chartRef.value) {
+      chartInstance = echartsModule.default.init(chartRef.value)
+    }
+  } catch (error) {
+    logger.warn('[CostTrendChart] Error initializing chart:', error)
+  }
+}
+
 function render() {
   if (!chartInstance) return
   if (!hasData.value && !hasMultiSeries.value) {
@@ -73,7 +85,6 @@ function render() {
     return
   }
 
-  // Phase 8.29: per-tier multi-series path (优先 over 单线)
   if (hasMultiSeries.value) {
     renderPerTier()
   } else {
@@ -270,11 +281,9 @@ function renderTotal() {
   })
 }
 
-onMounted(() => {
-  if (chartRef.value) {
-    chartInstance = echarts.init(chartRef.value)
-    render()
-  }
+onMounted(async () => {
+  await initChart()
+  render()
 })
 
 onUnmounted(() => {
@@ -284,8 +293,10 @@ onUnmounted(() => {
   }
 })
 
-// Phase 8.24 + 8.29: watch costByDay + costByDayPerTier (深 watch, dict 引用变就 re-render)
-watch(() => [props.costByDay, props.costByDayPerTier], render, { deep: true })
+watch(() => [props.costByDay, props.costByDayPerTier], async () => {
+  await initChart()
+  render()
+}, { deep: true })
 </script>
 
 <style scoped>

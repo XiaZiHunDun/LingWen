@@ -217,14 +217,13 @@ import SidebarSystemStatusBody from '../components/SidebarSystemStatusBody.vue';
 import SidebarCostBanner from '../components/SidebarCostBanner.vue';
 import { resolveNavCreationMode } from '../config/dashboardNavByMode.js';
 import { apiConnectivity } from '../api/connectivity.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
+import { useStudioProject, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
 import {
   fetchBudgets,
   fetchBudgetsByTier,
   setBudget,
   setBudgetByTier,
 } from '../api/index.js';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
 import { PRODUCTION_ENV_VARS, API_KEY_ENV_VARS } from '../utils/settingsEnv.js';
 import {
   formatWindowBudgetRows,
@@ -236,7 +235,6 @@ import {
   currentBudgetUsdForTarget,
   parseBudgetUsdInput,
 } from '../utils/settingsBudgetEdit.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
 
 const { status, connected: wsConnected } = useWorkflowSocket();
 const studio = useStudioProject();
@@ -247,7 +245,7 @@ const apiOffline = computed(() => apiConnectivity.value.offline);
 const apiChecking = computed(() => apiConnectivity.value.checking);
 const resolvedCreationMode = computed(
   () => injectedCreationMode?.value
-    ?? studio.summary.value?.creation_mode
+    ?? studio.summary?.creation_mode
     ?? null,
 );
 const isCompanionShell = computed(

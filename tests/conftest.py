@@ -10,6 +10,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# 确保 infra 目录在 sys.path 最前面，避免测试目录与包同名导致的导入冲突
+INFRA_ROOT = PROJECT_ROOT / "infra"
+if str(INFRA_ROOT) not in sys.path:
+    sys.path.insert(0, str(INFRA_ROOT))
+
 import pytest
 
 

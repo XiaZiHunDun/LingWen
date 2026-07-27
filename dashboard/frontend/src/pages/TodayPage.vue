@@ -102,9 +102,7 @@
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue';
 import PageLeadBar from '../components/PageLeadBar.vue';
-import { useTodayHub } from '../composables/useTodayHub.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+import { useTodayHub, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 import { copyDashboardShareUrl } from '../utils/shareLink.js';
 
 const { snapshot, loading, lastError, refresh } = useTodayHub();

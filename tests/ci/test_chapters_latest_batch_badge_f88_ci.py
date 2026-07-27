@@ -10,7 +10,7 @@ FRONTEND = NOVEL_FACTORY / "dashboard" / "frontend"
 
 class TestChaptersLatestBatchBadgeF88:
     def test_rollup_api_available(self):
-        app = NOVEL_FACTORY / "dashboard" / "app.py"
+        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
         assert "/api/production-records/rollup" in app.read_text(encoding="utf-8")
 
     def test_latest_batch_badge_util(self):

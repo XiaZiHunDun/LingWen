@@ -29,9 +29,12 @@
  */
 
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { logger } from '../utils/logger.js';
 
 const WS_PATH = '/api/ws/workflows';
 const RECONNECT_DELAY_MS = 1000;
+const HEARTBEAT_INTERVAL_MS = 30000;
+const HEARTBEAT_TIMEOUT_MS = 45000;
 // Phase 9.17: guard 防止 cascade handler 累积 leak (反复 mount/unmount / 脚本 bug)
 // 50 = 远超实际 (1-3 components), console.warn 留 diagnostic
 const MAX_HANDLERS = 50;
@@ -46,6 +49,8 @@ const latestCascadeUpdates = ref([]);
 
 let ws = null;
 let reconnectTimer = null;
+let heartbeatTimer = null;
+let heartbeatTimeoutTimer = null;
 let manuallyClosed = false;
 let mountedCount = 0;
 
@@ -76,6 +81,7 @@ function connect() {
   ws.onopen = () => {
     connected.value = true;
     lastError.value = null;
+    startHeartbeat();
   };
 
   ws.onmessage = (event) => {
@@ -100,6 +106,8 @@ function connect() {
         registeredHandlers.audit.forEach((h) => {
           try { h(data.payload); } catch (_) { /* best-effort */ }
         });
+      } else if (data.type === 'heartbeat') {
+        resetHeartbeatTimeout();
       }
     } catch (e) {
       lastError.value = `parse error: ${e?.message || e}`;
@@ -129,6 +137,7 @@ function scheduleReconnect() {
 
 function disconnect() {
   manuallyClosed = true;
+  stopHeartbeat();
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
@@ -142,6 +151,53 @@ function disconnect() {
     ws = null;
   }
   connected.value = false;
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        sendKeepAlive();
+      } catch (e) {
+        logger.warn('[useWorkflowSocket] Failed to send heartbeat:', e);
+        stopHeartbeat();
+        scheduleReconnect();
+      }
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+  resetHeartbeatTimeout();
+}
+
+function resetHeartbeatTimeout() {
+  if (heartbeatTimeoutTimer) {
+    clearTimeout(heartbeatTimeoutTimer);
+  }
+  heartbeatTimeoutTimer = setTimeout(() => {
+    logger.warn('[useWorkflowSocket] Heartbeat timeout, reconnecting');
+    stopHeartbeat();
+    if (ws) {
+      try {
+        ws.close();
+      } catch {
+        // ignore
+      }
+      ws = null;
+    }
+    connected.value = false;
+    scheduleReconnect();
+  }, HEARTBEAT_TIMEOUT_MS);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+  if (heartbeatTimeoutTimer) {
+    clearTimeout(heartbeatTimeoutTimer);
+    heartbeatTimeoutTimer = null;
+  }
 }
 
 function sendKeepAlive() {
@@ -184,7 +240,7 @@ export function useWorkflowSocket() {
 // Phase 9.17: 加 MAX_HANDLERS=50 guard 防止 leak
 export function onCascadeUpdate(handler) {
   if (registeredHandlers.cascade.size >= MAX_HANDLERS) {
-    console.warn(
+    logger.warn(
       `[useWorkflowSocket] MAX_HANDLERS=${MAX_HANDLERS} reached, refusing to register cascade handler`
     );
     return;
@@ -207,7 +263,7 @@ export function onCascadeUpdate(handler) {
 
 export function onAuditCreated(handler) {
   if (registeredHandlers.audit.size >= MAX_HANDLERS) {
-    console.warn(
+    logger.warn(
       `[useWorkflowSocket] MAX_HANDLERS=${MAX_HANDLERS} reached, refusing to register audit handler`
     );
     return;

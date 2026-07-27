@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import * as echarts from 'echarts'
+import { logger } from '../utils/logger.js'
 
 const props = defineProps({
   data: {
@@ -17,15 +17,26 @@ const props = defineProps({
 
 const barRef = ref(null)
 let barChart = null
+let echartsModule = null
 
-const initBarChart = () => {
+const initBarChart = async () => {
   if (!barRef.value || props.data.length === 0) return
 
-  if (barChart) {
-    barChart.dispose()
-  }
+  try {
+    if (!echartsModule) {
+      echartsModule = await import('echarts')
+    }
 
-  barChart = echarts.init(barRef.value)
+    if (!echartsModule?.default?.init) {
+      logger.warn('[CoolpointChart] ECharts module not properly loaded')
+      return
+    }
+
+    if (barChart) {
+      barChart.dispose()
+    }
+
+    barChart = echartsModule.default.init(barRef.value)
 
   const chapters = props.data.map(d => d.chapter)
   const coolpointCounts = props.data.map(d => d.coolpoint_count)
@@ -118,6 +129,9 @@ const initBarChart = () => {
   }
 
   barChart.setOption(option)
+  } catch (error) {
+    logger.warn('[CoolpointChart] Error initializing chart:', error)
+  }
 }
 
 const destroyChart = () => {
@@ -127,16 +141,16 @@ const destroyChart = () => {
   }
 }
 
-onMounted(() => {
-  initBarChart()
+onMounted(async () => {
+  await initBarChart()
 })
 
 onUnmounted(() => {
   destroyChart()
 })
 
-watch(() => props.data, () => {
-  initBarChart()
+watch(() => props.data, async () => {
+  await initBarChart()
 }, { deep: true })
 </script>
 

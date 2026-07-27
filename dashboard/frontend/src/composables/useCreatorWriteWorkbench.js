@@ -1,7 +1,7 @@
 /**
  * useCreatorWriteWorkbench — 左栈工作台状态、选区、checkpoint、导演控制（Human Comfort P0）
  */
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import {
   isWriteWorkbenchLayoutEnabled,
   isWriteWorkbenchPanelVisible,
@@ -15,6 +15,7 @@ import { buildInlineConflictMarkers } from '../utils/creatorInlineConflictUtils.
 import { runLightValidation, summarizeLightValidation } from '../utils/creatorLightValidationUtils.js';
 import { useCreatorAgent } from './useCreatorAgent.js';
 import { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
+import { updateCreatorCreationMode } from '../api/creator.js';
 
 /**
  * @param {{
@@ -47,6 +48,9 @@ export function useCreatorWriteWorkbench(deps) {
   const intentText = ref('');
   const intentGenre = ref('');
   const intentMood = ref('');
+  const intentType = ref('');
+  const intentTheme = ref('');
+  const intentHistory = ref([]);
   const bodySelection = ref({ start: 0, end: 0, text: '' });
   const checkpoints = ref([]);
   const qualityHints = ref([]);
@@ -279,14 +283,15 @@ export function useCreatorWriteWorkbench(deps) {
     },
   });
 
-  async function startQuickWrite() {
+  async function startQuickWrite(actionLabel = null) {
     if (!intentText.value.trim()) {
       qualityHints.value = [{ level: 'warn', text: '可先输入一句话意图，或直接在正文区开写' }];
       return;
     }
     generateRunning.value = true;
     try {
-      await agent.runPlan('quick-write', `一键开写：${intentText.value.trim()}`);
+      const label = actionLabel || `一键开写：${intentText.value.trim()}`;
+      await agent.runPlan('quick-write', label);
       if (!agent.candidates.value.length && !agent.directorAdvice.value.length) {
         return;
       }
@@ -417,12 +422,60 @@ export function useCreatorWriteWorkbench(deps) {
     activeInlineConflictId.value = null;
   }
 
+  async function updateCreationMode(newMode) {
+    if (!['companion', 'advance', 'studio'].includes(newMode)) {
+      throw new Error(`Invalid creation mode: ${newMode}`);
+    }
+    const result = await updateCreatorCreationMode(newMode);
+    if (overview.value) {
+      overview.value.creation_mode = newMode;
+    }
+    return result;
+  }
+
+  function saveIntentToHistory() {
+    if (!intentText.value.trim()) return;
+    const intent = {
+      id: `intent-${Date.now()}`,
+      text: intentText.value,
+      mood: intentMood.value,
+      type: intentType.value,
+      theme: intentTheme.value,
+      timestamp: new Date().toISOString(),
+    };
+    intentHistory.value = [intent, ...intentHistory.value].slice(0, 10);
+  }
+
+  function loadIntentFromHistory(intent) {
+    intentText.value = intent.text;
+    intentMood.value = intent.mood || '';
+    intentType.value = intent.type || '';
+    intentTheme.value = intent.theme || '';
+  }
+
+  function clearIntentHistory() {
+    intentHistory.value = [];
+  }
+
+  onUnmounted(() => {
+    if (lightValidationTimer) {
+      clearTimeout(lightValidationTimer);
+      lightValidationTimer = null;
+    }
+    if (inlineConflictHighlightTimer) {
+      clearTimeout(inlineConflictHighlightTimer);
+      inlineConflictHighlightTimer = null;
+    }
+  });
+
   return {
     workbenchEnabled,
     leftPanelCollapsed,
     intentText,
     intentGenre,
     intentMood,
+    intentType,
+    intentTheme,
     bodySelection,
     hasBodySelection,
     checkpoints,
@@ -466,5 +519,11 @@ export function useCreatorWriteWorkbench(deps) {
     dismissQualityHint,
     syncQualityFromLogicCheck,
     agent,
+    creationMode,
+    updateCreationMode,
+    intentHistory,
+    saveIntentToHistory,
+    loadIntentFromHistory,
+    clearIntentHistory,
   };
 }

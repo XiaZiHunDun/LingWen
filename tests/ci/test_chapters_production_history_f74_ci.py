@@ -15,7 +15,7 @@ class TestChaptersProductionHistoryF74:
         assert "list_production_records" in path.read_text(encoding="utf-8")
 
     def test_api_endpoint(self):
-        app = NOVEL_FACTORY / "dashboard" / "app.py"
+        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
         assert "/api/production-records" in app.read_text(encoding="utf-8")
 
     def test_chapters_page_history_panel(self):

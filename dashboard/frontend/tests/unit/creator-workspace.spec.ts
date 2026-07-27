@@ -2,6 +2,7 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { ref } from 'vue'
 import { byTestid } from '../helpers/by-testid'
 
 const creatorMocks = vi.hoisted(() => ({
@@ -55,7 +56,7 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
 })
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
-  useStudioProject: () => ({ projectRevision: { value: 0 } }),
+  useStudioProject: () => ({ projectRevision: ref(0) }),
 }))
 
 vi.mock('../../src/composables/useDashboardNav.js', () => ({

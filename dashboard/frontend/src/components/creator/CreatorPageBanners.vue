@@ -19,7 +19,7 @@
 <script setup>
 import { computed, inject } from 'vue';
 import { CREATOR_PAGE_CHROME_KEY } from './creatorPageChromeKey.js';
-import { useFilteredPageError } from '../../composables/useFilteredPageError.js';
+import { useFilteredPageError } from '../../composables/index.js';
 
 const c = inject(CREATOR_PAGE_CHROME_KEY);
 const displayError = useFilteredPageError(computed(() => c?.error ?? ''));

@@ -44,8 +44,7 @@ import ChaptersPage from './ChaptersPage.vue';
 import WorkflowsPage from './WorkflowsPage.vue';
 import { PRODUCE_TABS } from '../config/dashboardNav.js';
 import { isHubProduceTabVisible } from '../config/creatorPanelMatrix.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
+import { useDashboardNav, useStudioProject } from '../composables/index.js';
 
 const { produceTab, setProduceTab } = useDashboardNav();
 const studio = useStudioProject();
@@ -53,18 +52,18 @@ const chaptersPanelRef = ref(null);
 const workflowsPanelRef = ref(null);
 
 const activeTab = computed({
-  get: () => produceTab.value,
+  get: () => produceTab,
   set: (tab) => setProduceTab(tab),
 });
 
 const visibleProduceTabs = computed(() => {
-  const mode = studio.summary.value?.creation_mode;
+  const mode = studio.summary?.creation_mode;
   if (!mode) return PRODUCE_TABS;
   return PRODUCE_TABS.filter((tab) => isHubProduceTabVisible(mode, tab.id));
 });
 
 watch(
-  () => [studio.summary.value?.creation_mode, visibleProduceTabs.value.map((t) => t.id).join(',')],
+  () => [studio.summary?.creation_mode, visibleProduceTabs.value.map((t) => t.id).join(',')],
   () => {
     const ids = visibleProduceTabs.value.map((t) => t.id);
     if (ids.length && !ids.includes(activeTab.value)) {
@@ -75,7 +74,7 @@ watch(
 );
 
 const hubLoading = computed(() => {
-  if (activeTab.value === 'studio') return studio.loading.value;
+  if (activeTab.value === 'studio') return studio.loading;
   if (activeTab.value === 'chapters') return chaptersPanelRef.value?.loading ?? false;
   if (activeTab.value === 'workflows') return workflowsPanelRef.value?.loading ?? false;
   return false;

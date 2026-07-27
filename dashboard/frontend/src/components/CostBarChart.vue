@@ -33,23 +33,19 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import * as echarts from 'echarts'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { logger } from '../utils/logger.js'
 import { TIER_COLORS, TIER_ORDER, tierColor } from '../utils/costTrendChartUtils.js'
 
 const props = defineProps({
   costByScenario: {
     type: Object,
     required: true,
-    // shape: { "chapter_writing": 0.012, "chapter_review": 0.006, ... }
   },
-  // Phase 8.13: tier 维度数据 (来自后端 cost_by_tier)
-  // shape: { "premium": 0.05, "standard": 0.02, "budget": 0.005, ... }
   costByTier: {
     type: Object,
     default: () => ({}),
   },
-  // Phase 8.13: 'scenario' | 'tier'
   mode: {
     type: String,
     default: 'scenario',
@@ -57,11 +53,11 @@ const props = defineProps({
   },
 })
 
-// Phase 8.13: 切 mode → 选数据源 (v-model:mode 走 update:mode)
 const emit = defineEmits(['update:mode'])
 
 const chartRef = ref(null)
 let chartInstance = null
+let echartsModule = null
 
 // Phase 8.13: displayData 根据 mode 选 costByScenario / costByTier
 const displayData = computed(() => {
@@ -213,11 +209,26 @@ function render() {
   })
 }
 
-onMounted(() => {
-  if (chartRef.value) {
-    chartInstance = echarts.init(chartRef.value)
-    render()
+async function initChart() {
+  try {
+    if (!echartsModule) {
+      echartsModule = await import('echarts')
+    }
+    if (!echartsModule?.default?.init) {
+      logger.warn('[CostBarChart] ECharts module not properly loaded')
+      return
+    }
+    if (!chartInstance && chartRef.value) {
+      chartInstance = echartsModule.default.init(chartRef.value)
+    }
+  } catch (error) {
+    logger.warn('[CostBarChart] Error initializing chart:', error)
   }
+}
+
+onMounted(async () => {
+  await initChart()
+  render()
 })
 
 onUnmounted(() => {
@@ -227,9 +238,14 @@ onUnmounted(() => {
   }
 })
 
-// Phase 8.13: watch displayData 覆盖 3 trigger (costByScenario 变 / costByTier 变 / mode 切)
-watch(displayData, render, { deep: true })
-watch(() => props.mode, render)
+watch(displayData, async () => {
+  await initChart()
+  render()
+}, { deep: true })
+watch(() => props.mode, async () => {
+  await initChart()
+  render()
+})
 </script>
 
 <style scoped>

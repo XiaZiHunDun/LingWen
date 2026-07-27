@@ -50,9 +50,7 @@ import HubTabBar from '../components/HubTabBar.vue';
 import OverviewPage from './OverviewPage.vue';
 import AnalyticsPage from './AnalyticsPage.vue';
 import { INSIGHT_TABS } from '../config/dashboardNav.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { useOverviewStore } from '../composables/useOverviewStore.js';
-import { useRippleStore } from '../composables/useRippleStore.js';
+import { useDashboardNav, useOverviewStore, useRippleStore } from '../composables/index.js';
 
 const isReadonlyInsight = inject('isReadonlyInsight', computed(() => false));
 const { insightTab, setInsightTab } = useDashboardNav();
@@ -60,7 +58,7 @@ const overviewStore = useOverviewStore();
 const rippleStore = useRippleStore();
 
 const activeTab = computed({
-  get: () => insightTab.value,
+  get: () => insightTab,
   set: (tab) => setInsightTab(tab),
 });
 

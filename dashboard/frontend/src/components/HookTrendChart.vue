@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import * as echarts from 'echarts'
+import { logger } from '../utils/logger.js'
 
 const props = defineProps({
   data: {
@@ -17,11 +17,22 @@ const props = defineProps({
 
 const chartRef = ref(null)
 let chartInstance = null
+let echartsModule = null
 
-const initChart = () => {
+const initChart = async () => {
   if (!chartRef.value || props.data.length === 0) return
 
-  chartInstance = echarts.init(chartRef.value)
+  try {
+    if (!echartsModule) {
+      echartsModule = await import('echarts')
+    }
+
+    if (!echartsModule?.default?.init) {
+      logger.warn('[HookTrendChart] ECharts module not properly loaded')
+      return
+    }
+
+    chartInstance = echartsModule.default.init(chartRef.value)
 
   const chapters = props.data.map(d => d.chapter)
   const hookCounts = props.data.map(d => d.hook_count)
@@ -130,6 +141,9 @@ const initChart = () => {
   }
 
   chartInstance.setOption(option)
+  } catch (error) {
+    logger.warn('[HookTrendChart] Error initializing chart:', error)
+  }
 }
 
 const destroyChart = () => {
@@ -139,16 +153,16 @@ const destroyChart = () => {
   }
 }
 
-onMounted(() => {
-  initChart()
+onMounted(async () => {
+  await initChart()
 })
 
 onUnmounted(() => {
   destroyChart()
 })
 
-watch(() => props.data, () => {
-  initChart()
+watch(() => props.data, async () => {
+  await initChart()
 }, { deep: true })
 </script>
 

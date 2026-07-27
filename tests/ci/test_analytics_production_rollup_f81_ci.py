@@ -14,7 +14,7 @@ class TestAnalyticsProductionRollupF81:
         text = mod.read_text(encoding="utf-8")
         assert "rollup_production_records" in text
         assert "compute_deduplicated_cost_usd" in text
-        app = NOVEL_FACTORY / "dashboard" / "app.py"
+        app = NOVEL_FACTORY / "dashboard" / "routes" / "overview.py"
         assert "/api/production-records/rollup" in app.read_text(encoding="utf-8")
 
     def test_analytics_rollup_util(self):

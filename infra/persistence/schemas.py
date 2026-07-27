@@ -1,29 +1,33 @@
-"""Phase 15.0 T2.3: DDL schema 注册中心.
-
-集中 6 个 storage 类的初始 DDL, 让 schema 升级时只查一处。
-
-设计原则:
-- **不替代** `RippleStorage._apply_schema_migrations` 等类内的 additive migration。
-  SCHEMAS 仅含**初始 DDL** (CREATE TABLE IF NOT EXISTS), 增量迁移仍由原类控制。
-- **不导入** 真实 storage 类 (避免循环 import + 副作用)。DDL 直接内联。
-- 测试通过对比: 调用 apply_schema 后 pragma table_list 跟原 storage 初始化后一致。
-"""
-from __future__ import annotations
-
 import sqlite3
-from typing import Dict, List
 
-# 6 个 storage 的初始 DDL. 内容来自对应的 _init_db / _apply_schema_migrations 起始段.
-SCHEMAS: Dict[str, List[str]] = {
+SCHEMAS: dict[str, list[str]] = {
     "ripple": [
-        """
-        CREATE TABLE IF NOT EXISTS ripple_impact_scores (
-            ripple_id TEXT PRIMARY KEY,
-            impact_score REAL NOT NULL DEFAULT 0.0
-        )
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS ripples (
+        """CREATE TABLE IF NOT EXISTS reference_nodes (
+            id TEXT PRIMARY KEY,
+            dimension TEXT NOT NULL,
+            volume INTEGER NOT NULL,
+            chapter INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            created_by TEXT NOT NULL
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_nodes_volume ON reference_nodes(volume)",
+        "CREATE INDEX IF NOT EXISTS idx_nodes_dim ON reference_nodes(dimension)",
+        """CREATE TABLE IF NOT EXISTS reference_edges (
+            id TEXT PRIMARY KEY,
+            from_node_id TEXT NOT NULL REFERENCES reference_nodes(id),
+            to_node_id TEXT NOT NULL REFERENCES reference_nodes(id),
+            relationship_type TEXT NOT NULL,
+            weight REAL NOT NULL,
+            payload TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            created_by TEXT NOT NULL
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_edges_from ON reference_edges(from_node_id)",
+        "CREATE INDEX IF NOT EXISTS idx_edges_to ON reference_edges(to_node_id)",
+        """CREATE TABLE IF NOT EXISTS reference_ripples (
             id TEXT PRIMARY KEY,
             trigger_volume INTEGER NOT NULL,
             trigger_chapter INTEGER NOT NULL,
@@ -32,108 +36,203 @@ SCHEMAS: Dict[str, List[str]] = {
             proposed_actions TEXT NOT NULL,
             status TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-        """,
+            confirmed_at TEXT,
+            applied_at TEXT,
+            payload TEXT NOT NULL,
+            parent_ripple_id TEXT
+        )""",
+        """CREATE TABLE IF NOT EXISTS ripple_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ripple_id TEXT NOT NULL REFERENCES reference_ripples(id),
+            action TEXT NOT NULL CHECK(action IN ('created', 'applied', 'rejected', 'failed', 'rolled_back')),
+            prev_status TEXT,
+            new_status TEXT NOT NULL,
+            actor TEXT NOT NULL,
+            origin TEXT NOT NULL CHECK(origin IN ('ui', 'cli', 'system')),
+            reason TEXT,
+            created_at TEXT NOT NULL
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_audit_ripple ON ripple_audit(ripple_id, created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_audit_actor ON ripple_audit(actor, created_at DESC)",
+        """CREATE TABLE IF NOT EXISTS ripple_cascade (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trigger_ripple_id TEXT NOT NULL,
+            cascade_nodes_json TEXT NOT NULL,
+            cascade_edges_json TEXT NOT NULL,
+            cascade_actions_json TEXT NOT NULL,
+            depth_reached INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (trigger_ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_ripple_cascade_trigger ON ripple_cascade(trigger_ripple_id)",
+        """CREATE TABLE IF NOT EXISTS cascade_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ripple_id TEXT NOT NULL,
+            max_depth INTEGER NOT NULL,
+            depth_reached INTEGER NOT NULL,
+            algorithm TEXT NOT NULL,
+            started_at TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('running', 'completed', 'cancelled', 'failed')),
+            nodes_json TEXT NOT NULL,
+            edges_json TEXT NOT NULL,
+            actions_json TEXT NOT NULL,
+            FOREIGN KEY (ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_cascade_runs_ripple ON cascade_runs(ripple_id, id DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_cascade_runs_status ON cascade_runs(status) WHERE status != 'completed'",
+        """CREATE TABLE IF NOT EXISTS cascade_broadcast_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ripple_id TEXT NOT NULL,
+            latency_ms INTEGER NOT NULL CHECK(latency_ms >= 0),
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (ripple_id) REFERENCES reference_ripples(id) ON DELETE CASCADE
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_cascade_broadcast_ripple ON cascade_broadcast_log(ripple_id, id DESC)",
     ],
     "cost": [
-        """
-        CREATE TABLE IF NOT EXISTS cost_events (
+        """CREATE TABLE IF NOT EXISTS cost_records (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            agent TEXT NOT NULL,
-            operation TEXT NOT NULL,
-            tokens_in INTEGER NOT NULL DEFAULT 0,
-            tokens_out INTEGER NOT NULL DEFAULT 0,
-            cost_usd REAL NOT NULL DEFAULT 0.0,
-            project TEXT,
-            metadata TEXT
-        )
-        """,
+            scenario TEXT NOT NULL,
+            tier TEXT NOT NULL,
+            input_tokens INTEGER NOT NULL,
+            output_tokens INTEGER NOT NULL,
+            cost_usd REAL NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_cost_records_scenario ON cost_records(scenario)",
+        "CREATE INDEX IF NOT EXISTS idx_cost_records_tier ON cost_records(tier)",
+        "CREATE INDEX IF NOT EXISTS idx_cost_records_timestamp ON cost_records(timestamp)",
     ],
     "budget": [
-        """
-        CREATE TABLE IF NOT EXISTS budget_allocations (
+        """CREATE TABLE IF NOT EXISTS budgets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project TEXT NOT NULL,
-            window_start TEXT NOT NULL,
-            window_end TEXT NOT NULL,
-            allocated_usd REAL NOT NULL,
-            spent_usd REAL NOT NULL DEFAULT 0.0
-        )
-        """,
-    ],
-    "reading": [
-        """
-        CREATE TABLE IF NOT EXISTS hooks (
+            scope TEXT NOT NULL,
+            usd REAL NOT NULL,
+            run_id TEXT,
+            set_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_budgets_scope_setat ON budgets(scope, set_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_budgets_run_id ON budgets(run_id)",
+        """CREATE TABLE IF NOT EXISTS budgets_by_tier (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chapter INTEGER NOT NULL,
-            position INTEGER NOT NULL,
-            hook_type TEXT NOT NULL,
-            description TEXT NOT NULL,
-            resolved_in_chapter INTEGER,
-            created_at TEXT NOT NULL
-        )
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS coolpoints (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chapter INTEGER NOT NULL,
-            tension_level INTEGER NOT NULL,
-            description TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-        """,
+            tier TEXT NOT NULL,
+            usd REAL NOT NULL,
+            set_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_budgets_by_tier ON budgets_by_tier(tier, set_at DESC)",
     ],
     "workflow": [
-        """
-        CREATE TABLE IF NOT EXISTS workflow_runs (
-            id TEXT PRIMARY KEY,
-            project TEXT NOT NULL,
+        """CREATE TABLE IF NOT EXISTS workflow_state (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS agent_tasks (
+            task_id TEXT PRIMARY KEY,
+            task_name TEXT NOT NULL,
+            agent TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            heartbeat_at TEXT,
+            task_id_external TEXT,
+            dispatched_at TEXT,
+            error_msg TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS state_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            table_name TEXT,
+            record_id TEXT,
+            old_value TEXT,
+            new_value TEXT,
+            changed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            changed_by TEXT
+        )""",
+    ],
+    "reading": [
+        """CREATE TABLE IF NOT EXISTS hooks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chapter TEXT NOT NULL,
+            hook_type TEXT NOT NULL,
+            strength REAL NOT NULL,
+            position TEXT NOT NULL,
+            content TEXT NOT NULL,
+            llm_analyzed INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(chapter, hook_type, position)
+        )""",
+        """CREATE TABLE IF NOT EXISTS coolpoints (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chapter TEXT NOT NULL,
+            pattern TEXT NOT NULL,
+            density REAL NOT NULL,
+            combo_with TEXT,
+            content TEXT NOT NULL,
+            llm_analyzed INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(chapter, pattern)
+        )""",
+        """CREATE TABLE IF NOT EXISTS chapter_summary (
+            chapter TEXT PRIMARY KEY,
+            hook_count INTEGER DEFAULT 0,
+            hook_strength_avg REAL DEFAULT 0.0,
+            coolpoint_count INTEGER DEFAULT 0,
+            coolpoint_density REAL DEFAULT 0.0,
+            reading_power_score REAL DEFAULT 0.0,
+            last_analyzed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS analysis_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chapter TEXT NOT NULL,
+            analyzer_type TEXT NOT NULL,
+            input_tokens INTEGER,
+            output_tokens INTEGER,
+            duration_ms INTEGER,
             status TEXT NOT NULL,
-            started_at TEXT NOT NULL,
-            completed_at TEXT,
-            metadata TEXT
-        )
-        """,
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_hooks_chapter ON hooks(chapter)",
+        "CREATE INDEX IF NOT EXISTS idx_coolpoints_chapter ON coolpoints(chapter)",
+        "CREATE INDEX IF NOT EXISTS idx_chapter_summary_chapter ON chapter_summary(chapter)",
     ],
     "relationship": [
-        """
-        CREATE TABLE IF NOT EXISTS relationships (
+        """CREATE TABLE IF NOT EXISTS characters (
+            name TEXT PRIMARY KEY,
+            role TEXT NOT NULL DEFAULT 'supporting'
+        )""",
+        """CREATE TABLE IF NOT EXISTS relationships (
+            from_char TEXT NOT NULL,
+            to_char TEXT NOT NULL,
+            type TEXT NOT NULL,
+            trust REAL NOT NULL DEFAULT 0.5,
+            conflict REAL NOT NULL DEFAULT 0.1,
+            last_event TEXT,
+            PRIMARY KEY (from_char, to_char, type)
+        )""",
+        """CREATE TABLE IF NOT EXISTS events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            char_a TEXT NOT NULL,
-            char_b TEXT NOT NULL,
-            relationship_type TEXT NOT NULL,
-            strength REAL NOT NULL DEFAULT 0.5,
-            last_updated TEXT NOT NULL,
-            UNIQUE(char_a, char_b)
-        )
-        """,
+            from_char TEXT NOT NULL,
+            to_char TEXT NOT NULL,
+            type TEXT NOT NULL,
+            chapter INTEGER NOT NULL
+        )""",
     ],
 }
 
 
 def apply_schema(name: str, conn: sqlite3.Connection) -> None:
-    """对给定 connection 执行 name 对应 schema 的所有 DDL.
-
-    Args:
-        name: SCHEMAS key (ripple/cost/budget/reading/workflow/relationship)
-        conn: 已打开的 sqlite3.Connection
-
-    Raises:
-        KeyError: name 不在 SCHEMAS 中
-    """
     if name not in SCHEMAS:
-        raise KeyError(
-            f"schema '{name}' 未注册. 已注册: {sorted(SCHEMAS.keys())}"
-        )
-    for ddl in SCHEMAS[name]:
-        conn.executescript(ddl)
+        raise KeyError(f"Unknown schema: {name}")
+    for stmt in SCHEMAS[name]:
+        conn.execute(stmt)
 
 
-def registered_schema_names() -> List[str]:
-    """返回所有已注册 schema 名 (按字母排序)."""
+def get_schema(name: str) -> list[str]:
+    return SCHEMAS.get(name, [])
+
+
+def registered_schema_names() -> list[str]:
     return sorted(SCHEMAS.keys())
-
-
-__all__ = ["SCHEMAS", "apply_schema", "registered_schema_names"]

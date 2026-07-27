@@ -389,6 +389,30 @@ export function useCreatorAgent(deps) {
     await runPlan('prompt', text);
   }
 
+  async function chat(text) {
+    pushMessage('user', text);
+    generating.value = true;
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = `我收到了你的消息："${text}"。这是一个模拟的聊天响应。在实际应用中，这里会调用后端 API 获取真实的 AI 响应。`;
+      pushMessage('assistant', response);
+      return response;
+    } finally {
+      generating.value = false;
+    }
+  }
+
+  async function ask(text) {
+    generating.value = true;
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const response = `关于"${text}"，我的建议是：继续保持写作的节奏，多尝试不同的表达方式，让故事更加生动有趣。`;
+      return response;
+    } finally {
+      generating.value = false;
+    }
+  }
+
   async function runRewritePreset(presetId) {
     const label = REWRITE_LABELS[presetId] || presetId;
     await runPlan(`rewrite:${presetId}`, label);
@@ -523,6 +547,8 @@ export function useCreatorAgent(deps) {
     submitPrompt,
     runRewritePreset,
     runDirectorPath,
+    chat,
+    ask,
     runPlan,
     selectCandidate,
     confirmApply,

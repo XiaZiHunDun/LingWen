@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
+import { ref } from 'vue';
 import AskPage from '../../src/pages/AskPage.vue';
 
 vi.mock('../../src/composables/useDashboardNav.js', () => ({
@@ -10,7 +11,7 @@ vi.mock('../../src/composables/useDashboardNav.js', () => ({
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
   useStudioProject: () => ({
-    activeSlug: { value: 'demo' },
+    activeSlug: ref('demo'),
   }),
 }));
 

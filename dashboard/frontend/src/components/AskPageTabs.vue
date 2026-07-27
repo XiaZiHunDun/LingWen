@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { useAskPageTab } from '../composables/useAskAssistant.js';
+import { useAskPageTab } from '../composables/index.js';
 
 const { tab } = useAskPageTab();
 </script>

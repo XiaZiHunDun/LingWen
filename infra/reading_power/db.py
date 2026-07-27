@@ -1,9 +1,12 @@
 """
 Reading Power Database Module for 追读力系统.
 Provides SQLite-based storage for hooks, coolpoints, and chapter analysis results.
+
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("reading") singleton.
 """
 
 import sqlite3
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -18,6 +21,13 @@ class ReadingPowerDB:
         if isinstance(db_path, str):
             db_path = Path(db_path)
         self.db_path = db_path or self.DB_PATH
+        warnings.warn(
+            "Phase 15.0 T2.8: ReadingPowerDB 直接实例化已弃用, "
+            "请使用 infra.persistence.registry.get('reading') singleton. "
+            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if init_if_missing:
             self._ensure_db_path()
             self._init_db()

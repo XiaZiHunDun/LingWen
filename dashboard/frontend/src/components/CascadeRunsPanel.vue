@@ -90,7 +90,7 @@ import {
   cancelCascadeRun,
   fetchCascadeWithDepth,
 } from '../api/index.js';
-import { onCascadeUpdate } from '../composables/useWorkflowSocket.js';
+import { onCascadeUpdate } from '../composables/index.js';
 import CascadeGraph from './CascadeGraph.vue';
 import CascadeRunsFilter from './CascadeRunsFilter.vue';
 

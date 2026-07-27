@@ -1,18 +1,27 @@
 import { ref } from 'vue';
 
-/** @type {import('vue').Ref<{ offline: boolean, message: string, checking: boolean }>} */
 export const apiConnectivity = ref({
   offline: false,
   message: '',
   checking: false,
 });
 
+let connectivityStore = null;
+
+export function setConnectivityStore(store) {
+  connectivityStore = store;
+}
+
 export function markApiOnline() {
-  if (apiConnectivity.value.offline) {
-    apiConnectivity.value = { offline: false, message: '', checking: false };
+  apiConnectivity.value = { offline: false, message: '', checking: false };
+  if (connectivityStore) {
+    connectivityStore.markOnline();
   }
 }
 
 export function markApiOffline(message) {
   apiConnectivity.value = { offline: true, message, checking: false };
+  if (connectivityStore) {
+    connectivityStore.markOffline(message);
+  }
 }

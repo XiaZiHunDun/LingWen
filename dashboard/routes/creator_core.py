@@ -21,6 +21,7 @@ import json
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response, StreamingResponse
 
+from dashboard.errors import NotFoundError, ValidationError
 from dashboard.models import (
     CreatorAgentPlanRequest,
     CreatorAgentPlanResponse,
@@ -58,7 +59,7 @@ def _require_project(ctx: RoutesContext):
 
     project = active_project()
     if project is None:
-        raise HTTPException(404, "no active project")
+        raise NotFoundError("no active project")
     return project
 
 
@@ -71,6 +72,18 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         project = _require_project(ctx)
         return CreatorOverviewResponse(**creator_overview(project))
 
+    @app.put("/api/creator/overview/mode", response_model=CreatorOverviewResponse)
+    def creator_overview_mode_put(body: dict) -> CreatorOverviewResponse:
+        from infra.creator_dashboard import creator_overview
+        from infra.project_config import update_project_creation_mode
+
+        project = _require_project(ctx)
+        new_mode = body.get("mode")
+        if new_mode not in {"companion", "advance", "studio"}:
+            raise ValidationError("invalid creation mode")
+        update_project_creation_mode(project.root, new_mode)
+        return CreatorOverviewResponse(**creator_overview(project))
+
     @app.post("/api/creator/logic-check", response_model=CreatorLogicCheckResponse)
     def creator_logic_check_endpoint(chapter: int | None = None) -> CreatorLogicCheckResponse:
         from infra.creator_logic_check import run_creator_logic_check
@@ -79,7 +92,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         try:
             result = run_creator_logic_check(project.root, chapter_num=chapter)
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
         return CreatorLogicCheckResponse(**result)
 
     @app.post("/api/creator/agent/plan", response_model=CreatorAgentPlanResponse)
@@ -104,7 +117,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 provider_mode=body.provider_mode,
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
         return CreatorAgentPlanResponse(**result)
 
     @app.post("/api/creator/agent/plan/stream")
@@ -230,7 +243,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
         project = _require_project(ctx)
         if req.note is None and req.pinned is None:
-            raise HTTPException(400, "note or pinned required")
+            raise ValidationError("note or pinned required")
         try:
             result = upsert_memory_annotation(
                 project.root,
@@ -239,7 +252,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 pinned=req.pinned,
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
         return CreatorMemoryAnnotationResponse(
             asset_id=result["asset_id"],
             note=result.get("note"),
@@ -255,7 +268,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
         project = _require_project(ctx)
         if not req.query.strip():
-            raise HTTPException(400, "query required")
+            raise ValidationError("query required")
         return CreatorMemoryQueryResponse(
             **creator_memory_query(
                 project,
@@ -283,7 +296,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 submission_sample_count=req.submission_sample_count or 3,
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
         filename = f"{project.slug}-{mode}.epub"
         return Response(
             content=data,
@@ -309,7 +322,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 submission_sample_count=req.submission_sample_count or 3,
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
         filename = f"{project.slug}-{mode}.docx"
         return Response(
             content=data,
@@ -371,7 +384,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 ),
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
 
     @app.put(
         "/api/creator/chapters/{chapter_num}/outline",
@@ -389,7 +402,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 **save_creator_chapter_outline(project, chapter_num, req.outline),
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
 
     @app.put(
         "/api/creator/chapters/{chapter_num}",
@@ -407,7 +420,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
                 **save_creator_chapter_body(project, chapter_num, req.body),
             )
         except ValueError as exc:
-            raise HTTPException(400, str(exc)) from exc
+            raise ValidationError(str(exc)) from exc
 
     @app.post(
         "/api/creator/volume-summary/generate",
@@ -420,7 +433,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
         project = _require_project(ctx)
         if req.start_chapter < 1 or req.end_chapter < req.start_chapter:
-            raise HTTPException(400, "invalid chapter range")
+            raise ValidationError("invalid chapter range")
         out = write_volume_summary(
             project.root,
             start_chapter=req.start_chapter,

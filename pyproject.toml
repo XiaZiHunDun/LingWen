@@ -128,3 +128,29 @@ omit = [
 [tool.coverage.report]
 precision = 2
 show_missing = true
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+strict_optional = true
+strict_concatenate = true
+follow_imports = "normal"
+follow_imports_for_stubs = true
+ignore_missing_imports = true
+exclude = [
+    "tests/.*",
+    "tools/.*",
+    "dashboard/frontend/.*",
+    ".*__pycache__.*",
+]
+plugins = []

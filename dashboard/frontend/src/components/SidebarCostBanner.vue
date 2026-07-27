@@ -113,8 +113,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
-import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
+import { useCostWindow, TIME_OPTIONS } from '../composables/index.js';
 
 const props = defineProps({
   status: {

@@ -134,8 +134,7 @@ import { computed, ref } from 'vue';
 import ScoreRadarChart from './ScoreRadarChart.vue';
 import CostBarChart from './CostBarChart.vue';
 import CostTrendChart from './CostTrendChart.vue';  // Phase 8.24
-import { useCostWindow } from '../composables/useCostWindow.js';  // Phase 8.16
-import { TIME_OPTIONS } from '../composables/useTimeOptions.js';  // Phase 8.20
+import { useCostWindow, TIME_OPTIONS } from '../composables/index.js';
 import {
   formatIncrementalBackfill,
   productionSummaryLines,

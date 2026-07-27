@@ -9,30 +9,37 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Type
 
+from infra.errors import BaseError, RetryableError
 
-class AIProviderError(Exception):
+
+class AIProviderError(BaseError):
     """AI Provider错误基类"""
-    pass
+    __error_name__ = "AIProviderError"
+    __error_tags__ = ["ai", "provider"]
 
 
 class ProviderConfigError(AIProviderError):
     """配置错误"""
-    pass
+    __error_name__ = "ProviderConfigError"
+    __error_tags__ = ["ai", "config"]
 
 
 class APIError(AIProviderError):
     """API调用错误"""
-    pass
+    __error_name__ = "APIError"
+    __error_tags__ = ["ai", "api"]
 
 
-class NetworkError(AIProviderError):
+class NetworkError(AIProviderError, RetryableError):
     """网络错误"""
-    pass
+    __error_name__ = "NetworkError"
+    __error_tags__ = ["ai", "network"]
 
 
-class TimeoutError(AIProviderError):
+class TimeoutError(AIProviderError, RetryableError):
     """超时错误"""
-    pass
+    __error_name__ = "TimeoutError"
+    __error_tags__ = ["ai", "timeout"]
 
 
 # 默认模型（low-level fallback；生产环境由 infra/agent_system/agent_config.PROVIDER_MODEL_DEFAULTS 注入）

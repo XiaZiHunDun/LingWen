@@ -7,6 +7,9 @@ R3-012: Provider 类型注册化 — 3 个内置 provider 通过
 router.py 通过 `get_provider_class(name)` 查找,新增 provider 只需
 写一个 `<name>_provider.py` 并加 `@register_provider("name")`,
 无需改 router / __init__。
+
+插件化架构：通过 PluginManager 自动发现和加载 provider，
+支持内部模块、外部插件目录和环境变量配置。
 """
 
 # 触发各 provider 模块的 @register_provider 装饰器
@@ -27,6 +30,12 @@ from .base import (
     get_provider_class,
     list_registered_providers,
     register_provider,
+)
+from .plugin_manager import (
+    PluginInfo,
+    PluginManager,
+    discover_and_register,
+    get_plugin_manager,
 )
 
 # Phase 2.11 — 多模型分级路由
@@ -54,6 +63,11 @@ __all__ = [
     "register_provider",
     "get_provider_class",
     "list_registered_providers",
+    # 插件化架构
+    "PluginInfo",
+    "PluginManager",
+    "get_plugin_manager",
+    "discover_and_register",
     # Phase 2.11
     "ModelTier",
     "ModelTierConfig",

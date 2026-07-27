@@ -1,0 +1,41 @@
+# Cursor AI Assistant Rules
+# These rules guide AI assistants (Cursor, Trae, etc.) when modifying this project
+
+## FRONTEND VALIDATION MANDATE
+When you modify ANY frontend-related files (.vue, .js, .ts, .css, .scss, .json in dashboard/frontend/), YOU MUST:
+
+1. After making changes, immediately run: `bash scripts/check-frontend.sh`
+2. If the check fails, analyze the error message and fix the issue
+3. Re-run the check script until it passes
+4. Do NOT proceed with other tasks until the frontend check passes
+
+## AUTO-FIX WORKFLOW
+If the check script reports errors, follow this auto-fix workflow:
+
+1. Run `bash scripts/auto-fix-frontend.sh` to attempt automatic fixes
+2. If auto-fix succeeds, verify with `bash scripts/check-frontend.sh`
+3. If auto-fix fails, manually analyze and fix the error
+
+## COMMON ERROR PATTERNS AND FIXES
+- "X is not defined" in Vue component → Add missing import to the script section
+- "Invalid end tag" in Vue template → Check for unmatched HTML tags
+- "Cannot read property of undefined" → Add null checks or verify data injection
+- "Module not found" → Verify import paths are correct
+- Build fails with TypeScript errors → Fix type annotations
+
+## VERIFICATION CHECKLIST
+Before completing any frontend task, confirm:
+- ✅ `pnpm build` succeeds
+- ✅ Dev server at http://localhost:5173 returns 200
+- ✅ Page content is visible (not blank)
+- ✅ Console shows no fatal errors
+
+## RUNNING DEV SERVER
+If dev server is not running, start it with:
+`cd dashboard/frontend && pnpm dev`
+
+## EMERGENCY FIXES
+If frontend is completely broken (blank page):
+1. Check browser console for errors
+2. Look for missing imports in recently modified components
+3. Restore from git if needed: `git checkout dashboard/frontend/src/<broken-file>`

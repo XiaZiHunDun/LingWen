@@ -224,7 +224,9 @@ from dashboard.models.decision import (
     ResolveDecisionRequest,  # noqa: F401
 )
 from dashboard.models.health import (
+    DatabaseStatus,  # noqa: F401
     HealthResponse,  # noqa: F401
+    MemoryUsage,  # noqa: F401
     OverviewResponse,  # noqa: F401
 )
 from dashboard.models.studio import (

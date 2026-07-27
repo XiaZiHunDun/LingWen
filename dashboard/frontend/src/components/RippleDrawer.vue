@@ -154,8 +154,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useRippleStore } from '../composables/useRippleStore.js';
-import { onCascadeUpdate, onAuditCreated } from '../composables/useWorkflowSocket.js';  // Phase 9.16 / 9.62 F53
+import { useRippleStore, onCascadeUpdate, onAuditCreated } from '../composables/index.js';
 import CascadeGraph from './CascadeGraph.vue';
 import ApplyConfirmModal from './ApplyConfirmModal.vue';
 import CascadeRunsPanel from './CascadeRunsPanel.vue';  // Phase 9.22 T3

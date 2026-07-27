@@ -11,7 +11,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { fetchStudioSummary } from '../api/index.js';
 import { creationModeMeta } from '../utils/creationModeHint.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
+import { useStudioProject } from '../composables/index.js';
 
 const props = defineProps({
   mode: { type: String, default: '' },
@@ -21,7 +21,7 @@ const { summary } = useStudioProject();
 const localMode = ref('');
 
 onMounted(() => {
-  if (!props.mode && !summary.value) {
+  if (!props.mode && !summary) {
     fetchStudioSummary()
       .then((s) => { localMode.value = s?.creation_mode || ''; })
       .catch(() => {});
@@ -29,7 +29,7 @@ onMounted(() => {
 });
 
 const meta = computed(() => {
-  const mode = props.mode || summary.value?.creation_mode || localMode.value;
+  const mode = props.mode || summary?.creation_mode || localMode.value;
   return creationModeMeta(mode);
 });
 </script>

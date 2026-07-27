@@ -15,7 +15,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
+import { useWorkflowSocket } from '../composables/index.js';
 
 const { connected } = useWorkflowSocket();
 const hasMounted = ref(false);

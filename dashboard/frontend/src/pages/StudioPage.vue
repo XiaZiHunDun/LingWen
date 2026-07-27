@@ -373,9 +373,7 @@ import {
   fetchStudioBatchJob,
   fetchStudioActiveBatchJob,
 } from '../api/index.js';
-import { useStudioProject } from '../composables/useStudioProject.js';
-import { useDashboardNav } from '../composables/useDashboardNav.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+import { useStudioProject, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 
 defineProps({
   embedded: { type: Boolean, default: false },
@@ -387,8 +385,8 @@ const { navigateTo } = useDashboardNav();
 const productionSectionRef = ref(null);
 
 const showStudioEmptyGuide = computed(() => {
-  if (loading.value || error.value || !quality.value) return false;
-  return (quality.value.chapters_written ?? 0) === 0;
+  if (loading || error || !quality) return false;
+  return (quality.chapters_written ?? 0) === 0;
 });
 
 function scrollToProduction() {
@@ -400,7 +398,7 @@ function goCreator() {
 }
 
 const proseDiffChapters = computed(() => {
-  const rows = proseDiff.value?.chapters || [];
+  const rows = proseDiff?.chapters || [];
   return [...rows].sort((a, b) => a.chapter - b.chapter);
 });
 

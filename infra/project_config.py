@@ -152,3 +152,25 @@ def _env_bool(name: str, default: bool) -> bool:
     if not raw:
         return default
     return raw in _TRUTHY
+
+
+def update_project_creation_mode(project_root: Path, new_mode: str) -> None:
+    config_path = project_root / _DEFAULT_CONFIG_REL
+    raw: dict[str, Any] = {}
+    if config_path.is_file():
+        data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        raw = data
+    else:
+        raw = {"project": {}}
+
+    if "project" not in raw:
+        raw["project"] = {}
+
+    normalized_mode = normalize_creation_mode(new_mode)
+    raw["project"]["creation_mode"] = normalized_mode
+
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(
+        yaml.dump(raw, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )

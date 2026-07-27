@@ -40,7 +40,6 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import mermaid from 'mermaid';
 
 const props = defineProps({
   mermaid: { type: String, default: '' },
@@ -53,19 +52,24 @@ const svg = ref(null);
 const zoom = ref(1);
 const containerRef = ref(null);
 let renderId = 0;
+let mermaidModule = null;
 
-// 初始化 mermaid (一次性)
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'default',
-  securityLevel: 'loose',
-  fontFamily: '"Press Start 2P", monospace',
-  flowchart: {
-    useMaxWidth: true,
-    htmlLabels: true,
-    curve: 'basis',
-  },
-});
+async function initMermaid() {
+  if (!mermaidModule) {
+    mermaidModule = await import('mermaid');
+    mermaidModule.default.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      fontFamily: '"Press Start 2P", monospace',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis',
+      },
+    });
+  }
+}
 
 async function render() {
   if (!props.mermaid) {
@@ -77,9 +81,9 @@ async function render() {
   renderId += 1;
   const myId = renderId;
   try {
-    // mermaid.render() 期望唯一 ID
+    await initMermaid();
     const id = `mermaid-${myId}-${Date.now()}`;
-    const { svg: svgStr } = await mermaid.render(id, props.mermaid);
+    const { svg: svgStr } = await mermaidModule.default.render(id, props.mermaid);
     if (myId === renderId) {
       svg.value = svgStr;
     }

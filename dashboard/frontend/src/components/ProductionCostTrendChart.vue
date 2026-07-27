@@ -6,8 +6,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import * as echarts from 'echarts';
 import { buildCostTrendChartOption, hasCostTrendData } from '../utils/analyticsProductionCostTrend.js';
+import { logger } from '../utils/logger.js';
 
 const props = defineProps({
   trend: {
@@ -18,19 +18,33 @@ const props = defineProps({
 
 const chartRef = ref(null);
 let chartInstance = null;
+let echartsModule = null;
 
-const renderChart = () => {
+const renderChart = async () => {
   if (!chartRef.value || !hasCostTrendData(props.trend)) {
     destroyChart();
     return;
   }
 
-  if (!chartInstance) {
-    chartInstance = echarts.init(chartRef.value);
-  }
+  try {
+    if (!echartsModule) {
+      echartsModule = await import('echarts');
+    }
 
-  const option = buildCostTrendChartOption(props.trend);
-  chartInstance.setOption(option, true);
+    if (!echartsModule?.default?.init) {
+      logger.warn('[ProductionCostTrendChart] ECharts module not properly loaded');
+      return;
+    }
+
+    if (!chartInstance) {
+      chartInstance = echartsModule.default.init(chartRef.value);
+    }
+
+    const option = buildCostTrendChartOption(props.trend);
+    chartInstance.setOption(option, true);
+  } catch (error) {
+    logger.warn('[ProductionCostTrendChart] Error rendering chart:', error);
+  }
 };
 
 const destroyChart = () => {

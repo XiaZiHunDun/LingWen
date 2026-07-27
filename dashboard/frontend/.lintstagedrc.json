@@ -2,5 +2,11 @@
   "*.{js,ts,vue}": [
     "eslint --config eslint.config.js --fix",
     "pnpm vitest related --run"
+  ],
+  "*.vue": [
+    "vue-tsc -p tsconfig.app.json --noEmit"
+  ],
+  "*.{ts,js}": [
+    "tsc -p tsconfig.tests-relaxed.json --noEmit"
   ]
 }

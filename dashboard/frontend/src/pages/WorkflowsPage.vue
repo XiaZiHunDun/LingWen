@@ -129,9 +129,7 @@ import {
   runWorkflow,
   resumeWorkflow,
 } from '../api/index.js';
-import { useWorkflowListStore } from '../composables/useWorkflowListStore.js';
-import { useWorkflowSocket } from '../composables/useWorkflowSocket.js';
-import { useFilteredPageError } from '../composables/useFilteredPageError.js';
+import { useWorkflowListStore, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
 
 defineProps({
   embedded: { type: Boolean, default: false },

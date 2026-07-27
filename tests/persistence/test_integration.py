@@ -43,16 +43,16 @@ class TestEndToEnd:
         conn = get_connection(":memory:")
         try:
             apply_schema("ripple", conn)
-            # 造一条数据
+            # 造一条数据到 reference_nodes
             conn.execute(
-                "INSERT INTO ripple_impact_scores (ripple_id, impact_score) VALUES (?, ?)",
-                ("r1", 0.5),
+                "INSERT INTO reference_nodes (id, dimension, volume, chapter, title, description, payload, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("n1", "test", 1, 1, "Test", "Desc", "{}", "2024-01-01", "test"),
             )
             conn.commit()
             row = conn.execute(
-                "SELECT impact_score FROM ripple_impact_scores WHERE ripple_id = 'r1'"
+                "SELECT title FROM reference_nodes WHERE id = 'n1'"
             ).fetchone()
-            assert row["impact_score"] == 0.5
+            assert row["title"] == "Test"
         finally:
             conn.close()
 

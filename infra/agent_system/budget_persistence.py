@@ -14,10 +14,13 @@ Why single DB 跟 cost_records 共存:
 - gitignored infra/.state/cost_tracker.db 路径已就位
 
 Backward compat: scope='run' 跟 Phase 8.8 _current_budget_usd 等价 (in-memory)
+
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("budget") singleton.
 """
 from __future__ import annotations
 
 import sqlite3
+import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -83,6 +86,13 @@ class BudgetService:
         if isinstance(db_path, str):
             db_path = Path(db_path)
         self.db_path = db_path or _DB_PATH
+        warnings.warn(
+            "Phase 15.0 T2.8: BudgetService 直接实例化已弃用, "
+            "请使用 infra.persistence.registry.get('budget') singleton. "
+            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if init_if_missing:
             self._ensure_db_path()
 

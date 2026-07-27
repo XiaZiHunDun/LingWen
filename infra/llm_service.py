@@ -24,6 +24,7 @@ from .ai_service.base import (
     AIProviderError,
     ProviderConfig,
 )
+from .ai_service.plugin_manager import get_plugin_manager
 
 
 class TaskType(Enum):
@@ -59,9 +60,6 @@ class LLMService:
 
     _instance: Optional["LLMService"] = None
 
-    # Provider配置优先级
-    PROVIDER_PRIORITY = ["minimax", "anthropic", "openai"]
-
     # 各任务类型的推荐模型和参数
     TASK_CONFIGS: Dict[TaskType, Dict[str, Any]] = {
         TaskType.WORLDVIEW_CHECK: {
@@ -90,11 +88,15 @@ class LLMService:
         self._providers: list[tuple[str, AIProvider]] = []
         self._provider: Optional[AIProvider] = None
         self._provider_name: Optional[str] = None
+        self._plugin_manager = get_plugin_manager()
+        self._plugin_manager.load_plugins()
         self._init_providers()
 
     def _init_providers(self):
         """初始化所有可用Provider列表（支持运行时故障转移）"""
-        for provider_name in self.PROVIDER_PRIORITY:
+        priority = self._plugin_manager.get_priority()
+
+        for provider_name in priority:
             api_key = self._get_api_key(provider_name)
             if not api_key:
                 continue
@@ -105,7 +107,7 @@ class LLMService:
                 logger.warning(f"{provider_name} 初始化失败: {e}")
 
         if not self._providers:
-            raise RuntimeError("无可用的LLM Provider")
+            raise RuntimeError(f"无可用的LLM Provider。已注册: {self._plugin_manager.list_providers()}")
 
         # 第一个可用 provider 作为默认
         self._provider_name, self._provider = self._providers[0]
@@ -132,21 +134,12 @@ class LLMService:
         return api_key
 
     def _create_provider(self, name: str, api_key: str) -> AIProvider:
-        """创建Provider实例"""
-        if name == "minimax":
-            from .ai_service.minimax_provider import MiniMaxProvider
-            config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
-            return MiniMaxProvider(config)
-        elif name == "anthropic":
-            from .ai_service.anthropic_provider import AnthropicProvider
-            config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
-            return AnthropicProvider(config)
-        elif name == "openai":
-            from .ai_service.openai_provider import OpenAIProvider
-            config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
-            return OpenAIProvider(config)
-        else:
-            raise ValueError(f"Unknown provider: {name}")
+        """创建Provider实例（动态注册机制）"""
+        provider_class = get_provider_class(name)
+        if not provider_class:
+            raise ValueError(f"Unknown provider: {name}. Registered providers: {list_registered_providers()}")
+        config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
+        return provider_class(config)
 
     def execute(self, task: LLMTask) -> str:
         """

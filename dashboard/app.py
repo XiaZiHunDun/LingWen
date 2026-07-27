@@ -26,9 +26,11 @@ from infra.agent_system.agent_config import load_project_env
 load_project_env()
 
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+from dashboard.errors import APIError
 
 # Phase 13.0 T2 H2: middleware — CORS + GZip + slowapi 限流 (100/min default, 10/min mutation)
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -265,10 +267,17 @@ def create_app(
         cvg_storage=_cvg_storage,
     )
 
-    # ==================== Endpoints ====================
-    # Phase 15.0 T1.4: all 167 inline @app routes were moved to
-    # dashboard/routes/*.py; each module's `register_X(app, ctx)` is called
-    # once below via register_all_routes.
+    @app.exception_handler(APIError)
+    async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "code": exc.code,
+                "message": exc.message,
+                "detail": exc.message,
+            },
+        )
+
     register_all_routes(app, ctx)
 
     _maybe_mount_dashboard_ui(app)

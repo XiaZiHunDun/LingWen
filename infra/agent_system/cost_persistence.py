@@ -13,10 +13,13 @@ Doc 4 §11 Phase 8.5: SQLite 持久化 CostRecord 列表 (mirror ReadingPowerDB 
 - 复用 compute_cost (model_tiers.py) 算 cost_usd, 不重新实现
 - Phase 8.23: 加 cost_by_day(since) — 按 UTC 日期聚合 USD, 给 dashboard
   trend chart; SQL DATE(timestamp) GROUP BY day ORDER BY day (无 records 返 {})
+
+Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("cost") singleton.
 """
 from __future__ import annotations
 
 import sqlite3
+import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -35,6 +38,8 @@ class CostTrackerDB:
     单表 cost_records (id PK, scenario, tier, input_tokens, output_tokens,
     cost_usd, timestamp). 镜像 ReadingPowerDB 模式 (sqlite3 + Row factory +
     _connect context manager + lazy _init_db).
+
+    Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("cost") singleton.
     """
 
     def __init__(
@@ -45,6 +50,13 @@ class CostTrackerDB:
         if isinstance(db_path, str):
             db_path = Path(db_path)
         self.db_path = db_path or _DB_PATH
+        warnings.warn(
+            "Phase 15.0 T2.8: CostTrackerDB 直接实例化已弃用, "
+            "请使用 infra.persistence.registry.get('cost') singleton. "
+            "DB 路径统一在 infra/persistence/paths.py 定义.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if init_if_missing:
             self._ensure_db_path()
 

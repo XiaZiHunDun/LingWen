@@ -39,19 +39,63 @@ def _ripple_impact_score(storage: RippleStorage, r: CrossVolumeRipple) -> float:
     return compute_impact_score(r, cascade)
 
 
+def _ripple_dimension_and_relationship(
+    r: CrossVolumeRipple, storage: RippleStorage
+) -> tuple[str, str, int | None, int | None]:
+    """Phase 9.14: 从 affected_nodes/edges JOIN reference_nodes/reference_edges 获取维度和关系类型。
+
+    Returns:
+        (dimension, relationship_type, source_chapter, target_chapter)
+        如果没有关联节点/边，返回默认值。
+    """
+    dimension = "unknown"
+    relationship_type = "mentions"
+    source_chapter: int | None = None
+    target_chapter: int | None = None
+
+    if r.affected_nodes:
+        nodes = storage.load_all_nodes()
+        node_map = {n.id: n for n in nodes}
+        first_node = node_map.get(r.affected_nodes[0])
+        if first_node:
+            dimension = first_node.dimension
+            source_chapter = first_node.chapter
+
+    if r.affected_edges:
+        edges = storage.load_all_edges()
+        edge_map = {e.id: e for e in edges}
+        first_edge = edge_map.get(r.affected_edges[0])
+        if first_edge:
+            relationship_type = first_edge.relationship_type
+            nodes = storage.load_all_nodes()
+            node_map = {n.id: n for n in nodes}
+            from_node = node_map.get(first_edge.from_node_id)
+            to_node = node_map.get(first_edge.to_node_id)
+            if from_node:
+                source_chapter = from_node.chapter
+            if to_node:
+                target_chapter = to_node.chapter
+
+    if source_chapter is None:
+        source_chapter = r.trigger_chapter
+    if target_chapter is None:
+        target_chapter = r.trigger_chapter
+
+    return dimension, relationship_type, source_chapter, target_chapter
+
+
 def _ripple_to_list_item(r: CrossVolumeRipple, storage: RippleStorage) -> RippleListItemResponse:
     """Phase 9.13: helper to convert CrossVolumeRipple → RippleListItemResponse.
 
-    dimension / relationship_type 暂用 placeholder (Phase 9.14 通过 JOIN reference_nodes
-    + reference_edges 填充); source_chapter / target_chapter 暂用 trigger_chapter 占位
-    (Phase 9.14 真实化 — 从 affected_nodes 第一个 node 的 chapter 提取)。
+    Phase 9.14: 通过 JOIN reference_nodes + reference_edges 填充 dimension/relationship_type。
     """
+    dimension, relationship_type, source_chapter, target_chapter = _ripple_dimension_and_relationship(r, storage)
     return RippleListItemResponse(
         ripple_id=r.id,
-        dimension="unknown",  # TODO: Phase 9.14 JOIN reference_nodes
-        relationship_type="mentions",  # TODO: Phase 9.14 JOIN reference_edges
-        source_chapter=r.trigger_chapter,
-        target_chapter=r.trigger_chapter,
+        dimension=dimension,
+        relationship_type=relationship_type,
+        source_chapter=source_chapter,
+        target_chapter=target_chapter,
         status=r.status,
         confidence=r.payload.get("confidence", 1),
         created_at=r.created_at,
@@ -78,10 +122,10 @@ def _ripple_list_items(
     return [
         RippleListItemResponse(
             ripple_id=r.id,
-            dimension="unknown",
-            relationship_type="mentions",
-            source_chapter=r.trigger_chapter,
-            target_chapter=r.trigger_chapter,
+            dimension=_ripple_dimension_and_relationship(r, storage)[0],
+            relationship_type=_ripple_dimension_and_relationship(r, storage)[1],
+            source_chapter=_ripple_dimension_and_relationship(r, storage)[2],
+            target_chapter=_ripple_dimension_and_relationship(r, storage)[3],
             status=r.status,
             confidence=r.payload.get("confidence", 1),
             created_at=r.created_at,
@@ -94,13 +138,17 @@ def _ripple_list_items(
 
 
 def _ripple_to_detail(r: CrossVolumeRipple, storage: RippleStorage) -> RippleDetailResponse:
-    """Phase 9.13: helper to convert CrossVolumeRipple → RippleDetailResponse."""
+    """Phase 9.13: helper to convert CrossVolumeRipple → RippleDetailResponse.
+
+    Phase 9.14: 通过 JOIN reference_nodes + reference_edges 填充维度和关系类型。
+    """
+    dimension, relationship_type, source_chapter, target_chapter = _ripple_dimension_and_relationship(r, storage)
     return RippleDetailResponse(
         ripple_id=r.id,
-        dimension="unknown",
-        relationship_type="mentions",
-        source_chapter=r.trigger_chapter,
-        target_chapter=r.trigger_chapter,
+        dimension=dimension,
+        relationship_type=relationship_type,
+        source_chapter=source_chapter,
+        target_chapter=target_chapter,
         status=r.status,
         confidence=r.payload.get("confidence", 1),
         created_at=r.created_at,

@@ -21,7 +21,8 @@ class TestSettingsPageF78:
         assert (FRONTEND / "src" / "utils" / "settingsBudgetEdit.js").is_file()
 
     def test_api_set_budget_functions(self):
-        api = FRONTEND / "src" / "api" / "index.js"
+        # Phase 15.0: api/index.js 改为 barrel re-export, 实现迁到 api/budgets.js
+        api = FRONTEND / "src" / "api" / "budgets.js"
         text = api.read_text(encoding="utf-8")
         assert "export async function setBudget" in text
         assert "export async function setBudgetByTier" in text

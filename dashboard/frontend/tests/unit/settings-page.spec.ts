@@ -6,7 +6,7 @@ import SettingsPage from '../../src/pages/SettingsPage.vue'
 import { byTestid } from '../helpers/by-testid'
 import { apiConnectivity } from '../../src/api/connectivity.js'
 
-const studioSummary = ref({ creation_mode: 'advance' })
+const studioSummary = { creation_mode: 'advance' }
 
 const mocks = vi.hoisted(() => ({
   fetchBudgets: vi.fn(),
@@ -25,9 +25,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({
   useStudioProject: () => ({
-    summary: studioSummary,
-    projects: ref([]),
-    activeSlug: ref(null),
+    // 注意：useStudioProject 返回的是已解包的值，不是 ref
+    get summary() { return studioSummary },
+    projects: [],
+    activeSlug: null,
   }),
 }))
 
@@ -114,7 +115,7 @@ describe('SettingsPage (F68/F78)', () => {
   })
 
   test('companion mode uses basic + collapsed advanced with read-only budget', async () => {
-    studioSummary.value = { creation_mode: 'companion' }
+    studioSummary.creation_mode = 'companion'
     mocks.fetchBudgets.mockClear()
     const wrapper = mount(SettingsPage)
     await flushPromises()
@@ -138,7 +139,7 @@ describe('SettingsPage (F68/F78)', () => {
   })
 
   test('advance mode opens advanced panel with edit controls', async () => {
-    studioSummary.value = { creation_mode: 'advance' }
+    studioSummary.creation_mode = 'advance'
     const wrapper = mount(SettingsPage)
     await flushPromises()
     expect(wrapper.find(byTestid('settings-advanced-panel')).element.hasAttribute('open')).toBe(true)
