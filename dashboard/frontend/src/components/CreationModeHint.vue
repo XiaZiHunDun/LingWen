@@ -12,6 +12,7 @@ import { computed, onMounted, ref } from 'vue';
 import { fetchStudioSummary } from '../api/index.js';
 import { creationModeMeta } from '../utils/creationModeHint.js';
 import { useStudioProject } from '../composables/index.js';
+import { logger } from '../utils/logger.js';
 
 const props = defineProps({
   mode: { type: String, default: '' },
@@ -24,7 +25,7 @@ onMounted(() => {
   if (!props.mode && !summary) {
     fetchStudioSummary()
       .then((s) => { localMode.value = s?.creation_mode || ''; })
-      .catch(() => {});
+      .catch((err) => { logger.warn('fetchStudioSummary failed in CreationModeHint', err); });
   }
 });
 

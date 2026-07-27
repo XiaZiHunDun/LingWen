@@ -58,6 +58,7 @@ import RipplesPage from './RipplesPage.vue';
 import { INBOX_TABS } from '../config/dashboardNav.js';
 import { useDashboardNav, useDecisionStore, useRippleStore, useWorkflowSocket } from '../composables/index.js';
 import { copyDashboardShareUrl } from '../utils/shareLink.js';
+import { logger } from '../utils/logger.js';
 
 const { inboxTab, setInboxTab, focusChapter, focusDecisionId } = useDashboardNav();
 const decisionStore = useDecisionStore();
@@ -104,7 +105,7 @@ const hubLoading = computed(() => {
 
 onMounted(() => {
   if (activeTab.value !== 'ripples') {
-    rippleStore.refresh().catch(() => {});
+    rippleStore.refresh().catch(err => { logger.warn('rippleStore refresh failed', err); });
   }
 });
 

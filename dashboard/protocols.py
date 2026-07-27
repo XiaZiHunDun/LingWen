@@ -649,8 +649,9 @@ def _summary_to_dict(summary: Any) -> dict[str, Any]:
             d = asdict(summary)
             # paused_nodes 可能是 tuple → 保持 tuple (JSON 序列化无碍)
             return d
-    except Exception:
-        pass
+    except (TypeError, ValueError, RuntimeError) as exc:
+        # dataclass 序列化失败 — 降级到手动字段提取
+        logger.debug("_serialize_summary dataclass asdict failed, fallback: %s", exc)
     # fallback: 手动取字段
     return {
         "completed": getattr(summary, "completed", 0),
@@ -682,8 +683,9 @@ def _execution_to_dict(execution: Any) -> dict[str, Any]:
             if hasattr(status, "value"):
                 d["status"] = status.value
             return d
-    except Exception:
-        pass
+    except (TypeError, ValueError, AttributeError) as exc:
+        # dataclass 序列化失败 — 降级到手动字段提取
+        logger.debug("_serialize_execution dataclass asdict failed, fallback: %s", exc)
     # fallback
     return {
         "node_id": getattr(execution, "node_id", ""),
