@@ -1,9 +1,14 @@
 """File-size guard: lint tracked files for size limits per extension."""
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
+
+# Allow direct script execution: ensure `tooling/` is on sys.path so the
+# absolute import below resolves when running `python tooling/hygiene/check_file_size.py`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from tooling.hygiene._git_utils import git_ls_files
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -21,23 +26,6 @@ ALLOWLIST: set[str] = set()
 # ALLOWLIST.add("apps/dashboard/src/api/creator.js")  # Phase 19.1
 
 
-def _git_ls_files(repo_root: Path = REPO_ROOT) -> list[str]:
-    try:
-        out = subprocess.run(
-            ["git", "ls-files"],
-            capture_output=True,
-            text=True,
-            cwd=repo_root,
-            check=True,
-        )
-    except FileNotFoundError:
-        sys.exit("check_file_size: git executable not found on PATH")
-    except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip()
-        sys.exit(f"check_file_size: git ls-files failed: {stderr}")
-    return out.stdout.splitlines()
-
-
 def _count_lines(path: Path) -> int:
     if not path.exists():
         return 0
@@ -48,7 +36,7 @@ def _count_lines(path: Path) -> int:
 def find_oversized(repo_root: Path = REPO_ROOT) -> list[tuple[str, int]]:
     """Return list of (relative_path, line_count) for files exceeding their extension's limit."""
     offenders: list[tuple[str, int]] = []
-    for rel in _git_ls_files(repo_root):
+    for rel in git_ls_files(repo_root, tool="check_file_size"):
         if rel in ALLOWLIST:
             continue
         ext = Path(rel).suffix
@@ -67,7 +55,7 @@ def main() -> int:
     bad = find_oversized()
     if bad:
         print("Oversized files:")
-        for f, n in bad:
+        for f, n in sorted(bad):
             print(f"  {f}: {n} 行")
         return 1
     print("OK: 文件尺寸合规")

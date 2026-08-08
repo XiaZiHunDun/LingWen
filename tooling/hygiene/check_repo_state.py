@@ -1,9 +1,14 @@
 """Hygiene check: lint repo state for hygiene violations."""
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
+
+# Allow direct script execution: ensure `tooling/` is on sys.path so the
+# absolute import below resolves when running `python tooling/hygiene/check_repo_state.py`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from tooling.hygiene._git_utils import git_ls_files
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,26 +28,9 @@ PLACEHOLDER_NAMES = {
 }
 
 
-def _git_ls_files(repo_root: Path = REPO_ROOT) -> list[str]:
-    try:
-        out = subprocess.run(
-            ["git", "ls-files"],
-            capture_output=True,
-            text=True,
-            cwd=repo_root,
-            check=True,
-        )
-    except FileNotFoundError:
-        sys.exit("check_repo_state: git executable not found on PATH")
-    except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip()
-        sys.exit(f"check_repo_state: git ls-files failed: {stderr}")
-    return out.stdout.splitlines()
-
-
 def find_hygiene_violations(repo_root: Path = REPO_ROOT) -> list[str]:
     violations: list[str] = []
-    for f in _git_ls_files(repo_root):
+    for f in git_ls_files(repo_root, tool="check_repo_state"):
         parts = Path(f).parts
         if any(part in FORBIDDEN_PARTS for part in parts) or any(
             d in parts for d in FORBIDDEN_DIRS

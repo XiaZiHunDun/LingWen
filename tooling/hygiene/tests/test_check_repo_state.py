@@ -3,17 +3,17 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from check_repo_state import find_hygiene_violations
+from tooling.hygiene.check_repo_state import find_hygiene_violations
 
 
 @pytest.fixture
 def stub_ls_files(monkeypatch):
-    """Stub _git_ls_files to return an arbitrary file list."""
+    """Stub git_ls_files to return an arbitrary file list."""
     def _stub(files):
         monkeypatch.setattr(
-            "check_repo_state._git_ls_files",
+            "tooling.hygiene.check_repo_state.git_ls_files",
             lambda *args, **kwargs: files,
         )
     return _stub

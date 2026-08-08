@@ -3,11 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 def _git_init(repo: Path) -> None:
@@ -25,15 +21,15 @@ def _run_against(repo_root: Path):
     """Re-import the module under a fresh REPO_ROOT (via reload).
 
     Default args are captured at function definition; updating only the module
-    attribute is not enough. Patch __defaults__ so find_oversized() / _git_ls_files()
-    see the tmp_path.
+    attribute is not enough. Patch __defaults__ so find_oversized() sees the
+    tmp_path (git_ls_files receives repo_root as a positional arg, no patching
+    needed there).
     """
-    import check_file_size as mod
+    from tooling.hygiene import check_file_size as mod
 
     importlib.reload(mod)
     mod.REPO_ROOT = repo_root
     mod.find_oversized.__defaults__ = (repo_root,)
-    mod._git_ls_files.__defaults__ = (repo_root,)
     return mod
 
 
