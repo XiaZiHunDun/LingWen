@@ -102,3 +102,14 @@ def test_main_returns_0_clean(tmp_path: Path, capsys):
     captured = capsys.readouterr()
     assert rc == 0
     assert "OK" in captured.out
+
+
+def test_unicode_filename_detected(tmp_path: Path):
+    """A file with non-ASCII name should still be flagged by size check."""
+    _git_init(tmp_path)
+    (tmp_path / "超大.py").write_text("\n".join(["x = 1"] * 600) + "\n")
+    _git_commit(tmp_path)
+
+    mod = _run_against(tmp_path)
+    violations = mod.find_oversized()
+    assert any("超大.py" in v[0] for v in violations), f"应检测到超大.py: {violations}"
