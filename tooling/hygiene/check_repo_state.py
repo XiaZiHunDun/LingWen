@@ -7,14 +7,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-FORBIDDEN_TOKENS = (
+FORBIDDEN_PARTS = {
     "__pycache__",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
     "lingwen_novel_factory.egg-info",
-    ".state/",
-)
+}
+FORBIDDEN_DIRS = (".state",)
 
 PLACEHOLDER_NAMES = {
     "TEMPLATE.md",
@@ -23,24 +23,33 @@ PLACEHOLDER_NAMES = {
 }
 
 
-def _git_ls_files() -> list[str]:
-    out = subprocess.run(
-        ["git", "ls-files"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    )
+def _git_ls_files(repo_root: Path = REPO_ROOT) -> list[str]:
+    try:
+        out = subprocess.run(
+            ["git", "ls-files"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root,
+            check=True,
+        )
+    except FileNotFoundError:
+        sys.exit("check_repo_state: git executable not found on PATH")
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip()
+        sys.exit(f"check_repo_state: git ls-files failed: {stderr}")
     return out.stdout.splitlines()
 
 
-def find_hygiene_violations() -> list[str]:
-    violations = []
-    for f in _git_ls_files():
-        if any(tok in f for tok in FORBIDDEN_TOKENS):
+def find_hygiene_violations(repo_root: Path = REPO_ROOT) -> list[str]:
+    violations: list[str] = []
+    for f in _git_ls_files(repo_root):
+        parts = Path(f).parts
+        if any(part in FORBIDDEN_PARTS for part in parts) or any(
+            d in parts for d in FORBIDDEN_DIRS
+        ):
             violations.append(f"FORBIDDEN_PATH: {f}")
-        full = REPO_ROOT / f
-        if full.name in PLACEHOLDER_NAMES and full.exists():
+        full = repo_root / f
+        if full.name in PLACEHOLDER_NAMES:
             violations.append(f"PLACEHOLDER_FILE: {f}")
     return violations
 

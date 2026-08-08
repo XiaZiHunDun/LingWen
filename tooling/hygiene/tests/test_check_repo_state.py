@@ -1,51 +1,60 @@
-import subprocess
+import sys
 from pathlib import Path
+
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from check_repo_state import find_hygiene_violations
 
 
-def test_tracked_files_clean():
-    """被追踪的文件不应包含已知脏路径。"""
-    result = subprocess.run(
-        ["git", "ls-files"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    )
-    tracked = result.stdout.splitlines()
-    bad = [
-        f for f in tracked
-        if any(
-            token in f for token in (
-                "__pycache__",
-                ".mypy_cache",
-                ".pytest_cache",
-                ".ruff_cache",
-                "lingwen_novel_factory.egg-info",
-                ".state/",
-            )
+@pytest.fixture
+def stub_ls_files(monkeypatch):
+    """Stub _git_ls_files to return an arbitrary file list."""
+    def _stub(files):
+        monkeypatch.setattr(
+            "check_repo_state._git_ls_files",
+            lambda *args, **kwargs: files,
         )
-    ]
-    assert bad == [], f"脏文件未清理: {bad}"
+    return _stub
 
 
-def test_no_orphan_template_files():
-    """不允许存空模板 .md .py 文件。"""
-    result = subprocess.run(
-        ["git", "ls-files"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    )
-    placeholder = [
-        f for f in result.stdout.splitlines()
-        if Path(REPO_ROOT / f).name in {
-            "TEMPLATE.md",
-            ".template.py",
-            "_placeholder.md",
-        }
-    ]
-    assert placeholder == [], f"遗留模板: {placeholder}"
+def test_forbidden_path_detected(stub_ls_files):
+    """__pycache__ path component must be flagged."""
+    stub_ls_files(["src/foo.py", "a/__pycache__/x.pyc"])
+    violations = find_hygiene_violations()
+    assert any("FORBIDDEN_PATH: a/__pycache__/x.pyc" in v for v in violations)
+
+
+def test_state_subdir_detected(stub_ls_files):
+    """.state path component must be flagged."""
+    stub_ls_files(["infra/.state/workflow.db"])
+    violations = find_hygiene_violations()
+    assert any("FORBIDDEN_PATH: infra/.state/workflow.db" in v for v in violations)
+
+
+def test_substring_not_matched(stub_ls_files):
+    """Substring-only matches must NOT be flagged (path-component rule)."""
+    stub_ls_files([
+        "docs/state_machine/manager.py",
+        "docs/pycache_intro.md",
+        "tools/mypy_cache_helper.py",
+        "src/lingwen_novel_factory.egg-info.md",
+    ])
+    violations = find_hygiene_violations()
+    assert violations == []
+
+
+def test_placeholder_detected(stub_ls_files, tmp_path):
+    """TEMPLATE.md tracked file must be flagged."""
+    (tmp_path / "TEMPLATE.md").write_text("")
+    stub_ls_files(["TEMPLATE.md"])
+    violations = find_hygiene_violations(tmp_path)
+    assert any("PLACEHOLDER_FILE: TEMPLATE.md" in v for v in violations)
+
+
+def test_clean_tracked_files(stub_ls_files):
+    """No violations on a clean file list."""
+    stub_ls_files(["src/foo.py", "tests/test_x.py", "docs/readme.md"])
+    violations = find_hygiene_violations()
+    assert violations == []
