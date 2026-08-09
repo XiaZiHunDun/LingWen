@@ -36,6 +36,10 @@ jobs:
       llm: ${{ steps.filter.outputs.llm }}
     steps:
       - uses: actions/checkout@v4
+      # Repo hygiene needs the checked-out scripts, so this is the earliest runnable position.
+      - name: Repo hygiene
+        working-directory: tooling/hygiene
+        run: make check
       - uses: dorny/paths-filter@v3
         id: filter
         with:
