@@ -1,11 +1,14 @@
-import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
-from lingwen_storage.events.jsonl_store import JsonlStore, WorkflowEvent
+import lingwen_storage.events.jsonl_store as mod
+from lingwen_storage.events.jsonl_store import (
+    JsonlCorruptLineError,
+    JsonlStore,
+    WorkflowEvent,
+)
 
 
 def test_append_and_load(tmp_path: Path):
@@ -110,19 +113,68 @@ def test_file_created_in_nonexistent_directory(tmp_path: Path):
     assert nested.exists()
 
 
-def test_append_is_durable(tmp_path: Path):
-    """After append, the data is on disk (not just buffered)."""
+def test_append_calls_fsync(tmp_path: Path, monkeypatch):
+    """append() must invoke os.fsync for crash-safe persistence."""
+    fsync_calls: list[int] = []
+    original_fsync = mod.os.fsync
+
+    def tracking_fsync(fd):
+        fsync_calls.append(fd)
+        return original_fsync(fd)
+
+    monkeypatch.setattr(mod.os, "fsync", tracking_fsync)
+
     store = JsonlStore(tmp_path / "events.jsonl")
+    store.append(
+        WorkflowEvent(
+            event_id="01J00000000000000000000001",
+            occurred_at=datetime(2026, 8, 9, tzinfo=timezone.utc),
+            step="STEP_00",
+            actor="system",
+            correlation_id="c-1",
+            payload={"k": "v"},
+        )
+    )
+
+    assert len(fsync_calls) >= 1, "append() did not call os.fsync"
+    assert all(isinstance(fd, int) for fd in fsync_calls)
+
+
+def test_iter_raises_on_corrupt_line(tmp_path: Path):
+    """A single corrupt line should raise JsonlCorruptLineError with line_no."""
+    path = tmp_path / "events.jsonl"
+    path.write_text("{this is broken\n", encoding="utf-8")
+    store = JsonlStore(path)
+    with pytest.raises(JsonlCorruptLineError) as exc_info:
+        list(store.iter())
+    assert exc_info.value.line_no == 1
+
+
+def test_append_to_directory_raises_clear_error(tmp_path: Path):
+    """Appending to a path that resolves to a directory should raise IsADirectoryError."""
+    # Create a directory at the target path before constructing the store so
+    # __init__'s touch() doesn't materialize it as a regular file.
+    target = tmp_path / "events_dir"
+    target.mkdir()
+    target_path = target / "events.jsonl"
+    target_path.mkdir()  # events.jsonl is now a directory, not a file
+    store = JsonlStore(target_path)
     e = WorkflowEvent(
         event_id="01J00000000000000000000001",
         occurred_at=datetime(2026, 8, 9, tzinfo=timezone.utc),
         step="STEP_00",
         actor="system",
         correlation_id="c-1",
-        payload={"durable": True},
+        payload={},
     )
-    store.append(e)
-    # Read raw bytes from disk
-    content = (tmp_path / "events.jsonl").read_text(encoding="utf-8")
-    assert "durable" in content
-    assert "true" in content
+    with pytest.raises(IsADirectoryError):
+        store.append(e)
+
+
+def test_top_level_exports():
+    """JsonlStore, WorkflowEvent, JsonlCorruptLineError are re-exported from lingwen_storage."""
+    import lingwen_storage
+
+    assert lingwen_storage.JsonlStore is JsonlStore
+    assert lingwen_storage.WorkflowEvent is WorkflowEvent
+    assert lingwen_storage.JsonlCorruptLineError is JsonlCorruptLineError
