@@ -5,8 +5,12 @@ PYTHON ?= python3
 all: check
 
 check:
-	$(PYTHON) check_repo_state.py
-	$(PYTHON) check_file_size.py
+	@rc=0; \
+	for script in check_repo_state.py check_file_size.py; do \
+		echo "▶ Running $$script"; \
+		$(PYTHON) $$script || rc=$$?; \
+	done; \
+	exit $$rc
 
 clean:
-	rm -rf __pycache__ .pytest_cache tests/__pycache__
+	find . -type d \( -name '__pycache__' -o -name '.mypy_cache' -o -name '.pytest_cache' -o -name '.ruff_cache' -o -name '*.egg-info' \) -prune -exec rm -rf {} +

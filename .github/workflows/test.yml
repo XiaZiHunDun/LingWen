@@ -36,10 +36,6 @@ jobs:
       llm: ${{ steps.filter.outputs.llm }}
     steps:
       - uses: actions/checkout@v4
-      # Repo hygiene needs the checked-out scripts, so this is the earliest runnable position.
-      - name: Repo hygiene
-        working-directory: tooling/hygiene
-        run: make check
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -54,8 +50,21 @@ jobs:
               - 'config/**'
               - '.github/workflows/test.yml'
 
+  hygiene:
+    name: Repo hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Repo hygiene
+        working-directory: tooling/hygiene
+        run: make check
+
   test:
     name: pytest (Python ${{ matrix.python-version }})
+    needs: hygiene
     runs-on: ubuntu-latest
 
     strategy:
@@ -133,6 +142,7 @@ jobs:
 
   golden-set:
     name: golden-set smoke (${{ matrix.slug }})
+    needs: hygiene
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -156,6 +166,7 @@ jobs:
 
   onboarding-smoke:
     name: onboarding smoke (init → preflight → dry-run)
+    needs: hygiene
     runs-on: ubuntu-latest
     defaults:
       run: {}
@@ -175,6 +186,7 @@ jobs:
 
   vitest:
     name: Vitest (frontend unit)
+    needs: hygiene
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -200,6 +212,7 @@ jobs:
 
   llm-golden-set:
     name: LLM golden-set (optional, needs MINIMAX_API_KEY)
+    needs: hygiene
     runs-on: ubuntu-latest
     if: |
       (github.event_name == 'workflow_dispatch' && inputs.run_llm_golden_set == true) ||
@@ -239,7 +252,7 @@ jobs:
 
   llm-golden-primary:
     name: LLM golden primary (${{ matrix.slug }})
-    needs: llm-paths
+    needs: [llm-paths, hygiene]
     if: |
       needs.llm-paths.outputs.llm == 'true' ||
       (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'llm-check')) ||
