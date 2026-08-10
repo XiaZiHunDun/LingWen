@@ -15,10 +15,10 @@ python3 tooling/hygiene/check_file_size.py
 python3 tooling/hygiene/check_brand_consistency.py
 
 echo "▶ event-store 单元测试"
-(cd packages/lingwen-storage && pytest -q)
+(cd packages/lingwen-storage && python3 -m pytest -q)
 
 echo "▶ 前端 lint + typecheck + unit"
-(cd dashboard/frontend && pnpm lint && pnpm typecheck && pnpm test:run)
+(cd dashboard/frontend && pnpm lint && pnpm typecheck && pnpm test)
 
 echo "▶ 检查陈旧 SQLite/JSON 已删（16.6 / 16.10）"
 for f in \
