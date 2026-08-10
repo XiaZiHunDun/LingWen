@@ -64,7 +64,7 @@ def test_lingwen_studio_in_src_is_flagged(tmp_path: Path):
     violations = mod.find_violations()
     assert any(
         v[0] == "dashboard/frontend/src/bad.vue"
-        and v[1] == "forbidden:LingWen Studio"
+        and v[1] == "forbidden_LingWen Studio"
         for v in violations
     ), violations
 
@@ -124,7 +124,7 @@ def test_packages_readme_with_lingwen_studio_is_flagged(tmp_path: Path):
     violations = mod.find_violations()
     assert any(
         v[0] == "packages/foo/README.md"
-        and v[1] == "forbidden:LingWen Studio"
+        and v[1] == "forbidden_LingWen Studio"
         for v in violations
     ), violations
 
@@ -177,3 +177,40 @@ def test_main_returns_1_on_violations(tmp_path: Path, capsys):
     captured = capsys.readouterr()
     assert rc == 1
     assert "LingWen Studio" in captured.out
+
+
+def test_binary_file_is_skipped(tmp_path: Path):
+    """A non-UTF-8 binary file in dashboard/frontend/src/ must be skipped (no crash, no flag)."""
+    _git_init(tmp_path)
+    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir.mkdir(parents=True)
+    # Write raw non-UTF-8 bytes (e.g. simulated font/image header).
+    (src_dir / "asset.bin").write_bytes(b"\xFF\xFE\x00\x01\x80\x90binary")
+    _git_commit(tmp_path)
+
+    mod = _run_against(tmp_path)
+    # Must not crash. Binary file is skipped, so no violations from it.
+    violations = mod.find_violations()
+    assert violations == [], f"binary file must be skipped silently; got {violations}"
+
+
+def test_lingwen_standalone_in_packages_readme_is_flagged(tmp_path: Path):
+    """A standalone 'LingWen' token in a package README (non-JSDoc) must be flagged."""
+    _git_init(tmp_path)
+    pkg_dir = tmp_path / "packages" / "foo"
+    pkg_dir.mkdir(parents=True)
+    # Non-JSDoc context (plain prose): the standalone 'LingWen' rule only fires
+    # in dashboard/frontend/src/, but a forbidden product-string like 'LingWen Studio'
+    # must still be flagged here.
+    (pkg_dir / "README.md").write_text(
+        "# foo\nLingWen Studio is the product name.\n"
+    )
+    _git_commit(tmp_path)
+
+    mod = _run_against(tmp_path)
+    violations = mod.find_violations()
+    assert any(
+        v[0] == "packages/foo/README.md"
+        and v[1] == "forbidden_LingWen Studio"
+        for v in violations
+    ), violations

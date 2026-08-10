@@ -80,7 +80,7 @@ def find_violations(repo_root: Path = REPO_ROOT) -> list[tuple[str, str, str]]:
         # Universal product/framework-mix strings
         for bad in FORBIDDEN_PRODUCT_STRINGS:
             if bad in text:
-                violations.append((rel, f"forbidden:{bad}", bad))
+                violations.append((rel, f"forbidden_{bad}", bad))
         # Standalone LingWen in frontend src only
         if zone == _ZONE_FRONTEND_SRC:
             for m in LINGWEN_STANDALONE_RE.finditer(text):

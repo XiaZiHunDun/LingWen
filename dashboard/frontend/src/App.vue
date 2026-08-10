@@ -9,7 +9,7 @@
         <div class="sidebar-brand">
           <img src="/assets/brand/moling-logo.jpg" alt="墨灵Logo" class="sidebar-logo" aria-hidden="true" />
           <div class="sidebar-brand-text">
-            <h2 class="sidebar-title sidebar-product-name" data-testid="sidebar-product-name">{{ BRAND_PRODUCT_NAME }}</h2>
+            <h2 class="sidebar-title sidebar-product-name" data-testid="sidebar-product-name">{{ BRAND.productShortZh }}</h2>
           </div>
         </div>
 
@@ -58,7 +58,7 @@
         <div class="header-row" :class="{ 'header-row--human-l1': isCompactL1Chrome }">
           <div v-if="!isCompactL1Chrome" class="header-titles">
             <h1 class="header-title header-context-title" data-testid="header-context-title">
-              <span class="header-product-name" data-testid="header-product-name">{{ BRAND_PRODUCT_NAME }}</span>
+              <span class="header-product-name" data-testid="header-product-name">{{ BRAND.productShortZh }}</span>
               <span class="header-title-sep" aria-hidden="true">·</span>
               <span class="header-page-name">{{ contextTitle }}</span>
             </h1>
@@ -137,7 +137,7 @@ import { useWorkflowSocket } from './composables/index.js'
 import { useNavStore, useRoleStore, useStudioStore, useConnectivityStore } from './stores/index.js'
 import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BRAND_PRODUCT_NAME } from './config/brand.js'
+import { BRAND } from './config/brand.js'
 import { resolveEffectiveCreationMode } from './utils/effectiveCreationMode.js'
 
 const isDarkMode = ref(false);
