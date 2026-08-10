@@ -40,16 +40,17 @@ def reduce_events(events: Iterable[WorkflowEvent]) -> WorkflowProjection:
             proj.audit_history.setdefault(p["chapter_id"], [])
         elif e.step == "STEP_15" and "issues" in p:
             cid = p.get("chapter_id", "")
-            proj.chapters_audited.add(cid)
-            proj.audit_history.setdefault(cid, [])
-            for issue in p["issues"]:
-                proj.audit_history[cid].append(
-                    IssueRecord(
-                        severity=issue.get("severity", "P2"),
-                        category=issue.get("category", ""),
-                        detail=issue.get("detail", ""),
+            if cid:
+                proj.chapters_audited.add(cid)
+                proj.audit_history.setdefault(cid, [])
+                for issue in p["issues"]:
+                    proj.audit_history[cid].append(
+                        IssueRecord(
+                            severity=issue.get("severity", "P2"),
+                            category=issue.get("category", ""),
+                            detail=issue.get("detail", ""),
+                        )
                     )
-                )
         elif e.step == "STEP_21":
             cid = p.get("chapter_id", "")
             if cid:

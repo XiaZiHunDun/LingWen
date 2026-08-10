@@ -36,3 +36,32 @@ def test_audit_appends_issues():
     })
     state = reduce_events([e1, e2])
     assert state.audit_history["ch001"][0].severity == "P1"
+
+
+def test_publish_adds_to_published():
+    e1 = _e("STEP_21", {"chapter_id": "ch002"})
+    state = reduce_events([e1])
+    assert "ch002" in state.chapters_published
+
+
+def test_publish_empty_cid_is_skipped():
+    e1 = _e("STEP_21", {})
+    state = reduce_events([e1])
+    assert "" not in state.chapters_published
+    assert len(state.chapters_published) == 0
+
+
+def test_decision_appends_to_pending():
+    e1 = _e("STEP_08", {"decision": {"choice": "A"}})
+    state = reduce_events([e1])
+    assert state.pending_decisions == [{"choice": "A"}]
+
+
+def test_audit_missing_chapter_id_is_skipped():
+    e1 = _e("STEP_15", {
+        "issues": [{"severity": "P1", "category": "ai-trace"}],
+    })
+    state = reduce_events([e1])
+    assert "" not in state.chapters_audited
+    assert "" not in state.audit_history
+    assert len(state.chapters_audited) == 0
