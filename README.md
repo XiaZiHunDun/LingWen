@@ -5,6 +5,8 @@
 > **试验田**: 《星陨纪元》ch001–360 正史 · ch361+ stress test  
 > **CI**: [`test` workflow](../.github/workflows/test.yml) — pytest×3 · vitest · lint · build · golden×8 · llm×7 · e2e-live · ruff · cov 50%
 
+> **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`。
+
 切换工具 / 新同事入门：**先读** [`../HANDOFF.md`](../HANDOFF.md)（TL;DR + Phase 历史）。
 
 ---
