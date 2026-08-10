@@ -1,7 +1,7 @@
 import { watch, computed } from 'vue';
 
 /**
- * Safe access utilities for LingWen Dashboard
+ * Safe access utilities for 墨灵 Dashboard
  * Provides safe property access, store access, and reactive utilities
  */
 

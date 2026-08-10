@@ -1,5 +1,5 @@
 /**
- * Core API utilities for LingWen Dashboard
+ * Core API utilities for 墨灵 Dashboard
  * @module api/core
  */
 

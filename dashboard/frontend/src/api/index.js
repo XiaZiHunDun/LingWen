@@ -1,5 +1,5 @@
 /**
- * API Client for LingWen Dashboard
+ * API Client for 墨灵 Dashboard
  * Barrel re-export from domain-specific modules
  */
 
