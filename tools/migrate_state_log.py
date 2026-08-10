@@ -29,10 +29,16 @@ def _parse_line(line: str) -> WorkflowEvent | None:
         row = json.loads(line)
     except json.JSONDecodeError:
         return None
+    if not isinstance(row, dict):
+        return None
     name = row.get("event", "")
+    if not isinstance(name, str):
+        return None
     if name in SKIP_EVENTS:
         return None
     data = row.get("data") or {}
+    if not isinstance(data, dict):
+        data = {}
     step = data.get("step", "STEP_00")
     return WorkflowEvent(
         event_id=str(ULID()),
@@ -65,8 +71,13 @@ def main() -> int:
         print(f"WARNING: source log not found at {args.src}; skipping migration",
               file=sys.stderr)
         return 0
-    store = JsonlStore(args.dst)
-    n = migrate(args.src, store)
+    try:
+        store = JsonlStore(args.dst)
+        n = migrate(args.src, store)
+    except (OSError, Exception) as e:
+        print(f"ERROR: migration failed: {e.__class__.__name__}: {e}",
+              file=sys.stderr)
+        return 1
     print(f"Migrated {n} events to {args.dst}")
     return 0
 
