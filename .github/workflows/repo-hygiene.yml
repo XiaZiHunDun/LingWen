@@ -1,5 +1,10 @@
 name: Repo hygiene
 
+# Limit token permissions: this workflow only reads source and runs a
+# local script. No write operations are needed.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [master]

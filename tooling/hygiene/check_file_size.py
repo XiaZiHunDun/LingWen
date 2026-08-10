@@ -25,6 +25,94 @@ ALLOWLIST: set[str] = set()
 # 迁移期临时白名单格式样例（拆分后移除）：
 # ALLOWLIST.add("apps/dashboard/src/api/creator.js")  # Phase 19.1
 
+# === Phase 17 (monorepo split) — infra/legacy/tools ===
+ALLOWLIST.add("fn-core/src/core/aggregates/StoryAggregate.ts")  # Phase 17
+ALLOWLIST.add("infra/agent_system/chapter_production_pilot.py")  # Phase 17
+ALLOWLIST.add("infra/consistency/checkers/contradiction_detector.py")  # Phase 17
+ALLOWLIST.add("infra/consistency/checkers/sentence_diversity_checker.py")  # Phase 17
+ALLOWLIST.add("infra/consistency/engine/consistency_engine.py")  # Phase 17
+ALLOWLIST.add("infra/creator_agent.py")  # Phase 17
+ALLOWLIST.add("infra/creator_merge_preferences.py")  # Phase 17
+ALLOWLIST.add("infra/creator_onboarding_digest_schedule.py")  # Phase 17
+ALLOWLIST.add("infra/creator_template_approvals.py")  # Phase 17
+ALLOWLIST.add("infra/creator_volume_plan.py")  # Phase 17
+ALLOWLIST.add("infra/creator_volume_templates.py")  # Phase 17
+ALLOWLIST.add("infra/cross_volume/storage.py")  # Phase 17
+ALLOWLIST.add("infra/event_sourcing/store.py")  # Phase 17
+ALLOWLIST.add("infra/health.py")  # Phase 17
+ALLOWLIST.add("infra/llm_cache.py")  # Phase 17
+ALLOWLIST.add("infra/memory_system/gateway/query_engine.py")  # Phase 17
+ALLOWLIST.add("infra/memory_system/vector/qdrant_client.py")  # Phase 17
+ALLOWLIST.add("infra/permission.py")  # Phase 17
+ALLOWLIST.add("infra/prose_judge.py")  # Phase 17
+ALLOWLIST.add("infra/state_machine.py")  # Phase 17
+ALLOWLIST.add("infra/tool.py")  # Phase 17
+ALLOWLIST.add("tools/comprehensive_quality_check.py")  # Phase 17
+ALLOWLIST.add("tools/legacy/llm_outline_quality_check.py")  # Phase 17
+ALLOWLIST.add("tools/legacy/minimax_chapter_review.py")  # Phase 17
+
+# === Phase 19.1 (frontend refactor) — dashboard/frontend/src ===
+ALLOWLIST.add("dashboard/frontend/src/App.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/api/creator.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/DecisionCard.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/SidebarCostBanner.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/SkeletonLoader.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/WidgetRenderer.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/WorkflowStatus.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorBatchHistoryPanel.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorBatchOperations.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorFactoryPipeline.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorModeGuidePanel.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorOnboardingWizardPanel.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorSettingsPanel.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorVolumePlanTemplatesPanel.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/components/creator/CreatorWritePanel.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorAgent.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorBatchHistory.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorOnboarding.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorPage.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorProductTools.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorSettings.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorVolumePlanTemplates.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorWrite.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/composables/useCreatorWriteWorkbench.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/AnalyticsPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/AskPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/ChaptersPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/DecisionsPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/SettingsPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/StudioPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/TodayPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/src/pages/WorkflowsPage.vue")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/tests/e2e-smoke/companion-selection-agent-flow.spec.js")  # Phase 19.1
+ALLOWLIST.add("dashboard/frontend/tests/unit/creator-product-tools.spec.ts")  # Phase 19.1
+
+# === Phase 19.2 (dashboard backend refactor) ===
+ALLOWLIST.add("dashboard/protocols.py")  # Phase 19.2
+ALLOWLIST.add("dashboard/routes/creator_settings.py")  # Phase 19.2
+ALLOWLIST.add("dashboard/routes/creator_volume.py")  # Phase 19.2
+ALLOWLIST.add("dashboard/routes/cvg.py")  # Phase 19.2
+
+# === Phase 19.3 (test refactor) ===
+ALLOWLIST.add("tests/agent_system/test_got_bridge.py")  # Phase 19.3
+ALLOWLIST.add("tests/agent_system/test_master_controller_stub_router_e2e.py")  # Phase 19.3
+ALLOWLIST.add("tests/agent_system/test_novel_writing_real_llm.py")  # Phase 19.3
+ALLOWLIST.add("tests/dashboard/test_creator_endpoints.py")  # Phase 19.3
+ALLOWLIST.add("tests/dashboard/test_decision_api.py")  # Phase 19.3
+ALLOWLIST.add("tests/got/test_decision_pause_resume.py")  # Phase 19.3
+ALLOWLIST.add("tests/hooks/test_actions.py")  # Phase 19.3
+ALLOWLIST.add("tests/hooks/test_hook_engine.py")  # Phase 19.3
+ALLOWLIST.add("tests/test_inspector_repairer.py")  # Phase 19.3
+
+# === Phase 19.4 (methodology split) ===
+ALLOWLIST.add("11_方法论/PART3_工具集/提示词模板库/version_manager.py")  # Phase 19.4
+
+# === Phase 19.5 (third-party asset) ===
+ALLOWLIST.add("trae比赛/novel-writing-assistant/_shared/js/mermaid.min.js")  # Phase 19.5
+
+# === Phase 19.6 (verify engine refactor) ===
+ALLOWLIST.add("run_verify_engine.py")  # Phase 19.6
+
 
 def _count_lines(path: Path) -> int:
     if not path.exists():
