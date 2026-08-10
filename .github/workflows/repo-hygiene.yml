@@ -30,3 +30,6 @@ jobs:
 
       - name: File size guard
         run: python3 tooling/hygiene/check_file_size.py
+
+      - name: Brand consistency
+        run: python3 tooling/hygiene/check_brand_consistency.py
