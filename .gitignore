@@ -155,10 +155,14 @@ projects/**/.state/creator_merge_preferences.json
 infra/.state/factory_volume_templates.json
 infra/.state/creator_merge_preferences_global.json
 
-# State DBs are runtime artifacts — except the canonical workflow.db
+# State DBs are runtime artifacts (Phase 16 cleanup: blanket ignore, all are recoverable)
 .state/*.db
-!.state/workflow.db
+.state/**/*.db
 .state/test*.db
+.state/workflow.db
+.state/workflow.db-journal
+.state/state_history.log
+!state_history.log.sample
 
 # Phase 8.12 followup: workflow.db de-track (cbca7b5 claimed but missed)
 infra/.state/workflow.db

@@ -1,5 +1,5 @@
 /**
- * Type definitions for LingWen Dashboard
+ * Type definitions for 墨灵 Dashboard
  * Re-exports all type definitions from sub-modules
  */
 

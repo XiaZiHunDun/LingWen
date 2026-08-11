@@ -57,6 +57,9 @@ jobs:
       - name: Typecheck app (vue-tsc src/**/*.vue)
         run: pnpm typecheck:app
 
+      - name: File size guard (Phase 16.8)
+        run: python3 tooling/hygiene/check_file_size.py
+
       - name: Run vitest
         run: pnpm vitest run --coverage
 

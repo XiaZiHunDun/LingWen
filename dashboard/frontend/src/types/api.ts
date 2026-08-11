@@ -1,5 +1,5 @@
 /**
- * Core API types for LingWen Dashboard
+ * Core API types for 墨灵 Dashboard
  * Provides type definitions for API responses and requests
  */
 
