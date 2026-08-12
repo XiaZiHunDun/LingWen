@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from infra.memory_system.embeddings.minimax_provider import MiniMaxEmbeddingProvider
+from lingwen_memory.embeddings.minimax_provider import MiniMaxEmbeddingProvider
 
 
 class TestMiniMaxEmbeddingProvider:

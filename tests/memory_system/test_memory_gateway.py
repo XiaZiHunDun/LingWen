@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.memory_system.gateway.memory_gateway import MemoryGateway
+from lingwen_memory.gateway.memory_gateway import MemoryGateway
 
 
 class TestMemoryGateway:

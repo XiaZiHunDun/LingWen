@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.memory_system.state.fact_base import FactBase
+from lingwen_memory.state.fact_base import FactBase
 
 
 class TestFactBase:

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.memory_system.state.character_tracker import CharacterTracker
+from lingwen_memory.state.character_tracker import CharacterTracker
 
 
 class TestCharacterTracker:

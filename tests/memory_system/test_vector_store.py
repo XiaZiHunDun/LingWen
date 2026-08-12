@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from infra.memory_system.embeddings.batch_embed import BatchEmbedder, find_similar_chapters
-from infra.memory_system.vector_store.qdrant_client import QdrantClientWrapper
+from lingwen_memory.embeddings.batch_embed import BatchEmbedder, find_similar_chapters
+from lingwen_memory.vector_store.qdrant_client import QdrantClientWrapper
 
 
 class TestQdrantClientWrapper:
@@ -16,11 +16,11 @@ class TestQdrantClientWrapper:
     @pytest.fixture
     def wrapper(self):
         """创建 QdrantClientWrapper 实例（带 mock）"""
-        with patch("infra.memory_system.vector.qdrant_client.QdrantClient") as mock_client_class:
+        with patch("lingwen_memory.vector.qdrant_client.QdrantClient") as mock_client_class:
             mock_client = Mock()
             mock_client_class.return_value = mock_client
 
-            with patch("infra.memory_system.vector.qdrant_client.load_yaml") as mock_load_yaml:
+            with patch("lingwen_memory.vector.qdrant_client.load_yaml") as mock_load_yaml:
                 mock_load_yaml.side_effect = [
                     {
                         "qdrant": {"host": "localhost", "port": 6333, "grpc_port": 6334},

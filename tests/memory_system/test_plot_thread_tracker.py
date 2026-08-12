@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.memory_system.state.plot_thread_tracker import PlotThreadTracker
+from lingwen_memory.state.plot_thread_tracker import PlotThreadTracker
 
 
 class TestPlotThreadTracker:
