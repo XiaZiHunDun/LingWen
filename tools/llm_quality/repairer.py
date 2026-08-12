@@ -5,7 +5,7 @@
 from typing import List, Optional
 
 from infra.llm_service import LLMService
-from infra.quality import Issue
+from lingwen_quality.quality import Issue
 
 from . import paths
 

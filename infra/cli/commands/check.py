@@ -103,10 +103,10 @@ class CheckCommand(Command):
 
     def _check_full(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run comprehensive quality check"""
-        from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
-        from infra.consistency.checkers.pacing_checker import PacingChecker
-        from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
-        from infra.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
+        from lingwen_quality.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
+        from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+        from lingwen_quality.consistency.checkers.scene_transition_checker import SceneTransitionChecker
+        from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
 
         print(f"执行全面检查: {len(chapters)} 个章节")
 

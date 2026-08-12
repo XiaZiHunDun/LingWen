@@ -15,7 +15,7 @@
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
 from infra.llm_service import LLMService
-from infra.quality import Issue, RepairResult
+from lingwen_quality.quality import Issue, RepairResult
 
 from .checker import LLMQualityChecker
 from .cli import main, parse_chapter_range, save_report

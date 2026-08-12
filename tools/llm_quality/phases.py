@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List
 
-from infra.quality import Issue
+from lingwen_quality.quality import Issue
 
 from .checker import LLMQualityChecker
 from .repairer import LLMRepairer

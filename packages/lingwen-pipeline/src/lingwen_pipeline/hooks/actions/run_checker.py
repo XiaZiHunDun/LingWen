@@ -87,8 +87,8 @@ class RunCheckerAction(BaseAction):
         # 动态导入避免循环依赖
         import re
 
-        from infra.consistency.engine.consistency_engine import ConsistencyEngine
-        from infra.consistency.engine.data_structures import CheckScope
+        from lingwen_quality.consistency.engine.consistency_engine import ConsistencyEngine
+        from lingwen_quality.consistency.engine.data_structures import CheckScope
 
         # 从context获取chapters_dir，如果没有则从项目根目录推导
         if "chapters_dir" in context:

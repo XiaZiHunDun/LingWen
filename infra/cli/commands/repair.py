@@ -45,7 +45,7 @@ class RepairCommand(Command):
     def _repair_worldview(self, chapters: List[int], options: RepairOptions) -> int:
         """Repair worldview consistency issues"""
         try:
-            from infra.quality.repairers.worldview_repairer import WorldviewRepairer
+            from lingwen_quality.quality.repairers.worldview_repairer import WorldviewRepairer
 
             print(f"执行世界观修复: {len(chapters)} 个章节")
 
@@ -59,7 +59,7 @@ class RepairCommand(Command):
     def _repair_ai_trace(self, chapters: List[int], options: RepairOptions) -> int:
         """Repair AI trace issues"""
         try:
-            from infra.quality.repairers.ai_trace_repairer import AITraceRepairer
+            from lingwen_quality.quality.repairers.ai_trace_repairer import AITraceRepairer
 
             print(f"执行AI痕迹修复: {len(chapters)} 个章节")
 

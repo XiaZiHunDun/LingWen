@@ -11,8 +11,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.checkers.dialogue_action_checker import DialogueActionChecker
-from infra.consistency.engine.data_structures import IssueSeverity
+from lingwen_quality.consistency.checkers.dialogue_action_checker import DialogueActionChecker
+from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 
 
 class TestDialogueActionChecker:

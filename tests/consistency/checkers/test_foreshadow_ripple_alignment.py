@@ -17,8 +17,8 @@ from typing import Optional, Protocol
 
 import pytest
 
-from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
-from infra.consistency.engine.data_structures import (
+from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     Issue,
     IssueSeverity,

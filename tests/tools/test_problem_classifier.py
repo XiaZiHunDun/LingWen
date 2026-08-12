@@ -1,7 +1,7 @@
 """Tests for tools.problem_classifier (Phase 11.11 coverage)."""
 from __future__ import annotations
 
-from infra.quality import Issue
+from lingwen_quality.quality import Issue
 from tools.problem_classifier import ProblemClassifier
 
 

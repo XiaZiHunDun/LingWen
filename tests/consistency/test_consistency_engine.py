@@ -10,8 +10,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.engine.consistency_engine import ConsistencyEngine
-from infra.consistency.engine.data_structures import CheckScope, IssueSeverity
+from lingwen_quality.consistency.engine.consistency_engine import ConsistencyEngine
+from lingwen_quality.consistency.engine.data_structures import CheckScope, IssueSeverity
 
 
 class TestConsistencyEngineInit:
@@ -137,7 +137,7 @@ class TestConsistencyEngineGetChecker:
     """测试获取检查器"""
 
     def test_get_existing_checker(self):
-        from infra.consistency.engine.data_structures import CheckerType
+        from lingwen_quality.consistency.engine.data_structures import CheckerType
 
         engine = ConsistencyEngine()
         checker = engine.get_checker(CheckerType.CHARACTER)
@@ -147,7 +147,7 @@ class TestConsistencyEngineGetChecker:
     def test_get_nonexistent_checker(self):
         engine = ConsistencyEngine()
         # 使用一个不存在的检查器类型
-        from infra.consistency.engine.data_structures import CheckerType
+        from lingwen_quality.consistency.engine.data_structures import CheckerType
 
         checker = engine.get_checker(CheckerType.ITEM)
         assert checker is not None

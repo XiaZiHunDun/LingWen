@@ -29,7 +29,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.paths import ProjectPaths
-from infra.quality import (
+from lingwen_quality.quality import (
     AITraceChecker,
     AITraceRepairer,
     Inspector,
@@ -117,7 +117,7 @@ class TestIssueDataclass:
 
     def test_severity_normalized_from_enum(self):
         """传入 IssueSeverity 枚举 → __post_init__ 归一化为 str"""
-        from infra.consistency.engine.data_structures import IssueSeverity
+        from lingwen_quality.consistency.engine.data_structures import IssueSeverity
         issue = Issue(
             chapter=2,
             dimension="d",

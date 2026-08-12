@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-quality"
+version = "0.1.0"
+description = "LingWen · 一致性检测 + 质量评分 (consistency + quality)"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "lingwen-core",
+    "lingwen-llm",
+    "lingwen-storage",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_quality"]

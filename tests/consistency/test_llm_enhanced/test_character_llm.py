@@ -12,7 +12,7 @@ import pytest
 
 def test_character_llm_finds_uncertain_regions():
     """测试LLM增强角色检测器能找到模糊区域"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     content = "林夜性情大变，原本冷静的他突然暴怒起来"
@@ -24,7 +24,7 @@ def test_character_llm_finds_uncertain_regions():
 
 def test_character_llm_multiple_patterns():
     """测试LLM增强角色检测器匹配多种模式"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     content = "他仿佛换了一个人，完全不像他平日里的样子，判若两人"
@@ -35,7 +35,7 @@ def test_character_llm_multiple_patterns():
 
 def test_character_llm_context_extraction():
     """测试LLM增强角色检测器正确提取上下文"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     content = "林夜突然暴怒，眼中闪过一丝疯狂"
@@ -48,7 +48,7 @@ def test_character_llm_context_extraction():
 
 def test_character_llm_inherits_base_checker():
     """测试LLMEnhancedCharacterChecker继承基类检测器"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     assert checker.base_checker is not None
@@ -57,7 +57,7 @@ def test_character_llm_inherits_base_checker():
 
 def test_character_llm_has_llm_service():
     """测试LLMEnhancedCharacterChecker具有LLM服务"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     assert checker.llm_service is not None
@@ -65,7 +65,7 @@ def test_character_llm_has_llm_service():
 
 def test_character_llm_region_positions():
     """测试LLM增强角色检测器正确记录位置"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     content = "性情大变，突然暴怒，判若两人"
@@ -82,7 +82,7 @@ def test_character_llm_region_positions():
 
 def test_character_llm_no_matches():
     """测试LLM增强角色检测器在无匹配时返回空列表"""
-    from infra.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.character_llm import LLMEnhancedCharacterChecker
 
     checker = LLMEnhancedCharacterChecker()
     content = "林夜冷静地分析着局势，一切都在计划之中"

@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pytest
 
-from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
-from infra.consistency.checkers.pacing_checker import PacingChecker
-from infra.consistency.engine.data_structures import IssueSeverity
+from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 from lingwen_prompt import (
     ExtractedResolution,
     ExtractedRipple,

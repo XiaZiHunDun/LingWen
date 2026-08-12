@@ -39,7 +39,7 @@ class LLMAnalyzeCommand(Command):
         try:
             import json
 
-            from infra.quality import Issue
+            from lingwen_quality.quality import Issue
             from tools.llm_quality_analyzer import LLMQualityAnalyzer
 
             analyzer = LLMQualityAnalyzer()

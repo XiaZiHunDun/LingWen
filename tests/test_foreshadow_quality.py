@@ -10,8 +10,8 @@ _project_root = Path(__file__).parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-from infra.consistency.checkers.foreshadow_quality import ForeshadowQualityChecker
-from infra.consistency.engine.data_structures import IssueSeverity
+from lingwen_quality.consistency.checkers.foreshadow_quality import ForeshadowQualityChecker
+from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 
 
 class TestForeshadowQualityChecker:

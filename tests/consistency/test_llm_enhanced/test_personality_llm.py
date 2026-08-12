@@ -12,7 +12,7 @@ import pytest
 
 def test_personality_llm_finds_uncertain_regions():
     """测试LLM增强性格检测器能找到模糊区域"""
-    from infra.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
 
     checker = LLMEnhancedPersonalityChecker()
     content = "原本善良的林夜突然变得残忍无情，杀害了无辜的人"
@@ -24,7 +24,7 @@ def test_personality_llm_finds_uncertain_regions():
 
 def test_personality_llm_multiple_patterns():
     """测试LLM增强性格检测器匹配多种模式"""
-    from infra.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
 
     checker = LLMEnhancedPersonalityChecker()
     content = "他性情大变，完全变了一个人，判若两人"
@@ -35,7 +35,7 @@ def test_personality_llm_multiple_patterns():
 
 def test_personality_llm_context_extraction():
     """测试LLM增强性格检测器正确提取上下文"""
-    from infra.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
 
     checker = LLMEnhancedPersonalityChecker()
     content = "林夜核心性格发生了巨大转变"
@@ -48,7 +48,7 @@ def test_personality_llm_context_extraction():
 
 def test_personality_llm_inherits_base_checker():
     """测试LLMEnhancedPersonalityChecker继承基类检测器"""
-    from infra.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
 
     checker = LLMEnhancedPersonalityChecker()
     assert checker.base_checker is not None
@@ -57,7 +57,7 @@ def test_personality_llm_inherits_base_checker():
 
 def test_personality_llm_has_llm_service():
     """测试LLMEnhancedPersonalityChecker具有LLM服务"""
-    from infra.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
 
     checker = LLMEnhancedPersonalityChecker()
     assert checker.llm_service is not None
@@ -65,7 +65,7 @@ def test_personality_llm_has_llm_service():
 
 def test_personality_llm_region_positions():
     """测试LLM增强性格检测器正确记录位置"""
-    from infra.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.personality_llm import LLMEnhancedPersonalityChecker
 
     checker = LLMEnhancedPersonalityChecker()
     content = "突然变得残忍，性情大变"

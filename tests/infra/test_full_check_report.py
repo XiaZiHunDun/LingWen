@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.consistency.engine.data_structures import (
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     Issue,
     IssueLocation,

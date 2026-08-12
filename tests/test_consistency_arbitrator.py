@@ -1,9 +1,9 @@
 import pytest
 
-from infra.consistency.engine.consistency_arbitrator import (
+from lingwen_quality.consistency.engine.consistency_arbitrator import (
     ConsistencyArbitrator,
 )
-from infra.consistency.engine.data_structures import (
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     ConfidenceLevel,
     Issue,
