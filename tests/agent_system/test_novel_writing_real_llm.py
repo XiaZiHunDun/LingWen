@@ -239,7 +239,7 @@ class TestNovelWritingBudgetRealLLM:
 
     def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
         """Phase 8.9: real LLM run with generous budget, 验证 success + cost < budget + finally reset."""
-        from infra.ai_service.cost_tracker import CostTracker
+        from lingwen_llm.providers.cost_tracker import CostTracker
         cost_tracker = CostTracker()
         master = make_master_with_router(
             state_dir=tmp_path,
@@ -278,7 +278,7 @@ class TestNovelWritingBudgetRealLLM:
 
     def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
         """Phase 8.9: real LLM run with sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
-        from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
         _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
         cost_tracker = CostTracker()
         master = make_master_with_router(
@@ -335,7 +335,7 @@ class TestNovelWritingBudgetRealLLMOpenAI:
 
     def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
         """Phase 8.10: OpenAI gpt-4o-mini generous budget, 验证 success + cost < budget + finally reset."""
-        from infra.ai_service.cost_tracker import CostTracker
+        from lingwen_llm.providers.cost_tracker import CostTracker
         cost_tracker = CostTracker()
         master = make_master_with_router(
             state_dir=tmp_path,
@@ -374,7 +374,7 @@ class TestNovelWritingBudgetRealLLMOpenAI:
 
     def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
         """Phase 8.10: OpenAI gpt-4o-mini sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
-        from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
         _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
         cost_tracker = CostTracker()
         master = make_master_with_router(
@@ -431,7 +431,7 @@ class TestNovelWritingBudgetRealLLMMiniMax:
 
     def test_run_workflow_under_budget_passes(self, tmp_path: Path) -> None:
         """Phase 8.10: MiniMax M2.7 generous budget, 验证 success + cost < budget + finally reset."""
-        from infra.ai_service.cost_tracker import CostTracker
+        from lingwen_llm.providers.cost_tracker import CostTracker
         cost_tracker = CostTracker()
         master = make_master_with_router(
             state_dir=tmp_path,
@@ -470,7 +470,7 @@ class TestNovelWritingBudgetRealLLMMiniMax:
 
     def test_run_workflow_over_budget_raises(self, tmp_path: Path) -> None:
         """Phase 8.10: MiniMax M2.7 sub-cent budget, 验证 CostBudgetExceeded + FAILED + finally reset."""
-        from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
         _ = CostBudgetExceeded  # 文档化: workflow 内部抛此异常, scheduler 捕获后转 FAILED
         cost_tracker = CostTracker()
         master = make_master_with_router(

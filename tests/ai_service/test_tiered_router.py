@@ -16,13 +16,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.ai_service.base import AIProvider, AIProviderError, ProviderConfig
-from infra.ai_service.model_tiers import (
+from lingwen_llm.providers.base import AIProvider, AIProviderError, ProviderConfig
+from lingwen_llm.providers.model_tiers import (
     MODEL_TIERS,
     ModelTier,
     ModelTierConfig,
 )
-from infra.ai_service.tiered_router import (
+from lingwen_llm.providers.tiered_router import (
     TieredRouter,
     TieredRouterError,
 )
@@ -225,6 +225,6 @@ class TestImportContract:
     """Public API 完整性"""
 
     def test_top_level_imports(self):
-        from infra.ai_service import TieredRouter, TieredRouterError
+        from lingwen_llm.providers import TieredRouter, TieredRouterError
         assert TieredRouter is not None
         assert issubclass(TieredRouterError, Exception)

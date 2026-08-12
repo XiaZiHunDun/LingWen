@@ -351,7 +351,7 @@ def run_production_pilot(
         return result
 
     from infra.agent_system.master_controller import MasterController
-    from infra.ai_service.cost_tracker import CostTracker
+    from lingwen_llm.providers.cost_tracker import CostTracker
     from infra.got.data_structures import NodeStatus
 
     resolved_dir = Path(state_dir or DEFAULT_STATE_DIR)

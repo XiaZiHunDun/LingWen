@@ -27,8 +27,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterator, Optional
 
-from infra.ai_service.cost_tracker import CostBudgetExceeded
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
+from lingwen_llm.providers.model_tiers import ModelTier
 
 # 默认 DB 路径: 复用 cost_tracker.db (gitignored)
 _DB_PATH = Path(__file__).parent.parent / ".state" / "cost_tracker.db"

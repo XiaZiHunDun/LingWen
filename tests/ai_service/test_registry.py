@@ -5,13 +5,13 @@
 - register_provider 装饰器拒绝非 AIProvider 子类
 - get_provider_class / list_registered_providers 工作正常
 - AIRouter 走 registry 实例化(新增 provider 即可用)
-- 向后兼容:`from infra.ai_service import XxxProvider` 仍工作
+- 向后兼容:`from lingwen_llm.providers import XxxProvider` 仍工作
 """
 from unittest.mock import patch
 
 import pytest
 
-from infra.ai_service import (
+from lingwen_llm.providers import (
     AIProvider,
     AnthropicProvider,
     MiniMaxProvider,
@@ -21,12 +21,12 @@ from infra.ai_service import (
     list_registered_providers,
     register_provider,
 )
-from infra.ai_service.base import _PROVIDER_REGISTRY
-from infra.ai_service.router import AIRouter
+from lingwen_llm.providers.base import _PROVIDER_REGISTRY
+from lingwen_llm.providers.router import AIRouter
 
 
 class TestBuiltinRegistration:
-    """3 个内置 provider 应在 import infra.ai_service 时自动注册"""
+    """3 个内置 provider 应在 import lingwen_llm.providers 时自动注册"""
 
     def test_openai_registered(self):
         assert get_provider_class("openai") is OpenAIProvider
@@ -211,24 +211,24 @@ class TestBackwardCompat:
     """旧 import 路径仍工作"""
 
     def test_package_reexports_openai(self):
-        from infra.ai_service import OpenAIProvider as PkgOpenAI
-        from infra.ai_service.openai_provider import OpenAIProvider as ModOpenAI
+        from lingwen_llm.providers import OpenAIProvider as PkgOpenAI
+        from lingwen_llm.providers.openai_provider import OpenAIProvider as ModOpenAI
         assert PkgOpenAI is ModOpenAI
 
     def test_package_reexports_anthropic(self):
-        from infra.ai_service import AnthropicProvider as PkgAnthropic
-        from infra.ai_service.anthropic_provider import AnthropicProvider as ModAnthropic
+        from lingwen_llm.providers import AnthropicProvider as PkgAnthropic
+        from lingwen_llm.providers.anthropic_provider import AnthropicProvider as ModAnthropic
         assert PkgAnthropic is ModAnthropic
 
     def test_package_reexports_minimax(self):
-        from infra.ai_service import MiniMaxProvider as PkgMiniMax
-        from infra.ai_service.minimax_provider import MiniMaxProvider as ModMiniMax
+        from lingwen_llm.providers import MiniMaxProvider as PkgMiniMax
+        from lingwen_llm.providers.minimax_provider import MiniMaxProvider as ModMiniMax
         assert PkgMiniMax is ModMiniMax
 
     def test_submodule_imports_still_work(self):
         """tools/*.py 中用过的子模块 import 路径不应被破坏"""
-        from infra.ai_service.base import ProviderConfig
-        from infra.ai_service.minimax_provider import MiniMaxProvider
+        from lingwen_llm.providers.base import ProviderConfig
+        from lingwen_llm.providers.minimax_provider import MiniMaxProvider
         assert MiniMaxProvider is not None
         assert ProviderConfig is not None
 
@@ -237,7 +237,7 @@ class TestAllExports:
     """__all__ 完整性"""
 
     def test_package_all_includes_registry_helpers(self):
-        import infra.ai_service as pkg
+        import lingwen_llm.providers as pkg
         for name in [
             "AIProvider", "ProviderConfig", "AIProviderError",
             "OpenAIProvider", "AnthropicProvider", "MiniMaxProvider",

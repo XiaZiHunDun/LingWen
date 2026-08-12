@@ -25,8 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterator, Optional
 
-from infra.ai_service.cost_tracker import CostRecord
-from infra.ai_service.model_tiers import ModelTier, compute_cost
+from lingwen_llm.providers.cost_tracker import CostRecord
+from lingwen_llm.providers.model_tiers import ModelTier, compute_cost
 
 # 默认 DB 路径: infra/.state/cost_tracker.db (gitignored)
 _DB_PATH = Path(__file__).parent.parent / ".state" / "cost_tracker.db"

@@ -213,8 +213,8 @@ class LLMCausalReasoningChecker(BaseChecker):
         """
         import os
 
-        from ...ai_service import ProviderConfig
-        from ...ai_service.router import AIRouter
+        from lingwen_llm.providers import ProviderConfig
+        from lingwen_llm.providers.router import AIRouter
 
         api_key = os.environ.get("MINIMAX_API_KEY")
         if not api_key:

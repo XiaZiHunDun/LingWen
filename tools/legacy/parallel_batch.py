@@ -27,7 +27,7 @@ sys.path.insert(0, '.')
 
 from tools.minimax_batch_review import MiniMaxReviewer
 
-from infra.ai_service import MiniMaxProvider, ProviderConfig
+from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 
 
 def _resolve_max_chapter() -> int:

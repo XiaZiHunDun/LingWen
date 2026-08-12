@@ -39,8 +39,8 @@ from lingwen_core.agents.social_engine.conflict_alert import ConflictAlert
 from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
 from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
 from lingwen_core.agents.social_engine.writing_suggestion import WritingSuggestion
-from infra.ai_service import ProviderConfig
-from infra.ai_service.router import AIRouter
+from lingwen_llm.providers import ProviderConfig
+from lingwen_llm.providers.router import AIRouter
 
 
 def _make_config(provider="minimax", model="MiniMax-M2.7"):

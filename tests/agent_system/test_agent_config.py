@@ -148,7 +148,7 @@ def test_load_default_config_respects_explicit_state_dir(monkeypatch):
 def test_master_controller_config_is_frozen():
     """MasterControllerConfig 不可变（frozen dataclass）"""
     # 只用一个 provider 来构造，避免依赖 env
-    from infra.ai_service import ProviderConfig
+    from lingwen_llm.providers import ProviderConfig
     config = MasterControllerConfig(
         state_dir="/tmp",
         primary_provider="minimax",

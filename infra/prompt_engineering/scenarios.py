@@ -104,10 +104,10 @@ _SCENARIO_METADATA: dict[str, dict[str, str]] = {
 # - SONNET: 生成/中等审核/跨章节分析 (默认)
 # - OPUS: 结构推理/创意 (大纲建议/支线建议/审核关键路径)
 #
-# NOTE: 引用 infra.ai_service.model_tiers.ModelTier; 延迟导入避免循环
+# NOTE: 引用 lingwen_llm.providers.model_tiers.ModelTier; 延迟导入避免循环
 def _build_scenario_tier_map() -> dict:
     """构造 SCENARIO_TIER_MAP (12 SCENARIOS + 2 CVG → ModelTier, Phase 9.12 additive)"""
-    from infra.ai_service.model_tiers import ModelTier
+    from lingwen_llm.providers.model_tiers import ModelTier
     return {
         # --- 简单任务 → HAIKU ---
         "worldview_check": ModelTier.HAIKU,        # 境界/术语/规则事实核查

@@ -15,8 +15,8 @@ from typing import Optional
 import pytest
 
 from lingwen_core.agents.budget_persistence import BudgetService, TierBudgetEntry
-from infra.ai_service.cost_tracker import CostBudgetExceeded
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
+from lingwen_llm.providers.model_tiers import ModelTier
 
 
 class TestBudgetService:
@@ -96,7 +96,7 @@ class TestBudgetService:
 
     def test_check_all_scopes_per_run_exceeded(self, tmp_path: Path) -> None:
         """per-run set 0.1, total_cost 0.15 → raise CostBudgetExceeded(scope='run')"""
-        from infra.ai_service.cost_tracker import CostBudgetExceeded
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
         service.set("run", 0.1, run_id="r1")
@@ -140,7 +140,7 @@ class TestBudgetService:
         self, tmp_path: Path
     ) -> None:
         """3 档都设, total_cost 超 per-run → raise(scope='run') 不管 day/week"""
-        from infra.ai_service.cost_tracker import CostBudgetExceeded
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
         service.set("run", 0.1, run_id="r1")

@@ -20,8 +20,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Protocol
 
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.tiered_router import TieredRouter
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.tiered_router import TieredRouter
 
 from .data_structures import ThoughtNode
 from .scheduler import ComputeResult
@@ -116,7 +116,7 @@ class LLMComputeFn:
         if self._cost_tracker is not None:
             # 降级时,我们不知道实际 tier, 用 primary tier
             # 实际生产中可以扩展 TieredRouter 返回实际 tier
-            from infra.ai_service.model_tiers import ModelTier
+            from lingwen_llm.providers.model_tiers import ModelTier
             from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP
             try:
                 tier = SCENARIO_TIER_MAP[scenario]

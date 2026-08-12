@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.model_tiers import ModelTier
 from infra.prompt_engineering.scenarios import (
     _SCENARIO_METADATA,
     SCENARIO_TIER_MAP,

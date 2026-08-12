@@ -13,8 +13,8 @@ Phase 8.15: adds .tier: ModelTier | None for per-tier budget alarm.
 """
 from __future__ import annotations
 
-from infra.ai_service.cost_tracker import CostBudgetExceeded
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
+from lingwen_llm.providers.model_tiers import ModelTier
 
 
 def test_cost_budget_exceeded_tier_default_none():

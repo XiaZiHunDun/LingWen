@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from ..ai_service import ProviderConfig
+from lingwen_llm.providers import ProviderConfig
 from .social_engine.relationship_tracker import DEFAULT_STATE_FILE
 
 # DEFAULT_STATE_DIR 反推：DEFAULT_STATE_FILE = .../novel-factory/infra/agent_system/social_engine/relationship_network.db

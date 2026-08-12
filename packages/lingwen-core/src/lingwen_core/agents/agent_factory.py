@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import NamedTuple, Optional
 
-from ..ai_service.router import AIRouter
+from lingwen_llm.providers.router import AIRouter
 from ..state.state_manager import StateManager
 from .agent_config import MasterControllerConfig
 from .agents.auditor.tools import AuditorTools

@@ -9,9 +9,9 @@
 - LLMCache: SHA256-keyed LLM response cache (in-memory + JSON disk) (Phase 9.12)
 - LLMScanner: 4-dim serial LLM scanner (Phase 9.12)
 - EdgeInferrer: 8-rel-type cross-chapter edge inferrer (Phase 9.12)
-- ModelTier: HAIKU/SONNET/OPUS tier enum (re-exported from infra.ai_service) (Phase 9.12)
+- ModelTier: HAIKU/SONNET/OPUS tier enum (re-exported from lingwen_llm.providers) (Phase 9.12)
 """
-from infra.ai_service.model_tiers import ModelTier  # re-export for convenience
+from lingwen_llm.providers.model_tiers import ModelTier  # re-export for convenience
 from infra.cross_volume.cache import QueryImpactCache
 from infra.cross_volume.edge_inferrer import EdgeInferrer
 

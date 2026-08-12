@@ -15,16 +15,17 @@ import os
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional
 
 logger = logging.getLogger(__name__)
 
-from .ai_service.base import (
-    AIProvider,
-    AIProviderError,
-    ProviderConfig,
-)
-from .ai_service.plugin_manager import get_plugin_manager
+if TYPE_CHECKING:
+    from lingwen_llm.providers.base import (
+        AIProvider,
+        AIProviderError,
+        ProviderConfig,
+    )
+    from lingwen_llm.providers.plugin_manager import get_plugin_manager
 
 
 class TaskType(Enum):
@@ -85,8 +86,13 @@ class LLMService:
     }
 
     def __init__(self):
-        self._providers: list[tuple[str, AIProvider]] = []
-        self._provider: Optional[AIProvider] = None
+        # 延迟导入 lingwen_llm.providers 以避免 infra/__init__.py 加载时
+        # 触发循环依赖 (Phase 17.5: ai_service 迁出后)。
+        from lingwen_llm.providers.base import AIProvider
+        from lingwen_llm.providers.plugin_manager import get_plugin_manager
+
+        self._providers: list[tuple[str, "AIProvider"]] = []
+        self._provider: Optional["AIProvider"] = None
         self._provider_name: Optional[str] = None
         self._plugin_manager = get_plugin_manager()
         self._plugin_manager.load_plugins()
@@ -133,8 +139,10 @@ class LLMService:
             return None
         return api_key
 
-    def _create_provider(self, name: str, api_key: str) -> AIProvider:
+    def _create_provider(self, name: str, api_key: str) -> "AIProvider":
         """创建Provider实例（动态注册机制）"""
+        from lingwen_llm.providers.base import ProviderConfig
+
         provider_class = get_provider_class(name)
         if not provider_class:
             raise ValueError(f"Unknown provider: {name}. Registered providers: {list_registered_providers()}")
@@ -222,6 +230,8 @@ class LLMService:
                     return json.loads(json_match.group())
                 except json.JSONDecodeError:
                     pass
+            from lingwen_llm.providers.base import AIProviderError
+
             raise AIProviderError(f"JSON解析失败: {e}")
 
     @classmethod

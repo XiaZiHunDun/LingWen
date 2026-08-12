@@ -78,7 +78,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
             503: budget_service_by_tier not initialized on controller
         """
         from apps.studio_api.protocols import MasterControllerAdapter
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         try:
             tier_enum = ModelTier(tier)

@@ -19,7 +19,7 @@ Usage:
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from ....ai_service.router import AIRouter
+    from lingwen_llm.providers.router import AIRouter
 
 
 from ..agent_config import AGENT_DEFAULTS, PROVIDER_MODEL_DEFAULTS

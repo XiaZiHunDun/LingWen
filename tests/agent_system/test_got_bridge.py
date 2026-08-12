@@ -23,8 +23,8 @@ from lingwen_core.agents.got_bridge import (
     registered_scenarios,
     uncovered_scenarios,
 )
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult, ExecutionSummary
 
@@ -857,7 +857,7 @@ class TestBudgetEnforcement:
 
     def test_tuple_path_raises_after_budget_exceeded(self) -> None:
         """tuple path: handler 返 (output, usage) → record() 后 → check_budget raise"""
-        from infra.ai_service import CostBudgetExceeded
+        from lingwen_llm.providers import CostBudgetExceeded
 
         master, compute = self._make_compute_with_budget(budget_usd=0.0001)
         original = self._stub_chapter_writing(
@@ -875,7 +875,7 @@ class TestBudgetEnforcement:
 
     def test_dict_path_raises_after_budget_exceeded(self) -> None:
         """dict path (旧 handler 返 dict): 同样 raise, 无 tuple 时也走 check"""
-        from infra.ai_service import CostBudgetExceeded
+        from lingwen_llm.providers import CostBudgetExceeded
 
         master, compute = self._make_compute_with_budget(budget_usd=0.0001)
         original = self._stub_chapter_writing({"content": "x" * 100, "_test": True})

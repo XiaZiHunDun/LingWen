@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 from infra.cli.options import RippleScanOptions
 
 from .base import Command

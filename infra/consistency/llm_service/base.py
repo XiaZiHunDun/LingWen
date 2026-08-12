@@ -67,8 +67,8 @@ class LLMService:
 
     def _call_minimax(self, prompt: str, system: str = None) -> str:
         """调用MiniMax M2.7 API"""
-        from ...ai_service import ProviderConfig
-        from ...ai_service.router import AIRouter
+        from lingwen_llm.providers import ProviderConfig
+        from lingwen_llm.providers.router import AIRouter
         config = {"minimax": ProviderConfig(api_key=self.api_key, model="MiniMax-M2.7")}
         router = AIRouter(config=config, primary_provider="minimax", enable_failover=False)
         return router.generate(prompt=prompt, system=system, temperature=0.1, max_tokens=4096)

@@ -43,7 +43,7 @@ class TestExtractCostByTier:
     def test_returns_tier_value_keys_and_float_amounts(self) -> None:
         """ModelTier enum keys are serialized via .value; amounts as float."""
 
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         stub = MagicMock()
         stub.cost_by_tier.return_value = {
@@ -93,7 +93,7 @@ class TestExtractBudgetByTier:
     def test_extract_budget_by_tier_with_set_tiers_returns_dict(self, tmp_path: Path) -> None:
         """Phase 8.15: set haiku/opus → 返 haiku+opus dict, sonnet None."""
         from lingwen_core.agents.budget_persistence import BudgetService
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.HAIKU, 0.1)
@@ -117,7 +117,7 @@ class TestExtractBudgetByTier:
     def test_extract_budget_by_tier_includes_all_three_tiers(self, tmp_path: Path) -> None:
         """Phase 8.15: 3 tier keys (haiku/sonnet/opus) 永远 present, 顺序 Enum 顺序."""
         from lingwen_core.agents.budget_persistence import BudgetService
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.HAIKU, 0.05)
@@ -139,7 +139,7 @@ class TestExtractBudgetByTier:
         """
         from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_core.agents.budget_persistence import BudgetService
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)

@@ -30,7 +30,7 @@ from lingwen_core.agents.decision_queue import (
     HumanDecision,
     HumanDecisionQueue,
 )
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.model_tiers import ModelTier
 
 logger = logging.getLogger(__name__)
 

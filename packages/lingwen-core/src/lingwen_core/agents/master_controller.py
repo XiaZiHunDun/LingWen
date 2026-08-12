@@ -16,10 +16,10 @@ Phase 15.0 P3-SPLIT: 已拆分为多个子模块，保持向后兼容。
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from ..ai_service.router import AIRouter
+from lingwen_llm.providers.router import AIRouter
 
 if TYPE_CHECKING:
-    from ..ai_service.cost_tracker import CostTracker
+    from lingwen_llm.providers.cost_tracker import CostTracker
     from .budget_persistence import BudgetService
 from .agent_config import MasterControllerConfig, load_default_config
 from .agent_factory import (

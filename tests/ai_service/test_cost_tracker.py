@@ -19,8 +19,8 @@ from datetime import datetime
 
 import pytest
 
-from infra.ai_service.cost_tracker import CostRecord, CostTracker
-from infra.ai_service.model_tiers import ModelTier, compute_cost
+from lingwen_llm.providers.cost_tracker import CostRecord, CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier, compute_cost
 
 
 class TestCostRecord:
@@ -143,7 +143,7 @@ class TestImportContract:
     """Public API 完整性"""
 
     def test_top_level_imports(self):
-        from infra.ai_service import CostRecord, CostTracker
+        from lingwen_llm.providers import CostRecord, CostTracker
         assert CostRecord is not None
         assert CostTracker is not None
 
@@ -184,7 +184,7 @@ class TestCheckBudget:
         tracker.check_budget(20.0)
 
     def test_check_budget_over_threshold_raises(self):
-        from infra.ai_service.cost_tracker import CostBudgetExceeded
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
 
         tracker = CostTracker()
         # 制造 $90 cost
@@ -217,7 +217,7 @@ class TestCostBudgetExceededMessage:
 
     def test_cost_budget_exceeded_message_includes_scope(self) -> None:
         """Phase 8.12: scope='day' or 'week' appears in message, default 'run' does not"""
-        from infra.ai_service.cost_tracker import CostBudgetExceeded
+        from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
 
         # Default 'run' scope → no [scope=run] in message
         exc_default = CostBudgetExceeded(
@@ -291,8 +291,8 @@ class TestCostTrackerCostByDay:
         day1 = datetime(2026, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
         day2 = datetime(2026, 6, 2, 14, 0, 0, tzinfo=timezone.utc)
         # 直接插预制 timestamp 的 records (绕过 record() 调 datetime.now)
-        from infra.ai_service.cost_tracker import CostRecord
-        from infra.ai_service.model_tiers import compute_cost
+        from lingwen_llm.providers.cost_tracker import CostRecord
+        from lingwen_llm.providers.model_tiers import compute_cost
         tracker._records.append(CostRecord(
             scenario="chapter_writing", tier=ModelTier.SONNET,
             input_tokens=1000, output_tokens=500, cost_usd=0.0105,
@@ -336,7 +336,7 @@ class TestCostTrackerCostByDayPerTier:
     def test_cost_by_day_per_tier_groups_by_day_and_tier(self) -> None:
         from datetime import datetime, timezone
 
-        from infra.ai_service.cost_tracker import CostRecord
+        from lingwen_llm.providers.cost_tracker import CostRecord
 
         tracker = CostTracker()
         day1 = datetime(2026, 6, 1, 10, 0, 0, tzinfo=timezone.utc)

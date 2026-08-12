@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter
 from lingwen_core.agents import master_controller as mc_mod
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 
 
 class TestWorkflowStatusResponseCostByTier:
@@ -84,8 +84,8 @@ class TestWorkflowStatusTimeWindow:
         """复用 TestWorkflowStatusResponseCostByTier 的 _make_master pattern."""
         from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_core.agents import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()
@@ -169,8 +169,8 @@ class TestWorkflowStatusResponseCostByDay:
         """复用 TestWorkflowStatusTimeWindow pattern."""
         from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_core.agents import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()
@@ -251,8 +251,8 @@ class TestWorkflowStatusResponseCostByDayPerTier:
     def _make_master_with_cost_tracker(self, tmp_path: Path):
         from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_core.agents import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()

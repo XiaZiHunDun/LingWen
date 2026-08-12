@@ -89,8 +89,8 @@ class BackfillCommand(Command):
         Router instantiation 走 lazy: 优先 TieredRouter(providers={}) (test 路径不抛
         时也 OK), 真 LLM 调时才校验 missing tier.
         """
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.tiered_router import TieredRouter
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.tiered_router import TieredRouter
         from infra.cross_volume.backfill import (
             _default_storage,
             _load_chapters,

@@ -20,8 +20,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 from infra.got.data_structures import ThoughtNode
 from infra.got.scheduler import ComputeResult
 from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP, SCENARIOS

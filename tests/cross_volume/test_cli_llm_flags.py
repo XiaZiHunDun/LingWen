@@ -90,7 +90,7 @@ class TestCLINewFlags:
         # LLM 路径被触发, components 实例化成功.
         with patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner, \
              patch("infra.cross_volume.llm_cache.LLMCache"), \
-             patch("infra.ai_service.cost_tracker.CostTracker"):
+             patch("lingwen_llm.providers.cost_tracker.CostTracker"):
             options = make_options(use_llm=True, apply=True, vol=1, dry_run=False)
             cmd = BackfillCommand()
             result = cmd.execute(options)
@@ -109,8 +109,8 @@ class TestCLINewFlags:
         """
         with patch("infra.cross_volume.llm_scanner.LLMScanner") as mock_scanner, \
              patch("infra.cross_volume.llm_cache.LLMCache"), \
-             patch("infra.ai_service.cost_tracker.CostTracker"), \
-             patch("infra.ai_service.tiered_router.TieredRouter"), \
+             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
+             patch("lingwen_llm.providers.tiered_router.TieredRouter"), \
              patch("infra.cross_volume.backfill._load_chapters",
                    return_value=[], create=True), \
              patch("infra.cross_volume.storage.RippleStorage") as mock_storage:
@@ -131,7 +131,7 @@ class TestCLINewFlags:
         cache_path = tmp_path / "custom_cache.json"
         with patch("infra.cross_volume.llm_cache.LLMCache") as mock_cache, \
              patch("infra.cross_volume.llm_scanner.LLMScanner"), \
-             patch("infra.ai_service.cost_tracker.CostTracker"), \
+             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
              patch("infra.cross_volume.storage.RippleStorage"):
             options = make_options(
                 use_llm=True, apply=True, vol=1, cache_path=cache_path
