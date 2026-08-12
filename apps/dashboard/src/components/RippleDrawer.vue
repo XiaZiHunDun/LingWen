@@ -1,4 +1,4 @@
-<!-- dashboard/frontend/src/components/RippleDrawer.vue (Phase 9.13 + 9.22 T3) -->
+<!-- apps/dashboard/src/components/RippleDrawer.vue (Phase 9.13 + 9.22 T3) -->
 <!-- Per-ripple drawer: 3 tabs (Summary / Cascade / Runs) wrapping existing body content. -->
 <template>
   <div v-if="open" class="ripple-drawer ripple-drawer" data-testid="ripple-drawer" @click.self="$emit('close')">

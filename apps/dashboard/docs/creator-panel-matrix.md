@@ -229,7 +229,7 @@ idle → plan（scope + action）→ generating → candidates
 
 ## 10. Playwright 本地跑法
 
-在 `novel-factory/dashboard/frontend` 目录：
+在 `novel-factory/apps/dashboard` 目录：
 
 | 命令 | 说明 |
 |------|------|

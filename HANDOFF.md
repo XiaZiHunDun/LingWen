@@ -449,12 +449,12 @@ LingWen/                                    # 本目录 (项目根, git root)
 # 1. Setup
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen
 pip install -e .                 # 后端 (含 pytest/vitest 框架)
-cd dashboard/frontend && pnpm install && cd ../..
+cd apps/dashboard && pnpm install && cd ../..
 
 # 2. 验证 baseline (sanity check, 跟 Handoff 同步时的测试数比对)
 pytest -q                          # 期望: 2495 passed, 27 skipped, ~90s
-cd dashboard/frontend && pnpm test && cd ../..              # 期望: 193 passed, ~5s
-cd dashboard/frontend && pnpm test:coverage && cd ../..     # 期望: 193 passed + lcov (lines ≥70%)
+cd apps/dashboard && pnpm test && cd ../..              # 期望: 193 passed, ~5s
+cd apps/dashboard && pnpm test:coverage && cd ../..     # 期望: 193 passed + lcov (lines ≥70%)
 pytest -q                          # 期望: 2512 passed, ~90s
 # (e2e 14 tests, 部分 baseline fail 不是回归, 是 Phase 9.18 已知)
 
@@ -462,7 +462,7 @@ pytest -q                          # 期望: 2512 passed, ~90s
 # 后端:
 python dashboard/app.py &  # port 8000
 # 前端:
-cd dashboard/frontend && pnpm dev --port 5173 --strictPort &
+cd apps/dashboard && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
 ```
 
@@ -1126,15 +1126,15 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 ```bash
 # === Tests（全量以 GitHub Actions test workflow 为准；本地见 ci-quality-gates §本地最小验证）===
 pytest -q                                    # 3011+ collected · 全量见 CI
-cd dashboard/frontend && pnpm vitest run             # 改前端时 · ~8s
-cd dashboard/frontend && pnpm lint:all && pnpm build # 与 test 主门对齐
-cd dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
-cd dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
-cd dashboard/frontend && pnpm e2e:smoke --list       # 1 smoke test
-cd dashboard/frontend && LINGWEN_E2E_LIVE=1 pnpm e2e:live --list  # 5 live tests (opt-in)
+cd apps/dashboard && pnpm vitest run             # 改前端时 · ~8s
+cd apps/dashboard && pnpm lint:all && pnpm build # 与 test 主门对齐
+cd apps/dashboard && pnpm typecheck              # TS strict (tests/**)
+cd apps/dashboard && pnpm typecheck:app          # vue-tsc src/** (F47)
+cd apps/dashboard && pnpm e2e:smoke --list       # 1 smoke test
+cd apps/dashboard && LINGWEN_E2E_LIVE=1 pnpm e2e:live --list  # 5 live tests (opt-in)
 ruff check .                                 # 0 issues
-cd dashboard/frontend && pnpm lint:all             # 0 errors
-cd dashboard/frontend && pnpm build                # 0 errors
+cd apps/dashboard && pnpm lint:all             # 0 errors
+cd apps/dashboard && pnpm build                # 0 errors
 
 # === Lint ===
 ruff check .
@@ -1148,7 +1148,7 @@ git status                             # 干净 = 无 pending 改
 
 # === Dashboard ===
 python dashboard/app.py &                       # port 8000
-cd dashboard/frontend && pnpm dev --port 5173 --strictPort &  # port 5173
+cd apps/dashboard && pnpm dev --port 5173 --strictPort &  # port 5173
 # 浏览器: http://localhost:5173
 
 # === CLI ===

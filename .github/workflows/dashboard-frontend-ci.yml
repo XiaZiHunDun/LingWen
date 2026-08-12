@@ -7,12 +7,12 @@ on:
   push:
     branches: [master]
     paths:
-      - 'dashboard/frontend/**'
+      - 'apps/dashboard/**'
       - '.github/workflows/dashboard-frontend-ci.yml'
   pull_request:
     branches: [master]
     paths:
-      - 'dashboard/frontend/**'
+      - 'apps/dashboard/**'
       - '.github/workflows/dashboard-frontend-ci.yml'
 
 concurrency:
@@ -26,7 +26,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -67,7 +67,7 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v5
         with:
-          files: ./dashboard/frontend/coverage/lcov.info
+          files: ./apps/dashboard/coverage/lcov.info
           flags: frontend
           fail_ci_if_error: false
           verbose: false
@@ -83,7 +83,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -104,7 +104,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
         run: pip install -e . -r dashboard/requirements.txt
@@ -137,7 +137,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -158,7 +158,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
         run: pip install -e . -r dashboard/requirements.txt
@@ -191,7 +191,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -212,7 +212,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
         run: pip install -e . -r dashboard/requirements.txt
@@ -245,7 +245,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -266,7 +266,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
         run: pip install -e . -r dashboard/requirements.txt

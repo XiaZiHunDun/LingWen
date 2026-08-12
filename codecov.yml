@@ -17,7 +17,7 @@ coverage:
 flags:
   frontend:
     paths:
-      - dashboard/frontend/src/
+      - apps/dashboard/src/
   backend:
     paths:
       - infra/

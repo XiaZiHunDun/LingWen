@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/ripple-drawer.spec.js
+// apps/dashboard/tests/unit/ripple-drawer.spec.js
 import { describe, it, expect, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import RippleDrawer from '../../src/components/RippleDrawer.vue';

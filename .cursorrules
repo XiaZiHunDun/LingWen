@@ -2,7 +2,7 @@
 # These rules guide AI assistants (Cursor, Trae, etc.) when modifying this project
 
 ## FRONTEND VALIDATION MANDATE
-When you modify ANY frontend-related files (.vue, .js, .ts, .css, .scss, .json in dashboard/frontend/), YOU MUST:
+When you modify ANY frontend-related files (.vue, .js, .ts, .css, .scss, .json in apps/dashboard/), YOU MUST:
 
 1. After making changes, immediately run: `bash scripts/check-frontend.sh`
 2. If the check fails, analyze the error message and fix the issue
@@ -32,10 +32,10 @@ Before completing any frontend task, confirm:
 
 ## RUNNING DEV SERVER
 If dev server is not running, start it with:
-`cd dashboard/frontend && pnpm dev`
+`cd apps/dashboard && pnpm dev`
 
 ## EMERGENCY FIXES
 If frontend is completely broken (blank page):
 1. Check browser console for errors
 2. Look for missing imports in recently modified components
-3. Restore from git if needed: `git checkout dashboard/frontend/src/<broken-file>`
+3. Restore from git if needed: `git checkout apps/dashboard/src/<broken-file>`

@@ -1,4 +1,4 @@
-<!-- dashboard/frontend/src/pages/RipplesPage.vue — Phase 9.13 + 9.41 F30 ImpactGraph -->
+<!-- apps/dashboard/src/pages/RipplesPage.vue — Phase 9.13 + 9.41 F30 ImpactGraph -->
 <template>
   <div class="ripples-page" data-testid="ripples-page">
     <h1 v-if="!embedded" class="page-title">涟漪变更</h1>

@@ -1,4 +1,4 @@
-<!-- dashboard/frontend/src/components/CascadeGraph.vue (NEW, Phase 9.15 T3) -->
+<!-- apps/dashboard/src/components/CascadeGraph.vue (NEW, Phase 9.15 T3) -->
 <!-- Lazy ECharts graph: cascade nodes (BFS 下游) + edges + node click emit.
   Phase 9.51 F40: 3 view modes — force | depth-layer | action-cluster -->
 <template>

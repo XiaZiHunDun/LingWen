@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/ripple-drawer-cascade.spec.js — Phase 9.16 T3
+// apps/dashboard/tests/unit/ripple-drawer-cascade.spec.js — Phase 9.16 T3
 // RippleDrawer mount 时 onCascadeUpdate 注册 + ripple_id 匹配时静默 re-fetch 测试
 // 镜像 ripple-drawer-audit.spec.js Phase 9.14 T5 模式: relative path import +
 //   vi.mock + mockResolvedValue + flushPromises

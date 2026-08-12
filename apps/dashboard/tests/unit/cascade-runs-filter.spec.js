@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/cascade-runs-filter.spec.js — Phase 9.23 T4
+// apps/dashboard/tests/unit/cascade-runs-filter.spec.js — Phase 9.23 T4
 // Vitest unit tests for CascadeRunsFilter.vue (5 tests, 0 network, 0 LLM).
 // Pattern matches ripple-drawer-cascade.spec.js (mount via @vue/test-utils +
 // jsdom, dynamic await import in beforeEach). Emit capture via

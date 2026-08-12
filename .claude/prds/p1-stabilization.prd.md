@@ -4,7 +4,7 @@
 
 灵文工作室 v12 顶级 KPI 已达标（2026-06-24），项目进入维护模式（无 blocking 工程项）。但 2026-07-10 的全项目代码审计暴露 5 个 P1 止血项 —— **已知但未修**的工程债，已经从"代码味道"升级为"生产风险"：
 
-1. **前端 API 永久 hang 风险** —— `dashboard/frontend/src/api/index.js` 的 `request()` 无 timeout/abort，158 个调用点都在后端死时永远 spinner
+1. **前端 API 永久 hang 风险** —— `apps/dashboard/src/api/index.js` 的 `request()` 无 timeout/abort，158 个调用点都在后端死时永远 spinner
 2. **FastAPI 零中间件** —— `dashboard/app.py:2503` 后无任何 `add_middleware`，CORS/auth/限流/GZip 全缺；任何客户端都能调 mutation 路由
 3. **Ripple list N+1 查询** —— `_ripple_list_items` 对 200 个 ripple 做 400 次 DB 查询
 4. **CLI CWD 相对路径** —— `infra/cli/commands/{cascade,ripple_rollback,ripple_audit}.py` 的 `DEFAULT_RIPPLE_DB = Path(".state/ripple.db")` 在非项目根运行会**静默**创建错位 db
@@ -16,7 +16,7 @@
 
 （直接引用 2026-07-10 全项目审计的 E1–E10，均已由 user 认可为成立）
 
-- **E1** 前端 hang：`dashboard/frontend/src/api/index.js:29-58` 无 timeout/abort；158 调用点受影响
+- **E1** 前端 hang：`apps/dashboard/src/api/index.js:29-58` 无 timeout/abort；158 调用点受影响
 - **E2** 零中间件：`dashboard/app.py:2503` `app = FastAPI(...)` 后零 `add_middleware` 调用
 - **E3** Ripple N+1：`dashboard/app.py:2290` `_ripple_list_items` 每 ripple 调一次 `_ripple_impact_score`（DB query），200 ripple = 400 query
 - **E4** Cascade 邻接表缺失：`infra/cross_volume/reference_graph.py:326-334`（注：本次 P1 不修，留 P2）

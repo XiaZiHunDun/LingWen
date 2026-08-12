@@ -3,7 +3,7 @@
 > **版本**: v10.0 (Phase 16 卫生与基础完成)
 > **更新 (2026-08-11)**：Phase 16（卫生与基础）落地——事件 reducer、`tools/migrate_state_log`、文件尺寸上限（72 文件 ALLOWLIST 按 Phase 17/19.x 跟踪）、单一品牌（墨灵 Studio=产品，灵文=框架）、Phase 16 Gate 脚本。Phase 16.7（删陈旧 infra）推迟到 Phase 17 monorepo 阶段。
 
-> **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `dashboard/frontend/src/config/brand.js`。
+> **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
 ## 身份
 

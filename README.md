@@ -90,7 +90,7 @@ bash scripts/build-trial-read.sh jinghai-rizhi 1 10
 
 # 测试（全量以 GitHub Actions test workflow 为准）
 pytest -q                       # 3011+ collected
-cd dashboard/frontend && pnpm vitest run && pnpm lint:all && pnpm build
+cd apps/dashboard && pnpm vitest run && pnpm lint:all && pnpm build
 ```
 
 ---

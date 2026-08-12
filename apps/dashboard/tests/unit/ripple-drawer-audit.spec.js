@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/ripple-drawer-audit.spec.js — Phase 9.14 T5
+// apps/dashboard/tests/unit/ripple-drawer-audit.spec.js — Phase 9.14 T5
 // RippleDrawer audit timeline + Rollback button 测试 6 case.
 // 镜像 use-ripple-store-audit.spec.js Phase 9.14 T4 + ripple-drawer.spec.js
 //   Phase 9.13 模式: relative path import + vi.mock (proven pattern).

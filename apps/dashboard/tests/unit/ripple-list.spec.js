@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/ripple-list.spec.js
+// apps/dashboard/tests/unit/ripple-list.spec.js
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import RippleList from '../../src/components/RippleList.vue';

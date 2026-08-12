@@ -90,7 +90,7 @@ Cursor SSH：先在 IDE 内点击 Ports 里的 8765 链接激活转发，再开�
 
 ```bash
 python dashboard/app.py          # 8765 API
-cd dashboard/frontend && pnpm dev   # 5173 热更新
+cd apps/dashboard && pnpm dev   # 5173 热更新
 ```
 
 </details>

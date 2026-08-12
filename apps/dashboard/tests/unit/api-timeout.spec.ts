@@ -1,6 +1,6 @@
 // tests/unit/api-timeout.spec.ts — Phase 13.0 T1 (H10 frontend API timeout/AbortSignal)
 // Spec: 前端 request() 默认 15s timeout + AbortSignal 透传
-// E1: dashboard/frontend/src/api/index.js:29-58 无 timeout/abort；158 调用点受影响
+// E1: apps/dashboard/src/api/index.js:29-58 无 timeout/abort；158 调用点受影响
 
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 

@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/cascade-runs-panel.spec.js — Phase 9.22 T2 + Phase 9.23 T5b
+// apps/dashboard/tests/unit/cascade-runs-panel.spec.js — Phase 9.22 T2 + Phase 9.23 T5b
 // CascadeRunsPanel vitest: list historical cascade_runs + Replay + Cancel + WS handler
 // Mirror cascade-graph.spec.js pattern: vi.mock('../../src/api/index.js') + vi.mock
 //   useWorkflowSocket + globalThis.__cascadeHandlers for WS push injection.

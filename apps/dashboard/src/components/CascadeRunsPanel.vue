@@ -1,4 +1,4 @@
-<!-- dashboard/frontend/src/components/CascadeRunsPanel.vue (NEW, Phase 9.22 T2) -->
+<!-- apps/dashboard/src/components/CascadeRunsPanel.vue (NEW, Phase 9.22 T2) -->
 <!-- Per-ripple Cascade runs tab: 表格 (ID/Status/Depth/Created/Actions) + Replay +
   Cancel buttons + WS handler via Phase 9.17 useWorkflowSocket.onCascadeUpdate.
   Replay 调新 fetchCascadeWithDepth 走 Phase 9.20 ?persist=false read-only path,

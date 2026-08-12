@@ -6,7 +6,9 @@ settings:
 
 importers:
 
-  dashboard/frontend:
+  .: {}
+
+  apps/dashboard:
     dependencies:
       '@vueuse/core':
         specifier: ^14.3.0

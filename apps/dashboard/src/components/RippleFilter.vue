@@ -1,4 +1,4 @@
-<!-- dashboard/frontend/src/components/RippleFilter.vue (NEW, Phase 9.13) -->
+<!-- apps/dashboard/src/components/RippleFilter.vue (NEW, Phase 9.13) -->
 <template>
   <div class="ripple-filter">
     <label>

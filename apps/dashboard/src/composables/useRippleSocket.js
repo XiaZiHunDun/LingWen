@@ -1,4 +1,4 @@
-// dashboard/frontend/src/composables/useRippleSocket.js — Phase 9.13
+// apps/dashboard/src/composables/useRippleSocket.js — Phase 9.13
 // Vue composable for CVG WebSocket subscription (跟 useWorkflowSocket 1:1 mirror)
 // Module-level singleton state (Phase 8.11 baseline)
 

@@ -90,7 +90,7 @@ CLEANUP=1 bash scripts/verify-onboarding-blind.sh   # 通过后自动删除
 python dashboard/app.py
 
 # 终端 2：前端
-cd dashboard/frontend && pnpm dev
+cd apps/dashboard && pnpm dev
 ```
 
 打开 `http://localhost:5173/?nav=studio`：

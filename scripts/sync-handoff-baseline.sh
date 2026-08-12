@@ -52,8 +52,8 @@ PYTEST_SKIPPED="$(echo "$PYTEST_OUT" | grep -oE '[0-9]+ skipped' | grep -oE '[0-
 PYTEST_FAILED="$(echo "$PYTEST_OUT" | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+' || echo "0")"
 
 VITEST_PASSED="?"
-if [[ -d "${ROOT}/dashboard/frontend/node_modules" ]]; then
-  VITEST_LINE="$(cd dashboard/frontend && pnpm vitest run 2>&1 | tail -1 || true)"
+if [[ -d "${ROOT}/apps/dashboard/node_modules" ]]; then
+  VITEST_LINE="$(cd apps/dashboard && pnpm vitest run 2>&1 | tail -1 || true)"
   VITEST_PASSED="$(echo "$VITEST_LINE" | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+' || echo "?")"
 fi
 

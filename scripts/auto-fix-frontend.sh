@@ -22,7 +22,7 @@ print_info() {
   echo -e "[*] $1"
 }
 
-FRONTEND_DIR="/home/ailearn/projects/LingWen/dashboard/frontend"
+FRONTEND_DIR="/home/ailearn/projects/LingWen/apps/dashboard"
 CHECK_SCRIPT="/home/ailearn/projects/LingWen/scripts/check-frontend.sh"
 
 cd "$FRONTEND_DIR"

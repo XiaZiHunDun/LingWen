@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/use-workflow-socket-cascade.spec.js — Phase 9.16 T3
+// apps/dashboard/tests/unit/use-workflow-socket-cascade.spec.js — Phase 9.16 T3
 // useWorkflowSocket cascade.update event 分支 + onCascadeUpdate API 测试
 // 镜像 use-ripple-store.spec.js Phase 9.13 模式: dynamic import + vi.resetModules
 //   隔离 module-level singleton state (latestCascadeUpdates / registeredHandlers)

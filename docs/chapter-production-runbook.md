@@ -103,7 +103,7 @@ pytest tests/dashboard/test_human_review_smoke.py -q
 Live e2e（需 backend）：
 
 ```bash
-cd dashboard/frontend
+cd apps/dashboard
 LINGWEN_E2E_LIVE=1 pnpm e2e:live
 ```
 
@@ -205,7 +205,7 @@ pytest tests/agent_system/test_chapter_memory_hook.py -q
 验收：
 
 ```bash
-cd dashboard/frontend && pnpm exec vitest run tests/unit/chapters-page.spec.ts
+cd apps/dashboard && pnpm exec vitest run tests/unit/chapters-page.spec.ts
 ```
 
 ---
@@ -225,7 +225,7 @@ Opt-in GitHub Actions workflow `.github/workflows/dashboard-e2e-live.yml`：
 **本地 CI 模拟**（与 workflow 同 env）:
 
 ```bash
-cd dashboard/frontend
+cd apps/dashboard
 CI=true LINGWEN_E2E_LIVE=1 pnpm e2e:live
 # 期望: 5 passed (decisions-resolve ×2 + ripples-audit ×3)
 ```

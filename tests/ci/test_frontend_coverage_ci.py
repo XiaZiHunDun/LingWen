@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FRONTEND_DIR = REPO_ROOT / "dashboard" / "frontend"
+FRONTEND_DIR = REPO_ROOT / "apps" / "dashboard"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 
 
@@ -50,7 +50,7 @@ class TestFrontendCoverageCI:
         data = yaml.safe_load((REPO_ROOT / "codecov.yml").read_text(encoding="utf-8"))
         assert "frontend" in data["flags"]
         paths = data["flags"]["frontend"]["paths"]
-        assert any("dashboard/frontend/src" in p for p in paths)
+        assert any("apps/dashboard/src" in p for p in paths)
 
 
 class TestFrontendCoveragePages:

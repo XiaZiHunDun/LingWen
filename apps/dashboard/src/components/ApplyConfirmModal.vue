@@ -1,4 +1,4 @@
-<!-- dashboard/frontend/src/components/ApplyConfirmModal.vue (NEW, Phase 9.15 T4) -->
+<!-- apps/dashboard/src/components/ApplyConfirmModal.vue (NEW, Phase 9.15 T4) -->
 <!-- Generic 2-button confirmation modal (used by RippleDrawer before apply).
   0 store mutation on cancel; confirm emits event; parent decides action.
   Scope: dry-run flow only (cascade BFS preview → confirm). Reusable

@@ -1,4 +1,4 @@
-// dashboard/frontend/tests/unit/use-ripple-socket.spec.js — Phase 9.13
+// apps/dashboard/tests/unit/use-ripple-socket.spec.js — Phase 9.13
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 class MockWebSocket {
