@@ -9,9 +9,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 def test_master_controller_init():
     """测试主控调度器初始化"""
-    with patch('infra.agent_system.master_controller.RelationshipTracker'):
-        with patch('infra.agent_system.master_controller.ContextBuilder'):
-            from infra.agent_system.master_controller import MasterController
+    with patch('lingwen_core.agents.master_controller.RelationshipTracker'):
+        with patch('lingwen_core.agents.master_controller.ContextBuilder'):
+            from lingwen_core.agents.master_controller import MasterController
             controller = MasterController()
             assert controller is not None
             assert controller.outline_master is not None
@@ -22,9 +22,9 @@ def test_master_controller_init():
 
 def test_master_controller_generate_outline():
     """测试生成大纲"""
-    with patch('infra.agent_system.master_controller.RelationshipTracker'):
-        with patch('infra.agent_system.master_controller.ContextBuilder'):
-            from infra.agent_system.master_controller import MasterController
+    with patch('lingwen_core.agents.master_controller.RelationshipTracker'):
+        with patch('lingwen_core.agents.master_controller.ContextBuilder'):
+            from lingwen_core.agents.master_controller import MasterController
             controller = MasterController()
             outline = controller.generate_outline(
                 settings={"title": "测试小说", "genre": "玄幻"},
@@ -35,9 +35,9 @@ def test_master_controller_generate_outline():
 
 def test_master_controller_generate_characters():
     """测试生成角色"""
-    with patch('infra.agent_system.master_controller.RelationshipTracker'):
-        with patch('infra.agent_system.master_controller.ContextBuilder'):
-            from infra.agent_system.master_controller import MasterController
+    with patch('lingwen_core.agents.master_controller.RelationshipTracker'):
+        with patch('lingwen_core.agents.master_controller.ContextBuilder'):
+            from lingwen_core.agents.master_controller import MasterController
             controller = MasterController()
             characters = controller.generate_characters(
                 outline={"title": "测试"},
@@ -50,8 +50,8 @@ def test_master_controller_generate_characters():
 
 def test_master_controller_write_chapter():
     """测试写章节流程"""
-    with patch('infra.agent_system.master_controller.RelationshipTracker') as mock_rt:
-        with patch('infra.agent_system.master_controller.ContextBuilder') as mock_cb:
+    with patch('lingwen_core.agents.master_controller.RelationshipTracker') as mock_rt:
+        with patch('lingwen_core.agents.master_controller.ContextBuilder') as mock_cb:
             mock_network = {"characters": [], "relationships": [], "events": []}
             mock_rt_instance = Mock()
             mock_rt_instance.get_network.return_value = mock_network
@@ -65,7 +65,7 @@ def test_master_controller_write_chapter():
             }
             mock_cb.return_value = mock_cb_instance
 
-            from infra.agent_system.master_controller import MasterController
+            from lingwen_core.agents.master_controller import MasterController
             controller = MasterController()
 
             result = controller.write_chapter(
@@ -82,9 +82,9 @@ def test_master_controller_write_chapter():
 
 def test_master_controller_audit_chapter():
     """测试审核章节"""
-    with patch('infra.agent_system.master_controller.RelationshipTracker'):
-        with patch('infra.agent_system.master_controller.ContextBuilder'):
-            from infra.agent_system.master_controller import MasterController
+    with patch('lingwen_core.agents.master_controller.RelationshipTracker'):
+        with patch('lingwen_core.agents.master_controller.ContextBuilder'):
+            from lingwen_core.agents.master_controller import MasterController
             controller = MasterController()
             content = "铁蛋冷静地看着对手。首先，他需要分析局势。"
             report = controller.audit_chapter(
@@ -98,9 +98,9 @@ def test_master_controller_audit_chapter():
 
 def test_master_controller_polish_chapter():
     """测试润色章节"""
-    with patch('infra.agent_system.master_controller.RelationshipTracker'):
-        with patch('infra.agent_system.master_controller.ContextBuilder'):
-            from infra.agent_system.master_controller import MasterController
+    with patch('lingwen_core.agents.master_controller.RelationshipTracker'):
+        with patch('lingwen_core.agents.master_controller.ContextBuilder'):
+            from lingwen_core.agents.master_controller import MasterController
             controller = MasterController()
             content = "首先，铁蛋分析了情况。其次，他做出了决定。最后，执行计划。"
             result = controller.polish_chapter(content)

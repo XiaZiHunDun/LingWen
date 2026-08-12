@@ -240,14 +240,14 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_via_controller(self, monkeypatch, tmp_path):
         """controller.resume_workflow(decision_id, option) → 继续"""
-        import infra.agent_system.master_controller as mc_mod
+        import lingwen_core.agents.master_controller as mc_mod
         import infra.state.state_manager as sm_mod
-        from infra.agent_system.decision_queue import (
+        from lingwen_core.agents.decision_queue import (
             DecisionKind,
             HumanDecisionQueue,
             create_decision,
         )
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_core.agents.master_controller import MasterController
 
         monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
         monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
@@ -284,7 +284,7 @@ class TestControllerResumeWorkflow:
         )
 
         # 构造 scheduler
-        from infra.agent_system.got_bridge import build_got_scheduler
+        from lingwen_core.agents.got_bridge import build_got_scheduler
         scheduler, graph = build_got_scheduler(
             master=controller,
             workflow_name="dec_pause",
@@ -317,10 +317,10 @@ class TestControllerResumeWorkflow:
 
     def _build_controller_with_workflow(self, monkeypatch, tmp_path, workflow_body: str):
         """构造一个 stub MasterController + 含 DECISION 的工作流 + 注入的 scheduler"""
-        import infra.agent_system.master_controller as mc_mod
+        import lingwen_core.agents.master_controller as mc_mod
         import infra.state.state_manager as sm_mod
-        from infra.agent_system.decision_queue import HumanDecisionQueue
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_core.agents.decision_queue import HumanDecisionQueue
+        from lingwen_core.agents.master_controller import MasterController
 
         monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
         monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
@@ -344,7 +344,7 @@ class TestControllerResumeWorkflow:
         wf = tmp_path / "wf_resume.yaml"
         wf.write_text(workflow_body, encoding="utf-8")
 
-        from infra.agent_system.got_bridge import build_got_scheduler
+        from lingwen_core.agents.got_bridge import build_got_scheduler
         scheduler, graph = build_got_scheduler(
             master=controller,
             workflow_name="wf_resume",
@@ -355,7 +355,7 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_continues_via_controller(self, monkeypatch, tmp_path):
         """controller.resume_workflow(decision_id, option) 真正让工作流继续"""
-        from infra.agent_system.decision_queue import (
+        from lingwen_core.agents.decision_queue import (
             DecisionKind,
             create_decision,
         )
@@ -429,14 +429,14 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_raises_without_active_workflow(self, monkeypatch, tmp_path):
         """从未 run_workflow → resume_workflow 抛 RuntimeError"""
-        import infra.agent_system.master_controller as mc_mod
+        import lingwen_core.agents.master_controller as mc_mod
         import infra.state.state_manager as sm_mod
-        from infra.agent_system.decision_queue import (
+        from lingwen_core.agents.decision_queue import (
             DecisionKind,
             HumanDecisionQueue,
             create_decision,
         )
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_core.agents.master_controller import MasterController
 
         monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
         monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
@@ -496,7 +496,7 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_resolved_by_kwarg(self, monkeypatch, tmp_path):
         """resolved_by kwarg 透传到 HumanDecision 和 DECISION 节点"""
-        from infra.agent_system.decision_queue import (
+        from lingwen_core.agents.decision_queue import (
             DecisionKind,
             create_decision,
         )
@@ -539,7 +539,7 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_serial_decisions(self, monkeypatch, tmp_path):
         """两个串行 DECISION → 每次 resume 推进一个,直到全部 COMPLETED"""
-        from infra.agent_system.decision_queue import (
+        from lingwen_core.agents.decision_queue import (
             DecisionKind,
             create_decision,
         )

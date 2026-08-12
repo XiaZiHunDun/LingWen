@@ -26,8 +26,8 @@ from fastapi.testclient import TestClient
 
 from apps.studio_api.app import create_app
 from apps.studio_api.protocols import MasterControllerAdapter
-from infra.agent_system import master_controller as mc_mod
-from infra.agent_system.decision_queue import (
+from lingwen_core.agents import master_controller as mc_mod
+from lingwen_core.agents.decision_queue import (
     DecisionKind,
     HumanDecision,
     HumanDecisionQueue,
@@ -95,7 +95,7 @@ class _StubMasterController:
             completed=1, steps=1, node_count=3, paused=True, paused_nodes=("judge",),
         )
         # stub 模拟:run 扫描 DECISION 节点 → 创建 HumanDecision 入队
-        from infra.agent_system.decision_queue import (
+        from lingwen_core.agents.decision_queue import (
             DecisionKind,
             create_decision,
         )
@@ -600,7 +600,7 @@ def _make_fake_master_with_polish_merge_scores(
     """
     from datetime import datetime, timezone
 
-    from infra.agent_system import master_controller as mc_mod
+    from lingwen_core.agents import master_controller as mc_mod
     from infra.got.data_structures import NodeExecution, NodeStatus, NodeType, ThoughtNode
 
     s1_s8 = {"S1": 8, "S2": 7, "S3": 9, "S4": 8, "S5": 7, "S6": 8, "S7": 9, "S8": 8}
@@ -870,7 +870,7 @@ class TestCostByScenarioExtraction:
         加 cost_by_scenario 字段, WebSocket 自动获得, 0 改 endpoint 协议.
         """
         from apps.studio_api.protocols import MasterControllerAdapter
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_core.agents.master_controller import MasterController
 
         cost_tracker = CostTracker()
         cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
@@ -966,7 +966,7 @@ class TestBudgetStatusExtraction:
         has_tracker: bool = True,
     ) -> Any:
         """Build a MasterController-like stub with cost_tracker + _current_budget_usd"""
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_core.agents.master_controller import MasterController
         from infra.ai_service.cost_tracker import CostTracker
 
         ctrl = MasterController.__new__(MasterController)

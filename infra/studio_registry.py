@@ -303,7 +303,7 @@ def batch_command(
     budget_usd: float | None = None,
     calibrate_json: str = "",
 ) -> str:
-    from infra.agent_system.chapter_production_batch import resolve_cost_per_chapter_usd
+    from lingwen_core.agents.chapter_production_batch import resolve_cost_per_chapter_usd
 
     max_chapters = end_chapter - start_chapter + 1
     cal_path = Path(calibrate_json) if calibrate_json else find_calibration_batch(project)
@@ -320,7 +320,7 @@ def batch_command(
         "export LINGWEN_REAL_LLM=1",
         "export LINGWEN_EMIT_CHAPTER=1",
     ]
-    from infra.agent_system.chapter_memory_hook import default_studio_memory_rag_mode
+    from lingwen_core.agents.chapter_memory_hook import default_studio_memory_rag_mode
 
     mem_mode = default_studio_memory_rag_mode()
     lines.append(f"export LINGWEN_MEMORY_RAG={mem_mode}")

@@ -9,9 +9,9 @@ from infra.persistence.registry import register
 
 
 def register_all() -> dict[str, str]:
-    from infra.agent_system.budget_persistence import BudgetService
-    from infra.agent_system.cost_persistence import CostTrackerDB
-    from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
+    from lingwen_core.agents.budget_persistence import BudgetService
+    from lingwen_core.agents.cost_persistence import CostTrackerDB
+    from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
     from infra.cross_volume.storage import RippleStorage
     from infra.reading_power.db import ReadingPowerDB
     from infra.state.database import WorkflowDB

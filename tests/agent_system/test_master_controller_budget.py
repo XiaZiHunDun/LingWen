@@ -18,8 +18,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.agent_system.budget_persistence import BudgetService
-from infra.agent_system.master_controller import MasterController
+from lingwen_core.agents.budget_persistence import BudgetService
+from lingwen_core.agents.master_controller import MasterController
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def tmp_state_dir(tmp_path: Path) -> Path:
 
 def _make_stub_master(state_dir: Path) -> MasterController:
     """构造 MasterController 用 stub router/state 避免真实依赖"""
-    from infra.agent_system.agent_config import MasterControllerConfig
+    from lingwen_core.agents.agent_config import MasterControllerConfig
     config = MasterControllerConfig(
         state_dir=str(state_dir),
         primary_provider="minimax",
@@ -45,12 +45,12 @@ def _make_stub_master(state_dir: Path) -> MasterController:
 
 
 def _patch_got_bridge():
-    """Patch infra.agent_system.got_bridge.build_got_scheduler 返 stub (scheduler, graph).
+    """Patch lingwen_core.agents.got_bridge.build_got_scheduler 返 stub (scheduler, graph).
 
     Stub graph 提供 run_workflow 内部需要的: node_ids(), get_node(nid).depends_on,
     has_execution(nid), get_execution(nid). Stub scheduler 提供 run() 返 fake summary.
     """
-    from infra.agent_system import got_bridge
+    from lingwen_core.agents import got_bridge
     original = got_bridge.build_got_scheduler
     stub_node = MagicMock(depends_on=[])
     stub_graph = MagicMock(
@@ -91,7 +91,7 @@ class TestMasterControllerBudget:
                 f"run_id should be 32 char hex (uuid4().hex), got {call_kwargs['run_id']!r}"
             )
         finally:
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler = original
 
     def test_run_workflow_calls_budget_service_set_run(
@@ -110,7 +110,7 @@ class TestMasterControllerBudget:
             assert call_kwargs["usd"] == 0.1
             assert "run_id" in call_kwargs
         finally:
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler = original
 
     def test_run_workflow_no_budget_service_does_not_call_set(
@@ -125,7 +125,7 @@ class TestMasterControllerBudget:
             # 不 raise 即 pass
             master.run_workflow(workflow_name="test", cost_budget_usd=0.1)
         finally:
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler = original
 
     def test_run_workflow_finally_resets_budget_state(
@@ -140,7 +140,7 @@ class TestMasterControllerBudget:
             master.run_workflow(workflow_name="test", cost_budget_usd=0.1)
             assert master._current_budget_usd is None  # finally reset
         finally:
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler = original
 
     def test_old_run_workflow_signature_still_works(
@@ -155,7 +155,7 @@ class TestMasterControllerBudget:
             master.run_workflow(workflow_name="test", cost_budget_usd=None)
             assert master._current_budget_usd is None
         finally:
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler = original
 
 
@@ -172,7 +172,7 @@ def _make_real_master_with_budgets(
     用 stub router + minimal config 避免 load_default_config() 缺 API key 时
     RuntimeError. 仅用于验证 __init__ 接受新 kwarg + store 为 attr.
     """
-    from infra.agent_system.agent_config import MasterControllerConfig
+    from lingwen_core.agents.agent_config import MasterControllerConfig
     config = MasterControllerConfig(
         state_dir=str(state_dir),
         primary_provider="minimax",
@@ -234,7 +234,7 @@ class TestMasterControllerByTier:
         try:
             master.run_workflow(workflow_name="test", cost_budget_usd=None)
             # Verify build_got_scheduler called once with master=self
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler.assert_called_once()
             call_kwargs = got_bridge.build_got_scheduler.call_args.kwargs
             assert "master" in call_kwargs
@@ -242,5 +242,5 @@ class TestMasterControllerByTier:
             passed_master = call_kwargs["master"]
             assert passed_master.budget_service_by_tier is svc
         finally:
-            from infra.agent_system import got_bridge
+            from lingwen_core.agents import got_bridge
             got_bridge.build_got_scheduler = original

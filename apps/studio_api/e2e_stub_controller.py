@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from infra.agent_system.decision_queue import HumanDecision, HumanDecisionQueue
+from lingwen_core.agents.decision_queue import HumanDecision, HumanDecisionQueue
 
 
 @dataclass

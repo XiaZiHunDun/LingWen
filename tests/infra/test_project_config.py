@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.agent_system.chapter_production_pilot import preflight_checklist
+from lingwen_core.agents.chapter_production_pilot import preflight_checklist
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 

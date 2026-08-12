@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from infra.agent_system.production_summary import (
+from lingwen_core.agents.production_summary import (
     build_production_summary,
     build_production_summary_from_controller,
 )

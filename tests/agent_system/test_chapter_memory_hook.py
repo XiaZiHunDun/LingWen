@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.agent_system.chapter_golden_path import run_golden_path
-from infra.agent_system.chapter_memory_hook import (
+from lingwen_core.agents.chapter_golden_path import run_golden_path
+from lingwen_core.agents.chapter_memory_hook import (
     WORKFLOWS_WITH_MEMORY,
     default_studio_memory_rag_mode,
     describe_memory_rag_hook,

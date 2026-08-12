@@ -18,8 +18,8 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
-from infra.agent_system.agent_config import MasterControllerConfig
-from infra.agent_system.master_controller import MasterController
+from lingwen_core.agents.agent_config import MasterControllerConfig
+from lingwen_core.agents.master_controller import MasterController
 from infra.ai_service.base import AIProvider, ProviderConfig
 from infra.ai_service.cost_tracker import CostTracker
 from infra.ai_service.router import AIRouter

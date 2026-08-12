@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from infra.agent_system.chapter_production_pilot import (
+from lingwen_core.agents.chapter_production_pilot import (
     PilotResult,
     PreflightCheck,
     build_pilot_initial_inputs,
@@ -95,7 +95,7 @@ class TestPreflightChecklist:
         monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
         monkeypatch.setenv("LINGWEN_EMBEDDING_PROVIDER", "minimax")
         monkeypatch.setattr(
-            "infra.agent_system.chapter_production_pilot.memory_rag_live_gateway_check",
+            "lingwen_core.agents.chapter_production_pilot.memory_rag_live_gateway_check",
             lambda: (False, "MemoryGateway NoOp: test"),
         )
         checks = preflight_checklist(state_dir=tmp_path)
@@ -136,7 +136,7 @@ class TestRunProductionPilotStubbed:
         assert result.error is None
 
     def test_cli_main_preflight_only(self, tmp_path, monkeypatch):
-        from infra.agent_system import chapter_production_pilot as mod
+        from lingwen_core.agents import chapter_production_pilot as mod
 
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
         code = mod.main(
@@ -203,7 +203,7 @@ class TestPilotRecordF72:
     def test_cli_save_record_preflight_only(self, tmp_path, monkeypatch):
         import json as json_mod
 
-        from infra.agent_system import chapter_production_pilot as mod
+        from lingwen_core.agents import chapter_production_pilot as mod
 
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
         out = tmp_path / "preflight.json"

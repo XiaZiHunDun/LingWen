@@ -27,7 +27,7 @@ ALLOWLIST: set[str] = set()
 
 # === Phase 17 (monorepo split) — infra/legacy/tools ===
 ALLOWLIST.add("fn-core/src/core/aggregates/StoryAggregate.ts")  # Phase 17
-ALLOWLIST.add("infra/agent_system/chapter_production_pilot.py")  # Phase 17
+ALLOWLIST.add("packages/lingwen-core/src/lingwen_core/agents/chapter_production_pilot.py")  # Phase 17.4
 ALLOWLIST.add("infra/consistency/checkers/contradiction_detector.py")  # Phase 17
 ALLOWLIST.add("infra/consistency/checkers/sentence_diversity_checker.py")  # Phase 17
 ALLOWLIST.add("infra/consistency/engine/consistency_engine.py")  # Phase 17

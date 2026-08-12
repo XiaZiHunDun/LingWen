@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.agent_system.master_controller import MasterController
+from lingwen_core.agents.master_controller import MasterController
 from infra.cross_volume.backfill import Backfiller, BackfillStats
 from infra.cross_volume.incremental_backfill import (
     EMIT_CHAPTER_NODE,
@@ -256,7 +256,7 @@ class TestIncrementalBackfillWorkflowHook:
         scheduler.run.return_value = summary
 
         monkeypatch.setattr(
-            "infra.agent_system.got_bridge.build_got_scheduler",
+            "lingwen_core.agents.got_bridge.build_got_scheduler",
             lambda **kwargs: (scheduler, graph),
         )
 

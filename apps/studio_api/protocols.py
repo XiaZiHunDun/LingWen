@@ -15,8 +15,8 @@ Doc 4 §10 Phase 6: 把 MasterController 决策/工作流 API 暴露到 dashboar
 - 测试用 _StubMasterController 满足 Protocol
 
 Reference:
-- infra/agent_system/master_controller.py (lines 174-396)
-- infra/agent_system/decision_queue.py (lines 175-355)
+- packages/lingwen-core/src/lingwen_core/agents/master_controller.py (lines 174-396)
+- packages/lingwen-core/src/lingwen_core/agents/decision_queue.py (lines 175-355)
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from typing import Any, Literal, Optional, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from infra.agent_system.decision_queue import (
+from lingwen_core.agents.decision_queue import (
     HumanDecision,
     HumanDecisionQueue,
 )
@@ -174,7 +174,7 @@ class MasterControllerAdapter:
         # queue.cancel 不接受 reason;若需 reason,改写一个最小包装
         if reason:
             # 用 from_dict 重建 (frozen=True 不能直接改 reason)
-            from infra.agent_system.decision_queue import (
+            from lingwen_core.agents.decision_queue import (
                 DecisionStatus,
                 HumanDecision,
             )
@@ -301,7 +301,7 @@ class MasterControllerAdapter:
                     "fallback": output.get("fallback"),
                 }
 
-        from infra.agent_system.production_summary import (
+        from lingwen_core.agents.production_summary import (
             build_production_summary_from_controller,
         )
         from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
@@ -627,7 +627,7 @@ def _build_production_summary_for_result(
     result: dict[str, Any],
     initial_inputs: Any,
 ) -> dict[str, Any] | None:
-    from infra.agent_system.production_summary import build_production_summary
+    from lingwen_core.agents.production_summary import build_production_summary
 
     return build_production_summary(
         workflow_name=workflow_name,

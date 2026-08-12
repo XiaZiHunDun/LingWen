@@ -159,6 +159,6 @@ class TestRegistryIntegration:
     def test_get_cost_storage(self):
         register_all()
         storage = get("cost")
-        from infra.agent_system.cost_persistence import CostTrackerDB
+        from lingwen_core.agents.cost_persistence import CostTrackerDB
 
         assert isinstance(storage, CostTrackerDB)

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.agent_system.chapter_production_batch import (
+from lingwen_core.agents.chapter_production_batch import (
     BatchResult,
     auto_resolve_calibrate_from,
     build_batch_plan,
@@ -16,7 +16,7 @@ from infra.agent_system.chapter_production_batch import (
     run_production_batch,
     save_batch_summary,
 )
-from infra.agent_system.chapter_production_pilot import PilotResult, PreflightCheck
+from lingwen_core.agents.chapter_production_pilot import PilotResult, PreflightCheck
 
 
 def _ok(chapter_num: int, *, cost: float = 0.01) -> PilotResult:
@@ -242,7 +242,7 @@ class TestRunProductionBatch:
         assert batch.batch_plan["preflight_ok"] is True
 
     def test_cli_dry_run(self, tmp_path, monkeypatch):
-        from infra.agent_system import chapter_production_batch as mod
+        from lingwen_core.agents import chapter_production_batch as mod
 
         monkeypatch.setenv("LINGWEN_REAL_LLM", "1")
         monkeypatch.setenv("MINIMAX_API_KEY", "sk-test")
@@ -273,7 +273,7 @@ class TestRunProductionBatch:
         assert len(data["chapters"]) == 2
 
     def test_cli_preflight_only(self, tmp_path, monkeypatch):
-        from infra.agent_system import chapter_production_batch as mod
+        from lingwen_core.agents import chapter_production_batch as mod
 
         monkeypatch.delenv("LINGWEN_REAL_LLM", raising=False)
         code = mod.main([

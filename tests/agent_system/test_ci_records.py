@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from infra.agent_system.ci_records import (
+from lingwen_core.agents.ci_records import (
     build_e2e_live_first_green_record,
     default_e2e_live_first_green_path,
     validate_e2e_live_first_green_record,

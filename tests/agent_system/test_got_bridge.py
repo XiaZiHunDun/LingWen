@@ -1,4 +1,4 @@
-"""Tests for infra.agent_system.got_bridge (Phase 3.1 + 3.2 — GoT bridge)
+"""Tests for lingwen_core.agents.got_bridge (Phase 3.1 + 3.2 — GoT bridge)
 
 Doc 4 (GoT 适配设计 v1.0) §十一 Phase 3:
 MasterController + GoT 整合。本测试验证:
@@ -16,7 +16,7 @@ from typing import Any, Optional
 
 import pytest
 
-from infra.agent_system.got_bridge import (
+from lingwen_core.agents.got_bridge import (
     SCENARIO_HANDLERS,
     AgentComputeFn,
     build_got_scheduler,
@@ -289,7 +289,7 @@ class TestBuildGoTScheduler:
         master = _StubMaster()
         scheduler, _ = build_got_scheduler(master, "novel_writing")
         # 内部 compute_fn 是 AgentComputeFn 实例
-        from infra.agent_system.got_bridge import AgentComputeFn
+        from lingwen_core.agents.got_bridge import AgentComputeFn
         assert isinstance(scheduler._compute_fn, AgentComputeFn)
 
 
@@ -463,7 +463,7 @@ class TestPolishMergeHandlerScored:
             def __init__(self):
                 super().__init__()
                 # 加 polish_merge_synthesis 方法
-                from infra.agent_system.agents.polisher.prompts import _S1_S8_NAMES  # noqa
+                from lingwen_core.agents.agents.polisher.prompts import _S1_S8_NAMES  # noqa
                 self._llm_response = {
                     "scores_A": {"S1": 9, "S2": 9, "S3": 9, "S4": 9, "S5": 9, "S6": 9, "S7": 9, "S8": 9},
                     "scores_B": {"S1": 5, "S2": 5, "S3": 5, "S4": 5, "S5": 5, "S6": 5, "S7": 5, "S8": 5},
@@ -530,7 +530,7 @@ class TestPolishVariantResilience:
         通过 MasterController.__new__ 绕过 __init__ (避免 build_router 等重操作),
         只塞 self.polisher 即可 — polish_xxx methods 只读 self.polisher.
         """
-        from infra.agent_system import master_controller as mc_mod
+        from lingwen_core.agents import master_controller as mc_mod
 
         controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
 
@@ -621,7 +621,7 @@ class TestPolishHandlerTypoContract:
 
     def test_polish_handler_typo_propagates_as_attribute_error(self):
         """_make_polish_handler('nonexistent_method_xyz') → getattr 抛 AttributeError"""
-        from infra.agent_system.got_bridge import _make_polish_handler
+        from lingwen_core.agents.got_bridge import _make_polish_handler
 
         handler = _make_polish_handler("nonexistent_method_xyz")
 
@@ -745,8 +745,8 @@ class TestCostTrackerWiring:
 
     def test_polish_merge_handler_returns_tuple(self) -> None:
         """Phase 8.7: _handler_polish_merge 调 MC variant, 返 (dict, usage) tuple."""
-        from infra.agent_system import master_controller as mc_mod
-        from infra.agent_system.got_bridge import _handler_polish_merge
+        from lingwen_core.agents import master_controller as mc_mod
+        from lingwen_core.agents.got_bridge import _handler_polish_merge
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         # Phase 8.7: handler 调 polish_merge_synthesis_with_usage, 返 tuple
@@ -777,7 +777,7 @@ class TestCostTrackerWiring:
 
     def test_agent_compute_fn_records_polish_merge_real_usage(self) -> None:
         """Phase 8.7: _handler_polish_merge 返 tuple → AgentComputeFn 喂 cost_tracker 真实 usage."""
-        from infra.agent_system import master_controller as mc_mod
+        from lingwen_core.agents import master_controller as mc_mod
 
         cost_tracker = CostTracker()
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
@@ -828,7 +828,7 @@ class TestBudgetEnforcement:
 
     def _make_compute_with_budget(self, budget_usd):
         """建一个 mini master (含 _current_budget_usd + cost_tracker) + AgentComputeFn"""
-        from infra.agent_system.got_bridge import AgentComputeFn
+        from lingwen_core.agents.got_bridge import AgentComputeFn
 
         class _MiniMaster:
             def __init__(self, budget):
@@ -841,14 +841,14 @@ class TestBudgetEnforcement:
 
     def _stub_chapter_writing(self, return_value):
         """替换 SCENARIO_HANDLERS["chapter_writing"] → 返 return_value (保留原 handler 引用, finally 恢复)"""
-        from infra.agent_system.got_bridge import SCENARIO_HANDLERS
+        from lingwen_core.agents.got_bridge import SCENARIO_HANDLERS
 
         original = SCENARIO_HANDLERS.get("chapter_writing")
         SCENARIO_HANDLERS["chapter_writing"] = lambda m, inputs: return_value
         return original
 
     def _uninstall_stub(self, original):
-        from infra.agent_system.got_bridge import SCENARIO_HANDLERS
+        from lingwen_core.agents.got_bridge import SCENARIO_HANDLERS
 
         if original is not None:
             SCENARIO_HANDLERS["chapter_writing"] = original

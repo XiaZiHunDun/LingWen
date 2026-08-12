@@ -107,7 +107,7 @@ def register_overview(app: FastAPI, ctx: RoutesContext) -> None:
         limit: int = Query(default=30, ge=1, le=100),
     ) -> ProductionRecordsResponse:
         """Phase 9.82 F74: read pilot/batch JSON from infra/.state/pilot_records."""
-        from infra.agent_system.production_records import (
+        from lingwen_core.agents.production_records import (
             list_production_records,
         )
 
@@ -125,7 +125,7 @@ def register_overview(app: FastAPI, ctx: RoutesContext) -> None:
         limit: int = Query(default=100, ge=1, le=200),
     ) -> ProductionRollupResponse:
         """Phase 9.89 F81: deduplicated cost + batch list for Analytics."""
-        from infra.agent_system.production_records import (
+        from lingwen_core.agents.production_records import (
             rollup_production_records,
         )
 
@@ -144,7 +144,7 @@ def register_overview(app: FastAPI, ctx: RoutesContext) -> None:
         limit: int = Query(default=100, ge=1, le=200),
     ) -> ProductionCostTrendResponse:
         """Phase 9.96 F87: time-ordered cost trend for Analytics mini chart."""
-        from infra.agent_system.production_records import (
+        from lingwen_core.agents.production_records import (
             production_cost_trend,
         )
 

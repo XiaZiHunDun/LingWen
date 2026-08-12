@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from infra.agent_system.got_bridge import _handler_chapter_review
-from infra.agent_system.master_controller import MasterController
+from lingwen_core.agents.got_bridge import _handler_chapter_review
+from lingwen_core.agents.master_controller import MasterController
 from tests.agent_system._e2e_helpers import (
     make_master_with_router,
     make_stub_router,

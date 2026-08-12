@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.agent_system.chapter_production_outline import (
+from lingwen_core.agents.chapter_production_outline import (
     build_canon_chapter_spec,
     build_canon_initial_inputs,
     build_continuity_rules,

@@ -14,7 +14,7 @@ from typing import Optional
 
 import pytest
 
-from infra.agent_system.budget_persistence import BudgetService, TierBudgetEntry
+from lingwen_core.agents.budget_persistence import BudgetService, TierBudgetEntry
 from infra.ai_service.cost_tracker import CostBudgetExceeded
 from infra.ai_service.model_tiers import ModelTier
 

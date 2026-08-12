@@ -21,7 +21,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from infra.agent_system.agent_config import load_project_env
+from lingwen_core.agents.agent_config import load_project_env
 
 load_project_env()
 
@@ -239,7 +239,7 @@ def create_app(
 
     def _production_records_root() -> Path:
         """Env override, then active project pilot_records, else legacy infra/.state."""
-        from infra.agent_system.production_records import default_pilot_records_dir
+        from lingwen_core.agents.production_records import default_pilot_records_dir
         from infra.studio_registry import active_project, pilot_records_dir_for
 
         env = os.environ.get("LINGWEN_PILOT_RECORDS_DIR", "").strip()

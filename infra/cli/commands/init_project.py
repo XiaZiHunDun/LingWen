@@ -57,7 +57,7 @@ class InitProjectCommand(Command):
         else:
             print("  export LINGWEN_PRODUCTION_MODE=canon")
             print("  export LINGWEN_REAL_LLM=1")
-            print("  python -m infra.agent_system.chapter_production_pilot \\")
+            print("  python -m lingwen_core.agents.chapter_production_pilot \\")
             print("    --preflight-only --chapter-num 1")
             print()
             print("  # 生产前请编辑 docs/novel-pillars.md 与各章大纲")

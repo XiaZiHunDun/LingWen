@@ -1,4 +1,4 @@
-"""Tests for infra.agent_system.decision_queue (Phase 4.2)
+"""Tests for lingwen_core.agents.decision_queue (Phase 4.2)
 
 Doc 4 (GoT 适配设计 v1.0) §10: 决策点管理
 - 7 种 DecisionKind (outline_judgment, volume_judgment, chapter_iteration_judgment,
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.agent_system.decision_queue import (
+from lingwen_core.agents.decision_queue import (
     DecisionKind,
     DecisionStatus,
     HumanDecision,

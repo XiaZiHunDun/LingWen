@@ -14,11 +14,11 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from infra.agent_system.agent_config import (
+from lingwen_core.agents.agent_config import (
     MasterControllerConfig,
     load_default_config,
 )
-from infra.agent_system.agent_factory import (
+from lingwen_core.agents.agent_factory import (
     AgentToolsBundle,
     SocialEngineBundle,
     build_agent_tools,
@@ -27,18 +27,18 @@ from infra.agent_system.agent_factory import (
     build_skill_registry,
     build_social_engine,
 )
-from infra.agent_system.agents.auditor.tools import AuditorTools
-from infra.agent_system.agents.character_designer.tools import CharacterDesignerTools
-from infra.agent_system.agents.content_writer.tools import ContentWriterTools
-from infra.agent_system.agents.outline_master.tools import OutlineMasterTools
-from infra.agent_system.agents.polisher.tools import PolisherTools
-from infra.agent_system.core.context_builder import ContextBuilder
-from infra.agent_system.orchestration.task_orchestrator import TaskOrchestrator
-from infra.agent_system.registry.skill_registry import SkillRegistry
-from infra.agent_system.social_engine.conflict_alert import ConflictAlert
-from infra.agent_system.social_engine.event_effect_calculator import EventEffectCalculator
-from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
-from infra.agent_system.social_engine.writing_suggestion import WritingSuggestion
+from lingwen_core.agents.agents.auditor.tools import AuditorTools
+from lingwen_core.agents.agents.character_designer.tools import CharacterDesignerTools
+from lingwen_core.agents.agents.content_writer.tools import ContentWriterTools
+from lingwen_core.agents.agents.outline_master.tools import OutlineMasterTools
+from lingwen_core.agents.agents.polisher.tools import PolisherTools
+from lingwen_core.agents.core.context_builder import ContextBuilder
+from lingwen_core.agents.orchestration.task_orchestrator import TaskOrchestrator
+from lingwen_core.agents.registry.skill_registry import SkillRegistry
+from lingwen_core.agents.social_engine.conflict_alert import ConflictAlert
+from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
+from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
+from lingwen_core.agents.social_engine.writing_suggestion import WritingSuggestion
 from infra.ai_service import ProviderConfig
 from infra.ai_service.router import AIRouter
 

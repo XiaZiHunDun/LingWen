@@ -92,7 +92,7 @@ class TestExtractBudgetByTier:
 
     def test_extract_budget_by_tier_with_set_tiers_returns_dict(self, tmp_path: Path) -> None:
         """Phase 8.15: set haiku/opus → 返 haiku+opus dict, sonnet None."""
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")
@@ -116,7 +116,7 @@ class TestExtractBudgetByTier:
 
     def test_extract_budget_by_tier_includes_all_three_tiers(self, tmp_path: Path) -> None:
         """Phase 8.15: 3 tier keys (haiku/sonnet/opus) 永远 present, 顺序 Enum 顺序."""
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")
@@ -138,7 +138,7 @@ class TestExtractBudgetByTier:
         run_workflow 写入缓存). Pattern 跟 test_app_workflow_status.py 1:1.
         """
         from apps.studio_api.protocols import MasterControllerAdapter
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")

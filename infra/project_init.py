@@ -322,7 +322,7 @@ bash scripts/run-companion-check.sh
 
 # 你主笔写正文后，再按需跑单章 preflight
 export LINGWEN_PRODUCTION_MODE=canon
-python -m infra.agent_system.chapter_production_pilot \\
+python -m lingwen_core.agents.chapter_production_pilot \\
   --preflight-only --chapter-num 1
 ```"""
     elif creation_mode == CREATION_MODE_ADVANCE:
@@ -342,10 +342,10 @@ export LINGWEN_PROJECT_ROOT="$(pwd)/projects/{slug}"
 export LINGWEN_PRODUCTION_MODE=canon
 export LINGWEN_REAL_LLM=1
 
-python -m infra.agent_system.chapter_production_pilot \\
+python -m lingwen_core.agents.chapter_production_pilot \\
   --preflight-only --chapter-num 1
 
-python -m infra.agent_system.chapter_production_batch \\
+python -m lingwen_core.agents.chapter_production_batch \\
   --start-chapter 1 --max-chapters 3 --budget-usd 0.15 \\
   --save-summary infra/.state/pilot_records/batch-001-003.json
 ```"""

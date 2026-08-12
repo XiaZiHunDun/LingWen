@@ -3,8 +3,8 @@
 防止 magic number 0.7 / 4096 再次潜入 base.py - 必须从 agent_config 读,
 且值与历史一致 (行为契约)。
 """
-from infra.agent_system.agent_config import AGENT_DEFAULTS
-from infra.agent_system.agents.base import AgentBase
+from lingwen_core.agents.agent_config import AGENT_DEFAULTS
+from lingwen_core.agents.agents.base import AgentBase
 
 
 class TestR1011AgentDefaultsRegistry:

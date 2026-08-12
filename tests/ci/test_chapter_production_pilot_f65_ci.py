@@ -32,7 +32,7 @@ class TestChapterProductionPilotF65:
         assert spec.is_file()
 
     def test_describe_production_pilot(self):
-        from infra.agent_system.chapter_production_pilot import describe_production_pilot
+        from lingwen_core.agents.chapter_production_pilot import describe_production_pilot
 
         rows = describe_production_pilot()
         assert len(rows) >= 3

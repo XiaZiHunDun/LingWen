@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from infra.agent_system.production_records import (
+from lingwen_core.agents.production_records import (
     compute_deduplicated_cost_usd,
     list_production_records,
     parse_record_file,

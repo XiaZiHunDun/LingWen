@@ -28,7 +28,7 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
     """
     from apps.studio_api.app import create_app
     from apps.studio_api.protocols import MasterControllerAdapter
-    from infra.agent_system.budget_persistence import BudgetService
+    from lingwen_core.agents.budget_persistence import BudgetService
 
     service = BudgetService(db_path=tmp_path / "test.db")
     service.init_db()
@@ -118,7 +118,7 @@ class TestBudgetByTierEndpoints:
         """GET /api/workflows/active 返 dict 含 budget_by_tier 3 keys (T5 helper 透传, T6 补 model Field)."""
         from apps.studio_api.app import create_app
         from apps.studio_api.protocols import MasterControllerAdapter
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")

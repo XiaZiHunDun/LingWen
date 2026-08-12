@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.agent_system.chapter_golden_path import (
+from lingwen_core.agents.chapter_golden_path import (
     HumanReviewSmokeResult,
     run_golden_path,
     run_human_review_smoke,
@@ -45,7 +45,7 @@ class TestHumanReviewSmokeDashboard:
             assert result.pending_after_resume == 0
 
     def test_active_workflow_not_paused_after_resume(self, tmp_path: Path) -> None:
-        from infra.agent_system.chapter_golden_path import create_golden_dashboard_client
+        from lingwen_core.agents.chapter_golden_path import create_golden_dashboard_client
 
         state_dir = tmp_path / "state"
         client = create_golden_dashboard_client(state_dir, tmp_path / "rp.db")

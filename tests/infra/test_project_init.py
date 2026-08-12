@@ -6,8 +6,8 @@ import os
 import pytest
 import yaml
 
-from infra.agent_system.chapter_production_outline import build_canon_initial_inputs
-from infra.agent_system.chapter_production_pilot import preflight_checklist
+from lingwen_core.agents.chapter_production_outline import build_canon_initial_inputs
+from lingwen_core.agents.chapter_production_pilot import preflight_checklist
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.project_init import init_minimal_short_project, validate_slug

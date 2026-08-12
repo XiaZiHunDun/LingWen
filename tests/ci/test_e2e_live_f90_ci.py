@@ -29,7 +29,7 @@ class TestE2eLiveF90:
         assert "write-e2e-live-first-green-record.sh" in text
 
     def test_stub_validates_with_ci_records(self):
-        from infra.agent_system.ci_records import validate_e2e_live_first_green_record
+        from lingwen_core.agents.ci_records import validate_e2e_live_first_green_record
 
         stub = NOVEL_FACTORY / "docs" / "templates" / "e2e-live-first-green.stub.example.json"
         data = json.loads(stub.read_text(encoding="utf-8"))
