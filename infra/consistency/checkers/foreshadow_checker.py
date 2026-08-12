@@ -20,15 +20,12 @@ from typing import Any, Dict, List, Optional, Protocol
 from ..engine.data_structures import CheckerType, ForeshadowAlert, Issue, IssueLocation, IssueSeverity
 from .base_checker import BaseChecker
 
-# TODO(Phase18): replace with domain entity from packages/lingwen-domain.
-class _RippleStateStub:
-    RESOLVED = "RESOLVED"  # upstream: infra.world_model.data_structures.RippleState
-    ACTIVE = "ACTIVE"
-    OVERDUE = "OVERDUE"
-    PLANNED = "PLANNED"
+# TODO(Phase18): Replace infra.world_model with proper domain entity (Story / Ripple)
+# in packages/lingwen-quality (Phase 17.9). Tracked in plan §Task 17.9 + 18.1.
+from infra.world_model.data_structures import RippleState
+from infra.world_model.lifecycle import RESOLUTION_GRACE_CH  # noqa: F401
 
-RESOLUTION_GRACE_CH = 5  # upstream: infra.world_model.lifecycle.RESOLUTION_GRACE_CH
-RippleState = _RippleStateStub  # type: ignore[assignment,misc]
+
 def _get_ripple_state_and_grace():
     return RippleState, RESOLUTION_GRACE_CH
 
