@@ -6,8 +6,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
-from dashboard.protocols import MasterControllerAdapter
+from apps.studio_api.app import create_app
+from apps.studio_api.protocols import MasterControllerAdapter
 from infra.agent_system import master_controller as mc_mod
 from infra.got.data_structures import NodeExecution, NodeStatus
 

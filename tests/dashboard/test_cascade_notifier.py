@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from dashboard import cascade_notifier
+from apps.studio_api import cascade_notifier
 
 
 @pytest.fixture(autouse=True)

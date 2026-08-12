@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import ReadingPowerDB, create_app
+from apps.studio_api.app import ReadingPowerDB, create_app
 
 
 class TestHealthEndpoint:

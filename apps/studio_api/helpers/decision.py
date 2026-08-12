@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from dashboard.models import DecisionResponse
+from apps.studio_api.models import DecisionResponse
 
 
 def _decision_to_response(d: Any) -> DecisionResponse:

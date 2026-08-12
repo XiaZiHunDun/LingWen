@@ -26,8 +26,8 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
 
     Pattern 跟 tests/agent_system/test_dashboard_budget_endpoints.py 1:1 mirror.
     """
-    from dashboard.app import create_app
-    from dashboard.protocols import MasterControllerAdapter
+    from apps.studio_api.app import create_app
+    from apps.studio_api.protocols import MasterControllerAdapter
     from infra.agent_system.budget_persistence import BudgetService
 
     service = BudgetService(db_path=tmp_path / "test.db")
@@ -97,8 +97,8 @@ class TestBudgetByTierEndpoints:
         self, tmp_path: Path
     ) -> None:
         """PUT /api/budgets/by-tier/opus → 503 (master.budget_service_by_tier = None)."""
-        from dashboard.app import create_app
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.app import create_app
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         master = MagicMock()
         master.budget_service = None
@@ -116,8 +116,8 @@ class TestBudgetByTierEndpoints:
 
     def test_workflow_status_response_includes_budget_by_tier_field(self, tmp_path: Path) -> None:
         """GET /api/workflows/active 返 dict 含 budget_by_tier 3 keys (T5 helper 透传, T6 补 model Field)."""
-        from dashboard.app import create_app
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.app import create_app
+        from apps.studio_api.protocols import MasterControllerAdapter
         from infra.agent_system.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
 

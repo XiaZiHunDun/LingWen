@@ -20,10 +20,10 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 
-from dashboard import app as _app_module  # for monkeypatch-compatible _default_storage lookup
-from dashboard.cascade_notifier import notify_cascade_cancel
-from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
-from dashboard.helpers.cvg import (
+from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
+from apps.studio_api.cascade_notifier import notify_cascade_cancel
+from apps.studio_api.cvg_ws import EVENT_PONG, CvgConnectionManager
+from apps.studio_api.helpers.cvg import (
     _audit_to_response,
     _build_reference_graph_response,
     _edge_to_dict_for_response,
@@ -35,7 +35,7 @@ from dashboard.helpers.cvg import (
     _validate_max_nodes_cap,
     cvg_manager,
 )
-from dashboard.models import (
+from apps.studio_api.models import (
     CascadeBroadcastLogResponse,
     CascadeCancelPayload,
     CascadeCancelRequest,
@@ -53,7 +53,7 @@ from dashboard.models import (
     RippleRollbackRequest,
     RippleStatsResponse,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:

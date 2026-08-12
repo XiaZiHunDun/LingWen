@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dashboard.protocols import (
+from apps.studio_api.protocols import (
     _extract_budget_by_tier,
     _extract_cost_by_day,
     _extract_cost_by_day_per_tier,
@@ -137,7 +137,7 @@ class TestExtractBudgetByTier:
         Mock _last_scheduler/_last_graph 触发 active workflow path (Phase 5+
         run_workflow 写入缓存). Pattern 跟 test_app_workflow_status.py 1:1.
         """
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
         from infra.agent_system.budget_persistence import BudgetService
         from infra.ai_service.model_tiers import ModelTier
 

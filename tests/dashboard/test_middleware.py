@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app, limiter
+from apps.studio_api.app import create_app, limiter
 
 
 def _make_app():

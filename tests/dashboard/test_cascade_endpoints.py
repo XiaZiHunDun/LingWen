@@ -2,7 +2,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
+from apps.studio_api.app import create_app
 from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
@@ -34,7 +34,7 @@ def cvg_storage(tmp_path):
 @pytest.fixture
 def client(cvg_storage, monkeypatch):
     """TestClient with _default_storage overridden to use cvg_storage."""
-    from dashboard import app as app_module
+    from apps.studio_api import app as app_module
     monkeypatch.setattr(app_module, "_default_storage", lambda: cvg_storage)
     app = create_app()
     return TestClient(app)
@@ -115,7 +115,7 @@ class TestCascadeEndpointMaxNodesCap:
                 status="pending",
             )
         )
-        from dashboard import app as app_module
+        from apps.studio_api import app as app_module
         monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
         return TestClient(create_app())
 

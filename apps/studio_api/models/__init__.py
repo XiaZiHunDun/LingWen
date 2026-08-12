@@ -5,7 +5,7 @@ Re-exports all models so callers can use `from dashboard.models import X`.
 """
 from __future__ import annotations
 
-from dashboard.models.chapter import (
+from apps.studio_api.models.chapter import (
     ChapterData,  # noqa: F401
     ChaptersResponse,  # noqa: F401
     ProductionBatchRollupResponse,  # noqa: F401
@@ -15,14 +15,14 @@ from dashboard.models.chapter import (
     ProductionRecordsResponse,  # noqa: F401
     ProductionRollupResponse,  # noqa: F401
 )
-from dashboard.models.creator import (
+from apps.studio_api.models.creator import (
     CreatorChapterRow,  # noqa: F401
     CreatorUiProfile,  # noqa: F401
     CreatorVolumeDeviation,  # noqa: F401
     CreatorVolumePlanEntry,  # noqa: F401
     CreatorVolumeSummary,  # noqa: F401
 )
-from dashboard.models.creator_agent import (
+from apps.studio_api.models.creator_agent import (
     CreatorAgentAdviceItem,  # noqa: F401
     CreatorAgentAnnotation,  # noqa: F401
     CreatorAgentCandidate,  # noqa: F401
@@ -30,16 +30,16 @@ from dashboard.models.creator_agent import (
     CreatorAgentPlanResponse,  # noqa: F401
     CreatorAgentScope,  # noqa: F401
 )
-from dashboard.models.creator_history import (
+from apps.studio_api.models.creator_history import (
     CreatorBatchHistoryExportResponse,  # noqa: F401
     CreatorBatchHistoryItem,  # noqa: F401
     CreatorBatchHistoryResponse,  # noqa: F401
 )
-from dashboard.models.creator_logic import (
+from apps.studio_api.models.creator_logic import (
     CreatorLogicCheckIssue,  # noqa: F401
     CreatorLogicCheckResponse,  # noqa: F401
 )
-from dashboard.models.creator_merge import (
+from apps.studio_api.models.creator_merge import (
     CreatorDiffCollabNotesRequest,  # noqa: F401
     CreatorDiffCollabNotesResponse,  # noqa: F401
     CreatorMergePreferencesExportResponse,  # noqa: F401
@@ -92,7 +92,7 @@ from dashboard.models.creator_merge import (
     CreatorSettingsThreeWayRequest,  # noqa: F401
     CreatorSettingsThreeWayResponse,  # noqa: F401
 )
-from dashboard.models.creator_onboarding import (
+from apps.studio_api.models.creator_onboarding import (
     CreatorOnboardingDigestDeadLetterReplayRequest,  # noqa: F401
     CreatorOnboardingDigestDeadLetterReplayResponse,  # noqa: F401
     CreatorOnboardingDigestDeadLetterResponse,  # noqa: F401
@@ -121,7 +121,7 @@ from dashboard.models.creator_onboarding import (
     CreatorOnboardingWebhookDispatchResponse,  # noqa: F401
     CreatorOnboardingWebhookSaveRequest,  # noqa: F401
 )
-from dashboard.models.creator_overview import (
+from apps.studio_api.models.creator_overview import (
     CreatorOutlineHighlightLine,  # noqa: F401
     CreatorOverviewResponse,  # noqa: F401
     CreatorVolumePlanDiffChange,  # noqa: F401
@@ -129,12 +129,12 @@ from dashboard.models.creator_overview import (
     CreatorVolumePlanResponse,  # noqa: F401
     CreatorVolumePlanSaveRequest,  # noqa: F401
 )
-from dashboard.models.creator_pulse import (
+from apps.studio_api.models.creator_pulse import (
     CreatorVolumePulse,  # noqa: F401
     CreatorVolumePulseRow,  # noqa: F401
     CreatorVolumePulseSummary,  # noqa: F401
 )
-from dashboard.models.creator_settings import (
+from apps.studio_api.models.creator_settings import (
     CreatorChapterBodySaveRequest,  # noqa: F401
     CreatorChapterOutlineSaveRequest,  # noqa: F401
     CreatorChapterPreviewResponse,  # noqa: F401
@@ -162,7 +162,7 @@ from dashboard.models.creator_settings import (
     CreatorVolumeSummaryGenerateRequest,  # noqa: F401
     CreatorVolumeSummaryGenerateResponse,  # noqa: F401
 )
-from dashboard.models.creator_template import (
+from apps.studio_api.models.creator_template import (
     CreatorVolumeApplyTemplateRequest,  # noqa: F401
     CreatorVolumeApplyTemplateResponse,  # noqa: F401
     CreatorVolumeDeleteTemplateResponse,  # noqa: F401
@@ -205,7 +205,7 @@ from dashboard.models.creator_template import (
     CreatorVolumeTemplateVersionRequest,  # noqa: F401
     CreatorVolumeTemplateVersionResponse,  # noqa: F401
 )
-from dashboard.models.creator_volume_op import (
+from apps.studio_api.models.creator_volume_op import (
     CreatorVolumeFactoryDeleteResponse,  # noqa: F401
     CreatorVolumeFactoryPublishRequest,  # noqa: F401
     CreatorVolumeFactoryPublishResponse,  # noqa: F401
@@ -217,19 +217,19 @@ from dashboard.models.creator_volume_op import (
     CreatorVolumeSplitResponse,  # noqa: F401
     CreatorWizardPanelCollapsedRequest,  # noqa: F401
 )
-from dashboard.models.decision import (
+from apps.studio_api.models.decision import (
     CancelDecisionRequest,  # noqa: F401
     DecisionResponse,  # noqa: F401
     DeferDecisionRequest,  # noqa: F401
     ResolveDecisionRequest,  # noqa: F401
 )
-from dashboard.models.health import (
+from apps.studio_api.models.health import (
     DatabaseStatus,  # noqa: F401
     HealthResponse,  # noqa: F401
     MemoryUsage,  # noqa: F401
     OverviewResponse,  # noqa: F401
 )
-from dashboard.models.studio import (
+from apps.studio_api.models.studio import (
     StudioActiveResponse,  # noqa: F401
     StudioBatchJobResponse,  # noqa: F401
     StudioBatchRunRequest,  # noqa: F401
@@ -254,7 +254,7 @@ from dashboard.models.studio import (
     StudioSetActiveRequest,  # noqa: F401
     StudioSummaryResponse,  # noqa: F401
 )
-from dashboard.models.workflow import (
+from apps.studio_api.models.workflow import (
     BudgetSetRequest,  # noqa: F401
     BudgetTierSetRequest,  # noqa: F401
     ResumeWorkflowRequest,  # noqa: F401
@@ -269,7 +269,7 @@ from dashboard.models.workflow import (
 # so route modules can keep using the standard `from dashboard.models import`
 # form. Phase 15.0 T1.4: same applies to all cvg/ripple Pydantic models that
 # were originally defined alongside the storage layer.
-from dashboard.protocols import (
+from apps.studio_api.protocols import (
     CascadeBroadcastLogResponse,  # noqa: F401
     CascadeCancelPayload,  # noqa: F401
     CascadeCancelRequest,  # noqa: F401

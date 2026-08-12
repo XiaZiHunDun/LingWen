@@ -19,7 +19,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 
-from dashboard.models import (
+from apps.studio_api.models import (
     CreatorDiffCollabNotesRequest,
     CreatorDiffCollabNotesResponse,
     CreatorOnboardingDigestDeadLetterReplayRequest,
@@ -47,7 +47,7 @@ from dashboard.models import (
     CreatorOnboardingWebhookSaveRequest,
     CreatorWizardPanelCollapsedRequest,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def _require_project(ctx: RoutesContext):

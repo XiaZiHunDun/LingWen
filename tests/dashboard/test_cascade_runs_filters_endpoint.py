@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
+from apps.studio_api.app import create_app
 from infra.cross_volume.reference_graph import (
     CascadedRipple,
     CrossVolumeReferenceGraph,
@@ -89,7 +89,7 @@ def client_with_runs(tmp_path, monkeypatch):
         )
         conn.commit()
 
-    from dashboard import app as app_module
+    from apps.studio_api import app as app_module
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     return TestClient(create_app())
 

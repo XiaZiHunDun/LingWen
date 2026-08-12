@@ -9,8 +9,8 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
 
-from dashboard.helpers.production_records import production_records_root
-from dashboard.models import (
+from apps.studio_api.helpers.production_records import production_records_root
+from apps.studio_api.models import (
     ChapterData,
     ChaptersResponse,
     OverviewResponse,
@@ -20,7 +20,7 @@ from dashboard.models import (
     ProductionRecordsResponse,
     ProductionRollupResponse,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def register_overview(app: FastAPI, ctx: RoutesContext) -> None:

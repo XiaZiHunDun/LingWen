@@ -7,14 +7,14 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
-from dashboard.helpers.decision import _decision_to_response
-from dashboard.models import (
+from apps.studio_api.helpers.decision import _decision_to_response
+from apps.studio_api.models import (
     CancelDecisionRequest,
     DecisionResponse,
     DeferDecisionRequest,
     ResolveDecisionRequest,
 )
-from dashboard.routes.ctx import RoutesContext, require_controller
+from apps.studio_api.routes.ctx import RoutesContext, require_controller
 
 
 def register_decisions(app: FastAPI, ctx: RoutesContext) -> None:

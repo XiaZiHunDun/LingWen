@@ -10,7 +10,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 # Phase 15.0 T1.4: forward ref to CreatorVolumePlanEntry (defined in creator.py).
-from dashboard.models.creator import CreatorVolumePlanEntry
+from apps.studio_api.models.creator import CreatorVolumePlanEntry
 
 
 class CreatorWizardPanelCollapsedRequest(BaseModel):

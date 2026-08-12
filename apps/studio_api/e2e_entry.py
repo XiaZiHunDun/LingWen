@@ -11,8 +11,8 @@ def main() -> None:
 
     ensure_e2e_fixtures()
 
-    from dashboard.app import create_app
-    from dashboard.e2e_stub_controller import E2EStubController
+    from apps.studio_api.app import create_app
+    from apps.studio_api.e2e_stub_controller import E2EStubController
 
     state_dir = Path(__file__).resolve().parent.parent / "infra" / ".state"
     state_dir.mkdir(parents=True, exist_ok=True)

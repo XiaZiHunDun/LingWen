@@ -28,7 +28,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
+from apps.studio_api.app import create_app
 
 # === Controllable stub ===
 

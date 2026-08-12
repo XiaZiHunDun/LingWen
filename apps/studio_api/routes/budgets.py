@@ -13,8 +13,8 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 
-from dashboard.models import BudgetSetRequest, BudgetTierSetRequest
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.models import BudgetSetRequest, BudgetTierSetRequest
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
@@ -27,7 +27,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
             dict with keys: per_run, per_day, per_week
             每个 value 是 dict {status, budget_usd, used_usd, used_pct} 或 {} (无 budget)
         """
-        from dashboard.protocols import (
+        from apps.studio_api.protocols import (
             MasterControllerAdapter,
             _extract_budget_per_window,
             _extract_budget_status,
@@ -50,7 +50,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
         """
         if scope not in ("day", "week"):
             raise HTTPException(400, "scope must be 'day' or 'week'")
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
         controller = MasterControllerAdapter._controller
         service = getattr(controller, "budget_service", None)
         if service is None:
@@ -61,7 +61,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
     @app.get("/api/budgets/by-tier")
     async def get_budgets_by_tier() -> dict[str, Any]:
         """Phase 8.15 T6: 返 3 tier current budget entries (haiku/sonnet/opus)."""
-        from dashboard.protocols import (
+        from apps.studio_api.protocols import (
             MasterControllerAdapter,
             _extract_budget_by_tier,
         )
@@ -77,7 +77,7 @@ def register_budgets(app: FastAPI, ctx: RoutesContext) -> None:
             422: usd < 0 or usd > 10000
             503: budget_service_by_tier not initialized on controller
         """
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
         from infra.ai_service.model_tiers import ModelTier
 
         try:

@@ -23,7 +23,7 @@ from pydantic import ValidationError
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from dashboard.protocols import (
+    from apps.studio_api.protocols import (
         AuditCreatedPayload,
         CascadeCancelPayload,
         CascadeUpdatePayload,
@@ -88,7 +88,7 @@ def _broadcast_envelope(envelope: dict[str, Any]) -> None:
 
 def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
     """record_ripple cascade hook 完成后调, 推 cascade.update WS event."""
-    from dashboard.protocols import CascadeUpdatePayload as _CascadeUpdatePayload
+    from apps.studio_api.protocols import CascadeUpdatePayload as _CascadeUpdatePayload
     if not isinstance(payload, _CascadeUpdatePayload):
         try:
             payload = _CascadeUpdatePayload.model_validate(payload)
@@ -108,7 +108,7 @@ def notify_cascade_update(payload: "CascadeUpdatePayload") -> None:
 
 def notify_audit_created(payload: "AuditCreatedPayload") -> None:
     """Phase 9.62 F53: record_audit 完成后推 audit.created WS event."""
-    from dashboard.protocols import AuditCreatedPayload as _AuditCreatedPayload
+    from apps.studio_api.protocols import AuditCreatedPayload as _AuditCreatedPayload
     if not isinstance(payload, _AuditCreatedPayload):
         try:
             payload = _AuditCreatedPayload.model_validate(payload)
@@ -123,7 +123,7 @@ def notify_audit_created(payload: "AuditCreatedPayload") -> None:
 
 def notify_cascade_cancel(payload: "CascadeCancelPayload") -> None:
     """Phase 9.21: 推 cascade.cancel WS event (跟 cascade.update 1:1)."""
-    from dashboard.protocols import CascadeCancelPayload as _CascadeCancelPayload
+    from apps.studio_api.protocols import CascadeCancelPayload as _CascadeCancelPayload
     if not isinstance(payload, _CascadeCancelPayload):
         try:
             payload = _CascadeCancelPayload.model_validate(payload)

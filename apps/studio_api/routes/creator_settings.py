@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
 
-from dashboard.models import (
+from apps.studio_api.models import (
     CreatorMergePreferencesExportResponse,
     CreatorMergePreferencesImportRequest,
     CreatorMergePreferencesImportResponse,
@@ -65,7 +65,7 @@ from dashboard.models import (
     CreatorSettingsThreeWayRequest,
     CreatorSettingsThreeWayResponse,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def _require_project(ctx: RoutesContext):

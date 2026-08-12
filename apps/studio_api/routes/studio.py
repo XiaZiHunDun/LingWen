@@ -15,7 +15,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
 
-from dashboard.models import (
+from apps.studio_api.models import (
     StudioActiveResponse,
     StudioBatchJobResponse,
     StudioBatchRunRequest,
@@ -36,7 +36,7 @@ from dashboard.models import (
     StudioSetActiveRequest,
     StudioSummaryResponse,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def _require_project(ctx: RoutesContext):

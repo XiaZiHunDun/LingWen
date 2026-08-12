@@ -88,10 +88,10 @@ ALLOWLIST.add("apps/dashboard/tests/e2e-smoke/companion-selection-agent-flow.spe
 ALLOWLIST.add("apps/dashboard/tests/unit/creator-product-tools.spec.ts")  # Phase 19.1
 
 # === Phase 19.2 (dashboard backend refactor) ===
-ALLOWLIST.add("apps/studio-api/protocols.py")  # Phase 19.2 (renamed in Phase 17.3)
-ALLOWLIST.add("apps/studio-api/routes/creator_settings.py")  # Phase 19.2 (renamed in Phase 17.3)
-ALLOWLIST.add("apps/studio-api/routes/creator_volume.py")  # Phase 19.2 (renamed in Phase 17.3)
-ALLOWLIST.add("apps/studio-api/routes/cvg.py")  # Phase 19.2 (renamed in Phase 17.3)
+ALLOWLIST.add("apps/studio_api/protocols.py")  # Phase 19.2 (renamed in Phase 17.3)
+ALLOWLIST.add("apps/studio_api/routes/creator_settings.py")  # Phase 19.2 (renamed in Phase 17.3)
+ALLOWLIST.add("apps/studio_api/routes/creator_volume.py")  # Phase 19.2 (renamed in Phase 17.3)
+ALLOWLIST.add("apps/studio_api/routes/cvg.py")  # Phase 19.2 (renamed in Phase 17.3)
 
 # === Phase 19.3 (test refactor) ===
 ALLOWLIST.add("tests/agent_system/test_got_bridge.py")  # Phase 19.3

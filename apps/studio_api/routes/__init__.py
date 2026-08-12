@@ -9,18 +9,18 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from dashboard.routes.budgets import register_budgets
-from dashboard.routes.creator_core import register_creator_core
-from dashboard.routes.creator_onboarding import register_creator_onboarding
-from dashboard.routes.creator_settings import register_creator_settings
-from dashboard.routes.creator_volume import register_creator_volume
-from dashboard.routes.ctx import RoutesContext
-from dashboard.routes.cvg import register_cvg
-from dashboard.routes.decisions import register_decisions
-from dashboard.routes.health import register_health
-from dashboard.routes.overview import register_overview
-from dashboard.routes.studio import register_studio
-from dashboard.routes.workflows import register_workflows
+from apps.studio_api.routes.budgets import register_budgets
+from apps.studio_api.routes.creator_core import register_creator_core
+from apps.studio_api.routes.creator_onboarding import register_creator_onboarding
+from apps.studio_api.routes.creator_settings import register_creator_settings
+from apps.studio_api.routes.creator_volume import register_creator_volume
+from apps.studio_api.routes.ctx import RoutesContext
+from apps.studio_api.routes.cvg import register_cvg
+from apps.studio_api.routes.decisions import register_decisions
+from apps.studio_api.routes.health import register_health
+from apps.studio_api.routes.overview import register_overview
+from apps.studio_api.routes.studio import register_studio
+from apps.studio_api.routes.workflows import register_workflows
 
 
 def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:

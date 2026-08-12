@@ -145,7 +145,7 @@
 ┌────────────┼────────────────────────────────────────────────────┐
 │            ↓            服务边界                                 │
 │                                                                 │
-│   apps/studio-api (FastAPI)                                     │
+│   apps/studio_api (FastAPI)                                     │
 │   ┌──────────────────────────────────────────────────────┐     │
 │   │  HTTP / WS / SSE 适配器                              │     │
 │   │  应用层：orchestrator.run_studio_workflow(...)       │     │
@@ -168,7 +168,7 @@
 
 **关键改动**：
 
-- "墨灵 Studio" = 一个对外完整产品，由 `apps/dashboard`（前端）+ `apps/studio-api`（HTTP/WS 适配器）+ 后端灵文包组成。
+- "墨灵 Studio" = 一个对外完整产品，由 `apps/dashboard`（前端）+ `apps/studio_api`（HTTP/WS 适配器）+ 后端灵文包组成。
 - "灵文引擎" = 一组 Python 包 + CLI，可独立于墨灵 Studio 使用。
 - 两者之间没有直接 `import`，通过 `packages/dashboard-contracts`（TS 类型）隔开。
 
@@ -182,7 +182,7 @@
 lingwen/                                          # 仓库根（仍叫 LingWen，工程命名空间）
 ├── apps/
 │   ├── dashboard/                                # 墨灵 Studio 前端（来自 dashboard/frontend）
-│   └── studio-api/                               # 墨灵 Studio 后端（来自 dashboard/）
+│   └── studio_api/                               # 墨灵 Studio 后端（来自 dashboard/）
 ├── packages/
 │   ├── lingwen-core/                             # 领域 + 应用层（orchestrator, agents, domain）
 │   ├── lingwen-pipeline/                         # 22 步工作流 + 状态机
@@ -219,10 +219,10 @@ lingwen/                                          # 仓库根（仍叫 LingWen�
 | `infra/state/` | `packages/lingwen-pipeline/src/state/`, `packages/lingwen-storage/src/events/` |
 | `infra/consistency/`, `infra/quality/` | `packages/lingwen-quality/` |
 | `infra/hooks/` | `packages/lingwen-pipeline/src/hooks/` |
-| `infra/cli/` | `packages/lingwen-cli/`（CLI 命令实体的归宿）；`apps/studio-api/src/cli_bridge.py`（studio-api 调用 CLI 命令的薄适配器，**不含业务逻辑**） |
+| `infra/cli/` | `packages/lingwen-cli/`（CLI 命令实体的归宿）；`apps/studio_api/src/cli_bridge.py`（studio_api 调用 CLI 命令的薄适配器，**不含业务逻辑**） |
 | `infra/prompt_engineering/` | `packages/lingwen-prompt/` |
 | `dashboard/frontend/` | `apps/dashboard/` |
-| `dashboard/`（FastAPI + helpers + models + routes + protocols） | `apps/studio-api/` |
+| `dashboard/`（FastAPI + helpers + models + routes + protocols） | `apps/studio_api/` |
 | `dashboard/frontend/src/api/creator.js` | `apps/dashboard/src/api/creator/*.ts`（按子域拆分） |
 | `dashboard/frontend/src/composables/useCreator*.ts` | `apps/dashboard/src/composables/creator/{write,pulse,settings,...}.ts` |
 | `03_内容仓库`、`07_汇总仓库` 等 | `content/{outline,manuscript,summary,published,...}/` |
@@ -255,7 +255,7 @@ lingwen/                                          # 仓库根（仍叫 LingWen�
 ```
 
 - 不允许反向依赖。
-- `apps/dashboard` 只通过 HTTP / WS 调 `apps/studio-api`，绝不允许 `import` 任何 `lingwen-*` 包。
+- `apps/dashboard` 只通过 HTTP / WS 调 `apps/studio_api`，绝不允许 `import` 任何 `lingwen-*` 包。
 - `packages/lingwen-*` 之间遵循垂直分层：上层列在下层之上，箭头只往下。
 
 ---
@@ -450,7 +450,7 @@ lingwen-cli/src/
 └── ui/                           # Rich / Textual 输出
 ```
 
-- CLI 是灵文引擎的对外接口，墨灵 Studio 不直接调用 CLI，而是调 `apps/studio-api` 暴露的 HTTP/WS。
+- CLI 是灵文引擎的对外接口，墨灵 Studio 不直接调用 CLI，而是调 `apps/studio_api` 暴露的 HTTP/WS。
 
 ### 6.9 `packages/dashboard-contracts` — TypeScript 契约
 
@@ -462,13 +462,13 @@ dashboard-contracts/src/
 └── index.ts
 ```
 
-- 由 `apps/studio-api` 的 OpenAPI schema 自动生成（`make generate-contracts` 脚本）。
+- 由 `apps/studio_api` 的 OpenAPI schema 自动生成（`make generate-contracts` 脚本）。
 - 前端 import 此包得到强类型；后端不依赖。
 
-### 6.10 `apps/studio-api` — FastAPI 后端
+### 6.10 `apps/studio_api` — FastAPI 后端
 
 ```
-apps/studio-api/src/
+apps/studio_api/src/
 ├── api/                          # routers（薄壳）
 │   ├── chapters.py
 │   ├── workflows.py
@@ -485,7 +485,7 @@ apps/studio-api/src/
 
 **关键约束**：
 
-- `apps/studio-api` 只 import `packages/lingwen-*`（按依赖图，不破规则）。
+- `apps/studio_api` 只 import `packages/lingwen-*`（按依赖图，不破规则）。
 - 路由层**不写业务逻辑**，仅做参数解析、认证、用例调用、DTO 映射。
 
 ### 6.11 `apps/dashboard` — 墨灵 Studio 前端
@@ -598,7 +598,7 @@ apps/dashboard/src/
 ### 7.3 API 层拆分 + 类型契约
 
 - `apps/dashboard` 不写 API 响应类型——全部 import `packages/dashboard-contracts/api/*`。
-- `apps/studio-api` 单一来源 `make generate-contracts`，CI 检查 `dashboard-contracts` 必须从当前 OpenAPI 重新生成（防漂移）。
+- `apps/studio_api` 单一来源 `make generate-contracts`，CI 检查 `dashboard-contracts` 必须从当前 OpenAPI 重新生成（防漂移）。
 - `core.ts` 仍是统一 `request()` + 错误体系，但**接收 `dashboard-contracts` 的类型**，不再 `any`。
 
 ### 7.4 WS / 事件总线统一抽象
@@ -882,7 +882,7 @@ recall(query, ctx) -> list[MemoryChunk]:
 
 ### 13.1 顶命令
 
-旧 `lingwen.py` 主入口迁到 `packages/lingwen-cli/`，根目录软链到这；monorepo 用户从 `apps/studio-api` 调命令型用例。
+旧 `lingwen.py` 主入口迁到 `packages/lingwen-cli/`，根目录软链到这；monorepo 用户从 `apps/studio_api` 调命令型用例。
 
 ### 13.2 范围格式统一
 
@@ -1115,14 +1115,14 @@ CI 加 `grep -iE 'lingwen[[:space:]-]*studio|studio[[:space:]]*v12'` 在 `apps/d
 - 17.2：把 `infra/agent_system/` 内容迁到 `packages/lingwen-core/`、`packages/lingwen-pipeline/`
 - 17.3：把 `infra/quality/` + `infra/consistency/` 合并到 `packages/lingwen-quality/`
 - 17.4：把 `dashboard/frontend` 迁到 `apps/dashboard`
-- 17.5：把 `dashboard/`（除 frontend）迁到 `apps/studio-api`
+- 17.5：把 `dashboard/`（除 frontend）迁到 `apps/studio_api`
 
 ### Phase 18 — 业务边界 + 接口化（建议 3 周）
 
 - 18.0：抽出 ports（Protocol）并冻结
 - 18.1：domain 实体与不变式落地
 - 18.2：用例改造为接受/发出事件
-- 18.3：apps/studio-api 改造为薄壳（HTTP/WS → 用例）
+- 18.3：apps/studio_api 改造为薄壳（HTTP/WS → 用例）
 
 ### Phase 19 — 前端整治（建议 2 周）
 
@@ -1165,7 +1165,7 @@ CI 加 `grep -iE 'lingwen[[:space:]-]*studio|studio[[:space:]]*v12'` 在 `apps/d
 - `infra/world_model/`、`infra/story_contracts/`（除非确有下游依赖）
 - `infra/cross_volume/`（投影即可，重建）
 - `infra/subplot/`（除非 review 决定保留）
-- `infra/exports/`（合并到 `apps/studio-api` 适配器）
+- `infra/exports/`（合并到 `apps/studio_api` 适配器）
 
 ### 20.2 前端层
 
@@ -1247,7 +1247,7 @@ CI 加 `grep -iE 'lingwen[[:space:]-]*studio|studio[[:space:]]*v12'` 在 `apps/d
 | 包 | 路径 | 角色 |
 |----|------|------|
 | `apps/dashboard` | Vue 3 + TS | 墨灵 Studio 前端 |
-| `apps/studio-api` | FastAPI | 墨灵 Studio 后端 |
+| `apps/studio_api` | FastAPI | 墨灵 Studio 后端 |
 | `packages/lingwen-core` | Python | 领域 + 应用 + Agent |
 | `packages/lingwen-pipeline` | Python | 22 步工作流 + 状态机 |
 | `packages/lingwen-quality` | Python | 统一 Checker / Repairer |
@@ -1263,9 +1263,9 @@ CI 加 `grep -iE 'lingwen[[:space:]-]*studio|studio[[:space:]]*v12'` 在 `apps/d
 ## 附录 B：依赖矩阵
 
 ```
-                     cli  storage  memory  prompt   llm  quality  pipeline  core  studio-api  dashboard  contracts
+                     cli  storage  memory  prompt   llm  quality  pipeline  core  studio_api  dashboard  contracts
 apps/dashboard                                                                                              X         X
-apps/studio-api                                                  X    X        X     X                                X
+apps/studio_api                                                  X    X        X     X                                X
 packages/lingwen-core                                                                                        X         X         
 packages/lingwen-pipeline                                  X    X    X                      
 packages/lingwen-quality                                            X                                                  

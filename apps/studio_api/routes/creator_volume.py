@@ -15,7 +15,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 
-from dashboard.models import (
+from apps.studio_api.models import (
     CreatorVolumeApplyTemplateRequest,
     CreatorVolumeApplyTemplateResponse,
     CreatorVolumeDeleteTemplateResponse,
@@ -67,7 +67,7 @@ from dashboard.models import (
     CreatorVolumeTemplateVersionRequest,
     CreatorVolumeTemplateVersionResponse,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def _require_project(ctx: RoutesContext):

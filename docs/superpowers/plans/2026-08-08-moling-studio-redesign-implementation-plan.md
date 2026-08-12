@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 把 `lingwen/` 仓库重构为 monorepo，按 Hexagonal / Clean Architecture 拆成 `apps/{dashboard,studio-api}` + `8 个 lingwen-* 包` + `dashboard-contracts`，改造工作流引擎为事件溯源，把 209 文件未提交重构按 Step A/B/C 入库，最终交付一个可独立部署、CI 全绿、品牌锁定的 v10.0 发布。
+**Goal:** 把 `lingwen/` 仓库重构为 monorepo，按 Hexagonal / Clean Architecture 拆成 `apps/{dashboard,studio_api}` + `8 个 lingwen-* 包` + `dashboard-contracts`，改造工作流引擎为事件溯源，把 209 文件未提交重构按 Step A/B/C 入库，最终交付一个可独立部署、CI 全绿、品牌锁定的 v10.0 发布。
 
 **Architecture:** 见 spec `docs/superpowers/specs/2026-08-08-moling-studio-redesign-design.md`。本计划只列可执行步骤。
 
@@ -1518,23 +1518,23 @@
 
 ---
 
-### Task 17.3：把 dashboard/（除 frontend）迁到 apps/studio-api
+### Task 17.3：把 dashboard/（除 frontend）迁到 apps/studio_api
 
 **Files:**
-- Move: `dashboard/`（除 `dashboard/frontend`） → `apps/studio-api`
+- Move: `dashboard/`（除 `dashboard/frontend`） → `apps/studio_api`
 
 > 由于 17.2 已将 `dashboard/frontend` 移走，剩 `dashboard/` = 后端部分（app.py、routes/、models/、helpers/、protocols.py 等）。
 
 - [ ] **Step 1: git mv**
 
   ```bash
-  git mv dashboard apps/studio-api
+  git mv dashboard apps/studio_api
   ```
 
 - [ ] **Step 2: 修路径**
 
-  Run: `grep -rln 'dashboard/' apps/studio-api/ 2>/dev/null`
-  → 改为 `apps/studio-api/`，或对应新位置。
+  Run: `grep -rln 'dashboard/' apps/studio_api/ 2>/dev/null`
+  → 改为 `apps/studio_api/`，或对应新位置。
 
   修 Makefile / requirements.txt / e2e_entry.py / Dockerfile 里的 `cd dashboard` 等。
 
@@ -1542,7 +1542,7 @@
 
   ```bash
   git add -A
-  git commit -m "refactor(monorepo): dashboard/ → apps/studio-api"
+  git commit -m "refactor(monorepo): dashboard/ → apps/studio_api"
   ```
 
 ---
@@ -1816,7 +1816,7 @@
 
   def test_no_dashboard_import_in_lingwen():
       """apps/dashboard 不应 import 任何 lingwen-* 包代码"""
-      # 检查的是反向情况：lingwen 包不能被 dashboard 直接 import（只能经 studio-api HTTP/WS）
+      # 检查的是反向情况：lingwen 包不能被 dashboard 直接 import（只能经 studio_api HTTP/WS）
       # 本测试改为正向：确认 lingwen-* 包代码不引 '@moling' 或 'apps/dashboard'
       bad = subprocess.run(
           ["grep", "-rEl", r"['\"]@moling/dashboard['\"]|'@moling/dashboard-contracts'",
@@ -1955,7 +1955,7 @@
 ### Task 17.17：移 `social_engine/` 到合适位置
 
 **Files:**
-- Decision: 留 `social_engine/` 原位 / 迁到 `apps/social/?` 还是合到 `apps/studio-api/`
+- Decision: 留 `social_engine/` 原位 / 迁到 `apps/social/?` 还是合到 `apps/studio_api/`
 
 > 当前 `social_engine/` 是一个子域，是否纳入 monorepo？
 > 决策（spec §20 未明确）= 暂**不纳入** monorepo，保持顶层目录独立但加 README 解释其关系。
@@ -2408,7 +2408,7 @@
 - [ ] **G2**: `cd packages/lingwen-core && grep -rE 'from lingwen_llm|from lingwen_storage|import lingwen_llm|import lingwen_storage' src/` 返回 0 行（业务不感知 IO）
 - [ ] **G3**: `cd packages/lingwen-quality && pytest -q` 通过
 - [ ] **G4**: 至少 5 个 checker 已通用化（其余 commit-by-commit 跟进）
-- [ ] **G5**: `apps/studio-api` 仍能调通；之前 endpoint 行为不变
+- [ ] **G5**: `apps/studio_api` 仍能调通；之前 endpoint 行为不变
 
 ✅ **Gate 通过 → 进 Phase 19**
 
@@ -2737,7 +2737,7 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
 
   ```python
   #!/usr/bin/env python3
-  """从 apps/studio-api 的 OpenAPI 生成 TS 类型，写到 packages/dashboard-contracts/src/。"""
+  """从 apps/studio_api 的 OpenAPI 生成 TS 类型，写到 packages/dashboard-contracts/src/。"""
   # 用 datamodel-code-generator（pip install datamodel-code-generator）
   # 读 OpenAPI（启动 fastapi 子进程，访问 /openapi.json）
   # 输出到 packages/dashboard-contracts/src/api/*
@@ -2745,11 +2745,11 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
 
 - [ ] **Step 2: 接入 CI**
 
-  在 `apps/studio-api` 启动后跑：
+  在 `apps/studio_api` 启动后跑：
   ```yaml
         - name: Generate TS contracts
           run: |
-            (cd apps/studio-api && uvicorn app:app --port 18000 &)
+            (cd apps/studio_api && uvicorn app:app --port 18000 &)
             sleep 5
             python tools/generate_contracts.py
   ```
@@ -2767,7 +2767,7 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
 
   ```bash
   git add -A
-  git commit -m "feat(contracts): 从 apps/studio-api OpenAPI 自动生成 TS 类型"
+  git commit -m "feat(contracts): 从 apps/studio_api OpenAPI 自动生成 TS 类型"
   ```
 
 ---
@@ -2841,13 +2841,13 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
 ### Task 19.17：dashboard-contracts 自动生成可重跑
 
 **Files:**
-- Create: `apps/studio-api/scripts/export_openapi.py`
+- Create: `apps/studio_api/scripts/export_openapi.py`
 
 - [ ] **Step 1: 写 export 脚本**
 
   ```python
   #!/usr/bin/env python3
-  """导出 apps/studio-api 的 OpenAPI JSON 到 packages/dashboard-contracts/openapi.json。"""
+  """导出 apps/studio_api 的 OpenAPI JSON 到 packages/dashboard-contracts/openapi.json。"""
   import json
   from pathlib import Path
   from fastapi.openapi.utils import get_openapi
@@ -2889,7 +2889,7 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
   ```yaml
         - name: Verify contracts consistency
           run: |
-            (cd apps/studio-api && uvicorn app:app --port 18000 &)
+            (cd apps/studio_api && uvicorn app:app --port 18000 &)
             sleep 8
             python tools/generate_contracts.py --check
             # --check 模式：若 contracts 文件与新生成的内容不一致，exit 1
@@ -2956,7 +2956,7 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
   (cd apps/dashboard && pnpm test:run router/role-allowlist)
 
   echo "▶ contracts 一致性"
-  (cd apps/studio-api && uvicorn app:app --port 18000 &)
+  (cd apps/studio_api && uvicorn app:app --port 18000 &)
   sleep 5
   python tools/generate_contracts.py --check
 
@@ -2983,7 +2983,7 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
 - [ ] **G2**: `api/creator.js` 不存在；creator 子模块各自 ≤200 行
 - [ ] **G3**: `useXxxStore` 单例已全部转 Pinia 或保留 composable 时有书面理由
 - [ ] **G4**: 角色白名单只在 `router/index.ts` 定义
-- [ ] **G5**: `apps/dashboard` 无 `import { ... } from 'lingwen-...'` 或 `from 'apps/studio-api/...'`
+- [ ] **G5**: `apps/dashboard` 无 `import { ... } from 'lingwen-...'` 或 `from 'apps/studio_api/...'`
 - [ ] **G6**: `pnpm test:coverage` ≥ 阈值
 - [ ] **G7**: dashboard-contracts 一致性 CI 通过
 
@@ -3078,7 +3078,7 @@ refactor(stores): WS 单例 → Pinia useWorkflowSocketStore / useRippleSocketSt
   | Unit | 类型 | 用途 | 自述 |
   |------|------|------|------|
   | apps/dashboard | Vue 3 + TS | 墨灵 Studio 前端 | [README](apps/dashboard/README.md) |
-  | apps/studio-api | FastAPI | 墨灵 Studio 后端 | [README](apps/studio-api/README.md) |
+  | apps/studio_api | FastAPI | 墨灵 Studio 后端 | [README](apps/studio_api/README.md) |
   | packages/lingwen-core | Python | 领域 + 应用 | [README](packages/lingwen-core/README.md) |
   | ... |
   ```
@@ -3224,7 +3224,7 @@ docs(<unit>): 撰写 README（做什么 / 不做 / 用法）
   ## 破坏性变更
   - CLI: `python lingwen.py status` 仍然兼容（薄壳）
   - 数据: 旧的 `.state/workflow.db` 不再读取；事件从 `.state/events/*.jsonl` 派生
-  - API: `apps/dashboard` 不再 import `apps/studio-api/` 路径代码（only HTTP/WS）
+  - API: `apps/dashboard` 不再 import `apps/studio_api/` 路径代码（only HTTP/WS）
   - 开发: 各 Python 包迁到 `packages/lingwen-*`
 
   ## 迁移工具
@@ -3300,7 +3300,7 @@ docs(<unit>): 撰写 README（做什么 / 不做 / 用法）
 
 - [ ] **Step 2: 跑后端 e2e smoke（若存在）**
 
-  Run: `cd apps/studio-api && pytest tests/e2e/ -q`（如未实现，跳过）
+  Run: `cd apps/studio_api && pytest tests/e2e/ -q`（如未实现，跳过）
 
 - [ ] **Step 3: 跑前端 playwright opt-in**
 

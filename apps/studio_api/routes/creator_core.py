@@ -21,8 +21,8 @@ import json
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response, StreamingResponse
 
-from dashboard.errors import NotFoundError, ValidationError
-from dashboard.models import (
+from apps.studio_api.errors import NotFoundError, ValidationError
+from apps.studio_api.models import (
     CreatorAgentPlanRequest,
     CreatorAgentPlanResponse,
     CreatorBatchHistoryExportResponse,
@@ -51,7 +51,7 @@ from dashboard.models import (
     CreatorVolumeSummaryGenerateRequest,
     CreatorVolumeSummaryGenerateResponse,
 )
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.routes.ctx import RoutesContext
 
 
 def _require_project(ctx: RoutesContext):

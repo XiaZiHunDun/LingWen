@@ -10,25 +10,25 @@ from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 
-from dashboard import app as _app_module  # for monkeypatch-compatible _default_storage lookup
-from dashboard.helpers.time_window import _parse_time_window
-from dashboard.helpers.workflow import _list_workflow_yamls, _workflow_result_to_response
-from dashboard.models import (
+from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
+from apps.studio_api.helpers.time_window import _parse_time_window
+from apps.studio_api.helpers.workflow import _list_workflow_yamls, _workflow_result_to_response
+from apps.studio_api.models import (
     ResumeWorkflowRequest,
     RunWorkflowRequest,
     WorkflowListItem,
     WorkflowMermaidResponse,
     WorkflowStatusResponse,
 )
-from dashboard.protocols import (
+from apps.studio_api.protocols import (
     _extract_cost_by_day,
     _extract_cost_by_day_per_tier,
     _extract_cost_by_scenario,
     _extract_cost_by_tier,
     _extract_total_cost,
 )
-from dashboard.routes.ctx import RoutesContext, require_controller
-from dashboard.ws import EVENT_CONNECTED
+from apps.studio_api.routes.ctx import RoutesContext, require_controller
+from apps.studio_api.ws import EVENT_CONNECTED
 
 
 def register_workflows(app: FastAPI, ctx: RoutesContext) -> None:

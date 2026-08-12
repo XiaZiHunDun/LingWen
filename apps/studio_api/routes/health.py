@@ -15,8 +15,8 @@ from typing import Dict, Any
 
 from fastapi import FastAPI
 
-from dashboard.models import HealthResponse, DatabaseStatus, MemoryUsage
-from dashboard.routes.ctx import RoutesContext
+from apps.studio_api.models import HealthResponse, DatabaseStatus, MemoryUsage
+from apps.studio_api.routes.ctx import RoutesContext
 from infra.health import (
     HealthManager,
     DatabaseHealthCheck,

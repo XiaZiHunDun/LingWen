@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
+from apps.studio_api.app import create_app
 from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph, ReferenceEdge, ReferenceNode
 from infra.cross_volume.storage import RippleStorage
 
@@ -46,7 +46,7 @@ def cvg_storage(tmp_path):
 
 @pytest.fixture
 def client(cvg_storage, monkeypatch):
-    from dashboard import app as app_module
+    from apps.studio_api import app as app_module
 
     monkeypatch.setattr(app_module, "_default_storage", lambda: cvg_storage)
     return TestClient(create_app())
@@ -99,7 +99,7 @@ class TestReferenceGraphEndpoint:
         assert data["total_node_count"] >= 3
 
     def test_empty_graph(self, client, tmp_path, monkeypatch):
-        from dashboard import app as app_module
+        from apps.studio_api import app as app_module
 
         empty = RippleStorage(db_path=tmp_path / "empty.db")
         monkeypatch.setattr(app_module, "_default_storage", lambda: empty)

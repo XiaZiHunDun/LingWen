@@ -18,7 +18,7 @@ from typing import Any, Optional
 
 from fastapi import WebSocket
 
-from dashboard.protocols import MasterControllerLike
+from apps.studio_api.protocols import MasterControllerLike
 
 logger = logging.getLogger(__name__)
 

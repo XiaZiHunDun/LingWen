@@ -30,7 +30,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response, StreamingRes
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from dashboard.errors import APIError
+from apps.studio_api.errors import APIError
 
 # Phase 13.0 T2 H2: middleware — CORS + GZip + slowapi 限流 (100/min default, 10/min mutation)
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -40,13 +40,13 @@ from slowapi.util import get_remote_address
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
-from dashboard.cascade_notifier import (
+from apps.studio_api.cascade_notifier import (
     notify_cascade_cancel,  # Phase 9.21: cascade cancel WS push
     set_main_event_loop,  # Phase 9.66: worker-thread WS schedule
     set_ws_manager,  # Phase 9.16: cascade WS push injector
 )
-from dashboard.cvg_ws import EVENT_PONG, CvgConnectionManager
-from dashboard.protocols import (
+from apps.studio_api.cvg_ws import EVENT_PONG, CvgConnectionManager
+from apps.studio_api.protocols import (
     CascadeBroadcastLogResponse,  # Phase 9.44 F33
     CascadeCancelPayload,  # Phase 9.21
     CascadeCancelRequest,  # Phase 9.21
@@ -70,7 +70,7 @@ from dashboard.protocols import (
     _extract_cost_by_tier,
     _extract_total_cost,
 )
-from dashboard.ws import (
+from apps.studio_api.ws import (
     EVENT_CONNECTED,
     ConnectionManager,
     start_broadcast_task,
@@ -88,7 +88,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 # ==================== Helpers (Phase 15.0 T1.3: moved to dashboard/helpers/) ====================
 # app.py / create_app closure references these helpers — re-export them here
 # so the existing top-level call sites (e.g. _default_storage in tests) keep working.
-from dashboard.helpers.cvg import (  # noqa: F401
+from apps.studio_api.helpers.cvg import (  # noqa: F401
     _audit_to_response,
     _build_reference_graph_response,
     _edge_to_dict_for_response,
@@ -101,21 +101,21 @@ from dashboard.helpers.cvg import (  # noqa: F401
     _validate_max_nodes_cap,
     cvg_manager,
 )
-from dashboard.helpers.decision import _decision_to_response  # noqa: F401
-from dashboard.helpers.misc import _maybe_mount_dashboard_ui  # noqa: F401
-from dashboard.helpers.time_window import _parse_time_window  # noqa: F401
-from dashboard.helpers.workflow import (  # noqa: F401
+from apps.studio_api.helpers.decision import _decision_to_response  # noqa: F401
+from apps.studio_api.helpers.misc import _maybe_mount_dashboard_ui  # noqa: F401
+from apps.studio_api.helpers.time_window import _parse_time_window  # noqa: F401
+from apps.studio_api.helpers.workflow import (  # noqa: F401
     _list_workflow_yamls,
     _workflow_result_to_response,
 )
-from dashboard.models import *  # noqa: F401,F403
+from apps.studio_api.models import *  # noqa: F401,F403
 
 # Phase 15.0 T1.4: routes are defined in dashboard/routes/*.py and registered
 # via register_all_routes() at the end of create_app(). Each register_X takes
 # (app, ctx) where ctx is a RoutesContext dataclass that bundles the closure
 # dependencies (db, master_controller, manager, limiter, production_records_root,
 # cvg_storage).
-from dashboard.routes import RoutesContext, register_all_routes  # noqa: E402
+from apps.studio_api.routes import RoutesContext, register_all_routes  # noqa: E402
 from infra.reading_power.db import ReadingPowerDB  # noqa: F401
 
 # Phase 15.0 T1.3: CVG storage singleton stays module-level in dashboard.app so tests
@@ -306,7 +306,7 @@ if __name__ == "__main__":
         "on",
     )
     if dev_mode:
-        from dashboard.e2e_stub_controller import E2EStubController
+        from apps.studio_api.e2e_stub_controller import E2EStubController
         from infra.cross_volume.e2e_seed import ensure_e2e_fixtures
 
         ensure_e2e_fixtures()

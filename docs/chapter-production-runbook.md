@@ -215,7 +215,7 @@ cd apps/dashboard && pnpm exec vitest run tests/unit/chapters-page.spec.ts
 Opt-in GitHub Actions workflow `.github/workflows/dashboard-e2e-live.yml`：
 
 - 触发：`workflow_dispatch` 或 PR label `e2e-live`
-- 命令：`LINGWEN_E2E_LIVE=1 pnpm e2e:live`（vite + `apps/studio-api/e2e_entry.py`）
+- 命令：`LINGWEN_E2E_LIVE=1 pnpm e2e:live`（vite + `apps/studio_api/e2e_entry.py`）
 - **非** primary merge gate（primary 仍是 vitest CI）
 
 ### 11.1 F70 — e2e-live CI 首跑验证

@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from dashboard.models import WorkflowListItem, WorkflowStatusResponse
+from apps.studio_api.models import WorkflowListItem, WorkflowStatusResponse
 
 
 def _list_workflow_yamls() -> list[WorkflowListItem]:

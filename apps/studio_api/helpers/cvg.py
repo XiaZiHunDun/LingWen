@@ -11,8 +11,8 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from dashboard.cvg_ws import CvgConnectionManager
-from dashboard.protocols import (
+from apps.studio_api.cvg_ws import CvgConnectionManager
+from apps.studio_api.protocols import (
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,

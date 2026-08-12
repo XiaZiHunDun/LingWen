@@ -24,8 +24,8 @@ from typing import Any, Optional
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
-from dashboard.protocols import MasterControllerAdapter
+from apps.studio_api.app import create_app
+from apps.studio_api.protocols import MasterControllerAdapter
 from infra.agent_system import master_controller as mc_mod
 from infra.agent_system.decision_queue import (
     DecisionKind,
@@ -670,7 +670,7 @@ class TestScoreDataExtraction:
 
     def test_score_data_extracted_from_polish_merge_output(self, tmp_path: Path):
         """NodeExecution.output 含 scores_a + scores_b → adapter 抽 score_data"""
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         fake_controller = _make_fake_master_with_polish_merge_scores()
         adapter = MasterControllerAdapter(fake_controller)
@@ -699,7 +699,7 @@ class TestScoreDataExtraction:
 
     def test_score_data_includes_fallback_reason(self, tmp_path: Path):
         """fallback="llm_fail" → score_data[polish_merge].fallback 透传"""
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         fake_controller = _make_fake_master_with_polish_merge_scores(
             scores_a={},  # 兜底路径不填 scores
@@ -716,7 +716,7 @@ class TestScoreDataExtraction:
 
     def test_workflow_status_endpoint_returns_score_data(self, tmp_path: Path):
         """GET /api/workflows/active 响应 JSON 含 score_data 字段"""
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         fake_controller = _make_fake_master_with_polish_merge_scores()
         adapter = MasterControllerAdapter(fake_controller)
@@ -743,7 +743,7 @@ class TestCostByScenarioExtraction:
 
     def test_extract_cost_by_scenario_from_controller(self) -> None:
         """正常 path: cost_tracker 有 3 scenario records → dict 3 keys."""
-        from dashboard.protocols import _extract_cost_by_scenario
+        from apps.studio_api.protocols import _extract_cost_by_scenario
 
         tracker = CostTracker()
         tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
@@ -764,7 +764,7 @@ class TestCostByScenarioExtraction:
 
     def test_extract_cost_by_scenario_empty_when_no_tracker(self) -> None:
         """兜底 path: cost_tracker=None 或无 cost_tracker 属性 → 返 {}."""
-        from dashboard.protocols import _extract_cost_by_scenario
+        from apps.studio_api.protocols import _extract_cost_by_scenario
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         # 故意不设 cost_tracker
@@ -773,7 +773,7 @@ class TestCostByScenarioExtraction:
 
     def test_workflow_status_response_includes_cost_by_scenario(self, tmp_path: Path) -> None:
         """GET /api/workflows/active 返 cost_by_scenario 字段 (跟 score_data 同模式)."""
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()
@@ -810,7 +810,7 @@ class TestCostByScenarioExtraction:
         走真实 FastAPI endpoint + custom stub (满足 Protocol + 携带 cost_tracker)
         验证 run endpoint 走 helper → 透传到 WorkflowStatusResponse.
         """
-        from dashboard.app import _workflow_result_to_response
+        from apps.studio_api.app import _workflow_result_to_response
 
         # custom stub:有 cost_tracker + run_workflow 返合法 result
         cost_tracker = CostTracker()
@@ -869,7 +869,7 @@ class TestCostByScenarioExtraction:
         直接 send_json 该 dict — 故 Task 4.2 在 MasterControllerAdapter.get_active_workflow_status
         加 cost_by_scenario 字段, WebSocket 自动获得, 0 改 endpoint 协议.
         """
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
         from infra.agent_system.master_controller import MasterController
 
         cost_tracker = CostTracker()
@@ -978,7 +978,7 @@ class TestBudgetStatusExtraction:
         return ctrl
 
     def test_extract_returns_ok_status_when_under_budget(self) -> None:
-        from dashboard.protocols import _extract_budget_status
+        from apps.studio_api.protocols import _extract_budget_status
 
         ctrl = self._make_controller_with_budget(budget=10.0, cost_usd=3.0)
         result = _extract_budget_status(ctrl)
@@ -990,7 +990,7 @@ class TestBudgetStatusExtraction:
         assert result["used_pct"] > 0.0
 
     def test_extract_returns_exceeded_status_when_over_budget(self) -> None:
-        from dashboard.protocols import _extract_budget_status
+        from apps.studio_api.protocols import _extract_budget_status
 
         ctrl = self._make_controller_with_budget(budget=0.001, cost_usd=3.0)  # way over
         result = _extract_budget_status(ctrl)
@@ -1001,14 +1001,14 @@ class TestBudgetStatusExtraction:
         assert result["used_pct"] > 100.0
 
     def test_extract_returns_empty_when_no_budget(self) -> None:
-        from dashboard.protocols import _extract_budget_status
+        from apps.studio_api.protocols import _extract_budget_status
 
         ctrl = self._make_controller_with_budget(budget=None, cost_usd=3.0)
         result = _extract_budget_status(ctrl)
         assert result == {}
 
     def test_extract_returns_empty_when_no_cost_tracker(self) -> None:
-        from dashboard.protocols import _extract_budget_status
+        from apps.studio_api.protocols import _extract_budget_status
 
         ctrl = self._make_controller_with_budget(budget=5.0, has_tracker=False)
         result = _extract_budget_status(ctrl)
@@ -1021,7 +1021,7 @@ class TestBudgetStatusExtraction:
         并把结果塞进返回 dict (跟 cost_by_scenario 同模式), 然后 WorkflowStatusResponse
         通过 **kwargs 序列化.
         """
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         master.cost_tracker = CostTracker()
