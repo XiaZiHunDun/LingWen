@@ -4,7 +4,7 @@ Mirrors lines 512-581 of the original infra/cli/commands.py.
 """
 from typing import List
 
-from infra.cli.options import UnifiedOptions
+from lingwen_cli.options import UnifiedOptions
 
 from .base import Command
 

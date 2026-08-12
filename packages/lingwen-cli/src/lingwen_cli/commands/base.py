@@ -7,10 +7,10 @@ command (check/repair/verify/etc.) imports from this module and inherits the
 from abc import ABC, abstractmethod
 from typing import List
 
-from infra.cli.options import UnifiedOptions
-from infra.cli.output import OutputFormatter
-from infra.cli.project_range import project_max_chapter
-from infra.cli.range_parser import RangeParser
+from lingwen_cli.options import UnifiedOptions
+from lingwen_cli.output import OutputFormatter
+from lingwen_cli.project_range import project_max_chapter
+from lingwen_cli.range_parser import RangeParser
 from infra.paths import ProjectPaths
 
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from infra.cli.commands.cascade import CascadeCommand
-from infra.cli.options import CascadeOptions
+from lingwen_cli.commands.cascade import CascadeCommand
+from lingwen_cli.options import CascadeOptions
 from infra.cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
@@ -50,7 +50,7 @@ class TestCascadePersist:
             affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending")
         storage.append_ripple(ripple)
         monkeypatch.setattr(
-            "infra.cli.commands.cascade._get_storage",
+            "lingwen_cli.commands.cascade._get_storage",
             lambda: storage,
         )
         cmd = CascadeCommand()
@@ -74,7 +74,7 @@ class TestCascadePersist:
             affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending")
         storage.append_ripple(ripple)
         monkeypatch.setattr(
-            "infra.cli.commands.cascade._get_storage",
+            "lingwen_cli.commands.cascade._get_storage",
             lambda: storage,
         )
         cmd = CascadeCommand()
@@ -96,7 +96,7 @@ class TestCascadePersist:
             affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending")
         storage.append_ripple(ripple)
         monkeypatch.setattr(
-            "infra.cli.commands.cascade._get_storage",
+            "lingwen_cli.commands.cascade._get_storage",
             lambda: storage,
         )
         cmd = CascadeCommand()

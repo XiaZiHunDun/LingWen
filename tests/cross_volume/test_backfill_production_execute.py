@@ -4,9 +4,9 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.cli.commands.backfill import BackfillCommand
-from infra.cli.options import BackfillOptions
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.backfill import BackfillCommand
+from lingwen_cli.options import BackfillOptions
+from lingwen_cli.parsers import create_parser
 from infra.cross_volume.backfill import Backfiller
 from infra.cross_volume.reference_graph import CrossVolumeReferenceGraph
 from infra.cross_volume.storage import RippleStorage

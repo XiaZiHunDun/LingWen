@@ -15,8 +15,8 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.cli.commands.backfill import BackfillCommand
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.backfill import BackfillCommand
+from lingwen_cli.parsers import create_parser
 
 
 def parse_args(argv: list[str]):
@@ -30,7 +30,7 @@ def make_options(**overrides):
 
     Default = Phase 9.11 (no LLM flag) + Phase 9.12 LLM defaults.
     """
-    from infra.cli.options import BackfillOptions
+    from lingwen_cli.options import BackfillOptions
 
     defaults = dict(
         range=[],

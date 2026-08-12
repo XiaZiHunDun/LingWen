@@ -1,8 +1,8 @@
 """cascade command - Phase 9.19 (run) + 9.20 (--persist) + 9.21 (cancel subcommand)."""
 from pathlib import Path
 
-from infra.cli.options import CascadeOptions
-from infra.cli.path_utils import resolve_project_db_path
+from lingwen_cli.options import CascadeOptions
+from lingwen_cli.path_utils import resolve_project_db_path
 
 from .base import Command
 

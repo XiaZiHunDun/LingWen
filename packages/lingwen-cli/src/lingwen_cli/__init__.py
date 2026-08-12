@@ -1,4 +1,4 @@
-from infra.cli.options import (
+from lingwen_cli.options import (
     AntiTropeOptions,
     BackfillOptions,
     CascadeOptions,
@@ -15,7 +15,7 @@ from infra.cli.options import (
     UnifiedOptions,
     VerifyOptions,
 )
-from infra.cli.range_parser import RangeParser
+from lingwen_cli.range_parser import RangeParser
 
 __all__ = [
     "RangeParser",

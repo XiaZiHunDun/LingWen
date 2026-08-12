@@ -10,7 +10,7 @@ LLM path 走 LLMScanner + LLMCache + CostTracker; 真实 LLM scan-and-write 是 
 import sys
 from pathlib import Path
 
-from infra.cli.options import BackfillOptions
+from lingwen_cli.options import BackfillOptions
 
 from .base import Command
 

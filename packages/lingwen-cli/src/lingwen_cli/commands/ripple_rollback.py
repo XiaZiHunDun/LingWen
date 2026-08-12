@@ -9,8 +9,8 @@
 import sys
 from pathlib import Path
 
-from infra.cli.options import UnifiedOptions
-from infra.cli.path_utils import resolve_project_db_path
+from lingwen_cli.options import UnifiedOptions
+from lingwen_cli.path_utils import resolve_project_db_path
 
 from .base import Command
 

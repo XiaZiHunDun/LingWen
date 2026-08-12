@@ -5,9 +5,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from infra.cli.commands.cascade import CascadeCommand
-from infra.cli.options import CascadeOptions
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.cascade import CascadeCommand
+from lingwen_cli.options import CascadeOptions
+from lingwen_cli.parsers import create_parser
 from infra.cross_volume.cascade_retention import parse_older_than, purge_cascade_runs_older_than
 from infra.cross_volume.reference_graph import (
     CascadedRipple,
@@ -106,7 +106,7 @@ class TestCascadePurgeCLI:
 
     def test_purge_cli_dry_run(self, storage_with_runs, monkeypatch, capsys):
         monkeypatch.setattr(
-            "infra.cli.commands.cascade._get_storage",
+            "lingwen_cli.commands.cascade._get_storage",
             lambda: storage_with_runs,
         )
         rc = CascadeCommand().execute(

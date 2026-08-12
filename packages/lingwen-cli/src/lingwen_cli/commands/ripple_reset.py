@@ -14,7 +14,7 @@ import re
 import sys
 from pathlib import Path
 
-from infra.cli.options import UnifiedOptions
+from lingwen_cli.options import UnifiedOptions
 
 from .base import Command
 

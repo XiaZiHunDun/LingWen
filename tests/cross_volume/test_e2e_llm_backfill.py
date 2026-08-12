@@ -15,8 +15,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.cli.commands.backfill import BackfillCommand
-from infra.cli.options import BackfillOptions
+from lingwen_cli.commands.backfill import BackfillCommand
+from lingwen_cli.options import BackfillOptions
 from infra.cross_volume.reference_graph import ReferenceNode
 
 

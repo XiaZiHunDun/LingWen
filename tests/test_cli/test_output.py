@@ -1,4 +1,4 @@
-from infra.cli.output import OutputFormatter
+from lingwen_cli.output import OutputFormatter
 
 
 def test_init_formatter():

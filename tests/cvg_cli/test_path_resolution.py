@@ -4,7 +4,7 @@ Goal: 3 CLI commands (cascade / ripple-rollback / ripple-audit) resolve
 db path via $LINGWEN_PROJECT_ROOT, CWD fallback with WARNING (1-version
 deprecation), exit 2 when db 不存在。
 
-RED: import `infra.cli.path_utils.resolve_project_db_path` — helper
+RED: import `lingwen_cli.path_utils.resolve_project_db_path` — helper
 不存 → ImportError → RED。
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.cli import path_utils
+from lingwen_cli import path_utils
 
 
 class TestResolveProjectDbPath:

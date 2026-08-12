@@ -1,6 +1,6 @@
 """CLI subparser subpackage.
 
-Mirrors the per-command structure of `infra.cli.commands` — one file per
+Mirrors the per-command structure of `lingwen_cli.commands` — one file per
 subcommand, each exposing an `add_X_parser(subparsers)` function that
 registers the subparser and its arguments.
 

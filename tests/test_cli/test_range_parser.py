@@ -1,7 +1,7 @@
 """Tests for RangeParser"""
 import pytest
 
-from infra.cli.range_parser import RangeParser
+from lingwen_cli.range_parser import RangeParser
 
 
 def test_parse_simple_range():

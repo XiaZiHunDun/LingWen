@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from infra.cli.options import CheckOptions
+from lingwen_cli.options import CheckOptions
 from infra.creator_check import apply_creator_check_defaults, settings_from_project_config
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
