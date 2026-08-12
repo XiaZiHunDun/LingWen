@@ -41,8 +41,8 @@ ALLOWLIST.add("infra/cross_volume/storage.py")  # Phase 17
 ALLOWLIST.add("infra/event_sourcing/store.py")  # Phase 17
 ALLOWLIST.add("infra/health.py")  # Phase 17
 ALLOWLIST.add("infra/llm_cache.py")  # Phase 17
-ALLOWLIST.add("infra/memory_system/gateway/query_engine.py")  # Phase 17
-ALLOWLIST.add("infra/memory_system/vector/qdrant_client.py")  # Phase 17
+ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/gateway/query_engine.py")  # Phase 17.6
+ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/vector/qdrant_client.py")  # Phase 17.6
 ALLOWLIST.add("infra/permission.py")  # Phase 17
 ALLOWLIST.add("infra/prose_judge.py")  # Phase 17
 ALLOWLIST.add("infra/state_machine.py")  # Phase 17
