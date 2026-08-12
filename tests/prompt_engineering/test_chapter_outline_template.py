@@ -10,7 +10,7 @@ SCENARIOS 中已有 chapter_outline 描述,但缺 YAML 模板。
 """
 from __future__ import annotations
 
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

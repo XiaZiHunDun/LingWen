@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from infra.prompt_engineering.data_structures import (
+from lingwen_prompt.data_structures import (
     ContextItem,
     PromptContext,
 )

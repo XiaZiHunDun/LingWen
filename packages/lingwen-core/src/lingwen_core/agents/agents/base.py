@@ -222,7 +222,7 @@ class AgentBase:
         elif format_type == "json":
             import json
 
-            from infra.prompt_engineering.extraction import _extract_json_block
+            from lingwen_prompt.extraction import _extract_json_block
 
             try:
                 return json.loads(_extract_json_block(response))

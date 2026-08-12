@@ -117,7 +117,7 @@ class LLMComputeFn:
             # 降级时,我们不知道实际 tier, 用 primary tier
             # 实际生产中可以扩展 TieredRouter 返回实际 tier
             from lingwen_llm.providers.model_tiers import ModelTier
-            from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP
+            from lingwen_prompt.scenarios import SCENARIO_TIER_MAP
             try:
                 tier = SCENARIO_TIER_MAP[scenario]
             except KeyError:

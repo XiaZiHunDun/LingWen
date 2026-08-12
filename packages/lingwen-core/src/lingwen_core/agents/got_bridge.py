@@ -24,7 +24,7 @@ from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 from infra.got.data_structures import ThoughtNode
 from infra.got.scheduler import ComputeResult
-from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP, SCENARIOS
+from lingwen_prompt.scenarios import SCENARIO_TIER_MAP, SCENARIOS
 
 from .chapter_emit import emit_chapter_enabled, emit_chapter_to_repo
 from .master_controller import MasterController

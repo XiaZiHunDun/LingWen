@@ -25,7 +25,7 @@ class _DummyOutput:
 
 
 def _ctx(inputs=(), budget_tokens=16000):
-    from infra.prompt_engineering.data_structures import PromptContext
+    from lingwen_prompt.data_structures import PromptContext
 
     return PromptContext(
         scenario="chapter_writing",
@@ -39,7 +39,7 @@ def _ctx(inputs=(), budget_tokens=16000):
 class TestContextBuilderBasics:
     def test_build_empty_returns_empty_context(self):
         """无 input 的 ctx → build 后为空 BuiltContext"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         cb = ContextBuilder(_ctx())
         result = cb.build()
@@ -49,7 +49,7 @@ class TestContextBuilderBasics:
 
     def test_add_source_returns_self(self):
         """add_source 返回 self (链式 API)"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         cb = ContextBuilder(_ctx())
         result = cb.add_source("x", "data")
@@ -57,7 +57,7 @@ class TestContextBuilderBasics:
 
     def test_add_source_stores_data(self):
         """add_source 后 build 拿得到"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src_a", 100),
@@ -68,7 +68,7 @@ class TestContextBuilderBasics:
         assert result.total_tokens == 100
 
     def test_add_multiple_sources(self):
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src_a", 50),
@@ -85,7 +85,7 @@ class TestContextBuilderBasics:
 class TestContextBuilderMissingRequired:
     def test_missing_required_raises(self):
         """required=True 但未 add_source → raise"""
-        from infra.prompt_engineering.context_builder import ContextBuilder, MissingContextError
+        from lingwen_prompt.context_builder import ContextBuilder, MissingContextError
 
         ctx = _ctx(inputs=(
             _make_item("a", "src_a", 100, required=True),
@@ -96,7 +96,7 @@ class TestContextBuilderMissingRequired:
 
     def test_optional_missing_ok(self):
         """required=False 缺失不 raise,只记 missing_optionals"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src_a", 100, required=False),
@@ -110,7 +110,7 @@ class TestContextBuilderMissingRequired:
 class TestContextBuilderBudgetOverflow:
     def test_budget_overflow_raises(self):
         """total > budget_tokens → raise"""
-        from infra.prompt_engineering.context_builder import BudgetOverflowError, ContextBuilder
+        from lingwen_prompt.context_builder import BudgetOverflowError, ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src", 800),
@@ -123,7 +123,7 @@ class TestContextBuilderBudgetOverflow:
             cb.build()
 
     def test_budget_within_limit_ok(self):
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src", 400),
@@ -139,7 +139,7 @@ class TestContextBuilderBudgetOverflow:
 class TestContextBuilderTransforms:
     def test_summary_transform_truncates(self):
         """transform="summary_500" → 数据被 AutoSummarizer 处理"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         long_text = "X" * 5000  # 5000 chars
         ctx = _ctx(inputs=(
@@ -153,7 +153,7 @@ class TestContextBuilderTransforms:
 
     def test_truncate_transform(self):
         """transform="truncate_200" → 截断到 200 chars"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         long_text = "Y" * 2000
         ctx = _ctx(inputs=(
@@ -166,7 +166,7 @@ class TestContextBuilderTransforms:
 
     def test_no_transform_passthrough(self):
         """无 transform → 原样"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src", 100, transform=None),
@@ -177,7 +177,7 @@ class TestContextBuilderTransforms:
 
     def test_unknown_transform_passthrough(self):
         """未知 transform → 不报错,原样输出,记入 transforms_applied"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src", 100, transform="unknown_strategy"),
@@ -191,7 +191,7 @@ class TestContextBuilderTransforms:
 class TestAutoSummarizer:
     def test_summarize_keeps_key_events(self):
         """关键事件标记的段落必须保留"""
-        from infra.prompt_engineering.context_builder import AutoSummarizer
+        from lingwen_prompt.context_builder import AutoSummarizer
 
         text = (
             "[KEY_EVENT] 林尘突破到筑基期\n"
@@ -205,7 +205,7 @@ class TestAutoSummarizer:
 
     def test_summarize_pure_length(self):
         """无 key 标记 → 简单截断"""
-        from infra.prompt_engineering.context_builder import AutoSummarizer
+        from lingwen_prompt.context_builder import AutoSummarizer
 
         text = "X" * 1000
         s = AutoSummarizer()
@@ -215,7 +215,7 @@ class TestAutoSummarizer:
 
     def test_summarize_short_text_unchanged(self):
         """短文本不应被截断"""
-        from infra.prompt_engineering.context_builder import AutoSummarizer
+        from lingwen_prompt.context_builder import AutoSummarizer
 
         text = "短文本"
         s = AutoSummarizer()
@@ -226,7 +226,7 @@ class TestAutoSummarizer:
 class TestBuiltContext:
     def test_built_context_fields(self):
         """BuiltContext 字段: data, total_tokens, transforms_applied, missing_optionals"""
-        from infra.prompt_engineering.context_builder import ContextBuilder
+        from lingwen_prompt.context_builder import ContextBuilder
 
         ctx = _ctx(inputs=(
             _make_item("a", "src", 50, transform="truncate_100"),
@@ -241,7 +241,7 @@ class TestBuiltContext:
 
 
 def _make_item(key: str, source: str, tokens: int, **kwargs):
-    from infra.prompt_engineering.data_structures import ContextItem
+    from lingwen_prompt.data_structures import ContextItem
 
     defaults = dict(key=key, source=source, token_estimate=tokens)
     defaults.update(kwargs)

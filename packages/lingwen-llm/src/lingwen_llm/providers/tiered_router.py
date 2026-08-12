@@ -83,7 +83,7 @@ class TieredRouter:
             TieredRouterError: scenario 不在 SCENARIO_TIER_MAP
         """
         # 延迟导入避免循环
-        from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP
+        from lingwen_prompt.scenarios import SCENARIO_TIER_MAP
 
         if scenario not in SCENARIO_TIER_MAP:
             raise TieredRouterError(

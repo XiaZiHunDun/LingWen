@@ -21,8 +21,8 @@ from lingwen_llm.providers.model_tiers import (
     ModelTierConfig,
     compute_cost,
 )
-from infra.prompt_engineering import SCENARIOS
-from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP
+from lingwen_prompt import SCENARIOS
+from lingwen_prompt.scenarios import SCENARIO_TIER_MAP
 
 
 class TestModelTierEnum:

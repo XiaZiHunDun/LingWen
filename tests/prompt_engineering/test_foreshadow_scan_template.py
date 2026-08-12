@@ -4,7 +4,7 @@ Doc 2 §5 SCENARIOS:foreshadow_scan 是 auditor scenario,扫描伏笔未回收/�
 """
 from __future__ import annotations
 
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

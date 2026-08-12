@@ -26,7 +26,7 @@ from lingwen_llm.providers.tiered_router import (
     TieredRouter,
     TieredRouterError,
 )
-from infra.prompt_engineering import SCENARIO_TIER_MAP
+from lingwen_prompt import SCENARIO_TIER_MAP
 
 
 class _StubProvider(AIProvider):

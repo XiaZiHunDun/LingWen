@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from infra.prompt_engineering.data_structures import (
+from lingwen_prompt.data_structures import (
     ContextItem,
     StepContract,
 )

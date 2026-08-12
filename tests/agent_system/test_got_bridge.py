@@ -136,7 +136,7 @@ class TestScenarioCoverage:
     """12 SCENARIOS 全部覆盖 AgentComputeFn"""
 
     def test_all_12_scenarios_registered(self):
-        from infra.prompt_engineering.scenarios import SCENARIOS
+        from lingwen_prompt.scenarios import SCENARIOS
         assert len(SCENARIOS) == 12
         for s in SCENARIOS:
             assert s in SCENARIO_HANDLERS, f"scenario {s!r} not in SCENARIO_HANDLERS"

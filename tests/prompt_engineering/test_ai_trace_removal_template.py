@@ -4,7 +4,7 @@ Doc 2 §5 SCENARIOS:ai_trace_removal 是 polisher scenario,去除 AI 痕迹 (模
 """
 from __future__ import annotations
 
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

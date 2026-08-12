@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.prompt_engineering.extraction import (
+from lingwen_prompt.extraction import (
     ExtractedResolution,
     ExtractedRipple,
     ExtractionParseError,
@@ -214,7 +214,7 @@ class TestImportContract:
     """Public API 完整性"""
 
     def test_top_level_imports(self):
-        from infra.prompt_engineering import (
+        from lingwen_prompt import (
             ExtractedResolution,
             ExtractedRipple,
             ExtractionParseError,
