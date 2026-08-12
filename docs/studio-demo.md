@@ -89,7 +89,7 @@ Cursor SSH：先在 IDE 内点击 Ports 里的 8765 链接激活转发，再开�
 <summary>本地双进程开发（可选）</summary>
 
 ```bash
-python dashboard/app.py          # 8765 API
+python apps/studio-api/app.py          # 8765 API
 cd apps/dashboard && pnpm dev   # 5173 热更新
 ```
 

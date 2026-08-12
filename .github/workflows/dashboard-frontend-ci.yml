@@ -107,7 +107,7 @@ jobs:
           cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        run: pip install -e . -r dashboard/requirements.txt
+        run: pip install -e . -r apps/studio-api/requirements.txt
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -161,7 +161,7 @@ jobs:
           cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        run: pip install -e . -r dashboard/requirements.txt
+        run: pip install -e . -r apps/studio-api/requirements.txt
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -215,7 +215,7 @@ jobs:
           cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        run: pip install -e . -r dashboard/requirements.txt
+        run: pip install -e . -r apps/studio-api/requirements.txt
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -269,7 +269,7 @@ jobs:
           cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        run: pip install -e . -r dashboard/requirements.txt
+        run: pip install -e . -r apps/studio-api/requirements.txt
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

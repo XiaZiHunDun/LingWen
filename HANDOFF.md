@@ -362,10 +362,11 @@ LingWen/                                    # 本目录 (项目根, git root)
 │   ├── memory_system/                      # RAG/Qdrant
 │   ├── quality/                            # 检测器/修复器
 │   └── ...
-├── dashboard/                              # FastAPI 后端 + Vue 前端
-│   ├── app.py                              # FastAPI 入口
-│   ├── protocols.py                        # Pydantic schemas
-│   ├── frontend/                           # Vue 3 + Vite
+├── apps/
+│   ├── studio-api/                         # FastAPI Studio API (Phase 17.3) [legacy: dashboard/]
+│   │   ├── app.py                          # FastAPI 入口
+│   │   └── protocols.py                    # Pydantic schemas
+│   └── dashboard/                          # Vue 3 + Vite (Phase 17.2)
 │   │   ├── src/
 │   │   │   ├── components/                 # Vue SFC
 │   │   │   ├── composables/                # useWorkflowSocket / useCostWindow / useRippleStore
@@ -460,7 +461,7 @@ pytest -q                          # 期望: 2512 passed, ~90s
 
 # 3. 启动 dashboard (optional, 看 UI)
 # 后端:
-python dashboard/app.py &  # port 8000
+python apps/studio-api/app.py &  # port 8000
 # 前端:
 cd apps/dashboard && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
@@ -1065,7 +1066,7 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 - `dashboard-e2e-smoke.yml` — label `e2e-smoke` / manual, 1 test（调试）
 - ~~`dashboard-e2e-live.yml`~~ 已删（与 test 重复）
 - `pnpm e2e:smoke` — vite only，1 test
-- `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
+- `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `apps/studio-api/e2e_entry.py`，5 tests
 - **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；Phase 10.38 已将 list/detail 超时提至 30s
 
 ### 7.5 pytest baseline 与环境变量
@@ -1147,7 +1148,7 @@ git rev-parse HEAD origin/master       # 2 行同 SHA = 同步
 git status                             # 干净 = 无 pending 改
 
 # === Dashboard ===
-python dashboard/app.py &                       # port 8000
+python apps/studio-api/app.py &  # port 8000
 cd apps/dashboard && pnpm dev --port 5173 --strictPort &  # port 5173
 # 浏览器: http://localhost:5173
 

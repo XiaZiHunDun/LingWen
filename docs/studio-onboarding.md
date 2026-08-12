@@ -87,7 +87,7 @@ CLEANUP=1 bash scripts/verify-onboarding-blind.sh   # 通过后自动删除
 
 ```bash
 # 终端 1：API
-python dashboard/app.py
+python apps/studio-api/app.py
 
 # 终端 2：前端
 cd apps/dashboard && pnpm dev

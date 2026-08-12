@@ -22,7 +22,7 @@ flags:
     paths:
       - infra/
       - tools/
-      - dashboard/
+      - apps/studio-api/
 
 comment:
   layout: "header, diff, flags, components, files, footer"

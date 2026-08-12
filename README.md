@@ -75,7 +75,7 @@ python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter
 │   ├── verify-studio-production-dod.sh
 │   └── run-dashboard-single-port.sh
 ├── infra/                     # Agent · 质检 · project_config
-├── dashboard/                 # FastAPI + Vue Studio 页
+├── apps/studio-api/           # FastAPI Studio API (Phase 17.3) [legacy: dashboard/]
 └── tests/                     # pytest 3000+
 ```
 
