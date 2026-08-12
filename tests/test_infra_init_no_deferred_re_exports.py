@@ -81,26 +81,3 @@ def test_infra_init_does_not_import_exports_submodule() -> None:
         "Phase 17.0 Step 4-5 must delete this line."
     )
 
-
-def test_infra_init_summary_of_deferred_patterns() -> None:
-    """Single-shot summary: list every deferred pattern still present.
-
-    Helpful when running the whole test file — gives a complete picture
-    in one assertion rather than N separate failures.
-    """
-    source = _read_infra_init()
-    remaining = [
-        label
-        for (label, pattern) in FORBIDDEN_PATTERNS
-        if re.search(pattern, source, flags=re.MULTILINE)
-    ]
-    if re.search(
-        r"^\s*import\s+infra\.exports\s+as\s+exports",
-        source,
-        flags=re.MULTILINE,
-    ):
-        remaining.append("infra.exports namespace import")
-    assert not remaining, (
-        "infra/__init__.py still re-exports these deferred targets: "
-        + ", ".join(remaining)
-    )

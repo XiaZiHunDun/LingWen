@@ -11,7 +11,7 @@ after the deferred ``infra.story_contracts`` module is removed.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterable, List, Optional
+from typing import Any, Optional
 
 
 class _StoryContractPayload:
@@ -20,13 +20,6 @@ class _StoryContractPayload:
     def __init__(self, master_setting: dict[str, Any], anti_patterns: list[dict[str, Any]]):
         self.master_setting = master_setting
         self.anti_patterns = anti_patterns
-
-
-class _EmptyPayload:
-    """Empty payload returned when no contract is present."""
-
-    master_setting: dict[str, Any] = {}
-    anti_patterns: list[dict[str, Any]] = []
 
 
 class StoryContractEngine:
