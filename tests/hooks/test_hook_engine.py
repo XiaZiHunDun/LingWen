@@ -8,12 +8,12 @@ import time
 from pathlib import Path
 from unittest import TestCase
 
-from infra.hooks import Event, EventBus, EventTypes
-from infra.hooks.actions.base import ActionResult, BaseAction
-from infra.hooks.actions.notify import NotifyAction
-from infra.hooks.actions.update_state import UpdateStateAction
-from infra.hooks.config_loader import ConditionEvaluator, HookConfig, HookConfigLoader
-from infra.hooks.hook_engine import HookEngine, HookExecutionError, HookStatus
+from lingwen_pipeline.hooks import Event, EventBus, EventTypes
+from lingwen_pipeline.hooks.actions.base import ActionResult, BaseAction
+from lingwen_pipeline.hooks.actions.notify import NotifyAction
+from lingwen_pipeline.hooks.actions.update_state import UpdateStateAction
+from lingwen_pipeline.hooks.config_loader import ConditionEvaluator, HookConfig, HookConfigLoader
+from lingwen_pipeline.hooks.hook_engine import HookEngine, HookExecutionError, HookStatus
 
 
 class _SlowAction(BaseAction):
@@ -475,7 +475,7 @@ class TestHookEngineDefaultActions(TestCase):
 
     def test_all_action_classes_auto_registered(self):
         """新 HookEngine 实例应自动注册 actions/ 下的全部 7 个 action"""
-        from infra.hooks.actions import ACTION_REGISTRY
+        from lingwen_pipeline.hooks.actions import ACTION_REGISTRY
 
         engine = HookEngine()
         registered = set(engine.get_registered_action_types())
@@ -490,7 +490,7 @@ class TestHookEngineDefaultActions(TestCase):
 
     def test_action_type_matches_registry_class(self):
         """每个注册的 action_class().action_type 必须等于 registry key"""
-        from infra.hooks.actions import ACTION_REGISTRY
+        from lingwen_pipeline.hooks.actions import ACTION_REGISTRY
 
         engine = HookEngine()
         for type_name, action_cls in ACTION_REGISTRY.items():

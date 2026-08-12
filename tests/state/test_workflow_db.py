@@ -22,7 +22,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from infra.state.database import WorkflowDB
+from lingwen_pipeline.state.database import WorkflowDB
 
 
 @pytest.fixture

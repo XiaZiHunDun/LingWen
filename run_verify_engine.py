@@ -25,7 +25,7 @@ SQLITE_STATE_KEY = "verify_engine_state"
 
 def _get_workflow_db():
     """获取项目级 WorkflowDB 单例(延迟初始化)"""
-    from infra.state.database import WorkflowDB
+    from lingwen_pipeline.state.database import WorkflowDB
     return WorkflowDB()
 
 

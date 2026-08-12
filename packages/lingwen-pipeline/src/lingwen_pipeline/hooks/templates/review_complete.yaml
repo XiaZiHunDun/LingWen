@@ -1,0 +1,10 @@
+# 通知模板：审核完成
+content: |
+  审核完成通知
+
+  章节: {chapter_id}
+  结果: {review_result}
+
+  时间: {timestamp}
+channel: writer_channel
+event: REVIEW_COMPLETED

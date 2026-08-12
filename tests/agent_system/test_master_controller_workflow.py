@@ -186,7 +186,7 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
     # StateManager 在 __init__ 内部用 `from ..state.state_manager import StateManager` 导入
     # 需要 patch 它在原模块中的位置
-    import infra.state.state_manager as sm_mod
+    import lingwen_pipeline.state.state_manager as sm_mod
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)

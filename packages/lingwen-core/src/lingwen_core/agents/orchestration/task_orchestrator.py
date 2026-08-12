@@ -6,9 +6,9 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 # 导入事件总线（用于触发事件）
-from infra.hooks.event_bus import EventBus
+from lingwen_pipeline.hooks.event_bus import EventBus
 from infra.logging_config import logger
-from infra.state.workflow_validator import get_allowed_transitions, is_valid_step, validate_transition
+from lingwen_pipeline.state.workflow_validator import get_allowed_transitions, is_valid_step, validate_transition
 
 
 class TaskOrchestrator:
@@ -44,7 +44,7 @@ class TaskOrchestrator:
 
         # 状态管理器 - 延迟导入避免循环依赖
         if state_manager is None:
-            from infra.state.state_manager import StateManager
+            from lingwen_pipeline.state.state_manager import StateManager
             state_manager = StateManager()
 
         self._state = state_manager

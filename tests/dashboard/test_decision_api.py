@@ -870,7 +870,7 @@ class TestCostByScenarioExtraction:
         加 cost_by_scenario 字段, WebSocket 自动获得, 0 改 endpoint 协议.
         """
         from apps.studio_api.protocols import MasterControllerAdapter
-        from lingwen_core.agents.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         cost_tracker = CostTracker()
         cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
@@ -966,7 +966,7 @@ class TestBudgetStatusExtraction:
         has_tracker: bool = True,
     ) -> Any:
         """Build a MasterController-like stub with cost_tracker + _current_budget_usd"""
-        from lingwen_core.agents.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
         from lingwen_llm.providers.cost_tracker import CostTracker
 
         ctrl = MasterController.__new__(MasterController)

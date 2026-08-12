@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from unittest import TestCase
 
-from infra.hooks import Event, EventBus, EventTypes
+from lingwen_pipeline.hooks import Event, EventBus, EventTypes
 
 
 class TestEvent(TestCase):
@@ -194,24 +194,24 @@ class TestGlobalEventBusSingleton(TestCase):
 
     def setUp(self):
         # 每个测试用例前都重置,避免上轮测试残留 handler 影响
-        from infra.hooks.event_bus import reset_global_event_bus
+        from lingwen_pipeline.hooks.event_bus import reset_global_event_bus
         reset_global_event_bus()
 
     def tearDown(self):
         # 清理:不留跨测试状态
-        from infra.hooks.event_bus import reset_global_event_bus
+        from lingwen_pipeline.hooks.event_bus import reset_global_event_bus
         reset_global_event_bus()
 
     def test_get_event_bus_returns_singleton(self):
         """get_event_bus() 多次调用返回同一实例"""
-        from infra.hooks.event_bus import get_event_bus
+        from lingwen_pipeline.hooks.event_bus import get_event_bus
         a = get_event_bus()
         b = get_event_bus()
         self.assertIs(a, b)
 
     def test_reset_clears_handlers(self):
         """reset_global_event_bus() 必须清掉所有 handler"""
-        from infra.hooks.event_bus import get_event_bus, reset_global_event_bus
+        from lingwen_pipeline.hooks.event_bus import get_event_bus, reset_global_event_bus
         bus = get_event_bus()
         received = []
 
@@ -233,7 +233,7 @@ class TestGlobalEventBusSingleton(TestCase):
 
     def test_reset_idempotent(self):
         """reset 在没有单例时也可调用(不应抛异常)"""
-        from infra.hooks.event_bus import reset_global_event_bus
+        from lingwen_pipeline.hooks.event_bus import reset_global_event_bus
         # 先 reset 一次,确保 None
         reset_global_event_bus()
         # 再 reset 一次,仍是 None,不应抛
@@ -245,7 +245,7 @@ class TestGlobalEventBusSingleton(TestCase):
         这是 R1-008 修复的真实痛点:之前测试间 handler 泄漏导致
         偶发性失败 (e.g. handler 数对不上)。
         """
-        from infra.hooks.event_bus import get_event_bus, reset_global_event_bus
+        from lingwen_pipeline.hooks.event_bus import get_event_bus, reset_global_event_bus
 
         # 测试 A: subscribe
         bus_a = get_event_bus()
@@ -261,7 +261,7 @@ class TestGlobalEventBusSingleton(TestCase):
 
     def test_reset_clears_filters_too(self):
         """reset 也应清掉 event_filters (订阅 filter 也会泄漏)"""
-        from infra.hooks.event_bus import get_event_bus, reset_global_event_bus
+        from lingwen_pipeline.hooks.event_bus import get_event_bus, reset_global_event_bus
 
         bus = get_event_bus()
         # 通过 publish 触发 filter 注册路径 → 不直接暴露接口

@@ -101,7 +101,7 @@ from infra.types import (
     uuid_id,
     integer_id,
 )
-from infra.state_machine import (
+from lingwen_pipeline.state_machine import (
     State,
     StructuredState,
     CounterState,

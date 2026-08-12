@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from lingwen_core.agents.budget_persistence import BudgetService
-from lingwen_core.agents.master_controller import MasterController
+from lingwen_pipeline.master_controller import MasterController
 
 
 @pytest.fixture

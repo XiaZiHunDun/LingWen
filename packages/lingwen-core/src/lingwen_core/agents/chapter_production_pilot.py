@@ -30,7 +30,7 @@ from infra.agent_system.chapter_production_outline import (
 from infra.agent_system.internal.incremental_backfill import (
     incremental_backfill_enabled,  # TODO(Phase18): domain entity
 )
-from infra.memory_system.embeddings.factory import describe_embedding_requirements
+from lingwen_memory.embeddings.factory import describe_embedding_requirements
 from infra.project_config import ProjectConfig
 
 PILOT_WORKFLOW_NAME = "novel_writing"
@@ -350,7 +350,7 @@ def run_production_pilot(
         result.error = "preflight failed; fix checklist before running pilot"
         return result
 
-    from infra.agent_system.master_controller import MasterController
+    from lingwen_pipeline.master_controller import MasterController
     from lingwen_llm.providers.cost_tracker import CostTracker
     from infra.got.data_structures import NodeStatus
 

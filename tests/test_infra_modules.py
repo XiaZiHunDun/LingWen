@@ -279,7 +279,7 @@ class TestState:
     """状态转换系统测试"""
 
     def test_counter_state(self):
-        from infra.state_machine import CounterState
+        from lingwen_pipeline.state_machine import CounterState
 
         counter = CounterState(0)
         assert counter.value == 0
@@ -295,7 +295,7 @@ class TestState:
         assert counter.value == 0
 
     def test_toggle_state(self):
-        from infra.state_machine import ToggleState
+        from lingwen_pipeline.state_machine import ToggleState
 
         toggle = ToggleState(False)
         assert toggle.value is False
@@ -307,7 +307,7 @@ class TestState:
         assert toggle.value is False
 
     def test_list_state(self):
-        from infra.state_machine import ListState
+        from lingwen_pipeline.state_machine import ListState
 
         list_state = ListState(['a', 'b'])
         assert list_state.items == ['a', 'b']
@@ -323,7 +323,7 @@ class TestState:
         assert list_state.items == []
 
     def test_state_create(self):
-        from infra.state_machine import State
+        from lingwen_pipeline.state_machine import State
 
         state = State.create({
             'initial': {'count': 10},
@@ -336,7 +336,7 @@ class TestState:
         assert state.state == {'count': 15}
 
     def test_state_batch_apply(self):
-        from infra.state_machine import State
+        from lingwen_pipeline.state_machine import State
 
         state = State.create({
             'initial': {'x': 0},
@@ -349,7 +349,7 @@ class TestState:
         assert state.state == {'x': 6}
 
     def test_state_snapshot(self):
-        from infra.state_machine import CounterState
+        from lingwen_pipeline.state_machine import CounterState
 
         counter = CounterState(0)
         counter = counter.apply('increment', 10)

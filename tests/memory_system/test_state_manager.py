@@ -164,13 +164,13 @@ class TestR2019Rename:
         assert "MemoryStateManager" in dir(__import__("lingwen_memory.state", fromlist=["*"]))
 
     def test_no_collision_with_infra_state_state_manager(self):
-        """R2-019 核心收益:与 infra.state.state_manager.StateManager 区分清楚
+        """R2-019 核心收益:与 lingwen_pipeline.state.state_manager.StateManager 区分清楚
 
         两个模块都有 StateManager,但指代不同类 — 之前是 name 冲突,
         现在 memory_system 这边用新名 MemoryStateManager,IDE 跳转不会混。
         """
         from lingwen_memory.state.state_manager import MemoryStateManager
-        from infra.state.state_manager import StateManager as InfraStateManager
+        from lingwen_pipeline.state.state_manager import StateManager as InfraStateManager
 
         # 来自不同模块,即便叫 StateManager 也是不同类
         assert MemoryStateManager is not InfraStateManager

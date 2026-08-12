@@ -203,7 +203,7 @@ class TestAgentComputeFnByTier:
     def test_compute_fn_tier_budget_none_compat(self, tmp_path: Path) -> None:
         """Phase 8.15: budget_service_by_tier=None 跳过 check, backward compat."""
         from lingwen_core.agents.got_bridge import AgentComputeFn
-        from lingwen_core.agents.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         master = MasterController.__new__(MasterController)  # bypass __init__
         compute = AgentComputeFn(master, cost_tracker=None, budget_service_by_tier=None)

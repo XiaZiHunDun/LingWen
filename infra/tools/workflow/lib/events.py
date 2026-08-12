@@ -21,9 +21,9 @@ def _get_hook_engine():
     if _hook_engine_instance is None:
         with _hook_engine_lock:
             if _hook_engine_instance is None:
-                from infra.hooks.actions.block_proceed import BlockProceedAction
-                from infra.hooks.actions.log_state_change import LogStateChangeAction
-                from infra.hooks.hook_engine import HookEngine
+                from lingwen_pipeline.hooks.actions.block_proceed import BlockProceedAction
+                from lingwen_pipeline.hooks.actions.log_state_change import LogStateChangeAction
+                from lingwen_pipeline.hooks.hook_engine import HookEngine
 
                 engine = HookEngine()
                 engine.register_action("block_proceed", BlockProceedAction)
@@ -44,7 +44,7 @@ def _trigger_event(event_name: str, data: Dict) -> bool:
     try:
         import asyncio
 
-        from infra.hooks.event_bus import Event
+        from lingwen_pipeline.hooks.event_bus import Event
 
         engine = _get_hook_engine()
         event = Event(name=event_name, source="lib.py", data=data)

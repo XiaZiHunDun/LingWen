@@ -20,27 +20,27 @@ from lingwen_llm.providers.router import AIRouter
 
 if TYPE_CHECKING:
     from lingwen_llm.providers.cost_tracker import CostTracker
-    from .budget_persistence import BudgetService
-from .agent_config import MasterControllerConfig, load_default_config
-from .agent_factory import (
+    from lingwen_core.agents.budget_persistence import BudgetService
+from lingwen_core.agents.agent_config import MasterControllerConfig, load_default_config
+from lingwen_core.agents.agent_factory import (
     build_agent_tools,
     build_orchestrator,
     build_router,
     build_skill_registry,
     build_social_engine,
 )
-from .decision_queue import (
+from lingwen_core.agents.decision_queue import (
     DecisionKind,
     HumanDecision,
     HumanDecisionQueue,
     create_decision,
 )
-from .mc_social import SocialEngineMixin
-from .mc_writing import WritingMixin
-from .mc_editing import EditingMixin
-from .mc_workflow import WorkflowMixin
-from .orchestration.task_orchestrator import TaskOrchestrator
-from .registry.skill_registry import SkillRegistry
+from lingwen_core.agents.mc_social import SocialEngineMixin
+from lingwen_core.agents.mc_writing import WritingMixin
+from lingwen_core.agents.mc_editing import EditingMixin
+from lingwen_core.agents.mc_workflow import WorkflowMixin
+from lingwen_core.agents.orchestration.task_orchestrator import TaskOrchestrator
+from lingwen_core.agents.registry.skill_registry import SkillRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class MasterController(WorkflowMixin, WritingMixin, EditingMixin, SocialEngineMi
 
         self._current_run_id: Optional[str] = None
 
-        from ..state.state_manager import StateManager
+        from lingwen_pipeline.state.state_manager import StateManager
 
         self._state_manager = StateManager()
         self._orchestrator = build_orchestrator(state_manager=self._state_manager)

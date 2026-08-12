@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 from lingwen_llm.providers.router import AIRouter
-from ..state.state_manager import StateManager
+from lingwen_pipeline.state.state_manager import StateManager
 from .agent_config import MasterControllerConfig
 from .agents.auditor.tools import AuditorTools
 from .agents.character_designer.tools import CharacterDesignerTools

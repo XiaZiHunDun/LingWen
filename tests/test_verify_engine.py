@@ -36,7 +36,7 @@ def isolated_engine(monkeypatch, tmp_path):
     monkeypatch.setattr(rve, "OPINION_DIR", fake_opinion)
 
     # 2) 隔离 SQLite 状态库到 tmp_path
-    from infra.state import database as dbmod
+    from lingwen_pipeline.state import database as dbmod
     fake_db_path = tmp_path / "wf.db"
     dbmod.WorkflowDB(fake_db_path)
     # 替换 WorkflowDB 构造（无参时返回我们的 fake 实例）
@@ -360,7 +360,7 @@ class TestR5004Consolidation:
         from unittest.mock import patch
 
         # 隔离 SQLite + CONTENT_DIR (用全新 tmp_path 避免 fixture 冲突)
-        from infra.state import database as dbmod
+        from lingwen_pipeline.state import database as dbmod
         own_tmp = tmp_path / "fallback_test"
         own_tmp.mkdir()
         fake_db = own_tmp / "wf.db"

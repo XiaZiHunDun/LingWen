@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from lingwen_core.agents.got_bridge import _handler_chapter_review
-from lingwen_core.agents.master_controller import MasterController
+from lingwen_pipeline.master_controller import MasterController
 from tests.agent_system._e2e_helpers import (
     make_master_with_router,
     make_stub_router,

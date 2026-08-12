@@ -6,7 +6,7 @@
 - timeline.json - 时间线文件
 
 R2-019: 类名从 StateManager → MemoryStateManager,避免与
-infra.state.state_manager.StateManager 同名冲突(虽 import 路径不同,
+lingwen_pipeline.state.state_manager.StateManager 同名冲突(虽 import 路径不同,
 但容易混淆,IDE 跳转/类型提示都受影响)。StateManager 保留为别名
 (向后兼容 shim)。
 
@@ -147,5 +147,5 @@ class MemoryStateManager:
 
 # R2-019 向后兼容 shim — 旧代码 `from lingwen_memory.state.state_manager
 # import StateManager` 仍能工作。推荐新代码用 MemoryStateManager 以避免
-# 与 infra.state.state_manager.StateManager 混淆。
+# 与 lingwen_pipeline.state.state_manager.StateManager 混淆。
 StateManager = MemoryStateManager

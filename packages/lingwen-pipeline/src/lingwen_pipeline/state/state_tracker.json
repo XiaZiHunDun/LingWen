@@ -1,0 +1,11 @@
+{
+  "characters": {
+    "李逍遥": {
+      "current_location": "王宫",
+      "current_form": "人形",
+      "alive": true,
+      "last_updated_chapter": 1,
+      "emotion_state": "平静"
+    }
+  }
+}

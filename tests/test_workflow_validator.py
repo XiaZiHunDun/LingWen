@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra.state.workflow_validator import (
+from lingwen_pipeline.state.workflow_validator import (
     ALL_STEPS,
     VALID_TRANSITIONS,
     get_allowed_transitions,

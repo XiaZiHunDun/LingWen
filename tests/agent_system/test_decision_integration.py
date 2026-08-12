@@ -35,7 +35,7 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     monkeypatch.setattr(mc_mod, "build_agent_tools", lambda router: None)
     monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
 
-    import infra.state.state_manager as sm_mod
+    import lingwen_pipeline.state.state_manager as sm_mod
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
@@ -257,7 +257,7 @@ class TestRunWorkflowDecisionDiscovery:
         sched = GoTScheduler(graph, compute_fn=AgentComputeFn(controller), max_backtracks=0)
         del sched  # 仅构造验证 compute_fn 可注入
         # 把图 注入 decision discovery 流程
-        from lingwen_core.agents.master_controller import _collect_decision_specs_from_graph
+        from lingwen_pipeline.master_controller import _collect_decision_specs_from_graph
 
         specs = _collect_decision_specs_from_graph(graph)
         assert len(specs) == 1
@@ -267,7 +267,7 @@ class TestRunWorkflowDecisionDiscovery:
 
     def test_decision_kind_inferred_from_node_id(self, monkeypatch):
         """DECISION 节点 → DecisionKind 根据 node_id 推断"""
-        from lingwen_core.agents.master_controller import _infer_decision_kind
+        from lingwen_pipeline.master_controller import _infer_decision_kind
         assert _infer_decision_kind("outline_judgment") == DecisionKind.OUTLINE_JUDGMENT
         assert _infer_decision_kind("volume_judgment") == DecisionKind.VOLUME_JUDGMENT
         assert _infer_decision_kind("publish_judgment") == DecisionKind.PUBLISH_JUDGMENT

@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from lingwen_core.agents.master_controller import MasterController
+from lingwen_pipeline.master_controller import MasterController
 from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
 from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
 

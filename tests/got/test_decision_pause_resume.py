@@ -240,14 +240,14 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_via_controller(self, monkeypatch, tmp_path):
         """controller.resume_workflow(decision_id, option) → 继续"""
-        import lingwen_core.agents.master_controller as mc_mod
-        import infra.state.state_manager as sm_mod
+        import lingwen_pipeline.master_controller as mc_mod
+        import lingwen_pipeline.state.state_manager as sm_mod
         from lingwen_core.agents.decision_queue import (
             DecisionKind,
             HumanDecisionQueue,
             create_decision,
         )
-        from lingwen_core.agents.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
         monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
@@ -317,10 +317,10 @@ class TestControllerResumeWorkflow:
 
     def _build_controller_with_workflow(self, monkeypatch, tmp_path, workflow_body: str):
         """构造一个 stub MasterController + 含 DECISION 的工作流 + 注入的 scheduler"""
-        import lingwen_core.agents.master_controller as mc_mod
-        import infra.state.state_manager as sm_mod
+        import lingwen_pipeline.master_controller as mc_mod
+        import lingwen_pipeline.state.state_manager as sm_mod
         from lingwen_core.agents.decision_queue import HumanDecisionQueue
-        from lingwen_core.agents.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
         monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
@@ -429,14 +429,14 @@ class TestControllerResumeWorkflow:
 
     def test_resume_workflow_raises_without_active_workflow(self, monkeypatch, tmp_path):
         """从未 run_workflow → resume_workflow 抛 RuntimeError"""
-        import lingwen_core.agents.master_controller as mc_mod
-        import infra.state.state_manager as sm_mod
+        import lingwen_pipeline.master_controller as mc_mod
+        import lingwen_pipeline.state.state_manager as sm_mod
         from lingwen_core.agents.decision_queue import (
             DecisionKind,
             HumanDecisionQueue,
             create_decision,
         )
-        from lingwen_core.agents.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
         monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)

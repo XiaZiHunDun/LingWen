@@ -127,7 +127,7 @@ def build_merge_synthesis_prompt(content_a: str, content_b: str, labels: tuple[s
     label 参数允许上游节点用 input id (e.g. "polish_emotional_pacing") 当 label,
     JSON key 用 sanitized label (Phase 8.1: 防御性 normalize 非 [a-zA-Z0-9_] 字符).
     """
-    from infra.agent_system.master_controller import _safe_label  # Phase 8.1
+    from lingwen_pipeline.master_controller import _safe_label  # Phase 8.1
 
     label_a, label_b = labels
     safe_a, safe_b = _safe_label(label_a), _safe_label(label_b)
