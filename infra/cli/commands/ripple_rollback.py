@@ -11,17 +11,18 @@ from pathlib import Path
 
 from infra.cli.options import UnifiedOptions
 from infra.cli.path_utils import resolve_project_db_path
-from infra.cross_volume.storage import RippleStorage
 
 from .base import Command
 
 
-def _get_storage() -> RippleStorage:
+def _get_storage():
     """Phase 9.14: 1:1 with Phase 9.11 backfill pattern (lazy import).
 
     Phase 13.0 T4 M4: db path resolves via $LINGWEN_PROJECT_ROOT (preferred)
     or CWD fallback with WARNING (1-version deprecation).
     """
+    # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
+    from infra.cross_volume.storage import RippleStorage
     return RippleStorage(db_path=resolve_project_db_path())
 
 

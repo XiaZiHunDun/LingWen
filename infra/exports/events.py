@@ -1,42 +1,18 @@
 #!/usr/bin/env python3
+"""TODO(Phase18): migrate event symbols to packages/lingwen-storage.
+
+Phase 17.0 (Task 17.0 Step 7): the re-export chain
+``infra.exports.events`` -> ``infra.event_sourcing.{models,store}``
+has been severed. Event symbols will be re-introduced from
+``packages/lingwen-storage`` in a later task.
+
+This file remains so existing ``from infra.exports.events import ...``
+imports do not raise ModuleNotFoundError; the symbols are temporarily
+unavailable and any consumer must be migrated alongside the new
+storage package.
 """
-事件溯源系统导出
+from __future__ import annotations
 
-包含领域事件模型、事件存储和快照机制。
-"""
+# Intentionally empty: re-exports removed in Phase 17.0.
 
-from infra.event_sourcing.models import (
-    DomainEvent,
-    EventSerializer,
-    EventStream,
-    EventType,
-    Snapshot,
-    versioned_type,
-)
-from infra.event_sourcing.store import (
-    EventExistsError,
-    EventStore,
-    EventStoreError,
-    OwnerMismatchError,
-    ReplayDivergedError,
-    SequenceConflictError,
-    create_event,
-    create_snapshot,
-)
-
-__all__ = [
-    "DomainEvent",
-    "EventSerializer",
-    "EventStream",
-    "EventType",
-    "Snapshot",
-    "EventStore",
-    "EventStoreError",
-    "SequenceConflictError",
-    "ReplayDivergedError",
-    "EventExistsError",
-    "OwnerMismatchError",
-    "create_event",
-    "create_snapshot",
-    "versioned_type",
-]
+__all__: list[str] = []

@@ -62,34 +62,35 @@ class ContextBuilder:
 
         Returns:
             Story contract dict or None if not found.
+
+        Phase 17.0: decoupled from ``infra.story_contracts`` (deferred
+        deletion target). Falls back to None if the module is gone, so
+        downstream callers see no behavioral change.
         """
-        try:
-            from infra.story_contracts import StoryContractEngine
+        # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
+        from infra.agent_system.core.context_helpers import StoryContractEngine
 
-            engine = StoryContractEngine(project_root=self.project_root)
-            payload = engine.load()
+        engine = StoryContractEngine(project_root=self.project_root)
+        payload = engine.load()
 
-            if payload is None:
-                return None
-
-            return {
-                "route": {
-                    "primary_genre": payload.master_setting.get("route", {}).get("primary_genre", "unknown"),
-                    "genre_aliases": payload.master_setting.get("route", {}).get("genre_aliases", []),
-                },
-                "master_constraints": {
-                    "core_tone": payload.master_setting.get("master_constraints", {}).get("core_tone", ""),
-                    "pacing_strategy": payload.master_setting.get("master_constraints", {}).get("pacing_strategy", ""),
-                    "forbidden_patterns": payload.master_setting.get("master_constraints", {}).get("forbidden_patterns", []),
-                },
-                "anti_patterns": [
-                    {"text": ap.get("text", ""), "source": ap.get("source_table", "unknown")}
-                    for ap in payload.anti_patterns
-                ],
-            }
-        except Exception:
-            # Silently fail if story contract not available
+        if payload is None:
             return None
+
+        return {
+            "route": {
+                "primary_genre": payload.master_setting.get("route", {}).get("primary_genre", "unknown"),
+                "genre_aliases": payload.master_setting.get("route", {}).get("genre_aliases", []),
+            },
+            "master_constraints": {
+                "core_tone": payload.master_setting.get("master_constraints", {}).get("core_tone", ""),
+                "pacing_strategy": payload.master_setting.get("master_constraints", {}).get("pacing_strategy", ""),
+                "forbidden_patterns": payload.master_setting.get("master_constraints", {}).get("forbidden_patterns", []),
+            },
+            "anti_patterns": [
+                {"text": ap.get("text", ""), "source": ap.get("source_table", "unknown")}
+                for ap in payload.anti_patterns
+            ],
+        }
 
     def _get_current_states(self, characters: List[Dict]) -> Dict[str, Dict]:
         """获取角色当前状态"""

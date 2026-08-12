@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from infra.cross_volume.incremental_backfill import (
+from infra.agent_system.internal.incremental_backfill import (  # TODO(Phase18): domain entity
     backfill_stats_to_dict,
     extract_chapter_num,
 )

@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Any, Literal, Mapping
 
-from infra.cross_volume.incremental_backfill import extract_chapter_num
+from infra.agent_system.internal.incremental_backfill import extract_chapter_num  # TODO(Phase18): domain entity
 
 logger = logging.getLogger(__name__)
 

@@ -27,7 +27,9 @@ from infra.agent_system.chapter_production_outline import (
     production_mode,
     resolve_production_initial_inputs,
 )
-from infra.cross_volume.incremental_backfill import incremental_backfill_enabled
+from infra.agent_system.internal.incremental_backfill import (
+    incremental_backfill_enabled,  # TODO(Phase18): domain entity
+)
 from infra.memory_system.embeddings.factory import describe_embedding_requirements
 from infra.project_config import ProjectConfig
 

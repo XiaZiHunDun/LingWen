@@ -6,15 +6,6 @@ from unittest.mock import MagicMock
 from infra.ai_service.cost_tracker import CostTracker
 from infra.ai_service.model_tiers import ModelTier
 from infra.cli.options import RippleScanOptions
-from infra.cross_volume.llm_cache import LLMCache
-from infra.cross_volume.llm_scanner import LLMScanner
-from infra.cross_volume.scanner_calibration import (
-    build_calibration_feedback,
-    format_calibration_report,
-    format_calibration_yaml_example,
-    load_gold_labels,
-    load_scanner_calibration,
-)
 
 from .base import Command
 
@@ -40,6 +31,15 @@ class RippleScanCommand(Command):
         return self._run_calibrate(options)
 
     def _run_calibrate(self, options: RippleScanOptions) -> int:
+        # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
+        from infra.cross_volume.scanner_calibration import (
+            build_calibration_feedback,
+            format_calibration_report,
+            format_calibration_yaml_example,
+            load_gold_labels,
+            load_scanner_calibration,
+        )
+
         gold_path = options.gold_path or DEFAULT_GOLD
         fixture_dir = options.fixture_dir or DEFAULT_FIXTURES
         if not gold_path.is_file():
@@ -70,6 +70,10 @@ class RippleScanCommand(Command):
     @staticmethod
     def _scan_chapter_from_fixtures(fixture_dir: Path, chapter_id: int) -> list:
         """Build nodes via LLMScanner + mock router (0 real LLM)."""
+        # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
+        from infra.cross_volume.llm_cache import LLMCache
+        from infra.cross_volume.llm_scanner import LLMScanner
+
         suffix = f"ch{chapter_id:03d}"
         names = [n.replace("ch001", suffix) for n in FIXTURE_NAMES]
         for name in names:

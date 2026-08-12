@@ -10,6 +10,7 @@
 
 import re
 from collections import Counter
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Protocol
 
 from ..engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
@@ -17,7 +18,20 @@ from .base_checker import BaseChecker
 from .text_utils import split_chinese_sentences
 
 if TYPE_CHECKING:
-    from infra.world_model.data_structures import Ripple
+    # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
+    from infra.world_model.data_structures import Ripple  # type: ignore[import-not-found]
+
+
+# TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
+@dataclass(frozen=True)
+class _RippleStub:
+    ripple_id: str
+    chapter_id: str
+    wavefront: tuple = ()
+    origin_ch: int = 0
+
+
+Ripple = _RippleStub  # type: ignore[assignment,misc]
 
 
 class _RippleRegistryLike(Protocol):

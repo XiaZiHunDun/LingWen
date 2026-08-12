@@ -1,24 +1,16 @@
 #!/usr/bin/env python3
+"""TODO(Phase18): migrate infra.exports.* submodules into proper packages.
+
+Phase 17.0 (Task 17.0 Step 7): wildcard imports from ``.core``, ``.events``,
+``.persistence`` were removed because those subpackages transitively pulled
+in ``infra.event_sourcing.*`` (the deferred deletion target). The full
+migration to ``packages/lingwen-storage`` happens in a later task.
+
+For Phase 17, this package exists only as a placeholder so callers that
+import the path keep working without raising ModuleNotFoundError. The
+submodules (``core``, ``events``, ``persistence``) themselves are unchanged
+on disk and can still be imported by their full path if needed.
 """
-分组导出模块
+from __future__ import annotations
 
-提供按功能分组的导出方式，减少启动时的导入负担。
-
-使用方式：
-    # 按需导入（推荐）
-    from infra.exports.core import Result, Ok, Err
-    from infra.exports.events import Event, EventStore, create_event
-    from infra.exports.persistence import get_connection, register_query
-    
-    # 批量导入
-    from infra.exports import core, events, persistence
-"""
-
-from .core import *
-from .events import *
-from .persistence import *
-
-__all__ = [
-    # 模块引用
-    "core", "events", "persistence",
-]
+__all__: list[str] = []
