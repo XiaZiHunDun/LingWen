@@ -1,3 +1,8 @@
 packages:
-  - 'dashboard/frontend'
+  - 'apps/*'
   - 'packages/*'
+  - 'dashboard/frontend'
+  # Python 包用 uv workspaces 管理，不在此跟踪：
+  #   packages/lingwen-storage (16.5 创建)
+  #   packages/lingwen-core (17.5 创建)
+  #   packages/lingwen-{llm,memory,prompt,pipeline,quality,cli} (17.6-17.10 创建)
