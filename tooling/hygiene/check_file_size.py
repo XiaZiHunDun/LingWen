@@ -45,7 +45,7 @@ ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/gateway/query_engine.p
 ALLOWLIST.add("packages/lingwen-memory/src/lingwen_memory/vector/qdrant_client.py")  # Phase 17.6
 ALLOWLIST.add("infra/permission.py")  # Phase 17
 ALLOWLIST.add("infra/prose_judge.py")  # Phase 17
-ALLOWLIST.add("infra/state_machine.py")  # Phase 17
+ALLOWLIST.add("packages/lingwen-pipeline/src/lingwen_pipeline/state_machine.py")  # Phase 17.8 (was infra/state_machine.py)
 ALLOWLIST.add("infra/tool.py")  # Phase 17
 ALLOWLIST.add("tools/comprehensive_quality_check.py")  # Phase 17
 ALLOWLIST.add("tools/legacy/llm_outline_quality_check.py")  # Phase 17
