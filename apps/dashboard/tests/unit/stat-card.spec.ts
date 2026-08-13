@@ -13,13 +13,13 @@ describe('StatCard (F48)', () => {
 
   test('positive trend class', () => {
     const wrapper = mount(StatCard, { props: { label: 'Cost', value: 3, trend: 5 } })
-    expect(wrapper.find('.trend-positive').exists()).toBe(true)
+    expect(wrapper.find(byTestid('trend-positive')).exists()).toBe(true)
     expect(wrapper.text()).toContain('+5%')
   })
 
   test('negative trend class', () => {
     const wrapper = mount(StatCard, { props: { label: 'Cost', value: 3, trend: -2 } })
-    expect(wrapper.find('.trend-negative').exists()).toBe(true)
+    expect(wrapper.find(byTestid('trend-negative')).exists()).toBe(true)
     expect(wrapper.text()).toContain('-2%')
   })
 })

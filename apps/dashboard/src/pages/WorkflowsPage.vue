@@ -53,6 +53,7 @@
               v-if="selected?.name === wf.name"
               class="view-graph-btn pixel-border"
               :class="{ 'view-graph-btn--active': showGraph }"
+              data-testid="view-graph-btn"
               @click.stop="toggleGraph"
             >
               {{ showGraph ? '✕ 隐藏图' : '📊 查看图' }}

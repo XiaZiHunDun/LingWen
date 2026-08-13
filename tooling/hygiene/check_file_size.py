@@ -28,10 +28,6 @@ ALLOWLIST: set[str] = set()
 # === Phase 17 (monorepo split) — infra/legacy/tools ===
 ALLOWLIST.add("fn-core/src/core/aggregates/StoryAggregate.ts")  # Phase 17
 ALLOWLIST.add("packages/lingwen-core/src/lingwen_core/agents/chapter_production_pilot.py")  # Phase 17.4
-ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/checkers/contradiction_detector.py")  # Phase 17 (was infra/consistency/.../contradiction_detector.py, moved in 17.9)
-ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/checkers/foreshadow_checker.py")  # Phase 17.14 (added during allowlist pass for 17.9 leftovers)
-ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/checkers/sentence_diversity_checker.py")  # Phase 17 (was infra/consistency/.../sentence_diversity_checker.py, moved in 17.9)
-ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/engine/consistency_engine.py")  # Phase 17 (was infra/consistency/.../consistency_engine.py, moved in 17.9)
 ALLOWLIST.add("infra/creator_agent.py")  # Phase 17
 ALLOWLIST.add("infra/creator_merge_preferences.py")  # Phase 17
 ALLOWLIST.add("infra/creator_onboarding_digest_schedule.py")  # Phase 17

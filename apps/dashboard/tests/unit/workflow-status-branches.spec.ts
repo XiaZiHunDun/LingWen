@@ -62,7 +62,7 @@ describe('WorkflowStatus branches (F48)', () => {
       },
     })
     expect(wrapper.text()).toContain('待审核决策')
-    await wrapper.find('.resume-btn').trigger('click')
+    await wrapper.find(byTestid('resume-btn')).trigger('click')
     expect(wrapper.emitted('resume')?.[0]?.[0]).toMatchObject({ decisionId: 'd1', option: 'A' })
   })
 

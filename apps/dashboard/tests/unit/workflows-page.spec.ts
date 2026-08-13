@@ -150,7 +150,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     await flushPromises()
     await wrapper.findAll(byTestid('wf-item'))[0].trigger('click')
     await flushPromises()
-    const btn = wrapper.find('.view-graph-btn')
+    const btn = wrapper.find(byTestid('view-graph-btn'))
     expect(btn.exists()).toBe(true)
     await btn.trigger('click')
     await flushPromises()
