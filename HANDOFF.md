@@ -1,3 +1,10 @@
+
+## Phase 16 + 17 状态（2026-08-12）
+
+- **Phase 16 卫生与基础** (2026-08-11): v10.0 — 事件 reducer、文件尺寸上限、单一品牌、GATE 脚本。
+- **Phase 17 monorepo** (进行中): 8 个 lingwen-* Python 包 + apps/{dashboard,studio_api} + pnpm workspace。
+- **Phase 16.7 推迟**：删陈旧 infra 目录推迟到 Phase 17 monorepo 完成后再评估。
+
 # 灵文 · LingWen 项目 Handoff 文档
 
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
