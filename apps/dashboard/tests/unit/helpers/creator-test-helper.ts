@@ -3,7 +3,7 @@
 
 import { reactive, ref, computed } from 'vue'
 import type { Component, App } from 'vue'
-import { mount, type MountingOptions, type VueWrapper } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 
 // ---- Injection keys (re-exported for convenience) ----
 export { CREATOR_WRITE_KEY } from '../../../src/components/creator/creatorWriteKey.js'
@@ -67,17 +67,18 @@ export function mountWithWriteContext<T extends Component>(
   component: T,
   options: {
     writeContext?: Record<string, unknown>
-    mountOptions?: Partial<MountingOptions>
+    mountOptions?: Record<string, unknown>
   } = {},
-): VueWrapper {
+): VueWrapper<any, any> {
   const ctx = createDefaultWriteContext(options.writeContext)
+  const mountOptions = (options.mountOptions || {}) as Record<string, unknown>
   return mount(component, {
     global: {
       provide: { [CREATOR_WRITE_KEY]: ctx },
-      ...(options.mountOptions?.global || {}),
+      ...((mountOptions.global as Record<string, unknown>) || {}),
     },
-    ...options.mountOptions,
-  })
+    ...mountOptions,
+  }) as VueWrapper<any, any>
 }
 
 /**
@@ -87,17 +88,18 @@ export function mountWithChromeContext<T extends Component>(
   component: T,
   options: {
     chromeContext?: Record<string, unknown>
-    mountOptions?: Partial<MountingOptions>
+    mountOptions?: Record<string, unknown>
   } = {},
-): VueWrapper {
+): VueWrapper<any, any> {
   const chrome = createDefaultChromeContext(options.chromeContext)
+  const mountOptions = (options.mountOptions || {}) as Record<string, unknown>
   return mount(component, {
     global: {
       provide: { [CREATOR_PAGE_CHROME_KEY]: chrome },
-      ...(options.mountOptions?.global || {}),
+      ...((mountOptions.global as Record<string, unknown>) || {}),
     },
-    ...options.mountOptions,
-  })
+    ...mountOptions,
+  }) as VueWrapper<any, any>
 }
 
 /**
@@ -108,17 +110,18 @@ export function mountWithProductToolsContext<T extends Component>(
   component: T,
   options: {
     toolOverrides?: Record<string, unknown>
-    mountOptions?: Partial<MountingOptions>
+    mountOptions?: Record<string, unknown>
   } = {},
-): VueWrapper {
+): VueWrapper<any, any> {
   const pt = createCreatorProductToolsContext(options.toolOverrides || {})
+  const mountOptions = (options.mountOptions || {}) as Record<string, unknown>
   return mount(component, {
     global: {
       provide: { [CREATOR_PRODUCT_TOOLS_KEY]: pt },
-      ...(options.mountOptions?.global || {}),
+      ...((mountOptions.global as Record<string, unknown>) || {}),
     },
-    ...options.mountOptions,
-  })
+    ...mountOptions,
+  }) as VueWrapper<any, any>
 }
 
 /**
@@ -130,21 +133,22 @@ export function mountWithAllCreatorContexts<T extends Component>(
     writeContext?: Record<string, unknown>
     chromeContext?: Record<string, unknown>
     toolOverrides?: Record<string, unknown>
-    mountOptions?: Partial<MountingOptions>
+    mountOptions?: Record<string, unknown>
   } = {},
-): VueWrapper {
+): VueWrapper<any, any> {
   const w = createDefaultWriteContext(options.writeContext)
   const c = createDefaultChromeContext(options.chromeContext)
   const pt = createCreatorProductToolsContext(options.toolOverrides || {})
+  const mountOptions = (options.mountOptions || {}) as Record<string, unknown>
   return mount(component, {
     global: {
       provide: {
         [CREATOR_WRITE_KEY]: w,
         [CREATOR_PAGE_CHROME_KEY]: c,
         [CREATOR_PRODUCT_TOOLS_KEY]: pt,
-        ...(options.mountOptions?.global || {}),
+        ...((mountOptions.global as Record<string, unknown>) || {}),
       },
-      ...options.mountOptions,
+      ...mountOptions,
     },
-  })
+  }) as VueWrapper<any, any>
 }
