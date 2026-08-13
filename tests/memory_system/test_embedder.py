@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from infra.memory_system.vector.embedder import Embedder
+from lingwen_memory.vector.embedder import Embedder
 
 _EMBEDDING_CONFIG = {
     "embedding": {
@@ -19,11 +19,11 @@ _EMBEDDING_CONFIG = {
 @pytest.fixture
 def embedder():
     """创建 Embedder 实例 (mock OpenAI provider)"""
-    with patch("infra.memory_system.embeddings.openai_provider.OpenAI") as mock_openai_class:
+    with patch("lingwen_memory.embeddings.openai_provider.OpenAI") as mock_openai_class:
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
 
-        with patch("infra.memory_system.embeddings.factory.load_yaml") as mock_load_yaml:
+        with patch("lingwen_memory.embeddings.factory.load_yaml") as mock_load_yaml:
             mock_load_yaml.return_value = _EMBEDDING_CONFIG
             with patch.dict(
                 os.environ,
@@ -142,18 +142,18 @@ class TestEmbedderEdgeCases:
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
-        with patch("infra.memory_system.embeddings.factory.load_yaml", side_effect=RuntimeError("Config not found")):
+        with patch("lingwen_memory.embeddings.factory.load_yaml", side_effect=RuntimeError("Config not found")):
             with pytest.raises(RuntimeError, match="Failed to initialize Embedder"):
                 Embedder()
 
     def test_openai_api_error(self):
         """测试 OpenAI API 错误处理"""
-        with patch("infra.memory_system.embeddings.openai_provider.OpenAI") as mock_openai_class:
+        with patch("lingwen_memory.embeddings.openai_provider.OpenAI") as mock_openai_class:
             mock_client = Mock()
             mock_openai_class.return_value = mock_client
             mock_client.embeddings.create.side_effect = Exception("API Error")
 
-            with patch("infra.memory_system.embeddings.factory.load_yaml") as mock_load_yaml:
+            with patch("lingwen_memory.embeddings.factory.load_yaml") as mock_load_yaml:
                 mock_load_yaml.return_value = _EMBEDDING_CONFIG
                 with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test", "LINGWEN_EMBEDDING_PROVIDER": "openai"}):
                     instance = Embedder()

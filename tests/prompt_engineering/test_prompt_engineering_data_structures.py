@@ -20,7 +20,7 @@ import pytest
 class TestContextItem:
     def test_minimal_context_item(self):
         """最小 ContextItem 只需 key + source"""
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         item = ContextItem(key="world_snapshot", source="infra.world_model.WorldSnapshot")
         assert item.key == "world_snapshot"
@@ -32,7 +32,7 @@ class TestContextItem:
 
     def test_context_item_with_transform(self):
         """transform 是可选的字符串 (e.g. "summary_500", "truncate_2000")"""
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         item = ContextItem(
             key="chapter_history",
@@ -44,14 +44,14 @@ class TestContextItem:
         assert item.token_estimate == 2000
 
     def test_context_item_is_frozen(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         item = ContextItem(key="x", source="y")
         with pytest.raises(dataclasses.FrozenInstanceError):
             item.key = "z"  # type: ignore[misc]
 
     def test_context_item_to_dict(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         item = ContextItem(key="x", source="y", token_estimate=100, transform="truncate_500")
         d = item.to_dict()
@@ -64,7 +64,7 @@ class TestContextItem:
         }
 
     def test_context_item_from_dict(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         d = {"key": "x", "source": "y", "required": False, "token_estimate": 50, "transform": None}
         item = ContextItem.from_dict(d)
@@ -73,7 +73,7 @@ class TestContextItem:
         assert item.transform is None
 
     def test_context_item_equality(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         a = ContextItem(key="x", source="y")
         b = ContextItem(key="x", source="y")
@@ -83,7 +83,7 @@ class TestContextItem:
 class TestStepContract:
     def test_minimal_step_contract(self):
         """最小 StepContract: step + name + outputs (class 引用)"""
-        from infra.prompt_engineering.data_structures import StepContract
+        from lingwen_prompt.data_structures import StepContract
 
         class Output:
             pass
@@ -106,7 +106,7 @@ class TestStepContract:
         assert contract.can_skip is False
 
     def test_step_contract_with_inputs(self):
-        from infra.prompt_engineering.data_structures import ContextItem, StepContract
+        from lingwen_prompt.data_structures import ContextItem, StepContract
 
         class Out:
             pass
@@ -134,7 +134,7 @@ class TestStepContract:
         assert contract.can_skip is True
 
     def test_step_contract_is_frozen(self):
-        from infra.prompt_engineering.data_structures import StepContract
+        from lingwen_prompt.data_structures import StepContract
 
         class Out:
             pass
@@ -145,7 +145,7 @@ class TestStepContract:
 
     def test_step_contract_to_dict(self):
         """to_dict 不序列化 outputs (class 引用) — 留给运行时校验"""
-        from infra.prompt_engineering.data_structures import ContextItem, StepContract
+        from lingwen_prompt.data_structures import ContextItem, StepContract
 
         class Out:
             pass
@@ -175,7 +175,7 @@ class TestStepContract:
 class TestPromptContext:
     def test_minimal_prompt_context(self):
         """最小 PromptContext: scenario + agent_role + output_schema"""
-        from infra.prompt_engineering.data_structures import PromptContext
+        from lingwen_prompt.data_structures import PromptContext
 
         class Out:
             pass
@@ -195,7 +195,7 @@ class TestPromptContext:
         assert ctx.budget_tokens == 16000
 
     def test_prompt_context_with_inputs(self):
-        from infra.prompt_engineering.data_structures import ContextItem, PromptContext
+        from lingwen_prompt.data_structures import ContextItem, PromptContext
 
         class Out:
             pass
@@ -215,7 +215,7 @@ class TestPromptContext:
         assert ctx.budget_tokens == 32000
 
     def test_prompt_context_is_frozen(self):
-        from infra.prompt_engineering.data_structures import PromptContext
+        from lingwen_prompt.data_structures import PromptContext
 
         class Out:
             pass
@@ -225,7 +225,7 @@ class TestPromptContext:
             ctx.scenario = "z"  # type: ignore[misc]
 
     def test_prompt_context_to_dict(self):
-        from infra.prompt_engineering.data_structures import ContextItem, PromptContext
+        from lingwen_prompt.data_structures import ContextItem, PromptContext
 
         class Out:
             pass
@@ -247,7 +247,7 @@ class TestPromptContext:
 
     def test_prompt_context_inputs_total_tokens(self):
         """辅助方法: 计算 inputs 总 token 估计"""
-        from infra.prompt_engineering.data_structures import ContextItem, PromptContext
+        from lingwen_prompt.data_structures import ContextItem, PromptContext
 
         class Out:
             pass
@@ -265,7 +265,7 @@ class TestPromptContext:
 
     def test_prompt_context_under_budget_check(self):
         """辅助方法: 检查 inputs 是否在 budget 内"""
-        from infra.prompt_engineering.data_structures import ContextItem, PromptContext
+        from lingwen_prompt.data_structures import ContextItem, PromptContext
 
         class Out:
             pass
@@ -284,7 +284,7 @@ class TestPromptContext:
         assert ctx.fits_budget() is True
 
     def test_prompt_context_over_budget_check(self):
-        from infra.prompt_engineering.data_structures import ContextItem, PromptContext
+        from lingwen_prompt.data_structures import ContextItem, PromptContext
 
         class Out:
             pass
@@ -307,19 +307,19 @@ class TestContextItemUniqueKey:
     """ContextItem 验证: key 必填,不允许空白"""
 
     def test_empty_key_raises(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         with pytest.raises(ValueError, match="key"):
             ContextItem(key="", source="y")
 
     def test_whitespace_key_raises(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         with pytest.raises(ValueError, match="key"):
             ContextItem(key="   ", source="y")
 
     def test_empty_source_raises(self):
-        from infra.prompt_engineering.data_structures import ContextItem
+        from lingwen_prompt.data_structures import ContextItem
 
         with pytest.raises(ValueError, match="source"):
             ContextItem(key="x", source="")

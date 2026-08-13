@@ -1,6 +1,6 @@
 """Tests for check --fail-severity gate (Phase 10.38)."""
-from infra.cli.commands.check import _issues_meet_fail_threshold
-from infra.consistency.engine.data_structures import (
+from lingwen_cli.commands.check import _issues_meet_fail_threshold
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     Issue,
     IssueLocation,

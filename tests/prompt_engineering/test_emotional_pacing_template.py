@@ -4,7 +4,7 @@ Doc 2 §5 SCENARIOS:emotional_pacing 是 auditor scenario,诊断情感节奏 (�
 """
 from __future__ import annotations
 
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

@@ -150,7 +150,7 @@ ignore_missing_imports = true
 exclude = [
     "tests/.*",
     "tools/.*",
-    "dashboard/frontend/.*",
+    "apps/dashboard/.*",
     ".*__pycache__.*",
 ]
 plugins = []

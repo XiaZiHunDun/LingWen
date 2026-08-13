@@ -1,6 +1,6 @@
 import pytest
 
-from infra.consistency.engine.checker_inspector import CheckerInspector
+from lingwen_quality.consistency.engine.checker_inspector import CheckerInspector
 
 
 class TestCheckerInspector:

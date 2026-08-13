@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from infra.cli.commands.cascade import CascadeCommand
-from infra.cli.options import CascadeOptions
+from lingwen_cli.commands.cascade import CascadeCommand
+from lingwen_cli.options import CascadeOptions
 from infra.cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,
@@ -41,7 +41,7 @@ def storage_with_run(tmp_path, monkeypatch):
     storage.append_ripple(ripple)
     cascaded = storage.preview_cascade("rip-1", max_depth=2)
     run_id = storage.record_cascade_run("rip-1", cascaded, max_depth=2)
-    monkeypatch.setattr("infra.cli.commands.cascade._get_storage", lambda: storage)
+    monkeypatch.setattr("lingwen_cli.commands.cascade._get_storage", lambda: storage)
     yield storage, run_id
 
 

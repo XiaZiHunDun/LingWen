@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-cli"
+version = "0.1.0"
+description = "LingWen · CLI（lingwen check / status / repair 等）"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.0",
+    "lingwen-core",
+    "lingwen-llm",
+    "lingwen-pipeline",
+    "lingwen-prompt",
+    "lingwen-quality",
+    "lingwen-storage",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[project.scripts]
+lingwen = "lingwen_cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_cli"]

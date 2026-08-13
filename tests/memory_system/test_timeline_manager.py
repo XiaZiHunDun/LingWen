@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.memory_system.state.timeline_manager import TimelineManager
+from lingwen_memory.state.timeline_manager import TimelineManager
 
 
 class TestTimelineManager:

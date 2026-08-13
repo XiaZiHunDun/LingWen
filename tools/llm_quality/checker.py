@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
 from infra.llm_service import LLMService
-from infra.quality import Issue
+from lingwen_quality.quality import Issue
 
 from . import paths
 from .report import QualityReport

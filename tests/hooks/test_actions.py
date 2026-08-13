@@ -9,9 +9,9 @@ from pathlib import Path
 from subprocess import TimeoutExpired
 from unittest import TestCase
 
-from infra.hooks.actions.base import ActionResult, BaseAction
-from infra.hooks.actions.notify import NotifyAction
-from infra.hooks.actions.update_state import UpdateStateAction
+from lingwen_pipeline.hooks.actions.base import ActionResult, BaseAction
+from lingwen_pipeline.hooks.actions.notify import NotifyAction
+from lingwen_pipeline.hooks.actions.update_state import UpdateStateAction
 
 
 class TestBaseAction(TestCase):
@@ -197,13 +197,13 @@ class TestRunCheckerAction(TestCase):
 
     def test_action_type(self):
         """测试动作类型"""
-        from infra.hooks.actions.run_checker import RunCheckerAction
+        from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
         self.assertEqual(action.action_type, "run_checker")
 
     def test_missing_checker_param(self):
         """测试缺少checker参数"""
-        from infra.hooks.actions.run_checker import RunCheckerAction
+        from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
 
         result = action.execute(params={}, context={})
@@ -212,7 +212,7 @@ class TestRunCheckerAction(TestCase):
 
     def test_unknown_checker(self):
         """测试未知检查器"""
-        from infra.hooks.actions.run_checker import RunCheckerAction
+        from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
 
         result = action.execute(
@@ -229,7 +229,7 @@ class TestRunCheckerAction(TestCase):
         原 _run_auto_consistency_check 方法变成死代码(P0 broken import)。
         契约:任何 "auto_consistency_checker" 请求都应返回 Unknown。
         """
-        from infra.hooks.actions.run_checker import RunCheckerAction
+        from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
         action = RunCheckerAction()
 
         result = action.execute(
@@ -248,7 +248,7 @@ class TestRunCheckerAction(TestCase):
         """
         from unittest.mock import MagicMock, patch
 
-        from infra.hooks.actions.run_checker import RunCheckerAction
+        from lingwen_pipeline.hooks.actions.run_checker import RunCheckerAction
 
         fake_result = {"passed": True, "score": 0.95}
         with patch(
@@ -302,7 +302,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
     """
 
     def setUp(self):
-        from infra.hooks.actions.trigger_module import TriggerModuleAction
+        from lingwen_pipeline.hooks.actions.trigger_module import TriggerModuleAction
         self.action = TriggerModuleAction()
         self._run_calls = []
 
@@ -323,7 +323,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
             return mock_result
 
         mock.run.side_effect = record
-        return patch("infra.hooks.actions.trigger_module.subprocess.run", record)
+        return patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", record)
 
     def test_execute_via_cli_uses_list_not_string(self):
         """subprocess.run 的第一个位置参数必须是 list,不能是 string"""
@@ -337,7 +337,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
             r.stderr = ""
             return r
 
-        with patch("infra.hooks.actions.trigger_module.subprocess.run", fake_run):
+        with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             self.action.execute(
                 params={"command": "anti-trope", "count": 3},
                 context={"chapter_num": 5, "outline": "some outline"}
@@ -364,7 +364,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
             r.stderr = ""
             return r
 
-        with patch("infra.hooks.actions.trigger_module.subprocess.run", fake_run):
+        with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             self.action.execute(
                 params={"command": "anti-trope", "count": 2},
                 context={"chapter_num": 1}
@@ -397,7 +397,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
         # 试图在 outline 里塞 shell 元字符
         malicious = "$(touch /tmp/pwned) && echo evil"
 
-        with patch("infra.hooks.actions.trigger_module.subprocess.run", fake_run):
+        with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             result = self.action.execute(
                 params={"command": "anti-trope"},
                 context={"chapter_num": 1, "outline": malicious}
@@ -424,7 +424,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
             r.stderr = ""
             return r
 
-        with patch("infra.hooks.actions.trigger_module.subprocess.run", fake_run):
+        with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             self.action.execute(
                 params={"command": "anti-trope", "count": 7, "timeout": 60},
                 context={"chapter_num": 42, "outline": "my outline"}
@@ -455,7 +455,7 @@ class TestTriggerModuleActionShellSafety(TestCase):
             r.stderr = ""
             return r
 
-        with patch("infra.hooks.actions.trigger_module.subprocess.run", fake_run):
+        with patch("lingwen_pipeline.hooks.actions.trigger_module.subprocess.run", fake_run):
             self.action.execute(
                 params={"command": "anti-trope", "timeout": 45},
                 context={}
@@ -469,7 +469,7 @@ class TestBlockProceedAction(TestCase):
     """BlockProceedAction — 三条铁律强制验证闭环"""
 
     def setUp(self):
-        from infra.hooks.actions.block_proceed import BlockProceedAction
+        from lingwen_pipeline.hooks.actions.block_proceed import BlockProceedAction
         self.action = BlockProceedAction()
 
     def test_action_type(self):
@@ -566,7 +566,7 @@ class TestLogStateChangeAction(TestCase):
     """LogStateChangeAction — 状态变更日志记录"""
 
     def setUp(self):
-        from infra.hooks.actions.log_state_change import LogStateChangeAction
+        from lingwen_pipeline.hooks.actions.log_state_change import LogStateChangeAction
         self.action = LogStateChangeAction()
         self.temp_dir = Path(tempfile.mkdtemp())
 
@@ -668,7 +668,7 @@ class TestRunScriptAction(TestCase):
     """
 
     def setUp(self):
-        from infra.hooks.actions.run_script import RunScriptAction
+        from lingwen_pipeline.hooks.actions.run_script import RunScriptAction
         self.action = RunScriptAction()
         self.temp_dir = Path(tempfile.mkdtemp())
         self._run_calls = []
@@ -699,7 +699,7 @@ class TestRunScriptAction(TestCase):
         """缺 'script' 必需参数 → 不调 subprocess,直接返回错误"""
         from unittest.mock import patch
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             result = self.action.execute(params={}, context={})
 
         self.assertFalse(result.success)
@@ -710,7 +710,7 @@ class TestRunScriptAction(TestCase):
         """script 路径不存在 → 提前返回错误,不调 subprocess"""
         from unittest.mock import patch
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             result = self.action.execute(
                 params={"script": "/nonexistent/path/fake_script.sh"},
                 context={}
@@ -728,7 +728,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\necho hi\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
             returncode=0, stdout="hi\n", stderr=""
         )):
             result = self.action.execute(
@@ -749,7 +749,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
             returncode=2, stdout="", stderr="something went wrong"
         )):
             result = self.action.execute(
@@ -769,7 +769,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\nexit 3\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess(
             returncode=3, stdout="", stderr=""
         )):
             result = self.action.execute(params={"script": str(real_script)}, context={})
@@ -784,7 +784,7 @@ class TestRunScriptAction(TestCase):
         real_script = self.temp_dir / "my_script.py"
         real_script.write_text("print('hi')\n", encoding="utf-8")
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(params={"script": str(real_script)}, context={})
 
         called_args, _ = self._run_calls[0]
@@ -800,7 +800,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("hi\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
                 params={"script": str(real_script), "python": True},
                 context={}
@@ -818,7 +818,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("echo hi\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
                 params={"script": str(real_script), "python": False},
                 context={}
@@ -837,7 +837,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("#!/bin/sh\necho $@\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
                 params={"script": str(real_script), "args": ["--foo", "bar", "--baz", "qux"]},
                 context={}
@@ -861,7 +861,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("echo\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(params={"script": str(real_script), "python": False}, context={})
 
         called_args, called_kwargs = self._run_calls[0]
@@ -888,7 +888,7 @@ class TestRunScriptAction(TestCase):
 
         malicious = "$(touch /tmp/pwned) && echo evil"
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             result = self.action.execute(
                 params={
                     "script": str(real_script),
@@ -914,7 +914,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("sleep 999\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
                 params={"script": str(real_script), "python": False, "timeout": 30},
                 context={}
@@ -934,7 +934,7 @@ class TestRunScriptAction(TestCase):
         def fake_run(*args, **kwargs):
             raise TimeoutExpired(cmd=args[0] if args else [], timeout=5)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", fake_run):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", fake_run):
             result = self.action.execute(
                 params={"script": str(real_script), "python": False, "timeout": 5},
                 context={}
@@ -951,7 +951,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("pwd\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
                 params={"script": str(real_script), "python": False, "cwd": str(self.temp_dir)},
                 context={}
@@ -968,7 +968,7 @@ class TestRunScriptAction(TestCase):
         real_script.write_text("env\n", encoding="utf-8")
         real_script.chmod(0o755)
 
-        with patch("infra.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
+        with patch("lingwen_pipeline.hooks.actions.run_script.subprocess.run", self._mock_subprocess()):
             self.action.execute(
                 params={
                     "script": str(real_script),

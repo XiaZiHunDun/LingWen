@@ -12,7 +12,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.checkers.knowledge_tracker import KnowledgeTracker
+from lingwen_quality.consistency.checkers.knowledge_tracker import KnowledgeTracker
 
 
 class TestKnowledgeTracker:

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.agent_system.chapter_golden_path import (
+from lingwen_core.agents.chapter_golden_path import (
     GOLDEN_WORKFLOW_NAME,
     build_stub_master_controller,
     setup_golden_workflow_dir,

@@ -1,7 +1,7 @@
 """Phase 9.65 F56: e2e fixture seed/reset tests."""
 from __future__ import annotations
 
-from infra.agent_system.decision_queue import HumanDecisionQueue
+from lingwen_core.agents.decision_queue import HumanDecisionQueue
 from infra.cross_volume.e2e_seed import (
     E2E_DECISION_ID,
     E2E_PENDING_RIPPLE_ID,

@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from infra.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
-from infra.consistency.engine.data_structures import Issue, IssueSeverity
+from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
+from lingwen_quality.consistency.engine.data_structures import Issue, IssueSeverity
 from infra.paths import ProjectPaths
 
 _TOTAL_RE = re.compile(
@@ -38,7 +38,7 @@ def collect_prose_vitality_scores(
     chapters: list[int],
 ) -> dict[int, dict[str, Any]]:
     """Rule-based ProseVitalityScorer per chapter (v1.1)."""
-    from infra.quality.llm.scorers.prose_vitality import ProseVitalityScorer
+    from lingwen_quality.quality.llm.scorers.prose_vitality import ProseVitalityScorer
 
     scorer = ProseVitalityScorer()
     scores: dict[int, dict[str, Any]] = {}
@@ -60,9 +60,9 @@ def collect_full_check_issues(
     *,
     limit: int = 20,
 ) -> list[Issue]:
-    from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
-    from infra.consistency.checkers.pacing_checker import PacingChecker
-    from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
+    from lingwen_quality.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
+    from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+    from lingwen_quality.consistency.checkers.scene_transition_checker import SceneTransitionChecker
 
     issues: list[Issue] = []
     engine = ConsistencyEngine()

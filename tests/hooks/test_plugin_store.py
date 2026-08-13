@@ -4,7 +4,7 @@ Plugin Store Tests
 """
 import pytest
 
-from infra.hooks.plugin_store import PluginMetadata, PluginStore
+from lingwen_pipeline.hooks.plugin_store import PluginMetadata, PluginStore
 
 
 @pytest.fixture

@@ -12,7 +12,7 @@ import pytest
 
 def test_ability_llm_finds_uncertain_regions():
     """测试LLM增强能力检测器能找到模糊区域"""
-    from infra.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
 
     checker = LLMEnhancedAbilityChecker()
     content = "林夜突然实力大涨，一掌拍出，真气涌动"
@@ -24,7 +24,7 @@ def test_ability_llm_finds_uncertain_regions():
 
 def test_ability_llm_multiple_patterns():
     """测试LLM增强能力检测器匹配多种模式"""
-    from infra.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
 
     checker = LLMEnhancedAbilityChecker()
     content = "他竟然使出了绝世剑法，明明刚学会却能完美施展"
@@ -35,7 +35,7 @@ def test_ability_llm_multiple_patterns():
 
 def test_ability_llm_context_extraction():
     """测试LLM增强能力检测器正确提取上下文"""
-    from infra.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
 
     checker = LLMEnhancedAbilityChecker()
     content = "林夜毫无征兆地突破了修为瓶颈"
@@ -48,7 +48,7 @@ def test_ability_llm_context_extraction():
 
 def test_ability_llm_inherits_base_checker():
     """测试LLMEnhancedAbilityChecker继承基类检测器"""
-    from infra.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
 
     checker = LLMEnhancedAbilityChecker()
     assert checker.base_checker is not None
@@ -57,7 +57,7 @@ def test_ability_llm_inherits_base_checker():
 
 def test_ability_llm_has_llm_service():
     """测试LLMEnhancedAbilityChecker具有LLM服务"""
-    from infra.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
 
     checker = LLMEnhancedAbilityChecker()
     assert checker.llm_service is not None
@@ -65,7 +65,7 @@ def test_ability_llm_has_llm_service():
 
 def test_ability_llm_region_positions():
     """测试LLM增强能力检测器正确记录位置"""
-    from infra.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.ability_llm import LLMEnhancedAbilityChecker
 
     checker = LLMEnhancedAbilityChecker()
     content = "突然实力大涨，一夜之间实力飙升"

@@ -1,7 +1,7 @@
 """Tests for chapter_production_retry."""
 from pathlib import Path
 
-from infra.agent_system.chapter_production_retry import chapters_needing_retry
+from lingwen_core.agents.chapter_production_retry import chapters_needing_retry
 
 
 def test_retry_skips_failed_batch_when_body_exists(tmp_path):

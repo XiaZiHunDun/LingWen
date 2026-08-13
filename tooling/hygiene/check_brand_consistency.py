@@ -5,7 +5,7 @@ and prevent new occurrences of the "LingWen Studio" / "墨灵 Studio" / "MoLing 
 strings that conflate product and framework.
 
 Rules per zone:
-  - dashboard/frontend/src/**
+  - apps/dashboard/src/**
       * forbid any of LingWen Studio / MoLing Studio / 墨灵 Studio (product/framework mix)
       * forbid standalone "LingWen" token (use 灵文 instead)
       * brand.js is the source of truth and is exempt
@@ -40,7 +40,7 @@ FORBIDDEN_PRODUCT_STRINGS: tuple[str, ...] = (
 LINGWEN_STANDALONE_RE = re.compile(r"(?<![A-Za-z0-9_])LingWen(?![A-Za-z0-9_])")
 
 # 整个文件跳过（品牌字符串真源 / 历史规划）
-BRAND_SOURCE_PATH = "dashboard/frontend/src/config/brand.js"
+BRAND_SOURCE_PATH = "apps/dashboard/src/config/brand.js"
 HISTORICAL_PLAN_PREFIX = "docs/superpowers/plans/"
 
 # zone 分类
@@ -53,7 +53,7 @@ def _classify(rel: str) -> str:
     """Map a tracked path to a rule zone. Unmatched paths return 'other' (no rules)."""
     if rel == BRAND_SOURCE_PATH:
         return "exempt_brand_source"
-    if rel.startswith("dashboard/frontend/src/"):
+    if rel.startswith("apps/dashboard/src/"):
         return _ZONE_FRONTEND_SRC
     if rel.startswith("packages/") and rel.endswith("README.md"):
         return _ZONE_PACKAGES_README

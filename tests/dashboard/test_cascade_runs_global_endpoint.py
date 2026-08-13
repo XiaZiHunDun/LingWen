@@ -81,8 +81,8 @@ class TestListAllCascadeRunsStorage:
 
 @pytest.fixture
 def client_with_storage(storage_with_multi_ripple_runs, monkeypatch):
-    from dashboard import app as app_module
-    from dashboard.app import create_app
+    from apps.studio_api import app as app_module
+    from apps.studio_api.app import create_app
 
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage_with_multi_ripple_runs)
     yield TestClient(create_app()), storage_with_multi_ripple_runs

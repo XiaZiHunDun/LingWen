@@ -208,12 +208,12 @@ projects/**/.state/*.json
 projects/e2e-live-companion/.state/
 
 # Phase 8.40: husky 9 internal shim dir
-dashboard/frontend/.husky/_/
+apps/dashboard/.husky/_/
 
 # Phase 9.15: Playwright e2e artifacts (T4 followup: untracked after test run)
-dashboard/frontend/test-results/
-dashboard/frontend/playwright-report/
-dashboard/frontend/tests/visual-audit/output/
+apps/dashboard/test-results/
+apps/dashboard/playwright-report/
+apps/dashboard/tests/visual-audit/output/
 
 # Playwright live e2e ephemeral advance-mode fixture (e2e_seed)
 projects/e2e-live-creator/

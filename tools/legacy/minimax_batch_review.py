@@ -25,7 +25,7 @@ sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', buffering=1)
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from infra.ai_service import MiniMaxProvider, ProviderConfig
+from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 
 
 class MiniMaxReviewer:

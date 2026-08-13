@@ -38,7 +38,7 @@ class TestAgentBaseChatWithUsage:
 
     def test_uses_new_method_when_router_has_it(self) -> None:
         """Router 有 generate_with_usage → 走新方法, 返 real usage."""
-        from infra.agent_system.agents.base import AgentBase
+        from lingwen_core.agents.agents.base import AgentBase
 
         router = _TieredRouterStub()
         agent = AgentBase(router=router)  # type: ignore[arg-type]
@@ -52,7 +52,7 @@ class TestAgentBaseChatWithUsage:
 
     def test_falls_back_to_estimate_when_router_lacks_method(self) -> None:
         """Router 无 generate_with_usage (旧 AIRouter) → 调 chat() + len()//4 估算."""
-        from infra.agent_system.agents.base import AgentBase
+        from lingwen_core.agents.agents.base import AgentBase
 
         router = _LegacyRouterStub()
         agent = AgentBase(router=router)  # type: ignore[arg-type]
@@ -67,7 +67,7 @@ class TestAgentBaseChatWithUsage:
 
     def test_fallback_mode_returns_estimate(self) -> None:
         """_fallback_mode (router=None) → 返 _fallback_response + 估算."""
-        from infra.agent_system.agents.base import AgentBase
+        from lingwen_core.agents.agents.base import AgentBase
 
         agent = AgentBase(router=None)
         text, usage = agent.chat_with_usage("test prompt")
@@ -82,7 +82,7 @@ class TestMasterControllerChatWithUsage:
 
     def test_falls_back_to_estimate_when_router_lacks_method(self) -> None:
         """_router 是旧 AIRouter (无 generate_with_usage) → 走估算 fallback."""
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         # Use MasterController.__new__ to bypass __init__ (跟 Phase 7.1 / 8.5 模式)
         master = MasterController.__new__(MasterController)
@@ -97,7 +97,7 @@ class TestMasterControllerChatWithUsage:
 
     def test_uses_router_new_method_when_available(self) -> None:
         """_router 有 generate_with_usage → 走新方法, 返 real usage."""
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_pipeline.master_controller import MasterController
 
         master = MasterController.__new__(MasterController)
         router = _TieredRouterStub()
@@ -114,9 +114,9 @@ class TestEndToEndChatWithUsage:
 
     def test_real_usage_flows_through_full_chain(self) -> None:
         """Master.chat_with_usage → TieredRouter → Provider → 返 SDK real usage."""
-        from infra.agent_system.master_controller import MasterController
-        from infra.ai_service.model_tiers import ModelTier
-        from infra.ai_service.tiered_router import TieredRouter
+        from lingwen_pipeline.master_controller import MasterController
+        from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_llm.providers.tiered_router import TieredRouter
 
         class _FullChainProvider:
             """Stub provider 返 real usage (模拟 SDK 行为)."""
@@ -151,9 +151,9 @@ class TestEndToEndChatWithUsage:
 
     def test_scenario_routing_resolved_correctly(self) -> None:
         """scenario → TieredRouter 正确路由到对应 tier 的 provider."""
-        from infra.agent_system.master_controller import MasterController
-        from infra.ai_service.model_tiers import ModelTier
-        from infra.ai_service.tiered_router import TieredRouter
+        from lingwen_pipeline.master_controller import MasterController
+        from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_llm.providers.tiered_router import TieredRouter
 
         # 不同 tier 返不同 usage, 验证 routing
         class _TierAwareProvider:

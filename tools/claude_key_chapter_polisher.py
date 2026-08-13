@@ -14,8 +14,8 @@ from typing import Any, Dict, Optional
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.ai_service.base import ProviderConfig
-from infra.ai_service.minimax_provider import MiniMaxProvider
+from lingwen_llm.providers.base import ProviderConfig
+from lingwen_llm.providers.minimax_provider import MiniMaxProvider
 from infra.config.api_config_loader import get_api_config
 
 logger = logging.getLogger(__name__)

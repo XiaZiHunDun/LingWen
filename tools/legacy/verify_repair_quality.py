@@ -15,7 +15,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.ai_service import MiniMaxProvider, ProviderConfig
+from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 
 # 科幻术语检查清单
 WORLDVIEW_TERMS = [

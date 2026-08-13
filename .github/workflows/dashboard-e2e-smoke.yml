@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -63,7 +63,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: dashboard/frontend
+        working-directory: apps/dashboard
 
     steps:
       - name: Checkout
@@ -84,10 +84,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-          cache-dependency-path: dashboard/frontend/pnpm-lock.yaml
+          cache-dependency-path: apps/dashboard/pnpm-lock.yaml
 
       - name: Install Python dependencies
-        run: pip install -e . -r dashboard/requirements.txt
+        run: pip install -e . -r apps/studio_api/requirements.txt
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -106,5 +106,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-trace
-          path: dashboard/frontend/test-results/
+          path: apps/dashboard/test-results/
           if-no-files-found: ignore

@@ -35,7 +35,7 @@
 **部署步骤**:
 1. 拉取代码: `git pull origin main`
 2. 安装依赖: `pip install -e .`
-3. 构建前端: `cd dashboard/frontend && pnpm build`
+3. 构建前端: `cd apps/dashboard && pnpm build`
 4. 重启服务: `systemctl restart lingwen-backend`
 5. 验证: `curl http://localhost:8000/api/health`
 
@@ -71,7 +71,7 @@
 **部署步骤**:
 1. 确认代码: `git log --oneline -1`
 2. 安装依赖: `pip install -e .`
-3. 构建前端: `cd dashboard/frontend && pnpm build`
+3. 构建前端: `cd apps/dashboard && pnpm build`
 4. 启动服务: `python dashboard/app.py`
 5. 验证: `curl http://localhost:8000/api/health`
 
@@ -118,7 +118,7 @@ server {
 
     # 前端静态文件
     location / {
-        root /home/ailearn/projects/LingWen/dashboard/frontend/dist;
+        root /home/ailearn/projects/LingWen/apps/dashboard/dist;
         try_files $uri $uri/ /index.html;
     }
 
@@ -163,14 +163,14 @@ git checkout deployment
 pip install -e .
 
 # 5. 构建前端
-cd dashboard/frontend
+cd apps/dashboard
 pnpm install
 pnpm build
 cd ../..
 
 # 6. 运行测试（可选但推荐）
 pytest -q
-cd dashboard/frontend && pnpm test
+cd apps/dashboard && pnpm test
 cd ../..
 
 # 7. 备份数据库（重要）

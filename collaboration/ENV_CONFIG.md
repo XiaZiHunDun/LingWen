@@ -71,7 +71,7 @@ venv\Scripts\activate
 pip install -e .
 
 # 4. 安装前端依赖
-cd dashboard/frontend
+cd apps/dashboard
 pnpm install
 cd ../..
 
@@ -81,7 +81,7 @@ cp .env.example .env
 
 # 6. 验证安装
 pytest -q                          # 期望3274 passed
-cd dashboard/frontend && pnpm test # 期望192 passed
+cd apps/dashboard && pnpm test # 期望192 passed
 ```
 
 ### 2.2 虚拟机测试环境（Ubuntu）
@@ -98,7 +98,7 @@ source venv/bin/activate
 pip install -e .
 
 # 4. 安装前端依赖
-cd dashboard/frontend
+cd apps/dashboard
 pnpm install
 cd ../..
 
@@ -108,11 +108,11 @@ cp .env.example .env
 
 # 6. 验证安装
 pytest -q                          # 期望3274 passed
-cd dashboard/frontend && pnpm test # 期望192 passed
+cd apps/dashboard && pnpm test # 期望192 passed
 
 # 7. 启动服务
 python dashboard/app.py &          # 后端端口8000
-cd dashboard/frontend && pnpm dev --port 5173 --strictPort &
+cd apps/dashboard && pnpm dev --port 5173 --strictPort &
 ```
 
 ---
@@ -134,7 +134,7 @@ uvicorn dashboard.app:app --host 0.0.0.0 --port 8000 --workers 4
 ### 3.2 前端服务
 
 ```bash
-cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/dashboard/frontend
+cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen/apps/dashboard
 
 # 开发模式
 pnpm dev --port 5173 --strictPort

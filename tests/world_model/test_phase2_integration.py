@@ -17,16 +17,16 @@ from pathlib import Path
 
 import pytest
 
-from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker
-from infra.consistency.checkers.pacing_checker import PacingChecker
-from infra.consistency.engine.data_structures import IssueSeverity
-from infra.prompt_engineering import (
+from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+from lingwen_quality.consistency.engine.data_structures import IssueSeverity
+from lingwen_prompt import (
     ExtractedResolution,
     ExtractedRipple,
     RippleExtractionResult,
     parse_ripple_extraction,
 )
-from infra.prompt_engineering.templates import load_template, render_template
+from lingwen_prompt.templates import load_template, render_template
 from infra.subplot.data_structures import Plot, PlotStatus, PlotType
 from infra.subplot.registry import PlotRegistry
 from infra.world_model import (

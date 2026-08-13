@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from infra.agent_system.cost_persistence import CostTrackerDB
-from infra.ai_service.cost_tracker import CostRecord
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_core.agents.cost_persistence import CostTrackerDB
+from lingwen_llm.providers.cost_tracker import CostRecord
+from lingwen_llm.providers.model_tiers import ModelTier
 
 
 class TestCostTrackerDB:
@@ -117,7 +117,7 @@ class TestCostTrackerDB:
     def test_db_path_under_state_dir(self) -> None:
         """默认 db_path 在 infra/.state/cost_tracker.db (gitignored)"""
         # 不传 db_path — 用默认 _DB_PATH
-        from infra.agent_system.cost_persistence import _DB_PATH
+        from lingwen_core.agents.cost_persistence import _DB_PATH
 
         assert _DB_PATH.name == "cost_tracker.db"
         # 父目录 = infra/.state (跟 reading_power.db / workflow.db 错开)

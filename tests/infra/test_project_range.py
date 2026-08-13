@@ -1,10 +1,10 @@
-"""Tests for infra.cli.project_range."""
+"""Tests for lingwen_cli.project_range."""
 from __future__ import annotations
 
 import pytest
 
-from infra.cli.project_range import project_max_chapter
-from infra.cli.range_parser import RangeParser
+from lingwen_cli.project_range import project_max_chapter
+from lingwen_cli.range_parser import RangeParser
 from infra.paths import ProjectPaths
 
 

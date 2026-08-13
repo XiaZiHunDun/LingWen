@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.memory_system.state.state_manager import MemoryStateManager
+from lingwen_memory.state.state_manager import MemoryStateManager
 
 
 @pytest.fixture
@@ -143,7 +143,7 @@ class TestR2019Rename:
 
     def test_new_name_is_canonical(self):
         """新名 MemoryStateManager 才是真类,旧名是 alias"""
-        from infra.memory_system.state.state_manager import (
+        from lingwen_memory.state.state_manager import (
             MemoryStateManager,
             StateManager,
         )
@@ -152,25 +152,25 @@ class TestR2019Rename:
 
     def test_backward_compat_import_still_works(self):
         """旧代码 `from ... import StateManager` 仍能导入"""
-        from infra.memory_system.state.state_manager import StateManager
+        from lingwen_memory.state.state_manager import StateManager
         # 实例化能用 — 兼容层生效
         mgr = StateManager({"storage": {"state_file": "tmp.json"}})
         assert isinstance(mgr, StateManager)
 
     def test_state_package_exports_new_name(self):
         """state 包应同时导出新名 + 别名"""
-        from infra.memory_system.state import MemoryStateManager, StateManager
+        from lingwen_memory.state import MemoryStateManager, StateManager
         assert MemoryStateManager is StateManager  # 同一类
-        assert "MemoryStateManager" in dir(__import__("infra.memory_system.state", fromlist=["*"]))
+        assert "MemoryStateManager" in dir(__import__("lingwen_memory.state", fromlist=["*"]))
 
     def test_no_collision_with_infra_state_state_manager(self):
-        """R2-019 核心收益:与 infra.state.state_manager.StateManager 区分清楚
+        """R2-019 核心收益:与 lingwen_pipeline.state.state_manager.StateManager 区分清楚
 
         两个模块都有 StateManager,但指代不同类 — 之前是 name 冲突,
         现在 memory_system 这边用新名 MemoryStateManager,IDE 跳转不会混。
         """
-        from infra.memory_system.state.state_manager import MemoryStateManager
-        from infra.state.state_manager import StateManager as InfraStateManager
+        from lingwen_memory.state.state_manager import MemoryStateManager
+        from lingwen_pipeline.state.state_manager import StateManager as InfraStateManager
 
         # 来自不同模块,即便叫 StateManager 也是不同类
         assert MemoryStateManager is not InfraStateManager
@@ -188,7 +188,7 @@ class TestR2020AtomicSave:
 
     def test_save_uses_flock_exclusive_lock(self, mock_config, temp_state_dir):
         """save() 必须用 fcntl.flock 拿 LOCK_EX,保证多进程互斥"""
-        from infra.memory_system.state import state_manager as sm_module
+        from lingwen_memory.state import state_manager as sm_module
 
         manager = MemoryStateManager(mock_config)
         test_data = {"key": "value"}
@@ -203,7 +203,7 @@ class TestR2020AtomicSave:
 
     def test_save_writes_to_temp_file_then_renames(self, mock_config, temp_state_dir):
         """save() 必须先写 .tmp.{pid} 再 atomic rename,不能直接写 target"""
-        from infra.memory_system.state import state_manager as sm_module
+        from lingwen_memory.state import state_manager as sm_module
 
         manager = MemoryStateManager(mock_config)
         test_data = {"chapter": 99, "scene": 100}
@@ -242,7 +242,7 @@ class TestR2020AtomicSave:
 
     def test_save_fsuncs_temp_file_before_rename(self, mock_config, temp_state_dir):
         """fsync 必须在 os.replace 之前,否则断电后 temp → target 不一致"""
-        from infra.memory_system.state import state_manager as sm_module
+        from lingwen_memory.state import state_manager as sm_module
 
         manager = MemoryStateManager(mock_config)
         test_data = {"durability": "test"}
@@ -317,7 +317,7 @@ class TestR2020AtomicSave:
 
     def test_save_uses_exclusive_lock_pattern(self, mock_config, temp_state_dir):
         """finally 块确保 LOCK_UN 总是被调用(即使 rename 抛异常)"""
-        from infra.memory_system.state import state_manager as sm_module
+        from lingwen_memory.state import state_manager as sm_module
 
         manager = MemoryStateManager(mock_config)
         test_data = {"finally_test": True}

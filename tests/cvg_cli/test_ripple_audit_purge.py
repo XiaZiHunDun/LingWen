@@ -5,9 +5,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from infra.cli.commands.ripple_audit import RippleAuditCommand
-from infra.cli.options import RippleAuditOptions
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.ripple_audit import RippleAuditCommand
+from lingwen_cli.options import RippleAuditOptions
+from lingwen_cli.parsers import create_parser
 from infra.cross_volume.audit_retention import parse_older_than, purge_audit_entries_older_than
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
@@ -98,7 +98,7 @@ class TestRippleAuditPurgeCLI:
 
     def test_purge_cli_dry_run(self, storage_with_audit_rows, monkeypatch, capsys):
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_audit._get_storage",
+            "lingwen_cli.commands.ripple_audit._get_storage",
             lambda: storage_with_audit_rows,
         )
         rc = RippleAuditCommand().execute(

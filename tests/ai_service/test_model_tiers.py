@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import pytest
 
-from infra.ai_service.model_tiers import (
+from lingwen_llm.providers.model_tiers import (
     MODEL_TIERS,
     ModelTier,
     ModelTierConfig,
     compute_cost,
 )
-from infra.prompt_engineering import SCENARIOS
-from infra.prompt_engineering.scenarios import SCENARIO_TIER_MAP
+from lingwen_prompt import SCENARIOS
+from lingwen_prompt.scenarios import SCENARIO_TIER_MAP
 
 
 class TestModelTierEnum:
@@ -146,7 +146,7 @@ class TestImportContract:
     """Public API 完整性"""
 
     def test_top_level_imports(self):
-        from infra.ai_service import (
+        from lingwen_llm.providers import (
             MODEL_TIERS,
             ModelTier,
             ModelTierConfig,

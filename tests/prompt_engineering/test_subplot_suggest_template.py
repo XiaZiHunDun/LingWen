@@ -4,7 +4,7 @@ Doc 2 §5 SCENARIOS:subplot_suggest 是 outline_master scenario,每 5 章建议�
 """
 from __future__ import annotations
 
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

@@ -23,14 +23,14 @@ from typing import Any
 
 import pytest
 
-from infra.ai_service.model_tiers import ModelTier
-from infra.prompt_engineering.scenarios import (
+from lingwen_llm.providers.model_tiers import ModelTier
+from lingwen_prompt.scenarios import (
     _SCENARIO_METADATA,
     SCENARIO_TIER_MAP,
     SCENARIOS,
     STEP_CONTRACTS,
 )
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

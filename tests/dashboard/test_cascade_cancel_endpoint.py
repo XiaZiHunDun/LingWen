@@ -28,8 +28,8 @@ def client_with_runs(tmp_path, monkeypatch):
     cascaded = storage.preview_cascade("rip-1", max_depth=2)
     run_id = storage.record_cascade_run("rip-1", cascaded, max_depth=2)
 
-    from dashboard import app as app_module
-    from dashboard.app import create_app
+    from apps.studio_api import app as app_module
+    from apps.studio_api.app import create_app
 
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     yield TestClient(create_app()), storage, run_id

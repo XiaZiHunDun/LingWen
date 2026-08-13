@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import pytest
 
-from infra.prompt_engineering.data_structures import (
+from lingwen_prompt.data_structures import (
     ContextItem,
     StepContract,
 )
-from infra.prompt_engineering.scenarios import (
+from lingwen_prompt.scenarios import (
     SCENARIOS,
     STEP_CONTRACTS,
     get_scenario,

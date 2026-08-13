@@ -15,8 +15,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.cli.commands.backfill import BackfillCommand
-from infra.cli.options import BackfillOptions
+from lingwen_cli.commands.backfill import BackfillCommand
+from lingwen_cli.options import BackfillOptions
 from infra.cross_volume.reference_graph import ReferenceNode
 
 
@@ -111,10 +111,10 @@ class TestE2ELLMBackfill:
                    return_value=mock_scanner), \
              patch("infra.cross_volume.storage.RippleStorage",
                    return_value=mock_storage), \
-             patch("infra.ai_service.cost_tracker.CostTracker"), \
+             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
              patch("infra.cross_volume.backfill._default_storage",
                    return_value=mock_storage, create=True), \
-             patch("infra.ai_service.tiered_router.TieredRouter") as mock_router_cls:
+             patch("lingwen_llm.providers.tiered_router.TieredRouter") as mock_router_cls:
             result = cmd.execute(options)
 
         # 1. Exit code 0
@@ -165,8 +165,8 @@ class TestE2ELLMBackfill:
                    return_value=mock_chapters, create=True), \
              patch("infra.cross_volume.llm_scanner.LLMScanner",
                    return_value=mock_scanner), \
-             patch("infra.ai_service.cost_tracker.CostTracker"), \
-             patch("infra.ai_service.tiered_router.TieredRouter"), \
+             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
+             patch("lingwen_llm.providers.tiered_router.TieredRouter"), \
              patch("infra.cross_volume.storage.RippleStorage") as mock_storage:
             result = cmd.execute(options)
 
@@ -204,10 +204,10 @@ class TestE2ELLMBackfill:
                    return_value=mock_scanner), \
              patch("infra.cross_volume.storage.RippleStorage",
                    return_value=mock_storage), \
-             patch("infra.ai_service.cost_tracker.CostTracker"), \
+             patch("lingwen_llm.providers.cost_tracker.CostTracker"), \
              patch("infra.cross_volume.backfill._default_storage",
                    return_value=mock_storage, create=True), \
-             patch("infra.ai_service.tiered_router.TieredRouter"):
+             patch("lingwen_llm.providers.tiered_router.TieredRouter"):
             result = cmd.execute(options)
 
         # exit 0 (不因单章 fail 而整批 abort)

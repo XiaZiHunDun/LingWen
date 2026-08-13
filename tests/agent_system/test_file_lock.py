@@ -28,8 +28,8 @@ from pathlib import Path
 
 import pytest
 
-from infra.agent_system._file_lock import FileLock
-from infra.agent_system.decision_queue import (
+from lingwen_core.agents._file_lock import FileLock
+from lingwen_core.agents.decision_queue import (
     DecisionKind,
     HumanDecision,
     HumanDecisionQueue,

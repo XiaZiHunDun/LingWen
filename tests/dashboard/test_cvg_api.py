@@ -6,8 +6,8 @@ End-to-end test via TestClient + tmp_path RippleStorage.
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
-from dashboard.protocols import (
+from apps.studio_api.app import create_app
+from apps.studio_api.protocols import (
     RippleActionResponse,
     RippleDetailResponse,
     RippleListItemResponse,
@@ -25,7 +25,7 @@ def storage(tmp_path):
 @pytest.fixture
 def client(storage, monkeypatch):
     """Create FastAPI TestClient with cvg_storage dependency overridden."""
-    from dashboard import app as app_module
+    from apps.studio_api import app as app_module
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     app = create_app()
     return TestClient(app)

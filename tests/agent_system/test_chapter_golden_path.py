@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.agent_system.chapter_golden_path import (
+from lingwen_core.agents.chapter_golden_path import (
     GOLDEN_WORKFLOW_NAME,
     GoldenPathResult,
     run_golden_path,
@@ -36,7 +36,7 @@ class TestChapterGoldenPathModule:
         assert (tmp_path / "decisions.json").is_file()
 
     def test_golden_path_cli_main_exit_zero(self, tmp_path):
-        from infra.agent_system import chapter_golden_path as mod
+        from lingwen_core.agents import chapter_golden_path as mod
 
         code = mod.main(
             ["--state-dir", str(tmp_path), "--chapter-num", "3"],

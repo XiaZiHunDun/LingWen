@@ -5,14 +5,14 @@ import os
 
 import pytest
 
-from infra.memory_system.embeddings.factory import (
+from lingwen_memory.embeddings.factory import (
     create_embedding_provider,
     describe_embedding_requirements,
     embedding_keys_available,
     resolve_embedding_provider_name,
 )
-from infra.memory_system.embeddings.minimax_provider import MiniMaxEmbeddingProvider
-from infra.memory_system.embeddings.openai_provider import OpenAIEmbeddingProvider
+from lingwen_memory.embeddings.minimax_provider import MiniMaxEmbeddingProvider
+from lingwen_memory.embeddings.openai_provider import OpenAIEmbeddingProvider
 
 _CONFIG = {
     "embedding": {

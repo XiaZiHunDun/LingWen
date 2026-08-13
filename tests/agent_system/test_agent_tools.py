@@ -7,11 +7,11 @@ import pytest
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from infra.agent_system.agents.auditor.tools import AuditorTools
-from infra.agent_system.agents.character_designer.tools import CharacterDesignerTools
-from infra.agent_system.agents.content_writer.tools import ContentWriterTools
-from infra.agent_system.agents.outline_master.tools import OutlineMasterTools
-from infra.agent_system.agents.polisher.tools import PolisherTools
+from lingwen_core.agents.agents.auditor.tools import AuditorTools
+from lingwen_core.agents.agents.character_designer.tools import CharacterDesignerTools
+from lingwen_core.agents.agents.content_writer.tools import ContentWriterTools
+from lingwen_core.agents.agents.outline_master.tools import OutlineMasterTools
+from lingwen_core.agents.agents.polisher.tools import PolisherTools
 
 
 def test_outline_master_tools():

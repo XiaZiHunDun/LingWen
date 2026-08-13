@@ -17,8 +17,8 @@ from typing import Optional, Protocol
 
 import pytest
 
-from infra.consistency.checkers.pacing_checker import PacingChecker
-from infra.consistency.engine.data_structures import (
+from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     Issue,
     IssueSeverity,

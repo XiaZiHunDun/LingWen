@@ -7,7 +7,7 @@
 | # | Workflow 文件 | 显示名 | 触发 | blocking? | 用途 |
 |---|---------------|--------|------|-----------|------|
 | 1 | **`test.yml`** | test | 每次 push/PR master | **是** | 主门；**llm×7 路径过滤**（见 §MiniMax 成本） |
-| 2 | `dashboard-frontend-ci.yml` | Dashboard Frontend CI | `dashboard/frontend/**` 变更 | 否* | lint · typecheck · vitest+coverage · build · Codecov |
+| 2 | `dashboard-frontend-ci.yml` | Dashboard Frontend CI | `apps/dashboard/**` 变更 | 否* | lint · typecheck · vitest+coverage · build · Codecov |
 | 3 | `dashboard-frontend-coverage-pages.yml` | Frontend Coverage Pages | **仅手动** | 否 | vitest HTML → GitHub Pages |
 | 4 | `dashboard-e2e-smoke.yml` | Dashboard E2E Smoke | 手动 / label `e2e-smoke` | 否 | 1 spec 调试 |
 | 5 | `prose-judge-llm.yml` | Prose Judge LLM | **仅手动** | 否 | 七书六维 judge + artifact |
@@ -53,7 +53,7 @@ pytest CI **排除**（需真 API / 非主门）：
 |------------|------------|-------------|
 | **纯正文** `projects/*/03_内容仓库` | `bash scripts/run-prose-calibration.sh <slug>` | pytest · vitest · golden · e2e |
 | **Python / infra** | `pytest tests/<相关目录> -q` | 三版本矩阵 + cov 50% |
-| **Dashboard 前端** | `cd dashboard/frontend && pnpm vitest run`（~8s） | vitest + Frontend CI（含 e2e-live） |
+| **Dashboard 前端** | `cd apps/dashboard && pnpm vitest run`（~8s） | vitest + Frontend CI（含 e2e-live） |
 | **改 workflow / CI 契约** | `pytest tests/ci/ -q` | 同上 |
 | **发版前（可选）** | `bash scripts/verify-studio-release.sh` | 与 CI 大量重叠 |
 
@@ -78,7 +78,7 @@ LINGWEN_POST_CHECK_LLM=0 bash scripts/run-primary-revision-verify.sh tiedao-dang
 
 | Workflow | 触发 | 说明 |
 |----------|------|------|
-| **Dashboard Frontend CI** | `dashboard/frontend/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（95）** · a11y · visual · ui-metrics |
+| **Dashboard Frontend CI** | `apps/dashboard/**` 变更 | lint · typecheck · **coverage** · build · **e2e-live（95）** · a11y · visual · ui-metrics |
 | **Frontend Coverage Pages** | **仅手动** | GitHub Pages HTML 报告（Codecov 仍由 Frontend CI 上传） |
 | **Prose Judge LLM** | 仅手动 | 七书 `--llm` + artifact |
 | **e2e-smoke** | 手动 / label `e2e-smoke` | 1 spec 轻量调试 |

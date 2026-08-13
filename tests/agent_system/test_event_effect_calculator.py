@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from infra.agent_system.social_engine.event_effect_calculator import EventEffectCalculator
+from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
 
 
 def test_event_effect_calculator_init():
@@ -55,7 +55,7 @@ def test_calculate_effects_unknown():
 
 def test_apply_event():
     """测试应用事件到关系追踪器"""
-    from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
+    from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
 
     with tempfile.TemporaryDirectory() as tmpdir:
         state_file = os.path.join(tmpdir, "relationships.json")

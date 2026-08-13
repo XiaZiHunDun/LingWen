@@ -8,8 +8,8 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
-from infra.agent_system.got_bridge import SCENARIO_HANDLERS, _handler_polish_merge
-from infra.agent_system.master_controller import MasterController
+from lingwen_core.agents.got_bridge import SCENARIO_HANDLERS, _handler_polish_merge
+from lingwen_pipeline.master_controller import MasterController
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GOT_BRIDGE_PATH = REPO_ROOT / "infra" / "agent_system" / "got_bridge.py"

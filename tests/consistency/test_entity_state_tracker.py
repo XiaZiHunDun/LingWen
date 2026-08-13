@@ -5,7 +5,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.state.models import (
+from lingwen_quality.consistency.state.models import (
     CapabilityState,
     EntityState,
     KnowledgeState,

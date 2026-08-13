@@ -34,7 +34,7 @@ def _run_against(repo_root: Path):
 def test_clean_file_passes(tmp_path: Path):
     """A frontend src/ file with only the new product/framework strings is clean."""
     _git_init(tmp_path)
-    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     (src_dir / "Page.vue").write_text(
         "<template><h1>墨灵</h1><p>欢迎使用 MoLing</p></template>\n"
@@ -53,9 +53,9 @@ def test_clean_file_passes(tmp_path: Path):
 
 
 def test_lingwen_studio_in_src_is_flagged(tmp_path: Path):
-    """LingWen Studio literal inside dashboard/frontend/src/ must be flagged."""
+    """LingWen Studio literal inside apps/dashboard/src/ must be flagged."""
     _git_init(tmp_path)
-    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     (src_dir / "bad.vue").write_text("<h1>LingWen Studio</h1>\n")
     _git_commit(tmp_path)
@@ -63,7 +63,7 @@ def test_lingwen_studio_in_src_is_flagged(tmp_path: Path):
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
     assert any(
-        v[0] == "dashboard/frontend/src/bad.vue"
+        v[0] == "apps/dashboard/src/bad.vue"
         and v[1] == "forbidden_LingWen Studio"
         for v in violations
     ), violations
@@ -72,7 +72,7 @@ def test_lingwen_studio_in_src_is_flagged(tmp_path: Path):
 def test_brand_js_is_ignored(tmp_path: Path):
     """The brand source-of-truth file is exempt from the LingWen / 墨灵 / 灵文 checks."""
     _git_init(tmp_path)
-    config_dir = tmp_path / "dashboard" / "frontend" / "src" / "config"
+    config_dir = tmp_path / "apps" / "dashboard" / "src" / "config"
     config_dir.mkdir(parents=True)
     # The real brand.js contains LingWen / 墨灵 / 灵文 — those should not be flagged.
     (config_dir / "brand.js").write_text(
@@ -132,7 +132,7 @@ def test_packages_readme_with_lingwen_studio_is_flagged(tmp_path: Path):
 def test_standalone_lingwen_in_src_is_flagged(tmp_path: Path, capsys):
     """A standalone 'LingWen' token in frontend src/ must be flagged (rule: lingwen_standalone)."""
     _git_init(tmp_path)
-    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     (src_dir / "api.js").write_text(
         "// LingWen Dashboard API client\n"
@@ -143,7 +143,7 @@ def test_standalone_lingwen_in_src_is_flagged(tmp_path: Path, capsys):
     mod = _run_against(tmp_path)
     violations = mod.find_violations()
     assert any(
-        v[0] == "dashboard/frontend/src/api.js"
+        v[0] == "apps/dashboard/src/api.js"
         and v[1] == "lingwen_standalone"
         for v in violations
     ), violations
@@ -152,7 +152,7 @@ def test_standalone_lingwen_in_src_is_flagged(tmp_path: Path, capsys):
 def test_main_returns_0_on_clean_repo(tmp_path: Path, capsys):
     """main() returns 0 when no violations exist."""
     _git_init(tmp_path)
-    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     (src_dir / "Page.vue").write_text("<h1>墨灵</h1>\n")
     _git_commit(tmp_path)
@@ -167,7 +167,7 @@ def test_main_returns_0_on_clean_repo(tmp_path: Path, capsys):
 def test_main_returns_1_on_violations(tmp_path: Path, capsys):
     """main() returns 1 and prints the violation when LingWen Studio is found."""
     _git_init(tmp_path)
-    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     (src_dir / "bad.vue").write_text("<h1>LingWen Studio</h1>\n")
     _git_commit(tmp_path)
@@ -180,9 +180,9 @@ def test_main_returns_1_on_violations(tmp_path: Path, capsys):
 
 
 def test_binary_file_is_skipped(tmp_path: Path):
-    """A non-UTF-8 binary file in dashboard/frontend/src/ must be skipped (no crash, no flag)."""
+    """A non-UTF-8 binary file in apps/dashboard/src/ must be skipped (no crash, no flag)."""
     _git_init(tmp_path)
-    src_dir = tmp_path / "dashboard" / "frontend" / "src"
+    src_dir = tmp_path / "apps" / "dashboard" / "src"
     src_dir.mkdir(parents=True)
     # Write raw non-UTF-8 bytes (e.g. simulated font/image header).
     (src_dir / "asset.bin").write_bytes(b"\xFF\xFE\x00\x01\x80\x90binary")
@@ -200,7 +200,7 @@ def test_lingwen_standalone_in_packages_readme_is_flagged(tmp_path: Path):
     pkg_dir = tmp_path / "packages" / "foo"
     pkg_dir.mkdir(parents=True)
     # Non-JSDoc context (plain prose): the standalone 'LingWen' rule only fires
-    # in dashboard/frontend/src/, but a forbidden product-string like 'LingWen Studio'
+    # in apps/dashboard/src/, but a forbidden product-string like 'LingWen Studio'
     # must still be flagged here.
     (pkg_dir / "README.md").write_text(
         "# foo\nLingWen Studio is the product name.\n"

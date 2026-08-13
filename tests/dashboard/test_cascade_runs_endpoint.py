@@ -26,8 +26,8 @@ def client_with_storage(tmp_path, monkeypatch):
     )
     storage.append_ripple(ripple)
 
-    from dashboard import app as app_module
-    from dashboard.app import create_app
+    from apps.studio_api import app as app_module
+    from apps.studio_api.app import create_app
 
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     yield TestClient(create_app()), storage

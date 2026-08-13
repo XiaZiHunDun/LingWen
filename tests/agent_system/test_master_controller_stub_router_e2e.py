@@ -31,7 +31,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.ai_service.router import AIRouter
+from lingwen_llm.providers.router import AIRouter
 from infra.got.data_structures import NodeStatus
 from infra.got.scheduler import HumanInterventionRequired
 from tests.agent_system._e2e_helpers import (
@@ -323,7 +323,7 @@ class TestNovelWritingE2E:
         走 production path 后 cost_tracker 应有 5+ 笔 (write + audit + 2 polish_e + 1 polish_a),
         不依赖 polish_merge (走 identical fallback 不调 LLM)
         """
-        from infra.ai_service.cost_tracker import CostTracker
+        from lingwen_llm.providers.cost_tracker import CostTracker
 
         cost_tracker = CostTracker()
         router, _ = make_stub_router()
@@ -353,7 +353,7 @@ class TestNovelWritingE2E:
         硬编码 {input_tokens: 100, output_tokens: 50} — 每次 LLM call 喂 cost_tracker
         真实 100+50=150, 而非 StubProvider + len()//4 估算.
         """
-        from infra.ai_service.cost_tracker import CostTracker
+        from lingwen_llm.providers.cost_tracker import CostTracker
 
         cost_tracker = CostTracker()
         master = make_master_with_router(
@@ -425,7 +425,7 @@ class TestNovelWritingE2E:
         不是 flat dict keys. 此外 summary 无 .skipped 字段, SKIPPED 不在
         ExecutionSummary 计数里 (downstream 节点留 PENDING 不进 executions).
         """
-        from infra.ai_service.cost_tracker import CostTracker
+        from lingwen_llm.providers.cost_tracker import CostTracker
 
         cost_tracker = CostTracker()
         master = make_master_with_router(

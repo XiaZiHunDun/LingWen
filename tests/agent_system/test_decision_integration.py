@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from infra.agent_system.decision_queue import (
+from lingwen_core.agents.decision_queue import (
     DecisionKind,
     DecisionStatus,
     HumanDecision,
@@ -27,7 +27,7 @@ from infra.got.data_structures import NodeType, ThoughtNode
 
 def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     """构造 MasterController 但 stub 掉 init 中的重操作,只保留 run_workflow 链路"""
-    from infra.agent_system import master_controller as mc_mod
+    from lingwen_core.agents import master_controller as mc_mod
 
     monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
     monkeypatch.setattr(mc_mod, "build_orchestrator", lambda **kwargs: None)
@@ -35,7 +35,7 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, Any]:
     monkeypatch.setattr(mc_mod, "build_agent_tools", lambda router: None)
     monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
 
-    import infra.state.state_manager as sm_mod
+    import lingwen_pipeline.state.state_manager as sm_mod
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)
@@ -251,13 +251,13 @@ class TestRunWorkflowDecisionDiscovery:
         graph.add_node(decision_node)
         # 写一个临时 workflow YAML? 简化为直接构造 graph,再用 scheduler
 
-        from infra.agent_system.got_bridge import AgentComputeFn
+        from lingwen_core.agents.got_bridge import AgentComputeFn
         from infra.got.scheduler import GoTScheduler
 
         sched = GoTScheduler(graph, compute_fn=AgentComputeFn(controller), max_backtracks=0)
         del sched  # 仅构造验证 compute_fn 可注入
         # 把图 注入 decision discovery 流程
-        from infra.agent_system.master_controller import _collect_decision_specs_from_graph
+        from lingwen_pipeline.master_controller import _collect_decision_specs_from_graph
 
         specs = _collect_decision_specs_from_graph(graph)
         assert len(specs) == 1
@@ -267,7 +267,7 @@ class TestRunWorkflowDecisionDiscovery:
 
     def test_decision_kind_inferred_from_node_id(self, monkeypatch):
         """DECISION 节点 → DecisionKind 根据 node_id 推断"""
-        from infra.agent_system.master_controller import _infer_decision_kind
+        from lingwen_pipeline.master_controller import _infer_decision_kind
         assert _infer_decision_kind("outline_judgment") == DecisionKind.OUTLINE_JUDGMENT
         assert _infer_decision_kind("volume_judgment") == DecisionKind.VOLUME_JUDGMENT
         assert _infer_decision_kind("publish_judgment") == DecisionKind.PUBLISH_JUDGMENT

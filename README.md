@@ -75,7 +75,7 @@ python -m infra.agent_system.chapter_production_pilot --preflight-only --chapter
 │   ├── verify-studio-production-dod.sh
 │   └── run-dashboard-single-port.sh
 ├── infra/                     # Agent · 质检 · project_config
-├── dashboard/                 # FastAPI + Vue Studio 页
+├── apps/studio_api/           # FastAPI Studio API (Phase 17.3) [legacy: dashboard/]
 └── tests/                     # pytest 3000+
 ```
 
@@ -90,7 +90,7 @@ bash scripts/build-trial-read.sh jinghai-rizhi 1 10
 
 # 测试（全量以 GitHub Actions test workflow 为准）
 pytest -q                       # 3011+ collected
-cd dashboard/frontend && pnpm vitest run && pnpm lint:all && pnpm build
+cd apps/dashboard && pnpm vitest run && pnpm lint:all && pnpm build
 ```
 
 ---

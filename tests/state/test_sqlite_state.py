@@ -16,8 +16,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from infra.state.migrate_from_json import migrate_from_json
-from infra.state.state_manager import StateManager
+from lingwen_pipeline.state.migrate_from_json import migrate_from_json
+from lingwen_pipeline.state.state_manager import StateManager
 
 
 @pytest.fixture

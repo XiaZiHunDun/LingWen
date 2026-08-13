@@ -20,7 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.config.api_config_loader import get_api_config
 from infra.llm_service import LLMService, LLMTask, TaskType
-from infra.quality import Issue
+from lingwen_quality.quality import Issue
 
 logger = logging.getLogger(__name__)
 

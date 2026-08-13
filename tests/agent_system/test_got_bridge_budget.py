@@ -24,10 +24,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.agent_system.budget_persistence import BudgetService
-from infra.agent_system.got_bridge import AgentComputeFn
-from infra.ai_service.cost_tracker import CostBudgetExceeded, CostTracker
-from infra.ai_service.model_tiers import ModelTier
+from lingwen_core.agents.budget_persistence import BudgetService
+from lingwen_core.agents.got_bridge import AgentComputeFn
+from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult
 
@@ -59,7 +59,7 @@ class TestAgentComputeFnBudget:
 
     def test_compute_fn_checks_per_run_scope(self, tmp_path: Path) -> None:
         """set per-run budget 0.1, total_cost 0.15 → raise(scope='run')"""
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
 
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
@@ -85,7 +85,7 @@ class TestAgentComputeFnBudget:
 
     def test_compute_fn_checks_per_day_scope(self, tmp_path: Path) -> None:
         """set per-day 0.5, total_cost > 0.5 → raise(scope='day')"""
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
 
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
@@ -110,7 +110,7 @@ class TestAgentComputeFnBudget:
 
     def test_compute_fn_checks_per_week_scope(self, tmp_path: Path) -> None:
         """set per-week 2.0, total_cost > 2.0 → raise(scope='week')"""
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
 
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
@@ -164,7 +164,7 @@ class TestAgentComputeFnBudget:
         self, tmp_path: Path
     ) -> None:
         """set day 昨天 → window 失效 → 不 raise (即使 cost > budget)"""
-        from infra.agent_system.budget_persistence import BudgetService
+        from lingwen_core.agents.budget_persistence import BudgetService
 
         service = BudgetService(db_path=tmp_path / "test.db")
         service.init_db()
@@ -202,8 +202,8 @@ class TestAgentComputeFnByTier:
 
     def test_compute_fn_tier_budget_none_compat(self, tmp_path: Path) -> None:
         """Phase 8.15: budget_service_by_tier=None 跳过 check, backward compat."""
-        from infra.agent_system.got_bridge import AgentComputeFn
-        from infra.agent_system.master_controller import MasterController
+        from lingwen_core.agents.got_bridge import AgentComputeFn
+        from lingwen_pipeline.master_controller import MasterController
 
         master = MasterController.__new__(MasterController)  # bypass __init__
         compute = AgentComputeFn(master, cost_tracker=None, budget_service_by_tier=None)
@@ -270,7 +270,7 @@ class TestAgentComputeFnByTier:
         Ordering invariant: total → run/day/week → tier (跟 Phase 8.12 顺序同栈).
         若 total 必超, 验证 raise(scope='run', default) 而非 tier.
         """
-        from infra.agent_system.got_bridge import AgentComputeFn
+        from lingwen_core.agents.got_bridge import AgentComputeFn
 
         master = MagicMock()
         master._current_budget_usd = 0.0001  # 总 cap 极小, 必超

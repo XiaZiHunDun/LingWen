@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FRONTEND="$ROOT/dashboard/frontend"
+FRONTEND="$ROOT/apps/dashboard"
 
 echo "[F70] verify-e2e-live-ci: ROOT=$ROOT"
 

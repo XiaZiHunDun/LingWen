@@ -96,7 +96,7 @@ start_vite() {
     echo "Waiting for Vite (pid $pid) ..."
   else
     echo "Starting Vite on 0.0.0.0:${VITE_PORT} ..."
-    cd "$ROOT/dashboard/frontend"
+    cd "$ROOT/apps/dashboard"
     setsid nohup pnpm dev --host 0.0.0.0 --port "$VITE_PORT" >>"$LOG_DIR/vite.log" 2>&1 </dev/null &
     echo $! >"$VITE_PID_FILE"
   fi

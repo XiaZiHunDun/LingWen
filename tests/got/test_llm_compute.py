@@ -18,10 +18,10 @@ from typing import Any, Optional
 
 import pytest
 
-from infra.ai_service.base import AIProvider, ProviderConfig
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.model_tiers import ModelTier
-from infra.ai_service.tiered_router import TieredRouter, TieredRouterError
+from lingwen_llm.providers.base import AIProvider, ProviderConfig
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
+from lingwen_llm.providers.tiered_router import TieredRouter, TieredRouterError
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.got.llm_compute import LLMComputeFn
 from infra.got.scheduler import ComputeResult

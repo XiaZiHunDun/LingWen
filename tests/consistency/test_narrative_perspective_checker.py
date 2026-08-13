@@ -1,5 +1,5 @@
 """NarrativePerspectiveChecker integration with ConsistencyEngine."""
-from infra.consistency.checkers.narrative_perspective_checker import NarrativePerspectiveChecker
+from lingwen_quality.consistency.checkers.narrative_perspective_checker import NarrativePerspectiveChecker
 
 
 def test_check_accepts_inline_content_without_typeerror():

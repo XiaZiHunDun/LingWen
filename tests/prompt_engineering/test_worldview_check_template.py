@@ -4,7 +4,7 @@ Doc 2 §5 SCENARIOS:worldview_check 是 auditor scenario,抽检世界观一致�
 """
 from __future__ import annotations
 
-from infra.prompt_engineering.templates import (
+from lingwen_prompt.templates import (
     Template,
     load_template,
     render_template,

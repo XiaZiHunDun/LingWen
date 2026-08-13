@@ -10,8 +10,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.checkers.spatial_transition_checker import SpatialTransitionChecker
-from infra.consistency.engine.data_structures import IssueSeverity
+from lingwen_quality.consistency.checkers.spatial_transition_checker import SpatialTransitionChecker
+from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 
 
 class TestSpatialTransitionChecker:

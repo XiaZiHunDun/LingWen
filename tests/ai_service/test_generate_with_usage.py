@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from infra.ai_service.base import AIProvider, ProviderConfig
+from lingwen_llm.providers.base import AIProvider, ProviderConfig
 
 
 class _StubProvider(AIProvider):
@@ -72,7 +72,7 @@ class TestAnthropicProviderGenerateWithUsage:
 
     def test_returns_real_input_output_tokens(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Stub anthropic SDK → response.usage.input_tokens=100, output_tokens=50."""
-        from infra.ai_service import anthropic_provider
+        from lingwen_llm.providers import anthropic_provider
 
         # Stub anthropic.Anthropic class
         fake_client = MagicMock()
@@ -104,7 +104,7 @@ class TestOpenAIProviderGenerateWithUsage:
 
     def test_returns_real_prompt_completion_tokens(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Stub openai SDK → response.usage.prompt_tokens=80, completion_tokens=40."""
-        from infra.ai_service import openai_provider
+        from lingwen_llm.providers import openai_provider
 
         fake_client = MagicMock()
         fake_response = MagicMock()
@@ -133,7 +133,7 @@ class TestMiniMaxProviderGenerateWithUsage:
 
     def test_returns_real_input_output_tokens(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Stub anthropic SDK (MiniMax 走 Anthropic 兼容) → usage.input/output_tokens."""
-        from infra.ai_service import minimax_provider
+        from lingwen_llm.providers import minimax_provider
 
         fake_client = MagicMock()
         fake_response = MagicMock()
@@ -164,8 +164,8 @@ class TestTieredRouterGenerateWithUsage:
 
     def test_chains_to_provider_with_real_usage(self) -> None:
         """Stub provider 返 (text, {real_usage}) → router 透传."""
-        from infra.ai_service.model_tiers import ModelTier
-        from infra.ai_service.tiered_router import TieredRouter
+        from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_llm.providers.tiered_router import TieredRouter
 
         class _RealUsageProvider:
             def __init__(self, tier: ModelTier) -> None:
@@ -186,8 +186,8 @@ class TestTieredRouterGenerateWithUsage:
 
     def test_does_not_call_notify_tracker(self) -> None:
         """TieredRouter.generate_with_usage 不调 _notify_tracker (防双计数)."""
-        from infra.ai_service.model_tiers import ModelTier
-        from infra.ai_service.tiered_router import TieredRouter
+        from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_llm.providers.tiered_router import TieredRouter
 
         class _SpyProvider:
             def __init__(self) -> None:
@@ -224,8 +224,8 @@ class TestTieredRouterGenerateWithUsage:
         propagation across the chain. Code review 发现的 gap: 原 only happy path
         被测, 没断言降级时仍走 generate_with_usage 路径.
         """
-        from infra.ai_service.model_tiers import ModelTier
-        from infra.ai_service.tiered_router import TieredRouter
+        from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_llm.providers.tiered_router import TieredRouter
 
         class _OpusRaises:
             def generate(self, prompt: str, **kwargs) -> str:
@@ -286,8 +286,8 @@ class TestTieredRouterGenerateWithUsage:
         generate() 行为一致, 失败时不调下一个 tier 的 provider. 三个 tier
         都不该被调到 (OPUS 抛错就 break).
         """
-        from infra.ai_service.model_tiers import ModelTier
-        from infra.ai_service.tiered_router import TieredRouter, TieredRouterError
+        from lingwen_llm.providers.model_tiers import ModelTier
+        from lingwen_llm.providers.tiered_router import TieredRouter, TieredRouterError
 
         class _BoomProvider:
             def __init__(self) -> None:

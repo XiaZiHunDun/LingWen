@@ -18,7 +18,7 @@ echo "▶ event-store 单元测试"
 (cd packages/lingwen-storage && python3 -m pytest -q)
 
 echo "▶ 前端 lint + typecheck + unit"
-(cd dashboard/frontend && pnpm lint && pnpm typecheck && pnpm test)
+(cd apps/dashboard && pnpm lint && pnpm typecheck && pnpm test)
 
 echo "▶ 检查陈旧 SQLite/JSON 已删（16.6 / 16.10）"
 for f in \

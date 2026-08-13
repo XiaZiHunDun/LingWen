@@ -5,7 +5,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.state.causal_rules import CAUSAL_BREAK_RULES, CausalRuleEngine
+from lingwen_quality.consistency.state.causal_rules import CAUSAL_BREAK_RULES, CausalRuleEngine
 
 
 def test_causal_rules_has_required_fields():
@@ -51,7 +51,7 @@ def test_causal_rule_engine_no_contradiction():
 # =============================================================================
 
 def test_causal_chain_checker_detects_broken_pot():
-    from infra.consistency.checkers.causal_chain_checker import CausalChainChecker
+    from lingwen_quality.consistency.checkers.causal_chain_checker import CausalChainChecker
 
     checker = CausalChainChecker()
 
@@ -69,7 +69,7 @@ def test_causal_chain_checker_detects_broken_pot():
 
 
 def test_causal_chain_checker_no_issue_when_resolved():
-    from infra.consistency.checkers.causal_chain_checker import CausalChainChecker
+    from lingwen_quality.consistency.checkers.causal_chain_checker import CausalChainChecker
 
     checker = CausalChainChecker()
 

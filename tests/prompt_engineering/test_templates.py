@@ -20,7 +20,7 @@ import pytest
 class TestLoadTemplate:
     def test_load_existing_template(self, tmp_path: Path):
         """加载存在的 YAML 模板"""
-        from infra.prompt_engineering.templates import load_template
+        from lingwen_prompt.templates import load_template
 
         # 创建测试 YAML
         yaml_path = tmp_path / "chapter_writing_v1.yaml"
@@ -47,14 +47,14 @@ class TestLoadTemplate:
         assert "{chapter_num}" in tpl.user_prompt
 
     def test_load_nonexistent_raises(self, tmp_path: Path):
-        from infra.prompt_engineering.templates import TemplateNotFoundError, load_template
+        from lingwen_prompt.templates import TemplateNotFoundError, load_template
 
         with pytest.raises(TemplateNotFoundError, match="(?i)template"):
             load_template("nonexistent", version=1, base_dir=tmp_path)
 
     def test_default_version_1(self, tmp_path: Path):
         """load_template 默认 version=1"""
-        from infra.prompt_engineering.templates import load_template
+        from lingwen_prompt.templates import load_template
 
         yaml_path = tmp_path / "x_v1.yaml"
         yaml_path.write_text(
@@ -66,7 +66,7 @@ class TestLoadTemplate:
         assert tpl.version == 1
 
     def test_load_invalid_yaml_raises(self, tmp_path: Path):
-        from infra.prompt_engineering.templates import TemplateParseError, load_template
+        from lingwen_prompt.templates import TemplateParseError, load_template
 
         yaml_path = tmp_path / "bad_v1.yaml"
         yaml_path.write_text("invalid: yaml: [bad", encoding="utf-8")
@@ -74,7 +74,7 @@ class TestLoadTemplate:
             load_template("bad", version=1, base_dir=tmp_path)
 
     def test_load_missing_required_field_raises(self, tmp_path: Path):
-        from infra.prompt_engineering.templates import TemplateParseError, load_template
+        from lingwen_prompt.templates import TemplateParseError, load_template
 
         yaml_path = tmp_path / "missing_v1.yaml"
         yaml_path.write_text(
@@ -89,7 +89,7 @@ class TestLoadTemplate:
 
 class TestTemplateDataclass:
     def test_template_fields(self):
-        from infra.prompt_engineering.templates import Template
+        from lingwen_prompt.templates import Template
 
         tpl = Template(
             scenario="x",
@@ -105,7 +105,7 @@ class TestTemplateDataclass:
         assert tpl.output_schema == "dict"
 
     def test_template_is_frozen(self):
-        from infra.prompt_engineering.templates import Template
+        from lingwen_prompt.templates import Template
 
         tpl = Template(
             scenario="x", version=1, agent_role="y",
@@ -117,7 +117,7 @@ class TestTemplateDataclass:
 
 class TestRenderTemplate:
     def _template(self):
-        from infra.prompt_engineering.templates import Template
+        from lingwen_prompt.templates import Template
 
         return Template(
             scenario="chapter_writing",
@@ -131,7 +131,7 @@ class TestRenderTemplate:
         )
 
     def test_render_replaces_placeholders(self):
-        from infra.prompt_engineering.templates import render_template
+        from lingwen_prompt.templates import render_template
 
         tpl = self._template()
         rendered = render_template(
@@ -149,7 +149,7 @@ class TestRenderTemplate:
         assert "3000" in rendered.constraints_block
 
     def test_render_preserves_system_prompt(self):
-        from infra.prompt_engineering.templates import render_template
+        from lingwen_prompt.templates import render_template
 
         tpl = self._template()
         rendered = render_template(
@@ -160,7 +160,7 @@ class TestRenderTemplate:
 
     def test_render_keeps_unfilled_placeholders(self):
         """未提供的占位符保留 {xxx} (不报错)"""
-        from infra.prompt_engineering.templates import render_template
+        from lingwen_prompt.templates import render_template
 
         tpl = self._template()
         rendered = render_template(
@@ -171,7 +171,7 @@ class TestRenderTemplate:
         assert "{protagonist}" in rendered.user_prompt
 
     def test_render_returns_rendered_prompt(self):
-        from infra.prompt_engineering.templates import RenderedPrompt, render_template
+        from lingwen_prompt.templates import RenderedPrompt, render_template
 
         tpl = self._template()
         rendered = render_template(tpl, {"chapter_num": 1, "protagonist": "x",

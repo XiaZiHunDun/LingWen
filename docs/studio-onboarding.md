@@ -87,10 +87,10 @@ CLEANUP=1 bash scripts/verify-onboarding-blind.sh   # 通过后自动删除
 
 ```bash
 # 终端 1：API
-python dashboard/app.py
+python apps/studio_api/app.py
 
 # 终端 2：前端
-cd dashboard/frontend && pnpm dev
+cd apps/dashboard && pnpm dev
 ```
 
 打开 `http://localhost:5173/?nav=studio`：

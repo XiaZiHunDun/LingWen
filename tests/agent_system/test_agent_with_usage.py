@@ -13,10 +13,10 @@ from typing import Any, Dict, Union
 
 import pytest
 
-from infra.agent_system.agents.auditor.tools import AuditorTools
-from infra.agent_system.agents.content_writer.tools import ContentWriterTools
-from infra.agent_system.agents.polisher.tools import PolisherTools
-from infra.ai_service.base import AIProvider, ProviderConfig
+from lingwen_core.agents.agents.auditor.tools import AuditorTools
+from lingwen_core.agents.agents.content_writer.tools import ContentWriterTools
+from lingwen_core.agents.agents.polisher.tools import PolisherTools
+from lingwen_llm.providers.base import AIProvider, ProviderConfig
 
 
 class _UsageRecordingProvider(AIProvider):

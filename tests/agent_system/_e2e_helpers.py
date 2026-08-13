@@ -18,11 +18,11 @@ import os
 from pathlib import Path
 from typing import Optional, Union
 
-from infra.agent_system.agent_config import MasterControllerConfig
-from infra.agent_system.master_controller import MasterController
-from infra.ai_service.base import AIProvider, ProviderConfig
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.router import AIRouter
+from lingwen_core.agents.agent_config import MasterControllerConfig
+from lingwen_pipeline.master_controller import MasterController
+from lingwen_llm.providers.base import AIProvider, ProviderConfig
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.router import AIRouter
 
 
 class StubProvider(AIProvider):
@@ -154,17 +154,17 @@ def make_master_with_router(
 
 _PROVIDER_REGISTRY = {
     "anthropic": {
-        "class_path": "infra.ai_service.anthropic_provider.AnthropicProvider",
+        "class_path": "lingwen_llm.providers.anthropic_provider.AnthropicProvider",
         "env_var": "ANTHROPIC_API_KEY",
         "default_model": "claude-haiku-4-5-20251001",
     },
     "openai": {
-        "class_path": "infra.ai_service.openai_provider.OpenAIProvider",
+        "class_path": "lingwen_llm.providers.openai_provider.OpenAIProvider",
         "env_var": "OPENAI_API_KEY",
         "default_model": "gpt-4o-mini",
     },
     "minimax": {
-        "class_path": "infra.ai_service.minimax_provider.MiniMaxProvider",
+        "class_path": "lingwen_llm.providers.minimax_provider.MiniMaxProvider",
         "env_var": "MINIMAX_API_KEY",
         "default_model": "MiniMax-M2.7",
     },

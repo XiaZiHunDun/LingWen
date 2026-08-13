@@ -27,7 +27,7 @@ from infra.got import (
     GoTScheduler,
     load_workflow,
 )
-from infra.prompt_engineering import (
+from lingwen_prompt import (
     ContextItem,
     PromptContext,
     get_scenario,

@@ -143,7 +143,7 @@
 **T5 (P1-L6) 结果**: ✅ PASS — `scripts/_slug_guard.sh` 存在且含 `LINGWEN_PROJECT_ROOT`，6个脚本（prepare-anye + prepare-huangsha + generate-full-check-report + build-all-trial-reads + prepare-studio-samples-zip + run-project-batch）均已 source guard
 
 **T1/T3 失败说明（非本次验证范围）**:
-- **T1 失败原因**: `dashboard/frontend/src/api/index.js` 文件不存在 — Phase 15.0 后前端代码完全重构（src/ 目录被移除），verify 脚本期望的文件路径已失效。**功能本身正常**：vitest 192 passed 已覆盖 API timeout 行为（参考 CURRENT_STATUS.md）。
+- **T1 失败原因**: `apps/dashboard/src/api/index.js` 文件不存在 — Phase 15.0 后前端代码完全重构（src/ 目录被移除），verify 脚本期望的文件路径已失效。**功能本身正常**：vitest 192 passed 已覆盖 API timeout 行为（参考 CURRENT_STATUS.md）。
 - **T3 失败原因**: grep `dashboard/app.py` 找不到 `get_ripple_impact_scores_bulk` 引用 — Phase 15.0 T1 把 app.py 拆到 `dashboard/helpers/cvg.py`，verify 脚本的检查路径未同步更新。**功能本身正常**：P1-H4 bench（TEST-P1-H4-001）刚以 22.1ms 通过（200 ripples < 200ms budget），证明 bulk query 工作正常。
 
 **结论**: 用户请求的 P1-M4 (T4) + P1-L6 (T5) 验证全部通过。T1/T3 失败属于 verify 脚本陈旧（Phase 15.0 重构后未更新），建议下次维护时同步 verify 脚本（接受 `dashboard/helpers/` 路径 + 新 frontend 路径）。
@@ -237,7 +237,7 @@
 | **测试ID** | TEST-BASELINE-002 |
 | **关联任务** | Phase 15.0 T1 |
 | **测试环境** | Windows 10 / Python 3.11 / Node 20 |
-| **执行命令** | `cd dashboard/frontend && pnpm test` |
+| **执行命令** | `cd apps/dashboard && pnpm test` |
 | **测试类型** | 前端单元测试 |
 | **结果** | ✅ 通过 |
 | **通过数** | 192 |
@@ -294,9 +294,9 @@ pytest tests/agent_system/ -q      # 指定模块
 pytest -k "keyword" -q             # 按关键字筛选
 
 # 前端单元测试
-cd dashboard/frontend && pnpm test
-cd dashboard/frontend && pnpm test:coverage
-cd dashboard/frontend && pnpm test -- --reporter=verbose
+cd apps/dashboard && pnpm test
+cd apps/dashboard && pnpm test:coverage
+cd apps/dashboard && pnpm test -- --reporter=verbose
 
 # E2E测试
 bash scripts/verify-e2e-live-ci.sh
@@ -312,7 +312,7 @@ bash scripts/bench-ripple-list.sh
 
 # 代码检查
 ruff check
-cd dashboard/frontend && pnpm lint
+cd apps/dashboard && pnpm lint
 ```
 
 ---

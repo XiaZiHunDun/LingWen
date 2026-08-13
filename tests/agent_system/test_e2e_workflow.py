@@ -15,9 +15,9 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from infra.agent_system.master_controller import MasterController
-from infra.agent_system.social_engine.event_effect_calculator import EventEffectCalculator
-from infra.agent_system.social_engine.relationship_tracker import RelationshipTracker
+from lingwen_pipeline.master_controller import MasterController
+from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
+from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
 
 # End-to-end tests need a real AI provider to construct MasterController.
 # Skip the whole class when no API key is available, so this file is
@@ -450,7 +450,7 @@ class TestContextBuilderIntegration:
 
     def test_context_builder_with_empty_memory(self):
         """测试ContextBuilder处理空memory_context"""
-        from infra.agent_system.core.context_builder import ContextBuilder
+        from lingwen_core.agents.core.context_builder import ContextBuilder
 
         builder = ContextBuilder()
         context = builder.build_writing_context(
@@ -468,7 +468,7 @@ class TestContextBuilderIntegration:
 
     def test_context_builder_merges_foreshadow(self):
         """测试ContextBuilder合并伏笔"""
-        from infra.agent_system.core.context_builder import ContextBuilder
+        from lingwen_core.agents.core.context_builder import ContextBuilder
 
         builder = ContextBuilder()
         memory_context = {

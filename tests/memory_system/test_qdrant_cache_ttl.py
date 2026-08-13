@@ -16,7 +16,7 @@ import time
 
 import pytest
 
-from infra.memory_system.vector.qdrant_client import _LRUCache
+from lingwen_memory.vector.qdrant_client import _LRUCache
 
 
 def _make_cache(ttl: float = 300.0, max_size: int = 100) -> _LRUCache:

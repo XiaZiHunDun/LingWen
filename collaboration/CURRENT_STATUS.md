@@ -28,7 +28,7 @@
 | ~~P1-L6~~ | ~~Shell脚本硬编码slug修复~~ | P1 | Local-A | ✅ **已完成** | 2026-07-15 |
 
 > **P1 稳定化 5/5 全部完成**（2026-07-14 VM-A 验证通过）
-> - P1-H10（前端API timeout）已实现于 `dashboard/frontend/src/api/index.js`
+> - P1-H10（前端API timeout）已实现于 `apps/dashboard/src/api/index.js`
 > - P1-H2（FastAPI中间件 CORS/GZip/限流）已实现于 `dashboard/app.py` 并通过 VM-A 验证 (5/5 PASSED, 1.65s)
 > - P1-H4（Ripple bulk impact scores）已实现于 `dashboard/helpers/cvg.py` 并通过 VM-A bench 验证 (200 ripples 22.1ms, 7× speedup)
 > - P1-M4（CLI 路径 env-driven）已实现于 `infra/cli/path_utils.py` 并通过 VM-A verify T4 PASS
@@ -112,7 +112,7 @@
 
 | ID | 问题 | 严重程度 | 位置 | 关联任务 |
 |----|------|----------|------|----------|
-| E1 | 前端API无timeout/abort | ✅ 已修复 | `dashboard/frontend/src/api/index.js` | P1-H10 |
+| E1 | 前端API无timeout/abort | ✅ 已修复 | `apps/dashboard/src/api/index.js` | P1-H10 |
 | E2 | FastAPI零中间件 | ✅ 已修复 | `dashboard/app.py:209-219` | P1-H2 |
 | E3 | Ripple N+1查询 | ✅ 已修复 | `dashboard/helpers/cvg.py:_ripple_list_items` | P1-H4 |
 | E7 | CLI相对路径 | ✅ 已修复 | `infra/cli/path_utils.py` | P1-M4 |

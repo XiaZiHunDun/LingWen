@@ -26,9 +26,9 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
 
     Pattern 跟 tests/agent_system/test_dashboard_budget_endpoints.py 1:1 mirror.
     """
-    from dashboard.app import create_app
-    from dashboard.protocols import MasterControllerAdapter
-    from infra.agent_system.budget_persistence import BudgetService
+    from apps.studio_api.app import create_app
+    from apps.studio_api.protocols import MasterControllerAdapter
+    from lingwen_core.agents.budget_persistence import BudgetService
 
     service = BudgetService(db_path=tmp_path / "test.db")
     service.init_db()
@@ -54,7 +54,7 @@ class TestBudgetByTierEndpoints:
         """GET /api/budgets/by-tier 返 3 tier dict (haiku/sonnet/opus, Enum 顺序)."""
         client, service = _make_test_client(tmp_path)
         # 设 opus + sonnet (haiku 未设)
-        service.set_by_tier(__import__("infra.ai_service.model_tiers", fromlist=["ModelTier"]).ModelTier.OPUS, 1.0)
+        service.set_by_tier(__import__("lingwen_llm.providers.model_tiers", fromlist=["ModelTier"]).ModelTier.OPUS, 1.0)
         response = client.get("/api/budgets/by-tier")
         assert response.status_code == 200
         data = response.json()
@@ -75,7 +75,7 @@ class TestBudgetByTierEndpoints:
         body = response.json()
         assert body == {"ok": True, "tier": "opus", "usd": 1.0}
         # Verify persisted via service (mirror test_put_budgets_day_persists)
-        from infra.ai_service.model_tiers import ModelTier
+        from lingwen_llm.providers.model_tiers import ModelTier
         current = service.get_by_tier(ModelTier.OPUS)
         assert current is not None
         assert current.usd == 1.0
@@ -97,8 +97,8 @@ class TestBudgetByTierEndpoints:
         self, tmp_path: Path
     ) -> None:
         """PUT /api/budgets/by-tier/opus → 503 (master.budget_service_by_tier = None)."""
-        from dashboard.app import create_app
-        from dashboard.protocols import MasterControllerAdapter
+        from apps.studio_api.app import create_app
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         master = MagicMock()
         master.budget_service = None
@@ -116,10 +116,10 @@ class TestBudgetByTierEndpoints:
 
     def test_workflow_status_response_includes_budget_by_tier_field(self, tmp_path: Path) -> None:
         """GET /api/workflows/active 返 dict 含 budget_by_tier 3 keys (T5 helper 透传, T6 补 model Field)."""
-        from dashboard.app import create_app
-        from dashboard.protocols import MasterControllerAdapter
-        from infra.agent_system.budget_persistence import BudgetService
-        from infra.ai_service.model_tiers import ModelTier
+        from apps.studio_api.app import create_app
+        from apps.studio_api.protocols import MasterControllerAdapter
+        from lingwen_core.agents.budget_persistence import BudgetService
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)

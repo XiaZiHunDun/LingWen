@@ -21,10 +21,10 @@ from __future__ import annotations
 
 import pytest
 
-from infra.cli.commands.ripple_audit import RippleAuditCommand
-from infra.cli.commands.ripple_rollback import RippleRollbackCommand
-from infra.cli.options import RippleAuditOptions, RippleRollbackOptions
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.ripple_audit import RippleAuditCommand
+from lingwen_cli.commands.ripple_rollback import RippleRollbackCommand
+from lingwen_cli.options import RippleAuditOptions, RippleRollbackOptions
+from lingwen_cli.parsers import create_parser
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 
@@ -89,7 +89,7 @@ class TestRippleAuditCmd:
         """lingwen.py ripple-audit <id> prints audit entries for existing ripple."""
         # Patch the storage factory used inside the command module
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_audit._get_storage",
+            "lingwen_cli.commands.ripple_audit._get_storage",
             lambda: storage_with_ripple,
         )
         options = make_audit_options(ripple_id="rip-applied-1")
@@ -105,7 +105,7 @@ class TestRippleAuditCmd:
     def test_audit_404_for_missing(self, storage_with_ripple, monkeypatch, capsys):
         """Unknown ripple_id → exit 1 + 'not found' on stderr/stdout."""
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_audit._get_storage",
+            "lingwen_cli.commands.ripple_audit._get_storage",
             lambda: storage_with_ripple,
         )
         options = make_audit_options(ripple_id="rip-nonexistent")
@@ -120,7 +120,7 @@ class TestRippleAuditCmd:
     def test_audit_empty_message(self, storage_with_ripple, monkeypatch, capsys):
         """limit=0 → validation error (Phase 9.14 T6 fix: reject <1, was: empty list path)."""
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_audit._get_storage",
+            "lingwen_cli.commands.ripple_audit._get_storage",
             lambda: storage_with_ripple,
         )
         options = make_audit_options(ripple_id="rip-applied-1", limit=0)
@@ -136,7 +136,7 @@ class TestRippleRollbackCmd:
     def test_rollback_happy(self, storage_with_ripple, monkeypatch, capsys):
         """applied ripple + --reason → status=pending + applied_at=NULL + exit 0."""
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_rollback._get_storage",
+            "lingwen_cli.commands.ripple_rollback._get_storage",
             lambda: storage_with_ripple,
         )
         options = make_rollback_options(ripple_id="rip-applied-1", reason="CLI test")
@@ -165,7 +165,7 @@ class TestRippleRollbackCmd:
     def test_rollback_fails_for_pending_status(self, storage_with_ripple, monkeypatch, capsys):
         """Rollback a 'pending' ripple → ValueError → exit 1."""
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_rollback._get_storage",
+            "lingwen_cli.commands.ripple_rollback._get_storage",
             lambda: storage_with_ripple,
         )
         options = make_rollback_options(ripple_id="rip-pending-1", reason="should fail")

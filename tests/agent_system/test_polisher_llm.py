@@ -12,9 +12,9 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from infra.agent_system.agents.base import AgentBase
-from infra.agent_system.agents.polisher.tools import PolisherTools
-from infra.agent_system.master_controller import MasterController
+from lingwen_core.agents.agents.base import AgentBase
+from lingwen_core.agents.agents.polisher.tools import PolisherTools
+from lingwen_pipeline.master_controller import MasterController
 
 
 class _StubRouter:

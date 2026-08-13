@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from infra.ai_service import MiniMaxProvider, ProviderConfig
+from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 
 
 class ChapterReviewer:

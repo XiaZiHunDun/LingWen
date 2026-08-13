@@ -1,0 +1,36 @@
+role: writer
+skill_count: 11
+skills:
+- slug: writer-a
+  legacy_dir: writer/作家A
+  skill_md: roles/writer/skills/writer-a/SKILL.md
+- slug: writer-b
+  legacy_dir: writer/作家B
+  skill_md: roles/writer/skills/writer-b/SKILL.md
+- slug: writer-c
+  legacy_dir: writer/作家C
+  skill_md: roles/writer/skills/writer-c/SKILL.md
+- slug: writer-d
+  legacy_dir: writer/作家D
+  skill_md: roles/writer/skills/writer-d/SKILL.md
+- slug: writer-e
+  legacy_dir: writer/作家E
+  skill_md: roles/writer/skills/writer-e/SKILL.md
+- slug: writer-f
+  legacy_dir: writer/作家F
+  skill_md: roles/writer/skills/writer-f/SKILL.md
+- slug: writer-g
+  legacy_dir: writer/作家G
+  skill_md: roles/writer/skills/writer-g/SKILL.md
+- slug: writer-h
+  legacy_dir: writer/作家H
+  skill_md: roles/writer/skills/writer-h/SKILL.md
+- slug: writer-i
+  legacy_dir: writer/作家I
+  skill_md: roles/writer/skills/writer-i/SKILL.md
+- slug: writer-j
+  legacy_dir: writer/作家J
+  skill_md: roles/writer/skills/writer-j/SKILL.md
+- slug: writer-chief
+  legacy_dir: writer/作家主编
+  skill_md: roles/writer/skills/writer-chief/SKILL.md

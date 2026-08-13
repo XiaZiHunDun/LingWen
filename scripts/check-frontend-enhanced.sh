@@ -22,7 +22,7 @@ print_info() {
   echo -e "[*] $1"
 }
 
-FRONTEND_DIR="/home/ailearn/projects/LingWen/dashboard/frontend"
+FRONTEND_DIR="/home/ailearn/projects/LingWen/apps/dashboard"
 DEV_SERVER_URL="http://localhost:5173"
 
 cd "$FRONTEND_DIR"

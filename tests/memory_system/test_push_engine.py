@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.memory_system.gateway.push_engine import PushEngine
+from lingwen_memory.gateway.push_engine import PushEngine
 
 
 class TestPushEngine:

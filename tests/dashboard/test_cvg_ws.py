@@ -13,8 +13,8 @@ import pytest
 from fastapi import WebSocket
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
-from dashboard.cvg_ws import (
+from apps.studio_api.app import create_app
+from apps.studio_api.cvg_ws import (
     EVENT_PONG,
     EVENT_RIPPLE_CREATED,
     EVENT_RIPPLE_STATUS_CHANGED,
@@ -97,7 +97,7 @@ class TestCvgConnectionManager:
 
     def test_broadcast_module_helper_importable(self):
         """Phase 9.13: module-level broadcast() helper (storage layer lazy import 用)."""
-        from dashboard import cvg_ws
+        from apps.studio_api import cvg_ws
 
         assert hasattr(cvg_ws, "broadcast")
         assert callable(cvg_ws.broadcast)
@@ -112,7 +112,7 @@ class TestCvgWebSocketEndpoint:
     """WebSocket /api/ws/cvg endpoint 注册 + 握手测试."""
 
     def test_ws_endpoint_registered(self, tmp_path, monkeypatch):
-        from dashboard import app as app_module
+        from apps.studio_api import app as app_module
 
         storage = RippleStorage(db_path=tmp_path / "test.db")
         monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
@@ -121,7 +121,7 @@ class TestCvgWebSocketEndpoint:
         assert "/api/ws/cvg" in routes
 
     def test_ws_cvg_handshake_sends_pong_on_ping(self, tmp_path, monkeypatch):
-        from dashboard import app as app_module
+        from apps.studio_api import app as app_module
 
         storage = RippleStorage(db_path=tmp_path / "test.db")
         monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
@@ -131,7 +131,7 @@ class TestCvgWebSocketEndpoint:
 
     def test_ws_cvg_live_ping_pong(self, tmp_path, monkeypatch):
         """Live WS: client send {type: ping} → server reply {type: pong}."""
-        from dashboard import app as app_module
+        from apps.studio_api import app as app_module
 
         storage = RippleStorage(db_path=tmp_path / "test.db")
         monkeypatch.setattr(app_module, "_default_storage", lambda: storage)

@@ -8,7 +8,7 @@ cd "$ROOT"
 unset LINGWEN_PROJECT_ROOT
 
 echo "=== Building frontend ==="
-cd dashboard/frontend
+cd apps/dashboard
 pnpm build
 cd "$ROOT"
 

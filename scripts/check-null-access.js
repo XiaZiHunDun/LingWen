@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SRC_DIR = '/home/ailearn/projects/LingWen/dashboard/frontend/src';
+const SRC_DIR = '/home/ailearn/projects/LingWen/apps/dashboard/src';
 
 const patterns = [
   {

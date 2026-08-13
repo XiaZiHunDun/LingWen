@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from infra.agent_system.agent_config import (
+from lingwen_core.agents.agent_config import (
     DEFAULT_STATE_DIR,
     MasterControllerConfig,
     load_default_config,
@@ -51,7 +51,7 @@ def test_default_state_file_is_sibling_of_relationship_tracker():
     Lockdown: relationship_network.db 必须在 social_engine/ 下 (R2-012: 迁移到 .db),
     而不是 project root 旁边的孤儿目录里。
     """
-    from infra.agent_system.social_engine.relationship_tracker import (
+    from lingwen_core.agents.social_engine.relationship_tracker import (
         DEFAULT_STATE_FILE as RT_FILE,
     )
     # R2-012: 默认后端 .db
@@ -148,7 +148,7 @@ def test_load_default_config_respects_explicit_state_dir(monkeypatch):
 def test_master_controller_config_is_frozen():
     """MasterControllerConfig 不可变（frozen dataclass）"""
     # 只用一个 provider 来构造，避免依赖 env
-    from infra.ai_service import ProviderConfig
+    from lingwen_llm.providers import ProviderConfig
     config = MasterControllerConfig(
         state_dir="/tmp",
         primary_provider="minimax",
@@ -161,7 +161,7 @@ def test_master_controller_config_is_frozen():
 
 
 def test_load_project_env_from_file(tmp_path, monkeypatch):
-    from infra.agent_system.agent_config import load_project_env
+    from lingwen_core.agents.agent_config import load_project_env
 
     monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
     env_file = tmp_path / ".env"

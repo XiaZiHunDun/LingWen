@@ -11,7 +11,7 @@ reset_registry() 也没加锁,与正在 init 的线程 race。
 import threading
 from unittest import TestCase
 
-from infra.agent_system.registry.skill_registry import (
+from lingwen_core.agents.registry.skill_registry import (
     SkillRegistry,
     get_registry,
     reset_registry,

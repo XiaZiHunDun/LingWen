@@ -17,12 +17,12 @@ coverage:
 flags:
   frontend:
     paths:
-      - dashboard/frontend/src/
+      - apps/dashboard/src/
   backend:
     paths:
       - infra/
       - tools/
-      - dashboard/
+      - apps/studio_api/
 
 comment:
   layout: "header, diff, flags, components, files, footer"

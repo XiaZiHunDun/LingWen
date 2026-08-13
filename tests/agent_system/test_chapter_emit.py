@@ -6,11 +6,11 @@ import os
 
 import pytest
 
-from infra.agent_system.chapter_emit import (
+from lingwen_core.agents.chapter_emit import (
     emit_chapter_enabled,
     emit_chapter_to_repo,
 )
-from infra.agent_system.got_bridge import AgentComputeFn
+from lingwen_core.agents.got_bridge import AgentComputeFn
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.paths import ProjectPaths
 

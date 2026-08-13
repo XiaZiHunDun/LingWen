@@ -15,8 +15,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dashboard import cascade_notifier
-from dashboard.protocols import CascadeUpdatePayload
+from apps.studio_api import cascade_notifier
+from apps.studio_api.protocols import CascadeUpdatePayload
 
 
 @pytest.fixture(autouse=True)

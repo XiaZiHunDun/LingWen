@@ -31,4 +31,4 @@ class TestRootGithubWorkflows:
 
     def test_root_dashboard_frontend_ci_paths_include_frontend(self):
         text = (WORKFLOWS_DIR / "dashboard-frontend-ci.yml").read_text(encoding="utf-8")
-        assert "dashboard/frontend/**" in text
+        assert "apps/dashboard/**" in text

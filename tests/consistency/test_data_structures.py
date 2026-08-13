@@ -11,7 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.engine.data_structures import (
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerResult,
     CheckerType,
     CheckScope,

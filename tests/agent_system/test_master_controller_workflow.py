@@ -176,7 +176,7 @@ class _StubAgents:
 
 def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     """构造 MasterController 但 stub 掉 init 中的重操作,只保留 run_workflow 链路"""
-    from infra.agent_system import master_controller as mc_mod
+    from lingwen_core.agents import master_controller as mc_mod
 
     # 阻止 __init__ 中调 build_router (需要 API key)
     monkeypatch.setattr(mc_mod, "build_router", lambda config: None)
@@ -186,7 +186,7 @@ def _make_controller_with_stubs(monkeypatch) -> tuple[Any, _StubAgents]:
     monkeypatch.setattr(mc_mod, "build_social_engine", lambda state_dir: None)
     # StateManager 在 __init__ 内部用 `from ..state.state_manager import StateManager` 导入
     # 需要 patch 它在原模块中的位置
-    import infra.state.state_manager as sm_mod
+    import lingwen_pipeline.state.state_manager as sm_mod
     monkeypatch.setattr(sm_mod, "StateManager", lambda *a, **kw: None)
 
     controller = mc_mod.MasterController.__new__(mc_mod.MasterController)

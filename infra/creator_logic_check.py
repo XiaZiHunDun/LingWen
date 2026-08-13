@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from infra.cli.options import CheckOptions
+from lingwen_cli.options import CheckOptions
 from infra.creator_check import apply_creator_check_defaults, settings_from_project_config
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
@@ -33,10 +33,10 @@ def run_creator_logic_check(
     chapter_num: int | None = None,
 ) -> dict[str, Any]:
     """Run full consistency check with creation_mode defaults; return structured summary."""
-    from infra.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
-    from infra.consistency.checkers.pacing_checker import PacingChecker
-    from infra.consistency.checkers.scene_transition_checker import SceneTransitionChecker
-    from infra.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
+    from lingwen_quality.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
+    from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+    from lingwen_quality.consistency.checkers.scene_transition_checker import SceneTransitionChecker
+    from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
     from infra.creator_ui_profile import ui_profile_from_project_config
 
     root = project_root if isinstance(project_root, Path) else Path(project_root)

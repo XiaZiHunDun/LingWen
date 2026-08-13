@@ -11,15 +11,15 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.engine.consistency_engine import ConsistencyEngine
-from infra.consistency.engine.data_structures import (
+from lingwen_quality.consistency.engine.consistency_engine import ConsistencyEngine
+from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     ConsistencyReport,
     Issue,
     IssueLocation,
     IssueSeverity,
 )
-from infra.consistency.engine.report_generator import ReportGenerator
+from lingwen_quality.consistency.engine.report_generator import ReportGenerator
 
 
 @pytest.fixture

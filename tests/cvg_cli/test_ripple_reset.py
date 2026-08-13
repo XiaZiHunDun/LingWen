@@ -13,9 +13,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from infra.cli.commands.ripple_reset import RippleResetCommand
-from infra.cli.options import RippleResetOptions
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.ripple_reset import RippleResetCommand
+from lingwen_cli.options import RippleResetOptions
+from lingwen_cli.parsers import create_parser
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 
@@ -133,7 +133,7 @@ class TestRippleResetCmd:
     def test_reset_404_for_missing_ripple(self, storage_with_ripple, monkeypatch, capsys):
         """Unknown ripple_id → exit 1 + 'not found' on stderr."""
         monkeypatch.setattr(
-            "infra.cli.commands.ripple_reset._get_storage",
+            "lingwen_cli.commands.ripple_reset._get_storage",
             lambda: storage_with_ripple,
         )
         options = make_reset_options(ripple_id="rip-nonexistent", to_status="pending")

@@ -13,8 +13,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from infra.consistency.checkers.llm_causal_reasoning_checker import LLMCausalReasoningChecker
-from infra.consistency.engine.data_structures import Issue
+from lingwen_quality.consistency.checkers.llm_causal_reasoning_checker import LLMCausalReasoningChecker
+from lingwen_quality.consistency.engine.data_structures import Issue
 
 
 def test_llm_causal_reasoning_checker_basic():

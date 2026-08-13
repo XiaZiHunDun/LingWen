@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.ai_service import MiniMaxProvider, ProviderConfig
+from lingwen_llm.providers import MiniMaxProvider, ProviderConfig
 
 
 class CharacterConsistencyFixer:

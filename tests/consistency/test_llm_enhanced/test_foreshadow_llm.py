@@ -12,7 +12,7 @@ import pytest
 
 def test_foreshadow_llm_finds_uncertain_regions():
     """测试LLM增强伏笔检测器能找到模糊区域"""
-    from infra.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
 
     checker = LLMEnhancedForeshadowChecker()
     content = "原来这个人和之前的事件有关，真相终于揭晓"
@@ -24,7 +24,7 @@ def test_foreshadow_llm_finds_uncertain_regions():
 
 def test_foreshadow_llm_multiple_patterns():
     """测试LLM增强伏笔检测器匹配多种模式"""
-    from infra.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
 
     checker = LLMEnhancedForeshadowChecker()
     content = "原来他就是真凶，一切都说得通了"
@@ -35,7 +35,7 @@ def test_foreshadow_llm_multiple_patterns():
 
 def test_foreshadow_llm_context_extraction():
     """测试LLM增强伏笔检测器正确提取上下文"""
-    from infra.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
 
     checker = LLMEnhancedForeshadowChecker()
     content = "直到现在才明白，原来一切都是命中注定"
@@ -48,7 +48,7 @@ def test_foreshadow_llm_context_extraction():
 
 def test_foreshadow_llm_inherits_base_checker():
     """测试LLMEnhancedForeshadowChecker继承基类检测器"""
-    from infra.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
 
     checker = LLMEnhancedForeshadowChecker()
     assert checker.base_checker is not None
@@ -57,7 +57,7 @@ def test_foreshadow_llm_inherits_base_checker():
 
 def test_foreshadow_llm_has_llm_service():
     """测试LLMEnhancedForeshadowChecker具有LLM服务"""
-    from infra.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
 
     checker = LLMEnhancedForeshadowChecker()
     assert checker.llm_service is not None
@@ -65,7 +65,7 @@ def test_foreshadow_llm_has_llm_service():
 
 def test_foreshadow_llm_region_positions():
     """测试LLM增强伏笔检测器正确记录位置"""
-    from infra.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.foreshadow_llm import LLMEnhancedForeshadowChecker
 
     checker = LLMEnhancedForeshadowChecker()
     content = "原来真相是这样的，所有谜题揭晓"

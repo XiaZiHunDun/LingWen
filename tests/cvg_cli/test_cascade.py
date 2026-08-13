@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from infra.cli.commands.cascade import CascadeCommand
-from infra.cli.options import CascadeOptions
-from infra.cli.parsers import create_parser
+from lingwen_cli.commands.cascade import CascadeCommand
+from lingwen_cli.options import CascadeOptions
+from lingwen_cli.parsers import create_parser
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 
@@ -55,7 +55,7 @@ class TestCascadeCmd:
             affected_nodes=("n1",), affected_edges=(), proposed_actions=(), status="pending")
         storage.append_ripple(ripple)
         monkeypatch.setattr(
-            "infra.cli.commands.cascade._get_storage",
+            "lingwen_cli.commands.cascade._get_storage",
             lambda: storage,
         )
         cmd = CascadeCommand()
@@ -67,7 +67,7 @@ class TestCascadeCmd:
         """cascade unknown → exit 1 + 'not found'."""
         storage = RippleStorage(db_path=tmp_path / "cascade.db")
         monkeypatch.setattr(
-            "infra.cli.commands.cascade._get_storage",
+            "lingwen_cli.commands.cascade._get_storage",
             lambda: storage,
         )
         cmd = CascadeCommand()

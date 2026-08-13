@@ -1,3 +1,10 @@
+
+## Phase 16 + 17 状态（2026-08-12）
+
+- **Phase 16 卫生与基础** (2026-08-11): v10.0 — 事件 reducer、文件尺寸上限、单一品牌、GATE 脚本。
+- **Phase 17 monorepo** (进行中): 8 个 lingwen-* Python 包 + apps/{dashboard,studio_api} + pnpm workspace。
+- **Phase 16.7 推迟**：删陈旧 infra 目录推迟到 Phase 17 monorepo 完成后再评估。
+
 # 灵文 · LingWen 项目 Handoff 文档
 
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
@@ -362,10 +369,11 @@ LingWen/                                    # 本目录 (项目根, git root)
 │   ├── memory_system/                      # RAG/Qdrant
 │   ├── quality/                            # 检测器/修复器
 │   └── ...
-├── dashboard/                              # FastAPI 后端 + Vue 前端
-│   ├── app.py                              # FastAPI 入口
-│   ├── protocols.py                        # Pydantic schemas
-│   ├── frontend/                           # Vue 3 + Vite
+├── apps/
+│   ├── studio_api/                         # FastAPI Studio API (Phase 17.3) [legacy: dashboard/]
+│   │   ├── app.py                          # FastAPI 入口
+│   │   └── protocols.py                    # Pydantic schemas
+│   └── dashboard/                          # Vue 3 + Vite (Phase 17.2)
 │   │   ├── src/
 │   │   │   ├── components/                 # Vue SFC
 │   │   │   ├── composables/                # useWorkflowSocket / useCostWindow / useRippleStore
@@ -449,20 +457,20 @@ LingWen/                                    # 本目录 (项目根, git root)
 # 1. Setup
 cd /home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen
 pip install -e .                 # 后端 (含 pytest/vitest 框架)
-cd dashboard/frontend && pnpm install && cd ../..
+cd apps/dashboard && pnpm install && cd ../..
 
 # 2. 验证 baseline (sanity check, 跟 Handoff 同步时的测试数比对)
 pytest -q                          # 期望: 2495 passed, 27 skipped, ~90s
-cd dashboard/frontend && pnpm test && cd ../..              # 期望: 193 passed, ~5s
-cd dashboard/frontend && pnpm test:coverage && cd ../..     # 期望: 193 passed + lcov (lines ≥70%)
+cd apps/dashboard && pnpm test && cd ../..              # 期望: 193 passed, ~5s
+cd apps/dashboard && pnpm test:coverage && cd ../..     # 期望: 193 passed + lcov (lines ≥70%)
 pytest -q                          # 期望: 2512 passed, ~90s
 # (e2e 14 tests, 部分 baseline fail 不是回归, 是 Phase 9.18 已知)
 
 # 3. 启动 dashboard (optional, 看 UI)
 # 后端:
-python dashboard/app.py &  # port 8000
+python apps/studio_api/app.py &  # port 8000
 # 前端:
-cd dashboard/frontend && pnpm dev --port 5173 --strictPort &
+cd apps/dashboard && pnpm dev --port 5173 --strictPort &
 # 浏览器: http://localhost:5173
 ```
 
@@ -1065,7 +1073,7 @@ Phase 9.31 F15 已删全部 ceremonial Playwright spec. 契约全走 vitest (`te
 - `dashboard-e2e-smoke.yml` — label `e2e-smoke` / manual, 1 test（调试）
 - ~~`dashboard-e2e-live.yml`~~ 已删（与 test 重复）
 - `pnpm e2e:smoke` — vite only，1 test
-- `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `dashboard/e2e_entry.py`，5 tests
+- `LINGWEN_E2E_LIVE=1 pnpm e2e:live` — vite + `apps/studio_api/e2e_entry.py`，5 tests
 - **已知**: 本机偶发 `ripples-audit` loading 超时（4/5）；Phase 10.38 已将 list/detail 超时提至 30s
 
 ### 7.5 pytest baseline 与环境变量
@@ -1126,15 +1134,15 @@ Vite dev server 走 `pnpm dev --port 5173 --strictPort` (跟 Playwright e2e 的 
 ```bash
 # === Tests（全量以 GitHub Actions test workflow 为准；本地见 ci-quality-gates §本地最小验证）===
 pytest -q                                    # 3011+ collected · 全量见 CI
-cd dashboard/frontend && pnpm vitest run             # 改前端时 · ~8s
-cd dashboard/frontend && pnpm lint:all && pnpm build # 与 test 主门对齐
-cd dashboard/frontend && pnpm typecheck              # TS strict (tests/**)
-cd dashboard/frontend && pnpm typecheck:app          # vue-tsc src/** (F47)
-cd dashboard/frontend && pnpm e2e:smoke --list       # 1 smoke test
-cd dashboard/frontend && LINGWEN_E2E_LIVE=1 pnpm e2e:live --list  # 5 live tests (opt-in)
+cd apps/dashboard && pnpm vitest run             # 改前端时 · ~8s
+cd apps/dashboard && pnpm lint:all && pnpm build # 与 test 主门对齐
+cd apps/dashboard && pnpm typecheck              # TS strict (tests/**)
+cd apps/dashboard && pnpm typecheck:app          # vue-tsc src/** (F47)
+cd apps/dashboard && pnpm e2e:smoke --list       # 1 smoke test
+cd apps/dashboard && LINGWEN_E2E_LIVE=1 pnpm e2e:live --list  # 5 live tests (opt-in)
 ruff check .                                 # 0 issues
-cd dashboard/frontend && pnpm lint:all             # 0 errors
-cd dashboard/frontend && pnpm build                # 0 errors
+cd apps/dashboard && pnpm lint:all             # 0 errors
+cd apps/dashboard && pnpm build                # 0 errors
 
 # === Lint ===
 ruff check .
@@ -1147,8 +1155,8 @@ git rev-parse HEAD origin/master       # 2 行同 SHA = 同步
 git status                             # 干净 = 无 pending 改
 
 # === Dashboard ===
-python dashboard/app.py &                       # port 8000
-cd dashboard/frontend && pnpm dev --port 5173 --strictPort &  # port 5173
+python apps/studio_api/app.py &  # port 8000
+cd apps/dashboard && pnpm dev --port 5173 --strictPort &  # port 5173
 # 浏览器: http://localhost:5173
 
 # === CLI ===

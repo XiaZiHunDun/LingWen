@@ -15,11 +15,11 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
-from dashboard.protocols import MasterControllerAdapter
-from infra.agent_system import master_controller as mc_mod
-from infra.ai_service.cost_tracker import CostTracker
-from infra.ai_service.model_tiers import ModelTier
+from apps.studio_api.app import create_app
+from apps.studio_api.protocols import MasterControllerAdapter
+from lingwen_core.agents import master_controller as mc_mod
+from lingwen_llm.providers.cost_tracker import CostTracker
+from lingwen_llm.providers.model_tiers import ModelTier
 
 
 class TestWorkflowStatusResponseCostByTier:
@@ -82,10 +82,10 @@ class TestWorkflowStatusTimeWindow:
 
     def _make_master_with_cost_tracker(self, tmp_path: Path):
         """复用 TestWorkflowStatusResponseCostByTier 的 _make_master pattern."""
-        from dashboard.protocols import MasterControllerAdapter
-        from infra.agent_system import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
+        from apps.studio_api.protocols import MasterControllerAdapter
+        from lingwen_core.agents import master_controller as mc_mod
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()
@@ -106,7 +106,7 @@ class TestWorkflowStatusTimeWindow:
         master._last_workflow_name = "novel_writing"
 
         adapter = MasterControllerAdapter(master)
-        from dashboard.app import create_app
+        from apps.studio_api.app import create_app
         app = create_app(db_path=tmp_path / "rp.db", master_controller=adapter)
         from fastapi.testclient import TestClient
         return TestClient(app)
@@ -167,10 +167,10 @@ class TestWorkflowStatusResponseCostByDay:
 
     def _make_master_with_cost_tracker(self, tmp_path: Path):
         """复用 TestWorkflowStatusTimeWindow pattern."""
-        from dashboard.protocols import MasterControllerAdapter
-        from infra.agent_system import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
+        from apps.studio_api.protocols import MasterControllerAdapter
+        from lingwen_core.agents import master_controller as mc_mod
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()
@@ -249,10 +249,10 @@ class TestWorkflowStatusResponseCostByDayPerTier:
     """Phase 9.28 F12: GET /api/workflows/active 暴露 cost_by_day_per_tier 字段."""
 
     def _make_master_with_cost_tracker(self, tmp_path: Path):
-        from dashboard.protocols import MasterControllerAdapter
-        from infra.agent_system import master_controller as mc_mod
-        from infra.ai_service.cost_tracker import CostTracker
-        from infra.ai_service.model_tiers import ModelTier
+        from apps.studio_api.protocols import MasterControllerAdapter
+        from lingwen_core.agents import master_controller as mc_mod
+        from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_llm.providers.model_tiers import ModelTier
 
         master = mc_mod.MasterController.__new__(mc_mod.MasterController)
         cost_tracker = CostTracker()

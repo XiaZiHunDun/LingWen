@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from dashboard.app import create_app
+from apps.studio_api.app import create_app
 from infra.cross_volume.reference_graph import CascadedRipple, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
@@ -17,7 +17,7 @@ def storage(tmp_path):
 
 @pytest.fixture
 def client(storage, monkeypatch):
-    from dashboard import app as app_module
+    from apps.studio_api import app as app_module
     monkeypatch.setattr(app_module, "_default_storage", lambda: storage)
     return TestClient(create_app())
 

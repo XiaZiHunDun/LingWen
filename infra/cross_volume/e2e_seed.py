@@ -7,7 +7,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
-from infra.agent_system.decision_queue import (
+from lingwen_core.agents.decision_queue import (
     DecisionKind,
     DecisionStatus,
     HumanDecision,
@@ -119,7 +119,7 @@ def clear_inbox_pending(
     state_dir: Path | None = None,
 ) -> None:
     """No pending ripples/decisions — for Today hub / companion-only smoke."""
-    from infra.agent_system.decision_queue import DecisionStatus
+    from lingwen_core.agents.decision_queue import DecisionStatus
 
     reset_e2e_ripple(E2E_PENDING_RIPPLE_ID, "applied", db_path)
     directory = _state_dir(state_dir)

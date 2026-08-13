@@ -1,0 +1,36 @@
+role: reviewer
+skill_count: 11
+skills:
+- slug: reviewer-a
+  legacy_dir: reviewer/审核员A
+  skill_md: roles/reviewer/skills/reviewer-a/SKILL.md
+- slug: reviewer-b
+  legacy_dir: reviewer/审核员B
+  skill_md: roles/reviewer/skills/reviewer-b/SKILL.md
+- slug: reviewer-c
+  legacy_dir: reviewer/审核员C
+  skill_md: roles/reviewer/skills/reviewer-c/SKILL.md
+- slug: reviewer-d
+  legacy_dir: reviewer/审核员D
+  skill_md: roles/reviewer/skills/reviewer-d/SKILL.md
+- slug: reviewer-e
+  legacy_dir: reviewer/审核员E
+  skill_md: roles/reviewer/skills/reviewer-e/SKILL.md
+- slug: reviewer-f
+  legacy_dir: reviewer/审核员F
+  skill_md: roles/reviewer/skills/reviewer-f/SKILL.md
+- slug: reviewer-g
+  legacy_dir: reviewer/审核员G
+  skill_md: roles/reviewer/skills/reviewer-g/SKILL.md
+- slug: reviewer-h
+  legacy_dir: reviewer/审核员H
+  skill_md: roles/reviewer/skills/reviewer-h/SKILL.md
+- slug: reviewer-i
+  legacy_dir: reviewer/审核员I
+  skill_md: roles/reviewer/skills/reviewer-i/SKILL.md
+- slug: reviewer-j
+  legacy_dir: reviewer/审核员J
+  skill_md: roles/reviewer/skills/reviewer-j/SKILL.md
+- slug: reviewer-k
+  legacy_dir: reviewer/审核员K
+  skill_md: roles/reviewer/skills/reviewer-k/SKILL.md

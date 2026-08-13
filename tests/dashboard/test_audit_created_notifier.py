@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from dashboard.cascade_notifier import notify_audit_created, set_ws_manager
-from dashboard.protocols import AuditCreatedPayload
+from apps.studio_api.cascade_notifier import notify_audit_created, set_ws_manager
+from apps.studio_api.protocols import AuditCreatedPayload
 
 
 @pytest.fixture(autouse=True)

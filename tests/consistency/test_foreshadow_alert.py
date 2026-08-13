@@ -10,8 +10,8 @@
 
 import pytest
 
-from infra.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
-from infra.consistency.engine.data_structures import CheckerType, IssueSeverity
+from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
+from lingwen_quality.consistency.engine.data_structures import CheckerType, IssueSeverity
 
 
 class TestForeshadowRegistration:

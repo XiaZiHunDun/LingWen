@@ -1,9 +1,10 @@
 # 灵文 · 工业化小说生产系统
 
 > **版本**: v10.0 (Phase 16 卫生与基础完成)
-> **更新 (2026-08-11)**：Phase 16（卫生与基础）落地——事件 reducer、`tools/migrate_state_log`、文件尺寸上限（72 文件 ALLOWLIST 按 Phase 17/19.x 跟踪）、单一品牌（墨灵 Studio=产品，灵文=框架）、Phase 16 Gate 脚本。Phase 16.7（删陈旧 infra）推迟到 Phase 17 monorepo 阶段。
+  → v11.0 (Phase 17 monorepo 完成)
+> **更新 (2026-08-13)**：Phase 17（monorepo 化）落地——`apps/`+`packages/` 双层布局、8 个 `lingwen-*` Python 包独立发布、`apps/dashboard` + `apps/studio_api` 拆分、pnpm workspace + `packages/dashboard-contracts` 占位、`content/` 顶层化（含 SKILL.md 角色池 + 3 个 registry.yaml）、包依赖方向守卫（`tooling/lint/check_package_deps.py`）、`tooling/gates/phase_17.sh` 门禁。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 monorepo 完成后的下个 phase。
 
-> **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `dashboard/frontend/src/config/brand.js`。
+> **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
 ## 身份
 
@@ -194,8 +195,9 @@ style:
 **项目名称**：《星陨纪元》
 **当前阶段**：PHASE_7_CLOSE（归档闭环）— 已完成
 **总章节数**：360 章正史正文（ch045 已补回；ch361–996 见 experimental/）
-**最新版本**：v10.0
-**发布状态**：Phase 16 已完成并合并到 master（2026-08-11），下一步 Phase 17 monorepo 拆分启动。Phase 16.7（删陈旧 infra）推迟到 Phase 17。
+**最新版本**：v11.0
+**上一版本**：v10.0 (Phase 16 卫生与基础完成)
+**发布状态**：Phase 17 monorepo 完成（待合并）。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 之后的下个 phase。
 **汇总状态**：全文正文已更新（07_汇总仓库/全文正文/星陨纪元_全文正文_v9.10.md，2.47MB，359章节；v9.11/v9.12 未触发正文变更）
 
 ### 工作流结构（22步）
@@ -459,6 +461,7 @@ infra/
 ---
 
 > **版本记录**：
+> - v11.0 (2026-08-13)：Phase 17 monorepo 完成。apps/+packages/ 双层布局，8 个 lingwen-* Python 包独立发布，apps/dashboard + apps/studio_api 拆分，pnpm workspace + dashboard-contracts 占位，content/ 顶层化（含 SKILL.md 角色池 + 3 个 registry.yaml），包依赖方向守卫（tooling/lint/check_package_deps.py），tooling/gates/phase_17.sh。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 monorepo 完成后的下个 phase。
 > - v10.0 (2026-08-11)：Phase 16 卫生与基础完成。新增 `packages/lingwen-storage`（JSONL append-only event store + reducer）、`tools/migrate_state_log.py`、文件尺寸上限（pre-commit + CI + 72 文件 ALLOWLIST）、`tooling/gates/phase_16.sh` Gate 脚本、单一品牌（墨灵 Studio=产品，灵文=框架，brand check 已接入 CI）。Phase 16.7（删陈旧 infra）推迟到 Phase 17 monorepo。
 > - v9.12 (2026-05-27)：项目完善版。澄清03内容仓库vs07汇总仓库职责，补充07汇总仓库README，统一版本命名，添加SQLite状态管理说明，章节数统一为359章。
 > - v9.11 (2026-05-27)：目录结构澄清版。补充07_汇总仓库与03_内容仓库的职责区分，添加关键命令对照表，避免混淆"索引更新"与"正文汇总"。

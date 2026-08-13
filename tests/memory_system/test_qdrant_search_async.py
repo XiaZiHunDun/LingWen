@@ -23,7 +23,7 @@ import pytest
 @pytest.fixture
 def wrapper():
     """Build a QdrantClientWrapper with mocked config + sync client."""
-    with patch("infra.memory_system.vector.qdrant_client.load_yaml") as mock_yaml:
+    with patch("lingwen_memory.vector.qdrant_client.load_yaml") as mock_yaml:
         mock_yaml.side_effect = [
             # First call: memory_config
             {
@@ -46,8 +46,8 @@ def wrapper():
                 }
             },
         ]
-        with patch("infra.memory_system.vector.qdrant_client.QdrantClient"):
-            from infra.memory_system.vector.qdrant_client import QdrantClientWrapper
+        with patch("lingwen_memory.vector.qdrant_client.QdrantClient"):
+            from lingwen_memory.vector.qdrant_client import QdrantClientWrapper
             w = QdrantClientWrapper()
             return w
 
