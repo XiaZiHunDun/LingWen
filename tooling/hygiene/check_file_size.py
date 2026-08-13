@@ -28,9 +28,10 @@ ALLOWLIST: set[str] = set()
 # === Phase 17 (monorepo split) — infra/legacy/tools ===
 ALLOWLIST.add("fn-core/src/core/aggregates/StoryAggregate.ts")  # Phase 17
 ALLOWLIST.add("packages/lingwen-core/src/lingwen_core/agents/chapter_production_pilot.py")  # Phase 17.4
-ALLOWLIST.add("infra/consistency/checkers/contradiction_detector.py")  # Phase 17
-ALLOWLIST.add("infra/consistency/checkers/sentence_diversity_checker.py")  # Phase 17
-ALLOWLIST.add("infra/consistency/engine/consistency_engine.py")  # Phase 17
+ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/checkers/contradiction_detector.py")  # Phase 17 (was infra/consistency/.../contradiction_detector.py, moved in 17.9)
+ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/checkers/foreshadow_checker.py")  # Phase 17.14 (added during allowlist pass for 17.9 leftovers)
+ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/checkers/sentence_diversity_checker.py")  # Phase 17 (was infra/consistency/.../sentence_diversity_checker.py, moved in 17.9)
+ALLOWLIST.add("packages/lingwen-quality/src/lingwen_quality/consistency/engine/consistency_engine.py")  # Phase 17 (was infra/consistency/.../consistency_engine.py, moved in 17.9)
 ALLOWLIST.add("infra/creator_agent.py")  # Phase 17
 ALLOWLIST.add("infra/creator_merge_preferences.py")  # Phase 17
 ALLOWLIST.add("infra/creator_onboarding_digest_schedule.py")  # Phase 17
@@ -105,7 +106,7 @@ ALLOWLIST.add("tests/hooks/test_hook_engine.py")  # Phase 19.3
 ALLOWLIST.add("tests/test_inspector_repairer.py")  # Phase 19.3
 
 # === Phase 19.4 (methodology split) ===
-ALLOWLIST.add("11_方法论/PART3_工具集/提示词模板库/version_manager.py")  # Phase 19.4
+ALLOWLIST.add("content/roles/methodology/PART3_工具集/提示词模板库/version_manager.py")  # Phase 19.4 (was 11_方法论/.../version_manager.py, moved in 17.14)
 
 # === Phase 19.5 (third-party asset) ===
 ALLOWLIST.add("trae比赛/novel-writing-assistant/_shared/js/mermaid.min.js")  # Phase 19.5
