@@ -68,7 +68,7 @@ describe('InsightPage (Phase D)', () => {
       },
     })
     await flushPromises()
-    expect(wrapper.find('.hub-subtitle').text()).toContain('生产 KPI')
+    expect(wrapper.find(byTestid('hub-subtitle')).text()).toContain('生产 KPI')
   })
 })
 

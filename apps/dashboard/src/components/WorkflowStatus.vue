@@ -56,6 +56,7 @@
               v-for="opt in (d.options || [])"
               :key="opt"
               class="resume-btn pixel-border"
+              data-testid="resume-btn"
               @click="onResume(d, opt)"
             >
               恢复 → {{ opt }}

@@ -2,7 +2,7 @@
   <div class="stat-card pixel-border" data-testid="stat-card">
     <span class="stat-label">{{ label }}</span>
     <span class="stat-value">{{ value }}</span>
-    <span v-if="trend !== undefined" class="stat-trend" :class="trendClass">
+    <span v-if="trend !== undefined" class="stat-trend" :class="trendClass" :data-testid="trendClass">
       {{ trend >= 0 ? '+' : '' }}{{ trend }}%
     </span>
   </div>

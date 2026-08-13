@@ -10,7 +10,7 @@
   >
     <div v-if="showTitleBlock" class="hub-page-header__main">
       <h1 v-if="title" class="page-title" data-testid="page-title">{{ title }}</h1>
-      <p v-if="subtitle" class="hub-subtitle">{{ subtitle }}</p>
+      <p v-if="subtitle" class="hub-subtitle" data-testid="hub-subtitle">{{ subtitle }}</p>
       <p v-if="meta && !compactChrome" class="hub-meta" :data-testid="metaTestId">{{ meta }}</p>
     </div>
     <p

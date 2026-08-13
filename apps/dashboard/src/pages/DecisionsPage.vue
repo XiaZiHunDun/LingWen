@@ -27,6 +27,7 @@
         class="tab-btn"
         :class="{ 'tab-btn--active': activeTab === tab.id }"
         :data-tab="tab.id"
+        :data-testid="'tab-btn'"
         @click="activeTab = tab.id"
       >
         {{ tab.label }} ({{ tab.count }})
@@ -63,6 +64,7 @@
       <p class="hint">点击下方按钮展开历史记录</p>
       <button
         class="expand-toggle pixel-border"
+        data-testid="expand-toggle"
         @click="toggleExpand(activeTab)"
       >
         {{ expanded[activeTab] ? '▾ 折叠' : '▸ 展开' }}
