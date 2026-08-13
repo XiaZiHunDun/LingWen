@@ -1,3 +1,6 @@
+/* eslint-disable custom/no-class-selector-in-test */
+// This fixture intentionally contains class selectors to verify the lint rule fires.
+// Do not delete these — they are the regression test for Phase 8.31/8.32 rule.
 // tests/fixtures/lint-testid/dirty.spec.ts — Phase 8.33 永久 regression fixture
 // 含 2 violation, lint:testid 必须报 2 错. 0 改 (永久保留作为 rule sanity check).
 // 任何 git rm 触发 code review — 走 Phase 8.33 验证 'rule 真能 catch 违规' 唯一 fixture.
