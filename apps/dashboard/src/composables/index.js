@@ -39,6 +39,7 @@ export { useWorkflowListStore } from './useWorkflowListStore.js';
 export { useWorkflowSocket, onCascadeUpdate, onAuditCreated } from './useWorkflowSocket.js';
 export { useEventBus, onRippleUpdate, onWsConnected, onWsDisconnected } from './useEventBus.js';
 export { useWidgetRegistry, defineWidget, registerWidget, registerWidgets, getWidget, getAllWidgets, getWidgetsByCategory, unregisterWidget, createWidgetInstance, getWidgetInstance, removeWidgetInstance, updateWidgetInstance, setWidgetInstanceState, getWidgetInstanceState, emitWidgetEvent, onWidgetEvent, checkWidgetDependencies } from './useWidgetRegistry.js';
+export { useWorkbenchIndex } from './useWorkbenchIndex.ts';
 export { useWorkbenchAgent } from './useWorkbenchAgent.ts';
 export { useWorkbenchCheckpoint } from './useWorkbenchCheckpoint.ts';
 export { useWorkbenchSelection } from './useWorkbenchSelection.ts';
