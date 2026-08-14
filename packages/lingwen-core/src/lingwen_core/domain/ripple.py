@@ -39,6 +39,8 @@ class ResolutionMode(str, Enum):
 
 
 MAX_OPEN_RIPPLOTS = 10  # Doc 1 §3.4 硬限制
+RESOLUTION_GRACE_CH = 5  # planned_resolve_ch 可超 current_ch 最多 5 章（Doc 1 §3.4）
+COLLAPSE_RISK_THRESHOLD = 0.8  # > 0.8 系统报警
 
 
 @dataclass(frozen=True)
