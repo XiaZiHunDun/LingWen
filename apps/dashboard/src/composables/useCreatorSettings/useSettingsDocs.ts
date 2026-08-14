@@ -5,7 +5,7 @@
  * 负责: settingsDocs 加载 + diff 预览 + mergeStrategy preview + requestSaveSettings +
  *       confirmSaveSettings + bindGlobalOutlineEditorRef。
  */
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
   fetchCreatorSettingsDocs,
@@ -69,8 +69,11 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
     try {
       const data = await fetchCreatorSettingsDocs() as SettingsDocs;
       settingsDocs.value = data;
-      pillarsText.value = data.pillars || '';
-      settingsBaseline.value = { pillars: data.pillars || '', outline: data.outline || '' };
+      const pillars = data.pillars || (data as Record<string, unknown>).pillars_text || '';
+      const outline = data.outline || (data as Record<string, unknown>).global_outline_text || '';
+      pillarsText.value = String(pillars);
+      globalOutlineText.value = String(outline);
+      settingsBaseline.value = { pillars: String(pillars), outline: String(outline) };
     } catch (e) {
       handleSaveError(e);
     }
@@ -143,9 +146,6 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
   function bindGlobalOutlineEditorRef(el: HTMLElement | null): void {
     globalOutlineEditorRef.value = el;
   }
-
-  void overview; // placeholder for future deps
-  void computed; // placeholder
 
   return {
     settingsDocs,
