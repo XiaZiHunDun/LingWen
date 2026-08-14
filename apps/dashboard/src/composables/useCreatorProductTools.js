@@ -1,41 +1,27 @@
 /**
  * useCreatorProductTools — 创作偏好、导出、发布向导、介入摘要
  *
- * Phase 19 Task 1: 抽出 useProductExport + useProductPublish 两个子模块（无循环依赖），
- * 本主 hook 改为组合 facade。下游 API（panelContext shape）保持完全兼容，
- * 22+ 处 import 无需修改。
+ * Phase 19 Task 1 完成版：抽出全部 4 个 .ts 子模块，本主 hook 改为组合 facade。
+ * 下游 API（panelContext shape）保持完全兼容，22+ 处 import 无需修改。
  *
  * 子模块：
+ * - useProductPreferences  (创作偏好/模型同步)
+ * - useProductMemory       (记忆资产/搜索/标注/导航动作)
  * - useProductExport       (导出向导 + Markdown/EPUB/DOCX)
  * - useProductPublish      (发布向导 + 历史 + 平台)
  *
- * 暂未抽出的（保留内联，避免循环依赖）：
- * - useProductPreferences  (创作偏好/模型同步 — 与 memory 双向依赖)
- * - useProductMemory       (记忆资产/搜索/标注 — 与 preferences 双向依赖)
- *   → 后续 Task 1.5 / Task 1.6 单独 PR 渐进接入
+ * 跨子模块 computeds（避免循环依赖，由主 hook 组合）：
+ * - memoryRagEnabled       = payload.memory_rag_enabled ?? preferences.memoryRagEnabled
+ * - preferencesSummary     = buildSummary(prefs, { memoryRagEnabled, modelOptions })
+ * - interventionItems      = 聚合 + 偏好规则
  */
-import { computed, ref, watch } from 'vue';
-import {
-  fetchCreatorPreferences,
-  saveCreatorPreferencesApi,
-  fetchCreatorMemoryAssets,
-  saveCreatorMemoryAnnotation,
-  queryCreatorMemory,
-  fetchCreatorModels,
-} from '../api/index.js';
-import {
-  loadCreatorPreferences,
-  saveCreatorPreferences,
-  defaultCreatorPreferences,
-  CREATOR_MODEL_OPTIONS,
-} from '../utils/creatorPreferencesStorage.js';
-import { preferencesFromApi, preferencesToApi } from '../utils/creatorPreferencesApi.js';
-import { buildMemoryAssetItems } from '../utils/creatorMemoryAssetsUtils.js';
-import { buildStructureGraph } from '../utils/creatorStructureGraphUtils.js';
+import { computed, ref } from 'vue';
 import { highlightMemorySnippet, formatMemoryCitation } from '../utils/creatorMemoryHighlightUtils.js';
 import { buildCreatorPreferencesSummary } from '../utils/creatorPreferencesSummaryUtils.js';
 import { useStudioProject } from './useStudioProject.js';
 import {
+  useProductPreferences,
+  useProductMemory,
   useProductExport,
   useProductPublish,
 } from './useCreatorProductTools/index.ts';
@@ -87,29 +73,31 @@ export function useCreatorProductTools(deps) {
   const { activeSlug: activeSlugRef } = useStudioProject();
   const activeSlug = activeSlugRef ?? ref(null);
 
-  // --- Preferences 内联（与 memory 双向依赖，单独 PR 处理）---
-  const preferences = ref(loadCreatorPreferences());
-  const preferencesDirty = ref(false);
-  const preferencesSavedHint = ref('');
-  const preferencesSyncSource = ref('local');
-  const creatorModelOptions = ref([...CREATOR_MODEL_OPTIONS]);
+  // --- 1) Preferences 子模块 ---
+  const preferencesApi = useProductPreferences({
+    error,
+    saveMessage,
+  });
 
-  // --- Memory 内联（与 preferences 双向依赖，单独 PR 处理）---
-  const memoryAssetsPayload = ref(null);
-  const memoryAssetsLoading = ref(false);
-  const memoryAssetsLoadedOnce = ref(false);
-  const memoryFilter = ref('all');
-  const memoryFocusAssetId = ref(null);
-  const memorySearchQuery = ref('');
-  const memorySearchScope = ref('all');
-  const memorySearchResults = ref([]);
-  const memorySearchBusy = ref(false);
-  const memorySearchRan = ref(false);
-  const memorySearchUsedFallback = ref(false);
-  const memoryAnnotationSaving = ref(null);
-  const structureGraphView = ref('tree');
+  // --- 2) Memory 子模块（依赖 preferences.preferences.memoryRagTopK） ---
+  // 注意: 必须先建 preferences，再建 memory（memory 读 memoryRagTopK）
+  const memoryRagTopK = computed(() => preferencesApi.preferences.value.memoryRagTopK);
 
-  // --- Export 子模块（Phase 19 Task 1 抽出）---
+  const memory = useProductMemory({
+    overview,
+    editableVolumes,
+    visibleDeviations,
+    pillarsText,
+    globalOutlineText,
+    error,
+    saveMessage,
+    memoryRagTopK,
+    setWorkspaceTab,
+    jumpToChapter,
+    navigateTo,
+  });
+
+  // --- 3) Export 子模块 ---
   const exporter = useProductExport({
     overview,
     error,
@@ -119,7 +107,7 @@ export function useCreatorProductTools(deps) {
     activeSlug,
   });
 
-  // --- Publish 子模块（依赖 exporter）---
+  // --- 4) Publish 子模块（依赖 exporter）---
   const publisher = useProductPublish({
     exportIntro: exporter.exportIntro,
     exportDescription: exporter.exportDescription,
@@ -130,48 +118,31 @@ export function useCreatorProductTools(deps) {
     saveMessage,
   });
 
-  // --- 跨切 computeds ---
-  const memoryAssets = computed(() => {
-    if (memoryAssetsPayload.value?.items?.length) {
-      return memoryAssetsPayload.value.items;
-    }
-    return buildMemoryAssetItems({
-      overview: overview.value,
-      pillarsText: pillarsText.value,
-      outlineText: globalOutlineText.value,
-    });
+  // --- 跨切 computeds（主 hook 组合）---
+
+  // memoryRagEnabled = payload ?? preferences
+  const memoryRagEnabled = computed(() => {
+    const payload = memory.memoryAssetsPayload.value;
+    return payload?.memory_rag_enabled ?? Boolean(preferencesApi.preferences.value.memoryRagEnabled);
   });
 
-  const memoryAssetsFiltered = computed(() => {
-    const filter = memoryFilter.value;
-    if (filter === 'all') return memoryAssets.value;
-    return memoryAssets.value.filter((item) => item.kind === filter);
-  });
-
-  const memoryAvailable = computed(() => Boolean(memoryAssetsPayload.value?.memory_available));
-  const memoryRagEnabled = computed(
-    () => memoryAssetsPayload.value?.memory_rag_enabled ?? preferences.value.memoryRagEnabled,
-  );
-
+  // preferencesSummary
   const preferencesSummary = computed(() => buildCreatorPreferencesSummary(
-    preferences.value,
+    preferencesApi.preferences.value,
     {
       memoryRagEnabled: memoryRagEnabled.value,
-      modelOptions: creatorModelOptions.value,
+      modelOptions: preferencesApi.creatorModelOptions.value,
     },
   ));
 
+  // interventionRuleEnabled helper
   /** @param {string} ruleId */
   function interventionRuleEnabled(ruleId) {
-    return preferences.value.interventionRules?.[ruleId] !== false;
+    const rules = preferencesApi.preferences.value.interventionRules;
+    return rules?.[ruleId] !== false;
   }
 
-  const structureGraph = computed(() => buildStructureGraph({
-    overview: overview.value,
-    volumes: editableVolumes.value,
-    deviations: visibleDeviations.value,
-  }));
-
+  // interventionItems
   const interventionItems = computed(() => {
     const items = [];
     const alerts = visibleDeviations.value.filter((d) => d.severity === 'alert');
@@ -215,7 +186,7 @@ export function useCreatorProductTools(deps) {
         action: 'settings',
       });
     }
-    if (interventionRuleEnabled('preferencesUnsaved') && preferencesDirty.value) {
+    if (interventionRuleEnabled('preferencesUnsaved') && preferencesApi.preferencesDirty.value) {
       items.push({
         id: 'preferences-unsaved',
         kind: 'preferences',
@@ -226,10 +197,10 @@ export function useCreatorProductTools(deps) {
     }
     if (
       interventionRuleEnabled('memoryOffline')
-      && memoryAssetsLoadedOnce.value
-      && !memoryAssetsLoading.value
+      && memory.memoryAssetsLoadedOnce.value
+      && !memory.memoryAssetsLoading.value
       && memoryRagEnabled.value
-      && !memoryAvailable.value
+      && !memory.memoryAvailable.value
     ) {
       items.push({
         id: 'memory-offline',
@@ -257,201 +228,45 @@ export function useCreatorProductTools(deps) {
     return items;
   });
 
-  // --- 偏好/模型 actions (内联) ---
-  async function loadCreatorModels() {
-    try {
-      const data = await fetchCreatorModels();
-      if (data.models?.length) {
-        creatorModelOptions.value = data.models;
-      }
-    } catch {
-      creatorModelOptions.value = [...CREATOR_MODEL_OPTIONS];
-    }
-  }
-
-  async function loadPreferencesFromServer() {
-    try {
-      const data = await fetchCreatorPreferences();
-      preferences.value = preferencesFromApi(data);
-      saveCreatorPreferences(preferences.value);
-      preferencesSyncSource.value = 'server';
-      preferencesDirty.value = false;
-    } catch {
-      preferences.value = loadCreatorPreferences();
-      preferencesSyncSource.value = 'local';
-    }
-  }
-
-  function markPreferencesDirty() {
-    preferencesDirty.value = true;
-    preferencesSavedHint.value = '';
-  }
-
-  function resetPreferences() {
-    preferences.value = defaultCreatorPreferences();
-    preferencesDirty.value = true;
-    preferencesSavedHint.value = '';
-  }
-
-  async function savePreferences() {
-    saveCreatorPreferences(preferences.value);
-    try {
-      await saveCreatorPreferencesApi(preferencesToApi(preferences.value));
-      preferencesSyncSource.value = 'server';
-      preferencesSavedHint.value = '偏好已同步到项目';
-      saveMessage.value = '创作偏好已保存';
-    } catch (e) {
-      preferencesSyncSource.value = 'local';
-      preferencesSavedHint.value = '已保存到本机（服务器暂不可用）';
-      saveMessage.value = '创作偏好已保存到本机';
-      error.value = e instanceof Error ? e.message : String(e);
-    }
-    preferencesDirty.value = false;
-  }
-
-  // --- Memory actions (内联) ---
-  async function loadMemoryAssets() {
-    memoryAssetsLoading.value = true;
-    try {
-      memoryAssetsPayload.value = await fetchCreatorMemoryAssets();
-    } catch {
-      memoryAssetsPayload.value = null;
-    } finally {
-      memoryAssetsLoading.value = false;
-      memoryAssetsLoadedOnce.value = true;
-    }
-  }
-
-  async function runMemorySearch() {
-    const q = memorySearchQuery.value.trim();
-    if (!q) return;
-    memorySearchBusy.value = true;
-    memorySearchRan.value = false;
-    try {
-      const data = await queryCreatorMemory({
-        query: q,
-        scope: memorySearchScope.value,
-        top_k: preferences.value.memoryRagTopK,
-      });
-      memorySearchResults.value = data.results || [];
-      memorySearchUsedFallback.value = Boolean(data.used_fallback);
-      memorySearchRan.value = true;
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-      memorySearchResults.value = [];
-      memorySearchRan.value = true;
-    } finally {
-      memorySearchBusy.value = false;
-    }
-  }
-
-  async function saveMemoryAnnotation(assetId, patch) {
-    memoryAnnotationSaving.value = assetId;
-    try {
-      await saveCreatorMemoryAnnotation(assetId, patch);
-      await loadMemoryAssets();
-      saveMessage.value = '记忆备注已保存';
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      memoryAnnotationSaving.value = null;
-    }
-  }
-
-  async function toggleMemoryPin(item) {
-    if (!item?.id || item.placeholder) return;
-    await saveMemoryAnnotation(item.id, { pinned: !item.pinned });
-  }
-
-  async function saveMemoryNote(item, note) {
-    if (!item?.id || item.placeholder) return;
-    await saveMemoryAnnotation(item.id, { note });
-  }
-
-  // --- Intervention / 导航 actions (内联) ---
-  async function handleInterventionAction(item) {
-    if (!item) return;
-    if (item.action === 'pulse') {
-      setWorkspaceTab('pulse');
-      if (item.chapter) await jumpToChapter(item.chapter);
-      return;
-    }
-    if (item.action === 'write') {
-      setWorkspaceTab('write');
-      if (item.chapter) await jumpToChapter(item.chapter);
-      return;
-    }
-    if (item.action === 'memory') {
-      setWorkspaceTab('memory');
-      return;
-    }
-    if (item.action === 'settings') {
-      setWorkspaceTab('settings');
-      return;
-    }
-    if (item.action === 'decisions') {
-      navigateTo('decisions', { clearFocus: true });
-    }
-  }
-
-  function goToSettingsForAsset(item) {
-    if (item?.editable) {
-      setWorkspaceTab('settings');
-    }
-  }
-
-  function focusMemoryEntity(entity) {
-    if (!entity) {
-      memoryFocusAssetId.value = null;
-      setWorkspaceTab('memory');
-      return;
-    }
-    memoryFocusAssetId.value = entity.id || null;
-    const kind = entity.kind;
-    memoryFilter.value = kind === 'foreshadow' ? 'foreshadow' : kind === 'character' ? 'character' : 'all';
-    memorySearchQuery.value = (entity.name || '').replace(/^伏笔：/, '').trim();
-    setWorkspaceTab('memory');
-  }
-
-  // --- panelContext 聚合 ---
+  // --- panelContext 聚合（保持原 shape）---
   const panelContext = {
     // Preferences
-    preferences,
-    preferencesDirty,
+    preferences: preferencesApi.preferences,
+    preferencesDirty: preferencesApi.preferencesDirty,
     preferencesSummary,
-    creatorModelOptions,
-    loadCreatorModels,
-    preferencesSavedHint,
-    preferencesSyncSource,
-    markPreferencesDirty,
-    resetPreferences,
-    savePreferences,
-    loadPreferencesFromServer,
+    creatorModelOptions: preferencesApi.creatorModelOptions,
+    loadCreatorModels: preferencesApi.loadCreatorModels,
+    preferencesSavedHint: preferencesApi.preferencesSavedHint,
+    preferencesSyncSource: preferencesApi.preferencesSyncSource,
+    markPreferencesDirty: preferencesApi.markPreferencesDirty,
+    resetPreferences: preferencesApi.resetPreferences,
+    savePreferences: preferencesApi.savePreferences,
+    loadPreferencesFromServer: preferencesApi.loadPreferencesFromServer,
     // Memory
-    memoryAssets,
-    memoryAssetsFiltered,
-    memoryAssetsLoading,
-    memoryFilter,
-    memoryFocusAssetId,
-    memoryAvailable,
+    memoryAssets: memory.memoryAssets,
+    memoryAssetsFiltered: memory.memoryAssetsFiltered,
+    memoryAssetsLoading: memory.memoryAssetsLoading,
+    memoryFilter: memory.memoryFilter,
+    memoryFocusAssetId: memory.memoryFocusAssetId,
+    memoryAvailable: memory.memoryAvailable,
     memoryRagEnabled,
-    loadMemoryAssets,
-    saveMemoryAnnotation,
-    toggleMemoryPin,
-    saveMemoryNote,
-    memoryAnnotationSaving,
-    runMemorySearch,
-    structureGraph,
-    structureGraphView,
+    loadMemoryAssets: memory.loadMemoryAssets,
+    saveMemoryAnnotation: memory.saveMemoryAnnotation,
+    toggleMemoryPin: memory.toggleMemoryPin,
+    saveMemoryNote: memory.saveMemoryNote,
+    memoryAnnotationSaving: memory.memoryAnnotationSaving,
+    runMemorySearch: memory.runMemorySearch,
+    structureGraph: memory.structureGraph,
+    structureGraphView: memory.structureGraphView,
     isWorkspaceColumnVisible,
     deskDrawerActive: () => isDeskDrawerColumn('memory'),
     closeDeskDrawer,
-    memorySearchQuery,
-    memorySearchScope,
-    memorySearchResults,
-    memorySearchBusy,
-    memorySearchRan,
-    memorySearchUsedFallback,
+    memorySearchQuery: memory.memorySearchQuery,
+    memorySearchScope: memory.memorySearchScope,
+    memorySearchResults: memory.memorySearchResults,
+    memorySearchBusy: memory.memorySearchBusy,
+    memorySearchRan: memory.memorySearchRan,
+    memorySearchUsedFallback: memory.memorySearchUsedFallback,
     highlightMemorySnippet,
     formatMemoryCitation,
     // Export (子模块)
@@ -498,17 +313,17 @@ export function useCreatorProductTools(deps) {
     loadPublishPlatforms: publisher.loadPublishPlatforms,
     // Intervention / Navigation
     interventionItems,
-    handleInterventionAction,
-    goToSettingsForAsset,
+    handleInterventionAction: memory.handleInterventionAction,
+    goToSettingsForAsset: memory.goToSettingsForAsset,
     jumpToChapter,
     setWorkspaceTab,
-    focusMemoryEntity,
+    focusMemoryEntity: memory.focusMemoryEntity,
   };
 
   return {
     panelContext,
-    loadPreferencesFromServer,
-    loadMemoryAssets,
-    loadCreatorModels,
+    loadPreferencesFromServer: preferencesApi.loadPreferencesFromServer,
+    loadMemoryAssets: memory.loadMemoryAssets,
+    loadCreatorModels: preferencesApi.loadCreatorModels,
   };
 }

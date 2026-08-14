@@ -1,18 +1,22 @@
 /**
- * useProductMemory — 记忆资产、搜索、标注、介入/结构图
+ * useProductMemory — 记忆资产、搜索、标注、导航动作
  *
- * Phase 19 Task 1：从 useCreatorProductTools.js 拆出。
- * 负责: memory assets 列表/过滤 + 搜索 + 标注 + structureGraph + interventionItems。
+ * Phase 19 Task 1.5：从 useCreatorProductTools.js 拆出，最终接入。
+ * 负责: memory assets 列表/过滤 + 搜索 + 标注 + 结构图 + 介入导航 action。
  *
  * 依赖 (deps):
  * - overview, editableVolumes, visibleDeviations, batchJob, batchRunning, logicCheckResult
  * - pillarsText, globalOutlineText
  * - error, saveMessage
- * - preferences (用于读取 memoryRagTopK)
+ * - memoryRagTopK (Ref<number>): 来自 preferences 的 top_k 搜索参数
+ * - memoryRagEnabled (ComputedRef<boolean>): 主 hook 组合（payload ?? preferences）
  * - settingsHasUnsavedChanges（可选）
  * - setWorkspaceTab, jumpToChapter, navigateTo（导航动作）
+ *
+ * 注: 不计算 memoryRagEnabled 和 interventionItems（循环依赖）—— 这两个
+ * computed 在主 hook 中组合计算。
  */
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
   fetchCreatorMemoryAssets,
@@ -40,15 +44,11 @@ export interface MemoryDeps {
   overview: Ref<Record<string, unknown> | null>;
   editableVolumes: Ref<Array<Record<string, unknown>>>;
   visibleDeviations: ComputedRef<Array<Record<string, unknown>>>;
-  batchJob: Ref<Record<string, unknown> | null>;
-  batchRunning: Ref<boolean>;
-  logicCheckResult: Ref<Record<string, unknown> | null>;
   pillarsText: Ref<string>;
   globalOutlineText: Ref<string>;
   error: Ref<string | null>;
   saveMessage: Ref<string>;
-  preferences: Ref<{ memoryRagTopK?: number; interventionRules?: Record<string, boolean>; memoryRagEnabled?: boolean }>;
-  settingsHasUnsavedChanges?: ComputedRef<boolean>;
+  memoryRagTopK: Ref<number | undefined>;
   setWorkspaceTab: (tab: string) => void;
   jumpToChapter: (chapter: number) => Promise<void>;
   navigateTo: (page: string, opts?: Record<string, unknown>) => void;
@@ -63,7 +63,6 @@ export interface ProductMemoryReturn {
   memoryAssets: ComputedRef<MemoryAssetItem[]>;
   memoryAssetsFiltered: ComputedRef<MemoryAssetItem[]>;
   memoryAvailable: ComputedRef<boolean>;
-  memoryRagEnabled: ComputedRef<boolean>;
   memoryAnnotationSaving: Ref<string | null>;
   memorySearchQuery: Ref<string>;
   memorySearchScope: Ref<string>;
@@ -73,7 +72,6 @@ export interface ProductMemoryReturn {
   memorySearchUsedFallback: Ref<boolean>;
   structureGraph: ComputedRef<unknown>;
   structureGraphView: Ref<string>;
-  interventionItems: ComputedRef<Array<Record<string, unknown>>>;
   loadMemoryAssets: () => Promise<void>;
   runMemorySearch: () => Promise<void>;
   saveMemoryAnnotation: (assetId: string, patch: Record<string, unknown>) => Promise<void>;
@@ -89,15 +87,11 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
     overview,
     editableVolumes,
     visibleDeviations,
-    batchJob,
-    batchRunning,
-    logicCheckResult,
     pillarsText,
     globalOutlineText,
     error,
     saveMessage,
-    preferences,
-    settingsHasUnsavedChanges,
+    memoryRagTopK,
     setWorkspaceTab,
     jumpToChapter,
     navigateTo,
@@ -141,101 +135,12 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
   const memoryAvailable = computed<boolean>(() =>
     Boolean(memoryAssetsPayload.value?.memory_available),
   );
-  const memoryRagEnabled = computed<boolean>(() => {
-    const payload = memoryAssetsPayload.value;
-    return payload?.memory_rag_enabled ?? Boolean(preferences.value.memoryRagEnabled);
-  });
 
   const structureGraph = computed(() => buildStructureGraph({
     overview: overview.value as Parameters<typeof buildStructureGraph>[0]['overview'],
     volumes: editableVolumes.value as Parameters<typeof buildStructureGraph>[0]['volumes'],
     deviations: visibleDeviations.value as Parameters<typeof buildStructureGraph>[0]['deviations'],
   }));
-
-  function interventionRuleEnabled(ruleId: string): boolean {
-    const rules = preferences.value.interventionRules;
-    return rules?.[ruleId] !== false;
-  }
-
-  const interventionItems = computed(() => {
-    const items: Array<Record<string, unknown>> = [];
-    const deviations = visibleDeviations.value;
-    const alerts = deviations.filter((d) => (d as { severity?: string }).severity === 'alert') as Array<{ message?: string; chapter?: number }>;
-    if (interventionRuleEnabled('deviationAlerts') && alerts.length) {
-      items.push({
-        id: 'deviation-alerts',
-        kind: 'deviation',
-        title: `${alerts.length} 处需关注偏离`,
-        detail: alerts[0].message || '点击查看脉络详情',
-        action: 'pulse',
-        chapter: alerts[0].chapter,
-      });
-    }
-    if (interventionRuleEnabled('batchProgress') && (batchRunning.value || (batchJob.value as { status?: string } | null)?.status === 'running')) {
-      items.push({
-        id: 'batch-running',
-        kind: 'batch',
-        title: '批量推进进行中',
-        detail: (batchJob.value as { message?: string } | null)?.message || '可在脉络栏查看进度',
-        action: 'pulse',
-      });
-    }
-    const issues = ((logicCheckResult.value as { issues?: Array<{ severity?: string; priority?: string; message?: string }> } | null)?.issues) || [];
-    const p0 = issues.filter((i) => i.severity === 'P0' || i.priority === 'P0');
-    if (interventionRuleEnabled('logicP0') && p0.length) {
-      items.push({
-        id: 'logic-p0',
-        kind: 'logic',
-        title: `${p0.length} 条 P0 逻辑问题`,
-        detail: p0[0].message || '请在写栏处理',
-        action: 'write',
-        chapter: (logicCheckResult.value as { chapter?: number } | null)?.chapter,
-      });
-    }
-    if (interventionRuleEnabled('settingsUnsaved') && settingsHasUnsavedChanges?.value) {
-      items.push({
-        id: 'settings-unsaved',
-        kind: 'settings',
-        title: '设定尚未保存',
-        detail: '支柱或全局大纲有未保存的修改',
-        action: 'settings',
-      });
-    }
-    if (interventionRuleEnabled('preferencesUnsaved') && (preferences.value as unknown as { _dirty?: boolean })._dirty !== false) {
-      // placeholder hook for dirty state; main hook patches via watch
-    }
-    if (
-      interventionRuleEnabled('memoryOffline')
-      && memoryAssetsLoadedOnce.value
-      && !memoryAssetsLoading.value
-      && memoryRagEnabled.value
-      && !memoryAvailable.value
-    ) {
-      items.push({
-        id: 'memory-offline',
-        kind: 'memory',
-        title: '记忆系统离线',
-        detail: 'RAG 已开启但记忆网关不可用，搜索将降级为本地匹配',
-        action: 'memory',
-      });
-    }
-    if (
-      interventionRuleEnabled('emptyWriteHint')
-      && !items.length
-      && (overview.value as { chapters_written?: number; creation_mode?: string } | null)?.chapters_written === 0
-      && (overview.value as { creation_mode?: string } | null)?.creation_mode !== 'companion'
-      && (overview.value as { creation_mode?: string } | null)?.creation_mode !== 'advance'
-    ) {
-      items.push({
-        id: 'onboarding-write',
-        kind: 'hint',
-        title: '尚未开始写作',
-        detail: '从写栏选择章节或运行入门向导',
-        action: 'write',
-      });
-    }
-    return items;
-  });
 
   async function loadMemoryAssets(): Promise<void> {
     memoryAssetsLoading.value = true;
@@ -258,7 +163,7 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
       const data = await queryCreatorMemory({
         query: q,
         scope: memorySearchScope.value,
-        top_k: preferences.value.memoryRagTopK,
+        top_k: memoryRagTopK.value,
       });
       memorySearchResults.value = (data as { results?: Array<Record<string, unknown>> }).results || [];
       memorySearchUsedFallback.value = Boolean((data as { used_fallback?: boolean }).used_fallback);
@@ -348,7 +253,6 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
     memoryAssets,
     memoryAssetsFiltered,
     memoryAvailable,
-    memoryRagEnabled,
     memoryAnnotationSaving,
     memorySearchQuery,
     memorySearchScope,
@@ -358,7 +262,6 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
     memorySearchUsedFallback,
     structureGraph,
     structureGraphView,
-    interventionItems,
     loadMemoryAssets,
     runMemorySearch,
     saveMemoryAnnotation,

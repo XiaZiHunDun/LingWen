@@ -1,17 +1,17 @@
 /**
  * useProductPreferences — 创作偏好、模型、同步状态
  *
- * Phase 19 Task 1：从 useCreatorProductTools.js 拆出。
- * 负责: preferences state + 模型加载 + 服务端同步 + summary computed。
+ * Phase 19 Task 1.4：从 useCreatorProductTools.js 拆出，最终接入。
+ * 负责: preferences state + 模型加载 + 服务端同步。
  *
  * 依赖 (deps):
  * - error: 用于报错信息回写
  * - saveMessage: 用于顶部消息提示
- * - activeSlug: 项目 slug（用于保存提示）
- * - memoryRagEnabled: 来自 memory 子模块的 RAG 状态
+ *
+ * 注: 不计算 preferencesSummary（依赖 memoryRagEnabled，循环依赖）—— 在主 hook 组合。
  */
-import { computed, ref, watch } from 'vue';
-import type { ComputedRef, Ref } from 'vue';
+import { ref } from 'vue';
+import type { Ref } from 'vue';
 import {
   fetchCreatorPreferences,
   saveCreatorPreferencesApi,
@@ -24,21 +24,20 @@ import {
   CREATOR_MODEL_OPTIONS,
 } from '../../utils/creatorPreferencesStorage.js';
 import { preferencesFromApi, preferencesToApi } from '../../utils/creatorPreferencesApi.js';
-import { buildCreatorPreferencesSummary } from '../../utils/creatorPreferencesSummaryUtils.js';
+
+export type PreferencesShape = ReturnType<typeof loadCreatorPreferences>;
 
 export interface PreferencesDeps {
   error: Ref<string | null>;
   saveMessage: Ref<string>;
-  memoryRagEnabled: ComputedRef<boolean>;
 }
 
 export interface ProductPreferencesReturn {
-  preferences: Ref<ReturnType<typeof loadCreatorPreferences>>;
+  preferences: Ref<PreferencesShape>;
   preferencesDirty: Ref<boolean>;
   preferencesSavedHint: Ref<string>;
   preferencesSyncSource: Ref<string>;
   creatorModelOptions: Ref<Array<{ id: string; label: string }>>;
-  preferencesSummary: ComputedRef<ReturnType<typeof buildCreatorPreferencesSummary>>;
   loadCreatorModels: () => Promise<void>;
   loadPreferencesFromServer: () => Promise<void>;
   markPreferencesDirty: () => void;
@@ -47,21 +46,13 @@ export interface ProductPreferencesReturn {
 }
 
 export function useProductPreferences(deps: PreferencesDeps): ProductPreferencesReturn {
-  const { error, saveMessage, memoryRagEnabled } = deps;
+  const { error, saveMessage } = deps;
 
-  const preferences = ref(loadCreatorPreferences()) as ProductPreferencesReturn['preferences'];
+  const preferences = ref(loadCreatorPreferences()) as Ref<PreferencesShape>;
   const preferencesDirty = ref(false);
   const preferencesSavedHint = ref('');
   const preferencesSyncSource = ref('local');
   const creatorModelOptions = ref([...CREATOR_MODEL_OPTIONS]);
-
-  const preferencesSummary = computed(() => buildCreatorPreferencesSummary(
-    preferences.value,
-    {
-      memoryRagEnabled: memoryRagEnabled.value,
-      modelOptions: creatorModelOptions.value,
-    },
-  ));
 
   async function loadCreatorModels(): Promise<void> {
     try {
@@ -120,7 +111,6 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
     preferencesSavedHint,
     preferencesSyncSource,
     creatorModelOptions,
-    preferencesSummary,
     loadCreatorModels,
     loadPreferencesFromServer,
     markPreferencesDirty,
