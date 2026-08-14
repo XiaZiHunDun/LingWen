@@ -1,5 +1,5 @@
 /**
- * Branded Types for LingWen Dashboard
+ * Branded Types for 灵文 Dashboard
  *
  * Prevents ID confusion by assigning unique brand markers to each ID type.
  * Use the helper functions to create branded types from raw strings.
