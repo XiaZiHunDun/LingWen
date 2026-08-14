@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.4: /api/studio/* routes.
 
-Extracted from dashboard/app.py create_app closure:
 - studio_list_projects, studio_get_active, studio_set_active, studio_project_summary (lines 1176-1234)
 - studio quality + production endpoints (lines 3488-3676)
 

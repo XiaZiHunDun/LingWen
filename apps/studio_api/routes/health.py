@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.4: /api/health route.
 
-Extracted from dashboard/app.py create_app closure (was at app.py line 243-246).
 
 集成 infra.health 模块，支持多组件健康检查。
 """
@@ -59,7 +58,7 @@ def _register_health_checks(ctx: RoutesContext) -> None:
     # LLM 服务健康检查（非关键）
     def check_llm() -> bool:
         try:
-            from infra.llm_service import LLMService
+            from lingwen_llm.llm_service import LLMService
             llm = LLMService.get_instance()
             return llm.is_available()
         except (OSError, RuntimeError, ImportError, AttributeError):

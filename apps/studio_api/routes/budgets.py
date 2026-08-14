@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.4: /api/budgets and /api/budgets/by-tier routes.
 
-Extracted from dashboard/app.py create_app closure (was at app.py lines 1071-1172).
 
 Note: budget endpoints read from `MasterControllerAdapter._controller` (class-level
 singleton), not from the closure-captured master_controller. This is the historical

@@ -3,7 +3,6 @@ Phase 15.0 T1.4: /api/cvg/* + /api/ripples/cascade/* + /api/cascade/runs routes.
 
 Also registers the /api/ws/cvg WebSocket endpoint.
 
-Extracted from dashboard/app.py create_app closure (was at app.py lines 444-969).
 
 Note on _default_storage / monkeypatch:
 tests monkeypatch `dashboard.app._default_storage` via `monkeypatch.setattr(app_module, "_default_storage", lambda: storage)`.

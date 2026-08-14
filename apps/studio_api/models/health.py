@@ -1,5 +1,4 @@
 """
-Phase 15.0 T1.1: Pydantic models split from dashboard/app.py (health domain).
 """
 from __future__ import annotations
 

@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Any, Literal, Mapping
 
-from infra.agent_system.internal.incremental_backfill import extract_chapter_num  # TODO(Phase18): domain entity
+from lingwen_core.agents.internal.incremental_backfill import extract_chapter_num  # TODO(Phase18): domain entity
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ def fetch_live_memory_context(
 ) -> dict[str, Any]:
     """Live path via MemoryGateway (NoOp-safe when Qdrant unavailable)."""
     if gateway is None:
-        from infra.memory_service import get_memory_gateway
+        from lingwen_memory.memory_service import get_memory_gateway
 
         gateway = get_memory_gateway()
     ctx = dict(gateway.auto_push_context(chapter_num))
@@ -120,7 +120,7 @@ def describe_memory_rag_hook() -> list[dict[str, str]]:
 
 def memory_rag_live_gateway_check() -> tuple[bool, str]:
     """Return (ok, message) for live MemoryGateway (Qdrant + embedding provider)."""
-    from infra.memory_service import (
+    from lingwen_memory.memory_service import (
         get_initialization_error,
         get_memory_gateway,
         is_memory_gateway_available,

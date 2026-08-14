@@ -7,7 +7,6 @@ Routes:
 - /api/creator/volume-plan/templates/approvals × list / history / audit / sla / chain / batch / transfers / snapshot diff-drift
 - /api/creator/volume-plan/templates/export, import, sync-sources, sync, factory × list/publish/pull/delete
 
-Extracted from dashboard/app.py lines 1776-2555.
 """
 from __future__ import annotations
 

@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.4: overview / chapters / production-records routes.
 
-Extracted from dashboard/app.py create_app closure (was at app.py lines 248-369).
 """
 from __future__ import annotations
 

@@ -11,7 +11,6 @@ Routes:
 - /api/creator/volume-summary/generate
 - /api/creator/volume-plan/diff  (split off from creator_volume because it's small)
 
-Extracted from dashboard/app.py lines 1236-2646 (excluding volume-plan +
 templates + merge/split, which live in creator_volume.py).
 """
 from __future__ import annotations

@@ -19,7 +19,7 @@ from .text_utils import split_chinese_sentences
 
 if TYPE_CHECKING:
     # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
-    from infra.world_model.data_structures import Ripple  # type: ignore[import-not-found]
+    from lingwen_core.domain.ripple import Ripple
 
 
 # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain

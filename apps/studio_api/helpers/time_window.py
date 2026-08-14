@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.3: time window parsing helper.
 
-Extracted from dashboard/app.py (lines 88-107). Unchanged.
 """
 from __future__ import annotations
 

@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.3: decision response helper.
 
-Extracted from dashboard/app.py (lines 336-356). Unchanged.
 """
 from __future__ import annotations
 
