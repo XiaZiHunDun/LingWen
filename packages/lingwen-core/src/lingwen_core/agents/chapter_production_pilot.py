@@ -18,16 +18,16 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from infra.agent_system.agent_config import DEFAULT_STATE_DIR, load_default_config
-from infra.agent_system.chapter_memory_hook import (
+from lingwen_core.agents.agent_config import DEFAULT_STATE_DIR, load_default_config
+from lingwen_core.agents.chapter_memory_hook import (
     memory_rag_live_gateway_check,
     resolve_memory_rag_mode,
 )
-from infra.agent_system.chapter_production_outline import (
+from lingwen_core.agents.chapter_production_outline import (
     production_mode,
     resolve_production_initial_inputs,
 )
-from infra.agent_system.internal.incremental_backfill import (
+from lingwen_core.agents.internal.incremental_backfill import (
     incremental_backfill_enabled,  # TODO(Phase18): domain entity
 )
 from lingwen_memory.embeddings.factory import describe_embedding_requirements

@@ -3,7 +3,7 @@
 角色一致性 Agent — 检查新建角色是否与已有角色设定冲突
 
 Usage:
-    from infra.agent_system.agents.character_consistency import CharacterConsistencyAgent
+    from lingwen_core.agents.agents.character_consistency import CharacterConsistencyAgent
 
     agent = CharacterConsistencyAgent(router=router)
     findings = agent.run({"new_character": new_char, "existing_characters": existing})

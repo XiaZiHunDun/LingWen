@@ -3,7 +3,7 @@
 质量审稿 Agent — 对章节内容进行全面的质量检查
 
 Usage:
-    from infra.agent_system.agents.quality_reviewer import QualityReviewer
+    from lingwen_core.agents.agents.quality_reviewer import QualityReviewer
 
     agent = QualityReviewer(router=router)
     findings = agent.run({"chapter_content": content, "story_contract": contract})

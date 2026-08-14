@@ -6,7 +6,7 @@ Agent 编队 — 多 Agent 编排与结果聚合
 默认禁用，通过配置标志启用。
 
 Usage:
-    from infra.agent_system.agents.squad import AgentSquad
+    from lingwen_core.agents.agents.squad import AgentSquad
 
     squad = AgentSquad(router=router, enabled=False)
     if squad.enabled:

@@ -148,7 +148,7 @@ class LLMBasedInspector(Inspector):
     def llm_service(self):
         """延迟加载LLM服务"""
         if self._llm_service is None:
-            from infra.llm_service import LLMService
+            from lingwen_llm.llm_service import LLMService
             self._llm_service = LLMService.get()
         return self._llm_service
 

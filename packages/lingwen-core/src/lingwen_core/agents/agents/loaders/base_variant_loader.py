@@ -8,7 +8,7 @@ BaseVariantLoader - 变体配置加载器基类
 - 单例模式实现
 
 Usage:
-    from infra.agent_system.agents.loaders.base_variant_loader import BaseVariantLoader
+    from lingwen_core.agents.agents.loaders.base_variant_loader import BaseVariantLoader
 
     class AuditorVariantLoader(BaseVariantLoader):
         def __init__(self):

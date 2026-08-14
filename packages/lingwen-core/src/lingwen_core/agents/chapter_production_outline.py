@@ -141,7 +141,7 @@ def build_canon_chapter_spec(
 
     prev_excerpt = ""
     if chapter_num > 1 and prev_body_path.is_file():
-        from infra.agent_system.chapter_production_retry import (
+        from lingwen_core.agents.chapter_production_retry import (
             extract_previous_chapter_excerpt,
         )
 
@@ -204,7 +204,7 @@ def build_canon_initial_inputs(
     if chapter_num > 1:
         prev_path = resolved.get_chapter_path(chapter_num - 1)
         if prev_path.is_file():
-            from infra.agent_system.chapter_production_retry import (
+            from lingwen_core.agents.chapter_production_retry import (
                 extract_previous_chapter_excerpt,
             )
 
@@ -231,7 +231,7 @@ def build_canon_initial_inputs(
 
 def resolve_production_initial_inputs(chapter_num: int) -> dict[str, Any]:
     """Dispatch pilot vs canon based on LINGWEN_PRODUCTION_MODE."""
-    from infra.agent_system.chapter_production_pilot import build_pilot_initial_inputs
+    from lingwen_core.agents.chapter_production_pilot import build_pilot_initial_inputs
 
     if production_mode() == "canon":
         return build_canon_initial_inputs(chapter_num)

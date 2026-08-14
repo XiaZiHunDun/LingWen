@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from infra.agent_system.chapter_production_pilot import (
+from lingwen_core.agents.chapter_production_pilot import (
     PilotResult,
     PreflightCheck,
     _json_safe,

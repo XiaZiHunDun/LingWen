@@ -3,7 +3,7 @@
 大纲审稿 Agent — 检查大纲是否与故事契约一致
 
 Usage:
-    from infra.agent_system.agents.outline_reviewer import OutlineReviewer
+    from lingwen_core.agents.agents.outline_reviewer import OutlineReviewer
 
     agent = OutlineReviewer(router=router)
     findings = agent.run({"outline": outline, "story_contract": contract})

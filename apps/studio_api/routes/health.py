@@ -59,7 +59,7 @@ def _register_health_checks(ctx: RoutesContext) -> None:
     # LLM 服务健康检查（非关键）
     def check_llm() -> bool:
         try:
-            from infra.llm_service import LLMService
+            from lingwen_llm.llm_service import LLMService
             llm = LLMService.get_instance()
             return llm.is_available()
         except (OSError, RuntimeError, ImportError, AttributeError):

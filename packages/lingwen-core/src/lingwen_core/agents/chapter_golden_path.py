@@ -81,7 +81,7 @@ def setup_golden_workflow_dir(state_dir: Path) -> Path:
 
 def build_stub_master_controller(state_dir: Path) -> Any:
     """Minimal MasterController for golden path (skips __init__, 0 LLM)."""
-    from infra.agent_system.decision_queue import HumanDecisionQueue
+    from lingwen_core.agents.decision_queue import HumanDecisionQueue
     from lingwen_pipeline.master_controller import MasterController
 
     controller = MasterController.__new__(MasterController)

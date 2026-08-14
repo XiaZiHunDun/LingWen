@@ -68,7 +68,7 @@ class ContextBuilder:
         downstream callers see no behavioral change.
         """
         # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
-        from infra.agent_system.core.context_helpers import StoryContractEngine
+        from lingwen_core.agents.core.context_helpers import StoryContractEngine
 
         engine = StoryContractEngine(project_root=self.project_root)
         payload = engine.load()
