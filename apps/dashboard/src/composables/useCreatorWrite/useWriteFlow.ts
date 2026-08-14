@@ -9,13 +9,15 @@
  *
  * 注: 接收 main hook 的 ref 通过 deps，保持状态由 main hook 拥有。
  */
-import { computed, nextTick, onUnmounted } from 'vue';
+import { computed, nextTick, onUnmounted, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
 } from '../../api/index.js';
+import { saveWriteResume } from '../../utils/writeResumeStorage.js';
+import { extractMentionedEntityNames } from '../../utils/creatorChapterEntityUtils.js';
 
 export interface ChapterRow {
   chapter: number;
@@ -47,6 +49,8 @@ export interface WriteFlowDeps {
   chapterRecheckResult: Ref<Record<string, unknown> | null>;
   previewLoading: Ref<boolean>;
   focusChapter?: Ref<number | null>;
+  memoryAssetsCache?: Ref<Array<Record<string, unknown>>>;
+  lastPersistedBodyRef?: Ref<string>;
 }
 
 export interface WriteFlowReturn {
@@ -54,7 +58,6 @@ export interface WriteFlowReturn {
   alertChapters: ComputedRef<Set<number>>;
   visibleChapters: ComputedRef<ChapterRow[]>;
   showCompanionLogicCheckInWrite: ComputedRef<boolean>;
-  syncMemoryAssets: (items: Array<Record<string, unknown>>) => void;
   selectChapter: (chapter: number) => Promise<void>;
   jumpToChapter: (chapter: number) => Promise<void>;
   saveChapterBody: () => Promise<void>;
@@ -84,18 +87,17 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterRecheckResult,
     previewLoading,
     focusChapter,
+    memoryAssetsCache,
+    lastPersistedBodyRef,
   } = deps;
 
-  let lastPersistedBody = '';
+  const memCache = memoryAssetsCache || ref<Array<Record<string, unknown>>>([]);
+  const lastPersistedBody = lastPersistedBodyRef || ref<string>('');
+
   let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const memoryAssetsCache = (() => {
-    const r = { value: [] as Array<Record<string, unknown>> };
-    return r;
-  })();
-
   function syncMemoryAssets(items: Array<Record<string, unknown>>): void {
-    memoryAssetsCache.value = Array.isArray(items) ? items : [];
+    memCache.value = Array.isArray(items) ? items : [];
   }
 
   const deviationChapters = computed<Set<number>>(() => {
@@ -127,20 +129,31 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
   async function selectChapter(chapter: number): Promise<void> {
     selectedChapter.value = chapter;
     previewLoading.value = true;
-    try {
-      const preview = await fetchCreatorChapterPreview(chapter, { full: true }) as Record<string, unknown>;
-      chapterPreview.value = preview;
-      chapterBodyDraft.value = String(preview.body_draft || preview.body_text || '');
-      chapterOutlineDraft.value = String(preview.outline_text || '');
-      lastPersistedBody = chapterBodyDraft.value;
-      bodyLastSavedAt.value = preview.saved_at ? new Date(String(preview.saved_at)) : null;
-      bodyAutoSaveStatus.value = 'idle';
+    chapterPreview.value = null;
+    chapterBodyDraft.value = '';
+    chapterOutlineDraft.value = '';
+    if (chapterRecheckResult.value?.chapter !== chapter) {
       chapterRecheckResult.value = null;
-      await nextTick();
-      const textarea = chapterBodyTextareaRef.value as (HTMLElement & { focus?: () => void }) | null;
-      try { textarea?.focus?.(); } catch { /* jsdom */ }
+    }
+    try {
+      const full = Boolean(
+        (uiProfile.value as { chapter_inline_edit?: boolean }).chapter_inline_edit
+          || (uiProfile.value as { chapter_full_preview?: boolean }).chapter_full_preview
+          || (uiProfile.value as { chapter_outline_inline_edit?: boolean }).chapter_outline_inline_edit
+          || (uiProfile.value as { chapter_outline_read_preview?: boolean }).chapter_outline_read_preview,
+      );
+      chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full }) as Record<string, unknown>;
+      chapterBodyDraft.value = String((chapterPreview.value as Record<string, unknown>).body_text ?? (chapterPreview.value as Record<string, unknown>).body_preview ?? '');
+      chapterOutlineDraft.value = String((chapterPreview.value as Record<string, unknown>).outline_text ?? (chapterPreview.value as Record<string, unknown>).outline_preview ?? '');
+      lastPersistedBody.value = chapterBodyDraft.value;
+      bodyLastSavedAt.value = null;
+      bodyAutoSaveStatus.value = 'idle';
+      const slug = (overview.value as { slug?: string } | null)?.slug;
+      if (slug) {
+        saveWriteResume(slug, { chapter, projectName: (overview.value as { name?: string } | null)?.name });
+      }
     } catch (e) {
-      handleSaveError(e);
+      error.value = e instanceof Error ? e.message : String(e);
     } finally {
       previewLoading.value = false;
     }
@@ -148,43 +161,76 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
 
   async function jumpToChapter(chapter: number): Promise<void> {
     await selectChapter(chapter);
+    await nextTick();
+    try {
+      document.querySelector('[data-testid="chapter-preview-panel"]')?.scrollIntoView?.({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    } catch { /* jsdom */ }
   }
 
   async function saveChapterBody(): Promise<void> {
-    if (selectedChapter.value == null) return;
+    if (!selectedChapter.value) return;
     chapterBodySaving.value = true;
+    saveMessage.value = '';
     try {
-      await saveCreatorChapterBody({
-        chapter: selectedChapter.value,
-        body: chapterBodyDraft.value,
-      });
-      lastPersistedBody = chapterBodyDraft.value;
+      chapterPreview.value = await saveCreatorChapterBody(
+        selectedChapter.value,
+        chapterBodyDraft.value,
+      );
+      chapterBodyDraft.value = String((chapterPreview.value as Record<string, unknown>).body_text ?? chapterBodyDraft.value);
+      chapterOutlineDraft.value = String((chapterPreview.value as Record<string, unknown>).outline_text ?? chapterOutlineDraft.value);
+      lastPersistedBody.value = chapterBodyDraft.value;
       bodyLastSavedAt.value = new Date();
       bodyAutoSaveStatus.value = 'saved';
-      saveMessage.value = '章节正文已保存';
-      // 调用 saveWriteResume（与原实现一致）
-      try {
-        const { saveWriteResume } = await import('../../utils/writeResumeStorage.js');
-        saveWriteResume(String(selectedChapter.value), chapterBodyDraft.value);
-      } catch { /* ignore */ }
+      const mentioned = extractMentionedEntityNames(
+        chapterBodyDraft.value,
+        memCache.value as Array<{ kind: string; name: string }>,
+      );
+      saveMessage.value = mentioned.length
+        ? `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存 · 涉及：${mentioned.join('、')}`
+        : `ch${String(selectedChapter.value).padStart(3, '0')} 正文已保存`;
+      const slug = (overview.value as { slug?: string } | null)?.slug;
+      if (slug) {
+        saveWriteResume(slug, {
+          chapter: selectedChapter.value,
+          projectName: (overview.value as { name?: string } | null)?.name,
+        });
+      }
       await onAfterChapterSave();
+      if ((uiProfile.value as { chapter_save_p0_recheck?: boolean }).chapter_save_p0_recheck) {
+        const { runCreatorLogicCheck } = await import('../../api/index.js');
+        const result = await runCreatorLogicCheck({ chapter: selectedChapter.value }) as { p0_count?: number };
+        chapterRecheckResult.value = { ...result, chapter: selectedChapter.value };
+        if ((result.p0_count || 0) > 0) {
+          saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 保存后复查：发现 ${result.p0_count} 条 P0`;
+        }
+      }
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
-      bodyAutoSaveStatus.value = 'idle';
     } finally {
       chapterBodySaving.value = false;
     }
   }
 
   async function saveChapterOutline(): Promise<void> {
-    if (selectedChapter.value == null) return;
+    if (!selectedChapter.value) return;
     chapterOutlineSaving.value = true;
+    saveMessage.value = '';
     try {
-      await saveCreatorChapterOutline({
-        chapter: selectedChapter.value,
-        outline: chapterOutlineDraft.value,
-      });
-      saveMessage.value = '章节大纲已保存';
+      chapterPreview.value = await saveCreatorChapterOutline(
+        selectedChapter.value,
+        chapterOutlineDraft.value,
+      );
+      const slug = (overview.value as { slug?: string } | null)?.slug;
+      if (slug) {
+        saveWriteResume(slug, {
+          chapter: selectedChapter.value,
+          projectName: (overview.value as { name?: string } | null)?.name,
+        });
+      }
+      saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 大纲已保存`;
       await onAfterChapterSave();
     } catch (e) {
       handleSaveError(e);
@@ -194,20 +240,30 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
   }
 
   async function autoSaveChapterBody(): Promise<void> {
-    if (!selectedChapter.value) return;
-    if (chapterBodyDraft.value === lastPersistedBody) return;
+    if (!selectedChapter.value || chapterBodySaving.value) return;
+    if (chapterBodyDraft.value === lastPersistedBody.value) return;
+    chapterBodySaving.value = true;
     bodyAutoSaveStatus.value = 'saving';
     try {
-      await saveCreatorChapterBody({
-        chapter: selectedChapter.value,
-        body: chapterBodyDraft.value,
-        autosave: true,
-      });
-      lastPersistedBody = chapterBodyDraft.value;
+      chapterPreview.value = await saveCreatorChapterBody(
+        selectedChapter.value,
+        chapterBodyDraft.value,
+      );
+      lastPersistedBody.value = chapterBodyDraft.value;
       bodyLastSavedAt.value = new Date();
       bodyAutoSaveStatus.value = 'saved';
+      const slug = (overview.value as { slug?: string } | null)?.slug;
+      if (slug) {
+        saveWriteResume(slug, {
+          chapter: selectedChapter.value,
+          projectName: (overview.value as { name?: string } | null)?.name,
+        });
+      }
+      await onAfterChapterSave();
     } catch {
-      bodyAutoSaveStatus.value = 'idle';
+      bodyAutoSaveStatus.value = 'error';
+    } finally {
+      chapterBodySaving.value = false;
     }
   }
 
@@ -247,7 +303,6 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     alertChapters,
     visibleChapters,
     showCompanionLogicCheckInWrite,
-    syncMemoryAssets,
     selectChapter,
     jumpToChapter,
     saveChapterBody,

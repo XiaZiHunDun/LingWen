@@ -21,6 +21,7 @@ export interface WriteToolsDeps {
   batchDeviationInlineSummary: Ref<unknown>;
   visibleDeviations: ComputedRef<Array<Record<string, unknown>>>;
   overview: Ref<Record<string, unknown> | null>;
+  activeRecheckIssueIdxRef: Ref<number | null>;
   setWorkspaceTab?: (tab: string) => void;
   jumpToChapter: (chapter: number) => Promise<void>;
   openVolumeSummaryForRange: (start: number, end: number) => void;
@@ -57,6 +58,8 @@ export function useWriteTools(deps: WriteToolsDeps): WriteToolsReturn {
     chapterBodyHighlightTimerRef,
     batchDeviationInlineSummary,
     visibleDeviations,
+    overview,
+    activeRecheckIssueIdxRef,
     setWorkspaceTab,
     jumpToChapter,
     openVolumeSummaryForRange,
@@ -72,17 +75,19 @@ export function useWriteTools(deps: WriteToolsDeps): WriteToolsReturn {
   }
 
   function chapterRowClass(chapter: number | Record<string, unknown>): string {
-    const classes: string[] = [];
-    const deviations = visibleDeviations.value;
     const chapterNum = typeof chapter === 'number' ? chapter : Number(chapter.chapter);
-    const isAlert: boolean = deviations.some((d: Record<string, unknown>) => Number(d.chapter) === chapterNum && d.severity === 'alert');
-    const hasDeviation: boolean = deviations.some((d: Record<string, unknown>) => Number(d.chapter) === chapterNum);
+    const isAlert: boolean = visibleDeviations.value.some(
+      (d: Record<string, unknown>) => Number(d.chapter) === chapterNum && d.severity === 'alert',
+    );
     if (isAlert) return 'chapter-row--alert';
-    if (hasDeviation) return 'chapter-row--deviation';
-    const hasBody = typeof chapter === 'number' ? false : Boolean(chapter.has_body);
-    if (hasBody) classes.push('chapter-row--has-body');
-    else classes.push('chapter-row--missing');
-    return classes.join(' ');
+    const hasDeviation: boolean = visibleDeviations.value.some(
+      (d: Record<string, unknown>) => Number(d.chapter) === chapterNum,
+    );
+    if (hasDeviation) return 'chapter-row--warn';
+    const overviewChapters = (overview.value as { chapters?: Array<{ chapter: number; has_body?: boolean }> } | null)?.chapters || [];
+    const row = overviewChapters.find((c) => c.chapter === chapterNum);
+    if (row?.has_body) return 'chapter-row--done';
+    return '';
   }
 
   function chapterVolumeLabel(chapter: number | Record<string, unknown>): string {
@@ -94,19 +99,29 @@ export function useWriteTools(deps: WriteToolsDeps): WriteToolsReturn {
   function chapterRowTitle(chapter: number | Record<string, unknown>): string {
     const chapterNum = typeof chapter === 'number' ? chapter : Number(chapter.chapter);
     const hit = visibleDeviations.value.find((d) => Number(d.chapter) === chapterNum);
-    if (hit) return String(hit.message || hit.deviation || '存在偏离');
-    if (typeof chapter !== 'number' && chapter.has_body) return '已写';
+    if (hit?.message) return String(hit.message);
+    const overviewChapters = (overview.value as { chapters?: Array<{ chapter: number; has_body?: boolean; has_outline?: boolean; word_count?: number }> } | null)?.chapters || [];
+    const row = overviewChapters.find((c) => c.chapter === chapterNum);
+    if (row?.has_body) return `已写 ${row.word_count || 0} 字`;
+    if (row?.has_outline) return '仅有大纲';
     return '尚未开始';
   }
 
   function pulseChapterBodyHighlight(issueIdx: number, source: string = 'recheck'): void {
-    chapterBodyHighlightActiveRef.value = true;
-    if (chapterBodyHighlightTimerRef.value) clearTimeout(chapterBodyHighlightTimerRef.value);
-    chapterBodyHighlightTimerRef.value = setTimeout(() => {
-      chapterBodyHighlightActiveRef.value = false;
-    }, 1500);
-    void issueIdx;
-    void source;
+    const bodyHighlight = (uiProfile.value as { recheck_issue_highlight?: boolean }).recheck_issue_highlight
+      || ((uiProfile.value as { issue_paragraph_highlight_unified?: boolean }).issue_paragraph_highlight_unified
+        && (source === 'logic' || source === 'inline'))
+      || source === 'inline';
+    if (bodyHighlight) {
+      if (source === 'recheck') {
+        activeRecheckIssueIdxRef.value = issueIdx ?? null;
+      }
+      chapterBodyHighlightActiveRef.value = true;
+      if (chapterBodyHighlightTimerRef.value) clearTimeout(chapterBodyHighlightTimerRef.value);
+      chapterBodyHighlightTimerRef.value = setTimeout(() => {
+        chapterBodyHighlightActiveRef.value = false;
+      }, 1500);
+    }
   }
 
   function focusIssueParagraph(issue: Record<string, unknown>, issueIdx: number, source: string = 'recheck'): void {
@@ -147,14 +162,14 @@ export function useWriteTools(deps: WriteToolsDeps): WriteToolsReturn {
   }
 
   function updateBatchDeviationInlineSummary(start: number, end: number): void {
-    const list = batchDeviationsInRange(start, end);
-    batchDeviationInlineSummary.value = {
-      start,
-      end,
-      count: list.length,
-      sample: list.slice(0, 3),
-      computedAt: new Date().toISOString(),
-    };
+    if (!(uiProfile.value as { batch_deviation_inline_summary?: boolean }).batch_deviation_inline_summary) {
+      batchDeviationInlineSummary.value = null;
+      return;
+    }
+    const items = batchDeviationsInRange(start, end);
+    batchDeviationInlineSummary.value = items.length
+      ? { start, end, items }
+      : null;
   }
 
   async function linkBatchDeviationInlineSummary(start: number, end: number): Promise<void> {
