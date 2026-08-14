@@ -1,20 +1,26 @@
 /**
  * useCreatorProductTools — 创作偏好、导出、发布向导、介入摘要
+ *
+ * Phase 19 Task 1: 抽出 useProductExport + useProductPublish 两个子模块（无循环依赖），
+ * 本主 hook 改为组合 facade。下游 API（panelContext shape）保持完全兼容，
+ * 22+ 处 import 无需修改。
+ *
+ * 子模块：
+ * - useProductExport       (导出向导 + Markdown/EPUB/DOCX)
+ * - useProductPublish      (发布向导 + 历史 + 平台)
+ *
+ * 暂未抽出的（保留内联，避免循环依赖）：
+ * - useProductPreferences  (创作偏好/模型同步 — 与 memory 双向依赖)
+ * - useProductMemory       (记忆资产/搜索/标注 — 与 preferences 双向依赖)
+ *   → 后续 Task 1.5 / Task 1.6 单独 PR 渐进接入
  */
 import { computed, ref, watch } from 'vue';
 import {
-  fetchChapters,
-  fetchCreatorChapterPreview,
   fetchCreatorPreferences,
   saveCreatorPreferencesApi,
   fetchCreatorMemoryAssets,
   saveCreatorMemoryAnnotation,
-  exportCreatorEpub,
-  exportCreatorDocx,
   queryCreatorMemory,
-  submitCreatorPublish,
-  fetchCreatorPublishHistory,
-  fetchCreatorPublishPlatforms,
   fetchCreatorModels,
 } from '../api/index.js';
 import {
@@ -24,26 +30,17 @@ import {
   CREATOR_MODEL_OPTIONS,
 } from '../utils/creatorPreferencesStorage.js';
 import { preferencesFromApi, preferencesToApi } from '../utils/creatorPreferencesApi.js';
-import {
-  buildFullBookMarkdown,
-  buildSubmissionPackMarkdown,
-  defaultSubmissionChapterNums,
-  downloadTextFile,
-  downloadBlobFile,
-  safeExportFilename,
-} from '../utils/creatorExportUtils.js';
 import { buildMemoryAssetItems } from '../utils/creatorMemoryAssetsUtils.js';
 import { buildStructureGraph } from '../utils/creatorStructureGraphUtils.js';
 import { highlightMemorySnippet, formatMemoryCitation } from '../utils/creatorMemoryHighlightUtils.js';
 import { buildCreatorPreferencesSummary } from '../utils/creatorPreferencesSummaryUtils.js';
 import { useStudioProject } from './useStudioProject.js';
+import {
+  useProductExport,
+  useProductPublish,
+} from './useCreatorProductTools/index.ts';
 
-export const CREATOR_PUBLISH_PLATFORMS = [
-  { id: 'fanqie', label: '番茄小说' },
-  { id: 'qidian', label: '起点中文网' },
-  { id: 'jjwxc', label: '晋江文学城' },
-  { id: 'custom', label: '自定义平台' },
-];
+export { CREATOR_PUBLISH_PLATFORMS } from './useCreatorProductTools/useProductPublish.ts';
 
 /**
  * @param {{
@@ -90,75 +87,50 @@ export function useCreatorProductTools(deps) {
   const { activeSlug: activeSlugRef } = useStudioProject();
   const activeSlug = activeSlugRef ?? ref(null);
 
+  // --- Preferences 内联（与 memory 双向依赖，单独 PR 处理）---
   const preferences = ref(loadCreatorPreferences());
   const preferencesDirty = ref(false);
   const preferencesSavedHint = ref('');
   const preferencesSyncSource = ref('local');
   const creatorModelOptions = ref([...CREATOR_MODEL_OPTIONS]);
 
+  // --- Memory 内联（与 preferences 双向依赖，单独 PR 处理）---
   const memoryAssetsPayload = ref(null);
   const memoryAssetsLoading = ref(false);
   const memoryAssetsLoadedOnce = ref(false);
   const memoryFilter = ref('all');
   const memoryFocusAssetId = ref(null);
-
-  const exportModalOpen = ref(false);
-  const exportMode = ref('full');
-  const exportRangeStart = ref(1);
-  const exportRangeEnd = ref(10);
-  const exportIntro = ref('');
-  const exportAuthor = ref('');
-  const exportDescription = ref('');
-  const exportSubmissionSampleCount = ref(3);
-  const exportBusy = ref(false);
-  const exportPreview = ref('');
-
   const memorySearchQuery = ref('');
   const memorySearchScope = ref('all');
   const memorySearchResults = ref([]);
   const memorySearchBusy = ref(false);
   const memorySearchRan = ref(false);
   const memorySearchUsedFallback = ref(false);
-
-  const publishModalOpen = ref(false);
-  const publishStep = ref(0);
-  const publishPlatform = ref('fanqie');
-  const publishIncludeOutline = ref(true);
-  const publishIntro = ref('');
-  const publishStatus = ref('idle');
-  const publishMessage = ref('');
-  const publishHistory = ref([]);
-  const publishPlatforms = ref([...CREATOR_PUBLISH_PLATFORMS]);
-  const publishHistoryModalOpen = ref(false);
-  const publishPackPreview = ref('');
-  const publishPackBusy = ref(false);
-  const publishSubmissionChapters = ref([]);
-
   const memoryAnnotationSaving = ref(null);
-
   const structureGraphView = ref('tree');
 
-  watch(
-    () => overview.value?.max_chapter,
-    (max) => {
-      if (max) exportRangeEnd.value = max;
-    },
-    { immediate: true },
-  );
+  // --- Export 子模块（Phase 19 Task 1 抽出）---
+  const exporter = useProductExport({
+    overview,
+    error,
+    saveMessage,
+    pillarsText,
+    globalOutlineText,
+    activeSlug,
+  });
 
-  watch(
-    () => [activeSlug.value, overview.value?.pillars_excerpt],
-    () => {
-      if (!exportAuthor.value) {
-        exportAuthor.value = activeSlug.value || '';
-      }
-      if (!exportDescription.value && overview.value?.pillars_excerpt) {
-        exportDescription.value = overview.value.pillars_excerpt.slice(0, 280);
-      }
-    },
-    { immediate: true },
-  );
+  // --- Publish 子模块（依赖 exporter）---
+  const publisher = useProductPublish({
+    exportIntro: exporter.exportIntro,
+    exportDescription: exporter.exportDescription,
+    buildExportMarkdown: exporter.buildExportMarkdown,
+    resolveExportChapterNums: exporter.resolveExportChapterNums,
+    setExportMode: exporter.setExportMode,
+    error,
+    saveMessage,
+  });
 
+  // --- 跨切 computeds ---
   const memoryAssets = computed(() => {
     if (memoryAssetsPayload.value?.items?.length) {
       return memoryAssetsPayload.value.items;
@@ -285,6 +257,7 @@ export function useCreatorProductTools(deps) {
     return items;
   });
 
+  // --- 偏好/模型 actions (内联) ---
   async function loadCreatorModels() {
     try {
       const data = await fetchCreatorModels();
@@ -309,6 +282,34 @@ export function useCreatorProductTools(deps) {
     }
   }
 
+  function markPreferencesDirty() {
+    preferencesDirty.value = true;
+    preferencesSavedHint.value = '';
+  }
+
+  function resetPreferences() {
+    preferences.value = defaultCreatorPreferences();
+    preferencesDirty.value = true;
+    preferencesSavedHint.value = '';
+  }
+
+  async function savePreferences() {
+    saveCreatorPreferences(preferences.value);
+    try {
+      await saveCreatorPreferencesApi(preferencesToApi(preferences.value));
+      preferencesSyncSource.value = 'server';
+      preferencesSavedHint.value = '偏好已同步到项目';
+      saveMessage.value = '创作偏好已保存';
+    } catch (e) {
+      preferencesSyncSource.value = 'local';
+      preferencesSavedHint.value = '已保存到本机（服务器暂不可用）';
+      saveMessage.value = '创作偏好已保存到本机';
+      error.value = e instanceof Error ? e.message : String(e);
+    }
+    preferencesDirty.value = false;
+  }
+
+  // --- Memory actions (内联) ---
   async function loadMemoryAssets() {
     memoryAssetsLoading.value = true;
     try {
@@ -344,43 +345,6 @@ export function useCreatorProductTools(deps) {
     }
   }
 
-  async function loadPublishHistory(limit = 30) {
-    try {
-      const data = await fetchCreatorPublishHistory(limit);
-      publishHistory.value = data.entries || [];
-    } catch {
-      publishHistory.value = [];
-    }
-  }
-
-  function openPublishHistoryModal() {
-    publishHistoryModalOpen.value = true;
-    loadPublishHistory(30);
-  }
-
-  function closePublishHistoryModal() {
-    publishHistoryModalOpen.value = false;
-  }
-
-  async function prefillPublishFromSubmission() {
-    exportMode.value = 'submission';
-    if (!publishIntro.value.trim()) {
-      publishIntro.value = exportIntro.value || exportDescription.value || '';
-    }
-    publishPackBusy.value = true;
-    publishPackPreview.value = '';
-    try {
-      const chapterNums = await resolveExportChapterNums();
-      publishSubmissionChapters.value = chapterNums;
-      publishPackPreview.value = await buildExportMarkdown();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-      publishSubmissionChapters.value = [];
-    } finally {
-      publishPackBusy.value = false;
-    }
-  }
-
   async function saveMemoryAnnotation(assetId, patch) {
     memoryAnnotationSaving.value = assetId;
     try {
@@ -404,251 +368,7 @@ export function useCreatorProductTools(deps) {
     await saveMemoryAnnotation(item.id, { note });
   }
 
-  async function loadPublishPlatforms() {
-    try {
-      const data = await fetchCreatorPublishPlatforms();
-      if (data.platforms?.length) {
-        publishPlatforms.value = data.platforms;
-      }
-    } catch {
-      publishPlatforms.value = [...CREATOR_PUBLISH_PLATFORMS];
-    }
-  }
-
-  const activePublishPlatform = computed(
-    () => publishPlatforms.value.find((p) => p.id === publishPlatform.value)
-      || publishPlatforms.value[0],
-  );
-
-  function exportRequestBody() {
-    const body = {
-      mode: exportMode.value,
-      title: activeSlug.value || '灵文作品',
-      author: exportAuthor.value || undefined,
-      description: exportDescription.value || undefined,
-    };
-    if (exportMode.value === 'range') {
-      body.start_chapter = Math.min(exportRangeStart.value, exportRangeEnd.value);
-      body.end_chapter = Math.max(exportRangeStart.value, exportRangeEnd.value);
-    }
-    if (exportMode.value === 'submission') {
-      body.submission_sample_count = exportSubmissionSampleCount.value;
-    }
-    return body;
-  }
-
-  function markPreferencesDirty() {
-    preferencesDirty.value = true;
-    preferencesSavedHint.value = '';
-  }
-
-  function resetPreferences() {
-    preferences.value = defaultCreatorPreferences();
-    preferencesDirty.value = true;
-    preferencesSavedHint.value = '';
-  }
-
-  async function savePreferences() {
-    saveCreatorPreferences(preferences.value);
-    try {
-      await saveCreatorPreferencesApi(preferencesToApi(preferences.value));
-      preferencesSyncSource.value = 'server';
-      preferencesSavedHint.value = '偏好已同步到项目';
-      saveMessage.value = '创作偏好已保存';
-    } catch (e) {
-      preferencesSyncSource.value = 'local';
-      preferencesSavedHint.value = '已保存到本机（服务器暂不可用）';
-      saveMessage.value = '创作偏好已保存到本机';
-      error.value = e instanceof Error ? e.message : String(e);
-    }
-    preferencesDirty.value = false;
-  }
-
-  function openExportModal(mode = 'full') {
-    exportMode.value = mode;
-    exportModalOpen.value = true;
-    exportPreview.value = '';
-    if (overview.value?.max_chapter) {
-      exportRangeEnd.value = overview.value.max_chapter;
-    }
-  }
-
-  function closeExportModal() {
-    exportModalOpen.value = false;
-    exportBusy.value = false;
-  }
-
-  async function loadChapterBodies(chapterNums) {
-    const chapters = [];
-    for (const num of chapterNums) {
-      try {
-        const preview = await fetchCreatorChapterPreview(num, { full: true });
-        chapters.push({
-          chapter: num,
-          title: preview.title || `第${num}章`,
-          body: preview.body_text || preview.body_preview || preview.excerpt || '',
-          excerpt: preview.excerpt,
-        });
-      } catch {
-        const row = overview.value?.chapters?.find((c) => c.chapter === num);
-        chapters.push({
-          chapter: num,
-          title: `第${num}章`,
-          body: row?.excerpt || '',
-          excerpt: row?.excerpt,
-        });
-      }
-    }
-    return chapters;
-  }
-
-  async function resolveExportChapterNums() {
-    if (exportMode.value === 'range') {
-      const start = Math.min(exportRangeStart.value, exportRangeEnd.value);
-      const end = Math.max(exportRangeStart.value, exportRangeEnd.value);
-      const nums = [];
-      for (let n = start; n <= end; n += 1) nums.push(n);
-      return nums;
-    }
-    if (exportMode.value === 'submission') {
-      const resp = await fetchChapters();
-      const nums = (resp.chapters || [])
-        .filter((c) => c.has_body)
-        .map((c) => c.chapter);
-      return defaultSubmissionChapterNums(
-        nums,
-        overview.value?.max_chapter,
-        exportSubmissionSampleCount.value,
-      );
-    }
-    const resp = await fetchChapters();
-    return (resp.chapters || [])
-      .filter((c) => c.has_body)
-      .map((c) => c.chapter)
-      .sort((a, b) => a - b);
-  }
-
-  async function buildExportMarkdown() {
-    const chapterNums = await resolveExportChapterNums();
-    const chapters = await loadChapterBodies(chapterNums);
-    const projectTitle = activeSlug.value || '灵文作品';
-    const pillars = pillarsText.value || overview.value?.pillars_excerpt || '';
-    const outline = globalOutlineText.value || overview.value?.global_outline_excerpt || '';
-
-    if (exportMode.value === 'submission') {
-      return buildSubmissionPackMarkdown({
-        projectTitle,
-        intro: exportIntro.value,
-        pillars,
-        outline,
-        sampleChapters: chapters,
-      });
-    }
-    return buildFullBookMarkdown({ projectTitle, pillars, outline, chapters });
-  }
-
-  async function refreshExportPreview() {
-    exportBusy.value = true;
-    try {
-      exportPreview.value = await buildExportMarkdown();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      exportBusy.value = false;
-    }
-  }
-
-  async function runExportDownload() {
-    exportBusy.value = true;
-    try {
-      const markdown = await buildExportMarkdown();
-      const slug = activeSlug.value || 'novel';
-      const suffix = exportMode.value === 'submission' ? 'submission' : exportMode.value;
-      downloadTextFile(safeExportFilename(slug, suffix), markdown);
-      saveMessage.value = '作品已导出为 Markdown';
-      closeExportModal();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      exportBusy.value = false;
-    }
-  }
-
-  async function runExportEpub() {
-    exportBusy.value = true;
-    try {
-      const slug = activeSlug.value || 'novel';
-      const blob = await exportCreatorEpub(exportRequestBody());
-      downloadBlobFile(safeExportFilename(slug, exportMode.value).replace(/\.md$/, '.epub'), blob);
-      saveMessage.value = '作品已导出为 EPUB';
-      closeExportModal();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      exportBusy.value = false;
-    }
-  }
-
-  async function runExportDocx() {
-    exportBusy.value = true;
-    try {
-      const slug = activeSlug.value || 'novel';
-      const blob = await exportCreatorDocx(exportRequestBody());
-      downloadBlobFile(safeExportFilename(slug, exportMode.value).replace(/\.md$/, '.docx'), blob);
-      saveMessage.value = '作品已导出为 DOCX';
-      closeExportModal();
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
-    } finally {
-      exportBusy.value = false;
-    }
-  }
-
-  async function openPublishWizard() {
-    publishModalOpen.value = true;
-    publishStep.value = 0;
-    publishStatus.value = 'idle';
-    publishMessage.value = '';
-    await Promise.all([loadPublishHistory(), loadPublishPlatforms()]);
-  }
-
-  function closePublishWizard() {
-    publishModalOpen.value = false;
-    publishStatus.value = 'idle';
-  }
-
-  function nextPublishStep() {
-    const next = Math.min(publishStep.value + 1, 3);
-    if (publishStep.value === 0 && next === 1) {
-      prefillPublishFromSubmission();
-    }
-    publishStep.value = next;
-  }
-
-  function prevPublishStep() {
-    publishStep.value = Math.max(publishStep.value - 1, 0);
-  }
-
-  async function submitPublish() {
-    publishStatus.value = 'submitting';
-    publishMessage.value = '';
-    try {
-      const entry = await submitCreatorPublish({
-        platform: publishPlatform.value,
-        include_outline: publishIncludeOutline.value,
-        intro: publishIntro.value || exportIntro.value,
-        mode: 'submission',
-      });
-      publishStatus.value = 'success';
-      publishMessage.value = entry.message || `已提交至 ${publishPlatform.value}（${entry.status}）`;
-      saveMessage.value = publishMessage.value;
-      await loadPublishHistory();
-    } catch (e) {
-      publishStatus.value = 'idle';
-      error.value = e instanceof Error ? e.message : String(e);
-    }
-  }
-
+  // --- Intervention / 导航 actions (内联) ---
   async function handleInterventionAction(item) {
     if (!item) return;
     if (item.action === 'pulse') {
@@ -693,7 +413,9 @@ export function useCreatorProductTools(deps) {
     setWorkspaceTab('memory');
   }
 
+  // --- panelContext 聚合 ---
   const panelContext = {
+    // Preferences
     preferences,
     preferencesDirty,
     preferencesSummary,
@@ -705,6 +427,7 @@ export function useCreatorProductTools(deps) {
     resetPreferences,
     savePreferences,
     loadPreferencesFromServer,
+    // Memory
     memoryAssets,
     memoryAssetsFiltered,
     memoryAssetsLoading,
@@ -731,46 +454,49 @@ export function useCreatorProductTools(deps) {
     memorySearchUsedFallback,
     highlightMemorySnippet,
     formatMemoryCitation,
-    exportModalOpen,
-    exportMode,
-    exportRangeStart,
-    exportRangeEnd,
-    exportIntro,
-    exportAuthor,
-    exportDescription,
-    exportSubmissionSampleCount,
-    exportBusy,
-    exportPreview,
-    openExportModal,
-    closeExportModal,
-    refreshExportPreview,
-    runExportDownload,
-    runExportEpub,
-    runExportDocx,
-    publishModalOpen,
-    publishStep,
-    publishPlatform,
-    publishIncludeOutline,
-    publishIntro,
-    publishStatus,
-    publishMessage,
-    publishHistory,
-    publishPlatforms,
-    publishHistoryModalOpen,
-    publishPackPreview,
-    publishPackBusy,
-    publishSubmissionChapters,
-    activePublishPlatform,
-    openPublishWizard,
-    closePublishWizard,
-    openPublishHistoryModal,
-    closePublishHistoryModal,
-    prefillPublishFromSubmission,
-    nextPublishStep,
-    prevPublishStep,
-    submitPublish,
-    loadPublishHistory,
-    loadPublishPlatforms,
+    // Export (子模块)
+    exportModalOpen: exporter.exportModalOpen,
+    exportMode: exporter.exportMode,
+    exportRangeStart: exporter.exportRangeStart,
+    exportRangeEnd: exporter.exportRangeEnd,
+    exportIntro: exporter.exportIntro,
+    exportAuthor: exporter.exportAuthor,
+    exportDescription: exporter.exportDescription,
+    exportSubmissionSampleCount: exporter.exportSubmissionSampleCount,
+    exportBusy: exporter.exportBusy,
+    exportPreview: exporter.exportPreview,
+    openExportModal: exporter.openExportModal,
+    closeExportModal: exporter.closeExportModal,
+    refreshExportPreview: exporter.refreshExportPreview,
+    runExportDownload: exporter.runExportDownload,
+    runExportEpub: exporter.runExportEpub,
+    runExportDocx: exporter.runExportDocx,
+    // Publish (子模块)
+    publishModalOpen: publisher.publishModalOpen,
+    publishStep: publisher.publishStep,
+    publishPlatform: publisher.publishPlatform,
+    publishIncludeOutline: publisher.publishIncludeOutline,
+    publishIntro: publisher.publishIntro,
+    publishStatus: publisher.publishStatus,
+    publishMessage: publisher.publishMessage,
+    publishHistory: publisher.publishHistory,
+    publishPlatforms: publisher.publishPlatforms,
+    publishHistoryModalOpen: publisher.publishHistoryModalOpen,
+    publishPackPreview: publisher.publishPackPreview,
+    publishPackBusy: publisher.publishPackBusy,
+    publishSubmissionChapters: publisher.publishSubmissionChapters,
+    activePublishPlatform: publisher.activePublishPlatform,
+    openPublishWizard: publisher.openPublishWizard,
+    closePublishWizard: publisher.closePublishWizard,
+    openPublishHistoryModal: publisher.openPublishHistoryModal,
+    closePublishHistoryModal: publisher.closePublishHistoryModal,
+    prefillPublishFromSubmission: publisher.prefillPublishFromSubmission,
+    nextPublishStep: publisher.nextPublishStep,
+    prevPublishStep: publisher.prevPublishStep,
+    submitPublish: publisher.submitPublish,
+    loadPublishHistory: publisher.loadPublishHistory,
+    loadPublishPlatforms: publisher.loadPublishPlatforms,
+    // Intervention / Navigation
     interventionItems,
     handleInterventionAction,
     goToSettingsForAsset,
