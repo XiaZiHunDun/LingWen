@@ -11,8 +11,8 @@ import type { ComputedRef, Ref } from 'vue';
 import { fetchCreatorVolumeTemplates } from '../../api/index.js';
 
 export interface TemplateRow {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
   scope?: 'project' | 'factory';
   description?: string;
   version_label?: string;
@@ -21,7 +21,8 @@ export interface TemplateRow {
 }
 
 export interface TemplateListDeps {
-  // 主 hook 上下文（暂无依赖，保持接口兼容）
+  volumeTemplates: Ref<TemplateRow[]>;
+  selectedTemplateId: Ref<string>;
 }
 
 export interface TemplateListReturn {
@@ -40,16 +41,16 @@ export interface TemplateListReturn {
 
 const VERSION_SEMVER_PATTERN = /^v?\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9][a-zA-Z0-9.-]*)?$/i;
 
-export function useTemplateList(_deps: TemplateListDeps): TemplateListReturn {
-  const volumeTemplates = ref<TemplateRow[]>([]);
-  const selectedTemplateId = ref('three_act');
+export function useTemplateList(deps: TemplateListDeps): TemplateListReturn {
+  const { volumeTemplates, selectedTemplateId } = deps;
 
   async function loadVolumeTemplates(): Promise<void> {
     try {
       const data = await fetchCreatorVolumeTemplates() as { templates?: TemplateRow[] };
       volumeTemplates.value = data.templates || [];
       if (volumeTemplates.value.length && !volumeTemplates.value.some((t) => t.id === selectedTemplateId.value)) {
-        selectedTemplateId.value = volumeTemplates.value[0].id;
+        const firstId = volumeTemplates.value[0].id || '';
+        if (firstId) selectedTemplateId.value = firstId;
       }
     } catch {
       volumeTemplates.value = [];
@@ -80,9 +81,9 @@ export function useTemplateList(_deps: TemplateListDeps): TemplateListReturn {
   function formatTemplateOption(template: TemplateRow): string {
     if (template.version_label) {
       const prefix = template.version_semver_valid === false ? '!' : '';
-      return `${prefix}[${template.version_label}] ${template.name}`;
+      return `${prefix}[${template.version_label}] ${template.name || ''}`;
     }
-    return template.name;
+    return template.name || '';
   }
 
   function isSemverVersionLabel(label: string): boolean {
