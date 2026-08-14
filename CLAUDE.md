@@ -1,8 +1,8 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v10.0 (Phase 16 卫生与基础完成)
+> **版本**: v12.0 (Phase 18 业务边界 + 接口化 完成)
   → v11.0 (Phase 17 monorepo 完成)
-> **更新 (2026-08-13)**：Phase 17（monorepo 化）落地——`apps/`+`packages/` 双层布局、8 个 `lingwen-*` Python 包独立发布、`apps/dashboard` + `apps/studio_api` 拆分、pnpm workspace + `packages/dashboard-contracts` 占位、`content/` 顶层化（含 SKILL.md 角色池 + 3 个 registry.yaml）、包依赖方向守卫（`tooling/lint/check_package_deps.py`）、`tooling/gates/phase_17.sh` 门禁。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 monorepo 完成后的下个 phase。
+> **更新 (2026-08-14)**：Phase 18（业务边界 + 接口化）落地——`packages/lingwen-core/src/lingwen_core/ports/` 4 个 Protocol (StoragePort / EventStorePort / LLMPort / CheckerPort) + 5 个 Mock；`lingwen_core.domain/` 6 个 Domain 实体（Chapter/Volume/Character/Foreshadow/Ripple/WorldSnapshot）+ 7 个 DomainEvent；`lingwen_core.use_cases/` 3 个事件驱动用例 (WriteChapterUseCase / ReviewChapterUseCase / MergeRipplesUseCase)；`apps/studio_api/dependencies.py` DI 容器 + `routes/chapters.py` 薄壳样板；删除 `infra/agent_system/` + 5 个 agent 迁到 packages；删除 `infra/consistency/ai_tells_blacklist.py` 等 3 文件迁到 packages；删除 `infra/memory_system/` + `infra/prompt_engineering/` + `infra/state/`；`infra/__init__.py` 178 行 → 22 行薄壳；删除 `dashboard/frontend/` 影子目录 8 文件迁到 apps/dashboard；`scripts/ci_baseline_check.py` 路径修复；陈旧 import 230 → 205（-25）；`tooling/gates/phase_18.sh` 9 项 Gate PASS。
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
@@ -461,6 +461,7 @@ infra/
 ---
 
 > **版本记录**：
+> - v12.0 (2026-08-14)：Phase 18 业务边界 + 接口化完成。lingwen_core.ports (4 Protocol + 5 Mock) + domain (6 entities + 7 events) + use_cases (3 个事件驱动用例)；studio_api DI + chapters.py 薄壳样板；删除 5 个 infra/ 子目录 + dashboard/frontend/；陈旧 import 230 → 205；tooling/gates/phase_18.sh (9 项 Gate PASS)。
 > - v11.0 (2026-08-13)：Phase 17 monorepo 完成。apps/+packages/ 双层布局，8 个 lingwen-* Python 包独立发布，apps/dashboard + apps/studio_api 拆分，pnpm workspace + dashboard-contracts 占位，content/ 顶层化（含 SKILL.md 角色池 + 3 个 registry.yaml），包依赖方向守卫（tooling/lint/check_package_deps.py），tooling/gates/phase_17.sh。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 monorepo 完成后的下个 phase。
 > - v10.0 (2026-08-11)：Phase 16 卫生与基础完成。新增 `packages/lingwen-storage`（JSONL append-only event store + reducer）、`tools/migrate_state_log.py`、文件尺寸上限（pre-commit + CI + 72 文件 ALLOWLIST）、`tooling/gates/phase_16.sh` Gate 脚本、单一品牌（墨灵 Studio=产品，灵文=框架，brand check 已接入 CI）。Phase 16.7（删陈旧 infra）推迟到 Phase 17 monorepo。
 > - v9.12 (2026-05-27)：项目完善版。澄清03内容仓库vs07汇总仓库职责，补充07汇总仓库README，统一版本命名，添加SQLite状态管理说明，章节数统一为359章。
