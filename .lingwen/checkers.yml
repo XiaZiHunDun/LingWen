@@ -1,0 +1,204 @@
+# LingWen 检查器注册表 — 替代检查器开发规范中的文字描述
+# 新增检查器时同步更新此文件
+
+version: "1.0"
+
+# 检查器分类
+checkers:
+  # --- 人物维度 (Character) ---
+  - id: character_checker
+    file: character_checker.py
+    category: character
+    description: 人物基础属性一致性
+    type: rule_engine
+  - id: character_state
+    file: character_state.py
+    category: character
+    description: 人物状态（位置、携带物品、健康）
+    type: rule_engine
+  - id: character_agency
+    file: character_agency.py
+    category: character
+    description: 人物能动性（是否被动跟随情节）
+    type: rule_engine
+  - id: personality_checker
+    file: personality_checker.py
+    category: character
+    description: 人物性格一致性
+    type: rule_engine
+  - id: gender_consistency_checker
+    file: gender_consistency_checker.py
+    category: character
+    description: 人称代词一致性
+    type: rule_engine
+
+  # --- 情节维度 (Plot) ---
+  - id: foreshadow_checker
+    file: foreshadow_checker.py
+    category: plot
+    description: 伏笔埋设与回收
+    type: rule_engine
+  - id: foreshadow_quality
+    file: foreshadow_quality.py
+    category: plot
+    description: 伏笔质量（时机、深度）
+    type: rule_engine
+  - id: contradiction_detector
+    file: contradiction_detector.py
+    category: plot
+    description: 情节矛盾检测
+    type: rule_engine
+  - id: causal_chain_checker
+    file: causal_chain_checker.py
+    category: plot
+    description: 因果链完整性
+    type: rule_engine
+  - id: llm_causal_reasoning_checker
+    file: llm_causal_reasoning_checker.py
+    category: plot
+    description: LLM 增强因果推理
+    type: llm_enhanced
+  - id: cross_chapter_logic_checker
+    file: cross_chapter_logic_checker.py
+    category: plot
+    description: 跨章节逻辑一致性
+    type: rule_engine
+  - id: outline_checker
+    file: outline_checker.py
+    category: plot
+    description: 大纲偏离检测
+    type: rule_engine
+  - id: timeline_checker
+    file: timeline_checker.py
+    category: plot
+    description: 时间线一致性
+    type: rule_engine
+  - id: timeline_age
+    file: timeline_age.py
+    category: plot
+    description: 人物年龄时间线
+    type: rule_engine
+
+  # --- 文笔维度 (Prose) ---
+  - id: ai_gloss_checker
+    file: ai_gloss_checker.py
+    category: prose
+    description: AI 痕迹检测（AI Tells 黑名单）
+    type: rule_engine
+  - id: sentence_diversity_checker
+    file: sentence_diversity_checker.py
+    category: prose
+    description: 句式多样性
+    type: rule_engine
+  - id: repetitive_phrase_checker
+    file: repetitive_phrase_checker.py
+    category: prose
+    description: 重复短语检测
+    type: rule_engine
+  - id: vocabulary
+    file: vocabulary.py
+    category: prose
+    description: 词汇丰富度
+    type: rule_engine
+  - id: dialogue_authenticity_checker
+    file: dialogue_authenticity_checker.py
+    category: prose
+    description: 对话真实性
+    type: rule_engine
+  - id: dialogue_action_checker
+    file: dialogue_action_checker.py
+    category: prose
+    description: 对话动作配合
+    type: rule_engine
+  - id: narrative_perspective_checker
+    file: narrative_perspective_checker.py
+    category: prose
+    description: 叙事视角一致性
+    type: rule_engine
+
+  # --- 结构维度 (Structure) ---
+  - id: pacing_checker
+    file: pacing_checker.py
+    category: structure
+    description: 节奏控制
+    type: rule_engine
+  - id: scene_transition_checker
+    file: scene_transition_checker.py
+    category: structure
+    description: 场景过渡
+    type: rule_engine
+  - id: spatial_transition_checker
+    file: spatial_transition_checker.py
+    category: structure
+    description: 空间过渡
+    type: rule_engine
+  - id: chapter_redundancy_checker
+    file: chapter_redundancy_checker.py
+    category: structure
+    description: 章节冗余度
+    type: rule_engine
+  - id: scene_pattern_repeat
+    file: scene_pattern_repeat.py
+    category: structure
+    description: 场景模式重复
+    type: rule_engine
+
+  # --- 道具/能力维度 (Items) ---
+  - id: core_props_checker
+    file: core_props_checker.py
+    category: items
+    description: 核心道具一致性
+    type: rule_engine
+  - id: item_checker
+    file: item_checker.py
+    category: items
+    description: 道具使用追踪
+    type: rule_engine
+  - id: ability_checker
+    file: ability_checker.py
+    category: items
+    description: 能力体系一致性
+    type: rule_engine
+
+  # --- 关系维度 (Relationship) ---
+  - id: relationship_state_checker
+    file: relationship_state_checker.py
+    category: relationship
+    description: 人物关系状态
+    type: rule_engine
+  - id: knowledge_tracker
+    file: knowledge_tracker.py
+    category: relationship
+    description: 人物知识追踪（谁知道什么）
+    type: rule_engine
+
+  # --- 特殊维度 ---
+  - id: battle_visualization
+    file: battle_visualization.py
+    category: special
+    description: 战斗场景可视化质量
+    type: rule_engine
+  - id: attribute_comparer
+    file: attribute_comparer.py
+    category: special
+    description: 属性对比
+    type: rule_engine
+  - id: repair_trace_checker
+    file: repair_trace_checker.py
+    category: special
+    description: 修复追踪（元数据）
+    type: rule_engine
+  - id: text_utils
+    file: text_utils.py
+    category: special
+    description: 文本工具（辅助）
+    type: utility
+
+# 工具类（非检查器，不参与检查流程）
+utilities:
+  - id: base_checker
+    file: base_checker.py
+    description: 所有检查器的基类
+  - id: text_utils
+    file: text_utils.py
+    description: 文本处理工具函数

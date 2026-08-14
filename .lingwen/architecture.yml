@@ -1,0 +1,63 @@
+# LingWen 架构契约 — AI 可读的结构化模块边界定义
+# 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
+
+version: "1.0"
+
+# 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
+layers:
+  - name: presentation
+    path: dashboard/frontend/
+    depends_on: [api_gateway]
+    tech: [Vue3, Pinia, TypeScript]
+  - name: api_gateway
+    path: dashboard/
+    depends_on: [core]
+    tech: [FastAPI, Pydantic, WebSocket]
+  - name: core
+    path: infra/
+    depends_on: []
+    tech: [Python3.12, SQLite]
+
+# 架构不变量（违反即架构错误）
+invariants:
+  - id: I001
+    rule: "infra/ 禁止 import dashboard/"
+    severity: error
+  - id: I002
+    rule: "检查器 = 纯函数规则引擎，禁止调用 LLM / AI 服务"
+    severity: error
+    scope: "infra/consistency/checkers/"
+  - id: I003
+    rule: "L3(consistency) 和 L4(cross_volume) 禁止 import L2(agent_system)"
+    severity: error
+  - id: I004
+    rule: "审查流程使用独立 AI 会话，审查者无作者 CLAIM 访问"
+    severity: error
+  - id: I005
+    rule: "创作流必须支持 checkpoint 恢复，不可中断"
+    severity: error
+
+# 模块边界（明确每个模块的公共 API 和依赖）
+module_boundaries:
+  consistency:
+    path: infra/consistency/
+    exports: [ConsistencyEngine, Issue, IssueSeverity, CheckerType]
+    allowed_imports: [infra/errors]
+    forbidden_imports: [infra/agent_system]
+  agent_system:
+    path: infra/agent_system/
+    exports: [MasterController, ReviewerSession]
+    allowed_imports: [infra/consistency, infra/errors, infra/state]
+  cross_volume:
+    path: infra/cross_volume/
+    exports: [CrossVolumeRipple, RippleStorage, ReferenceGraph]
+    allowed_imports: [infra/errors]
+    forbidden_imports: [infra/agent_system]
+  hooks:
+    path: infra/hooks/
+    exports: [HookEngine, EventBus]
+    allowed_imports: [infra/errors]
+  state:
+    path: infra/state/
+    exports: [StateManager, WorkflowDB]
+    allowed_imports: [infra/persistence]

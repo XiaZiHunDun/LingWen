@@ -1,0 +1,71 @@
+# LingWen 开发约束 — 替代 AGENTS.md 中的文字规范
+# AI 开发工具应在每次代码修改前检查此文件
+
+version: "1.0"
+
+# 反模式（禁止操作）
+antipatterns:
+  - id: A001
+    rule: "禁止 as any / @ts-ignore / @ts-nocheck"
+    scope: "*.ts,*.vue"
+  - id: A002
+    rule: "禁止空 catch 块（必须记录日志或 rethrow）"
+    scope: "*.py,*.ts"
+  - id: A003
+    rule: "禁止删除 Failing Test（先记录 bug 再修复）"
+    scope: "tests/"
+  - id: A004
+    rule: "禁止 git add -A（只 stage 自己改的文件）"
+  - id: A005
+    rule: "禁止未经请求的依赖升级"
+  - id: A006
+    rule: "禁止修改生成产物（codegen 输出，应修改生成器）"
+  - id: A007
+    rule: "禁止在检查器中调用 AI 生成内容"
+    scope: "infra/consistency/checkers/"
+  - id: A008
+    rule: "禁止在生产代码中保留 console.log 调试输出"
+    scope: "*.ts,*.vue"
+  - id: A009
+    rule: "禁止在 Vue 组件中直接操作 DOM（使用 ref + 响应式）"
+    scope: "*.vue"
+  - id: A010
+    rule: "禁止在 Composable 外部修改 Pinia Store 状态"
+    scope: "*.ts"
+
+# 安全约束
+security:
+  frontend:
+    - "禁止 v-html 用于用户输入（仅用于受信任内容如 mermaid SVG）"
+    - "禁止 eval() / new Function() / innerHTML"
+    - "禁止硬编码 API 密钥"
+  backend:
+    - "CORS: 本地开发 *，生产环境限制具体域名"
+    - "速率限制: 默认 100/min，变更 10/min，AI 调用 5/min"
+    - "输入校验: 所有 API 端点使用 Pydantic 模型"
+    - "SQL 注入防护: 参数化查询，禁止字符串拼接"
+  ai:
+    - "提示词注入防护: 用户输入不直接拼接到系统提示词"
+    - "成本控制: 每次 AI 调用记录 token 消耗，超预算阻断"
+
+# 提交纪律
+commits:
+  - "未验证的修改 commit 为 WIP"
+  - "PR 必须包含运行证据（测试输出 / 截图）"
+  - "提交前必须通过: ESLint + vue-tsc --noEmit + pytest/vitest"
+  - "禁止提交含 sk- / api_key / password / secret 的文件"
+
+# 多文件修改链路
+change_links:
+  - change: "新增检查器"
+    files: ["infra/consistency/checkers/", "engine/checker_inspector.py", "tests/"]
+  - change: "新增 API 端点"
+    files: ["dashboard/routes/", "dashboard/models/", "frontend/src/api/", "tests/"]
+  - change: "新增 Composable"
+    files: ["frontend/src/composables/", "tests/", "composables/index.js"]
+  - change: "改 DB Schema"
+    files: ["infra/persistence/schemas.py", "infra/state/database.py", "tests/"]
+  - change: "新增异常类"
+    files: ["infra/errors.py", "infra/exports/core.py", "使用方 import"]
+  - change: "新增钩子动作"
+    files: ["infra/hooks/actions/", "infra/hooks/plugin_store.py", "tests/"]
