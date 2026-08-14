@@ -99,7 +99,7 @@ def run_baseline_checks(baseline_path: str | None = None) -> bool:
     if baseline_path is None:
         project_root = Path(__file__).resolve().parent.parent
         baseline_path = str(
-            project_root / "dashboard" / "frontend" / "tests" / "baselines" / "checker-baseline.json"
+            project_root / "apps" / "dashboard" / "tests" / "baselines" / "checker-baseline.json"
         )
 
     baseline = load_baseline(Path(baseline_path))
