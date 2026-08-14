@@ -11,7 +11,6 @@ Routes:
 - /api/creator/onboarding/webhook (GET, PUT)
 - /api/creator/onboarding/email (GET, PUT)
 
-Extracted from dashboard/app.py lines 1366-1775.
 """
 from __future__ import annotations
 

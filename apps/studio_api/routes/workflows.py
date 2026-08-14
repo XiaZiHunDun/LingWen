@@ -3,7 +3,6 @@ Phase 15.0 T1.4: /api/workflows/* routes.
 
 Also registers /api/ws/workflows WebSocket endpoint.
 
-Extracted from dashboard/app.py create_app closure (was at app.py lines 971-1069,
 3680-3817).
 """
 from __future__ import annotations

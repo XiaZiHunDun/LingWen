@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.3: misc helpers (UI mount, etc.).
 
-Extracted from dashboard/app.py (lines 584-600). Unchanged.
 """
 from __future__ import annotations
 

@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.4: /api/health route.
 
-Extracted from dashboard/app.py create_app closure (was at app.py line 243-246).
 
 集成 infra.health 模块，支持多组件健康检查。
 """

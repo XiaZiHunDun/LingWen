@@ -12,7 +12,6 @@ Routes:
 - /api/creator/settings-docs/history (GET)
 - /api/creator/settings-docs/restore (POST)
 
-Extracted from dashboard/app.py lines 2857-3487.
 """
 from __future__ import annotations
 

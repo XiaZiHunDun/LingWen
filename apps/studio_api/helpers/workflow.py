@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.3: workflow + workflow result helpers.
 
-Extracted from dashboard/app.py (lines 304-356 + 4286-4346). Unchanged.
 """
 from __future__ import annotations
 

@@ -1,7 +1,6 @@
 """
 Phase 15.0 T1.3: cross-volume graph (CVG) helpers.
 
-Extracted from dashboard/app.py (lines 360-583). Unchanged.
 """
 from __future__ import annotations
 
