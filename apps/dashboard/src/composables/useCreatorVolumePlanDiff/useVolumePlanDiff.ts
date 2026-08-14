@@ -257,7 +257,7 @@ export function useVolumePlanDiff(deps: VolumePlanDiffDeps): VolumePlanDiffRetur
       merged[label] = String(note).trim();
     }
     const saved = await saveCreatorDiffCollabNotes({ notes: merged }) as { notes?: Record<string, string> };
-    diffCollabNotes.value = { ...(saved?.notes || merged) };
+    diffCollabNotes.value = { ...merged, ...(saved?.notes || {}) };
   }
 
   void saving; // 占位兼容原 API（saving 通过 deps 暴露）
