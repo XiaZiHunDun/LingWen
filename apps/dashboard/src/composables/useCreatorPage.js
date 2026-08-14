@@ -21,6 +21,7 @@ import { useCreatorPulse } from './useCreatorPulse.js';
 import { createCreatorPageRefresh } from './useCreatorPageRefresh.js';
 import { useCreatorPageProviders } from './useCreatorPageProviders.js';
 import { useCreatorProductTools } from './useCreatorProductTools.js';
+import { useCreatorPageChrome } from './useCreatorPage/index.ts';
 
 export function useCreatorPage() {
   const { projectRevision } = useStudioProject();
@@ -398,53 +399,21 @@ export function useCreatorPage() {
 
   refreshRef.fn = refresh;
 
-  const workspaceTabBadgesMerged = computed(() => {
-    const badges = { ...(workspaceTabBadges.value || {}) };
-    if (settingsHasUnsavedChanges.value || productToolsPanelContext.preferencesDirty) {
-      badges.settings = '!';
-    }
-    return Object.keys(badges).length ? badges : null;
-  });
-
-  const chromeContext = {
-    overview,
-    loading,
-    uiProfile,
-    modeLabel,
-    creationModeBadgeHintText,
-    modeBadgeHintEnabled,
-    showCreationModeBadge,
-    showPageTitle,
-    showHeaderPreferences,
-    showHeaderPublishExport,
-    showHeaderRefresh,
-    showHeaderActionsRow,
-    displayDeviationBadge,
-    displayDeviationCount,
-    showCreationModeBadgeHint,
-    workspaceActiveTab,
-    workspaceTabsEnabled,
-    workspaceTabs,
-    workspacePrimaryTabs,
-    workspaceSecondaryTabs,
-    workspaceDrawerTabs,
-    deskDrawerEnabled,
-    deskDrawerPanel,
-    deskDrawerOpen,
-    isDeskDrawerColumn,
-    openDeskDrawer,
-    closeDeskDrawer,
-    workspaceTabBadges: workspaceTabBadgesMerged,
-    setWorkspaceTab,
-    onDeviationBadgeClick,
-    error,
-    conflictMessage,
-    saveMessage,
-    refresh,
-    preferencesSummary: productToolsPanelContext.preferencesSummary,
+  const { workspaceTabBadgesMerged, chromeContext } = useCreatorPageChrome({
+    overview, loading, uiProfile, error, conflictMessage, saveMessage,
+    modeLabel, creationModeBadgeHintText, modeBadgeHintEnabled, showCreationModeBadge,
+    showPageTitle, showHeaderPreferences, showHeaderPublishExport, showHeaderRefresh,
+    showHeaderActionsRow, displayDeviationBadge, displayDeviationCount, showCreationModeBadgeHint,
+    workspaceActiveTab, workspaceTabsEnabled, workspaceTabs, workspacePrimaryTabs,
+    workspaceSecondaryTabs, workspaceDrawerTabs, deskDrawerEnabled, deskDrawerPanel,
+    deskDrawerOpen, isDeskDrawerColumn, openDeskDrawer, closeDeskDrawer,
+    workspaceTabBadges, setWorkspaceTab, onDeviationBadgeClick,
+    settingsHasUnsavedChanges, preferencesSummary: productToolsPanelContext.preferencesSummary,
+    preferencesDirty: productToolsPanelContext.preferencesDirty,
     openExportModal: (...args) => productToolsPanelContext.openExportModal(...args),
     openPublishWizard: () => productToolsPanelContext.openPublishWizard(),
-  };
+    refresh,
+  });
 
   useCreatorPageProviders({
     chromeContext,
