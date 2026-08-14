@@ -4,7 +4,7 @@
 钻石级（diamond）检查，金级（gold）和银级（silver）检查降级为建议。
 
 使用方式:
-    from infra.consistency.creative_whitelist import (
+    from lingwen_quality.consistency.creative_whitelist import (
         CreativeWhitelist,
         add_whitelist,
         is_whitelisted,

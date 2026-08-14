@@ -6,7 +6,7 @@
 - QdrantClientWrapper — Qdrant 客户端封装
 """
 
-from infra.memory_system.vector_store.qdrant_client import QdrantClientWrapper
+from lingwen_memory.vector_store.qdrant_client import QdrantClientWrapper
 
 __all__ = [
     "QdrantClientWrapper",

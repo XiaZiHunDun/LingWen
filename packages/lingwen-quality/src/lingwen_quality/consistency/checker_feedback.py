@@ -4,7 +4,7 @@
 并优化检查器规则。
 
 使用方式:
-    from infra.consistency.checker_feedback import (
+    from lingwen_quality.consistency.checker_feedback import (
         CheckerFeedback,
         record_feedback,
         get_false_positive_rate,

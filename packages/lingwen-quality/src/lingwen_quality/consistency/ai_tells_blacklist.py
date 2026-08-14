@@ -4,7 +4,7 @@
 AI 生成内容的痕迹，提升写作风格的多样性和自然度。
 
 使用方式:
-    from infra.consistency.ai_tells_blacklist import (
+    from lingwen_quality.consistency.ai_tells_blacklist import (
         AI_TELLS_BLACKLIST,
         detect_ai_tells,
         get_style_diversity_score,
