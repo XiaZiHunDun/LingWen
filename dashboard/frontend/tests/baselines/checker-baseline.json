@@ -1,0 +1,8 @@
+{
+  "checker_coverage": { "min": 0.80 },
+  "checker_performance": { "max_total_ms": 10000 },
+  "ripple_accuracy": { "min_precision": 0.85, "min_recall": 0.80 },
+  "ai_cost_budget": { "per_volume_max_usd": 5.0, "per_chapter_max_usd": 0.5 },
+  "checker_false_positive_rate": { "max": 0.20 },
+  "test_pass_rate": { "min": 1.0 }
+}
