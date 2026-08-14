@@ -1,13 +1,16 @@
 /**
  * useSettingsHistory — 设定历史快照加载与回滚
  *
- * Phase 19 Task 3 占位：useCreatorSettings.js 711 行拆为 3 子模块之一。
+ * Phase 19 Task 3：从 useCreatorSettings.js 拆出（完整实现）。
  * 负责: settingsHistory 列表 + loadSettingsHistory + restoreSettingsHistory +
- *       formatHistoryTime 辅助。
- *
- * 注: 本会话仅建立类型骨架（Task 8 同模式），实际提取在后续会话完成。
+ *       formatHistoryTime helper。
  */
+import { ref } from 'vue';
 import type { Ref } from 'vue';
+import {
+  fetchCreatorSettingsHistory,
+  restoreCreatorSettingsSnapshot,
+} from '../../api/index.js';
 
 export interface SettingsSnapshot {
   id: string;
@@ -15,10 +18,13 @@ export interface SettingsSnapshot {
   author?: string;
   pillars_excerpt?: string;
   outline_excerpt?: string;
+  message?: string;
 }
 
 export interface SettingsHistoryDeps {
-  // 暂未使用（待后续会话填充）
+  error: Ref<string | null>;
+  saveMessage: Ref<string>;
+  handleSaveError: (err: unknown) => void;
 }
 
 export interface SettingsHistoryReturn {
@@ -28,7 +34,43 @@ export interface SettingsHistoryReturn {
   restoreSettingsHistory: (snapshotId: string) => Promise<void>;
 }
 
-// 占位实现 — 后续会话填充实际逻辑
-export function useSettingsHistory(_deps: SettingsHistoryDeps): SettingsHistoryReturn {
-  throw new Error('useSettingsHistory: not yet implemented (Phase 19 Task 3.1)');
+export function useSettingsHistory(deps: SettingsHistoryDeps): SettingsHistoryReturn {
+  const { error, saveMessage, handleSaveError } = deps;
+
+  const settingsHistory = ref<SettingsSnapshot[]>([]);
+
+  function formatHistoryTime(iso: string): string {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleString('zh-CN', { hour12: false });
+    } catch {
+      return iso;
+    }
+  }
+
+  async function loadSettingsHistory(): Promise<void> {
+    try {
+      const data = await fetchCreatorSettingsHistory() as { snapshots?: SettingsSnapshot[]; history?: SettingsSnapshot[] };
+      settingsHistory.value = data.snapshots || data.history || [];
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+      settingsHistory.value = [];
+    }
+  }
+
+  async function restoreSettingsHistory(snapshotId: string): Promise<void> {
+    try {
+      await restoreCreatorSettingsSnapshot(snapshotId);
+      saveMessage.value = '已回滚到指定快照';
+    } catch (e) {
+      handleSaveError(e);
+    }
+  }
+
+  return {
+    settingsHistory,
+    formatHistoryTime,
+    loadSettingsHistory,
+    restoreSettingsHistory,
+  };
 }
