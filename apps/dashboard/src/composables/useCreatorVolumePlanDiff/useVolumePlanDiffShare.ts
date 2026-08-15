@@ -107,12 +107,12 @@ export function useVolumePlanDiffShare(deps: VolumePlanDiffShareDeps): VolumePla
       : null;
     const collabNotes = buildVolumePlanDiffShareCollabNotes(changes);
     // encodeVolumePlanDiffShareToken 是 .js 工具函数（未类型化），
-    // TypeScript 推断为 draft=null, collabNotes=null。需绕过类型检查。
-    // 使用 unknown 转换避免 as any。
+    // TypeScript 推断为 draft=null|undefined, collabNotes=null|undefined。
+    // 使用双重转换（unknown → null）兼容类型。
     const token = encodeVolumePlanDiffShareToken(
       payload,
-      draft as unknown,
-      collabNotes as unknown,
+      draft as unknown as null,
+      collabNotes as unknown as null,
     );
     return `${window.location.origin}${window.location.pathname}#creator-diff=${token}`;
   }

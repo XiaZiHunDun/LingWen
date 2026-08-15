@@ -40,8 +40,7 @@ import { useProductPreferences } from '../../src/composables/useCreatorProductTo
 function mountPrefs() {
   const error = ref<string | null>(null);
   const saveMessage = ref('');
-  const memoryRagEnabled = ref(true);
-  return useProductPreferences({ error, saveMessage, memoryRagEnabled });
+  return useProductPreferences({ error, saveMessage });
 }
 
 describe('useProductPreferences', () => {

@@ -42,16 +42,10 @@ function mountExport(overviewData: Record<string, unknown> | null = null) {
   const overview = ref<Record<string, unknown> | null>(overviewData);
   const error = ref<string | null>(null);
   const saveMessage = ref('');
-  const handleSaveError = vi.fn((err: unknown) => {
-    error.value = err instanceof Error ? err.message : String(err);
-  });
-  const editableVolumes = ref<Array<Record<string, unknown>>>([
-    { label: '第一卷', start_chapter: 1, end_chapter: 5, core_conflict: '', locked: false },
-  ]);
   const activeSlug = ref('demo-novel');
   return { ...useProductExport({
-    overview, error, saveMessage, handleSaveError,
-    editableVolumes, activeSlug,
+    overview, error, saveMessage,
+    pillarsText: ref(''), globalOutlineText: ref(''), activeSlug,
   }), saveMessage };
 }
 

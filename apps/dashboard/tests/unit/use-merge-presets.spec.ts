@@ -183,6 +183,6 @@ describe('useMergePresets', () => {
     });
     const m = mountMerge();
     await m.preflightMergePresetImport();
-    expect(m.mergePresetImportPreflight.value.blocked).toBe(false);
+    expect((m.mergePresetImportPreflight.value as { blocked?: boolean } | null)?.blocked).toBe(false);
   });
 });

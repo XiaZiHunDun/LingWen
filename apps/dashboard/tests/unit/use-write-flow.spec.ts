@@ -5,7 +5,7 @@
  * 重点测试：选章节 + 保存正文 + 自动保存 + 记忆同步（API 调用 + return shape）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 // Mock API
 const writeMocks = vi.hoisted(() => ({
@@ -45,7 +45,7 @@ describe('useWriteFlow', () => {
   });
 
   it('initial state has empty visibleChapters', () => {
-    const uiProfile = ref<Record<string, unknown>>({});
+    const uiProfile = computed(() => ({}));
     const overview = ref<Record<string, unknown> | null>(null);
     const error = ref<string | null>(null);
     const saveMessage = ref('');
@@ -81,7 +81,7 @@ describe('useWriteFlow', () => {
       ],
     });
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview,
+      uiProfile: computed(() => ({})), overview,
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
@@ -107,7 +107,7 @@ describe('useWriteFlow', () => {
       ],
     });
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview,
+      uiProfile: computed(() => ({})), overview,
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
@@ -133,7 +133,7 @@ describe('useWriteFlow', () => {
       ],
     });
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview,
+      uiProfile: computed(() => ({})), overview,
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
@@ -157,7 +157,7 @@ describe('useWriteFlow', () => {
     const bodyAutoSaveStatus = ref('idle');
     const previewLoading = ref(false);
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview: ref<Record<string, unknown> | null>(null),
+      uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
@@ -181,7 +181,7 @@ describe('useWriteFlow', () => {
   it('jumpToChapter delegates to selectChapter', async () => {
     const selectedChapter = ref<number | null>(null);
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview: ref<Record<string, unknown> | null>(null),
+      uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
@@ -202,7 +202,7 @@ describe('useWriteFlow', () => {
     const selectedChapter = ref<number | null>(1);
     const saveMessage = ref('');
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview: ref<Record<string, unknown> | null>(null),
+      uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage, handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
@@ -225,7 +225,7 @@ describe('useWriteFlow', () => {
     const selectedChapter = ref<number | null>(5);
     const saveMessage = ref('');
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview: ref<Record<string, unknown> | null>(null),
+      uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage, handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
@@ -248,7 +248,7 @@ describe('useWriteFlow', () => {
     const chapterBodyDraft = ref('unchanged');
     const lastPersistedBody = ref('unchanged');
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview: ref<Record<string, unknown> | null>(null),
+      uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
@@ -268,7 +268,7 @@ describe('useWriteFlow', () => {
   it('bindChapterBodyTextareaRef sets ref', () => {
     const chapterBodyTextareaRef = ref<unknown>(null);
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview: ref<Record<string, unknown> | null>(null),
+      uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
@@ -295,7 +295,7 @@ describe('useWriteFlow', () => {
       chapters: [{ chapter: 5, has_body: false }, { chapter: 1, has_body: false }],
     });
     const flow = useWriteFlow({
-      uiProfile: ref({}), overview,
+      uiProfile: computed(() => ({})), overview,
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
