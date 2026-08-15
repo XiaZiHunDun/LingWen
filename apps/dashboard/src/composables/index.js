@@ -47,3 +47,46 @@ export { useWorkbenchValidation } from './useWorkbenchValidation.ts';
 export { useDashboardWidgets } from './useDashboardWidgets.js';
 export { useDevice } from './useDevice.js';
 export { default as volumePlanDiffExportUtils } from './volumePlanDiffExportUtils.js';
+
+// Phase 19-20 子模块聚合（提供细粒度依赖注入）
+export {
+  useProductPreferences,
+  useProductExport,
+  useProductPublish,
+  useProductMemory,
+} from './useCreatorProductTools/index.ts';
+export {
+  useSettingsHistory,
+  useMergePresets,
+  useSettingsDocs,
+} from './useCreatorSettings/index.ts';
+export {
+  useTemplateList,
+  useTemplateEditor,
+  useTemplateSync,
+} from './useCreatorVolumePlanTemplates/index.ts';
+export {
+  useBatchList,
+  useBatchDiff,
+  useBatchRestore,
+} from './useCreatorBatchHistory/index.ts';
+export {
+  useWriteFlow,
+  useWriteValidation,
+  useWriteTools,
+} from './useCreatorWrite/index.ts';
+export {
+  useWizardSteps,
+  useOnboardingProgress,
+  useOnboardingNotifications,
+} from './useCreatorOnboarding/index.ts';
+export {
+  useAgentConfig,
+  useAgentTask,
+  useAgentTools,
+} from './useCreatorAgent/index.ts';
+export {
+  useVolumePlanDiff,
+  useVolumePlanDiffShare,
+} from './useCreatorVolumePlanDiff/index.ts';
+export { useCreatorPageChrome } from './useCreatorPage/index.ts';
