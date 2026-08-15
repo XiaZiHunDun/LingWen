@@ -106,8 +106,14 @@ export function useVolumePlanDiffShare(deps: VolumePlanDiffShareDeps): VolumePla
       ? buildVolumePlanDiffShareDraft()
       : null;
     const collabNotes = buildVolumePlanDiffShareCollabNotes(changes);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const token = encodeVolumePlanDiffShareToken(payload, draft as any, collabNotes as any);
+    // encodeVolumePlanDiffShareToken 是 .js 工具函数（未类型化），
+    // TypeScript 推断为 draft=null, collabNotes=null。需绕过类型检查。
+    // 使用 unknown 转换避免 as any。
+    const token = encodeVolumePlanDiffShareToken(
+      payload,
+      draft as unknown,
+      collabNotes as unknown,
+    );
     return `${window.location.origin}${window.location.pathname}#creator-diff=${token}`;
   }
 
@@ -195,8 +201,6 @@ export function useVolumePlanDiffShare(deps: VolumePlanDiffShareDeps): VolumePla
       saveMessage.value = link;
     }
   }
-
-  void saving;
 
   return {
     showVolumePlanDiffShareLinkPreview,

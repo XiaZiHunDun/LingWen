@@ -184,7 +184,6 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
       mergePresetPackagesImporting.value = false;
     }
   }
-  void importCreatorMergePresetPackages;
 
   async function publishMergePresetToFactory(): Promise<void> {
     mergePresetFactoryPublishing.value = true;
@@ -265,7 +264,7 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function applyMergePresetToposort(): Promise<void> {
     mergePresetToposortApplying.value = true;
     try {
-      await applyCreatorMergePresetToposort({});
+      await applyCreatorMergePresetToposort();
       saveMessage.value = '已应用 toposort';
     } catch (e) {
       handleSaveError(e);
@@ -285,9 +284,6 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
       mergePresetImportPreflightLoading.value = false;
     }
   }
-
-  // loadMergePreferences 占位
-  void loadMergePreferences;
 
   return {
     mergePresetPackages,

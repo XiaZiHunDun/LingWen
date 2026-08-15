@@ -260,8 +260,6 @@ export function useVolumePlanDiff(deps: VolumePlanDiffDeps): VolumePlanDiffRetur
     diffCollabNotes.value = { ...merged, ...(saved?.notes || {}) };
   }
 
-  void saving; // 占位兼容原 API（saving 通过 deps 暴露）
-
   return {
     volumePlanDiffPreview,
     volumePlanDiffExpanded,
