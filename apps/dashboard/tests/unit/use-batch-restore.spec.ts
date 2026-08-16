@@ -5,7 +5,7 @@
  * 重点测试：预算/范围/重试/JSON 导出。
  */
 import { describe, it, expect, vi } from 'vitest';
-import { ref } from 'vue';
+import { ref, ComputedRef } from 'vue';
 
 const restoreMocks = vi.hoisted(() => ({
   exportCreatorBatchHistory: vi.fn(),
@@ -31,7 +31,7 @@ function mountBatchRestore() {
   const ctx = useBatchRestore({
     uiProfile, saveMessage, error, conflictMessage, handleSaveError,
     batchStart, batchEnd, batchBudget, filteredBatchHistory,
-  });
+  } as unknown as Parameters<typeof useBatchRestore>[0]);
   return { ...ctx, uiProfile, batchStart, batchEnd, batchBudget, error, handleSaveError, saveMessage, filteredBatchHistory };
 }
 
@@ -60,7 +60,7 @@ describe('useBatchRestore', () => {
     const r = mountBatchRestore();
     r.uiProfile.value = { batch_history_budget_hint: true };
     r.batchBudget.value = 5;
-    r.applyBatchHistoryBudgetFromJob({ budget_usd: 'invalid' });
+    r.applyBatchHistoryBudgetFromJob({ budget_usd: Number.NaN });
     expect(r.batchBudget.value).toBe(5);
   });
 

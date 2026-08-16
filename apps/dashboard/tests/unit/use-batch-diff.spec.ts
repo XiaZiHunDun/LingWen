@@ -5,7 +5,7 @@
  * 重点测试：状态分类 + 图表数据 + 失败原因标签 + ops summary。
  */
 import { describe, it, expect } from 'vitest';
-import { ref, computed } from 'vue';
+import { ref, computed, ComputedRef } from 'vue';
 
 import { useBatchDiff } from '../../src/composables/useCreatorBatchHistory/useBatchDiff';
 
@@ -19,7 +19,7 @@ function mountBatchDiff() {
 
   const ctx = useBatchDiff({
     uiProfile: uiProfile as unknown as ComputedRef<Record<string, unknown>>,
-    batchHistory, batchJobDurationMinutes,
+    batchHistory, batchJobDurationMinutes: batchJobDurationMinutes as unknown as (job: { started_at?: string; finished_at?: string }) => number | null,
   });
   return { ...ctx, uiProfile, batchHistory };
 }

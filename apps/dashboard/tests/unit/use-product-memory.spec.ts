@@ -5,7 +5,7 @@
  * 重点测试：记忆资产 + 搜索 + 标注 + 结构图 + 介入项。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref } from 'vue';
+import { ref, ComputedRef } from 'vue';
 
 const memMocks = vi.hoisted(() => ({
   fetchCreatorMemoryAssets: vi.fn(),
@@ -45,7 +45,7 @@ function mountMemory() {
     preferences, memoryRagTopK: ref(5),
     settingsHasUnsavedChanges: ref(false),
     setWorkspaceTab, jumpToChapter,
-  });
+    } as unknown as Parameters<typeof useProductMemory>[0]);
   return {
     ...ctx, error, saveMessage, batchJob, batchRunning, logicCheckResult,
     overview, editableVolumes, visibleDeviations, preferences,

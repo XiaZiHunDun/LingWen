@@ -5,7 +5,7 @@
  * 重点测试：mention 解析 + 模式链接 + 步骤查询。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref, computed } from 'vue';
+import { ref, computed, ComputedRef } from 'vue';
 
 import { useOnboardingProgress } from '../../src/composables/useCreatorOnboarding/useOnboardingProgress';
 
@@ -37,7 +37,7 @@ function mountProgress(uiProfileOverrides: Record<string, unknown> = {}) {
     overview, saveMessage,
     onboardingWizard, wizardStepNotes,
     extractMentionsFromText, setWizardDeepLink, focusWizardStepFromUrl,
-  });
+    } as unknown as Parameters<typeof useOnboardingProgress>[0]);
   return { ...ctx, overview, onboardingWizard, wizardStepNotes, saveMessage, setWizardDeepLink, focusWizardStepFromUrl, uiProfile };
 }
 

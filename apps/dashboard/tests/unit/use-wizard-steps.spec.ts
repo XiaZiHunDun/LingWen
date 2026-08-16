@@ -44,7 +44,7 @@ function mountWizard() {
     focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes,
     wizardUnreadMentions,
     setWizardDeepLink, buildWizardShareUrl, globalOutlineEditorRef,
-  });
+    } as unknown as Parameters<typeof useWizardSteps>[0]);
   return {
     ...ctx,
     uiProfile, overview, focusWizard, focusWizardStep, focusWizardDone, focusWizardNotes,

@@ -5,7 +5,7 @@
  * 重点测试：设定文档加载 + diff 预览 + 保存流程。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref } from 'vue';
+import { ref, ComputedRef } from 'vue';
 
 const docsMocks = vi.hoisted(() => ({
   fetchCreatorSettingsDocs: vi.fn(),
@@ -41,7 +41,7 @@ function mountDocs() {
       uiProfile, overview, error, saveMessage, conflictMessage,
       handleSaveError, onAfterSettingsSave,
       globalOutlineEditorRef, globalOutlineText,
-    }),
+    } as unknown as Parameters<typeof useSettingsDocs>[0]),
     error, saveMessage, conflictMessage, globalOutlineText, globalOutlineEditorRef,
     onAfterSettingsSave, handleSaveError,
   };

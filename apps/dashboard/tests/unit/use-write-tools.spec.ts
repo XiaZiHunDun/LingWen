@@ -40,7 +40,7 @@ function mountTools(overrides: Record<string, unknown> = {}) {
     setWorkspaceTab: vi.fn(),
     jumpToChapter,
     openVolumeSummaryForRange,
-  });
+    } as unknown as Parameters<typeof useWriteTools>[0]);
   return {
     ...ctx, chapterBodyDraft, batchDeviationInlineSummary, visibleDeviations,
     overview, chapterBodyTextareaRef, openVolumeSummaryForRange,

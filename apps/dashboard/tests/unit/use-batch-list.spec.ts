@@ -5,7 +5,7 @@
  * 重点测试：批次列表 + 过滤 + 分组 + 周月汇总。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref, computed } from 'vue';
+import { ref, computed, ComputedRef } from 'vue';
 
 const batchMocks = vi.hoisted(() => ({
   fetchCreatorBatchHistory: vi.fn(),
@@ -39,7 +39,7 @@ function mountBatchList(uiProfileOverrides: Record<string, unknown> = {}) {
   const ctx = useBatchList({
     uiProfile: uiProfile as unknown as ComputedRef<Record<string, unknown>>,
     batchHistory, batchJobDurationMinutes, batchJobIsoWeekKey, batchJobMonthKey,
-  });
+    } as unknown as Parameters<typeof useBatchList>[0]);
   return { ...ctx, uiProfile, batchHistory };
 }
 
@@ -99,15 +99,15 @@ describe('useBatchList', () => {
   it('filteredBatchHistory filters by status', async () => {
     batchMocks.fetchCreatorBatchHistory.mockResolvedValueOnce({
       jobs: [
-        { id: '1', status: 'completed' },
-        { id: '2', status: 'failed' },
+        { job_id: '1', status: 'completed' },
+        { job_id: '2', status: 'failed' },
       ],
     });
     const b = mountBatchList({ batch_history_status_filter: true });
     await b.loadBatchHistory();
     b.batchHistoryStatusFilter.value = 'failed';
     expect(b.filteredBatchHistory.value).toHaveLength(1);
-    expect(b.filteredBatchHistory.value[0].id).toBe('2');
+    expect(b.filteredBatchHistory.value[0].job_id).toBe('2');
   });
 
   it('filteredBatchHistory returns all when filter empty', async () => {
