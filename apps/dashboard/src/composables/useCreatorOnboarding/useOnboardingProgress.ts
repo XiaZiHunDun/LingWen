@@ -93,9 +93,6 @@ export function useOnboardingProgress(deps: OnboardingProgressDeps): OnboardingP
     saveMessage.value = `已联动 ${CREATION_MODE_ONBOARDING_LABELS[mode] || mode} 向导步骤`;
   }
 
-  // 引用 ref 仅用于类型推断，无副作用
-  void ref<unknown>(null);
-
   return {
     wizardMentionsForStep,
     onboardingModesForStep,
