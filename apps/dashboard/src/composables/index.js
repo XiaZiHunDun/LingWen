@@ -1,3 +1,44 @@
+/**
+ * Composables 统一导出入口（Phase 19-20 重构后）
+ *
+ * 主 hook（按业务领域分组）：
+ *
+ * - 工具: creatorDefaultUiProfile, useApiConnectivity, useAskAssistant, useCostWindow, TIME_OPTIONS
+ * - 批量/批次: useCreatorAdvanceBatch, useCreatorBatchHistory
+ * - 设定: useCreatorSettings
+ * - 创作页编排: useCreatorPage（含 chrome 子模块 useCreatorPageChrome）
+ * - 模板: useCreatorVolumePlanTemplates（含子模块 useTemplateList/Editor/Sync）
+ * - 卷纲: useCreatorVolumePlan, useCreatorVolumePlanDiff（含子模块 useVolumePlanDiff/Share）
+ * - 创作工具: useCreatorProductTools（含子模块 useProductPreferences/Export/Publish/Memory）
+ * - 助手: useCreatorAgent（含子模块 useAgentConfig/Task/Tools）
+ * - 入门: useCreatorOnboarding（含子模块 useWizardSteps/OnboardingProgress/OnboardingNotifications）
+ * - 写作: useCreatorWrite（含子模块 useWriteFlow/WriteTools）
+ * - 引导: useCreatorModeGuide
+ * - 工作台: useCreatorWriteWorkbench, useWorkbenchIndex
+ * - 页面: useCreatorPageHeader, useCreatorPageProviders, useCreatorPageRefresh
+ * - 仪表盘: useCreatorPulse
+ * - 工作区: useCreatorWorkspace
+ * - 数据/导航: useDashboardNav, useDashboardRole, useRippleSocket, useRippleStore,
+ *   useEffectiveCreationMode, useDecisionStore, useOverviewStore, usePageLeadDismiss,
+ *   useTodayHub, useTierBudgetAlerts, useWorkflowListStore, useWidgetRegistry, useDashboardWidgets
+ * - 事件总线: useEventBus
+ * - 工作流 socket: useWorkflowSocket
+ * - 业务工具: useAskPageTab, useStudioProject, useFilteredPageError, useDevice,
+ *   volumePlanDiffExportUtils
+ *
+ * 子模块（Phase 19-20 拆分）：
+ * - useCreatorProductTools/{useProductPreferences,useProductExport,useProductPublish,useProductMemory}
+ * - useCreatorSettings/{useSettingsHistory,useMergePresets,useSettingsDocs}
+ * - useCreatorVolumePlanTemplates/{useTemplateList,useTemplateEditor,useTemplateSync}
+ * - useCreatorBatchHistory/{useBatchList,useBatchDiff,useBatchRestore}
+ * - useCreatorWrite/{useWriteFlow,useWriteValidation,useWriteTools}
+ * - useCreatorOnboarding/{useWizardSteps,useOnboardingProgress,useOnboardingNotifications}
+ * - useCreatorAgent/{useAgentConfig,useAgentTask,useAgentTools}
+ * - useCreatorVolumePlanDiff/{useVolumePlanDiff,useVolumePlanDiffShare}
+ * - useCreatorPage/{useCreatorPageChrome}
+ * 详见 composables.d.ts 类型声明。
+ */
+
 export { default as creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
 export { useApiConnectivity } from './useApiConnectivity.js';
 export { useAskAssistant, useAskPageTab, ASK_LONG_DRAFT_CHAR_LIMIT } from './useAskAssistant.js';

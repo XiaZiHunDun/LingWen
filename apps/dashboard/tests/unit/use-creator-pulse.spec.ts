@@ -38,7 +38,6 @@ function mountPulse() {
   return {
     ...ctx,
     overview, editableVolumes, visibleDeviations, workspaceTabsEnabled,
-    highlightedVolumeLabel: ctx.highlightedVolumeLabel,
   };
 }
 
