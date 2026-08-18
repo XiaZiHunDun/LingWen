@@ -35,15 +35,16 @@ function mountDocs() {
   const onAfterSettingsSave = vi.fn(async () => {});
   const globalOutlineEditorRef = ref<HTMLElement | null>(null);
   const globalOutlineText = ref('');
+  const settingsBaseline = ref({ pillars: '', outline: '' });
 
   return {
     ...useSettingsDocs({
       uiProfile, overview, error, saveMessage, conflictMessage,
       handleSaveError, onAfterSettingsSave,
-      globalOutlineEditorRef, globalOutlineText,
+      globalOutlineEditorRef, globalOutlineText, settingsBaseline,
     } as unknown as Parameters<typeof useSettingsDocs>[0]),
     error, saveMessage, conflictMessage, globalOutlineText, globalOutlineEditorRef,
-    onAfterSettingsSave, handleSaveError,
+    onAfterSettingsSave, handleSaveError, settingsBaseline,
   };
 }
 

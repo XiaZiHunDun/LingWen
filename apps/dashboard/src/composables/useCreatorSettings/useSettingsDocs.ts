@@ -30,6 +30,8 @@ export interface SettingsDocsDeps {
   onAfterSettingsSave: () => Promise<void>;
   globalOutlineEditorRef: Ref<HTMLElement | null>;
   globalOutlineText: Ref<string>;
+  // settingsBaseline 由主 hook 拥有并传入（避免双同步 wrapper）
+  settingsBaseline: Ref<{ pillars: string; outline: string }>;
 }
 
 export interface SettingsDocsReturn {
@@ -53,12 +55,11 @@ export interface SettingsDocsReturn {
 export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
   const {
     overview, error, saveMessage, handleSaveError,
-    onAfterSettingsSave, globalOutlineEditorRef, globalOutlineText,
+    onAfterSettingsSave, globalOutlineEditorRef, globalOutlineText, settingsBaseline,
   } = deps;
 
   const settingsDocs = ref<SettingsDocs | null>(null);
   const pillarsText = ref('');
-  const settingsBaseline = ref({ pillars: '', outline: '' });
   const settingsDiffPreview = ref<unknown>(null);
   const showSettingsDiff = ref(false);
   const settingsSaving = ref(false);

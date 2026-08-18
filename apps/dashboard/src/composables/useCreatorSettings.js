@@ -120,7 +120,7 @@ export function useCreatorSettings(deps) {
   const settingsDocsApi = useSettingsDocs({
     uiProfile, overview, error, saveMessage, conflictMessage,
     handleSaveError, onAfterSettingsSave,
-    globalOutlineEditorRef, globalOutlineText,
+    globalOutlineEditorRef, globalOutlineText, settingsBaseline,
   });
 
   // --- Computed ---
@@ -560,19 +560,7 @@ export function useCreatorSettings(deps) {
     }
   }
 
-  // --- loadSettingsDocs: 同步 settingsBaseline（main hook 与 submodule 共享）---
-  // 包装以确保 panelContext.settingsHasUnsavedChanges 立即正确
-  async function loadSettingsDocsWithBaseline() {
-    await settingsDocsApi.loadSettingsDocs();
-    // 同步本地 settingsBaseline（与 submodule 内部一致）
-    settingsBaseline.value = {
-      pillars: settingsDocsApi.pillarsText.value,
-      outline: globalOutlineText.value,
-    };
-  }
-  // 替换主 hook 中的 loadSettingsDocs 顶层导出
-  // （保留顶层 loadSettingsDocs 名称）
-  // 注意: panel.loadSettingsDocs 仍指向 settingsDocsApi.loadSettingsDocs
+  // --- loadSettingsDocs: settingsBaseline 已通过 deps 共享给子模块（无需包装）---
 
   // --- panelContext 聚合 ---
   const panelContext = {
@@ -655,7 +643,7 @@ export function useCreatorSettings(deps) {
     panelContext,
     pillarsText: settingsDocsApi.pillarsText,
     settingsHasUnsavedChanges,
-    loadSettingsDocs: loadSettingsDocsWithBaseline,
+    loadSettingsDocs: settingsDocsApi.loadSettingsDocs,
     loadSettingsHistory,
     loadMergePreferences,
     loadMergePresetPackages,
