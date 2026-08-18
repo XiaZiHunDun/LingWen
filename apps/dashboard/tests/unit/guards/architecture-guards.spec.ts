@@ -77,8 +77,12 @@ describe('Guard: 架构不变量', () => {
     const nonUsePrefix: string[] = [];
     for (const file of files) {
       const basename = file.replace(/\.(js|ts)$/, '');
-      if (!basename.startsWith('use') && basename !== 'creatorDefaultUiProfile' && basename !== 'volumePlanDiffExportUtils') {
+      if (!basename.startsWith('use')
+        && basename !== 'creatorDefaultUiProfile'
+        && basename !== 'volumePlanDiffExportUtils'
+        && basename !== 'composables.d') {
         // creatorDefaultUiProfile 和 volumePlanDiffExportUtils 是已知的例外（工具函数）
+        // composables.d 是 Phase 44 新增的子模块类型声明文件
         nonUsePrefix.push(basename);
       }
     }

@@ -85,7 +85,7 @@ describe('useAgentTools', () => {
     t.selectCandidate('a'); // pendingPlan 仍 null
     t.candidates.value = [{ id: 'a', label: 'A' }];
     // pendingPlan 仍 null，因为 selectCandidate 在 preview mode 设置 confirmReplace 但需要 plan
-    t.requestApply();
+    t.requestApply('');
     // requestApply 不修改 pendingPlan（已 null）
     expect(t.pendingPlan.value).toBeNull();
   });

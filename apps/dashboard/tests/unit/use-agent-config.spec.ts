@@ -5,7 +5,7 @@
  * 重点测试：执行模式切换 + Agent Lens + Director Paths。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref, computed } from 'vue';
+import { ref, computed, ComputedRef } from 'vue';
 
 const configMocks = vi.hoisted(() => ({
   runCreatorAgentPlan: vi.fn(),
