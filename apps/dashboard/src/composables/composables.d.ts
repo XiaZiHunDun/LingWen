@@ -74,3 +74,12 @@ declare module './useCreatorVolumePlanDiff/index.js' {
 declare module './useCreatorPage/index.js' {
   export { useCreatorPageChrome } from './useCreatorPage/index';
 }
+
+declare module './useCreatorWriteWorkbench/index.js' {
+  export {
+    useWorkbenchLayout,
+    useWorkbenchSelection,
+    useWorkbenchCheckpoints,
+    useWorkbenchQuality,
+  } from './useCreatorWriteWorkbench/index';
+}

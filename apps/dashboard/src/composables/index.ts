@@ -127,3 +127,12 @@ export {
   useVolumePlanDiffShare,
 } from './useCreatorVolumePlanDiff/index';
 export { useCreatorPageChrome } from './useCreatorPage/index';
+// Phase 60: useWorkbenchSelection aliased to avoid conflict with legacy
+// useWorkbenchIndex.js re-export (Phase 19-20 placeholders, superseded by
+// useCreatorWriteWorkbench/{useWorkbench*} submodules).
+export {
+  useWorkbenchLayout,
+  useWorkbenchSelection as useCreatorWorkbenchSelection,
+  useWorkbenchCheckpoints,
+  useWorkbenchQuality,
+} from './useCreatorWriteWorkbench/index';

@@ -91,7 +91,7 @@ describe('useCreatorWriteWorkbench', () => {
       selectionStart: 0,
       selectionEnd: 5,
       value: 'hello world',
-    };
+    } as unknown as HTMLTextAreaElement;
     wb.captureBodySelection(textarea);
     expect(wb.hasBodySelection.value).toBe(true);
     expect(wb.bodySelection.value.text).toBe('hello');
