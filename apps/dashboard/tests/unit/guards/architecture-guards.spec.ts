@@ -103,6 +103,13 @@ describe('Guard: 架构不变量', () => {
       expect(nonUsePrefix).toEqual([]);
     }
   });
+
+  it('useCreatorWriteWorkbench.js 保持 ≤ 200 行 (Phase 60)', () => {
+    const file = path.join(composablesDir, 'useCreatorWriteWorkbench.js');
+    const content = fs.readFileSync(file, 'utf-8');
+    const lines = content.split('\n').length;
+    expect(lines).toBeLessThanOrEqual(200);
+  });
 });
 
 function findVueFiles(dir: string): string[] {
