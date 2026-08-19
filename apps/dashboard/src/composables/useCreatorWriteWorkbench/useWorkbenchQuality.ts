@@ -22,7 +22,7 @@ import { buildInlineConflictMarkers } from '../../utils/creatorInlineConflictUti
 export type QualityLevel = 'ok' | 'info' | 'warn';
 
 export interface QualityHint {
-  level: string;
+  level: QualityLevel;
   text: string;
   source?: string;
   markerId?: string;
@@ -209,13 +209,11 @@ export function useWorkbenchQuality(
     const summary = summarizeLightValidation(issues as unknown as Array<{ level?: string }>);
     const base = selectionQualityHints.value.filter((h) => h.source !== 'light');
     if (summary.status === 'ok') {
-      selectionQualityHints.value = [
-        { level: 'ok', text: '轻量校验通过', source: 'light' },
-        ...base,
-      ].slice(0, MAX_QUALITY_HINTS_LIGHT);
+      const okHint: QualityHint = { level: 'ok', text: '轻量校验通过', source: 'light' };
+      selectionQualityHints.value = [okHint, ...base].slice(0, MAX_QUALITY_HINTS_LIGHT);
       return;
     }
-    const hints = issues.slice(0, 2).map((issue) => ({
+    const hints: QualityHint[] = issues.slice(0, 2).map((issue) => ({
       level: issue.level === 'warn' ? 'warn' : 'info',
       text: issue.label,
       source: 'light',

@@ -1,9 +1,9 @@
 /**
  * useWorkbenchQuality 子模块独立测试（Phase 60.3）
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ref, computed, nextTick } from 'vue';
-import type { ComputedRef, Ref } from 'vue';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { defineComponent, ref, computed } from 'vue';
+import { mount } from '@vue/test-utils';
 
 const utilsMocks = vi.hoisted(() => ({
   runLightValidation: vi.fn(),
@@ -55,7 +55,7 @@ function mountQuality(opts: {
     getAgent: () => agent,
     focusParagraphByIndex,
   } as unknown as Parameters<typeof useWorkbenchQuality>[0]);
-  return { ...ctx, agent, isPanelVisible, focusParagraphByIndex, selectionQualityHints, logicCheckResult };
+  return { ...ctx, agent, isPanelVisible, focusParagraphByIndex, selectionQualityHints, logicCheckResult, chapterBodyDraft };
 }
 
 describe('useWorkbenchQuality', () => {
@@ -100,6 +100,23 @@ describe('useWorkbenchQuality', () => {
       expect(q.intentText.value).toBe('old');
     });
 
+    it('loadIntentFromHistory restores intentMood + intentType + intentTheme', () => {
+      const q = mountQuality();
+      q.intentText.value = 'heist setup';
+      q.intentMood.value = 'tense';
+      q.intentType.value = 'plot-twist';
+      q.intentTheme.value = 'betrayal';
+      q.saveIntentToHistory();
+      q.intentText.value = '';
+      q.intentMood.value = '';
+      q.intentType.value = '';
+      q.intentTheme.value = '';
+      q.loadIntentFromHistory(q.intentHistory.value[0]);
+      expect(q.intentMood.value).toBe('tense');
+      expect(q.intentType.value).toBe('plot-twist');
+      expect(q.intentTheme.value).toBe('betrayal');
+    });
+
     it('clearIntentHistory empties list', () => {
       const q = mountQuality();
       q.intentText.value = 'x';
@@ -134,6 +151,34 @@ describe('useWorkbenchQuality', () => {
       expect(utilsMocks.runLightValidation).toHaveBeenCalledTimes(1);
       vi.useRealTimers();
     });
+
+    it('lightValidationSummary computed reflects summarizeLightValidation', () => {
+      utilsMocks.summarizeLightValidation.mockReturnValue({ status: 'ok' });
+      const q = mountQuality();
+      expect(q.lightValidationSummary.value).toEqual({ status: 'ok' });
+      utilsMocks.summarizeLightValidation.mockReturnValue({
+        status: 'warn',
+        count: 2,
+      });
+      q.lightValidationIssues.value = [
+        { id: 'i1', level: 'warn', label: 'x' },
+        { id: 'i2', level: 'warn', label: 'y' },
+      ];
+      expect(q.lightValidationSummary.value).toEqual({ status: 'warn', count: 2 });
+      expect(utilsMocks.summarizeLightValidation).toHaveBeenCalled();
+    });
+
+    it('watch(chapterBodyDraft) triggers scheduleLightValidation', async () => {
+      vi.useFakeTimers();
+      const q = mountQuality({ body: 'first' });
+      q.chapterBodyDraft.value = 'second draft';
+      // flush Vue's async watch microtask without firing setTimeout callbacks
+      await Promise.resolve();
+      expect(utilsMocks.runLightValidation).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1200);
+      expect(utilsMocks.runLightValidation).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
+    });
   });
 
   describe('quality hints', () => {
@@ -162,6 +207,45 @@ describe('useWorkbenchQuality', () => {
       q.syncQualityFromLogicCheck(null);
       expect(q.selectionQualityHints.value).toEqual([{ level: 'warn', text: 'light-x', source: 'light' }]);
     });
+
+    it('syncQualityFromLightValidation ok state replaces hint with light-ok', () => {
+      utilsMocks.summarizeLightValidation.mockReturnValue({ status: 'ok' });
+      const q = mountQuality();
+      q.selectionQualityHints.value = [{ level: 'warn', text: 'stale', source: 'logic' }];
+      q.syncQualityFromLightValidation([]);
+      expect(q.selectionQualityHints.value).toEqual([
+        { level: 'ok', text: '轻量校验通过', source: 'light' },
+        { level: 'warn', text: 'stale', source: 'logic' },
+      ]);
+    });
+
+    it('syncQualityFromLightValidation warn state appends hints', () => {
+      utilsMocks.summarizeLightValidation.mockReturnValue({ status: 'warn', count: 2 });
+      const q = mountQuality();
+      q.selectionQualityHints.value = [{ level: 'info', text: 'kept', source: 'logic' }];
+      q.syncQualityFromLightValidation([
+        { id: 'i1', level: 'warn', label: 'A' },
+        { id: 'i2', level: 'info', label: 'B' },
+      ]);
+      expect(q.selectionQualityHints.value).toHaveLength(3);
+      expect(q.selectionQualityHints.value[0]).toMatchObject({
+        level: 'warn',
+        text: 'A',
+        source: 'light',
+        markerId: 'i1',
+      });
+      expect(q.selectionQualityHints.value[1]).toMatchObject({
+        level: 'info',
+        text: 'B',
+        source: 'light',
+        markerId: 'i2',
+      });
+      expect(q.selectionQualityHints.value[2]).toMatchObject({
+        level: 'info',
+        text: 'kept',
+        source: 'logic',
+      });
+    });
   });
 
   describe('inline conflicts', () => {
@@ -185,6 +269,38 @@ describe('useWorkbenchQuality', () => {
       q.activeInlineConflictId.value = 'x';
       q.clearInlineConflictFocus();
       expect(q.activeInlineConflictId.value).toBeNull();
+    });
+
+    it('focusLightValidationIssue finds marker in inlineConflictMarkers', () => {
+      utilsMocks.buildInlineConflictMarkers.mockReturnValue([
+        { id: 'm1', paragraph: 5 },
+      ]);
+      const q = mountQuality();
+      q.focusLightValidationIssue({ id: 'm1', paragraph: 5 });
+      expect(q.activeInlineConflictId.value).toBe('m1');
+      expect(q.focusParagraphByIndex).toHaveBeenCalledWith(5, 'inline');
+      expect(q.chapterBodyConflictHighlightActive.value).toBe(true);
+    });
+
+    it('focusLightValidationIssue falls back to paragraph focus when no marker', () => {
+      utilsMocks.buildInlineConflictMarkers.mockReturnValue([]);
+      const q = mountQuality();
+      q.focusLightValidationIssue({ id: 'unknown', paragraph: 7 });
+      expect(q.activeInlineConflictId.value).toBeNull();
+      expect(q.focusParagraphByIndex).toHaveBeenCalledWith(7, 'inline');
+      expect(q.chapterBodyConflictHighlightActive.value).toBe(true);
+    });
+
+    it('pulseInlineConflictHighlight sets+clears highlight after 1400ms', () => {
+      vi.useFakeTimers();
+      const q = mountQuality();
+      q.focusInlineConflict({ id: 'm1', paragraph: 1 } as never);
+      expect(q.chapterBodyConflictHighlightActive.value).toBe(true);
+      vi.advanceTimersByTime(1399);
+      expect(q.chapterBodyConflictHighlightActive.value).toBe(true);
+      vi.advanceTimersByTime(2);
+      expect(q.chapterBodyConflictHighlightActive.value).toBe(false);
+      vi.useRealTimers();
     });
   });
 
@@ -220,6 +336,46 @@ describe('useWorkbenchQuality', () => {
       expect(utilsMocks.buildInlineConflictMarkers).toHaveBeenCalledWith(
         expect.objectContaining({ chapter: 1, lightIssues: [] }),
       );
+    });
+  });
+
+  describe('lifecycle', () => {
+    it('onUnmounted clears both timers', () => {
+      vi.useFakeTimers();
+      const selectedChapter = ref<number | null>(1);
+      const chapterBodyDraft = ref<string>('');
+      const selectionQualityHints = ref<Array<Record<string, unknown>>>([]);
+      const logicCheckResult = ref<{ passed: boolean; p0_count: number; issues: unknown[] } | null>(null);
+      const isPanelVisible = vi.fn((id: string) => id === 'lightValidationBar');
+      const agent = {
+        runPlan: vi.fn().mockResolvedValue(undefined),
+        generating: ref(false),
+        statusLine: ref('idle'),
+        candidates: ref<unknown[]>([]),
+        directorAdvice: ref<unknown[]>([]),
+      };
+      let api!: ReturnType<typeof useWorkbenchQuality>;
+      const Comp = defineComponent({
+        setup() {
+          api = useWorkbenchQuality({
+            selectedChapter,
+            chapterBodyDraft,
+            logicCheckResult,
+            selectionQualityHints,
+            isPanelVisible,
+            getAgent: () => agent,
+            focusParagraphByIndex: vi.fn(),
+          } as unknown as Parameters<typeof useWorkbenchQuality>[0]);
+          return () => null;
+        },
+      });
+      const wrapper = mount(Comp);
+      api.scheduleLightValidation();
+      api.focusInlineConflict({ id: 'm1', paragraph: 1 } as never);
+      expect(vi.getTimerCount()).toBeGreaterThanOrEqual(2);
+      wrapper.unmount();
+      expect(vi.getTimerCount()).toBe(0);
+      vi.useRealTimers();
     });
   });
 });
