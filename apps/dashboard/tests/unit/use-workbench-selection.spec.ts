@@ -1,130 +1,120 @@
 /**
- * useWorkbenchSelection 子模块独立测试
- *
- * Phase 37: 为 Phase 18 useWorkbenchSelection 子模块添加专门测试。
- * 重点测试：选区捕获 + Intent 历史管理。
+ * useWorkbenchSelection 子模块独立测试（Phase 60.2）
  */
-import { describe, it, expect } from 'vitest';
-import { useWorkbenchSelection } from '../../src/composables/useWorkbenchSelection';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ref } from 'vue';
+import type { Ref } from 'vue';
+import { useWorkbenchSelection } from '../../src/composables/useCreatorWriteWorkbench/useWorkbenchSelection';
+
+function mountSelection(opts: { body?: string; agentStatus?: string } = {}) {
+  const chapterBodyDraft = ref<string>(opts.body ?? '');
+  const saveMessage = ref<string>('');
+  const statusLine = ref<string>(opts.agentStatus ?? '');
+  const setStatus = vi.fn((v: string) => { statusLine.value = v; });
+
+  const ctx = useWorkbenchSelection({
+    chapterBodyDraft,
+    saveMessage,
+    getAgentStatusLine: () => statusLine as Ref<string>,
+    setAgentStatusLine: setStatus,
+  });
+  return { ...ctx, chapterBodyDraft, saveMessage, statusLine, setStatus };
+}
 
 describe('useWorkbenchSelection', () => {
-  it('initial state has empty selection and intent', () => {
-    const s = useWorkbenchSelection();
+  beforeEach(() => vi.clearAllMocks());
+
+  it('starts with empty bodySelection + default controls', () => {
+    const s = mountSelection();
     expect(s.bodySelection.value).toEqual({ start: 0, end: 0, text: '' });
-    expect(s.intentText.value).toBe('');
-    expect(s.intentMood.value).toBe('');
-    expect(s.intentHistory.value).toEqual([]);
+    expect(s.hasBodySelection.value).toBe(false);
+    expect(s.styleStrength.value).toBe(1);
+    expect(s.selectionLocked.value).toBe(false);
+    expect(s.allowWorldbuildingFill.value).toBe(false);
+    expect(s.goalTag.value).toBe('');
   });
 
-  it('captureBodySelection sets start/end/text from textarea', () => {
-    const s = useWorkbenchSelection();
-    s.captureBodySelection({
-      selectionStart: 6,
-      selectionEnd: 11,
-      value: 'Hello World',
-    });
-    expect(s.bodySelection.value).toEqual({ start: 6, end: 11, text: 'World' });
-  });
-
-  it('captureBodySelection with no range sets text empty', () => {
-    const s = useWorkbenchSelection();
-    s.captureBodySelection({
-      selectionStart: 3,
-      selectionEnd: 3,
-      value: 'abc',
-    });
-    expect(s.bodySelection.value).toEqual({ start: 3, end: 3, text: '' });
-  });
-
-  it('captureBodySelection with null textarea resets', () => {
-    const s = useWorkbenchSelection();
-    s.bodySelection.value = { start: 5, end: 10, text: 'old' };
-    s.captureBodySelection(null as unknown as { selectionStart: number; selectionEnd: number; value: string });
+  it('captureBodySelection handles null textarea', () => {
+    const s = mountSelection();
+    s.captureBodySelection(null);
     expect(s.bodySelection.value).toEqual({ start: 0, end: 0, text: '' });
   });
 
-  it('captureBodySelection ignores invalid input', () => {
-    const s = useWorkbenchSelection();
-    s.captureBodySelection({} as unknown as { selectionStart: number; selectionEnd: number; value: string });
+  it('captureBodySelection handles textarea without selectionStart', () => {
+    const s = mountSelection();
+    s.captureBodySelection({} as HTMLTextAreaElement);
     expect(s.bodySelection.value).toEqual({ start: 0, end: 0, text: '' });
   });
 
-  it('saveIntentToHistory no-op on empty text', () => {
-    const s = useWorkbenchSelection();
-    s.intentText.value = '';
-    s.saveIntentToHistory();
-    expect(s.intentHistory.value).toEqual([]);
+  it('captureBodySelection captures text only when start !== end', () => {
+    const s = mountSelection({ body: 'hello world' });
+    s.captureBodySelection({ selectionStart: 6, selectionEnd: 11, value: 'hello world' } as unknown as HTMLTextAreaElement);
+    expect(s.bodySelection.value).toEqual({ start: 6, end: 11, text: 'world' });
+    expect(s.hasBodySelection.value).toBe(true);
   });
 
-  it('saveIntentToHistory prepends entry with metadata', () => {
-    const s = useWorkbenchSelection();
-    s.intentText.value = '主角觉醒';
-    s.intentMood.value = 'epic';
-    s.intentType.value = 'character';
-    s.intentTheme.value = 'awakening';
-    s.saveIntentToHistory();
-    expect(s.intentHistory.value).toHaveLength(1);
-    expect(s.intentHistory.value[0].text).toBe('主角觉醒');
-    expect(s.intentHistory.value[0].mood).toBe('epic');
-    expect(s.intentHistory.value[0].type).toBe('character');
+  it('captureBodySelection with same start/end yields empty text', () => {
+    const s = mountSelection({ body: 'hello' });
+    s.captureBodySelection({ selectionStart: 2, selectionEnd: 2, value: 'hello' } as unknown as HTMLTextAreaElement);
+    expect(s.bodySelection.value.text).toBe('');
+    expect(s.hasBodySelection.value).toBe(false);
   });
 
-  it('saveIntentToHistory caps at 10 entries', () => {
-    const s = useWorkbenchSelection();
-    for (let i = 0; i < 15; i += 1) {
-      s.intentText.value = `intent-${i}`;
-      s.saveIntentToHistory();
-    }
-    expect(s.intentHistory.value).toHaveLength(10);
-    // 最新（i=14）在头部
-    expect(s.intentHistory.value[0].text).toBe('intent-14');
+  it('applyTextToSelection with selection replaces selected text', () => {
+    const s = mountSelection({ body: 'hello world' });
+    s.captureBodySelection({ selectionStart: 6, selectionEnd: 11, value: 'hello world' } as unknown as HTMLTextAreaElement);
+    s.applyTextToSelection('there');
+    expect(s.chapterBodyDraft.value).toBe('hello there');
+    expect(s.qualityHints.value).toEqual([
+      { level: 'ok', text: '已写入编辑器（未保存到磁盘）' },
+    ]);
   });
 
-  it('loadIntentFromHistory restores text + metadata', () => {
-    const s = useWorkbenchSelection();
-    s.intentText.value = 'current';
-    s.loadIntentFromHistory({
-      id: 'intent-1',
-      text: 'previous',
-      mood: 'dark',
-      type: 'plot',
-      theme: 'betrayal',
-      timestamp: '2026-06-01T00:00:00Z',
+  it('applyTextToSelection without selection appends to draft', () => {
+    const s = mountSelection({ body: 'first' });
+    s.applyTextToSelection('second');
+    expect(s.chapterBodyDraft.value).toBe('first\n\nsecond');
+  });
+
+  it('applyTextToSelection on empty draft writes directly', () => {
+    const s = mountSelection({ body: '' });
+    s.applyTextToSelection('hello');
+    expect(s.chapterBodyDraft.value).toBe('hello');
+  });
+
+  it('toggleSelectionLock flips + updates statusLine when locked with selection', () => {
+    const s = mountSelection({ body: 'hello world', agentStatus: 'idle' });
+    s.captureBodySelection({ selectionStart: 0, selectionEnd: 5, value: 'hello world' } as unknown as HTMLTextAreaElement);
+    s.toggleSelectionLock();
+    expect(s.selectionLocked.value).toBe(true);
+    expect(s.setStatus).toHaveBeenCalledWith('选区已锁定，改写不会覆盖选中文字');
+  });
+
+  it('toggleSelectionLock without selection does not update statusLine', () => {
+    const s = mountSelection({ agentStatus: 'idle' });
+    s.toggleSelectionLock();
+    expect(s.selectionLocked.value).toBe(true);
+    expect(s.setStatus).not.toHaveBeenCalled();
+  });
+
+  it('toggleSelectionLock twice returns to unlocked', () => {
+    const s = mountSelection();
+    s.toggleSelectionLock();
+    s.toggleSelectionLock();
+    expect(s.selectionLocked.value).toBe(false);
+  });
+
+  it('getControls returns current ref values', () => {
+    const s = mountSelection();
+    s.styleStrength.value = 2;
+    s.selectionLocked.value = true;
+    s.allowWorldbuildingFill.value = true;
+    s.goalTag.value = 'pacing-fast';
+    expect(s.getControls()).toEqual({
+      styleStrength: 2,
+      selectionLocked: true,
+      allowWorldbuildingFill: true,
+      goalTag: 'pacing-fast',
     });
-    expect(s.intentText.value).toBe('previous');
-    expect(s.intentMood.value).toBe('dark');
-    expect(s.intentType.value).toBe('plot');
-    expect(s.intentTheme.value).toBe('betrayal');
-  });
-
-  it('loadIntentFromHistory defaults missing metadata to empty', () => {
-    const s = useWorkbenchSelection();
-    s.loadIntentFromHistory({
-      id: 'intent-1',
-      text: 'text',
-      // 缺 mood/type/theme
-      timestamp: '2026-06-01T00:00:00Z',
-    } as Parameters<typeof s.loadIntentFromHistory>[0]);
-    expect(s.intentText.value).toBe('text');
-    expect(s.intentMood.value).toBe('');
-    expect(s.intentType.value).toBe('');
-    expect(s.intentTheme.value).toBe('');
-  });
-
-  it('clearIntentHistory empties list', () => {
-    const s = useWorkbenchSelection();
-    s.intentText.value = 'first';
-    s.saveIntentToHistory();
-    s.intentText.value = 'second';
-    s.saveIntentToHistory();
-    expect(s.intentHistory.value.length).toBeGreaterThan(0);
-    s.clearIntentHistory();
-    expect(s.intentHistory.value).toEqual([]);
-  });
-
-  it('intentGenre ref is exposed and mutable', () => {
-    const s = useWorkbenchSelection();
-    s.intentGenre.value = 'fantasy';
-    expect(s.intentGenre.value).toBe('fantasy');
   });
 });
