@@ -39,7 +39,7 @@
  * 详见 composables.d.ts 类型声明。
  */
 
-export { default as creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
+export { creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
 export { useApiConnectivity } from './useApiConnectivity.js';
 export { useAskAssistant, useAskPageTab, ASK_LONG_DRAFT_CHAR_LIMIT } from './useAskAssistant.js';
 export { useCostWindow } from './useCostWindow.js';
@@ -52,7 +52,7 @@ export { useCreatorOnboarding } from './useCreatorOnboarding.js';
 export { useCreatorPage } from './useCreatorPage.js';
 export { useCreatorPageHeader } from './useCreatorPageHeader.js';
 export { useCreatorPageProviders } from './useCreatorPageProviders.js';
-export { useCreatorPageRefresh } from './useCreatorPageRefresh.js';
+export { createCreatorPageRefresh } from './useCreatorPageRefresh.js';
 export { useCreatorProductTools } from './useCreatorProductTools.js';
 export { useCreatorPulse } from './useCreatorPulse.js';
 export { useCreatorSettings } from './useCreatorSettings.js';
@@ -74,20 +74,16 @@ export { useRippleSocket } from './useRippleSocket.js';
 export { useRippleStore } from './useRippleStore.js';
 export { useStudioProject } from './useStudioProject.js';
 export { useTierBudgetAlerts } from './useTierBudgetAlerts.js';
-export { useTimeOptions } from './useTimeOptions.js';
+// useTimeOptions 不导出 useTimeOptions，只有 TIME_OPTIONS
 export { useTodayHub } from './useTodayHub.js';
 export { useWorkflowListStore } from './useWorkflowListStore.js';
 export { useWorkflowSocket, onCascadeUpdate, onAuditCreated } from './useWorkflowSocket.js';
 export { useEventBus, onRippleUpdate, onWsConnected, onWsDisconnected } from './useEventBus.js';
 export { useWidgetRegistry, defineWidget, registerWidget, registerWidgets, getWidget, getAllWidgets, getWidgetsByCategory, unregisterWidget, createWidgetInstance, getWidgetInstance, removeWidgetInstance, updateWidgetInstance, setWidgetInstanceState, getWidgetInstanceState, emitWidgetEvent, onWidgetEvent, checkWidgetDependencies } from './useWidgetRegistry.js';
-export { useWorkbenchIndex } from './useWorkbenchIndex.ts';
-export { useWorkbenchAgent } from './useWorkbenchAgent.ts';
-export { useWorkbenchCheckpoint } from './useWorkbenchCheckpoint.ts';
-export { useWorkbenchSelection } from './useWorkbenchSelection.ts';
-export { useWorkbenchValidation } from './useWorkbenchValidation.ts';
-export { useDashboardWidgets } from './useDashboardWidgets.js';
+export { useWorkbenchSelection, useWorkbenchCheckpoint, useWorkbenchValidation, useWorkbenchAgent } from './useWorkbenchIndex.js';
+export { registerDashboardWidgets, getDefaultDashboardLayout } from './useDashboardWidgets.js';
 export { useDevice } from './useDevice.js';
-export { default as volumePlanDiffExportUtils } from './volumePlanDiffExportUtils.js';
+export * as volumePlanDiffExportUtils from './volumePlanDiffExportUtils.js';
 
 // Phase 19-20 子模块聚合（提供细粒度依赖注入）
 export {
@@ -95,39 +91,39 @@ export {
   useProductExport,
   useProductPublish,
   useProductMemory,
-} from './useCreatorProductTools/index.ts';
+} from './useCreatorProductTools/index';
 export {
   useSettingsHistory,
   useMergePresets,
   useSettingsDocs,
-} from './useCreatorSettings/index.ts';
+} from './useCreatorSettings/index';
 export {
   useTemplateList,
   useTemplateEditor,
   useTemplateSync,
-} from './useCreatorVolumePlanTemplates/index.ts';
+} from './useCreatorVolumePlanTemplates/index';
 export {
   useBatchList,
   useBatchDiff,
   useBatchRestore,
-} from './useCreatorBatchHistory/index.ts';
+} from './useCreatorBatchHistory/index';
 export {
   useWriteFlow,
   useWriteValidation,
   useWriteTools,
-} from './useCreatorWrite/index.ts';
+} from './useCreatorWrite/index';
 export {
   useWizardSteps,
   useOnboardingProgress,
   useOnboardingNotifications,
-} from './useCreatorOnboarding/index.ts';
+} from './useCreatorOnboarding/index';
 export {
   useAgentConfig,
   useAgentTask,
   useAgentTools,
-} from './useCreatorAgent/index.ts';
+} from './useCreatorAgent/index';
 export {
   useVolumePlanDiff,
   useVolumePlanDiffShare,
-} from './useCreatorVolumePlanDiff/index.ts';
-export { useCreatorPageChrome } from './useCreatorPage/index.ts';
+} from './useCreatorVolumePlanDiff/index';
+export { useCreatorPageChrome } from './useCreatorPage/index';

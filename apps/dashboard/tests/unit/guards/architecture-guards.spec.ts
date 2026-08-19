@@ -13,26 +13,38 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 const composablesDir = path.resolve(__dirname, '../../../src/composables');
-const indexFile = path.resolve(composablesDir, 'index.js');
+const indexFileJs = path.resolve(composablesDir, 'index.js');
+const indexFileTs = path.resolve(composablesDir, 'index.ts');
+const indexFile = fs.existsSync(indexFileTs) ? indexFileTs : indexFileJs;
 
 describe('Guard: 架构不变量', () => {
-  it('composables/index.js 导出所有 composable 文件', () => {
+  it('composables/index.ts 导出所有 composable 文件', () => {
     const indexContent = fs.readFileSync(indexFile, 'utf-8');
     const composableFiles = fs.readdirSync(composablesDir)
       .filter((f) =>
         (f.endsWith('.js') || f.endsWith('.ts'))
-        && f !== 'index.js'
+        && f !== 'index.js' && f !== 'index.ts'
         && !f.endsWith('.d.ts')
       );
 
     const missingExports: string[] = [];
     for (const file of composableFiles) {
       const moduleName = file.replace(/\.(js|ts)$/, '');
-      // 检查 index.js 中是否导出了该模块
-      const exportPattern = new RegExp(
-        `export\\s*\\{[^}]*\\}\\s*from\\s*['"]\\.\\/${moduleName}`
+      // 检查 index.ts 中是否导出了该模块（直接 export 或从子目录 re-export）
+      // 直接 export 模式: export { ... } from './moduleName' 或 export * as from './moduleName'
+      const directPattern = new RegExp(
+        `export\\s*(?:\\{[^}]*\\}|\\*(?:\\s*as\\s*${moduleName})?)\\s*from\\s*['"]\\.\\/${moduleName}(?:\\.js|\\.ts|['"])`
       );
-      if (!exportPattern.test(indexContent)) {
+      // 对于 workbench 子模块，它们通过 useWorkbenchIndex.js 重新聚合
+      if (!directPattern.test(indexContent) && moduleName.startsWith('useWorkbench') && moduleName !== 'useWorkbenchIndex') {
+        // 检查 useWorkbenchIndex 内部是否导出
+        const indexFileFull = path.join(composablesDir, 'useWorkbenchIndex.ts');
+        if (fs.existsSync(indexFileFull)) {
+          const workbenchIndexContent = fs.readFileSync(indexFileFull, 'utf-8');
+          if (workbenchIndexContent.includes(moduleName)) continue;
+        }
+      }
+      if (!directPattern.test(indexContent)) {
         missingExports.push(moduleName);
       }
     }
@@ -72,7 +84,7 @@ describe('Guard: 架构不变量', () => {
 
   it('Composable 文件使用 use 前缀', () => {
     const files = fs.readdirSync(composablesDir)
-      .filter((f) => (f.endsWith('.js') || f.endsWith('.ts')) && f !== 'index.js');
+      .filter((f) => (f.endsWith('.js') || f.endsWith('.ts')) && f !== 'index.js' && f !== 'index.ts');
 
     const nonUsePrefix: string[] = [];
     for (const file of files) {
