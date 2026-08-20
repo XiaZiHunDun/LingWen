@@ -65,14 +65,29 @@ test.describe('Cross-tab persistence (live)', () => {
       await tabA.goto('/', { waitUntil: 'domcontentloaded' });
       await expect(tabA.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
 
+      // Open tabB and ensure the key is present before clearing.
       const tabB = await context.newPage();
       await tabB.goto('/', { waitUntil: 'domcontentloaded' });
+      const beforeClear = await tabB.evaluate((key) => localStorage.getItem(key), WRITE_RESUME_KEY);
+      expect(beforeClear).toBeTruthy();
+
+      // Open tabC and arm a storage-event listener BEFORE the mutation in tabB,
+      // so we can prove the cross-tab propagation actually fires.
+      const tabC = await context.newPage();
+      const storageEventPromise = tabC.waitForEvent('storage');
+      await tabC.goto('/', { waitUntil: 'domcontentloaded' });
+
+      // Clear in tabB — must fire a 'storage' event in tabC (same context).
       await tabB.evaluate((key) => localStorage.removeItem(key), WRITE_RESUME_KEY);
 
-      const tabC = await context.newPage();
-      await tabC.goto('/', { waitUntil: 'domcontentloaded' });
-      const afterClear = await tabC.evaluate((key) => localStorage.getItem(key), WRITE_RESUME_KEY);
-      expect(afterClear).toBeNull();
+      const event = await storageEventPromise;
+      expect(event.key).toBe(WRITE_RESUME_KEY);
+      expect(event.storageArea).toBeTruthy();
+      expect(tabC.url()).toContain('/');
+
+      // Cleanup
+      await tabC.close();
+      await tabB.close();
     } finally {
       await context.close();
     }

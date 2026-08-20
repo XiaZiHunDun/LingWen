@@ -36,14 +36,11 @@ test.describe('URL deep-linking (live)', () => {
     test.setTimeout(60_000);
     await request.put('/api/studio/active', { data: { slug: COMPANION_SLUG } });
 
-    await page.goto('/?nav=does-not-exist', { waitUntil: 'domcontentloaded' });
+    await page.goto('/?nav=invalid-routing-key', { waitUntil: 'domcontentloaded' });
+    // Shell always visible regardless of nav value.
     await expect(page.getByTestId('app-root')).toBeVisible();
-    // App shell must stay interactive even with an unknown nav value.
-    await expect(
-      page.getByTestId('ask-page')
-        .or(page.getByTestId('header-l1-page-name'))
-        .or(page.getByTestId('more-page'))
-        .or(page.getByTestId('creator-write-workbench')),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('header-l1-page-name')).toBeVisible();
+    // Fallback to 'ask' (verified via useNavUrlUtils.ts:83).
+    await expect(page.getByTestId('ask-page')).toBeVisible({ timeout: 30_000 });
   });
 });
