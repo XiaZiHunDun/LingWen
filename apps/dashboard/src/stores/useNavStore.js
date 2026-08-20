@@ -31,6 +31,7 @@ import {
   activeNavToUrlParam,
   resolveHumanNavToActive,
 } from '../config/humanFirstNav.js'
+import { useNavUrlUtils } from './useNavUrlUtils'
 
 const PRODUCE_TAB_IDS = PRODUCE_TABS.map((t) => t.id)
 const INBOX_TAB_IDS = INBOX_TABS.map((t) => t.id)
@@ -64,168 +65,23 @@ const REVIEWER_BLOCKED_NAV = new Set([
   'studio', 'chapters', 'workflows',
 ])
 
-function canonicalNav(nav) {
-  if (!nav) return 'ask'
-  if (nav === 'write' || nav === 'creator') return 'creator'
-  if (LEGACY_PRODUCE_NAV_IDS.includes(nav)) return 'produce'
-  if (LEGACY_INBOX_NAV_IDS.includes(nav)) return 'inbox'
-  if (LEGACY_INSIGHT_NAV_IDS.includes(nav)) return 'insight'
-  return nav
-}
-
-function readRawNavFromUrl() {
-  if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('nav')
-}
-
-function isReviewerUrl() {
-  if (typeof window === 'undefined') return false
-  const params = new URLSearchParams(window.location.search)
-  return params.get('role') === 'reviewer' || params.get('review') === '1'
-}
-
-function readProduceTab(rawNav) {
-  if (typeof window === 'undefined') return 'studio'
-  const tab = new URLSearchParams(window.location.search).get('tab')
-  if (tab && PRODUCE_TAB_IDS.includes(tab)) return tab
-  if (rawNav && LEGACY_PRODUCE_NAV_IDS.includes(rawNav)) return rawNav
-  return 'studio'
-}
-
-function readInboxTab(rawNav) {
-  if (typeof window === 'undefined') return 'decisions'
-  const tab = new URLSearchParams(window.location.search).get('tab')
-  if (tab && INBOX_TAB_IDS.includes(tab)) return tab
-  if (rawNav && LEGACY_INBOX_NAV_IDS.includes(rawNav)) return rawNav
-  return 'decisions'
-}
-
-function readInsightTab(rawNav) {
-  if (typeof window === 'undefined') return 'overview'
-  const tab = new URLSearchParams(window.location.search).get('tab')
-  if (tab && INSIGHT_TAB_IDS.includes(tab)) return tab
-  if (rawNav && LEGACY_INSIGHT_NAV_IDS.includes(rawNav)) return rawNav
-  return 'overview'
-}
-
-function readCreatorWorkspaceFromUrl() {
-  if (typeof window === 'undefined') return null
-  const ws = new URLSearchParams(window.location.search).get('workspace')
-  if (ws && CREATOR_WORKSPACE_IDS.includes(ws) && ws !== 'write') return ws
-  return null
-}
-
-function normalizeCreatorWorkspace(tab) {
-  if (!tab || tab === 'write') return null
-  return CREATOR_WORKSPACE_IDS.includes(tab) ? tab : null
-}
-
-function readNavFromUrl() {
-  if (typeof window === 'undefined') return 'ask'
-  const raw = readRawNavFromUrl()
-  if (!raw) return isReviewerUrl() ? 'inbox' : null
-  if (!VALID_NAV.includes(raw)) return isReviewerUrl() ? 'inbox' : 'ask'
-  const canonical = canonicalNav(raw)
-  if (isReviewerUrl() && REVIEWER_BLOCKED_NAV.has(canonical)) {
-    return 'inbox'
-  }
-  if (isReviewerUrl() && REVIEWER_BLOCKED_NAV.has(raw)) {
-    return 'inbox'
-  }
-  return canonical
-}
-
-function readChapterFromUrl() {
-  if (typeof window === 'undefined') return null
-  const raw = new URLSearchParams(window.location.search).get('chapter')
-  if (raw == null || raw === '') return null
-  const n = Number(raw)
-  return Number.isFinite(n) && n >= 1 ? n : null
-}
-
-function readDecisionFromUrl() {
-  if (typeof window === 'undefined') return null
-  const id = new URLSearchParams(window.location.search).get('decision')
-  return id && id.trim() ? id.trim() : null
-}
-
-function encodeWizardNotes(notes) {
-  const filtered = Object.fromEntries(
-    Object.entries(notes || {}).filter(([, value]) => String(value).trim()),
-  )
-  if (!Object.keys(filtered).length) return null
-  return btoa(unescape(encodeURIComponent(JSON.stringify(filtered))))
-}
-
-function readWizardNotesFromUrl() {
-  if (typeof window === 'undefined') return {}
-  const raw = new URLSearchParams(window.location.search).get('notes')
-  if (!raw) return {}
-  try {
-    const json = decodeURIComponent(escape(atob(raw)))
-    const parsed = JSON.parse(json)
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch {
-    return {}
-  }
-}
-
-function readWizardFromUrl() {
-  if (typeof window === 'undefined') return false
-  const params = new URLSearchParams(window.location.search)
-  return (
-    params.get('wizard') === '1'
-    || Boolean(params.get('step'))
-    || Boolean(params.get('done'))
-    || Boolean(params.get('notes'))
-  )
-}
-
-function readWizardStepFromUrl() {
-  if (typeof window === 'undefined') return null
-  const step = new URLSearchParams(window.location.search).get('step')
-  return step && step.trim() ? step.trim() : null
-}
-
-function readWizardDoneFromUrl() {
-  if (typeof window === 'undefined') return []
-  const raw = new URLSearchParams(window.location.search).get('done')
-  if (!raw || !raw.trim()) return []
-  return raw.split(',').map((s) => s.trim()).filter(Boolean)
-}
-
-function preserveRoleParams(url) {
-  if (typeof window === 'undefined') return
-  const current = new URL(window.location.href)
-  const role = current.searchParams.get('role')
-  const review = current.searchParams.get('review')
-  if (role) {
-    url.searchParams.set('role', role)
-  } else {
-    url.searchParams.delete('role')
-  }
-  if (!role && review === '1') {
-    url.searchParams.set('review', '1')
-  } else {
-    url.searchParams.delete('review')
-  }
-}
-
 export const useNavStore = defineStore('nav', () => {
-  const rawNavOnLoad = readRawNavFromUrl()
-  const initialNav = readNavFromUrl()
-  
+  const utils = useNavUrlUtils()
+
+  const rawNavOnLoad = utils.readRawNavFromUrl()
+  const initialNav = utils.readNavFromUrl()
+
   const activeNav = ref(initialNav ?? 'ask')
-  const produceTab = ref(readProduceTab(rawNavOnLoad))
-  const inboxTab = ref(readInboxTab(rawNavOnLoad))
-  const insightTab = ref(readInsightTab(rawNavOnLoad))
-  const focusChapter = ref(readChapterFromUrl())
-  const focusDecisionId = ref(readDecisionFromUrl())
-  const focusWizard = ref(readWizardFromUrl())
-  const focusWizardStep = ref(readWizardStepFromUrl())
-  const focusWizardDone = ref(readWizardDoneFromUrl())
-  const focusWizardNotes = ref(readWizardNotesFromUrl())
-  const focusCreatorWorkspace = ref(readCreatorWorkspaceFromUrl())
+  const produceTab = ref(utils.readProduceTab(rawNavOnLoad))
+  const inboxTab = ref(utils.readInboxTab(rawNavOnLoad))
+  const insightTab = ref(utils.readInsightTab(rawNavOnLoad))
+  const focusChapter = ref(utils.readChapterFromUrl())
+  const focusDecisionId = ref(utils.readDecisionFromUrl())
+  const focusWizard = ref(utils.readWizardFromUrl())
+  const focusWizardStep = ref(utils.readWizardStepFromUrl())
+  const focusWizardDone = ref(utils.readWizardDoneFromUrl())
+  const focusWizardNotes = ref(utils.readWizardNotesFromUrl())
+  const focusCreatorWorkspace = ref(utils.readCreatorWorkspaceFromUrl())
 
   function resolveNavTarget(nav) {
     if (nav === 'write' || nav === 'creator') {
@@ -244,8 +100,8 @@ export const useNavStore = defineStore('nav', () => {
   }
 
   function guardReviewerNav(nav) {
-    if (!isReviewerUrl()) return nav
-    const canonical = canonicalNav(nav)
+    if (!utils.isReviewerUrl()) return nav
+    const canonical = utils.canonicalNav(nav)
     if (REVIEWER_BLOCKED_NAV.has(canonical)) return 'inbox'
     return canonical
   }
@@ -295,7 +151,7 @@ export const useNavStore = defineStore('nav', () => {
     } else {
       url.searchParams.delete('done')
     }
-    const encodedNotes = encodeWizardNotes(focusWizardNotes.value)
+    const encodedNotes = utils.encodeWizardNotes(focusWizardNotes.value)
     if (encodedNotes) {
       url.searchParams.set('notes', encodedNotes)
     } else {
@@ -311,7 +167,7 @@ export const useNavStore = defineStore('nav', () => {
     } else {
       url.searchParams.delete('workspace')
     }
-    preserveRoleParams(url)
+    utils.preserveRoleParams(url)
     window.history.replaceState(window.history.state, '', url.toString())
   }
 
@@ -320,7 +176,7 @@ export const useNavStore = defineStore('nav', () => {
     const resolved = guardReviewerNav(target.nav)
     activeNav.value = VALID_NAV.includes(nav) || nav === 'write' || nav === 'creator'
       ? resolved
-      : (isReviewerUrl() ? 'inbox' : 'ask')
+      : (utils.isReviewerUrl() ? 'inbox' : 'ask')
     if (opts.tab) {
       if (activeNav.value === 'produce' && PRODUCE_TAB_IDS.includes(opts.tab)) {
         produceTab.value = opts.tab
@@ -357,7 +213,7 @@ export const useNavStore = defineStore('nav', () => {
     if (opts.wizardDone?.length) focusWizard.value = true
     if (opts.wizardNotes && Object.keys(opts.wizardNotes).length) focusWizard.value = true
     if (opts.workspace !== undefined) {
-      focusCreatorWorkspace.value = normalizeCreatorWorkspace(opts.workspace)
+      focusCreatorWorkspace.value = utils.normalizeCreatorWorkspace(opts.workspace)
     }
     syncNavUrl()
   }
@@ -384,7 +240,7 @@ export const useNavStore = defineStore('nav', () => {
   }
 
   function setCreatorWorkspace(tab) {
-    focusCreatorWorkspace.value = normalizeCreatorWorkspace(tab)
+    focusCreatorWorkspace.value = utils.normalizeCreatorWorkspace(tab)
     syncNavUrl()
   }
 
@@ -416,7 +272,7 @@ export const useNavStore = defineStore('nav', () => {
     if (wizardStep) {
       url.searchParams.set('step', wizardStep)
     }
-    const encodedNotes = encodeWizardNotes(stepNotes)
+    const encodedNotes = utils.encodeWizardNotes(stepNotes)
     if (encodedNotes) {
       url.searchParams.set('notes', encodedNotes)
     } else {
@@ -432,18 +288,18 @@ export const useNavStore = defineStore('nav', () => {
   }
 
   function syncNavFromBrowserUrl() {
-    const raw = readRawNavFromUrl()
-    activeNav.value = readNavFromUrl()
-    produceTab.value = readProduceTab(raw)
-    inboxTab.value = readInboxTab(raw)
-    insightTab.value = readInsightTab(raw)
-    focusChapter.value = readChapterFromUrl()
-    focusDecisionId.value = readDecisionFromUrl()
-    focusWizard.value = readWizardFromUrl()
-    focusWizardStep.value = readWizardStepFromUrl()
-    focusWizardDone.value = readWizardDoneFromUrl()
-    focusWizardNotes.value = readWizardNotesFromUrl()
-    focusCreatorWorkspace.value = readCreatorWorkspaceFromUrl()
+    const raw = utils.readRawNavFromUrl()
+    activeNav.value = utils.readNavFromUrl()
+    produceTab.value = utils.readProduceTab(raw)
+    inboxTab.value = utils.readInboxTab(raw)
+    insightTab.value = utils.readInsightTab(raw)
+    focusChapter.value = utils.readChapterFromUrl()
+    focusDecisionId.value = utils.readDecisionFromUrl()
+    focusWizard.value = utils.readWizardFromUrl()
+    focusWizardStep.value = utils.readWizardStepFromUrl()
+    focusWizardDone.value = utils.readWizardDoneFromUrl()
+    focusWizardNotes.value = utils.readWizardNotesFromUrl()
+    focusCreatorWorkspace.value = utils.readCreatorWorkspaceFromUrl()
   }
 
   function isProduceNav(nav) {
