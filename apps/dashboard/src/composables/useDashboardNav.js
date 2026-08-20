@@ -1,8 +1,6 @@
 import { unref } from 'vue';
 import { useNavStore } from '../stores/useNavStore.js';
 
-export const CREATOR_WORKSPACE_IDS = ['write', 'pulse', 'settings'];
-
 function navValue(store, key) {
   return unref(store[key]);
 }

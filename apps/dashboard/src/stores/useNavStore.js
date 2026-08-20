@@ -23,47 +23,20 @@ import {
   LEGACY_INBOX_NAV_IDS,
   LEGACY_INSIGHT_NAV_IDS,
   LEGACY_PRODUCE_NAV_IDS,
-  PRODUCE_TABS,
-  INBOX_TABS,
-  INSIGHT_TABS,
 } from '../config/dashboardNav.js'
 import {
   activeNavToUrlParam,
   resolveHumanNavToActive,
 } from '../config/humanFirstNav.js'
+import {
+  PRODUCE_TAB_IDS,
+  INBOX_TAB_IDS,
+  INSIGHT_TAB_IDS,
+  CREATOR_WORKSPACE_IDS,
+  VALID_NAV,
+  REVIEWER_BLOCKED_NAV,
+} from './navConstants.js'
 import { useNavUrlUtils } from './useNavUrlUtils'
-
-const PRODUCE_TAB_IDS = PRODUCE_TABS.map((t) => t.id)
-const INBOX_TAB_IDS = INBOX_TABS.map((t) => t.id)
-const INSIGHT_TAB_IDS = INSIGHT_TABS.map((t) => t.id)
-
-const CREATOR_WORKSPACE_IDS = ['write', 'pulse', 'settings']
-
-const VALID_NAV = [
-  'ask',
-  'write',
-  'library',
-  'more',
-  'today',
-  'creator',
-  'produce',
-  'inbox',
-  'insight',
-  'studio',
-  'chapters',
-  'workflows',
-  'decisions',
-  'ripples',
-  'overview',
-  'analytics',
-  'cascade-runs',
-  'settings',
-]
-
-const REVIEWER_BLOCKED_NAV = new Set([
-  'write', 'creator', 'produce', 'library', 'more', 'settings', 'cascade-runs',
-  'studio', 'chapters', 'workflows',
-])
 
 export const useNavStore = defineStore('nav', () => {
   const utils = useNavUrlUtils()
