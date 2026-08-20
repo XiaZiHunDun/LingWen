@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 删除 Phase 19-20 遗留的 5 个 `useWorkbench*.ts` legacy 占位源文件 + 2 个对应测试 + 清理 `composables/index.ts` re-export 与 alias + 新增 6 项架构守卫；单原子 commit，vue-tsc 0 errors，pnpm test 1343 → 1341 PASS。
+**Goal:** 删除 Phase 19-20 遗留的 5 个 `useWorkbench*.ts` legacy 占位源文件 + 2 个对应测试 + 清理 `composables/index.ts` re-export 与 alias + 新增 6 项架构守卫；单原子 commit，vue-tsc 0 errors，pnpm test 182 files → 180 files、1343 → 1322 tests PASS。
+
+> **PATCH 2 (2026-08-20, after Task 2 BLOCKED on count delta)**: 计划原预期 `1343 → 1341`（delta -2）是错的。实际删除的 2 个 spec 含 14 + 8 = 22 tests（详见 `git show HEAD~0:...` 验证），Phase 60 final state 写的 "1343 tests" 也是偏乐观记录。本阶段实测终点：**1322 tests / 180 files**。
 
 **Architecture:** 纯删除 + 出口清理 + 防回潮守卫。0 调用方已 grep 验证（Phase 60 已把对应功能迁到 `useCreatorWriteWorkbench/*` 4 个新 submodule）。沿用 Phase 60.6 守卫模式（`fs.existsSync` + `readFileSync` + `toMatch`）追加 6 个新断言。
 
@@ -184,7 +186,7 @@ cd apps/dashboard
 pnpm test 2>&1 | tail -10
 ```
 
-Expected: `Test Files  182 passed (182)` 与 `Tests  1341 passed (1341)`。**注意**：`1343 → 1341`，因为删了 2 个 legacy spec 文件。如果出现 1343 或其他数值，说明有未发现的引用测试。
+Expected: `Test Files  180 passed (180)` 与 `Tests  1322 passed (1322)`。**注意**：原计划写 1343 → 1341（delta -2）错。实测 14 + 8 = 22 tests 删除（`use-workbench-checkpoint.spec.ts` 14 + `use-workbench-selection-intent.spec.ts` 8），实际 delta = -21。终点 baseline = 1322。
 
 **重要：到此步骤不要 commit。** 删除只是工作树变更，最终单一 commit 在 Task 4 一并完成。
 
@@ -285,7 +287,7 @@ pnpm exec vitest run tests/unit/guards/ 2>&1 | tail -10
 Expected（4 个命令依次）：
 1. `vue-tsc --noEmit` 0 errors
 2. `vue-tsc -p tsconfig.app.json` 0 errors
-3. `Test Files  182 passed (182)` + `Tests  1341 passed (1341)`
+3. `Test Files  180 passed (180)` + `Tests  1322 passed (1322)`
 4. `Test Files  1 passed (1)` + `Tests  11 passed (11)`
 
 - [ ] **Step 4.3: 检查 working tree 状态**

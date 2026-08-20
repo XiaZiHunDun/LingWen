@@ -107,7 +107,7 @@ it('composables/index.ts 不再 re-export useWorkbenchIndex (Phase 61)', () => {
 |------|----------|
 | `pnpm exec vue-tsc --noEmit --pretty false` | 0 errors |
 | `pnpm exec vue-tsc -p tsconfig.app.json --noEmit` | 0 errors |
-| `pnpm test` | 1343 → 1341 tests PASS（-2 legacy tests） |
+| `pnpm test` | 1343 → 1322 tests PASS（-21 tests；2 个 legacy spec 共含 14+8=22 tests，留 1 个 skip/未跑） |
 | `pnpm exec vitest run tests/unit/guards/` | 现有 5 tests + 新 6 tests = 11 tests PASS |
 | `grep -r "useWorkbenchIndex" apps/dashboard/src` | 0 hits |
 | `grep -r "useCreatorWorkbenchSelection" apps/dashboard/src` | 0 hits |
