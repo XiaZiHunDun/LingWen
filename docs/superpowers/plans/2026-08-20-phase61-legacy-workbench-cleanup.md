@@ -10,11 +10,16 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-20-phase61-legacy-workbench-cleanup-design.md`
 
+> **PATCH (2026-08-20, after BLOCKED on Task 1 attempt #1)**: Task 1 ↔ Task 2 必须先清理 `index.ts:83` 的 hard import 再删源文件。原顺序导致 `Cannot find module './useWorkbenchIndex.js'` 编译失败。修正后的顺序：先 Task 1 改 index.ts → 再 Task 2 删文件 → Task 3 加守卫 → Task 4 验证+commit。
+
 ---
 
 ## 文件结构
 
 ```
+改 1 源
+  apps/dashboard/src/composables/index.ts                          (4 处编辑，必须先做)
+
 删 5 源（717L）
   apps/dashboard/src/composables/useWorkbenchCheckpoint.ts        (107L)
   apps/dashboard/src/composables/useWorkbenchValidation.ts        (333L)
@@ -26,86 +31,23 @@
   apps/dashboard/tests/unit/use-workbench-checkpoint.spec.ts        (Phase 38)
   apps/dashboard/tests/unit/use-workbench-selection-intent.spec.ts  (Phase 18.9)
 
-改 1 源
-  apps/dashboard/src/composables/index.ts                          (3 处编辑)
-
-改 1 测
+加 1 守卫
   apps/dashboard/tests/unit/guards/architecture-guards.spec.ts    (新增 6 守卫)
 
-新增 1 文档
+新建 1 文档
   docs/superpowers/specs/2026-08-20-phase61-final-state.md
 ```
 
 ---
 
-## Task 1: 删除 5 个 legacy 源文件 + 2 个对应测试
-
-**Files:**
-- Delete: `apps/dashboard/src/composables/useWorkbenchCheckpoint.ts`
-- Delete: `apps/dashboard/src/composables/useWorkbenchValidation.ts`
-- Delete: `apps/dashboard/src/composables/useWorkbenchAgent.ts`
-- Delete: `apps/dashboard/src/composables/useWorkbenchSelection.ts`
-- Delete: `apps/dashboard/src/composables/useWorkbenchIndex.ts`
-- Delete: `apps/dashboard/tests/unit/use-workbench-checkpoint.spec.ts`
-- Delete: `apps/dashboard/tests/unit/use-workbench-selection-intent.spec.ts`
-
-**Why first:** 文件级删除是原子操作的最干净起点。删除后跑测试/v tsc 可立即验证 0 调用方假设。
-
-- [ ] **Step 1.1: 删除 5 个 legacy 源文件**
-
-```bash
-cd apps/dashboard/src/composables
-rm useWorkbenchCheckpoint.ts \
-   useWorkbenchValidation.ts \
-   useWorkbenchAgent.ts \
-   useWorkbenchSelection.ts \
-   useWorkbenchIndex.ts
-ls -la useWorkbench*.ts 2>/dev/null
-```
-
-Expected: `ls` 输出为空（或只剩 `useCreatorWriteWorkbench/` 目录的 submodule）。
-
-- [ ] **Step 1.2: 删除 2 个 legacy 测试文件**
-
-```bash
-cd apps/dashboard/tests/unit
-rm use-workbench-checkpoint.spec.ts \
-   use-workbench-selection-intent.spec.ts
-ls -la use-workbench-checkpoint.spec.ts use-workbench-selection-intent.spec.ts 2>/dev/null
-```
-
-Expected: `ls` 命令每个文件报 `No such file or directory`（退出码 2）。
-
-- [ ] **Step 1.3: 验证未引入 typescript 编译错误**
-
-```bash
-cd apps/dashboard
-pnpm exec vue-tsc --noEmit --pretty false 2>&1 | tail -20
-```
-
-Expected: 输出以 `error TS` 开头 0 行（命令退出码 0）。如果出现 `Cannot find module './useWorkbenchXxx'` 之类的错误，说明有未发现的隐式引用——**立即停止**回退此任务调查。
-
-- [ ] **Step 1.4: 验证测试通过数**
-
-```bash
-cd apps/dashboard
-pnpm test 2>&1 | tail -10
-```
-
-Expected: `Test Files  182 passed (182)` 与 `Tests  1341 passed (1341)`。**注意**：`1343 → 1341`，因为删了 2 个 legacy spec 文件。如果出现 1343 或其他数值，说明有未发现的引用测试。
-
-**重要：到此步骤不要 commit。** 删除只是工作树变更，最终单一 commit 在 Task 4 一并完成。
-
----
-
-## Task 2: 清理 `composables/index.ts` 的 re-export 与 alias
+## Task 1: 清理 `composables/index.ts` 的 re-export 与 alias（必须先做）
 
 **Files:**
 - Modify: `apps/dashboard/src/composables/index.ts:17, 83, 130-132, 135`
 
-**Why second:** 文件操作最小化（仅注释 + 1 行 re-export + 1 个 alias 名），最容易出错。编辑后跑 vue-tsc 验证。
+**Why first:** `index.ts:83` 包含 `export { ... } from './useWorkbenchIndex.js'` 这条 hard TypeScript import。如果**先删源文件**而**未先改 index.ts**，vue-tsc 会报 `Cannot find module './useWorkbenchIndex.js'` 错误（Task 1 attempt #1 即因此 BLOCKED）。所以本任务必须先于源文件删除。
 
-- [ ] **Step 2.1: 编辑 header 注释 (line 17)**
+- [ ] **Step 1.1: 编辑 header 注释 (line 17)**
 
 文件 `apps/dashboard/src/composables/index.ts` 第 17 行：
 
@@ -119,7 +61,7 @@ Expected: `Test Files  182 passed (182)` 与 `Tests  1341 passed (1341)`。**注
  * - 工作台: useCreatorWriteWorkbench
 ```
 
-- [ ] **Step 2.2: 删除 line 83 re-export 整行**
+- [ ] **Step 1.2: 删除 line 83 re-export 整行**
 
 文件 `apps/dashboard/src/composables/index.ts` 删除 line 83 整行：
 
@@ -130,7 +72,7 @@ export { useWorkbenchSelection, useWorkbenchCheckpoint, useWorkbenchValidation, 
 
 **整行删除**（不要留空行）。
 
-- [ ] **Step 2.3: 删除 lines 130-132 alias 解释注释**
+- [ ] **Step 1.3: 删除 lines 130-132 alias 解释注释**
 
 文件 `apps/dashboard/src/composables/index.ts` 删除 lines 130-132 整 3 行：
 
@@ -143,7 +85,7 @@ export { useWorkbenchSelection, useWorkbenchCheckpoint, useWorkbenchValidation, 
 
 **整 3 行删除**（不要留空行）。
 
-- [ ] **Step 2.4: 去掉 line 135 alias 还原直接名**
+- [ ] **Step 1.4: 去掉 line 135 alias 还原直接名**
 
 文件 `apps/dashboard/src/composables/index.ts` 把 line 135：
 
@@ -157,7 +99,7 @@ export { useWorkbenchSelection, useWorkbenchCheckpoint, useWorkbenchValidation, 
   useWorkbenchSelection,
 ```
 
-- [ ] **Step 2.5: 验证 index.ts 改动正确**
+- [ ] **Step 1.5: 验证 index.ts 改动正确**
 
 ```bash
 cd apps/dashboard
@@ -166,16 +108,16 @@ grep -n "useWorkbenchIndex\|useCreatorWorkbenchSelection" src/composables/index.
 
 Expected: 0 行输出（命令退出码 1）。
 
-- [ ] **Step 2.6: 验证 typescript 编译**
+- [ ] **Step 1.6: 验证 typescript 编译**
 
 ```bash
 cd apps/dashboard
 pnpm exec vue-tsc --noEmit --pretty false 2>&1 | tail -20
 ```
 
-Expected: 0 errors（退出码 0）。
+Expected: 0 errors（退出码 0）。**这步必须通过**——如果出现 `useWorkbenchIndex` 任何剩余引用，要回退 Step 1.1-1.4 检查。
 
-- [ ] **Step 2.7: 验证两套 tsconfig 编译**
+- [ ] **Step 1.7: 验证两套 tsconfig 编译**
 
 ```bash
 cd apps/dashboard
@@ -184,7 +126,67 @@ pnpm exec vue-tsc -p tsconfig.app.json --noEmit 2>&1 | tail -20
 
 Expected: 0 errors（退出码 0）。
 
-**重要：到此步骤不要 commit。**
+**重要：到此步骤不要 commit。** 4 处编辑只是工作树变更，最终单一 commit 在 Task 4 一并完成。
+
+---
+
+## Task 2: 删除 5 个 legacy 源文件 + 2 个对应测试
+
+**Files:**
+- Delete: `apps/dashboard/src/composables/useWorkbenchCheckpoint.ts`
+- Delete: `apps/dashboard/src/composables/useWorkbenchValidation.ts`
+- Delete: `apps/dashboard/src/composables/useWorkbenchAgent.ts`
+- Delete: `apps/dashboard/src/composables/useWorkbenchSelection.ts`
+- Delete: `apps/dashboard/src/composables/useWorkbenchIndex.ts`
+- Delete: `apps/dashboard/tests/unit/use-workbench-checkpoint.spec.ts`
+- Delete: `apps/dashboard/tests/unit/use-workbench-selection-intent.spec.ts`
+
+**Why second:** Task 1 已清理 `index.ts:83` 的 hard import，删除源文件不再触发 vue-tsc 编译错误。
+
+- [ ] **Step 2.1: 删除 5 个 legacy 源文件**
+
+```bash
+cd apps/dashboard/src/composables
+rm useWorkbenchCheckpoint.ts \
+   useWorkbenchValidation.ts \
+   useWorkbenchAgent.ts \
+   useWorkbenchSelection.ts \
+   useWorkbenchIndex.ts
+ls -la useWorkbench*.ts 2>/dev/null
+```
+
+Expected: `ls` 输出为空（命令退出码 2）。`useCreatorWriteWorkbench/` 子目录的 submodule 不受影响。
+
+- [ ] **Step 2.2: 删除 2 个 legacy 测试文件**
+
+```bash
+cd apps/dashboard/tests/unit
+rm use-workbench-checkpoint.spec.ts \
+   use-workbench-selection-intent.spec.ts
+ls -la use-workbench-checkpoint.spec.ts use-workbench-selection-intent.spec.ts 2>/dev/null
+```
+
+Expected: `ls` 命令每个文件报 `No such file or directory`（退出码 2）。
+
+- [ ] **Step 2.3: 验证 typescript 编译（Task 1 hard import 清理后不会再失败）**
+
+```bash
+cd apps/dashboard
+pnpm exec vue-tsc --noEmit --pretty false 2>&1 | tail -20
+```
+
+Expected: 0 errors（退出码 0）。
+
+- [ ] **Step 2.4: 验证测试通过数**
+
+```bash
+cd apps/dashboard
+pnpm test 2>&1 | tail -10
+```
+
+Expected: `Test Files  182 passed (182)` 与 `Tests  1341 passed (1341)`。**注意**：`1343 → 1341`，因为删了 2 个 legacy spec 文件。如果出现 1343 或其他数值，说明有未发现的引用测试。
+
+**重要：到此步骤不要 commit。** 删除只是工作树变更，最终单一 commit 在 Task 4 一并完成。
 
 ---
 
@@ -194,6 +196,8 @@ Expected: 0 errors（退出码 0）。
 - Modify: `apps/dashboard/tests/unit/guards/architecture-guards.spec.ts` (在文件末尾追加 6 守卫)
 
 **Why third:** 删 + 改完后再加守卫，是「删除 → 验证 → 加防」的标准顺序——只有删干净后，守卫才有意义。
+
+> **关于既有 workbench-special-case（lines 38-46）**：该段位于「composables/index.ts 导出所有 composable 文件」测试内，**已被 `fs.existsSync` 包裹**（`if (fs.existsSync(indexFileFull))`），删除 `useWorkbenchIndex.ts` 后会安全 no-op（落入直接 `missingExports` 判空分支）。**无需修改**，但 Task 3 加 6 项新守卫直接 BLOCK 路径，杜绝回潮。
 
 - [ ] **Step 3.1: 读取现有 guards 文件**
 
@@ -233,7 +237,7 @@ describe('Phase 61 — Legacy Workbench Cleanup Guards', () => {
 });
 ```
 
-**注意**：如文件中已有的 Phase 60.6 守卫（`useCreatorWriteWorkbench.js ≤ 200L`）所处的 `describe` 块在末尾前结束，应在文件最末另起 `describe`。**不要**嵌套到其他 `describe` 里。
+**注意**：文件中已有的 Phase 60.6 守卫（`useCreatorWriteWorkbench.js ≤ 200L`，第 107-112 行）所属 `describe('Guard: 架构不变量', ...)` 块在 line 113 关闭。新 `describe` 应在文件最末另起，**不要**嵌套到其他 `describe` 里。
 
 - [ ] **Step 3.3: 验证 6 项新守卫通过**
 
@@ -244,7 +248,7 @@ pnpm exec vitest run tests/unit/guards/architecture-guards.spec.ts 2>&1 | tail -
 
 Expected: `Test Files  1 passed (1)` 与 `Tests  11 passed (11)`（既有 5 个 + 新 6 个）。如果失败：
 - 某 BANNED_LEGACY 文件被错误建回来 → 检查 `apps/dashboard/src/composables/` 目录
-- `useWorkbenchIndex` grep 命中 → 检查 Task 2 删除是否完整
+- `useWorkbenchIndex` grep 命中 → 检查 Task 1 的 Step 1.1-1.4 是否完整
 
 **重要：到此步骤不要 commit。**
 
@@ -340,7 +344,7 @@ Expected: 7 个 `D` (7 个删除) + 2 个 `M` (index.ts + architecture-guards.sp
 | useWorkbenchIndex.ts | deleted (14L) |
 | use-workbench-checkpoint.spec.ts | deleted |
 | use-workbench-selection-intent.spec.ts | deleted |
-| composables/index.ts | 3 处清理 |
+| composables/index.ts | 4 处清理 (line 17, 83, 130-132, 135) |
 | architecture-guards.spec.ts | +6 guards |
 
 ## 验证结果
@@ -358,6 +362,11 @@ Expected: 7 个 `D` (7 个删除) + 2 个 `M` (index.ts + architecture-guards.sp
 
 - 5 项断言：5 个 legacy 文件不存在
 - 1 项断言：`composables/index.ts` 不再 re-export `useWorkbenchIndex`
+
+## 过程 Notes
+
+- 任务顺序修正：Task 1 (index.ts) 先于 Task 2 (delete files)，否则 vue-tsc 报 `Cannot find module './useWorkbenchIndex.js'`。
+- 见 plan 的 PATCH 注释。
 
 ## 后续 Phase 62+ 候选
 
@@ -409,6 +418,6 @@ Expected: 显示新的 commit hash（最新 1 行）。Phase 60 模式是直接 
 - [ ] 工作目录干净（`git status` 无未追踪改动，**除了本 plan 自身的修改**）
 - [ ] 在 `LingWen/` 仓库根目录
 - [ ] 当前在 master 分支（`git branch --show-current` 输出 `master`）
-- [ ] 上一 commit 是 `38e5126f`（Phase 61 spec）或更晚
+- [ ] 上一 commit 是 `e9de635b`（Phase 61 plan）或更晚
 
 执行中遇任何 verify 步骤失败：**立即停止**回退该步骤调查，不要跳过。
