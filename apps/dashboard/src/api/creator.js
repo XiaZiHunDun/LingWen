@@ -4,6 +4,8 @@
 
 import { request } from './core.js';
 
+export * from './memory.js';
+
 const BASE_URL = import.meta.env.VITE_API_BASE || '/api';
 
 export async function fetchCreatorOverview() {
@@ -630,17 +632,6 @@ export async function saveCreatorPreferencesApi(body) {
   });
 }
 
-export async function fetchCreatorMemoryAssets() {
-  return request('/creator/memory-assets');
-}
-
-export async function saveCreatorMemoryAnnotation(assetId, body) {
-  return request(`/creator/memory-assets/${encodeURIComponent(assetId)}/annotation`, {
-    method: 'PUT',
-    body,
-  });
-}
-
 export async function exportCreatorEpub(body = {}) {
   const res = await fetch(`${BASE_URL}/creator/export/epub`, {
     method: 'POST',
@@ -665,10 +656,6 @@ export async function exportCreatorDocx(body = {}) {
     throw new Error(`API Error ${res.status}: ${text}`);
   }
   return res.blob();
-}
-
-export async function queryCreatorMemory(body) {
-  return request('/creator/memory/query', { method: 'POST', body });
 }
 
 export async function submitCreatorPublish(body) {
