@@ -83,7 +83,8 @@ test.describe('Cross-tab persistence (live)', () => {
       const event = await storageEventPromise;
       expect(event.key).toBe(WRITE_RESUME_KEY);
       expect(event.storageArea).toBeTruthy();
-      expect(tabC.url()).toContain('/');
+      // Verify tabC is on a known surface (post-goto('/') lands on /creator/ via init script)
+      await expect(tabC).toHaveURL(/\/creator\/?$/);
 
       // Cleanup
       await tabC.close();
