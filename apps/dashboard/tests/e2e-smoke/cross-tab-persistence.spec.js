@@ -32,7 +32,7 @@ test.describe('Cross-tab persistence (live)', () => {
         { key: WRITE_RESUME_KEY, slug: COMPANION_SLUG, chapter: 5 },
       );
       await tabA.goto('/', { waitUntil: 'domcontentloaded' });
-      await expect(tabA.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
+      await expect(tabA.getByTestId('writer-desk')).toBeVisible({ timeout: 30_000 });
 
       const tabB = await context.newPage();
       await tabB.goto('/', { waitUntil: 'domcontentloaded' });
@@ -63,7 +63,7 @@ test.describe('Cross-tab persistence (live)', () => {
         { key: WRITE_RESUME_KEY, slug: COMPANION_SLUG },
       );
       await tabA.goto('/', { waitUntil: 'domcontentloaded' });
-      await expect(tabA.getByTestId('creator-write-workbench')).toBeVisible({ timeout: 30_000 });
+      await expect(tabA.getByTestId('writer-desk')).toBeVisible({ timeout: 30_000 });
 
       // Open tabB and ensure the key is present before clearing.
       const tabB = await context.newPage();
