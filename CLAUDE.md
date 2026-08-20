@@ -1,8 +1,8 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v12.0 (Phase 18 业务边界 + 接口化 完成)
-  → v11.0 (Phase 17 monorepo 完成)
-> **更新 (2026-08-14)**：Phase 18（业务边界 + 接口化）落地——`packages/lingwen-core/src/lingwen_core/ports/` 4 个 Protocol (StoragePort / EventStorePort / LLMPort / CheckerPort) + 5 个 Mock；`lingwen_core.domain/` 6 个 Domain 实体（Chapter/Volume/Character/Foreshadow/Ripple/WorldSnapshot）+ 7 个 DomainEvent；`lingwen_core.use_cases/` 3 个事件驱动用例 (WriteChapterUseCase / ReviewChapterUseCase / MergeRipplesUseCase)；`apps/studio_api/dependencies.py` DI 容器 + `routes/chapters.py` 薄壳样板；删除 `infra/agent_system/` + 5 个 agent 迁到 packages；删除 `infra/consistency/ai_tells_blacklist.py` 等 3 文件迁到 packages；删除 `infra/memory_system/` + `infra/prompt_engineering/` + `infra/state/`；`infra/__init__.py` 178 行 → 22 行薄壳；删除 `dashboard/frontend/` 影子目录 8 文件迁到 apps/dashboard；`scripts/ci_baseline_check.py` 路径修复；陈旧 import 230 → 205（-25）；`tooling/gates/phase_18.sh` 9 项 Gate PASS。
+> **版本**: v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+  → v12.0 (Phase 18 业务边界 + 接口化 完成)
+> **更新 (2026-08-20)**：Phase 60-67 落地——useCreatorWriteWorkbench 拆为 facade + 4 submodules (Phase 60)；清 5 workbench legacy 占位 (Phase 61)；api/creator.js 686L 拆为 8 sibling submodules + 130 tests (Phase 62)；useNavStore.js 17 helpers 抽出为 useNavUrlUtils composable + 88 tests (Phase 63)；6 nav constants 抽到 navConstants.ts 共享模块 (Phase 64)；137 文件 trailing newline 修复 (Phase 65)；6 跨流 gap e2e integration tests (Phase 66)；Phase 66 follow-up 闭合 (Phase 67)。详见 `docs/superpowers/specs/2026-08-20-phase6N-*.md` 各 phase spec.
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
@@ -193,10 +193,10 @@ style:
 ## 当前项目状态
 
 **项目名称**：《星陨纪元》
-**当前阶段**：PHASE_7_CLOSE（归档闭环）— 已完成
+**当前阶段**：Phase 60-67 闭环（dashboard 基础设施重构完成）
 **总章节数**：360 章正史正文（ch045 已补回；ch361–996 见 experimental/）
-**最新版本**：v11.0
-**上一版本**：v10.0 (Phase 16 卫生与基础完成)
+**最新版本**：v13.0
+**上一版本**：v12.0 (Phase 18 业务边界 + 接口化 完成)
 **发布状态**：Phase 17 monorepo 完成（待合并）。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 之后的下个 phase。
 **汇总状态**：全文正文已更新（07_汇总仓库/全文正文/星陨纪元_全文正文_v9.10.md，2.47MB，359章节；v9.11/v9.12 未触发正文变更）
 
@@ -461,9 +461,8 @@ infra/
 ---
 
 > **版本记录**：
-> - v12.0 (2026-08-14)：Phase 18 业务边界 + 接口化完成。lingwen_core.ports (4 Protocol + 5 Mock) + domain (6 entities + 7 events) + use_cases (3 个事件驱动用例)；studio_api DI + chapters.py 薄壳样板；删除 5 个 infra/ 子目录 + dashboard/frontend/；陈旧 import 230 → 205；tooling/gates/phase_18.sh (9 项 Gate PASS)。
-> - v11.0 (2026-08-13)：Phase 17 monorepo 完成。apps/+packages/ 双层布局，8 个 lingwen-* Python 包独立发布，apps/dashboard + apps/studio_api 拆分，pnpm workspace + dashboard-contracts 占位，content/ 顶层化（含 SKILL.md 角色池 + 3 个 registry.yaml），包依赖方向守卫（tooling/lint/check_package_deps.py），tooling/gates/phase_17.sh。Phase 16.7（删陈旧 infra 目录）推迟到 Phase 17 monorepo 完成后的下个 phase。
-> - v10.0 (2026-08-11)：Phase 16 卫生与基础完成。新增 `packages/lingwen-storage`（JSONL append-only event store + reducer）、`tools/migrate_state_log.py`、文件尺寸上限（pre-commit + CI + 72 文件 ALLOWLIST）、`tooling/gates/phase_16.sh` Gate 脚本、单一品牌（墨灵 Studio=产品，灵文=框架，brand check 已接入 CI）。Phase 16.7（删陈旧 infra）推迟到 Phase 17 monorepo。
+> - v13.0 (2026-08-20)：Phase 60-67 dashboard 基础设施重构完成。
+> - v12.0 (2026-08-14)：Phase 18 业务边界 + 接口化完成。
 > - v9.12 (2026-05-27)：项目完善版。澄清03内容仓库vs07汇总仓库职责，补充07汇总仓库README，统一版本命名，添加SQLite状态管理说明，章节数统一为359章。
 > - v9.11 (2026-05-27)：目录结构澄清版。补充07_汇总仓库与03_内容仓库的职责区分，添加关键命令对照表，避免混淆"索引更新"与"正文汇总"。
 > - v9.9 (2026-05-26)：全章节P0/P1修复版。全部360章节P0/P1问题修复完成。
