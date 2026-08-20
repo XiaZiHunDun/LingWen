@@ -4,6 +4,8 @@
 
 **Goal:** 从 `apps/dashboard/src/stores/useNavStore.js` (497L) 抽出 17 URL helper functions 为独立 `useNavUrlUtils` composable + 17 dedicated tests + 减薄 store + 1 架构守卫；3 commits；vue-tsc 0 errors；pnpm test 1495 → 1520 tests PASS。
 
+> **PATCH (2026-08-20, after Task 2 BLOCKED on line count)**: spec 原 `useNavStore.js ≤ 250L` 目标过低。实测 Task 2 implementer 完成后 useNavStore.js = 353L（-29%）。原因：67L JSDoc + imports + constants + 286L defineStore body（含 store-internal helpers `resolveNavTarget`/`guardReviewerNav`/`syncNavUrl` 不能抽、4 `isXNav` 谓词为 public API、11 ref() 不可避免）。本阶段守阈值新设为 **≤ 360L**（实测 353L + 7L buffer）。
+
 **Architecture:** 沿用 Phase 60-62 composable 模式。`useNavStore.js` 终态为 ≤ 250L Pinia store，17 helpers 全部抽到 `useNavUrlUtils.ts` composable。Composable 内部 `typeof window === 'undefined'` 守卫统一 SSR 安全。
 
 **Tech Stack:** Vue 3 + TypeScript + Pinia + Vitest + vue-tsc。

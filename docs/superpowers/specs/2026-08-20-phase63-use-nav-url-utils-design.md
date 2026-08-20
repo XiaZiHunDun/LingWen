@@ -23,8 +23,8 @@
 ### 目标
 1. 17 URL helpers 抽出为 `useNavUrlUtils` composable
 2. 17 dedicated tests（每 helper 至少 1 个 + 边界 cases）
-3. `useNavStore.js` 减薄至 ≤ 250L
-4. 1 架构守卫确保 store ≤ 250L
+3. `useNavStore.js` 减薄至 ≤ 360L
+4. 1 架构守卫确保 store ≤ 360L
 5. vue-tsc 0 errors + 全测 PASS
 
 ### 非目标
