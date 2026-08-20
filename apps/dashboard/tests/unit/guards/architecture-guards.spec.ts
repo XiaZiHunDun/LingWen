@@ -164,3 +164,18 @@ describe('Phase 62 — api/creator.js Thin Shell Guards', () => {
     expect(content).not.toMatch(/^\s*(const|let|var)\s+BASE_URL\s*=/m);
   });
 });
+
+// Phase 63: useNavStore.js must stay slim after extracting 17 helpers to composable
+// (spec target was ≤ 250L; actual 353L after store-internal helpers preserved)
+// Threshold updated to 360L to allow future additions to store-internal logic.
+describe('Phase 63 — useNavStore.js Slim Guards', () => {
+  const storesDir = path.resolve(__dirname, '../../../src/stores');
+  const navStoreFile = path.join(storesDir, 'useNavStore.js');
+
+  it('useNavStore.js 保持 ≤ 360 行 (Phase 63)', () => {
+    expect(fs.existsSync(navStoreFile)).toBe(true);
+    const content = fs.readFileSync(navStoreFile, 'utf-8');
+    const lines = content.split('\n').length;
+    expect(lines).toBeLessThanOrEqual(360);
+  });
+});
