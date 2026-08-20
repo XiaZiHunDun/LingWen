@@ -125,3 +125,25 @@ function findVueFiles(dir: string): string[] {
   }
   return results;
 }
+
+// Phase 61: 5 legacy placeholders from Phase 19-20 must NOT come back
+describe('Phase 61 — Legacy Workbench Cleanup Guards', () => {
+  const BANNED_LEGACY = [
+    'useWorkbenchCheckpoint.ts',
+    'useWorkbenchValidation.ts',
+    'useWorkbenchAgent.ts',
+    'useWorkbenchSelection.ts', // legacy colocation; new is under useCreatorWriteWorkbench/
+    'useWorkbenchIndex.ts',
+  ];
+
+  for (const banned of BANNED_LEGACY) {
+    it(`legacy ${banned} 不应复活 (Phase 61)`, () => {
+      expect(fs.existsSync(path.join(composablesDir, banned))).toBe(false);
+    });
+  }
+
+  it('composables/index.ts 不再 re-export useWorkbenchIndex (Phase 61)', () => {
+    const indexTs = fs.readFileSync(path.join(composablesDir, 'index.ts'), 'utf-8');
+    expect(indexTs).not.toMatch(/useWorkbenchIndex/);
+  });
+});

@@ -14,7 +14,7 @@
  * - 入门: useCreatorOnboarding（含子模块 useWizardSteps/OnboardingProgress/OnboardingNotifications）
  * - 写作: useCreatorWrite（含子模块 useWriteFlow/WriteTools）
  * - 引导: useCreatorModeGuide
- * - 工作台: useCreatorWriteWorkbench, useWorkbenchIndex
+ * - 工作台: useCreatorWriteWorkbench
  * - 页面: useCreatorPageHeader, useCreatorPageProviders, useCreatorPageRefresh
  * - 仪表盘: useCreatorPulse
  * - 工作区: useCreatorWorkspace
@@ -80,7 +80,6 @@ export { useWorkflowListStore } from './useWorkflowListStore.js';
 export { useWorkflowSocket, onCascadeUpdate, onAuditCreated } from './useWorkflowSocket.js';
 export { useEventBus, onRippleUpdate, onWsConnected, onWsDisconnected } from './useEventBus.js';
 export { useWidgetRegistry, defineWidget, registerWidget, registerWidgets, getWidget, getAllWidgets, getWidgetsByCategory, unregisterWidget, createWidgetInstance, getWidgetInstance, removeWidgetInstance, updateWidgetInstance, setWidgetInstanceState, getWidgetInstanceState, emitWidgetEvent, onWidgetEvent, checkWidgetDependencies } from './useWidgetRegistry.js';
-export { useWorkbenchSelection, useWorkbenchCheckpoint, useWorkbenchValidation, useWorkbenchAgent } from './useWorkbenchIndex.js';
 export { registerDashboardWidgets, getDefaultDashboardLayout } from './useDashboardWidgets.js';
 export { useDevice } from './useDevice.js';
 export * as volumePlanDiffExportUtils from './volumePlanDiffExportUtils.js';
@@ -127,12 +126,9 @@ export {
   useVolumePlanDiffShare,
 } from './useCreatorVolumePlanDiff/index';
 export { useCreatorPageChrome } from './useCreatorPage/index';
-// Phase 60: useWorkbenchSelection aliased to avoid conflict with legacy
-// useWorkbenchIndex.js re-export (Phase 19-20 placeholders, superseded by
-// useCreatorWriteWorkbench/{useWorkbench*} submodules).
 export {
   useWorkbenchLayout,
-  useWorkbenchSelection as useCreatorWorkbenchSelection,
+  useWorkbenchSelection,
   useWorkbenchCheckpoints,
   useWorkbenchQuality,
 } from './useCreatorWriteWorkbench/index';
