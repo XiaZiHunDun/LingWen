@@ -8,83 +8,14 @@ export * from './memory.js';
 export * from './agent.js';
 export * from './volumePlan.js';
 export * from './publish.js';
+export * from './volumeTemplate.js';
 
 const BASE_URL = import.meta.env.VITE_API_BASE || '/api';
-
-export async function fetchCreatorVolumeTemplates() {
-  return request('/creator/volume-plan/templates');
-}
 
 export async function applyCreatorVolumeTemplate(body) {
   return request('/creator/volume-plan/apply-template', {
     method: 'POST',
     body,
-  });
-}
-
-export async function saveCreatorVolumeTemplate(body) {
-  return request('/creator/volume-plan/templates/save', {
-    method: 'POST',
-    body,
-  });
-}
-
-export async function deleteCreatorVolumeTemplate(templateId) {
-  return request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
-    method: 'DELETE',
-  });
-}
-
-export async function renameCreatorVolumeTemplate(templateId, body) {
-  return request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
-    method: 'PATCH',
-    body,
-  });
-}
-
-export async function exportCreatorVolumeTemplates() {
-  return request('/creator/volume-plan/templates/export');
-}
-
-export async function importCreatorVolumeTemplates(body) {
-  return request('/creator/volume-plan/templates/import', {
-    method: 'POST',
-    body,
-  });
-}
-
-export async function fetchCreatorVolumeTemplateSyncSources() {
-  return request('/creator/volume-plan/templates/sync-sources');
-}
-
-export async function syncCreatorVolumeTemplates(body) {
-  return request('/creator/volume-plan/templates/sync', {
-    method: 'POST',
-    body,
-  });
-}
-
-export async function fetchCreatorFactoryVolumeTemplates() {
-  return request('/creator/volume-plan/templates/factory');
-}
-
-export async function publishCreatorVolumeTemplateToFactory(body) {
-  return request('/creator/volume-plan/templates/factory/publish', {
-    method: 'POST',
-    body,
-  });
-}
-
-export async function pullCreatorFactoryVolumeTemplates(body) {
-  return request('/creator/volume-plan/templates/factory/pull', {
-    method: 'POST',
-    body,
-  });
-}
-
-export async function deleteCreatorFactoryVolumeTemplate(templateId) {
-  return request(`/creator/volume-plan/templates/factory/${encodeURIComponent(templateId)}`, {
-    method: 'DELETE',
   });
 }
 
@@ -122,26 +53,6 @@ export async function saveCreatorDiffCollabNotes(body) {
     method: 'PUT',
     body,
   });
-}
-
-export async function setCreatorVolumeTemplateVersion(templateId, body) {
-  return request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version`, {
-    method: 'PUT',
-    body,
-  });
-}
-
-export async function fetchCreatorVolumeTemplateChangelog(templateId) {
-  return request(
-    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-changelog`,
-  );
-}
-
-export async function rollbackCreatorVolumeTemplate(templateId, body) {
-  return request(
-    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-rollback`,
-    { method: 'POST', body },
-  );
 }
 
 export async function fetchCreatorOnboardingNotifications(handle) {
