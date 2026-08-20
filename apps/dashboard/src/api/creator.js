@@ -13,8 +13,6 @@ export * from './templateApproval.js';
 export * from './onboarding.js';
 export * from './mergePreset.js';
 
-const BASE_URL = import.meta.env.VITE_API_BASE || '/api';
-
 export async function applyCreatorVolumeTemplate(body) {
   return request('/creator/volume-plan/apply-template', {
     method: 'POST',

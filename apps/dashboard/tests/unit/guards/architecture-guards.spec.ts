@@ -147,3 +147,20 @@ describe('Phase 61 — Legacy Workbench Cleanup Guards', () => {
     expect(indexTs).not.toMatch(/useWorkbenchIndex/);
   });
 });
+
+// Phase 62: api/creator.js must stay a thin shell re-export
+describe('Phase 62 — api/creator.js Thin Shell Guards', () => {
+  const apiDir = path.resolve(__dirname, '../../../src/api');
+  const creatorFile = path.join(apiDir, 'creator.js');
+
+  it('api/creator.js 保持 ≤ 50 行 (Phase 62)', () => {
+    const content = fs.readFileSync(creatorFile, 'utf-8');
+    const lines = content.split('\n').length;
+    expect(lines).toBeLessThanOrEqual(50);
+  });
+
+  it('api/creator.js 不应包含 dead BASE_URL (Phase 62)', () => {
+    const content = fs.readFileSync(creatorFile, 'utf-8');
+    expect(content).not.toMatch(/^\s*(const|let|var)\s+BASE_URL\s*=/m);
+  });
+});
