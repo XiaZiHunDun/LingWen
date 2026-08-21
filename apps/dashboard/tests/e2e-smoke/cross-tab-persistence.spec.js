@@ -83,7 +83,7 @@ test.describe('Cross-tab persistence (live)', () => {
       const event = await storageEventPromise;
       expect(event.key).toBe(WRITE_RESUME_KEY);
       expect(event.storageArea).toBeTruthy();
-      // Verify tabC is on a known surface (post-goto('/') lands on /creator/ via init script)
+      // Verify tabC is on a known surface: tabC.goto('/') reads WRITE_RESUME_KEY from shared localStorage (set by tabA's init script at test 1 setup) and routes to /creator/. The regex is coupled to the route name; if the route is renamed, this test needs updating.
       await expect(tabC).toHaveURL(/\/creator\/?$/);
 
       // Cleanup
