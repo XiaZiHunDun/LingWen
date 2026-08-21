@@ -1,12 +1,12 @@
 # Phase 78 — Submodule shallowRef Extension 设计
 
 > **日期**: 2026-08-21
-> **范围**: 3 submodule `.ts` files code change. 10 wholesale-refs → shallowRef.
+> **范围**: 3 submodule `.ts` files code change. 11 wholesale-refs → shallowRef.
 > **基础**: master = `74c12759` (Phase 77 pushed)
 > **作者**: 主控调度 (brainstorming → spec)
 > **状态**: spec 草稿待 user review
 
-> **背景**: Phase 77 code review M1 识别 3 submodule `.ts` 文件有 10 wholesale-refs 符合同 decision rule, 推荐扩展 shallowRef sweep.
+> **背景**: Phase 77 code review M1 识别 3 submodule `.ts` 文件有 11 wholesale-refs 符合同 decision rule, 推荐扩展 shallowRef sweep.
 
 ---
 
@@ -14,7 +14,7 @@
 
 Phase 77 (commit `73a9d297`) 在 facade 层 (`useStudioStore.js` + `useCreatorSettings.js`) 转换 22 wholesale-refs 到 shallowRef. Phase 77 code review (subagent) 指出:
 
-> **M1**: 3 submodule `.ts` files 有 10 wholesale-refs 符合同 decision rule. Facade 文件已经优化, 但 submodule 内有相同 pattern, 扩展可获 10 more conversions.
+> **M1**: 3 submodule `.ts` files 有 11 wholesale-refs 符合同 decision rule. Facade 文件已经优化, 但 submodule 内有相同 pattern, 扩展可获 11 more conversions.
 
 Submodule 文件:
 - `apps/dashboard/src/composables/useCreatorSettings/useSettingsDocs.ts`
@@ -77,7 +77,7 @@ Pre-scan reveals refs at lines 61-65+. Specific conversions (subject to per-ref 
 | 64 | `showSettingsDiff` | `ref(false)` | **KEEP** primitive |
 | 65 | `settingsSaving` | `ref(false)` | **KEEP** primitive |
 
-**Expected**: 4 conversions.
+**Expected**: 5 conversions.
 
 ### 4.2 File 2: `useSettingsHistory.ts`
 
@@ -109,7 +109,7 @@ Pre-scan reveals refs at lines 61-65+. Specific conversions (subject to per-ref 
 
 ## 5. Total Conversions
 
-**10 conversions** across 3 files (subject to per-ref verify at impl):
+**11 conversions** across 3 files (subject to per-ref verify at impl):
 - useSettingsDocs.ts: 4
 - useSettingsHistory.ts: 1
 - useMergePresets.ts: 5
@@ -160,7 +160,7 @@ const settingsHistory = shallowRef<Array<Snapshot>>([])
 | `grep -c "shallowRef" useSettingsHistory.ts` | ≥ 1 |
 | `grep -c "shallowRef" useMergePresets.ts` | ≥ 5 |
 | `git diff --stat` 3 files modified | ✓ |
-| `// Phase 78: shallowRef — wholesale replacement` comments | 10/10 |
+| `// Phase 78: shallowRef — wholesale replacement` comments | 11/11 |
 | `shallowRef` added to vue imports | 3/3 files |
 
 ---
@@ -186,7 +186,7 @@ git add apps/dashboard/src/composables/useCreatorSettings/useSettingsDocs.ts \
         apps/dashboard/src/composables/useCreatorSettings/useMergePresets.ts
 
 git -c user.name="Claude" -c user.email="claude@anthropic.local" \
-    commit -m "perf(submodules): convert 10 wholesale-refs to shallowRef (Phase 78)" \
+    commit -m "perf(submodules): convert 11 wholesale-refs to shallowRef (Phase 78)" \
     -m "Phase 78 submodule shallowRef extension (per Phase 77 code review M1):
 
 useSettingsDocs.ts (4 conversions):
@@ -232,3 +232,21 @@ Phase 79+ 候选 (per Phase 78 + Handoff §6):
 5. **Phase 83**: `no-shallowref-mutation` ESLint rule (Phase 78b from review)
 6. **Phase 84**: Dead `mergePreset*` submodule ref cleanup (Phase 78c from review)
 7. **Phase 85+**: Residual 485 reactives audit
+
+## 12. Phase 87 Amend Note
+
+Phase 78 spec had count drift — actual implementation had 11 conversions, spec said 10. Corrected in this amend:
+
+| Location | Was | Now |
+|---------|-----|-----|
+| Header | 10 wholesale-refs | 11 wholesale-refs |
+| §1 background | 10 wholesale-refs | 11 wholesale-refs |
+| §1 M1 list item | 10 wholesale-refs + 10 more conversions | 11 wholesale-refs + 11 more conversions |
+| §4.1 footer (useSettingsDocs) | 4 conversions | 5 conversions |
+| §5 Total | 10 conversions | 11 conversions |
+| §7 Verification | 10/10 | 11/11 |
+| §9 commit subject | 10 wholesale-refs | 11 wholesale-refs |
+
+Rationale: implementer correctly identified useSettingsDocs had 5 conversions (not 4). Original commit `98c7aa89` amended from 9 → 11 conversions to fix same drift in commit message. Spec amended separately for completeness.
+
+Phase 78 amend commit `a6d4afe2` already corrected commit message; this spec amend keeps the design doc consistent.
