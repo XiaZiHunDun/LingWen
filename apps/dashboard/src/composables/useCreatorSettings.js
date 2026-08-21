@@ -14,7 +14,7 @@
  * 2. 初始化 3 个子模块（每个接收 deps）
  * 3. 暴露原 panelContext shape（70+ keys） + 顶层 load*
  */
-import { computed, ref, watch } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import {
   fetchCreatorSettingsHistory,
   fetchCreatorMergePresetChangelog,
@@ -74,30 +74,30 @@ export function useCreatorSettings(deps) {
   } = deps;
 
   // --- 共享 ref（跨子模块）---
-  const settingsDocs = ref(null);
+  const settingsDocs = shallowRef(null); // Phase 77: shallowRef — wholesale replacement
   // pillarsText: 使用 settingsDocsApi 子模块的 ref 以保持单一真源
-  const settingsBaseline = ref({ pillars: '', outline: '' });
-  const settingsDiffPreview = ref(null);
+  const settingsBaseline = shallowRef({ pillars: '', outline: '' }); // Phase 77: shallowRef — wholesale replacement
+  const settingsDiffPreview = shallowRef(null); // Phase 77: shallowRef — wholesale replacement
   const showSettingsDiff = ref(false);
   const settingsSaving = ref(false);
-  const settingsHistory = ref([]);
+  const settingsHistory = shallowRef([]); // Phase 77: shallowRef — wholesale replacement
   const settingsRestoring = ref(false);
   const usesGlobalMergeDefault = ref(false);
-  const mergePresetPackages = ref([]);
-  const factoryMergePresetPackages = ref([]);
+  const mergePresetPackages = shallowRef([]); // Phase 77: shallowRef — wholesale replacement
+  const factoryMergePresetPackages = shallowRef([]); // Phase 77: shallowRef — wholesale replacement
   const selectedMergePresetPackage = ref('');
   const showImportMergePresetPackages = ref(false);
   const importMergePresetPackagesJson = ref('');
   const mergePresetPackagesImporting = ref(false);
-  const mergePresetImportDiff = ref({ added: [], updated: [], removed: [] });
-  const mergePresetToposort = ref({ order: [], edges: [], edge_count: 0 });
-  const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] });
-  const mergePresetChangelogDiff = ref({ change_count: 0, changes: [] });
-  const factoryMergePresetPullConflicts = ref({ conflict_count: 0, conflicts: [] });
-  const mergePresetImportPreflight = ref(null);
-  const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [], edges: [] });
-  const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] });
-  const mergePresetConflictFixes = ref({ fix_count: 0, fixes: [] });
+  const mergePresetImportDiff = shallowRef({ added: [], updated: [], removed: [] }); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetToposort = shallowRef({ order: [], edges: [], edge_count: 0 }); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetChangelog = shallowRef({ package_id: '', entry_count: 0, entries: [] }); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetChangelogDiff = shallowRef({ change_count: 0, changes: [] }); // Phase 77: shallowRef — wholesale replacement
+  const factoryMergePresetPullConflicts = shallowRef({ conflict_count: 0, conflicts: [] }); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetImportPreflight = shallowRef(null); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetGraph = shallowRef({ node_count: 0, edge_count: 0, nodes: [], edges: [] }); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetConflicts = shallowRef({ conflict_count: 0, conflicts: [] }); // Phase 77: shallowRef — wholesale replacement
+  const mergePresetConflictFixes = shallowRef({ fix_count: 0, fixes: [] }); // Phase 77: shallowRef — wholesale replacement
   const mergePresetFactoryPublishing = ref(false);
   const mergePresetFactoryPulling = ref(false);
   const showImportMergePrefs = ref(false);

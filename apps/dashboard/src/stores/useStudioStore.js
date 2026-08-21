@@ -19,7 +19,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, shallowRef, computed } from 'vue'
 import {
   fetchStudioProjects,
   fetchStudioSummary,
@@ -43,15 +43,15 @@ function debounce(fn, delay) {
 }
 
 export const useStudioStore = defineStore('studio', () => {
-  const projects = ref([])
+  const projects = shallowRef([]) // Phase 77: shallowRef — wholesale replacement (line 46)
   const activeSlug = ref(null)
-  const summary = ref(null)
-  const overview = ref(null)
+  const summary = shallowRef(null) // Phase 77: shallowRef — wholesale replacement (line 48)
+  const overview = shallowRef(null) // Phase 77: shallowRef — wholesale replacement (line 49)
   const loading = ref(false)
-  const quality = ref(null)
-  const qualityReport = ref(null)
-  const proseDiff = ref(null)
-  const proseJudge = ref(null)
+  const quality = shallowRef(null) // Phase 77: shallowRef — wholesale replacement (line 51)
+  const qualityReport = shallowRef(null) // Phase 77: shallowRef — wholesale replacement (line 52)
+  const proseDiff = shallowRef(null) // Phase 77: shallowRef — wholesale replacement (line 53)
+  const proseJudge = shallowRef(null) // Phase 77: shallowRef — wholesale replacement (line 54)
   const error = ref(null)
   const projectRevision = ref(0)
 
