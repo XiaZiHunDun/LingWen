@@ -1,0 +1,13 @@
+{
+  "route": "/creator",
+  "slug": "creator",
+  "run": 2,
+  "timestamp": "2026-08-21T03:32:38.923Z",
+  "metrics": {
+    "lcp": 1880,
+    "cls": 0.03035530630747477,
+    "fcp": 680,
+    "tbt": 0,
+    "inp": null
+  }
+}

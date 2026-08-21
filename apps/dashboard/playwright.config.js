@@ -93,6 +93,15 @@ export default defineConfig({
       testMatch: /ui-metrics\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'web-vitals',
+      testDir: './tests/e2e-smoke',
+      testMatch: /web-vitals\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.PW_BASE_URL || 'http://localhost:5173',
+      },
+    },
   ],
   webServer: (liveE2E || liveLlmE2E || a11yE2E) ? [dashboardServer, viteServer] : viteServer,
 })

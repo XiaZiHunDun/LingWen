@@ -1,0 +1,13 @@
+{
+  "route": "/",
+  "slug": "landing",
+  "run": 3,
+  "timestamp": "2026-08-21T03:32:30.046Z",
+  "metrics": {
+    "lcp": 896,
+    "cls": 0.03035530630747477,
+    "fcp": 684,
+    "tbt": 0,
+    "inp": null
+  }
+}

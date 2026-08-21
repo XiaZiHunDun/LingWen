@@ -1,0 +1,13 @@
+{
+  "route": "/production",
+  "slug": "production",
+  "run": 3,
+  "timestamp": "2026-08-21T03:33:09.294Z",
+  "metrics": {
+    "lcp": 1580,
+    "cls": 0.03035530630747477,
+    "fcp": 680,
+    "tbt": 0,
+    "inp": null
+  }
+}
