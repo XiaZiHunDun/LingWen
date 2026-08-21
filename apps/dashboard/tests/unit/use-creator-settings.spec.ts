@@ -21,9 +21,6 @@ const settingsMocks = vi.hoisted(() => ({
   fetchCreatorMergePresetToposort: vi.fn(),
   fetchCreatorMergePresetPackages: vi.fn(),
   fetchCreatorFactoryMergePresetPackages: vi.fn(),
-  fetchCreatorMergePresetGraph: vi.fn(),
-  fetchCreatorMergePresetConflicts: vi.fn(),
-  fetchCreatorMergePresetConflictFixes: vi.fn(),
   applyCreatorMergePresetConflictFix: vi.fn(),
   applyAllCreatorMergePresetConflictFixes: vi.fn(),
   preflightCreatorMergePresetImport: vi.fn(),
@@ -52,9 +49,6 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorMergePresetToposort: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetToposort(...args),
   fetchCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetPackages(...args),
   fetchCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchCreatorFactoryMergePresetPackages(...args),
-  fetchCreatorMergePresetGraph: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetGraph(...args),
-  fetchCreatorMergePresetConflicts: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetConflicts(...args),
-  fetchCreatorMergePresetConflictFixes: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetConflictFixes(...args),
   applyCreatorMergePresetConflictFix: (...args: unknown[]) => settingsMocks.applyCreatorMergePresetConflictFix(...args),
   applyAllCreatorMergePresetConflictFixes: (...args: unknown[]) => settingsMocks.applyAllCreatorMergePresetConflictFixes(...args),
   preflightCreatorMergePresetImport: (...args: unknown[]) => settingsMocks.preflightCreatorMergePresetImport(...args),
@@ -120,9 +114,6 @@ describe('useCreatorSettings', () => {
     settingsMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValue({
       packages: [{ id: 'fac-1', name: '工厂预设', scope: 'factory' }],
     });
-    settingsMocks.fetchCreatorMergePresetGraph.mockResolvedValue({ node_count: 1, edge_count: 0, nodes: [], edges: [] });
-    settingsMocks.fetchCreatorMergePresetConflicts.mockResolvedValue({ conflict_count: 1, conflicts: [{ id: 'c1' }] });
-    settingsMocks.fetchCreatorMergePresetConflictFixes.mockResolvedValue({ fix_count: 1, fixes: [{ package_id: 'pkg-1', action: 'bump' }] });
     settingsMocks.fetchCreatorMergePresetToposort.mockResolvedValue({ order: ['pkg-1'], edges: [], edge_count: 0 });
     settingsMocks.fetchCreatorMergePresetChangelog.mockResolvedValue({ package_id: 'pkg-1', entry_count: 1, entries: [{ index: 0 }] });
     settingsMocks.exportCreatorMergePresetPackages.mockResolvedValue({ packages: [] });

@@ -22,11 +22,8 @@ import {
   previewCreatorMergePresetImportDiff,
   fetchCreatorMergePresetChangelog,
   fetchCreatorMergePresetChangelogDiff,
-  fetchCreatorMergePresetConflicts,
-  fetchCreatorMergePresetConflictFixes,
   applyCreatorMergePresetConflictFix,
   applyAllCreatorMergePresetConflictFixes,
-  fetchCreatorMergePresetGraph,
   fetchCreatorMergePresetToposort,
   applyCreatorMergePresetToposort,
   // SettingsDocs
@@ -230,22 +227,6 @@ describe('api/mergePreset', () => {
       );
     });
 
-    it('fetchCreatorMergePresetConflicts GETs preset-packages/conflicts', async () => {
-      mocks.request.mockResolvedValueOnce({ conflicts: [] });
-      await fetchCreatorMergePresetConflicts();
-      expect(mocks.request).toHaveBeenCalledWith(
-        '/creator/settings-docs/merge-preferences/preset-packages/conflicts',
-      );
-    });
-
-    it('fetchCreatorMergePresetConflictFixes GETs preset-packages/conflicts/fixes', async () => {
-      mocks.request.mockResolvedValueOnce({ fixes: [] });
-      await fetchCreatorMergePresetConflictFixes();
-      expect(mocks.request).toHaveBeenCalledWith(
-        '/creator/settings-docs/merge-preferences/preset-packages/conflicts/fixes',
-      );
-    });
-
     it('applyCreatorMergePresetConflictFix POSTs body to conflicts/apply-fix', async () => {
       mocks.request.mockResolvedValueOnce({ ok: true });
       await applyCreatorMergePresetConflictFix({ fixId: 'f1' });
@@ -261,14 +242,6 @@ describe('api/mergePreset', () => {
       expect(mocks.request).toHaveBeenCalledWith(
         '/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-all',
         { method: 'POST' },
-      );
-    });
-
-    it('fetchCreatorMergePresetGraph GETs preset-packages/graph', async () => {
-      mocks.request.mockResolvedValueOnce({ graph: {} });
-      await fetchCreatorMergePresetGraph();
-      expect(mocks.request).toHaveBeenCalledWith(
-        '/creator/settings-docs/merge-preferences/preset-packages/graph',
       );
     });
 

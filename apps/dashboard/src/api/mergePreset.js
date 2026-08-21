@@ -117,14 +117,6 @@ export async function fetchCreatorMergePresetChangelogDiff(packageId, entryIndex
   );
 }
 
-export async function fetchCreatorMergePresetConflicts() {
-  return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts');
-}
-
-export async function fetchCreatorMergePresetConflictFixes() {
-  return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/fixes');
-}
-
 export async function applyCreatorMergePresetConflictFix(body) {
   return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-fix', {
     method: 'POST',
@@ -136,10 +128,6 @@ export async function applyAllCreatorMergePresetConflictFixes() {
   return request('/creator/settings-docs/merge-preferences/preset-packages/conflicts/apply-all', {
     method: 'POST',
   });
-}
-
-export async function fetchCreatorMergePresetGraph() {
-  return request('/creator/settings-docs/merge-preferences/preset-packages/graph');
 }
 
 export async function fetchCreatorMergePresetToposort() {
