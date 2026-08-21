@@ -23,12 +23,37 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           // Named chunks: package → chunk name
-          // Phase 71: initial 8 chunks. Phase 80: verified state — naive-ui chunk
-          // exists (3.11kB) but most Naive UI code remains in vendor (407kB gz)
-          // due to inter-deps with vue/pinia. Future: explicit defineAsyncComponent
-          // for heavy Naive UI panels (Phase 81+ candidate).
-          // Known circular chunk warning: mermaid <-> vendor. Functional but
-          // suboptimal — investigate in future phase.
+          //
+          // === Phase 83 investigation (mermaid <-> vendor circular) ===
+          //
+          // Build emits: `Circular chunk: mermaid -> vendor -> mermaid`
+          //
+          // Analysis:
+          // - mermaid chunk imports ~100+ Vue 3 internal symbols (createVNode, h, etc.)
+          //   from vendor — LEGITIMATE dependency (mermaid needs Vue runtime)
+          // - vendor chunk imports 1 symbol (_ as ln) from mermaid
+          //   — likely a markdown lib (marked.js / markdown-it with mermaid extension)
+          //   consuming a mermaid export
+          //
+          // Trade-off accepted:
+          // - Build succeeds with warning only — runtime works
+          // - True fix requires moving mermaid-consuming lib out of vendor
+          //   OR merging mermaid into vendor (loses lazy-load isolation)
+          // - Both options worse than current state
+          //
+          // Future work:
+          // - Phase 84+ may delete dead mergePreset* refs (cleanup, unrelated)
+          // - Phase 78+ reviews noted 7 dead refs in useMergePresets.ts
+          //   — deletion may slightly alter chunk graph
+          // - Vite upgrade could change warning behavior — revisit if upgraded
+          //
+          // === Phase 80 / Phase 71 chunk history ===
+          //
+          // - Phase 71: initial 8 chunks + vendor catch-all
+          // - Phase 80: naive-ui already in NAMED (3.11kB chunk, but most code
+          //   in vendor due to inter-deps with vue/pinia — see Phase 80 commit
+          //   7516865d for verification details
+          //
           const NAMED = {
             echarts: 'echarts',
             mermaid: 'mermaid',
