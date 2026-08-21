@@ -5,7 +5,7 @@
  * 负责: settingsDocs 加载 + diff 预览 + mergeStrategy preview + requestSaveSettings +
  *       confirmSaveSettings + bindGlobalOutlineEditorRef。
  */
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
   fetchCreatorSettingsDocs,
@@ -58,13 +58,13 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
     onAfterSettingsSave, globalOutlineEditorRef, globalOutlineText, settingsBaseline,
   } = deps;
 
-  const settingsDocs = ref<SettingsDocs | null>(null);
-  const pillarsText = ref('');
-  const settingsDiffPreview = ref<unknown>(null);
+  const settingsDocs = shallowRef<SettingsDocs | null>(null); // Phase 78: shallowRef — wholesale replacement
+  const pillarsText = shallowRef(''); // Phase 78: shallowRef — wholesale replacement
+  const settingsDiffPreview = shallowRef<unknown>(null); // Phase 78: shallowRef — wholesale replacement
   const showSettingsDiff = ref(false);
   const settingsSaving = ref(false);
-  const mergeStrategyPreview = ref<unknown>(null);
-  const threeWayPreview = ref<unknown>(null);
+  const mergeStrategyPreview = shallowRef<unknown>(null); // Phase 78: shallowRef — wholesale replacement
+  const threeWayPreview = shallowRef<unknown>(null); // Phase 78: shallowRef — wholesale replacement
 
   async function loadSettingsDocs(): Promise<void> {
     try {

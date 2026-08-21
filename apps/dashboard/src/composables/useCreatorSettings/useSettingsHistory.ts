@@ -5,7 +5,7 @@
  * 负责: settingsHistory 列表 + loadSettingsHistory + restoreSettingsHistory +
  *       formatHistoryTime helper。
  */
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 import {
   fetchCreatorSettingsHistory,
@@ -37,7 +37,7 @@ export interface SettingsHistoryReturn {
 export function useSettingsHistory(deps: SettingsHistoryDeps): SettingsHistoryReturn {
   const { error, saveMessage, handleSaveError } = deps;
 
-  const settingsHistory = ref<SettingsSnapshot[]>([]);
+  const settingsHistory = shallowRef<SettingsSnapshot[]>([]); // Phase 78: shallowRef — wholesale replacement
 
   function formatHistoryTime(iso: string): string {
     if (!iso) return '';

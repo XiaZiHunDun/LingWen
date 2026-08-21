@@ -5,7 +5,7 @@
  * 负责: mergePresetPackages + 选/应用/导入/导出/同步/factory + 冲突修复 +
  *       toposort + 偏好导入导出。
  */
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
   fetchCreatorMergePreferences,
@@ -89,18 +89,18 @@ export interface MergePresetsReturn {
 export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   const { error, saveMessage, conflictMessage, handleSaveError } = deps;
 
-  const mergePresetPackages = ref<MergePresetPackage[]>([]);
-  const factoryMergePresetPackages = ref<MergePresetPackage[]>([]);
+  const mergePresetPackages = shallowRef<MergePresetPackage[]>([]); // Phase 78: shallowRef — wholesale replacement
+  const factoryMergePresetPackages = shallowRef<MergePresetPackage[]>([]); // Phase 78: shallowRef — wholesale replacement
   const selectedMergePresetPackage = ref('');
   const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] as Array<Record<string, unknown>> });
-  const mergePresetImportPreview = ref({ added: [] as unknown[], updated: [] as unknown[], removed: [] as unknown[] });
-  const mergePreferences = ref<MergePreferences>({});
+  const mergePresetImportPreview = shallowRef({ added: [] as unknown[], updated: [] as unknown[], removed: [] as unknown[] }); // Phase 78: shallowRef — wholesale replacement
+  const mergePreferences = shallowRef<MergePreferences>({}); // Phase 78: shallowRef — wholesale replacement
   const mergePresetToposort = ref({ order: [] as string[], edges: [] as unknown[], edge_count: 0 });
   const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [] as unknown[], edges: [] as unknown[] });
   const mergePresetConflictFixes = ref({ fix_count: 0, fixes: [] as Array<Record<string, unknown>> });
   const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] as Array<Record<string, unknown>> });
   const mergePresetChangelogDiff = ref({ change_count: 0, changes: [] as Array<Record<string, unknown>> });
-  const mergePresetImportPreflight = ref<unknown>(null);
+  const mergePresetImportPreflight = shallowRef<unknown>(null); // Phase 78: shallowRef — wholesale replacement
   const factoryMergePresetPullConflicts = ref({ conflict_count: 0, conflicts: [] as Array<Record<string, unknown>> });
 
   const mergePresetFactoryPublishing = ref(false);
