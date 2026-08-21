@@ -90,14 +90,10 @@ export function useCreatorSettings(deps) {
   const importMergePresetPackagesJson = ref('');
   const mergePresetPackagesImporting = ref(false);
   const mergePresetImportDiff = shallowRef({ added: [], updated: [], removed: [] }); // Phase 77: shallowRef — wholesale replacement
-  const mergePresetToposort = shallowRef({ order: [], edges: [], edge_count: 0 }); // Phase 77: shallowRef — wholesale replacement
   const mergePresetChangelog = shallowRef({ package_id: '', entry_count: 0, entries: [] }); // Phase 77: shallowRef — wholesale replacement
   const mergePresetChangelogDiff = shallowRef({ change_count: 0, changes: [] }); // Phase 77: shallowRef — wholesale replacement
   const factoryMergePresetPullConflicts = shallowRef({ conflict_count: 0, conflicts: [] }); // Phase 77: shallowRef — wholesale replacement
   const mergePresetImportPreflight = shallowRef(null); // Phase 77: shallowRef — wholesale replacement
-  const mergePresetGraph = shallowRef({ node_count: 0, edge_count: 0, nodes: [], edges: [] }); // Phase 77: shallowRef — wholesale replacement
-  const mergePresetConflicts = shallowRef({ conflict_count: 0, conflicts: [] }); // Phase 77: shallowRef — wholesale replacement
-  const mergePresetConflictFixes = shallowRef({ fix_count: 0, fixes: [] }); // Phase 77: shallowRef — wholesale replacement
   const mergePresetFactoryPublishing = ref(false);
   const mergePresetFactoryPulling = ref(false);
   const showImportMergePrefs = ref(false);
@@ -595,15 +591,11 @@ export function useCreatorSettings(deps) {
     mergePresetFactoryPulling,
     factoryMergePresetCount,
     pullFactoryMergePresets,
-    mergePresetToposort,
     mergePresetChangelog,
     previewMergePresetChangelogDiff,
     mergePresetChangelogDiff,
     factoryMergePresetPullConflicts,
     pullFactoryMergePresetsWithStrategy,
-    mergePresetGraph,
-    mergePresetConflicts,
-    mergePresetConflictFixes,
     applyAllMergePresetConflictFixes,
     applyMergePresetConflictFix,
     importMergePresetPackagesJson,

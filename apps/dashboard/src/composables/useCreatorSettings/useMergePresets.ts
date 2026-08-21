@@ -46,12 +46,8 @@ export interface MergePresetsReturn {
   factoryMergePresetPackages: Ref<MergePresetPackage[]>;
   selectedMergePresetPackage: Ref<string>;
   selectedMergePresetPackageName: ComputedRef<string>;
-  mergePresetConflicts: Ref<{ conflict_count: number; conflicts: Array<Record<string, unknown>> }>;
   mergePresetImportPreview: Ref<{ added: unknown[]; updated: unknown[]; removed: unknown[] }>;
   mergePreferences: Ref<MergePreferences>;
-  mergePresetToposort: Ref<{ order: string[]; edges: unknown[]; edge_count: number }>;
-  mergePresetGraph: Ref<{ node_count: number; edge_count: number; nodes: unknown[]; edges: unknown[] }>;
-  mergePresetConflictFixes: Ref<{ fix_count: number; fixes: Array<Record<string, unknown>> }>;
   mergePresetChangelog: Ref<{ package_id: string; entry_count: number; entries: Array<Record<string, unknown>> }>;
   mergePresetChangelogDiff: Ref<{ change_count: number; changes: Array<Record<string, unknown>> }>;
   mergePresetImportPreflight: Ref<unknown>;
@@ -67,9 +63,6 @@ export interface MergePresetsReturn {
   mergePresetChangelogLoading: Ref<boolean>;
   mergePresetChangelogDiffLoading: Ref<boolean>;
   mergePresetToposortLoading: Ref<boolean>;
-  mergePresetGraphLoading: Ref<boolean>;
-  mergePresetConflictsLoading: Ref<boolean>;
-  mergePresetConflictFixesLoading: Ref<boolean>;
   loadMergePresetPackages: () => Promise<void>;
   loadMergePreferences: () => Promise<void>;
   applyMergePreset: (source: string) => Promise<void>;
@@ -92,12 +85,8 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   const mergePresetPackages = shallowRef<MergePresetPackage[]>([]); // Phase 78: shallowRef — wholesale replacement
   const factoryMergePresetPackages = shallowRef<MergePresetPackage[]>([]); // Phase 78: shallowRef — wholesale replacement
   const selectedMergePresetPackage = ref('');
-  const mergePresetConflicts = ref({ conflict_count: 0, conflicts: [] as Array<Record<string, unknown>> });
   const mergePresetImportPreview = shallowRef({ added: [] as unknown[], updated: [] as unknown[], removed: [] as unknown[] }); // Phase 78: shallowRef — wholesale replacement
   const mergePreferences = shallowRef<MergePreferences>({}); // Phase 78: shallowRef — wholesale replacement
-  const mergePresetToposort = ref({ order: [] as string[], edges: [] as unknown[], edge_count: 0 });
-  const mergePresetGraph = ref({ node_count: 0, edge_count: 0, nodes: [] as unknown[], edges: [] as unknown[] });
-  const mergePresetConflictFixes = ref({ fix_count: 0, fixes: [] as Array<Record<string, unknown>> });
   const mergePresetChangelog = ref({ package_id: '', entry_count: 0, entries: [] as Array<Record<string, unknown>> });
   const mergePresetChangelogDiff = ref({ change_count: 0, changes: [] as Array<Record<string, unknown>> });
   const mergePresetImportPreflight = shallowRef<unknown>(null); // Phase 78: shallowRef — wholesale replacement
@@ -114,9 +103,6 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   const mergePresetChangelogLoading = ref(false);
   const mergePresetChangelogDiffLoading = ref(false);
   const mergePresetToposortLoading = ref(false);
-  const mergePresetGraphLoading = ref(false);
-  const mergePresetConflictsLoading = ref(false);
-  const mergePresetConflictFixesLoading = ref(false);
 
   const selectedMergePresetPackageName = computed<string>(() => {
     const pkg = mergePresetPackages.value.find((row) => row.id === selectedMergePresetPackage.value);
@@ -290,12 +276,8 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
     factoryMergePresetPackages,
     selectedMergePresetPackage,
     selectedMergePresetPackageName,
-    mergePresetConflicts,
     mergePresetImportPreview,
     mergePreferences,
-    mergePresetToposort,
-    mergePresetGraph,
-    mergePresetConflictFixes,
     mergePresetChangelog,
     mergePresetChangelogDiff,
     mergePresetImportPreflight,
@@ -311,9 +293,6 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
     mergePresetChangelogLoading,
     mergePresetChangelogDiffLoading,
     mergePresetToposortLoading,
-    mergePresetGraphLoading,
-    mergePresetConflictsLoading,
-    mergePresetConflictFixesLoading,
     loadMergePresetPackages,
     loadMergePreferences,
     applyMergePreset,

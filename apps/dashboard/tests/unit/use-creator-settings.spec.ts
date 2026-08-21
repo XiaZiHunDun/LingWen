@@ -309,7 +309,6 @@ describe('useCreatorSettings', () => {
     const { hub, panel } = await mountSettings();
     await hub.loadMergePresetPackages();
     expect(panel.mergePresetPackages.value).toEqual([]);
-    expect(panel.mergePresetGraph.value.node_count).toBe(0);
   });
 
   test('requestSaveSettings uses two-way preview without history', async () => {
