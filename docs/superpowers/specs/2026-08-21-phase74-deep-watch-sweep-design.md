@@ -9,7 +9,7 @@
 
 ## 1. 背景
 
-Phase 73 reviewer 列出 9 sibling `deep: true` sites (10 sites in 9 files):
+Phase 73 reviewer 列出 **9 sibling `deep: true` sites + 1 page-level site (RipplesPage.vue)**:
 
 ```
 apps/dashboard/src/components/CoolpointChart.vue:154
@@ -21,20 +21,24 @@ apps/dashboard/src/components/CostTrendChart.vue:299
 apps/dashboard/src/components/SidebarTierBudgetAlerts.vue:78  (also has `immediate: true`)
 apps/dashboard/src/components/creator/CreatorWriteChat.vue:129
 apps/dashboard/src/components/CostBarChart.vue:244
-apps/dashboard/src/pages/RipplesPage.vue:77
 ```
 
-总 10 sites. Phase 73 已修 ImpactGraph. 此 phase 攻其余 9 files.
+加 **1 page site**: `apps/dashboard/src/pages/RipplesPage.vue:77` (v-model property assignment, deep 必要)
+
+总 **10 sites**: **9 sites 安全移除 deep** + **1 site 保留 deep** (见 §3.3 新增). Phase 73 已修 ImpactGraph. 此 phase 攻其余 9 files.
+
+> **注**: `RipplesPage.vue:77` 在本 spec §1/§3.1 列出, 但实际 commit `3ae7f8b6` 仅改 9 files (漏改 RipplesPage). 经 Phase 75 Vue 3 语义分析, 该 site `deep: true` 必要, **保留** (见 §3.3). Phase 75 spec `2026-08-21-phase75-phase74-doc-drift-decision.md` §1.3.1 记录决策.
 
 ## 2. 目标 & 非目标
 
 ### 目标
-1. 9 files 10 sites `deep: true` 移除
-2. 每个 site 逐 file verify parent pattern
-3. 1 原子 commit
-4. `pnpm test` 1549 PASS
-5. `pnpm exec vue-tsc --noEmit` 0 errors
-6. 全 codebase `grep -rnE 'deep.*true'` 0 hits
+1. **9 sites `deep: true` 移除** (sibling sites, 见 §3.1)
+2. **1 site `deep: true` 保留** (RipplesPage.vue:77, 见 §3.3 新增)
+3. 每个 site 逐 file verify parent pattern
+4. 1 原子 commit
+5. `pnpm test` 1549 PASS
+6. `pnpm exec vue-tsc --noEmit` 0 errors
+7. 全 codebase `grep -rnE 'deep.*true'` **2 hits** (RipplesPage.vue:77 + useCreatorPage.js:449, 经 Phase 75 Vue 3 语义分析确认 deep 必要)
 
 ### 非目标
 - 不动 `ImpactGraph.vue` (Phase 73 已修)
@@ -44,7 +48,7 @@ apps/dashboard/src/pages/RipplesPage.vue:77
 
 ## 3. 修复模式
 
-### 3.1 Standard pattern (9 sites)
+### 3.1 Standard pattern (8 sites)
 
 ```js
 - watch(() => props.X, initChart, { deep: true })
@@ -60,7 +64,8 @@ apps/dashboard/src/pages/RipplesPage.vue:77
 - CostTrendChart.vue:299
 - creator/CreatorWriteChat.vue:129
 - CostBarChart.vue:244
-- pages/RipplesPage.vue:77
+
+> **注**: `pages/RipplesPage.vue:77` 原在 §1/§3.1 列出, 但 commit `3ae7f8b6` 未改. 该 site `deep: true` 必要 (v-model property assignment), **保留** (见 §3.3). 本 spec 修正时从 §3.1 sites 列表移除.
 
 ### 3.2 Special pattern (1 site: SidebarTierBudgetAlerts)
 
@@ -70,6 +75,22 @@ apps/dashboard/src/pages/RipplesPage.vue:77
 ```
 
 **Rationale**: 保留 `immediate: true` (Phase 73 修复仅移除 `deep:`, 不动 `immediate`)。
+
+### 3.3 Preserved site (1: RipplesPage.vue:77)
+
+```js
+// apps/dashboard/src/pages/RipplesPage.vue:74
+const filter = ref({ status: 'all', dimension: 'all', volume: 'all', sortBy: 'created_at', minScore: '' });
+// template: v-model:status="filter.status" 等 5 个 v-model 绑定
+watch(filter, (f) => {
+  store.refresh(filterToFilters(f));
+  loadReferenceGraph();
+}, { deep: true });  // KEEP — v-model property assignment requires deep
+```
+
+**Rationale**: `filter = ref({...})` + 5 v-model bindings (`v-model:status="filter.status"` 等). Vue 3 watch on ref 默认 shallow, 不追踪 reactive property setter. 移除 deep 会导致 v-model 修改不触发 `loadReferenceGraph()`.
+
+> **注**: `useCreatorPage.js:449` `watch(editableVolumes, ..., { deep: true })` 同样保留 (push + property assignment nested mutations, deep 必要). 见 Phase 75 spec (`2026-08-21-phase75-phase74-doc-drift-decision.md`) §1.3.2.
 
 ## 4. 验证流程 (per-file)
 
@@ -103,8 +124,7 @@ for file in apps/dashboard/src/components/CoolpointChart.vue \
               apps/dashboard/src/components/CostTrendChart.vue \
               apps/dashboard/src/components/SidebarTierBudgetAlerts.vue \
               apps/dashboard/src/components/creator/CreatorWriteChat.vue \
-              apps/dashboard/src/components/CostBarChart.vue \
-              apps/dashboard/src/pages/RipplesPage.vue; do
+              apps/dashboard/src/components/CostBarChart.vue; do
   echo "---verify $file---"
   grep -nE "deep.*true" "$file"
   # Read parent code (manually) to verify pattern
@@ -132,8 +152,7 @@ git add apps/dashboard/src/components/CoolpointChart.vue \
         apps/dashboard/src/components/CostTrendChart.vue \
         apps/dashboard/src/components/SidebarTierBudgetAlerts.vue \
         apps/dashboard/src/components/creator/CreatorWriteChat.vue \
-        apps/dashboard/src/components/CostBarChart.vue \
-        apps/dashboard/src/pages/RipplesPage.vue
+        apps/dashboard/src/components/CostBarChart.vue
 
 git -c user.name="Claude" -c user.email="claude@anthropic.local" \
     commit -m "perf: remove deep:true from 9 sibling watch sites (Phase 74)" \
@@ -144,7 +163,7 @@ git show --stat HEAD
 
 ### 5.2 Commit 详情
 
-- **Files**: 9 (10 sites)
+- **Files**: 9 (9 sites removed, 1 site `RipplesPage.vue:77` preserved, deep 必要 — 见 §3.3)
 - **Lines**: per-file -1 / -1 (each removes `, { deep: true }`)
 - **Special**: SidebarTierBudgetAlerts 保留 `immediate: true`, 1 line still `-1` (just removes `deep: true` part)
 - **Method**: Surgical edits per file
@@ -166,7 +185,7 @@ git show --stat HEAD
 
 | 检查 | 期望 |
 |------|------|
-| `grep -rnE 'deep.*true' apps/dashboard/src --include='*.vue' --include='*.ts' \| wc -l` | 0 |
+| `grep -rnE 'deep.*true' apps/dashboard/src --include='*.vue' --include='*.ts' --include='*.js' \| wc -l` | **2** (RipplesPage.vue:77 + useCreatorPage.js:449, deep 必要, 不动) |
 | `git show --stat HEAD` | 9 files changed |
 | `pnpm test` | 1549 tests PASS |
 | `pnpm exec vue-tsc --noEmit` | 0 errors |
