@@ -2,11 +2,11 @@
   "route": "/",
   "slug": "landing",
   "run": 1,
-  "timestamp": "2026-08-21T03:32:21.282Z",
+  "timestamp": "2026-08-21T06:12:29.273Z",
   "metrics": {
-    "lcp": 948,
+    "lcp": 1220,
     "cls": 0.03035530630747477,
-    "fcp": 760,
+    "fcp": 1064,
     "tbt": 0,
     "inp": null
   }

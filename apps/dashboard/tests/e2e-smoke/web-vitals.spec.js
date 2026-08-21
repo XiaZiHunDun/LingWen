@@ -72,11 +72,13 @@ test.describe('Web Vitals baseline (Phase 76)', () => {
         // Navigate (SPA needs networkidle for route-specific render)
         await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
-        // Synthetic interaction for INP
-        await page.evaluate(() => {
-          const target = document.querySelector('button, a, [role="button"]');
-          if (target) target.click();
-        });
+        // Real Playwright interaction for INP (Phase 79: synthetic → real click)
+        try {
+          await page.locator('button:visible').first().click({ timeout: 5000 });
+        } catch (err) {
+          // Some routes may have no visible button (fallback)
+          console.log(`[${slug} run ${run}] no clickable button: ${err.message.split('\n')[0]}`);
+        }
 
         // Wait for metrics to settle (SPA needs extra time)
         await page.waitForTimeout(3000);
