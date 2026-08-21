@@ -1,8 +1,8 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v13.1 (Phase 68-80 dashboard perf + 测量 闭环完成)
+> **版本**: v13.2 (Phase 81-88 maintenance + ESLint extension 闭环完成)
+  → v13.1 (Phase 68-80 dashboard perf + 测量 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
-  → v12.0 (Phase 18 业务边界 + 接口化 完成)
 > **更新 (2026-08-20)**：Phase 60-67 落地——useCreatorWriteWorkbench 拆为 facade + 4 submodules (Phase 60)；清 5 workbench legacy 占位 (Phase 61)；api/creator.js 686L 拆为 8 sibling submodules + 130 tests (Phase 62)；useNavStore.js 17 helpers 抽出为 useNavUrlUtils composable + 88 tests (Phase 63)；6 nav constants 抽到 navConstants.ts 共享模块 (Phase 64)；137 文件 trailing newline 修复 (Phase 65)；6 跨流 gap e2e integration tests (Phase 66)；Phase 66 follow-up 闭合 (Phase 67)。详见 `docs/superpowers/specs/2026-08-20-phase6N-*.md` 各 phase spec.
 
 > **更新 (2026-08-21)**：Phase 68-80 perf + 测量 13 phases 闭环——
@@ -16,6 +16,17 @@
   Web Vitals baseline: 4/4 routes pass LCP/CLS/FCP/TBT/INP targets.
   Tests: 1549 PASS. Vue-tsc: 0 errors. Build: OK.
   详见 `docs/superpowers/specs/2026-08-21-phase6N-*.md` 与 `docs/perf/playwright-web-vitals-baseline.md`.
+
+> **更新 (2026-08-21)**：Phase 81-88 maintenance + ESLint 8 phases 闭环——
+  CLAUDE.md v13.1 housekeeping (Phase 81)；
+  no-shallowref-mutation ESLint rule + extension (Phase 82 + Phase 88)；
+  mermaid-vendor circular warning documented as benign (Phase 83)；
+  7 dead mergePreset* refs + 9 dead mocks + 3 test cases cleanup (Phase 84 + Phase 85)；
+  stale header comment fix (Phase 86)；
+  Phase 78 spec count drift housekeeping (Phase 87)；
+  All phases include 2-stage subagent review (spec + code quality).
+  Cumulative: 33 shallowRef conversions, 1546 unit tests + 31 e2e + ~18 ESLint rule tests all PASS.
+  详见 `docs/superpowers/specs/2026-08-21-phase8N-*.md` 各 phase spec.
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
@@ -208,11 +219,11 @@ style:
 **项目名称**：《星陨纪元》
 **当前阶段**：Phase 60-80 闭环（dashboard perf + 测量）
 **总章节数**：360 章正史正文（ch045 已补回；ch361–996 见 experimental/）
-**最新版本**：v13.1
+**最新版本**：v13.2
 **上一版本**：v12.0 (Phase 18 业务边界 + 接口化 完成)
 **发布状态**：Phase 60-80 全部闭环完成（已合并）。
   Phase 16.7（删陈旧 infra 目录）已于 Phase 18（基础设施重构）完成。
-  Phase 60-67 dashboard 基础设施重构 (v13.0) + Phase 68-80 perf + 测量 (v13.1) 已全部合并。
+  Phase 60-67 dashboard 基础设施重构 (v13.0) + Phase 68-80 perf + 测量 (v13.1) + Phase 81-88 maintenance + ESLint (v13.2) 已全部合并。
 **汇总状态**：全文正文已更新（07_汇总仓库/全文正文/星陨纪元_全文正文_v9.10.md，2.47MB，359章节；v9.11/v9.12 未触发正文变更）
 
 ### 工作流结构（22步）
@@ -476,6 +487,7 @@ infra/
 ---
 
 > **版本记录**：
+> - v13.2 (2026-08-21)：Phase 81-88 maintenance + ESLint rule extension. 8 phases closed (v13.1 housekeeping + ESLint rule + dead cleanup + housekeeping).
 > - v13.1 (2026-08-21)：Phase 68-80 dashboard perf + 测量. shallowRef 33 conversions (Phase 77+78). Web Vitals baseline 4 routes × 5 metrics (Phase 76+79). 13 phases closed.
 > - v13.0 (2026-08-20)：Phase 60-67 dashboard 基础设施重构完成。
 > - v12.0 (2026-08-14)：Phase 18 业务边界 + 接口化完成。
