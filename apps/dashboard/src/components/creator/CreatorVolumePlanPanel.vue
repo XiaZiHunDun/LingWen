@@ -22,9 +22,9 @@
 </template>
 
 <script setup>
-import { inject } from 'vue';
+import { inject, defineAsyncComponent } from 'vue';
 import { CREATOR_VOLUME_PLAN_KEY } from './creatorVolumePlanKey.js';
-import CreatorVolumePlanTemplatesPanel from './CreatorVolumePlanTemplatesPanel.vue';
+const CreatorVolumePlanTemplatesPanel = defineAsyncComponent(() => import('./CreatorVolumePlanTemplatesPanel.vue'));
 import CreatorVolumePlanEditPanel from './CreatorVolumePlanEditPanel.vue';
 import CreatorVolumePlanDiffPanel from './CreatorVolumePlanDiffPanel.vue';
 import CreatorVolumePlanMergeSplitPanel from './CreatorVolumePlanMergeSplitPanel.vue';

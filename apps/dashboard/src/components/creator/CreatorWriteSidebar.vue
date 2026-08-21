@@ -133,10 +133,10 @@
 </template>
 
 <script setup>
-import { inject, ref, computed } from 'vue';
+import { inject, ref, computed, defineAsyncComponent } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 import CreatorBatchOperations from './CreatorBatchOperations.vue';
-import CreatorFactoryPipeline from './CreatorFactoryPipeline.vue';
+const CreatorFactoryPipeline = defineAsyncComponent(() => import('./CreatorFactoryPipeline.vue'));
 
 const w = inject(CREATOR_WRITE_KEY);
 const wb = w.wb;
