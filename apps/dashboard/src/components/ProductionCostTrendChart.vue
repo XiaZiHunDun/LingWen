@@ -64,7 +64,7 @@ onUnmounted(() => {
 
 watch(() => props.trend, () => {
   renderChart();
-}, { deep: true });
+});
 </script>
 
 <style scoped>

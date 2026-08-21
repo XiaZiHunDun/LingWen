@@ -296,7 +296,7 @@ onUnmounted(() => {
 watch(() => [props.costByDay, props.costByDayPerTier], async () => {
   await initChart()
   render()
-}, { deep: true })
+})
 </script>
 
 <style scoped>

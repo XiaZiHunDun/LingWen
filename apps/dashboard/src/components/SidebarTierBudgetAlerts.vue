@@ -75,7 +75,7 @@ watch(
     });
     syncTierBudgetAlerts(states, timeWindow.value);
   },
-  { deep: true, immediate: true },
+  { immediate: true },
 );
 </script>
 

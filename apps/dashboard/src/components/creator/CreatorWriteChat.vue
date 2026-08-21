@@ -126,7 +126,7 @@ async function sendChatMessage() {
 
 watch(chatMessages, () => {
   scrollToBottom();
-}, { deep: true });
+});
 
 onMounted(() => {
   loadChatMessages();

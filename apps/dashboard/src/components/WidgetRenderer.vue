@@ -284,7 +284,7 @@ watch(() => props.widgetProps, (newProps) => {
   if (props.autoCreate && !isLoading.value) {
     updateWidgetInstance(localInstanceId.value, newProps);
   }
-}, { deep: true });
+});
 
 // 生命周期
 onMounted(() => {

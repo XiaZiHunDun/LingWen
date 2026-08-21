@@ -241,7 +241,7 @@ onUnmounted(() => {
 watch(displayData, async () => {
   await initChart()
   render()
-}, { deep: true })
+})
 watch(() => props.mode, async () => {
   await initChart()
   render()

@@ -125,7 +125,7 @@ onUnmounted(() => {
 watch([() => props.scoresA, () => props.scoresB, () => props.winner], async () => {
   await initChart()
   render()
-}, { deep: true })
+})
 </script>
 
 <style scoped>

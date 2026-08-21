@@ -151,7 +151,7 @@ onUnmounted(() => {
 
 watch(() => props.data, async () => {
   await initBarChart()
-}, { deep: true })
+})
 </script>
 
 <style scoped>
