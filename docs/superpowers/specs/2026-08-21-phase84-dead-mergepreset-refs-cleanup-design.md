@@ -35,8 +35,10 @@ Phase 84 investigation:
 2. **Delete 3 loading flags** (mergePresetGraphLoading, mergePresetConflictsLoading, mergePresetConflictFixesLoading):
    - Submodule `useMergePresets.ts`: declarations + panelContext returns + Ref<boolean> type defs
 
-3. **不破坏**: 1549 tests + 31 e2e + Web Vitals baseline
-4. **1 atomic commit** (parent + submodule together — logically related)
+3. **Delete test reference**: `apps/dashboard/tests/unit/use-creator-settings.spec.ts:312` — references `panel.mergePresetGraph.value.node_count` in dead-ref assertion (per Phase 78 review note 5: this assertion was vacuous — checks initial value of a ref nothing ever writes).
+
+4. **不破坏**: 1549 tests + 31 e2e + Web Vitals baseline
+5. **1 atomic commit** (parent + submodule + test together — 3 files logically related)
 
 ### 非目标
 
@@ -85,7 +87,7 @@ Final parent deletions (4 refs):
 
 ### 4.2 File 2: `useMergePresets.ts` (submodule)
 
-Delete lines (approx, based on earlier grep):
+Delete lines (verified exact via grep):
 - 49: type def `mergePresetConflicts: Ref<...>`
 - 52: type def `mergePresetToposort: Ref<...>`
 - 53: type def `mergePresetGraph: Ref<...>`
@@ -101,13 +103,24 @@ Delete lines (approx, based on earlier grep):
 - 118: `const mergePresetConflictsLoading = ref(false)`
 - 119: `const mergePresetConflictFixesLoading = ref(false)`
 - 293: `mergePresetConflicts,` (panelContext return)
-- 297: `mergePresetToposort,` (panelContext return)
-- 298: `mergePresetGraph,` (panelContext return)
+- 296: `mergePresetToposort,` (panelContext return) [amend: was 297]
+- 297: `mergePresetGraph,` (panelContext return) [amend: was 298]
 - 314: `mergePresetGraphLoading,` (panelContext return)
 - 315: `mergePresetConflictsLoading,` (panelContext return)
 - 316: `mergePresetConflictFixesLoading,` (panelContext return)
 
 Final submodule deletions: ~20 lines.
+
+**WARNING**: Lines 306 (`mergePresetToposortApplying,`) and 313 (`mergePresetToposortLoading,`) are LIVE refs (written at lines 265/272). MUST NOT be deleted. Spec §4.2 original line numbers were off by 1-3 — verify before delete.
+
+### 4.3 File 3: `tests/unit/use-creator-settings.spec.ts`
+
+Delete line 312:
+```js
+    expect(panel.mergePresetGraph.value.node_count).toBe(0);   // line 312
+```
+
+This assertion was vacuous — checks initial value of a ref nothing ever writes. Per Phase 78 review note 5. Test still meaningfully asserts `mergePresetPackages` (line 311).
 
 ---
 
@@ -115,7 +128,7 @@ Final submodule deletions: ~20 lines.
 
 | Check | Expected |
 |-------|----------|
-| `pnpm test` 1549 PASS | ✓ (unchanged) |
+| `pnpm test` 1549 PASS | ✓ (unchanged — test line 312 deleted, other 1548 unchanged) |
 | `pnpm exec vue-tsc --noEmit` 0 errors | ✓ |
 | `pnpm run build` 0 errors | ✓ |
 | `grep -rn "mergePresetGraph\|mergePresetConflicts\|mergePresetConflictFixes\|mergePresetToposort" apps/dashboard/src --include="*.vue" --include="*.ts" --include="*.js"` | 0 hits (after delete) |
