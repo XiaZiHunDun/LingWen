@@ -31,8 +31,9 @@ Phase 84 code review flagged: "3 orphaned fetch imports in `useMergePresets.ts:1
 2. **Delete 3 re-exports** in `api/index.js` (line 146-148)
 3. **Delete 3 function definitions** in `api/mergePreset.js` (lines 120, 124, 141)
 4. **Delete 3 test cases** in `tests/unit/api-creator-merge-preset.spec.ts` (lines 235, 243, 269) — vacuous tests for now-dead functions
-5. **不破坏**: 1549 tests + 31 e2e + Web Vitals baseline + build
-6. **1 atomic commit** (4 files logically related)
+5. **Delete 9 dead mock references** in `tests/unit/use-creator-settings.spec.ts` (lines 24-26 settingsMocks + 55-57 vi.mock factory + 123-125 beforeEach mockResolvedValue)
+6. **不破坏**: 1549 tests + 31 e2e + Web Vitals baseline + build
+7. **1 atomic commit** (5 files logically related)
 
 ### 非目标
 
@@ -85,6 +86,15 @@ Each function is ~5-10 lines (function body + closing brace).
 Each test block is ~7 lines (it() callback + assertions). Also delete the corresponding imports at lines 25, 26, 29 in the same file.
 
 ⚠️ Tests cover fetch functions directly. After deleting functions in api/mergePreset.js, these tests fail at module-resolution time. Must delete tests + imports together.
+
+### 4.5 File 5: `tests/unit/use-creator-settings.spec.ts`
+
+9 dead mock references (mocks for now-dead functions):
+- Lines 24-26: 3 entries in `settingsMocks` object (`fetchCreatorMergePresetGraph: vi.fn()`, etc.)
+- Lines 55-57: 3 entries in `vi.mock` factory (passthrough to settingsMocks)
+- Lines 123-125: 3 `settingsMocks.<X>.mockResolvedValue()` calls in `beforeEach`
+
+⚠️ `use-creator-settings.spec.ts:vi.mock` factory intercepts imports from `api/index.js`. After deleting the 3 re-exports, the mock factory would reference non-existent exports and fail at module-resolution time. Must delete mock entries together.
 
 ---
 
@@ -140,7 +150,8 @@ echo "expected: 0"
 git add apps/dashboard/src/composables/useCreatorSettings/useMergePresets.ts \
         apps/dashboard/src/api/index.js \
         apps/dashboard/src/api/mergePreset.js \
-        apps/dashboard/tests/unit/api-creator-merge-preset.spec.ts
+        apps/dashboard/tests/unit/api-creator-merge-preset.spec.ts \
+        apps/dashboard/tests/unit/use-creator-settings.spec.ts
 
 git -c user.name="Claude" -c user.email="claude@anthropic.local" \
     commit -m "refactor(api): delete 3 orphaned mergePreset fetch functions (Phase 85)" \
