@@ -11,6 +11,7 @@ import testidClassSync from './eslint-rules/testid-class-sync.js'
 import noDuplicateHooks from './eslint-rules/no-duplicate-hooks.js'
 import requireOptionalChain from './eslint-rules/require-optional-chain.js'
 import noStoreValueAccess from './eslint-rules/no-store-value-access.js'
+import noShallowRefMutation from './eslint-rules/no-shallowref-mutation.js'
 
 export default [
   {
@@ -51,11 +52,12 @@ export default [
       },
     },
     plugins: {
-      'custom': { rules: { 
+      'custom': { rules: {
         'testid-class-sync': testidClassSync,
         'no-duplicate-hooks': noDuplicateHooks,
         'require-optional-chain': requireOptionalChain,
         'no-store-value-access': noStoreValueAccess,
+        'no-shallowref-mutation': noShallowRefMutation,
       } },
     },
     rules: {
@@ -63,6 +65,26 @@ export default [
       'custom/no-duplicate-hooks': 'error',
       'custom/require-optional-chain': 'warn',
       'custom/no-store-value-access': 'error',
+      'custom/no-shallowref-mutation': 'error',
+    },
+  },
+
+  // 33 shallowRef sites live in .ts/.js (Phase 77+78 wholesale conversions in
+  // composables/stores). Vue parser not needed — use tsParser directly.
+  {
+    files: ['src/**/*.{ts,js}'],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 2022,
+      sourceType: 'module',
+    },
+    plugins: {
+      'custom': { rules: {
+        'no-shallowref-mutation': noShallowRefMutation,
+      } },
+    },
+    rules: {
+      'custom/no-shallowref-mutation': 'error',
     },
   },
 
