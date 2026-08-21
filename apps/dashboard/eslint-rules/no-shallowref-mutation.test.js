@@ -8,7 +8,7 @@ const rule = require('./no-shallowref-mutation.js')
 
 const ruleTester = new RuleTester({
   languageOptions: {
-    ecmaVersion: 2022,
+    ecmaVersion: 2024,
     sourceType: 'module',
   },
 })
@@ -39,6 +39,10 @@ ruleTester.run('no-shallowref-mutation', rule, {
     { code: `const x = shallowRef({foo: 1}); const y = x.value['foo'];` },
     // Mixed chain read — OK
     { code: `const x = shallowRef({foo: [1, 2]}); const y = x.value.foo[0];` },
+    // optional chain read (Phase 88 NEW) — OK
+    { code: `const x = shallowRef({foo: 1}); x.value?.foo;` },
+    // delete non-shallowRef (Phase 88 NEW) — OK
+    { code: `const obj = {foo: 1}; delete obj.foo;` },
   ],
 
   invalid: [
@@ -72,6 +76,21 @@ ruleTester.run('no-shallowref-mutation', rule, {
     // Mixed computed/non-computed chain mutation
     {
       code: `const x = shallowRef({foo: {bar: 1}}); x.value.foo['bar'] = 2;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    // delete shallowRef inner property (Phase 88 NEW)
+    {
+      code: `const x = shallowRef({foo: 1}); delete x.value.foo;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    // NOTE: `x.value?.foo = 2` cannot be tested directly because optional
+    // chaining on assignment LHS is not yet standardized in espree
+    // (any ecmaVersion fails to parse). The rule's AssignmentExpression
+    // chain walk handles it by descending through optional segments
+    // without filtering on `optional`.
+    // optional chain nested + delete (Phase 88 NEW)
+    {
+      code: `const x = shallowRef({foo: {bar: 1}}); delete x.value?.foo.bar;`,
       errors: [{ messageId: 'mutateShallowRef' }],
     },
   ],

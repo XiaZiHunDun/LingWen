@@ -174,6 +174,49 @@ module.exports = {
           propName = extractPropName(current)
         }
       },
+
+      // Detect delete: delete x.value.foo (Phase 88 NEW)
+      UnaryExpression(node) {
+        // Only flag `delete` operator (not !, -, +, typeof, void)
+        if (node.operator !== 'delete') return
+
+        // node.argument is the expression being deleted. With optional
+        // chains (`x.value?.foo`), the parser wraps the chain in a
+        // `ChainExpression`; drill through to the inner MemberExpression.
+        let argument = node.argument
+        if (argument.type === 'ChainExpression') {
+          argument = argument.expression
+        }
+        if (argument.type !== 'MemberExpression') return
+
+        // Walk chain to find .value access of shallowRef
+        let current = argument
+        let propName = extractPropName(current)
+        while (current.type === 'MemberExpression') {
+          if (
+            !current.computed &&
+            current.property.type === 'Identifier' &&
+            current.property.name === 'value'
+          ) {
+            if (
+              current.object.type === 'Identifier' &&
+              lookupRefType(current.object.name) === 'shallowRef'
+            ) {
+              context.report({
+                node,
+                messageId: 'mutateShallowRef',
+                data: {
+                  name: current.object.name,
+                  prop: propName,
+                },
+              })
+              return
+            }
+          }
+          current = current.object
+          propName = extractPropName(current)
+        }
+      },
     }
   },
 }
