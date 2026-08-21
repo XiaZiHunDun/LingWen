@@ -23,6 +23,12 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           // Named chunks: package → chunk name
+          // Phase 71: initial 8 chunks. Phase 80: verified state — naive-ui chunk
+          // exists (3.11kB) but most Naive UI code remains in vendor (407kB gz)
+          // due to inter-deps with vue/pinia. Future: explicit defineAsyncComponent
+          // for heavy Naive UI panels (Phase 81+ candidate).
+          // Known circular chunk warning: mermaid <-> vendor. Functional but
+          // suboptimal — investigate in future phase.
           const NAMED = {
             echarts: 'echarts',
             mermaid: 'mermaid',
