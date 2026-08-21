@@ -151,7 +151,7 @@ onUnmounted(() => {
     chart = null
   }
 })
-watch(() => props.graph, initChart, { deep: true })
+watch(() => props.graph, initChart)
 
 defineExpose({ impactNodeColor })
 </script>
