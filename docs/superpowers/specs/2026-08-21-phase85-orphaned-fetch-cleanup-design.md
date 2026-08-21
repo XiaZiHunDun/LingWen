@@ -30,8 +30,9 @@ Phase 84 code review flagged: "3 orphaned fetch imports in `useMergePresets.ts:1
 1. **Delete 3 imports** in `useMergePresets.ts` (line 19-21)
 2. **Delete 3 re-exports** in `api/index.js` (line 146-148)
 3. **Delete 3 function definitions** in `api/mergePreset.js` (lines 120, 124, 141)
-4. **不破坏**: 1549 tests + 31 e2e + Web Vitals baseline + build
-5. **1 atomic commit** (3 files logically related)
+4. **Delete 3 test cases** in `tests/unit/api-creator-merge-preset.spec.ts` (lines 235, 243, 269) — vacuous tests for now-dead functions
+5. **不破坏**: 1549 tests + 31 e2e + Web Vitals baseline + build
+6. **1 atomic commit** (4 files logically related)
 
 ### 非目标
 
@@ -74,16 +75,27 @@ Lines 146-148 (re-exports from `'./mergePreset.js'`):
 
 Each function is ~5-10 lines (function body + closing brace).
 
+### 4.4 File 4: `tests/unit/api-creator-merge-preset.spec.ts`
+
+3 test cases (vacuous — test now-dead functions):
+- Line 235: `it('fetchCreatorMergePresetConflicts GETs preset-packages/conflicts', ...)`
+- Line 243: `it('fetchCreatorMergePresetConflictFixes GETs preset-packages/conflicts/fixes', ...)`
+- Line 269: `it('fetchCreatorMergePresetGraph GETs preset-packages/graph', ...)`
+
+Each test block is ~7 lines (it() callback + assertions). Also delete the corresponding imports at lines 25, 26, 29 in the same file.
+
+⚠️ Tests cover fetch functions directly. After deleting functions in api/mergePreset.js, these tests fail at module-resolution time. Must delete tests + imports together.
+
 ---
 
 ## 5. Verification
 
 | Check | Expected |
 |-------|----------|
-| `pnpm test` 1549 PASS | ✓ (unchanged) |
+| `pnpm test` 1549 PASS | ✓ (unchanged — 3 test cases removed, total count maintained) |
 | `pnpm exec vue-tsc --noEmit` 0 errors | ✓ |
 | `pnpm run build` 0 errors | ✓ |
-| `grep -rn "fetchCreatorMergePresetGraph\|fetchCreatorMergePresetConflicts\|fetchCreatorMergePresetConflictFixes" src/` | 0 hits (all 3 files clean) |
+| `grep -rn "fetchCreatorMergePresetGraph\|fetchCreatorMergePresetConflicts\|fetchCreatorMergePresetConflictFixes" apps/dashboard/src apps/dashboard/tests` | 0 hits (all 4 files clean) |
 | `pnpm exec eslint src` | 0 violations |
 
 ---
@@ -127,7 +139,8 @@ echo "expected: 0"
 
 git add apps/dashboard/src/composables/useCreatorSettings/useMergePresets.ts \
         apps/dashboard/src/api/index.js \
-        apps/dashboard/src/api/mergePreset.js
+        apps/dashboard/src/api/mergePreset.js \
+        apps/dashboard/tests/unit/api-creator-merge-preset.spec.ts
 
 git -c user.name="Claude" -c user.email="claude@anthropic.local" \
     commit -m "refactor(api): delete 3 orphaned mergePreset fetch functions (Phase 85)" \
