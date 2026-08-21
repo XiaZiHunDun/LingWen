@@ -4,7 +4,7 @@
  * Phase 62.8: 从 api/creator.js 拆出 39 funcs。
  *
  * 子域：
- * - MergePreset (25): CRUD + Factory + Conflicts + Fixes + Graph + Toposort + Import/Export + Preflight + Diff
+ * - MergePreset (22): CRUD + Factory + Conflicts + Fixes + Toposort + Import/Export + Preflight + Diff
  * - SettingsDocs (7): 文档编辑 + 3-way diff + 保存 + 历史 + 快照恢复
  * - DiffCollab (2): 协作备注
  * - Wizard (2): 引导面板
