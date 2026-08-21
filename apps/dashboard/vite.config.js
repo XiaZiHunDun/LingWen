@@ -16,46 +16,30 @@ export default defineConfig({
     }
   },
   build: {
+    target: 'es2020',
+    reportCompressedSize: true,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // 将大型图表库拆分为独立 chunks
-          if (id.includes('node_modules/echarts')) {
-            return 'echarts';
+          // Named chunks: package → chunk name
+          const NAMED = {
+            echarts: 'echarts',
+            mermaid: 'mermaid',
+            cytoscape: 'cytoscape',
+            katex: 'katex',
+            'naive-ui': 'naive-ui',
+            'vue-router': 'vue-router',
+            pinia: 'pinia',
+            '@vicons': 'vicons',
+            lodash: 'lodash',
+            dayjs: 'dayjs',
+          };
+          for (const [pkg, chunk] of Object.entries(NAMED)) {
+            if (id.includes(`node_modules/${pkg}`)) return chunk;
           }
-          if (id.includes('node_modules/mermaid')) {
-            return 'mermaid';
-          }
-          if (id.includes('node_modules/cytoscape')) {
-            return 'cytoscape';
-          }
-          if (id.includes('node_modules/katex')) {
-            return 'katex';
-          }
-          if (id.includes('node_modules/naive-ui')) {
-            return 'naive-ui';
-          }
-          if (id.includes('node_modules/vue-router')) {
-            return 'vue-router';
-          }
-          if (id.includes('node_modules/pinia')) {
-            return 'pinia';
-          }
-          if (id.includes('node_modules/@vicons')) {
-            return 'vicons';
-          }
-          if (id.includes('node_modules/lodash')) {
-            return 'lodash';
-          }
-          if (id.includes('node_modules/dayjs')) {
-            return 'dayjs';
-          }
-          // 将其他第三方依赖合并到 vendor chunk
-          // 排除可能导致循环依赖的包
-          const excluded = ['mermaid', 'echarts', 'cytoscape', 'katex', 'naive-ui', 'vue-router', 'pinia', '@vicons', 'lodash', 'dayjs'];
-          if (id.includes('node_modules/') && !excluded.some(e => id.includes(`node_modules/${e}`))) {
-            return 'vendor';
-          }
+          // 剩余 node_modules 合并到 vendor chunk
+          if (id.includes('node_modules/')) return 'vendor';
         }
       }
     },
