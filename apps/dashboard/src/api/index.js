@@ -149,7 +149,6 @@ export {
   previewCreatorMergePresetImportDiff,
   fetchCreatorMergePresetToposort,
   applyCreatorMergePresetToposort,
-  fetchCreatorFactoryMergePresetConflicts,
   resolveCreatorFactoryMergePresetConflict,
   deleteCreatorFactoryMergePresetPackage,
   fetchCreatorChapterPreview,

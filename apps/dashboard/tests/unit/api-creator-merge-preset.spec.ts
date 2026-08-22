@@ -16,7 +16,6 @@ import {
   pullCreatorFactoryMergePresetPackages,
   publishCreatorMergePresetToFactory,
   preflightCreatorFactoryMergePresetPull,
-  fetchCreatorFactoryMergePresetConflicts,
   resolveCreatorFactoryMergePresetConflict,
   preflightCreatorMergePresetImport,
   previewCreatorMergePresetImportDiff,
@@ -157,14 +156,6 @@ describe('api/mergePreset', () => {
       expect(mocks.request).toHaveBeenCalledWith(
         '/creator/settings-docs/merge-preferences/preset-packages/factory/pull/preflight',
         { method: 'POST', body: { ids: ['p1'] } },
-      );
-    });
-
-    it('fetchCreatorFactoryMergePresetConflicts GETs factory/conflicts', async () => {
-      mocks.request.mockResolvedValueOnce({ conflicts: [] });
-      await fetchCreatorFactoryMergePresetConflicts();
-      expect(mocks.request).toHaveBeenCalledWith(
-        '/creator/settings-docs/merge-preferences/preset-packages/factory/conflicts',
       );
     });
 
