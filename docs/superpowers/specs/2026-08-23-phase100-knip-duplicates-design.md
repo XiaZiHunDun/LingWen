@@ -117,7 +117,7 @@ Phase 100 — fix knip duplicate exports:
 - Delete `export default useWidgetRegistry` (composables/useWidgetRegistry.js:375)
 - Delete `export default logger` (utils/logger.js:83)
 
-Both defaults were unreferenced — all 30 import sites use named form.
+Both defaults were unreferenced — all consumer import sites use named form.
 knip output: Duplicate exports (2 → 0) ✅
 
 测试基线不变: 1545 PASS, 0 type errors, 0 build errors.
