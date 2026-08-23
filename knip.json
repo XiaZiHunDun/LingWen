@@ -1,0 +1,11 @@
+{
+  "entry": [
+    "src/main.js",
+    "src/router/index.js",
+    "src/router/routes.js"
+  ],
+  "project": [
+    "src/**/*.{js,ts,vue}",
+    "tests/**/*.{js,ts}"
+  ]
+}
