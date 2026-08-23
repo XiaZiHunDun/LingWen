@@ -1,6 +1,7 @@
 /**
  * Core API utilities for 墨灵 Dashboard
  * @module api/core
+ * (2 funcs)
  */
 
 import { markApiOffline, markApiOnline } from './connectivity.js';

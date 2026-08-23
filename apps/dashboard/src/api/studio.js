@@ -1,5 +1,6 @@
 /**
  * Studio API
+ * (12 funcs)
  */
 
 import { request } from './core.js';

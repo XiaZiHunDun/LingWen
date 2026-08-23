@@ -1,6 +1,7 @@
 /**
  * API Client for 墨灵 Dashboard
  * Barrel re-export from domain-specific modules
+ * (0 funcs, re-export only)
  */
 
 export { apiConnectivity, markApiOffline, markApiOnline } from './connectivity.js';

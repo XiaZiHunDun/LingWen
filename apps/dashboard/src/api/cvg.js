@@ -1,5 +1,6 @@
 /**
  * CVG (Cross-Volume Graph) API
+ * (14 funcs)
  */
 
 import { request } from './core.js';

@@ -1,5 +1,6 @@
 /**
  * Creator API
+ * (2 funcs, re-export only)
  */
 
 import { request } from './core.js';

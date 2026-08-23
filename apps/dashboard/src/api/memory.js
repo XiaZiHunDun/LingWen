@@ -2,6 +2,7 @@
  * Memory API
  *
  * Phase 62 Task 1: 从 api/creator.js 拆出。
+ * (3 funcs)
  */
 
 import { request } from './core.js';

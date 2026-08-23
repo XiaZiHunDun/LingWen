@@ -1,5 +1,6 @@
 /**
  * Reading Power and Health API
+ * (6 funcs)
  */
 
 import { request } from './core.js';

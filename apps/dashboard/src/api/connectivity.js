@@ -1,3 +1,8 @@
+/**
+ * Connectivity API
+ * (3 funcs)
+ */
+
 import { ref } from 'vue';
 
 export const apiConnectivity = ref({
