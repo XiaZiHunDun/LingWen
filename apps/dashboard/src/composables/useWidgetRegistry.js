@@ -371,5 +371,3 @@ export function useWidgetRegistry() {
     checkWidgetDependencies,
   };
 }
-
-export default useWidgetRegistry;
