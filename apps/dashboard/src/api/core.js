@@ -21,10 +21,6 @@ export const API_ERROR_EVENT = 'api-error';
  * @param {(error: ApiError) => void} callback - Error handler
  * @returns {() => void} Unsubscribe function
  */
-export function onApiError(callback) {
-  errorEventTarget.addEventListener(API_ERROR_EVENT, callback);
-  return () => errorEventTarget.removeEventListener(API_ERROR_EVENT, callback);
-}
 
 /**
  * Dispatch an API error event
