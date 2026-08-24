@@ -1,0 +1,18 @@
+{
+  "entry": [
+    "src/main.js",
+    "src/router/index.js",
+    "src/router/routes.js"
+  ],
+  "project": [
+    "src/**/*.{js,ts,vue}",
+    "tests/**/*.{js,ts}"
+  ],
+  "ignore": [
+    "tests/fixtures/lint-testid/clean.spec.ts",
+    "tests/fixtures/lint-testid/dirty.spec.ts",
+    "tests/visual-audit/capture.spec.js",
+    "tests/visual-audit/regression.spec.js",
+    "tests/visual-audit/ui-metrics.spec.js"
+  ]
+}
