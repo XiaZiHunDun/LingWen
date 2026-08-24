@@ -6,8 +6,7 @@
  *
  * 子模块：
  * - useWriteFlow       (写作流：选章节/保存/自动保存/记忆同步)
- * - useWriteValidation (写作验证：P0 复检/逻辑检查点击/偏离点击 — 类型骨架占位)
- * - useWriteTools      (写作工具：format/label/class/highlight/batch inline)
+  * - useWriteTools      (写作工具：format/label/class/highlight/batch inline)
  */
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useCreatorWriteWorkbench } from './useCreatorWriteWorkbench.js';
