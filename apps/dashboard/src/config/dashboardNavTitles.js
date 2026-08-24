@@ -1,5 +1,5 @@
 /** 主顶栏上下文标题（侧栏品牌见 config/brand.js） */
-export const NAV_CONTEXT_TITLES = {
+const NAV_CONTEXT_TITLES = {
   ask: '聊聊',
   write: '书桌',
   creator: '书桌',

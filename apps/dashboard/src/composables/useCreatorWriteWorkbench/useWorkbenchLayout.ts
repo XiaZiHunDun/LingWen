@@ -24,7 +24,7 @@ import { useEffectiveCreationMode } from '../useEffectiveCreationMode.js';
 import { updateCreatorCreationMode } from '../../api/creator.js';
 
 export type CreationMode = 'companion' | 'advance' | 'studio';
-export const VALID_CREATION_MODES: ReadonlyArray<CreationMode> = ['companion', 'advance', 'studio'];
+const VALID_CREATION_MODES: ReadonlyArray<CreationMode> = ['companion', 'advance', 'studio'];
 
 export interface Deviation {
   chapter?: number;

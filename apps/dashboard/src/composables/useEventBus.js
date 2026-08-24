@@ -332,17 +332,3 @@ export function onRippleUpdate(handler) {
     unsubscribeFn();
   });
 }
-
-export function onWsConnected(handler) {
-  const unsubscribeFn = subscribe(eventTypes.WS_CONNECTED, handler);
-  onBeforeUnmount(() => {
-    unsubscribeFn();
-  });
-}
-
-export function onWsDisconnected(handler) {
-  const unsubscribeFn = subscribe(eventTypes.WS_DISCONNECTED, handler);
-  onBeforeUnmount(() => {
-    unsubscribeFn();
-  });
-}

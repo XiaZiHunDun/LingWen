@@ -1,7 +1,7 @@
 /** 伴侣/推进模式章内微任务（再写 N 字） */
 
 /** @type {Record<string, number>} */
-export const DEFAULT_CHAPTER_WORD_GOALS = {
+const DEFAULT_CHAPTER_WORD_GOALS = {
   companion: 1500,
   advance: 2000,
 };

@@ -26,8 +26,6 @@ import {
   useProductPublish,
 } from './useCreatorProductTools/index.ts';
 
-export { CREATOR_PUBLISH_PLATFORMS } from './useCreatorProductTools/useProductPublish.ts';
-
 /**
  * @param {{
  *   overview: import('vue').Ref<object|null>,

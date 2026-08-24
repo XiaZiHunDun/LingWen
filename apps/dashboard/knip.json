@@ -13,6 +13,12 @@
     "tests/fixtures/lint-testid/dirty.spec.ts",
     "tests/visual-audit/capture.spec.js",
     "tests/visual-audit/regression.spec.js",
-    "tests/visual-audit/ui-metrics.spec.js"
+    "tests/visual-audit/ui-metrics.spec.js",
+    "src/composables/index.ts",
+    "src/composables/useDashboardNav.js",
+    "src/composables/useDevice.js",
+    "src/composables/useWidgetRegistry.js",
+    "src/config/creatorPanelMatrix.js",
+    "tests/visual-audit/helpers/capture-ui-audit.js"
   ]
 }

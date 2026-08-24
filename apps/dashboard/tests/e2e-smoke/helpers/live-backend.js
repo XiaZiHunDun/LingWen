@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const NOVEL_FACTORY_ROOT = path.resolve(__dirname, '../../../../..');
 
 export const LIVE_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE === '1';
-export const LIVE_LLM_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE_LLM === '1';
+const LIVE_LLM_E2E_ENABLED = process.env.LINGWEN_E2E_LIVE_LLM === '1';
 
 export function skipUnlessLive(test) {
   test.skip(!LIVE_E2E_ENABLED, 'set LINGWEN_E2E_LIVE=1 to run live-backend e2e');

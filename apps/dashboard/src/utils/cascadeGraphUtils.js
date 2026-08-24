@@ -16,21 +16,21 @@ export const CASCADE_VIEW_MODE_LABELS = {
   'action-cluster': 'Action',
 };
 
-export const DEPTH_LAYER_COLORS = {
+const DEPTH_LAYER_COLORS = {
   0: '#6366f1',
   1: '#3b82f6',
   2: '#06b6d4',
   3: '#14b8a6',
 };
 
-export const ACTION_TYPE_COLORS = {
+const ACTION_TYPE_COLORS = {
   trigger: '#22c55e',
   propagate: '#3b82f6',
   modify: '#eab308',
   unknown: '#9ca3af',
 };
 
-export const ACTION_TYPE_ORDER = ['trigger', 'propagate', 'modify', 'unknown'];
+const ACTION_TYPE_ORDER = ['trigger', 'propagate', 'modify', 'unknown'];
 
 /**
  * @param {Array<{ id: string }>} nodes

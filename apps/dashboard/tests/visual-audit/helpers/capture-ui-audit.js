@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const VISUAL_AUDIT_OUTPUT_DIR = path.resolve(__dirname, '../output');
+const VISUAL_AUDIT_OUTPUT_DIR = path.resolve(__dirname, '../output');
 
 /** CI runners (Ubuntu + headless fonts) need slightly looser pixel tolerance. */
 export function visualShotOptions(maxDiffPixelRatio = 0.02) {

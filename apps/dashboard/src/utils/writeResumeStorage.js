@@ -47,8 +47,3 @@ export function getWriteResume(slug) {
   if (!row?.chapter) return null;
   return row;
 }
-
-export function hasAnyWriteResume() {
-  const map = readAll();
-  return Object.values(map).some((r) => r?.chapter);
-}

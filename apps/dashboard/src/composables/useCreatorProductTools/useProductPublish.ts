@@ -18,7 +18,7 @@ import {
   fetchCreatorPublishPlatforms,
 } from '../../api/index.js';
 
-export const CREATOR_PUBLISH_PLATFORMS = [
+const CREATOR_PUBLISH_PLATFORMS = [
   { id: 'fanqie', label: '番茄小说' },
   { id: 'qidian', label: '起点中文网' },
   { id: 'jjwxc', label: '晋江文学城' },

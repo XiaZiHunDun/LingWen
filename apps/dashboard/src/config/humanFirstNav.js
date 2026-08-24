@@ -29,10 +29,10 @@ export const HUMAN_FIRST_NAV_GROUPS = [
   },
 ];
 
-export const HUMAN_FIRST_NAV_IDS = HUMAN_FIRST_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
+const HUMAN_FIRST_NAV_IDS = HUMAN_FIRST_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
 
 /** Nav id shown in sidebar → active page key */
-export const NAV_WRITE_ALIASES = new Set(['write', 'creator']);
+const NAV_WRITE_ALIASES = new Set(['write', 'creator']);
 
 /** URL / sidebar id → internal activeNav for App.vue */
 export function resolveHumanNavToActive(navId) {

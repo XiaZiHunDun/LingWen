@@ -14,7 +14,7 @@ const RETRY_DELAY_MS = 1000;
 
 const errorEventTarget = new EventTarget();
 
-export const API_ERROR_EVENT = 'api-error';
+const API_ERROR_EVENT = 'api-error';
 
 /**
  * Subscribe to API error events
@@ -34,7 +34,7 @@ function dispatchApiError(error) {
  * Base API error class
  * @extends Error
  */
-export class ApiError extends Error {
+class ApiError extends Error {
   /**
    * @param {string} message
    * @param {{ status?: number|null, code?: string|null, path?: string|null, response?: Response|null }} [options]
@@ -57,7 +57,7 @@ export class ApiError extends Error {
  * Network error (no connection)
  * @extends ApiError
  */
-export class NetworkError extends ApiError {
+class NetworkError extends ApiError {
   /** @param {string} message */
   constructor(message) {
     super(message, { code: 'NETWORK_ERROR' });
@@ -69,7 +69,7 @@ export class NetworkError extends ApiError {
  * Request timeout error
  * @extends ApiError
  */
-export class TimeoutError extends ApiError {
+class TimeoutError extends ApiError {
   /** @param {string} message */
   constructor(message) {
     super(message, { code: 'TIMEOUT_ERROR' });
@@ -81,7 +81,7 @@ export class TimeoutError extends ApiError {
  * Authentication error (401)
  * @extends ApiError
  */
-export class AuthError extends ApiError {
+class AuthError extends ApiError {
   /** @param {string} message */
   constructor(message) {
     super(message, { code: 'AUTH_ERROR', status: 401 });
@@ -93,7 +93,7 @@ export class AuthError extends ApiError {
  * Forbidden error (403)
  * @extends ApiError
  */
-export class ForbiddenError extends ApiError {
+class ForbiddenError extends ApiError {
   /** @param {string} message */
   constructor(message) {
     super(message, { code: 'FORBIDDEN_ERROR', status: 403 });
@@ -105,7 +105,7 @@ export class ForbiddenError extends ApiError {
  * Not found error (404)
  * @extends ApiError
  */
-export class NotFoundError extends ApiError {
+class NotFoundError extends ApiError {
   /** @param {string} message */
   constructor(message) {
     super(message, { code: 'NOT_FOUND_ERROR', status: 404 });
@@ -117,7 +117,7 @@ export class NotFoundError extends ApiError {
  * Server error (500)
  * @extends ApiError
  */
-export class ServerError extends ApiError {
+class ServerError extends ApiError {
   /** @param {string} message */
   constructor(message) {
     super(message, { code: 'SERVER_ERROR', status: 500 });
@@ -251,5 +251,3 @@ export async function request(path, opts = {}) {
   dispatchApiError(lastError);
   throw lastError;
 }
-
-export { apiConnectivity, markApiOffline, markApiOnline } from './connectivity.js';

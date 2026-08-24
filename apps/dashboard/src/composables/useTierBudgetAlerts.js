@@ -8,9 +8,9 @@
 
 import { ref } from 'vue';
 
-export const TIER_ORDER = ['haiku', 'sonnet', 'opus'];
-export const TIER_ALARM_WARNING_PCT = 80;
-export const TIER_ALARM_EXCEEDED_PCT = 100;
+const TIER_ORDER = ['haiku', 'sonnet', 'opus'];
+const TIER_ALARM_WARNING_PCT = 80;
+const TIER_ALARM_EXCEEDED_PCT = 100;
 const MAX_ALERTS = 20;
 
 const alerts = ref([]);

@@ -43,11 +43,3 @@ export const BRAND = Object.freeze({
   // 内部工程命名空间（沿用历史，不要改成 "moling"）
   engineeringNamespace: 'lingwen',
 });
-
-// 旧常量（保留向后兼容；新代码应优先用 BRAND.*）
-/** @deprecated Use `BRAND.productShortZh` instead. */
-export const BRAND_PRODUCT_NAME = BRAND.productShortZh;
-/** @deprecated Use `BRAND.productTagline` instead. */
-export const BRAND_PRODUCT_TAGLINE = BRAND.productTagline;
-/** @deprecated Analytical feature prefix should use `BRAND.productShortZh`. */
-export const BRAND_FEATURE_READING_POWER = '追读力';

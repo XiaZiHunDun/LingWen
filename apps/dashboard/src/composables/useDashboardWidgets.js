@@ -138,35 +138,3 @@ export function registerDashboardWidgets() {
     defaultProps: {},
   })
 }
-
-/**
- * 获取默认 Dashboard Widget 布局
- */
-export function getDefaultDashboardLayout() {
-  return [
-    {
-      id: 'overview-stats',
-      widgetId: 'stats-card',
-      props: { title: '追读力概览' },
-      grid: { x: 0, y: 0, w: 2, h: 1 },
-    },
-    {
-      id: 'hook-trend',
-      widgetId: 'hook-trend-chart',
-      props: {},
-      grid: { x: 0, y: 1, w: 2, h: 2 },
-    },
-    {
-      id: 'coolpoint-chart',
-      widgetId: 'coolpoint-chart',
-      props: {},
-      grid: { x: 0, y: 3, w: 2, h: 2 },
-    },
-    {
-      id: 'chapter-table',
-      widgetId: 'chapter-table',
-      props: {},
-      grid: { x: 0, y: 5, w: 2, h: 2 },
-    },
-  ]
-}

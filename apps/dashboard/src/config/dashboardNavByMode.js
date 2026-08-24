@@ -9,7 +9,7 @@ import { HUMAN_FIRST_NAV_GROUPS } from './humanFirstNav.js';
 import { REVIEWER_NAV_GROUPS } from './dashboardNav.js';
 
 /** @type {Record<string, string[]>} */
-export const MODE_NAV_ITEM_IDS = {
+const MODE_NAV_ITEM_IDS = {
   companion: ['ask', 'write', 'library', 'more', 'settings'],
   advance: ['ask', 'write', 'library', 'more', 'settings'],
   studio: ['ask', 'library', 'more', 'settings'],
@@ -17,7 +17,7 @@ export const MODE_NAV_ITEM_IDS = {
 
 /** 「更多」页内链接 id — 按模式裁剪 */
 /** @type {Record<string, string[]>} */
-export const MODE_MORE_LINK_IDS = {
+const MODE_MORE_LINK_IDS = {
   companion: ['today', 'inbox', 'insight'],
   advance: ['today', 'produce', 'inbox', 'insight', 'cascade-runs'],
   studio: ['today', 'produce', 'inbox', 'insight', 'cascade-runs'],

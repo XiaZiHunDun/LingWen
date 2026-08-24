@@ -4,60 +4,17 @@
  */
 
 /** Creator workspace tab definition */
-export interface WorkspaceTab {
+interface WorkspaceTab {
   id: string;
   label: string;
   icon?: string;
   disabled?: boolean;
 }
 
-/** Split tabs result */
-export interface SplitTabsResult {
-  primary: WorkspaceTab[];
-  secondary: WorkspaceTab[];
-  drawerTabs?: WorkspaceTab[];
-}
-
 /** UI profile for creator */
-export interface CreatorUiProfile {
+interface CreatorUiProfile {
   creator_workspace_tabs?: boolean;
   creation_mode?: string;
-  [key: string]: unknown;
-}
-
-/** Studio project state */
-export interface StudioProjectState {
-  projects: unknown[];
-  activeSlug: string | null;
-  loading: boolean;
-  error: string | null;
-}
-
-/** Dashboard navigation state */
-export interface DashboardNavState {
-  currentNav: string;
-  params: Record<string, unknown>;
-  [key: string]: unknown;
-}
-
-/** Review decision */
-export interface ReviewDecision {
-  id?: string | number;
-  chapter_id?: string | number;
-  type?: string;
-  status?: string;
-  reason?: string;
-  created_at?: string;
-  [key: string]: unknown;
-}
-
-/** Pulse/ripple entry */
-export interface PulseEntry {
-  id?: string | number;
-  type?: string;
-  content?: string;
-  severity?: string;
-  related_chapter?: string | number;
   [key: string]: unknown;
 }
 
@@ -79,26 +36,6 @@ export interface CreatorWorkspaceReturn {
   setWorkspaceTab: (tabId: string) => void;
   workspaceTabBadges: import('vue').ComputedRef<Record<string, number> | null>;
   onDeviationBadgeClick: () => void;
-}
-
-/** Cost window composable return */
-export interface CostWindowReturn {
-  costData: import('vue').Ref<unknown>;
-  loading: import('vue').Ref<boolean>;
-  error: import('vue').Ref<string | null>;
-  startPolling: () => void;
-  stopPolling: () => void;
-}
-
-/** Ripple store composable return */
-export interface RippleStoreReturn {
-  ripples: import('vue').Ref<unknown[]>;
-  stats: import('vue').Ref<unknown>;
-  loading: import('vue').Ref<boolean>;
-  refresh: () => Promise<void>;
-  apply: (id: string | number) => Promise<void>;
-  reject: (id: string | number) => Promise<void>;
-  rollback: (id: string | number) => Promise<void>;
 }
 
 /** Creator page composable return */

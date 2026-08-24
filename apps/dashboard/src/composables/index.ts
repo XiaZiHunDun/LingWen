@@ -3,7 +3,7 @@
  *
  * 主 hook（按业务领域分组）：
  *
- * - 工具: creatorDefaultUiProfile, useApiConnectivity, useAskAssistant, useCostWindow, TIME_OPTIONS
+ * - 工具: creatorDefaultUiProfile, useAskAssistant, useCostWindow, TIME_OPTIONS
  * - 批量/批次: useCreatorAdvanceBatch, useCreatorBatchHistory
  * - 设定: useCreatorSettings
  * - 创作页编排: useCreatorPage（含 chrome 子模块 useCreatorPageChrome）
@@ -18,9 +18,9 @@
  * - 页面: useCreatorPageHeader, useCreatorPageProviders, useCreatorPageRefresh
  * - 仪表盘: useCreatorPulse
  * - 工作区: useCreatorWorkspace
- * - 数据/导航: useDashboardNav, useDashboardRole, useRippleSocket, useRippleStore,
+ * - 数据/导航: useDashboardNav, useRippleSocket, useRippleStore,
  *   useEffectiveCreationMode, useDecisionStore, useOverviewStore, usePageLeadDismiss,
- *   useTodayHub, useTierBudgetAlerts, useWorkflowListStore, useWidgetRegistry, useDashboardWidgets
+ *   useTodayHub, useTierBudgetAlerts, useWorkflowListStore, useDashboardWidgets
  * - 事件总线: useEventBus
  * - 工作流 socket: useWorkflowSocket
  * - 业务工具: useAskPageTab, useStudioProject, useFilteredPageError, useDevice,
@@ -31,7 +31,7 @@
  * - useCreatorSettings/{useSettingsHistory,useMergePresets,useSettingsDocs}
  * - useCreatorVolumePlanTemplates/{useTemplateList,useTemplateEditor,useTemplateSync}
  * - useCreatorBatchHistory/{useBatchList,useBatchDiff,useBatchRestore}
- * - useCreatorWrite/{useWriteFlow,useWriteValidation,useWriteTools}
+ * - useCreatorWrite/{useWriteFlow,useWriteTools}
  * - useCreatorOnboarding/{useWizardSteps,useOnboardingProgress,useOnboardingNotifications}
  * - useCreatorAgent/{useAgentConfig,useAgentTask,useAgentTools}
  * - useCreatorVolumePlanDiff/{useVolumePlanDiff,useVolumePlanDiffShare}
@@ -40,7 +40,6 @@
  */
 
 export { creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
-export { useApiConnectivity } from './useApiConnectivity.js';
 export { useAskAssistant, useAskPageTab, ASK_LONG_DRAFT_CHAR_LIMIT } from './useAskAssistant.js';
 export { useCostWindow } from './useCostWindow.js';
 export { TIME_OPTIONS } from './useTimeOptions.js';
@@ -64,7 +63,6 @@ export { useCreatorWorkspace } from './useCreatorWorkspace.js';
 export { useCreatorWrite } from './useCreatorWrite.js';
 export { useCreatorWriteWorkbench } from './useCreatorWriteWorkbench.js';
 export { useDashboardNav } from './useDashboardNav.js';
-export { useDashboardRole } from './useDashboardRole.js';
 export { useDecisionStore } from './useDecisionStore.js';
 export { useEffectiveCreationMode } from './useEffectiveCreationMode.js';
 export { useFilteredPageError } from './useFilteredPageError.js';
@@ -78,9 +76,9 @@ export { useTierBudgetAlerts } from './useTierBudgetAlerts.js';
 export { useTodayHub } from './useTodayHub.js';
 export { useWorkflowListStore } from './useWorkflowListStore.js';
 export { useWorkflowSocket, onCascadeUpdate, onAuditCreated } from './useWorkflowSocket.js';
-export { useEventBus, onRippleUpdate, onWsConnected, onWsDisconnected } from './useEventBus.js';
-export { useWidgetRegistry, defineWidget, registerWidget, registerWidgets, getWidget, getAllWidgets, getWidgetsByCategory, unregisterWidget, createWidgetInstance, getWidgetInstance, removeWidgetInstance, updateWidgetInstance, setWidgetInstanceState, getWidgetInstanceState, emitWidgetEvent, onWidgetEvent, checkWidgetDependencies } from './useWidgetRegistry.js';
-export { registerDashboardWidgets, getDefaultDashboardLayout } from './useDashboardWidgets.js';
+export { useEventBus, onRippleUpdate } from './useEventBus.js';
+export * as useWidgetRegistry from './useWidgetRegistry.js';
+export { registerDashboardWidgets } from './useDashboardWidgets.js';
 export { useDevice } from './useDevice.js';
 export * as volumePlanDiffExportUtils from './volumePlanDiffExportUtils.js';
 
@@ -108,7 +106,6 @@ export {
 } from './useCreatorBatchHistory/index';
 export {
   useWriteFlow,
-  useWriteValidation,
   useWriteTools,
 } from './useCreatorWrite/index';
 export {
