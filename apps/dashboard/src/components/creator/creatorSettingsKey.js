@@ -1,5 +1,5 @@
 /**
- * Injection key for CreatorSettingsPanel context.
+ * Injection key for settings context.
  */
 import { reactive } from 'vue';
 

@@ -1,5 +1,5 @@
 /**
- * Injection key for CreatorAdvanceBatchPanel bindings in pulse column.
+ * Injection key for advance-batch bindings (pulse column).
  */
 import { reactive } from 'vue';
 

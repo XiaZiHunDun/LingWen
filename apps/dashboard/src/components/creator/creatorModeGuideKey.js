@@ -1,5 +1,5 @@
 /**
- * Injection key for CreatorModeGuidePanel context.
+ * Injection key for mode-guide context.
  */
 import { reactive } from 'vue';
 

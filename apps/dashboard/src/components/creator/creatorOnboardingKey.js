@@ -1,5 +1,5 @@
 /**
- * Injection key for CreatorOnboardingWizardPanel context.
+ * Injection key for onboarding-wizard context.
  */
 import { reactive } from 'vue';
 

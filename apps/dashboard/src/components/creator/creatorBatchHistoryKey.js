@@ -1,5 +1,5 @@
 /**
- * Injection key for CreatorBatchHistoryPanel context.
+ * Injection key for batch-history context.
  */
 import { reactive } from 'vue';
 
