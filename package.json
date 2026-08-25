@@ -18,10 +18,5 @@
   },
   "devDependencies": {
     "knip": "^6.32.2"
-  },
-  "pnpm": {
-    "overrides": {
-      "layout-base": "1.0.2"
-    }
   }
 }
