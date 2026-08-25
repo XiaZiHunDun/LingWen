@@ -169,9 +169,8 @@ module.exports = {
             }
             return
           }
-          // Continue walking up — capture next segment's property name before moving
+          // Continue walking up; preserve propName (initial leaf)
           current = current.object
-          propName = extractPropName(current)
         }
       },
 
@@ -214,7 +213,6 @@ module.exports = {
             return
           }
           current = current.object
-          propName = extractPropName(current)
         }
       },
 
@@ -257,7 +255,6 @@ module.exports = {
             }
           }
           current = current.object
-          propName = extractPropName(current)
         }
       },
     }

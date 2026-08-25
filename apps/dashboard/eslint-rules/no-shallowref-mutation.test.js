@@ -56,12 +56,12 @@ ruleTester.run('no-shallowref-mutation', rule, {
     // Inner property mutation
     {
       code: `const x = shallowRef({foo: 1}); x.value.foo = 2;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     // Nested mutation
     {
       code: `const x = shallowRef({foo: {bar: 1}}); x.value.foo.bar = 2;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'bar' } }],
     },
     // Multiple violations in same file
     {
@@ -71,24 +71,24 @@ ruleTester.run('no-shallowref-mutation', rule, {
         x.value.baz = 2;
       `,
       errors: [
-        { messageId: 'mutateShallowRef' },
-        { messageId: 'mutateShallowRef' },
+        { messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } },
+        { messageId: 'mutateShallowRef', data: { name: 'x', prop: 'baz' } },
       ],
     },
     // Computed property mutation
     {
       code: `const x = shallowRef({foo: 1}); x.value['foo'] = 2;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     // Mixed computed/non-computed chain mutation
     {
       code: `const x = shallowRef({foo: {bar: 1}}); x.value.foo['bar'] = 2;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'bar' } }],
     },
     // delete shallowRef inner property (Phase 88 NEW)
     {
       code: `const x = shallowRef({foo: 1}); delete x.value.foo;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     // NOTE: `x.value?.foo = 2` cannot be tested directly because optional
     // chaining on assignment LHS is not yet standardized in espree
@@ -98,33 +98,33 @@ ruleTester.run('no-shallowref-mutation', rule, {
     // optional chain nested + delete (Phase 88 NEW)
     {
       code: `const x = shallowRef({foo: {bar: 1}}); delete x.value?.foo.bar;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'bar' } }],
     },
 
     // Phase 98 NEW: UpdateExpression on inner property
     {
       code: `const x = shallowRef({foo: 1}); x.value.foo++;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); ++x.value.foo;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); x.value.foo--;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); --x.value.foo;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); x.value['foo']++;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: {bar: 1}}); x.value.foo.bar++;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'bar' } }],
     },
     // NOTE: `x.value?.foo++` cannot be tested directly because optional
     // chaining on UpdateExpression argument is not parseable in espree
@@ -137,19 +137,19 @@ ruleTester.run('no-shallowref-mutation', rule, {
     // by AssignmentExpression handler; explicit tests document contract)
     {
       code: `const x = shallowRef({foo: 1}); x.value.foo += 1;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); x.value.foo -= 1;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); x.value['foo'] *= 2;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
     {
       code: `const x = shallowRef({foo: 1}); x.value.foo ??= 2;`,
-      errors: [{ messageId: 'mutateShallowRef' }],
+      errors: [{ messageId: 'mutateShallowRef', data: { name: 'x', prop: 'foo' } }],
     },
   ],
 })
