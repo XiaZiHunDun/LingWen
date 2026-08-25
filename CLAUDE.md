@@ -27,7 +27,7 @@
   Phase 78 spec count drift housekeeping (Phase 87)；
   All phases include 2-stage subagent review (spec + code quality).
   Cumulative: 33 shallowRef conversions, 1546 unit tests + 31 e2e + ~18 ESLint rule tests all PASS.
-    (Note: subsequent Phase 89/102.2/103/103.1/105a dead-code cleanup removed 1 test for a net of 1545 tests as of Phase 105b.)
+  (Note: subsequent Phase 89/102.2/103/103.1/105a dead-code cleanup removed 1 test for a net of 1545 tests as of Phase 105b.)
   详见 `docs/superpowers/specs/2026-08-21-phase8N-*.md` 各 phase spec.
 
 > **更新 (2026-08-23)**：Phase 89 CLAUDE.md v13.2 housekeeping 闭环——
