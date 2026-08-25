@@ -1,16 +1,12 @@
 /**
  * Studio API
- * (12 funcs)
+ * (11 funcs)
  */
 
 import { request } from './core.js';
 
 export async function fetchStudioProjects() {
   return request('/studio/projects');
-}
-
-async function fetchStudioActive() {
-  return request('/studio/active');
 }
 
 export async function setStudioActive(slug) {
