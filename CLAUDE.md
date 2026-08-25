@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v14.0 (Phase 99-105b knip-follow-up 闭环完成)
+> **版本**: v14.1 (Phase 106-113 CI/perf 闭环完成)
+  → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.2 (Phase 81-88 maintenance + ESLint extension 闭环完成)
   → v13.1 (Phase 68-80 dashboard perf + 测量 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
@@ -86,6 +87,21 @@
   `docs/superpowers/specs/2026-08-25-phase104-unused-types-audit-design.md`,
   `docs/superpowers/specs/2026-08-25-phase105a-unused-deps-cleanup-design.md`,
   `docs/superpowers/specs/2026-08-25-phase105b-knip-cleanup-housekeeping-design.md`.
+
+> **更新 (2026-08-25)**：Phase 106 + 106-followup + 109 + 110 + 111B + 113 CI/perf/prod-investigation 闭环——
+  Phase 106: CI step `pnpm exec knip` → `pnpm -C apps/dashboard exec knip` (knip 6.32.2 ignore paths resolve relative to cwd; root delegation alone insufficient); verified clean (exit 0).
+  Phase 106 follow-up: Web Vitals re-baseline (4 routes × 3 runs × 5 metrics) — 0 regressions vs Phase 76; added `.phase76-baseline/` to root .gitignore + deleted local backup.
+  Phase 109: same fix applied to root `package.json#scripts.knip` so `pnpm knip` from repo root also returns clean (was 48 false-positives).
+  Phase 110: attempted to fix `pnpm preview` JS error ("Cannot set properties of undefined (setting 'exports')") to enable prod-mode Web Vitals. Root cause: cytoscape-fcose / cose-base are webpack-bundled CJS; rollup's @rollup/plugin-commonjs fails on their nested `module.exports = ...` patterns inside webpackBootstrap. Tried 6 approaches (optimizeDeps.include, commonjsOptions.transformMixedEsModules/include regex, NAMED chunks, merge cytoscape into vendor) — all failed. Audit doc records findings; recommended Phase 111C (custom Vite plugin).
+  Phase 111B: attempted `pnpm patch cytoscape-fcose@2.2.0` (prepend module/exports polyfill + full ESM replacement). Both fail because inner webpackBootstrap still has `module.exports = ...` patterns. Deferred to Phase 111C.
+  Phase 113: CLAUDE.md v14.1 housekeeping (this entry).
+  Tests: 1545 PASS (unchanged).  Vue-tsc: 0 errors.  Build: OK.  knip gate: all 7 categories = 0.
+  Master ahead of handoff HEAD (9ea11010) by 6 commits: `3a607819`, `dc824871`, `a8af4669`, `8016c41d`, `0e052a2f`, `db3c4a82` (+ this housekeeping commit).
+  详见 `docs/superpowers/specs/2026-08-25-phase106-fix-ci-knip-gate-design.md`,
+  `docs/superpowers/specs/2026-08-25-phase109-root-knip-cwd-safe-design.md`,
+  `docs/superpowers/audit/2026-08-25-post-knip-vitals-rebaseline.md`,
+  `docs/superpowers/audit/2026-08-25-phase110-vite-preview-js-error-audit.md`,
+  `docs/superpowers/audit/2026-08-25-phase111b-pnpm-patch-deferred.md`.
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
