@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v14.1 (Phase 106-113 CI/perf 闭环完成)
+> **版本**: v14.2 (Phase 114 prod Web Vitals 终结)
+  → v14.1 (Phase 106-113 CI/perf 闭环完成)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.2 (Phase 81-88 maintenance + ESLint extension 闭环完成)
   → v13.1 (Phase 68-80 dashboard perf + 测量 闭环完成)
@@ -102,6 +103,17 @@
   `docs/superpowers/audit/2026-08-25-post-knip-vitals-rebaseline.md`,
   `docs/superpowers/audit/2026-08-25-phase110-vite-preview-js-error-audit.md`,
   `docs/superpowers/audit/2026-08-25-phase111b-pnpm-patch-deferred.md`.
+
+> **更新 (2026-08-26)**：Phase 114 prod Web Vitals 终结——正式接受 dev baseline 为权威——
+  Phase 114: Vite alias + ESM Proxy stub 修复尝试（5 个 aliases: cytoscape/cytoscape-fcose/cytoscape-cose-bilkent/cose-base/layout-base → `apps/dashboard/scripts/cytoscape-stub.mjs`）。
+  Build/Test/dev mode 全部 PASS，但 `pnpm preview` 出现 `ReferenceError: Cannot access 'H' before initialization`（Theme class 访问 vendor chunk 的 jsdom DOMWrapper `H` 时 TDZ）——与 Phase 112C 失败同款。
+  Root cause：alias 改变 mermaid chunk graph 初始化顺序，与 stub 返回什么（undefined vs Proxy）无关。
+  **决策**：prod Web Vitals 终结。dev baseline (Phase 106) 正式作为权威 measurement，理由 (a) dev 数字偏保守（HMR + 无 minification），passing 即代表 prod 也能 pass；(b) 5 个 phase (110/111B/111C/112/112C/114) 投入均失败，stub 方向已证伪；(c) 真正的修复需 custom rollup plugin (4-8h, 高风险) 或替换 mermaid (8-16h, feature work)，ROI 不匹配。
+  Master ahead of handoff HEAD (9ea11010) by 11 commits（含本次 housekeeping commit）。
+  Tests: 1545 PASS. Vue-tsc: 0 errors. Build: OK. knip gate: all 7 categories = 0.
+  详见 `docs/superpowers/specs/2026-08-26-phase114-cytoscape-vite-alias-design.md`,
+  `docs/superpowers/plans/2026-08-26-phase114-cytoscape-vite-alias.md`,
+  `docs/superpowers/audit/2026-08-26-phase114-cytoscape-alias-failed.md`。
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
@@ -562,6 +574,9 @@ infra/
 ---
 
 > **版本记录**：
+> - v14.2 (2026-08-26)：Phase 114 prod Web Vitals 终结。Vite alias + Proxy stub 修复尝试失败（同 Phase 112C TDZ），正式接受 dev baseline (Phase 106) 为权威。cytoscape stub 方向在 5 个 phase (110/111B/111C/112/112C/114) 投入后证伪。CLAUDE.md housekeeping。
+> - v14.1 (2026-08-25)：Phase 106 + 106-followup + 109 + 110 + 111B + 113 CI/perf/prod-investigation 闭环。6 commits 推进 CI/perf 工作，prod preview 修复尝试（Phase 110/111B）失败但 audit 完整。
+> - v14.0 (2026-08-25)：Phase 99-105b knip-follow-up 闭环完成（见 spec/audit docs 详）。
 > - v13.2 (2026-08-21)：Phase 81-88 maintenance + ESLint rule extension. 8 phases closed (v13.1 housekeeping + ESLint rule + dead cleanup + housekeeping).
 > - v13.1 (2026-08-21)：Phase 68-80 dashboard perf + 测量. shallowRef 33 conversions (Phase 77+78). Web Vitals baseline 4 routes × 5 metrics (Phase 76+79). 13 phases closed.
 > - v13.0 (2026-08-20)：Phase 60-67 dashboard 基础设施重构完成。
