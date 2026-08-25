@@ -27,6 +27,7 @@
   Phase 78 spec count drift housekeeping (Phase 87)；
   All phases include 2-stage subagent review (spec + code quality).
   Cumulative: 33 shallowRef conversions, 1546 unit tests + 31 e2e + ~18 ESLint rule tests all PASS.
+    (Note: subsequent Phase 89/102.2/103/103.1/105a dead-code cleanup removed 1 test for a net of 1545 tests as of Phase 105b.)
   详见 `docs/superpowers/specs/2026-08-21-phase8N-*.md` 各 phase spec.
 
 > **更新 (2026-08-23)**：Phase 89 CLAUDE.md v13.2 housekeeping 闭环——
@@ -278,7 +279,7 @@ style:
 **当前阶段**：Phase 60-105b 闭环（dashboard perf + 测量 + knip gate enforcement）
 **总章节数**：360 章正史正文（ch045 已补回；ch361–996 见 experimental/）
 **最新版本**：v14.0
-**上一版本**：v13.2 (Phase 81-88 maintenance + ESLint 完成)
+**上一版本**：v13.2 (Phase 81-88 maintenance + ESLint rule extension 完成)
 **发布状态**：Phase 60-105b 全部闭环完成（已合并）。
   Phase 16.7（删陈旧 infra 目录）已于 Phase 18（基础设施重构）完成。
   Phase 60-67 dashboard 基础设施重构 (v13.0) + Phase 68-80 perf + 测量 (v13.1) + Phase 81-88 maintenance + ESLint (v13.2) + Phase 89 housekeeping + Phase 95 knip integration + Phase 99-105b knip-follow-up (v14.0) 已全部合并。
