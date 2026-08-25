@@ -31,13 +31,13 @@
 
 > **更新 (2026-08-23)**：Phase 89 CLAUDE.md v13.2 housekeeping 闭环——
   bump version header to v13.2; mark Phase 89 plan commit (`docs(plan): Phase 89 — CLAUDE.md v13.2 bump`) for future reference.
-  详见 `docs/superpowers/plans/2026-08-23-phase89-claude-md-v13.2-bump.md`.
+  详见 `docs/superpowers/plans/2026-08-21-phase89-claude-md-v13-2-housekeeping.md`.
 
 > **更新 (2026-08-23)**：Phase 95 knip integration 闭环——
   add knip 6.32.2 devDep to root package.json (lockfile updated);
   knip.json config scaffold (entry/project/ignore base arrays);
   GitHub Actions dashboard-frontend-ci.yml adds knip step (non-blocking).
-  详见 `docs/superpowers/specs/2026-08-23-phase95-knip-ci-design.md` 与 `docs/superpowers/plans/2026-08-23-phase95-knip-ci.md`.
+  详见 `docs/superpowers/specs/2026-08-23-phase95-knip-ci-integration-design.md` 与 `docs/superpowers/plans/2026-08-23-phase95-knip-ci-integration.md`.
 
 > **更新 (2026-08-23)**：Phase 100 knip duplicate exports 闭环——
   delete 2 unused default exports (`useWidgetRegistry`, `logger`) per Phase 95 knip finding;
