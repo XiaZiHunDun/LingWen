@@ -12,7 +12,11 @@
     "resolveJsonModule": true,
     "types": [
       "node"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": [
     "tests/env.d.ts",
