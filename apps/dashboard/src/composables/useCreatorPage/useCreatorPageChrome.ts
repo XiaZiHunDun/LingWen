@@ -9,7 +9,7 @@
 import { computed } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 
-export interface ChromeContext {
+interface ChromeContext {
   overview: Ref<unknown>;
   loading: Ref<boolean>;
   uiProfile: ComputedRef<Record<string, unknown>>;

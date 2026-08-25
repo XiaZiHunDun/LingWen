@@ -9,7 +9,7 @@ import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { computeLineDiff, countDiffChanges } from '../../utils/textDiffUtils.js';
 
-export interface CheckpointEntry {
+interface CheckpointEntry {
   id: string;
   label: string;
   at: string;
@@ -17,12 +17,12 @@ export interface CheckpointEntry {
   bodySnapshot: string;
 }
 
-export interface DiffViewLine {
+interface DiffViewLine {
   type: string;
   text: string;
 }
 
-export interface DiffView {
+interface DiffView {
   checkpoint: CheckpointEntry;
   lines: DiffViewLine[];
   changeCount: number;

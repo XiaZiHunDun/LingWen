@@ -12,7 +12,7 @@ import {
   restoreCreatorSettingsSnapshot,
 } from '../../api/index.js';
 
-export interface SettingsSnapshot {
+interface SettingsSnapshot {
   id: string;
   created_at?: string;
   author?: string;

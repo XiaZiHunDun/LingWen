@@ -11,7 +11,7 @@
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 
-export interface BodySelection {
+interface BodySelection {
   start: number;
   end: number;
   text: string;
@@ -24,14 +24,14 @@ export interface WorkbenchSelectionDeps {
   setAgentStatusLine?: (value: string) => void;
 }
 
-export interface SelectionControls {
+interface SelectionControls {
   styleStrength: number;
   selectionLocked: boolean;
   allowWorldbuildingFill: boolean;
   goalTag: string;
 }
 
-export interface QualityHint {
+interface QualityHint {
   level: string;
   text: string;
   source?: string;

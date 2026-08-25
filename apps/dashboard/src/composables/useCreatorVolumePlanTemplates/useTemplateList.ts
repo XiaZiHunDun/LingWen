@@ -10,7 +10,7 @@ import { computed, ref, watch } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { fetchCreatorVolumeTemplates } from '../../api/index.js';
 
-export interface TemplateRow {
+interface TemplateRow {
   id?: string;
   name?: string;
   scope?: 'project' | 'factory';

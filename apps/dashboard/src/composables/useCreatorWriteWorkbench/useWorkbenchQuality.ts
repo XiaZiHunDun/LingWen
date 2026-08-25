@@ -19,16 +19,16 @@ import {
 } from '../../utils/creatorLightValidationUtils.js';
 import { buildInlineConflictMarkers } from '../../utils/creatorInlineConflictUtils.js';
 
-export type QualityLevel = 'ok' | 'info' | 'warn';
+type QualityLevel = 'ok' | 'info' | 'warn';
 
-export interface QualityHint {
+interface QualityHint {
   level: QualityLevel;
   text: string;
   source?: string;
   markerId?: string;
 }
 
-export interface IntentEntry {
+interface IntentEntry {
   id: string;
   text: string;
   mood: string;
@@ -37,7 +37,7 @@ export interface IntentEntry {
   timestamp: string;
 }
 
-export interface LightValidationIssue {
+interface LightValidationIssue {
   id: string;
   kind?: string;
   level: 'warn' | 'info';
@@ -47,27 +47,27 @@ export interface LightValidationIssue {
   fixHint?: string;
 }
 
-export interface LogicCheckIssue {
+interface LogicCheckIssue {
   title?: string;
   message?: string;
   severity?: string;
   chapter?: number;
 }
 
-export interface LogicCheckResult {
+interface LogicCheckResult {
   passed: boolean;
   p0_count?: number;
   issues?: LogicCheckIssue[];
 }
 
-export interface Deviation {
+interface Deviation {
   chapter?: number;
   severity?: string;
   message?: string;
   paragraph?: number;
 }
 
-export interface InlineConflictMarker {
+interface InlineConflictMarker {
   id: string;
   kind?: string;
   level?: string;
@@ -76,7 +76,7 @@ export interface InlineConflictMarker {
   fixHint?: string | null;
 }
 
-export interface AgentLike {
+interface AgentLike {
   runPlan: (mode: string, label: string) => Promise<unknown>;
   generating: Ref<boolean>;
   statusLine: Ref<string>;
@@ -84,7 +84,7 @@ export interface AgentLike {
   directorAdvice: Ref<unknown[]>;
 }
 
-export interface OverviewLike {
+interface OverviewLike {
   slug?: string;
   name?: string;
   creation_mode?: string;

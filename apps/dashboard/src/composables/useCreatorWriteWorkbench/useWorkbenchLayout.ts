@@ -23,43 +23,43 @@ import { resolveChapterEntities } from '../../utils/creatorChapterEntityUtils.js
 import { useEffectiveCreationMode } from '../useEffectiveCreationMode.js';
 import { updateCreatorCreationMode } from '../../api/creator.js';
 
-export type CreationMode = 'companion' | 'advance' | 'studio';
+type CreationMode = 'companion' | 'advance' | 'studio';
 const VALID_CREATION_MODES: ReadonlyArray<CreationMode> = ['companion', 'advance', 'studio'];
 
-export interface Deviation {
+interface Deviation {
   chapter?: number;
   severity?: string;
   message?: string;
 }
 
-export interface LogicIssue {
+interface LogicIssue {
   title?: string;
   message?: string;
   severity?: string;
   chapter?: number;
 }
 
-export interface OverviewLike {
+interface OverviewLike {
   slug?: string;
   name?: string;
   creation_mode?: CreationMode | string;
   deviations?: Deviation[];
 }
 
-export interface MemoryAsset {
+interface MemoryAsset {
   id: string;
   name: string;
   [k: string]: unknown;
 }
 
-export interface ConsistencyItem {
+interface ConsistencyItem {
   id: string;
   level: 'warn' | 'info' | 'ok';
   text: string;
   kind: 'deviation' | 'logic' | 'memory';
 }
 
-export interface GoalCardLines {
+interface GoalCardLines {
   line1: string;
   line2: string;
   line3: string;

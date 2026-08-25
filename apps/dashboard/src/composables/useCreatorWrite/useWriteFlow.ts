@@ -19,12 +19,12 @@ import {
 import { saveWriteResume } from '../../utils/writeResumeStorage.js';
 import { extractMentionedEntityNames } from '../../utils/creatorChapterEntityUtils.js';
 
-export interface ChapterRow {
+interface ChapterRow {
   chapter: number;
   has_body?: boolean;
 }
 
-export interface Deviation {
+interface Deviation {
   chapter?: number;
   severity?: string;
   volume_label?: string;

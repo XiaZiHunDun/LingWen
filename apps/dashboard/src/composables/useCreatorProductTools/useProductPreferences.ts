@@ -25,7 +25,7 @@ import {
 } from '../../utils/creatorPreferencesStorage.js';
 import { preferencesFromApi, preferencesToApi } from '../../utils/creatorPreferencesApi.js';
 
-export type PreferencesShape = ReturnType<typeof loadCreatorPreferences>;
+type PreferencesShape = ReturnType<typeof loadCreatorPreferences>;
 
 export interface PreferencesDeps {
   error: Ref<string | null>;
