@@ -2,12 +2,12 @@
   "route": "/production",
   "slug": "production",
   "run": 1,
-  "timestamp": "2026-08-21T06:13:09.218Z",
+  "timestamp": "2026-08-25T14:10:44.860Z",
   "metrics": {
-    "lcp": 860,
+    "lcp": 856,
     "cls": 0.03035530630747477,
-    "fcp": 692,
+    "fcp": 688,
     "tbt": 0,
-    "inp": null
+    "inp": 1.2999999523162842
   }
 }

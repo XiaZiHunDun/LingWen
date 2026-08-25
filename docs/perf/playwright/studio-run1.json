@@ -2,12 +2,12 @@
   "route": "/studio",
   "slug": "studio",
   "run": 1,
-  "timestamp": "2026-08-21T06:12:56.093Z",
+  "timestamp": "2026-08-25T14:10:31.712Z",
   "metrics": {
-    "lcp": 956,
+    "lcp": 852,
     "cls": 0.03035530630747477,
-    "fcp": 788,
+    "fcp": 684,
     "tbt": 0,
-    "inp": null
+    "inp": 1.7999999523162842
   }
 }

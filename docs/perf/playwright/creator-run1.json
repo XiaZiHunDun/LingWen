@@ -2,12 +2,12 @@
   "route": "/creator",
   "slug": "creator",
   "run": 1,
-  "timestamp": "2026-08-21T06:12:42.768Z",
+  "timestamp": "2026-08-25T14:10:18.513Z",
   "metrics": {
-    "lcp": 928,
+    "lcp": 900,
     "cls": 0.062131734530131016,
-    "fcp": 768,
+    "fcp": 724,
     "tbt": 0,
-    "inp": null
+    "inp": 0.9000000953674316
   }
 }
