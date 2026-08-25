@@ -43,6 +43,13 @@ ruleTester.run('no-shallowref-mutation', rule, {
     { code: `const x = shallowRef({foo: 1}); x.value?.foo;` },
     // delete non-shallowRef (Phase 88 NEW) — OK
     { code: `const obj = {foo: 1}; delete obj.foo;` },
+
+    // Phase 98 NEW: wholesale update on whole .value is OK
+    // (postfix / prefix, increment / decrement)
+    { code: `const x = shallowRef({foo: 1}); x.value++;` },
+    { code: `const x = shallowRef({foo: 1}); ++x.value;` },
+    { code: `const x = shallowRef({foo: 1}); x.value--;` },
+    { code: `const x = shallowRef({foo: 1}); --x.value;` },
   ],
 
   invalid: [
@@ -91,6 +98,57 @@ ruleTester.run('no-shallowref-mutation', rule, {
     // optional chain nested + delete (Phase 88 NEW)
     {
       code: `const x = shallowRef({foo: {bar: 1}}); delete x.value?.foo.bar;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+
+    // Phase 98 NEW: UpdateExpression on inner property
+    {
+      code: `const x = shallowRef({foo: 1}); x.value.foo++;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); ++x.value.foo;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); x.value.foo--;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); --x.value.foo;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); x.value['foo']++;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: {bar: 1}}); x.value.foo.bar++;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    // NOTE: `x.value?.foo++` cannot be tested directly because optional
+    // chaining on UpdateExpression argument is not parseable in espree
+    // (any ecmaVersion fails: "Optional chaining cannot appear in
+    // left-hand side"). The handler's chain walk descends through
+    // segments without filtering on `optional`, mirroring the
+    // AssignmentExpression note above.
+
+    // Phase 98 NEW: CompoundAssignment lock-in (already implicitly covered
+    // by AssignmentExpression handler; explicit tests document contract)
+    {
+      code: `const x = shallowRef({foo: 1}); x.value.foo += 1;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); x.value.foo -= 1;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); x.value['foo'] *= 2;`,
+      errors: [{ messageId: 'mutateShallowRef' }],
+    },
+    {
+      code: `const x = shallowRef({foo: 1}); x.value.foo ??= 2;`,
       errors: [{ messageId: 'mutateShallowRef' }],
     },
   ],

@@ -175,6 +175,49 @@ module.exports = {
         }
       },
 
+      // Detect update: x.value.foo++ / ++x.value.foo / --x.value.foo (Phase 98 NEW)
+      UpdateExpression(node) {
+        const arg = node.argument
+
+        // Wholesale replacement: x.value++ / ++x.value / x.value-- / --x.value
+        // These are NOT flagged — they replace the whole .value reference.
+        if (
+          arg.type === 'MemberExpression' &&
+          !arg.computed &&
+          arg.property.type === 'Identifier' &&
+          arg.property.name === 'value' &&
+          arg.object.type === 'Identifier'
+        ) {
+          return
+        }
+
+        // Walk chain to find .value access of shallowRef.
+        // For x.value.foo++ the chain is: foo ← value ← x
+        // For mixed chains keep walking through computed segments.
+        let current = arg
+        let propName = extractPropName(current)
+        while (current && current.type === 'MemberExpression') {
+          if (
+            !current.computed &&
+            current.property.type === 'Identifier' &&
+            current.property.name === 'value' &&
+            current.object.type === 'Identifier'
+          ) {
+            const refName = current.object.name
+            if (lookupRefType(refName) === 'shallowRef') {
+              context.report({
+                node,
+                messageId: 'mutateShallowRef',
+                data: { name: refName, prop: propName },
+              })
+            }
+            return
+          }
+          current = current.object
+          propName = extractPropName(current)
+        }
+      },
+
       // Detect delete: delete x.value.foo (Phase 88 NEW)
       UnaryExpression(node) {
         // Only flag `delete` operator (not !, -, +, typeof, void)
