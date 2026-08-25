@@ -19,7 +19,8 @@
     "src/composables/useDevice.js",
     "src/composables/useWidgetRegistry.js",
     "src/config/creatorPanelMatrix.js",
-    "tests/visual-audit/helpers/capture-ui-audit.js"
+    "tests/visual-audit/helpers/capture-ui-audit.js",
+    "tests/helpers/strict-test-types.ts"
   ],
   "ignoreBinaries": ["knip"]
 }
