@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v13.2 (Phase 81-88 maintenance + ESLint extension 闭环完成)
+> **版本**: v14.0 (Phase 99-105b knip-follow-up 闭环完成)
+  → v13.2 (Phase 81-88 maintenance + ESLint extension 闭环完成)
   → v13.1 (Phase 68-80 dashboard perf + 测量 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
 > **更新 (2026-08-20)**：Phase 60-67 落地——useCreatorWriteWorkbench 拆为 facade + 4 submodules (Phase 60)；清 5 workbench legacy 占位 (Phase 61)；api/creator.js 686L 拆为 8 sibling submodules + 130 tests (Phase 62)；useNavStore.js 17 helpers 抽出为 useNavUrlUtils composable + 88 tests (Phase 63)；6 nav constants 抽到 navConstants.ts 共享模块 (Phase 64)；137 文件 trailing newline 修复 (Phase 65)；6 跨流 gap e2e integration tests (Phase 66)；Phase 66 follow-up 闭合 (Phase 67)。详见 `docs/superpowers/specs/2026-08-20-phase6N-*.md` 各 phase spec.
@@ -27,6 +28,63 @@
   All phases include 2-stage subagent review (spec + code quality).
   Cumulative: 33 shallowRef conversions, 1546 unit tests + 31 e2e + ~18 ESLint rule tests all PASS.
   详见 `docs/superpowers/specs/2026-08-21-phase8N-*.md` 各 phase spec.
+
+> **更新 (2026-08-23)**：Phase 89 CLAUDE.md v13.2 housekeeping 闭环——
+  bump version header to v13.2; mark Phase 89 plan commit (`docs(plan): Phase 89 — CLAUDE.md v13.2 bump`) for future reference.
+  详见 `docs/superpowers/plans/2026-08-23-phase89-claude-md-v13.2-bump.md`.
+
+> **更新 (2026-08-23)**：Phase 95 knip integration 闭环——
+  add knip 6.32.2 devDep to root package.json (lockfile updated);
+  knip.json config scaffold (entry/project/ignore base arrays);
+  GitHub Actions dashboard-frontend-ci.yml adds knip step (non-blocking).
+  详见 `docs/superpowers/specs/2026-08-23-phase95-knip-ci-design.md` 与 `docs/superpowers/plans/2026-08-23-phase95-knip-ci.md`.
+
+> **更新 (2026-08-23)**：Phase 100 knip duplicate exports 闭环——
+  delete 2 unused default exports (`useWidgetRegistry`, `logger`) per Phase 95 knip finding;
+  knip Unused exports 2 → 0.
+  Phase 99 knip gate promote 闭环：knip CI step flipped from non-blocking (`|| echo`) to hard error;
+  pre-existing pnpm setup version conflict surfaced (worked around in Phase 99.1).
+  详见 `docs/superpowers/specs/2026-08-23-phase100-knip-duplicates-design.md` 与 `docs/superpowers/specs/2026-08-24-phase99-knip-promote-to-error-design.md`.
+
+> **更新 (2026-08-24)**：Phase 99.1 + 102 + 102.1 + 102.2 knip-setup 闭环——
+  Phase 99.1: remove `version: 9` from 11 `pnpm/action-setup@v4` invocations in 6 workflows;
+  let `package.json#packageManager: "pnpm@9.0.0"` be single source of truth.
+  Phase 102: delete 30 unused files + add 5 knip false-positives to `apps/dashboard/knip.json#ignore`;
+  out-of-plan commit 3 moves `knip.json` from root to `apps/dashboard/` (knip doesn't walk parent dirs).
+  Phase 102.1: restore root `pnpm knip` delegation (root `package.json` script) + clean 5 stale
+  JSDoc comments in preserved creator key files.
+  Phase 102.2: remove unused `eslint-plugin-local-rules` devDep + add `ignoreBinaries: ["knip"]`
+  to `apps/dashboard/knip.json` (correct field name per knip 6.32.2 schema; "binaries" rejected).
+  Cumulative: knip Unused devDependencies 0, Unlisted binaries 0.
+  详见 `docs/superpowers/specs/2026-08-24-phase99.1-pnpm-setup-fix-design.md`,
+  `docs/superpowers/specs/2026-08-24-phase102-unused-files-audit-design.md`,
+  `docs/superpowers/specs/2026-08-24-phase102.1-knip-config-and-comment-cleanup-design.md`,
+  `docs/superpowers/specs/2026-08-24-phase102.2-clean-devDep-and-binary-config-design.md`.
+
+> **更新 (2026-08-25)**：Phase 103 + 103.1 + 104 + 105a + 105b knip-follow-up 闭环——
+  Phase 103: delete 47 unused exports (4 whole-file deletes, 19 partial source edits,
+  barrel re-exports of dead sources stripped) + 1 dead file (`types/index.ts`) + 9 dead types
+  in `types/composables.ts`; pivot to knip.json#ignore for `useWidgetRegistry.js` /
+  `creatorPanelMatrix.js` (live consumers discovered mid-implementation); `composables/index.ts`
+  added to knip.json#ignore (public-API barrel). All 7 subcategories dead exports cleared.
+  Phase 103.1: delete dead `useWriteValidation.ts` (zero consumers post-Phase 103) + 2 stale JSDoc
+  references; knip Unused files 1 → 0.
+  Phase 104: drop `export` keyword from 29 dead type declarations across 9 source files + add
+  `tests/helpers/strict-test-types.ts` to `apps/dashboard/knip.json#ignore` (knip can't trace
+  helper-function return types); knip Unused exported types 33 → 0.
+  Phase 105a: delete 3 truly-dead deps (`@vueuse/core`, `animate.css`, `vfonts`) + drop
+  `@import 'animate.css';` from `style.css:1`; knip Unused dependencies 3 → 0.
+  Phase 105b: housekeeping — correct 4 doc inaccuracies flagged by reviewers (Phase 102.2/104/105a
+  spec wording) + delete stale `apps/dashboard/pnpm-lock.yaml` (Phase 17.2 npm-lock artifact
+  ignored by pnpm 9 workspace mode).
+  Cumulative: knip gate fully clean (Unused exports 0, files 0, exported types 0, dependencies 0,
+  devDependencies 0, Unlisted binaries 0, Duplicate exports 0).
+  Tests: 1545 PASS. Vue-tsc: 0 errors. Build: OK.
+  详见 `docs/superpowers/specs/2026-08-24-phase103-unused-exports-audit-design.md`,
+  `docs/superpowers/specs/2026-08-24-phase103.1-delete-dead-useWriteValidation-design.md`,
+  `docs/superpowers/specs/2026-08-25-phase104-unused-types-audit-design.md`,
+  `docs/superpowers/specs/2026-08-25-phase105a-unused-deps-cleanup-design.md`,
+  `docs/superpowers/specs/2026-08-25-phase105b-knip-cleanup-housekeeping-design.md`.
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
@@ -217,13 +275,13 @@ style:
 ## 当前项目状态
 
 **项目名称**：《星陨纪元》
-**当前阶段**：Phase 60-80 闭环（dashboard perf + 测量）
+**当前阶段**：Phase 60-105b 闭环（dashboard perf + 测量 + knip gate enforcement）
 **总章节数**：360 章正史正文（ch045 已补回；ch361–996 见 experimental/）
-**最新版本**：v13.2
-**上一版本**：v12.0 (Phase 18 业务边界 + 接口化 完成)
-**发布状态**：Phase 60-80 全部闭环完成（已合并）。
+**最新版本**：v14.0
+**上一版本**：v13.2 (Phase 81-88 maintenance + ESLint 完成)
+**发布状态**：Phase 60-105b 全部闭环完成（已合并）。
   Phase 16.7（删陈旧 infra 目录）已于 Phase 18（基础设施重构）完成。
-  Phase 60-67 dashboard 基础设施重构 (v13.0) + Phase 68-80 perf + 测量 (v13.1) + Phase 81-88 maintenance + ESLint (v13.2) 已全部合并。
+  Phase 60-67 dashboard 基础设施重构 (v13.0) + Phase 68-80 perf + 测量 (v13.1) + Phase 81-88 maintenance + ESLint (v13.2) + Phase 89 housekeeping + Phase 95 knip integration + Phase 99-105b knip-follow-up (v14.0) 已全部合并。
 **汇总状态**：全文正文已更新（07_汇总仓库/全文正文/星陨纪元_全文正文_v9.10.md，2.47MB，359章节；v9.11/v9.12 未触发正文变更）
 
 ### 工作流结构（22步）
