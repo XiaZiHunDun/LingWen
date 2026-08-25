@@ -2,14 +2,14 @@
 
 > **Date**: 2026-08-25
 > **Phase**: 104
-> **Source**: Phase 99 knip CI integration follow-up — `Unused exported types (10)` (~27 individual type names)
+> **Source**: Phase 99 knip CI integration follow-up — `Unused exported types (33 — actual was 33)` (~27 individual type names)
 > **Status**: Design
 
 ---
 
 ## 1. Context
 
-Phase 103 cleared `Unused exports (0)`. Phase 103.1 + 102.2 + 102.1 cleared `Unused files` + `Unused devDependencies` + `Unlisted binaries`. The remaining knip finding is `Unused exported types (10)` across 10 source files.
+Phase 103 cleared `Unused exports (0)`. Phase 103.1 + 102.2 + 102.1 cleared `Unused files` + `Unused devDependencies` + `Unlisted binaries`. The remaining knip finding is `Unused exported types (33 — actual was 33)` across 10 source files.
 
 Phase 104 reduces this to 0 by:
 - Dropping `export` keyword from 22 truly-dead type declarations across 9 files (the types stay in their files as internal interfaces)
@@ -68,7 +68,7 @@ Add `tests/helpers/strict-test-types.ts` to the existing `ignore` array in `apps
 
 | Category | File | Change |
 |----------|------|--------|
-| Edit | 9 source files (above) | Drop `export` from 22 type declarations |
+| Edit | 9 source files (above) | Drop `export` from 29 type declarations |
 | Edit | `apps/dashboard/knip.json` | Add 1 ignore entry |
 | **Total** | **10 file operations** | |
 
@@ -79,7 +79,7 @@ Add `tests/helpers/strict-test-types.ts` to the existing `ignore` array in `apps
 ## 6. Test Strategy
 
 **No new tests.** Rationale:
-- All 22 type declarations stay in their files; only the `export` keyword is removed.
+- All 29 type declarations stay in their files; only the `export` keyword is removed.
 - Internal usage within the same file still works (verified by grep per spec §4.2).
 - 1545 existing tests still cover all production behavior unchanged by this phase.
 - 1545 tests passing after edit is the test.
@@ -92,11 +92,11 @@ Add `tests/helpers/strict-test-types.ts` to the existing `ignore` array in `apps
 
 **Commit 1** — 9 source files (drop `export` keywords):
 ```
-refactor(cleanup): drop export from 22 dead type declarations (Phase 104)
+refactor(cleanup): drop export from 29 dead type declarations (Phase 104)
 
 Phase 104 — reduce knip Unused exported types from 27 names to 4 (test helpers):
 
-Drop \`export\` keyword from 22 type declarations across 9 source files.
+Drop \`export\` keyword from 29 type declarations across 9 source files.
 The types remain in their files as internal interfaces for in-file use.
 
 - useCreatorPageChrome.ts: ChromeContext
@@ -154,7 +154,7 @@ None. Scope confirmed (Option A: full audit 10 files).
 
 ## 9. Success Criteria
 
-- [ ] 22 type declarations in 9 source files have `export` keyword removed
+- [ ] 29 type declarations in 9 source files have `export` keyword removed
 - [ ] `tests/helpers/strict-test-types.ts` added to `apps/dashboard/knip.json#ignore`
 - [ ] `pnpm exec knip` reports `Unused exported types (0)`
 - [ ] Other knip categories unchanged (Unused exports, Unused files, Unused deps, Unused devDeps, Unlisted binaries all remain at their Phase 102.2 / 103 / 103.1 / 105a-pending state)

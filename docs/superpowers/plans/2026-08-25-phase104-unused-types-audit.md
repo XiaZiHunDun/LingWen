@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Eliminate knip's `Unused exported types` category by dropping `export` keyword from 22 dead type declarations across 9 source files + adding 1 ignore entry for the public test-API helpers file.
+**Goal:** Eliminate knip's `Unused exported types` category by dropping `export` keyword from 29 dead type declarations across 9 source files + adding 1 ignore entry for the public test-API helpers file.
 
 **Architecture:** Two atomic commits — source edits (Commit 1) + knip.json config edit (Commit 2). Surgical, no code logic changes (types remain in-file).
 
@@ -74,7 +74,7 @@ Expected: zero matches.
 cd /home/ailearn/projects/LingWen/apps/dashboard && pnpm exec knip --reporter=compact 2>&1 | grep "^Unused exported types"
 ```
 
-Expected: `Unused exported types (10)`.
+Expected: `Unused exported types (33 — actual was 33)`.
 
 ```bash
 cd /home/ailearn/projects/LingWen/apps/dashboard && pnpm exec vitest run 2>&1 | tail -3
@@ -84,7 +84,7 @@ Expected: `1545 passed`. If red, STOP.
 
 ---
 
-## Task 2: Commit 1 — Drop `export` from 22 type declarations in 9 files
+## Task 2: Commit 1 — Drop `export` from 29 type declarations in 9 files
 
 **Files:**
 - Modify: 9 source files (22 `export` keyword removals, no other changes)
@@ -183,7 +183,7 @@ Expected: 0 errors.
 cd /home/ailearn/projects/LingWen/apps/dashboard && pnpm exec knip --reporter=compact 2>&1 | grep "^Unused exported types"
 ```
 
-Expected: count is still 10 (or 6 — 22 dead types → 4 test types remain). If count is 4 (just test types), source edit was fully successful.
+Expected: count is still 10 (or 6 — 29 dead types → 4 test types remain). If count is 4 (just test types), source edit was fully successful.
 
 If count is still 10, check that the 22 edits actually removed exports (one or more may have been missed). STOP and investigate.
 
@@ -196,9 +196,9 @@ cd /home/ailearn/projects/LingWen && git add apps/dashboard/src/composables/useC
 Expected: 9 files staged.
 
 ```bash
-cd /home/ailearn/projects/LingWen && git commit -m "refactor(cleanup): drop export from 22 dead type declarations (Phase 104)" -m "Phase 104 — reduce knip Unused exported types from 27 names to 4 (test helpers):
+cd /home/ailearn/projects/LingWen && git commit -m "refactor(cleanup): drop export from 29 dead type declarations (Phase 104)" -m "Phase 104 — reduce knip Unused exported types from 27 names to 4 (test helpers):
 
-Drop \`export\` keyword from 22 type declarations across 9 source files.
+Drop \`export\` keyword from 29 type declarations across 9 source files.
 The types remain in their files as internal interfaces for in-file use.
 
 - useCreatorPageChrome.ts: ChromeContext
@@ -388,7 +388,7 @@ Expected: clean.
 
 ## Success Criteria
 
-- [ ] 22 type declarations in 9 source files have `export` keyword removed
+- [ ] 29 type declarations in 9 source files have `export` keyword removed
 - [ ] `tests/helpers/strict-test-types.ts` added to `apps/dashboard/knip.json#ignore`
 - [ ] `pnpm exec knip` reports `Unused exported types (0)` (line absent)
 - [ ] Other knip categories unchanged

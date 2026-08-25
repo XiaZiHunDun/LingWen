@@ -186,7 +186,7 @@ cd /home/ailearn/projects/LingWen && git add apps/dashboard/package.json && git 
 ```
 
 ```bash
-cd /home/ailearn/projects/LingWen && git commit -m "refactor(cleanup): remove unused animate.css dep (Phase 105a)" -m "Phase 105a — resolve knip Unused dependencies (1 of 3):
+cd /home/ailearn/projects/LingWen && git commit -m "build(deps): remove unused animate.css dep (Phase 105a)" -m "Phase 105a — resolve knip Unused dependencies (1 of 3):
 
 - Delete \`animate.css\` from apps/dashboard/package.json devDeps
 - Delete \`@import 'animate.css';\` from
@@ -278,7 +278,7 @@ cd /home/ailearn/projects/LingWen && git add apps/dashboard/package.json && git 
 ```
 
 ```bash
-cd /home/ailearn/projects/LingWen && git commit -m "refactor(cleanup): remove unused @vueuse/core dep (Phase 105a)" -m "Phase 105a — resolve knip Unused dependencies (2 of 3):
+cd /home/ailearn/projects/LingWen && git commit -m "build(deps): remove unused @vueuse/core dep (Phase 105a)" -m "Phase 105a — resolve knip Unused dependencies (2 of 3):
 
 - Delete \`@vueuse/core\` from apps/dashboard/package.json devDeps
 - pnpm install auto-updates pnpm-lock.yaml
@@ -377,7 +377,7 @@ cd /home/ailearn/projects/LingWen && git add apps/dashboard/package.json && git 
 ```
 
 ```bash
-cd /home/ailearn/projects/LingWen && git commit -m "refactor(cleanup): remove unused vfonts dep (Phase 105a)" -m "Phase 105a — resolve knip Unused dependencies (3 of 3, final):
+cd /home/ailearn/projects/LingWen && git commit -m "build(deps): remove unused vfonts dep (Phase 105a)" -m "Phase 105a — resolve knip Unused dependencies (3 of 3, final):
 
 - Delete \`vfonts\` from apps/dashboard/package.json devDeps
 - pnpm install auto-updates pnpm-lock.yaml

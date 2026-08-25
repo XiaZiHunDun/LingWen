@@ -127,7 +127,7 @@ Reverts all 3 commits. No data loss.
 
 **Commit 1** — Remove animate.css (also drops the @import):
 ```
-refactor(cleanup): remove unused animate.css dep (Phase 105a)
+build(deps): remove unused animate.css dep (Phase 105a)
 
 Phase 105a — resolve knip Unused dependencies (1 of 3):
 
@@ -149,7 +149,7 @@ Refs: docs/superpowers/specs/2026-08-25-phase105a-unused-deps-cleanup-design.md
 
 **Commit 2** — Remove @vueuse/core:
 ```
-refactor(cleanup): remove unused @vueuse/core dep (Phase 105a)
+build(deps): remove unused @vueuse/core dep (Phase 105a)
 
 Phase 105a — resolve knip Unused dependencies (2 of 3):
 
@@ -168,7 +168,7 @@ Refs: docs/superpowers/specs/2026-08-25-phase105a-unused-deps-cleanup-design.md
 
 **Commit 3** — Remove vfonts:
 ```
-refactor(cleanup): remove unused vfonts dep (Phase 105a)
+build(deps): remove unused vfonts dep (Phase 105a)
 
 Phase 105a — resolve knip Unused dependencies (3 of 3, final):
 
