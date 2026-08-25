@@ -49,7 +49,7 @@ jobs:
         run: pnpm lint:all
 
       - name: Run knip (dead-export detection)
-        run: pnpm exec knip
+        run: pnpm -C apps/dashboard exec knip
 
       # Relaxed test tsc (pnpm typecheck); strict gate: pnpm typecheck:tests:strict
       - name: Typecheck tests (relaxed)
