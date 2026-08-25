@@ -275,8 +275,8 @@ None. Scope confirmed (OptionA: full audit).
 
 ## 10. References
 
-- Phase 89 plan: `docs/superpowers/plans/2026-08-23-phase89-claude-md-v13.2-bump.md`
-- Phase 95 spec: `docs/superpowers/specs/2026-08-23-phase95-knip-ci-design.md`
+- Phase 89 plan: `docs/superpowers/plans/2026-08-21-phase89-claude-md-v13-2-housekeeping.md`
+- Phase 95 spec: `docs/superpowers/specs/2026-08-23-phase95-knip-ci-integration-design.md`
 - Phase 99 spec: `docs/superpowers/specs/2026-08-24-phase99-knip-promote-to-error-design.md`
 - Phase 100 spec: `docs/superpowers/specs/2026-08-24-phase100-knip-duplicates-design.md`
 - Phase 99.1 spec: `docs/superpowers/specs/2026-08-24-phase99.1-pnpm-setup-fix-design.md`
