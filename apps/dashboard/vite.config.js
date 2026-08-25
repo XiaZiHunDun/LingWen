@@ -1,29 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath } from 'node:url'
-
-// === Phase 114: cytoscape family stub ===
-// mermaid 11.16 architectureDiagram chunk statically imports
-// cytoscape/cytoscape-fcose/cytoscape-cose-bilkent/cose-base/layout-base.
-// These are webpack-bundled UMD modules that rollup's commonjs plugin
-// can't wrap. Alias to no-op ESM stub because LingWen never renders
-// architecture diagrams (only `graph TD` flowcharts).
-const cytoscapeStubPath = fileURLToPath(
-  new URL('./scripts/cytoscape-stub.mjs', import.meta.url)
-)
-const CYTOSCAPE_STUB_ALIASES = [
-  { find: /^cytoscape$/, replacement: cytoscapeStubPath },
-  { find: /^cytoscape-fcose$/, replacement: cytoscapeStubPath },
-  { find: /^cytoscape-cose-bilkent$/, replacement: cytoscapeStubPath },
-  { find: /^cose-base$/, replacement: cytoscapeStubPath },
-  { find: /^layout-base$/, replacement: cytoscapeStubPath },
-]
 
 export default defineConfig({
   plugins: [vue()],
-  resolve: {
-    alias: CYTOSCAPE_STUB_ALIASES,
-  },
   server: {
     host: '0.0.0.0',
     port: 5173,
