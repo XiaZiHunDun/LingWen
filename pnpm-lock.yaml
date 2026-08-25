@@ -26,9 +26,6 @@ importers:
       pinia:
         specifier: ^4.0.2
         version: 4.0.2(@vue/devtools-api@6.6.4)(typescript@5.9.3)(vue@3.5.40(typescript@5.9.3))
-      vfonts:
-        specifier: ^0.0.3
-        version: 0.0.3
       vue:
         specifier: ^3.5.0
         version: 3.5.40(typescript@5.9.3)
@@ -2246,9 +2243,6 @@ packages:
     resolution: {integrity: sha512-H9V1zGRLQZg9b+GdMk8MXDN2Lva0zx72MPahDKc30v+DtwKjfyOSXWRIX4t2mhDubM1H09gPhWeth/BJWPHGUw==}
     peerDependencies:
       vue: ^3.0.11
-
-  vfonts@0.0.3:
-    resolution: {integrity: sha512-nguyw8L6Un8eelg1vQ31vIU2ESxqid7EYmy8V+MDeMaHBqaRSkg3dTBToC1PR00D89UzS/SLkfYPnx0Wf23IQQ==}
 
   vite@6.4.3:
     resolution: {integrity: sha512-NTKlcQjlAK7MlQoyb6LgaqHc8sso/pVyUJYWMws3jg21uTJw/LddqIFPcPqP6PzpgbIcZyKI85sFE4HBrQDA8A==}
@@ -4514,8 +4508,6 @@ snapshots:
     dependencies:
       evtd: 0.2.4
       vue: 3.5.40(typescript@5.9.3)
-
-  vfonts@0.0.3: {}
 
   vite@6.4.3(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.9.0):
     dependencies:
