@@ -9,7 +9,7 @@ export async function fetchStudioProjects() {
   return request('/studio/projects');
 }
 
-export async function fetchStudioActive() {
+async function fetchStudioActive() {
   return request('/studio/active');
 }
 

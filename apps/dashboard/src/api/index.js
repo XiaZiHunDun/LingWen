@@ -4,8 +4,6 @@
  * (0 funcs, re-export only)
  */
 
-export { apiConnectivity, markApiOffline, markApiOnline } from './connectivity.js';
-
 export {
   fetchOverview,
   fetchChapters,
@@ -57,7 +55,6 @@ export {
 
 export {
   fetchStudioProjects,
-  fetchStudioActive,
   setStudioActive,
   fetchStudioSummary,
   fetchStudioQuality,
@@ -91,7 +88,6 @@ export {
   importCreatorVolumeTemplates,
   fetchCreatorVolumeTemplateSyncSources,
   syncCreatorVolumeTemplates,
-  fetchCreatorFactoryVolumeTemplates,
   publishCreatorVolumeTemplateToFactory,
   pullCreatorFactoryVolumeTemplates,
   deleteCreatorFactoryVolumeTemplate,
@@ -150,8 +146,6 @@ export {
   previewCreatorMergePresetImportDiff,
   fetchCreatorMergePresetToposort,
   applyCreatorMergePresetToposort,
-  resolveCreatorFactoryMergePresetConflict,
-  deleteCreatorFactoryMergePresetPackage,
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
@@ -164,7 +158,6 @@ export {
   previewCreatorSettingsThreeWay,
   previewCreatorSettingsMerge,
   fetchCreatorMergePreferences,
-  fetchCreatorGlobalMergePreferences,
   exportCreatorMergePreferences,
   importCreatorMergePreferences,
   fetchCreatorSettingsHistory,
