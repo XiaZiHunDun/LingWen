@@ -215,6 +215,9 @@ apps/dashboard/test-results/
 apps/dashboard/playwright-report/
 apps/dashboard/tests/visual-audit/output/
 
+# Phase 106: Web Vitals re-baseline backup directory (local diff reference only)
+docs/perf/playwright/.phase76-baseline/
+
 # Playwright live e2e ephemeral advance-mode fixture (e2e_seed)
 projects/e2e-live-creator/
 
