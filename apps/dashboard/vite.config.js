@@ -58,15 +58,6 @@ export default defineConfig({
             echarts: 'echarts',
             mermaid: 'mermaid',
             cytoscape: 'cytoscape',
-            // Phase 112: keep cytoscape-fcose / cose-base / layout-base in a
-            // separate 'cytoscape-shim' chunk so they don't get inlined into
-            // cytoscape main (Phase 111C: webpack runtime ID remapping on
-            // inlining causes '__webpack_require__(140).layoutBase' lookups
-            // to fail at runtime).
-            'cytoscape-fcose': 'cytoscape-shim',
-            'cytoscape-cose-bilkent': 'cytoscape-shim',
-            'cose-base': 'cytoscape-shim',
-            'layout-base': 'cytoscape-shim',
             katex: 'katex',
             'naive-ui': 'naive-ui',
             'vue-router': 'vue-router',
@@ -76,9 +67,7 @@ export default defineConfig({
             dayjs: 'dayjs',
           };
           for (const [pkg, chunk] of Object.entries(NAMED)) {
-            // Use trailing slash so 'cytoscape' doesn't substring-match
-            // 'cytoscape-fcose' / 'cytoscape-cose-bilkent'.
-            if (id.includes(`node_modules/${pkg}/`)) return chunk;
+            if (id.includes(`node_modules/${pkg}`)) return chunk;
           }
           // 剩余 node_modules 合并到 vendor chunk
           if (id.includes('node_modules/')) return 'vendor';
