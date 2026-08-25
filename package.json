@@ -14,7 +14,7 @@
     "lint": "pnpm -r --filter './apps/*' --filter './packages/*' run lint",
     "test": "pnpm -r --filter './apps/*' --filter './packages/*' run test",
     "typecheck": "pnpm -r --filter './apps/*' --filter './packages/*' run typecheck",
-    "knip": "pnpm exec knip --config apps/dashboard/knip.json"
+    "knip": "pnpm -C apps/dashboard exec knip"
   },
   "devDependencies": {
     "knip": "^6.32.2"
