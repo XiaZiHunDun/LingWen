@@ -34,6 +34,9 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@tiptap/pm": "^2.10.0",
+    "@tiptap/starter-kit": "^2.10.0",
+    "@tiptap/vue-3": "^2.10.0",
     "echarts": "^6.1.0",
     "mermaid": "^11.15.0",
     "naive-ui": "^2.44.1",
@@ -44,6 +47,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.49.0",
+    "@tiptap/core": "^2.10.0",
     "@types/node": "^25.9.2",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-vue": "^5.1.0",
