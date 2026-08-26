@@ -303,7 +303,8 @@ def import_project_markdown(
                 md = md_path.read_text(encoding="utf-8")
                 parsed = parse_character_markdown(md)
                 from infra.world_db.queries.characters import (
-                    get_character_by_slug, create_character,
+                    create_character,
+                    get_character_by_slug,
                 )
                 if get_character_by_slug(conn, parsed["slug"]):
                     summary["characters_skipped"] += 1
@@ -316,7 +317,8 @@ def import_project_markdown(
     if faction_path and faction_path.is_file():
         try:
             from infra.world_db.queries.factions import (
-                get_faction_by_slug, create_faction,
+                create_faction,
+                get_faction_by_slug,
             )
             md = faction_path.read_text(encoding="utf-8")
             parsed = parse_faction_markdown(md)
@@ -331,7 +333,7 @@ def import_project_markdown(
             from infra.world_db.queries.lore import create_lore, list_lore
             md = lore_path.read_text(encoding="utf-8")
             parsed = parse_lore_markdown(md)
-            existing = {l["slug"] for l in list_lore(conn)}
+            existing = {lore_entry["slug"] for lore_entry in list_lore(conn)}
             if parsed["slug"] not in existing:
                 create_lore(conn, parsed)
                 summary["lore_imported"] += 1

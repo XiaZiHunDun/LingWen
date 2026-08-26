@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Body, Query
+from fastapi import Body, FastAPI, HTTPException, Query
 
 from apps.studio_api.routes.ctx import RoutesContext
 
@@ -77,8 +77,9 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/world/import")
     def import_markdown(project: str = Query(default="lingwen-novel")):
-        from infra.world_db.markdown_roundtrip import import_project_markdown
         from pathlib import Path
+
+        from infra.world_db.markdown_roundtrip import import_project_markdown
 
         project_dir = Path(f"projects/{project}")
         conn = _get_world_db()
@@ -91,12 +92,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/world/export")
     def export_markdown(project: str = Query(default="lingwen-novel")):
+        from pathlib import Path
+
+        from infra.world_db.markdown_roundtrip import (
+            serialize_character_markdown,
+            serialize_timeline_markdown,
+        )
         from infra.world_db.queries.characters import list_characters
         from infra.world_db.queries.timeline import list_timeline
-        from infra.world_db.markdown_roundtrip import (
-            serialize_character_markdown, serialize_timeline_markdown,
-        )
-        from pathlib import Path
 
         conn = _get_world_db()
         out_dir = Path(f"projects/{project}/03_内容仓库/world-export")
@@ -131,11 +134,14 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     @app.post("/api/world/proposals/{pid}/accept")
     def accept_proposal(pid: int, payload: dict = Body(...)):
         """Apply the proposal's payload to the main table."""
-        from infra.world_db.queries.proposals import (
-            get_proposal, update_proposal_status,
-        )
         from infra.world_db.queries.characters import (
-            create_character, update_character, get_character_by_slug,
+            create_character,
+            get_character_by_slug,
+            update_character,
+        )
+        from infra.world_db.queries.proposals import (
+            get_proposal,
+            update_proposal_status,
         )
         conn = _get_world_db()
         prop = get_proposal(conn, pid)
@@ -171,7 +177,8 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     @app.post("/api/world/proposals/{pid}/reject")
     def reject_proposal(pid: int, payload: dict = Body(...)):
         from infra.world_db.queries.proposals import (
-            get_proposal, update_proposal_status,
+            get_proposal,
+            update_proposal_status,
         )
         conn = _get_world_db()
         prop = get_proposal(conn, pid)
