@@ -16,11 +16,11 @@
       提案 ({{ pending.length }})
     </button>
     <div v-if="open" class="world-proposal-inbox__panel proposal-inbox-panel" data-testid="proposal-inbox-panel">
-      <section class="world-proposal-inbox__extract" data-testid="world-proposal-inbox-extract">
+      <section class="world-proposal-inbox-extract world-proposal-inbox__extract" data-testid="world-proposal-inbox-extract">
         <h3>从章节提取角色更新</h3>
         <label class="world-proposal-inbox-extract-slug">
           character
-          <select v-model="extractSlug" data-testid="world-proposal-inbox-extract-slug">
+          <select v-model="extractSlug" class="world-proposal-inbox-extract-slug" data-testid="world-proposal-inbox-extract-slug">
             <option value="" disabled>请选择</option>
             <option v-for="c in characters" :key="c.id" :value="c.slug">
               {{ c.name }} ({{ c.slug }})
@@ -31,6 +31,7 @@
           start
           <input
             v-model.number="extractRange.start"
+            class="world-proposal-inbox-extract-start"
             type="number"
             min="1"
             data-testid="world-proposal-inbox-extract-start"
@@ -40,6 +41,7 @@
           end
           <input
             v-model.number="extractRange.end"
+            class="world-proposal-inbox-extract-end"
             type="number"
             min="1"
             data-testid="world-proposal-inbox-extract-end"
