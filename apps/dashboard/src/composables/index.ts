@@ -86,6 +86,7 @@ export { useWriteQualityCheck } from './useWriteQualityCheck.js';
 export { useWorldDb } from './world/useWorldDb.js';
 export { useWorldReview } from './world/useWorldReview.js';
 export { useWorldImportExport } from './world/useWorldImportExport.js';
+export { useWorldAgent } from './world/useWorldAgent.js';
 export { useEventBus, onRippleUpdate } from './useEventBus.js';
 export * as useWidgetRegistry from './useWidgetRegistry.js';
 export { registerDashboardWidgets } from './useDashboardWidgets.js';

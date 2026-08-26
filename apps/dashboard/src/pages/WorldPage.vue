@@ -14,6 +14,7 @@
       <WorldTabs :active-tab="store.activeTab" @switch="store.switchTab" />
       <div class="world-page__body">
         <WorldProposalInbox />
+        <WorldImportExport />
         <CharacterList v-if="store.activeTab === 'characters'" />
         <FactionGraph v-else-if="store.activeTab === 'factions'" />
         <TimelineView v-else-if="store.activeTab === 'timeline'" />
@@ -28,6 +29,7 @@ import PageLeadBar from '@/components/PageLeadBar.vue'
 import { useWorldStore } from '@/stores/useWorldStore'
 import WorldTabs from '@/components/world/WorldTabs.vue'
 import WorldProposalInbox from '@/components/world/WorldProposalInbox.vue'
+import WorldImportExport from '@/components/world/WorldImportExport.vue'
 import CharacterList from '@/components/world/characters/CharacterList.vue'
 import FactionGraph from '@/components/world/factions/FactionGraph.vue'
 import TimelineView from '@/components/world/timeline/TimelineView.vue'
