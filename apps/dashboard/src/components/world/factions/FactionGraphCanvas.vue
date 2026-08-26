@@ -1,24 +1,68 @@
 <!--
-  FactionGraphCanvas.vue — Phase 117 (Task 16) 势力关系图画布 stub
-  完整 cytoscape graph 实现在 Task 17,本任务仅交付 stub 占位.
+  FactionGraphCanvas.vue — Phase 117 (Task 17) 势力关系图 (vis-network 实现)
+  - vis-network 通过 import('vis-network/standalone') 动态加载,避免主 bundle 膨胀.
+  - 仅渲染 enemy/ally 关系边 (红色=敌人, 绿色=盟友),其余类型过滤.
+  - props.factions / relationships 变化时通过 network.setData() 增量更新.
 -->
 <template>
-  <div data-testid="faction-graph-canvas-stub" class="faction-graph-canvas-stub world-stub">
-    势力关系图 (Phase 117 Task 17 follow-up)
-  </div>
+  <div
+    ref="container"
+    class="faction-graph-canvas"
+    data-testid="faction-graph-canvas"
+  />
 </template>
 
 <script setup>
-defineProps({
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+
+const props = defineProps({
   factions: { type: Array, required: true },
   relationships: { type: Array, required: true },
 })
-</script>
 
-<style scoped>
-.world-stub {
-  padding: var(--space-md);
-  color: var(--color-text-dim);
-  font-size: var(--text-sm);
+const container = ref(null)
+let network = null
+
+function buildData() {
+  const nodes = props.factions.map((f) => ({
+    id: `faction-${f.id}`,
+    label: f.name,
+    shape: 'box',
+    color: '#7c3aed',
+  }))
+  const edges = props.relationships
+    .filter((r) => r.kind === 'enemy' || r.kind === 'ally')
+    .map((r) => ({
+      from: `${r.source_kind}-${r.source_id}`,
+      to: `${r.target_kind}-${r.target_id}`,
+      color: r.kind === 'enemy' ? '#ef4444' : '#10b981',
+      arrows: 'to',
+    }))
+  return { nodes, edges }
 }
-</style>
+
+async function mount() {
+  const visNetwork = await import('vis-network/standalone')
+  if (!container.value) return
+  const data = buildData()
+  network = new visNetwork.Network(container.value, data, {
+    physics: { enabled: true, stabilization: { iterations: 100 } },
+    interaction: { hover: true },
+  })
+}
+
+onMounted(mount)
+
+watch(() => [props.factions, props.relationships], () => {
+  if (network) {
+    network.setData(buildData())
+  }
+})
+
+onBeforeUnmount(() => {
+  if (network) {
+    network.destroy()
+    network = null
+  }
+})
+</script>
