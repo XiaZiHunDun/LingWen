@@ -81,7 +81,12 @@ def _call_provider(
         for p in proposals:
             validated = ProposalResponse(**p.model_dump())
             parsed_proposals.append(p.model_dump())
-            if validated.payload.canon_level not in {"Draft", "Secondary", "Primary"}:
+            # canon_level is Optional in CharacterUpdatePayload; only mark
+            # non-compliant if a value IS provided AND not in the enum.
+            if (
+                validated.payload.canon_level is not None
+                and validated.payload.canon_level not in {"Draft", "Secondary", "Primary"}
+            ):
                 canon_level_ok = False
     except Exception as exc:
         logger.warning("%s parse failure: %s", provider, exc)

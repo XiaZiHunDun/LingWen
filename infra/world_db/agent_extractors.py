@@ -49,6 +49,7 @@ SYSTEM_PROMPT = """你是小说设定编辑。分析章节正文,提取与指定
 4. canon_level 只允许 Draft / Secondary / Primary。
 5. confidence: high (明确文本证据) / medium (合理推断) / low (猜测)。
 6. 没有发现任何变更时,返回空数组,不要编造。
+7. **target_id 必须是整数 (JSON number),不是字符串。** 如果不知道角色的整数数据库 ID,**使用 0**。绝对不要把角色 slug 或角色名字符串作为 target_id(这是 JSON number,不是 JSON string)。
 
 输出严格 JSON,不要 markdown 标题,不要解释。返回格式示例:
 {"proposals":[{"kind":"character.update","target_kind":"character","target_id":5,"payload":{"status":"alive","last_seen_chapter":42},"source_context":"第42章明确说...","confidence":"high"}]}
