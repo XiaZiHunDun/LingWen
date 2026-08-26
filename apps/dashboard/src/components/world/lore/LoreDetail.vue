@@ -16,15 +16,27 @@
       {{ lore.category }}
     </p>
     <pre class="lore-detail__body lore-detail-body" data-testid="lore-detail-body">{{ lore.body }}</pre>
+    <button
+      type="button"
+      class="lore-detail-edit-toggle lore-detail__edit-toggle"
+      data-testid="lore-detail-edit-toggle"
+      @click="editing = !editing"
+    >{{ editing ? '取消新增' : '新增条目' }}</button>
+    <LoreEditor v-if="editing" />
   </aside>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import LoreEditor from './LoreEditor.vue'
+
 defineProps({
   /** @type {{ id: number, slug: string, title: string, category: string, summary?: string|null, body: string }} */
   lore: { type: Object, required: true },
 })
 defineEmits(['close'])
+
+const editing = ref(false)
 </script>
 
 <style scoped>
@@ -68,5 +80,16 @@ defineEmits(['close'])
   font-size: var(--text-sm);
   white-space: pre-wrap;
   word-break: break-word;
+}
+.lore-detail-edit-toggle,
+.lore-detail__edit-toggle {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--color-border, currentColor);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 0.125rem 0.5rem;
 }
 </style>
