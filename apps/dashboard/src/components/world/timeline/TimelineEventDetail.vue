@@ -15,15 +15,27 @@
     <p v-if="event.story_label" class="timeline-detail__label">{{ event.story_label }}</p>
     <p v-if="event.chapter" class="timeline-detail__chapter">章节: {{ event.chapter }}</p>
     <p v-if="event.description" class="timeline-detail__description">{{ event.description }}</p>
+    <button
+      type="button"
+      class="timeline-event-detail-edit-toggle timeline-detail__edit-toggle"
+      data-testid="timeline-event-detail-edit-toggle"
+      @click="editing = !editing"
+    >{{ editing ? '取消新增' : '新增事件' }}</button>
+    <TimelineEditor v-if="editing" />
   </aside>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import TimelineEditor from './TimelineEditor.vue'
+
 defineProps({
   /** @type {{ id: number, slug: string, title: string, story_year?: number|null, story_label?: string|null, chapter?: string|null, description?: string|null }} */
   event: { type: Object, required: true },
 })
 defineEmits(['close'])
+
+const editing = ref(false)
 </script>
 
 <style scoped>
@@ -65,5 +77,16 @@ defineEmits(['close'])
   font-size: var(--text-sm);
   opacity: 0.85;
   white-space: pre-wrap;
+}
+.timeline-event-detail-edit-toggle,
+.timeline-detail__edit-toggle {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--color-border, currentColor);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 0.125rem 0.5rem;
 }
 </style>
