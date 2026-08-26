@@ -170,3 +170,111 @@ def serialize_character_markdown(char: dict) -> str:
             lines.append(str(val))
         lines.append("")
     return "\n".join(lines)
+
+
+def parse_faction_markdown(md: str) -> dict:
+    """Parse a faction-design.md style file.
+
+    Extracts the title (stripping the "阵营 · " / "势力 · " prefix
+    when present), the lead description (everything before the first
+    `## ` section), and an empty attributes dict for downstream edits.
+    Slug is derived via :func:`_slugify`.
+    """
+    lines = md.split("\n")
+    title = next(
+        (re.sub(r"^#+\s*", "", line).strip() for line in lines if line.startswith("# ")),
+        "未知势力",
+    )
+    name = title.replace("阵营 · ", "").replace("势力 · ", "").strip()
+    description_lines: list[str] = []
+    in_section = False
+    for line in lines:
+        if line.startswith("## "):
+            in_section = True
+            continue
+        if not in_section and line.strip() and not line.startswith("#"):
+            description_lines.append(line.strip())
+    return {
+        "slug": _slugify(name),
+        "name": name,
+        "description": "\n".join(description_lines),
+        "attributes": {},
+    }
+
+
+def serialize_faction_markdown(faction: dict) -> str:
+    """Serialize a faction dict back to a faction-design.md-style file."""
+    lines = [f"# 阵营 · {faction['name']}", ""]
+    if faction.get("description"):
+        lines.append(faction["description"])
+        lines.append("")
+    return "\n".join(lines)
+
+
+def parse_lore_markdown(md: str) -> dict:
+    """Parse a lore-registry.md style file.
+
+    Extracts the title (stripping the "世界观注册表 · " prefix when
+    present), a category when expressed in a bullet line like
+    "- 类别：xxx", and the body text (everything after the first
+    `## ` section). Summary defaults to the cleaned title.
+    """
+    lines = md.split("\n")
+    title = next(
+        (re.sub(r"^#+\s*", "", line).strip() for line in lines if line.startswith("# ")),
+        "未命名世界观",
+    )
+    title_clean = title.replace("世界观注册表 · ", "").strip()
+    category = "history"
+    summary_lines: list[str] = []
+    body_lines: list[str] = []
+    in_body = False
+    for line in lines:
+        if line.startswith("## "):
+            in_body = True
+            continue
+        if not in_body:
+            if line.startswith("- ") and "类别" in line:
+                category = line.split("：", 1)[-1].strip()
+        else:
+            body_lines.append(line)
+    return {
+        "slug": _slugify(title_clean),
+        "title": title_clean,
+        "category": category,
+        "summary": "\n".join(summary_lines).strip()[:200] or title_clean,
+        "body": "\n".join(body_lines).strip(),
+        "tags": [],
+    }
+
+
+def serialize_lore_markdown(lore: dict) -> str:
+    """Serialize a lore dict back to a lore-registry.md-style file."""
+    lines = [
+        f"# 世界观条目 · {lore['title']}",
+        "",
+        f"> 类别：{lore.get('category', 'history')}",
+        "",
+        lore.get("body", ""),
+    ]
+    return "\n".join(lines)
+
+
+def serialize_timeline_markdown(events: list[dict]) -> str:
+    """Serialize a list of timeline events into a single timeline.md file.
+
+    Events are sorted by ``story_year`` (ascending; ``None`` treated as 0)
+    and rendered as ``## <year-label> — <title>`` headings followed by the
+    event description when present.
+    """
+    lines = ["# 世界时间线", ""]
+    for ev in sorted(events, key=lambda e: (e.get("story_year") or 0)):
+        year_label = ev.get("story_label") or (
+            f"T{ev['story_year']:+d}" if ev.get("story_year") is not None else ""
+        )
+        lines.append(f"## {year_label} — {ev['title']}")
+        lines.append("")
+        if ev.get("description"):
+            lines.append(ev["description"])
+            lines.append("")
+    return "\n".join(lines)
