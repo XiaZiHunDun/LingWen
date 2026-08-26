@@ -7,9 +7,6 @@ export const SceneMetaSchema = z.object({
   word_count: z.number().int().nonnegative(),
 })
 
-/** @lintignore — exported type consumed by Tasks 8+ (page/outline pane); not yet referenced in current scope. */
-export type SceneMeta = z.infer<typeof SceneMetaSchema>
-
 export const ChapterFrontmatterSchema = z.object({
   chapter: z.number().int().positive(),
   title: z.string().min(1),
