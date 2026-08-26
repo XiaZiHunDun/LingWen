@@ -81,6 +81,12 @@ const routes = [
     component: () => import('../pages/WriteWorkspacePage.vue'),
     props: true,
   },
+  {
+    path: '/world',
+    name: 'world',
+    component: () => import('../pages/WorldPage.vue'),
+    meta: { title: '世界' },
+  },
 ]
 
 const router = createRouter({
