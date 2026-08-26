@@ -64,8 +64,8 @@ def test_timeline_serialize():
 
 
 def test_import_project_markdown(tmp_path):
-    from infra.world_db.schema import get_connection, init_schema
     from infra.world_db.markdown_roundtrip import import_project_markdown
+    from infra.world_db.schema import get_connection, init_schema
     conn = get_connection(tmp_path / "w.db")
     init_schema(conn)
 
