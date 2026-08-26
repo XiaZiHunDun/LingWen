@@ -1,38 +1,104 @@
-// useWorldAgent.js — Phase 117 (Task 21) 世界页 LLM agent stub
-// v1: 返回空 proposal，标志"功能在 Phase 118"。
-// Phase 118 会接入真实 LLM 调用 + 结构化 prompt。
-//
-// 设计意图：
-// - 即使是 stub，也要保持与 Phase 118 真实实现的契约一致。
-// - 业务侧（CharacterDetail 等）可以安全调用，不会破坏现有 UI。
-// - 便于 Phase 118 直接替换实现，无需修改调用方。
+// useWorldAgent.js — Phase 117 stub → Phase 118 real LLM-backed calls.
+// Talks to /api/world/agent/* routes (apps/studio_api/routes/world.py).
+// Backend enforces a 5-call/session rate limit (handoff §5).
+
+/**
+ * @typedef {Object} ExtractionResult
+ * @property {number} proposals_created - number of proposals inserted
+ * @property {number[]} ids - inserted proposal ids
+ * @property {string} [message] - optional human-readable status
+ */
+
+/**
+ * @typedef {Object} ChapterRange
+ * @property {number} start - first chapter number (inclusive)
+ * @property {number} end   - last chapter number (inclusive)
+ */
 
 export function useWorldAgent() {
   /**
-   * 从章节范围提取角色设定提案（stub）。
-   * @param {string} characterSlug - 角色 slug
-   * @param {{start: number, end: number}} chapterRange - 章节范围
-   * @returns {Promise<{proposals_created: number, message: string}>}
+   * Extract character-update proposals from a chapter text range.
+   *
+   * Phase 118 v1 takes a flat `chapter_texts` array (resolved by the caller
+   * from `chapterRange`). When chapter_texts is empty the backend still
+   * counts against the rate limit; pass an empty array only when the user
+   * has nothing to extract.
+   *
+   * @param {string} characterSlug - target character slug
+   * @param {ChapterRange} chapterRange - {start, end} for UI display only
+   * @param {string[]} [chapterTexts] - chapter bodies (defaults to [])
+   * @returns {Promise<ExtractionResult>}
    */
-  async function extractFromChapters(characterSlug, chapterRange) {
-    // Phase 117 v1 stub — returns empty proposal.
-    // Phase 118 wires LLM call + structured prompt.
-    return {
-      proposals_created: 0,
-      message: 'agent extraction is a Phase 118 feature',
+  async function extractFromChapters(characterSlug, chapterRange, chapterTexts = []) {
+    try {
+      const res = await fetch('/api/world/agent/extract-from-chapters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          character_slug: characterSlug,
+          chapter_texts: chapterTexts,
+        }),
+      })
+      if (!res.ok) {
+        const detail = (await res.json().catch(() => ({}))).detail || res.statusText
+        return {
+          proposals_created: 0,
+          ids: [],
+          message: `extract failed: ${detail}`,
+        }
+      }
+      const data = await res.json()
+      return {
+        proposals_created: data.proposals_created,
+        ids: data.ids,
+        message: `extracted ${data.proposals_created} proposal(s) from chapters ${chapterRange.start}-${chapterRange.end}`,
+      }
+    } catch (err) {
+      return {
+        proposals_created: 0,
+        ids: [],
+        message: `extract failed: ${err && err.message ? err.message : 'network error'}`,
+      }
     }
   }
 
   /**
-   * 从自然语言 prompt 提取角色设定提案（stub）。
-   * @param {string} characterSlug - 角色 slug
-   * @param {string} prompt - 用户输入的描述/指令
-   * @returns {Promise<{proposals_created: number, message: string}>}
+   * Extract character-update proposals from a free-form user prompt.
+   *
+   * @param {string} characterSlug - target character slug
+   * @param {string} prompt - user description / instruction
+   * @returns {Promise<ExtractionResult>}
    */
   async function extractFromPrompt(characterSlug, prompt) {
-    return {
-      proposals_created: 0,
-      message: 'agent extraction is a Phase 118 feature',
+    try {
+      const res = await fetch('/api/world/agent/extract-from-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          character_slug: characterSlug,
+          prompt,
+        }),
+      })
+      if (!res.ok) {
+        const detail = (await res.json().catch(() => ({}))).detail || res.statusText
+        return {
+          proposals_created: 0,
+          ids: [],
+          message: `extract failed: ${detail}`,
+        }
+      }
+      const data = await res.json()
+      return {
+        proposals_created: data.proposals_created,
+        ids: data.ids,
+        message: `extracted ${data.proposals_created} proposal(s) from prompt`,
+      }
+    } catch (err) {
+      return {
+        proposals_created: 0,
+        ids: [],
+        message: `extract failed: ${err && err.message ? err.message : 'network error'}`,
+      }
     }
   }
 

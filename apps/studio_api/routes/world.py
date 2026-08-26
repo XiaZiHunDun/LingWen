@@ -189,3 +189,98 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         reviewer = payload.get("reviewer", "human")
         update_proposal_status(conn, pid, "rejected", reviewer=reviewer)
         return {"id": pid, "status": "rejected"}
+
+    # ------------------------------------------------------------------
+    # Phase 118: LLM-backed agent extractors
+    # ------------------------------------------------------------------
+    # Per-process soft cost guard (handoff §5: 5 calls / session).
+    # For v1 this is a global counter; per-IP scoping can come later.
+    agent_rate_limiter = _AgentRateLimiter(max_calls=5)
+
+    @app.post("/api/world/agent/extract-from-chapters")
+    def agent_extract_from_chapters(payload: dict = Body(...)):
+        """Extract character-update proposals from chapter text via LLM."""
+        from infra.world_db.agent_extractors import (
+            extract_proposals_from_chapters,
+        )
+        from infra.world_db.queries.proposals import create_proposal
+
+        if not agent_rate_limiter.allow():
+            raise HTTPException(
+                429,
+                detail="agent extraction rate limit exceeded (5 calls per session)",
+            )
+
+        character_slug = payload.get("character_slug")
+        chapter_texts = payload.get("chapter_texts") or []
+        if not character_slug or not isinstance(character_slug, str):
+            raise HTTPException(400, detail="character_slug is required")
+        if not isinstance(chapter_texts, list) or not all(
+            isinstance(t, str) for t in chapter_texts
+        ):
+            raise HTTPException(400, detail="chapter_texts must be a list[str]")
+
+        proposals = extract_proposals_from_chapters(
+            character_slug=character_slug,
+            chapter_texts=chapter_texts,
+        )
+        conn = _get_world_db()
+        ids: list[int] = []
+        for prop in proposals:
+            ids.append(create_proposal(conn, prop))
+        return {"proposals_created": len(ids), "ids": ids}
+
+    @app.post("/api/world/agent/extract-from-prompt")
+    def agent_extract_from_prompt(payload: dict = Body(...)):
+        """Extract character-update proposals from a free-form user prompt."""
+        from infra.world_db.agent_extractors import (
+            extract_proposals_from_prompt,
+        )
+        from infra.world_db.queries.proposals import create_proposal
+
+        if not agent_rate_limiter.allow():
+            raise HTTPException(
+                429,
+                detail="agent extraction rate limit exceeded (5 calls per session)",
+            )
+
+        character_slug = payload.get("character_slug")
+        user_prompt = payload.get("prompt")
+        if not character_slug or not isinstance(character_slug, str):
+            raise HTTPException(400, detail="character_slug is required")
+        if not user_prompt or not isinstance(user_prompt, str):
+            raise HTTPException(400, detail="prompt is required")
+
+        proposals = extract_proposals_from_prompt(
+            character_slug=character_slug,
+            user_prompt=user_prompt,
+        )
+        conn = _get_world_db()
+        ids: list[int] = []
+        for prop in proposals:
+            ids.append(create_proposal(conn, prop))
+        return {"proposals_created": len(ids), "ids": ids}
+
+
+class _AgentRateLimiter:
+    """Simple in-process counter for agent extraction calls.
+
+    Phase 118 v1: counts every successful ``allow()`` until the cap is
+    reached; resets only on process restart. Suitable for the cost guard
+    mandated by handoff §5 (5 calls / session). Production-grade per-IP
+    or per-user scoping can replace this without changing the route
+    contract.
+    """
+
+    def __init__(self, max_calls: int = 5):
+        self._max_calls = max_calls
+        self._count = 0
+
+    def allow(self) -> bool:
+        if self._count >= self._max_calls:
+            return False
+        self._count += 1
+        return True
+
+    def reset(self) -> None:
+        self._count = 0

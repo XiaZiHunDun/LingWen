@@ -94,3 +94,118 @@ def test_import_and_export_roundtrip(tmp_path, monkeypatch):
     assert resp.status_code == 200, resp.text
     summary = resp.json()
     assert summary["characters_imported"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# Phase 118: LLM-backed agent extractor routes
+# ---------------------------------------------------------------------------
+class _StubLLM:
+    """In-memory stand-in for LLMService.get(); returns a fixed response."""
+
+    def __init__(self, response: str = '{"proposals":[]}'):
+        self.response = response
+
+    def generate(self, prompt: str, system: str | None = None, **kwargs) -> str:
+        return self.response
+
+
+def test_agent_extract_from_chapters_happy_path(tmp_path, monkeypatch):
+    """POST /api/world/agent/extract-from-chapters inserts proposals."""
+    monkeypatch.chdir(tmp_path)
+    import infra.world_db.agent_extractors as aext
+
+    aext._default_llm_service = lambda: _StubLLM(response=(
+        '{"proposals":[{"kind":"character.update","target_kind":"character",'
+        '"target_id":1,"payload":{"status":"alive","last_seen_chapter":3},'
+        '"source_context":"第3章","confidence":"high"}]}'
+    ))
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/world/agent/extract-from-chapters",
+        json={
+            "character_slug": "lin-ye",
+            "chapter_texts": ["第一章", "第二章"],
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["proposals_created"] == 1
+    assert isinstance(body["ids"], list) and len(body["ids"]) == 1
+
+    # Proposal is queryable via the existing list endpoint.
+    resp = client.get("/api/world/proposals")
+    assert any(p["kind"] == "character.update" for p in resp.json()["proposals"])
+
+
+def test_agent_extract_from_chapters_missing_slug_400(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    import infra.world_db.agent_extractors as aext
+    aext._default_llm_service = lambda: _StubLLM()
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/world/agent/extract-from-chapters",
+        json={"chapter_texts": ["x"]},
+    )
+    assert resp.status_code == 400
+
+
+def test_agent_extract_from_prompt_happy_path(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    import infra.world_db.agent_extractors as aext
+    aext._default_llm_service = lambda: _StubLLM(response=(
+        '{"proposals":[{"kind":"character.update","target_kind":"character",'
+        '"target_id":2,"payload":{"status":"deceased"},'
+        '"source_context":"用户说","confidence":"medium"}]}'
+    ))
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/world/agent/extract-from-prompt",
+        json={"character_slug": "mo-yan", "prompt": "莫言死了"},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["proposals_created"] == 1
+
+
+def test_agent_extract_rate_limit(tmp_path, monkeypatch):
+    """After 5 calls the 6th must return HTTP 429."""
+    monkeypatch.chdir(tmp_path)
+    import infra.world_db.agent_extractors as aext
+    aext._default_llm_service = lambda: _StubLLM()
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+
+    for i in range(5):
+        resp = client.post(
+            "/api/world/agent/extract-from-chapters",
+            json={"character_slug": "x", "chapter_texts": ["y"]},
+        )
+        assert resp.status_code == 200, f"call {i+1} failed: {resp.text}"
+
+    resp = client.post(
+        "/api/world/agent/extract-from-chapters",
+        json={"character_slug": "x", "chapter_texts": ["y"]},
+    )
+    assert resp.status_code == 429, resp.text
+    assert "rate limit" in resp.text.lower()
+
+
+def test_agent_routes_are_registered():
+    app = FastAPI()
+    _mount(app)
+    methods = {(r.path, tuple(sorted(r.methods or []))) for r in app.routes}
+    assert ("/api/world/agent/extract-from-chapters", ("POST",)) in methods
+    assert ("/api/world/agent/extract-from-prompt", ("POST",)) in methods
