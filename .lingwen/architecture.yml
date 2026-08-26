@@ -6,11 +6,11 @@ version: "1.0"
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
   - name: presentation
-    path: dashboard/frontend/
+    path: apps/dashboard/src/
     depends_on: [api_gateway]
     tech: [Vue3, Pinia, TypeScript]
   - name: api_gateway
-    path: dashboard/
+    path: apps/studio_api/
     depends_on: [core]
     tech: [FastAPI, Pydantic, WebSocket]
   - name: core
@@ -21,14 +21,14 @@ layers:
 # 架构不变量（违反即架构错误）
 invariants:
   - id: I001
-    rule: "infra/ 禁止 import dashboard/"
+    rule: "infra/ 禁止 import apps/"
     severity: error
   - id: I002
     rule: "检查器 = 纯函数规则引擎，禁止调用 LLM / AI 服务"
     severity: error
-    scope: "infra/consistency/checkers/"
+    scope: "infra/quality/checkers/, infra/cross_volume/"
   - id: I003
-    rule: "L3(consistency) 和 L4(cross_volume) 禁止 import L2(agent_system)"
+    rule: "L3 (consistency / quality) 和 L4 (cross_volume) 禁止 import L2 (creator / agent)"
     severity: error
   - id: I004
     rule: "审查流程使用独立 AI 会话，审查者无作者 CLAIM 访问"
@@ -39,25 +39,37 @@ invariants:
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
-  consistency:
-    path: infra/consistency/
-    exports: [ConsistencyEngine, Issue, IssueSeverity, CheckerType]
+  quality:
+    path: infra/quality/
+    exports: [QualityChecker, QualityRepairer, Severity]
     allowed_imports: [infra/errors]
-    forbidden_imports: [infra/agent_system]
-  agent_system:
-    path: infra/agent_system/
-    exports: [MasterController, ReviewerSession]
-    allowed_imports: [infra/consistency, infra/errors, infra/state]
+    forbidden_imports: [infra/creator, infra/ai_service]
+  creator:
+    path: infra/creator/
+    exports: [CreatorAgent, CreatorBatchHistory, CreatorMemory]
+    allowed_imports: [infra/quality, infra/ai_service, infra/errors, infra/persistence]
   cross_volume:
     path: infra/cross_volume/
-    exports: [CrossVolumeRipple, RippleStorage, ReferenceGraph]
+    exports: [Ripple, RippleStorage, ReferenceGraph]
     allowed_imports: [infra/errors]
-    forbidden_imports: [infra/agent_system]
+    forbidden_imports: [infra/creator]
   hooks:
     path: infra/hooks/
     exports: [HookEngine, EventBus]
     allowed_imports: [infra/errors]
-  state:
-    path: infra/state/
-    exports: [StateManager, WorkflowDB]
-    allowed_imports: [infra/persistence]
+  persistence:
+    path: infra/persistence/
+    exports: [Registry, WriteChapter, Connection]
+    allowed_imports: [infra/errors]
+  ai_service:
+    path: infra/ai_service/
+    exports: [Provider, Router]
+    allowed_imports: [infra/errors]
+
+# 当前活跃子系统（v15.0 闭环）
+active_subsystems:
+  write_workspace:
+    path: apps/dashboard/src/components/writeWorkspace/
+    status: shipped
+    spec: docs/superpowers/specs/2026-08-26-immersive-write-workspace-design.md
+    plan: docs/superpowers/plans/2026-08-26-immersive-write-workspace.md

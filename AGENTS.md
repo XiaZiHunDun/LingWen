@@ -22,14 +22,6 @@ AI 开发工具应优先解析以下文件，而非从本文档推理：
 | [`.lingwen/constraints.yml`](.lingwen/constraints.yml) | 反模式、安全规范、提交纪律、修改链路 |
 | [`.lingwen/checkers.yml`](.lingwen/checkers.yml) | 检查器注册表（分类、类型、文件） |
 
-## Do-Not-Delete
-
-以下文件看似无用实则承重：
-
-- `infra/persistence/registry.py` — 单例注册表
-- `infra/state/state_manager.py` — 状态机，创作流恢复依赖
-- `dashboard/frontend/src/utils/asyncStoreUtils.js` — 异步生命周期管理
-
 ## 技术栈
 
 | 层 | 技术 |
@@ -39,25 +31,3 @@ AI 开发工具应优先解析以下文件，而非从本文档推理：
 | 测试 | pytest (后端) / Vitest (前端) |
 | Lint | ruff (后端) / ESLint (前端) |
 | 类型 | mypy (后端) / vue-tsc --noEmit (前端) |
-
-## 项目结构
-
-```
-LingWen/
-├── infra/                    # 后端核心（禁止依赖 dashboard/）
-│   ├── consistency/          # 一致性检查（L3）
-│   ├── cross_volume/         # 跨卷涟漪（L4）
-│   ├── agent_system/         # 创作引擎（L2）
-│   ├── state/                # 状态管理（L6）
-│   ├── persistence/          # 持久化（L6）
-│   ├── hooks/                # 事件钩子
-│   └── exports/              # 统一导出
-├── dashboard/                # 前端 + API 网关
-│   ├── routes/               # API 路由
-│   └── frontend/             # Vue 3 前端
-├── .lingwen/                 # 结构化 AI 配置（优先阅读）
-├── tests/                    # 后端测试
-├── docs/                     # 文档
-├── DESIGN.md                 # 系统设计文档
-└── README.md                 # 项目说明
-```
