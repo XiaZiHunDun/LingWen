@@ -63,9 +63,12 @@ def update_proposal_status(
     status: str,
     reviewer: str | None = None,
 ) -> None:
-    conn.execute(
+    """Update proposal status. Raises ValueError if proposal does not exist."""
+    cur = conn.execute(
         """UPDATE proposal SET status = ?, reviewer = ?, reviewed_at = ?
            WHERE id = ?""",
         (status, reviewer, _now(), pid),
     )
+    if cur.rowcount == 0:
+        raise ValueError(f"proposal {pid} not found")
     conn.commit()
