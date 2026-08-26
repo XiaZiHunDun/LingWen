@@ -62,7 +62,7 @@ CharacterEditor **仍是 create-only 空表单**(无 props),"编辑"按钮实际
 
 ### 2.1 `apps/dashboard/src/components/world/lore/LoreDetail.vue`
 
-**Template 改动** (在 `<aside>` 内,接在 close button 之后或文末):
+**Template 改动** (在 `<aside>` 内文末,接在 `<pre>` body 之后 — 镜像 CharacterDetail.vue lines 28-34 的位置):
 
 ```vue
 <button
