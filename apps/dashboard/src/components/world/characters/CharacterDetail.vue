@@ -25,6 +25,13 @@
       </section>
       <CharacterRelationships :character-id="character.id" />
     </div>
+    <button
+      type="button"
+      class="character-detail-edit-toggle"
+      data-testid="character-detail-edit-toggle"
+      @click="editing = !editing"
+    >{{ editing ? '取消编辑' : '编辑' }}</button>
+    <CharacterEditor v-if="editing" />
   </aside>
 </template>
 
@@ -32,6 +39,7 @@
 import { ref, watch } from 'vue'
 import { useWorldDb } from '@/composables/world/useWorldDb.js'
 import CharacterRelationships from './CharacterRelationships.vue'
+import CharacterEditor from './CharacterEditor.vue'
 
 const props = defineProps({
   characterId: { type: Number, required: true },
@@ -41,6 +49,7 @@ defineEmits(['close'])
 const { getCharacter } = useWorldDb()
 const character = ref(null)
 const loading = ref(false)
+const editing = ref(false)
 
 async function load() {
   loading.value = true
