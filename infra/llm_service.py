@@ -99,8 +99,21 @@ class LLMService:
         self._init_providers()
 
     def _init_providers(self):
-        """初始化所有可用Provider列表（支持运行时故障转移）"""
-        priority = self._plugin_manager.get_priority()
+        """初始化所有可用Provider列表（支持运行时故障转移）
+
+        Phase 123: was iterating self._plugin_manager.get_priority() but the
+        plugin manager's _discover_internal_providers uses wrong module path
+        ('infra.ai_service.<name>') so priority list is always empty. Now reads
+        the decorator-driven _PROVIDER_REGISTRY via list_registered_providers()
+        and applies a local priority order.
+        """
+        from lingwen_llm.providers import list_registered_providers
+
+        priority_default = ["minimax", "anthropic", "openai"]
+        registered = list_registered_providers()
+        priority = [p for p in priority_default if p in registered] + [
+            p for p in registered if p not in priority_default
+        ]
 
         for provider_name in priority:
             api_key = self._get_api_key(provider_name)
@@ -113,7 +126,7 @@ class LLMService:
                 logger.warning(f"{provider_name} 初始化失败: {e}")
 
         if not self._providers:
-            raise RuntimeError(f"无可用的LLM Provider。已注册: {self._plugin_manager.list_providers()}")
+            raise RuntimeError(f"无可用的LLM Provider。已注册: {registered}")
 
         # 第一个可用 provider 作为默认
         self._provider_name, self._provider = self._providers[0]
@@ -141,7 +154,7 @@ class LLMService:
 
     def _create_provider(self, name: str, api_key: str) -> "AIProvider":
         """创建Provider实例（动态注册机制）"""
-        from lingwen_llm.providers.base import ProviderConfig
+        from lingwen_llm.providers.base import ProviderConfig, get_provider_class, list_registered_providers
 
         provider_class = get_provider_class(name)
         if not provider_class:
