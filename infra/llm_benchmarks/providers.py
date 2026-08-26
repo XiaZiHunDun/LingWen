@@ -115,8 +115,8 @@ def get_provider_llm(name: str, *, real: bool = False) -> _LLMRunnable:
                 "MINIMAX_API_KEY not set; add to .env or export before --real"
             )
         # Lazy imports avoid module-load side effects in tests
-        from lingwen_llm.providers.base import ProviderConfig
         from lingwen_llm.providers import get_provider_class
+        from lingwen_llm.providers.base import ProviderConfig
 
         provider_class = get_provider_class("minimax")
         if not provider_class:

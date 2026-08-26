@@ -69,6 +69,14 @@ module_boundaries:
     purpose: "Characters, factions, lore, timeline, proposals (SQLite)"
     exports: ["init_schema", "get_connection", "queries.*", "markdown_roundtrip.*", "agent_extractors.extract_proposals_from_chapters"]
     consumers: ["apps.studio_api.routes.world"]
+  llm_benchmarks:
+    purpose: "Phase 120 LLM provider benchmark tool (dev/CI only, NOT production code path)"
+    path: infra/llm_benchmarks/
+    exports: ["run_benchmark", "get_provider_llm", "MockLLMService", "CallResult", "ProviderMetrics", "compute_metrics", "consistency_score", "quality_composite", "recommend_priority"]
+    consumers: ["(manual CLI only; benchmark results gitignored under infra/llm_benchmarks/results/)"]
+    notes:
+      - "Bypasses infra.llm_service.LLMService (plugin_manager discovery is broken)"
+      - "Direct instantiation via lingwen_llm.providers.get_provider_class"
 
 # 当前活跃子系统（v15.0 闭环）
 active_subsystems:
