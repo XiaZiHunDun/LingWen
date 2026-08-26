@@ -100,21 +100,31 @@ def get_provider_llm(name: str, *, real: bool = False) -> _LLMRunnable:
     """Return LLM service for the named provider.
 
     real=False → MockLLMService (no env var check, safe for tests).
-    real=True + name=="minimax" → LLMService.get() (requires MINIMAX_API_KEY).
+    real=True + name=="minimax" → directly instantiate MiniMaxProvider
+        via get_provider_class (bypasses infra.llm_service.LLMService
+        whose plugin_manager discovery is broken in this codebase).
     real=True + name in {"anthropic","openai"} → NotImplementedError.
     """
     if not real:
         return MockLLMService(canned=_canned_for(name))
 
     if name == "minimax":
-        if not os.environ.get("MINIMAX_API_KEY"):
+        api_key = os.environ.get("MINIMAX_API_KEY")
+        if not api_key:
             raise RuntimeError(
                 "MINIMAX_API_KEY not set; add to .env or export before --real"
             )
-        # Lazy import to avoid module-load side effects in tests
-        from infra.llm_service import LLMService
+        # Lazy imports avoid module-load side effects in tests
+        from lingwen_llm.providers.base import ProviderConfig
+        from lingwen_llm.providers import get_provider_class
 
-        return LLMService.get()
+        provider_class = get_provider_class("minimax")
+        if not provider_class:
+            raise RuntimeError(
+                "minimax provider class not registered; check lingwen_llm package"
+            )
+        config = ProviderConfig(api_key=api_key, timeout=120, max_retries=3)
+        return provider_class(config)
 
     if name in {"anthropic", "openai"}:
         raise NotImplementedError(

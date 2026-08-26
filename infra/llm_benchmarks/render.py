@@ -68,6 +68,7 @@ def render_report(
     lines.append("")
     lines.append(f"Quality threshold = {threshold:.2f}.")
     above = [m for m in provider_metrics if quality_composite(m) >= threshold]
+    below = [m for m in provider_metrics if quality_composite(m) < threshold]
     if above:
         above_sorted = sorted(above, key=lambda m: m.cost_per_call_usd)
         lines.append("Providers above threshold (cost-ordered):")
@@ -75,6 +76,15 @@ def render_report(
             composite = quality_composite(m)
             lines.append(
                 f"{i}. {m.provider} (composite={composite:.2f}, cost=${m.cost_per_call_usd:.4f})"
+            )
+    if below:
+        below_sorted = sorted(below, key=lambda m: quality_composite(m), reverse=True)
+        lines.append("")
+        lines.append("Providers below threshold (composite-desc):")
+        for i, m in enumerate(below_sorted, 1):
+            composite = quality_composite(m)
+            lines.append(
+                f"{i}. {m.provider} (composite={composite:.2f}, cost=${m.cost_per_call_usd:.4f}, parse_rate={m.parse_rate:.2f})"
             )
     lines.append("")
     lines.append("## Recommended priority")

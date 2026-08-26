@@ -17,8 +17,9 @@ def _projects_root() -> Path:
     env = os.environ.get("LINGWEN_PROJECTS_ROOT")
     if env:
         return Path(env)
-    # Walk up from this file to find projects/ — repo root is 4 levels up
-    return Path(__file__).resolve().parents[3] / "projects"
+    # fixtures.py is at <repo>/infra/llm_benchmarks/fixtures.py
+    # parents[2] = <repo> → + "/projects" gives <repo>/projects
+    return Path(__file__).resolve().parents[2] / "projects"
 
 
 def _chapter_path(slug: str, chapter_id: int) -> Path:
