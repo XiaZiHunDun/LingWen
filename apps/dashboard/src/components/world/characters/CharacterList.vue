@@ -27,6 +27,11 @@
         @click="open(char)"
       />
     </div>
+    <CharacterDetail
+      v-if="store.selectedCharacterId"
+      :character-id="store.selectedCharacterId"
+      @close="store.selectedCharacterId = null"
+    />
   </div>
 </template>
 
@@ -35,6 +40,7 @@ import { ref, onMounted } from 'vue'
 import { useWorldDb } from '@/composables/world/useWorldDb.js'
 import { useWorldStore } from '@/stores/useWorldStore'
 import CharacterCard from './CharacterCard.vue'
+import CharacterDetail from './CharacterDetail.vue'
 
 const store = useWorldStore()
 const { listCharacters } = useWorldDb()
