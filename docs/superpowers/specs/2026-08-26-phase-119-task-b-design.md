@@ -229,7 +229,7 @@ async function runExtract() {
   }
 }
 
-// 在 onMounted refresh() 之后加:
+// 替换原 onMounted(refresh) 这一行:
 onMounted(async () => {
   await Promise.all([refresh(), loadCharacters()])
 })
