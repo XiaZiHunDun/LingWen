@@ -64,6 +64,10 @@
  * Wires keyboard shortcuts (Cmd/Ctrl + . / 2 / 3 / s), mode persistence, and
  * debounced auto-save via the persistence composable.
  *
+ * Mode persistence (plan Task 25 — verified): the active mode ('author' | 'editor')
+ * is restored from localStorage key `lingwen.write_workspace.mode` on mount and
+ * persisted back on unmount. See onMounted / onBeforeUnmount below.
+ *
  * Note: the quality-check bridge (plan Task 23) is wired for editor-mode jumps.
  * The conflict-detection dialog (plan Task 24) is wired after loadChapter and
  * offers rebase / discard / export-local resolution.
