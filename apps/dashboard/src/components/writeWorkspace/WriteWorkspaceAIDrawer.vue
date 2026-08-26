@@ -1,13 +1,13 @@
 <template>
   <aside
-    class="ws-ai-drawer"
+    class="ws-ai-drawer ai-drawer"
     :class="{ 'is-closed': !open }"
     data-testid="ai-drawer"
   >
     <header class="ws-ai-drawer__header">
       <button
         type="button"
-        class="ws-ai-drawer__close"
+        class="ws-ai-drawer__close close-btn"
         data-testid="close-btn"
         @click="$emit('close')"
       >✕</button>

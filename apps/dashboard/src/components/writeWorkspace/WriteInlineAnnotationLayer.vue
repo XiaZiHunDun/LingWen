@@ -1,10 +1,10 @@
 <template>
-  <div class="ws-annotation-layer" data-testid="annotation-layer">
+  <div class="ws-annotation-layer annotation-layer" data-testid="annotation-layer">
     <button
       v-for="(a, idx) in annotations"
       :key="idx"
       type="button"
-      class="ws-annotation-marker"
+      class="ws-annotation-marker annotation-marker"
       :class="`is-${a.severity.toLowerCase()}`"
       :title="`${a.rule}: ${a.msg}`"
       data-testid="annotation-marker"

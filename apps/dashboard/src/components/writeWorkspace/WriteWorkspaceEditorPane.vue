@@ -1,5 +1,5 @@
 <template>
-  <section class="ws-editor-pane" data-testid="editor-pane">
+  <section class="ws-editor-pane editor-pane" data-testid="editor-pane">
     <TipTapEditor
       :model-value="content"
       :editable="editable"

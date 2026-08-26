@@ -5,7 +5,7 @@
       <li
         v-for="scene in scenes"
         :key="scene.id"
-        class="ws-outline__item"
+        class="ws-outline__item scene-card"
         :class="{ 'is-active': scene.id === activeSceneId }"
         data-testid="scene-card"
         @click="$emit('selectScene', scene.id)"

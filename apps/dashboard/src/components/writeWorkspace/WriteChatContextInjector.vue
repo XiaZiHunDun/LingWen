@@ -1,5 +1,5 @@
 <template>
-  <div class="ws-context-injector" data-testid="context-injector">
+  <div class="ws-context-injector context-injector" data-testid="context-injector">
     <div class="ws-context-injector__chip">
       章节: <strong>{{ context.current_chapter_heading }}</strong>
     </div>

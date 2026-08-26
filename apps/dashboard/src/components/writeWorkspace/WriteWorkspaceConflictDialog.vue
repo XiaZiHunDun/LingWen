@@ -1,13 +1,13 @@
 <template>
-  <div v-if="open" class="ws-conflict-dialog" data-testid="conflict-dialog">
+  <div v-if="open" class="ws-conflict-dialog conflict-dialog" data-testid="conflict-dialog">
     <div class="ws-conflict-dialog__backdrop" />
     <div class="ws-conflict-dialog__panel">
       <h3>检测到外部修改</h3>
       <p>外部时间戳: {{ externalMtime }}</p>
       <div class="ws-conflict-dialog__actions">
-        <button data-testid="rebase-btn" @click="$emit('rebase')">Rebase 他们的到本地</button>
-        <button data-testid="discard-btn" @click="$emit('discard')">放弃本地</button>
-        <button data-testid="export-btn" @click="$emit('export')">导出本地到 .local.md</button>
+        <button class="rebase-btn" data-testid="rebase-btn" @click="$emit('rebase')">Rebase 他们的到本地</button>
+        <button class="discard-btn" data-testid="discard-btn" @click="$emit('discard')">放弃本地</button>
+        <button class="export-btn" data-testid="export-btn" @click="$emit('export')">导出本地到 .local.md</button>
       </div>
     </div>
   </div>

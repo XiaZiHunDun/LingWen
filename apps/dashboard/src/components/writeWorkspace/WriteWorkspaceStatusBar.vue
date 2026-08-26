@@ -1,5 +1,5 @@
 <template>
-  <footer class="ws-status" :data-status="saveState.status" data-testid="ws-status-bar">
+  <footer class="ws-status ws-status-bar" :data-status="saveState.status" data-testid="ws-status-bar">
     <span v-if="saveState.status === 'idle'">就绪</span>
     <span v-else-if="saveState.status === 'saving'">保存中…</span>
     <span v-else-if="saveState.status === 'saved'">

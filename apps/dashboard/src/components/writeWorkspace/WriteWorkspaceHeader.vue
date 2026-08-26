@@ -14,7 +14,7 @@
     <div class="ws-header__right">
       <button
         type="button"
-        class="ws-header__mode-toggle"
+        class="ws-header__mode-toggle mode-toggle"
         data-testid="mode-toggle"
         @click="$emit('toggleMode')"
       >
