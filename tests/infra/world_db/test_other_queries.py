@@ -38,6 +38,27 @@ def test_relationship_round_trip(tmp_path):
     assert len(rels) == 1 and rels[0]["kind"] == "member_of"
 
 
+def test_create_relationship_idempotent_returns_same_id(tmp_path):
+    """INSERT OR IGNORE on UNIQUE conflict must still return a valid id.
+
+    SQLite's ``lastrowid`` after ``INSERT OR IGNORE`` is implementation-
+    defined (may be 0, the pre-existing row's id, or None depending on driver).
+    The fix wraps the INSERT with a deterministic SELECT on the unique key,
+    so the returned id is the canonical row regardless of driver quirks.
+    """
+    c = _setup(tmp_path)
+    data = {
+        "source_kind": "character", "source_id": 1,
+        "target_kind": "faction", "target_id": 1,
+        "kind": "member_of", "strength": 0.9,
+    }
+    rid_first = create_relationship(c, data)
+    rid_second = create_relationship(c, data)
+    assert rid_first > 0
+    assert rid_second == rid_first  # same canonical id, not 0 / None
+    assert len(list_relationships(c)) == 1  # no duplicate row created
+
+
 def test_lore_crud(tmp_path):
     c = _setup(tmp_path)
     lid = create_lore(c, {"slug": "magic", "title": "灵力系统",

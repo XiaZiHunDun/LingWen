@@ -5,8 +5,18 @@ from infra.world_db.queries._helpers import now_iso
 
 
 def create_relationship(conn: sqlite3.Connection, data: dict) -> int:
+    """Insert a relationship, idempotent on the UNIQUE constraint.
+
+    Returns the canonical row id. When a relationship with the same
+    (source_kind, source_id, target_kind, target_id, kind) already exists,
+    the INSERT OR IGNORE is a no-op and we resolve the id with a SELECT on
+    the same key — making the return value deterministic regardless of
+    SQLite's lastrowid behavior on conflict (which is implementation-defined
+    across Python/sqlite3 versions and may return 0, the pre-existing row's
+    id, or None).
+    """
     now = now_iso()
-    cur = conn.execute(
+    conn.execute(
         """INSERT OR IGNORE INTO relationship
            (source_kind, source_id, target_kind, target_id, kind,
             strength, chapter, notes, created_at, updated_at)
@@ -19,7 +29,20 @@ def create_relationship(conn: sqlite3.Connection, data: dict) -> int:
         ),
     )
     conn.commit()
-    return cur.lastrowid
+    row = conn.execute(
+        "SELECT id FROM relationship "
+        "WHERE source_kind = ? AND source_id = ? "
+        "AND target_kind = ? AND target_id = ? AND kind = ?",
+        (data["source_kind"], data["source_id"],
+         data["target_kind"], data["target_id"], data["kind"]),
+    ).fetchone()
+    if row is None:
+        # Should be unreachable — INSERT OR IGNORE either inserts or finds
+        # a conflicting row, both of which leave a row matching the key.
+        raise RuntimeError(
+            "create_relationship: row missing after INSERT OR IGNORE"
+        )
+    return row["id"]
 
 
 def list_relationships(
