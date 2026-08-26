@@ -71,3 +71,52 @@ def test_compute_metrics_returns_provider_metrics_instance():
     assert m.provider == "minimax"
     assert m.n_calls == 1
     assert m.n_failed == 0
+
+
+def test_canon_level_compliance_counts_only_canon_ok_among_parse_ok():
+    calls = [
+        _make_call(parse_ok=True, canon_level_ok=True),
+        _make_call(parse_ok=True, canon_level_ok=False),
+        _make_call(parse_ok=False, canon_level_ok=True),  # not counted
+    ]
+    m = compute_metrics(calls, provider="minimax")
+    assert m.canon_level_compliance == 0.5
+
+
+def test_latency_p50_and_p95():
+    calls = [_make_call(latency_s=float(i)) for i in range(1, 11)]  # 1.0..10.0
+    m = compute_metrics(calls, provider="minimax")
+    # 10 sorted latencies: 1,2,3,...,10 → p50=5.5 (mean of 5th & 6th), p95=9.55 (linear interp)
+    assert 5.4 <= m.latency_p50_s <= 5.6
+    assert 9.0 <= m.latency_p95_s <= 10.0
+
+
+def test_cost_per_call_is_mean():
+    calls = [
+        _make_call(cost_usd=0.001),
+        _make_call(cost_usd=0.003),
+        _make_call(cost_usd=0.006),
+    ]
+    m = compute_metrics(calls, provider="minimax")
+    assert abs(m.cost_per_call_usd - 0.003333) < 1e-6
+
+
+def test_confidence_distribution_counts_by_proposal_payload():
+    calls = [
+        _make_call(
+            parse_ok=True,
+            parsed_proposals=[
+                {"payload": {"confidence": "high"}, "kind": "character.update"},
+                {"payload": {"confidence": "medium"}, "kind": "character.update"},
+            ],
+        ),
+        _make_call(
+            parse_ok=True,
+            parsed_proposals=[
+                {"payload": {"confidence": "high"}, "kind": "character.update"},
+                {"payload": {"confidence": "low"}, "kind": "character.update"},
+            ],
+        ),
+    ]
+    m = compute_metrics(calls, provider="minimax")
+    assert m.confidence_distribution == {"high": 2, "medium": 1, "low": 1}

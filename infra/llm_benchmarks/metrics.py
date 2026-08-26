@@ -5,6 +5,7 @@ All functions are pure (no I/O), testable without fixtures.
 """
 from __future__ import annotations
 
+import statistics
 from dataclasses import dataclass, field
 
 
@@ -46,6 +47,27 @@ class ProviderMetrics:
     quality_composite: float = 0.0
 
 
+def _percentile(values: list[float], pct: float) -> float:
+    """Linear-interpolation percentile (matches numpy default).
+
+    Returns 0.0 for empty values; falls back to single value when n=1.
+    """
+    if not values:
+        return 0.0
+    if len(values) == 1:
+        return float(values[0])
+    return statistics.quantiles(values, n=100, method="inclusive")[int(pct) - 1]
+
+
+def _confidence_distribution(proposals_list: list[list[dict]]) -> dict[str, int]:
+    dist: dict[str, int] = {}
+    for proposals in proposals_list:
+        for p in proposals:
+            conf = (p.get("payload") or {}).get("confidence", "unknown")
+            dist[conf] = dist.get(conf, 0) + 1
+    return dist
+
+
 def compute_metrics(calls: list[CallResult], provider: str) -> ProviderMetrics:
     """Aggregate N CallResults into a ProviderMetrics summary.
 
@@ -63,6 +85,19 @@ def compute_metrics(calls: list[CallResult], provider: str) -> ProviderMetrics:
     schema_compliance = n_schema_ok / n_parse_ok if n_parse_ok else 0.0
     canon_level_compliance = n_canon_ok / n_parse_ok if n_parse_ok else 0.0
 
+    latencies = [c.latency_s for c in calls if not c.failed]
+    latency_p50_s = _percentile(latencies, 50)
+    latency_p95_s = _percentile(latencies, 95)
+
+    valid_calls = [c for c in calls if not c.failed]
+    cost_per_call_usd = (
+        sum(c.cost_usd for c in valid_calls) / len(valid_calls) if valid_calls else 0.0
+    )
+
+    confidence_distribution = _confidence_distribution(
+        [c.parsed_proposals for c in calls if c.parse_ok]
+    )
+
     return ProviderMetrics(
         provider=provider,
         n_calls=n_calls,
@@ -70,4 +105,8 @@ def compute_metrics(calls: list[CallResult], provider: str) -> ProviderMetrics:
         parse_rate=parse_rate,
         schema_compliance=schema_compliance,
         canon_level_compliance=canon_level_compliance,
+        confidence_distribution=confidence_distribution,
+        latency_p50_s=latency_p50_s,
+        latency_p95_s=latency_p95_s,
+        cost_per_call_usd=cost_per_call_usd,
     )
