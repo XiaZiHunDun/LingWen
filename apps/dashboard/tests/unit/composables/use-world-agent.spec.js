@@ -105,4 +105,48 @@ describe('useWorldAgent', () => {
     const [, init] = fetchMock.mock.calls[0]
     expect(JSON.parse(init.body).chapter_texts).toEqual([])
   })
+
+  it('fetchChapterTexts builds correct URL and returns parsed texts', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      statusText: 'OK',
+      json: async () => ({
+        chapters: [
+          { num: 1, text: 'body1' },
+          { num: 2, text: 'body2' },
+        ],
+        found: 2,
+        requested: 2,
+      }),
+    })
+
+    const { fetchChapterTexts } = useWorldAgent()
+    const result = await fetchChapterTexts('lingwen-novel', { start: 1, end: 2 })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url] = fetchMock.mock.calls[0]
+    expect(url).toContain('/api/world/chapters?')
+    expect(url).toContain('project=lingwen-novel')
+    expect(url).toContain('start=1')
+    expect(url).toContain('end=2')
+
+    expect(result).toEqual({
+      texts: ['body1', 'body2'],
+      found: 2,
+      requested: 2,
+    })
+  })
+
+  it('fetchChapterTexts throws on non-OK response with detail', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      statusText: 'Bad Request',
+      json: async () => ({ detail: 'start must be <= end' }),
+    })
+
+    const { fetchChapterTexts } = useWorldAgent()
+    await expect(
+      fetchChapterTexts('lingwen-novel', { start: 5, end: 3 }),
+    ).rejects.toThrow(/start must be <= end/)
+  })
 })

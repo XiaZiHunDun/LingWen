@@ -63,6 +63,32 @@ export function useWorldAgent() {
   }
 
   /**
+   * Resolve chapterRange → list[str] of chapter texts via backend bulk-fetch.
+   * Throws on error (caller is expected to display message).
+   * @param {string} projectSlug
+   * @param {ChapterRange} chapterRange - {start, end}
+   * @returns {Promise<{texts: string[], found: number, requested: number}>}
+   */
+  async function fetchChapterTexts(projectSlug, chapterRange) {
+    const params = new URLSearchParams({
+      project: projectSlug,
+      start: String(chapterRange.start),
+      end: String(chapterRange.end),
+    })
+    const res = await fetch(`/api/world/chapters?${params}`)
+    if (!res.ok) {
+      const detail = (await res.json().catch(() => ({}))).detail || res.statusText
+      throw new Error(`fetchChapterTexts failed: ${detail}`)
+    }
+    const data = await res.json()
+    return {
+      texts: data.chapters.map((c) => c.text),
+      found: data.found,
+      requested: data.requested,
+    }
+  }
+
+  /**
    * Extract character-update proposals from a free-form user prompt.
    *
    * @param {string} characterSlug - target character slug
@@ -102,5 +128,5 @@ export function useWorldAgent() {
     }
   }
 
-  return { extractFromChapters, extractFromPrompt }
+  return { extractFromChapters, extractFromPrompt, fetchChapterTexts }
 }
