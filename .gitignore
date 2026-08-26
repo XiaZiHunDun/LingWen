@@ -227,3 +227,6 @@ memory/
 
 # Collaboration blackboard (tracked - shared across dev assistants)
 # collaboration/
+
+# Phase 120: LLM provider benchmark raw results (per-run JSON)
+infra/llm_benchmarks/results/
