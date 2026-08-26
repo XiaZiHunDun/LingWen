@@ -13,6 +13,7 @@
     <div class="l1-page__body l1-panel-enter hub-l1__panel">
       <WorldTabs :active-tab="store.activeTab" @switch="store.switchTab" />
       <div class="world-page__body">
+        <WorldProposalInbox />
         <CharacterList v-if="store.activeTab === 'characters'" />
         <FactionGraph v-else-if="store.activeTab === 'factions'" />
         <TimelineView v-else-if="store.activeTab === 'timeline'" />
@@ -26,6 +27,7 @@
 import PageLeadBar from '@/components/PageLeadBar.vue'
 import { useWorldStore } from '@/stores/useWorldStore'
 import WorldTabs from '@/components/world/WorldTabs.vue'
+import WorldProposalInbox from '@/components/world/WorldProposalInbox.vue'
 import CharacterList from '@/components/world/characters/CharacterList.vue'
 import FactionGraph from '@/components/world/factions/FactionGraph.vue'
 import TimelineView from '@/components/world/timeline/TimelineView.vue'
