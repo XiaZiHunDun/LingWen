@@ -17,6 +17,8 @@ from infra.persistence.registry import (
     reset_all,
 )
 from infra.persistence.schemas import SCHEMAS, apply_schema, get_schema
+from infra.persistence.write_chapter import write_chapter
+from infra.persistence.write_workspace_api import router as write_workspace_router
 
 __all__ = [
     "get",
@@ -37,4 +39,6 @@ __all__ = [
     "READING_POWER_DB",
     "RELATIONSHIP_DB",
     "CROSS_VOLUME_DB",
+    "write_chapter",
+    "write_workspace_router",
 ]
