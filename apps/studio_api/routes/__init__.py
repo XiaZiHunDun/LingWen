@@ -21,6 +21,7 @@ from apps.studio_api.routes.health import register_health
 from apps.studio_api.routes.overview import register_overview
 from apps.studio_api.routes.studio import register_studio
 from apps.studio_api.routes.workflows import register_workflows
+from apps.studio_api.routes.write_workspace import register_write_workspace
 
 
 def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:
@@ -40,6 +41,7 @@ def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:
     register_creator_volume(app, ctx)
     register_creator_onboarding(app, ctx)
     register_creator_settings(app, ctx)
+    register_write_workspace(app, ctx)
 
 
 __all__ = [
@@ -56,4 +58,5 @@ __all__ = [
     "register_creator_volume",
     "register_creator_onboarding",
     "register_creator_settings",
+    "register_write_workspace",
 ]
