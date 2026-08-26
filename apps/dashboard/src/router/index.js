@@ -75,6 +75,12 @@ const routes = [
     name: 'settings',
     component: () => import('../pages/SettingsPage.vue'),
   },
+  {
+    path: '/write/:chapterId',
+    name: 'write-workspace',
+    component: () => import('../pages/WriteWorkspacePage.vue'),
+    props: true,
+  },
 ]
 
 const router = createRouter({
