@@ -60,13 +60,14 @@
  * are intentionally NOT wired here — they will be added once those composables/
  * components ship.
  */
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch as vueWatch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useWriteWorkspaceStore } from '@/stores/useWriteWorkspaceStore'
 import { useWriteWorkspaceApi } from '@/composables/useWriteWorkspaceApi'
 import { useWriteWorkspacePersistence } from '@/composables/useWriteWorkspacePersistence'
 import { useWriteGoal } from '@/composables/useWriteGoal'
 import { useTypewriterMode } from '@/composables/useTypewriterMode'
+import { useWriteQualityCheck } from '@/composables/useWriteQualityCheck'
 import WriteWorkspaceHeader from '@/components/writeWorkspace/WriteWorkspaceHeader.vue'
 import WriteWorkspaceOutlinePane from '@/components/writeWorkspace/WriteWorkspaceOutlinePane.vue'
 import WriteWorkspaceEditorPane from '@/components/writeWorkspace/WriteWorkspaceEditorPane.vue'
@@ -81,6 +82,7 @@ const store = useWriteWorkspaceStore()
 const api = useWriteWorkspaceApi()
 const writeGoal = useWriteGoal()
 const typewriter = useTypewriterMode()
+const quality = useWriteQualityCheck()
 
 const editorContent = ref('')
 const chatInput = ref('')
@@ -149,11 +151,21 @@ async function retrySave() {
   await persist.flushNow()
 }
 
-async function handleJumpToFix(_annotation) {
-  // Quality-check bridge not yet wired (plan Tasks 23/24); keep as a no-op
-  // until the runner + annotation pipeline ship. The button still renders
-  // and emits, so the UI surface is testable end-to-end.
+async function handleJumpToFix(annotation) {
+  const result = await quality.runCheck({ chapterId: store.chapterId, body: editorContent.value })
+  store.annotations = result.annotations
 }
+
+vueWatch(() => store.mode, async (newMode) => {
+  if (newMode === 'editor' && store.chapterId) {
+    try {
+      const result = await quality.runCheck({ chapterId: store.chapterId, body: editorContent.value })
+      store.annotations = result.annotations
+    } catch (e) {
+      console.warn('[write-workspace] quality check failed', e)
+    }
+  }
+})
 
 function handleKeydown(e) {
   if ((e.metaKey || e.ctrlKey) && e.key === '.') {

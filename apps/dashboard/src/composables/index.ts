@@ -16,6 +16,7 @@
  * - 引导: useCreatorModeGuide
  * - 工作台: useCreatorWriteWorkbench
  * - 写作空间持久化: useWriteWorkspacePersistence (debounce + 冲突检测)
+ * - 写作空间质量桥: useWriteQualityCheck (POST /api/quality/run)
  * - 页面: useCreatorPageHeader, useCreatorPageProviders, useCreatorPageRefresh
  * - 仪表盘: useCreatorPulse
  * - 工作区: useCreatorWorkspace
@@ -81,6 +82,7 @@ export { useTypewriterMode } from './useTypewriterMode.js';
 export { useWriteGoal } from './useWriteGoal.js';
 export { useWriteWorkspaceApi } from './useWriteWorkspaceApi.js';
 export { useWriteWorkspacePersistence } from './useWriteWorkspacePersistence.js';
+export { useWriteQualityCheck } from './useWriteQualityCheck.js';
 export { useEventBus, onRippleUpdate } from './useEventBus.js';
 export * as useWidgetRegistry from './useWidgetRegistry.js';
 export { registerDashboardWidgets } from './useDashboardWidgets.js';
