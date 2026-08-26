@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 
 from apps.studio_api.routes.ctx import RoutesContext
 
@@ -215,17 +215,21 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     agent_rate_limiter = _AgentRateLimiter(max_calls=5)
 
     @app.post("/api/world/agent/extract-from-chapters")
-    def agent_extract_from_chapters(payload: dict = Body(...)):
+    def agent_extract_from_chapters(
+        request: Request,
+        payload: dict = Body(...),
+    ):
         """Extract character-update proposals from chapter text via LLM."""
         from infra.world_db.agent_extractors import (
             extract_proposals_from_chapters,
         )
         from infra.world_db.queries.proposals import create_proposal
 
-        if not agent_rate_limiter.allow():
+        client_host = request.client.host if request.client else "unknown"
+        if not agent_rate_limiter.allow(client_host):
             raise HTTPException(
                 429,
-                detail="agent extraction rate limit exceeded (5 calls per session)",
+                detail="agent extraction rate limit exceeded (5 calls per session per IP)",
             )
 
         character_slug = payload.get("character_slug")
@@ -248,17 +252,21 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         return {"proposals_created": len(ids), "ids": ids}
 
     @app.post("/api/world/agent/extract-from-prompt")
-    def agent_extract_from_prompt(payload: dict = Body(...)):
+    def agent_extract_from_prompt(
+        request: Request,
+        payload: dict = Body(...),
+    ):
         """Extract character-update proposals from a free-form user prompt."""
         from infra.world_db.agent_extractors import (
             extract_proposals_from_prompt,
         )
         from infra.world_db.queries.proposals import create_proposal
 
-        if not agent_rate_limiter.allow():
+        client_host = request.client.host if request.client else "unknown"
+        if not agent_rate_limiter.allow(client_host):
             raise HTTPException(
                 429,
-                detail="agent extraction rate limit exceeded (5 calls per session)",
+                detail="agent extraction rate limit exceeded (5 calls per session per IP)",
             )
 
         character_slug = payload.get("character_slug")
@@ -280,24 +288,41 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
 
 
 class _AgentRateLimiter:
-    """Simple in-process counter for agent extraction calls.
+    """Per-key counter for agent extraction calls.
 
-    Phase 118 v1: counts every successful ``allow()`` until the cap is
-    reached; resets only on process restart. Suitable for the cost guard
-    mandated by handoff §5 (5 calls / session). Production-grade per-IP
-    or per-user scoping can replace this without changing the route
-    contract.
+    Phase 119 Task C: replaces process-global counter with per-key dict
+    (typically keyed by client IP). Lazy TTL cleanup evicts entries that
+    have not been touched in `ttl_seconds` to bound memory growth.
     """
 
-    def __init__(self, max_calls: int = 5):
+    def __init__(self, max_calls: int = 5, ttl_seconds: int = 3600):
         self._max_calls = max_calls
-        self._count = 0
+        self._ttl_seconds = ttl_seconds
+        self._counters: dict[str, int] = {}
+        self._last_access: dict[str, float] = {}
 
-    def allow(self) -> bool:
-        if self._count >= self._max_calls:
+    def allow(self, key: str, *, now: float | None = None) -> bool:
+        import time
+        if now is None:
+            now = time.monotonic()
+        self._evict(now)
+        if self._counters.get(key, 0) >= self._max_calls:
             return False
-        self._count += 1
+        self._counters[key] = self._counters.get(key, 0) + 1
+        self._last_access[key] = now
         return True
 
-    def reset(self) -> None:
-        self._count = 0
+    def reset(self, key: str | None = None) -> None:
+        if key is None:
+            self._counters.clear()
+            self._last_access.clear()
+        else:
+            self._counters.pop(key, None)
+            self._last_access.pop(key, None)
+
+    def _evict(self, now: float) -> None:
+        threshold = now - self._ttl_seconds
+        expired = [k for k, t in self._last_access.items() if t < threshold]
+        for k in expired:
+            self._counters.pop(k, None)
+            self._last_access.pop(k, None)

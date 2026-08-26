@@ -271,3 +271,43 @@ def test_get_chapter_texts_validates_range(tmp_path, monkeypatch):
     resp = client.get("/api/world/chapters?project=lingwen-novel&start=5&end=3")
     assert resp.status_code == 400
     assert "start must be <= end" in resp.json()["detail"]
+
+
+# ---------------------------------------------------------------------------
+# Phase 119 Task C: per-IP rate limiter isolation
+# ---------------------------------------------------------------------------
+def test_agent_rate_limiter_isolates_per_key():
+    """Two keys have independent counters; one hitting cap does not block the other."""
+    import apps.studio_api.routes.world as wmod
+    rl = wmod._AgentRateLimiter(max_calls=5)
+
+    # IP1 hits cap
+    for _ in range(5):
+        assert rl.allow("1.2.3.4") is True
+    assert rl.allow("1.2.3.4") is False  # 6th call from IP1 blocked
+
+    # IP2 starts independent
+    for _ in range(5):
+        assert rl.allow("5.6.7.8") is True
+    assert rl.allow("5.6.7.8") is False  # IP2 also at cap
+
+    # IP1 still blocked
+    assert rl.allow("1.2.3.4") is False
+
+    # reset(IP1) frees IP1's quota
+    rl.reset("1.2.3.4")
+    assert rl.allow("1.2.3.4") is True
+
+
+def test_agent_rate_limiter_ttl_evicts_old_keys():
+    """Keys not accessed within ttl_seconds are evicted; counter freed."""
+    import apps.studio_api.routes.world as wmod
+    rl = wmod._AgentRateLimiter(max_calls=5, ttl_seconds=10)
+
+    # IP1: 5 successful calls at t=100..104
+    for t in (100.0, 101.0, 102.0, 103.0, 104.0):
+        assert rl.allow("1.2.3.4", now=t) is True
+    assert rl.allow("1.2.3.4", now=105.0) is False  # cap reached
+
+    # At t=200 (> ttl=10 from last_access=105.0), IP1 evicted on next call
+    assert rl.allow("1.2.3.4", now=200.0) is True
