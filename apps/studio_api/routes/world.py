@@ -90,6 +90,23 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
             lore_path=project_dir / "03_内容仓库" / "lore-registry.md",
         )
 
+    @app.get("/api/world/chapters")
+    def get_chapter_texts(
+        project: str = Query(default="lingwen-novel"),
+        start: int = Query(..., ge=1),
+        end: int = Query(..., ge=1),
+    ):
+        """Bulk-fetch chapter text bodies from projects/<project>/golden-set/chapters/."""
+        if start > end:
+            raise HTTPException(400, detail="start must be <= end")
+        chapters_dir = Path(f"projects/{project}/golden-set/chapters")
+        out = []
+        for num in range(start, end + 1):
+            path = chapters_dir / f"ch{num:03d}.md"
+            if path.exists():
+                out.append({"num": num, "text": path.read_text(encoding="utf-8")})
+        return {"chapters": out, "found": len(out), "requested": end - start + 1}
+
     @app.get("/api/world/export")
     def export_markdown(project: str = Query(default="lingwen-novel")):
         from pathlib import Path

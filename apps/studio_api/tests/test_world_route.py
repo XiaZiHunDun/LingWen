@@ -209,3 +209,65 @@ def test_agent_routes_are_registered():
     methods = {(r.path, tuple(sorted(r.methods or []))) for r in app.routes}
     assert ("/api/world/agent/extract-from-chapters", ("POST",)) in methods
     assert ("/api/world/agent/extract-from-prompt", ("POST",)) in methods
+
+
+# ---------------------------------------------------------------------------
+# Phase 119 Task B: chapterRange → chapterTexts bulk-fetch endpoint
+# ---------------------------------------------------------------------------
+def test_get_chapter_texts_returns_existing_chapters(tmp_path, monkeypatch):
+    """GET /api/world/chapters returns text bodies of existing ch{NNN}.md files."""
+    project_dir = tmp_path / "projects" / "lingwen-novel"
+    chapters_dir = project_dir / "golden-set" / "chapters"
+    chapters_dir.mkdir(parents=True)
+    (chapters_dir / "ch001.md").write_text("# ch1\nfirst chapter body", encoding="utf-8")
+    (chapters_dir / "ch002.md").write_text("# ch2\nsecond chapter body", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+    resp = client.get("/api/world/chapters?project=lingwen-novel&start=1&end=2")
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["requested"] == 2
+    assert data["found"] == 2
+    assert len(data["chapters"]) == 2
+    assert data["chapters"][0]["num"] == 1
+    assert "first chapter body" in data["chapters"][0]["text"]
+    assert data["chapters"][1]["num"] == 2
+    assert "second chapter body" in data["chapters"][1]["text"]
+
+
+def test_get_chapter_texts_skips_missing(tmp_path, monkeypatch):
+    """GET /api/world/chapters silently skips non-existent chapters in range."""
+    project_dir = tmp_path / "projects" / "lingwen-novel"
+    chapters_dir = project_dir / "golden-set" / "chapters"
+    chapters_dir.mkdir(parents=True)
+    (chapters_dir / "ch001.md").write_text("# ch1", encoding="utf-8")
+    # ch002 missing
+    (chapters_dir / "ch003.md").write_text("# ch3", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+    resp = client.get("/api/world/chapters?project=lingwen-novel&start=1&end=3")
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["requested"] == 3
+    assert data["found"] == 2
+    nums = [c["num"] for c in data["chapters"]]
+    assert nums == [1, 3]
+
+
+def test_get_chapter_texts_validates_range(tmp_path, monkeypatch):
+    """GET /api/world/chapters returns 400 when start > end."""
+    monkeypatch.chdir(tmp_path)
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+    resp = client.get("/api/world/chapters?project=lingwen-novel&start=5&end=3")
+    assert resp.status_code == 400
+    assert "start must be <= end" in resp.json()["detail"]
