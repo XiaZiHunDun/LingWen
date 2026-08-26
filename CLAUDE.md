@@ -60,7 +60,6 @@ pnpm knip                  # 委托 apps/dashboard 跑 knip
 ## 已知遗留
 
 - **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup commonjs 插件不兼容，5 个 phase 投入失败。dev baseline 仍是 authoritative measurement。E2E Playwright runtime 暂时阻塞。
-- **Backend FastAPI router 未注册**：`infra/persistence/write_workspace_api.py` 已创建并 importable，但 `apps/studio_api/main.py` 还未 `app.include_router(write_workspace_router)`。待 Phase 116+ 接通。
 
 ---
 
