@@ -120,3 +120,68 @@ def test_confidence_distribution_counts_by_proposal_payload():
     ]
     m = compute_metrics(calls, provider="minimax")
     assert m.confidence_distribution == {"high": 2, "medium": 1, "low": 1}
+
+
+from infra.llm_benchmarks.metrics import (
+    consistency_score,
+    quality_composite,
+    recommend_priority,
+)
+
+
+def test_consistency_score_perfect_when_proposals_match_across_runs():
+    proposals = [{"kind": "character.update", "target_id": 5}]
+    calls = [
+        _make_call(chapter_id=1, run_index=i, parsed_proposals=proposals)
+        for i in range(1, 4)
+    ]
+    assert consistency_score(calls) == 1.0
+
+
+def test_consistency_score_zero_when_all_proposals_differ():
+    calls = [
+        _make_call(chapter_id=1, run_index=1, parsed_proposals=[{"target_id": 1}]),
+        _make_call(chapter_id=1, run_index=2, parsed_proposals=[{"target_id": 2}]),
+        _make_call(chapter_id=1, run_index=3, parsed_proposals=[{"target_id": 3}]),
+    ]
+    # pairwise identical rate = 0/3 = 0.0
+    assert consistency_score(calls) == 0.0
+
+
+def test_consistency_score_handles_missing_runs():
+    calls = [_make_call(chapter_id=1, run_index=1)]
+    # only 1 run → no variance to measure → 1.0
+    assert consistency_score(calls) == 1.0
+
+
+def test_quality_composite_is_simple_average():
+    m = ProviderMetrics(
+        provider="minimax",
+        n_calls=10,
+        n_failed=0,
+        parse_rate=0.9,
+        schema_compliance=0.8,
+        canon_level_compliance=1.0,
+    )
+    assert abs(quality_composite(m) - 0.9) < 1e-9
+
+
+def test_recommend_priority_orders_by_cost_above_threshold():
+    metrics = [
+        ProviderMetrics(provider="a", n_calls=10, n_failed=0, parse_rate=1.0,
+                        schema_compliance=1.0, canon_level_compliance=1.0,
+                        cost_per_call_usd=0.005),
+        ProviderMetrics(provider="b", n_calls=10, n_failed=0, parse_rate=1.0,
+                        schema_compliance=1.0, canon_level_compliance=1.0,
+                        cost_per_call_usd=0.001),
+        ProviderMetrics(provider="c", n_calls=10, n_failed=0, parse_rate=0.5,
+                        schema_compliance=0.5, canon_level_compliance=0.5,
+                        cost_per_call_usd=0.0001),  # composite=0.5, below 0.9
+    ]
+    priority = recommend_priority(metrics, threshold=0.9)
+    # a and b pass (composite=1.0), c fails (composite=0.5)
+    assert priority == ["b", "a", "c"]
+
+
+def test_recommend_priority_handles_empty_list():
+    assert recommend_priority([], threshold=0.9) == []

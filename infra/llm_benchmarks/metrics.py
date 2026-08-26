@@ -110,3 +110,55 @@ def compute_metrics(calls: list[CallResult], provider: str) -> ProviderMetrics:
         latency_p95_s=latency_p95_s,
         cost_per_call_usd=cost_per_call_usd,
     )
+
+
+def consistency_score(calls: list[CallResult]) -> float:
+    """Pairwise identity rate of proposals for the same chapter_id.
+
+    Groups calls by chapter_id, then for each chapter with >=2 runs,
+    computes pairwise proposal-list identity rate, averaged.
+    """
+    by_chapter: dict[int, list[CallResult]] = {}
+    for c in calls:
+        by_chapter.setdefault(c.chapter_id, []).append(c)
+
+    if not by_chapter:
+        return 1.0
+
+    chapter_scores: list[float] = []
+    for chapter_calls in by_chapter.values():
+        if len(chapter_calls) < 2:
+            chapter_scores.append(1.0)
+            continue
+        pairs_total = 0
+        pairs_match = 0
+        for i in range(len(chapter_calls)):
+            for j in range(i + 1, len(chapter_calls)):
+                pairs_total += 1
+                if chapter_calls[i].parsed_proposals == chapter_calls[j].parsed_proposals:
+                    pairs_match += 1
+        chapter_scores.append(pairs_match / pairs_total if pairs_total else 1.0)
+
+    return sum(chapter_scores) / len(chapter_scores)
+
+
+def quality_composite(m: ProviderMetrics) -> float:
+    """Simple average of parse_rate, schema_compliance, canon_level_compliance."""
+    return (m.parse_rate + m.schema_compliance + m.canon_level_compliance) / 3
+
+
+def recommend_priority(
+    metrics_list: list[ProviderMetrics],
+    threshold: float = 0.9,
+) -> list[str]:
+    """Order providers: above-threshold by cost asc, below-threshold appended."""
+    above: list[ProviderMetrics] = []
+    below: list[ProviderMetrics] = []
+    for m in metrics_list:
+        if quality_composite(m) >= threshold:
+            above.append(m)
+        else:
+            below.append(m)
+    above.sort(key=lambda m: m.cost_per_call_usd)
+    below.sort(key=lambda m: quality_composite(m), reverse=True)
+    return [m.provider for m in above] + [m.provider for m in below]
