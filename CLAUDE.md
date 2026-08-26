@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v14.2 (Phase 114 prod Web Vitals 终结)
+> **版本**: v15.0 (Phase 115 创作端 UX 子项目 #1 闭环)
+  → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.1 (Phase 106-113 CI/perf 闭环完成)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.2 (Phase 81-88 maintenance + ESLint extension 闭环完成)
@@ -114,6 +115,14 @@
   详见 `docs/superpowers/specs/2026-08-26-phase114-cytoscape-vite-alias-design.md`,
   `docs/superpowers/plans/2026-08-26-phase114-cytoscape-vite-alias.md`,
   `docs/superpowers/audit/2026-08-26-phase114-cytoscape-alias-failed.md`。
+
+> **更新 (2026-08-26)**：Phase 115 v15.0 创作端 UX 子项目 #1 闭环——
+  Immersive Write Workspace v1：/write/:chapterId 路由 + TipTap 长文编辑器 + 章节-场景两级 + Markdown 落地 + Author/Editor 双模式 + Scrivener 3-pane + AI 侧栏抽屉 + 5-agent 兼容契约。
+  新增 4 composables + 1 store + 8 components + 1 共享 front-matter schema + 1 Python atomic write backend。
+  Tests: 1614/1614 PASS (was 1545, +69 across 23 tasks). Vue-tsc: 0 errors. Build: OK. knip: clean.
+  Plan-deviation inline fixes: 12 (json schema、ts regex、code quality cleanup、barrel exports, etc.)
+  详见 `docs/superpowers/specs/2026-08-26-immersive-write-workspace-design.md` 与 `docs/superpowers/plans/2026-08-26-immersive-write-workspace.md`。
+  E2E tests 在 place 但因 Phase 114 prod preview regression 暂时 blocking 运行时（dev baseline 仍 authoritative）。
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
@@ -574,6 +583,7 @@ infra/
 ---
 
 > **版本记录**：
+> - v15.0 (2026-08-26)：Phase 115 创作端 UX 子项目 #1 闭环——Immersive Write Workspace v1 (/write/:chapterId 路由 + TipTap 编辑器 + 章节-场景两级 + Markdown 落地 + Author/Editor 双模式 + Scrivener 3-pane + AI 侧栏抽屉 + 5-agent 兼容契约)。Tests 1545 → 1614 (+69). E2E 暂时被 Phase 114 prod preview regression block，dev baseline 仍 authoritative。
 > - v14.2 (2026-08-26)：Phase 114 prod Web Vitals 终结。Vite alias + Proxy stub 修复尝试失败（同 Phase 112C TDZ），正式接受 dev baseline (Phase 106) 为权威。cytoscape stub 方向在 5 个 phase (110/111B/111C/112/112C/114) 投入后证伪。CLAUDE.md housekeeping。
 > - v14.1 (2026-08-25)：Phase 106 + 106-followup + 109 + 110 + 111B + 113 CI/perf/prod-investigation 闭环。6 commits 推进 CI/perf 工作，prod preview 修复尝试（Phase 110/111B）失败但 audit 完整。
 > - v14.0 (2026-08-25)：Phase 99-105b knip-follow-up 闭环完成（见 spec/audit docs 详）。
