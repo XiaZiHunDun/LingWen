@@ -2,7 +2,7 @@
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { SceneBreak } from './sceneBreakMark.js'
-import { onBeforeUnmount } from 'vue'
+import { onBeforeUnmount, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -18,6 +18,17 @@ const editor = useEditor({
   onUpdate: ({ editor }) => {
     emit('update:modelValue', editor.getHTML())
   },
+})
+
+watch(() => props.editable, (val) => {
+  editor.value?.setEditable(val)
+})
+
+watch(() => props.modelValue, (val) => {
+  // Only update if content actually differs (avoid feedback loops)
+  if (editor.value && val !== editor.value.getHTML()) {
+    editor.value.commands.setContent(val, false) // false = don't emit update
+  }
 })
 
 defineExpose({

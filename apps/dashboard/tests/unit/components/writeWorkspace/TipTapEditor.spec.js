@@ -30,4 +30,27 @@ describe('TipTapEditor', () => {
     })
     expect(wrapper.exists()).toBe(true)
   })
+
+  // NEW: actually invokes insertSceneBreak against a real editor
+  it('insertSceneBreak inserts a scene break into editor HTML', async () => {
+    const wrapper = mount(TipTapEditor, {
+      props: { modelValue: '<p>前面</p>' },
+      global: { stubs: { EditorContent: true } },
+    })
+    wrapper.vm.insertSceneBreak()
+    await nextTick()
+    const html = wrapper.vm.editor?.getHTML() || ''
+    expect(html).toContain('data-scene-break')
+  })
+
+  // NEW: editable prop is reactive
+  it('editable prop change updates editor editable state', async () => {
+    const wrapper = mount(TipTapEditor, {
+      props: { modelValue: '', editable: true },
+      global: { stubs: { EditorContent: true } },
+    })
+    expect(wrapper.vm.editor?.isEditable).toBe(true)
+    await wrapper.setProps({ editable: false })
+    expect(wrapper.vm.editor?.isEditable).toBe(false)
+  })
 })

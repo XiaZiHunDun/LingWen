@@ -1,12 +1,15 @@
-import { Mark } from '@tiptap/core'
+import { Node } from '@tiptap/core'
 
-export const SceneBreak = Mark.create({
+export const SceneBreak = Node.create({
   name: 'sceneBreak',
-  inclusive: false,
+  group: 'block',
+  atom: true,
+  inline: false,
+  selectable: true,
   parseHTML() {
-    return [{ tag: 'span[data-scene-break]' }]
+    return [{ tag: 'div[data-scene-break]' }]
   },
   renderHTML() {
-    return ['span', { 'data-scene-break': 'true' }, 0]
+    return ['div', { 'data-scene-break': 'true' }]
   },
 })
