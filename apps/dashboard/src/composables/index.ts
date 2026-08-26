@@ -77,6 +77,8 @@ export { useTierBudgetAlerts } from './useTierBudgetAlerts.js';
 export { useTodayHub } from './useTodayHub.js';
 export { useWorkflowListStore } from './useWorkflowListStore.js';
 export { useWorkflowSocket, onCascadeUpdate, onAuditCreated } from './useWorkflowSocket.js';
+export { useTypewriterMode } from './useTypewriterMode.js';
+export { useWriteGoal } from './useWriteGoal.js';
 export { useWriteWorkspaceApi } from './useWriteWorkspaceApi.js';
 export { useWriteWorkspacePersistence } from './useWriteWorkspacePersistence.js';
 export { useEventBus, onRippleUpdate } from './useEventBus.js';
