@@ -1,6 +1,8 @@
 """Atomic write of a chapter markdown file with front-matter preservation."""
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Tuple
+
 import yaml
 
 
@@ -40,4 +42,58 @@ def write_chapter(chapter_id: int, project: str, frontmatter: dict, body: str) -
         'path': str(md_path),
         'mtime': md_path.stat().st_mtime,
         'snapshot_path': str(snapshot_path),
+    }
+
+
+def _split_frontmatter(content: str) -> Tuple[dict, str]:
+    """Split `---\\n{fm}\\n---\\n\\n{body}` into (fm_dict, body).
+
+    Returns ({}, content) when no frontmatter is present or YAML parsing fails.
+    """
+    if not content.startswith('---\n'):
+        return {}, content
+
+    # Closing fence: '\n---\n' (standard) or trailing '\n---'
+    close_idx = content.find('\n---\n', 4)
+    if close_idx == -1:
+        if content.endswith('\n---'):
+            close_idx = len(content) - 4
+            body = ''
+        else:
+            return {}, content
+    else:
+        body = content[close_idx + 5:]
+        # Strip the single blank-line separator between fence and body.
+        if body.startswith('\n'):
+            body = body[1:]
+
+    fm_text = content[4:close_idx]
+    try:
+        frontmatter = yaml.safe_load(fm_text) or {}
+    except yaml.YAMLError:
+        frontmatter = {}
+
+    return frontmatter, body
+
+
+def read_chapter(chapter_id: int, project: str) -> dict:
+    """Read ch{N}.md and split into frontmatter + body.
+
+    Returns: {frontmatter: dict, body: str, mtime: float}
+    Raises: FileNotFoundError if chapter doesn't exist.
+    """
+    base = Path(f"projects/{project}/03_内容仓库/04_正文")
+    md_path = base / f"ch{chapter_id:03d}.md"
+    if not md_path.exists():
+        raise FileNotFoundError(
+            f"Chapter {chapter_id} not found in project '{project}'"
+        )
+
+    content = md_path.read_text(encoding='utf-8')
+    mtime = md_path.stat().st_mtime
+    frontmatter, body = _split_frontmatter(content)
+    return {
+        'frontmatter': frontmatter,
+        'body': body,
+        'mtime': mtime,
     }

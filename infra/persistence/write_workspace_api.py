@@ -1,6 +1,7 @@
 """FastAPI router for /api/write."""
-from fastapi import APIRouter, HTTPException, Body
-from .write_chapter import write_chapter
+from fastapi import APIRouter, Body, HTTPException, Query
+
+from .write_chapter import read_chapter, write_chapter
 
 router = APIRouter(prefix='/api/write', tags=['write-workspace'])
 
@@ -15,3 +16,14 @@ def put_chapter(chapter_id: int, payload: dict = Body(...)):
         return write_chapter(chapter_id, project, frontmatter, body)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get('/{chapter_id}')
+def get_chapter(
+    chapter_id: int,
+    project: str = Query(default='lingwen-novel'),
+):
+    try:
+        return read_chapter(chapter_id, project)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
