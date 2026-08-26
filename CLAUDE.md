@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v15.5 (Phase 120 LLM provider benchmark 闭环)
+> **版本**: v15.6 (Phase 121 minimax parse_rate 修复 闭环)
+  → v15.5 (Phase 120 LLM provider benchmark 闭环)
   → v15.4 (Phase 119 World follow-up 闭环)
   → v15.3 (Phase 118 World LLM Agent + cleanup 闭环)
   → v15.2 (Phase 117 World Visualization v1)
@@ -31,6 +32,24 @@
   - **Task 13 (docs sync)**: CLAUDE.md v15.5 + `.lingwen/architecture.yml` 加 `llm_benchmarks` module boundary。
   副产物 — 修复了 `infra/llm_service.py` 的 latent bug: `_init_providers` 走 `plugin_manager.get_priority()` 但 `plugin_manager._discover_internal_providers` 用错的 module path (`infra.ai_service.<name>` 而非 `lingwen_llm.providers.<name>`)。Phase 120 绕过: 直接 instantiate `MiniMaxProvider` via `get_provider_class("minimax")`。原 bug 保留待 v15.6+ 修。
   Lessons: pytest mock-only 必须 monkeypatch LLMService.get() 避免 CI 烧钱 / Path.parents[N] 是 N levels up (off-by-one 容易错) / subprocess.run 来源 (`source .env` + `set -a`) / Pydantic validation failure 反映真 LLM output quality — benchmark surface 真实问题 / 缺数据时不要 edit hardcode (Phase 119 §5 invariants)。
+
+> **更新 (2026-08-26)**：Phase 121 v15.6 闭环——1 commit (`e1b0539a`)：
+  - **SYSTEM_PROMPT 加 rule #7** `target_id 必须是整数,不是字符串。如果不知道角色的整数数据库 ID,使用 0。绝对不要把角色 slug 或角色名字符串作为 target_id。`
+  - **`infra/llm_benchmarks/run.py._call_provider` 修 canon_level_ok 指标** — 之前把 Optional=None 也算 fail,实际 schema 允许 canon_level omit (LLM 选 omit 时不应 fail)。改: only mark non-compliant if value IS provided AND not in enum。
+  - **Benchmark 重跑结果**:
+    - parse_rate: 0.20 → 0.70 (3.5x)
+    - schema_compliance: 1.00 → 1.00
+    - canon_level_compliance: 0.25 → 1.00
+    - **quality_composite: 0.73 → 0.90 (AT 0.90 threshold!)**
+    - consistency: 0.33 → 0.58
+    - cost/call: \$0.0004, p50=3.96s, p95=8.62s
+  - 73 tests pass (33 llm_bench + 40 world_db).
+  Lessons: LLM 输出 schema 验证要严格区分 "字段缺失 vs 字段非法" / `parse_proposals_json` 容忍 markdown fences 但不容忍 truncated JSON / SYSTEM_PROMPT 改一个数字规则 ≠ 改 schema,小改动仍然要 verify benchmark。
+  已知 carryover (Phase 122 候选):
+  - 2 calls 仍 fail (JSON truncation at char 499/1017 — model-specific, 需 follow-up)
+  - consistency=0.58 偏低 (temperature=0.2 + 长 chapter 输出,follow-up: 改 temperature=0.0 或更短 prompt)
+  - `infra/llm_service.py._init_providers` latent bug (Phase 120 发现,未修)
+  - (可选) Anthropic/OpenAI real re-test
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
