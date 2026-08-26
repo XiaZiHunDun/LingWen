@@ -1,17 +1,13 @@
 
-## Phase 16 + 17 状态（2026-08-12）
-
-- **Phase 16 卫生与基础** (2026-08-11): v10.0 — 事件 reducer、文件尺寸上限、单一品牌、GATE 脚本。
-- **Phase 17 monorepo** (进行中): 8 个 lingwen-* Python 包 + apps/{dashboard,studio_api} + pnpm workspace。
-- **Phase 16.7 推迟**：删陈旧 infra 目录推迟到 Phase 17 monorepo 完成后再评估。
-
 # 灵文 · LingWen 项目 Handoff 文档
 
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v9.33-bk (Phase 15.0 P3 一致性, 2026-07-13)  
-> **更新 (2026-07-13)**: Phase 15.0 T1 (`a9ed735a`) dashboard/app.py 6265 → 296 行；T2 (`3fd59a87`) SQLite consolidation spec/plan/tasks 三文档；T3-T5 待执行
+> **版本**: v15.0 (Phase 115 创作端 UX 子项目 #1 闭环, 2026-08-26)  
+> **更新 (2026-08-26)**: Phase 115 Immersive Write Workspace v1 — `/write/:chapterId` 路由 + TipTap 编辑器 + 章节-场景两级 + Author/Editor 双模式 + Scrivener 3-pane + AI 侧栏抽屉 + 5-agent pipeline 兼容契约。Tests 1545 → 1614 (+69)。E2E 暂时被 Phase 114 prod preview regression block，dev baseline 仍 authoritative。详见 `CLAUDE.md` v15 段。  
+> **更新 (2026-08-25)**: Phase 99-105b knip-follow-up 闭环。knip gate 全 7 categories = 0。  
+> **更新 (2026-08-20)**: Phase 60-67 dashboard 基础设施重构（v13.0）+ Phase 68-80 perf + 测量（v13.1）+ Phase 81-88 ESLint + maintenance（v13.2）+ Phase 89 housekeeping + Phase 95 knip integration 完成。
 
 ---
 
@@ -25,8 +21,8 @@
 | **生产硬门** | `config/project.yaml` → `max_chapter: 360`；canon 超章需 `LINGWEN_ALLOW_STRESS_TEST=1` |
 | **新书** | **八本** Studio 短篇 **10 章齐全**（含《铁道档案》P0=0） |
 | **CI** | **`test` 主门**；llm×7 **路径过滤**（改样章/infra 或 label `llm-check`） |
-| **下一期推荐** | **双轨**：Studio 维护 · **创作者线**见 §0.2 |
-| **最新 CI** | `test` + `Dashboard Frontend CI` @ **`3fd59a87`**（Phase 15.0 T1+T2 docs） |
+| **下一期推荐** | 见 `CLAUDE.md` "已知遗留"段（prod preview、backend router） |
+| **最新 CI** | `test` + `Dashboard Frontend CI` @ master (v15.0, 1614/1614 tests) |
 | **对外 zip** | `bash scripts/prepare-studio-samples-zip.sh` → **七样章** |
 | **主修 slug** | **七样章** dist + prose 快照 + **LLM judge** 报告 |
 | **顶级 KPI** | [`top-tier-studio-gap-v1.md`](docs/top-tier-studio-gap-v1.md) |
@@ -45,14 +41,21 @@
 - **仓库根**：`/home/ailearn/projects/AI-Incursion/domains/IP创作/projects/LingWen`（git root）
 - **主代码**：项目根目录（~95%）
 
-### 当前阶段：**维护模式**（v12 顶级 KPI 已达标）
+### 当前阶段：**v15.0 维护模式**（Write Workspace v1 闭环，无 blocking 项）
 
-**无 blocking 工程项。** 不要主动开第九本书、星陨 wave、SaaS、录屏、或恢复 llm×7 每次 push 全跑。
+**已知遗留**（按优先级）：
+1. **Prod preview regression** (Phase 114 accepted)：cytoscape-fcose CJS 与 rollup 冲突，dev baseline 仍 authoritative。E2E Playwright runtime 暂时阻塞。
+2. **OPTIMIZATION_PLAN 收尾**：page test coverage 24% → 80%（OPTIMIZATION_PLAN 立项 P0，未闭环）；ESLint warnings 148 → ≤50。
+
+不要主动开第九本书、星陨 wave、SaaS、录屏、或恢复 llm×7 每次 push 全跑。
 
 ### 本会话已完成（按时间倒序）
 
 | 主题 | 状态 | 证据 / commit |
 |------|------|----------------|
+| **Phase 115 v15.0 沉浸写作工作台** | ✅ | `/write/:chapterId` 路由 + TipTap + 章节-场景两级 + Author/Editor 双模式 + AI 抽屉。Tests 1545 → **1614** (+69). Vue-tsc 0 errors. Build OK. Commits `191d693d..d3482b14` (28 commits) |
+| **Phase 114 prod Web Vitals 终结** | ⚠️ accepted debt | dev baseline (Phase 106) 正式 authoritative；5 phase 投入失败。详见 `CLAUDE.md` |
+| **Phase 60-114 maintenance + perf + knip** | ✅ | 50+ phases closed (v13.0 / v13.1 / v13.2 / v14.0 / v14.1) |
 | **Phase 13.0 P1 止血（T1–T5）** | ✅ | `4da70b6b`/`7aaaaa5e`/`bbfc8b5d`/`02af6787`/`ed753a20` api 15s 超时 · slowapi 限流 · ripple list bulk · CLI path env · shell slug guard · Vitest **1029** · ruff clean · 5 spec new |
 | **Phase 14.0 P2 性能（T1–T3）** | ✅ | `70202c0c`/`acc8b834`/`546cc9a5` cascade 邻接表 O(1) (7.0×) · Qdrant async wrap to_thread (4.89×) · `_LRUCache` TTL 300s 防 stale (100% effective) · verify-p2 5/5 · bench-p2 3/3 · ruff clean · 12 new tests |
 | **Phase 15.0 P3 一致性 · T1** | ✅ | `a9ed735a` dashboard/app.py 6265 → 296 行 · 11 routes modules · `RoutesContext` dataclass · Pydantic v2 forward refs 修复 · CVG WebSocket 行为保持 · `.gitignore` 补 `.state/` + `.claude/worktrees/` · dashboard pytest **359** · ruff 0 · code-reviewer 0 阻塞 |
