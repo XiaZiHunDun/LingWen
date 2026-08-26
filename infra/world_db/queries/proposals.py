@@ -1,24 +1,8 @@
 """Proposal CRUD for review flow."""
 import json
 import sqlite3
-from datetime import datetime, timezone
 
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _row_to_dict(row: sqlite3.Row | None) -> dict | None:
-    if row is None:
-        return None
-    d = dict(row)
-    if d.get("payload"):
-        d["payload"] = json.loads(d["payload"])
-    return d
-
-
-def _rows_to_dicts(rows: list[sqlite3.Row]) -> list[dict]:
-    return [_row_to_dict(r) for r in rows]  # type: ignore[misc]
+from infra.world_db.queries._helpers import now_iso, row_to_dict
 
 
 def create_proposal(conn: sqlite3.Connection, data: dict) -> int:
@@ -30,7 +14,7 @@ def create_proposal(conn: sqlite3.Connection, data: dict) -> int:
         (
             data["kind"], data.get("target_kind"), data.get("target_id"),
             json.dumps(data["payload"], ensure_ascii=False),
-            data["source"], data.get("source_context"), _now(),
+            data["source"], data.get("source_context"), now_iso(),
         ),
     )
     conn.commit()
@@ -49,12 +33,14 @@ def list_proposals(
         rows = conn.execute(
             "SELECT * FROM proposal ORDER BY created_at DESC"
         ).fetchall()
-    return _rows_to_dicts(rows)
+    return [row_to_dict(r, ("payload",)) for r in rows if r is not None]
 
 
 def get_proposal(conn: sqlite3.Connection, pid: int) -> dict | None:
-    row = conn.execute("SELECT * FROM proposal WHERE id = ?", (pid,)).fetchone()
-    return _row_to_dict(row)
+    return row_to_dict(
+        conn.execute("SELECT * FROM proposal WHERE id = ?", (pid,)).fetchone(),
+        ("payload",),
+    )
 
 
 def update_proposal_status(
@@ -67,7 +53,7 @@ def update_proposal_status(
     cur = conn.execute(
         """UPDATE proposal SET status = ?, reviewer = ?, reviewed_at = ?
            WHERE id = ?""",
-        (status, reviewer, _now(), pid),
+        (status, reviewer, now_iso(), pid),
     )
     if cur.rowcount == 0:
         raise ValueError(f"proposal {pid} not found")

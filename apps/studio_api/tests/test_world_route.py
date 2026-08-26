@@ -1,5 +1,6 @@
 """Thin-shell tests for /api/world/* routes."""
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 

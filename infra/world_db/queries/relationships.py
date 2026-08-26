@@ -1,14 +1,11 @@
 """Relationship CRUD."""
 import sqlite3
-from datetime import datetime, timezone
 
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+from infra.world_db.queries._helpers import now_iso
 
 
 def create_relationship(conn: sqlite3.Connection, data: dict) -> int:
-    now = _now()
+    now = now_iso()
     cur = conn.execute(
         """INSERT OR IGNORE INTO relationship
            (source_kind, source_id, target_kind, target_id, kind,

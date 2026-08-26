@@ -1,32 +1,20 @@
 """Lore CRUD with optimistic concurrency."""
 import json
 import sqlite3
-from datetime import datetime, timezone
+
+from infra.world_db.queries._helpers import (
+    RevisionConflict,
+    now_iso,
+    row_to_dict,
+)
 
 
-class LoreRevisionConflict(Exception):
+class LoreRevisionConflict(RevisionConflict):
     """Raised when expected_revision does not match current lore row."""
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _row_to_dict(row: sqlite3.Row | None) -> dict | None:
-    if row is None:
-        return None
-    d = dict(row)
-    if d.get("tags"):
-        d["tags"] = json.loads(d["tags"])
-    return d
-
-
-def _rows_to_dicts(rows: list[sqlite3.Row]) -> list[dict]:
-    return [_row_to_dict(r) for r in rows]  # type: ignore[misc]
-
-
 def create_lore(conn: sqlite3.Connection, data: dict) -> int:
-    now = _now()
+    now = now_iso()
     cur = conn.execute(
         """INSERT INTO lore_entry
            (slug, title, category, summary, body, tags, created_at, updated_at, revision)
@@ -43,13 +31,17 @@ def create_lore(conn: sqlite3.Connection, data: dict) -> int:
 
 
 def get_lore(conn: sqlite3.Connection, lid: int) -> dict | None:
-    row = conn.execute("SELECT * FROM lore_entry WHERE id = ?", (lid,)).fetchone()
-    return _row_to_dict(row)
+    return row_to_dict(
+        conn.execute("SELECT * FROM lore_entry WHERE id = ?", (lid,)).fetchone(),
+        ("tags",),
+    )
 
 
 def get_lore_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
-    row = conn.execute("SELECT * FROM lore_entry WHERE slug = ?", (slug,)).fetchone()
-    return _row_to_dict(row)
+    return row_to_dict(
+        conn.execute("SELECT * FROM lore_entry WHERE slug = ?", (slug,)).fetchone(),
+        ("tags",),
+    )
 
 
 def list_lore(conn: sqlite3.Connection, category: str | None = None) -> list[dict]:
@@ -60,7 +52,7 @@ def list_lore(conn: sqlite3.Connection, category: str | None = None) -> list[dic
         ).fetchall()
     else:
         rows = conn.execute("SELECT * FROM lore_entry ORDER BY title").fetchall()
-    return _rows_to_dicts(rows)
+    return [row_to_dict(r, ("tags",)) for r in rows if r is not None]
 
 
 def update_lore(
@@ -82,7 +74,7 @@ def update_lore(
         (
             patch.get("title"), patch.get("category"),
             patch.get("summary"), patch.get("body"),
-            tags_value, _now(), lid, expected_revision,
+            tags_value, now_iso(), lid, expected_revision,
         ),
     )
     if cur.rowcount == 0:

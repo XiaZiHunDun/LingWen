@@ -1,30 +1,23 @@
 """Character CRUD with optimistic concurrency."""
 import json
 import sqlite3
-from datetime import datetime, timezone
+
+from infra.world_db.queries._helpers import (
+    RevisionConflict,
+    now_iso,
+    row_to_dict,
+)
 
 
-class CharacterRevisionConflict(Exception):
-    """Raised when expected_revision does not match current row."""
+class CharacterRevisionConflict(RevisionConflict):
+    """Raised when expected_revision does not match current character row."""
 
 
 CHARACTER_REVISION_CONFLICT = CharacterRevisionConflict
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _row_to_dict(row: sqlite3.Row) -> dict:
-    d = dict(row)
-    for k in ("attributes", "aliases"):
-        if d.get(k):
-            d[k] = json.loads(d[k])
-    return d
-
-
 def create_character(conn: sqlite3.Connection, data: dict) -> int:
-    now = _now()
+    now = now_iso()
     attrs = json.dumps(data.get("attributes") or {}, ensure_ascii=False)
     aliases = json.dumps(data.get("aliases") or [], ensure_ascii=False)
     cur = conn.execute(
@@ -44,17 +37,17 @@ def create_character(conn: sqlite3.Connection, data: dict) -> int:
 
 
 def get_character(conn: sqlite3.Connection, char_id: int) -> dict | None:
-    row = conn.execute(
-        "SELECT * FROM character WHERE id = ?", (char_id,)
-    ).fetchone()
-    return _row_to_dict(row) if row else None
+    return row_to_dict(
+        conn.execute("SELECT * FROM character WHERE id = ?", (char_id,)).fetchone(),
+        ("attributes", "aliases"),
+    )
 
 
 def get_character_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
-    row = conn.execute(
-        "SELECT * FROM character WHERE slug = ?", (slug,)
-    ).fetchone()
-    return _row_to_dict(row) if row else None
+    return row_to_dict(
+        conn.execute("SELECT * FROM character WHERE slug = ?", (slug,)).fetchone(),
+        ("attributes", "aliases"),
+    )
 
 
 def list_characters(conn: sqlite3.Connection, canon_level: str | None = None) -> list[dict]:
@@ -65,7 +58,7 @@ def list_characters(conn: sqlite3.Connection, canon_level: str | None = None) ->
         ).fetchall()
     else:
         rows = conn.execute("SELECT * FROM character ORDER BY name").fetchall()
-    return [_row_to_dict(r) for r in rows]
+    return [row_to_dict(r, ("attributes", "aliases")) for r in rows if r is not None]
 
 
 def update_character(
@@ -93,7 +86,7 @@ def update_character(
             json.dumps(patch["aliases"], ensure_ascii=False)
                 if "aliases" in patch else None,
             patch.get("notes"),
-            _now(), char_id, expected_revision,
+            now_iso(), char_id, expected_revision,
         ),
     )
     if cur.rowcount == 0:
