@@ -1,8 +1,18 @@
 # Write Workspace v1 会话交接文档
 
+> **历史快照**: 本文档对应 master @ `dce74c33` (v15.0 Phase 115 闭环时刻)。**后续会话不应按本文档 carryover 工作** — 这些项已在 Phase 116 (v15.1) 闭环：
+>
+> | 原始 carryover | Phase 116 commit | 状态 |
+> |----------------|------------------|------|
+> | Task B: GET `/api/write/:chapter_id` 未实现 | `65615f8c` feat(api): add GET /api/write/{chapter_id} endpoint | ✅ Closed |
+> | Task C: 老页面测试覆盖率 24%→80% | `d7646c10` + `d22070ae` (page-level tests) | ✅ Closed (LibraryPage / MorePage / InsightPage / WriteWorkspacePage) |
+> | Task D: ESLint warnings 148→≤50 | `39b53346` fix(dashboard): resolve 13 testid-class-sync warnings | ✅ Closed (13→0) |
+>
+> 当前真实状态见 `CLAUDE.md` v15.1 段。Tests: 1685/1686 PASS (1 skipped)。本文档保留供历史参考，不归档 (per handoff §5)。
+
 > **目的**: 新会话从这个 doc 衔接 — 项目状态、已闭环工作、未做 carryover、下一步推荐、用户策略。
 > **生成时间**: 2026-08-26 (master @ `dce74c33`)
-> **前置阅读** (按顺序): `CLAUDE.md` v15 段 → 本文档 → `docs/superpowers/specs/2026-08-26-immersive-write-workspace-design.md`
+> **前置阅读** (按顺序): `CLAUDE.md` v15.1 段 → 本文档 → `docs/superpowers/specs/2026-08-26-immersive-write-workspace-design.md`
 
 ---
 
