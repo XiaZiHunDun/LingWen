@@ -278,3 +278,64 @@ def serialize_timeline_markdown(events: list[dict]) -> str:
             lines.append(ev["description"])
             lines.append("")
     return "\n".join(lines)
+
+
+def import_project_markdown(
+    conn, character_dir, faction_path=None, lore_path=None,
+) -> dict:
+    """Import markdown files into the world DB. Returns import summary.
+
+    Idempotent for re-runs: if a slug already exists, skip.
+    """
+    summary = {
+        "characters_imported": 0,
+        "characters_skipped": 0,
+        "factions_imported": 0,
+        "lore_imported": 0,
+        "errors": [],
+    }
+
+    if character_dir and character_dir.is_dir():
+        for md_path in sorted(character_dir.glob("*.md")):
+            if md_path.name.lower() == "readme.md":
+                continue
+            try:
+                md = md_path.read_text(encoding="utf-8")
+                parsed = parse_character_markdown(md)
+                from infra.world_db.queries.characters import (
+                    get_character_by_slug, create_character,
+                )
+                if get_character_by_slug(conn, parsed["slug"]):
+                    summary["characters_skipped"] += 1
+                    continue
+                create_character(conn, parsed)
+                summary["characters_imported"] += 1
+            except Exception as e:
+                summary["errors"].append(f"{md_path.name}: {e}")
+
+    if faction_path and faction_path.is_file():
+        try:
+            from infra.world_db.queries.factions import (
+                get_faction_by_slug, create_faction,
+            )
+            md = faction_path.read_text(encoding="utf-8")
+            parsed = parse_faction_markdown(md)
+            if not get_faction_by_slug(conn, parsed["slug"]):
+                create_faction(conn, parsed)
+                summary["factions_imported"] += 1
+        except Exception as e:
+            summary["errors"].append(f"{faction_path.name}: {e}")
+
+    if lore_path and lore_path.is_file():
+        try:
+            from infra.world_db.queries.lore import create_lore, list_lore
+            md = lore_path.read_text(encoding="utf-8")
+            parsed = parse_lore_markdown(md)
+            existing = {l["slug"] for l in list_lore(conn)}
+            if parsed["slug"] not in existing:
+                create_lore(conn, parsed)
+                summary["lore_imported"] += 1
+        except Exception as e:
+            summary["errors"].append(f"{lore_path.name}: {e}")
+
+    return summary

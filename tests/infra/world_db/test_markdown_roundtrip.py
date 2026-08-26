@@ -61,3 +61,21 @@ def test_timeline_serialize():
     ]
     out = serialize_timeline_markdown(events)
     assert "暗域入侵" in out and "T-37" in out
+
+
+def test_import_project_markdown(tmp_path):
+    from infra.world_db.schema import get_connection, init_schema
+    from infra.world_db.markdown_roundtrip import import_project_markdown
+    conn = get_connection(tmp_path / "w.db")
+    init_schema(conn)
+
+    src_dir = Path("docs")
+    summary = import_project_markdown(
+        conn,
+        character_dir=src_dir / "character-bible",
+        faction_path=src_dir / "faction-design.md",
+        lore_path=src_dir / "lore-registry.md",
+    )
+    assert summary["characters_imported"] >= 5
+    assert summary["factions_imported"] >= 1
+    assert summary["lore_imported"] >= 1
