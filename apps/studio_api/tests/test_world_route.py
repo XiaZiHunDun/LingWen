@@ -60,3 +60,36 @@ def test_proposal_post_and_accept(tmp_path, monkeypatch):
     # Verify character exists
     resp = client.get("/api/world/characters")
     assert any(c["slug"] == "new-char" for c in resp.json()["characters"])
+
+
+def test_import_and_export_roundtrip(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Create project dir structure
+    project_dir = tmp_path / "projects" / "test-proj"
+    project_dir.mkdir(parents=True)
+    char_dir = project_dir / "03_内容仓库" / "character-bible"
+    char_dir.mkdir(parents=True)
+    (char_dir / "test-char.md").write_text(
+        "# 角色圣经 · 测试\n\n> Canon 等级：Draft\n\n## 快速参考\n- 全名：测试\n\n",
+        encoding="utf-8",
+    )
+    (project_dir / "docs").mkdir(exist_ok=True)
+    (project_dir / "docs" / "faction-design.md").write_text(
+        "# 阵营 · 测试阵营\n", encoding="utf-8",
+    )
+    (project_dir / "docs" / "lore-registry.md").write_text(
+        "# 世界观注册表 · 测试\n\n## 设定\n...body...\n", encoding="utf-8",
+    )
+
+    import apps.studio_api.routes.world as wmod
+    wmod._world_db_path = lambda: project_dir / ".state" / "world.db"
+
+    app = FastAPI()
+    _mount(app)
+    client = TestClient(app)
+
+    # Import
+    resp = client.post("/api/world/import?project=test-proj")
+    assert resp.status_code == 200, resp.text
+    summary = resp.json()
+    assert summary["characters_imported"] >= 1

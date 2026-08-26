@@ -75,6 +75,46 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         conn = _get_world_db()
         return {"events": list_timeline(conn)}
 
+    @app.post("/api/world/import")
+    def import_markdown(project: str = Query(default="lingwen-novel")):
+        from infra.world_db.markdown_roundtrip import import_project_markdown
+        from pathlib import Path
+
+        project_dir = Path(f"projects/{project}")
+        conn = _get_world_db()
+        return import_project_markdown(
+            conn,
+            character_dir=project_dir / "03_内容仓库" / "character-bible",
+            faction_path=project_dir / "03_内容仓库" / "faction-design.md",
+            lore_path=project_dir / "03_内容仓库" / "lore-registry.md",
+        )
+
+    @app.get("/api/world/export")
+    def export_markdown(project: str = Query(default="lingwen-novel")):
+        from infra.world_db.queries.characters import list_characters
+        from infra.world_db.queries.timeline import list_timeline
+        from infra.world_db.markdown_roundtrip import (
+            serialize_character_markdown, serialize_timeline_markdown,
+        )
+        from pathlib import Path
+
+        conn = _get_world_db()
+        out_dir = Path(f"projects/{project}/03_内容仓库/world-export")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        file_count = 0
+        for char in list_characters(conn):
+            (out_dir / f"{char['slug']}.md").write_text(
+                serialize_character_markdown(char), encoding="utf-8"
+            )
+            file_count += 1
+        events = list_timeline(conn)
+        if events:
+            (out_dir / "timeline.md").write_text(
+                serialize_timeline_markdown(events), encoding="utf-8"
+            )
+            file_count += 1
+        return {"files_written": file_count, "output_dir": str(out_dir)}
+
     @app.get("/api/world/proposals")
     def list_proposals(status: Optional[str] = None):
         from infra.world_db.queries.proposals import list_proposals
