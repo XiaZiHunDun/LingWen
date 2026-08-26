@@ -15,6 +15,7 @@
  * - 写作: useCreatorWrite（含子模块 useWriteFlow/WriteTools）
  * - 引导: useCreatorModeGuide
  * - 工作台: useCreatorWriteWorkbench
+ * - 写作空间持久化: useWriteWorkspacePersistence (debounce + 冲突检测)
  * - 页面: useCreatorPageHeader, useCreatorPageProviders, useCreatorPageRefresh
  * - 仪表盘: useCreatorPulse
  * - 工作区: useCreatorWorkspace
@@ -76,6 +77,7 @@ export { useTierBudgetAlerts } from './useTierBudgetAlerts.js';
 export { useTodayHub } from './useTodayHub.js';
 export { useWorkflowListStore } from './useWorkflowListStore.js';
 export { useWorkflowSocket, onCascadeUpdate, onAuditCreated } from './useWorkflowSocket.js';
+export { useWriteWorkspacePersistence } from './useWriteWorkspacePersistence.js';
 export { useEventBus, onRippleUpdate } from './useEventBus.js';
 export * as useWidgetRegistry from './useWidgetRegistry.js';
 export { registerDashboardWidgets } from './useDashboardWidgets.js';
