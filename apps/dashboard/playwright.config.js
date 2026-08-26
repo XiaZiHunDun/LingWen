@@ -76,6 +76,19 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      // Phase 115 Task 20 — Immersive Write Workspace v1 E2E.
+      // Reads from /write/:chapterId; mocks /api/write/* via page.route so it
+      // can run under the standard vite dev server without the live backend.
+      // NOTE: Currently BLOCKED — the dev server throws "Cannot set properties
+      // of undefined (setting 'exports')" (Phase 110/111B/114 cytoscape issue,
+      // see CLAUDE.md v14.2). Vue app fails to mount, so `workbench-root`
+      // is never rendered. Test is staged for a future fix.
+      name: 'write-workspace',
+      testDir: './tests/e2e',
+      testMatch: /write-workspace\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'visual-capture',
       testDir: './tests/visual-audit',
       testMatch: /capture\.spec\.js/,
