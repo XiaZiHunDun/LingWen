@@ -65,6 +65,10 @@ module_boundaries:
     path: infra/ai_service/
     exports: [Provider, Router]
     allowed_imports: [infra/errors]
+  world_db:
+    purpose: "Characters, factions, lore, timeline, proposals (SQLite)"
+    exports: ["init_schema", "get_connection", "queries.*", "markdown_roundtrip.*", "agent_extractors.extract_proposals_from_chapters"]
+    consumers: ["apps.studio_api.routes.world"]
 
 # 当前活跃子系统（v15.0 闭环）
 active_subsystems:
