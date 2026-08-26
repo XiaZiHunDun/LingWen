@@ -14,25 +14,25 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ L7  前端展示层 (dashboard/frontend/)                     │
+│ L7  前端展示层 (apps/dashboard/src/)                    │
 │     Vue 3 + Pinia + TypeScript                          │
 ├─────────────────────────────────────────────────────────┤
-│ L6  持久化与状态 (infra/persistence/ + infra/state/)     │
-│     SQLite + 状态机 + 检查点恢复                         │
+│ L6  持久化 (infra/persistence/)                          │
+│     SQLite + 注册表 + 检查点恢复                         │
 ├─────────────────────────────────────────────────────────┤
 │ L5  世界模型 (infra/world_model/ + prompt_engineering/)  │
 │     人物快照 + 伏笔追踪 + 上下文缓存 + 压缩器             │
 ├─────────────────────────────────────────────────────────┤
-│ L4  跨卷涟漪 (infra/ripple/ + cross_volume/)            │
+│ L4  跨卷涟漪 (infra/cross_volume/)                       │
 │     涟漪传播 + 影响评估 + 审计日志                       │
 ├─────────────────────────────────────────────────────────┤
-│ L3  一致性免疫 (infra/consistency/)                      │
-│     37 个检查器 + 规则引擎 + AI 增强                     │
+│ L3  一致性免疫 (infra/quality/ + infra/cross_volume/)    │
+│     检查器 + 规则引擎 + AI 增强                         │
 ├─────────────────────────────────────────────────────────┤
-│ L2  创作引擎 (infra/agent_system/)                       │
+│ L2  创作引擎 (infra/creator/)                            │
 │     Agent 编排 + 多 Agent 协作 + 写审分离                │
 ├─────────────────────────────────────────────────────────┤
-│ L1  API 网关 (dashboard/routes/ + dashboard/models/)     │
+│ L1  API 网关 (apps/studio_api/routes/ + apps/studio_api/models/) │
 │     FastAPI + WebSocket + 速率限制                       │
 ├─────────────────────────────────────────────────────────┤
 │ L0  基础设施 (infra/errors.py + infra/result.py + ...)   │
@@ -298,7 +298,7 @@ CI 流程自动运行基线检查：
 │              Nginx (反向代理)              │
 ├──────────────────────────────────────────┤
 │  FastAPI (Uvicorn)     │  Vue 3 (静态文件) │
-│  dashboard/app.py      │  dashboard/frontend/│
+│  apps/studio_api/app.py │  apps/dashboard/   │
 ├──────────────────────────────────────────┤
 │              SQLite                       │
 └──────────────────────────────────────────┘
