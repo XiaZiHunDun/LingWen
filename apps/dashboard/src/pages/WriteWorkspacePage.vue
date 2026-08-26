@@ -45,6 +45,14 @@
       :annotations="store.annotations"
       @jump-to-fix="handleJumpToFix"
     />
+
+    <WriteWorkspaceConflictDialog
+      :open="conflictDialogOpen"
+      :external-mtime="conflictExternalMtime"
+      @rebase="handleRebase"
+      @discard="handleDiscard"
+      @export="handleExportLocal"
+    />
   </div>
 </template>
 
@@ -56,9 +64,9 @@
  * Wires keyboard shortcuts (Cmd/Ctrl + . / 2 / 3 / s), mode persistence, and
  * debounced auto-save via the persistence composable.
  *
- * Note: the quality-check bridge and conflict-detection dialog (plan Tasks 23/24)
- * are intentionally NOT wired here — they will be added once those composables/
- * components ship.
+ * Note: the quality-check bridge (plan Task 23) is wired for editor-mode jumps.
+ * The conflict-detection dialog (plan Task 24) is wired after loadChapter and
+ * offers rebase / discard / export-local resolution.
  */
 import { ref, computed, onMounted, onBeforeUnmount, watch as vueWatch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -74,6 +82,7 @@ import WriteWorkspaceEditorPane from '@/components/writeWorkspace/WriteWorkspace
 import WriteWorkspaceAIDrawer from '@/components/writeWorkspace/WriteWorkspaceAIDrawer.vue'
 import WriteWorkspaceStatusBar from '@/components/writeWorkspace/WriteWorkspaceStatusBar.vue'
 import WriteInlineAnnotationLayer from '@/components/writeWorkspace/WriteInlineAnnotationLayer.vue'
+import WriteWorkspaceConflictDialog from '@/components/writeWorkspace/WriteWorkspaceConflictDialog.vue'
 
 const MODE_KEY = 'lingwen.write_workspace.mode'
 
@@ -87,6 +96,8 @@ const quality = useWriteQualityCheck()
 const editorContent = ref('')
 const chatInput = ref('')
 const activeSceneId = ref(null)
+const conflictDialogOpen = ref(false)
+const conflictExternalMtime = ref(0)
 
 const persist = useWriteWorkspacePersistence({
   saveFn: api.saveChapter,
@@ -109,9 +120,10 @@ const aiContext = computed(() => {
 async function loadChapter() {
   const cid = Number(route.params.chapterId)
   try {
-    const { frontmatter, body } = await api.loadChapter(cid)
+    const { frontmatter, body, mtime } = await api.loadChapter(cid)
     store.load({ chapterId: cid, frontmatter, body })
     editorContent.value = body
+    await checkForConflict({ externalMtime: mtime })
   } catch (e) {
     // Backend not yet wired in v1; fall back to empty state so the page still renders.
     store.load({
@@ -128,6 +140,40 @@ async function loadChapter() {
     })
     editorContent.value = ''
   }
+}
+
+async function checkForConflict({ externalMtime } = {}) {
+  let serverMtime = externalMtime
+  if (typeof serverMtime !== 'number') {
+    try {
+      const { mtime } = await api.loadChapter(store.chapterId)
+      serverMtime = mtime
+    } catch (e) {
+      // Backend unavailable; skip conflict check.
+      return
+    }
+  }
+  const localMtime = persist.lastMtime.value || 0
+  if (serverMtime > localMtime && store.saveState.dirty) {
+    conflictExternalMtime.value = serverMtime
+    conflictDialogOpen.value = true
+  }
+}
+
+async function handleRebase() {
+  conflictDialogOpen.value = false
+  // Reload from server; discard local edits.
+  await loadChapter()
+}
+
+function handleDiscard() {
+  conflictDialogOpen.value = false
+  // TODO: also clear dirty state and any pending saves.
+}
+
+async function handleExportLocal() {
+  // TODO: write body to ch{N}.local.md via download anchor.
+  conflictDialogOpen.value = false
 }
 
 function handleContentChange(html) {

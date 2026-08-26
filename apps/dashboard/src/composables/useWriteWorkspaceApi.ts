@@ -32,10 +32,16 @@ export function useWriteWorkspaceApi() {
     return res.json()
   }
 
-  async function loadChapter(chapterId: number): Promise<{ frontmatter: any; body: string }> {
+  async function loadChapter(chapterId: number): Promise<{ frontmatter: any; body: string; mtime: number }> {
     const res = await fetch(`/api/write/${chapterId}`)
     if (!res.ok) throw new Error(`Load failed: ${res.statusText}`)
-    return res.json()
+    const data = await res.json()
+    // v1 mock: derive mtime from frontmatter.last_modified_at ISO string.
+    // A real backend would return the file mtime directly.
+    const mtime = data?.frontmatter?.last_modified_at
+      ? new Date(data.frontmatter.last_modified_at).getTime()
+      : Date.now()
+    return { ...data, mtime }
   }
 
   return { saveChapter, loadChapter }
