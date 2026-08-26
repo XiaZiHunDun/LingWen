@@ -53,4 +53,15 @@ describe('TipTapEditor', () => {
     await wrapper.setProps({ editable: false })
     expect(wrapper.vm.editor?.isEditable).toBe(false)
   })
+
+  // NEW: modelValue prop is reactive (parent can swap chapter content)
+  it('modelValue prop change updates editor content', async () => {
+    const wrapper = mount(TipTapEditor, {
+      props: { modelValue: '<p>前面</p>' },
+      global: { stubs: { EditorContent: true } },
+    })
+    expect(wrapper.vm.editor?.getHTML()).toContain('前面')
+    await wrapper.setProps({ modelValue: '<p>后面</p>' })
+    expect(wrapper.vm.editor?.getHTML()).toContain('后面')
+  })
 })
