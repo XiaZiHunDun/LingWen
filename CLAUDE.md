@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v15.6 (Phase 121 minimax parse_rate 修复 闭环)
+> **版本**: v15.7 (Phase 123 llm_service latent bug fix 闭环)
+  → v15.6 (Phase 121 minimax parse_rate 修复 闭环)
   → v15.5 (Phase 120 LLM provider benchmark 闭环)
   → v15.4 (Phase 119 World follow-up 闭环)
   → v15.3 (Phase 118 World LLM Agent + cleanup 闭环)
@@ -50,6 +51,15 @@
   - consistency=0.58 偏低 (temperature=0.2 + 长 chapter 输出,follow-up: 改 temperature=0.0 或更短 prompt)
   - `infra/llm_service.py._init_providers` latent bug (Phase 120 发现,未修)
   - (可选) Anthropic/OpenAI real re-test
+
+> **更新 (2026-08-26)**：Phase 123 v15.7 闭环——1 commit (`171a757b`)：
+  - **修复 `infra/llm_service.py._init_providers` + `_create_provider`** 两个 latent bug：
+    - `_init_providers` 走 `self._plugin_manager.get_priority()`,但 `PluginManager._discover_internal_providers` 用错 module path (`infra.ai_service.<name>` 而非 `lingwen_llm.providers.<name>`),priority list 永远是空 → `RuntimeError("无可用的LLM Provider")`。改: 走 `_PROVIDER_REGISTRY` (`list_registered_providers()`,decorator-driven) + local priority order `[minimax, anthropic, openai]`。
+    - `_create_provider` 用 `get_provider_class` 但没 import → `NameError`。改: import `get_provider_class` + `list_registered_providers`。
+  - **3 new tests** (`tests/infra/test_llm_service.py`): load-minimax-with-key / uses-decorator-registry / singleton-reset。
+  - 73 existing tests 仍 pass (无 regression)。
+  - Phase 120 benchmark 的 bypass (直接 `get_provider_class("minimax")`) 现在变成可选 — `LLMService.get()` 也 work,但保留 bypass 避免 real-run 路径产生意外 side-effect。
+  Lessons: latent bug 藏了多久 — 至少从 Phase 118 (real LLM agent integration) 起就在,只是 agent_extractors 测试都注入 mock 没触发。Production code path 上 `LLMService.get()` 一直没真跑过 (除 health.py 的 `LLMService.get_instance` 走 lingwen_llm.llm_service 路径)。Type-level fix 重要: 不光 `_init_providers`, `_create_provider` 也漏 import。
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
 
