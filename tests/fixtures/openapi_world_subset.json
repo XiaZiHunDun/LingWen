@@ -1,0 +1,43 @@
+{
+  "openapi": "3.0.0",
+  "info": {"title": "LingWen fixture", "version": "16.1.0"},
+  "paths": {
+    "/api/world/characters": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "characters": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/CharacterDTO"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CharacterDTO": {
+        "type": "object",
+        "required": ["id", "slug", "name", "canon_level"],
+        "properties": {
+          "id": {"type": "integer"},
+          "slug": {"type": "string"},
+          "name": {"type": "string"},
+          "canon_level": {"type": "string", "enum": ["Draft", "Secondary", "Primary"]},
+          "status": {"type": ["string", "null"]},
+          "first_chapter": {"type": ["integer", "null"]}
+        }
+      }
+    }
+  }
+}

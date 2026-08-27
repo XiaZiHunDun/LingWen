@@ -1,0 +1,20 @@
+{
+  "openapi": "3.0.0",
+  "info": {"title": "drift fixture", "version": "16.1.0"},
+  "paths": {},
+  "components": {
+    "schemas": {
+      "CharacterDTO": {
+        "type": "object",
+        "required": ["id", "slug", "name", "canon_level", "extra_required_field"],
+        "properties": {
+          "id": {"type": "integer"},
+          "slug": {"type": "string"},
+          "name": {"type": "string"},
+          "canon_level": {"type": "string", "enum": ["Draft"]},
+          "extra_required_field": {"type": "string"}
+        }
+      }
+    }
+  }
+}
