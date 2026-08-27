@@ -87,6 +87,7 @@ members = [
     "packages/lingwen-pipeline",
     "packages/lingwen-quality",
     "packages/lingwen-cli",
+    "packages/lingwen-shared",    # ★ v16.1 新增
     "apps/studio_api",
 ]
 
@@ -100,6 +101,7 @@ lingwen-prompt = { workspace = true }
 lingwen-pipeline = { workspace = true }
 lingwen-quality = { workspace = true }
 lingwen-cli = { workspace = true }
+lingwen-shared = { workspace = true }
 
 # ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)

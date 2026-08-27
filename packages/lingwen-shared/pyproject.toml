@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-shared"
+version = "16.1.0"
+description = "LingWen · shared contracts (Pydantic DTO), ports (Hexagonal), value objects — single source of truth for cross-context communication"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+dev = ["pydantic-to-typescript>=1.0", "grimp>=3.0", "import-linter>=2.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_shared"]
+
+# NOTE: do NOT add empty [tool.ruff] here — would override root's ignore list (v16.0 lesson)
+# NOTE: do NOT add [tool.uv] package = true — uv auto-detects [project] sections (v16.0 lesson)
