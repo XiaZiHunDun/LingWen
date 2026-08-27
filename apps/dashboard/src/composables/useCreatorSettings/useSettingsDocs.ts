@@ -2,22 +2,29 @@
  * useSettingsDocs — 设定文档编辑 + 3-way diff + 保存流程
  *
  * Phase 19 Task 3.3：从 useCreatorSettings.js 拆出（完整实现）。
+ * Phase 126 v16.2.2 T4b：从 `'../../api/index.js'` 迁到 `'../../api/settings.js'`
+ * typed wrapper。`request()` 自动加 `/api/` 前缀（无 `/api/` 写死在代码里，
+ * v16.2.1 教训）。
+ *
  * 负责: settingsDocs 加载 + diff 预览 + mergeStrategy preview + requestSaveSettings +
  *       confirmSaveSettings + bindGlobalOutlineEditorRef。
  */
 import { ref, shallowRef } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
-  fetchCreatorSettingsDocs,
-  saveCreatorSettingsDocs,
-  previewCreatorSettingsDocs,
-  previewCreatorSettingsThreeWay,
-  previewCreatorSettingsMerge,
-} from '../../api/index.js';
+  fetchSettingsDocs,
+  saveSettingsDocs,
+  previewSettingsDocsDiff,
+  previewSettingsThreeWay,
+  previewSettingsMergeStrategy,
+} from '../../api/settings.js';
+import type { CreatorSettingsDocsResponse } from '@lingwen/dashboard-contracts/shared';
 
 interface SettingsDocs {
   pillars?: string;
   outline?: string;
+  pillars_text?: string;
+  global_outline_text?: string;
 }
 
 export interface SettingsDocsDeps {
@@ -68,10 +75,16 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
 
   async function loadSettingsDocs(): Promise<void> {
     try {
-      const data = await fetchCreatorSettingsDocs() as SettingsDocs;
-      settingsDocs.value = data;
-      const pillars = data.pillars || (data as Record<string, unknown>).pillars_text || '';
-      const outline = data.outline || (data as Record<string, unknown>).global_outline_text || '';
+      const data: CreatorSettingsDocsResponse = await fetchSettingsDocs();
+      settingsDocs.value = data as unknown as SettingsDocs;
+      // typed wrapper uses snake_case (`pillars_text`, `global_outline_text`) — accept
+      // legacy `pillars`/`outline` aliases for backward compatibility.
+      const pillars = (data as unknown as SettingsDocs).pillars_text
+        ?? (data as unknown as Record<string, unknown>).pillars
+        ?? '';
+      const outline = (data as unknown as SettingsDocs).global_outline_text
+        ?? (data as unknown as Record<string, unknown>).outline
+        ?? '';
       pillarsText.value = String(pillars);
       globalOutlineText.value = String(outline);
       settingsBaseline.value = { pillars: String(pillars), outline: String(outline) };
@@ -82,9 +95,9 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
 
   async function refreshMergeStrategyPreview(): Promise<void> {
     try {
-      const data = await previewCreatorSettingsMerge({
-        pillars: pillarsText.value,
-        outline: globalOutlineText.value,
+      const data = await previewSettingsMergeStrategy({
+        pillars_text: pillarsText.value,
+        global_outline_text: globalOutlineText.value,
       });
       mergeStrategyPreview.value = data;
     } catch (e) {
@@ -94,9 +107,9 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
 
   async function refreshThreeWayPreview(): Promise<void> {
     try {
-      const data = await previewCreatorSettingsThreeWay({
-        pillars: pillarsText.value,
-        outline: globalOutlineText.value,
+      const data = await previewSettingsThreeWay({
+        pillars_text: pillarsText.value,
+        global_outline_text: globalOutlineText.value,
       });
       threeWayPreview.value = data;
     } catch (e) {
@@ -108,9 +121,9 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
     settingsSaving.value = true;
     error.value = null;
     try {
-      const preview = await previewCreatorSettingsDocs({
-        pillars: pillarsText.value,
-        outline: globalOutlineText.value,
+      const preview = await previewSettingsDocsDiff({
+        pillars_text: pillarsText.value,
+        global_outline_text: globalOutlineText.value,
       });
       settingsDiffPreview.value = preview;
       showSettingsDiff.value = true;
@@ -124,9 +137,9 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
   async function confirmSaveSettings(): Promise<void> {
     settingsSaving.value = true;
     try {
-      await saveCreatorSettingsDocs({
-        pillars: pillarsText.value,
-        outline: globalOutlineText.value,
+      await saveSettingsDocs({
+        pillars_text: pillarsText.value,
+        global_outline_text: globalOutlineText.value,
       });
       settingsBaseline.value = { pillars: pillarsText.value, outline: globalOutlineText.value };
       showSettingsDiff.value = false;

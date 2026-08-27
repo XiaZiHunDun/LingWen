@@ -2,31 +2,39 @@
  * useMergePresets — 合并预设管理 + 工厂库 + 冲突修复
  *
  * Phase 19 Task 3.2：从 useCreatorSettings.js 拆出（完整实现）。
+ * Phase 126 v16.2.2 T4b：迁到 typed wrapper `'../../api/settings.js'`。
+ * `request()` 自动加 `/api/` 前缀（v16.2.1 教训）。
+ *
+ * IMPORTANT: typed wrapper names collide with this submodule's exported
+ * function names (`publishMergePresetToFactory`, `exportMergePresetPackages`,
+ * `applyMergePresetConflictFix`, etc.). Imports are aliased to a `Creator`
+ * suffix to avoid recursion in the inner try blocks.
+ *
  * 负责: mergePresetPackages + 选/应用/导入/导出/同步/factory + 冲突修复 +
  *       toposort + 偏好导入导出。
  */
 import { computed, ref, shallowRef } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
-  fetchCreatorMergePreferences,
-  exportCreatorMergePreferences,
-  importCreatorMergePreferences,
-  fetchCreatorMergePresetChangelog,
-  fetchCreatorMergePresetChangelogDiff,
-  fetchCreatorMergePresetToposort,
-  fetchCreatorMergePresetPackages,
-  fetchCreatorFactoryMergePresetPackages,
-  applyCreatorMergePresetConflictFix,
-  applyAllCreatorMergePresetConflictFixes,
-  preflightCreatorMergePresetImport,
-  previewCreatorMergePresetImportDiff,
-  applyCreatorMergePresetToposort,
-  exportCreatorMergePresetPackages,
-  importCreatorMergePresetPackages,
-  publishCreatorMergePresetToFactory,
-  pullCreatorFactoryMergePresetPackages,
-  preflightCreatorFactoryMergePresetPull,
-} from '../../api/index.js';
+  fetchMergePreferences,
+  exportMergePreferences,
+  importMergePreferences,
+  fetchMergePresetChangelog,
+  fetchMergePresetChangelogDiff,
+  toposortMergePresetPackages,
+  listMergePresetPackages,
+  listFactoryMergePresetPackages,
+  applyMergePresetConflictFix as applyMergePresetConflictFixApi,
+  applyAllMergePresetConflictFixes as applyAllMergePresetConflictFixesApi,
+  preflightMergePresetImport as preflightMergePresetImportApi,
+  previewMergePresetImportDiff as previewMergePresetImportDiffApi,
+  applyToposortMergePresetOrder,
+  exportMergePresetPackages as exportMergePresetPackagesApi,
+  importMergePresetPackages,
+  publishMergePresetToFactory as publishMergePresetToFactoryApi,
+  pullFactoryMergePresetsToProject,
+  preflightFactoryMergePresetPull,
+} from '../../api/settings.js';
 
 interface MergePresetPackage { id: string; name?: string; scope?: string }
 interface MergePreferences { [key: string]: unknown }
@@ -108,9 +116,9 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
 
   async function loadMergePresetPackages(): Promise<void> {
     try {
-      const data = await fetchCreatorMergePresetPackages() as { packages?: MergePresetPackage[] };
+      const data = await listMergePresetPackages();
       mergePresetPackages.value = data.packages || [];
-      const factoryData = await fetchCreatorFactoryMergePresetPackages() as { packages?: MergePresetPackage[] };
+      const factoryData = await listFactoryMergePresetPackages();
       factoryMergePresetPackages.value = factoryData.packages || [];
     } catch (e) {
       handleSaveError(e);
@@ -119,8 +127,8 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
 
   async function loadMergePreferences(): Promise<void> {
     try {
-      const data = await fetchCreatorMergePreferences() as MergePreferences;
-      mergePreferences.value = data;
+      const data = await fetchMergePreferences();
+      mergePreferences.value = data as unknown as MergePreferences;
     } catch (e) {
       handleSaveError(e);
     }
@@ -145,7 +153,7 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
 
   async function exportMergePresetPackages(): Promise<void> {
     try {
-      const data = await exportCreatorMergePresetPackages() as { count?: number; packages?: unknown[] };
+      const data = await exportMergePresetPackagesApi();
       const text = JSON.stringify(data, null, 2);
       saveMessage.value = `已导出 ${data.count || (data.packages?.length || 0)} 个合并预设`;
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -171,7 +179,10 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function publishMergePresetToFactory(): Promise<void> {
     mergePresetFactoryPublishing.value = true;
     try {
-      await publishCreatorMergePresetToFactory({});
+      // typed wrapper requests `package_id` (legacy path passed `{}` and relied
+      // on backend to surface the publish target; preserved here for
+      // backwards compatibility — full migration deferred to next phase).
+      await publishMergePresetToFactoryApi({} as unknown as Parameters<typeof publishMergePresetToFactoryApi>[0]);
       saveMessage.value = '已发布到工厂库';
     } catch (e) {
       handleSaveError(e);
@@ -183,7 +194,7 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function pullFactoryMergePresets(): Promise<void> {
     mergePresetFactoryPulling.value = true;
     try {
-      const result = await pullCreatorFactoryMergePresetPackages({}) as { imported: number };
+      const result = await pullFactoryMergePresetsToProject({ package_ids: [] });
       saveMessage.value = `已从工厂库拉取 ${result.imported} 个预设`;
       await loadMergePresetPackages();
     } catch (e) {
@@ -196,7 +207,10 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function pullFactoryMergePresetsWithStrategy(packageId: string, strategy: string): Promise<void> {
     mergePresetFactoryPulling.value = true;
     try {
-      const result = await pullCreatorFactoryMergePresetPackages({ package_id: packageId, strategy }) as { imported: number; conflicts?: number };
+      const result = await pullFactoryMergePresetsToProject({
+        package_ids: [packageId],
+        conflict_strategies: { [packageId]: strategy },
+      });
       saveMessage.value = `已拉取 ${result.imported} 个预设`;
       await loadMergePresetPackages();
     } catch (e) {
@@ -209,7 +223,16 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function applyMergePresetConflictFix(fix: Record<string, unknown>): Promise<void> {
     mergePresetConflictFixing.value = true;
     try {
-      await applyCreatorMergePresetConflictFix(fix);
+      // typed wrapper expects `CreatorMergePresetConflictFixApplyRequest`
+      // (`{ package_id, action, dependency_id?, version_label? }`). The legacy
+      // `fix` shape may have additional diagnostic fields — narrow to the typed
+      // DTO before passing.
+      await applyMergePresetConflictFixApi({
+        package_id: String(fix.package_id ?? ''),
+        action: String(fix.action ?? 'bump_version'),
+        dependency_id: (fix.dependency_id as string | null | undefined) ?? null,
+        version_label: (fix.version_label as string | null | undefined) ?? null,
+      });
       saveMessage.value = '已应用冲突修复';
       await loadMergePresetPackages();
     } catch (e) {
@@ -222,7 +245,7 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function applyAllMergePresetConflictFixes(): Promise<void> {
     mergePresetConflictFixingAll.value = true;
     try {
-      await applyAllCreatorMergePresetConflictFixes();
+      await applyAllMergePresetConflictFixesApi();
       saveMessage.value = '已批量应用冲突修复';
       await loadMergePresetPackages();
     } catch (e) {
@@ -235,8 +258,8 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function previewMergePresetImportDiff(): Promise<void> {
     mergePresetImportPreviewLoading.value = true;
     try {
-      const data = await previewCreatorMergePresetImportDiff({}) as { added: unknown[]; updated: unknown[]; removed: unknown[] };
-      mergePresetImportPreview.value = data;
+      const data = await previewMergePresetImportDiffApi({ packages: [] });
+      mergePresetImportPreview.value = data as unknown as { added: unknown[]; updated: unknown[]; removed: unknown[] };
     } catch (e) {
       handleSaveError(e);
     } finally {
@@ -247,7 +270,7 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function applyMergePresetToposort(): Promise<void> {
     mergePresetToposortApplying.value = true;
     try {
-      await applyCreatorMergePresetToposort();
+      await applyToposortMergePresetOrder();
       saveMessage.value = '已应用 toposort';
     } catch (e) {
       handleSaveError(e);
@@ -259,7 +282,7 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function preflightMergePresetImport(): Promise<void> {
     mergePresetImportPreflightLoading.value = true;
     try {
-      const data = await preflightCreatorMergePresetImport({});
+      const data = await preflightMergePresetImportApi({ packages: [] });
       mergePresetImportPreflight.value = data;
     } catch (e) {
       handleSaveError(e);

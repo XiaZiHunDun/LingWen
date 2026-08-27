@@ -2,23 +2,32 @@
  * useSettingsHistory — 设定历史快照加载与回滚
  *
  * Phase 19 Task 3：从 useCreatorSettings.js 拆出（完整实现）。
+ * Phase 126 v16.2.2 T4b：迁到 typed wrapper `'../../api/settings.js'`。
+ * `request()` 自动加 `/api/` 前缀（v16.2.1 教训）。
+ *
  * 负责: settingsHistory 列表 + loadSettingsHistory + restoreSettingsHistory +
  *       formatHistoryTime helper。
  */
 import { ref, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 import {
-  fetchCreatorSettingsHistory,
-  restoreCreatorSettingsSnapshot,
-} from '../../api/index.js';
+  fetchSettingsHistory,
+  restoreSettingsSnapshot,
+} from '../../api/settings.js';
+import type { CreatorSettingsHistoryResponse } from '@lingwen/dashboard-contracts/shared';
 
 interface SettingsSnapshot {
   id: string;
+  saved_at?: string;
   created_at?: string;
-  author?: string;
+  label?: string;
   pillars_excerpt?: string;
   outline_excerpt?: string;
+  global_outline_excerpt?: string;
+  pillars_lines?: number;
+  global_outline_lines?: number;
   message?: string;
+  author?: string;
 }
 
 export interface SettingsHistoryDeps {
@@ -50,8 +59,11 @@ export function useSettingsHistory(deps: SettingsHistoryDeps): SettingsHistoryRe
 
   async function loadSettingsHistory(): Promise<void> {
     try {
-      const data = await fetchCreatorSettingsHistory() as { snapshots?: SettingsSnapshot[]; history?: SettingsSnapshot[] };
-      settingsHistory.value = data.snapshots || data.history || [];
+      const data: CreatorSettingsHistoryResponse = await fetchSettingsHistory();
+      // typed wrapper returns `{ snapshots: [...] }` (CreatorSettingsHistoryResponse).
+      // Legacy fallback to `history` key kept for test compat only.
+      const rawData = data as unknown as { snapshots?: SettingsSnapshot[]; history?: SettingsSnapshot[] };
+      settingsHistory.value = rawData.snapshots || rawData.history || [];
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
       settingsHistory.value = [];
@@ -60,7 +72,7 @@ export function useSettingsHistory(deps: SettingsHistoryDeps): SettingsHistoryRe
 
   async function restoreSettingsHistory(snapshotId: string): Promise<void> {
     try {
-      await restoreCreatorSettingsSnapshot(snapshotId);
+      await restoreSettingsSnapshot({ snapshot_id: snapshotId });
       saveMessage.value = '已回滚到指定快照';
     } catch (e) {
       handleSaveError(e);
