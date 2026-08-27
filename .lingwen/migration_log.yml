@@ -54,6 +54,7 @@ phases:
     review_findings:
       - "shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO, 违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则. carryover 到 v16.2.6 Task 8.1: 把 CreatorSettings 等抽到 shared/mode.py, 让 infra/creator_mode.py 变 shim re-export shared.mode。"
       - "v16.2.1 Task 3.1 code review: commit message lesson 'circular import through shim' 是技术上不准确的 (import chain 实际上 terminates via sys.modules)。正确理由是 plan §12.1 rule 3 'target 已迁出 → use new path',即使 intra-package。已在 plan §12.2 加 intra-package example 明确规则。"
+      - "v16.2.1 Task 3.3 code review: 4 typed wrappers (world.ts/workspace.ts/quality.ts/volume.ts) 都有 /api/api/... URL 重复 (BASE_URL='/api' + code '/api/' prefix)。当前无 consumer,不触发,但 v16.2 consumer migration 时会 404。carryover 到 v16.2.7 cleanup: normalize 4 个 typed wrapper 的 URL convention (去掉 code-side '/api/' prefix)。"
     tests_added: 13 (5 layout + 4 revision + 4 check)
     status: closed
 
