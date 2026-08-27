@@ -15,4 +15,5 @@ from lingwen_creator.settings.merge_preferences import *  # noqa: F403
 from lingwen_creator.settings.merge_preferences import (  # noqa: F401
     _factory_preset_packages_path,
     _global_prefs_path,
+    _normalize_factory_preset_id,
 )
