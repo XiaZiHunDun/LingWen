@@ -157,7 +157,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePreferencesResponse,
     )
     def creator_settings_merge_preferences_get() -> CreatorMergePreferencesResponse:
-        from infra.creator_merge_preferences import load_merge_preferences
+        from lingwen_creator.settings.merge_preferences import load_merge_preferences
 
         project = _require_project(ctx)
         return CreatorMergePreferencesResponse(**load_merge_preferences(project.root))
@@ -167,7 +167,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePreferencesResponse,
     )
     def creator_settings_merge_preferences_global_get() -> CreatorMergePreferencesResponse:
-        from infra.creator_merge_preferences import load_global_merge_preferences
+        from lingwen_creator.settings.merge_preferences import load_global_merge_preferences
 
         prefs = load_global_merge_preferences()
         prefs["uses_global_default"] = True
@@ -178,7 +178,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePreferencesExportResponse,
     )
     def creator_settings_merge_preferences_export() -> CreatorMergePreferencesExportResponse:
-        from infra.creator_merge_preferences import export_merge_preferences
+        from lingwen_creator.settings.merge_preferences import export_merge_preferences
 
         project = _require_project(ctx)
         data = export_merge_preferences(project.root)
@@ -195,7 +195,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preferences_import(
         req: CreatorMergePreferencesImportRequest,
     ) -> CreatorMergePreferencesImportResponse:
-        from infra.creator_merge_preferences import import_merge_preferences
+        from lingwen_creator.settings.merge_preferences import import_merge_preferences
 
         project = _require_project(ctx)
         payload = req.model_dump(by_alias=True, exclude_none=True)
@@ -218,7 +218,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetPackagesResponse,
     )
     def creator_settings_merge_preset_packages() -> CreatorMergePresetPackagesResponse:
-        from infra.creator_merge_preferences import list_merge_preset_packages
+        from lingwen_creator.settings.merge_preferences import list_merge_preset_packages
 
         project = _require_project(ctx)
         packages = list_merge_preset_packages(project.root)
@@ -231,7 +231,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetGraphResponse,
     )
     def creator_settings_merge_preset_graph() -> CreatorMergePresetGraphResponse:
-        from infra.creator_merge_preferences import build_merge_preset_graph
+        from lingwen_creator.settings.merge_preferences import build_merge_preset_graph
 
         project = _require_project(ctx)
         graph = build_merge_preset_graph(project.root)
@@ -254,7 +254,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetConflictsResponse,
     )
     def creator_settings_merge_preset_conflicts() -> CreatorMergePresetConflictsResponse:
-        from infra.creator_merge_preferences import detect_merge_preset_conflicts
+        from lingwen_creator.settings.merge_preferences import detect_merge_preset_conflicts
 
         project = _require_project(ctx)
         result = detect_merge_preset_conflicts(project.root)
@@ -268,7 +268,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetConflictFixesResponse,
     )
     def creator_settings_merge_preset_conflict_fixes() -> CreatorMergePresetConflictFixesResponse:
-        from infra.creator_merge_preferences import suggest_merge_preset_fixes
+        from lingwen_creator.settings.merge_preferences import suggest_merge_preset_fixes
 
         project = _require_project(ctx)
         result = suggest_merge_preset_fixes(project.root)
@@ -284,7 +284,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preset_conflict_apply_fix(
         req: CreatorMergePresetConflictFixApplyRequest,
     ) -> CreatorMergePresetConflictFixApplyResponse:
-        from infra.creator_merge_preferences import apply_merge_preset_fix
+        from lingwen_creator.settings.merge_preferences import apply_merge_preset_fix
 
         project = _require_project(ctx)
         try:
@@ -304,7 +304,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetApplyAllFixesResponse,
     )
     def creator_settings_merge_preset_conflict_apply_all() -> CreatorMergePresetApplyAllFixesResponse:
-        from infra.creator_merge_preferences import apply_all_merge_preset_fixes
+        from lingwen_creator.settings.merge_preferences import apply_all_merge_preset_fixes
 
         project = _require_project(ctx)
         result = apply_all_merge_preset_fixes(project.root)
@@ -315,7 +315,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetToposortResponse,
     )
     def creator_settings_merge_preset_toposort() -> CreatorMergePresetToposortResponse:
-        from infra.creator_merge_preferences import toposort_merge_preset_packages
+        from lingwen_creator.settings.merge_preferences import toposort_merge_preset_packages
 
         project = _require_project(ctx)
         return CreatorMergePresetToposortResponse(**toposort_merge_preset_packages(project.root))
@@ -325,7 +325,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetToposortApplyResponse,
     )
     def creator_settings_merge_preset_toposort_apply() -> CreatorMergePresetToposortApplyResponse:
-        from infra.creator_merge_preferences import apply_toposort_merge_preset_order
+        from lingwen_creator.settings.merge_preferences import apply_toposort_merge_preset_order
 
         project = _require_project(ctx)
         try:
@@ -604,7 +604,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/settings-docs/history", response_model=CreatorSettingsHistoryResponse)
     def creator_settings_history_get() -> CreatorSettingsHistoryResponse:
-        from infra.creator_settings_history import settings_history_payload
+        from lingwen_creator.settings.history import settings_history_payload
 
         project = _require_project(ctx)
         return CreatorSettingsHistoryResponse(**settings_history_payload(project))
@@ -613,7 +613,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_history_restore(
         req: CreatorSettingsRestoreRequest,
     ) -> CreatorSettingsDocsResponse:
-        from infra.creator_settings_history import restore_settings_snapshot
+        from lingwen_creator.settings.history import restore_settings_snapshot
 
         project = _require_project(ctx)
         try:
