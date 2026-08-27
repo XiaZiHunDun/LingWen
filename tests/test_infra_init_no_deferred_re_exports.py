@@ -29,7 +29,6 @@ from pathlib import Path
 
 import pytest
 
-
 INFRA_INIT = Path(__file__).resolve().parents[1] / "infra" / "__init__.py"
 
 

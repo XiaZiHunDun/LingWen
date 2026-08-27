@@ -18,8 +18,9 @@ from typing import Any, Dict, List
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.paths import ProjectPaths
 from lingwen_quality.quality import AITraceChecker, WorldviewChecker
+
+from infra.paths import ProjectPaths
 
 
 class QualityVerifier:

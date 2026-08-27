@@ -15,7 +15,6 @@ from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
-
 from lingwen_llm.providers.base import AIProvider, AIProviderError, ProviderConfig
 from lingwen_llm.providers.model_tiers import (
     MODEL_TIERS,

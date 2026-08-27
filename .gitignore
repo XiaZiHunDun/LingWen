@@ -150,6 +150,8 @@ reference/
 projects/**/.state/volume_plan.json
 projects/**/.state/creator_settings_history.json
 projects/**/.state/custom_volume_templates.json
+apps/.state/
+packages/**/.state/
 projects/**/.state/creator_onboarding_progress.json
 projects/**/.state/creator_merge_preferences.json
 infra/.state/factory_volume_templates.json

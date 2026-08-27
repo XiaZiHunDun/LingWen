@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+
 from infra.consistency.checkers.core_props_checker import CorePropsChecker, PropIssue
 
 

@@ -15,7 +15,6 @@ Phase 18.1 — Domain 实体下沉。
 """
 from __future__ import annotations
 
-from lingwen_core.domain.character import Character, CharacterStatus
 from lingwen_core.domain.chapter import (
     Chapter,
     ChapterReviewedEvent,
@@ -23,6 +22,7 @@ from lingwen_core.domain.chapter import (
     MentalLine,
     PhysicalLine,
 )
+from lingwen_core.domain.character import Character, CharacterStatus
 from lingwen_core.domain.common import KeyPoint, NodeId, NodeType, Relation
 from lingwen_core.domain.foreshadow import (
     Foreshadow,

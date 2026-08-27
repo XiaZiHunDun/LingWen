@@ -11,8 +11,9 @@ def test_dependencies_module_importable():
 
 def test_get_event_store_returns_port():
     """get_event_store() 必须返回 EventStorePort 协议实现。"""
-    from apps.studio_api.dependencies import get_event_store
     from lingwen_core.ports import EventStorePort
+
+    from apps.studio_api.dependencies import get_event_store
 
     store = get_event_store()
     assert isinstance(store, EventStorePort)
@@ -20,8 +21,9 @@ def test_get_event_store_returns_port():
 
 def test_get_llm_returns_port():
     """get_llm() 必须返回 LLMPort 协议实现。"""
-    from apps.studio_api.dependencies import get_llm
     from lingwen_core.ports import LLMPort
+
+    from apps.studio_api.dependencies import get_llm
 
     llm = get_llm()
     assert isinstance(llm, LLMPort)
@@ -29,24 +31,27 @@ def test_get_llm_returns_port():
 
 def test_get_write_chapter_use_case():
     """get_write_chapter_use_case() 必须返回 WriteChapterUseCase。"""
-    from apps.studio_api.dependencies import get_write_chapter_use_case
     from lingwen_core.use_cases import WriteChapterUseCase
+
+    from apps.studio_api.dependencies import get_write_chapter_use_case
 
     use_case = get_write_chapter_use_case()
     assert isinstance(use_case, WriteChapterUseCase)
 
 
 def test_get_review_chapter_use_case():
-    from apps.studio_api.dependencies import get_review_chapter_use_case
     from lingwen_core.use_cases import ReviewChapterUseCase
+
+    from apps.studio_api.dependencies import get_review_chapter_use_case
 
     use_case = get_review_chapter_use_case()
     assert isinstance(use_case, ReviewChapterUseCase)
 
 
 def test_get_merge_ripples_use_case():
-    from apps.studio_api.dependencies import get_merge_ripples_use_case
     from lingwen_core.use_cases import MergeRipplesUseCase
+
+    from apps.studio_api.dependencies import get_merge_ripples_use_case
 
     use_case = get_merge_ripples_use_case()
     assert isinstance(use_case, MergeRipplesUseCase)

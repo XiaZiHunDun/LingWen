@@ -1,8 +1,8 @@
 import json
 import re
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 
 def _run(script: Path, src: Path, dst: Path) -> subprocess.CompletedProcess:

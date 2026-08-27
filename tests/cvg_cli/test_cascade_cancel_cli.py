@@ -6,9 +6,9 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_cli.commands.cascade import CascadeCommand
 from lingwen_cli.options import CascadeOptions
+
 from infra.cross_volume.reference_graph import (
     CrossVolumeReferenceGraph,
     ReferenceEdge,

@@ -1,4 +1,4 @@
-from infra.project_characters import *
-from infra.project_config import *
-from infra.project_init import *
-from infra.paths import *
+from infra.paths import *  # noqa: F403
+from infra.project_characters import *  # noqa: F403
+from infra.project_config import *  # noqa: F403
+from infra.project_init import *  # noqa: F403

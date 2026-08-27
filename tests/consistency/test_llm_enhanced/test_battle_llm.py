@@ -12,7 +12,9 @@ import pytest
 
 def test_battle_llm_finds_uncertain_regions():
     """测试LLM增强战斗检测器能找到模糊区域"""
-    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import LLMEnhancedBattleVisualizationChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import (
+        LLMEnhancedBattleVisualizationChecker,
+    )
 
     checker = LLMEnhancedBattleVisualizationChecker()
     content = "林夜轻松击败了对手，但其实对手是修仙界第一人"
@@ -24,7 +26,9 @@ def test_battle_llm_finds_uncertain_regions():
 
 def test_battle_llm_multiple_patterns():
     """测试LLM增强战斗检测器匹配多种模式"""
-    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import LLMEnhancedBattleVisualizationChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import (
+        LLMEnhancedBattleVisualizationChecker,
+    )
 
     checker = LLMEnhancedBattleVisualizationChecker()
     content = "他瞬间斩杀了对手，竟然输了"
@@ -35,7 +39,9 @@ def test_battle_llm_multiple_patterns():
 
 def test_battle_llm_context_extraction():
     """测试LLM增强战斗检测器正确提取上下文"""
-    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import LLMEnhancedBattleVisualizationChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import (
+        LLMEnhancedBattleVisualizationChecker,
+    )
 
     checker = LLMEnhancedBattleVisualizationChecker()
     content = "林夜一招毙命，对方毫无还手之力"
@@ -48,7 +54,9 @@ def test_battle_llm_context_extraction():
 
 def test_battle_llm_inherits_base_checker():
     """测试LLMEnhancedBattleVisualizationChecker继承基类检测器"""
-    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import LLMEnhancedBattleVisualizationChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import (
+        LLMEnhancedBattleVisualizationChecker,
+    )
 
     checker = LLMEnhancedBattleVisualizationChecker()
     assert checker.base_checker is not None
@@ -57,7 +65,9 @@ def test_battle_llm_inherits_base_checker():
 
 def test_battle_llm_has_llm_service():
     """测试LLMEnhancedBattleVisualizationChecker具有LLM服务"""
-    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import LLMEnhancedBattleVisualizationChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import (
+        LLMEnhancedBattleVisualizationChecker,
+    )
 
     checker = LLMEnhancedBattleVisualizationChecker()
     assert checker.llm_service is not None
@@ -65,7 +75,9 @@ def test_battle_llm_has_llm_service():
 
 def test_battle_llm_region_positions():
     """测试LLM增强战斗检测器正确记录位置"""
-    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import LLMEnhancedBattleVisualizationChecker
+    from lingwen_quality.consistency.checkers.llm_enhanced.battle_llm import (
+        LLMEnhancedBattleVisualizationChecker,
+    )
 
     checker = LLMEnhancedBattleVisualizationChecker()
     content = "轻松击败，瞬间斩杀，一招毙命"

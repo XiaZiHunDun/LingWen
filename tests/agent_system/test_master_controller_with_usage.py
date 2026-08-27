@@ -15,8 +15,8 @@ import inspect
 from pathlib import Path
 
 import pytest
-
 from lingwen_pipeline.master_controller import MasterController
+
 from tests.agent_system._e2e_helpers import make_master_with_router
 
 # Reuse Phase 8.6.1 stubs (tests/agent_system/test_agent_with_usage.py)

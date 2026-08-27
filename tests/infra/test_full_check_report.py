@@ -9,6 +9,7 @@ from lingwen_quality.consistency.engine.data_structures import (
     IssueLocation,
     IssueSeverity,
 )
+
 from infra.full_check_report import (
     format_report_markdown,
     generate_report,

@@ -5,6 +5,7 @@
 - 把 {'event':'STEP_BUMP','data':{...}} 映射成 WorkflowEvent
 """
 from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -13,7 +14,6 @@ from pathlib import Path
 
 from lingwen_storage.events.jsonl_store import JsonlStore, WorkflowEvent
 from ulid import ULID
-
 
 SKIP_EVENTS = {"DEFAULT_TEST"}
 STEP_PREFIX_MAP = {

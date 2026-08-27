@@ -1,5 +1,4 @@
 import pytest
-
 from lingwen_quality.consistency.engine.consistency_arbitrator import (
     ConsistencyArbitrator,
 )

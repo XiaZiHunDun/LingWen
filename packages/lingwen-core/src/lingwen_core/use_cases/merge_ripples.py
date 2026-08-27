@@ -10,7 +10,6 @@ from __future__ import annotations
 from lingwen_core.domain import Ripple, RippleState, RippleStateChangedEvent
 from lingwen_core.ports import EventStorePort
 
-
 # 合法状态转移表 (from → set of allowed to)
 _VALID_TRANSITIONS: dict[RippleState, set[RippleState]] = {
     RippleState.OPEN: {RippleState.PROPAGATING},

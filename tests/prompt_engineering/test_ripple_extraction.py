@@ -17,7 +17,6 @@ JSON 容忍:
 from __future__ import annotations
 
 import pytest
-
 from lingwen_prompt.extraction import (
     ExtractedResolution,
     ExtractedRipple,

@@ -9,7 +9,9 @@ class TestLLMEnhancedKnowledgeTracker:
 
     def test_knowledge_llm_finds_uncertain_regions(self):
         """测试_find_uncertain_regions能正确识别需要LLM判断的信息知晓段落"""
-        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
+        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import (
+            LLMEnhancedKnowledgeTracker,
+        )
 
         checker = LLMEnhancedKnowledgeTracker()
         content = "林夜明明知道这个秘密，却假装不知道，继续演戏"
@@ -21,7 +23,9 @@ class TestLLMEnhancedKnowledgeTracker:
 
     def test_knowledge_llm_finds_multiple_patterns(self):
         """测试多种知识知晓模式都能被识别"""
-        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
+        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import (
+            LLMEnhancedKnowledgeTracker,
+        )
 
         checker = LLMEnhancedKnowledgeTracker()
         content = "他心知肚明，却装作不知情"
@@ -33,7 +37,9 @@ class TestLLMEnhancedKnowledgeTracker:
 
     def test_knowledge_llm_returns_empty_for_plain_text(self):
         """测试没有模糊区域时返回空列表"""
-        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
+        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import (
+            LLMEnhancedKnowledgeTracker,
+        )
 
         checker = LLMEnhancedKnowledgeTracker()
         content = "林夜走进了房间，看到桌上放着一封信。"
@@ -45,7 +51,9 @@ class TestLLMEnhancedKnowledgeTracker:
 
     def test_knowledge_llm_has_correct_structure(self):
         """测试返回的region结构正确"""
-        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
+        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import (
+            LLMEnhancedKnowledgeTracker,
+        )
 
         checker = LLMEnhancedKnowledgeTracker()
         content = "他应该记得这件事，但看起来完全忘了"
@@ -63,7 +71,9 @@ class TestLLMEnhancedKnowledgeTracker:
 
     def test_checker_type_is_knowledge(self):
         """测试checker_type设置为knowledge"""
-        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
+        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import (
+            LLMEnhancedKnowledgeTracker,
+        )
 
         checker = LLMEnhancedKnowledgeTracker()
 
@@ -72,7 +82,9 @@ class TestLLMEnhancedKnowledgeTracker:
     def test_prompt_template_is_knowledge_llm(self):
         """测试prompt模板是KNOWLEDGE_LLM_PROMPT"""
         from lingwen_quality.consistency.checkers.llm_enhanced.base import LLMEnhancedChecker
-        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import LLMEnhancedKnowledgeTracker
+        from lingwen_quality.consistency.checkers.llm_enhanced.knowledge_llm import (
+            LLMEnhancedKnowledgeTracker,
+        )
 
         checker = LLMEnhancedKnowledgeTracker()
 

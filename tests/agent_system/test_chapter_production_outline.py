@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_core.agents.chapter_production_outline import (
     build_canon_chapter_spec,
     build_canon_initial_inputs,
@@ -11,6 +10,7 @@ from lingwen_core.agents.chapter_production_outline import (
     production_mode,
     resolve_production_initial_inputs,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 

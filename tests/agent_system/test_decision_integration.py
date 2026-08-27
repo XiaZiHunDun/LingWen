@@ -13,7 +13,6 @@ import types
 from typing import Any
 
 import pytest
-
 from lingwen_core.agents.decision_queue import (
     DecisionKind,
     DecisionStatus,
@@ -21,6 +20,7 @@ from lingwen_core.agents.decision_queue import (
     HumanDecisionQueue,
     create_decision,
 )
+
 from infra.got.data_structures import NodeType, ThoughtNode
 
 # === Reuse stub helpers from test_master_controller_workflow ===
@@ -252,6 +252,7 @@ class TestRunWorkflowDecisionDiscovery:
         # 写一个临时 workflow YAML? 简化为直接构造 graph,再用 scheduler
 
         from lingwen_core.agents.got_bridge import AgentComputeFn
+
         from infra.got.scheduler import GoTScheduler
 
         sched = GoTScheduler(graph, compute_fn=AgentComputeFn(controller), max_backtracks=0)

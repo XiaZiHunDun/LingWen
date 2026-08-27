@@ -14,6 +14,7 @@ from lingwen_core.agents.decision_queue import (
     HumanDecisionQueue,
     create_decision,
 )
+
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 

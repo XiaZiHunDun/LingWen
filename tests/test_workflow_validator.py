@@ -1,7 +1,6 @@
 """workflow_validator 单元测试"""
 
 import pytest
-
 from lingwen_pipeline.state.workflow_validator import (
     ALL_STEPS,
     VALID_TRANSITIONS,

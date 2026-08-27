@@ -15,8 +15,15 @@ import time
 from typing import Any, Callable, List, Optional, Type, TypeVar, Union
 
 from infra.errors import (
-    AuthenticationError, BaseError, FatalError, NetworkError, RateLimitError,
-    RetryableError, ServiceUnavailableError, TimeoutError, is_instance,
+    AuthenticationError,
+    BaseError,
+    FatalError,
+    NetworkError,
+    RateLimitError,
+    RetryableError,
+    ServiceUnavailableError,
+    TimeoutError,
+    is_instance,
 )
 
 T = TypeVar('T')

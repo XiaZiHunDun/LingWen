@@ -5,7 +5,6 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from lingwen_memory.embeddings.batch_embed import BatchEmbedder, find_similar_chapters
 from lingwen_memory.vector_store.qdrant_client import QdrantClientWrapper
 

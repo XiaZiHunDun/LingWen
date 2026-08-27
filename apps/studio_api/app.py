@@ -30,8 +30,6 @@ from fastapi.responses import FileResponse, JSONResponse, Response, StreamingRes
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from apps.studio_api.errors import APIError
-
 # Phase 13.0 T2 H2: middleware — CORS + GZip + slowapi 限流 (100/min default, 10/min mutation)
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -46,6 +44,7 @@ from apps.studio_api.cascade_notifier import (
     set_ws_manager,  # Phase 9.16: cascade WS push injector
 )
 from apps.studio_api.cvg_ws import EVENT_PONG, CvgConnectionManager
+from apps.studio_api.errors import APIError
 from apps.studio_api.protocols import (
     CascadeBroadcastLogResponse,  # Phase 9.44 F33
     CascadeCancelPayload,  # Phase 9.21
@@ -240,6 +239,7 @@ def create_app(
     def _production_records_root() -> Path:
         """Env override, then active project pilot_records, else legacy infra/.state."""
         from lingwen_core.agents.production_records import default_pilot_records_dir
+
         from infra.studio_registry import active_project, pilot_records_dir_for
 
         env = os.environ.get("LINGWEN_PILOT_RECORDS_DIR", "").strip()

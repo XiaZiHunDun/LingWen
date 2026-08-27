@@ -6,9 +6,9 @@
 - apps/studio-api 可以 import packages/lingwen-*（应用层）
 - 同包内可互相 import。
 """
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 SCRIPT = REPO / "tooling" / "lint" / "check_package_deps.py"

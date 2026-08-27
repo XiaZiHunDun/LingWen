@@ -3,7 +3,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from lingwen_memory.gateway.memory_gateway import MemoryGateway
 
 

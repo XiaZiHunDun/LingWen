@@ -58,7 +58,7 @@ def test_packages_apps_have_minimal_stale_imports():
             f"Top 5:\n" + "\n".join(stale[:5])
         )
     else:
-        assert not stale, f"Unexpected stale imports:\n" + "\n".join(stale[:5])
+        assert not stale, "Unexpected stale imports:\n" + "\n".join(stale[:5])
 
 
 def test_count_stale_imports_baseline():
@@ -74,4 +74,4 @@ def test_count_stale_imports_baseline():
                     continue
                 count += 1
     print(f"\n[INFO] Current stale 'from infra.*' imports: {count}")
-    print(f"[INFO] Target after Phase 18.10: < 50")
+    print("[INFO] Target after Phase 18.10: < 50")

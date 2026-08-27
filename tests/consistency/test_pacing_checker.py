@@ -169,7 +169,7 @@ class TestPacingChecker:
         assert any("集中" in i.title for i in issues)
 
     def test_filter_active_wavefront(self):
-        checker = PacingChecker()
+        PacingChecker()
         mock_ripple = MagicMock()
         mock_ripple.origin_ch = 3
         mock_ripple.wavefront = (3, 5, 7, 10)

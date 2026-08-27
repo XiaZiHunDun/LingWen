@@ -3,7 +3,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
 from lingwen_memory.state.timeline_manager import TimelineManager
 
 

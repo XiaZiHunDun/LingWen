@@ -20,11 +20,11 @@ site so 0 启动 dashboard / 0 真实 project path。
 from __future__ import annotations
 
 import pytest
-
 from lingwen_cli.commands.ripple_audit import RippleAuditCommand
 from lingwen_cli.commands.ripple_rollback import RippleRollbackCommand
 from lingwen_cli.options import RippleAuditOptions, RippleRollbackOptions
 from lingwen_cli.parsers import create_parser
+
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.storage import RippleStorage
 

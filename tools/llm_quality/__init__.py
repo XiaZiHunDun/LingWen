@@ -12,10 +12,11 @@
   from tools.llm_quality import LLMQualityChecker, LLMRepairer, QualityReport
   python -m tools.llm_quality --help
 """
+from lingwen_quality.quality import Issue, RepairResult
+
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
 from infra.llm_service import LLMService
-from lingwen_quality.quality import Issue, RepairResult
 
 from .checker import LLMQualityChecker
 from .cli import main, parse_chapter_range, save_report

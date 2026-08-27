@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
-
 from lingwen_core.agents.decision_queue import (
     DecisionKind,
     DecisionStatus,

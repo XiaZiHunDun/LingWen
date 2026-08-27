@@ -61,7 +61,7 @@ class CheckerType(Enum):
     KNOWLEDGE_TRACKING = "knowledge_tracking_checker"
     DIALOGUE_ACTION = "dialogue_action_checker"
     LLM_CAUSAL_REASONING = "llm_causal_reasoning_checker"
-    
+
     ITEM_CORE = "core_props_checker"  # CorePropsChecker - 核心物品/道具追踪
     AI_GLOSS_DIALOGUE = "dialogue_authenticity_checker"  # DialogueAuthenticityChecker - 对话AI化专项
 

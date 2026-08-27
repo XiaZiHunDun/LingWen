@@ -8,8 +8,8 @@
 - tests/dashboard/: 'from dashboard.X import Y' → 'from apps.studio_api.X import Y' (绝对)
 - 目录名: apps/studio-api/ → apps/studio_api/ (下划线,因 hyphen 不是合法 Python 标识符)
 """
-from pathlib import Path
 import re
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 

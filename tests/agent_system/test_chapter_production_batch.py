@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from lingwen_core.agents.chapter_production_batch import (
     BatchResult,
     auto_resolve_calibrate_from,

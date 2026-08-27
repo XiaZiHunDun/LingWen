@@ -18,7 +18,6 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
-
 from lingwen_llm.providers.cost_tracker import CostRecord, CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier, compute_cost
 

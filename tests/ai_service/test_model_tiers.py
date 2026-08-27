@@ -14,7 +14,6 @@ Doc 2 §6.3 + Doc 4 §2: 多模型分级路由
 from __future__ import annotations
 
 import pytest
-
 from lingwen_llm.providers.model_tiers import (
     MODEL_TIERS,
     ModelTier,

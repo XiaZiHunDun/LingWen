@@ -15,7 +15,6 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import pytest
-
 from lingwen_core.agents.got_bridge import (
     SCENARIO_HANDLERS,
     AgentComputeFn,
@@ -25,6 +24,7 @@ from lingwen_core.agents.got_bridge import (
 )
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
+
 from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult, ExecutionSummary
 

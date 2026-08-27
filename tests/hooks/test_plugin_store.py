@@ -3,7 +3,6 @@
 Plugin Store Tests
 """
 import pytest
-
 from lingwen_pipeline.hooks.plugin_store import PluginMetadata, PluginStore
 
 

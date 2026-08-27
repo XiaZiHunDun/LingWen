@@ -9,6 +9,7 @@ from typing import Any
 
 from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
 from lingwen_quality.consistency.engine.data_structures import Issue, IssueSeverity
+
 from infra.paths import ProjectPaths
 
 _TOTAL_RE = re.compile(

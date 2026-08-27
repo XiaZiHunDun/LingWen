@@ -1,6 +1,6 @@
 """Phase 17.14 守卫:顶层不应再有 01_* ~ 11_* 数字目录。"""
-from pathlib import Path
 import re
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 PATTERN = re.compile(r"^\d{2}_")

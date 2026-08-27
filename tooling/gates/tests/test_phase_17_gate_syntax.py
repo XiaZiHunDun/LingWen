@@ -2,8 +2,8 @@
 
 确保 tooling/gates/phase_17.sh 存在、可执行、bash 语法正确。
 """
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 SCRIPT = REPO / "tooling" / "gates" / "phase_17.sh"

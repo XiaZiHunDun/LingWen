@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import Any, Dict, Union
 
 import pytest
-
 from lingwen_core.agents.agents.auditor.tools import AuditorTools
 from lingwen_core.agents.agents.content_writer.tools import ContentWriterTools
 from lingwen_core.agents.agents.polisher.tools import PolisherTools

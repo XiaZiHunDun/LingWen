@@ -164,10 +164,6 @@ class EditingMixin:
         from mc_utils import _coerce_score, _safe_label
 
         try:
-            system_prompt = (
-                "你是资深小说编辑。请对以下两段文字进行8维度评分，"
-                "每个维度1-10分。只返回JSON，不要其他内容。"
-            )
             user_prompt = f"""
 文本A ({labels[0]}):
 {content_a}

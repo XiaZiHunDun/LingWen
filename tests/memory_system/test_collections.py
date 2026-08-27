@@ -2,7 +2,6 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from lingwen_memory.vector.collections import CollectionManager
 
 

@@ -17,13 +17,13 @@ slug 规则:
 - "读者A" → "reader-a"
 """
 from __future__ import annotations
+
 import argparse
 import re
 import sys
 from pathlib import Path
 
 import yaml
-
 
 ROLE_MAP = {"作家": "writer", "审核员": "reviewer", "读者": "reader"}
 

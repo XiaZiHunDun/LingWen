@@ -16,6 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from lingwen_llm.providers.base import ProviderConfig
 from lingwen_llm.providers.minimax_provider import MiniMaxProvider
+
 from infra.config.api_config_loader import get_api_config
 
 logger = logging.getLogger(__name__)

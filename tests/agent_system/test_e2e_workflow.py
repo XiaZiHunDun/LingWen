@@ -15,9 +15,9 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from lingwen_pipeline.master_controller import MasterController
 from lingwen_core.agents.social_engine.event_effect_calculator import EventEffectCalculator
 from lingwen_core.agents.social_engine.relationship_tracker import RelationshipTracker
+from lingwen_pipeline.master_controller import MasterController
 
 # End-to-end tests need a real AI provider to construct MasterController.
 # Skip the whole class when no API key is available, so this file is

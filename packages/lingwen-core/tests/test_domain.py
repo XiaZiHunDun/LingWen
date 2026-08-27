@@ -213,8 +213,9 @@ def test_ripple_state_enum():
 
 
 def test_world_snapshot_frozen():
-    from lingwen_core.domain.ripple import WorldSnapshot
     from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
 
     snap = WorldSnapshot(
         snapshot_id="snap:1",

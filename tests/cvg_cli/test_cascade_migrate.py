@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_cli.commands.cascade import CascadeCommand
 from lingwen_cli.options import CascadeOptions
 from lingwen_cli.parsers import create_parser
+
 from infra.cross_volume.cascade_migration import migrate_v1_cascade_runs
 from infra.cross_volume.reference_graph import (
     CascadedRipple,

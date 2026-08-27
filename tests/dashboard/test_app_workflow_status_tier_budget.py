@@ -26,9 +26,10 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, Any]:
 
     Pattern 跟 tests/agent_system/test_dashboard_budget_endpoints.py 1:1 mirror.
     """
+    from lingwen_core.agents.budget_persistence import BudgetService
+
     from apps.studio_api.app import create_app
     from apps.studio_api.protocols import MasterControllerAdapter
-    from lingwen_core.agents.budget_persistence import BudgetService
 
     service = BudgetService(db_path=tmp_path / "test.db")
     service.init_db()
@@ -116,10 +117,11 @@ class TestBudgetByTierEndpoints:
 
     def test_workflow_status_response_includes_budget_by_tier_field(self, tmp_path: Path) -> None:
         """GET /api/workflows/active 返 dict 含 budget_by_tier 3 keys (T5 helper 透传, T6 补 model Field)."""
-        from apps.studio_api.app import create_app
-        from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_core.agents.budget_persistence import BudgetService
         from lingwen_llm.providers.model_tiers import ModelTier
+
+        from apps.studio_api.app import create_app
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)

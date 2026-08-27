@@ -23,11 +23,11 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-
 from lingwen_core.agents.budget_persistence import BudgetService
 from lingwen_core.agents.got_bridge import AgentComputeFn
 from lingwen_llm.providers.cost_tracker import CostBudgetExceeded, CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
+
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.got.scheduler import ComputeResult
 

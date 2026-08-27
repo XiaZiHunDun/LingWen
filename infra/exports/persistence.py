@@ -14,6 +14,7 @@ from infra.persistence.paths import (
     RIPPLE_DB,
     WORKFLOW_DB,
 )
+from infra.persistence.queries import Query, QueryRegistry, get_query, list_queries, register_query
 from infra.persistence.registry import (
     get,
     get_registration,
@@ -24,9 +25,6 @@ from infra.persistence.registry import (
     reset_all,
 )
 from infra.persistence.schemas import SCHEMAS, apply_schema, get_schema
-from infra.persistence.queries import (
-    Query, QueryRegistry, register_query, get_query, list_queries
-)
 
 __all__ = [
     # Connection

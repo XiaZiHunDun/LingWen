@@ -5,12 +5,12 @@ import json
 import os
 
 import pytest
-
 from lingwen_core.agents.chapter_emit import (
     emit_chapter_enabled,
     emit_chapter_to_repo,
 )
 from lingwen_core.agents.got_bridge import AgentComputeFn
+
 from infra.got.data_structures import NodeType, ThoughtNode
 from infra.paths import ProjectPaths
 

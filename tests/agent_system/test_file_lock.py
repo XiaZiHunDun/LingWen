@@ -27,7 +27,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from lingwen_core.agents._file_lock import FileLock
 from lingwen_core.agents.decision_queue import (
     DecisionKind,

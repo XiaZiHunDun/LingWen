@@ -11,8 +11,8 @@ from functools import lru_cache
 from lingwen_core.ports import (
     EmbeddingPort,
     EventStorePort,
-    LLMPort,
     InMemoryEventStore,
+    LLMPort,
 )
 from lingwen_core.use_cases import (
     MergeRipplesUseCase,

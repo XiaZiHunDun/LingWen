@@ -16,10 +16,6 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
-from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
-from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
-from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 from lingwen_prompt import (
     ExtractedResolution,
     ExtractedRipple,
@@ -27,6 +23,10 @@ from lingwen_prompt import (
     parse_ripple_extraction,
 )
 from lingwen_prompt.templates import load_template, render_template
+from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
+from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
+from lingwen_quality.consistency.engine.data_structures import IssueSeverity
+
 from infra.subplot.data_structures import Plot, PlotStatus, PlotType
 from infra.subplot.registry import PlotRegistry
 from infra.world_model import (

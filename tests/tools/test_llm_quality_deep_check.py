@@ -83,6 +83,7 @@ class TestLLMQualityChecker:
     def test_quality_report_creation(self, checker):
         """测试质检报告创建"""
         from lingwen_quality.quality import Issue
+
         from tools.llm_quality_deep_check import QualityReport
 
         report = QualityReport(

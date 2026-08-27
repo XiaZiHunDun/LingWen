@@ -10,10 +10,10 @@ SQL查询集中管理模块
 
 使用方式：
     from infra.persistence.queries import get_query
-    
+
     # 获取查询
     query = get_query('events.get_by_aggregate')
-    
+
     # 执行查询
     cursor.execute(query.sql, query.params({'aggregate_id': 'abc'}))
 """
@@ -26,7 +26,7 @@ from typing import Any, Callable, Dict, List, Optional
 class Query:
     """
     SQL查询定义
-    
+
     Args:
         name: 查询名称
         sql: SQL语句模板
@@ -41,17 +41,17 @@ class Query:
     description: str = ""
     namespace: str = "default"
     version: int = 1
-    
+
     def params(self, **kwargs) -> Dict[str, Any]:
         """
         构建查询参数
-        
+
         Args:
             **kwargs: 参数键值对
-            
+
         Returns:
             参数字典
-            
+
         Raises:
             ValueError: 如果参数不符合schema
         """
@@ -64,114 +64,114 @@ class Query:
                             f"Parameter '{key}' expects {expected_type.__name__}, "
                             f"got {type(value).__name__}"
                         )
-        
+
         return {k: v for k, v in kwargs.items() if v is not None}
 
 
 class QueryRegistry:
     """
     查询注册表
-    
+
     管理所有SQL查询，支持按名称和命名空间查找。
     """
-    
+
     def __init__(self):
         self._queries: Dict[str, Query] = {}
         self._namespaces: Dict[str, List[str]] = {}
-    
+
     def register(self, query: Query) -> None:
         """
         注册查询
-        
+
         Args:
             query: 查询对象
         """
         key = self._make_key(query.namespace, query.name)
         self._queries[key] = query
-        
+
         if query.namespace not in self._namespaces:
             self._namespaces[query.namespace] = []
         if query.name not in self._namespaces[query.namespace]:
             self._namespaces[query.namespace].append(query.name)
-    
+
     def register_multiple(self, queries: List[Query]) -> None:
         """
         批量注册查询
-        
+
         Args:
             queries: 查询列表
         """
         for query in queries:
             self.register(query)
-    
+
     def get(self, name: str, namespace: str = "default") -> Optional[Query]:
         """
         获取查询
-        
+
         Args:
             name: 查询名称
             namespace: 命名空间
-            
+
         Returns:
             查询对象或None
         """
         key = self._make_key(namespace, name)
         return self._queries.get(key)
-    
+
     def get_by_namespace(self, namespace: str) -> List[Query]:
         """
         按命名空间获取所有查询
-        
+
         Args:
             namespace: 命名空间
-            
+
         Returns:
             查询列表
         """
         if namespace not in self._namespaces:
             return []
-        
+
         return [
             self._queries[self._make_key(namespace, name)]
             for name in self._namespaces[namespace]
         ]
-    
+
     def list_namespaces(self) -> List[str]:
         """
         获取所有命名空间
-        
+
         Returns:
             命名空间列表
         """
         return list(self._namespaces.keys())
-    
+
     def list_queries(self) -> List[str]:
         """
         获取所有查询名称
-        
+
         Returns:
             查询名称列表
         """
         return list(self._queries.keys())
-    
+
     def exists(self, name: str, namespace: str = "default") -> bool:
         """
         检查查询是否存在
-        
+
         Args:
             name: 查询名称
             namespace: 命名空间
-            
+
         Returns:
             是否存在
         """
         key = self._make_key(namespace, name)
         return key in self._queries
-    
+
     def unregister(self, name: str, namespace: str = "default") -> None:
         """
         卸载查询
-        
+
         Args:
             name: 查询名称
             namespace: 命名空间
@@ -179,27 +179,27 @@ class QueryRegistry:
         key = self._make_key(namespace, name)
         if key in self._queries:
             del self._queries[key]
-            
+
             if namespace in self._namespaces and name in self._namespaces[namespace]:
                 self._namespaces[namespace].remove(name)
                 if not self._namespaces[namespace]:
                     del self._namespaces[namespace]
-    
+
     def clear(self) -> None:
         """
         清空所有查询
         """
         self._queries.clear()
         self._namespaces.clear()
-    
+
     def _make_key(self, namespace: str, name: str) -> str:
         """
         生成查询键
-        
+
         Args:
             namespace: 命名空间
             name: 查询名称
-            
+
         Returns:
             查询键
         """
@@ -213,7 +213,7 @@ _global_registry = QueryRegistry()
 def register_query(query: Query) -> None:
     """
     注册查询（快捷方法）
-    
+
     Args:
         query: 查询对象
     """
@@ -223,7 +223,7 @@ def register_query(query: Query) -> None:
 def register_queries(queries: List[Query]) -> None:
     """
     批量注册查询（快捷方法）
-    
+
     Args:
         queries: 查询列表
     """
@@ -233,14 +233,14 @@ def register_queries(queries: List[Query]) -> None:
 def get_query(name: str, namespace: str = "default") -> Query:
     """
     获取查询
-    
+
     Args:
         name: 查询名称
         namespace: 命名空间
-        
+
     Returns:
         查询对象
-        
+
     Raises:
         ValueError: 如果查询不存在
     """
@@ -253,10 +253,10 @@ def get_query(name: str, namespace: str = "default") -> Query:
 def list_queries(namespace: str = None) -> List[Query]:
     """
     列出查询
-    
+
     Args:
         namespace: 命名空间（可选）
-        
+
     Returns:
         查询列表
     """
@@ -268,11 +268,11 @@ def list_queries(namespace: str = None) -> List[Query]:
 def query_exists(name: str, namespace: str = "default") -> bool:
     """
     检查查询是否存在
-    
+
     Args:
         name: 查询名称
         namespace: 命名空间
-        
+
     Returns:
         是否存在
     """
@@ -282,7 +282,7 @@ def query_exists(name: str, namespace: str = "default") -> bool:
 def get_registry() -> QueryRegistry:
     """
     获取全局查询注册表
-    
+
     Returns:
         查询注册表
     """

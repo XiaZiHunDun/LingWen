@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from lingwen_core.agents.ci_records import (
     build_e2e_live_first_green_record,
     default_e2e_live_first_green_path,

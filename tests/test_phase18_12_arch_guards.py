@@ -85,6 +85,6 @@ def test_no_useinfra_in_dashboard_src():
 
     # Vue 前端通常不应 import Python infra 包；保留 info 报告
     if stale:
-        print(f"\n[INFO] apps/dashboard/src 中引用 infra/ 的行:")
+        print("\n[INFO] apps/dashboard/src 中引用 infra/ 的行:")
         for s in stale[:5]:
             print(f"  {s}")

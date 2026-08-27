@@ -19,8 +19,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from lingwen_llm.providers.router import AIRouter
 
 if TYPE_CHECKING:
-    from lingwen_llm.providers.cost_tracker import CostTracker
     from lingwen_core.agents.budget_persistence import BudgetService
+    from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_core.agents.agent_config import MasterControllerConfig, load_default_config
 from lingwen_core.agents.agent_factory import (
     build_agent_tools,
@@ -35,10 +35,10 @@ from lingwen_core.agents.decision_queue import (
     HumanDecisionQueue,
     create_decision,
 )
-from lingwen_core.agents.mc_social import SocialEngineMixin
-from lingwen_core.agents.mc_writing import WritingMixin
 from lingwen_core.agents.mc_editing import EditingMixin
+from lingwen_core.agents.mc_social import SocialEngineMixin
 from lingwen_core.agents.mc_workflow import WorkflowMixin
+from lingwen_core.agents.mc_writing import WritingMixin
 from lingwen_core.agents.orchestration.task_orchestrator import TaskOrchestrator
 from lingwen_core.agents.registry.skill_registry import SkillRegistry
 

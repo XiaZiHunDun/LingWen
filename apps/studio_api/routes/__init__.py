@@ -21,8 +21,8 @@ from apps.studio_api.routes.health import register_health
 from apps.studio_api.routes.overview import register_overview
 from apps.studio_api.routes.studio import register_studio
 from apps.studio_api.routes.workflows import register_workflows
-from apps.studio_api.routes.write_workspace import register_write_workspace
 from apps.studio_api.routes.world import register_world
+from apps.studio_api.routes.write_workspace import register_write_workspace
 
 
 def register_all_routes(app: FastAPI, ctx: RoutesContext) -> None:

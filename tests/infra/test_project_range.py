@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_cli.project_range import project_max_chapter
 from lingwen_cli.range_parser import RangeParser
+
 from infra.paths import ProjectPaths
 
 

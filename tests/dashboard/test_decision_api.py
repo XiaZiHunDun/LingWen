@@ -23,9 +23,6 @@ from typing import Any, Optional
 
 import pytest
 from fastapi.testclient import TestClient
-
-from apps.studio_api.app import create_app
-from apps.studio_api.protocols import MasterControllerAdapter
 from lingwen_core.agents import master_controller as mc_mod
 from lingwen_core.agents.decision_queue import (
     DecisionKind,
@@ -35,6 +32,9 @@ from lingwen_core.agents.decision_queue import (
 )
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
+
+from apps.studio_api.app import create_app
+from apps.studio_api.protocols import MasterControllerAdapter
 
 # === Stub MasterController ===
 
@@ -601,6 +601,7 @@ def _make_fake_master_with_polish_merge_scores(
     from datetime import datetime, timezone
 
     from lingwen_core.agents import master_controller as mc_mod
+
     from infra.got.data_structures import NodeExecution, NodeStatus, NodeType, ThoughtNode
 
     s1_s8 = {"S1": 8, "S2": 7, "S3": 9, "S4": 8, "S5": 7, "S6": 8, "S7": 9, "S8": 8}
@@ -869,8 +870,9 @@ class TestCostByScenarioExtraction:
         直接 send_json 该 dict — 故 Task 4.2 在 MasterControllerAdapter.get_active_workflow_status
         加 cost_by_scenario 字段, WebSocket 自动获得, 0 改 endpoint 协议.
         """
-        from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_pipeline.master_controller import MasterController
+
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         cost_tracker = CostTracker()
         cost_tracker.record("chapter_writing", ModelTier.SONNET, 100, 50)
@@ -966,8 +968,8 @@ class TestBudgetStatusExtraction:
         has_tracker: bool = True,
     ) -> Any:
         """Build a MasterController-like stub with cost_tracker + _current_budget_usd"""
-        from lingwen_pipeline.master_controller import MasterController
         from lingwen_llm.providers.cost_tracker import CostTracker
+        from lingwen_pipeline.master_controller import MasterController
 
         ctrl = MasterController.__new__(MasterController)
         ctrl.cost_tracker = CostTracker() if has_tracker else None

@@ -4,8 +4,9 @@
 """
 from typing import List, Optional
 
-from infra.llm_service import LLMService
 from lingwen_quality.quality import Issue
+
+from infra.llm_service import LLMService
 
 from . import paths
 

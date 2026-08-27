@@ -4,8 +4,8 @@ Mirrors lines 78-210 of the original infra/cli/commands.py.
 """
 from typing import List, Optional
 
-from lingwen_cli.options import UnifiedOptions
 from infra.creator_check import apply_creator_check_defaults, format_check_mode_banner
+from lingwen_cli.options import UnifiedOptions
 
 from .base import Command
 
@@ -103,7 +103,9 @@ class CheckCommand(Command):
 
     def _check_full(self, chapters: List[int], options: UnifiedOptions) -> int:
         """Run comprehensive quality check"""
-        from lingwen_quality.consistency.checkers.dialogue_authenticity_checker import DialogueAuthenticityChecker
+        from lingwen_quality.consistency.checkers.dialogue_authenticity_checker import (
+            DialogueAuthenticityChecker,
+        )
         from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
         from lingwen_quality.consistency.checkers.scene_transition_checker import SceneTransitionChecker
         from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine

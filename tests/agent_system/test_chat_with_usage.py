@@ -114,9 +114,9 @@ class TestEndToEndChatWithUsage:
 
     def test_real_usage_flows_through_full_chain(self) -> None:
         """Master.chat_with_usage → TieredRouter → Provider → 返 SDK real usage."""
-        from lingwen_pipeline.master_controller import MasterController
         from lingwen_llm.providers.model_tiers import ModelTier
         from lingwen_llm.providers.tiered_router import TieredRouter
+        from lingwen_pipeline.master_controller import MasterController
 
         class _FullChainProvider:
             """Stub provider 返 real usage (模拟 SDK 行为)."""
@@ -151,9 +151,9 @@ class TestEndToEndChatWithUsage:
 
     def test_scenario_routing_resolved_correctly(self) -> None:
         """scenario → TieredRouter 正确路由到对应 tier 的 provider."""
-        from lingwen_pipeline.master_controller import MasterController
         from lingwen_llm.providers.model_tiers import ModelTier
         from lingwen_llm.providers.tiered_router import TieredRouter
+        from lingwen_pipeline.master_controller import MasterController
 
         # 不同 tier 返不同 usage, 验证 routing
         class _TierAwareProvider:

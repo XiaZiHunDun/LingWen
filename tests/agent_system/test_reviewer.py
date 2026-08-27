@@ -1,13 +1,14 @@
 """写审分离流程测试"""
 
 import pytest
+
 from infra.agent_system.reviewer import (
+    MAX_REVIEW_CYCLES,
+    STOP_THRESHOLD,
     ReviewerSession,
     ReviewFinding,
     ReviewResult,
     review_chapter,
-    MAX_REVIEW_CYCLES,
-    STOP_THRESHOLD,
 )
 
 

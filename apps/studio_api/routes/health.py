@@ -7,24 +7,24 @@ Phase 15.0 T1.4: /api/health route.
 from __future__ import annotations
 
 import os
-import psutil
 import sys
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Any, Dict
 
+import psutil
 from fastapi import FastAPI
 
-from apps.studio_api.models import HealthResponse, DatabaseStatus, MemoryUsage
+from apps.studio_api.models import DatabaseStatus, HealthResponse, MemoryUsage
 from apps.studio_api.routes.ctx import RoutesContext
 from infra.health import (
-    HealthManager,
+    CacheHealthCheck,
     DatabaseHealthCheck,
+    HealthManager,
     LLMHealthCheck,
     VectorDBHealthCheck,
-    CacheHealthCheck,
     get_health_manager,
-    register_health_check,
     health_endpoint,
+    register_health_check,
 )
 
 _START_TIME = datetime.now(timezone.utc)

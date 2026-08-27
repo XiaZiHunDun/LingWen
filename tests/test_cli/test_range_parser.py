@@ -1,6 +1,5 @@
 """Tests for RangeParser"""
 import pytest
-
 from lingwen_cli.range_parser import RangeParser
 
 

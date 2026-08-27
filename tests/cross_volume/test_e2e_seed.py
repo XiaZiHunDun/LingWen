@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from lingwen_core.agents.decision_queue import HumanDecisionQueue
+
 from infra.cross_volume.e2e_seed import (
     E2E_DECISION_ID,
     E2E_PENDING_RIPPLE_ID,

@@ -1,6 +1,6 @@
 """Phase 18 Gate 脚本守卫 — syntax + executable 验证。"""
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 SCRIPT = REPO / "tooling" / "gates" / "phase_18.sh"

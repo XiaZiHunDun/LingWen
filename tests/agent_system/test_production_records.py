@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from lingwen_core.agents.production_records import (
     compute_deduplicated_cost_usd,
     list_production_records,

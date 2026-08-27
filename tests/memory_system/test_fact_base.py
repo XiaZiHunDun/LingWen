@@ -2,7 +2,6 @@
 from pathlib import Path
 
 import pytest
-
 from lingwen_memory.state.fact_base import FactBase
 
 

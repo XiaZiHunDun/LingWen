@@ -7,6 +7,7 @@ from lingwen_core.agents.production_summary import (
     build_production_summary,
     build_production_summary_from_controller,
 )
+
 from infra.got.data_structures import NodeExecution, NodeStatus
 
 

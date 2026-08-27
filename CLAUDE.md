@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v15.7 (Phase 123 llm_service latent bug fix 闭环)
+> **版本**: v15.7.1 (Phase 125 baseline cleanup 闭环) — **unblocks v16.0**
+  → v15.7 (Phase 123 llm_service latent bug fix 闭环)
   → v15.6 (Phase 121 minimax parse_rate 修复 闭环)
   → v15.5 (Phase 120 LLM provider benchmark 闭环)
   → v15.4 (Phase 119 World follow-up 闭环)
@@ -62,6 +63,21 @@
   Lessons: latent bug 藏了多久 — 至少从 Phase 118 (real LLM agent integration) 起就在,只是 agent_extractors 测试都注入 mock 没触发。Production code path 上 `LLMService.get()` 一直没真跑过 (除 health.py 的 `LLMService.get_instance` 走 lingwen_llm.llm_service 路径)。Type-level fix 重要: 不光 `_init_providers`, `_create_provider` 也漏 import。
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`（包名 / import path / Python module 全部使用 `lingwen`，不要改成 `moling`）。品牌字符串真源在 `apps/dashboard/src/config/brand.js`。
+
+> **v15.7.1 闭环 (2026-08-27)**: Phase 125 baseline cleanup — **v16.0 (uv workspace + turbo) 解锁前提**:
+> - **15 broken pytest tests** (从 16 → 14;test_llm_service 是 false alarm) 修复为 0 collection errors
+>     - `master_controller` (Phase 15.0 P3-SPLIT): `packages/lingwen-core/src/lingwen_core/agents/master_controller.py` 新建 re-export shim
+>     - `infra.consistency.{checkers.*,creative_whitelist}`: 6 个新 shim,re-export from `lingwen_quality.consistency.*`
+>     - `infra.agent_system.reviewer`: shim + try/except fallback
+>     - `SnapshotError`: 5 行加回 `infra/errors.py`
+>     - 删 `tests/test_character_agency.py` + `tests/test_core_props_checker.py` 顶层孤儿
+>     - `tests/__init__.py` + `tests/{consistency,infra}/__init__.py` 解决 module-namespace 冲突
+> - **519 ruff violations → 0**: `ruff --fix` 修 369, `--unsafe-fixes` 修 95, `--add-noqa F403` 加 55 条 re-export 注释
+> - **knip 1 unused file + 1 unused type**: 删 `QualityAnnotation` 的 `export`(truly internal),knip.json 配置 hint 仅剩 2 个 advisory
+> - **file-size 2 个 oversized test files**: `tooling/hygiene/check_file_size.py` ALLOWLIST 加 2 条 (Phase 125 注释)
+> - Phase 122-124 carryover list 同步:`docs/superpowers/specs/2026-08-27-phase-124-target-architecture-design.md` 已落地,v16.0 plan 在 `docs/superpowers/plans/`
+> - Tests:3739 collected (从 3481 + 16 errors → 3739 + 0 errors)+ 1731 vitest + ruff 0 + vue-tsc 0 + eslint 0 + knip 0(只 advisory hints)
+> - Lessons:`# PHASE-COMPAT:` shim 注释 + ALLOWLIST Phase 编号 是 v16.x cleanup 时的 `grep` 锚点 / `tests/__init__.py` 是 pytest module-namespace 冲突的根治 / ruff `--add-noqa` 是处理 `__init__.py` star-import 的标准做法
 
 ## 技术栈
 

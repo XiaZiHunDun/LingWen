@@ -18,6 +18,7 @@
     "src/composables/useDashboardNav.js",
     "src/composables/useDevice.js",
     "src/composables/useWidgetRegistry.js",
+    "tests/e2e/write-workspace.spec.ts",
     "src/config/creatorPanelMatrix.js",
     "tests/visual-audit/helpers/capture-ui-audit.js",
     "tests/helpers/strict-test-types.ts"

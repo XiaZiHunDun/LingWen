@@ -2,7 +2,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-
 from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker, PlotThread
 from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 

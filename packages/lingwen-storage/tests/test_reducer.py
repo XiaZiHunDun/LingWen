@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
-from ulid import ULID
+
 from lingwen_storage.events.jsonl_store import WorkflowEvent
-from lingwen_storage.events.reducer import reduce_events, WorkflowProjection
+from lingwen_storage.events.reducer import WorkflowProjection, reduce_events
+from ulid import ULID
 
 
 def _e(step: str, payload: dict, cid: str = "c1") -> WorkflowEvent:

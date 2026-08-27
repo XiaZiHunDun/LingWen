@@ -7,11 +7,11 @@ command (check/repair/verify/etc.) imports from this module and inherits the
 from abc import ABC, abstractmethod
 from typing import List
 
+from infra.paths import ProjectPaths
 from lingwen_cli.options import UnifiedOptions
 from lingwen_cli.output import OutputFormatter
 from lingwen_cli.project_range import project_max_chapter
 from lingwen_cli.range_parser import RangeParser
-from infra.paths import ProjectPaths
 
 
 class Command(ABC):

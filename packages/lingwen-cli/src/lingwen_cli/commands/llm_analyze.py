@@ -40,6 +40,7 @@ class LLMAnalyzeCommand(Command):
             import json
 
             from lingwen_quality.quality import Issue
+
             from tools.llm_quality_analyzer import LLMQualityAnalyzer
 
             analyzer = LLMQualityAnalyzer()

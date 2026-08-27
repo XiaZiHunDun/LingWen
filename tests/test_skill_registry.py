@@ -1,5 +1,6 @@
 """Phase 17.16 守卫:角色池 registry.yaml 自动生成 + SKILL.md 存在。"""
 from pathlib import Path
+
 import yaml
 
 REPO = Path(__file__).resolve().parents[1]

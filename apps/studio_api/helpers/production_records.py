@@ -21,6 +21,7 @@ def production_records_root() -> Path:
     3. Legacy infra/.state/default_pilot_records_dir
     """
     from lingwen_core.agents.production_records import default_pilot_records_dir
+
     from infra.studio_registry import active_project, pilot_records_dir_for
 
     env = os.environ.get("LINGWEN_PILOT_RECORDS_DIR", "").strip()

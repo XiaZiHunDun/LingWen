@@ -2,10 +2,10 @@
 from pathlib import Path
 
 import pytest
-
 from lingwen_cli.commands.ripple_scan import RippleScanCommand
 from lingwen_cli.options import RippleScanOptions
 from lingwen_cli.parsers import create_parser
+
 from infra.cross_volume.reference_graph import ReferenceNode
 from infra.cross_volume.scanner_calibration import (
     compute_threshold_metrics,

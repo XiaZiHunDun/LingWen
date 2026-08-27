@@ -14,11 +14,11 @@ def test_ports_package_importable():
 
 
 def test_storage_port_importable():
-    from lingwen_core.ports.storage import StoragePort, EventStorePort  # noqa: F401
+    from lingwen_core.ports.storage import EventStorePort, StoragePort  # noqa: F401
 
 
 def test_llm_port_importable():
-    from lingwen_core.ports.llm import LLMPort, EmbeddingPort  # noqa: F401
+    from lingwen_core.ports.llm import EmbeddingPort, LLMPort  # noqa: F401
 
 
 def test_checker_port_importable():
@@ -116,7 +116,7 @@ def test_checker_port_methods():
 
 def test_mock_storage_port_satisfies_protocol():
     """InMemoryStoragePort 必须满足 StoragePort（runtime_checkable duck typing）。"""
-    from lingwen_core.ports.storage import StoragePort, InMemoryStoragePort
+    from lingwen_core.ports.storage import InMemoryStoragePort, StoragePort
 
     store = InMemoryStoragePort()
     assert isinstance(store, StoragePort)
@@ -129,7 +129,7 @@ def test_mock_storage_port_satisfies_protocol():
 
 def test_mock_event_store_satisfies_protocol():
     """InMemoryEventStore 必须满足 EventStorePort。"""
-    from lingwen_core.ports.storage import EventStorePort, InMemoryEventStore, DomainEvent
+    from lingwen_core.ports.storage import DomainEvent, EventStorePort, InMemoryEventStore
 
     store: EventStorePort = InMemoryEventStore()
     assert isinstance(store, EventStorePort)
@@ -147,7 +147,7 @@ def test_mock_event_store_satisfies_protocol():
 
 def test_mock_llm_satisfies_protocol():
     """EchoLLM 必须满足 LLMPort。"""
-    from lingwen_core.ports.llm import LLMPort, EchoLLM
+    from lingwen_core.ports.llm import EchoLLM, LLMPort
 
     llm: LLMPort = EchoLLM()
     assert isinstance(llm, LLMPort)
@@ -171,7 +171,7 @@ def test_mock_embedding_satisfies_protocol():
 
 def test_mock_checker_satisfies_protocol():
     """AlwaysPassChecker 必须满足 CheckerPort。"""
-    from lingwen_core.ports.checker import CheckerPort, AlwaysPassChecker
+    from lingwen_core.ports.checker import AlwaysPassChecker, CheckerPort
 
     checker: CheckerPort = AlwaysPassChecker()
     assert isinstance(checker, CheckerPort)

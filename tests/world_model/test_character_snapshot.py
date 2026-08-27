@@ -1,11 +1,12 @@
 """人物状态快照测试"""
 
 import pytest
+
 from infra.world_model.character_snapshot import (
-    CharacterSnapshot,
-    CharacterState,
     CharacterAttributeChange,
+    CharacterSnapshot,
     CharacterSnapshotError,
+    CharacterState,
     capture_character_state,
     get_character_changes,
 )

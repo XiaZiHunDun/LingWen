@@ -137,9 +137,10 @@ class TestExtractBudgetByTier:
         Mock _last_scheduler/_last_graph 触发 active workflow path (Phase 5+
         run_workflow 写入缓存). Pattern 跟 test_app_workflow_status.py 1:1.
         """
-        from apps.studio_api.protocols import MasterControllerAdapter
         from lingwen_core.agents.budget_persistence import BudgetService
         from lingwen_llm.providers.model_tiers import ModelTier
+
+        from apps.studio_api.protocols import MasterControllerAdapter
 
         svc = BudgetService(db_path=tmp_path / "b.db")
         svc.set_by_tier(ModelTier.OPUS, 1.0)

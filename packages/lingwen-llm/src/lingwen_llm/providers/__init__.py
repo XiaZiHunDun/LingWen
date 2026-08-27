@@ -31,12 +31,6 @@ from .base import (
     list_registered_providers,
     register_provider,
 )
-from .plugin_manager import (
-    PluginInfo,
-    PluginManager,
-    discover_and_register,
-    get_plugin_manager,
-)
 
 # Phase 2.11 — 多模型分级路由
 from .cost_tracker import CostBudgetExceeded, CostRecord, CostTracker
@@ -45,6 +39,12 @@ from .model_tiers import MODEL_TIERS, ModelTier, ModelTierConfig, compute_cost
 
 # 显式 re-export provider 类(向后兼容: `from infra.ai_service import OpenAIProvider`)
 from .openai_provider import OpenAIProvider
+from .plugin_manager import (
+    PluginInfo,
+    PluginManager,
+    discover_and_register,
+    get_plugin_manager,
+)
 
 # Phase 2.12 — TieredRouter
 from .tiered_router import TieredRouter, TieredRouterError

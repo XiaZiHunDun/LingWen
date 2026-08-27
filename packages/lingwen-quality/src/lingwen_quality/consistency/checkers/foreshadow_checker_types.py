@@ -20,8 +20,10 @@ from typing import Optional, Protocol
 # Lazy-imported so that the module remains importable even if infra.world_model is not
 # available (e.g. when only lingwen-quality is installed standalone).
 try:  # pragma: no cover - optional legacy import
-    from lingwen_core.domain.ripple import RESOLUTION_GRACE_CH  # noqa: F401
-    from lingwen_core.domain.ripple import RippleState
+    from lingwen_core.domain.ripple import (
+        RESOLUTION_GRACE_CH,  # noqa: F401
+        RippleState,
+    )
 except ImportError:
     RippleState = None  # type: ignore[assignment]
     RESOLUTION_GRACE_CH = 5  # sensible default (chapters)

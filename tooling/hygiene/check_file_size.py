@@ -28,6 +28,12 @@ ALLOWLIST: set[str] = set()
 # === Phase 17 (monorepo split) — infra/legacy/tools ===
 ALLOWLIST.add("fn-core/src/core/aggregates/StoryAggregate.ts")  # Phase 17
 ALLOWLIST.add("packages/lingwen-core/src/lingwen_core/agents/chapter_production_pilot.py")  # Phase 17.4
+# === Phase 125 v15.7.1 — temporary allowlist during baseline cleanup ===
+# These 2 test files exceed 500 lines and pre-date v15.7.1. Refactor scheduled
+# for v15.8. They are tracked tests; not refactoring them keeps the v15.7.1
+# scope focused on tooling migration.
+ALLOWLIST.add("apps/dashboard/tests/unit/pages/write-workspace-page.spec.ts")  # Phase 125
+ALLOWLIST.add("apps/dashboard/tests/unit/use-nav-url-utils.spec.ts")  # Phase 125
 ALLOWLIST.add("infra/creator_agent.py")  # Phase 17
 ALLOWLIST.add("infra/creator_merge_preferences.py")  # Phase 17
 ALLOWLIST.add("infra/creator_onboarding_digest_schedule.py")  # Phase 17

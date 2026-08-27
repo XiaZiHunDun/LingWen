@@ -12,7 +12,6 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from infra.logging_config import logger
 from lingwen_memory.config import load_yaml
 from lingwen_memory.embeddings.batch_embed import BatchEmbedder
 from lingwen_memory.gateway.memory_gateway import MemoryGateway
@@ -22,6 +21,8 @@ from lingwen_memory.state.plot_thread_tracker import PlotThreadTracker
 from lingwen_memory.state.timeline_manager import TimelineManager
 from lingwen_memory.vector.embedder import Embedder
 from lingwen_memory.vector.qdrant_client import QdrantClientWrapper
+
+from infra.logging_config import logger
 
 # 全局单例实例
 _memory_gateway: Optional[MemoryGateway] = None

@@ -60,10 +60,10 @@ def run_migrations(conn: sqlite3.Connection) -> List[Tuple[int, str]]:
     applied = get_applied_migrations(conn)
     all_migrations = get_migration_files()
     applied_list = []
-    
+
     for version, description, sql_file in all_migrations:
         if version not in applied:
             apply_migration(conn, version, description, sql_file)
             applied_list.append((version, description))
-    
+
     return applied_list

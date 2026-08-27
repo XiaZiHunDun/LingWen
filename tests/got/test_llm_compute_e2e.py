@@ -22,11 +22,11 @@ from __future__ import annotations
 from typing import Optional
 
 import pytest
-
 from lingwen_llm.providers.base import AIProvider, ProviderConfig
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.model_tiers import ModelTier
 from lingwen_llm.providers.tiered_router import TieredRouter
+
 from infra.got.data_structures import NodeStatus, NodeType, ThoughtNode
 from infra.got.graph import ThoughtGraph
 from infra.got.llm_compute import LLMComputeFn

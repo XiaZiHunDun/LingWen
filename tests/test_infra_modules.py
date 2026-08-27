@@ -60,8 +60,8 @@ class TestTool:
     """类型安全工具定义测试"""
 
     def test_make_typed_tool(self):
-        from infra.tool import make, dispatch, ToolOutput
         from infra.schema import Struct
+        from infra.tool import ToolOutput, dispatch, make
 
         class WeatherParams(Struct):
             city: str
@@ -82,7 +82,7 @@ class TestTool:
         assert result.content['temperature'] == 22.0
 
     def test_make_dynamic_tool(self):
-        from infra.tool import make, dispatch, ToolOutput
+        from infra.tool import ToolOutput, dispatch, make
 
         tool = make({
             'description': 'Lookup',
@@ -95,8 +95,8 @@ class TestTool:
         assert result.content['result'] == 'Found: test'
 
     def test_tools_registry(self):
-        from infra.tool import make, ToolsRegistry
         from infra.schema import Struct
+        from infra.tool import ToolsRegistry, make
 
         class Params(Struct):
             value: str
@@ -192,7 +192,7 @@ class TestLLMCache:
         assert call_count[0] == 1
 
     def test_cache_policy(self):
-        from infra.llm_cache import CachePolicy, apply_cache_policy, MessageRole
+        from infra.llm_cache import CachePolicy, MessageRole, apply_cache_policy
 
         request = {
             'model': 'gpt-4',
@@ -230,8 +230,7 @@ class TestTypes:
         assert str(user_id) == '550e8400-e29b-41d4-a716-446655440000'
 
     def test_uuid_validation(self):
-        from infra.types import UUIDID, SessionID
-        from infra.types import NewtypeValidationError
+        from infra.types import UUIDID, NewtypeValidationError, SessionID
 
         # 有效 UUID
         session_id = SessionID('550e8400-e29b-41d4-a716-446655440000')
@@ -242,8 +241,7 @@ class TestTypes:
             SessionID('invalid-uuid')
 
     def test_email_validation(self):
-        from infra.types import Email
-        from infra.types import NewtypeValidationError
+        from infra.types import Email, NewtypeValidationError
 
         # 有效邮箱
         email = Email('test@example.com')
@@ -254,7 +252,7 @@ class TestTypes:
             Email('invalid-email')
 
     def test_newtype_factory(self):
-        from infra.types import newtype, integer_id
+        from infra.types import integer_id, newtype
 
         ProductID = newtype('ProductID', str)
         prod_id = ProductID('prod-123')
@@ -389,7 +387,7 @@ class TestResult:
         assert result.unwrap_or('default') == 'default'
 
     def test_map(self):
-        from infra.result import Ok, Err
+        from infra.result import Err, Ok
 
         result = Ok(42)
         mapped = result.map(lambda x: x * 2)
@@ -400,7 +398,7 @@ class TestResult:
         assert mapped_err.is_err() is True
 
     def test_flat_map(self):
-        from infra.result import Ok, Err, ok
+        from infra.result import Err, Ok, ok
 
         result = Ok(42)
         flat_mapped = result.flat_map(lambda x: ok(x * 2))
@@ -425,7 +423,7 @@ class TestResult:
         assert result2.is_err() is True
 
     def test_combine(self):
-        from infra.result import Ok, Err, combine
+        from infra.result import Err, Ok, combine
 
         results = [Ok(1), Ok(2), Ok(3)]
         combined = combine(results)
@@ -440,7 +438,7 @@ class TestDI:
     """依赖注入系统测试"""
 
     def test_layer_basic(self):
-        from infra.di.layer import Layer, Tag, Runtime
+        from infra.di.layer import Layer, Runtime, Tag
 
         # 创建标签
         DbTag = Tag(str, 'Database')

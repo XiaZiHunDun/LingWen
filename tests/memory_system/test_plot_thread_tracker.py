@@ -3,7 +3,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_memory.state.plot_thread_tracker import PlotThreadTracker
 
 

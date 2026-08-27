@@ -7,14 +7,13 @@
 
 from infra.persistence.queries import Query, register_queries
 
-
 # 事件查询定义 - 与 event_sourcing.store.py 数据库结构匹配
 EVENT_QUERIES = [
     Query(
         name="get_by_aggregate",
         sql="""
-            SELECT * FROM events 
-            WHERE aggregate_id = :aggregate_id 
+            SELECT * FROM events
+            WHERE aggregate_id = :aggregate_id
             ORDER BY seq ASC
         """,
         params_schema={"aggregate_id": str},
@@ -24,8 +23,8 @@ EVENT_QUERIES = [
     Query(
         name="get_by_aggregate_since_seq",
         sql="""
-            SELECT * FROM events 
-            WHERE aggregate_id = :aggregate_id 
+            SELECT * FROM events
+            WHERE aggregate_id = :aggregate_id
             AND seq > :after_seq
             ORDER BY seq ASC
         """,
@@ -36,7 +35,7 @@ EVENT_QUERIES = [
     Query(
         name="get_latest_seq",
         sql="""
-            SELECT seq FROM event_sequences 
+            SELECT seq FROM event_sequences
             WHERE aggregate_id = :aggregate_id
         """,
         params_schema={"aggregate_id": str},
@@ -98,8 +97,8 @@ EVENT_QUERIES = [
     Query(
         name="get_by_type",
         sql="""
-            SELECT * FROM events 
-            WHERE event_type = :event_type 
+            SELECT * FROM events
+            WHERE event_type = :event_type
             ORDER BY timestamp ASC
         """,
         params_schema={"event_type": str},
@@ -109,8 +108,8 @@ EVENT_QUERIES = [
     Query(
         name="get_since_timestamp",
         sql="""
-            SELECT * FROM events 
-            WHERE timestamp >= :timestamp 
+            SELECT * FROM events
+            WHERE timestamp >= :timestamp
             ORDER BY timestamp ASC
         """,
         params_schema={"timestamp": str},
@@ -120,8 +119,8 @@ EVENT_QUERIES = [
     Query(
         name="count_by_aggregate",
         sql="""
-            SELECT COUNT(*) as count 
-            FROM events 
+            SELECT COUNT(*) as count
+            FROM events
             WHERE aggregate_id = :aggregate_id
         """,
         params_schema={"aggregate_id": str},
@@ -137,7 +136,7 @@ EVENT_QUERIES = [
     Query(
         name="delete_by_aggregate",
         sql="""
-            DELETE FROM events 
+            DELETE FROM events
             WHERE aggregate_id = :aggregate_id
         """,
         params_schema={"aggregate_id": str},
@@ -147,7 +146,7 @@ EVENT_QUERIES = [
     Query(
         name="delete_sequence",
         sql="""
-            DELETE FROM event_sequences 
+            DELETE FROM event_sequences
             WHERE aggregate_id = :aggregate_id
         """,
         params_schema={"aggregate_id": str},
@@ -163,7 +162,7 @@ EVENT_QUERIES = [
     Query(
         name="get_aggregate_ids_by_type",
         sql="""
-            SELECT DISTINCT aggregate_id FROM events 
+            SELECT DISTINCT aggregate_id FROM events
             WHERE aggregate_type = :aggregate_type
         """,
         params_schema={"aggregate_type": str},
@@ -180,8 +179,8 @@ EVENT_QUERIES = [
     Query(
         name="get_event_by_aggregate_seq",
         sql="""
-            SELECT * FROM events 
-            WHERE aggregate_id = :aggregate_id 
+            SELECT * FROM events
+            WHERE aggregate_id = :aggregate_id
             AND seq = :seq
         """,
         params_schema={"aggregate_id": str, "seq": int},
@@ -191,7 +190,7 @@ EVENT_QUERIES = [
     Query(
         name="get_sequence",
         sql="""
-            SELECT seq, owner_id FROM event_sequences 
+            SELECT seq, owner_id FROM event_sequences
             WHERE aggregate_id = :aggregate_id
         """,
         params_schema={"aggregate_id": str},
@@ -234,8 +233,8 @@ EVENT_QUERIES = [
     Query(
         name="get_latest_snapshot",
         sql="""
-            SELECT * FROM snapshots 
-            WHERE aggregate_id = :aggregate_id 
+            SELECT * FROM snapshots
+            WHERE aggregate_id = :aggregate_id
             ORDER BY seq DESC LIMIT 1
         """,
         params_schema={"aggregate_id": str},
@@ -245,7 +244,7 @@ EVENT_QUERIES = [
     Query(
         name="delete_snapshot",
         sql="""
-            DELETE FROM snapshots 
+            DELETE FROM snapshots
             WHERE aggregate_id = :aggregate_id
         """,
         params_schema={"aggregate_id": str},

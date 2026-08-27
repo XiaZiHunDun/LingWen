@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from lingwen_quality.quality import Issue
+
 from tools.problem_classifier import ProblemClassifier
 
 

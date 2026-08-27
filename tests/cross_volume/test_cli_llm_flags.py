@@ -14,7 +14,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_cli.commands.backfill import BackfillCommand
 from lingwen_cli.parsers import create_parser
 

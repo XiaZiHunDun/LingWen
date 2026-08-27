@@ -21,8 +21,13 @@ from .interfaces import (
 )
 
 if TYPE_CHECKING:
-    from lingwen_quality.consistency.engine.data_structures import CheckerType, ConsistencyReport, IssueSeverity
+    from lingwen_quality.consistency.engine.data_structures import (
+        CheckerType,
+        ConsistencyReport,
+        IssueSeverity,
+    )
     from lingwen_quality.consistency.engine.data_structures import Issue as RuleBasedIssue
+
     from tools.llm_emotional_resonance_checker import EmotionalResonanceReport
     from tools.llm_foreshadow_analyzer import ForeshadowAnalysisReport
     from tools.llm_pacing_analyzer import PacingReport

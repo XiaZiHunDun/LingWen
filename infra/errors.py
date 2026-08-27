@@ -242,7 +242,7 @@ class ValidationError(BaseError):
     __error_name__ = "ValidationError"
     __error_tags__ = ["validation"]
 
-    def __init__(self, message: str = "", field: str = "", expected: Any = None, actual: Any = None, **kwargs):
+    def __init__(self, message: str = "", field: str = "", expected: Any = None, actual: Any = None, **kwargs):  # noqa: F811
         super().__init__(message, **kwargs)
         self.field = field
         self.expected = expected
@@ -325,6 +325,16 @@ class NotImplementedError(BaseError):
     __error_tags__ = ["not_implemented"]
 
 
+# PHASE-COMPAT: SnapshotError was used by infra.world_model.character_snapshot.
+# The class was removed during Phase 13.X consolidation but downstream code
+# still inherits from it. Restore here so test_character_snapshot.py
+# can collect.
+class SnapshotError(BaseError):
+    """角色快照操作失败时抛出（如空 chapter_range）。"""
+    __error_name__ = "SnapshotError"
+    __error_tags__ = ["snapshot"]
+
+
 __all__ = [
     "BaseError",
     "create",
@@ -348,4 +358,5 @@ __all__ = [
     "DatabaseError",
     "ConfigurationError",
     "NotImplementedError",
+    "SnapshotError",
 ]

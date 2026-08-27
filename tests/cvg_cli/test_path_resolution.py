@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from lingwen_cli import path_utils
 
 

@@ -19,10 +19,10 @@ from pathlib import Path
 from typing import Optional, Union
 
 from lingwen_core.agents.agent_config import MasterControllerConfig
-from lingwen_pipeline.master_controller import MasterController
 from lingwen_llm.providers.base import AIProvider, ProviderConfig
 from lingwen_llm.providers.cost_tracker import CostTracker
 from lingwen_llm.providers.router import AIRouter
+from lingwen_pipeline.master_controller import MasterController
 
 
 class StubProvider(AIProvider):

@@ -1,5 +1,6 @@
 """Phase 17.1 守卫：pnpm-workspace.yaml 覆盖 apps/*。"""
 from pathlib import Path
+
 import yaml
 
 REPO = Path(__file__).resolve().parents[3]

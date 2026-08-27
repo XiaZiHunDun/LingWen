@@ -180,7 +180,7 @@ def get_style_diversity_score(text: str) -> float:
     if len(sentences) >= 3:
         lengths = [len(s) for s in sentences]
         avg_len = sum(lengths) / len(lengths)
-        variance = sum((l - avg_len) ** 2 for l in lengths) / len(lengths)
+        variance = sum((l - avg_len) ** 2 for l in lengths) / len(lengths)  # noqa: E741
         # 方差归一化：方差 >= 1000 视为满分
         variance_score = min(1.0, variance / 1000.0)
     else:

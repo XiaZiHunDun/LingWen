@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-import pytest
-
 import lingwen_storage.events.jsonl_store as mod
+import pytest
 from lingwen_storage.events.jsonl_store import (
     JsonlCorruptLineError,
     JsonlStore,

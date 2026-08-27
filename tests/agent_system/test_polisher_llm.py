@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 import pytest
-
 from lingwen_core.agents.agents.base import AgentBase
 from lingwen_core.agents.agents.polisher.tools import PolisherTools
 from lingwen_pipeline.master_controller import MasterController

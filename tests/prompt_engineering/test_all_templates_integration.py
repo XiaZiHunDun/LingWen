@@ -22,7 +22,6 @@ import re
 from typing import Any
 
 import pytest
-
 from lingwen_llm.providers.model_tiers import ModelTier
 from lingwen_prompt.scenarios import (
     _SCENARIO_METADATA,

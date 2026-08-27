@@ -161,7 +161,7 @@ class CharacterConsistencyAgent(AgentBase):
                     conflict_type="name_conflict",
                     description=f"角色名 '{new_name}' 与已有角色 '{existing_name}' 完全相同",
                     severity="critical",
-                    suggestion=f"请为角色使用不同的名字",
+                    suggestion="请为角色使用不同的名字",
                 ))
 
             # 名字高度相似的冲突（包含关系）
@@ -171,7 +171,7 @@ class CharacterConsistencyAgent(AgentBase):
                     conflict_type="name_similarity",
                     description=f"角色名 '{new_name}' 与已有角色 '{existing_name}' 高度相似",
                     severity="major",
-                    suggestion=f"建议修改角色名以避免读者混淆",
+                    suggestion="建议修改角色名以避免读者混淆",
                 ))
 
         return findings

@@ -1,5 +1,4 @@
-export interface QualityAnnotation {
-  sceneId: string
+interface QualityAnnotation {  // Phase 125 v15.7.1: removed 'export' — truly internal type  sceneId: string
   offset: number
   severity: 'P0' | 'P1' | 'P2'
   rule: string

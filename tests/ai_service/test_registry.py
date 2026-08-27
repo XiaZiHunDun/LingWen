@@ -10,7 +10,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_llm.providers import (
     AIProvider,
     AnthropicProvider,

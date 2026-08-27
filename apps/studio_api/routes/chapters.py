@@ -9,19 +9,18 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import Depends, FastAPI
-from pydantic import BaseModel, Field
-
-from apps.studio_api.dependencies import (
-    review_chapter_dep,
-    write_chapter_dep,
-)
 from lingwen_core.use_cases import (
     ReviewChapterCommand,
     ReviewChapterUseCase,
     WriteChapterCommand,
     WriteChapterUseCase,
 )
+from pydantic import BaseModel, Field
 
+from apps.studio_api.dependencies import (
+    review_chapter_dep,
+    write_chapter_dep,
+)
 
 # ──────────────── Request models ────────────────
 

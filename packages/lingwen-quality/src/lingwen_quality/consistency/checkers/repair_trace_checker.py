@@ -15,7 +15,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from lingwen_quality.consistency.engine.data_structures import CheckerType, Issue, IssueLocation, IssueSeverity
+from lingwen_quality.consistency.engine.data_structures import (
+    CheckerType,
+    Issue,
+    IssueLocation,
+    IssueSeverity,
+)
 
 from .base_checker import BaseChecker
 

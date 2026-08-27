@@ -24,13 +24,12 @@ import logging
 from datetime import datetime
 from typing import Any, Literal, Optional, Protocol, runtime_checkable
 
-from pydantic import BaseModel, Field
-
 from lingwen_core.agents.decision_queue import (
     HumanDecision,
     HumanDecisionQueue,
 )
 from lingwen_llm.providers.model_tiers import ModelTier
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +303,7 @@ class MasterControllerAdapter:
         from lingwen_core.agents.production_summary import (
             build_production_summary_from_controller,
         )
+
         from infra.cross_volume.incremental_backfill import backfill_stats_to_dict
 
         production_summary = build_production_summary_from_controller(self._controller)

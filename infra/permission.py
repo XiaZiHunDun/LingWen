@@ -12,8 +12,8 @@
 5. 三种权限效果：allow（允许）、deny（拒绝）、ask（询问）
 """
 
-import re
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 

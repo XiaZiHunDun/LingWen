@@ -16,13 +16,13 @@ from __future__ import annotations
 from typing import Optional, Protocol
 
 import pytest
-
 from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
 from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
     Issue,
     IssueSeverity,
 )
+
 from infra.world_model.data_structures import Ripple, RippleState
 from infra.world_model.registry import RippleRegistry
 

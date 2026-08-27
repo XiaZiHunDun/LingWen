@@ -15,7 +15,6 @@ from __future__ import annotations
 import time
 
 import pytest
-
 from lingwen_memory.vector.qdrant_client import _LRUCache
 
 

@@ -2,7 +2,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from lingwen_llm.providers.anthropic_provider import AnthropicProvider
 from lingwen_llm.providers.base import AIProviderError, ProviderConfig
 from lingwen_llm.providers.openai_provider import OpenAIProvider

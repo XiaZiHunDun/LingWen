@@ -1,20 +1,21 @@
 """创意豁免白名单测试"""
 
 import pytest
+
 from infra.consistency.creative_whitelist import (
+    DIAMOND,
+    DOWNGRADED_LEVELS,
+    GOLD,
+    SILVER,
+    ChapterAlreadyWhitelistedError,
+    ChapterNotWhitelistedError,
     CreativeWhitelist,
     WhitelistChapter,
     WhitelistError,
-    ChapterAlreadyWhitelistedError,
-    ChapterNotWhitelistedError,
-    DIAMOND,
-    GOLD,
-    SILVER,
-    DOWNGRADED_LEVELS,
     add_whitelist,
+    get_whitelisted_chapters,
     is_whitelisted,
     remove_whitelist,
-    get_whitelisted_chapters,
 )
 
 

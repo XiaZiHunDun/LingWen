@@ -12,7 +12,6 @@ Phase 1.3.c — RED tests for 12 SCENARIOS + 22 STEP_CONTRACTS constants.
 from __future__ import annotations
 
 import pytest
-
 from lingwen_prompt.data_structures import (
     ContextItem,
     StepContract,

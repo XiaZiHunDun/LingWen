@@ -8,7 +8,6 @@ from typing import Any, List
 from unittest.mock import MagicMock
 
 import pytest
-
 from lingwen_llm.providers.base import AIProvider, ProviderConfig
 
 

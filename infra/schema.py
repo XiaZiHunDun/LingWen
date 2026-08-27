@@ -22,12 +22,14 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
 try:
     from pydantic_core import PydanticCoreError
 except ImportError:
     from pydantic_core import PydanticKnownError as PydanticCoreError
 
-from infra.errors import ValidationError as InfraValidationError, BaseError, wrap
+from infra.errors import BaseError, wrap
+from infra.errors import ValidationError as InfraValidationError
 
 T = TypeVar('T')
 S = TypeVar('S')

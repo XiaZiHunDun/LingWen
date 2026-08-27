@@ -38,7 +38,9 @@ class StoryContractEngine:
     def load(self) -> Optional[_StoryContractPayload]:
         # Try the upstream first (legacy still works during transition).
         try:
-            from infra.story_contracts import StoryContractEngine as _Upstream  # type: ignore[import-not-found]
+            from infra.story_contracts import (
+                StoryContractEngine as _Upstream,  # type: ignore[import-not-found]
+            )
             engine = _Upstream(project_root=self.project_root)
             return engine.load()
         except Exception:

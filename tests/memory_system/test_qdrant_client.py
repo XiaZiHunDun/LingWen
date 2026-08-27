@@ -3,7 +3,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from lingwen_memory.vector.qdrant_client import QdrantClientWrapper
 
 

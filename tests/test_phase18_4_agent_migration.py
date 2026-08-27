@@ -62,9 +62,10 @@ def test_packages_have_no_imports_from_infra_agent_system():
     将在 Phase 18.10 (Task 18.10) 全栈扫描 + 修复时清理。
     本测试标记为 xfail 接受当前已知状态。
     """
-    import pytest
     import re
     from pathlib import Path
+
+    import pytest
 
     repo = Path(__file__).resolve().parents[1]
     bad_imports = []

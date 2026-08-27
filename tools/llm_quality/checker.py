@@ -6,10 +6,11 @@ import json
 import re
 from typing import Dict, List, Optional
 
+from lingwen_quality.quality import Issue
+
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
 from infra.llm_service import LLMService
-from lingwen_quality.quality import Issue
 
 from . import paths
 from .report import QualityReport

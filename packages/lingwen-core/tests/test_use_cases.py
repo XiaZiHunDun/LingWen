@@ -25,8 +25,8 @@ def test_write_chapter_use_case_class():
 
 def test_write_chapter_emits_event():
     """execute() 调用 llm.complete 然后 append ChapterWrittenEvent。"""
-    from lingwen_core.use_cases.write_chapter import WriteChapterUseCase, WriteChapterCommand
     from lingwen_core.ports import EchoLLM, InMemoryEventStore
+    from lingwen_core.use_cases.write_chapter import WriteChapterCommand, WriteChapterUseCase
 
     llm = EchoLLM()
     store = InMemoryEventStore()
@@ -54,8 +54,8 @@ def test_write_chapter_emits_event():
 
 def test_write_chapter_rejects_invalid_command():
     """execute() 对非法命令应抛 ValueError，不写入 event store。"""
-    from lingwen_core.use_cases.write_chapter import WriteChapterUseCase, WriteChapterCommand
     from lingwen_core.ports import EchoLLM, InMemoryEventStore
+    from lingwen_core.use_cases.write_chapter import WriteChapterCommand, WriteChapterUseCase
 
     use_case = WriteChapterUseCase(llm=EchoLLM(), store=InMemoryEventStore())
 
@@ -86,11 +86,11 @@ def test_review_chapter_use_case_class():
 
 def test_review_chapter_emits_event():
     """execute() 调用所有 checker，返回 ChapterReviewedEvent。"""
-    from lingwen_core.use_cases.review_chapter import ReviewChapterUseCase, ReviewChapterCommand
     from lingwen_core.ports import (
         AlwaysPassChecker,
         InMemoryEventStore,
     )
+    from lingwen_core.use_cases.review_chapter import ReviewChapterCommand, ReviewChapterUseCase
 
     checker = AlwaysPassChecker()
     store = InMemoryEventStore()
@@ -108,11 +108,11 @@ def test_review_chapter_emits_event():
 
 def test_review_chapter_aggregates_issues():
     """多个 checkers 的问题应聚合到 event payload。"""
-    from lingwen_core.use_cases.review_chapter import ReviewChapterUseCase, ReviewChapterCommand
     from lingwen_core.ports import (
         AlwaysPassChecker,
         InMemoryEventStore,
     )
+    from lingwen_core.use_cases.review_chapter import ReviewChapterCommand, ReviewChapterUseCase
 
     class IssueRaisingChecker:
         def check(self, chapter: object) -> list[object]:
@@ -142,9 +142,9 @@ def test_merge_ripples_use_case_class():
 
 def test_merge_ripples_emits_state_changed_event():
     """execute() 推进 ripple 状态 + emit RippleStateChangedEvent。"""
-    from lingwen_core.use_cases.merge_ripples import MergeRipplesUseCase
     from lingwen_core.domain import Ripple, RippleState
     from lingwen_core.ports import InMemoryEventStore
+    from lingwen_core.use_cases.merge_ripples import MergeRipplesUseCase
 
     store = InMemoryEventStore()
     use_case = MergeRipplesUseCase(store=store)
@@ -169,11 +169,10 @@ def test_merge_ripples_emits_state_changed_event():
 
 def test_merge_ripples_validates_transition():
     """不允许非法状态跃迁（如 RESOLVED → OPEN）。"""
-    from lingwen_core.use_cases.merge_ripples import MergeRipplesUseCase
+    import pytest
     from lingwen_core.domain import Ripple, RippleState
     from lingwen_core.ports import InMemoryEventStore
-
-    import pytest
+    from lingwen_core.use_cases.merge_ripples import MergeRipplesUseCase
 
     use_case = MergeRipplesUseCase(store=InMemoryEventStore())
     r = Ripple(

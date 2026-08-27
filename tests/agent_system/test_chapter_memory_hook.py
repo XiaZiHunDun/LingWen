@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-
 from lingwen_core.agents.chapter_golden_path import run_golden_path
 from lingwen_core.agents.chapter_memory_hook import (
     WORKFLOWS_WITH_MEMORY,

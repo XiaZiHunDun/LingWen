@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 
 import pytest
-
 from lingwen_memory.embeddings.factory import (
     create_embedding_provider,
     describe_embedding_requirements,

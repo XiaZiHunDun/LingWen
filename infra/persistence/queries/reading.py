@@ -7,13 +7,13 @@ QUERIES = {
             content = excluded.content
     """,
     "select_hooks_by_chapter": """
-        SELECT * FROM hooks 
-        WHERE chapter = ? 
+        SELECT * FROM hooks
+        WHERE chapter = ?
         ORDER BY position ASC
     """,
     "select_hooks_by_type": """
-        SELECT * FROM hooks 
-        WHERE hook_type = ? 
+        SELECT * FROM hooks
+        WHERE hook_type = ?
         ORDER BY chapter ASC, position ASC
     """,
     "insert_coolpoint": """
@@ -25,8 +25,8 @@ QUERIES = {
             content = excluded.content
     """,
     "select_coolpoints_by_chapter": """
-        SELECT * FROM coolpoints 
-        WHERE chapter = ? 
+        SELECT * FROM coolpoints
+        WHERE chapter = ?
         ORDER BY pattern ASC
     """,
     "upsert_chapter_summary": """
@@ -42,11 +42,11 @@ QUERIES = {
             updated_at = CURRENT_TIMESTAMP
     """,
     "select_chapter_summary": """
-        SELECT * FROM chapter_summary 
+        SELECT * FROM chapter_summary
         WHERE chapter = ?
     """,
     "select_all_chapter_summaries": """
-        SELECT * FROM chapter_summary 
+        SELECT * FROM chapter_summary
         ORDER BY chapter ASC
     """,
     "insert_analysis_log": """
