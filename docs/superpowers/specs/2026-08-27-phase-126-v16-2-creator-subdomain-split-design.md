@@ -39,15 +39,16 @@
 
 **Shared** 独立于 6 subdomains,作为 cross-subdomain utility(由 Content 重度使用)。
 
-**迁移策略 = Strangler Fig**,因 DP-06 enforcement 从 v16.2 起生效("每个 phase 代码改动收敛到自己 context 内 ≤4 文件"):
-- v16.2.0 = `packages/lingwen-creator/` skeleton + shared/ 迁移 (4 files)
-- v16.2.1 = memory 迁移 (3 files + DTO + typed wrapper + 3 composables)
-- v16.2.2 = settings 迁移 (3 files + DTO + typed wrapper + 1 composable)
-- v16.2.3 = export 迁移 (5 files + DTO + typed wrapper + 2 composables)
-- v16.2.4 = volume 迁移 (6 files + DTO + typed wrapper + 6 composables)
-- v16.2.5 = onboarding 迁移 (9 files + DTO + typed wrapper + 4 composables)
-- v16.2.6 = content 迁移 (10 files + DTO + typed wrapper + 19 composables)
-- v16.2.7 = final gate(import count = 0,所有 118 consumer 走 `lingwen_creator.*`)
+**迁移策略 = Strangler Fig**,因 DP-06 enforcement 从 v16.2 起生效("每个 phase 代码改动收敛到自己 context 内 ≤4 文件")。**DP-06 commit-level 解释**(沿用 v16.0/v16.1 实践):每个 sub-phase 内拆 3-5 focused commits,每个 commit 触 4-6 个文件,**总计 14-20 文件 per sub-phase 但分散在 layer-aligned commits**。
+
+- v16.2.0 = `packages/lingwen-creator/` skeleton + shared/ 迁移 (~6 files, 3 commits)
+- v16.2.1 = memory 迁移 (3 files + DTO + typed wrapper + 3 composables, ~14 files, 4 commits)
+- v16.2.2 = settings 迁移 (3 files + DTO + typed wrapper + 1 composable, ~12 files, 4 commits)
+- v16.2.3 = export 迁移 (5 files + DTO + typed wrapper + 3 composables, ~16 files, 4 commits)
+- v16.2.4 = volume 迁移 (6 files + DTO + typed wrapper + 6 composables, ~18 files, 5 commits)
+- v16.2.5 = onboarding 迁移 (9 files + DTO + typed wrapper + 4 composables, ~20 files, 5 commits)
+- v16.2.6 = content 迁移 (10 files + DTO + typed wrapper + 19 composables, ~25 files, 6 commits)
+- v16.2.7 = final cleanup (shim 删除 + 剩余 consumer migration, **multi-commit** 每 commit ≤4 files)
 
 **全量 4 周**(每 sub-phase 半天到 1 天)。最后 1 sub-phase (content) 最大,因为 import graph 最深。
 
@@ -295,16 +296,42 @@ apps/dashboard/src/
 
 10 files (最大) + DTO (CreatorOverviewResponse, CreatorAgentPlanRequest/Response, CreatorBatchHistoryResponse/Export, CreatorMemoryQueryRequest/Response, CreatorPreferencesResponse/SaveRequest, CreatorModelsResponse, CreatorLogicCheckResponse, CreatorChapterPreview/OutlineSaveRequest/BodySaveRequest, ≥15 DTO) + typed wrapper + 19 composables (`useCreatorAgent`, `useCreatorBatchHistory`, `useCreatorModeGuide`, `useCreatorPage*`, `useCreatorPulse`, `useCreatorProductTools`, `useCreatorWorkspace`, `useCreatorWrite*`, `useCreatorWriteWorkbench`, `useCreatorSettings` (preferences 部分), 等) + routes 改 import (`creator_core.py` 22 endpoints 中除 memory/export/volume 部分,余下全 content)。
 
-### 3.8 v16.2.7 — Final gate
+### 3.8 v16.2.7 — Final gate (multi-commit, DP-06 严格遵守)
 
-| 任务 | 命令 |
-|---|---|
-| 1. 验证 `from infra.creator_*` 在 `apps/` + `packages/` 中除 shim 文件外为 0 | `grep -rl "from infra\.creator_" --include="*.py" apps/ packages/ \| grep -v "infra/creator_.*\.py"` |
-| 2. 验证 shim 文件仍然 re-export 全部原 symbols | 跑现有 integration tests,确认 0 regression |
-| 3. 删除 36 个 shim 文件 (`infra/creator_*.py`),改 routes composables import | 36 个 shim 删除 + 1 commit |
-| 4. 更新 `.lingwen/architecture.yml`:`creator` module 移到 `packages/lingwen-creator/` | `module_boundaries.creator.path: packages/lingwen-creator/` |
-| 5. 更新 `infra/__init__.py` 注释(如果有 creator 相关) |  |
-| 6. knip 全清(allowlist 仍需要,但确保 typed wrappers 都在引用) |  |
+v16.2.7 不能 1 commit 删 36 个 shim files(违反 DP-06)。拆为 9 commits,每 commit ≤4 files:
+
+| Commit | 范围 | Files | 操作 |
+|---|---|---|---|
+| 1 | 删 memory shim ×3 | 3 files | `rm infra/creator_memory_{annotations,assets,query}.py` + integration tests verify |
+| 2 | 删 settings shim ×3 | 3 files | `rm infra/creator_{settings_docs,settings_history,merge_preferences}.py` |
+| 3 | 删 export shim ×4 (split 1) | 4 files | `rm infra/creator_{export_common,export_docx,export_epub,publish}.py` |
+| 4 | 删 export shim ×1 (split 2) | 1 file | `rm infra/creator_publish_adapters.py` |
+| 5 | 删 volume shim ×4 (split 1) | 4 files | `rm infra/creator_{volume_plan,volume_plan_share,volume_pulse,volume_summary}.py` |
+| 6 | 删 volume shim ×2 (split 2) | 2 files | `rm infra/creator_{volume_templates,template_approvals}.py` |
+| 7 | 删 onboarding shim ×4 (split 1) | 4 files | `rm infra/creator_{onboarding,onboarding_autodetect,onboarding_progress,onboarding_notifications}.py` |
+| 8 | 删 onboarding shim ×4 (split 2) | 4 files | `rm infra/creator_{onboarding_digest_background,onboarding_digest_schedule,onboarding_email,onboarding_webhook}.py` |
+| 9 | 删 onboarding shim ×1 + diff_collab shim | 2 files | `rm infra/creator_{diff_collab,onboarding_webhook}` — webhook 移到 split 2 上方 |
+
+**修正后顺序**:
+
+| Commit | 范围 | Files |
+|---|---|---|
+| 7 | 删 onboarding shim (split 1) | 4 files: onboarding, autodetect, progress, notifications |
+| 8 | 删 onboarding shim (split 2) | 4 files: digest_background, digest_schedule, email, webhook |
+| 9 | 删 onboarding shim + diff_collab | 2 files: diff_collab, (1 more from content) |
+
+| Commit | 范围 | Files |
+|---|---|---|
+| 10 | 删 content shim ×4 (split 1) | 4 files: agent, dashboard, batch_history, mode |
+| 11 | 删 content shim ×4 (split 2) | 4 files: logic_check, models, preferences, ui_profile |
+| 12 | 删 content shim ×2 (split 3) | 2 files: check, revision |
+
+**总 12 commits** in v16.2.7, 每 commit ≤4 files (DP-06 严格)。
+
+**最后 1 commit** (commit 13):
+- 更新 `.lingwen/architecture.yml`:`creator` module 移到 `packages/lingwen-creator/`
+- knip.json allowlist 验证 typed wrappers 都在引用
+- `tests/test_infra_init_no_deferred_re_exports.py` 加 `infra.creator_X` forbidden pattern 检查 (确保不再有 shim 加回)
 
 **v16.2 final gate**(必过):
 - `pytest tests/ packages/lingwen-creator/tests/ -q` ≥3768 tests,0 regression
@@ -314,6 +341,7 @@ apps/dashboard/src/
 - `pnpm exec knip` 0
 - `uv run python tooling/contracts/generate.py` 生成 7 ts files (shared + 6 subdomains)
 - `uv run python tooling/contracts/zod_revalidate.py` 0 drift
+- `grep -rl "from infra\.creator_" --include="*.py" apps/ packages/` = 0 (除可能的 `infra/__init__.py` docstring 引用)
 
 ---
 
