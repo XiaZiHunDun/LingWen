@@ -50,10 +50,25 @@ module_boundaries:
       # Shared (v16.2.0)
       CreatorDocConflictError, content_revision,
       load_creator_check_context, apply_creator_check_defaults, format_check_mode_banner,
-      # Memory (v16.2.1) — 待添加
-      # Settings (v16.2.2) — 待添加
-      # Export (v16.2.3) — 待添加
-      # Volume (v16.2.4) — 待添加
+      # Volume (v16.2.1) ✅ — root,被 4 个其他 sub-domain 依赖
+      VolumeEntry, save_volume_plan, load_volume_plan, compute_volume_deviations,
+      merge_volume_range, split_volume, encode_share_token, decode_share_token,
+      build_volume_pulse, write_volume_summary,
+      save_custom_volume_template, list_volume_templates, delete_custom_volume_template,
+      set_custom_template_version_label, get_template_version_changelog, rollback_template_version,
+      export_custom_volume_templates, import_custom_volume_templates, sync_custom_volume_templates_from_projects,
+      build_volume_template, list_factory_volume_templates, publish_custom_to_factory_library,
+      pull_factory_templates_to_project, delete_factory_volume_template,
+      list_template_approvals, submit_template_version_approval, approve_template_approval,
+      reject_template_approval, transfer_template_approval,
+      batch_approve_template_approvals, batch_reject_template_approvals,
+      notify_overdue_template_approvals, preview_template_approval_snapshot_diff,
+      check_approval_snapshot_drift, load_approval_sla_config, save_approval_sla_config,
+      load_approval_chain_config, save_approval_chain_config, export_template_approval_audit,
+      list_template_approval_history,
+      # Memory (v16.2.2) — 待添加
+      # Settings (v16.2.3) — 待添加
+      # Export (v16.2.4) — 待添加
       # Onboarding (v16.2.5) — 待添加
       # Content (v16.2.6) — 待添加
     ]
@@ -63,9 +78,11 @@ module_boundaries:
     ]
     notes:
       - "v16.2.0: skeleton + shared/ migration (creator_revision + creator_check 迁入 shared/)"
-      - "v16.2.1..6: 6 subdomains (memory/settings/export/volume/onboarding/content) 依次迁入"
+      - "v16.2.1 ✅: Volume subdomain 闭环 (6 files + 58 DTOs + typed wrapper + 5 composables + 36 routes imports)"
+      - "v16.2.2..6: 5 subdomains (memory/settings/export/onboarding/content) 依次迁入"
       - "v16.2.7: shim cleanup, infra/creator_*.py 全部删除"
-      - "⚠️ v16.2.0 review 发现: shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO(违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则)。v16.2.6 (content 迁移时) 需把 CreatorSettings 等抽到 shared/mode.py,让 infra/creator_mode.py 变 shim re-export shared.mode。carryover in v16.2.6 Task 8.1。"
+      - "⚠️ v16.2.0 review 发现: shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO(违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则)。v16.2.6 (content 迁移时) 需把 CreatorSettings 等抽到 shared/mode.py,让 infra.creator_mode.py 变 shim re-export shared.mode。carryover in v16.2.6 Task 8.1。"
+      - "v16.2.1 review: typed wrappers (world.ts/workspace.ts/quality.ts) 仍有 /api/api/ URL 重复 bug (volume.ts 已 fix)。carryover 到 v16.2.7 cleanup。"
   cross_volume:
     path: infra/cross_volume/
     exports: [Ripple, RippleStorage, ReferenceGraph]

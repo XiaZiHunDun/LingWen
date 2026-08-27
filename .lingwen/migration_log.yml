@@ -1,9 +1,67 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.2.0"  # 最新 phase 闭环 (v16.2.0 skeleton + shared/)
+version: "16.2.1"  # 最新 phase 闭环 (v16.2.1 volume subdomain 闭环)
 
 phases:
+  - phase: 126
+    version: 16.2.1
+    date: 2026-08-27
+    scope: Creator 6-subdomain 拆分 Phase 2/8 — Volume subdomain 闭环
+    sub_phase_decision: "REORDERED from memory to volume (v16.2.0 review 发现 memory 依赖 content + settings;volume 才是 root,被 4 个其他 sub-domain 依赖)"
+    files_added:
+      - packages/lingwen-creator/src/lingwen_creator/volume/plan.py (619 lines, verbatim copy)
+      - packages/lingwen-creator/src/lingwen_creator/volume/plan_share.py (111 lines)
+      - packages/lingwen-creator/src/lingwen_creator/volume/pulse.py (105 lines)
+      - packages/lingwen-creator/src/lingwen_creator/volume/summary.py (148 lines)
+      - packages/lingwen-creator/src/lingwen_creator/volume/templates.py (1026 lines)
+      - packages/lingwen-creator/src/lingwen_creator/volume/template_approvals.py (697 lines)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py (Volume section, 58 DTOs)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts (auto-generated, 59 interfaces)
+      - packages/lingwen-shared/tests/test_creator_dto.py (23 tests)
+      - packages/lingwen-creator/tests/test_volume.py (14 tests, extends from 7)
+      - apps/dashboard/src/api/volume.ts (417 lines, 37 wrapper functions)
+      - packages/dashboard-contracts/src/shared/creator.ts (61 lines, re-export shim)
+      - apps/dashboard/tests/unit/api/use-volume-typed-wrapper.spec.ts (18 URL-contract tests)
+      - docs/superpowers/handoffs/2026-08-27-phase-126-v16-2-1-volume-handoff.md
+    files_modified:
+      - tooling/contracts/generate.py (add "creator" to MODULES — v16.1 was missing)
+      - apps/dashboard/knip.json (add apps/dashboard/src/api/volume.ts allowlist)
+      - apps/dashboard/src/composables/useCreatorVolumePlan.js (use typed wrapper)
+      - apps/dashboard/src/composables/useCreatorVolumePlanDiff/useVolumePlanDiff.ts (use typed wrapper)
+      - apps/dashboard/src/composables/useCreatorVolumePlanMergeSplit.js (use typed wrapper)
+      - apps/dashboard/src/composables/useCreatorVolumePlanTemplates.js (use typed wrapper + wire exportTemplateApprovalAudit)
+      - apps/dashboard/src/composables/useCreatorPulse.js (use typed wrapper)
+      - apps/studio_api/routes/creator_volume.py (36 imports migrated: 4 plan + 32 templates/approvals)
+      - .lingwen/architecture.yml (creator module exports + notes updated)
+      - uv.lock (uv sync --all-packages)
+    files_not_touched (out of scope, kept on shim):
+      - apps/studio_api/routes/creator_core.py:431 (uses infra.creator_volume_summary)
+      - infra/creator_merge_preferences.py:10,679 (uses infra.creator_volume_templates)
+      - infra/creator_onboarding_digest_background.py:41 (uses infra.creator_template_approvals)
+    shims_created: "6 (3 in T1 + 3 in T5: creator_volume_plan + plan_share + pulse + summary + templates + template_approvals)"
+    shims_remaining: "28 (was 36, -6 migrated, -2 from v16.2.0 shared)"
+    tests_added: "55 (7 in T1 + 23 in T2 + 0 in T3 + 0 in T4 + 7 in T5d + 18 in T4 URL contract)"
+    migrations_from_v16_2_0_carryover:
+      - "Task 3.1 实现只迁了 3 files 而非 plan 的 6,summary/templates/template_approvals catch-up 到 T5 (5a/b/c)"
+    deviations:
+      - D1: plan memory-first 错,v16.2.0 review 跑 cross-subdomain analysis 发现 volume 是 root,reorder
+      - D2: plan Task 3.1 = 6 files, 实际 = 3,summary/templates/template_approvals catch-up 到 T5
+      - D3: plan T4 + T5 = 1 batch, 实际 = 2 batches (T4 plan 路由 + T5 templates/approvals 路由) + scope expansion
+      - D4: plan typed wrapper "zod runtime validation" — v16.1 T4 reference (world.ts/workspace.ts/quality.ts) 都不 use zod, 跟随参考 pattern
+      - D5: T4 implementer commit "26 paths fixed" — 实际 11 missed template-literal paths (spec reviewer 实证 404 bug, fix commit db0d6c12)
+      - D6: implementer 错误报告 "circular import through shim" — Python import chain actually terminates via sys.modules, 正确理由是 §12.1 rule 3
+    review_findings:
+      - "shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO, 违反 spec §2.4。carryover 到 v16.2.6 Task 8.1 (content migration 时抽 CreatorSettings 到 shared/mode.py)。"
+      - "其他 3 typed wrappers (world.ts/workspace.ts/quality.ts) 仍有 /api/api/ URL 重复 bug。carryover 到 v16.2.7 cleanup (normalize URL convention)。"
+      - "27 underscore-prefixed names 在 templates shim + 13 在 template_approvals shim 显式 re-export (因为 `from X import *` 默认 skip underscore names, 现有 tests import private symbols 需要兼容)。"
+    new_lessons:
+      - "dependency analysis MUST precede Strangler Fig sub-phase ordering (cross-subdomain grep + graph before sequencing)"
+      - "shim private name re-exports required for test compat (any shim must audit existing tests for private symbol imports)"
+      - "typed wrapper 不 use zod runtime validation (zod is T5/CI drift, not wrapper layer; verify against v16.1 T4 reference)"
+      - "/api/ prefix 必须 NOT be in code (core.js BASE_URL 已是 /api, all 4 typed wrappers 错,v16.2.1 修 volume.ts only, 其他 carryover 到 v16.2.7)"
+    status: closed
+
   - phase: 126
     version: 16.2.0
     date: 2026-08-27

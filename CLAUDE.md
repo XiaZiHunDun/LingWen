@@ -1,6 +1,8 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.1 (Phase 124 lingwen-shared contracts 包 闭环)
+> **版本**: v16.2.1 (Phase 126 creator 6-subdomain 拆分 Phase 1/8: volume subdomain 闭环)
+  → v16.2.0 (Phase 124 uv workspaces + turbo 启用 闭环)
+  → v16.1 (Phase 124 lingwen-shared contracts 包 闭环)
   → v16.0 (Phase 124 uv workspaces + turbo 启用 闭环)
   → v15.7.1 (Phase 125 baseline cleanup 闭环)
   → v15.7 (Phase 123 llm_service latent bug fix 闭环)
@@ -14,6 +16,24 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-27)**: Phase 126 v16.2.1 闭环 — creator Volume subdomain 拆分——15 commits (`5bc35f1b` ... `5733505b`):
+- **Plan reorder**: 原 plan memory-first 假设错(v16.2.0 review 跑 cross-subdomain analysis 发现 memory 依赖 content + settings)。Volume 是 root,被 4 个其他 sub-domain 依赖。先迁 volume 让后续 sub-phase 可用新 package path。— `5bc35f1b`
+- **T1**: 3 小 volume files (plan + plan_share + pulse) → `packages/lingwen-creator/src/lingwen_creator/volume/` + shim + tests (7 tests)。intra-package import 规则明确(plan §12.2)。— `0ec3da6c`
+- **T2**: 58 Volume DTOs → `packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py` + 跑 tooling/contracts/generate.py (修 v16.1 missing "creator" entry in MODULES list) → TS 自动生成 (59 interfaces, 9068 bytes) + zod reverse 0 drift + 23 tests。— `69195d23`
+- **T3**: `apps/dashboard/src/api/volume.ts` typed wrapper + `packages/dashboard-contracts/src/shared/creator.ts` re-export shim + knip allowlist (37 wrapper functions, 匹配 v16.1 T4 world.ts/workspace.ts/quality.ts style)。— `95245044`
+- **T4**: 3 composables refactor (useCreatorVolumePlan + Diff + MergeSplit) + 4 routes imports (creator_volume_plan) + 第一次 /api/ prefix fix (26/37 paths)。plan §12.2 intra-package example 更新。— `fbaee62d` + `515c399f` + `f12763cc` + `b63253e5`
+- **T4 bug fix**: spec reviewer 实证 11 个 template-literal paths 仍带 `/api/` prefix (会 404)。修 commit `db0d6c12` + 18 URL-contract tests (regression lock)。
+- **T5a-c**: catch-up missing 3 volume files (summary 144 + templates 1022 + template_approvals 692 lines) + shim (含 27 + 13 个 underscore re-exports for test compat) + intra-package import per §12.2。— `f5844680` + `87876ee2` + `626f60c4`
+- **T5d**: `volume/__init__.py` 加 3 star-imports + `test_volume.py` 扩展 7 → 14 tests。— `ee1cb5a3`
+- **T5e-f**: 2 composables refactor (useCreatorPulse + useCreatorVolumePlanTemplates, exportTemplateApprovalAudit stub 替换为真实现) + 32 routes imports migration (templates + template_approvals endpoints) + `generateVolumeSummary` typed wrapper 新增。— `0870f7c2` + `5733505b`
+- **Handoff**: `docs/superpowers/handoffs/2026-08-27-phase-126-v16-2-1-volume-handoff.md` (15 commits, 11 deviations, 5 lessons, 6 carryover)。
+
+Lessons:dependency analysis MUST precede Strangler Fig sub-phase ordering (cross-subdomain grep + graph before sequencing)/ shim private name re-exports required for test compat (any shim must audit existing tests for private symbol imports)/ typed wrapper 不 use zod runtime validation (zod is T5/CI drift, not wrapper layer; verify against v16.1 T4 reference)/ `/api/` prefix 必须 NOT be in code (core.js BASE_URL 已是 `/api`,all 4 typed wrappers 错,v16.2.1 修 volume.ts only, 其他 3 carryover 到 v16.2.7)/ spec violation carryover (shared/check.py 当前依赖 infra.creator_mode.CreatorSettings,carryover 到 v16.2.3 content migration 抽到 shared/mode.py)。
+
+Tests:14 (packages) + 44 (infra consumer) + 40 (frontend composable + api) = 98 total passing. vue-tsc 0 errors / ruff 0 / eslint 0 / knip 0 (2 advisory hints)。Backend routes imports 全部迁移 (36 routes imports migrated, no `from infra.creator_volume` left in `creator_volume.py`)。Shim count: 6 created (3 T1 + 3 T5), 28 remaining。
+
+Carryover to v16.2.2..7:settings (3 files)/ content (10 files, must fix shared/check.py spec violation)/ onboarding (9 files)/ memory (3 files, Round 2 leaf)/ export (5 files, Round 2 leaf)/ v16.2.7 cleanup (36 shims + /api/ fix for world/workspace/quality wrappers + import-linter forbidden pattern check)/ import-linter enforcement DP-01..06 (v16.4 / v16.5)。
 
 > **更新 (2026-08-27)**: Phase 124 v16.1 闭环——9 commits (T1-T8 + 2 review fixups):
 - **T1** `packages/lingwen-shared/` uv workspace member 新建 (hyphen name + underscore module,5/5 layout tests pass) — `121b7855`
