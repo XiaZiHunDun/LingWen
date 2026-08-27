@@ -286,4 +286,30 @@ jobs:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: bash scripts/run-llm-golden-check.sh ${{ matrix.slug }}
 
+  zod-revalidate:
+    name: zod reverse validation (v16.1)
+    runs-on: ubuntu-latest
+    needs: [hygiene]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install dependencies
+        run: uv sync
+      - name: Dump OpenAPI from local FastAPI server
+        run: |
+          # spin up a minimal backend (test mode), dump OpenAPI, kill server
+          # NOTE: app.py exposes `create_app()` (callable factory), not module-level `app`,
+          # so use uvicorn --factory; v16.1 plan §T6 originally wrote `apps.studio_api.app:app`.
+          uv run uvicorn --factory apps.studio_api.app:create_app --host 127.0.0.1 --port 8765 &
+          SERVER_PID=$!
+          sleep 5
+          uv run python tooling/contracts/dump_openapi.py --out /tmp/openapi.json
+          kill $SERVER_PID || true
+      - name: Run zod reverse validation
+        run: uv run python tooling/contracts/zod_revalidate.py --openapi /tmp/openapi.json
+      - name: Cleanup on failure
+        if: failure()
+        run: cat /tmp/openapi.json | head -100
+
   # Playwright live-backend E2E moved to dashboard-frontend-ci.yml (e2e-live job).
