@@ -197,7 +197,7 @@ infra/agent_system/social_engine/relationship_network.json
 
 # 配置 & context 运行时文件
 config/api_config.yaml
-context/checker_performance.json
+**/context/checker_performance.json
 
 # 日志
 logs/dashboard/
