@@ -676,7 +676,7 @@ def build_merge_preset_graph(project_root: Path | str) -> dict[str, Any]:
 
 
 def _semver_tuple(label: str | None) -> tuple[int, ...] | None:
-    from infra.creator_volume_templates import is_valid_version_label, validate_version_label
+    from lingwen_creator.volume.templates import is_valid_version_label, validate_version_label
 
     if not label or not is_valid_version_label(label):
         return None
