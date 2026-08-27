@@ -124,19 +124,23 @@ touch packages/lingwen-creator/tests/__init__.py
 
 ```bash
 cd /home/ailearn/projects/LingWen
-uv sync
+uv sync --all-packages
 ```
 
-Expected: `Prepared 1 package in X seconds` (or similar — lingwen-creator 新识别)
+Expected: `Built lingwen-creator @ file:///.../packages/lingwen-creator` + `Installed lingwen-creator==16.2.0`
+
+**Note (v16.2.0 review fix)**: plain `uv sync` **不会**装 workspace member (uv sync 只装 root project + direct deps)。新加 workspace member 必须显式 `uv sync --all-packages`。
 
 - [ ] **Step 5: 验证 `lingwen_creator` 可 import**
 
 ```bash
 cd /home/ailearn/projects/LingWen
-/home/ailearn/miniconda3/bin/python -c "import lingwen_creator; print(lingwen_creator.__file__)"
+uv run python -c "import lingwen_creator; print(lingwen_creator.__file__)"
 ```
 
 Expected: 输出 `/home/ailearn/projects/LingWen/packages/lingwen-creator/src/lingwen_creator/__init__.py`
+
+**Note (v16.2.0 review fix)**: `/home/ailearn/miniconda3/bin/python` 是 conda Python 3.13,**不在 uv venv 内**。Miniconda Python 无法 import `lingwen_creator` (uv sync 装在 `.venv/`)。必须用 `uv run python` 让 uv venv 解析 import path。后续所有 v16.2 sub-phase 的 verification commands 都用 `uv run python` 而非 miniconda。
 
 - [ ] **Step 6: Commit**
 
@@ -548,8 +552,8 @@ Lessons applied:
 
 ```bash
 cd /home/ailearn/projects/LingWen
-uv sync 2>&1 | tail -3
-/home/ailearn/miniconda3/bin/python -m pytest tests/ packages/lingwen-creator/tests/ -q 2>&1 | tail -3
+uv sync --all-packages 2>&1 | tail -3
+uv run python -m pytest tests/ packages/lingwen-creator/tests/ -q 2>&1 | tail -3
 ruff check . 2>&1 | tail -3
 cd apps/dashboard && pnpm vitest run --reporter=dot 2>&1 | tail -3 && pnpm exec vue-tsc --noEmit 2>&1 | tail -3 && pnpm exec knip 2>&1 | tail -3 && cd ../..
 uv run python tooling/contracts/zod_revalidate.py 2>&1 | tail -3
