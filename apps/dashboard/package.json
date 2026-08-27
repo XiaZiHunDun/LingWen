@@ -34,6 +34,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@lingwen/dashboard-contracts": "workspace:*",
     "@tiptap/pm": "^2.10.0",
     "@tiptap/starter-kit": "^2.10.0",
     "@tiptap/vue-3": "^2.10.0",

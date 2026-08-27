@@ -17,6 +17,9 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@lingwen/dashboard-contracts':
+        specifier: workspace:*
+        version: link:../../packages/dashboard-contracts
       '@tiptap/pm':
         specifier: ^2.10.0
         version: 2.27.2
