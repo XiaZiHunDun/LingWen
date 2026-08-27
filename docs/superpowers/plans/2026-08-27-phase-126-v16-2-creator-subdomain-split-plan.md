@@ -1604,6 +1604,13 @@ git commit -m "docs(phase-126): v16.2 handoff — creator 6-subdomain 拆分 闭
 # Onboarding/onboarding.py — 可能 import memory.annotations (v16.2.5+ 起):
 # Before: from infra.creator_memory_annotations import upsert_memory_annotation
 # After:  from lingwen_creator.memory.annotations import upsert_memory_annotation
+
+# Volume/pulse.py — INTRA-PACKAGE (v16.2.1 Task 3.1 发现):
+# Before: from infra.creator_volume_plan import ...
+# After:  from lingwen_creator.volume.plan import ...
+# Reason: 规则 3 适用 — target 已迁出到 lingwen_creator.volume.plan,即使是同 package。
+#         保留 `from infra.creator_volume_plan` 会绕道 shim (shim 仍 work, but 不 idiomatic)。
+#         Intra-package import 走新 path 让 package 自包含,避免不必要的间接。
 ```
 
 ---

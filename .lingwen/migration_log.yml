@@ -53,6 +53,7 @@ phases:
       - "D4: plan verification commands `uv sync` + `/home/ailearn/miniconda3/bin/python` 不 work, 改 `uv sync --all-packages` + `uv run python` (uv venv resolves)。"
     review_findings:
       - "shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO, 违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则. carryover 到 v16.2.6 Task 8.1: 把 CreatorSettings 等抽到 shared/mode.py, 让 infra/creator_mode.py 变 shim re-export shared.mode。"
+      - "v16.2.1 Task 3.1 code review: commit message lesson 'circular import through shim' 是技术上不准确的 (import chain 实际上 terminates via sys.modules)。正确理由是 plan §12.1 rule 3 'target 已迁出 → use new path',即使 intra-package。已在 plan §12.2 加 intra-package example 明确规则。"
     tests_added: 13 (5 layout + 4 revision + 4 check)
     status: closed
 
