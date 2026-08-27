@@ -10,6 +10,7 @@
  * - useTemplateSync     (导入/导出/同步/factory pull/publish/delete + apply)
  */
 import { computed, ref, watch } from 'vue';
+import { exportVolumeTemplateApprovalAudit } from '@/api/volume.js';
 import {
   useTemplateList,
   useTemplateEditor,
@@ -158,7 +159,14 @@ export function useCreatorVolumePlanTemplates(deps) {
     rollbackTemplateVersion: editor.rollbackTemplateVersion,
     saveTemplateApprovalSlaConfig: editor.saveTemplateApprovalSlaConfig,
     saveTemplateApprovalChainConfig: editor.saveTemplateApprovalChainConfig,
-    exportTemplateApprovalAudit: () => {},
+    exportTemplateApprovalAudit: async () => {
+      try {
+        await exportVolumeTemplateApprovalAudit();
+        saveMessage.value = '已导出审批审计';
+      } catch (e) {
+        handleSaveError(e);
+      }
+    },
     deleteSelectedVolumeTemplate: editor.deleteSelectedVolumeTemplate,
     renameSelectedVolumeTemplate: editor.renameSelectedVolumeTemplate,
     saveTemplateVersionLabel: editor.saveTemplateVersionLabel,

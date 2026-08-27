@@ -2,7 +2,7 @@
  * useCreatorPulse — 脉络栏卷级脉络、偏离与卷摘要（从 CreatorPage 抽出）
  */
 import { computed, nextTick, ref } from 'vue';
-import { generateCreatorVolumeSummary } from '../api/index.js';
+import { generateVolumeSummary } from '../api/volume.js';
 import { isPulseSubpanelVisible, isPanelDefaultCollapsed, CREATOR_PULSE_SUBPANEL_MATRIX } from '../config/creatorPanelMatrix.js';
 
 /**
@@ -130,9 +130,9 @@ export function useCreatorPulse(deps) {
   async function generateVolumeSummaryForRow(row) {
     if (!row) return;
     try {
-      await generateCreatorVolumeSummary({
-        startChapter: row.start_chapter,
-        endChapter: row.end_chapter,
+      await generateVolumeSummary({
+        start_chapter: row.start_chapter,
+        end_chapter: row.end_chapter,
       });
       saveMessage.value = `已生成「${row.label}」卷摘要`;
       await onAfterVolumeSummarySave();

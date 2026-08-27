@@ -32,6 +32,8 @@ import type {
   CreatorVolumeSaveTemplateResponse,
   CreatorVolumeSplitRequest,
   CreatorVolumeSplitResponse,
+  CreatorVolumeSummaryGenerateRequest,
+  CreatorVolumeSummaryGenerateResponse,
   CreatorVolumeTemplateApproval,
   CreatorVolumeTemplateApprovalAuditExportResponse,
   CreatorVolumeTemplateApprovalBatchRequest,
@@ -416,4 +418,27 @@ export async function deleteFactoryVolumeTemplate(
     { method: 'DELETE' },
   );
   return data as CreatorVolumeFactoryDeleteResponse;
+}
+
+// ---------------------------------------------------------------------------
+// /creator/volume-summary/generate (volume-level markdown summary)
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a markdown volume summary for a chapter range (推进 mode).
+ *
+ * v16.2.1 T5b: Migrated from `api/publish.js#generateCreatorVolumeSummary` to the
+ * typed wrapper. Behavior unchanged — callers pass `startChapter` / `endChapter`,
+ * server writes `docs/volume-summary-ch{NNN}-{NNN}.md` via
+ * `infra.creator_volume_summary.write_volume_summary` (shim →
+ * `lingwen_creator.volume.summary.write_volume_summary`).
+ */
+export async function generateVolumeSummary(
+  req: CreatorVolumeSummaryGenerateRequest,
+): Promise<CreatorVolumeSummaryGenerateResponse> {
+  const data = await request('/creator/volume-summary/generate', {
+    method: 'POST',
+    body: req,
+  });
+  return data as CreatorVolumeSummaryGenerateResponse;
 }
