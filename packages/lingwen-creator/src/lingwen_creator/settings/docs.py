@@ -5,11 +5,10 @@ import difflib
 from pathlib import Path
 from typing import Any
 
-# Note: append_settings_snapshot stays on infra path until T1b migrates settings/history.py
-from infra.creator_settings_history import append_settings_snapshot
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
+from lingwen_creator.settings.history import append_settings_snapshot
 from lingwen_creator.shared.revision import CreatorDocConflictError, content_revision
 from lingwen_creator.volume.plan import global_outline_path
 
