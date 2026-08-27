@@ -191,17 +191,17 @@ def test_legacy_import_paths_still_work() -> None:
     from lingwen_creator.volume.plan_share import encode_share_token
     from lingwen_creator.volume.pulse import build_volume_pulse
     from lingwen_creator.volume.summary import build_volume_summary
-    from lingwen_creator.volume.templates import list_volume_templates
     from lingwen_creator.volume.template_approvals import list_template_approvals
+    from lingwen_creator.volume.templates import list_volume_templates
 
+    from infra.creator_template_approvals import (
+        list_template_approvals as LegacyApprovals,
+    )
     from infra.creator_volume_plan import load_volume_plan as LegacyLoad
     from infra.creator_volume_plan_share import encode_share_token as LegacyEncode
     from infra.creator_volume_pulse import build_volume_pulse as LegacyPulse
     from infra.creator_volume_summary import build_volume_summary as LegacySummary
     from infra.creator_volume_templates import list_volume_templates as LegacyTemplates
-    from infra.creator_template_approvals import (
-        list_template_approvals as LegacyApprovals,
-    )
 
     assert LegacyLoad is load_volume_plan
     assert LegacyEncode is encode_share_token

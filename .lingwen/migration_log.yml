@@ -1,9 +1,73 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.2.1"  # 最新 phase 闭环 (v16.2.1 volume subdomain 闭环)
+version: "16.2.2"  # 最新 phase 闭环 (v16.2.2 settings subdomain 闭环)
 
 phases:
+  - phase: 126
+    version: 16.2.2
+    date: 2026-08-27
+    scope: Creator 6-subdomain 拆分 Phase 3/8 — Settings subdomain 闭环
+    files_added:
+      - packages/lingwen-creator/src/lingwen_creator/settings/docs.py (352 lines, verbatim copy)
+      - packages/lingwen-creator/src/lingwen_creator/settings/history.py (136 lines)
+      - packages/lingwen-creator/src/lingwen_creator/settings/merge_preferences.py (1355 lines, ~50 functions)
+      - packages/lingwen-creator/src/lingwen_creator/settings/__init__.py (3 star-imports)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py (+28 Settings DTOs)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts (87 interfaces, +28 settings)
+      - packages/lingwen-shared/tests/test_creator_dto.py (+7 tests, total 37)
+      - apps/dashboard/src/api/settings.ts (32 typed wrapper functions)
+      - packages/dashboard-contracts/src/shared/settings.ts (re-export shim)
+      - packages/lingwen-creator/tests/test_settings.py (6 tests)
+      - apps/dashboard/tests/unit/api/use-settings-typed-wrapper.spec.ts (34 URL contract tests)
+      - docs/superpowers/handoffs/2026-08-27-phase-126-v16-2-2-settings-handoff.md
+      - docs/superpowers/specs/2026-08-27-phase-126-v16-2-2-settings-design.md
+      - docs/superpowers/plans/2026-08-27-phase-126-v16-2-2-settings-plan.md
+    files_modified:
+      - packages/lingwen-creator/src/lingwen_creator/volume/templates.py:144 (cross-subdomain lazy import cleanup)
+      - packages/lingwen-creator/src/lingwen_creator/volume/template_approvals.py:667 (cross-subdomain lazy import cleanup)
+      - apps/studio_api/routes/creator_settings.py (32 lazy imports migrated: 5 docs T4b + 14 T5a + 13 T5b)
+      - apps/dashboard/src/composables/useCreatorSettings.js (5 functions refactored to typed wrapper)
+      - apps/dashboard/src/composables/useSettingsDocs.ts (~25 functions refactored)
+      - apps/dashboard/src/composables/useSettingsHistory.ts (~2 functions refactored)
+      - apps/dashboard/src/composables/useMergePresets.ts (~20 functions refactored)
+      - apps/dashboard/tests/unit/use-creator-settings.spec.ts (added 2 typed wrapper mocks)
+      - apps/dashboard/tests/unit/use-settings-docs.spec.ts (mocks migrated to @/api/settings)
+      - apps/dashboard/tests/unit/use-settings-history.spec.ts (mocks migrated to @/api/settings)
+      - apps/dashboard/tests/unit/use-merge-presets.spec.ts (mocks migrated to @/api/settings)
+      - packages/dashboard-contracts/src/shared/index.ts (export * from './settings')
+      - apps/dashboard/knip.json (settings.ts allowlist)
+      - .lingwen/architecture.yml (creator module exports + notes)
+      - uv.lock (uv sync --all-packages)
+    shims_created: "3 (infra/creator_settings_docs + creator_settings_history + creator_merge_preferences → 1-line shim with v16.2.1 docstring pattern; merge_preferences has 3 explicit underscore re-exports)"
+    shims_remaining: "36 (no shim deletion in v16.2.2 — v16.2.7 cleanup responsibility)"
+    tests_added: "97 (6 package settings + 7 shared DTO + 34 URL contract + 4 useCreatorSettings + 5 sub + 41 composable mocks = 97; total verified: 116 backend + 87 frontend = 203 pass)"
+    migrations_from_v16_2_1_carryover:
+      - "T1a carve-out (line 11 of settings/docs.py: append_settings_snapshot infra path) — fixed in T1b commit 9494ba87"
+      - "T1c BLOCKED due to 3 underscore test failures (_global_prefs_path, _factory_preset_packages_path, _normalize_factory_preset_id) — fixed in T1c-followup commit e85980c4 + T7 audit confirmed 0 additional needed"
+    deviations:
+      - D1: T1 plan 3 commits (one per file) → actual 5 (T1a/b/c/d + T1c-followup) due to carve-out + BLOCKED → fix sequence
+      - D2: T3 ≤4 files/commit (per DP-06) → 5 files (index.ts re-export required, matches v16.2.1 volume T3 precedent)
+      - D3: T4b 1 commit → 2 commits (composables + tests/routes) due to 8 files > DP-06 limit
+      - D4: T1c carve-out: 1 import to adjust → 2 (infra.creator_settings_docs for MERGE_SOURCES caught by implementer per v16.2.1 §12.2 principle)
+      - D5: T3 wrapper count ~15 (estimated) → 32 (1:1 mapping of @router.X decorators in creator_settings.py)
+      - D6: DTOs ~20 (estimated) → 28 (20 top-level + 8 nested helpers, nested unavoidable for accurate modeling)
+      - D7: Plan §11 gate 14 "Expected: 33 shims" → 36 (no shim deletion in v16.2.2, gate description was misleading — clarify in handoff)
+    review_findings:
+      - "infra.creator_revision import at apps/studio_api/routes/creator_settings.py:94 — out of T5b scope but should migrate to lingwen_creator.shared.revision (v16.2.0 shared already done). Carryover to v16.2.7 cleanup."
+      - "creator_settings_docs.py shim lacks v16.2.1 docstring header (1-line bare star-import). Per T7 audit, add for consistency with creator_settings_history.py + creator_merge_preferences.py in v16.2.7 cleanup."
+      - "4 stale cross-subdomain lazy imports in volume: plan.py:591 → infra.creator_dashboard (not in creator-6-subdomain list); template_approvals.py:133, 423, 435 → infra.creator_onboarding (pending v16.2.3). Tracked for v16.2.7 cleanup or onboarding migration."
+      - "T3 wrapper has ~15 local DTO interfaces (for types still in apps/studio_api/models/creator_merge.py). v16.2.x will replace as more DTOs migrate."
+      - "pre-existing 22 vitest failures in useCreatorVolumePlan*.spec.ts (v16.2.1 composable refactor — tests mock src/api/index.js but composables use @/api/volume typed wrapper). v16.2.7 cleanup will fix."
+      - "shared/check.py still depends on infra.creator_mode.CreatorSettings (spec §2.4 violation) — carryover from v16.2.0 review, will fix in v16.2.6 content migration."
+    new_lessons:
+      - "spec §2 import list completeness check before verbatim copy (T1c caught missing MERGE_SOURCES import)"
+      - "T1a carve-out pattern for cross-task imports (留 infra path + inline comment + commit message follow-up, T1b 修复)"
+      - "T3 DP-06 budget includes index.ts re-export (5 files vs 4, matches v16.2.1 volume T3 precedent)"
+      - "shim underscore re-exports added continuously (T1c follow-up pattern), not pre-emptive in T1"
+      - "DTO count budgets ~30% extra for nested types required for accurate modeling"
+      - "Plan §11 gate descriptions must be explicit about shim creation vs deletion (gate 14 was misleading)"
+    status: closed
   - phase: 126
     version: 16.2.1
     date: 2026-08-27

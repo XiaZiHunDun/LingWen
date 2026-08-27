@@ -66,10 +66,26 @@ module_boundaries:
       check_approval_snapshot_drift, load_approval_sla_config, save_approval_sla_config,
       load_approval_chain_config, save_approval_chain_config, export_template_approval_audit,
       list_template_approval_history,
-      # Memory (v16.2.2) — 待添加
-      # Settings (v16.2.3) — 待添加
+      # Settings (v16.2.2) ✅ — root,被 content + export + memory 依赖
+      creator_settings_docs_payload, save_creator_settings_docs, preview_settings_docs_diff,
+      preview_settings_three_way, preview_settings_merge_strategy, assert_settings_revisions,
+      resolve_merged_settings, text_diff_summary,
+      settings_history_payload, append_settings_snapshot, restore_settings_snapshot,
+      load_merge_preferences, save_merge_preferences, load_global_merge_preferences,
+      save_global_merge_preferences, export_merge_preferences, import_merge_preferences,
+      list_factory_merge_preset_packages, list_merge_preset_packages, get_merge_preset_package,
+      save_merge_preset_package, publish_merge_preset_to_factory,
+      pull_factory_merge_presets_to_project, delete_factory_merge_preset_package,
+      export_merge_preset_packages, import_merge_preset_packages, build_merge_preset_graph,
+      detect_merge_preset_conflicts, suggest_merge_preset_fixes, apply_merge_preset_fix,
+      apply_all_merge_preset_fixes, preview_merge_preset_import_diff,
+      toposort_merge_preset_packages, apply_toposort_merge_preset_order,
+      detect_factory_merge_preset_conflicts, resolve_factory_merge_preset_conflict,
+      list_merge_preset_changelog, preflight_factory_merge_preset_pull,
+      preview_merge_preset_changelog_diff, preflight_merge_preset_import,
+      # Memory (v16.2.5) — 待添加
       # Export (v16.2.4) — 待添加
-      # Onboarding (v16.2.5) — 待添加
+      # Onboarding (v16.2.3) — 待添加
       # Content (v16.2.6) — 待添加
     ]
     allowed_imports: [
@@ -79,7 +95,8 @@ module_boundaries:
     notes:
       - "v16.2.0: skeleton + shared/ migration (creator_revision + creator_check 迁入 shared/)"
       - "v16.2.1 ✅: Volume subdomain 闭环 (6 files + 58 DTOs + typed wrapper + 5 composables + 36 routes imports)"
-      - "v16.2.2..6: 5 subdomains (memory/settings/export/onboarding/content) 依次迁入"
+      - "v16.2.2 ✅: Settings subdomain 闭环 (3 files + 28 DTOs + typed wrapper 32 funcs + 3 composables + 32 routes imports + 2 cross-imports cleanup + 3 underscore re-exports)"
+      - "v16.2.3..6: 4 subdomains (onboarding/content/export/memory) 依次迁入"
       - "v16.2.7: shim cleanup, infra/creator_*.py 全部删除"
       - "⚠️ v16.2.0 review 发现: shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO(违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则)。v16.2.6 (content 迁移时) 需把 CreatorSettings 等抽到 shared/mode.py,让 infra.creator_mode.py 变 shim re-export shared.mode。carryover in v16.2.6 Task 8.1。"
       - "v16.2.1 review: typed wrappers (world.ts/workspace.ts/quality.ts) 仍有 /api/api/ URL 重复 bug (volume.ts 已 fix)。carryover 到 v16.2.7 cleanup。"
