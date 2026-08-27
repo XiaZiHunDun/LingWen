@@ -92,7 +92,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateListResponse,
     )
     def creator_volume_plan_templates() -> CreatorVolumeTemplateListResponse:
-        from infra.creator_volume_templates import list_volume_templates
+        from lingwen_creator.volume.templates import list_volume_templates
 
         project = _require_project(ctx)
         return CreatorVolumeTemplateListResponse(
@@ -109,7 +109,8 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_save_template(
         req: CreatorVolumeSaveTemplateRequest,
     ) -> CreatorVolumeSaveTemplateResponse:
-        from infra.creator_volume_templates import save_custom_volume_template
+        from lingwen_creator.volume.templates import save_custom_volume_template
+
         from infra.paths import ProjectPaths
         from infra.project_config import ProjectConfig
 
@@ -141,7 +142,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_delete_template(
         template_id: str,
     ) -> CreatorVolumeDeleteTemplateResponse:
-        from infra.creator_volume_templates import delete_custom_volume_template
+        from lingwen_creator.volume.templates import delete_custom_volume_template
 
         project = _require_project(ctx)
         try:
@@ -158,7 +159,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         template_id: str,
         req: CreatorVolumeRenameTemplateRequest,
     ) -> CreatorVolumeRenameTemplateResponse:
-        from infra.creator_volume_templates import rename_custom_volume_template
+        from lingwen_creator.volume.templates import rename_custom_volume_template
 
         project = _require_project(ctx)
         try:
@@ -181,7 +182,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         template_id: str,
         req: CreatorVolumeTemplateVersionRequest,
     ) -> CreatorVolumeTemplateVersionResponse:
-        from infra.creator_volume_templates import (
+        from lingwen_creator.volume.templates import (
             set_custom_template_version_label,
             set_factory_template_version_label,
         )
@@ -211,7 +212,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_changelog(
         template_id: str,
     ) -> CreatorVolumeTemplateChangelogResponse:
-        from infra.creator_volume_templates import get_template_version_changelog
+        from lingwen_creator.volume.templates import get_template_version_changelog
 
         project = _require_project(ctx)
         tid = template_id.strip().lower()
@@ -235,7 +236,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         template_id: str,
         req: CreatorVolumeTemplateRollbackRequest,
     ) -> CreatorVolumeTemplateRollbackResponse:
-        from infra.creator_volume_templates import rollback_template_version
+        from lingwen_creator.volume.templates import rollback_template_version
 
         project = _require_project(ctx)
         tid = template_id.strip().lower()
@@ -262,7 +263,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         status: Optional[str] = None,
         template_id: Optional[str] = None,
     ) -> CreatorVolumeTemplateApprovalListResponse:
-        from infra.creator_template_approvals import list_template_approvals
+        from lingwen_creator.volume.template_approvals import list_template_approvals
 
         project = _require_project(ctx)
         rows = list_template_approvals(
@@ -281,7 +282,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_history(
         limit: int = 20,
     ) -> CreatorVolumeTemplateApprovalHistoryResponse:
-        from infra.creator_template_approvals import list_template_approval_history
+        from lingwen_creator.volume.template_approvals import list_template_approval_history
 
         project = _require_project(ctx)
         rows = list_template_approval_history(project.root, limit=max(1, min(limit, 50)))
@@ -294,7 +295,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateApprovalAuditExportResponse,
     )
     def creator_volume_plan_template_approval_audit_export() -> CreatorVolumeTemplateApprovalAuditExportResponse:
-        from infra.creator_template_approvals import export_template_approval_audit
+        from lingwen_creator.volume.template_approvals import export_template_approval_audit
 
         project = _require_project(ctx)
         data = export_template_approval_audit(project.root)
@@ -305,7 +306,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateApprovalSlaConfig,
     )
     def creator_volume_plan_template_approval_sla_get() -> CreatorVolumeTemplateApprovalSlaConfig:
-        from infra.creator_template_approvals import load_approval_sla_config
+        from lingwen_creator.volume.template_approvals import load_approval_sla_config
 
         project = _require_project(ctx)
         return CreatorVolumeTemplateApprovalSlaConfig(**load_approval_sla_config(project.root))
@@ -317,7 +318,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_sla_put(
         req: CreatorVolumeTemplateApprovalSlaConfig,
     ) -> CreatorVolumeTemplateApprovalSlaConfig:
-        from infra.creator_template_approvals import save_approval_sla_config
+        from lingwen_creator.volume.template_approvals import save_approval_sla_config
 
         project = _require_project(ctx)
         saved = save_approval_sla_config(
@@ -334,7 +335,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateApprovalOverdueResponse,
     )
     def creator_volume_plan_template_approval_overdue() -> CreatorVolumeTemplateApprovalOverdueResponse:
-        from infra.creator_template_approvals import list_overdue_template_approvals
+        from lingwen_creator.volume.template_approvals import list_overdue_template_approvals
 
         project = _require_project(ctx)
         rows = list_overdue_template_approvals(project.root)
@@ -348,7 +349,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateApprovalChainConfig,
     )
     def creator_volume_plan_template_approval_chain_get() -> CreatorVolumeTemplateApprovalChainConfig:
-        from infra.creator_template_approvals import load_approval_chain_config
+        from lingwen_creator.volume.template_approvals import load_approval_chain_config
 
         project = _require_project(ctx)
         return CreatorVolumeTemplateApprovalChainConfig(**load_approval_chain_config(project.root))
@@ -360,7 +361,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_chain_put(
         req: CreatorVolumeTemplateApprovalChainConfig,
     ) -> CreatorVolumeTemplateApprovalChainConfig:
-        from infra.creator_template_approvals import save_approval_chain_config
+        from lingwen_creator.volume.template_approvals import save_approval_chain_config
 
         project = _require_project(ctx)
         saved = save_approval_chain_config(
@@ -379,7 +380,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         template_id: str,
         req: CreatorVolumeTemplateApprovalSubmitRequest,
     ) -> CreatorVolumeTemplateApproval:
-        from infra.creator_template_approvals import submit_template_version_approval
+        from lingwen_creator.volume.template_approvals import submit_template_version_approval
 
         project = _require_project(ctx)
         try:
@@ -401,7 +402,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         approval_id: str,
         req: CreatorVolumeTemplateApprovalResolveRequest | None = None,
     ) -> CreatorVolumeTemplateApproval:
-        from infra.creator_template_approvals import approve_template_approval
+        from lingwen_creator.volume.template_approvals import approve_template_approval
 
         project = _require_project(ctx)
         body = req or CreatorVolumeTemplateApprovalResolveRequest()
@@ -425,7 +426,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         approval_id: str,
         req: CreatorVolumeTemplateApprovalRejectRequest,
     ) -> CreatorVolumeTemplateApproval:
-        from infra.creator_template_approvals import reject_template_approval
+        from lingwen_creator.volume.template_approvals import reject_template_approval
 
         project = _require_project(ctx)
         try:
@@ -447,7 +448,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         approval_id: str,
         req: CreatorVolumeTemplateApprovalTransferRequest,
     ) -> CreatorVolumeTemplateApproval:
-        from infra.creator_template_approvals import transfer_template_approval
+        from lingwen_creator.volume.template_approvals import transfer_template_approval
 
         project = _require_project(ctx)
         try:
@@ -468,7 +469,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_snapshot_diff(
         approval_id: str,
     ) -> CreatorVolumeTemplateApprovalSnapshotDiffResponse:
-        from infra.creator_template_approvals import preview_template_approval_snapshot_diff
+        from lingwen_creator.volume.template_approvals import preview_template_approval_snapshot_diff
 
         project = _require_project(ctx)
         try:
@@ -484,7 +485,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_snapshot_drift(
         approval_id: str,
     ) -> CreatorVolumeTemplateApprovalDriftResponse:
-        from infra.creator_template_approvals import check_approval_snapshot_drift
+        from lingwen_creator.volume.template_approvals import check_approval_snapshot_drift
 
         project = _require_project(ctx)
         try:
@@ -500,7 +501,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_batch_approve(
         req: CreatorVolumeTemplateApprovalBatchRequest,
     ) -> CreatorVolumeTemplateApprovalBatchResponse:
-        from infra.creator_template_approvals import batch_approve_template_approvals
+        from lingwen_creator.volume.template_approvals import batch_approve_template_approvals
 
         project = _require_project(ctx)
         result = batch_approve_template_approvals(
@@ -524,7 +525,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_approval_batch_reject(
         req: CreatorVolumeTemplateApprovalBatchRequest,
     ) -> CreatorVolumeTemplateApprovalBatchResponse:
-        from infra.creator_template_approvals import batch_reject_template_approvals
+        from lingwen_creator.volume.template_approvals import batch_reject_template_approvals
 
         project = _require_project(ctx)
         result = batch_reject_template_approvals(
@@ -545,7 +546,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateExportResponse,
     )
     def creator_volume_plan_export_templates() -> CreatorVolumeTemplateExportResponse:
-        from infra.creator_volume_templates import export_custom_volume_templates
+        from lingwen_creator.volume.templates import export_custom_volume_templates
 
         project = _require_project(ctx)
         return CreatorVolumeTemplateExportResponse(
@@ -559,7 +560,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_import_templates(
         req: CreatorVolumeTemplateImportRequest,
     ) -> CreatorVolumeTemplateImportResponse:
-        from infra.creator_volume_templates import import_custom_volume_templates
+        from lingwen_creator.volume.templates import import_custom_volume_templates
 
         project = _require_project(ctx)
         try:
@@ -577,7 +578,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateSyncSourcesResponse,
     )
     def creator_volume_plan_template_sync_sources() -> CreatorVolumeTemplateSyncSourcesResponse:
-        from infra.creator_volume_templates import list_template_sync_sources
+        from lingwen_creator.volume.templates import list_template_sync_sources
 
         project = _require_project(ctx)
         return CreatorVolumeTemplateSyncSourcesResponse(
@@ -594,7 +595,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_template_sync(
         req: CreatorVolumeTemplateSyncRequest,
     ) -> CreatorVolumeTemplateSyncResponse:
-        from infra.creator_volume_templates import sync_custom_volume_templates_from_projects
+        from lingwen_creator.volume.templates import sync_custom_volume_templates_from_projects
 
         project = _require_project(ctx)
         try:
@@ -612,7 +613,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorVolumeTemplateListResponse,
     )
     def creator_volume_plan_factory_templates() -> CreatorVolumeTemplateListResponse:
-        from infra.creator_volume_templates import list_factory_volume_templates
+        from lingwen_creator.volume.templates import list_factory_volume_templates
 
         return CreatorVolumeTemplateListResponse(
             templates=[
@@ -628,7 +629,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_factory_publish(
         req: CreatorVolumeFactoryPublishRequest,
     ) -> CreatorVolumeFactoryPublishResponse:
-        from infra.creator_volume_templates import publish_custom_to_factory_library
+        from lingwen_creator.volume.templates import publish_custom_to_factory_library
 
         project = _require_project(ctx)
         try:
@@ -644,7 +645,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_factory_pull(
         req: CreatorVolumeFactoryPullRequest,
     ) -> CreatorVolumeFactoryPullResponse:
-        from infra.creator_volume_templates import pull_factory_templates_to_project
+        from lingwen_creator.volume.templates import pull_factory_templates_to_project
 
         project = _require_project(ctx)
         try:
@@ -663,7 +664,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_factory_delete(
         template_id: str,
     ) -> CreatorVolumeFactoryDeleteResponse:
-        from infra.creator_volume_templates import delete_factory_volume_template
+        from lingwen_creator.volume.templates import delete_factory_volume_template
 
         try:
             result = delete_factory_volume_template(template_id)
@@ -678,7 +679,8 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_apply_template(
         req: CreatorVolumeApplyTemplateRequest,
     ) -> CreatorVolumeApplyTemplateResponse:
-        from infra.creator_volume_templates import build_volume_template, template_meta
+        from lingwen_creator.volume.templates import build_volume_template, template_meta
+
         from infra.paths import ProjectPaths
         from infra.project_config import ProjectConfig
 
