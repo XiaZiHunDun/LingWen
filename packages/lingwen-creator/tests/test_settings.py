@@ -54,3 +54,35 @@ def test_settings_merge_preferences_module_exists():
         suggest_merge_preset_fixes,
         toposort_merge_preset_packages,
     )
+
+
+def test_settings_package_layout():
+    """All 3 modules must be importable via package."""
+    from lingwen_creator.settings import docs, history, merge_preferences
+    assert docs.__file__.endswith("settings/docs.py")
+    assert history.__file__.endswith("settings/history.py")
+    assert merge_preferences.__file__.endswith("settings/merge_preferences.py")
+
+
+def test_settings_intra_package_imports_terminates():
+    """Intra-package imports must not introduce circular dependency."""
+    # If circular, this would fail or hang at module-load time
+    from lingwen_creator.settings.docs import creator_settings_docs_payload
+    from lingwen_creator.settings.history import append_settings_snapshot
+    from lingwen_creator.settings.merge_preferences import load_merge_preferences
+    # All 3 should be callable (import chain terminates via sys.modules)
+
+
+def test_settings_no_stale_infra_imports():
+    """Verify no module-level stale infra paths in settings package.
+
+    Function-body lazy imports for circular-dep avoidance are intentional
+    (per plan §12.2) and not flagged by this test.
+    """
+    import subprocess
+    result = subprocess.run(
+        ["grep", "-rn", "^from infra.creator_",
+         "packages/lingwen-creator/src/lingwen_creator/settings/"],
+        capture_output=True, text=True,
+    )
+    assert result.stdout == "", f"Found stale infra imports:\n{result.stdout}"
