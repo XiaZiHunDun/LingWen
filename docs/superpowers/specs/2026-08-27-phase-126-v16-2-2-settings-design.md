@@ -13,7 +13,7 @@
 
 ## 0. TL;DR
 
-**v16.2.2 = 3 个 Python files + ≥8 DTOs + typed wrapper + 1 composable refactor + 32 routes imports** 迁到 `packages/lingwen-creator/src/lingwen_creator/settings/`。Settings 是 root 之一 (被 content + export + memory 依赖),先迁让后续 sub-phase 可用新 package path。
+**v16.2.2 = 3 个 Python files + ~20 DTOs + typed wrapper + 1 composable refactor + 32 routes imports** 迁到 `packages/lingwen-creator/src/lingwen_creator/settings/`。Settings 是 root 之一 (被 content + export + memory 依赖),先迁让后续 sub-phase 可用新 package path。
 
 **关键事实** (实测):
 - `infra/creator_settings_docs.py`: 351 lines, 7 functions
@@ -146,7 +146,7 @@ from lingwen_creator.volume.plan import global_outline_path
 仿 v16.1 T4 reference (world.ts/workspace.ts/quality.ts) + v16.2.1 volume.ts style:
 - **No zod runtime validation** (v16.2.1 lesson: zod 是 T5/CI drift,不是 wrapper layer)
 - **No `/api/` prefix in code** (v16.2.1 lesson: BASE_URL 已是 `/api`)
-- ≥7 wrapper functions:
+- ≥7 wrapper functions (实际覆盖 creator_settings.py 全部 30+ endpoints, 估 ~15 functions):
 
 ```typescript
 // apps/dashboard/src/api/settings.ts (example signature)
@@ -362,7 +362,7 @@ ls infra/creator_*.py | wc -l
 
 | Commit | 范围 | Files |
 |---|---|---|
-| 1 | T1: settings/docs + history.py + 2 shims + 1 init | 4-5 files |
+| 1 | T1: settings/docs.py + settings/history.py + 2 shims | 4 files (DP-06 边界, 谨慎) |
 | 2 | T1 cont: merge_preferences.py + 1 shim | 2 files |
 | 3 | T1 cont: __init__.py + tests | 2-3 files |
 | 4 | T2: Settings DTOs + codegen | 2 files |
@@ -432,7 +432,7 @@ v16.2.2 闭环时必须通过的验收清单 (harness 自动化):
 
 1. ✅ `uv run python -m pytest packages/lingwen-creator/tests/test_settings.py -v` ≥3 passed
 2. ✅ `uv run python -m pytest tests/infra/test_creator_settings_*.py -v` 12 files all passing
-3. ✅ `uv run python tooling/contracts/generate.py` 生成 settings.ts (≥18 interfaces 估)
+3. ✅ `uv run python tooling/contracts/generate.py` 生成 settings.ts (~20 interfaces 估, 与 §3 DTO 数量对应)
 4. ✅ `uv run python tooling/contracts/zod_revalidate.py` 0 drift
 5. ✅ `pnpm vitest run` ≥40 passing + new settings tests
 6. ✅ `pnpm exec vue-tsc --noEmit` 0 errors
