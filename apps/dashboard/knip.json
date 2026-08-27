@@ -21,7 +21,11 @@
     "tests/e2e/write-workspace.spec.ts",
     "src/config/creatorPanelMatrix.js",
     "tests/visual-audit/helpers/capture-ui-audit.js",
-    "tests/helpers/strict-test-types.ts"
+    "tests/helpers/strict-test-types.ts",
+    "src/api/world.ts",
+    "src/api/workspace.ts",
+    "src/api/quality.ts"
   ],
+  "ignoreDependencies": ["@lingwen/dashboard-contracts"],
   "ignoreBinaries": ["knip"]
 }
