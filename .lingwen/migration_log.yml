@@ -11,7 +11,7 @@ phases:
     decisions_approved:
       - Q2=A (lingwen-shared 命名)
       - Q3=A (Pydantic v2 source of truth)
-      - Q4=A (pydantic-to-typescript)
+      - Q4=A (pydantic-to-typescript — approved; T3 implemented hand-rolled JSON Schema → TS variant instead, dev dep 保留 for future option)
       - Q5=B (zod CI 独立 job)
     files_added:
       - packages/lingwen-shared/pyproject.toml
@@ -70,7 +70,7 @@ phases:
       - v16.4: LLMServicePort enforcement (import-linter 强制) + pydantic-to-typescript 真实集成(可选)
       - v16.5: StoragePort enforcement + yoyo-migrations + workspace members exist gate (v16.0 lesson)
       - T3 minor: hand-rolled converter `const` keyword 未处理 (single-value Literal → string)
-      - T4 minor: T5 zod + openapi-typescript 装了但没用 (future-use)
+      - T5 minor: zod + openapi-typescript 装了但没用 (future-use)
 
   - phase: 124
     version: 16.0.0
@@ -79,4 +79,4 @@ phases:
     notes:
       - "v16.0 完成: uv workspaces + turbo + import-linter 骨架 + dead dir 清理"
       - "v16.0 不动业务代码;bounded context 拆分(v16.2/v16.3) / port 强制(v16.4/v16.5) 后续"
-      - "Pre-flight check 警告 (v16.1 复用): uv sync 不验证 member 目录存在 → v16.1 加 layout gate"
+      - "Pre-flight check 警告 (carried over from v16.0 handoff §5): uv sync 不验证 member 目录存在 → workspace members exist gate deferred to Phase 126 v16.0.1 candidate (NOT done in v16.1)"

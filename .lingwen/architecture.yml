@@ -99,7 +99,7 @@ active_subsystems:
     status: shipped
     spec: docs/superpowers/specs/2026-08-27-phase-124-target-architecture-design.md (同 v16.0)
     plan: docs/superpowers/plans/2026-08-27-phase-124-v16-1-plan.md
-    handoff: docs/superpowers/handoffs/2026-08-27-phase-124-v16-1-handoff.md
+    implementation_log: docs/superpowers/handoffs/2026-08-27-phase-124-v16-1-handoff.md
     notes:
       - "12 DTO in 3 starter contexts (world/workspace/quality)"
       - "2 Hexagonal ports declared (LLMServicePort, StoragePort) — enforcement v16.4/v16.5"
