@@ -664,7 +664,7 @@ def preview_template_approval_snapshot_diff(
     approval_id: str,
 ) -> dict[str, Any]:
     """Compare approval volumes snapshot against current template state."""
-    from infra.creator_settings_docs import text_diff_summary
+    from lingwen_creator.settings.docs import text_diff_summary
 
     store = _load_store(project_root)
     aid = str(approval_id).strip()

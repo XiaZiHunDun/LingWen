@@ -141,7 +141,7 @@ def _build_visual_diff_lines(before: str, after: str) -> list[dict[str, str]]:
 
 
 def _enrich_changelog_diff(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    from infra.creator_settings_docs import text_diff_summary
+    from lingwen_creator.settings.docs import text_diff_summary
 
     enriched: list[dict[str, Any]] = []
     for index, row in enumerate(entries):
