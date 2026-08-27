@@ -523,3 +523,172 @@ def test_ts_codegen_produces_creator_file(tmp_path) -> None:
         "CreatorVolumeSummaryGenerateResponse",
     ):
         assert name in content, f"{name} missing from generated creator.ts"
+
+
+# ---------------------------------------------------------------------------
+# Settings DTOs (Phase 126 v16.2.2 T2)
+# ---------------------------------------------------------------------------
+
+
+def test_settings_dtos_importable() -> None:
+    """All Settings DTOs from spec §3 must be importable."""
+    from lingwen_shared.contracts.python.creator import (  # noqa: F401
+        CreatorFactoryMergePresetOperationResponse,
+        CreatorMergePreferencesExportResponse,
+        CreatorMergePreferencesImportRequest,
+        # Merge preferences (3)
+        CreatorMergePreferencesResponse,
+        CreatorMergePresetChangelogResponse,
+        CreatorMergePresetConflictFix,
+        CreatorMergePresetConflictsResponse,
+        CreatorMergePresetGraphResponse,
+        CreatorMergePresetImportPreviewResponse,
+        CreatorMergePresetPackageDetail,
+        # Merge presets (10)
+        CreatorMergePresetPackageSummary,
+        CreatorMergePresetPublishRequest,
+        CreatorMergePresetToposortResponse,
+        CreatorSettingsDocsDiffResponse,
+        # Docs (5)
+        CreatorSettingsDocsResponse,
+        CreatorSettingsDocsSaveRequest,
+        # History (2)
+        CreatorSettingsHistoryResponse,
+        CreatorSettingsHistoryRestoreRequest,
+        CreatorSettingsMergeStrategyResponse,
+        CreatorSettingsThreeWayDiffResponse,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Settings behavioral tests (Pydantic v2 serialization, defaults, roundtrip)
+# ---------------------------------------------------------------------------
+
+
+def test_settings_docs_response_roundtrip() -> None:
+    """CreatorSettingsDocsResponse round-trips and exposes slug + revisions."""
+    from lingwen_shared.contracts.python.creator import CreatorSettingsDocsResponse
+
+    resp = CreatorSettingsDocsResponse(
+        slug="lin_zhi",
+        pillars_path="projects/lin_zhi/pillars.md",
+        global_outline_path="projects/lin_zhi/global_outline.md",
+        pillars_text="# 创作支柱\n...",
+        global_outline_text="# 全局大纲\n...",
+        pillars_revision="abc123",
+        global_outline_revision="def456",
+    )
+    assert resp.slug == "lin_zhi"
+    assert resp.pillars_revision == "abc123"
+    assert resp.global_outline_revision == "def456"
+    dumped = resp.model_dump()
+    assert dumped["pillars_text"].startswith("# 创作支柱")
+
+
+def test_settings_history_response_serialization() -> None:
+    """CreatorSettingsHistoryResponse serializes snapshot list correctly."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorSettingsHistoryResponse,
+        CreatorSettingsHistorySnapshot,
+    )
+
+    snap = CreatorSettingsHistorySnapshot(
+        id="snap-1",
+        saved_at="2026-08-27T00:00:00Z",
+        label="save",
+        pillars_excerpt="...",
+        global_outline_excerpt="...",
+        pillars_lines=10,
+        global_outline_lines=20,
+    )
+    resp = CreatorSettingsHistoryResponse(
+        slug="lin_zhi",
+        snapshots=[snap],
+        count=1,
+    )
+    dumped = resp.model_dump()
+    assert dumped["snapshots"][0]["id"] == "snap-1"
+    assert dumped["count"] == 1
+
+
+def test_merge_preset_package_detail_basic_shape() -> None:
+    """CreatorMergePresetPackageDetail carries builtin + version + sources."""
+    from lingwen_shared.contracts.python.creator import CreatorMergePresetPackageDetail
+
+    pkg = CreatorMergePresetPackageDetail(
+        id="all_editor",
+        name="全选编辑器",
+        description="支柱与全局大纲均保留编辑器内容",
+        builtin=True,
+        scope="builtin",
+        version_label="1.0.0",
+        version_semver_valid=True,
+        depends_on=[],
+        pillars_merge_source="editor",
+        global_outline_merge_source="editor",
+    )
+    assert pkg.id == "all_editor"
+    assert pkg.builtin is True
+    assert pkg.depends_on == []
+    assert pkg.version_semver_valid is True
+
+
+def test_merge_preset_graph_response_shape() -> None:
+    """CreatorMergePresetGraphResponse wraps node/edge lists with counts."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorMergePresetGraphEdge,
+        CreatorMergePresetGraphNode,
+        CreatorMergePresetGraphResponse,
+    )
+
+    resp = CreatorMergePresetGraphResponse(
+        node_count=2,
+        edge_count=1,
+        nodes=[
+            CreatorMergePresetGraphNode(id="pkg-a", name="A", scope="builtin"),
+            CreatorMergePresetGraphNode(id="pkg-b", name="B", scope="project"),
+        ],
+        edges=[
+            CreatorMergePresetGraphEdge(from_pkg="pkg-b", to="pkg-a", relation="depends_on"),
+        ],
+    )
+    assert resp.node_count == 2
+    assert resp.edges[0].from_pkg == "pkg-b"
+    assert resp.edges[0].to == "pkg-a"
+
+
+def test_merge_preset_conflicts_response_with_factory_alias() -> None:
+    """Conflicts response handles both project + factory conflict shapes."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorMergePresetConflict,
+        CreatorMergePresetConflictsResponse,
+    )
+
+    resp = CreatorMergePresetConflictsResponse(
+        conflict_count=2,
+        conflicts=[
+            CreatorMergePresetConflict(
+                type="circular_dependency",
+                package_id="pkg-a",
+                path=["pkg-a", "pkg-b", "pkg-a"],
+                message="pkg-a -> pkg-b -> pkg-a",
+            ),
+            CreatorMergePresetConflict(
+                type="missing_dependency",
+                package_id="pkg-c",
+                dependency_id="pkg-missing",
+                message="pkg-c depends on unknown package pkg-missing",
+            ),
+        ],
+    )
+    assert resp.conflict_count == 2
+    assert resp.conflicts[1].dependency_id == "pkg-missing"
+
+
+def test_settings_extra_ignored_for_settings_dtos() -> None:
+    """Settings DTOs must tolerate unknown fields (forward compat)."""
+    from lingwen_shared.contracts.python.creator import CreatorSettingsHistoryRestoreRequest
+
+    req = CreatorSettingsHistoryRestoreRequest(snapshot_id="snap-1", future_field=42)  # type: ignore[call-arg]
+    assert req.snapshot_id == "snap-1"
+    assert not hasattr(req, "future_field")
