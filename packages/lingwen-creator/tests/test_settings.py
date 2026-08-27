@@ -74,15 +74,34 @@ def test_settings_intra_package_imports_terminates():
 
 
 def test_settings_no_stale_infra_imports():
-    """Verify no module-level stale infra paths in settings package.
+    """Verify no stale infra paths in settings package (module level + indented lazy).
 
-    Function-body lazy imports for circular-dep avoidance are intentional
-    (per plan §12.2) and not flagged by this test.
+    Function-body lazy imports are intentional ONLY when they prevent
+    circular dependencies between sibling settings modules. Per plan §12.2,
+    these 4 locations are allowed:
+    - settings/docs.py:76 (load_snapshot_raw from settings.history)
+    - settings/docs.py:222 (load_snapshot_raw from settings.history)
+    - settings/docs.py:317 (creator_settings_docs_payload from settings.history)
+    - settings/history.py:97 (load_snapshot_raw from settings.docs)
+
+    All OTHER infra imports are stale and should fail this test.
     """
     import subprocess
+    # Wider grep to catch indented lazy imports too (the exact pattern H1 missed)
     result = subprocess.run(
-        ["grep", "-rn", "^from infra.creator_",
+        ["grep", "-rn", "from infra.creator_",
          "packages/lingwen-creator/src/lingwen_creator/settings/"],
         capture_output=True, text=True,
     )
-    assert result.stdout == "", f"Found stale infra imports:\n{result.stdout}"
+    lines = [line for line in result.stdout.split("\n") if line.strip()]
+    # Allowlist the 4 known-intentional lazy imports (function-body circular-dep avoidance)
+    allowed = {
+        "packages/lingwen-creator/src/lingwen_creator/settings/docs.py:76:",
+        "packages/lingwen-creator/src/lingwen_creator/settings/docs.py:222:",
+        "packages/lingwen-creator/src/lingwen_creator/settings/docs.py:317:",
+        "packages/lingwen-creator/src/lingwen_creator/settings/history.py:97:",
+    }
+    stale = [line for line in lines if not any(line.startswith(a) for a in allowed)]
+    assert stale == [], (
+        "Found stale infra imports (not in allowlist):\n" + "\n".join(stale)
+    )
