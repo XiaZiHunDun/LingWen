@@ -1,11 +1,13 @@
 /**
  * useCreatorVolumePlan — 卷纲编辑编排（diff / 模板 / 合并拆分 子 composable 组合）
+ *
+ * Phase 126 v16.2.1 Task 3.4 part 1: switch from legacy `../api/index.js`
+ * re-exports to typed wrapper `@/api/volume` (Phase 126 T3). saveVolumePlan
+ * takes a single `CreatorVolumePlanSaveRequest` object instead of positional
+ * (volumes, expectedRevision) args.
  */
 import { ref } from 'vue';
-import {
-  fetchCreatorVolumePlan,
-  saveCreatorVolumePlan,
-} from '../api/index.js';
+import { fetchVolumePlan, saveVolumePlan as saveVolumePlanRequest } from '@/api/volume';
 import { normalizeVolumePlanVolumes } from '../utils/displayProjectName.js';
 import { useCreatorVolumePlanDiff } from './useCreatorVolumePlanDiff.js';
 import { useCreatorVolumePlanTemplates } from './useCreatorVolumePlanTemplates.js';
@@ -133,7 +135,7 @@ export function useCreatorVolumePlan(deps) {
   }
 
   async function loadVolumePlan() {
-    const plan = await fetchCreatorVolumePlan();
+    const plan = await fetchVolumePlan();
     editableVolumes.value = normalizeVolumePlanVolumes(plan.volumes);
     savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
     volumePlanRevision.value = plan.revision || '';
@@ -165,7 +167,10 @@ export function useCreatorVolumePlan(deps) {
     saveMessage.value = '';
     error.value = null;
     try {
-      await saveCreatorVolumePlan(editableVolumes.value, volumePlanRevision.value);
+      await saveVolumePlanRequest({
+        volumes: editableVolumes.value,
+        expected_revision: volumePlanRevision.value,
+      });
       if (uiProfile.value.volume_plan_diff_refresh_on_save) {
         savedVolumeSnapshot.value = JSON.parse(JSON.stringify(editableVolumes.value));
         await diffHub.refreshVolumePlanDiffPreview();

@@ -11,10 +11,11 @@
  */
 import { computed, nextTick, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
+import { diffVolumePlan } from '@/api/volume';
 import {
   fetchCreatorDiffCollabNotes,
   saveCreatorDiffCollabNotes,
-  previewCreatorVolumePlanDiff,
 } from '../../api/index.js';
 import {
   buildMinimalTextPdf,
@@ -136,9 +137,12 @@ export function useVolumePlanDiff(deps: VolumePlanDiffDeps): VolumePlanDiffRetur
       return;
     }
     try {
-      const data = await previewCreatorVolumePlanDiff({
-        volumes: editableVolumes.value,
-      }) as DiffPreview;
+      // editableVolumes is structurally CreatorVolumePlanEntry[] at runtime,
+      // but the consumer-facing Ref<Array<Record<string, unknown>>> is too
+      // loose for the typed-wrapper input contract.
+      const data = await diffVolumePlan({
+        volumes: editableVolumes.value as unknown as CreatorVolumePlanEntry[],
+      }) as unknown as DiffPreview;
       volumePlanDiffPreview.value = data;
     } catch {
       volumePlanDiffPreview.value = null;

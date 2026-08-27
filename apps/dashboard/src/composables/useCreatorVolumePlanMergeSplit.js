@@ -1,11 +1,13 @@
 /**
  * useCreatorVolumePlanMergeSplit — 卷纲合并/拆分逻辑（从 useCreatorVolumePlan 抽出）
+ *
+ * Phase 126 v16.2.1 Task 3.4 part 1: switch from legacy `../api/index.js`
+ * re-exports to typed wrapper `@/api/volume`. The two request types
+ * (`CreatorVolumeMergeRequest` / `CreatorVolumeSplitRequest`) accept the
+ * same fields the composable was already sending.
  */
 import { computed, ref } from 'vue';
-import {
-  mergeCreatorVolumePlan,
-  splitCreatorVolumePlan,
-} from '../api/index.js';
+import { mergeVolumePlan, splitVolumePlan } from '@/api/volume';
 import { formatDisplayLabel, normalizeVolumePlanVolumes } from '../utils/displayProjectName.js';
 
 /**
@@ -65,7 +67,7 @@ export function useCreatorVolumePlanMergeSplit(deps) {
     splitApplying.value = true;
     error.value = null;
     try {
-      const result = await splitCreatorVolumePlan({
+      const result = await splitVolumePlan({
         volumes: editableVolumes.value,
         volume_index: splitVolumeIdx.value,
         split_at_chapter: splitAtChapter.value,
@@ -110,7 +112,7 @@ export function useCreatorVolumePlanMergeSplit(deps) {
     mergeApplying.value = true;
     error.value = null;
     try {
-      const result = await mergeCreatorVolumePlan({
+      const result = await mergeVolumePlan({
         volumes: editableVolumes.value,
         start_index: mergeStartIdx.value,
         end_index: mergeEndIdx.value,
