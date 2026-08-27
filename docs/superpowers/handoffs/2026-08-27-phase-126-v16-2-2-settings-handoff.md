@@ -80,7 +80,7 @@ bd0ecce6 feat(creator): T1a settings/docs.py migration + shim
 | D1 | T1 1 commit per file (3 commits total) | 5 commits (T1a/b/c/d + T1c-followup) | T1a carve-out (settings/history not yet created) + T1c test failures (3 underscore names needed) |
 | D2 | T3 ≤4 files/commit | 5 files (DP-06 violation) | `packages/dashboard-contracts/src/shared/index.ts` re-export required (matches v16.2.1 volume T3 precedent) |
 | D3 | T4b 1 commit | 2 commits (composables + test/routes) | 8 files exceed DP-06; split into 2 logical commits |
-| D4 | T1c carve-out: 1 import adjusted | 2 imports adjusted (`infra.creator_settings_docs` for MERGE_SOURCES + `infra.creator_volume_templates`) | Implementer caught plan §2.3 omission; applied v16.2.1 §12.2 intra-package principle for both |
+| D4 | T1c carve-out: 1 import adjusted | 1 import adjusted (T1c); 1 missed (caught by final code review, fixed in H1 follow-up commit) | T1c correctly updated MERGE_SOURCES (module-level); the `infra.creator_volume_templates` function-body lazy import inside `_semver_tuple` (merge_preferences.py:679) was missed and corrected by final code review (H1, post-handoff). Handoff doc originally stated "2 imports adjusted" — that was inaccurate; only MERGE_SOURCES was adjusted during v16.2.2 main flow. |
 | D5 | T3 wrapper count ~15 | 32 (more than 2x estimate) | Match all 32 `@router.X` decorators in creator_settings.py (1:1 wrapper-to-endpoint mapping) |
 | D6 | DTOs ~20 | 28 (20 + 8 nested) | Nested types unavoidable for accurate Pydantic modeling |
 | D7 | T7 0 re-exports expected | 0 new (T1c + follow-up already comprehensive) | T7 formal audit confirmed — all test imports already covered |
