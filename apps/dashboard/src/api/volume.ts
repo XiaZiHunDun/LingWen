@@ -1,8 +1,13 @@
 /**
- * Volume API client — typed wrapper around /api/creator/volume-plan* endpoints.
+ * Volume API client — typed wrapper around /creator/volume-plan* endpoints.
  *
  * Types come from @lingwen/dashboard-contracts/shared/creator (which mirrors
  * packages/lingwen-shared Pydantic DTOs via codegen).
+ *
+ * Path convention: relative paths (no `/api/` prefix) — `core.js`'s `request()`
+ * prepends `BASE_URL='/api'`. Earlier draft mistakenly included the `/api/`
+ * prefix on every path, which yielded `/api/api/creator/...` at runtime and
+ * 404'd in production. v16.2.1 Task 3.4 part 1 commit 1: normalize.
  *
  * NOTE: This is a NEW typed wrapper added in v16.2.1 (Phase 126 T3).
  * Existing api/creator.js + api/volumePlan.js + api/volumeTemplate.js +
@@ -60,18 +65,18 @@ import type {
 import { request } from './core.js';
 
 // ---------------------------------------------------------------------------
-// /api/creator/volume-plan (CRUD + diff + merge + split + apply-template)
+// /creator/volume-plan (CRUD + diff + merge + split + apply-template)
 // ---------------------------------------------------------------------------
 
 export async function fetchVolumePlan(): Promise<CreatorVolumePlanResponse> {
-  const data = await request('/api/creator/volume-plan');
+  const data = await request('/creator/volume-plan');
   return data as CreatorVolumePlanResponse;
 }
 
 export async function saveVolumePlan(
   req: CreatorVolumePlanSaveRequest,
 ): Promise<CreatorVolumePlanResponse> {
-  const data = await request('/api/creator/volume-plan', {
+  const data = await request('/creator/volume-plan', {
     method: 'PUT',
     body: req,
   });
@@ -81,7 +86,7 @@ export async function saveVolumePlan(
 export async function diffVolumePlan(
   req: CreatorVolumePlanSaveRequest,
 ): Promise<CreatorVolumePlanDiffResponse> {
-  const data = await request('/api/creator/volume-plan/diff', {
+  const data = await request('/creator/volume-plan/diff', {
     method: 'POST',
     body: req,
   });
@@ -91,7 +96,7 @@ export async function diffVolumePlan(
 export async function mergeVolumePlan(
   req: CreatorVolumeMergeRequest,
 ): Promise<CreatorVolumeMergeResponse> {
-  const data = await request('/api/creator/volume-plan/merge', {
+  const data = await request('/creator/volume-plan/merge', {
     method: 'POST',
     body: req,
   });
@@ -101,7 +106,7 @@ export async function mergeVolumePlan(
 export async function splitVolumePlan(
   req: CreatorVolumeSplitRequest,
 ): Promise<CreatorVolumeSplitResponse> {
-  const data = await request('/api/creator/volume-plan/split', {
+  const data = await request('/creator/volume-plan/split', {
     method: 'POST',
     body: req,
   });
@@ -111,7 +116,7 @@ export async function splitVolumePlan(
 export async function applyVolumeTemplate(
   req: CreatorVolumeApplyTemplateRequest,
 ): Promise<CreatorVolumeApplyTemplateResponse> {
-  const data = await request('/api/creator/volume-plan/apply-template', {
+  const data = await request('/creator/volume-plan/apply-template', {
     method: 'POST',
     body: req,
   });
@@ -119,18 +124,18 @@ export async function applyVolumeTemplate(
 }
 
 // ---------------------------------------------------------------------------
-// /api/creator/volume-plan/templates (list / save / delete / rename / version)
+// /creator/volume-plan/templates (list / save / delete / rename / version)
 // ---------------------------------------------------------------------------
 
 export async function listVolumeTemplates(): Promise<CreatorVolumeTemplateListResponse> {
-  const data = await request('/api/creator/volume-plan/templates');
+  const data = await request('/creator/volume-plan/templates');
   return data as CreatorVolumeTemplateListResponse;
 }
 
 export async function saveVolumeTemplate(
   req: CreatorVolumeSaveTemplateRequest,
 ): Promise<CreatorVolumeSaveTemplateResponse> {
-  const data = await request('/api/creator/volume-plan/templates/save', {
+  const data = await request('/creator/volume-plan/templates/save', {
     method: 'POST',
     body: req,
   });
@@ -140,7 +145,7 @@ export async function saveVolumeTemplate(
 export async function deleteVolumeTemplate(
   templateId: string,
 ): Promise<CreatorVolumeDeleteTemplateResponse> {
-  const data = await request(`/api/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
+  const data = await request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
     method: 'DELETE',
   });
   return data as CreatorVolumeDeleteTemplateResponse;
@@ -150,7 +155,7 @@ export async function renameVolumeTemplate(
   templateId: string,
   req: CreatorVolumeRenameTemplateRequest,
 ): Promise<CreatorVolumeRenameTemplateResponse> {
-  const data = await request(`/api/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
+  const data = await request(`/creator/volume-plan/templates/${encodeURIComponent(templateId)}`, {
     method: 'PATCH',
     body: req,
   });
@@ -189,7 +194,7 @@ export async function rollbackVolumeTemplate(
 }
 
 // ---------------------------------------------------------------------------
-// /api/creator/volume-plan/templates/approvals (list / history / audit / SLA / chain)
+// /creator/volume-plan/templates/approvals (list / history / audit / SLA / chain)
 // ---------------------------------------------------------------------------
 
 export async function listVolumeTemplateApprovals(
@@ -202,7 +207,7 @@ export async function listVolumeTemplateApprovals(
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
         .join('&')
     : '';
-  const data = await request(`/api/creator/volume-plan/templates/approvals${query}`);
+  const data = await request(`/creator/volume-plan/templates/approvals${query}`);
   return data as CreatorVolumeTemplateApprovalListResponse;
 }
 
@@ -216,19 +221,19 @@ export async function fetchVolumeTemplateApprovalHistory(
 }
 
 export async function exportVolumeTemplateApprovalAudit(): Promise<CreatorVolumeTemplateApprovalAuditExportResponse> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/audit-export');
+  const data = await request('/creator/volume-plan/templates/approvals/audit-export');
   return data as CreatorVolumeTemplateApprovalAuditExportResponse;
 }
 
 export async function fetchVolumeTemplateApprovalSla(): Promise<CreatorVolumeTemplateApprovalSlaConfig> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/sla-config');
+  const data = await request('/creator/volume-plan/templates/approvals/sla-config');
   return data as CreatorVolumeTemplateApprovalSlaConfig;
 }
 
 export async function saveVolumeTemplateApprovalSla(
   req: CreatorVolumeTemplateApprovalSlaConfig,
 ): Promise<CreatorVolumeTemplateApprovalSlaConfig> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/sla-config', {
+  const data = await request('/creator/volume-plan/templates/approvals/sla-config', {
     method: 'PUT',
     body: req,
   });
@@ -236,19 +241,19 @@ export async function saveVolumeTemplateApprovalSla(
 }
 
 export async function fetchVolumeTemplateApprovalsOverdue(): Promise<CreatorVolumeTemplateApprovalOverdueResponse> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/overdue');
+  const data = await request('/creator/volume-plan/templates/approvals/overdue');
   return data as CreatorVolumeTemplateApprovalOverdueResponse;
 }
 
 export async function fetchVolumeTemplateApprovalChain(): Promise<CreatorVolumeTemplateApprovalChainConfig> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/chain-config');
+  const data = await request('/creator/volume-plan/templates/approvals/chain-config');
   return data as CreatorVolumeTemplateApprovalChainConfig;
 }
 
 export async function saveVolumeTemplateApprovalChain(
   req: CreatorVolumeTemplateApprovalChainConfig,
 ): Promise<CreatorVolumeTemplateApprovalChainConfig> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/chain-config', {
+  const data = await request('/creator/volume-plan/templates/approvals/chain-config', {
     method: 'PUT',
     body: req,
   });
@@ -256,8 +261,8 @@ export async function saveVolumeTemplateApprovalChain(
 }
 
 // ---------------------------------------------------------------------------
-// /api/creator/volume-plan/templates/{id}/version-approval (submit per-template)
-// /api/creator/volume-plan/templates/approvals/{approval_id}/{action}
+// /creator/volume-plan/templates/{id}/version-approval (submit per-template)
+// /creator/volume-plan/templates/approvals/{approval_id}/{action}
 // ---------------------------------------------------------------------------
 
 export async function submitVolumeTemplateApproval(
@@ -325,7 +330,7 @@ export async function fetchVolumeTemplateApprovalSnapshotDrift(
 export async function batchApproveVolumeTemplateApprovals(
   req: CreatorVolumeTemplateApprovalBatchRequest,
 ): Promise<CreatorVolumeTemplateApprovalBatchResponse> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/batch-approve', {
+  const data = await request('/creator/volume-plan/templates/approvals/batch-approve', {
     method: 'POST',
     body: req,
   });
@@ -335,7 +340,7 @@ export async function batchApproveVolumeTemplateApprovals(
 export async function batchRejectVolumeTemplateApprovals(
   req: CreatorVolumeTemplateApprovalBatchRequest,
 ): Promise<CreatorVolumeTemplateApprovalBatchResponse> {
-  const data = await request('/api/creator/volume-plan/templates/approvals/batch-reject', {
+  const data = await request('/creator/volume-plan/templates/approvals/batch-reject', {
     method: 'POST',
     body: req,
   });
@@ -343,18 +348,18 @@ export async function batchRejectVolumeTemplateApprovals(
 }
 
 // ---------------------------------------------------------------------------
-// /api/creator/volume-plan/templates (export / import / sync-sources / sync)
+// /creator/volume-plan/templates (export / import / sync-sources / sync)
 // ---------------------------------------------------------------------------
 
 export async function exportVolumeTemplates(): Promise<CreatorVolumeTemplateExportResponse> {
-  const data = await request('/api/creator/volume-plan/templates/export');
+  const data = await request('/creator/volume-plan/templates/export');
   return data as CreatorVolumeTemplateExportResponse;
 }
 
 export async function importVolumeTemplates(
   req: CreatorVolumeTemplateImportRequest,
 ): Promise<CreatorVolumeTemplateImportResponse> {
-  const data = await request('/api/creator/volume-plan/templates/import', {
+  const data = await request('/creator/volume-plan/templates/import', {
     method: 'POST',
     body: req,
   });
@@ -362,14 +367,14 @@ export async function importVolumeTemplates(
 }
 
 export async function fetchVolumeTemplateSyncSources(): Promise<CreatorVolumeTemplateSyncSourcesResponse> {
-  const data = await request('/api/creator/volume-plan/templates/sync-sources');
+  const data = await request('/creator/volume-plan/templates/sync-sources');
   return data as CreatorVolumeTemplateSyncSourcesResponse;
 }
 
 export async function syncVolumeTemplates(
   req: CreatorVolumeTemplateSyncRequest,
 ): Promise<CreatorVolumeTemplateSyncResponse> {
-  const data = await request('/api/creator/volume-plan/templates/sync', {
+  const data = await request('/creator/volume-plan/templates/sync', {
     method: 'POST',
     body: req,
   });
@@ -377,18 +382,18 @@ export async function syncVolumeTemplates(
 }
 
 // ---------------------------------------------------------------------------
-// /api/creator/volume-plan/templates/factory (list / publish / pull / delete)
+// /creator/volume-plan/templates/factory (list / publish / pull / delete)
 // ---------------------------------------------------------------------------
 
 export async function listFactoryVolumeTemplates(): Promise<CreatorVolumeTemplateListResponse> {
-  const data = await request('/api/creator/volume-plan/templates/factory');
+  const data = await request('/creator/volume-plan/templates/factory');
   return data as CreatorVolumeTemplateListResponse;
 }
 
 export async function publishFactoryVolumeTemplate(
   req: CreatorVolumeFactoryPublishRequest,
 ): Promise<CreatorVolumeFactoryPublishResponse> {
-  const data = await request('/api/creator/volume-plan/templates/factory/publish', {
+  const data = await request('/creator/volume-plan/templates/factory/publish', {
     method: 'POST',
     body: req,
   });
@@ -398,7 +403,7 @@ export async function publishFactoryVolumeTemplate(
 export async function pullFactoryVolumeTemplates(
   req: CreatorVolumeFactoryPullRequest,
 ): Promise<CreatorVolumeFactoryPullResponse> {
-  const data = await request('/api/creator/volume-plan/templates/factory/pull', {
+  const data = await request('/creator/volume-plan/templates/factory/pull', {
     method: 'POST',
     body: req,
   });
