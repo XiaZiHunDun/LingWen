@@ -45,9 +45,27 @@ module_boundaries:
     allowed_imports: [infra/errors]
     forbidden_imports: [infra/creator, infra/ai_service]
   creator:
-    path: infra/creator/
-    exports: [CreatorAgent, CreatorBatchHistory, CreatorMemory]
-    allowed_imports: [infra/quality, infra/ai_service, infra/errors, infra/persistence]
+    path: packages/lingwen-creator/src/lingwen_creator/  # v16.2.0 迁移
+    exports: [
+      # Shared (v16.2.0)
+      CreatorDocConflictError, content_revision,
+      load_creator_check_context, apply_creator_check_defaults, format_check_mode_banner,
+      # Memory (v16.2.1) — 待添加
+      # Settings (v16.2.2) — 待添加
+      # Export (v16.2.3) — 待添加
+      # Volume (v16.2.4) — 待添加
+      # Onboarding (v16.2.5) — 待添加
+      # Content (v16.2.6) — 待添加
+    ]
+    allowed_imports: [
+      infra/persistence, infra/project_config, infra/errors,
+      lingwen_shared,
+    ]
+    notes:
+      - "v16.2.0: skeleton + shared/ migration (creator_revision + creator_check 迁入 shared/)"
+      - "v16.2.1..6: 6 subdomains (memory/settings/export/volume/onboarding/content) 依次迁入"
+      - "v16.2.7: shim cleanup, infra/creator_*.py 全部删除"
+      - "⚠️ v16.2.0 review 发现: shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO(违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则)。v16.2.6 (content 迁移时) 需把 CreatorSettings 等抽到 shared/mode.py,让 infra/creator_mode.py 变 shim re-export shared.mode。carryover in v16.2.6 Task 8.1。"
   cross_volume:
     path: infra/cross_volume/
     exports: [Ripple, RippleStorage, ReferenceGraph]

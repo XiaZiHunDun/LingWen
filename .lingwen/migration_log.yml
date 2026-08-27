@@ -1,9 +1,61 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.1.0"  # 最新 phase 闭环
+version: "16.2.0"  # 最新 phase 闭环 (v16.2.0 skeleton + shared/)
 
 phases:
+  - phase: 126
+    version: 16.2.0
+    date: 2026-08-27
+    scope: Creator 6-subdomain 拆分 Phase 1/8 (skeleton + shared/ migration)
+    decisions_approved:
+      - Q1=A (6 subdomains: Memory/Onboarding/Volume/Content/Export/Settings)
+      - Q2=A (Strangler Fig migration, v16.2.1..6 逐 subdomain)
+      - Q3=A (顺序 bottom-up by deps: memory → settings → export → volume → onboarding → content)
+      - Q4=A (Shim re-export pattern, 0 consumer 改动)
+      - Q5=B (Routes 留在 apps/studio_api/, thin shim, 不搬 lingwen-creator/api/)
+      - Q6=A (Shared infra → lingwen_creator/shared/)
+      - Q7=A (Tests inside package + layout test at root per v16.1 pattern)
+      - Q8=B (v16.2.1..6 全量加 typed wrappers + composable refactor, 不全推到 v16.3+)
+    files_added:
+      - packages/lingwen-creator/pyproject.toml
+      - packages/lingwen-creator/src/lingwen_creator/__init__.py
+      - packages/lingwen-creator/src/lingwen_creator/shared/__init__.py
+      - packages/lingwen-creator/src/lingwen_creator/shared/revision.py
+      - packages/lingwen-creator/src/lingwen_creator/shared/check.py
+      - packages/lingwen-creator/contracts/__init__.py
+      - packages/lingwen-creator/contracts/python/__init__.py
+      - packages/lingwen-creator/tests/__init__.py
+      - packages/lingwen-creator/tests/test_shared_revision.py
+      - packages/lingwen-creator/tests/test_shared_check.py
+      - tests/test_lingwen_creator_layout.py
+    files_modified:
+      - pyproject.toml (workspace members 加 packages/lingwen-creator + lingwen-creator source)
+      - uv.lock (uv sync --all-packages 触发, v16.2.0 T1 review fix 后 requires-python align 重 sync)
+      - infra/creator_revision.py (→ shim re-export lingwen_creator.shared.revision)
+      - infra/creator_check.py (→ shim re-export lingwen_creator.shared.check)
+      - .lingwen/architecture.yml (creator module path: infra/creator/ → packages/lingwen-creator/src/lingwen_creator/, exports + allowed_imports 更新)
+    files_not_touched:
+      - 34 个 infra/creator_*.py (v16.2.1..7 才迁/删)
+    shims_remaining: 34 (out of 36 original infra/creator_*.py; v16.2.0 T2 已迁 2 个)
+    shims_deleted: 0 (cleanup 在 v16.2.7)
+    consumers_using_shims:
+      - apps/studio_api/routes/creator_volume.py:703 (from infra.creator_revision import CreatorDocConflictError)
+      - apps/studio_api/routes/creator_settings.py:92 (同上)
+      - packages/lingwen-cli/src/lingwen_cli/commands/check.py:7 (from infra.creator_revision)
+      - infra/creator_volume_plan.py:11 (from infra.creator_revision)
+      - infra/creator_settings_docs.py:8 (from infra.creator_revision)
+      - infra/creator_logic_check.py:9 (from infra.creator_logic_check)  # 注: 此 file 属于 v16.2.6 迁,未迁移前是 direct import
+    deviations:
+      - "D1: plan 写 118 consumer files, 实际 shared/ 范围 consumer = 6 files (3 import creator_revision + 3 import creator_check)。Total consumer count across all 36 infra/creator_*.py 后续 sub-phase 才精确统计。"
+      - "D2: layout test 位置 plan 写 `packages/lingwen-creator/tests/`, 实际放 `tests/test_lingwen_creator_layout.py` (root), per Phase 125 module-namespace conflict lesson + v16.1 `test_lingwen_shared_layout.py` pattern。"
+      - "D3: `requires-python = '>=3.12,<3.14'` (plan spec) 改为 `'>=3.12'` (code reviewer concern, 与其他 12 个 workspace members 一致)。"
+      - "D4: plan verification commands `uv sync` + `/home/ailearn/miniconda3/bin/python` 不 work, 改 `uv sync --all-packages` + `uv run python` (uv venv resolves)。"
+    review_findings:
+      - "shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO, 违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则. carryover 到 v16.2.6 Task 8.1: 把 CreatorSettings 等抽到 shared/mode.py, 让 infra/creator_mode.py 变 shim re-export shared.mode。"
+    tests_added: 13 (5 layout + 4 revision + 4 check)
+    status: closed
+
   - phase: 124
     version: 16.1.0
     date: 2026-08-27
