@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.0 (Phase 124 uv workspaces + turbo 启用 闭环)
+> **版本**: v16.1 (Phase 124 lingwen-shared contracts 包 闭环)
+  → v16.0 (Phase 124 uv workspaces + turbo 启用 闭环)
   → v15.7.1 (Phase 125 baseline cleanup 闭环)
   → v15.7 (Phase 123 llm_service latent bug fix 闭环)
   → v15.6 (Phase 121 minimax parse_rate 修复 闭环)
@@ -13,6 +14,17 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-27)**: Phase 124 v16.1 闭环——7 commits (T1-T8):
+- **T1** `packages/lingwen-shared/` uv workspace member 新建 (hyphen name + underscore module,5/5 layout tests pass) — `121b7855`
+- **T2** 12 DTO 迁入 (6 world / 4 workspace / 3 quality) + 2 Hexagonal ports 声明 (`LLMServicePort` / `StoragePort`,enforcement 在 v16.4 / v16.5)。7/7 contract tests pass。`ChapterDTO.id` 改为 `int | None = None` (TDD-driven,匹配 `ProposalDTO.id` 模式)— `b4fb3fe3`
+- **T3** `tooling/contracts/generate.py` Pydantic → TS codegen (hand-rolled JSON Schema → TS converter)。5/5 codegen tests pass。Known caveat: 单值 `Literal["agent"]` 在 TS 中变成 `string` 而非 `"agent"`(`const` keyword 未处理)— `209ee5bb`
+- **T4** `apps/dashboard/src/api/{world,workspace,quality}.ts` typed wrapper 新增(不替换 `composables/world/useWorldDb.js`,creator 拆分才动)。vue-tsc 0 / ESLint 0 / vitest 1731。knip allowlist 加 3 wrapper + 1 dep(`@lingwen/dashboard-contracts` 占位 rename → `@lingwen`)— `64f80f6c` + knip fix `b8b6bd5a`
+- **T5** `tooling/contracts/zod_revalidate.py` + `dump_openapi.py`(Q5=B 独立 CI job)。4/4 zod tests pass(含 drift detection)。同时装 `zod` + `openapi-typescript` Node dev deps(future-use)— `7be49d38`
+- **T6** `.github/workflows/test.yml` 加 `zod-revalidate` job。`needs: [hygiene]`(plan 说 `setup` 但实际 workflow 用 `hygiene`)+ `uvicorn --factory create_app` 修正(`app.py` 只有 factory,无 module-level `app`)。code review 后续修:`enable-cache: true` uv cache + readiness poll 替代 `sleep 5`— `8e542d6f` + fix `66f72f45`
+- **T7** 全套 CI smoke PASS — 10/10 验证门全过。Net improvement vs v15.7.1 baseline:+4 passing / -4 failing(in pre-existing pytest debt)。新测试 +21 (T1+T2+T3+T5)全部通过。
+- **T8** 文档同步(本节)。
+Lessons:hyphen name + underscore module 严格分离 (v16.0 教训沿用)/ `ChapterDTO.id optional` TDD-driven 修正 vs 计划 spec 冲突 / hand-rolled JSON Schema → TS converter 比 `pydantic-to-typescript` 库更稳(version drift avoidance)/ `knip` 在加 typed wrapper 时要把 unused file/dep 加 allowlist / CI `setup-uv` cache 必加 / `sleep N` → readiness poll 在 cold CI 上更稳 / pre-existing pytest debt(agent_system/dashboard)与 v16.1 无关,不阻塞闭环。
 
 > **更新 (2026-08-26)**：Phase 119 v15.4 闭环——14 commits (`8fcae6eb` ... `ae374afb` + `fbc99da2` ruff 清理)：
   - **Task A** LoreEditor/TimelineEditor 接入 Detail 页面 — `LoreDetail.vue` + `TimelineEventDetail.vue` 加 `editing` ref + toggle button + inline `<XxxEditor v-if="editing" />`。按钮文案 "新增条目" / "新增事件" (semantic 清晰,Editor 仍 create-only)。4 component tests per detail page (stub Editor via `vi.mock('@/.../XxxEditor.vue')`)。

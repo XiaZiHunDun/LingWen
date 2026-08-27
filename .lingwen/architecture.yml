@@ -94,6 +94,18 @@ active_subsystems:
     notes:
       - "v16.0 完成: uv workspaces + turbo + import-linter 骨架 + dead dir 清理"
       - "v16.0 不动业务代码;bounded context 拆分(v16.2/v16.3) / port 强制(v16.4/v16.5) 后续"
+  v16_1_lingwen_shared:
+    purpose: "Phase 124 v16.1 — lingwen-shared 包 (Pydantic contracts + TS codegen + zod reverse validation)"
+    status: shipped
+    spec: docs/superpowers/specs/2026-08-27-phase-124-target-architecture-design.md (同 v16.0)
+    plan: docs/superpowers/plans/2026-08-27-phase-124-v16-1-plan.md
+    handoff: docs/superpowers/handoffs/2026-08-27-phase-124-v16-1-handoff.md
+    notes:
+      - "12 DTO in 3 starter contexts (world/workspace/quality)"
+      - "2 Hexagonal ports declared (LLMServicePort, StoragePort) — enforcement v16.4/v16.5"
+      - "TS codegen via tooling/contracts/generate.py (hand-rolled, avoids pydantic-to-typescript version drift)"
+      - "zod reverse validation CI in independent job (Q5=B)"
+      - "Known carryover: composables still use raw fetch; switch to typed wrappers deferred to v16.2"
 
 # Phase 124 v16.0 设计原则(DP-01..DP-06)
 # enforcement 在 v16.0..v16.5 渐进加,v16.0 阶段仅声明。
@@ -113,7 +125,7 @@ design_principles:
   - id: DP-04
     rule: "跨 context 调用只通过 contract DTO"
     scope: "cross-context"
-    enforcement_phase: v16.1
+    enforcement_phase: v16.1 ✓ done (lingwen-shared 包上线, zod CI 在线)
   - id: DP-05
     rule: "新增 feature 必须先建或选 context"
     scope: "all"

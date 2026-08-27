@@ -1,0 +1,82 @@
+# LingWen 架构迁移日志
+# 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
+
+version: "16.1.0"  # 最新 phase 闭环
+
+phases:
+  - phase: 124
+    version: 16.1.0
+    date: 2026-08-27
+    scope: lingwen-shared 包抽出 + Pydantic→TS codegen + zod 反向校验 CI
+    decisions_approved:
+      - Q2=A (lingwen-shared 命名)
+      - Q3=A (Pydantic v2 source of truth)
+      - Q4=A (pydantic-to-typescript)
+      - Q5=B (zod CI 独立 job)
+    files_added:
+      - packages/lingwen-shared/pyproject.toml
+      - packages/lingwen-shared/README.md
+      - packages/lingwen-shared/src/lingwen_shared/__init__.py
+      - packages/lingwen-shared/src/lingwen_shared/contracts/__init__.py
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/__init__.py
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/world.py
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/workspace.py
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/quality.py
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/world.ts (auto-generated)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/workspace.ts (auto-generated)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/quality.ts (auto-generated)
+      - packages/lingwen-shared/src/lingwen_shared/ports/llm_service.py
+      - packages/lingwen-shared/src/lingwen_shared/ports/storage.py
+      - packages/lingwen-shared/tests/test_contracts.py
+      - packages/lingwen-shared/tests/__init__.py
+      - tests/test_lingwen_shared_layout.py
+      - tests/test_contracts_codegen.py
+      - tests/test_contracts_zod_revalidate.py
+      - tests/fixtures/openapi_world_subset.json
+      - tests/fixtures/openapi_drift.json
+      - tooling/contracts/generate.py
+      - tooling/contracts/zod_revalidate.py
+      - tooling/contracts/dump_openapi.py
+      - tooling/contracts/README.md
+      - apps/dashboard/src/api/world.ts
+      - apps/dashboard/src/api/workspace.ts
+      - apps/dashboard/src/api/quality.ts
+      - packages/dashboard-contracts/src/shared/world.ts
+      - packages/dashboard-contracts/src/shared/workspace.ts
+      - packages/dashboard-contracts/src/shared/quality.ts
+      - packages/dashboard-contracts/src/shared/index.ts
+    files_modified:
+      - pyproject.toml (workspace members 加 packages/lingwen-shared)
+      - uv.lock (uv sync 触发)
+      - .github/workflows/test.yml (新增 zod-revalidate job + uv cache + readiness poll fix)
+      - apps/dashboard/knip.json (T4 typed wrappers allowlist)
+      - apps/dashboard/package.json (@lingwen/dashboard-contracts workspace:* dep)
+      - packages/dashboard-contracts/package.json (@moling → @lingwen rename + exports field)
+      - packages/dashboard-contracts/tsconfig.json (rootDir relaxation for cross-package imports)
+      - pnpm-lock.yaml (zod + openapi-typescript dev deps + workspace symlink)
+      - package.json (zod + openapi-typescript dev deps)
+    files_not_touched:
+      - infra/world_db/agent_schemas.py (CharacterUpdatePayload 保留,shared 重导出)
+      - apps/dashboard/src/composables/world/useWorldDb.js (v16.2 才切)
+      - apps/dashboard/src/components/**
+      - apps/dashboard/src/stores/**
+      - apps/dashboard/src/pages/**
+      - apps/dashboard/src/api/*.js (除新增 .ts)
+      - apps/studio_api/routes/** 文件结构
+      - packages/lingwen-{core,storage,llm,memory,prompt,pipeline,quality,cli}/src/**
+    known_carryover:
+      - v16.2: creator 6 subdomain 拆分 (35 composables 用 typed wrapper 重写)
+      - v16.3: world + workspace 拆分 + application service 层提取
+      - v16.4: LLMServicePort enforcement (import-linter 强制) + pydantic-to-typescript 真实集成(可选)
+      - v16.5: StoragePort enforcement + yoyo-migrations + workspace members exist gate (v16.0 lesson)
+      - T3 minor: hand-rolled converter `const` keyword 未处理 (single-value Literal → string)
+      - T4 minor: T5 zod + openapi-typescript 装了但没用 (future-use)
+
+  - phase: 124
+    version: 16.0.0
+    date: 2026-08-27
+    scope: uv workspaces + turbo + import-linter 骨架 + dead dir 清理
+    notes:
+      - "v16.0 完成: uv workspaces + turbo + import-linter 骨架 + dead dir 清理"
+      - "v16.0 不动业务代码;bounded context 拆分(v16.2/v16.3) / port 强制(v16.4/v16.5) 后续"
+      - "Pre-flight check 警告 (v16.1 复用): uv sync 不验证 member 目录存在 → v16.1 加 layout gate"
