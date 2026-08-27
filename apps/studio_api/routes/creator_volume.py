@@ -82,7 +82,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_get() -> CreatorVolumePlanResponse:
-        from infra.creator_volume_plan import volume_plan_payload
+        from lingwen_creator.volume.plan import volume_plan_payload
 
         project = _require_project(ctx)
         return CreatorVolumePlanResponse(**volume_plan_payload(project.root))
@@ -700,8 +700,9 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.put("/api/creator/volume-plan", response_model=CreatorVolumePlanResponse)
     def creator_volume_plan_put(req: CreatorVolumePlanSaveRequest) -> CreatorVolumePlanResponse:
+        from lingwen_creator.volume.plan import save_volume_plan, volume_plan_payload
+
         from infra.creator_revision import CreatorDocConflictError
-        from infra.creator_volume_plan import save_volume_plan, volume_plan_payload
 
         project = _require_project(ctx)
         try:
@@ -716,7 +717,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/creator/volume-plan/merge", response_model=CreatorVolumeMergeResponse)
     def creator_volume_plan_merge(req: CreatorVolumeMergeRequest) -> CreatorVolumeMergeResponse:
-        from infra.creator_volume_plan import merge_volume_range
+        from lingwen_creator.volume.plan import merge_volume_range
 
         try:
             merged_volumes, merged = merge_volume_range(
@@ -739,7 +740,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/creator/volume-plan/split", response_model=CreatorVolumeSplitResponse)
     def creator_volume_plan_split(req: CreatorVolumeSplitRequest) -> CreatorVolumeSplitResponse:
-        from infra.creator_volume_plan import split_volume
+        from lingwen_creator.volume.plan import split_volume
 
         try:
             split_volumes, first, second = split_volume(
