@@ -1,10 +1,15 @@
 // tests/unit/use-creator-settings.spec.ts — useCreatorSettings 编排
+//
+// Phase 126 v16.2.2 T4a: main-file composable refactor — 5 docs/history
+// functions now use typed wrapper (`@/api/settings`). Submodule mocks stay
+// on the legacy path (T4b carryover).
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { computed, ref } from 'vue';
 import { flushPromises } from '@vue/test-utils';
 
 const settingsMocks = vi.hoisted(() => ({
+  // Legacy mocks (still used by submodules in T4a)
   fetchCreatorSettingsDocs: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
@@ -30,6 +35,12 @@ const settingsMocks = vi.hoisted(() => ({
   importCreatorMergePresetPackages: vi.fn(),
   publishCreatorMergePresetToFactory: vi.fn(),
   pullCreatorFactoryMergePresetPackages: vi.fn(),
+  // T4a typed wrapper mocks (used by main file's direct calls)
+  fetchSettingsHistory: vi.fn(),
+  restoreSettingsSnapshot: vi.fn(),
+  saveSettingsDocs: vi.fn(),
+  previewSettingsDocsDiff: vi.fn(),
+  previewSettingsThreeWay: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
@@ -58,6 +69,17 @@ vi.mock('../../src/api/index.js', () => ({
   importCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.importCreatorMergePresetPackages(...args),
   publishCreatorMergePresetToFactory: (...args: unknown[]) => settingsMocks.publishCreatorMergePresetToFactory(...args),
   pullCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.pullCreatorFactoryMergePresetPackages(...args),
+}));
+
+// T4a: typed wrapper mock — only the 5 functions now used directly by the
+// main file. The submodule (`useSettingsDocs.ts`, `useSettingsHistory.ts`)
+// continues importing from `'../../api/index.js'` until T4b.
+vi.mock('../../src/api/settings.js', () => ({
+  fetchSettingsHistory: (...args: unknown[]) => settingsMocks.fetchSettingsHistory(...args),
+  restoreSettingsSnapshot: (...args: unknown[]) => settingsMocks.restoreSettingsSnapshot(...args),
+  saveSettingsDocs: (...args: unknown[]) => settingsMocks.saveSettingsDocs(...args),
+  previewSettingsDocsDiff: (...args: unknown[]) => settingsMocks.previewSettingsDocsDiff(...args),
+  previewSettingsThreeWay: (...args: unknown[]) => settingsMocks.previewSettingsThreeWay(...args),
 }));
 
 describe('useCreatorSettings', () => {
@@ -90,6 +112,24 @@ describe('useCreatorSettings', () => {
       global_outline: { vs_disk: { snippet: [] } },
     });
     settingsMocks.saveCreatorSettingsDocs.mockResolvedValue({});
+    // T4a typed wrapper mock defaults (mirror legacy responses)
+    settingsMocks.fetchSettingsHistory.mockResolvedValue({
+      snapshots: [{ id: 'snap-1', recorded_at: '2026-06-01T00:00:00Z' }],
+    });
+    settingsMocks.previewSettingsThreeWay.mockResolvedValue({
+      has_changes: true,
+      has_history: true,
+      pillars: { snippet: ['p'] },
+      global_outline: { snippet: ['o'] },
+      disk_vs_history: { pillars: { changed: true } },
+      editor_vs_history: { global_outline: { changed: false } },
+    });
+    settingsMocks.previewSettingsDocsDiff.mockResolvedValue({
+      has_changes: true,
+      pillars: { snippet: ['p'] },
+      global_outline: { snippet: ['o'] },
+    });
+    settingsMocks.saveSettingsDocs.mockResolvedValue({});
     settingsMocks.fetchCreatorMergePreferences.mockResolvedValue({
       pillars_merge_source: 'editor',
       global_outline_merge_source: 'history',
@@ -130,6 +170,13 @@ describe('useCreatorSettings', () => {
     settingsMocks.pullCreatorFactoryMergePresetPackages.mockResolvedValue({ imported: 1, skipped: 0 });
     settingsMocks.fetchCreatorMergePresetChangelogDiff.mockResolvedValue({ change_count: 2, changes: [] });
     settingsMocks.restoreCreatorSettingsSnapshot.mockResolvedValue({
+      pillars_text: '历史支柱',
+      global_outline_text: '历史大纲',
+      pillars_revision: 'hp',
+      global_outline_revision: 'ho',
+    });
+    // T4a typed wrapper mock mirrors legacy restore response
+    settingsMocks.restoreSettingsSnapshot.mockResolvedValue({
       pillars_text: '历史支柱',
       global_outline_text: '历史大纲',
       pillars_revision: 'hp',
@@ -194,7 +241,7 @@ describe('useCreatorSettings', () => {
     await hub.loadSettingsHistory();
     panel.pillarsText.value = '支柱B';
     await panel.requestSaveSettings();
-    expect(settingsMocks.previewCreatorSettingsThreeWay).toHaveBeenCalled();
+    expect(settingsMocks.previewSettingsThreeWay).toHaveBeenCalled();
     expect(panel.showSettingsDiff.value).toBe(true);
     expect(panel.settingsDiffSnippet.value.length).toBeGreaterThan(0);
     expect(panel.showMergeStrategy.value).toBe(true);
@@ -207,7 +254,7 @@ describe('useCreatorSettings', () => {
     panel.pillarsText.value = '支柱B';
     await panel.requestSaveSettings();
     await panel.confirmSaveSettings();
-    expect(settingsMocks.saveCreatorSettingsDocs).toHaveBeenCalled();
+    expect(settingsMocks.saveSettingsDocs).toHaveBeenCalled();
     expect(onAfterSettingsSave).toHaveBeenCalled();
     expect(panel.showSettingsDiff.value).toBe(false);
   });
@@ -303,13 +350,13 @@ describe('useCreatorSettings', () => {
   });
 
   test('requestSaveSettings uses two-way preview without history', async () => {
-    settingsMocks.fetchCreatorSettingsHistory.mockResolvedValueOnce({ snapshots: [] });
+    settingsMocks.fetchSettingsHistory.mockResolvedValueOnce({ snapshots: [] });
     const { hub, panel } = await mountSettings();
     await hub.loadSettingsDocs();
     await hub.loadSettingsHistory();
     panel.pillarsText.value = '新支柱';
     await panel.requestSaveSettings();
-    expect(settingsMocks.previewCreatorSettingsDocs).toHaveBeenCalled();
+    expect(settingsMocks.previewSettingsDocsDiff).toHaveBeenCalled();
   });
 
   test('importMergePresetPackagesFromJson stops when preflight blocked', async () => {

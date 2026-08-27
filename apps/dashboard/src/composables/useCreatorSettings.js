@@ -15,18 +15,22 @@
  * 3. 暴露原 panelContext shape（70+ keys） + 顶层 load*
  */
 import { computed, ref, shallowRef, watch } from 'vue';
+// T4a (Phase 126 v16.2.2): simple settings subset now uses typed wrapper
+// (`@/api/settings`). /api/ prefix is added by `core.js`'s `request()`.
 import {
-  fetchCreatorSettingsHistory,
+  fetchSettingsHistory,
+  restoreSettingsSnapshot,
+  saveSettingsDocs,
+  previewSettingsDocsDiff,
+  previewSettingsThreeWay,
+} from '../api/settings.js';
+// Legacy imports — T4b carryover (merge preset / changelog / conflict / etc.).
+import {
   fetchCreatorMergePresetChangelog,
   fetchCreatorMergePresetChangelogDiff,
   fetchCreatorMergePreferences,
   exportCreatorMergePreferences,
   importCreatorMergePreferences,
-  fetchCreatorSettingsDocs,
-  saveCreatorSettingsDocs,
-  previewCreatorSettingsDocs,
-  previewCreatorSettingsThreeWay,
-  previewCreatorSettingsMerge,
 } from '../api/index.js';
 import {
   useSettingsHistory,
@@ -217,7 +221,7 @@ export function useCreatorSettings(deps) {
   // --- Settings History 加载（用子模块 + watch）---
   async function loadSettingsHistory() {
     try {
-      const data = await fetchCreatorSettingsHistory();
+      const data = await fetchSettingsHistory();
       const list = data?.snapshots || data?.history || [];
       settingsHistory.value = list;
       history.settingsHistory.value = list;
@@ -229,8 +233,7 @@ export function useCreatorSettings(deps) {
   async function restoreSettingsHistory(snapshotId) {
     settingsRestoring.value = true;
     try {
-      const { restoreCreatorSettingsSnapshot } = await import('../api/index.js');
-      const docs = await restoreCreatorSettingsSnapshot(snapshotId);
+      const docs = await restoreSettingsSnapshot({ snapshot_id: snapshotId });
       settingsDocs.value = docs;
       const pillars = docs?.pillars_text || docs?.pillars || '';
       const outline = docs?.global_outline_text || docs?.outline || '';
@@ -290,7 +293,7 @@ export function useCreatorSettings(deps) {
     }
     try {
       if (settingsHistory.value.length) {
-        const threeWay = await (await import('../api/index.js')).previewCreatorSettingsThreeWay({
+        const threeWay = await previewSettingsThreeWay({
           pillars_text: settingsDocsApi.pillarsText.value,
           global_outline_text: globalOutlineText.value,
           snapshot_id: compareSnapshotId.value || undefined,
@@ -299,7 +302,7 @@ export function useCreatorSettings(deps) {
         settingsDocsApi.settingsDiffPreview.value = threeWay;
         settingsDocsApi.threeWayPreview.value = threeWay;
       } else {
-        const preview = await previewCreatorSettingsDocs({
+        const preview = await previewSettingsDocsDiff({
           pillars_text: settingsDocsApi.pillarsText.value,
           global_outline_text: globalOutlineText.value,
         });
@@ -319,9 +322,9 @@ export function useCreatorSettings(deps) {
   async function confirmSaveSettings() {
     settingsSaving.value = true;
     try {
-      await saveCreatorSettingsDocs({
-        pillars: settingsDocsApi.pillarsText.value,
-        outline: globalOutlineText.value,
+      await saveSettingsDocs({
+        pillars_text: settingsDocsApi.pillarsText.value,
+        global_outline_text: globalOutlineText.value,
       });
       settingsBaseline.value = {
         pillars: settingsDocsApi.pillarsText.value,
