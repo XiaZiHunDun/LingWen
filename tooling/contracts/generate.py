@@ -4,10 +4,10 @@ Usage:
     uv run python tooling/contracts/generate.py
 
 Reads:
-    packages/lingwen-shared/src/lingwen_shared/contracts/python/{world,workspace,quality}.py
+    packages/lingwen-shared/src/lingwen_shared/contracts/python/{world,workspace,quality,creator}.py
 
 Writes:
-    packages/lingwen-shared/src/lingwen_shared/contracts/ts/{world,workspace,quality}.ts
+    packages/lingwen-shared/src/lingwen_shared/contracts/ts/{world,workspace,quality,creator}.ts
 
 Uses pydantic v2's model_json_schema() directly + hand-rolled JSON Schema → TS
 converter. Do not edit generated TS manually — run this script after any
@@ -24,7 +24,7 @@ SHARED_SRC = REPO_ROOT / "packages" / "lingwen-shared" / "src" / "lingwen_shared
 PYTHON_DIR = SHARED_SRC / "contracts" / "python"
 TS_DIR = SHARED_SRC / "contracts" / "ts"
 
-MODULES = ["world", "workspace", "quality"]
+MODULES = ["world", "workspace", "quality", "creator"]
 
 
 def _emit_json_schema(module_name: str) -> Path:
