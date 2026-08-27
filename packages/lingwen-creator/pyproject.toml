@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-creator"
+version = "16.2.0"
+description = "LingWen · Creator subdomain bounded contexts (memory / settings / export / volume / onboarding / content)"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pydantic>=2.5",
+    "lingwen-shared",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lingwen_creator"]
+
+# NOTE: do NOT add empty [tool.ruff] here — would override root's ignore list (v16.0 lesson)
+# NOTE: do NOT add [tool.uv] package = true — uv auto-detects [project] sections (v16.0 lesson)
