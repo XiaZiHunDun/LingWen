@@ -589,7 +589,33 @@ Expected: 3 commits for v16.2.0, 34 shims remaining (out of 36 original creator_
 
 ---
 
-## 3. v16.2.1 — Memory Subdomain (4 commits, ~14 files)
+## 3. v16.2.1 — Volume Subdomain (5 commits, ~18 files) **NEW ORDER (root)**
+
+**目的**: 迁 `infra/creator_volume_{plan,plan_share,pulse,summary,templates}.py` + `infra/creator_template_approvals.py` 到 `lingwen_creator/volume/`。Volume 是 root — 被 content (creator_dashboard → volume_plan/pulse) + settings (settings_docs/history → volume_plan) + onboarding (autodetect → volume_plan) 依赖。先迁让后续 sub-phase 可以用新 package path。
+
+### Task 3.1: 移 Python files + shim + tests
+
+**Files:**
+- Create: `packages/lingwen-creator/src/lingwen_creator/volume/__init__.py`
+- Create: `packages/lingwen-creator/src/lingwen_creator/volume/{plan,plan_share,pulse,summary,templates}.py`
+- Create: `packages/lingwen-creator/src/lingwen_creator/volume/template_approvals.py`
+- Modify: 6 `infra/creator_volume_*.py` + 1 `infra/creator_template_approvals.py` → shim
+- Create: `packages/lingwen-creator/tests/test_volume.py` (≥5 tests)
+
+**Steps:** 类似 v16.2.2 Memory Task 4.1 pattern(plan §12.1 通用 file copy + import adjustment rule):
+- Read each `infra/creator_volume_*.py` → 检查 imports
+- `from infra.creator_revision import CreatorDocConflictError` → `from lingwen_creator.shared.revision import CreatorDocConflictError`
+- 其他 `from infra.creator_X` → 保留原路径 (shim 兼容),后续 sub-phase 才切新 package path
+
+### Task 3.2: 加 Volume DTOs (~10 DTOs)
+
+- `CreatorVolumePlanEntryPlan, CreatorVolumePlanResponse, CreatorVolumePlanSaveRequest, CreatorVolumeMergeRequest, CreatorVolumeMergeResponse, CreatorVolumeSplitRequest, CreatorVolumeSplitResponse, CreatorVolumeTemplateInfo, CreatorVolumeTemplateListResponse, CreatorVolumeDiffResponse, CreatorVolumeSummaryGenerateRequest, CreatorVolumeSummaryGenerateResponse` + template approval DTOs
+
+### Task 3.3: typed wrapper `apps/dashboard/src/api/volume.ts`
+
+### Task 3.4-3.5: composable refactor (6 composables) + creator_volume.py 24 endpoints import 更新
+
+**注意**: volume_templates.py 1022 lines + template_approvals.py 692 lines — DP-06 拆为 2 commits (templates + approvals 各自 1 commit)。
 
 **目的**: 迁 `infra/creator_memory_{annotations,assets,query}.py` 到 `lingwen_creator/memory/`,加 DTO + TS codegen + typed wrapper + 3 composables 切换。
 
@@ -1269,7 +1295,15 @@ Expected: 4 commits for v16.2.1,3 shims remaining
 
 ---
 
-## 4. v16.2.2 — Settings Subdomain (4 commits, ~12 files)
+## 4. v16.2.2 — Settings Subdomain (4 commits, ~12 files) **NEW ORDER**
+
+**顺序**: volume 迁完后迁 settings。Settings 依赖 volume (`creator_settings_docs → volume_plan.global_outline_path`, `creator_settings_history → volume_plan`, `creator_merge_preferences → volume_templates`)。
+
+### Task 4.1-4.5: 同 v16.2.2 plan outline (§4 原)
+
+迁移 `infra/creator_settings_docs.py` + `infra/creator_settings_history.py` + `infra/creator_merge_preferences.py` 到 `lingwen_creator/settings/{docs,history,merge_preferences}.py`。
+
+注意: `creator_settings_docs → creator_revision` → `from lingwen_creator.shared.revision import CreatorDocConflictError` (v16.2.0 shared 已迁)。
 
 **Pattern**: 与 v16.2.1 完整 analog,迁 `infra/creator_{settings_docs,settings_history,merge_preferences}.py` 到 `lingwen_creator/settings/{docs,history,merge_preferences}.py`。
 
@@ -1305,7 +1339,22 @@ Expected: 4 commits for v16.2.1,3 shims remaining
 
 ---
 
-## 5. v16.2.3 — Export Subdomain (4 commits, ~16 files)
+## 5. v16.2.3 — Content Subdomain (6 commits, ~25 files) **NEW ORDER (largest)**
+
+**顺序**: volume + settings 都迁完后迁 content。Content 依赖 volume (`creator_dashboard → volume_plan/pulse`)。Cycles via lazy `_excerpt` (`volume_plan → creator_dashboard`) — shim 兼容。
+
+### Task 5.1-5.6: 同 v16.2.6 原 outline
+
+迁移 10 files (agent + dashboard + batch_history + check + logic_check + models + mode + preferences + revision + ui_profile) 到 `lingwen_creator/content/`
+
+**Special handling**: `shared/check.py` 当前依赖 `infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO` (spec violation,见 v16.2.0 review_findings)。Fix: content/mode.py 创建时,**先**抽 `CreatorSettings` + `settings_from_project_config` 到 `shared/mode.py`(或留在 `content/mode.py` 但让 `shared/check.py` import `from lingwen_creator.content.mode import CreatorSettings` — 但这违反 spec §2.4 也)。**正确 fix**: 抽到 `shared/mode.py`。
+
+`creator_check.py` 已迁 shared (v16.2.0),content/mode.py 迁移时:
+1. Read `infra/creator_mode.py` (108 lines)
+2. 抽 `CreatorSettings` + `settings_from_project_config` + `CREATION_MODE_STUDIO` → `shared/mode.py`
+3. 让 `infra/creator_mode.py` 变 shim re-export shared.mode
+4. 让 `content/mode.py` 变 shim re-export shared.mode
+5. `shared/check.py` import 路径不变 (仍 `from lingwen_creator.shared.mode import ...`)
 
 ### Task 5.1: 移 Python files + shim
 
@@ -1321,7 +1370,19 @@ Expected: 4 commits for v16.2.1,3 shims remaining
 
 ---
 
-## 6. v16.2.4 — Volume Subdomain (5 commits, ~18 files)
+## 6. v16.2.4 — Onboarding Subdomain (5 commits, ~20 files) **NEW ORDER**
+
+迁移 9 files (onboarding + 7 子 + diff_collab) 到 `lingwen_creator/onboarding/`。依赖 content (`creator_mode.CREATION_MODE_*` + `settings_from_project_config`) + volume (`creator_volume_plan.load_volume_plan`, `creator_template_approvals.notify_overdue_template_approvals`)。Cycles via lazy imports,shim 兼容。
+
+## 7. v16.2.5 — Memory Subdomain (4 commits, ~14 files) **NEW ORDER (Round 2 leaf)**
+
+**顺序**: content + settings 都迁完后迁 memory。Memory 实际依赖 content (`creator_dashboard.creator_overview` + `creator_preferences.load_creator_preferences`) + settings (`creator_settings_docs.creator_settings_docs_payload`)。
+
+迁移 3 files (annotations, assets, query) 到 `lingwen_creator/memory/`。
+
+## 8. v16.2.6 — Export Subdomain (4 commits, ~16 files) **NEW ORDER (Round 2 leaf)**
+
+迁移 5 files (common, docx, epub, publish, publish_adapters) 到 `lingwen_creator/export/`。依赖 content (`creator_dashboard.creator_chapter_preview`) + settings (`creator_settings_docs.creator_settings_docs_payload`)。
 
 最大 DTO 集合 (~10 DTOs)。
 
@@ -1330,35 +1391,6 @@ Expected: 4 commits for v16.2.1,3 shims remaining
 迁移 6 files + 10 DTOs + typed wrapper + 6 composables + creator_volume.py 24 endpoints 改 import。
 
 **注意**: `creator_volume_plan_share.py` 与 `creator_volume_pulse.py` 较小可一次 commit。`creator_volume_templates.py` (1022 lines) 与 `creator_template_approvals.py` (692 lines) 各 1 commit。
-
----
-
-## 7. v16.2.5 — Onboarding Subdomain (5 commits, ~20 files)
-
-9 files (最多),含 8 onboarding_X sub-modules + diff_collab。
-
-### Task 7.1-7.5: 同 v16.2.1 pattern
-
-迁移 9 files + 10 DTOs + typed wrapper + 4 composables + creator_onboarding.py 24 endpoints 改 import。
-
-**Cross-ref**: onboarding 可能 import memory.annotations (`upsert_memory_annotation` for cross-context annotation),可走 lingwen_creator.memory.annotations — 但仅在 onboarding 内使用,符合 DP-01 (cross-context import via contract)。
-
----
-
-## 8. v16.2.6 — Content Subdomain (6 commits, ~25 files)
-
-最大 sub-phase,10 files + ~15 DTOs + 19 composables。
-
-### Task 8.1-8.6: 同 v16.2.1 pattern
-
-迁移 10 files (agent + dashboard + batch_history + check + logic_check + models + mode + preferences + revision + ui_profile)+ 15 DTOs + typed wrapper + 19 composables (useCreatorAgent + useCreatorBatchHistory + useCreatorModeGuide + useCreatorPage* + useCreatorPulse + useCreatorProductTools + useCreatorWorkspace + useCreatorWrite* + useCreatorWriteWorkbench 等)+ creator_core.py 中 content routes 改 import。
-
-**Decomposition for DP-06**:
-- T1: agent + check + logic_check + models (4 files)
-- T2: dashboard + batch_history + mode (3 files)
-- T3: preferences + revision + ui_profile (3 files)
-
-每 T 独立 commit,每个 ≤4 files。
 
 ---
 
