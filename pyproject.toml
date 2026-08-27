@@ -72,6 +72,36 @@ exclude = ["tests*", "docs*", "plans*", ".claude*", ".skills*"]
 "dashboard" = ["**/*.html", "**/*.css", "**/*.js", "**/*.json"]
 
 # ---------------------------------------------------------------------------
+# Phase 124 v16.0 — uv workspace
+# ---------------------------------------------------------------------------
+# 在 setuptools 之外,叠加 uv workspace 声明。新人 onboarding 用 `uv sync`
+# 单命令安装所有 8 个 packages/* + apps/studio-api。
+# Q1=A 决策:不保留 setuptools 兜底,若 uv 切换失败走 git revert。
+[tool.uv.workspace]
+members = [
+    "packages/lingwen-core",
+    "packages/lingwen-storage",
+    "packages/lingwen-llm",
+    "packages/lingwen-memory",
+    "packages/lingwen-prompt",
+    "packages/lingwen-pipeline",
+    "packages/lingwen-quality",
+    "packages/lingwen-cli",
+    "apps/studio_api",
+]
+
+[tool.uv.sources]
+# Internal workspace members (uv reads these to know they're workspace-relative)
+lingwen-core = { workspace = true }
+lingwen-storage = { workspace = true }
+lingwen-llm = { workspace = true }
+lingwen-memory = { workspace = true }
+lingwen-prompt = { workspace = true }
+lingwen-pipeline = { workspace = true }
+lingwen-quality = { workspace = true }
+lingwen-cli = { workspace = true }
+
+# ---------------------------------------------------------------------------
 # Tool configs (pyproject.toml 集中配置,避免散在多个 ini/tox)
 # ---------------------------------------------------------------------------
 #
@@ -154,3 +184,9 @@ exclude = [
     ".*__pycache__.*",
 ]
 plugins = []
+
+[dependency-groups]
+dev = [
+    "grimp>=3.15",
+    "import-linter>=2.13",
+]

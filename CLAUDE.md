@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v15.7.1 (Phase 125 baseline cleanup 闭环) — **unblocks v16.0**
+> **版本**: v16.0 (Phase 124 uv workspaces + turbo 启用 闭环)
+  → v15.7.1 (Phase 125 baseline cleanup 闭环)
   → v15.7 (Phase 123 llm_service latent bug fix 闭环)
   → v15.6 (Phase 121 minimax parse_rate 修复 闭环)
   → v15.5 (Phase 120 LLM provider benchmark 闭环)

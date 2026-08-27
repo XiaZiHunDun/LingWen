@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lingwen-studio-api"
+version = "16.0.0"
+description = "LingWen · FastAPI dashboard backend (墨灵 Studio)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "slowapi>=0.1.9",
+    "aiosqlite>=0.19.0",
+    # Workspace members (resolved via [tool.uv.sources] in root pyproject)
+    "lingwen-core",
+    "lingwen-llm",
+    "lingwen-storage",
+    "lingwen-pipeline",
+    "lingwen-quality",
+    "lingwen-prompt",
+    "lingwen-memory",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+include = ["app.py", "routes/**", "models/**", "helpers/**", "protocols.py", "errors.py"]
+exclude = ["tests/**", "requirements.txt", ".state/**"]
+
+[tool.hatch.build.targets.watch]
+ignore = ["tests", ".state"]

@@ -10,13 +10,14 @@
   },
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "build": "pnpm -r --filter './apps/*' --filter './packages/*' build",
-    "lint": "pnpm -r --filter './apps/*' --filter './packages/*' run lint",
-    "test": "pnpm -r --filter './apps/*' --filter './packages/*' run test",
-    "typecheck": "pnpm -r --filter './apps/*' --filter './packages/*' run typecheck",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
     "knip": "pnpm -C apps/dashboard exec knip"
   },
   "devDependencies": {
-    "knip": "^6.32.2"
+    "knip": "^6.32.2",
+    "turbo": "^2.10.12"
   }
 }

@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "1.0"
+version: "16.0.0"  # Phase 124 v16.0 闭环
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -78,10 +78,47 @@ module_boundaries:
       - "Bypasses infra.llm_service.LLMService (plugin_manager discovery is broken)"
       - "Direct instantiation via lingwen_llm.providers.get_provider_class"
 
-# 当前活跃子系统（v15.0 闭环）
+# 当前活跃子系统（v15.0 闭环 → v16.0 闭环）
 active_subsystems:
   write_workspace:
     path: apps/dashboard/src/components/writeWorkspace/
     status: shipped
     spec: docs/superpowers/specs/2026-08-26-immersive-write-workspace-design.md
     plan: docs/superpowers/plans/2026-08-26-immersive-write-workspace.md
+  v16_target_architecture:
+    purpose: "Phase 124 v16.0 目标架构 — DDD 风格 Vertical Slice + 轻量 Hexagonal"
+    status: shipped
+    spec: docs/superpowers/specs/2026-08-27-phase-124-target-architecture-design.md
+    plan: docs/superpowers/plans/2026-08-27-phase-124-v16-0-plan.md
+    implementation_log: docs/superpowers/handoffs/2026-08-27-phase-124-v16-0-handoff.md
+    notes:
+      - "v16.0 完成: uv workspaces + turbo + import-linter 骨架 + dead dir 清理"
+      - "v16.0 不动业务代码;bounded context 拆分(v16.2/v16.3) / port 强制(v16.4/v16.5) 后续"
+
+# Phase 124 v16.0 设计原则(DP-01..DP-06)
+# enforcement 在 v16.0..v16.5 渐进加,v16.0 阶段仅声明。
+design_principles:
+  - id: DP-01
+    rule: "跨 lingwen-* package import 仅 4 种允许形式 (contracts / ports / value_objects / pure util)"
+    scope: "cross-package"
+    enforcement_phase: v16.5
+  - id: DP-02
+    rule: "LLM 调用必须通过 LLMServicePort,不允许 import concrete LLMService 类"
+    scope: "any context using LLM"
+    enforcement_phase: v16.4
+  - id: DP-03
+    rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
+    scope: "any context with persistence"
+    enforcement_phase: v16.5
+  - id: DP-04
+    rule: "跨 context 调用只通过 contract DTO"
+    scope: "cross-context"
+    enforcement_phase: v16.1
+  - id: DP-05
+    rule: "新增 feature 必须先建或选 context"
+    scope: "all"
+    enforcement_phase: v16.2
+  - id: DP-06
+    rule: "每个 phase 代码改动收敛到自己 context 内 ≤4 文件"
+    scope: "all"
+    enforcement_phase: v16.2
