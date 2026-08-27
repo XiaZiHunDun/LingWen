@@ -1,17 +1,9 @@
-"""Content revision tokens for creator doc conflict detection."""
-from __future__ import annotations
+"""Phase 126 v16.2.0 shim: re-export from lingwen_creator.shared.revision.
 
-import hashlib
+Migrated to packages/lingwen-creator/src/lingwen_creator/shared/revision.py.
+This shim maintains backwards compat for consumers using:
+    from infra.creator_revision import CreatorDocConflictError, content_revision
 
-
-class CreatorDocConflictError(Exception):
-    """Raised when on-disk content changed since the client loaded it."""
-
-    def __init__(self, message: str, *, fields: list[str] | None = None):
-        super().__init__(message)
-        self.fields = fields or []
-
-
-def content_revision(text: str) -> str:
-    normalized = text.replace("\r\n", "\n")
-    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+Shim will be deleted in v16.2.7 final cleanup.
+"""
+from lingwen_creator.shared.revision import *  # noqa: F403
