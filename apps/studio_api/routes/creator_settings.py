@@ -80,7 +80,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/settings-docs", response_model=CreatorSettingsDocsResponse)
     def creator_settings_docs_get() -> CreatorSettingsDocsResponse:
-        from infra.creator_settings_docs import creator_settings_docs_payload
+        from lingwen_creator.settings.docs import creator_settings_docs_payload
 
         project = _require_project(ctx)
         return CreatorSettingsDocsResponse(**creator_settings_docs_payload(project))
@@ -89,8 +89,9 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_docs_put(
         req: CreatorSettingsDocsSaveRequest,
     ) -> CreatorSettingsDocsResponse:
+        from lingwen_creator.settings.docs import save_creator_settings_docs
+
         from infra.creator_revision import CreatorDocConflictError
-        from infra.creator_settings_docs import save_creator_settings_docs
 
         project = _require_project(ctx)
         if req.pillars_text is None and req.global_outline_text is None:
@@ -119,7 +120,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_docs_preview(
         req: CreatorSettingsDocsSaveRequest,
     ) -> CreatorSettingsDiffResponse:
-        from infra.creator_settings_docs import preview_settings_docs_diff
+        from lingwen_creator.settings.docs import preview_settings_docs_diff
 
         project = _require_project(ctx)
         if req.pillars_text is None or req.global_outline_text is None:
@@ -139,7 +140,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_three_way_preview(
         req: CreatorSettingsThreeWayRequest,
     ) -> CreatorSettingsThreeWayResponse:
-        from infra.creator_settings_docs import preview_settings_three_way
+        from lingwen_creator.settings.docs import preview_settings_three_way
 
         project = _require_project(ctx)
         return CreatorSettingsThreeWayResponse(
@@ -583,7 +584,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preview(
         req: CreatorSettingsMergePreviewRequest,
     ) -> CreatorSettingsMergePreviewResponse:
-        from infra.creator_settings_docs import preview_settings_merge_strategy
+        from lingwen_creator.settings.docs import preview_settings_merge_strategy
 
         project = _require_project(ctx)
         try:

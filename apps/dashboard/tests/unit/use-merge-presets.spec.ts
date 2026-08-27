@@ -2,48 +2,52 @@
  * useMergePresets 子模块独立测试
  *
  * Phase 28: 为 Phase 19.3 useMergePresets 子模块添加专门测试。
+ * Phase 126 v16.2.2 T4b: 迁到 typed wrapper `'../../api/settings.js'`.
+ * Mock 名跟随 typed wrapper rename:
+ *   fetchCreator* → typed wrapper name (no `Creator` prefix typically).
+ *
  * 重点测试：合并预设加载/应用/导出/工厂库/冲突修复。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref } from 'vue';
 
-// Mock API（合并预设相关）
+// Mock API（合并预设相关）— typed wrapper names (Phase 126 v16.2.2 T4b)
 const mergeMocks = vi.hoisted(() => ({
-  fetchCreatorMergePresetPackages: vi.fn(),
-  fetchCreatorFactoryMergePresetPackages: vi.fn(),
-  fetchCreatorMergePreferences: vi.fn(),
-  exportCreatorMergePreferences: vi.fn(),
-  importCreatorMergePreferences: vi.fn(),
-  exportCreatorMergePresetPackages: vi.fn(),
-  importCreatorMergePresetPackages: vi.fn(),
-  publishCreatorMergePresetToFactory: vi.fn(),
-  pullCreatorFactoryMergePresetPackages: vi.fn(),
-  applyCreatorMergePresetConflictFix: vi.fn(),
-  applyAllCreatorMergePresetConflictFixes: vi.fn(),
-  previewCreatorMergePresetImportDiff: vi.fn(),
-  applyCreatorMergePresetToposort: vi.fn(),
-  preflightCreatorMergePresetImport: vi.fn(),
-  preflightCreatorFactoryMergePresetPull: vi.fn(),
+  listMergePresetPackages: vi.fn(),
+  listFactoryMergePresetPackages: vi.fn(),
+  fetchMergePreferences: vi.fn(),
+  exportMergePreferences: vi.fn(),
+  importMergePreferences: vi.fn(),
+  exportMergePresetPackages: vi.fn(),
+  importMergePresetPackages: vi.fn(),
+  publishMergePresetToFactory: vi.fn(),
+  pullFactoryMergePresetsToProject: vi.fn(),
+  applyMergePresetConflictFix: vi.fn(),
+  applyAllMergePresetConflictFixes: vi.fn(),
+  previewMergePresetImportDiff: vi.fn(),
+  applyToposortMergePresetOrder: vi.fn(),
+  preflightMergePresetImport: vi.fn(),
+  preflightFactoryMergePresetPull: vi.fn(),
 }));
 
-vi.mock('../../src/api/index.js', () => {
+vi.mock('../../src/api/settings.js', () => {
   const m = mergeMocks;
   return {
-    fetchCreatorMergePresetPackages: (...args: unknown[]) => m.fetchCreatorMergePresetPackages(...args),
-    fetchCreatorFactoryMergePresetPackages: (...args: unknown[]) => m.fetchCreatorFactoryMergePresetPackages(...args),
-    fetchCreatorMergePreferences: (...args: unknown[]) => m.fetchCreatorMergePreferences(...args),
-    exportCreatorMergePreferences: (...args: unknown[]) => m.exportCreatorMergePreferences(...args),
-    importCreatorMergePreferences: (...args: unknown[]) => m.importCreatorMergePreferences(...args),
-    exportCreatorMergePresetPackages: (...args: unknown[]) => m.exportCreatorMergePresetPackages(...args),
-    importCreatorMergePresetPackages: (...args: unknown[]) => m.importCreatorMergePresetPackages(...args),
-    publishCreatorMergePresetToFactory: (...args: unknown[]) => m.publishCreatorMergePresetToFactory(...args),
-    pullCreatorFactoryMergePresetPackages: (...args: unknown[]) => m.pullCreatorFactoryMergePresetPackages(...args),
-    applyCreatorMergePresetConflictFix: (...args: unknown[]) => m.applyCreatorMergePresetConflictFix(...args),
-    applyAllCreatorMergePresetConflictFixes: (...args: unknown[]) => m.applyAllCreatorMergePresetConflictFixes(...args),
-    previewCreatorMergePresetImportDiff: (...args: unknown[]) => m.previewCreatorMergePresetImportDiff(...args),
-    applyCreatorMergePresetToposort: (...args: unknown[]) => m.applyCreatorMergePresetToposort(...args),
-    preflightCreatorMergePresetImport: (...args: unknown[]) => m.preflightCreatorMergePresetImport(...args),
-    preflightCreatorFactoryMergePresetPull: (...args: unknown[]) => m.preflightCreatorFactoryMergePresetPull(...args),
+    listMergePresetPackages: (...args: unknown[]) => m.listMergePresetPackages(...args),
+    listFactoryMergePresetPackages: (...args: unknown[]) => m.listFactoryMergePresetPackages(...args),
+    fetchMergePreferences: (...args: unknown[]) => m.fetchMergePreferences(...args),
+    exportMergePreferences: (...args: unknown[]) => m.exportMergePreferences(...args),
+    importMergePreferences: (...args: unknown[]) => m.importMergePreferences(...args),
+    exportMergePresetPackages: (...args: unknown[]) => m.exportMergePresetPackages(...args),
+    importMergePresetPackages: (...args: unknown[]) => m.importMergePresetPackages(...args),
+    publishMergePresetToFactory: (...args: unknown[]) => m.publishMergePresetToFactory(...args),
+    pullFactoryMergePresetsToProject: (...args: unknown[]) => m.pullFactoryMergePresetsToProject(...args),
+    applyMergePresetConflictFix: (...args: unknown[]) => m.applyMergePresetConflictFix(...args),
+    applyAllMergePresetConflictFixes: (...args: unknown[]) => m.applyAllMergePresetConflictFixes(...args),
+    previewMergePresetImportDiff: (...args: unknown[]) => m.previewMergePresetImportDiff(...args),
+    applyToposortMergePresetOrder: (...args: unknown[]) => m.applyToposortMergePresetOrder(...args),
+    preflightMergePresetImport: (...args: unknown[]) => m.preflightMergePresetImport(...args),
+    preflightFactoryMergePresetPull: (...args: unknown[]) => m.preflightFactoryMergePresetPull(...args),
   };
 });
 
@@ -72,10 +76,10 @@ describe('useMergePresets', () => {
   });
 
   it('loadMergePresetPackages fetches project + factory packages', async () => {
-    mergeMocks.fetchCreatorMergePresetPackages.mockResolvedValueOnce({
+    mergeMocks.listMergePresetPackages.mockResolvedValueOnce({
       packages: [{ id: 'p1', name: 'project1', scope: 'project' }],
     });
-    mergeMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValueOnce({
+    mergeMocks.listFactoryMergePresetPackages.mockResolvedValueOnce({
       packages: [{ id: 'f1', name: 'factory1', scope: 'factory' }],
     });
     const m = mountMerge();
@@ -85,10 +89,10 @@ describe('useMergePresets', () => {
   });
 
   it('selectedMergePresetPackageName finds matching name', async () => {
-    mergeMocks.fetchCreatorMergePresetPackages.mockResolvedValueOnce({
+    mergeMocks.listMergePresetPackages.mockResolvedValueOnce({
       packages: [{ id: 'p1', name: 'project1', scope: 'project' }],
     });
-    mergeMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.listFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
     const m = mountMerge();
     await m.loadMergePresetPackages();
     m.selectedMergePresetPackage.value = 'p1';
@@ -96,7 +100,7 @@ describe('useMergePresets', () => {
   });
 
   it('loadMergePreferences sets preferences', async () => {
-    mergeMocks.fetchCreatorMergePreferences.mockResolvedValueOnce({ style: 'auto' });
+    mergeMocks.fetchMergePreferences.mockResolvedValueOnce({ style: 'auto' });
     const m = mountMerge();
     await m.loadMergePreferences();
     expect(m.mergePreferences.value.style).toBe('auto');
@@ -110,14 +114,14 @@ describe('useMergePresets', () => {
   });
 
   it('publishMergePresetToFactory sets loading state', async () => {
-    mergeMocks.publishCreatorMergePresetToFactory.mockResolvedValueOnce({});
+    mergeMocks.publishMergePresetToFactory.mockResolvedValueOnce({});
     const m = mountMerge();
     await m.publishMergePresetToFactory();
     expect(m.mergePresetFactoryPublishing.value).toBe(false);
   });
 
   it('publishMergePresetToFactory sets error on failure', async () => {
-    mergeMocks.publishCreatorMergePresetToFactory.mockRejectedValueOnce(new Error('publish-fail'));
+    mergeMocks.publishMergePresetToFactory.mockRejectedValueOnce(new Error('publish-fail'));
     let capturedErr: unknown = null;
     const error = ref<string | null>(null);
     const saveMessage = ref('');
@@ -133,34 +137,34 @@ describe('useMergePresets', () => {
   });
 
   it('pullFactoryMergePresets updates packages', async () => {
-    mergeMocks.pullCreatorFactoryMergePresetPackages.mockResolvedValueOnce({ imported: 2 });
-    mergeMocks.fetchCreatorMergePresetPackages.mockResolvedValueOnce({ packages: [] });
-    mergeMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.pullFactoryMergePresetsToProject.mockResolvedValueOnce({ imported: 2 });
+    mergeMocks.listMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.listFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
     const m = mountMerge();
     await m.pullFactoryMergePresets();
     expect(m.mergePresetFactoryPulling.value).toBe(false);
   });
 
   it('applyMergePresetConflictFix saves message', async () => {
-    mergeMocks.applyCreatorMergePresetConflictFix.mockResolvedValueOnce({});
-    mergeMocks.fetchCreatorMergePresetPackages.mockResolvedValueOnce({ packages: [] });
-    mergeMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.applyMergePresetConflictFix.mockResolvedValueOnce({});
+    mergeMocks.listMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.listFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
     const m = mountMerge();
     await m.applyMergePresetConflictFix({ id: 'fix-1' });
     expect(m.saveMessage.value).toContain('冲突修复');
   });
 
   it('applyAllMergePresetConflictFixes triggers save', async () => {
-    mergeMocks.applyAllCreatorMergePresetConflictFixes.mockResolvedValueOnce({});
-    mergeMocks.fetchCreatorMergePresetPackages.mockResolvedValueOnce({ packages: [] });
-    mergeMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.applyAllMergePresetConflictFixes.mockResolvedValueOnce({});
+    mergeMocks.listMergePresetPackages.mockResolvedValueOnce({ packages: [] });
+    mergeMocks.listFactoryMergePresetPackages.mockResolvedValueOnce({ packages: [] });
     const m = mountMerge();
     await m.applyAllMergePresetConflictFixes();
     expect(m.saveMessage.value).toContain('批量');
   });
 
   it('previewMergePresetImportDiff updates importPreview', async () => {
-    mergeMocks.previewCreatorMergePresetImportDiff.mockResolvedValueOnce({
+    mergeMocks.previewMergePresetImportDiff.mockResolvedValueOnce({
       added: ['a'], updated: ['b'], removed: ['c'],
     });
     const m = mountMerge();
@@ -169,16 +173,16 @@ describe('useMergePresets', () => {
   });
 
   it('applyMergePresetToposort updates message', async () => {
-    mergeMocks.applyCreatorMergePresetToposort.mockResolvedValueOnce({});
+    mergeMocks.applyToposortMergePresetOrder.mockResolvedValueOnce({});
     const m = mountMerge();
     await m.applyMergePresetToposort();
     // 注意: 原 useMergePresets 子模块返回的 saveMessage 是子模块内部的 ref，
     // mountMerge 中 spread 后覆盖了原始 saveMessage。这里检查 apply API 调用即可
-    expect(mergeMocks.applyCreatorMergePresetToposort).toHaveBeenCalled();
+    expect(mergeMocks.applyToposortMergePresetOrder).toHaveBeenCalled();
   });
 
   it('preflightMergePresetImport stores preflight data', async () => {
-    mergeMocks.preflightCreatorMergePresetImport.mockResolvedValueOnce({
+    mergeMocks.preflightMergePresetImport.mockResolvedValueOnce({
       blocked: false, conflict_count: 0,
     });
     const m = mountMerge();

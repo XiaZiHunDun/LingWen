@@ -2,25 +2,29 @@
  * useSettingsDocs 子模块独立测试
  *
  * Phase 36: 为 Phase 19.3 useSettingsDocs 子模块添加专门测试。
+ * Phase 126 v16.2.2 T4b: 迁到 typed wrapper `'../../api/settings.js'`,
+ * mocks 跟随更新。新 typed wrapper 没有 legacy `pillars`/`outline` 别名
+ * （统一 `pillars_text`/`global_outline_text`）。
+ *
  * 重点测试：设定文档加载 + diff 预览 + 保存流程。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ref, ComputedRef } from 'vue';
+import { ref } from 'vue';
 
 const docsMocks = vi.hoisted(() => ({
-  fetchCreatorSettingsDocs: vi.fn(),
-  saveCreatorSettingsDocs: vi.fn(),
-  previewCreatorSettingsDocs: vi.fn(),
-  previewCreatorSettingsThreeWay: vi.fn(),
-  previewCreatorSettingsMerge: vi.fn(),
+  fetchSettingsDocs: vi.fn(),
+  saveSettingsDocs: vi.fn(),
+  previewSettingsDocsDiff: vi.fn(),
+  previewSettingsThreeWay: vi.fn(),
+  previewSettingsMergeStrategy: vi.fn(),
 }));
 
-vi.mock('../../src/api/index.js', () => ({
-  fetchCreatorSettingsDocs: (...args: unknown[]) => docsMocks.fetchCreatorSettingsDocs(...args),
-  saveCreatorSettingsDocs: (...args: unknown[]) => docsMocks.saveCreatorSettingsDocs(...args),
-  previewCreatorSettingsDocs: (...args: unknown[]) => docsMocks.previewCreatorSettingsDocs(...args),
-  previewCreatorSettingsThreeWay: (...args: unknown[]) => docsMocks.previewCreatorSettingsThreeWay(...args),
-  previewCreatorSettingsMerge: (...args: unknown[]) => docsMocks.previewCreatorSettingsMerge(...args),
+vi.mock('../../src/api/settings.js', () => ({
+  fetchSettingsDocs: (...args: unknown[]) => docsMocks.fetchSettingsDocs(...args),
+  saveSettingsDocs: (...args: unknown[]) => docsMocks.saveSettingsDocs(...args),
+  previewSettingsDocsDiff: (...args: unknown[]) => docsMocks.previewSettingsDocsDiff(...args),
+  previewSettingsThreeWay: (...args: unknown[]) => docsMocks.previewSettingsThreeWay(...args),
+  previewSettingsMergeStrategy: (...args: unknown[]) => docsMocks.previewSettingsMergeStrategy(...args),
 }));
 
 import { useSettingsDocs } from '../../src/composables/useCreatorSettings/useSettingsDocs';
@@ -51,7 +55,7 @@ function mountDocs() {
 describe('useSettingsDocs', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    docsMocks.fetchCreatorSettingsDocs.mockResolvedValue({
+    docsMocks.fetchSettingsDocs.mockResolvedValue({
       pillars_text: '支柱',
       global_outline_text: '大纲',
     });
@@ -71,8 +75,10 @@ describe('useSettingsDocs', () => {
     expect(d.pillarsText.value).toBe('支柱');
   });
 
-  it('loadSettingsDocs populates from API with pillars (camelCase)', async () => {
-    docsMocks.fetchCreatorSettingsDocs.mockResolvedValueOnce({
+  it('loadSettingsDocs populates from API with pillars (camelCase legacy alias)', async () => {
+    // typed wrapper returns `CreatorSettingsDocsResponse` with snake_case keys,
+    // but we keep a defensive `pillars`/`outline` fallback for legacy responses.
+    docsMocks.fetchSettingsDocs.mockResolvedValueOnce({
       pillars: 'pillarsKey',
       outline: 'outlineKey',
     });
@@ -82,21 +88,21 @@ describe('useSettingsDocs', () => {
   });
 
   it('loadSettingsDocs sets empty on failure', async () => {
-    docsMocks.fetchCreatorSettingsDocs.mockRejectedValueOnce(new Error('down'));
+    docsMocks.fetchSettingsDocs.mockRejectedValueOnce(new Error('down'));
     const d = mountDocs();
     await d.loadSettingsDocs();
     expect(d.settingsDocs.value).toBeNull();
   });
 
   it('loadSettingsDocs does not set pillarsText on failure', async () => {
-    docsMocks.fetchCreatorSettingsDocs.mockRejectedValueOnce(new Error('down'));
+    docsMocks.fetchSettingsDocs.mockRejectedValueOnce(new Error('down'));
     const d = mountDocs();
     await d.loadSettingsDocs();
     expect(d.pillarsText.value).toBe('');
   });
 
   it('refreshMergeStrategyPreview sets mergeStrategyPreview', async () => {
-    docsMocks.previewCreatorSettingsMerge.mockResolvedValueOnce({
+    docsMocks.previewSettingsMergeStrategy.mockResolvedValueOnce({
       pillars: { vs_disk: { snippet: ['p'] } },
     });
     const d = mountDocs();
@@ -105,7 +111,7 @@ describe('useSettingsDocs', () => {
   });
 
   it('refreshMergeStrategyPreview handles failure', async () => {
-    docsMocks.previewCreatorSettingsMerge.mockRejectedValueOnce(new Error('merge fail'));
+    docsMocks.previewSettingsMergeStrategy.mockRejectedValueOnce(new Error('merge fail'));
     const d = mountDocs();
     await d.refreshMergeStrategyPreview();
     // 不抛错即可
@@ -113,7 +119,7 @@ describe('useSettingsDocs', () => {
   });
 
   it('refreshThreeWayPreview sets threeWayPreview', async () => {
-    docsMocks.previewCreatorSettingsThreeWay.mockResolvedValueOnce({
+    docsMocks.previewSettingsThreeWay.mockResolvedValueOnce({
       has_history: true,
     });
     const d = mountDocs();
@@ -122,7 +128,7 @@ describe('useSettingsDocs', () => {
   });
 
   it('requestSaveSettings sets showSettingsDiff true', async () => {
-    docsMocks.previewCreatorSettingsDocs.mockResolvedValueOnce({
+    docsMocks.previewSettingsDocsDiff.mockResolvedValueOnce({
       has_changes: true, has_history: false,
     });
     const d = mountDocs();
@@ -138,18 +144,18 @@ describe('useSettingsDocs', () => {
   });
 
   it('confirmSaveSettings posts docs and resets state', async () => {
-    docsMocks.saveCreatorSettingsDocs.mockResolvedValueOnce({});
+    docsMocks.saveSettingsDocs.mockResolvedValueOnce({});
     const d = mountDocs();
     await d.loadSettingsDocs();
     d.pillarsText.value = 'new pillars';
     await d.confirmSaveSettings();
-    expect(docsMocks.saveCreatorSettingsDocs).toHaveBeenCalled();
+    expect(docsMocks.saveSettingsDocs).toHaveBeenCalled();
     expect(d.showSettingsDiff.value).toBe(false);
     expect(d.onAfterSettingsSave).toHaveBeenCalled();
   });
 
   it('confirmSaveSettings handles save failure via handleSaveError', async () => {
-    docsMocks.saveCreatorSettingsDocs.mockRejectedValueOnce(new Error('conflict'));
+    docsMocks.saveSettingsDocs.mockRejectedValueOnce(new Error('conflict'));
     const d = mountDocs();
     await d.loadSettingsDocs();
     await d.confirmSaveSettings();

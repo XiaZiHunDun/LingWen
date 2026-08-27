@@ -41,6 +41,8 @@ const settingsMocks = vi.hoisted(() => ({
   saveSettingsDocs: vi.fn(),
   previewSettingsDocsDiff: vi.fn(),
   previewSettingsThreeWay: vi.fn(),
+  fetchSettingsDocs: vi.fn(),
+  previewSettingsMergeStrategy: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
@@ -80,6 +82,8 @@ vi.mock('../../src/api/settings.js', () => ({
   saveSettingsDocs: (...args: unknown[]) => settingsMocks.saveSettingsDocs(...args),
   previewSettingsDocsDiff: (...args: unknown[]) => settingsMocks.previewSettingsDocsDiff(...args),
   previewSettingsThreeWay: (...args: unknown[]) => settingsMocks.previewSettingsThreeWay(...args),
+  fetchSettingsDocs: (...args: unknown[]) => settingsMocks.fetchSettingsDocs(...args),
+  previewSettingsMergeStrategy: (...args: unknown[]) => settingsMocks.previewSettingsMergeStrategy(...args),
 }));
 
 describe('useCreatorSettings', () => {
@@ -130,6 +134,18 @@ describe('useCreatorSettings', () => {
       global_outline: { snippet: ['o'] },
     });
     settingsMocks.saveSettingsDocs.mockResolvedValue({});
+    // T4b: submodule's loadSettingsDocs + refreshMergeStrategyPreview now go
+    // through typed wrapper. Defaults mirror legacy path responses.
+    settingsMocks.fetchSettingsDocs.mockResolvedValue({
+      pillars_text: '支柱A',
+      global_outline_text: '大纲A',
+      pillars_revision: 'p1',
+      global_outline_revision: 'o1',
+    });
+    settingsMocks.previewSettingsMergeStrategy.mockResolvedValue({
+      pillars: { vs_disk: { snippet: ['merge'] } },
+      global_outline: { vs_disk: { snippet: [] } },
+    });
     settingsMocks.fetchCreatorMergePreferences.mockResolvedValue({
       pillars_merge_source: 'editor',
       global_outline_merge_source: 'history',
