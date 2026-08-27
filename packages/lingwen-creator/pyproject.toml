@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "lingwen-creator"
 version = "16.2.0"
 description = "LingWen · Creator subdomain bounded contexts (memory / settings / export / volume / onboarding / content)"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.5",
     "lingwen-shared",
