@@ -24,7 +24,8 @@
     "tests/helpers/strict-test-types.ts",
     "src/api/world.ts",
     "src/api/workspace.ts",
-    "src/api/quality.ts"
+    "src/api/quality.ts",
+    "src/api/volume.ts"
   ],
   "ignoreDependencies": ["@lingwen/dashboard-contracts"],
   "ignoreBinaries": ["knip"]

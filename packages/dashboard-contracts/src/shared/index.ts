@@ -4,3 +4,4 @@
 export * from './world';
 export * from './workspace';
 export * from './quality';
+export * from './creator';
