@@ -5,9 +5,7 @@
  * packages/lingwen-shared Pydantic DTOs via codegen).
  *
  * Path convention: relative paths (no `/api/` prefix) — `core.js`'s `request()`
- * prepends `BASE_URL='/api'`. Earlier draft mistakenly included the `/api/`
- * prefix on every path, which yielded `/api/api/creator/...` at runtime and
- * 404'd in production. v16.2.1 Task 3.4 part 1 commit 1: normalize.
+ * prepends `BASE_URL='/api'`.
  *
  * NOTE: This is a NEW typed wrapper added in v16.2.1 (Phase 126 T3).
  * Existing api/creator.js + api/volumePlan.js + api/volumeTemplate.js +
@@ -167,7 +165,7 @@ export async function setVolumeTemplateVersion(
   req: CreatorVolumeTemplateVersionRequest,
 ): Promise<CreatorVolumeTemplateVersionResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version`,
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version`,
     { method: 'PUT', body: req },
   );
   return data as CreatorVolumeTemplateVersionResponse;
@@ -177,7 +175,7 @@ export async function fetchVolumeTemplateChangelog(
   templateId: string,
 ): Promise<CreatorVolumeTemplateChangelogResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-changelog`,
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-changelog`,
   );
   return data as CreatorVolumeTemplateChangelogResponse;
 }
@@ -187,7 +185,7 @@ export async function rollbackVolumeTemplate(
   req: CreatorVolumeTemplateRollbackRequest,
 ): Promise<CreatorVolumeTemplateRollbackResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-rollback`,
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-rollback`,
     { method: 'POST', body: req },
   );
   return data as CreatorVolumeTemplateRollbackResponse;
@@ -215,7 +213,7 @@ export async function fetchVolumeTemplateApprovalHistory(
   limit = 20,
 ): Promise<CreatorVolumeTemplateApprovalHistoryResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/approvals/history?limit=${encodeURIComponent(String(limit))}`,
+    `/creator/volume-plan/templates/approvals/history?limit=${encodeURIComponent(String(limit))}`,
   );
   return data as CreatorVolumeTemplateApprovalHistoryResponse;
 }
@@ -270,7 +268,7 @@ export async function submitVolumeTemplateApproval(
   req: CreatorVolumeTemplateApprovalSubmitRequest,
 ): Promise<CreatorVolumeTemplateApproval> {
   const data = await request(
-    `/api/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-approval`,
+    `/creator/volume-plan/templates/${encodeURIComponent(templateId)}/version-approval`,
     { method: 'POST', body: req },
   );
   return data as CreatorVolumeTemplateApproval;
@@ -281,7 +279,7 @@ export async function approveVolumeTemplateApproval(
   req?: CreatorVolumeTemplateApprovalResolveRequest,
 ): Promise<CreatorVolumeTemplateApproval> {
   const data = await request(
-    `/api/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/approve`,
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/approve`,
     { method: 'POST', body: req ?? {} },
   );
   return data as CreatorVolumeTemplateApproval;
@@ -292,7 +290,7 @@ export async function rejectVolumeTemplateApproval(
   req: CreatorVolumeTemplateApprovalRejectRequest,
 ): Promise<CreatorVolumeTemplateApproval> {
   const data = await request(
-    `/api/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/reject`,
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/reject`,
     { method: 'POST', body: req },
   );
   return data as CreatorVolumeTemplateApproval;
@@ -303,7 +301,7 @@ export async function transferVolumeTemplateApproval(
   req: CreatorVolumeTemplateApprovalTransferRequest,
 ): Promise<CreatorVolumeTemplateApproval> {
   const data = await request(
-    `/api/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/transfer`,
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/transfer`,
     { method: 'POST', body: req },
   );
   return data as CreatorVolumeTemplateApproval;
@@ -313,7 +311,7 @@ export async function fetchVolumeTemplateApprovalSnapshotDiff(
   approvalId: string,
 ): Promise<CreatorVolumeTemplateApprovalSnapshotDiffResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/snapshot-diff`,
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/snapshot-diff`,
   );
   return data as CreatorVolumeTemplateApprovalSnapshotDiffResponse;
 }
@@ -322,7 +320,7 @@ export async function fetchVolumeTemplateApprovalSnapshotDrift(
   approvalId: string,
 ): Promise<CreatorVolumeTemplateApprovalDriftResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/snapshot-drift`,
+    `/creator/volume-plan/templates/approvals/${encodeURIComponent(approvalId)}/snapshot-drift`,
   );
   return data as CreatorVolumeTemplateApprovalDriftResponse;
 }
@@ -414,7 +412,7 @@ export async function deleteFactoryVolumeTemplate(
   templateId: string,
 ): Promise<CreatorVolumeFactoryDeleteResponse> {
   const data = await request(
-    `/api/creator/volume-plan/templates/factory/${encodeURIComponent(templateId)}`,
+    `/creator/volume-plan/templates/factory/${encodeURIComponent(templateId)}`,
     { method: 'DELETE' },
   );
   return data as CreatorVolumeFactoryDeleteResponse;
