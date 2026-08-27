@@ -341,7 +341,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preset_import_preview_diff(
         req: CreatorMergePresetPackagesImportRequest,
     ) -> CreatorMergePresetImportDiffPreviewResponse:
-        from infra.creator_merge_preferences import preview_merge_preset_import_diff
+        from lingwen_creator.settings.merge_preferences import preview_merge_preset_import_diff
 
         project = _require_project(ctx)
         try:
@@ -355,7 +355,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetFactoryConflictResponse,
     )
     def creator_settings_merge_preset_factory_conflicts() -> CreatorMergePresetFactoryConflictResponse:
-        from infra.creator_merge_preferences import detect_factory_merge_preset_conflicts
+        from lingwen_creator.settings.merge_preferences import detect_factory_merge_preset_conflicts
 
         project = _require_project(ctx)
         result = detect_factory_merge_preset_conflicts(project.root)
@@ -368,7 +368,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preset_factory_merge_conflicts(
         req: CreatorMergePresetFactoryConflictResolveRequest,
     ) -> CreatorMergePresetFactoryConflictResolveResponse:
-        from infra.creator_merge_preferences import resolve_factory_merge_preset_conflict
+        from lingwen_creator.settings.merge_preferences import resolve_factory_merge_preset_conflict
 
         project = _require_project(ctx)
         try:
@@ -388,7 +388,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preset_import_preflight(
         req: CreatorMergePresetPackagesImportRequest,
     ) -> CreatorMergePresetImportPreflightResponse:
-        from infra.creator_merge_preferences import preflight_merge_preset_import
+        from lingwen_creator.settings.merge_preferences import preflight_merge_preset_import
 
         project = _require_project(ctx)
         try:
@@ -407,7 +407,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetPackagesExportResponse,
     )
     def creator_settings_merge_preset_packages_export() -> CreatorMergePresetPackagesExportResponse:
-        from infra.creator_merge_preferences import export_merge_preset_packages
+        from lingwen_creator.settings.merge_preferences import export_merge_preset_packages
 
         project = _require_project(ctx)
         data = export_merge_preset_packages(project.root)
@@ -420,7 +420,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_preset_packages_import(
         req: CreatorMergePresetPackagesImportRequest,
     ) -> CreatorMergePresetPackagesImportResponse:
-        from infra.creator_merge_preferences import import_merge_preset_packages
+        from lingwen_creator.settings.merge_preferences import import_merge_preset_packages
 
         project = _require_project(ctx)
         try:
@@ -443,7 +443,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         response_model=CreatorMergePresetPackagesResponse,
     )
     def creator_settings_merge_factory_preset_packages() -> CreatorMergePresetPackagesResponse:
-        from infra.creator_merge_preferences import list_factory_merge_preset_packages
+        from lingwen_creator.settings.merge_preferences import list_factory_merge_preset_packages
 
         packages = list_factory_merge_preset_packages()
         return CreatorMergePresetPackagesResponse(
@@ -457,7 +457,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_factory_preset_publish(
         req: CreatorMergePresetFactoryPublishRequest,
     ) -> CreatorMergePresetFactoryPublishResponse:
-        from infra.creator_merge_preferences import publish_merge_preset_to_factory
+        from lingwen_creator.settings.merge_preferences import publish_merge_preset_to_factory
 
         project = _require_project(ctx)
         try:
@@ -478,7 +478,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_factory_preset_pull_preflight(
         req: CreatorMergePresetFactoryPullRequest,
     ) -> CreatorMergePresetFactoryPullPreflightResponse:
-        from infra.creator_merge_preferences import preflight_factory_merge_preset_pull
+        from lingwen_creator.settings.merge_preferences import preflight_factory_merge_preset_pull
 
         project = _require_project(ctx)
         try:
@@ -495,7 +495,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         package_id: str,
         limit: int = 10,
     ) -> CreatorMergePresetChangelogResponse:
-        from infra.creator_merge_preferences import list_merge_preset_changelog
+        from lingwen_creator.settings.merge_preferences import list_merge_preset_changelog
 
         project = _require_project(ctx)
         try:
@@ -516,7 +516,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         package_id: str,
         entry_index: int = 0,
     ) -> CreatorMergePresetChangelogDiffResponse:
-        from infra.creator_merge_preferences import preview_merge_preset_changelog_diff
+        from lingwen_creator.settings.merge_preferences import preview_merge_preset_changelog_diff
 
         project = _require_project(ctx)
         try:
@@ -543,7 +543,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_factory_preset_pull(
         req: CreatorMergePresetFactoryPullRequest,
     ) -> CreatorMergePresetFactoryPullResponse:
-        from infra.creator_merge_preferences import pull_factory_merge_presets_to_project
+        from lingwen_creator.settings.merge_preferences import pull_factory_merge_presets_to_project
 
         project = _require_project(ctx)
         try:
@@ -569,7 +569,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_settings_merge_factory_preset_delete(
         package_id: str,
     ) -> CreatorMergePresetFactoryDeleteResponse:
-        from infra.creator_merge_preferences import delete_factory_merge_preset_package
+        from lingwen_creator.settings.merge_preferences import delete_factory_merge_preset_package
 
         try:
             result = delete_factory_merge_preset_package(package_id)
