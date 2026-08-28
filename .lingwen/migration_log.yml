@@ -1,9 +1,50 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.2.6"  # 最新 phase 闭环 (v16.2.6 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
+version: "16.3"  # 最新 phase 闭环 (v16.3 import-linter DP-01..06 enforcement)
 
 phases:
+  - phase: 126
+    version: 16.3
+    date: 2026-08-28
+    scope: import-linter DP-01..06 enforcement — 永久固化架构边界
+    commits:
+      - "T1.a: 3 pages (Chapters/Analytics/Workflows) migrate from @/api/index.js barrel to typed wrappers (@/api/health + @/api/workflows)"
+      - "T1.b: StudioPage + useStudioStore migrate to @/api/studio + @/api/content (split)"
+      - "T1.c: RipplesPage + CascadeRunsPanel migrate to @/api/cvg"
+      - "T1.d: SettingsPage migrate to @/api/budgets; useSettingsDocs migrate to @/api/settings (bonus fix fragile '../../api/settings.js' → '@/api/settings')"
+      - "T2.1.a: shared/mode.py moves from lingwen_creator/shared/ to lingwen_shared/ (true leaf); lingwen_creator/shared/mode.py becomes back-compat shim (closes v16.2.4 §5.1 carryover)"
+      - "T2.1.b: infra/project_config.py + infra/project_init.py switch import from lingwen_creator.shared.mode to lingwen_shared.mode"
+      - "T2.1.c: pyproject.toml [tool.importlinter] config — 1 contract: layer_dependencies (apps.studio_api → lingwen_creator → infra)"
+      - "T2.2: tooling/hygiene/check_import_linter.py skeleton → real (runs lint-imports + glob infra/creator_*.py check); Makefile adds it; 4 hygiene tests added"
+      - "T3.1: apps/dashboard/eslint.config.js — no-restricted-imports rule for src/** (block infra/* + lingwen_creator/*)"
+      - "T3.2: eslint.config.js — no-restricted-imports rule for src/{composables,stores,pages,components}/** (block @/api/index.js barrel)"
+      - "T3.3: apps/dashboard/tests/eslint-rules/no-restricted-imports.test.cjs — 13 regression tests (5 isolation + 5 barrel + 3 positive)"
+      - "T4.1: 6 page tests updated with parallel typed wrapper mocks (per v16.2.8 §3 lesson 1: hoisted mock pattern)"
+      - "T4.2: knip.json cleanup — 13 typed wrappers removed from ignore; 4 advisory kept (knip can't resolve @/ alias)"
+    final_gates:
+      vitest: "1729 passed / 1 skipped (0 regression vs v16.2.8)"
+      backend_pytest: "544 passed (unchanged); +26 hygiene tests (NEW)"
+      vue_tsc: "0 errors"
+      ruff: "0 errors"
+      knip: "0 (3 advisory, -2 vs v16.2.8 baseline 5)"
+      eslint: "0 errors (2 NEW no-restricted-imports rules active)"
+      lint_imports: "1 contract kept (layer_dependencies); 0 broken"
+      make_check: "4 scripts (NEW check_import_linter.py)"
+      creator_shims: "0 (v16.2.7 baseline preserved)"
+      barrel_consumers_in_src: "0 (was 8 in v16.2.8)"
+    new_lessons:
+      - "import-linter forbidden_modules glob syntax: 'infra.creator_*' rejected (wildcard must replace whole module); file-existence check via glob is the reliable gate for shim resurrection"
+      - "import-linter layers ordering: layers[0]=top (api_gateway), layers[N]=bottom (infra). Higher may import lower, lower MUST NOT import higher — easy to invert by accident"
+      - "Mode.py placement: cross-subdomain utility must be in lingwen_shared (true leaf), NOT lingwen_creator/shared. v16.2.4 spec assumed latter; only surfaces when import-linter layer contract enforces it. Architecture invariants must be enforced to be discovered"
+      - "ESLint no-restricted-imports patterns use minimatch glob — literal + /* + /** + **/... 4 forms cover all cases"
+      - "Hoisted mock pattern re-confirmed (6 page tests): barrel mock + typed wrapper mock must share SAME vi.fn instances via vi.hoisted(). Per-file mechanical update, but MUST be done per test atomically"
+    carryover_to_v16_4:
+      - "DP-01 enforcement (cross-package contracts via ports) — 4 import forms across lingwen-* packages"
+      - "DP-02 enforcement (LLMServicePort via import-linter forbidden contract)"
+      - "DTO schema audit (carryover from v16.2.7/v16.2.8 — 4 production as unknown as casts + 2 test casts)"
+      - "Typed wrapper type narrowing — 41 funcs in 5 new wrappers return Promise<unknown>; add DTOs to shared contracts"
+    status: closed
   - phase: 126
     version: 16.2.6
     date: 2026-08-28
