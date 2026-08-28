@@ -4,12 +4,12 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_creator.onboarding.webhook import (
     dispatch_mention_webhook,
     load_webhook_config,
     save_webhook_config,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

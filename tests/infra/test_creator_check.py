@@ -5,9 +5,9 @@ from dataclasses import dataclass
 
 import pytest
 from lingwen_cli.options import CheckOptions
-
 from lingwen_creator.shared.check import apply_creator_check_defaults
 from lingwen_creator.shared.mode import CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
+
 from infra.paths import ProjectPaths
 
 

@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.onboarding.notifications import (
     build_notification_digest,
     record_mentions_from_notes,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

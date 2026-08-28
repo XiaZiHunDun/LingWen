@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.onboarding.progress import (
     effective_completed_step_ids,
     load_onboarding_progress,
@@ -10,6 +9,7 @@ from lingwen_creator.onboarding.progress import (
     reconcile_onboarding_toggle,
     save_onboarding_progress,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

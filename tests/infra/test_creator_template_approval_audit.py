@@ -4,7 +4,6 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
     export_template_approval_audit,
@@ -13,6 +12,7 @@ from lingwen_creator.volume.template_approvals import (
     submit_template_version_approval,
 )
 from lingwen_creator.volume.templates import save_custom_volume_template
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

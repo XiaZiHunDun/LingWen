@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.onboarding.autodetect import infer_auto_completed_steps
 from lingwen_creator.volume.plan import save_volume_plan
+
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.project_init import init_minimal_short_project

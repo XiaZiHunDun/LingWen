@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.volume.templates import (
     get_template_version_changelog,
     save_custom_volume_template,
     set_custom_template_version_label,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

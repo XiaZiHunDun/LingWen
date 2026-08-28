@@ -90,7 +90,6 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
         req: CreatorSettingsDocsSaveRequest,
     ) -> CreatorSettingsDocsResponse:
         from lingwen_creator.settings.docs import save_creator_settings_docs
-
         from lingwen_creator.shared.revision import CreatorDocConflictError
 
         project = _require_project(ctx)

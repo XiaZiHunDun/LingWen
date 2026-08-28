@@ -4,12 +4,12 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from lingwen_creator.onboarding.email import (
     dispatch_mention_email,
     load_email_config,
     save_email_config,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

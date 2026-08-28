@@ -4,12 +4,12 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_creator.onboarding.digest_schedule import (
     dispatch_scheduled_digest,
     save_digest_schedule,
 )
 from lingwen_creator.onboarding.notifications import record_mentions_from_notes
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

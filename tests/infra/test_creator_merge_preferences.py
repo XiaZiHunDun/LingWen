@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.settings.merge_preferences import load_merge_preferences, save_merge_preferences
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

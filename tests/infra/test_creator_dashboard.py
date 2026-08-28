@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from lingwen_creator.content.dashboard import creator_overview
+
 from infra.paths import ProjectPaths
 from infra.studio_registry import get_project_by_slug
 

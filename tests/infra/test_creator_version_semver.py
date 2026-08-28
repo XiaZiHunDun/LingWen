@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.volume.templates import (
     is_valid_version_label,
     validate_version_label,

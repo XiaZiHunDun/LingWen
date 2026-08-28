@@ -1,12 +1,12 @@
 """Tests for post-v7.0 product features: share collab v2, diff collab notes."""
 from __future__ import annotations
 
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_creator.onboarding.diff_collab import (
     load_diff_collab_notes,
     merge_diff_collab_notes,
     save_diff_collab_notes,
 )
-from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_creator.volume.plan_share import decode_share_token, encode_share_token
 
 

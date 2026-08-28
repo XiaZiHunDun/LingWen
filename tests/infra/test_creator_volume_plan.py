@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.shared.revision import CreatorDocConflictError
 from lingwen_creator.volume.plan import (
     VolumeEntry,
@@ -15,6 +14,7 @@ from lingwen_creator.volume.plan import (
     split_volume,
     volume_plan_revision,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

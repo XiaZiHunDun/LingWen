@@ -4,14 +4,6 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-
-from lingwen_creator.settings.merge_preferences import (
-    list_merge_preset_changelog,
-    preview_merge_preset_changelog_diff,
-    publish_merge_preset_to_factory,
-    pull_factory_merge_presets_to_project,
-    save_merge_preset_package,
-)
 from lingwen_creator.onboarding.digest_schedule import (
     _append_dead_letter,
     enqueue_digest_retry,
@@ -20,6 +12,13 @@ from lingwen_creator.onboarding.digest_schedule import (
     process_digest_retries,
     replay_digest_dead_letter,
     save_digest_schedule,
+)
+from lingwen_creator.settings.merge_preferences import (
+    list_merge_preset_changelog,
+    preview_merge_preset_changelog_diff,
+    publish_merge_preset_to_factory,
+    pull_factory_merge_presets_to_project,
+    save_merge_preset_package,
 )
 from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
@@ -30,6 +29,7 @@ from lingwen_creator.volume.template_approvals import (
     submit_template_version_approval,
 )
 from lingwen_creator.volume.templates import save_custom_volume_template, set_custom_template_version_label
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

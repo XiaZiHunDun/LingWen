@@ -6,6 +6,7 @@ from lingwen_creator.shared.mode import (
     CREATION_MODE_COMPANION,
     CREATION_MODE_STUDIO,
 )
+
 from infra.project_init import init_minimal_short_project
 from lingwen_cli.options import InitProjectOptions
 

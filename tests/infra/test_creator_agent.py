@@ -4,7 +4,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from lingwen_creator.content.agent import iter_creator_agent_plan_stream, run_creator_agent_plan
 
 

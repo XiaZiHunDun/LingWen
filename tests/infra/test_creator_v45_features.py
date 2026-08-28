@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.content.dashboard import creator_chapter_preview, save_creator_chapter_outline
 from lingwen_creator.content.logic_check import run_creator_logic_check
 from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

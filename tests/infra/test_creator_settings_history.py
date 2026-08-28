@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.settings.docs import save_creator_settings_docs
 from lingwen_creator.settings.history import (
     append_settings_snapshot,
     restore_settings_snapshot,
     settings_history_payload,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

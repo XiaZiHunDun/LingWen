@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import pytest
-
 from lingwen_creator.settings.merge_preferences import (
     apply_all_merge_preset_fixes,
     import_merge_preset_packages,
     preflight_merge_preset_import,
 )
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

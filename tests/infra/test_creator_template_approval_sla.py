@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
-
 from lingwen_creator.volume.template_approvals import (
     _load_store,
     _save_store,
@@ -14,6 +13,7 @@ from lingwen_creator.volume.template_approvals import (
     submit_template_version_approval,
 )
 from lingwen_creator.volume.templates import save_custom_volume_template
+
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
