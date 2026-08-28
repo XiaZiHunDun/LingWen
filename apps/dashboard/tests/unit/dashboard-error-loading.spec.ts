@@ -29,6 +29,12 @@ vi.mock('../../src/api/index.js', () => ({
   fetchChapters: mocks.fetchChapters,
 }))
 
+// v16.2.8 T3.A: parallel mock for typed wrapper (per v16.2.7 §3 lesson 1)
+vi.mock('../../src/api/health.js', () => ({
+  fetchOverview: mocks.fetchOverview,
+  fetchChapters: mocks.fetchChapters,
+}))
+
 beforeEach(() => {
   mocks.fetchOverview.mockReset()
   mocks.fetchChapters.mockReset()

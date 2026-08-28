@@ -6,7 +6,8 @@
  */
 
 import { ref } from 'vue'
-import { fetchWorkflows } from '../api/index.js'
+// Phase 126 v16.2.8 T3.A: migrate to typed wrapper.
+import { fetchWorkflows } from '@/api/workflows'
 import { createSingletonLifecycle, withLoadingState } from '../utils/asyncStoreUtils.js'
 
 const workflows = ref([])

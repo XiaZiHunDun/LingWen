@@ -7,26 +7,20 @@ import { byTestid } from '../helpers/by-testid'
 const pendingUpdates = ref<Array<Record<string, unknown>>>([])
 
 const mocks = vi.hoisted(() => ({
-  fetchRipples: vi.fn(),
-  fetchRippleStats: vi.fn(),
+  fetchRipples: vi.fn().mockResolvedValue([]),
+  fetchRippleStats: vi.fn().mockResolvedValue({ total: 0, by_status: {}, by_volume: {} }),
   fetchRippleDetail: vi.fn(),
   fetchReferenceGraph: vi.fn(),
-  applyRipple: vi.fn(),
-  rejectRipple: vi.fn(),
-}))
-
-vi.mock('../../src/api/index.js', () => ({
-  fetchRipples: mocks.fetchRipples,
-  fetchRippleStats: mocks.fetchRippleStats,
-  fetchRippleDetail: mocks.fetchRippleDetail,
-  fetchReferenceGraph: mocks.fetchReferenceGraph,
   fetchRippleAudit: vi.fn().mockResolvedValue([]),
-  applyRipple: mocks.applyRipple,
-  rejectRipple: mocks.rejectRipple,
+  applyRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'applied' }),
+  rejectRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'rejected' }),
   rollbackRipple: vi.fn(),
   fetchRippleCascade: vi.fn().mockResolvedValue({ cascade_nodes: [], cascade_edges: [] }),
-  fetchRipplePreview: vi.fn().mockResolvedValue({}),
+  fetchRipplePreview: vi.fn().mockResolvedValue({ affected_chapter_count: 0 }),
 }))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/cvg.js', () => mocks)
 
 vi.mock('../../src/composables/useRippleSocket.js', () => ({
   useRippleSocket: () => ({

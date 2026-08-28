@@ -12,6 +12,7 @@
  */
 
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+// Phase 126 v16.2.8 T3.A: migrate to typed wrapper (per v16.2.1 convention).
 import {
   fetchRipples,
   fetchRippleStats,
@@ -21,7 +22,7 @@ import {
   rollbackRipple,
   fetchRippleCascade,     // Phase 9.15
   fetchRipplePreview,     // Phase 9.15
-} from '../api/index.js'
+} from '@/api/cvg'
 import { logger } from '../utils/logger.js'
 
 const ripples = ref([])

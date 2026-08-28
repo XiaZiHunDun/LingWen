@@ -5,19 +5,12 @@ import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { byTestid } from '../helpers/by-testid'
 
+// v16.2.8 T3.A: hoisted mocks (per v16.2.7 §3 lesson 1)
 const mocks = vi.hoisted(() => ({
-  fetchRipples: vi.fn(),
-  fetchRippleStats: vi.fn(),
+  fetchRipples: vi.fn().mockResolvedValue([]),
+  fetchRippleStats: vi.fn().mockResolvedValue({ total: 0, by_status: {}, by_volume: {} }),
   fetchRippleDetail: vi.fn(),
   fetchReferenceGraph: vi.fn(),
-  applyRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'applied' }),
-}))
-
-vi.mock('../../src/api/index.js', () => ({
-  fetchRipples: mocks.fetchRipples,
-  fetchRippleStats: mocks.fetchRippleStats,
-  fetchRippleDetail: mocks.fetchRippleDetail,
-  fetchReferenceGraph: mocks.fetchReferenceGraph,
   fetchRippleAudit: vi.fn().mockResolvedValue([]),
   applyRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'applied' }),
   rejectRipple: vi.fn().mockResolvedValue({ ripple_id: 'rip-1', status: 'rejected' }),
@@ -25,6 +18,9 @@ vi.mock('../../src/api/index.js', () => ({
   fetchRippleCascade: vi.fn().mockResolvedValue({ cascade_nodes: [], cascade_edges: [] }),
   fetchRipplePreview: vi.fn().mockResolvedValue({ affected_chapter_count: 0 }),
 }))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/cvg.js', () => mocks)
 
 vi.mock('../../src/composables/useRippleSocket.js', () => ({
   useRippleSocket: () => ({

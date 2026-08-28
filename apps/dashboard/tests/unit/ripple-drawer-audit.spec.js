@@ -13,7 +13,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import RippleDrawer from '../../src/components/RippleDrawer.vue';
 
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks (per v16.2.7 §3 lesson 1)
+const mocks = vi.hoisted(() => ({
   fetchRippleAudit: vi.fn(),
   rollbackRipple: vi.fn(),
   fetchRipples: vi.fn(),
@@ -21,6 +22,9 @@ vi.mock('../../src/api/index.js', () => ({
   applyRipple: vi.fn(),
   rejectRipple: vi.fn(),
 }));
+
+vi.mock('../../src/api/index.js', () => mocks);
+vi.mock('../../src/api/cvg.js', () => mocks);
 
 const baseRipple = {
   ripple_id: 'rip-1',
@@ -43,7 +47,7 @@ describe('RippleDrawer audit timeline', () => {
     // 必须在 useRippleStore() 调用之前设置, 否则 singleton store 第一个 mount
     // 时 refresh() 会拿到 undefined, 把 ripples.value 覆盖成 undefined,
     // 后续 store.rollback() findIndex() 报 TypeError
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRipples.mockResolvedValue([]);
     api.fetchRippleStats.mockResolvedValue({ total: 0, by_status: {}, by_volume: {} });
   });
@@ -55,7 +59,7 @@ describe('RippleDrawer audit timeline', () => {
   });
 
   it('drawer_calls_fetch_audit_on_mount', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRippleAudit.mockResolvedValue([]);
     mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
     await flushPromises();
@@ -63,7 +67,7 @@ describe('RippleDrawer audit timeline', () => {
   });
 
   it('drawer_renders_audit_entries_with_action_actor_timestamp', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRippleAudit.mockResolvedValue([
       { id: 1, action: 'applied', actor: 'user', origin: 'ui', created_at: '2026-06-10T10:00:00', reason: null },
       { id: 2, action: 'created', actor: 'system', origin: 'system', created_at: '2026-06-10T09:00:00', reason: null },
@@ -77,7 +81,7 @@ describe('RippleDrawer audit timeline', () => {
   });
 
   it('rollback_button_hidden_for_pending', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRippleAudit.mockResolvedValue([]);
     const pending = { ...baseRipple, status: 'pending' };
     const wrapper = mount(RippleDrawer, { props: { ripple: pending, open: true } });
@@ -86,7 +90,7 @@ describe('RippleDrawer audit timeline', () => {
   });
 
   it('rollback_button_shown_for_applied', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRippleAudit.mockResolvedValue([]);
     const wrapper = mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
     await flushPromises();
@@ -94,7 +98,7 @@ describe('RippleDrawer audit timeline', () => {
   });
 
   it('rollback_click_prompts_and_calls_store_rollback', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     // fetchRipples 返回包含 baseRipple 的列表 — 这样 component mount 时的
     // refresh() 不会把 ripples.value 覆盖成空数组 (store.rollback 需要 ripple 在 list)
     api.fetchRipples.mockResolvedValue([{ ...baseRipple }]);
@@ -111,7 +115,7 @@ describe('RippleDrawer audit timeline', () => {
   });
 
   it('empty_audit_shows_no_history', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRippleAudit.mockResolvedValue([]);
     const wrapper = mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
     await flushPromises();

@@ -12,7 +12,7 @@
 //   - api.rollbackRipple sends POST with reason (POST /api/cvg/ripples/{id}/rollback)
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../src/api/index.js', () => ({
+vi.mock('../../src/api/cvg.js', () => ({
   fetchRipples: vi.fn(),
   fetchRippleStats: vi.fn(),
   applyRipple: vi.fn(),
@@ -29,7 +29,7 @@ describe('useRippleStore audit actions', () => {
   });
 
   it('fetchAudit returns entries on success', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     const entries = [{ id: 1, action: 'created', actor: 'sys', origin: 'system' }];
     api.fetchRippleAudit.mockResolvedValue(entries);
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
@@ -40,7 +40,7 @@ describe('useRippleStore audit actions', () => {
   });
 
   it('fetchAudit sets lastError on failure', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRippleAudit.mockRejectedValue(new Error('network'));
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
@@ -49,7 +49,7 @@ describe('useRippleStore audit actions', () => {
   });
 
   it('rollback updates ripple status optimistically', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     const updated = { ripple_id: 'rip-1', status: 'pending', applied_at: null };
     api.rollbackRipple.mockResolvedValue(updated);
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
@@ -65,7 +65,7 @@ describe('useRippleStore audit actions', () => {
   });
 
   it('rollback sets lastError and does not mutate on failure', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.rollbackRipple.mockRejectedValue(new Error('422'));
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
@@ -79,7 +79,7 @@ describe('useRippleStore audit actions', () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve([]) });
     global.fetch = mockFetch;
     // vi.importActual: 拿真实 module (不取 mock) 来测 fetch URL/options
-    const api = await vi.importActual('../../src/api/index.js');
+    const api = await vi.importActual('../../src/api/cvg.js');
     await api.fetchRippleAudit('rip-1');
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/cvg/ripples/rip-1/audit'),
@@ -91,7 +91,7 @@ describe('useRippleStore audit actions', () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
     global.fetch = mockFetch;
     // vi.importActual: 拿真实 module (不取 mock) 来测 fetch URL/options
-    const api = await vi.importActual('../../src/api/index.js');
+    const api = await vi.importActual('../../src/api/cvg.js');
     await api.rollbackRipple('rip-1', 'reason text');
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/cvg/ripples/rip-1/rollback'),
@@ -106,7 +106,7 @@ describe('useRippleStore audit actions', () => {
   // === Phase 9.15: cascade BFS + dry-run preview (cascade actions / preview) ===
 
   it('loadCascade fetches and caches cascade', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     const data = {
       trigger_ripple_id: 'rip-1',
       cascade_nodes: [{ id: 'n2', volume: 2, chapter: 1, dimension: 'character' }],
@@ -126,7 +126,7 @@ describe('useRippleStore audit actions', () => {
   });
 
   it('loadCascadePreview fetches and caches preview', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     const data = {
       ripple_id: 'rip-1',
       nodes_to_add: [],

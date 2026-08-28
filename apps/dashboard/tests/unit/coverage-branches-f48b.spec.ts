@@ -66,7 +66,8 @@ describe('useCostWindow abort race (F48b)', () => {
   })
 })
 
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks (per v16.2.7 §3 lesson 1)
+const mocks = vi.hoisted(() => ({
   fetchAllDecisions: vi.fn().mockResolvedValue([
     {
       decision_id: 'd-p',
@@ -85,6 +86,21 @@ vi.mock('../../src/api/index.js', () => ({
   fetchWorkflows: vi.fn().mockResolvedValue([]),
   fetchOverview: vi.fn().mockResolvedValue({}),
   fetchChapters: vi.fn().mockResolvedValue({ chapters: [] }),
+}))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/decisions.js', () => ({
+  fetchAllDecisions: mocks.fetchAllDecisions,
+  resolveDecision: mocks.resolveDecision,
+  deferDecision: mocks.deferDecision,
+  cancelDecision: mocks.cancelDecision,
+}))
+vi.mock('../../src/api/workflows.js', () => ({
+  fetchWorkflows: mocks.fetchWorkflows,
+}))
+vi.mock('../../src/api/health.js', () => ({
+  fetchOverview: mocks.fetchOverview,
+  fetchChapters: mocks.fetchChapters,
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({

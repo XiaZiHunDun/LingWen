@@ -20,8 +20,10 @@ import { describe, test, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { byTestid } from '../helpers/by-testid'
 
-// 顶层 mock api (跟 Phase 8.30b dashboard.spec.ts 同 pattern)
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks so the SAME vi.fn() instances are shared between
+// the legacy api/index.js barrel re-exports AND the typed-wrapper modules
+// (per v16.2.7 §3 lesson 1).
+const mocks = vi.hoisted(() => ({
   fetchAllDecisions: vi.fn().mockResolvedValue([]),
   resolveDecision: vi.fn().mockResolvedValue({}),
   deferDecision: vi.fn().mockResolvedValue({}),
@@ -29,6 +31,21 @@ vi.mock('../../src/api/index.js', () => ({
   fetchWorkflows: vi.fn().mockResolvedValue([]),
   fetchOverview: vi.fn().mockResolvedValue({}),
   fetchChapters: vi.fn().mockResolvedValue({ chapters: [] }),
+}))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/decisions.js', () => ({
+  fetchAllDecisions: mocks.fetchAllDecisions,
+  resolveDecision: mocks.resolveDecision,
+  deferDecision: mocks.deferDecision,
+  cancelDecision: mocks.cancelDecision,
+}))
+vi.mock('../../src/api/workflows.js', () => ({
+  fetchWorkflows: mocks.fetchWorkflows,
+}))
+vi.mock('../../src/api/health.js', () => ({
+  fetchOverview: mocks.fetchOverview,
+  fetchChapters: mocks.fetchChapters,
 }))
 
 // 顶层 mock WS composable: 默认 connected + 空 pending (happy path)

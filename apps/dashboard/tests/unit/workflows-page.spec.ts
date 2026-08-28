@@ -21,22 +21,43 @@ import { describe, test, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { byTestid } from '../helpers/by-testid'
 
-// 顶层 mock api (跟 Phase 8.30b dashboard.spec.ts 同 pattern)
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks so the SAME vi.fn() instances are shared between
+// the legacy api/index.js barrel re-exports AND the typed-wrapper modules
+// (per v16.2.7 §3 lesson 1). Without hoisting, each `vi.mock()` factory
+// creates fresh vi.fn() instances per module path → assertions on the typed
+// wrapper miss calls invoked through the barrel.
+const mocks = vi.hoisted(() => ({
   fetchAllDecisions: vi.fn().mockResolvedValue([]),
   resolveDecision: vi.fn().mockResolvedValue({}),
   deferDecision: vi.fn().mockResolvedValue({}),
   cancelDecision: vi.fn().mockResolvedValue({}),
-  // 默认返 2 个 fixture workflow, 让 list 渲染
+  fetchOverview: vi.fn().mockResolvedValue({}),
+  fetchChapters: vi.fn().mockResolvedValue({ chapters: [] }),
   fetchWorkflows: vi.fn().mockResolvedValue([
     { name: 'novel_writing', node_count: 7, path: 'wf/novel_writing.yaml', has_decision_nodes: true },
     { name: 'character_design', node_count: 4, path: 'wf/character_design.yaml', has_decision_nodes: false },
   ]),
-  fetchOverview: vi.fn().mockResolvedValue({}),
-  fetchChapters: vi.fn().mockResolvedValue({ chapters: [] }),
   fetchWorkflowGraph: vi.fn().mockResolvedValue({ mermaid: 'graph TD\n  A-->B', workflow_name: 'novel_writing' }),
   runWorkflow: vi.fn().mockResolvedValue({ workflow_name: 'novel_writing', is_active: true }),
   resumeWorkflow: vi.fn().mockResolvedValue({ workflow_name: 'novel_writing', is_active: true }),
+}))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/workflows.js', () => ({
+  fetchWorkflows: mocks.fetchWorkflows,
+  fetchWorkflowGraph: mocks.fetchWorkflowGraph,
+  runWorkflow: mocks.runWorkflow,
+  resumeWorkflow: mocks.resumeWorkflow,
+}))
+vi.mock('../../src/api/decisions.js', () => ({
+  fetchAllDecisions: mocks.fetchAllDecisions,
+  resolveDecision: mocks.resolveDecision,
+  deferDecision: mocks.deferDecision,
+  cancelDecision: mocks.cancelDecision,
+}))
+vi.mock('../../src/api/health.js', () => ({
+  fetchOverview: mocks.fetchOverview,
+  fetchChapters: mocks.fetchChapters,
 }))
 
 // 顶层 mock WS composable: 默认 connected + 空 status (happy path)
@@ -91,7 +112,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
   test('error-banner 在 store.lastError 出现时显示 (mock fetchWorkflows reject)', async () => {
     // 重新加载模块 + 重设 api mock, 让 useWorkflowListStore 内部 refresh() 走 reject
     vi.resetModules()
-    const api = await import('../../src/api/index.js')
+    const api = await import('../../src/api/workflows.js')
     vi.mocked(api.fetchWorkflows).mockReset()
     vi.mocked(api.fetchWorkflows).mockRejectedValue(new Error('fetch fail'))
 
@@ -109,7 +130,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
   test('refresh button triggers list reload', async () => {
     const wrapper = mount(WorkflowsPage)
     await flushPromises()
-    const api = await import('../../src/api/index.js')
+    const api = await import('../../src/api/workflows.js')
     vi.mocked(api.fetchWorkflows).mockClear()
     await wrapper.find(byTestid('refresh-btn')).trigger('click')
     await flushPromises()
@@ -121,7 +142,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     await flushPromises()
     await wrapper.findAll(byTestid('wf-item'))[0].trigger('click')
     await flushPromises()
-    const api = await import('../../src/api/index.js')
+    const api = await import('../../src/api/workflows.js')
     await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
     expect(api.runWorkflow).toHaveBeenCalled()
@@ -129,7 +150,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
 
   test('run form shows error on invalid JSON', async () => {
     vi.resetModules()
-    const api = await import('../../src/api/index.js')
+    const api = await import('../../src/api/workflows.js')
     vi.mocked(api.fetchWorkflows).mockResolvedValue([
       { name: 'novel_writing', node_count: 7, path: 'wf/novel_writing.yaml', has_decision_nodes: true },
     ])
@@ -154,7 +175,7 @@ describe('WorkflowsPage (page-level) — Phase 8.39', () => {
     expect(btn.exists()).toBe(true)
     await btn.trigger('click')
     await flushPromises()
-    const api = await import('../../src/api/index.js')
+    const api = await import('../../src/api/workflows.js')
     expect(api.fetchWorkflowGraph).toHaveBeenCalled()
   })
 })

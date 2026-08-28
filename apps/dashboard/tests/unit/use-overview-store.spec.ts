@@ -13,17 +13,17 @@ import { mount, flushPromises } from '@vue/test-utils'
 // Phase 8.34: useOverviewStore module-level singleton
 // Owns overview + chapters data, fetched in parallel via Promise.all.
 // Per-page UI state (chartData, statCards computed) stays in OverviewPage.
-vi.mock('../../src/api/index.js', () => ({
+vi.mock('../../src/api/health.js', () => ({
   fetchOverview: vi.fn(),
   fetchChapters: vi.fn(),
 }))
 
 let useOverviewStore: typeof import('../../src/composables/useOverviewStore.js').useOverviewStore
-let api: typeof import('../../src/api/index.js')
+let api: typeof import('../../src/api/health.js')
 
 beforeEach(async () => {
   vi.resetModules()
-  api = await import('../../src/api/index.js')
+  api = await import('../../src/api/health.js')
   vi.mocked(api.fetchOverview).mockReset()
   vi.mocked(api.fetchChapters).mockReset()
   vi.mocked(api.fetchOverview).mockResolvedValue({})

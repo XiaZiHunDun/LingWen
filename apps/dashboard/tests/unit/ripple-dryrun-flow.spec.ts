@@ -50,7 +50,8 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   onAuditCreated: vi.fn(() => () => {}),
 }))
 
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks (per v16.2.7 §3 lesson 1)
+const mocks = vi.hoisted(() => ({
   fetchRippleAudit: vi.fn().mockResolvedValue([]),
   rollbackRipple: vi.fn(),
   fetchRipples: vi.fn().mockResolvedValue([]),
@@ -63,6 +64,9 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCascadeRunReplay: vi.fn(),
   cancelCascadeRun: vi.fn(),
 }))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/cvg.js', () => mocks)
 
 import RippleDrawer from '../../src/components/RippleDrawer.vue'
 

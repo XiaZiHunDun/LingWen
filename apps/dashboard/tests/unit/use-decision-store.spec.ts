@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
-vi.mock('../../src/api/index.js', () => ({
+vi.mock('../../src/api/decisions.js', () => ({
   fetchAllDecisions: vi.fn(),
   resolveDecision: vi.fn(),
   deferDecision: vi.fn(),
@@ -15,11 +15,11 @@ vi.mock('../../src/api/index.js', () => ({
 }))
 
 let useDecisionStore: typeof import('../../src/composables/useDecisionStore.js').useDecisionStore
-let api: typeof import('../../src/api/index.js')
+let api: typeof import('../../src/api/decisions.js')
 
 beforeEach(async () => {
   vi.resetModules()
-  api = await import('../../src/api/index.js')
+  api = await import('../../src/api/decisions.js')
   vi.mocked(api.fetchAllDecisions).mockReset()
   vi.mocked(api.resolveDecision).mockReset()
   vi.mocked(api.deferDecision).mockReset()

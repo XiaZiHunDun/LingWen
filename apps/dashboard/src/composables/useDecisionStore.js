@@ -8,12 +8,13 @@
 //   cancel) 内部 await refresh() 是 sync 触发 (用户期待 mutation 后立即看到新数据).
 
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+// Phase 126 v16.2.8 T3.A: migrate to typed wrapper (per v16.2.1 convention).
 import {
   fetchAllDecisions,
   resolveDecision,
   deferDecision,
   cancelDecision,
-} from '../api/index.js'
+} from '@/api/decisions'
 
 const all = ref([])
 const loading = ref(false)

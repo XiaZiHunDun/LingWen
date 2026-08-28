@@ -11,16 +11,16 @@ import { mount, flushPromises } from '@vue/test-utils'
 // Simpler than useDecisionStore — only owns workflows list + refresh action.
 // Per-page UI state (selected, initialInputsJson, maxBacktracks, running,
 // showGraph, graphData, graphLoading, active) stays in WorkflowsPage.
-vi.mock('../../src/api/index.js', () => ({
+vi.mock('../../src/api/workflows.js', () => ({
   fetchWorkflows: vi.fn(),
 }))
 
 let useWorkflowListStore: typeof import('../../src/composables/useWorkflowListStore.js').useWorkflowListStore
-let api: typeof import('../../src/api/index.js')
+let api: typeof import('../../src/api/workflows.js')
 
 beforeEach(async () => {
   vi.resetModules()
-  api = await import('../../src/api/index.js')
+  api = await import('../../src/api/workflows.js')
   vi.mocked(api.fetchWorkflows).mockReset()
   vi.mocked(api.fetchWorkflows).mockResolvedValue([])
   const mod = await import('../../src/composables/useWorkflowListStore.js')

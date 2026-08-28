@@ -4,7 +4,7 @@
 //   applySocketUpdate ripple_status_changed / lastError on failure
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../src/api/index.js', () => ({
+vi.mock('../../src/api/cvg.js', () => ({
   fetchRipples: vi.fn(),
   fetchRippleStats: vi.fn(),
   applyRipple: vi.fn(),
@@ -19,7 +19,7 @@ describe('useRippleStore', () => {
   it('refresh fetches ripples and stats', async () => {
     const mockRipples = [{ ripple_id: 'r1', status: 'pending' }];
     const mockStats = { total: 1, by_status: { pending: 1 }, by_volume: { '1': 1 } };
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRipples.mockResolvedValue(mockRipples);
     api.fetchRippleStats.mockResolvedValue(mockStats);
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
@@ -32,7 +32,7 @@ describe('useRippleStore', () => {
   });
 
   it('apply updates ripple status optimistically', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.applyRipple.mockResolvedValue({ ripple_id: 'r1', status: 'applied' });
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
@@ -42,7 +42,7 @@ describe('useRippleStore', () => {
   });
 
   it('reject updates ripple status', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.rejectRipple.mockResolvedValue({ ripple_id: 'r1', status: 'rejected' });
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
@@ -75,7 +75,7 @@ describe('useRippleStore', () => {
   });
 
   it('lastError is set on refresh failure', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRipples.mockRejectedValue(new Error('network error'));
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
@@ -85,7 +85,7 @@ describe('useRippleStore', () => {
   });
 
   it('refresh passes sort_by and min_score filters', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRipples.mockResolvedValue([]);
     api.fetchRippleStats.mockResolvedValue({ total: 0, by_status: {}, by_volume: {} });
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
@@ -99,7 +99,7 @@ describe('useRippleStore', () => {
   });
 
   it('apply failure sets lastError', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.applyRipple.mockRejectedValue(new Error('apply fail'));
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();
@@ -108,7 +108,7 @@ describe('useRippleStore', () => {
   });
 
   it('reject failure sets lastError', async () => {
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.rejectRipple.mockRejectedValue(new Error('reject fail'));
     const { useRippleStore } = await import('../../src/composables/useRippleStore.js');
     const store = useRippleStore();

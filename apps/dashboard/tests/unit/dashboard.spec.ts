@@ -20,10 +20,10 @@ import { mount, flushPromises } from '@vue/test-utils'
 import OverviewPage from '../../src/pages/OverviewPage.vue'
 import { byTestid } from '../helpers/by-testid'
 
-// Phase 8.30b: mock api/index.js 模块 (fetchOverview + fetchChapters)
-// 返 fixture 让页面 mount 后 loadData() 不抛错. 后续 5 stat-card + chapter
-// table 都能 render.
-vi.mock('../../src/api/index.js', () => ({
+// Phase 8.30b: mock api 模块 (fetchOverview + fetchChapters) 返 fixture 让页面 mount 后 loadData() 不抛错.
+// v16.2.8 T3.A: hoisted mocks so the SAME vi.fn() instances are shared between the legacy
+// api/index.js barrel AND the typed-wrapper modules (per v16.2.7 §3 lesson 1).
+const mocks = vi.hoisted(() => ({
   fetchOverview: vi.fn().mockResolvedValue({
     total_chapters: 359,
     total_hooks: 2845,
@@ -37,6 +37,12 @@ vi.mock('../../src/api/index.js', () => ({
       { chapter: 2, hook_count: 7, hook_strength: 0.76, coolpoint_count: 4, coolpoint_density: 4.8 },
     ],
   }),
+}))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/health.js', () => ({
+  fetchOverview: mocks.fetchOverview,
+  fetchChapters: mocks.fetchChapters,
 }))
 
 describe('OverviewPage (page-level) — Phase 8.30b dashboard', () => {

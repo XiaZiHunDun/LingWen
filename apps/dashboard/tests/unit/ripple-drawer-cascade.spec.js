@@ -35,7 +35,8 @@ vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   onAuditCreated: vi.fn(() => () => {}),
 }));
 
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks (per v16.2.7 §3 lesson 1)
+const mocks = vi.hoisted(() => ({
   fetchRippleAudit: vi.fn(),
   rollbackRipple: vi.fn(),
   fetchRipples: vi.fn(),
@@ -45,6 +46,9 @@ vi.mock('../../src/api/index.js', () => ({
   fetchRippleCascade: vi.fn(),
   fetchRipplePreview: vi.fn(),
 }));
+
+vi.mock('../../src/api/index.js', () => mocks);
+vi.mock('../../src/api/cvg.js', () => mocks);
 
 const baseRipple = {
   ripple_id: 'rip-1',
@@ -66,7 +70,7 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
     registeredCascadeHandlers.clear();
     // 镜像 ripple-drawer-audit.spec.js: 显式 import + mockResolvedValue before mount
     // (避免 useRippleStore 单例 mount 时 refresh() 拿到 undefined)
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
     api.fetchRipples.mockResolvedValue([]);
     api.fetchRippleStats.mockResolvedValue({ total: 0, by_status: {}, by_volume: {} });
     api.fetchRippleAudit.mockResolvedValue([]);
@@ -88,7 +92,7 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
   it('matching_ripple_id_triggers_silent_refetch', async () => {
     vi.useFakeTimers();
     const RippleDrawer = (await import('../../src/components/RippleDrawer.vue')).default;
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
 
     mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
     await flushPromises();
@@ -118,7 +122,7 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
   it('debounced_cascade_updates_coalesce_to_single_refetch', async () => {
     vi.useFakeTimers();
     const RippleDrawer = (await import('../../src/components/RippleDrawer.vue')).default;
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
 
     mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
     await flushPromises();
@@ -140,7 +144,7 @@ describe('RippleDrawer cascade auto-refresh (Phase 9.16)', () => {
   it('non_matching_ripple_id_ignored_no_refetch', async () => {
     vi.useFakeTimers();
     const RippleDrawer = (await import('../../src/components/RippleDrawer.vue')).default;
-    const api = await import('../../src/api/index.js');
+    const api = await import('../../src/api/cvg.js');
 
     mount(RippleDrawer, { props: { ripple: baseRipple, open: true } });
     await flushPromises();

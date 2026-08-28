@@ -5,7 +5,8 @@ import { describe, test, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { byTestid } from '../helpers/by-testid'
 
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.A: hoisted mocks (per v16.2.7 §3 lesson 1)
+const mocks = vi.hoisted(() => ({
   fetchAllDecisions: vi.fn().mockResolvedValue([]),
   resolveDecision: vi.fn().mockResolvedValue({}),
   deferDecision: vi.fn().mockResolvedValue({}),
@@ -18,6 +19,24 @@ vi.mock('../../src/api/index.js', () => ({
   fetchWorkflowGraph: vi.fn().mockResolvedValue({ mermaid: 'graph TD\n  A-->B', workflow_name: 'novel_writing' }),
   runWorkflow: vi.fn().mockResolvedValue({ workflow_name: 'novel_writing', is_active: true }),
   resumeWorkflow: vi.fn().mockResolvedValue({ workflow_name: 'novel_writing', is_active: true }),
+}))
+
+vi.mock('../../src/api/index.js', () => mocks)
+vi.mock('../../src/api/decisions.js', () => ({
+  fetchAllDecisions: mocks.fetchAllDecisions,
+  resolveDecision: mocks.resolveDecision,
+  deferDecision: mocks.deferDecision,
+  cancelDecision: mocks.cancelDecision,
+}))
+vi.mock('../../src/api/workflows.js', () => ({
+  fetchWorkflows: mocks.fetchWorkflows,
+  fetchWorkflowGraph: mocks.fetchWorkflowGraph,
+  runWorkflow: mocks.runWorkflow,
+  resumeWorkflow: mocks.resumeWorkflow,
+}))
+vi.mock('../../src/api/health.js', () => ({
+  fetchOverview: mocks.fetchOverview,
+  fetchChapters: mocks.fetchChapters,
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({

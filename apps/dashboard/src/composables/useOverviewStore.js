@@ -6,7 +6,8 @@
  */
 
 import { ref } from 'vue'
-import { fetchOverview, fetchChapters } from '../api/index.js'
+// Phase 126 v16.2.8 T3.A: migrate to typed wrapper.
+import { fetchOverview, fetchChapters } from '@/api/health'
 import { createSingletonLifecycle, withLoadingState } from '../utils/asyncStoreUtils.js'
 
 const overview = ref({})
