@@ -6,8 +6,9 @@ changelog + rollback + approval workflow.
 
 Volume is ROOT — depended on by content (creator_dashboard → volume_plan/pulse)
 + settings (settings_docs/history → volume_plan) + onboarding (autodetect → volume_plan).
-Cycles via lazy imports in volume_plan_diff_payload (`from infra.creator_dashboard import _excerpt`)
-are handled by the shim re-export pattern (see v16.2.7 final cleanup).
+Cycles via lazy imports in volume_plan_diff_payload (`from
+lingwen_creator.content.dashboard import _excerpt`, kept function-body-local)
+are broken by deferring the import to call time.
 
 Migrated from infra/creator_volume_{plan,plan_share,pulse,summary,templates}.py
 + infra/creator_template_approvals.py.

@@ -588,7 +588,7 @@ def volume_plan_diff_payload(
     project_root: Path | str,
     draft: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    from infra.creator_dashboard import _excerpt
+    from lingwen_creator.content.dashboard import _excerpt
 
     root = _root(project_root)
     baseline = [v.to_dict() for v in load_volume_plan(root)]
