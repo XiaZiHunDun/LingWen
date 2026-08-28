@@ -1,7 +1,7 @@
 """Tests for infra.creator_dashboard."""
 from __future__ import annotations
 
-from infra.creator_dashboard import creator_overview
+from lingwen_creator.content.dashboard import creator_overview
 from infra.paths import ProjectPaths
 from infra.studio_registry import get_project_by_slug
 

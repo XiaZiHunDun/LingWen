@@ -55,39 +55,37 @@ def test_content_preferences_uses_shared_mode() -> None:
 
 
 def test_legacy_shims_deleted_mode() -> None:
-    """v16.2.7 T4.9: infra.creator_mode shim deleted, must raise ModuleNotFoundError.
-
-    Other 7 content shims (agent/batch_history/dashboard/logic_check/models/preferences/ui_profile)
-    are tested by test_content_legacy_shims_alive below (still alive until T4.11+T4.12).
-    """
+    """v16.2.7 T4.9: infra.creator_mode shim deleted, must raise ModuleNotFoundError."""
     import pytest
 
     with pytest.raises(ModuleNotFoundError):
         from infra.creator_mode import CreatorSettings  # noqa: F401
 
 
+def test_legacy_shims_deleted_content() -> None:
+    """v16.2.7 T4.10: 4 content shims deleted, must raise ModuleNotFoundError."""
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_models import list_creator_models_payload  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_preferences import creator_preferences_payload  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_logic_check import run_creator_logic_check  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_dashboard import creator_overview  # noqa: F401
+
+
 def test_content_legacy_shims_alive() -> None:
-    """7 content shims still alive (deleted in T4.11+T4.12)."""
+    """3 content shims still alive (deleted in T4.11+T4.12)."""
     from lingwen_creator.content.agent import run_creator_agent_plan
     from lingwen_creator.content.batch_history import enrich_batch_history_job
-    from lingwen_creator.content.dashboard import creator_overview
-    from lingwen_creator.content.logic_check import run_creator_logic_check
-    from lingwen_creator.content.models import list_creator_models_payload
-    from lingwen_creator.content.preferences import creator_preferences_payload
     from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
     from infra.creator_agent import run_creator_agent_plan as LegacyRun
     from infra.creator_batch_history import enrich_batch_history_job as LegacyEnrich
-    from infra.creator_dashboard import creator_overview as LegacyOverview
-    from infra.creator_logic_check import run_creator_logic_check as LegacyLogic
-    from infra.creator_models import list_creator_models_payload as LegacyModels
-    from infra.creator_preferences import creator_preferences_payload as LegacyPrefs
     from infra.creator_ui_profile import resolve_creator_ui_profile as LegacyUI
 
     assert LegacyRun is run_creator_agent_plan
     assert LegacyEnrich is enrich_batch_history_job
-    assert LegacyOverview is creator_overview
-    assert LegacyLogic is run_creator_logic_check
-    assert LegacyModels is list_creator_models_payload
-    assert LegacyPrefs is creator_preferences_payload
     assert LegacyUI is resolve_creator_ui_profile

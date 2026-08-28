@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.creator_preferences import (
+from lingwen_creator.content.preferences import (
     load_creator_preferences,
     normalize_creator_preferences,
     save_creator_preferences,
