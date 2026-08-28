@@ -1843,3 +1843,106 @@ class CreatorDashboardChapterPreview(BaseModel):
     project_slug: str
     outline: str = ""
     body: str = ""
+
+
+# =============================================================================
+# Export + Publish DTOs (Phase 126 v16.2.5)
+# =============================================================================
+
+
+class CreatorEpubExportRequest(BaseModel):
+    """POST /api/creator/export/epub request body."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    mode: str = "full"  # "full" | "range" | "submission"
+    start_chapter: Optional[int] = None
+    end_chapter: Optional[int] = None
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+    submission_sample_count: Optional[int] = 3
+
+
+class CreatorDocxExportRequest(BaseModel):
+    """POST /api/creator/export/docx request body."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    mode: str = "full"
+    start_chapter: Optional[int] = None
+    end_chapter: Optional[int] = None
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+    submission_sample_count: Optional[int] = 3
+
+
+class CreatorPublishRequest(BaseModel):
+    """POST /api/creator/publish request body."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    platform: str  # "fanqie" | "qidian" | "jjwxc" | "custom"
+    include_outline: bool = True
+    intro: str = ""
+    mode: str = "submission"
+
+
+class CreatorPublishEntry(BaseModel):
+    """Single publish job entry (response item + history row)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    platform: str
+    include_outline: bool
+    intro: str = ""
+    mode: str
+    status: str
+    message: str
+    created_at: str
+    adapter_id: Optional[str] = None
+    connection: Optional[str] = None
+    external_url: Optional[str] = None
+    package_hint: Optional[str] = None
+
+
+class CreatorPublishPlatformCapabilities(BaseModel):
+    """Capability descriptor for a publish platform (nested helper)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    supports_submission_pack: bool = True
+    supports_full_book: bool = False
+    oauth_required: bool = True
+    max_intro_chars: int = 2000
+
+
+class CreatorPublishPlatform(BaseModel):
+    """Single publish platform descriptor (nested helper)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    label: str
+    connection: str
+    capabilities: CreatorPublishPlatformCapabilities
+
+
+class CreatorPublishPlatformsResponse(BaseModel):
+    """GET /api/creator/publish/platforms response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    slug: str
+    platforms: list[CreatorPublishPlatform] = Field(default_factory=list)
+
+
+class CreatorPublishHistoryResponse(BaseModel):
+    """GET /api/creator/publish/history response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    slug: str
+    entries: list[CreatorPublishEntry] = Field(default_factory=list)

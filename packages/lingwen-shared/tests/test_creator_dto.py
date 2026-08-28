@@ -692,3 +692,150 @@ def test_settings_extra_ignored_for_settings_dtos() -> None:
     req = CreatorSettingsHistoryRestoreRequest(snapshot_id="snap-1", future_field=42)  # type: ignore[call-arg]
     assert req.snapshot_id == "snap-1"
     assert not hasattr(req, "future_field")
+
+
+# =============================================================================
+# Phase 126 v16.2.5: Export + Publish DTOs
+# =============================================================================
+
+
+def test_epub_export_request_defaults() -> None:
+    """CreatorEpubExportRequest has sensible defaults (full mode + 3 sample count)."""
+    from lingwen_shared.contracts.python.creator import CreatorEpubExportRequest
+
+    req = CreatorEpubExportRequest()
+    assert req.mode == "full"
+    assert req.submission_sample_count == 3
+    assert req.start_chapter is None
+    assert req.end_chapter is None
+    assert req.title is None
+    assert req.author is None
+    assert req.description is None
+
+
+def test_epub_export_request_full() -> None:
+    """CreatorEpubExportRequest with all fields populated."""
+    from lingwen_shared.contracts.python.creator import CreatorEpubExportRequest
+
+    req = CreatorEpubExportRequest(
+        mode="range",
+        start_chapter=1,
+        end_chapter=10,
+        title="林栀",
+        author="灵文作者",
+        description="测试导出",
+    )
+    assert req.start_chapter == 1
+    assert req.end_chapter == 10
+    assert req.title == "林栀"
+
+
+def test_docx_export_request_matches_epub() -> None:
+    """CreatorDocxExportRequest schema is identical to CreatorEpubExportRequest."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorDocxExportRequest,
+        CreatorEpubExportRequest,
+    )
+
+    epub = CreatorEpubExportRequest(mode="submission", submission_sample_count=5)
+    docx = CreatorDocxExportRequest(mode="submission", submission_sample_count=5)
+    assert epub.mode == docx.mode
+    assert epub.submission_sample_count == docx.submission_sample_count
+
+
+def test_publish_request_defaults() -> None:
+    """CreatorPublishRequest requires platform, defaults rest."""
+    from lingwen_shared.contracts.python.creator import CreatorPublishRequest
+
+    req = CreatorPublishRequest(platform="fanqie")
+    assert req.platform == "fanqie"
+    assert req.include_outline is True
+    assert req.intro == ""
+    assert req.mode == "submission"
+
+
+def test_publish_entry_round_trip() -> None:
+    """CreatorPublishEntry round-trips all fields including optional defaults."""
+    from lingwen_shared.contracts.python.creator import CreatorPublishEntry
+
+    entry = CreatorPublishEntry(
+        id="abc123",
+        platform="fanqie",
+        include_outline=True,
+        mode="submission",
+        status="adapter_stub",
+        message="已入队",
+        created_at="2026-08-28T10:00:00Z",
+        adapter_id="fanqie",
+        connection="stub",
+    )
+    assert entry.id == "abc123"
+    assert entry.external_url is None
+    assert entry.package_hint is None
+
+
+def test_publish_platform_capabilities_defaults() -> None:
+    """CreatorPublishPlatformCapabilities has sensible defaults."""
+    from lingwen_shared.contracts.python.creator import CreatorPublishPlatformCapabilities
+
+    caps = CreatorPublishPlatformCapabilities()
+    assert caps.supports_submission_pack is True
+    assert caps.supports_full_book is False
+    assert caps.oauth_required is True
+    assert caps.max_intro_chars == 2000
+
+
+def test_publish_platform_nested_capabilities() -> None:
+    """CreatorPublishPlatform embeds capabilities (nested helper)."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorPublishPlatform,
+        CreatorPublishPlatformCapabilities,
+    )
+
+    caps = CreatorPublishPlatformCapabilities(supports_full_book=True, max_intro_chars=500)
+    platform = CreatorPublishPlatform(
+        id="fanqie",
+        label="番茄小说",
+        connection="stub",
+        capabilities=caps,
+    )
+    assert platform.capabilities.max_intro_chars == 500
+    assert platform.capabilities.supports_full_book is True
+
+
+def test_publish_platforms_response_has_slug() -> None:
+    """CreatorPublishPlatformsResponse includes slug + platforms list."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorPublishPlatform,
+        CreatorPublishPlatformCapabilities,
+        CreatorPublishPlatformsResponse,
+    )
+
+    caps = CreatorPublishPlatformCapabilities()
+    platform = CreatorPublishPlatform(
+        id="custom", label="自定义", connection="disconnected", capabilities=caps,
+    )
+    resp = CreatorPublishPlatformsResponse(slug="test-project", platforms=[platform])
+    assert resp.slug == "test-project"
+    assert len(resp.platforms) == 1
+
+
+def test_publish_history_response_has_entries() -> None:
+    """CreatorPublishHistoryResponse includes slug + entries list."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorPublishEntry,
+        CreatorPublishHistoryResponse,
+    )
+
+    entry = CreatorPublishEntry(
+        id="x1",
+        platform="qidian",
+        include_outline=False,
+        mode="full",
+        status="queued",
+        message="OK",
+        created_at="2026-08-28",
+    )
+    resp = CreatorPublishHistoryResponse(slug="test-project", entries=[entry])
+    assert resp.entries[0].platform == "qidian"
+    assert resp.entries[0].include_outline is False

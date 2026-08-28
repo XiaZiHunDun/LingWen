@@ -60,6 +60,26 @@ export interface CreatorDiffCollabNotesResponse {
   count?: number;
 }
 
+export interface CreatorDocxExportRequest {
+  mode?: string;
+  start_chapter?: number | null;
+  end_chapter?: number | null;
+  title?: string | null;
+  author?: string | null;
+  description?: string | null;
+  submission_sample_count?: number | null;
+}
+
+export interface CreatorEpubExportRequest {
+  mode?: string;
+  start_chapter?: number | null;
+  end_chapter?: number | null;
+  title?: string | null;
+  author?: string | null;
+  description?: string | null;
+  submission_sample_count?: number | null;
+}
+
 export interface CreatorFactoryMergePresetOperationResponse {
   imported: number;
   skipped?: number;
@@ -446,6 +466,52 @@ export interface CreatorPreferencesSaveRequest {
   run_golden_set?: boolean | null;
   notify_per_chapter?: boolean | null;
   advance_volume_summary?: boolean | null;
+}
+
+export interface CreatorPublishEntry {
+  id: string;
+  platform: string;
+  include_outline: boolean;
+  intro?: string;
+  mode: string;
+  status: string;
+  message: string;
+  created_at: string;
+  adapter_id?: string | null;
+  connection?: string | null;
+  external_url?: string | null;
+  package_hint?: string | null;
+}
+
+export interface CreatorPublishHistoryResponse {
+  slug: string;
+  entries?: CreatorPublishEntry[];
+}
+
+export interface CreatorPublishPlatform {
+  id: string;
+  label: string;
+  connection: string;
+  capabilities: CreatorPublishPlatformCapabilities;
+}
+
+export interface CreatorPublishPlatformCapabilities {
+  supports_submission_pack?: boolean;
+  supports_full_book?: boolean;
+  oauth_required?: boolean;
+  max_intro_chars?: number;
+}
+
+export interface CreatorPublishPlatformsResponse {
+  slug: string;
+  platforms?: CreatorPublishPlatform[];
+}
+
+export interface CreatorPublishRequest {
+  platform: string;
+  include_outline?: boolean;
+  intro?: string;
+  mode?: string;
 }
 
 export interface CreatorSettingsDiffPart {
