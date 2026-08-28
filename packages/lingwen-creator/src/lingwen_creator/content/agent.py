@@ -234,10 +234,11 @@ def _build_llm_prompt(
 
 
 def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
-    from infra.llm_service import LLMService, LLMTask, TaskType
+    from infra.llm_service import LLMTask, TaskType  # LLMTask/TaskType still used as data types
+    from lingwen_llm.port_adapter import LLMServiceAdapter
 
-    service = LLMService.get()
-    raw = service.execute(
+    adapter = LLMServiceAdapter()
+    raw = adapter.execute(
         LLMTask(
             task_type=TaskType.REPAIR if not advice_only else TaskType.QUALITY_ANALYSIS,
             system=_AGENT_SYSTEM,
@@ -246,17 +247,18 @@ def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
             temperature=0.45,
         ),
     )
-    parsed = service.parse_json_response(raw)
+    parsed = adapter.parse_json_response(raw)
     if not isinstance(parsed, dict):
         raise ValueError("LLM response is not a JSON object")
     return parsed
 
 
 def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> Iterator[str]:
-    from infra.llm_service import LLMService, LLMTask, TaskType
+    from infra.llm_service import LLMTask, TaskType
+    from lingwen_llm.port_adapter import LLMServiceAdapter
 
-    service = LLMService.get()
-    yield from service.execute_stream(
+    adapter = LLMServiceAdapter()
+    yield from adapter.execute_stream(
         LLMTask(
             task_type=TaskType.REPAIR if not advice_only else TaskType.QUALITY_ANALYSIS,
             system=_AGENT_SYSTEM,
@@ -466,7 +468,7 @@ def run_creator_agent_plan(
             coerced = _coerce_plan_payload(parsed, fallback_advice_only=advice_only)
             if not coerced["advice_only"] and not coerced["candidates"] and not coerced["annotations"]:
                 raise ValueError("LLM returned empty plan")
-            from infra.llm_service import LLMService
+            from lingwen_llm.port_adapter import LLMServiceAdapter
 
             return _assemble_plan_result(
                 coerced,
@@ -474,7 +476,7 @@ def run_creator_agent_plan(
                 memory_hints=memory_hints,
                 lens_norm=lens_norm,
                 execution_mode=execution_mode,
-                provider=LLMService.get().provider_name,
+                provider=LLMServiceAdapter().provider_name,
                 stream_mode="sync",
             )
         except Exception as exc:
@@ -553,10 +555,10 @@ def iter_creator_agent_plan_stream(
                 parts.append(delta)
                 yield {"type": "chunk", "text": delta, "source": "llm"}
             raw = "".join(parts)
-            from infra.llm_service import LLMService
+            from lingwen_llm.port_adapter import LLMServiceAdapter
 
-            service = LLMService.get()
-            parsed = service.parse_json_response(raw)
+            adapter = LLMServiceAdapter()
+            parsed = adapter.parse_json_response(raw)
             if not isinstance(parsed, dict):
                 raise ValueError("LLM response is not a JSON object")
             coerced = _coerce_plan_payload(parsed, fallback_advice_only=advice_only)
@@ -568,7 +570,7 @@ def iter_creator_agent_plan_stream(
                 memory_hints=memory_hints,
                 lens_norm=lens_norm,
                 execution_mode=execution_mode,
-                provider=service.provider_name,
+                provider=adapter.provider_name,
                 stream_mode="llm_token",
             )
             if plan.get("advice_only"):
