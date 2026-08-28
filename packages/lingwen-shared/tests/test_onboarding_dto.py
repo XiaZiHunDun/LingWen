@@ -11,7 +11,6 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-
 # ---------------------------------------------------------------------------
 # Importability — all 30 onboarding DTOs available
 # ---------------------------------------------------------------------------
