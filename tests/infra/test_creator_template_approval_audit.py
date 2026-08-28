@@ -41,7 +41,7 @@ def test_export_approval_audit_includes_chain_log(factory_tmp) -> None:
         {"label": "一", "start_chapter": 1, "end_chapter": 12, "core_conflict": "x", "locked": False},
     ]
     saved = save_custom_volume_template(root, name="结构", volumes=volumes, max_chapter=12)
-    with patch("infra.creator_onboarding_webhook.dispatch_approval_webhook") as mock_hook:
+    with patch("lingwen_creator.onboarding.webhook.dispatch_approval_webhook") as mock_hook:
         pending = submit_template_version_approval(root, saved["id"], version_label="v1.0.0")
         approve_template_approval(root, pending["id"])
         assert mock_hook.call_count >= 2

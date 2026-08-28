@@ -40,7 +40,7 @@ def test_dispatch_scheduled_digest_when_forced(factory_tmp) -> None:
     )
     save_digest_schedule(root, enabled=True, interval_hours=24, channels=["webhook"])
     with patch(
-        "infra.creator_onboarding_webhook.dispatch_digest_webhook",
+        "lingwen_creator.onboarding.webhook.dispatch_digest_webhook",
         return_value={"sent": True},
     ) as mock_webhook:
         sent = dispatch_scheduled_digest(root, force=True)

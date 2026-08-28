@@ -42,8 +42,8 @@ def test_overdue_template_approvals(factory_tmp) -> None:
         {"label": "一", "start_chapter": 1, "end_chapter": 12, "core_conflict": "x", "locked": False},
     ]
     saved = save_custom_volume_template(root, name="结构", volumes=volumes, max_chapter=12)
-    with patch("infra.creator_onboarding_webhook.dispatch_approval_webhook"):
-        with patch("infra.creator_onboarding_email.dispatch_approval_email") as mock_email:
+    with patch("lingwen_creator.onboarding.webhook.dispatch_approval_webhook"):
+        with patch("lingwen_creator.onboarding.email.dispatch_approval_email") as mock_email:
             pending = submit_template_version_approval(root, saved["id"], version_label="v1.0.0")
             mock_email.assert_called()
     store = _load_store(root)

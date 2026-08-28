@@ -96,7 +96,7 @@ def test_notify_overdue_once(factory_tmp) -> None:
     past = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
     store["approvals"][0]["submitted_at"] = past
     _approvals_path(root).write_text(json.dumps(store, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    with patch("infra.creator_onboarding_email.dispatch_approval_email", return_value={"sent": True}) as mail:
+    with patch("lingwen_creator.onboarding.email.dispatch_approval_email", return_value={"sent": True}) as mail:
         first = notify_overdue_template_approvals(root)
         second = notify_overdue_template_approvals(root)
     assert first["notified"] == 1

@@ -72,7 +72,7 @@ def test_digest_retry_queue(factory_tmp) -> None:
     queue = load_digest_retry_queue(root)
     assert queue["item_count"] == 1
     with patch(
-        "infra.creator_onboarding_webhook.dispatch_digest_webhook",
+        "lingwen_creator.onboarding.webhook.dispatch_digest_webhook",
         return_value={"dispatched": 1},
     ):
         processed = process_digest_retries(root)
