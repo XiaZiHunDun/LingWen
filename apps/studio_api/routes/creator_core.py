@@ -282,7 +282,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/creator/export/epub")
     def creator_export_epub(req: CreatorEpubExportRequest) -> Response:
-        from infra.creator_export_epub import build_creator_epub_bytes
+        from lingwen_creator.export.epub import build_creator_epub_bytes
 
         project = _require_project(ctx)
         mode = req.mode if req.mode in {"full", "range", "submission"} else "full"
@@ -308,7 +308,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/creator/export/docx")
     def creator_export_docx(req: CreatorDocxExportRequest) -> Response:
-        from infra.creator_export_docx import build_creator_docx_bytes
+        from lingwen_creator.export.docx import build_creator_docx_bytes
 
         project = _require_project(ctx)
         mode = req.mode if req.mode in {"full", "range", "submission"} else "full"
@@ -334,7 +334,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/creator/publish", response_model=CreatorPublishEntry)
     def creator_publish_submit(req: CreatorPublishRequest) -> CreatorPublishEntry:
-        from infra.creator_publish import submit_creator_publish
+        from lingwen_creator.export.publish import submit_creator_publish
 
         project = _require_project(ctx)
         entry = submit_creator_publish(
@@ -348,7 +348,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/publish/platforms", response_model=CreatorPublishPlatformsResponse)
     def creator_publish_platforms() -> CreatorPublishPlatformsResponse:
-        from infra.creator_publish import list_publish_platforms
+        from lingwen_creator.export.publish import list_publish_platforms
 
         project = _require_project(ctx)
         return CreatorPublishPlatformsResponse(
@@ -360,7 +360,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_publish_history(
         limit: int = 10,
     ) -> CreatorPublishHistoryResponse:
-        from infra.creator_publish import list_creator_publish_history
+        from lingwen_creator.export.publish import list_creator_publish_history
 
         project = _require_project(ctx)
         return CreatorPublishHistoryResponse(**list_creator_publish_history(project, limit=limit))
