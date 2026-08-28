@@ -39,7 +39,13 @@ vi.mock('../../src/config/creatorPanelMatrix.js', () => ({
 vi.mock('../../src/utils/creatorChapterEntityUtils.js', () => ({
   resolveChapterEntities: (...args: unknown[]) => entityUtilsMocks.resolveChapterEntities(...args),
 }));
+// v16.2.7 T6.D: api/creator.js shim deleted; updateCreatorCreationMode moved to
+// @/api/content typed wrapper. Both mocks kept for back-compat (shim deletion
+// is the goal; remove this api/creator.js mock when shim is gone).
 vi.mock('../../src/api/creator.js', () => ({
+  updateCreatorCreationMode: (...args: unknown[]) => apiMocks.updateCreatorCreationMode(...args),
+}));
+vi.mock('../../src/api/content', () => ({
   updateCreatorCreationMode: (...args: unknown[]) => apiMocks.updateCreatorCreationMode(...args),
 }));
 vi.mock('../../src/composables/useStudioProject.js', () => ({

@@ -48,6 +48,16 @@ export async function fetchCreatorOverview(): Promise<CreatorOverviewResponse> {
   return data as CreatorOverviewResponse;
 }
 
+export async function updateCreatorCreationMode(mode: string): Promise<void> {
+  // v16.2.7 T6.D: was only in legacy api/creator.js → api/agent.js. Now in typed
+  // wrapper so useCreatorWriteWorkbench/useWorkbenchLayout.ts can drop its
+  // `api/creator.js` import and we can delete that barrel shim.
+  await request('/creator/overview/mode', {
+    method: 'PUT',
+    body: { mode },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // /creator/preferences (GET + PUT)
 // ---------------------------------------------------------------------------

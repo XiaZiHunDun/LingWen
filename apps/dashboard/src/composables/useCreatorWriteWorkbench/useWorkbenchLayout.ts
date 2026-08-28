@@ -21,7 +21,7 @@ import {
 } from '../../config/creatorPanelMatrix.js';
 import { resolveChapterEntities } from '../../utils/creatorChapterEntityUtils.js';
 import { useEffectiveCreationMode } from '../useEffectiveCreationMode.js';
-import { updateCreatorCreationMode } from '../../api/creator.js';
+import { updateCreatorCreationMode } from '@/api/content';
 
 type CreationMode = 'companion' | 'advance' | 'studio';
 const VALID_CREATION_MODES: ReadonlyArray<CreationMode> = ['companion', 'advance', 'studio'];

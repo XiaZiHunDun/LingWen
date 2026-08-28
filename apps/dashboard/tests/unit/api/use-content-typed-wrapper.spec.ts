@@ -36,9 +36,9 @@ describe('content typed wrapper (v16.2.4 Task T4)', () => {
 
   // --- exports count: 11 wrappers (matches real endpoints) ---
 
-  it('exports 11 wrapper functions', () => {
+  it('exports 12 wrapper functions', () => {  // v16.2.7 T6.D: added updateCreatorCreationMode (was 11)
     const wrappers = Object.entries(contentApi).filter(([, fn]) => typeof fn === 'function');
-    expect(wrappers.length).toBe(11);
+    expect(wrappers.length).toBe(12);
   });
 
   // --- static: no /api/ prefix in any wrapper body (TYPE-level regression lock) ---
