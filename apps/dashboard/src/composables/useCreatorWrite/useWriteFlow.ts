@@ -15,7 +15,7 @@ import {
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
   saveCreatorChapterOutline,
-} from '../../api/index.js';
+} from '@/api/content';
 import { saveWriteResume } from '../../utils/writeResumeStorage.js';
 import { extractMentionedEntityNames } from '../../utils/creatorChapterEntityUtils.js';
 
@@ -200,7 +200,7 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
       }
       await onAfterChapterSave();
       if ((uiProfile.value as { chapter_save_p0_recheck?: boolean }).chapter_save_p0_recheck) {
-        const { runCreatorLogicCheck } = await import('../../api/index.js');
+        const { runCreatorLogicCheck } = await import('@/api/content');
         const result = await runCreatorLogicCheck({ chapter: selectedChapter.value }) as { p0_count?: number };
         chapterRecheckResult.value = { ...result, chapter: selectedChapter.value };
         if ((result.p0_count || 0) > 0) {

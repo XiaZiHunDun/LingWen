@@ -3,7 +3,7 @@
  * @returns {import('../types/composables').CreatorPageReturn}
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { fetchCreatorOverview, runCreatorLogicCheck } from '../api/index.js';
+import { fetchCreatorOverview, runCreatorLogicCheck } from '@/api/content';
 import { creatorDefaultUiProfile } from './creatorDefaultUiProfile.js';
 import { getModeUiProfileDefaults, isHumanFirstDeskMode } from '../config/creatorPanelMatrix.js';
 import { useStudioProject } from './useStudioProject.js';

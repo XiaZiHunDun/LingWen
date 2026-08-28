@@ -8,7 +8,7 @@
  */
 import { ref } from 'vue';
 import type { Ref } from 'vue';
-import { exportCreatorBatchHistory } from '../../api/index.js';
+import { exportCreatorBatchHistory } from '@/api/content';
 import type { BatchJob } from './useBatchList';
 
 export interface BatchRestoreDeps {

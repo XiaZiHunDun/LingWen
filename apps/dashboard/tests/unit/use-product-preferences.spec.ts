@@ -10,13 +10,20 @@ import { ref, computed } from 'vue';
 // Mock API
 const prefMocks = vi.hoisted(() => ({
   fetchCreatorPreferences: vi.fn(),
-  saveCreatorPreferencesApi: vi.fn(),
+  saveCreatorPreferences: vi.fn(),
   fetchCreatorModels: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
   fetchCreatorPreferences: (...args: unknown[]) => prefMocks.fetchCreatorPreferences(...args),
-  saveCreatorPreferencesApi: (...args: unknown[]) => prefMocks.saveCreatorPreferencesApi(...args),
+  fetchCreatorModels: (...args: unknown[]) => prefMocks.fetchCreatorModels(...args),
+}));
+
+// v16.2.7 T6a: also mock the typed wrapper module so useProductPreferences (which
+// now imports from @/api/content) resolves the same mocks. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/content', () => ({
+  fetchCreatorPreferences: (...args: unknown[]) => prefMocks.fetchCreatorPreferences(...args),
+  saveCreatorPreferences: (...args: unknown[]) => prefMocks.saveCreatorPreferences(...args),
   fetchCreatorModels: (...args: unknown[]) => prefMocks.fetchCreatorModels(...args),
 }));
 
@@ -48,7 +55,7 @@ describe('useProductPreferences', () => {
     vi.clearAllMocks();
     prefMocks.fetchCreatorModels.mockResolvedValue({ models: [{ id: 'gpt-4', label: 'GPT-4' }] });
     prefMocks.fetchCreatorPreferences.mockResolvedValue({ memoryRagEnabled: true, modelId: 'gpt-4' });
-    prefMocks.saveCreatorPreferencesApi.mockResolvedValue({ ok: true });
+    prefMocks.saveCreatorPreferences.mockResolvedValue({ ok: true });
   });
 
   it('loadCreatorModels updates creatorModelOptions from API', async () => {
@@ -104,7 +111,7 @@ describe('useProductPreferences', () => {
   });
 
   it('savePreferences falls back to local on server failure', async () => {
-    prefMocks.saveCreatorPreferencesApi.mockRejectedValueOnce(new Error('conflict'));
+    prefMocks.saveCreatorPreferences.mockRejectedValueOnce(new Error('conflict'));
     const prefs = mountPrefs();
     prefs.markPreferencesDirty();
     await prefs.savePreferences();

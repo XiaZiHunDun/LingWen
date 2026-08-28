@@ -15,6 +15,11 @@ vi.mock('../../src/api/index.js', () => ({
   exportCreatorBatchHistory: (...args: unknown[]) => restoreMocks.exportCreatorBatchHistory(...args),
 }));
 
+// v16.2.7 T6a: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/content', () => ({
+  exportCreatorBatchHistory: (...args: unknown[]) => restoreMocks.exportCreatorBatchHistory(...args),
+}));
+
 import { useBatchRestore } from '../../src/composables/useCreatorBatchHistory/useBatchRestore';
 
 function mountBatchRestore() {

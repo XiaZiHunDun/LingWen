@@ -14,7 +14,8 @@ const apiMocks = vi.hoisted(() => ({
   fetchChapters: vi.fn(),
   fetchCreatorChapterPreview: vi.fn(),
   fetchCreatorPreferences: vi.fn(),
-  saveCreatorPreferencesApi: vi.fn(),
+  saveCreatorPreferences: vi.fn(),  // v16.2.7 T6a: typed wrapper name (was saveCreatorPreferencesApi)
+  saveCreatorPreferencesApi: vi.fn(),  // legacy alias kept for any direct api/index.js callers
   fetchCreatorMemoryAssets: vi.fn(),
   saveCreatorMemoryAnnotation: vi.fn(),
   exportCreatorEpub: vi.fn(),
@@ -29,7 +30,7 @@ const apiMocks = vi.hoisted(() => ({
 vi.mock('../../src/api/index.js', () => ({
   fetchChapters: apiMocks.fetchChapters,
   fetchCreatorPreferences: apiMocks.fetchCreatorPreferences,
-  saveCreatorPreferencesApi: apiMocks.saveCreatorPreferencesApi,
+  saveCreatorPreferencesApi: apiMocks.saveCreatorPreferences,
   fetchCreatorModels: apiMocks.fetchCreatorModels,
 }));
 
@@ -43,6 +44,9 @@ vi.mock('../../src/api/memory.js', () => ({
 
 vi.mock('../../src/api/content.js', () => ({
   fetchCreatorChapterPreview: apiMocks.fetchCreatorChapterPreview,
+  fetchCreatorPreferences: apiMocks.fetchCreatorPreferences,
+  saveCreatorPreferences: apiMocks.saveCreatorPreferences,
+  fetchCreatorModels: apiMocks.fetchCreatorModels,
 }));
 
 vi.mock('../../src/api/export.js', () => ({
@@ -134,7 +138,7 @@ describe('creator product tools', () => {
     apiMocks.fetchChapters.mockReset();
     apiMocks.fetchCreatorChapterPreview.mockReset();
     apiMocks.fetchCreatorPreferences.mockReset();
-    apiMocks.saveCreatorPreferencesApi.mockReset();
+    apiMocks.saveCreatorPreferences.mockReset();
     apiMocks.fetchCreatorMemoryAssets.mockReset();
     apiMocks.saveCreatorMemoryAnnotation.mockReset();
     apiMocks.queryCreatorMemory.mockReset();
@@ -163,7 +167,7 @@ describe('creator product tools', () => {
     });
     await wrapper.find(byTestid('pref-save-btn')).trigger('click');
     await flushPromises();
-    expect(apiMocks.saveCreatorPreferencesApi).toHaveBeenCalled();
+    expect(apiMocks.saveCreatorPreferences).toHaveBeenCalled();
     expect(pt.preferencesSavedHint).toContain('同步');
   });
 
@@ -379,7 +383,7 @@ describe('creator product tools', () => {
   });
 
   it('savePreferences falls back to local when API fails', async () => {
-    apiMocks.saveCreatorPreferencesApi.mockRejectedValueOnce(new Error('offline'));
+    apiMocks.saveCreatorPreferences.mockRejectedValueOnce(new Error('offline'));
     const pt = makeProductToolsContext();
     await pt.savePreferences();
     expect(pt.preferencesSavedHint).toContain('本机');

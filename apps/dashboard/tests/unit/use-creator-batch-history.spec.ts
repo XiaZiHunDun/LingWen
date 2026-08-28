@@ -13,6 +13,12 @@ vi.mock('../../src/api/index.js', () => ({
   exportCreatorBatchHistory: (...args: unknown[]) => batchMocks.exportCreatorBatchHistory(...args),
 }));
 
+// v16.2.7 T6a: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/content', () => ({
+  fetchCreatorBatchHistory: (...args: unknown[]) => batchMocks.fetchCreatorBatchHistory(...args),
+  exportCreatorBatchHistory: (...args: unknown[]) => batchMocks.exportCreatorBatchHistory(...args),
+}));
+
 const sampleJobs = [
   {
     job_id: 'j1',

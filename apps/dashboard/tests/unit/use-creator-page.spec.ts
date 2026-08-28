@@ -40,6 +40,13 @@ vi.mock('../../src/api/index.js', () => ({
   runCreatorLogicCheck: vi.fn(),
 }));
 
+// v16.2.7 T6a: also mock the typed wrapper module so useCreatorPage (which now
+// imports from @/api/content) resolves the same mocks. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/content', () => ({
+  fetchCreatorOverview: (...args: unknown[]) => pageMocks.fetchCreatorOverview(...args),
+  runCreatorLogicCheck: vi.fn(),
+}));
+
 // Phase 126 v16.2.6 T7: memory calls now go through the api/memory.ts typed
 // wrapper, which the api/index.js mock no longer covers (v16.2.4 §5.1 lesson 2).
 vi.mock('../../src/api/memory.js', () => ({

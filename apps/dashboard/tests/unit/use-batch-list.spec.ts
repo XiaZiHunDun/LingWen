@@ -15,6 +15,11 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorBatchHistory: (...args: unknown[]) => batchMocks.fetchCreatorBatchHistory(...args),
 }));
 
+// v16.2.7 T6a: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/content', () => ({
+  fetchCreatorBatchHistory: (...args: unknown[]) => batchMocks.fetchCreatorBatchHistory(...args),
+}));
+
 import { useBatchList } from '../../src/composables/useCreatorBatchHistory/useBatchList';
 
 function mountBatchList(uiProfileOverrides: Record<string, unknown> = {}) {

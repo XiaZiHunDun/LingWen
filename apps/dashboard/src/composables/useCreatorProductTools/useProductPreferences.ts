@@ -14,12 +14,12 @@ import { ref } from 'vue';
 import type { Ref } from 'vue';
 import {
   fetchCreatorPreferences,
-  saveCreatorPreferencesApi,
+  saveCreatorPreferences,
   fetchCreatorModels,
-} from '../../api/index.js';
+} from '@/api/content';
 import {
   loadCreatorPreferences,
-  saveCreatorPreferences,
+  saveCreatorPreferences as saveCreatorPreferencesLocal,
   defaultCreatorPreferences,
   CREATOR_MODEL_OPTIONS,
 } from '../../utils/creatorPreferencesStorage.js';
@@ -69,7 +69,7 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
     try {
       const data = await fetchCreatorPreferences();
       preferences.value = preferencesFromApi(data);
-      saveCreatorPreferences(preferences.value);
+      saveCreatorPreferencesLocal(preferences.value);
       preferencesSyncSource.value = 'server';
       preferencesDirty.value = false;
     } catch {
@@ -90,9 +90,9 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
   }
 
   async function savePreferences(): Promise<void> {
-    saveCreatorPreferences(preferences.value);
+    saveCreatorPreferencesLocal(preferences.value);
     try {
-      await saveCreatorPreferencesApi(preferencesToApi(preferences.value));
+      await saveCreatorPreferences(preferencesToApi(preferences.value));
       preferencesSyncSource.value = 'server';
       preferencesSavedHint.value = '偏好已同步到项目';
       saveMessage.value = '创作偏好已保存';

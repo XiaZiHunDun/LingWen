@@ -10,7 +10,7 @@
  */
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import { fetchCreatorBatchHistory } from '../../api/index.js';
+import { fetchCreatorBatchHistory } from '@/api/content';
 
 export interface BatchJob {
   job_id?: string;

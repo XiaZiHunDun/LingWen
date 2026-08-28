@@ -19,6 +19,14 @@ vi.mock('../../src/api/index.js', () => ({
   runCreatorLogicCheck: (...args: unknown[]) => writeMocks.runCreatorLogicCheck(...args),
 }));
 
+// v16.2.7 T6a: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/content', () => ({
+  fetchCreatorChapterPreview: (...args: unknown[]) => writeMocks.fetchCreatorChapterPreview(...args),
+  saveCreatorChapterBody: (...args: unknown[]) => writeMocks.saveCreatorChapterBody(...args),
+  saveCreatorChapterOutline: (...args: unknown[]) => writeMocks.saveCreatorChapterOutline(...args),
+  runCreatorLogicCheck: (...args: unknown[]) => writeMocks.runCreatorLogicCheck(...args),
+}));
+
 vi.mock('../../src/utils/writeResumeStorage.js', () => ({
   saveWriteResume: (...args: unknown[]) => writeMocks.saveWriteResume(...args),
 }));
