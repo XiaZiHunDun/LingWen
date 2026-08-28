@@ -161,4 +161,43 @@ export default [
       ],
     },
   },
+
+  // Phase 126 v16.3 — no_barrel_bypass.
+  // Composables/stores/pages/components MUST import typed wrappers directly
+  // (e.g. '@/api/cvg', '@/api/health'), NOT the api/index.js barrel.
+  // The barrel is kept for test mocks + non-creator funcs (budgets/connectivity).
+  // Excludes src/api/** (barrel itself + non-creator .js modules).
+  {
+    files: [
+      'src/composables/**/*.{js,ts,vue}',
+      'src/stores/**/*.{js,ts,vue}',
+      'src/pages/**/*.{js,ts,vue}',
+      'src/components/**/*.{js,ts,vue}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@/api/index',
+                '@/api/index.js',
+                '@/api/index.ts',
+                '../api/index',
+                '../api/index.js',
+                '../../api/index',
+                '../../api/index.js',
+                '../../../api/index',
+                '../../../api/index.js',
+              ],
+              message:
+                'do not bypass typed wrappers via the api/index.js barrel. ' +
+                'Import directly from the typed wrapper (e.g. @/api/cvg).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]
