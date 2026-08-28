@@ -225,7 +225,9 @@ projects/e2e-live-creator/
 
 # Phase 9.24: legacy memory/ superseded by auto-memory path
 # (active path: ~/.claude/projects/.../memory/, see CLAUDE.md)
-memory/
+# Phase 126 v16.2.6: root-scoped (leading slash) so it no longer swallows
+# packages/lingwen-creator/src/lingwen_creator/memory/
+/memory/
 
 # Collaboration blackboard (tracked - shared across dev assistants)
 # collaboration/
