@@ -26,7 +26,8 @@
     "src/api/workspace.ts",
     "src/api/quality.ts",
     "src/api/volume.ts",
-    "src/api/settings.ts"
+    "src/api/settings.ts",
+    "src/api/content.ts"
   ],
   "ignoreDependencies": ["@lingwen/dashboard-contracts"],
   "ignoreBinaries": ["knip"]
