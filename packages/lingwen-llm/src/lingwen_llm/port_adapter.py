@@ -53,7 +53,7 @@ class LLMServiceAdapter:
     def is_available(self) -> bool:
         """Check if the underlying LLM service is available.
 
+        Delegates to the concrete service's public ``is_available()`` method.
         Returns True if the provider is configured and providers are loaded.
         """
-        provider = getattr(self._service, "_provider", None)
-        return provider is not None
+        return self._service.is_available()

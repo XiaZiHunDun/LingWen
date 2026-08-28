@@ -220,6 +220,15 @@ class LLMService:
 
         raise RuntimeError(f"所有 LLM provider 流式调用均失败: {last_error}")
 
+    def is_available(self) -> bool:
+        """Public availability check.
+
+        Returns True iff an LLM provider has been successfully initialized.
+        Used by adapters (e.g. ``lingwen_llm.port_adapter.LLMServiceAdapter``)
+        to avoid reaching into private ``_provider`` state.
+        """
+        return self._provider is not None
+
     def parse_json_response(self, response: str) -> Any:
         """
         解析LLM的JSON响应

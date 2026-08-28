@@ -21,6 +21,11 @@ def fake_service() -> MagicMock:
     service.execute_stream.return_value = iter(["chunk1", "chunk2"])
     service.parse_json_response.return_value = {"key": "value"}
     service.provider_name = "minimax"
+    service.is_available.return_value = True
+    # Intentionally DO NOT pre-populate _provider so that the attribute is
+    # absent from this MagicMock until a test sets it explicitly. This lets
+    # each is_available() test pin down the exact state under verification
+    # rather than relying on MagicMock's auto-attribute truthiness.
     return service
 
 
@@ -37,6 +42,7 @@ def test_adapter_execute_stream_returns_iterator(fake_service: MagicMock) -> Non
     task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="p")
     chunks = list(adapter.execute_stream(task))
     assert chunks == ["chunk1", "chunk2"]
+    fake_service.execute_stream.assert_called_once_with(task)
 
 
 def test_adapter_parse_json_response(fake_service: MagicMock) -> None:
@@ -53,8 +59,17 @@ def test_adapter_provider_name(fake_service: MagicMock) -> None:
 
 def test_adapter_is_available_true_when_service_set(fake_service: MagicMock) -> None:
     fake_service.get.return_value = fake_service
+    fake_service._provider = MagicMock()
     adapter = LLMServiceAdapter(service=fake_service)
     assert adapter.is_available() is True
+
+
+def test_adapter_is_available_false_when_no_provider(fake_service: MagicMock) -> None:
+    fake_service.get.return_value = fake_service
+    fake_service._provider = None
+    fake_service.is_available.return_value = False
+    adapter = LLMServiceAdapter(service=fake_service)
+    assert adapter.is_available() is False
 
 
 def test_adapter_uses_singleton_when_no_service() -> None:
