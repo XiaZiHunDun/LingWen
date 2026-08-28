@@ -1176,3 +1176,481 @@ class CreatorMergePresetToposortResponse(BaseModel):
     nodes: list[dict[str, Any]] = []
     edges: list[dict[str, str]] = []
     edge_count: int = 0
+
+
+# ===========================================================================
+# Onboarding — Phase 126 v16.2.3 (30 DTOs)
+# ===========================================================================
+# Source of truth: apps/studio_api/models/creator_onboarding.py
+#                   apps/studio_api/models/creator_volume_op.py::CreatorWizardPanelCollapsedRequest
+#                   apps/studio_api/models/creator_merge.py::CreatorDiffCollabNotesRequest/Response
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Wizard panel + diff collab (cross-module)
+# ---------------------------------------------------------------------------
+
+
+class CreatorWizardPanelCollapsedRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/wizard-collapse.
+
+    Source of truth: apps/studio_api/models/creator_volume_op.py::CreatorWizardPanelCollapsedRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    collapsed: bool
+
+
+class CreatorDiffCollabNotesRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/diff-collab-notes.
+
+    Source of truth: apps/studio_api/models/creator_merge.py::CreatorDiffCollabNotesRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    notes: dict[str, str] = {}
+
+
+class CreatorDiffCollabNotesResponse(BaseModel):
+    """Return shape of GET / PUT /api/creator/onboarding/diff-collab-notes.
+
+    Source of truth: apps/studio_api/models/creator_merge.py::CreatorDiffCollabNotesResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    notes: dict[str, str] = {}
+    count: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Wizard step (nested)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingStep(BaseModel):
+    """One step in the creator onboarding wizard.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingStep
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    title: str
+    detail: str
+    note: str = ""
+    mentions: list[str] = []
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Main wizard payload (1 DTO)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingResponse(BaseModel):
+    """Return shape of GET /api/creator/onboarding.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    slug: str
+    creation_mode: str
+    mode_label: str
+    max_chapter: int
+    steps: list[CreatorOnboardingStep]
+    checklist_doc: str
+    smoke_command: str
+    onboarding_doc: str
+    completed_step_ids: list[str] = []
+    auto_completed_step_ids: list[str] = []
+    step_notes: dict[str, str] = {}
+    step_mentions: dict[str, list[str]] = {}
+    unread_mention_count: int = 0
+    progress_pct: int = 0
+    wizard_panel_dismissed: bool = False
+    wizard_panel_collapsed: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Progress + Notes (3 DTOs)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingProgressRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/progress.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingProgressRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    completed_step_ids: list[str] = []
+    step_notes: Optional[dict[str, str]] = None
+
+
+class CreatorOnboardingNotesRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/notes.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotesRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    step_notes: dict[str, str]
+
+
+class CreatorOnboardingProgressResponse(BaseModel):
+    """Return shape of PUT /api/creator/onboarding/progress.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingProgressResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    completed_step_ids: list[str]
+    auto_completed_step_ids: list[str] = []
+    step_notes: dict[str, str] = {}
+    step_mentions: dict[str, list[str]] = {}
+    progress_pct: int
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Notifications (6 DTOs + 2 nested)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingNotification(BaseModel):
+    """One notification row in the wizard @mention feed.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotification
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    step_id: str
+    handle: str
+    note_excerpt: str
+    created_at: Optional[str] = None
+    read: bool = False
+
+
+class CreatorOnboardingNotificationsResponse(BaseModel):
+    """Return shape of GET /api/creator/onboarding/notifications.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotificationsResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    notifications: list[CreatorOnboardingNotification]
+    unread: int
+    handles: list[str] = []
+
+
+class CreatorOnboardingNotificationsAckRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/notifications/ack.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotificationsAckRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    notification_ids: list[str] = []
+    all_notifications: bool = False
+    handle: Optional[str] = None
+
+
+class CreatorOnboardingNotificationsAckResponse(BaseModel):
+    """Return shape of PUT /api/creator/onboarding/notifications/ack.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotificationsAckResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    acked: int
+    unread: int
+
+
+class CreatorOnboardingNotificationDigestStep(BaseModel):
+    """One step entry inside a notification digest group.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotificationDigestStep
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    step_id: str
+    count: int
+
+
+class CreatorOnboardingNotificationDigestGroup(BaseModel):
+    """One handle group inside a notification digest.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotificationDigestGroup
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    handle: str
+    count: int
+    steps: list[CreatorOnboardingNotificationDigestStep] = []
+    latest_at: Optional[str] = None
+    excerpts: list[str] = []
+
+
+class CreatorOnboardingNotificationDigestResponse(BaseModel):
+    """Return shape of POST /api/creator/onboarding/notifications/digest.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingNotificationDigestResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    unread: int
+    group_count: int
+    groups: list[CreatorOnboardingNotificationDigestGroup] = []
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Digest schedule + retry + dead-letter (10 DTOs)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingDigestScheduleConfig(BaseModel):
+    """Stored creator onboarding digest schedule.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestScheduleConfig
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = False
+    interval_hours: int = 24
+    last_sent_at: Optional[str] = None
+    channels: list[str] = ["webhook"]
+    handle_channels: dict[str, list[str]] = {}
+    quiet_hours_start: Optional[int] = None
+    quiet_hours_end: Optional[int] = None
+    handle_quiet_hours: dict[str, dict[str, int]] = {}
+    channel_retry_config: dict[str, dict[str, int]] = {}
+
+
+class CreatorOnboardingDigestScheduleSaveRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/digest/schedule.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestScheduleSaveRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = True
+    interval_hours: int = 24
+    channels: list[str] = ["webhook"]
+    handle_channels: dict[str, list[str]] = {}
+    quiet_hours_start: Optional[int] = None
+    quiet_hours_end: Optional[int] = None
+    handle_quiet_hours: dict[str, dict[str, int]] = {}
+    channel_retry_config: dict[str, dict[str, int]] = {}
+
+
+class CreatorOnboardingDigestDispatchStats(BaseModel):
+    """Return shape of GET /api/creator/onboarding/digest/stats.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestDispatchStats
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    sent_total: int = 0
+    failed_total: int = 0
+    last_sent_at: Optional[str] = None
+    last_failure_at: Optional[str] = None
+
+
+class CreatorOnboardingDigestRetryItem(BaseModel):
+    """One retry queue entry.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestRetryItem
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    channel: str
+    error: str = ""
+    queued_at: Optional[str] = None
+    attempts: int = 0
+    next_retry_at: Optional[str] = None
+
+
+class CreatorOnboardingDigestRetryQueueResponse(BaseModel):
+    """Return shape of GET /api/creator/onboarding/digest/retry-queue.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestRetryQueueResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    item_count: int
+    items: list[CreatorOnboardingDigestRetryItem] = []
+
+
+class CreatorOnboardingDigestRetryProcessResponse(BaseModel):
+    """Return shape of POST /api/creator/onboarding/digest/retry.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestRetryProcessResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    retried: int
+    remaining: int
+    dead_letter_count: int = 0
+
+
+class CreatorOnboardingDigestDeadLetterResponse(BaseModel):
+    """Return shape of GET /api/creator/onboarding/digest/dead-letter.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestDeadLetterResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    item_count: int
+    items: list[CreatorOnboardingDigestRetryItem] = []
+
+
+class CreatorOnboardingDigestDeadLetterReplayRequest(BaseModel):
+    """Request body for POST /api/creator/onboarding/digest/dead-letter/replay.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestDeadLetterReplayRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    index: int = 0
+
+
+class CreatorOnboardingDigestDeadLetterReplayResponse(BaseModel):
+    """Return shape of POST /api/creator/onboarding/digest/dead-letter/replay.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestDeadLetterReplayResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    replayed: bool
+    index: int
+    channel: Optional[str] = None
+    retry_queue_size: int = 0
+    dead_letter_count: int = 0
+
+
+class CreatorOnboardingDigestDispatchResponse(BaseModel):
+    """Return shape of POST /api/creator/onboarding/digest/dispatch.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingDigestDispatchResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    sent: bool = False
+    skipped: bool = False
+    reason: Optional[str] = None
+    last_sent_at: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Webhook (3 DTOs)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingWebhookConfig(BaseModel):
+    """Stored creator onboarding webhook config.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingWebhookConfig
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = False
+    url: str = ""
+    mention_handles: list[str] = []
+    signing_secret: str = ""
+
+
+class CreatorOnboardingWebhookSaveRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/webhook.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingWebhookSaveRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = True
+    url: str = ""
+    mention_handles: list[str] = []
+    signing_secret: Optional[str] = None
+
+
+class CreatorOnboardingWebhookDispatchResponse(BaseModel):
+    """Generic webhook dispatch result.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingWebhookDispatchResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    dispatched: int = 0
+    skipped: bool = False
+    status: Optional[int] = None
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Onboarding — Email (2 DTOs)
+# ---------------------------------------------------------------------------
+
+
+class CreatorOnboardingEmailConfig(BaseModel):
+    """Stored creator onboarding email config.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingEmailConfig
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = False
+    to_addresses: list[str] = []
+    mention_handles: list[str] = []
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_use_tls: bool = True
+    from_address: str = ""
+
+
+class CreatorOnboardingEmailSaveRequest(BaseModel):
+    """Request body for PUT /api/creator/onboarding/email.
+
+    Source of truth: apps/studio_api/models/creator_onboarding.py::CreatorOnboardingEmailSaveRequest
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = True
+    to_addresses: list[str] = []
+    mention_handles: list[str] = []
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: Optional[str] = None
+    smtp_use_tls: bool = True
+    from_address: str = ""
