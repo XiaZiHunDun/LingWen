@@ -6,7 +6,7 @@ all: check
 
 check:
 	@rc=0; \
-	for script in check_repo_state.py check_file_size.py check_brand_consistency.py; do \
+	for script in check_repo_state.py check_file_size.py check_brand_consistency.py check_import_linter.py; do \
 		echo "▶ Running $$script"; \
 		$(PYTHON) $$script || rc=$$?; \
 	done; \
