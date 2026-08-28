@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.2.8 (Phase 126 final closure — 9 blocked composables 完成 + 7 legacy api/.js 全删 + useCreatorSettings.js 完整 refactor)
+> **版本**: v16.3 (Phase 126 import-linter DP-01..06 enforcement — 8 barrel consumers 迁移 + import-linter layer_dependencies contract + ESLint no-restricted-imports × 2 rules + 17 regression tests)
+  → v16.2.8 (Phase 126 final closure — 9 blocked composables 完成 + 7 legacy api/.js 全删 + useCreatorSettings.js 完整 refactor)
   → v16.2.7 (Phase 126 cleanup — creator 6-subdomain 拆分 收官 final)
   → v16.2.6 (Phase 126 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
   → v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
@@ -22,6 +23,32 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-28)**: Phase 126 v16.3 闭环 — import-linter DP-01..06 enforcement 永久固化架构边界——11 commits (`7afd18e6` ... `70120dcc`):
+- **T1 (4 commits)**: 8 barrel consumers 迁 typed wrapper (Chapters/Analytics → @/api/health, StudioPage + useStudioStore → @/api/studio + @/api/content, Workflows → @/api/workflows, Ripples/CascadeRunsPanel → @/api/cvg, Settings → @/api/budgets, useSettingsDocs → @/api/settings)。每 commit ≤3 files (DP-06 严格)。
+- **T2.1 (3 commits)**: import-linter layer_dependencies contract (`apps.studio_api → lingwen_creator → infra`)。Closes v16.2.4 §5.1 carryover — `shared/mode.py` 从 `lingwen_creator/shared/` 移到 `lingwen_shared/` (true leaf, infra 可 import),lingwen_creator 留 back-compat shim。2 infra files 改 import。
+- **T2.2 (1 commit)**: `tooling/hygiene/check_import_linter.py` skeleton → 真跑 `lint-imports` + glob `infra/creator_*.py` 检查 + 4 hygiene tests。
+- **T3.1 + T3.2 (2 commits)**: ESLint `no-restricted-imports` × 2 rule groups — `frontend_isolation` (forbid `infra/*` + `lingwen_creator/*` 在 src/) + `no_barrel_bypass` (forbid `@/api/index.js` 在 composables/stores/pages/components)。验证: 现有 1729 tests 0 violation,synthetic violation 立即报错。
+- **T3.3 (1 commit)**: `apps/dashboard/tests/eslint-rules/no-restricted-imports.test.cjs` — 13 regression tests (5 isolation + 5 barrel + 3 positive)。
+- **T4.1 (1 commit)**: 6 page tests 加 parallel typed wrapper mocks (per v16.2.8 §3 lesson 1: hoisted mock pattern)。cascade-runs-panel also changed dynamic import from `@/api/index.js` → `@/api/cvg` to match production path。
+- **T4.2 (1 commit)**: `knip.json` 清理 (13 typed wrappers 从 ignore 移除;4 个 advisory 保留因 knip 不解析 `@/` alias)。
+- **Bonus**: `useSettingsDocs.ts` bonus fix — `'../../api/settings.js'` (non-existent .js shim) → `'@/api/settings'` typed wrapper。Vite alias 兜底但 fragile,现在 clean。
+
+Tests: 1729 vitest passing (0 regression) / 544 backend (73 creator + 79 shared + 359 infra + 33 studio_api) + 26 hygiene / vue-tsc 0 / ruff 0 / knip 0 (3 advisory) / ESLint 0 (NEW 2 rules active) / lint-imports 1 contract kept / make check 4 scripts。
+`apps/dashboard/src/api/*.js` (creator-domain): 0 (从 v16.2.8 维持)。`grep -rln "from '../api/index" apps/dashboard/src`: 8 → 0。
+
+5 new lessons:
+1. **import-linter `forbidden_modules` glob syntax**: `infra.creator_*` rejected ("wildcard can only replace a whole module")。file-existence check 用 glob `infra/creator_*.py` 是 reliable gate (import-linter + check_import_linter.py 互补)。
+2. **import-linter `layers` ordering**: layers[0]=top (api_gateway),layers[N]=bottom (infra)。Higher 可 import lower,lower MUST NOT import higher。
+3. **Mode.py 真正位置**: cross-subdomain utility 必须在 `lingwen_shared/` (true leaf),NOT `lingwen_creator/shared/`。v16.2.4 spec 假设后者,只有 import-linter layer contract enforce 后才 surface。**Architecture invariants 必须 enforced 才能 discovered**。
+4. **ESLint `no-restricted-imports` patterns 用 minimatch**: literal + `*` + `**` + `**/...` 4 种覆盖。
+5. **Hoisted mock pattern re-confirmed (6 page tests)**: barrel mock 与 typed wrapper mock 必须 share SAME vi.fn instances via `vi.hoisted()`。每 typed wrapper 迁移 = 6+ tests 需手动更新。**Future barrel → typed wrapper migrations should plan this upfront**。
+
+Carryover to v16.4:
+- DP-01 enforcement (cross-package contracts via ports)
+- DP-02 enforcement (LLMServicePort via import-linter forbidden contract)
+- DTO schema audit (carryover from v16.2.7/v16.2.8 — 4 production `as unknown as` casts + 2 test casts)
+- Typed wrapper type narrowing (41 funcs in 5 new wrappers return `Promise<unknown>`)
 
 > **更新 (2026-08-28)**: Phase 126 v16.2.8 闭环 — final closure (T2 5 typed wrappers + T2.5 SSE stream + T3.A 4 Pinia stores + T3.B 5 composables + T4.5 useCreatorSettings.js refactor + T5 7 legacy api/.js deletion) ——7 commits (`a196e807` ... `4b2948ef`):
 - **T2** (1 commit): 5 new typed wrappers — health.ts (6) + decisions.ts (5) + cvg.ts (14) + workflows.ts (5) + studio.ts (11) = 41 funcs。命名 NO 'Creator' prefix (per v16.2.1+ convention)。
