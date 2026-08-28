@@ -8,7 +8,7 @@ from infra.creator_mode import (
     CREATION_MODE_COMPANION,
     CREATION_MODE_STUDIO,
 )
-from infra.creator_onboarding import onboarding_wizard_payload
+from lingwen_creator.onboarding.onboarding import onboarding_wizard_payload
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

@@ -226,82 +226,24 @@ def test_onboarding_forward_references_creator_mode() -> None:
     assert callable(settings_from_project_config)
 
 
-# --- Shim back-compat tests ---
+# --- Shim deletion tests (v16.2.7 T4.7+T4.8) ---
 
 
-def test_shim_backcompat_autodetect() -> None:
-    """Backwards compat: `from infra.creator_onboarding_autodetect import ...` works."""
-    from infra.creator_onboarding_autodetect import infer_auto_completed_steps
-    assert callable(infer_auto_completed_steps)
+def test_legacy_shims_deleted() -> None:
+    """v16.2.7 T4.7: 4 onboarding leaf shims deleted, must raise ModuleNotFoundError.
 
+    T4.8 (next commit) adds creator_onboarding_digest_background/schedule/notifications/progress + creator_diff_collab.
+    """
+    import pytest
 
-def test_shim_backcompat_digest_background() -> None:
-    """Backwards compat: `from infra.creator_onboarding_digest_background import ...` works."""
-    from infra.creator_onboarding_digest_background import (
-        digest_poll_interval_sec,
-        start_digest_background_task,
-    )
-    assert callable(start_digest_background_task)
-    assert callable(digest_poll_interval_sec)
-
-
-def test_shim_backcompat_email() -> None:
-    """Backwards compat: `from infra.creator_onboarding_email import ...` works."""
-    from infra.creator_onboarding_email import dispatch_approval_email, load_email_config
-    assert callable(dispatch_approval_email)
-    assert callable(load_email_config)
-
-
-def test_shim_backcompat_notifications() -> None:
-    """Backwards compat: `from infra.creator_onboarding_notifications import ...` works."""
-    from infra.creator_onboarding_notifications import list_onboarding_notifications
-    assert callable(list_onboarding_notifications)
-
-
-def test_shim_backcompat_progress() -> None:
-    """Backwards compat: `from infra.creator_onboarding_progress import ...` works."""
-    from infra.creator_onboarding_progress import save_onboarding_progress
-    assert callable(save_onboarding_progress)
-
-
-def test_shim_backcompat_webhook() -> None:
-    """Backwards compat: `from infra.creator_onboarding_webhook import ...` works."""
-    from infra.creator_onboarding_webhook import dispatch_approval_webhook
-    assert callable(dispatch_approval_webhook)
-
-
-def test_shim_backcompat_diff_collab() -> None:
-    """Backwards compat: `from infra.creator_diff_collab import ...` works."""
-    from infra.creator_diff_collab import diff_collab_notes_payload
-    assert callable(diff_collab_notes_payload)
-
-
-def test_shim_backcompat_digest_schedule() -> None:
-    """Backwards compat: `from infra.creator_onboarding_digest_schedule import ...` works."""
-    from infra.creator_onboarding_digest_schedule import (
-        dispatch_scheduled_digest,
-        load_digest_schedule,
-        process_digest_retries,
-        save_digest_schedule,
-    )
-    assert callable(load_digest_schedule)
-    assert callable(save_digest_schedule)
-    assert callable(dispatch_scheduled_digest)
-    assert callable(process_digest_retries)
-
-
-def test_shim_backcompat_onboarding_main() -> None:
-    """Backwards compat: `from infra.creator_onboarding import ...` works (main file)."""
-    from infra.creator_onboarding import (
-        dismiss_onboarding_wizard_panel,
-        onboarding_wizard_payload,
-        save_onboarding_notes_from_ui,
-        save_onboarding_progress_from_ui,
-    )
-    assert callable(onboarding_wizard_payload)
-    assert callable(save_onboarding_progress_from_ui)
-    assert callable(dismiss_onboarding_wizard_panel)
-    assert callable(save_onboarding_notes_from_ui)
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_onboarding_autodetect import infer_auto_completed_steps  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_onboarding_email import dispatch_approval_email  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_onboarding_webhook import dispatch_approval_webhook  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_onboarding import onboarding_wizard_payload  # noqa: F401
 
 
 # --- Cross-subdomain imports ---

@@ -18,7 +18,7 @@ from infra.creator_onboarding_digest_schedule import (
     process_digest_retries,
     save_digest_schedule,
 )
-from infra.creator_onboarding_webhook import load_webhook_config, save_webhook_config
+from lingwen_creator.onboarding.webhook import load_webhook_config, save_webhook_config
 from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
     load_approval_chain_config,
@@ -119,7 +119,7 @@ def test_digest_dead_letter_and_handle_quiet(factory_tmp) -> None:
     items[0]["next_retry_at"] = None
     _save_retry_queue(root, items)
     with patch(
-        "infra.creator_onboarding_webhook.dispatch_digest_webhook",
+        "lingwen_creator.onboarding.webhook.dispatch_digest_webhook",
         return_value={"dispatched": 0, "error": "fail"},
     ):
         processed = process_digest_retries(root)

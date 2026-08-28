@@ -123,7 +123,7 @@ def test_digest_replay_and_channel_retry(factory_tmp) -> None:
     items[0]["next_retry_at"] = None
     _save_retry_queue(root, items)
     with patch(
-        "infra.creator_onboarding_webhook.dispatch_digest_webhook",
+        "lingwen_creator.onboarding.webhook.dispatch_digest_webhook",
         return_value={"dispatched": 0, "error": "fail"},
     ):
         processed = process_digest_retries(root)
