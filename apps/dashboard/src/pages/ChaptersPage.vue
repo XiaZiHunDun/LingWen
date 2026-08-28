@@ -144,7 +144,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import ChapterTable from '../components/ChapterTable.vue';
-import { fetchChapters, fetchProductionRecords, fetchProductionRollup } from '../api/index.js';
+import { fetchChapters, fetchProductionRecords, fetchProductionRollup } from '@/api/health';
 import { useStudioProject, useWorkflowSocket, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 
 defineProps({

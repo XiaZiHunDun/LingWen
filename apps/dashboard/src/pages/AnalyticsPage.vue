@@ -151,7 +151,7 @@ import StatCard from '../components/StatCard.vue';
 import HookTrendChart from '../components/HookTrendChart.vue';
 import CoolpointChart from '../components/CoolpointChart.vue';
 import ProductionCostTrendChart from '../components/ProductionCostTrendChart.vue';
-import { fetchProductionCostTrend, fetchProductionRollup } from '../api/index.js';
+import { fetchProductionCostTrend, fetchProductionRollup } from '@/api/health';
 import { useOverviewStore, useRippleStore, useStudioProject, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
 import {
   buildProductionKpiCards,

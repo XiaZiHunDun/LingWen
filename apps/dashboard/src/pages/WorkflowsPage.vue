@@ -129,7 +129,7 @@ import {
   fetchWorkflowGraph,
   runWorkflow,
   resumeWorkflow,
-} from '../api/index.js';
+} from '@/api/workflows';
 import { useWorkflowListStore, useWorkflowSocket, useFilteredPageError } from '../composables/index.js';
 
 defineProps({
