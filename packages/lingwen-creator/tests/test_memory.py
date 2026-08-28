@@ -47,35 +47,19 @@ def test_package_star_reexports() -> None:
     assert callable(memory.creator_memory_query)
 
 
-def test_legacy_import_paths_still_work() -> None:
-    """Backwards compat: `from infra.creator_memory_X import ...` resolves to the same objects."""
-    from lingwen_creator.memory.annotations import (
-        apply_memory_annotations,
-        load_memory_annotations,
-        upsert_memory_annotation,
-    )
-    from lingwen_creator.memory.assets import creator_memory_assets_payload
-    from lingwen_creator.memory.query import creator_memory_query
+def test_legacy_shims_deleted() -> None:
+    """v16.2.7 T4.1: shim files were deleted; back-compat `from infra.creator_memory_X` must now raise.
 
-    from infra.creator_memory_annotations import (
-        apply_memory_annotations as LegacyApply,
-    )
-    from infra.creator_memory_annotations import (
-        load_memory_annotations as LegacyLoad,
-    )
-    from infra.creator_memory_annotations import (
-        upsert_memory_annotation as LegacyUpsert,
-    )
-    from infra.creator_memory_assets import (
-        creator_memory_assets_payload as LegacyAssets,
-    )
-    from infra.creator_memory_query import creator_memory_query as LegacyQuery
+    Replaces test_legacy_import_paths_still_work from v16.2.6 cycle (shim existence test).
+    """
+    import pytest
 
-    assert LegacyLoad is load_memory_annotations
-    assert LegacyApply is apply_memory_annotations
-    assert LegacyUpsert is upsert_memory_annotation
-    assert LegacyAssets is creator_memory_assets_payload
-    assert LegacyQuery is creator_memory_query
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_memory_annotations import apply_memory_annotations  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_memory_assets import creator_memory_assets_payload  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_memory_query import creator_memory_query  # noqa: F401
 
 
 def test_intra_package_imports_use_new_path() -> None:

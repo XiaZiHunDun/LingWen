@@ -1,7 +1,7 @@
 """Tests for creator_memory_query."""
 from __future__ import annotations
 
-from infra.creator_memory_query import creator_memory_query
+from lingwen_creator.memory.query import creator_memory_query
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

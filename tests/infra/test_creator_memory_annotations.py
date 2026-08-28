@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.creator_memory_annotations import (
+from lingwen_creator.memory.annotations import (
     apply_memory_annotations,
     load_memory_annotations,
     upsert_memory_annotation,
