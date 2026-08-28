@@ -189,6 +189,48 @@ exclude = [
 ]
 plugins = []
 
+# Phase 126 v16.3 — import-linter DP-01..06 enforcement.
+# Permanently blocks reintroduction of:
+#   - cross-layer violations between apps/studio_api ↔ packages/lingwen-creator ↔ infra
+#   - file-existence check for infra/creator_*.py shims is in check_import_linter.py
+#     (import-linter's `forbidden` contract requires enumerated module names; glob
+#     patterns can't match Python module names that don't follow the `.` package
+#     separator convention. infra.creator_X is a top-level module, not a
+#     submodule of infra.creator, so `infra.creator.*` doesn't match it. The
+#     file-existence check is the reliable gate for shim resurrection.)
+# Run via: cd tooling/hygiene && make check  (check_import_linter.py)
+[tool.importlinter]
+root_packages = [
+    "infra",
+    "lingwen_creator",
+    "apps",
+]
+include_external_imports = false
+known_third_party_libraries = [
+    "fastapi",
+    "pydantic",
+    "sqlalchemy",
+    "pytest",
+    "click",
+]
+
+# Contract 1: Layer purity between api_gateway, creator packages, and infra.
+# import-linter's `layers` is ordered top → bottom. Higher layers may import
+# lower layers; lower layers MUST NOT import higher ones.
+#   apps.studio_api (api_gateway) may import lingwen_creator + infra.
+#   lingwen_creator may import infra.
+#   infra is the leaf — must NOT import from upper layers.
+# This is the import-time enforcement of the layering declared in
+# .lingwen/architecture.yml (top of file).
+[[tool.importlinter.contracts]]
+name = "layer_dependencies"
+type = "layers"
+layers = [
+    "apps.studio_api",
+    "lingwen_creator",
+    "infra",
+]
+
 [dependency-groups]
 dev = [
     "grimp>=3.15",
