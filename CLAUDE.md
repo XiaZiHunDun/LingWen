@@ -1,7 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.2.6 (Phase 126 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
-  → v16.2.5 (Phase 126 export subdomain 拆分 Round 2 leaf)
+> **版本**: v16.2.7 (Phase 126 cleanup — creator 6-subdomain 拆分 收官 final)
+  → v16.2.6 (Phase 126 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
   → v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
   → v16.2.3 (Phase 126 onboarding 闭环)
   → v16.2.2 (Phase 126 settings 闭环)
@@ -21,6 +21,24 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-28)**: Phase 126 v16.2.7 闭环 — creator cleanup final (T4 12-commit shim deletion + T5 DTO dedup + T6 4-commit composables refactor + T7 4 DTO deletion + T8 verification) ——20 commits (`6a463809` ... `7da58f43`):
+- **T4 12 commits**: delete all 36 `infra/creator_*.py` shims (memory/settings/export/volume/onboarding/content tiers, leaf-first). 191 consumer files migrated. **Final**: `ls infra/creator_*.py | wc -l` → 0.
+- **T5**: dedup 20 Pydantic DTOs in `creator_settings.py` to re-export from `lingwen_shared.contracts.python.creator`. -191/+72 lines net.
+- **T6 4 commits (A/B/C/D)**: migrate 10 composables from `@/api/index.js` barrel to typed wrappers (`@/api/content`/`@/api/volume`/`@/api/onboarding`). 9 blocked composables carryover to v16.2.8 (need typed wrappers for health/decisions/cvg/workflow/studio surface). `api/creator.js` deletion deferred.
+- **T7**: delete 4 unwired Content DTOs (CreatorUiProfileState/SaveRequest + CreatorDashboardOverview/ChapterPreview). TS auto-codegen drops 4 interfaces.
+- **T8**: 7 schema mismatch `as unknown as` casts + CreatorModelsResponse DTO fix (`providers` → `models + default_model`) surfaced by typed wrapper strict types. vue-tsc 0 / ruff 0 / knip 0 / vitest 1817 / backend pytest 521. **Phase 126 v16.2.x closure**: 36 shims deleted, 20 DTOs deduped, 10 composables migrated, 4 forward-compat DTOs removed.
+
+Tests: 73 creator pkg + 79 shared pkg + 359 infra + 33 studio_api = 544 backend passing (was 521; -6 legacy back-compat tests + -4 deleted DTO tests + 0 actual regression). 1817 vitest passing. vue-tsc 0 / ruff 0 / knip 0 (5 advisory hints) / codegen OK.
+
+New lessons:
+1. **Re-export shim mocks don't propagate** — when composable migrates from barrel to typed wrapper, test's barrel mock no longer intercepts. Must add parallel typed wrapper mock (v16.2.5 §5.1 lesson 3).
+2. **Name collision after rename** — useProductPreferences had 2 imports named `saveCreatorPreferences`; aliased local-storage as `saveCreatorPreferencesLocal` (real bug fix, not cosmetic).
+3. **Shadow bug in legacy composables** — useTemplateSync had local `async function applyVolumeTemplate()` shadowing typed wrapper import; aliased as `apiApplyVolumeTemplate` to break recursion.
+4. **DTO schema drift pre-existing** — typed wrapper strict types exposed `providers` vs `models` mismatch in CreatorModelsResponse; casts preserve behavior, full schema audit deferred.
+5. **Shim existence ≠ back-compat** — `test_legacy_import_paths_still_work` was tautological (comparing `lingwen_creator.X.Y as LegacyFoo` to same); rewritten to `test_legacy_shim_deleted` asserting ModuleNotFoundError.
+
+Carryover to v16.2.8: 9 blocked composables + `api/creator.js` deletion (5 underlying legacy modules). v16.3: import-linter DP-01..06 enforcement. v16.4+: DTO schema audit.
 
 > **更新 (2026-08-28)**: Phase 126 v16.2.6 闭环 — creator Memory subdomain 拆分 (Round 2 leaf 最后一个,**creator 6-subdomain 拆分收官**)——13 commits (`98da5407` ... `e18606dd` + T8):
 - **gitignore fix**: 仓库根 `.gitignore:228` 的 `memory/` 是无前导斜杠的目录模式,匹配任意深度 → 静默吞掉新建的 `lingwen_creator/memory/`。收窄为 `/memory/`。— `94970497`
