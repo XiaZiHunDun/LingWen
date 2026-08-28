@@ -27,7 +27,9 @@
     "src/api/quality.ts",
     "src/api/volume.ts",
     "src/api/settings.ts",
-    "src/api/content.ts"
+    "src/api/content.ts",
+    "src/api/export.ts",
+    "packages/dashboard-contracts/src/shared/export.ts"
   ],
   "ignoreDependencies": ["@lingwen/dashboard-contracts"],
   "ignoreBinaries": ["knip"]

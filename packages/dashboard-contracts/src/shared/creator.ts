@@ -109,4 +109,13 @@ export type {
   CreatorBodySaveRequest,
   CreatorUiProfileState,
   CreatorUiProfileSaveRequest,
+  // Phase 126 v16.2.5 T3 — Export/Publish DTOs (8 new types per T2)
+  CreatorEpubExportRequest,
+  CreatorDocxExportRequest,
+  CreatorPublishRequest,
+  CreatorPublishEntry,
+  CreatorPublishPlatformCapabilities,
+  CreatorPublishPlatform,
+  CreatorPublishPlatformsResponse,
+  CreatorPublishHistoryResponse,
 } from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/creator';
