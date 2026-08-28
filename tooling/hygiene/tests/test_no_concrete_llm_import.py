@@ -72,7 +72,7 @@ def test_no_concrete_llm_in_business_code() -> None:
     result = subprocess.run(
         [
             "grep", "-rn",
-            "from infra.llm_service import.*LLMService[^A-Za-z]",
+            "from infra.llm_service import.*LLMService($|[^A-Za-z])",
             "--include=*.py",
             "packages/lingwen-creator/",
             "apps/",
