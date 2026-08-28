@@ -339,11 +339,17 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
     statusLine.value = '生成中…';
     const body = buildPlanRequestBody(action, actionLabel, scope, controls);
     try {
-      const result = await runCreatorAgentPlanStream(body, handleStreamEvent) as Record<string, unknown>;
+      // v16.2.8 T3.B: cast body to CreatorAgentPlanRequest (typed wrapper now strict)
+      const result = await runCreatorAgentPlanStream(
+        body as unknown as Parameters<typeof runCreatorAgentPlanStream>[0],
+        handleStreamEvent as unknown as (event: unknown) => void,
+      ) as Record<string, unknown>;
       applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
     } catch {
       try {
-        const result = await runCreatorAgentPlan(body) as Record<string, unknown>;
+        const result = await runCreatorAgentPlan(
+          body as unknown as Parameters<typeof runCreatorAgentPlan>[0],
+        ) as Record<string, unknown>;
         applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
       } catch {
         applyLocalPlan(action, actionLabel, scope, pathMeta, controls);

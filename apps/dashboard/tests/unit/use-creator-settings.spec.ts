@@ -9,35 +9,37 @@ import { computed, ref } from 'vue';
 import { flushPromises } from '@vue/test-utils';
 
 const settingsMocks = vi.hoisted(() => ({
-  // Legacy mocks (still used by submodules in T4a)
+  // Legacy mocks (kept for any consumers still using Creator-prefixed names
+  // via the @/api/index.js barrel — back-compat alias to same vi.fn instance)
   fetchCreatorSettingsDocs: vi.fn(),
+  // Back-compat alias (test body still uses Creator-prefixed names):
+  fetchCreatorSettingsHistory: vi.fn(),
   saveCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsDocs: vi.fn(),
   previewCreatorSettingsThreeWay: vi.fn(),
   previewCreatorSettingsMerge: vi.fn(),
-  fetchCreatorMergePreferences: vi.fn(),
-  exportCreatorMergePreferences: vi.fn(),
-  importCreatorMergePreferences: vi.fn(),
-  fetchCreatorSettingsHistory: vi.fn(),
-  restoreCreatorSettingsSnapshot: vi.fn(),
-  preflightCreatorFactoryMergePresetPull: vi.fn(),
-  fetchCreatorMergePresetChangelog: vi.fn(),
-  fetchCreatorMergePresetChangelogDiff: vi.fn(),
-  fetchCreatorMergePresetToposort: vi.fn(),
-  fetchCreatorMergePresetPackages: vi.fn(),
-  fetchCreatorFactoryMergePresetPackages: vi.fn(),
-  applyCreatorMergePresetConflictFix: vi.fn(),
-  applyAllCreatorMergePresetConflictFixes: vi.fn(),
-  preflightCreatorMergePresetImport: vi.fn(),
-  previewCreatorMergePresetImportDiff: vi.fn(),
-  applyCreatorMergePresetToposort: vi.fn(),
-  exportCreatorMergePresetPackages: vi.fn(),
-  importCreatorMergePresetPackages: vi.fn(),
-  publishCreatorMergePresetToFactory: vi.fn(),
-  pullCreatorFactoryMergePresetPackages: vi.fn(),
-  // T4a typed wrapper mocks (used by main file's direct calls)
+  // Typed wrapper mocks (per v16.2.8 T4.5: useCreatorSettings.js main + submodule
+  // both use unprefixed names from @/api/settings)
+  fetchMergePreferences: vi.fn(),
+  exportMergePreferences: vi.fn(),
+  importMergePreferences: vi.fn(),
   fetchSettingsHistory: vi.fn(),
   restoreSettingsSnapshot: vi.fn(),
+  preflightFactoryMergePresetPull: vi.fn(),
+  fetchMergePresetChangelog: vi.fn(),
+  fetchMergePresetChangelogDiff: vi.fn(),
+  fetchMergePresetPackages: vi.fn(),
+  fetchFactoryMergePresetPackages: vi.fn(),
+  applyMergePresetConflictFix: vi.fn(),
+  applyAllMergePresetConflictFixes: vi.fn(),
+  preflightMergePresetImport: vi.fn(),
+  previewMergePresetImportDiff: vi.fn(),
+  applyToposortMergePresetOrder: vi.fn(),
+  exportMergePresetPackages: vi.fn(),
+  importMergePresetPackages: vi.fn(),
+  publishMergePresetToFactory: vi.fn(),
+  pullFactoryMergePresetsToProject: vi.fn(),
+  // T4a typed wrapper mocks (used by main file's direct calls)
   saveSettingsDocs: vi.fn(),
   previewSettingsDocsDiff: vi.fn(),
   previewSettingsThreeWay: vi.fn(),
@@ -45,37 +47,37 @@ const settingsMocks = vi.hoisted(() => ({
   previewSettingsMergeStrategy: vi.fn(),
 }));
 
+// Back-compat aliases for the legacy @/api/index.js barrel
 vi.mock('../../src/api/index.js', () => ({
   fetchCreatorSettingsDocs: (...args: unknown[]) => settingsMocks.fetchCreatorSettingsDocs(...args),
   saveCreatorSettingsDocs: (...args: unknown[]) => settingsMocks.saveCreatorSettingsDocs(...args),
   previewCreatorSettingsDocs: (...args: unknown[]) => settingsMocks.previewCreatorSettingsDocs(...args),
   previewCreatorSettingsThreeWay: (...args: unknown[]) => settingsMocks.previewCreatorSettingsThreeWay(...args),
   previewCreatorSettingsMerge: (...args: unknown[]) => settingsMocks.previewCreatorSettingsMerge(...args),
-  fetchCreatorMergePreferences: (...args: unknown[]) => settingsMocks.fetchCreatorMergePreferences(...args),
-  exportCreatorMergePreferences: (...args: unknown[]) => settingsMocks.exportCreatorMergePreferences(...args),
-  importCreatorMergePreferences: (...args: unknown[]) => settingsMocks.importCreatorMergePreferences(...args),
-  fetchCreatorSettingsHistory: (...args: unknown[]) => settingsMocks.fetchCreatorSettingsHistory(...args),
-  restoreCreatorSettingsSnapshot: (...args: unknown[]) => settingsMocks.restoreCreatorSettingsSnapshot(...args),
-  preflightCreatorFactoryMergePresetPull: (...args: unknown[]) => settingsMocks.preflightCreatorFactoryMergePresetPull(...args),
-  fetchCreatorMergePresetChangelog: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetChangelog(...args),
-  fetchCreatorMergePresetChangelogDiff: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetChangelogDiff(...args),
-  fetchCreatorMergePresetToposort: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetToposort(...args),
-  fetchCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchCreatorMergePresetPackages(...args),
-  fetchCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchCreatorFactoryMergePresetPackages(...args),
-  applyCreatorMergePresetConflictFix: (...args: unknown[]) => settingsMocks.applyCreatorMergePresetConflictFix(...args),
-  applyAllCreatorMergePresetConflictFixes: (...args: unknown[]) => settingsMocks.applyAllCreatorMergePresetConflictFixes(...args),
-  preflightCreatorMergePresetImport: (...args: unknown[]) => settingsMocks.preflightCreatorMergePresetImport(...args),
-  previewCreatorMergePresetImportDiff: (...args: unknown[]) => settingsMocks.previewCreatorMergePresetImportDiff(...args),
-  applyCreatorMergePresetToposort: (...args: unknown[]) => settingsMocks.applyCreatorMergePresetToposort(...args),
-  exportCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.exportCreatorMergePresetPackages(...args),
-  importCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.importCreatorMergePresetPackages(...args),
-  publishCreatorMergePresetToFactory: (...args: unknown[]) => settingsMocks.publishCreatorMergePresetToFactory(...args),
-  pullCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.pullCreatorFactoryMergePresetPackages(...args),
+  fetchCreatorMergePreferences: (...args: unknown[]) => settingsMocks.fetchMergePreferences(...args),
+  exportCreatorMergePreferences: (...args: unknown[]) => settingsMocks.exportMergePreferences(...args),
+  importCreatorMergePreferences: (...args: unknown[]) => settingsMocks.importMergePreferences(...args),
+  fetchCreatorSettingsHistory: (...args: unknown[]) => settingsMocks.fetchSettingsHistory(...args),
+  restoreCreatorSettingsSnapshot: (...args: unknown[]) => settingsMocks.restoreSettingsSnapshot(...args),
+  preflightCreatorFactoryMergePresetPull: (...args: unknown[]) => settingsMocks.preflightFactoryMergePresetPull(...args),
+  fetchCreatorMergePresetChangelog: (...args: unknown[]) => settingsMocks.fetchMergePresetChangelog(...args),
+  fetchCreatorMergePresetChangelogDiff: (...args: unknown[]) => settingsMocks.fetchMergePresetChangelogDiff(...args),
+  fetchCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchMergePresetPackages(...args),
+  fetchCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchFactoryMergePresetPackages(...args),
+  applyCreatorMergePresetConflictFix: (...args: unknown[]) => settingsMocks.applyMergePresetConflictFix(...args),
+  applyAllCreatorMergePresetConflictFixes: (...args: unknown[]) => settingsMocks.applyAllMergePresetConflictFixes(...args),
+  preflightCreatorMergePresetImport: (...args: unknown[]) => settingsMocks.preflightMergePresetImport(...args),
+  previewCreatorMergePresetImportDiff: (...args: unknown[]) => settingsMocks.previewMergePresetImportDiff(...args),
+  applyCreatorMergePresetToposort: (...args: unknown[]) => settingsMocks.applyToposortMergePresetOrder(...args),
+  exportCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.exportMergePresetPackages(...args),
+  importCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.importMergePresetPackages(...args),
+  publishCreatorMergePresetToFactory: (...args: unknown[]) => settingsMocks.publishMergePresetToFactory(...args),
+  pullCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.pullFactoryMergePresetsToProject(...args),
 }));
 
-// T4a: typed wrapper mock — only the 5 functions now used directly by the
-// main file. The submodule (`useSettingsDocs.ts`, `useSettingsHistory.ts`)
-// continues importing from `'../../api/index.js'` until T4b.
+// v16.2.8 T4.5: typed wrapper mock — unprefixed names (per v16.2.1+ convention).
+// useCreatorSettings.js (main + submodule useMergePresets.ts) now imports these
+// directly from @/api/settings.
 vi.mock('../../src/api/settings.js', () => ({
   fetchSettingsHistory: (...args: unknown[]) => settingsMocks.fetchSettingsHistory(...args),
   restoreSettingsSnapshot: (...args: unknown[]) => settingsMocks.restoreSettingsSnapshot(...args),
@@ -84,6 +86,23 @@ vi.mock('../../src/api/settings.js', () => ({
   previewSettingsThreeWay: (...args: unknown[]) => settingsMocks.previewSettingsThreeWay(...args),
   fetchSettingsDocs: (...args: unknown[]) => settingsMocks.fetchSettingsDocs(...args),
   previewSettingsMergeStrategy: (...args: unknown[]) => settingsMocks.previewSettingsMergeStrategy(...args),
+  fetchMergePreferences: (...args: unknown[]) => settingsMocks.fetchMergePreferences(...args),
+  exportMergePreferences: (...args: unknown[]) => settingsMocks.exportMergePreferences(...args),
+  importMergePreferences: (...args: unknown[]) => settingsMocks.importMergePreferences(...args),
+  preflightFactoryMergePresetPull: (...args: unknown[]) => settingsMocks.preflightFactoryMergePresetPull(...args),
+  fetchMergePresetChangelog: (...args: unknown[]) => settingsMocks.fetchMergePresetChangelog(...args),
+  fetchMergePresetChangelogDiff: (...args: unknown[]) => settingsMocks.fetchMergePresetChangelogDiff(...args),
+  fetchMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchMergePresetPackages(...args),
+  fetchFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.fetchFactoryMergePresetPackages(...args),
+  applyMergePresetConflictFix: (...args: unknown[]) => settingsMocks.applyMergePresetConflictFix(...args),
+  applyAllMergePresetConflictFixes: (...args: unknown[]) => settingsMocks.applyAllMergePresetConflictFixes(...args),
+  preflightMergePresetImport: (...args: unknown[]) => settingsMocks.preflightMergePresetImport(...args),
+  previewMergePresetImportDiff: (...args: unknown[]) => settingsMocks.previewMergePresetImportDiff(...args),
+  applyToposortMergePresetOrder: (...args: unknown[]) => settingsMocks.applyToposortMergePresetOrder(...args),
+  exportMergePresetPackages: (...args: unknown[]) => settingsMocks.exportMergePresetPackages(...args),
+  importMergePresetPackages: (...args: unknown[]) => settingsMocks.importMergePresetPackages(...args),
+  publishMergePresetToFactory: (...args: unknown[]) => settingsMocks.publishMergePresetToFactory(...args),
+  pullFactoryMergePresetsToProject: (...args: unknown[]) => settingsMocks.pullFactoryMergePresetsToProject(...args),
 }));
 
 describe('useCreatorSettings', () => {
@@ -146,13 +165,13 @@ describe('useCreatorSettings', () => {
       pillars: { vs_disk: { snippet: ['merge'] } },
       global_outline: { vs_disk: { snippet: [] } },
     });
-    settingsMocks.fetchCreatorMergePreferences.mockResolvedValue({
+    settingsMocks.fetchMergePreferences.mockResolvedValue({
       pillars_merge_source: 'editor',
       global_outline_merge_source: 'history',
       merge_snapshot_id: 'snap-1',
       uses_global_default: true,
     });
-    settingsMocks.fetchCreatorMergePresetPackages.mockResolvedValue({
+    settingsMocks.fetchMergePresetPackages.mockResolvedValue({
       packages: [
         {
           id: 'pkg-1',
@@ -167,25 +186,25 @@ describe('useCreatorSettings', () => {
         { id: 'fac-1', name: '工厂预设', scope: 'factory' },
       ],
     });
-    settingsMocks.fetchCreatorFactoryMergePresetPackages.mockResolvedValue({
+    settingsMocks.fetchFactoryMergePresetPackages.mockResolvedValue({
       packages: [{ id: 'fac-1', name: '工厂预设', scope: 'factory' }],
     });
-    settingsMocks.fetchCreatorMergePresetToposort.mockResolvedValue({ order: ['pkg-1'], edges: [], edge_count: 0 });
-    settingsMocks.fetchCreatorMergePresetChangelog.mockResolvedValue({ package_id: 'pkg-1', entry_count: 1, entries: [{ index: 0 }] });
-    settingsMocks.exportCreatorMergePresetPackages.mockResolvedValue({ packages: [] });
-    settingsMocks.exportCreatorMergePreferences.mockResolvedValue({ scope: 'both' });
-    settingsMocks.importCreatorMergePreferences.mockResolvedValue({});
-    settingsMocks.importCreatorMergePresetPackages.mockResolvedValue({});
-    settingsMocks.preflightCreatorMergePresetImport.mockResolvedValue({ blocked: false, would_import: 1, conflict_count: 0 });
-    settingsMocks.previewCreatorMergePresetImportDiff.mockResolvedValue({ added: ['x'], updated: [], removed: [] });
-    settingsMocks.applyCreatorMergePresetToposort.mockResolvedValue({ reordered: 1 });
-    settingsMocks.applyCreatorMergePresetConflictFix.mockResolvedValue({ conflict_count: 0 });
-    settingsMocks.applyAllCreatorMergePresetConflictFixes.mockResolvedValue({ applied: 2, conflict_count: 0 });
-    settingsMocks.publishCreatorMergePresetToFactory.mockResolvedValue({});
-    settingsMocks.preflightCreatorFactoryMergePresetPull.mockResolvedValue({ conflict_count: 0 });
-    settingsMocks.pullCreatorFactoryMergePresetPackages.mockResolvedValue({ imported: 1, skipped: 0 });
-    settingsMocks.fetchCreatorMergePresetChangelogDiff.mockResolvedValue({ change_count: 2, changes: [] });
-    settingsMocks.restoreCreatorSettingsSnapshot.mockResolvedValue({
+    settingsMocks.applyToposortMergePresetOrder.mockResolvedValue({ order: ['pkg-1'], edges: [], edge_count: 0 });
+    settingsMocks.fetchMergePresetChangelog.mockResolvedValue({ package_id: 'pkg-1', entry_count: 1, entries: [{ index: 0 }] });
+    settingsMocks.exportMergePresetPackages.mockResolvedValue({ packages: [] });
+    settingsMocks.exportMergePreferences.mockResolvedValue({ scope: 'both' });
+    settingsMocks.importMergePreferences.mockResolvedValue({});
+    settingsMocks.importMergePresetPackages.mockResolvedValue({});
+    settingsMocks.preflightMergePresetImport.mockResolvedValue({ blocked: false, would_import: 1, conflict_count: 0 });
+    settingsMocks.previewMergePresetImportDiff.mockResolvedValue({ added: ['x'], updated: [], removed: [] });
+    settingsMocks.applyToposortMergePresetOrder.mockResolvedValue({ reordered: 1 });
+    settingsMocks.applyMergePresetConflictFix.mockResolvedValue({ conflict_count: 0 });
+    settingsMocks.applyAllMergePresetConflictFixes.mockResolvedValue({ applied: 2, conflict_count: 0 });
+    settingsMocks.publishMergePresetToFactory.mockResolvedValue({});
+    settingsMocks.preflightFactoryMergePresetPull.mockResolvedValue({ conflict_count: 0 });
+    settingsMocks.pullFactoryMergePresetsToProject.mockResolvedValue({ imported: 1, skipped: 0 });
+    settingsMocks.fetchMergePresetChangelogDiff.mockResolvedValue({ change_count: 2, changes: [] });
+    settingsMocks.restoreSettingsSnapshot.mockResolvedValue({
       pillars_text: '历史支柱',
       global_outline_text: '历史大纲',
       pillars_revision: 'hp',
@@ -304,7 +323,7 @@ describe('useCreatorSettings', () => {
     await panel.preflightMergePresetImport();
     await panel.previewMergePresetImportDiff();
     await panel.importMergePresetPackagesFromJson();
-    expect(settingsMocks.importCreatorMergePresetPackages).toHaveBeenCalled();
+    expect(settingsMocks.importMergePresetPackages).toHaveBeenCalled();
   });
 
   test('merge preset conflict fixes and toposort', async () => {
@@ -322,15 +341,15 @@ describe('useCreatorSettings', () => {
     panel.selectedMergePresetPackage.value = 'pkg-1';
     await flushPromises();
     await panel.publishMergePresetToFactory();
-    expect(settingsMocks.publishCreatorMergePresetToFactory).toHaveBeenCalled();
-    settingsMocks.preflightCreatorFactoryMergePresetPull.mockResolvedValueOnce({
+    expect(settingsMocks.publishMergePresetToFactory).toHaveBeenCalled();
+    settingsMocks.preflightFactoryMergePresetPull.mockResolvedValueOnce({
       conflict_count: 1,
       conflicts: [{ package_id: 'fac-1' }],
     });
     await panel.pullFactoryMergePresets();
     expect(saveMessage.value).toContain('冲突');
     await panel.pullFactoryMergePresetsWithStrategy('fac-1', 'skip');
-    expect(settingsMocks.pullCreatorFactoryMergePresetPackages).toHaveBeenCalled();
+    expect(settingsMocks.pullFactoryMergePresetsToProject).toHaveBeenCalled();
   });
 
   test('merge preferences export import and changelog diff', async () => {
@@ -359,7 +378,7 @@ describe('useCreatorSettings', () => {
   });
 
   test('loadMergePresetPackages clears state on API failure', async () => {
-    settingsMocks.fetchCreatorMergePresetPackages.mockRejectedValueOnce(new Error('down'));
+    settingsMocks.fetchMergePresetPackages.mockRejectedValueOnce(new Error('down'));
     const { hub, panel } = await mountSettings();
     await hub.loadMergePresetPackages();
     expect(panel.mergePresetPackages.value).toEqual([]);
@@ -376,7 +395,7 @@ describe('useCreatorSettings', () => {
   });
 
   test('importMergePresetPackagesFromJson stops when preflight blocked', async () => {
-    settingsMocks.preflightCreatorMergePresetImport.mockResolvedValueOnce({
+    settingsMocks.preflightMergePresetImport.mockResolvedValueOnce({
       blocked: true,
       would_import: 0,
       conflict_count: 2,
@@ -385,7 +404,7 @@ describe('useCreatorSettings', () => {
     panel.importMergePresetPackagesJson.value = JSON.stringify({ packages: [] });
     await panel.preflightMergePresetImport();
     await panel.importMergePresetPackagesFromJson();
-    expect(settingsMocks.importCreatorMergePresetPackages).not.toHaveBeenCalled();
+    expect(settingsMocks.importMergePresetPackages).not.toHaveBeenCalled();
     expect(saveMessage.value).toContain('预检');
   });
 

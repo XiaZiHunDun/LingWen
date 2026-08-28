@@ -26,12 +26,12 @@ import {
 } from '../api/settings.js';
 // Legacy imports — T4b carryover (merge preset / changelog / conflict / etc.).
 import {
-  fetchCreatorMergePresetChangelog,
-  fetchCreatorMergePresetChangelogDiff,
-  fetchCreatorMergePreferences,
-  exportCreatorMergePreferences,
-  importCreatorMergePreferences,
-} from '../api/index.js';
+  fetchMergePresetChangelog,
+  fetchMergePresetChangelogDiff,
+  fetchMergePreferences,
+  exportMergePreferences,
+  importMergePreferences,
+} from '@/api/settings';
 import {
   useSettingsHistory,
   useMergePresets,
@@ -256,10 +256,10 @@ export function useCreatorSettings(deps) {
   async function loadMergePresetPackages() {
     mergePresets.mergePresetPackages.value = mergePresetPackages.value;
     try {
-      const { fetchCreatorMergePresetPackages, fetchCreatorFactoryMergePresetPackages } = await import('../api/index.js');
-      const data = await fetchCreatorMergePresetPackages();
+      const { fetchMergePresetPackages, fetchFactoryMergePresetPackages } = await import('@/api/settings');
+      const data = await fetchMergePresetPackages();
       mergePresetPackages.value = data?.packages || [];
-      const factoryData = await fetchCreatorFactoryMergePresetPackages();
+      const factoryData = await fetchFactoryMergePresetPackages();
       factoryMergePresetPackages.value = factoryData?.packages || [];
     } catch (e) {
       handleSaveError(e);
@@ -268,7 +268,7 @@ export function useCreatorSettings(deps) {
 
   async function loadMergePreferences() {
     try {
-      const data = await fetchCreatorMergePreferences();
+      const data = await fetchMergePreferences();
       mergePresets.mergePreferences.value = data;
       usesGlobalMergeDefault.value = Boolean(data?.uses_global_default);
     } catch (e) {
@@ -359,7 +359,7 @@ export function useCreatorSettings(deps) {
     if (packageId) {
       applyMergePresetPackage(packageId);
       try {
-        mergePresetChangelog.value = await fetchCreatorMergePresetChangelog(packageId);
+        mergePresetChangelog.value = await fetchMergePresetChangelog(packageId);
       } catch {
         mergePresetChangelog.value = { package_id: packageId, entry_count: 0, entries: [] };
       }
@@ -371,8 +371,8 @@ export function useCreatorSettings(deps) {
   // --- 包装 mergePreset 操作（链接到 ref）---
   async function exportMergePresetPackages() {
     try {
-      const { exportCreatorMergePresetPackages } = await import('../api/index.js');
-      const data = await exportCreatorMergePresetPackages();
+      const { exportMergePresetPackages } = await import('@/api/settings');
+      const data = await exportMergePresetPackages();
       const text = JSON.stringify(data, null, 2);
       importMergePresetPackagesJson.value = text;
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -396,8 +396,8 @@ export function useCreatorSettings(deps) {
         saveMessage.value = '预检仍有冲突，请先修复或调整 JSON';
         return;
       }
-      const { importCreatorMergePresetPackages } = await import('../api/index.js');
-      await importCreatorMergePresetPackages(payload);
+      const { importMergePresetPackages } = await import('@/api/settings');
+      await importMergePresetPackages(payload);
       importMergePresetPackagesJson.value = '';
       showImportMergePresetPackages.value = false;
       mergePresetImportPreflight.value = null;
@@ -413,8 +413,8 @@ export function useCreatorSettings(deps) {
   async function publishMergePresetToFactory() {
     mergePresetFactoryPublishing.value = true;
     try {
-      const { publishCreatorMergePresetToFactory } = await import('../api/index.js');
-      await publishCreatorMergePresetToFactory({});
+      const { publishMergePresetToFactory } = await import('@/api/settings');
+      await publishMergePresetToFactory({});
       saveMessage.value = '已发布到工厂库';
     } catch (e) {
       handleSaveError(e);
@@ -426,14 +426,14 @@ export function useCreatorSettings(deps) {
   async function pullFactoryMergePresets() {
     mergePresetFactoryPulling.value = true;
     try {
-      const { pullCreatorFactoryMergePresetPackages, preflightCreatorFactoryMergePresetPull } = await import('../api/index.js');
-      const preflight = await preflightCreatorFactoryMergePresetPull({});
+      const { pullFactoryMergePresetsToProject, preflightFactoryMergePresetPull } = await import('@/api/settings');
+      const preflight = await preflightFactoryMergePresetPull({});
       factoryMergePresetPullConflicts.value = preflight || { conflict_count: 0, conflicts: [] };
       if (preflight?.conflict_count > 0) {
         saveMessage.value = `预检发现 ${preflight.conflict_count} 处冲突`;
         return;
       }
-      const result = await pullCreatorFactoryMergePresetPackages({});
+      const result = await pullFactoryMergePresetsToProject({});
       saveMessage.value = `已从工厂库拉取 ${result.imported} 个预设`;
       await loadMergePresetPackages();
     } catch (e) {
@@ -446,14 +446,14 @@ export function useCreatorSettings(deps) {
   async function pullFactoryMergePresetsWithStrategy(packageId, strategy) {
     mergePresetFactoryPulling.value = true;
     try {
-      const { pullCreatorFactoryMergePresetPackages, preflightCreatorFactoryMergePresetPull } = await import('../api/index.js');
-      const preflight = await preflightCreatorFactoryMergePresetPull({ package_id: packageId, strategy });
+      const { pullFactoryMergePresetsToProject, preflightFactoryMergePresetPull } = await import('@/api/settings');
+      const preflight = await preflightFactoryMergePresetPull({ package_id: packageId, strategy });
       factoryMergePresetPullConflicts.value = preflight || { conflict_count: 0, conflicts: [] };
       if (preflight?.conflict_count > 0) {
         saveMessage.value = `预检发现 ${preflight.conflict_count} 处冲突`;
         return;
       }
-      const result = await pullCreatorFactoryMergePresetPackages({ package_id: packageId, strategy });
+      const result = await pullFactoryMergePresetsToProject({ package_id: packageId, strategy });
       saveMessage.value = `已拉取 ${result.imported} 个预设`;
       await loadMergePresetPackages();
     } catch (e) {
@@ -465,7 +465,7 @@ export function useCreatorSettings(deps) {
 
   async function previewMergePresetChangelogDiff(entryIndex) {
     try {
-      const data = await fetchCreatorMergePresetChangelogDiff(entryIndex);
+      const data = await fetchMergePresetChangelogDiff(entryIndex);
       mergePresetChangelogDiff.value = data;
     } catch (e) {
       handleSaveError(e);
@@ -474,8 +474,8 @@ export function useCreatorSettings(deps) {
 
   async function applyMergePresetConflictFix(fix) {
     try {
-      const { applyCreatorMergePresetConflictFix } = await import('../api/index.js');
-      await applyCreatorMergePresetConflictFix(fix);
+      const { applyMergePresetConflictFix } = await import('@/api/settings');
+      await applyMergePresetConflictFix(fix);
       saveMessage.value = '已应用冲突修复';
       await loadMergePresetPackages();
     } catch (e) {
@@ -485,8 +485,8 @@ export function useCreatorSettings(deps) {
 
   async function applyAllMergePresetConflictFixes() {
     try {
-      const { applyAllCreatorMergePresetConflictFixes } = await import('../api/index.js');
-      await applyAllCreatorMergePresetConflictFixes();
+      const { applyAllMergePresetConflictFixes } = await import('@/api/settings');
+      await applyAllMergePresetConflictFixes();
       saveMessage.value = '已批量应用冲突修复';
       await loadMergePresetPackages();
     } catch (e) {
@@ -496,8 +496,8 @@ export function useCreatorSettings(deps) {
 
   async function previewMergePresetImportDiff() {
     try {
-      const { previewCreatorMergePresetImportDiff } = await import('../api/index.js');
-      const data = await previewCreatorMergePresetImportDiff({});
+      const { previewMergePresetImportDiff } = await import('@/api/settings');
+      const data = await previewMergePresetImportDiff({});
       mergePresetImportDiff.value = data || { added: [], updated: [], removed: [] };
     } catch (e) {
       handleSaveError(e);
@@ -506,8 +506,8 @@ export function useCreatorSettings(deps) {
 
   async function applyMergePresetToposort() {
     try {
-      const { applyCreatorMergePresetToposort } = await import('../api/index.js');
-      await applyCreatorMergePresetToposort();
+      const { applyToposortMergePresetOrder } = await import('@/api/settings');
+      await applyToposortMergePresetOrder();
       saveMessage.value = '已应用拓扑排序';
     } catch (e) {
       handleSaveError(e);
@@ -516,8 +516,8 @@ export function useCreatorSettings(deps) {
 
   async function preflightMergePresetImport() {
     try {
-      const { preflightCreatorMergePresetImport } = await import('../api/index.js');
-      const data = await preflightCreatorMergePresetImport({});
+      const { preflightMergePresetImport } = await import('@/api/settings');
+      const data = await preflightMergePresetImport({});
       mergePresetImportPreflight.value = data;
     } catch (e) {
       handleSaveError(e);
@@ -527,7 +527,7 @@ export function useCreatorSettings(deps) {
   async function exportMergePreferences() {
     error.value = null;
     try {
-      const data = await exportCreatorMergePreferences();
+      const data = await exportMergePreferences();
       const text = JSON.stringify(data, null, 2);
       importMergePrefsJson.value = text;
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -547,7 +547,7 @@ export function useCreatorSettings(deps) {
     error.value = null;
     try {
       const payload = JSON.parse(importMergePrefsJson.value);
-      await importCreatorMergePreferences({ ...payload, scope: payload.scope || 'both' });
+      await importMergePreferences({ ...payload, scope: payload.scope || 'both' });
       saveMessage.value = '已导入合并策略';
       importMergePrefsJson.value = '';
       showImportMergePrefs.value = false;
