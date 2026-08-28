@@ -99,9 +99,12 @@ def test_preferences_save_request_optional_mode() -> None:
 # --- Models ---
 
 
-def test_models_response_has_providers() -> None:
-    resp = CreatorModelsResponse(providers=[])
-    assert resp.providers == []
+def test_models_response_has_models() -> None:
+    # v16.2.7 T8: CreatorModelsResponse schema corrected — `providers` was a stale
+    # forward-compat stub; backend payload uses `models + default_model`.
+    resp = CreatorModelsResponse(models=[], default_model="local-mock")
+    assert resp.models == []
+    assert resp.default_model == "local-mock"
 
 
 # --- Logic check ---
