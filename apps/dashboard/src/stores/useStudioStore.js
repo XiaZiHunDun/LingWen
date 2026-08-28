@@ -24,12 +24,12 @@ import {
   fetchStudioProjects,
   fetchStudioSummary,
   setStudioActive,
-  fetchCreatorOverview,
   fetchStudioQuality,
   fetchStudioQualityReport,
   fetchStudioProseDiff,
   fetchStudioProseJudge,
-} from '../api/index.js'
+} from '@/api/studio'
+import { fetchCreatorOverview } from '@/api/content'
 import { logger } from '../utils/logger.js'
 
 const CACHE_TTL_MS = 30000;

@@ -372,7 +372,7 @@ import {
   studioProductionRun,
   fetchStudioBatchJob,
   fetchStudioActiveBatchJob,
-} from '../api/index.js';
+} from '@/api/studio';
 import { useStudioProject, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 
 defineProps({
