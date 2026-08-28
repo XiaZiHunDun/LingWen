@@ -73,7 +73,7 @@ def preview_settings_three_way(
     global_outline_text: str,
     snapshot_id: str | None = None,
 ) -> dict[str, Any]:
-    from infra.creator_settings_history import load_snapshot_raw, settings_history_payload
+    from lingwen_creator.settings.history import load_snapshot_raw, settings_history_payload
 
     disk = creator_settings_docs_payload(project)
     base = preview_settings_docs_diff(
@@ -219,7 +219,7 @@ def resolve_merged_settings(
     pillars_snapshot_id: str | None = None,
     outline_snapshot_id: str | None = None,
 ) -> tuple[str, str]:
-    from infra.creator_settings_history import load_snapshot_raw
+    from lingwen_creator.settings.history import load_snapshot_raw
 
     disk = creator_settings_docs_payload(project)
 
@@ -314,7 +314,7 @@ def save_creator_settings_docs(
         path.write_text(resolved_outline.rstrip() + "\n", encoding="utf-8")
 
     if pillars_merge_source or global_outline_merge_source:
-        from infra.creator_merge_preferences import load_merge_preferences, save_merge_preferences
+        from lingwen_creator.settings.merge_preferences import load_merge_preferences, save_merge_preferences
 
         existing = load_merge_preferences(project.root)
         resolved_pillars_snap = (

@@ -94,7 +94,7 @@ def settings_history_payload(project: StudioProject) -> dict[str, Any]:
 
 
 def restore_settings_snapshot(project: StudioProject, snapshot_id: str) -> dict[str, Any]:
-    from infra.creator_settings_docs import creator_settings_docs_payload
+    from lingwen_creator.settings.docs import creator_settings_docs_payload
 
     path = _history_path(project.root)
     data = _load_history(path)
