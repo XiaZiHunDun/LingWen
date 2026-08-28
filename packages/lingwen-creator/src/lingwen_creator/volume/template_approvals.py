@@ -130,7 +130,7 @@ def notify_overdue_template_approvals(project_root: Path | str) -> dict[str, Any
             continue
         public = _public_approval_row(row, chain_cfg=chain_cfg)
         try:
-            from infra.creator_onboarding_email import dispatch_approval_email
+            from lingwen_creator.onboarding.email import dispatch_approval_email
 
             dispatch_approval_email(project_root, "overdue", public)
         except Exception:
@@ -420,7 +420,7 @@ def _notify_approval_event(
     chain_cfg = _approval_chain_config(project_root)
     public = _public_approval_row(row, chain_cfg=chain_cfg)
     try:
-        from infra.creator_onboarding_webhook import dispatch_approval_webhook
+        from lingwen_creator.onboarding.webhook import dispatch_approval_webhook
 
         dispatch_approval_webhook(project_root, event, public)
     except Exception:
@@ -432,7 +432,7 @@ def _notify_approval_event(
     )
     if send_email:
         try:
-            from infra.creator_onboarding_email import dispatch_approval_email
+            from lingwen_creator.onboarding.email import dispatch_approval_email
 
             dispatch_approval_email(project_root, event, public)
         except Exception:
