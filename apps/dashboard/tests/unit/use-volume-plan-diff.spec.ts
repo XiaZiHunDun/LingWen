@@ -20,6 +20,12 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorDiffCollabNotes: (...args: unknown[]) => diffMocks.saveCreatorDiffCollabNotes(...args),
 }));
 
+// v16.2.7 T3: see use-creator-volume-plan.spec.ts comment. The composable
+// imports diffVolumePlan from @/api/volume directly.
+vi.mock('../../src/api/volume', () => ({
+  diffVolumePlan: (...args: unknown[]) => diffMocks.previewCreatorVolumePlanDiff(...args),
+}));
+
 // Mock utils
 vi.mock('../../src/composables/volumePlanDiffExportUtils.js', () => ({
   buildMinimalTextPdf: (lines: string[]) => lines.join('\n'),

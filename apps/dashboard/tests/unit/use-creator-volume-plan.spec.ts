@@ -40,6 +40,26 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorTemplateApprovalOverdue: vi.fn(async () => ({ approvals: [] })),
 }));
 
+// v16.2.7 T3: composables now import typed wrapper @/api/volume directly
+// (refactored in v16.2.1 T5a — see handoff §4). The api/index.js barrel
+// shim mocks above don't propagate to @/api/volume (per v16.2.5 §5.1
+// lesson 3: shim mocks 不 propagate), so we mock the typed wrapper itself.
+vi.mock('../../src/api/volume', () => ({
+  fetchVolumePlan: (...args: unknown[]) => planMocks.fetchCreatorVolumePlan(...args),
+  saveVolumePlan: (...args: unknown[]) => planMocks.saveCreatorVolumePlan(...args),
+  diffVolumePlan: (...args: unknown[]) => planMocks.previewCreatorVolumePlanDiff(...args),
+  applyVolumeTemplate: (...args: unknown[]) => planMocks.applyCreatorVolumeTemplate(...args),
+  mergeVolumePlan: (...args: unknown[]) => planMocks.mergeCreatorVolumePlan(...args),
+  splitVolumePlan: vi.fn(),
+  listVolumeTemplates: vi.fn(async () => ({ templates: [] })),
+  fetchVolumeTemplateSyncSources: vi.fn(async () => ({ sources: [] })),
+  listVolumeTemplateApprovals: vi.fn(async () => ({ approvals: [] })),
+  fetchVolumeTemplateApprovalHistory: vi.fn(async () => ({ approvals: [] })),
+  fetchVolumeTemplateApprovalChain: vi.fn(async () => ({ required_steps: 2, step_assignees: [] })),
+  fetchVolumeTemplateApprovalSla: vi.fn(async () => ({ timeout_hours: 72 })),
+  fetchVolumeTemplateApprovalsOverdue: vi.fn(async () => ({ approvals: [] })),
+}));
+
 describe('useCreatorVolumePlan', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -153,10 +173,12 @@ describe('useCreatorVolumePlan', () => {
     await hub.refreshVolumePlanDiffPreview();
     planMocks.previewCreatorVolumePlanDiff.mockResolvedValueOnce({ has_changes: false, changes: [] });
     await panel.confirmSaveVolumePlan();
-    expect(planMocks.saveCreatorVolumePlan).toHaveBeenCalledWith(
-      hub.editableVolumes.value,
-      'rev-1',
-    );
+    // v16.2.7 T3: typed wrapper saveVolumePlan takes 1-arg object shape
+    // ({ volumes, expected_revision }), not 2-arg (volumes, expectedRevision).
+    expect(planMocks.saveCreatorVolumePlan).toHaveBeenCalledWith({
+      volumes: hub.editableVolumes.value,
+      expected_revision: 'rev-1',
+    });
     expect(planMocks.previewCreatorVolumePlanDiff).toHaveBeenCalledTimes(2);
     expect(saveMessage.value).toContain('卷纲已保存');
     expect(onAfterVolumePlanSave).toHaveBeenCalledTimes(1);

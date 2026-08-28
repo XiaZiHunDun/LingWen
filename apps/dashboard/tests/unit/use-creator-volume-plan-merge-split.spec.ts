@@ -14,6 +14,14 @@ vi.mock('../../src/api/index.js', () => ({
   splitCreatorVolumePlan: (...args: unknown[]) => mergeSplitMocks.splitCreatorVolumePlan(...args),
 }));
 
+// v16.2.7 T3: see use-creator-volume-plan.spec.ts comment. The composable
+// now imports mergeVolumePlan/splitVolumePlan from typed wrapper; mock
+// those directly.
+vi.mock('../../src/api/volume', () => ({
+  mergeVolumePlan: (...args: unknown[]) => mergeSplitMocks.mergeCreatorVolumePlan(...args),
+  splitVolumePlan: (...args: unknown[]) => mergeSplitMocks.splitCreatorVolumePlan(...args),
+}));
+
 describe('useCreatorVolumePlanMergeSplit', () => {
   beforeEach(() => {
     vi.clearAllMocks();

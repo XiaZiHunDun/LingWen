@@ -15,6 +15,13 @@ vi.mock('../../src/api/index.js', () => ({
   saveCreatorDiffCollabNotes: vi.fn(async (payload: unknown) => payload),
 }));
 
+// v16.2.7 T3: see use-creator-volume-plan.spec.ts comment. Add typed
+// wrapper mock so diffVolumePlan (called by useVolumePlanDiff.ts) is
+// stubbed instead of hitting real fetch.
+vi.mock('../../src/api/volume', () => ({
+  diffVolumePlan: (...args: unknown[]) => diffMocks.previewCreatorVolumePlanDiff(...args),
+}));
+
 vi.mock('../../src/composables/volumePlanDiffExportUtils.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/composables/volumePlanDiffExportUtils.js')>();
   return {
