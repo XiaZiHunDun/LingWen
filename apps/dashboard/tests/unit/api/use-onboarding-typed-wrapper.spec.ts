@@ -92,16 +92,18 @@ describe('onboarding typed wrapper (v16.2.3 Task 6 / T3)', () => {
     expect(opts.method).toBe('POST');
   });
 
-  it('fetchDiffCollabNotes GETs /api/creator/onboarding/diff-collab-notes', async () => {
+  it('fetchDiffCollabNotes GETs /api/creator/diff-collab-notes (NOT under /onboarding/)', async () => {
     await onboardingApi.fetchDiffCollabNotes();
     const url = fetchMock.mock.calls[0][0];
-    expect(url).toBe('/api/creator/onboarding/diff-collab-notes');
+    // v16.2.7 T2: backend mounts @app.get('/api/creator/diff-collab-notes') directly,
+    // NOT under /api/creator/onboarding/. Earlier wrapper path was 404.
+    expect(url).toBe('/api/creator/diff-collab-notes');
   });
 
-  it('saveDiffCollabNotes PUTs /api/creator/onboarding/diff-collab-notes', async () => {
+  it('saveDiffCollabNotes PUTs /api/creator/diff-collab-notes (NOT under /onboarding/)', async () => {
     await onboardingApi.saveDiffCollabNotes({ notes: {} });
     const url = fetchMock.mock.calls[0][0];
-    expect(url).toBe('/api/creator/onboarding/diff-collab-notes');
+    expect(url).toBe('/api/creator/diff-collab-notes');
   });
 
   it('fetchOnboardingNotifications GETs /api/creator/onboarding/notifications', async () => {

@@ -96,18 +96,18 @@ export async function applyWizardShareDone(
 }
 
 // ---------------------------------------------------------------------------
-// /creator/onboarding/diff-collab-notes
+// /creator/diff-collab-notes  (mounted on app, NOT under /creator/onboarding/)
 // ---------------------------------------------------------------------------
 
 export async function fetchDiffCollabNotes(): Promise<CreatorDiffCollabNotesResponse> {
-  const data = await request('/creator/onboarding/diff-collab-notes');
+  const data = await request('/creator/diff-collab-notes');
   return data as CreatorDiffCollabNotesResponse;
 }
 
 export async function saveDiffCollabNotes(
   req: CreatorDiffCollabNotesRequest,
 ): Promise<CreatorDiffCollabNotesResponse> {
-  const data = await request('/creator/onboarding/diff-collab-notes', {
+  const data = await request('/creator/diff-collab-notes', {
     method: 'PUT',
     body: req,
   });
