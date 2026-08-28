@@ -85,9 +85,12 @@ export async function saveOnboardingNotes(
   return data as CreatorOnboardingProgressResponse;
 }
 
-export async function applyWizardShareDone(): Promise<CreatorOnboardingProgressResponse> {
+export async function applyWizardShareDone(
+  req?: CreatorOnboardingProgressRequest,
+): Promise<CreatorOnboardingProgressResponse> {
   const data = await request('/creator/onboarding/progress/apply-share', {
     method: 'POST',
+    ...(req ? { body: req } : {}),
   });
   return data as CreatorOnboardingProgressResponse;
 }
@@ -188,8 +191,13 @@ export async function processDigestRetries(): Promise<CreatorOnboardingDigestRet
   return data as CreatorOnboardingDigestRetryProcessResponse;
 }
 
-export async function dispatchDigestNow(): Promise<CreatorOnboardingDigestDispatchResponse> {
-  const data = await request('/creator/onboarding/digest/dispatch', {
+export async function dispatchDigestNow(
+  force: boolean = false,
+): Promise<CreatorOnboardingDigestDispatchResponse> {
+  const path = force
+    ? '/creator/onboarding/digest/dispatch?force=true'
+    : '/creator/onboarding/digest/dispatch';
+  const data = await request(path, {
     method: 'POST',
   });
   return data as CreatorOnboardingDigestDispatchResponse;

@@ -13,13 +13,13 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
-  fetchCreatorOnboarding,
-  saveCreatorOnboardingProgress,
-  saveCreatorOnboardingNotes,
-  applyCreatorOnboardingShare,
-  saveCreatorWizardPanelCollapsed,
-  dismissCreatorWizardPanel,
-} from '../../api/index.js';
+  fetchOnboardingWizard,
+  saveOnboardingProgress,
+  saveOnboardingNotes,
+  applyWizardShareDone,
+  collapseOnboardingWizard,
+  dismissOnboardingWizard,
+} from '@/api/onboarding';
 import { isCreatorChromeVisible, isHumanFirstDeskMode } from '../../config/creatorPanelMatrix.js';
 import { logger } from '../../utils/logger.js';
 
@@ -150,7 +150,7 @@ export function useWizardSteps(deps: WizardStepsDeps): WizardStepsReturn {
 
   async function loadOnboardingWizard(): Promise<void> {
     try {
-      const data = await fetchCreatorOnboarding() as OnboardingWizard;
+      const data = await fetchOnboardingWizard() as OnboardingWizard;
       onboardingWizard.value = data;
       completedWizardSteps.value = new Set(data?.completed_step_ids || []);
       autoCompletedWizardSteps.value = new Set(data?.auto_completed_step_ids || []);
@@ -175,20 +175,20 @@ export function useWizardSteps(deps: WizardStepsDeps): WizardStepsReturn {
   function onWizardToggle(event: { target: { open: boolean } }): void {
     wizardPanelOpen.value = event.target.open;
     if ((uiProfile.value as { studio_wizard_collapse_memory?: boolean }).studio_wizard_collapse_memory) {
-      saveCreatorWizardPanelCollapsed(!event.target.open)
+      collapseOnboardingWizard({ collapsed: !event.target.open })
         .then((data) => {
           onboardingWizard.value = data as OnboardingWizard;
         })
         .catch((err) => {
-          logger.warn('saveCreatorWizardPanelCollapsed failed', err);
+          logger.warn('collapseOnboardingWizard failed', err);
         });
     } else if (!event.target.open && (uiProfile.value as { wizard_expand_if_incomplete?: boolean }).wizard_expand_if_incomplete) {
-      dismissCreatorWizardPanel()
+      dismissOnboardingWizard()
         .then((data) => {
           onboardingWizard.value = data as OnboardingWizard;
         })
         .catch((err) => {
-          logger.warn('dismissCreatorWizardPanel failed', err);
+          logger.warn('dismissOnboardingWizard failed', err);
         });
     }
     setWizardDeepLink(
@@ -204,11 +204,11 @@ export function useWizardSteps(deps: WizardStepsDeps): WizardStepsReturn {
     const notes = focusWizardNotes.value;
     if (!done?.length && (!notes || !Object.keys(notes).length)) return;
     try {
-      await applyCreatorOnboardingShare({
+      await applyWizardShareDone({
         completed_step_ids: done || [],
         step_notes: notes || {},
       });
-      const fresh = await fetchCreatorOnboarding() as OnboardingWizard;
+      const fresh = await fetchOnboardingWizard() as OnboardingWizard;
       onboardingWizard.value = fresh;
       completedWizardSteps.value = new Set(fresh?.completed_step_ids || []);
       autoCompletedWizardSteps.value = new Set(fresh?.auto_completed_step_ids || []);
@@ -220,7 +220,7 @@ export function useWizardSteps(deps: WizardStepsDeps): WizardStepsReturn {
 
   async function saveWizardStepNote(stepId: string): Promise<void> {
     try {
-      await saveCreatorOnboardingNotes({
+      await saveOnboardingNotes({
         step_notes: { [stepId]: wizardStepNotes.value[stepId] || '' },
       });
       await loadWizardNotifications();
@@ -267,7 +267,7 @@ export function useWizardSteps(deps: WizardStepsDeps): WizardStepsReturn {
       next.delete(stepId);
     }
     try {
-      const result = await saveCreatorOnboardingProgress({
+      const result = await saveOnboardingProgress({
         completed_step_ids: [...next],
       }) as { completed_step_ids?: string[]; auto_completed_step_ids?: string[]; progress_pct?: number };
       completedWizardSteps.value = new Set(result.completed_step_ids || []);

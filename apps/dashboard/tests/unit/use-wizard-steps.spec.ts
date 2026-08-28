@@ -3,24 +3,27 @@
  *
  * Phase 39: 为 Phase 19.7 useWizardSteps 子模块添加专门测试。
  * 重点测试：步骤加载/分享链接/勾选/笔记/同步。
+ *
+ * Phase 126 v16.2.4 T6: mock 改用 `@/api/onboarding` typed wrapper names
+ * （替代 v16.2.3 之前的 Creator-prefixed legacy aliases from api/index.js）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref, computed, nextTick } from 'vue';
 
 const wizMocks = vi.hoisted(() => ({
-  fetchCreatorOnboarding: vi.fn(),
-  saveCreatorOnboardingProgress: vi.fn(),
-  applyCreatorOnboardingShare: vi.fn(),
-  saveCreatorOnboardingNotes: vi.fn(),
+  fetchOnboardingWizard: vi.fn(),
+  saveOnboardingProgress: vi.fn(),
+  applyWizardShareDone: vi.fn(),
+  saveOnboardingNotes: vi.fn(),
 }));
 
-vi.mock('../../src/api/index.js', () => {
+vi.mock('@/api/onboarding', () => {
   const m = wizMocks;
   return {
-    fetchCreatorOnboarding: (...args: unknown[]) => m.fetchCreatorOnboarding(...args),
-    saveCreatorOnboardingProgress: (...args: unknown[]) => m.saveCreatorOnboardingProgress(...args),
-    applyCreatorOnboardingShare: (...args: unknown[]) => m.applyCreatorOnboardingShare(...args),
-    saveCreatorOnboardingNotes: (...args: unknown[]) => m.saveCreatorOnboardingNotes(...args),
+    fetchOnboardingWizard: (...args: unknown[]) => m.fetchOnboardingWizard(...args),
+    saveOnboardingProgress: (...args: unknown[]) => m.saveOnboardingProgress(...args),
+    applyWizardShareDone: (...args: unknown[]) => m.applyWizardShareDone(...args),
+    saveOnboardingNotes: (...args: unknown[]) => m.saveOnboardingNotes(...args),
   };
 });
 
@@ -55,7 +58,7 @@ function mountWizard() {
 describe('useWizardSteps', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    wizMocks.fetchCreatorOnboarding.mockResolvedValue({
+    wizMocks.fetchOnboardingWizard.mockResolvedValue({
       steps: [],
       completed_step_ids: [],
       auto_completed_step_ids: [],
@@ -71,7 +74,7 @@ describe('useWizardSteps', () => {
   });
 
   it('loadOnboardingWizard populates state', async () => {
-    wizMocks.fetchCreatorOnboarding.mockResolvedValueOnce({
+    wizMocks.fetchOnboardingWizard.mockResolvedValueOnce({
       steps: [{ id: 'init', title: '初始化' }],
       completed_step_ids: ['init'],
       auto_completed_step_ids: ['pillars'],
@@ -86,7 +89,7 @@ describe('useWizardSteps', () => {
   });
 
   it('loadOnboardingWizard handles failure gracefully', async () => {
-    wizMocks.fetchCreatorOnboarding.mockRejectedValueOnce(new Error('down'));
+    wizMocks.fetchOnboardingWizard.mockRejectedValueOnce(new Error('down'));
     const w = mountWizard();
     await w.loadOnboardingWizard();
     expect(w.onboardingWizard.value).toBeNull();
@@ -125,7 +128,7 @@ describe('useWizardSteps', () => {
   });
 
   it('toggleWizardStep adds and saves progress', async () => {
-    wizMocks.saveCreatorOnboardingProgress.mockResolvedValueOnce({
+    wizMocks.saveOnboardingProgress.mockResolvedValueOnce({
       completed_step_ids: ['init', 'pillars'],
       auto_completed_step_ids: [],
       progress_pct: 50,
@@ -134,11 +137,11 @@ describe('useWizardSteps', () => {
     w.completedWizardSteps.value = new Set(['init']);
     await w.toggleWizardStep('pillars', true);
     expect(w.completedWizardSteps.value.has('pillars')).toBe(true);
-    expect(wizMocks.saveCreatorOnboardingProgress).toHaveBeenCalled();
+    expect(wizMocks.saveOnboardingProgress).toHaveBeenCalled();
   });
 
   it('toggleWizardStep removes step when unchecked', async () => {
-    wizMocks.saveCreatorOnboardingProgress.mockResolvedValueOnce({
+    wizMocks.saveOnboardingProgress.mockResolvedValueOnce({
       completed_step_ids: ['pillars'], // mock 返回服务端权威结果（仅 pillars）
       auto_completed_step_ids: [],
       progress_pct: 50,
@@ -151,7 +154,7 @@ describe('useWizardSteps', () => {
   });
 
   it('toggleWizardStep handles save failure', async () => {
-    wizMocks.saveCreatorOnboardingProgress.mockRejectedValueOnce(new Error('fail'));
+    wizMocks.saveOnboardingProgress.mockRejectedValueOnce(new Error('fail'));
     const w = mountWizard();
     w.completedWizardSteps.value = new Set(['init']);
     await w.toggleWizardStep('pillars', true);
@@ -159,11 +162,11 @@ describe('useWizardSteps', () => {
   });
 
   it('saveWizardStepNote calls API', async () => {
-    wizMocks.saveCreatorOnboardingNotes.mockResolvedValueOnce({});
+    wizMocks.saveOnboardingNotes.mockResolvedValueOnce({});
     const w = mountWizard();
     w.wizardStepNotes.value = { 'init': 'note content' };
     await w.saveWizardStepNote('init');
-    expect(wizMocks.saveCreatorOnboardingNotes).toHaveBeenCalledWith({
+    expect(wizMocks.saveOnboardingNotes).toHaveBeenCalledWith({
       step_notes: { 'init': 'note content' },
     });
   });

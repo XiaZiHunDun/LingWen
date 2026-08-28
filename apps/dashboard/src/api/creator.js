@@ -11,7 +11,11 @@ export * from './volumePlan.js';
 export * from './publish.js';
 export * from './volumeTemplate.js';
 export * from './templateApproval.js';
-export * from './onboarding.js';
+// Note: legacy `./onboarding.js` shim (21 Creator-prefixed aliases) deleted in
+// Phase 126 v16.2.4 T6 — consumers now import directly from `./onboarding.ts`
+// typed wrapper. Wizard helpers (`dismissCreatorWizardPanel`,
+// `saveCreatorWizardPanelCollapsed`) and `fetchCreatorDiffCollabNotes`/
+// `saveCreatorDiffCollabNotes` continue to flow through `./mergePreset.js`.
 export * from './mergePreset.js';
 
 export async function applyCreatorVolumeTemplate(body) {

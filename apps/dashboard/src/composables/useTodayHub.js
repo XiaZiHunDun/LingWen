@@ -4,7 +4,6 @@
 import { ref } from 'vue';
 import {
   fetchCreatorChapterPreview,
-  fetchCreatorOnboarding,
   fetchCreatorOverview,
   fetchPendingDecisions,
   fetchRippleStats,
@@ -13,6 +12,7 @@ import {
   fetchStudioQualityReport,
   fetchStudioSummary,
 } from '../api/index.js';
+import { fetchOnboardingWizard } from '@/api/onboarding';
 import { buildMicroTaskProgress } from '../utils/creatorMicroTaskUtils.js';
 import { resolveTodayPrimaryAction } from '../utils/creationModeHint.js';
 import { buildTodaySecondaryLinks } from '../utils/todaySecondaryLinks.js';
@@ -43,7 +43,7 @@ async function loadTodaySnapshot(options = {}) {
     fetchStudioQuality().catch(err => { logger.warn('fetchStudioQuality failed', err); return null; }),
     fetchStudioQualityReport().catch(err => { logger.warn('fetchStudioQualityReport failed', err); return null; }),
     fetchStudioActiveBatchJob().catch(err => { logger.warn('fetchStudioActiveBatchJob failed', err); return null; }),
-    fetchCreatorOnboarding().catch(err => { logger.warn('fetchCreatorOnboarding failed', err); return null; }),
+    fetchOnboardingWizard().catch(err => { logger.warn('fetchOnboardingWizard failed', err); return null; }),
   ]);
 
   const creationMode = creator?.creation_mode || summary?.creation_mode || 'companion';

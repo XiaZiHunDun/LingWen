@@ -37,8 +37,11 @@ vi.mock('../../src/api/index.js', () => ({
   fetchStudioQuality: mocks.fetchStudioQuality,
   fetchStudioQualityReport: mocks.fetchStudioQualityReport,
   fetchStudioActiveBatchJob: mocks.fetchStudioActiveBatchJob,
-  fetchCreatorOnboarding: mocks.fetchCreatorOnboarding,
   fetchCreatorChapterPreview: mocks.fetchCreatorChapterPreview,
+}))
+
+vi.mock('@/api/onboarding', () => ({
+  fetchOnboardingWizard: mocks.fetchCreatorOnboarding,
 }))
 
 import TodayPage from '../../src/pages/TodayPage.vue'

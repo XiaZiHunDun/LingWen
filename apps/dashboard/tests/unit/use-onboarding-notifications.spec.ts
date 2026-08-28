@@ -8,41 +8,41 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref } from 'vue';
 
 const onbMocks = vi.hoisted(() => ({
-  fetchCreatorOnboardingNotifications: vi.fn(),
-  fetchCreatorOnboardingNotificationDigest: vi.fn(),
-  fetchCreatorOnboardingDigestSchedule: vi.fn(),
-  saveCreatorOnboardingDigestSchedule: vi.fn(),
-  dispatchCreatorOnboardingDigest: vi.fn(),
-  processCreatorOnboardingDigestRetries: vi.fn(),
-  replayCreatorOnboardingDigestDeadLetter: vi.fn(),
-  fetchCreatorOnboardingDigestRetryQueue: vi.fn(),
-  fetchCreatorOnboardingDigestDeadLetter: vi.fn(),
-  fetchCreatorOnboardingDigestStats: vi.fn(),
-  fetchCreatorOnboardingWebhook: vi.fn(),
-  saveCreatorOnboardingWebhook: vi.fn(),
-  fetchCreatorOnboardingEmail: vi.fn(),
-  saveCreatorOnboardingEmail: vi.fn(),
-  ackCreatorOnboardingNotifications: vi.fn(),
+  fetchOnboardingNotifications: vi.fn(),
+  buildOnboardingNotificationDigest: vi.fn(),
+  fetchDigestSchedule: vi.fn(),
+  saveDigestSchedule: vi.fn(),
+  dispatchDigestNow: vi.fn(),
+  processDigestRetries: vi.fn(),
+  replayDigestDeadLetter: vi.fn(),
+  fetchDigestRetryQueue: vi.fn(),
+  fetchDigestDeadLetter: vi.fn(),
+  fetchDigestStats: vi.fn(),
+  fetchOnboardingWebhookConfig: vi.fn(),
+  saveOnboardingWebhookConfig: vi.fn(),
+  fetchOnboardingEmailConfig: vi.fn(),
+  saveOnboardingEmailConfig: vi.fn(),
+  ackOnboardingNotifications: vi.fn(),
 }));
 
-vi.mock('../../src/api/index.js', () => {
+vi.mock('@/api/onboarding', () => {
   const m = onbMocks;
   return {
-    fetchCreatorOnboardingNotifications: (...args: unknown[]) => m.fetchCreatorOnboardingNotifications(...args),
-    fetchCreatorOnboardingNotificationDigest: (...args: unknown[]) => m.fetchCreatorOnboardingNotificationDigest(...args),
-    fetchCreatorOnboardingDigestSchedule: (...args: unknown[]) => m.fetchCreatorOnboardingDigestSchedule(...args),
-    saveCreatorOnboardingDigestSchedule: (...args: unknown[]) => m.saveCreatorOnboardingDigestSchedule(...args),
-    dispatchCreatorOnboardingDigest: (...args: unknown[]) => m.dispatchCreatorOnboardingDigest(...args),
-    processCreatorOnboardingDigestRetries: (...args: unknown[]) => m.processCreatorOnboardingDigestRetries(...args),
-    replayCreatorOnboardingDigestDeadLetter: (...args: unknown[]) => m.replayCreatorOnboardingDigestDeadLetter(...args),
-    fetchCreatorOnboardingDigestRetryQueue: (...args: unknown[]) => m.fetchCreatorOnboardingDigestRetryQueue(...args),
-    fetchCreatorOnboardingDigestDeadLetter: (...args: unknown[]) => m.fetchCreatorOnboardingDigestDeadLetter(...args),
-    fetchCreatorOnboardingDigestStats: (...args: unknown[]) => m.fetchCreatorOnboardingDigestStats(...args),
-    fetchCreatorOnboardingWebhook: (...args: unknown[]) => m.fetchCreatorOnboardingWebhook(...args),
-    saveCreatorOnboardingWebhook: (...args: unknown[]) => m.saveCreatorOnboardingWebhook(...args),
-    fetchCreatorOnboardingEmail: (...args: unknown[]) => m.fetchCreatorOnboardingEmail(...args),
-    saveCreatorOnboardingEmail: (...args: unknown[]) => m.saveCreatorOnboardingEmail(...args),
-    ackCreatorOnboardingNotifications: (...args: unknown[]) => m.ackCreatorOnboardingNotifications(...args),
+    fetchOnboardingNotifications: (...args: unknown[]) => m.fetchOnboardingNotifications(...args),
+    buildOnboardingNotificationDigest: (...args: unknown[]) => m.buildOnboardingNotificationDigest(...args),
+    fetchDigestSchedule: (...args: unknown[]) => m.fetchDigestSchedule(...args),
+    saveDigestSchedule: (...args: unknown[]) => m.saveDigestSchedule(...args),
+    dispatchDigestNow: (...args: unknown[]) => m.dispatchDigestNow(...args),
+    processDigestRetries: (...args: unknown[]) => m.processDigestRetries(...args),
+    replayDigestDeadLetter: (...args: unknown[]) => m.replayDigestDeadLetter(...args),
+    fetchDigestRetryQueue: (...args: unknown[]) => m.fetchDigestRetryQueue(...args),
+    fetchDigestDeadLetter: (...args: unknown[]) => m.fetchDigestDeadLetter(...args),
+    fetchDigestStats: (...args: unknown[]) => m.fetchDigestStats(...args),
+    fetchOnboardingWebhookConfig: (...args: unknown[]) => m.fetchOnboardingWebhookConfig(...args),
+    saveOnboardingWebhookConfig: (...args: unknown[]) => m.saveOnboardingWebhookConfig(...args),
+    fetchOnboardingEmailConfig: (...args: unknown[]) => m.fetchOnboardingEmailConfig(...args),
+    saveOnboardingEmailConfig: (...args: unknown[]) => m.saveOnboardingEmailConfig(...args),
+    ackOnboardingNotifications: (...args: unknown[]) => m.ackOnboardingNotifications(...args),
   };
 });
 
@@ -64,20 +64,20 @@ function mountOnb() {
 describe('useOnboardingNotifications', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    onbMocks.fetchCreatorOnboardingNotifications.mockResolvedValue({
+    onbMocks.fetchOnboardingNotifications.mockResolvedValue({
       notifications: [], handles: [], unread: 0,
     });
-    onbMocks.fetchCreatorOnboardingNotificationDigest.mockResolvedValue({
+    onbMocks.buildOnboardingNotificationDigest.mockResolvedValue({
       unread: 0, group_count: 0, groups: [],
     });
-    onbMocks.fetchCreatorOnboardingDigestSchedule.mockResolvedValue({
+    onbMocks.fetchDigestSchedule.mockResolvedValue({
       enabled: false, interval_hours: 24,
     });
-    onbMocks.fetchCreatorOnboardingDigestStats.mockResolvedValue({ sent_total: 0, failed_total: 0 });
-    onbMocks.fetchCreatorOnboardingDigestRetryQueue.mockResolvedValue({ item_count: 0, items: [] });
-    onbMocks.fetchCreatorOnboardingDigestDeadLetter.mockResolvedValue({ item_count: 0, items: [] });
-    onbMocks.fetchCreatorOnboardingWebhook.mockResolvedValue({ url: '', enabled: false });
-    onbMocks.fetchCreatorOnboardingEmail.mockResolvedValue({ to_addresses: [], smtp_host: '', enabled: false });
+    onbMocks.fetchDigestStats.mockResolvedValue({ sent_total: 0, failed_total: 0 });
+    onbMocks.fetchDigestRetryQueue.mockResolvedValue({ item_count: 0, items: [] });
+    onbMocks.fetchDigestDeadLetter.mockResolvedValue({ item_count: 0, items: [] });
+    onbMocks.fetchOnboardingWebhookConfig.mockResolvedValue({ url: '', enabled: false });
+    onbMocks.fetchOnboardingEmailConfig.mockResolvedValue({ to_addresses: [], smtp_host: '', enabled: false });
   });
 
   it('initial state has defaults', () => {
@@ -90,7 +90,7 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('loadWizardNotifications populates state', async () => {
-    onbMocks.fetchCreatorOnboardingNotifications.mockResolvedValueOnce({
+    onbMocks.fetchOnboardingNotifications.mockResolvedValueOnce({
       notifications: [{ id: 'n1', text: 'hello' }],
       handles: ['@alice'],
       unread: 3,
@@ -103,45 +103,45 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('loadWizardNotifications handles failure', async () => {
-    onbMocks.fetchCreatorOnboardingNotifications.mockRejectedValueOnce(new Error('down'));
+    onbMocks.fetchOnboardingNotifications.mockRejectedValueOnce(new Error('down'));
     const o = mountOnb();
     await o.loadWizardNotifications();
     expect(o.wizardNotifications.value).toEqual([]);
   });
 
   it('saveWizardDigestSchedule posts and saves message', async () => {
-    onbMocks.saveCreatorOnboardingDigestSchedule.mockResolvedValueOnce({});
+    onbMocks.saveDigestSchedule.mockResolvedValueOnce({});
     const o = mountOnb();
     o.wizardDigestScheduleEnabled.value = true;
     o.wizardDigestScheduleHours.value = 48;
     await o.saveWizardDigestSchedule();
-    expect(onbMocks.saveCreatorOnboardingDigestSchedule).toHaveBeenCalled();
+    expect(onbMocks.saveDigestSchedule).toHaveBeenCalled();
     expect(o.saveMessage.value).toContain('digest');
   });
 
   it('saveWizardDigestSchedule handles failure via handleSaveError', async () => {
-    onbMocks.saveCreatorOnboardingDigestSchedule.mockRejectedValueOnce(new Error('fail'));
+    onbMocks.saveDigestSchedule.mockRejectedValueOnce(new Error('fail'));
     const o = mountOnb();
     await o.saveWizardDigestSchedule();
     expect(o.handleSaveError).toHaveBeenCalled();
   });
 
   it('dispatchWizardDigest updates message on success', async () => {
-    onbMocks.dispatchCreatorOnboardingDigest.mockResolvedValueOnce({ sent: true, reason: '' });
+    onbMocks.dispatchDigestNow.mockResolvedValueOnce({ sent: true, reason: '' });
     const o = mountOnb();
     await o.dispatchWizardDigest();
     expect(o.saveMessage.value).toContain('已发送');
   });
 
   it('dispatchWizardDigest reports skip reason', async () => {
-    onbMocks.dispatchCreatorOnboardingDigest.mockResolvedValueOnce({ sent: false, reason: 'quiet hours' });
+    onbMocks.dispatchDigestNow.mockResolvedValueOnce({ sent: false, reason: 'quiet hours' });
     const o = mountOnb();
     await o.dispatchWizardDigest();
     expect(o.saveMessage.value).toContain('quiet hours');
   });
 
   it('processWizardDigestRetries reports retry count', async () => {
-    onbMocks.processCreatorOnboardingDigestRetries.mockResolvedValueOnce({ retried: 5, remaining: 2 });
+    onbMocks.processDigestRetries.mockResolvedValueOnce({ retried: 5, remaining: 2 });
     const o = mountOnb();
     await o.processWizardDigestRetries();
     expect(o.saveMessage.value).toContain('已重试 5');
@@ -149,14 +149,14 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('replayWizardDigestDeadLetter reports channel', async () => {
-    onbMocks.replayCreatorOnboardingDigestDeadLetter.mockResolvedValueOnce({ channel: 'email' });
+    onbMocks.replayDigestDeadLetter.mockResolvedValueOnce({ channel: 'email' });
     const o = mountOnb();
     await o.replayWizardDigestDeadLetter();
     expect(o.saveMessage.value).toContain('email');
   });
 
   it('loadWizardWebhook populates state', async () => {
-    onbMocks.fetchCreatorOnboardingWebhook.mockResolvedValueOnce({
+    onbMocks.fetchOnboardingWebhookConfig.mockResolvedValueOnce({
       url: 'https://hook.example.com', enabled: true, signing_secret: 'secret123',
     });
     const o = mountOnb();
@@ -167,7 +167,7 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('loadWizardWebhook handles failure', async () => {
-    onbMocks.fetchCreatorOnboardingWebhook.mockRejectedValueOnce(new Error('down'));
+    onbMocks.fetchOnboardingWebhookConfig.mockRejectedValueOnce(new Error('down'));
     const o = mountOnb();
     await o.loadWizardWebhook();
     expect(o.wizardWebhookUrl.value).toBe('');
@@ -175,7 +175,7 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('saveWizardWebhook posts and saves message', async () => {
-    onbMocks.saveCreatorOnboardingWebhook.mockResolvedValueOnce({});
+    onbMocks.saveOnboardingWebhookConfig.mockResolvedValueOnce({});
     const o = mountOnb();
     o.wizardWebhookUrl.value = 'https://hook.example.com';
     await o.saveWizardWebhook();
@@ -183,7 +183,7 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('loadWizardEmail populates state', async () => {
-    onbMocks.fetchCreatorOnboardingEmail.mockResolvedValueOnce({
+    onbMocks.fetchOnboardingEmailConfig.mockResolvedValueOnce({
       to_addresses: ['test@example.com', 'admin@example.com'],
       smtp_host: 'smtp.example.com',
       enabled: true,
@@ -196,16 +196,16 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('saveWizardEmail posts and saves message', async () => {
-    onbMocks.saveCreatorOnboardingEmail.mockResolvedValueOnce({});
+    onbMocks.saveOnboardingEmailConfig.mockResolvedValueOnce({});
     const o = mountOnb();
     o.wizardEmailTo.value = 'a@b.com';
     await o.saveWizardEmail();
-    expect(onbMocks.saveCreatorOnboardingEmail).toHaveBeenCalled();
+    expect(onbMocks.saveOnboardingEmailConfig).toHaveBeenCalled();
     expect(o.saveMessage.value).toContain('邮件');
   });
 
   it('ackWizardNotifications reloads and shows count', async () => {
-    onbMocks.ackCreatorOnboardingNotifications.mockResolvedValueOnce({ unread: 0, acked: 5 });
+    onbMocks.ackOnboardingNotifications.mockResolvedValueOnce({ unread: 0, acked: 5 });
     const o = mountOnb();
     await o.ackWizardNotifications();
     expect(o.saveMessage.value).toContain('5');
@@ -213,7 +213,7 @@ describe('useOnboardingNotifications', () => {
   });
 
   it('ackWizardNotifications handles failure', async () => {
-    onbMocks.ackCreatorOnboardingNotifications.mockRejectedValueOnce(new Error('fail'));
+    onbMocks.ackOnboardingNotifications.mockRejectedValueOnce(new Error('fail'));
     const o = mountOnb();
     await o.ackWizardNotifications();
     expect(o.handleSaveError).toHaveBeenCalled();

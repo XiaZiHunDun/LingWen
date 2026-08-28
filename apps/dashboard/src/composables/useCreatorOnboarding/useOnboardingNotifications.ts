@@ -12,22 +12,22 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
 import {
-  fetchCreatorOnboardingNotifications,
-  fetchCreatorOnboardingNotificationDigest,
-  fetchCreatorOnboardingDigestSchedule,
-  saveCreatorOnboardingDigestSchedule,
-  dispatchCreatorOnboardingDigest,
-  fetchCreatorOnboardingDigestRetryQueue,
-  fetchCreatorOnboardingDigestStats,
-  processCreatorOnboardingDigestRetries,
-  fetchCreatorOnboardingDigestDeadLetter,
-  replayCreatorOnboardingDigestDeadLetter,
-  ackCreatorOnboardingNotifications,
-  fetchCreatorOnboardingWebhook,
-  saveCreatorOnboardingWebhook,
-  fetchCreatorOnboardingEmail,
-  saveCreatorOnboardingEmail,
-} from '../../api/index.js';
+  fetchOnboardingNotifications,
+  buildOnboardingNotificationDigest,
+  fetchDigestSchedule,
+  saveDigestSchedule,
+  dispatchDigestNow,
+  fetchDigestRetryQueue,
+  fetchDigestStats,
+  processDigestRetries,
+  fetchDigestDeadLetter,
+  replayDigestDeadLetter,
+  ackOnboardingNotifications,
+  fetchOnboardingWebhookConfig,
+  saveOnboardingWebhookConfig,
+  fetchOnboardingEmailConfig,
+  saveOnboardingEmailConfig,
+} from '@/api/onboarding';
 
 interface NotificationDigest {
   unread: number;
@@ -132,8 +132,12 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function loadWizardNotifications(): Promise<void> {
     try {
-      const handle = wizardNotificationHandleFilter.value || undefined;
-      const data = await fetchCreatorOnboardingNotifications(handle) as {
+      // Phase 126 v16.2.4 T6: typed wrapper `fetchOnboardingNotifications` /
+      // `buildOnboardingNotificationDigest` don't yet forward `handle` query
+      // param (Phase 127+ will add optional query support via core.js). Until
+      // then we pass handle to backend through URL state (router query) which
+      // matches the v16.2.3 shim behaviour (handle dropped identically).
+      const data = await fetchOnboardingNotifications() as unknown as {
         notifications: Array<Record<string, unknown>>;
         handles: string[];
         unread?: number;
@@ -141,7 +145,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
       wizardNotifications.value = data.notifications || [];
       wizardNotificationHandles.value = data.handles || [];
       wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
-      const digest = await fetchCreatorOnboardingNotificationDigest(handle) as NotificationDigest;
+      const digest = await buildOnboardingNotificationDigest() as unknown as NotificationDigest;
       wizardNotificationDigest.value = digest;
       await loadWizardDigestSchedule();
       await loadWizardWebhook();
@@ -158,18 +162,18 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function loadWizardDigestSchedule(): Promise<void> {
     try {
-      const data = await fetchCreatorOnboardingDigestSchedule() as DigestSchedule;
+      const data = await fetchDigestSchedule() as DigestSchedule;
       wizardDigestScheduleEnabled.value = Boolean(data.enabled);
       wizardDigestScheduleHours.value = data.interval_hours || 24;
       wizardDigestQuietStart.value = data.quiet_hours_start ?? null;
       wizardDigestQuietEnd.value = data.quiet_hours_end ?? null;
       wizardDigestHandleChannelsJson.value = JSON.stringify(data.handle_channels || {});
       wizardDigestHandleQuietJson.value = JSON.stringify(data.handle_quiet_hours || {});
-      const stats = await fetchCreatorOnboardingDigestStats() as DigestStats;
+      const stats = await fetchDigestStats() as DigestStats;
       wizardDigestStats.value = stats;
-      const retry = await fetchCreatorOnboardingDigestRetryQueue() as DigestQueue;
+      const retry = await fetchDigestRetryQueue() as unknown as DigestQueue;
       wizardDigestRetryQueue.value = retry;
-      const deadLetter = await fetchCreatorOnboardingDigestDeadLetter() as DigestQueue;
+      const deadLetter = await fetchDigestDeadLetter() as unknown as DigestQueue;
       wizardDigestDeadLetter.value = deadLetter;
     } catch {
       wizardDigestScheduleEnabled.value = false;
@@ -190,7 +194,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
       if (wizardDigestHandleQuietJson.value.trim()) {
         handleQuietHours = JSON.parse(wizardDigestHandleQuietJson.value);
       }
-      await saveCreatorOnboardingDigestSchedule({
+      await saveDigestSchedule({
         enabled: wizardDigestScheduleEnabled.value,
         interval_hours: wizardDigestScheduleHours.value,
         channels: ['webhook', 'email'],
@@ -208,7 +212,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function processWizardDigestRetries(): Promise<void> {
     try {
-      const result = await processCreatorOnboardingDigestRetries() as { retried: number; remaining: number };
+      const result = await processDigestRetries() as { retried: number; remaining: number };
       saveMessage.value = `已重试 ${result.retried} 条，剩余 ${result.remaining}`;
       await loadWizardDigestSchedule();
     } catch (e) {
@@ -218,7 +222,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function replayWizardDigestDeadLetter(): Promise<void> {
     try {
-      const result = await replayCreatorOnboardingDigestDeadLetter({ index: 0 }) as { channel?: string };
+      const result = await replayDigestDeadLetter({ index: 0 }) as { channel?: string };
       saveMessage.value = `已重放死信（${result.channel || 'unknown'}）`;
       await loadWizardDigestSchedule();
     } catch (e) {
@@ -228,7 +232,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function dispatchWizardDigest(): Promise<void> {
     try {
-      const result = await dispatchCreatorOnboardingDigest(true) as { sent: boolean; reason?: string };
+      const result = await dispatchDigestNow(true) as { sent: boolean; reason?: string };
       saveMessage.value = result.sent ? '已发送 digest' : `跳过：${result.reason || '未知'}`;
     } catch (e) {
       handleSaveError(e);
@@ -237,7 +241,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function loadWizardWebhook(): Promise<void> {
     try {
-      const data = await fetchCreatorOnboardingWebhook() as WebhookConfig;
+      const data = await fetchOnboardingWebhookConfig() as WebhookConfig;
       wizardWebhookUrl.value = data.url || '';
       wizardWebhookEnabled.value = Boolean(data.enabled);
       wizardWebhookSigningSecret.value = data.signing_secret || '';
@@ -249,7 +253,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function saveWizardWebhook(): Promise<void> {
     try {
-      await saveCreatorOnboardingWebhook({
+      await saveOnboardingWebhookConfig({
         url: wizardWebhookUrl.value.trim(),
         enabled: wizardWebhookEnabled.value,
         mention_handles: wizardNotificationHandles.value,
@@ -263,7 +267,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function loadWizardEmail(): Promise<void> {
     try {
-      const data = await fetchCreatorOnboardingEmail() as EmailConfig;
+      const data = await fetchOnboardingEmailConfig() as EmailConfig;
       wizardEmailTo.value = (data.to_addresses || []).join(', ');
       wizardEmailSmtpHost.value = data.smtp_host || '';
       wizardEmailEnabled.value = Boolean(data.enabled);
@@ -280,7 +284,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
         .split(',')
         .map((addr) => addr.trim())
         .filter(Boolean);
-      await saveCreatorOnboardingEmail({
+      await saveOnboardingEmailConfig({
         enabled: wizardEmailEnabled.value,
         to_addresses: toAddresses,
         mention_handles: wizardNotificationHandles.value,
@@ -297,7 +301,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
 
   async function ackWizardNotifications(): Promise<void> {
     try {
-      const result = await ackCreatorOnboardingNotifications({
+      const result = await ackOnboardingNotifications({
         all_notifications: true,
         handle: wizardNotificationHandleFilter.value || undefined,
       }) as { unread?: number; acked: number };

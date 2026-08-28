@@ -71,13 +71,18 @@ vi.mock('../../src/api/index.js', () => ({
   fetchStudioActiveBatchJob: mocks.fetchStudioActiveBatchJob,
   fetchStudioProseDiff: mocks.fetchStudioProseDiff,
   fetchStudioProseJudge: mocks.fetchStudioProseJudge,
-  fetchCreatorOnboarding: mocks.fetchCreatorOnboarding,
   fetchHealth: mocks.fetchHealth,
   fetchProductionRollup: mocks.fetchProductionRollup,
   fetchProductionRecords: mocks.fetchProductionRecords,
   fetchProductionRecordsTrend: mocks.fetchProductionRecordsTrend,
   queryCreatorMemory: mocks.queryCreatorMemory,
   setStudioActive: vi.fn(),
+}))
+
+// Phase 126 v16.2.4 T6: useTodayHub now imports typed wrapper directly from
+// `@/api/onboarding` (mock fetchOnboardingWizard → reused mock fn from above).
+vi.mock('@/api/onboarding', () => ({
+  fetchOnboardingWizard: mocks.fetchCreatorOnboarding,
 }))
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
