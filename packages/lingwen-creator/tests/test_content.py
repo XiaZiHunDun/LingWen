@@ -1,0 +1,84 @@
+"""Phase 126 v16.2.4: tests for content/ subdomain (8 modules + __init__ star-imports)."""
+from __future__ import annotations
+
+
+def test_content_package_imports() -> None:
+    """lingwen_creator.content package is importable."""
+    import lingwen_creator.content
+    assert lingwen_creator.content.__name__ == "lingwen_creator.content"
+
+
+def test_content_star_imports_all_8_submodules() -> None:
+    """content/__init__.py star-imports re-export from 8 submodules."""
+    from lingwen_creator.content import (
+        CreatorSettings,  # via mode.py shim → shared.mode
+        creator_overview,
+        creator_preferences_payload,
+        enrich_batch_history_job,
+        list_creator_models_payload,
+        resolve_creator_ui_profile,
+        run_creator_agent_plan,
+        run_creator_logic_check,
+    )
+    assert callable(run_creator_agent_plan)
+    assert callable(enrich_batch_history_job)
+    assert callable(creator_overview)
+    assert callable(run_creator_logic_check)
+    assert callable(list_creator_models_payload)
+    assert callable(creator_preferences_payload)
+    assert callable(resolve_creator_ui_profile)
+
+
+def test_content_mode_shim_re_exports_shared() -> None:
+    """content/mode.py is a shim → lingwen_creator.shared.mode."""
+    from lingwen_creator.content.mode import CreatorSettings as ContentCreatorSettings
+    from lingwen_creator.shared.mode import CreatorSettings as SharedCreatorSettings
+    assert ContentCreatorSettings is SharedCreatorSettings
+
+
+def test_content_dashboard_chapter_preview_exists() -> None:
+    """content.dashboard exports creator_chapter_preview."""
+    from lingwen_creator.content.dashboard import (
+        creator_chapter_preview,
+        save_creator_chapter_body,
+        save_creator_chapter_outline,
+    )
+    assert callable(creator_chapter_preview)
+    assert callable(save_creator_chapter_outline)
+    assert callable(save_creator_chapter_body)
+
+
+def test_content_preferences_uses_shared_mode() -> None:
+    """content.preferences imports from lingwen_creator.shared.mode (intra-package)."""
+    from lingwen_creator.content.preferences import creator_preferences_payload
+    assert callable(creator_preferences_payload)
+
+
+def test_legacy_import_paths_still_work() -> None:
+    """Backwards compat: 8 infra.creator_X.py shims re-export."""
+    from lingwen_creator.content.agent import run_creator_agent_plan
+    from lingwen_creator.content.batch_history import enrich_batch_history_job
+    from lingwen_creator.content.dashboard import creator_overview
+    from lingwen_creator.content.logic_check import run_creator_logic_check
+    from lingwen_creator.content.mode import CreatorSettings
+    from lingwen_creator.content.models import list_creator_models_payload
+    from lingwen_creator.content.preferences import creator_preferences_payload
+    from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
+
+    from infra.creator_agent import run_creator_agent_plan as LegacyRun
+    from infra.creator_batch_history import enrich_batch_history_job as LegacyEnrich
+    from infra.creator_dashboard import creator_overview as LegacyOverview
+    from infra.creator_logic_check import run_creator_logic_check as LegacyLogic
+    from infra.creator_mode import CreatorSettings as LegacySettings
+    from infra.creator_models import list_creator_models_payload as LegacyModels
+    from infra.creator_preferences import creator_preferences_payload as LegacyPrefs
+    from infra.creator_ui_profile import resolve_creator_ui_profile as LegacyUI
+
+    assert LegacyRun is run_creator_agent_plan
+    assert LegacyEnrich is enrich_batch_history_job
+    assert LegacyOverview is creator_overview
+    assert LegacyLogic is run_creator_logic_check
+    assert LegacySettings is CreatorSettings
+    assert LegacyModels is list_creator_models_payload
+    assert LegacyPrefs is creator_preferences_payload
+    assert LegacyUI is resolve_creator_ui_profile
