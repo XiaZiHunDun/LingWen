@@ -13,10 +13,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from infra.creator_ui_profile import filter_deviations_by_min_severity, ui_profile_from_project_config
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject, quality_report_summary
+from lingwen_creator.content.ui_profile import (
+    filter_deviations_by_min_severity,
+    ui_profile_from_project_config,
+)
 from lingwen_creator.shared.mode import settings_from_project_config
 from lingwen_creator.volume.plan import compute_volume_deviations, load_volume_plan
 from lingwen_creator.volume.pulse import build_volume_pulse

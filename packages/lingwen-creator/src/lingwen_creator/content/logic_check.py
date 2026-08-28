@@ -42,7 +42,7 @@ def run_creator_logic_check(
     from lingwen_quality.consistency.checkers.scene_transition_checker import SceneTransitionChecker
     from lingwen_quality.consistency.engine.consistency_engine import CheckScope, ConsistencyEngine
 
-    from infra.creator_ui_profile import ui_profile_from_project_config
+    from lingwen_creator.content.ui_profile import ui_profile_from_project_config
 
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     paths = ProjectPaths.get(root)
