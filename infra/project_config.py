@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from lingwen_creator.shared.mode import (
+from lingwen_shared.mode import (
     CREATION_MODE_STUDIO,
     normalize_creation_mode,
     normalize_quality_profile,
