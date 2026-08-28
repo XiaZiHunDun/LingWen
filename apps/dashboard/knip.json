@@ -1,8 +1,7 @@
 {
   "entry": [
     "src/main.js",
-    "src/router/index.js",
-    "src/router/routes.js"
+    "src/router/index.js"
   ],
   "project": [
     "src/**/*.{js,ts,vue}",
@@ -22,23 +21,11 @@
     "src/config/creatorPanelMatrix.js",
     "tests/visual-audit/helpers/capture-ui-audit.js",
     "tests/helpers/strict-test-types.ts",
-    "src/api/world.ts",
-    "src/api/workspace.ts",
-    "src/api/quality.ts",
     "src/api/index.js",
-    "src/api/volume.ts",
-    "src/api/settings.ts",
-    "src/api/content.ts",
-    "src/api/export.ts",
-    "src/api/memory.ts",
-    "src/api/health.ts",
-    "src/api/decisions.ts",
     "src/api/cvg.ts",
-    "src/api/workflows.ts",
-    "src/api/studio.ts",
-    "packages/dashboard-contracts/src/shared/export.ts",
-    "packages/dashboard-contracts/src/shared/memory.ts"
+    "src/api/decisions.ts",
+    "src/api/health.ts",
+    "src/api/workflows.ts"
   ],
-  "ignoreDependencies": ["@lingwen/dashboard-contracts"],
   "ignoreBinaries": ["knip"]
 }
