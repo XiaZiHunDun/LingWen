@@ -75,21 +75,12 @@ def test_publish_adapters_module_exports() -> None:
     assert CustomPublishAdapter.platform_id == "custom"
 
 
-def test_legacy_publish_shim_alive() -> None:
-    """v16.2.7 T4.3: only infra.creator_publish shim is still alive (T4.4 deletes it).
-
-    Replaces test_legacy_import_paths_still_work from v16.2.5 cycle.
-    Other 4 export shims (creator_export_common/docx/epub/publish_adapters)
-    are deleted in T4.3 — see test_legacy_shims_deleted below.
-    """
-    from lingwen_creator.export.publish import submit_creator_publish
-    from infra.creator_publish import submit_creator_publish as LegacyPublish
-
-    assert LegacyPublish is submit_creator_publish
-
-
 def test_legacy_shims_deleted() -> None:
-    """v16.2.7 T4.3: 4 export shims deleted, must now raise ModuleNotFoundError."""
+    """v16.2.7 T4.3+T4.4: all 5 export shims deleted, must raise ModuleNotFoundError.
+
+    T4.3: creator_export_common/docx/epub/publish_adapters.
+    T4.4: creator_publish.
+    """
     import pytest
 
     with pytest.raises(ModuleNotFoundError):
@@ -100,6 +91,8 @@ def test_legacy_shims_deleted() -> None:
         from infra.creator_export_epub import build_creator_epub_bytes  # noqa: F401
     with pytest.raises(ModuleNotFoundError):
         from infra.creator_publish_adapters import get_publish_adapter  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_publish import submit_creator_publish  # noqa: F401
 
 
 def test_intra_package_imports_no_cycle() -> None:
