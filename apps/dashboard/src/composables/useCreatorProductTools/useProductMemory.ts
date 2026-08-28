@@ -22,7 +22,7 @@ import {
   fetchCreatorMemoryAssets,
   saveCreatorMemoryAnnotation,
   queryCreatorMemory,
-} from '../../api/index.js';
+} from '@/api/memory';
 import { buildMemoryAssetItems } from '../../utils/creatorMemoryAssetsUtils.js';
 import { buildStructureGraph } from '../../utils/creatorStructureGraphUtils.js';
 

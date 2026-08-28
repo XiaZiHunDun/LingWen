@@ -6,8 +6,8 @@ import { computed, ref } from 'vue';
 import {
   fetchCreatorOverview,
   fetchStudioSummary,
-  queryCreatorMemory,
 } from '../api/index.js';
+import { queryCreatorMemory } from '../api/memory.js';
 import { logger } from '../utils/logger.js';
 
 /** @type {import('vue').Ref<'chat'|'note'>} */
