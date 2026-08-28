@@ -40,6 +40,14 @@ vi.mock('../../src/api/index.js', () => ({
   runCreatorLogicCheck: vi.fn(),
 }));
 
+// Phase 126 v16.2.6 T7: memory calls now go through the api/memory.ts typed
+// wrapper, which the api/index.js mock no longer covers (v16.2.4 §5.1 lesson 2).
+vi.mock('../../src/api/memory.js', () => ({
+  fetchCreatorMemoryAssets: vi.fn(async () => ({ items: [] })),
+  saveCreatorMemoryAnnotation: vi.fn(async () => ({})),
+  queryCreatorMemory: vi.fn(async () => ({ results: [] })),
+}));
+
 vi.mock('../../src/composables/useStudioProject.js', () => ({
   useStudioProject: () => ({ projectRevision: ref(0) }),
 }));

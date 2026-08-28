@@ -13,7 +13,10 @@ const memMocks = vi.hoisted(() => ({
   queryCreatorMemory: vi.fn(),
 }));
 
-vi.mock('../../src/api/index.js', () => ({
+// Phase 126 v16.2.6 T7: useProductMemory imports directly from the api/memory.ts
+// typed wrapper, so the mock must target that module (barrel mocks don't
+// intercept — v16.2.4 §5.1 lesson 2 / v16.2.5 §5.1 lesson 3).
+vi.mock('../../src/api/memory.js', () => ({
   fetchCreatorMemoryAssets: (...args: unknown[]) => memMocks.fetchCreatorMemoryAssets(...args),
   saveCreatorMemoryAnnotation: (...args: unknown[]) => memMocks.saveCreatorMemoryAnnotation(...args),
   queryCreatorMemory: (...args: unknown[]) => memMocks.queryCreatorMemory(...args),

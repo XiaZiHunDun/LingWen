@@ -30,10 +30,15 @@ vi.mock('../../src/api/index.js', () => ({
   fetchChapters: apiMocks.fetchChapters,
   fetchCreatorPreferences: apiMocks.fetchCreatorPreferences,
   saveCreatorPreferencesApi: apiMocks.saveCreatorPreferencesApi,
+  fetchCreatorModels: apiMocks.fetchCreatorModels,
+}));
+
+// Phase 126 v16.2.6 T7: useProductMemory imports from the api/memory.ts typed
+// wrapper (v16.2.4 §5.1 lesson 2 — barrel mocks don't intercept).
+vi.mock('../../src/api/memory.js', () => ({
   fetchCreatorMemoryAssets: apiMocks.fetchCreatorMemoryAssets,
   saveCreatorMemoryAnnotation: apiMocks.saveCreatorMemoryAnnotation,
   queryCreatorMemory: apiMocks.queryCreatorMemory,
-  fetchCreatorModels: apiMocks.fetchCreatorModels,
 }));
 
 vi.mock('../../src/api/content.js', () => ({
