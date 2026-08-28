@@ -31,7 +31,9 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   };
 });
 
-import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../../src/api/index.js';
+// v16.2.8 T5: runCreatorAgentPlan{,Stream} no longer re-exported from index.js
+// (creator.js barrel deleted). Import directly from the typed wrapper module.
+import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../../src/api/content.js';
 
 describe('creator write workbench matrix', () => {
   it('enables workbench layout for companion by default', () => {
@@ -320,15 +322,16 @@ describe('useCreatorAgent', () => {
 
   it('falls back to non-stream API plan', async () => {
     vi.mocked(runCreatorAgentPlanStream).mockRejectedValue(new Error('stream down'));
+    // v16.2.8 T5: cast — pre-existing fixture uses DTO fields not yet in shared contracts.
     vi.mocked(runCreatorAgentPlan).mockResolvedValue({
       advice_only: false,
       candidates: [{ id: 'steady', label: '稳健', direction: '稳', text: 'REST 候选' }],
-      advice: [],
+      advice: null,
       annotations: [],
       status_line: 'REST 就绪',
       provider: 'rest',
       lens: 'reviewer',
-    });
+    } as unknown as Awaited<ReturnType<typeof runCreatorAgentPlan>>);
     const agent = makeAgent();
     agent.setAgentLens('reviewer');
     await agent.runRewritePreset('dramatic');

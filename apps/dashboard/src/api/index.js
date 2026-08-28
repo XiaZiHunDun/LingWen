@@ -1,9 +1,18 @@
 /**
  * API Client for 墨灵 Dashboard
  * Barrel re-export from domain-specific modules
- * (0 funcs, re-export only)
+ *
+ * Phase 126 v16.2.8 T5: legacy creator.js + its 5 underlying modules (agent,
+ * volumePlan, volumeTemplate, templateApproval, mergePreset) DELETED. All
+ * re-exports below now point to typed wrappers (.ts). v16.2.6 memory +
+ * v16.2.5 publish re-points are the canonical paths.
+ *
+ * Remaining .js files in this directory (NOT creator-domain, kept as-is):
+ *   - core.js (request helper + error classes)
+ *   - budgets.js (4 legacy budget funcs, used by dashboard not creator)
+ *   - connectivity.js (ApiError offline tracking, used by core.js)
+ *   - this file (barrel)
  */
-
 export {
   fetchOverview,
   fetchChapters,
@@ -54,7 +63,7 @@ export {
 } from './budgets.js';
 
 export {
-  fetchStudioProjects,
+  listStudioProjects,
   setStudioActive,
   fetchStudioSummary,
   fetchStudioQuality,
@@ -66,83 +75,6 @@ export {
   fetchStudioActiveBatchJob,
   fetchStudioBatchJob,
 } from './studio.js';
-
-export {
-  fetchCreatorOverview,
-  runCreatorLogicCheck,
-  runCreatorAgentPlan,
-  runCreatorAgentPlanStream,
-  fetchCreatorVolumePlan,
-  saveCreatorVolumePlan,
-  previewCreatorVolumePlanDiff,
-  fetchCreatorBatchHistory,
-  exportCreatorBatchHistory,
-  mergeCreatorVolumePlan,
-  splitCreatorVolumePlan,
-  fetchCreatorVolumeTemplates,
-  applyCreatorVolumeTemplate,
-  saveCreatorVolumeTemplate,
-  deleteCreatorVolumeTemplate,
-  renameCreatorVolumeTemplate,
-  exportCreatorVolumeTemplates,
-  importCreatorVolumeTemplates,
-  fetchCreatorVolumeTemplateSyncSources,
-  syncCreatorVolumeTemplates,
-  publishCreatorVolumeTemplateToFactory,
-  pullCreatorFactoryVolumeTemplates,
-  deleteCreatorFactoryVolumeTemplate,
-  fetchCreatorDiffCollabNotes,
-  saveCreatorDiffCollabNotes,
-  setCreatorVolumeTemplateVersion,
-  fetchCreatorVolumeTemplateChangelog,
-  rollbackCreatorVolumeTemplate,
-  fetchCreatorTemplateApprovals,
-  submitCreatorTemplateVersionApproval,
-  approveCreatorTemplateApproval,
-  rejectCreatorTemplateApproval,
-  fetchCreatorTemplateApprovalChainConfig,
-  saveCreatorTemplateApprovalChainConfig,
-  fetchCreatorTemplateApprovalHistory,
-  exportCreatorTemplateApprovalAudit,
-  fetchCreatorTemplateApprovalSlaConfig,
-  saveCreatorTemplateApprovalSlaConfig,
-  fetchCreatorTemplateApprovalOverdue,
-  transferCreatorTemplateApproval,
-  fetchCreatorTemplateApprovalSnapshotDiff,
-  fetchCreatorTemplateApprovalSnapshotDrift,
-  batchApproveCreatorTemplateApprovals,
-  batchRejectCreatorTemplateApprovals,
-  preflightCreatorFactoryMergePresetPull,
-  fetchCreatorMergePresetChangelog,
-  fetchCreatorMergePresetChangelogDiff,
-  fetchCreatorMergePresetPackages,
-  exportCreatorMergePresetPackages,
-  importCreatorMergePresetPackages,
-  fetchCreatorFactoryMergePresetPackages,
-  publishCreatorMergePresetToFactory,
-  pullCreatorFactoryMergePresetPackages,
-  applyCreatorMergePresetConflictFix,
-  applyAllCreatorMergePresetConflictFixes,
-  preflightCreatorMergePresetImport,
-  previewCreatorMergePresetImportDiff,
-  fetchCreatorMergePresetToposort,
-  applyCreatorMergePresetToposort,
-  dismissCreatorWizardPanel,
-  saveCreatorWizardPanelCollapsed,
-  fetchCreatorSettingsDocs,
-  saveCreatorSettingsDocs,
-  previewCreatorSettingsDocs,
-  previewCreatorSettingsThreeWay,
-  previewCreatorSettingsMerge,
-  fetchCreatorMergePreferences,
-  exportCreatorMergePreferences,
-  importCreatorMergePreferences,
-  fetchCreatorSettingsHistory,
-  restoreCreatorSettingsSnapshot,
-  fetchCreatorPreferences,
-  fetchCreatorModels,
-  saveCreatorPreferencesApi,
-} from './creator.js';
 
 // Phase 126 v16.2.6 T5.b: memory aliases re-pointed from memory.js shim (deleted)
 // to the api/memory.ts typed wrapper.
@@ -166,3 +98,9 @@ export {
   fetchCreatorPublishHistory,
   fetchCreatorPublishPlatforms,
 } from './export.js';
+
+// Phase 126 v16.2.7 T5: creator_settings.ts DTO dedup keeps 6 LOCAL-ONLY classes
+// (CreatorChapterPreviewResponse / CreatorChapterBodySaveRequest /
+// CreatorChapterOutlineSaveRequest / CreatorTaskModelsPreferences /
+// CreatorInterventionRules / CreatorModelOption). No barrel exports needed
+// here — callers import directly from @/api/settings.

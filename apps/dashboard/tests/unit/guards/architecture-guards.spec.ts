@@ -148,20 +148,22 @@ describe('Phase 61 — Legacy Workbench Cleanup Guards', () => {
   });
 });
 
-// Phase 62: api/creator.js must stay a thin shell re-export
-describe('Phase 62 — api/creator.js Thin Shell Guards', () => {
+// Phase 126 v16.2.8 T5: api/creator.js (and 5 underlying legacy modules) DELETED.
+// The Phase 62 guards that asserted creator.js stayed ≤ 50 lines are now inverted:
+// the file should NOT exist. v16.3+ import-linter enforcement prevents reintroduction.
+describe('Phase 126 v16.2.8 — api/creator.js Deleted (Phase 62 guards inverted)', () => {
   const apiDir = path.resolve(__dirname, '../../../src/api');
   const creatorFile = path.join(apiDir, 'creator.js');
 
-  it('api/creator.js 保持 ≤ 50 行 (Phase 62)', () => {
-    const content = fs.readFileSync(creatorFile, 'utf-8');
-    const lines = content.split('\n').length;
-    expect(lines).toBeLessThanOrEqual(50);
+  it('api/creator.js 不应存在 (Phase 126 v16.2.8 T5)', () => {
+    expect(fs.existsSync(creatorFile)).toBe(false);
   });
 
-  it('api/creator.js 不应包含 dead BASE_URL (Phase 62)', () => {
-    const content = fs.readFileSync(creatorFile, 'utf-8');
-    expect(content).not.toMatch(/^\s*(const|let|var)\s+BASE_URL\s*=/m);
+  it('api/ 下不应再有 Creator-prefixed mergePreset / agent / volumePlan / volumeTemplate / templateApproval .js (Phase 126 v16.2.8 T5)', () => {
+    const legacyNames = ['agent.js', 'volumePlan.js', 'volumeTemplate.js', 'templateApproval.js', 'mergePreset.js'];
+    for (const name of legacyNames) {
+      expect(fs.existsSync(path.join(apiDir, name))).toBe(false);
+    }
   });
 });
 
