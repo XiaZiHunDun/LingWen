@@ -1,9 +1,81 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.2.4"  # 最新 phase 闭环 (v16.2.4 content subdomain + onboarding T4 closure)
+version: "16.2.5"  # 最新 phase 闭环 (v16.2.5 export subdomain 拆分)
 
 phases:
+  - phase: 126
+    version: 16.2.5
+    date: 2026-08-28
+    scope: Creator 6-subdomain 拆分 Phase 5/8 — Export subdomain 闭环 (Round 2 leaf)
+    files_added:
+      - packages/lingwen-creator/src/lingwen_creator/export/__init__.py (5 star-imports)
+      - packages/lingwen-creator/src/lingwen_creator/export/common.py (92 lines, verbatim from infra/creator_export_common.py)
+      - packages/lingwen-creator/src/lingwen_creator/export/docx.py (111 lines)
+      - packages/lingwen-creator/src/lingwen_creator/export/epub.py (181 lines)
+      - packages/lingwen-creator/src/lingwen_creator/export/publish.py (90 lines)
+      - packages/lingwen-creator/src/lingwen_creator/export/publish_adapters.py (159 lines)
+      - packages/lingwen-creator/tests/test_export.py (8 tests, 含 legacy import back-compat + intra-package import no-cycle)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py (+8 Export/Publish DTOs)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts (148 interfaces, +8 export/publish)
+      - packages/lingwen-shared/tests/test_creator_dto.py (+9 tests, total 39)
+      - apps/dashboard/src/api/export.ts (5 typed wrapper functions: exportCreatorEpub + exportCreatorDocx + submitCreatorPublish + fetchCreatorPublishPlatforms + fetchCreatorPublishHistory)
+      - packages/dashboard-contracts/src/shared/export.ts (8 Export/Publish types re-export)
+      - apps/dashboard/tests/unit/api/use-export-typed-wrapper.spec.ts (8 URL contract tests)
+      - docs/superpowers/specs/2026-08-28-phase-126-v16-2-5-export-design.md
+      - docs/superpowers/plans/2026-08-28-phase-126-v16-2-5-export-plan.md
+      - docs/superpowers/handoffs/2026-08-28-phase-126-v16-2-5-export-handoff.md
+    files_modified:
+      - infra/creator_export_common.py (T1.a → shim re-export from lingwen_creator.export.common)
+      - infra/creator_export_docx.py (T1.a → shim)
+      - infra/creator_export_epub.py (T1.b → shim)
+      - infra/creator_publish.py (T1.c → shim)
+      - infra/creator_publish_adapters.py (T1.b → shim pre-emptive, lights up T1.c)
+      - packages/lingwen-creator/src/lingwen_creator/export/common.py (T1.a intra-package imports: creator_dashboard → lingwen_creator.content.dashboard, creator_settings_docs → lingwen_creator.settings.docs)
+      - packages/lingwen-creator/src/lingwen_creator/export/docx.py (T1.a intra-subdomain: lingwen_creator.export.common)
+      - packages/lingwen-creator/src/lingwen_creator/export/epub.py (T1.b intra-subdomain)
+      - packages/lingwen-creator/src/lingwen_creator/export/publish.py (T1.c intra-subdomain)
+      - packages/lingwen-shared/tests/test_creator_dto.py (T2 +9 tests: defaults / nested / round-trip)
+      - packages/dashboard-contracts/src/shared/creator.ts (T3.a +8 types to re-export list)
+      - apps/dashboard/knip.json (T3.a +2 allowlist: export.ts + dashboard-contracts/export.ts)
+      - apps/dashboard/src/api/export.ts (T3.a /// <reference types=\"vite/client\" /> triple-slash directive for import.meta.env TS support)
+      - apps/dashboard/src/composables/useCreatorProductTools/useProductExport.ts (T5.a refactored: 3 export calls → @/api/export + 1 fetchCreatorChapterPreview → @/api/content)
+      - apps/dashboard/src/composables/useCreatorProductTools/useProductPublish.ts (T5.a refactored: 3 publish calls → @/api/export)
+      - apps/studio_api/routes/creator_core.py (T4 → 5 lazy imports migrated: creator_export_epub → lingwen_creator.export.epub, creator_export_docx → .docx, creator_publish → .publish)
+      - apps/dashboard/src/api/creator.js (T5.b removed `export * from './publish.js'`)
+      - apps/dashboard/src/api/index.js (T5.b 6 publish.js re-exports → @/api/export typed wrapper + 4 Content functions → content.ts/volume.ts)
+      - apps/dashboard/src/composables/useCreatorWrite/useWriteFlow.ts (T5.b typed signature migration: saveCreatorChapterBody(chapter, body) → saveCreatorChapterBody({ chapter_id, body }) + saveCreatorChapterOutline analog + 4 cast `as Record<string, unknown>` → `as unknown as Record<string, unknown>`)
+      - apps/dashboard/tests/unit/use-product-export.spec.ts (T7 mock path: split to api/export.js + api/content.js, removed from api/index.js)
+      - apps/dashboard/tests/unit/use-product-publish.spec.ts (T7 mock path: api/export.js only)
+      - apps/dashboard/tests/unit/creator-product-tools.spec.ts (T7 split: index.js for legacy + content.js + export.js)
+      - apps/dashboard/tests/unit/creator-publish-wizard-modal.spec.ts (T7 split: index.js + content.js + export.js)
+      - apps/dashboard/tests/unit/use-creator-write.spec.ts (T7 mock signatures: 2-arg → 1-arg typed shape)
+      - .lingwen/architecture.yml (this commit: +19 export symbols to creator.exports + notes)
+      - CLAUDE.md (this commit: bump v16.2.4 → v16.2.5 + lessons entry)
+    files_deleted:
+      - apps/dashboard/src/api/publish.js (T5.b legacy Phase 62.4 shim with raw fetch, replaced by export.ts typed wrapper)
+      - apps/dashboard/tests/unit/api-creator-publish.spec.ts (T5.b orphan test for deleted shim, per v16.2.4 §5.1 lesson 5)
+    shims_created: "5 (creator_export_common + creator_export_docx + creator_export_epub + creator_publish + creator_publish_adapters → 1-line star-import shims)"
+    shims_remaining: "41 (was 36 + 5 new export shims; no net deletion in v16.2.5 — v16.2.7 cleanup responsibility)"
+    tests_added: "25 (8 export pkg + 9 export DTO + 8 URL contract; deleted ~12 from orphan api-creator-publish.spec.ts → net +13)"
+    carryover_closures:
+      - "C1 ✅: typed wrapper typed signature refactor of useWriteFlow (saveCreatorChapterBody/Outline) — adapted to CreatorBodySaveRequest/creatorOutlineSaveRequest typed signatures introduced in v16.2.4 content migration"
+    deviations:
+      - "D1: T1 plan 4 commits → actual 4 (T1.a/b/c/d) with DP-06 4-file budget (5 export files + 5 shims + __init__.py + tests = 13 files; T1 split per file-group semantic boundaries)"
+      - "D2: T3 split: plan 2 commits → actual 2 (T3.a typed wrapper + re-export + knip = 4 files, T3.b URL contract = 1 file)"
+      - "D3: T5 scope expansion: plan estimated useProductExport + useProductPublish refactor → actual + api/index.js update + delete api/publish.js + delete orphan test + useWriteFlow typed signature migration (3 call sites + 4 cast fixes)"
+      - "D4: T7 verification discovered 17 new test failures (publish.js mocks targeting api/index.js don't intercept typed wrapper imports) — fixed in single T7 commit (5 test files)"
+      - "D5: T7 spec lesson 5 (orphan test files linger) → 1 orphan deleted (api-creator-publish.spec.ts); T5b useWriteFlow.ts had no orphan but typed signature migration was needed"
+    new_lessons:
+      - "v16.2.4 lesson 1 (intra-package imports) confirmed: T1.a export/common.py verbatim copy preserved `from infra.creator_dashboard` → fixed to `from lingwen_creator.content.dashboard` (cross-subdomain intra-package)"
+      - "v16.2.4 lesson 4 (typed wrapper params forwarding fragility) confirmed + extended: useWriteFlow.ts 3 call sites using old 2-arg signature (chapterNum, body) vs new typed 1-arg signature ({ chapter_id, body }) — migration is mechanical but discovered only via vue-tsc strict mode"
+      - "T5.b api/index.js legacy alias pattern works: keep Creator-prefixed aliases pointing to typed wrappers (avoids cascading consumer updates)"
+      - "T7 test mock path lesson (v16.2.4 lesson 2): vi.mock('../../src/api/index.js', ...) does NOT intercept composables that import directly from @/api/export or @/api/content — must split mocks per typed wrapper module"
+      - "T5.b useWriteFlow.ts TS cast fragility: 'as Record<string, unknown>' from typed CreatorChapterPreview fails TS strict mode — must use 'as unknown as Record<string, unknown>' (double-cast pattern)"
+    carryover_to_v16_2_6:
+      - "v16.2.6 memory subdomain: 3 files (annotations + assets + query) — Round 2 leaf last"
+      - "v16.2.7 cleanup: 41 shim deletions + 4 typed wrapper /api/ prefix fix (world/workspace/quality + onboarding from v16.2.3) + 22 vitest debt + import-linter DP-01..06"
+    status: closed
   - phase: 126
     version: 16.2.4
     date: 2026-08-28
@@ -86,12 +158,12 @@ phases:
       - "C3 ✅: infra/project_init + infra/project_config creator_mode imports → closed in T5 (now use lingwen_creator.shared.mode)"
       - "C4 ✅: onboarding T4 composables (5 files deferred from v16.2.3) + api/onboarding.js shim → closed in T6 (23 aliases replaced, shim deleted)"
     deviations:
-      - D1: T2 plan 1 commit → actual 4 (T2a-d) due to 8-file T2 > DP-06 4-file budget
-      - D2: T6 plan 5 composable files → actual 11 files (5 composables + creator.js + index.js + useTodayHub + 4 test mocks + 2 typed wrapper defects fix)
-      - D3: T8 plan 1 commit (handoff doc) → actual 4 commits (3 T8 fixups + handoff doc)
-      - D4: v16.2.3 onboarding test mock regression discovered (6 tests patch path was targeting shim but production lazy-imports from real module — fixes 6 mock sites in T8 fixup B)
-      - D5: 22 ruff I001 violations accumulated across 10 files (auto-fix in T8 fixup C)
-      - D6: v16.2.4 my regression — content/dashboard.py + logic_check.py verbatim copy preserved `from infra.creator_ui_profile` → cycle via shim (fix in T8 fixup A)
+      - "D1: T2 plan 1 commit → actual 4 (T2a-d) due to 8-file T2 > DP-06 4-file budget"
+      - "D2: T6 plan 5 composable files → actual 11 files (5 composables + creator.js + index.js + useTodayHub + 4 test mocks + 2 typed wrapper defects fix)"
+      - "D3: T8 plan 1 commit (handoff doc) → actual 4 commits (3 T8 fixups + handoff doc)"
+      - "D4: v16.2.3 onboarding test mock regression discovered (6 tests patch path was targeting shim but production lazy-imports from real module — fixes 6 mock sites in T8 fixup B)"
+      - "D5: 22 ruff I001 violations accumulated across 10 files (auto-fix in T8 fixup C)"
+      - "D6: v16.2.4 my regression — content/dashboard.py + logic_check.py verbatim copy preserved `from infra.creator_ui_profile` → cycle via shim (fix in T8 fixup A)"
     review_findings:
       - "content composables (19 per spec §3.7) refactor deferred to v16.2.7 (T6 only refactored onboarding T4, not content composables)"
       - "4 unwired Content DTOs (CreatorDashboardOverview + CreatorDashboardChapterPreview + CreatorUiProfileState + CreatorUiProfileSaveRequest) — wrap when endpoints land"
@@ -140,13 +212,13 @@ phases:
       - "T1a carve-out (line 11 of settings/docs.py: append_settings_snapshot infra path) — fixed in T1b commit 9494ba87"
       - "T1c BLOCKED due to 3 underscore test failures (_global_prefs_path, _factory_preset_packages_path, _normalize_factory_preset_id) — fixed in T1c-followup commit e85980c4 + T7 audit confirmed 0 additional needed"
     deviations:
-      - D1: T1 plan 3 commits (one per file) → actual 5 (T1a/b/c/d + T1c-followup) due to carve-out + BLOCKED → fix sequence
-      - D2: T3 ≤4 files/commit (per DP-06) → 5 files (index.ts re-export required, matches v16.2.1 volume T3 precedent)
-      - D3: T4b 1 commit → 2 commits (composables + tests/routes) due to 8 files > DP-06 limit
-      - D4: T1c carve-out: 1 import to adjust → 2 (infra.creator_settings_docs for MERGE_SOURCES caught by implementer per v16.2.1 §12.2 principle)
-      - D5: T3 wrapper count ~15 (estimated) → 32 (1:1 mapping of @router.X decorators in creator_settings.py)
-      - D6: DTOs ~20 (estimated) → 28 (20 top-level + 8 nested helpers, nested unavoidable for accurate modeling)
-      - D7: Plan §11 gate 14 "Expected: 33 shims" → 36 (no shim deletion in v16.2.2, gate description was misleading — clarify in handoff)
+      - "D1: T1 plan 3 commits (one per file) → actual 5 (T1a/b/c/d + T1c-followup) due to carve-out + BLOCKED → fix sequence"
+      - "D2: T3 ≤4 files/commit (per DP-06) → 5 files (index.ts re-export required, matches v16.2.1 volume T3 precedent)"
+      - "D3: T4b 1 commit → 2 commits (composables + tests/routes) due to 8 files > DP-06 limit"
+      - "D4: T1c carve-out: 1 import to adjust → 2 (infra.creator_settings_docs for MERGE_SOURCES caught by implementer per v16.2.1 §12.2 principle)"
+      - "D5: T3 wrapper count ~15 (estimated) → 32 (1:1 mapping of @router.X decorators in creator_settings.py)"
+      - "D6: DTOs ~20 (estimated) → 28 (20 top-level + 8 nested helpers, nested unavoidable for accurate modeling)"
+      - "D7: Plan §11 gate 14 'Expected: 33 shims' → 36 (no shim deletion in v16.2.2, gate description was misleading — clarify in handoff)"
     review_findings:
       - "infra.creator_revision import at apps/studio_api/routes/creator_settings.py:94 — out of T5b scope but should migrate to lingwen_creator.shared.revision (v16.2.0 shared already done). Carryover to v16.2.7 cleanup."
       - "creator_settings_docs.py shim lacks v16.2.1 docstring header (1-line bare star-import). Per T7 audit, add for consistency with creator_settings_history.py + creator_merge_preferences.py in v16.2.7 cleanup."
@@ -203,12 +275,12 @@ phases:
     migrations_from_v16_2_0_carryover:
       - "Task 3.1 实现只迁了 3 files 而非 plan 的 6,summary/templates/template_approvals catch-up 到 T5 (5a/b/c)"
     deviations:
-      - D1: plan memory-first 错,v16.2.0 review 跑 cross-subdomain analysis 发现 volume 是 root,reorder
-      - D2: plan Task 3.1 = 6 files, 实际 = 3,summary/templates/template_approvals catch-up 到 T5
-      - D3: plan T4 + T5 = 1 batch, 实际 = 2 batches (T4 plan 路由 + T5 templates/approvals 路由) + scope expansion
-      - D4: plan typed wrapper "zod runtime validation" — v16.1 T4 reference (world.ts/workspace.ts/quality.ts) 都不 use zod, 跟随参考 pattern
-      - D5: T4 implementer commit "26 paths fixed" — 实际 11 missed template-literal paths (spec reviewer 实证 404 bug, fix commit db0d6c12)
-      - D6: implementer 错误报告 "circular import through shim" — Python import chain actually terminates via sys.modules, 正确理由是 §12.1 rule 3
+      - "D1: plan memory-first 错,v16.2.0 review 跑 cross-subdomain analysis 发现 volume 是 root,reorder"
+      - "D2: plan Task 3.1 = 6 files, 实际 = 3,summary/templates/template_approvals catch-up 到 T5"
+      - "D3: plan T4 + T5 = 1 batch, 实际 = 2 batches (T4 plan 路由 + T5 templates/approvals 路由) + scope expansion"
+      - "D4: plan typed wrapper 'zod runtime validation' — v16.1 T4 reference (world.ts/workspace.ts/quality.ts) 都不 use zod, 跟随参考 pattern"
+      - "D5: T4 implementer commit '26 paths fixed' — 实际 11 missed template-literal paths (spec reviewer 实证 404 bug, fix commit db0d6c12)"
+      - "D6: implementer 错误报告 'circular import through shim' — Python import chain actually terminates via sys.modules, 正确理由是 §12.1 rule 3"
     review_findings:
       - "shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO, 违反 spec §2.4。carryover 到 v16.2.6 Task 8.1 (content migration 时抽 CreatorSettings 到 shared/mode.py)。"
       - "其他 3 typed wrappers (world.ts/workspace.ts/quality.ts) 仍有 /api/api/ URL 重复 bug。carryover 到 v16.2.7 cleanup (normalize URL convention)。"

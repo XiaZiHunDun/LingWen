@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
+> **版本**: v16.2.5 (Phase 126 export subdomain 拆分 Round 2 leaf)
+  → v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
   → v16.2.3 (Phase 126 onboarding 闭环)
   → v16.2.2 (Phase 126 settings 闭环)
   → v16.2.1 (Phase 126 creator 6-subdomain 拆分 Phase 1/8: volume subdomain 闭环)
@@ -19,6 +20,36 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-28)**: Phase 126 v16.2.5 闭环 — creator Export subdomain 拆分 (Round 2 leaf)——13 commits (`389f91a5` ... `4d11064b`):
+- **T1.a**: `export/common.py + export/docx.py + 2 shims` (4 files, intra-package imports: creator_dashboard → lingwen_creator.content.dashboard + creator_settings_docs → lingwen_creator.settings.docs)。— `389f91a5`
+- **T1.b**: `export/epub.py + creator_export_epub shim + creator_publish_adapters shim (pre-emptive)` (3 files)。— `dce65eaf`
+- **T1.c**: `export/publish.py + export/publish_adapters.py + __init__.py + creator_publish shim` (4 files, 5 star-imports)。— `5715ff15`
+- **T1.d**: `test_export.py` (8 tests, 含 legacy import back-compat + intra-package import no-cycle) + ruff --fix。— `b2dd6f53`
+- **T2**: 8 Export/Publish DTOs (CreatorEpubExportRequest + CreatorDocxExportRequest + CreatorPublishRequest + CreatorPublishEntry + CreatorPublishPlatformCapabilities + CreatorPublishPlatform + CreatorPublishPlatformsResponse + CreatorPublishHistoryResponse) → `lingwen_shared/contracts/python/creator.py` + TS codegen (24042 bytes, +1501) + 9 backend tests (39 total)。— `5308c63e`
+- **T3.a**: `apps/dashboard/src/api/export.ts` typed wrapper (5 funcs, NO zod, NO /api/, 含 fetchBlob + fetchJson helpers) + `packages/dashboard-contracts/src/shared/export.ts` re-export + knip allowlist + creator.ts +8 types。— `5390a776`
+- **T3.b**: `apps/dashboard/tests/unit/api/use-export-typed-wrapper.spec.ts` URL contract (8 tests)。— `1e95ff82`
+- **T4**: routes imports migration (5 lazy imports in `creator_core.py`: creator_export_epub → lingwen_creator.export.epub + creator_export_docx → .docx + creator_publish.submit → .publish + creator_publish.list_publish_platforms → .publish + creator_publish.list_creator_publish_history → .publish)。— `8695e3dd`
+- **T5.a**: composable refactor (useProductExport.ts + useProductPublish.ts → @/api/export + fetchCreatorChapterPreview → @/api/content) + export.ts vite/client triple-slash directive fix。— `f3dd8f99`
+- **T5.b**: api/index.js update (6 publish.js re-exports → typed wrapper, 4 Content functions → content.ts/volume.ts) + delete api/publish.js shim + delete orphan api-creator-publish.spec.ts + useWriteFlow typed signature migration (saveCreatorChapterBody/Outline 2-arg → 1-arg `{ chapter_id, body }` shape + 4 cast fixes `as Record` → `as unknown as Record`)。— `8bd30325`
+- **T6**: cross-subdomain check (only test_export.py references infra imports — expected back-compat test) + intra-package imports verified all use new path。**Skipped commit** — no findings。
+- **T7**: test mock path updates (5 test files: split vi.mock from api/index.js to api/export.js + api/content.js, per v16.2.4 §5.1 lesson 2 — shim mocks 不 propagate)。— `4d11064b`
+- **T8**: handoff + CLAUDE.md + architecture.yml + migration_log.yml。— (current commit)
+
+Lessons confirmed from v16.2.4:
+- §5.1 lesson 1 (intra-package imports after verbatim copy): T1.a export/common.py — `infra.creator_dashboard → lingwen_creator.content.dashboard` + `infra.creator_settings_docs → lingwen_creator.settings.docs`
+- §5.1 lesson 2 (shim mocks 不 propagate): T7 — 5 test files split vi.mock from api/index.js to typed wrapper modules (per v16.2.4 bug class)
+- §5.1 lesson 4 (typed wrapper params forwarding fragility): T5.b — useWriteFlow.ts 3 call sites migrated from `(chapterNum, body)` 2-arg to `({ chapter_id, body })` 1-arg typed signature; 4 cast sites `as Record<string, unknown>` → `as unknown as Record<string, unknown>`
+- §5.1 lesson 5 (orphan test files linger): T5.b — `apps/dashboard/tests/unit/api-creator-publish.spec.ts` (12 tests) deleted before/with api/publish.js deletion
+
+Tests: 71 (creator pkg, +8) + 75 (shared pkg, +9) + 359 (infra, unchanged) = 505 backend passing. 1774 vitest passing (22 pre-existing volume-plan debt unchanged from v16.2.4 baseline). vue-tsc 0 / ruff 0 / knip 0 (7 advisory hints) / zod reverse CI OK / codegen OK.
+
+Carryover closures (1):
+- ✅ useWriteFlow.ts typed signature migration (saveCreatorChapterBody/Outline) — bonus fix per T5.b scope expansion
+
+Carryover to v16.2.6+:
+- **v16.2.6 memory**: 3 files (annotations + assets + query) — Round 2 leaf last
+- **v16.2.7 cleanup**: 41 shim deletions + 4 typed wrapper `/api/` prefix fix (world/workspace/quality + onboarding from v16.2.3) + 22 vitest debt + import-linter DP-01..06 + 19 content composables refactor + 4 unwired Content DTOs + onboarding diff-collab-notes 404 fix
 
 > **更新 (2026-08-28)**: Phase 126 v16.2.4 闭环 — creator Content subdomain 拆分 + onboarding T4 闭环——15 commits (`3f21513a` ... `55f9a84f`):
 - **T1**: `shared/mode.py` extraction (cross-subdomain utility: CREATION_MODE_* + CreatorSettings + settings_from_project_config) + `infra/creator_mode` 变 shim + `shared/check.py` spec violation fix + onboarding forward-ref close。— `19e1ca03`

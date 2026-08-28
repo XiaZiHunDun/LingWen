@@ -106,7 +106,14 @@ module_boundaries:
       list_creator_models_payload,
       creator_preferences_payload, save_creator_preferences,
       resolve_creator_ui_profile, ui_profile_from_project_config, filter_deviations_by_min_severity,
-      # Export (v16.2.5) — 待添加
+      # Export (v16.2.5) ✅ — leaf, cross-subdomain dep on content.dashboard + settings.docs
+      export_metadata, written_chapter_nums, resolve_export_chapter_nums, load_export_chapters,
+      split_paragraphs, utc_modified_iso,
+      build_creator_docx_bytes, build_creator_epub_bytes,
+      submit_creator_publish, list_creator_publish_history,
+      PublishAdapter, PublishCapabilities, PublishSubmitResult,
+      FanqiePublishAdapter, QidianPublishAdapter, JjwxcPublishAdapter, CustomPublishAdapter,
+      get_publish_adapter, list_publish_platforms,
       # Memory (v16.2.6) — 待添加
     ]
     allowed_imports: [
@@ -119,7 +126,8 @@ module_boundaries:
       - "v16.2.2 ✅: Settings subdomain 闭环 (3 files + 28 DTOs + typed wrapper 32 funcs + 3 composables + 32 routes imports + 2 cross-imports cleanup + 3 underscore re-exports)"
       - "v16.2.3 ✅: Onboarding subdomain 闭环 (9 files + 30 DTOs + typed wrapper 23 funcs + shim with 21 Creator-prefixed aliases for composable back-compat + 21 routes imports + 3 cross-subdomain cleanup)"
       - "v16.2.4 ✅: Content subdomain 闭环 (8 files + 1 shared/mode.py extraction + 16 DTOs + typed wrapper 11 funcs + 13 routes imports + 2 project_X imports + 23 onboarding aliases refactored + shim deleted + 4 carryover closures + 3 T8 fixups for intra-package imports + 6 test mock paths + ruff I001)"
-      - "v16.2.5..6: 2 subdomains (export/memory) 依次迁入"
+      - "v16.2.5 ✅: Export subdomain 闭环 (5 files + 8 DTOs + typed wrapper 5 funcs + 5 routes imports + 2 composables refactored + api/publish.js shim + orphan test deleted + 5 test mock paths updated + useWriteFlow typed signature migration)"
+      - "v16.2.6: Memory subdomain 迁入 (3 files — annotations + assets + query, Round 2 leaf last)"
       - "v16.2.7: shim cleanup, infra/creator_*.py 全部删除"
       - "v16.2.4 review: typed wrappers (world.ts/workspace.ts/quality.ts + onboarding.ts) 仍有 /api/api/ URL 重复 bug (volume.ts 已 fix,content + shared.mode 不受影响)。carryover 到 v16.2.7 cleanup。"
       - "v16.2.4 review: content composables (19 per spec §3.7) refactor deferred to v16.2.7 (T6 only refactored onboarding T4)"
