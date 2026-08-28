@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
-from infra.creator_mode import (
+from lingwen_creator.shared.mode import (
     CREATION_MODE_STUDIO,
     normalize_creation_mode,
     normalize_quality_profile,
 )
+
 from infra.paths import ProjectPaths
 
 _DEFAULT_CONFIG_REL = Path("config/project.yaml")

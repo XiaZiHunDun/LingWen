@@ -66,14 +66,15 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/overview", response_model=CreatorOverviewResponse)
     def creator_overview_endpoint() -> CreatorOverviewResponse:
-        from infra.creator_dashboard import creator_overview
+        from lingwen_creator.content.dashboard import creator_overview
 
         project = _require_project(ctx)
         return CreatorOverviewResponse(**creator_overview(project))
 
     @app.put("/api/creator/overview/mode", response_model=CreatorOverviewResponse)
     def creator_overview_mode_put(body: dict) -> CreatorOverviewResponse:
-        from infra.creator_dashboard import creator_overview
+        from lingwen_creator.content.dashboard import creator_overview
+
         from infra.project_config import update_project_creation_mode
 
         project = _require_project(ctx)
@@ -85,7 +86,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.post("/api/creator/logic-check", response_model=CreatorLogicCheckResponse)
     def creator_logic_check_endpoint(chapter: int | None = None) -> CreatorLogicCheckResponse:
-        from infra.creator_logic_check import run_creator_logic_check
+        from lingwen_creator.content.logic_check import run_creator_logic_check
 
         project = _require_project(ctx)
         try:
@@ -98,7 +99,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_agent_plan_endpoint(
         body: CreatorAgentPlanRequest,
     ) -> CreatorAgentPlanResponse:
-        from infra.creator_agent import run_creator_agent_plan
+        from lingwen_creator.content.agent import run_creator_agent_plan
 
         project = _require_project(ctx)
         try:
@@ -123,7 +124,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_agent_plan_stream_endpoint(
         body: CreatorAgentPlanRequest,
     ) -> StreamingResponse:
-        from infra.creator_agent import iter_creator_agent_plan_stream
+        from lingwen_creator.content.agent import iter_creator_agent_plan_stream
 
         project = _require_project(ctx)
 
@@ -155,7 +156,8 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/batch-history", response_model=CreatorBatchHistoryResponse)
     def creator_batch_history_endpoint() -> CreatorBatchHistoryResponse:
-        from infra.creator_batch_history import enrich_batch_history_job
+        from lingwen_creator.content.batch_history import enrich_batch_history_job
+
         from infra.studio_batch_runner import list_batch_jobs_for_slug
 
         project = _require_project(ctx)
@@ -164,7 +166,8 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/batch-history/export", response_model=CreatorBatchHistoryExportResponse)
     def creator_batch_history_export_endpoint() -> CreatorBatchHistoryExportResponse:
-        from infra.creator_batch_history import enrich_batch_history_job
+        from lingwen_creator.content.batch_history import enrich_batch_history_job
+
         from infra.studio_batch_runner import list_batch_jobs_for_slug
 
         project = _require_project(ctx)
@@ -185,13 +188,13 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/models", response_model=CreatorModelsResponse)
     def creator_models_get() -> CreatorModelsResponse:
-        from infra.creator_models import list_creator_models_payload
+        from lingwen_creator.content.models import list_creator_models_payload
 
         return CreatorModelsResponse(**list_creator_models_payload())
 
     @app.get("/api/creator/preferences", response_model=CreatorPreferencesResponse)
     def creator_preferences_get() -> CreatorPreferencesResponse:
-        from infra.creator_preferences import creator_preferences_payload
+        from lingwen_creator.content.preferences import creator_preferences_payload
 
         project = _require_project(ctx)
         return CreatorPreferencesResponse(**creator_preferences_payload(project))
@@ -200,7 +203,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_preferences_put(
         req: CreatorPreferencesSaveRequest,
     ) -> CreatorPreferencesResponse:
-        from infra.creator_preferences import (
+        from lingwen_creator.content.preferences import (
             creator_preferences_payload,
             load_creator_preferences,
             save_creator_preferences,
@@ -370,7 +373,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         chapter_num: int,
         full: bool = False,
     ) -> CreatorChapterPreviewResponse:
-        from infra.creator_dashboard import creator_chapter_preview
+        from lingwen_creator.content.dashboard import creator_chapter_preview
 
         project = _require_project(ctx)
         try:
@@ -393,7 +396,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         chapter_num: int,
         req: CreatorChapterOutlineSaveRequest,
     ) -> CreatorChapterPreviewResponse:
-        from infra.creator_dashboard import save_creator_chapter_outline
+        from lingwen_creator.content.dashboard import save_creator_chapter_outline
 
         project = _require_project(ctx)
         try:
@@ -411,7 +414,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         chapter_num: int,
         req: CreatorChapterBodySaveRequest,
     ) -> CreatorChapterPreviewResponse:
-        from infra.creator_dashboard import save_creator_chapter_body
+        from lingwen_creator.content.dashboard import save_creator_chapter_body
 
         project = _require_project(ctx)
         try:
