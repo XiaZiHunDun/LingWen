@@ -119,4 +119,46 @@ export default [
       'vue/no-v-html': 'off',
     },
   },
+
+  // Phase 126 v16.3 — DP-01..06 ESLint enforcement.
+  // Block frontend from importing backend Python packages directly.
+  // Frontend talks to backend ONLY via FastAPI (typed wrappers in src/api/*.ts).
+  {
+    files: ['src/**/*.{js,ts,vue}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'infra',
+                'infra/*',
+                'infra/**',
+                '**/infra',
+                '**/infra/*',
+                '**/infra/**',
+              ],
+              message:
+                'frontend MUST NOT import backend infra modules directly. ' +
+                'Use typed wrappers in src/api/*.ts (which call FastAPI).',
+            },
+            {
+              group: [
+                'lingwen_creator',
+                'lingwen_creator/*',
+                'lingwen_creator/**',
+                '**/lingwen_creator',
+                '**/lingwen_creator/*',
+                '**/lingwen_creator/**',
+              ],
+              message:
+                'frontend MUST NOT import lingwen_creator directly. ' +
+                'Use typed wrappers in src/api/*.ts (which call FastAPI).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]
