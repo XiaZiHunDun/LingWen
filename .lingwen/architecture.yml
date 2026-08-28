@@ -50,6 +50,10 @@ module_boundaries:
       # Shared (v16.2.0)
       CreatorDocConflictError, content_revision,
       load_creator_check_context, apply_creator_check_defaults, format_check_mode_banner,
+      # Mode (v16.2.4 T1) — cross-subdomain utility,被 content + settings + onboarding 依赖
+      CreatorSettings, CREATION_MODE_STUDIO, CREATION_MODE_ADVANCE, CREATION_MODE_COMPANION,
+      settings_from_project_config, normalize_creation_mode, normalize_quality_profile,
+      resolve_creator_settings,
       # Volume (v16.2.1) ✅ — root,被 4 个其他 sub-domain 依赖
       VolumeEntry, save_volume_plan, load_volume_plan, compute_volume_deviations,
       merge_volume_range, split_volume, encode_share_token, decode_share_token,
@@ -83,10 +87,27 @@ module_boundaries:
       detect_factory_merge_preset_conflicts, resolve_factory_merge_preset_conflict,
       list_merge_preset_changelog, preflight_factory_merge_preset_pull,
       preview_merge_preset_changelog_diff, preflight_merge_preset_import,
-      # Memory (v16.2.5) — 待添加
-      # Export (v16.2.4) — 待添加
-      # Onboarding (v16.2.3) — 待添加
-      # Content (v16.2.6) — 待添加
+      # Onboarding (v16.2.3) ✅ — cross-subdomain dep on shared.mode
+      onboarding_wizard_payload, save_onboarding_progress_from_ui, fetch_onboarding_diff_collab,
+      infer_auto_completed_steps, digest_poll_interval_sec, tick_digest_for_active_project,
+      run_digest_background_loop, start_digest_background_task,
+      load_email_config, save_email_config, dispatch_mention_email, dispatch_approval_email, dispatch_digest_email,
+      load_webhook_config, save_webhook_config, dispatch_mention_webhook, dispatch_digest_webhook, dispatch_approval_webhook,
+      onboarding_notifications_payload, ack_mentions, record_mentions_from_notes,
+      onboarding_progress_payload, save_onboarding_progress, list_onboarding_history, export_onboarding_history,
+      load_digest_schedule, save_digest_schedule, dispatch_scheduled_digest, list_digest_history,
+      load_digest_retry_queue, process_digest_retries, list_digest_dead_letter, replay_digest_dead_letter,
+      load_diff_collab_notes, save_diff_collab_notes, merge_diff_collab_notes, diff_collab_notes_payload,
+      # Content (v16.2.4) ✅ — cross-subdomain dep on shared.mode + settings.volume_*
+      run_creator_agent_plan, iter_creator_agent_plan_stream,
+      enrich_batch_history_job,
+      creator_overview, creator_chapter_preview, save_creator_chapter_outline, save_creator_chapter_body,
+      run_creator_logic_check,
+      list_creator_models_payload,
+      creator_preferences_payload, save_creator_preferences,
+      resolve_creator_ui_profile, ui_profile_from_project_config, filter_deviations_by_min_severity,
+      # Export (v16.2.5) — 待添加
+      # Memory (v16.2.6) — 待添加
     ]
     allowed_imports: [
       infra/persistence, infra/project_config, infra/errors,
@@ -96,10 +117,14 @@ module_boundaries:
       - "v16.2.0: skeleton + shared/ migration (creator_revision + creator_check 迁入 shared/)"
       - "v16.2.1 ✅: Volume subdomain 闭环 (6 files + 58 DTOs + typed wrapper + 5 composables + 36 routes imports)"
       - "v16.2.2 ✅: Settings subdomain 闭环 (3 files + 28 DTOs + typed wrapper 32 funcs + 3 composables + 32 routes imports + 2 cross-imports cleanup + 3 underscore re-exports)"
-      - "v16.2.3..6: 4 subdomains (onboarding/content/export/memory) 依次迁入"
+      - "v16.2.3 ✅: Onboarding subdomain 闭环 (9 files + 30 DTOs + typed wrapper 23 funcs + shim with 21 Creator-prefixed aliases for composable back-compat + 21 routes imports + 3 cross-subdomain cleanup)"
+      - "v16.2.4 ✅: Content subdomain 闭环 (8 files + 1 shared/mode.py extraction + 16 DTOs + typed wrapper 11 funcs + 13 routes imports + 2 project_X imports + 23 onboarding aliases refactored + shim deleted + 4 carryover closures + 3 T8 fixups for intra-package imports + 6 test mock paths + ruff I001)"
+      - "v16.2.5..6: 2 subdomains (export/memory) 依次迁入"
       - "v16.2.7: shim cleanup, infra/creator_*.py 全部删除"
-      - "⚠️ v16.2.0 review 发现: shared/check.py 当前依赖 infra.creator_mode.CreatorSettings + settings_from_project_config + CREATION_MODE_STUDIO(违反 spec §2.4 'shared 禁止 import 其他 subdomains' 规则)。v16.2.6 (content 迁移时) 需把 CreatorSettings 等抽到 shared/mode.py,让 infra.creator_mode.py 变 shim re-export shared.mode。carryover in v16.2.6 Task 8.1。"
-      - "v16.2.1 review: typed wrappers (world.ts/workspace.ts/quality.ts) 仍有 /api/api/ URL 重复 bug (volume.ts 已 fix)。carryover 到 v16.2.7 cleanup。"
+      - "v16.2.4 review: typed wrappers (world.ts/workspace.ts/quality.ts + onboarding.ts) 仍有 /api/api/ URL 重复 bug (volume.ts 已 fix,content + shared.mode 不受影响)。carryover 到 v16.2.7 cleanup。"
+      - "v16.2.4 review: content composables (19 per spec §3.7) refactor deferred to v16.2.7 (T6 only refactored onboarding T4)"
+      - "v16.2.4 review: 4 unwired Content DTOs (CreatorDashboardOverview + CreatorDashboardChapterPreview + CreatorUiProfileState + CreatorUiProfileSaveRequest) — wrap when endpoints land"
+      - "v16.2.4 review: typed wrapper path bug — fetchDiffCollabNotes/saveDiffCollabNotes hit /creator/onboarding/diff-collab-notes (doesn't exist) — should be /creator/diff-collab-notes. Phase 127+ fix."
   cross_volume:
     path: infra/cross_volume/
     exports: [Ripple, RippleStorage, ReferenceGraph]

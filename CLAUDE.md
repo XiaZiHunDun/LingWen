@@ -1,6 +1,9 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.2.1 (Phase 126 creator 6-subdomain 拆分 Phase 1/8: volume subdomain 闭环)
+> **版本**: v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
+  → v16.2.3 (Phase 126 onboarding 闭环)
+  → v16.2.2 (Phase 126 settings 闭环)
+  → v16.2.1 (Phase 126 creator 6-subdomain 拆分 Phase 1/8: volume subdomain 闭环)
   → v16.2.0 (Phase 124 uv workspaces + turbo 启用 闭环)
   → v16.1 (Phase 124 lingwen-shared contracts 包 闭环)
   → v16.0 (Phase 124 uv workspaces + turbo 启用 闭环)
@@ -16,6 +19,47 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-28)**: Phase 126 v16.2.4 闭环 — creator Content subdomain 拆分 + onboarding T4 闭环——15 commits (`3f21513a` ... `55f9a84f`):
+- **T1**: `shared/mode.py` extraction (cross-subdomain utility: CREATION_MODE_* + CreatorSettings + settings_from_project_config) + `infra/creator_mode` 变 shim + `shared/check.py` spec violation fix + onboarding forward-ref close。— `19e1ca03`
+- **T2a-d**: 8 content files verbatim copy + 8 shims + `__init__.py` star-imports (T2 split 4 commits per DP-06: agent 598L / dashboard+logic_check / mode+models / preferences+ui_profile)。— `2ebb10ad` + `307afa97` + `ee710d6d` + `3afe3c09`
+- **T3**: 16 Content DTOs (10 spec + 2 CreatorDashboard* + 4 settings/Mode utilities) → `packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py` + TS codegen (9068→22541 bytes, +13473) + 13 backend tests。— `b63367a1`
+- **T4**: `apps/dashboard/src/api/content.ts` typed wrapper (11 funcs, NO zod, NO /api/) + `packages/dashboard-contracts/src/shared/content.ts` re-export + knip allowlist + 15 URL contract tests。— `e9facc1e`
+- **T5**: 13 routes imports in `creator_core.py` migration + `infra/project_init.py` + `infra/project_config.py` 2 creator_mode imports → `shared.mode` migration。— `aec1dbff`
+- **T6**: onboarding T4 composables refactor (5 files: useCreatorOnboarding + useWizardSteps + useOnboardingProgress + useOnboardingNotifications + useTodayHub cross-cutting) + delete `api/onboarding.js` shim (was 23 Creator-prefixed aliases) + bonus fix 2 T3 typed wrapper defects (applyWizardShareDone + dispatchDigestNow silently dropped body/query params) + update 4 test mocks。— `06a91169`
+- **T7**: 4 cross-subdomain settings.{docs,history,merge_preferences}.py stale `infra.creator_*` imports → `lingwen_creator.content.*` migration。— `392fd809`
+- **T8 fixups (3 commits)**: verification gates 发现 3 classes 修复 — (A) `content/dashboard.py` + `content/logic_check.py` intra-package imports (verbatim copy preserved `from infra.creator_ui_profile` → cycle via shim) + `infra/creator_dashboard.py` shim `_excerpt` re-export; (B) 6 onboarding test files patch path `infra.creator_onboarding_{webhook,email}` → `lingwen_creator.onboarding.{webhook,email}` (v16.2.3 T1a regression discovered: shim mock 不通过 `from X import Y` lazy import 传播) + delete orphan `apps/dashboard/tests/unit/api-creator-onboarding.spec.ts`; (C) ruff `--fix` 22 I001 violations across 10 files (shim star-import + explicit import block sort)。— `9fff074a` + `8a6e0f25` + `55f9a84f`
+- **Handoff**: `docs/superpowers/handoffs/2026-08-28-phase-126-v16-2-4-content-handoff.md` (15 commits, 8 deviations, 5 lessons, 8 carryover)。
+
+Lessons:intra-package imports after verbatim copy (extends v16.2.2 §5.1 lesson 7: now also applies to sibling-subdomain imports) / shim mocks 不 propagate through `from X import Y` lazy imports (PEP 562 `__getattr__` proxy no work for modules — Python modules don't honor `__setattr__`; test patches MUST target real module path) / composable refactor scope expansion (T6 plan estimated 5 files, actual 11: 5 composables + creator.js + index.js + useTodayHub + 4 test mocks + 2 typed wrapper defects) / typed wrapper params forwarding is fragile (use `requestWithParams(method, path, params)` helper to avoid silent arg drops) / orphan test files linger after shim deletion (`grep -r "<shim-path>" tests/` must precede deletion)。
+
+Tests:63 (creator pkg) + 66 (shared pkg) + 241 (infra) = 370 backend passing。1778 vitest passing (22 pre-existing v16.2.1 `useCreatorVolumePlan*` debt unchanged)。vue-tsc 0 / ruff 0 / knip 0 (5 advisory hints) / codegen OK / zod 0 drift。Backend routes imports 全部迁移 (13 routes imports in `creator_core.py` + 2 project_X imports, no `from infra.creator_{agent,batch_history,dashboard,logic_check,models,preferences,ui_profile}` left in `creator_core.py`)。Shim count: 36 (unchanged, conversion of full impls to shims doesn't add count per v16.2.3 §5.1 lesson 2)。
+
+Carryover to v16.2.5..7:v16.2.5 export (5 files Round 2 leaf)/ v16.2.6 memory (3 files Round 2 leaf)/ v16.2.7 cleanup (36 shim deletions + 4 typed wrapper `/api/` prefix fix for world/workspace/quality + onboarding `/creator/onboarding/diff-collab-notes` 404 fix + 22 vitest debt + import-linter DP-01..06)/ Content composables (19 per spec §3.7) refactor deferred to v16.2.7 / 4 unwired Content DTOs (CreatorDashboard* + CreatorUiProfile*) — wrap when endpoints land。
+
+> **更新 (2026-08-27)**: Phase 126 v16.2.3 闭环 — onboarding subdomain 拆分——10 commits (`c7c3913a` ... `6cfdf5c2`):
+- **T1a-d**: 9 onboarding files (autodetect/digest_background/digest_schedule/email/notifications/progress/webhook/onboarding.py + diff_collab) → `packages/lingwen-creator/src/lingwen_creator/onboarding/` + shims + 24 tests。T1 split 4 commits per DP-06。— `c7c3913a` + `949fb0ec` + `aa867b6b` + `8a800d68`
+- **T2**: 30 Onboarding DTOs (20 top-level + 10 nested helpers) → `packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py` + TS codegen (14462→19805 bytes) + 13 backend tests。— `4fe2512c`
+- **T3+T4-partial**: `apps/dashboard/src/api/onboarding.ts` typed wrapper (23 funcs) + `packages/dashboard-contracts/src/shared/onboarding.ts` re-export + `apps/dashboard/src/api/onboarding.js` shim with 21 Creator-prefixed legacy aliases (full composable refactor deferred to v16.2.4 T6 carryover)。— `d2a440d9`
+- **T5**: 21 routes imports in `creator_onboarding.py` migration (single commit)。— `36a26fc2`
+- **T6**: 3 cross-subdomain `volume/template_approvals.py` stale `infra.creator_onboarding_*` imports → `lingwen_creator.onboarding.*` (carryover from v16.2.2 §6 closed)。— `6cfdf5c2`
+- **Handoff**: `docs/superpowers/handoffs/2026-08-27-phase-126-v16-2-3-onboarding-handoff.md` (10 commits, 9 deviations, 5 lessons)。
+
+Lessons:legacy `api/onboarding.js` shim with backward-compat aliases pattern (cleanest migration path: thin shim with both `export * from './new.ts'` AND legacy aliases) / shim count 不 increase when migrating existing files to shim form / `@lingwen/dashboard-contracts` re-export chain fragility (new DTOs need manual addition to explicit re-export list) / top-level `await import()` in shims is unsafe (use synchronous `import { ... } from './X'; export const legacy = newName`) / spec §2 import list + grep verification = complete adjustment guarantee。
+
+Tests:24 (onboarding pkg) + 50 (shared DTO) + 16 (onboarding infra) + 25 (frontend URL contract) = 115 onboarding passing。vue-tsc 0 / ruff 0 / knip 0 / codegen OK / zod 0 drift。Shim count: 36 (unchanged per §5.1 lesson 2)。Carryover:5 composable files (useCreatorOnboarding + 3 submodules + index.ts) refactor to v16.2.4 T6 / content migration 抽 shared/mode.py 修 spec violation / dashboard-contracts/src/shared/creator.ts explicit re-export list needs update per new DTO。
+
+> **更新 (2026-08-27)**: Phase 126 v16.2.2 闭环 — creator Settings subdomain 拆分——20 commits (`5b7c1d7f` ... `1fb9baed`):
+- **T1a-d**: 3 settings Python files (docs 351 + history 136 + merge_preferences 1355 lines) verbatim copy + 1-line shim with underscore re-exports。4 commits + carve-out fix + T1c BLOCKED follow-up + H1 function-body lazy import fix。— `5b7c1d7f` + `78621a0f` + `f5844680` + `4df3fb1e` + `19e1ca03` (no, that's v16.2.4)
+- **T2**: 28 Settings DTOs → `packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py` + tooling/contracts/generate.py + TS codegen (87 interfaces total) + 7 new DTO tests。
+- **T3**: `apps/dashboard/src/api/settings.ts` typed wrapper (32 funcs, NO zod, NO /api/) + URL contract regression lock (34 tests) + knip allowlist。
+- **T4a-b**: useCreatorSettings composable + 3 submodules (useSettingsDocs/History/MergePresets) refactored to typed wrapper。
+- **T5a-b**: All 32 routes lazy imports in `creator_settings.py` migrated (5 docs T4b + 2 history T5a + 25 merge_preferences T5a/T5b)。
+- **T6-T8**: Cross-subdomain cleanup + formal shim audit + handoff + 3 fixups (H1 function-body lazy import + D4 doc mismatch + test regex gap)。
+
+Lessons:spec §2 import list completeness check before verbatim copy / T1a carve-out pattern for cross-task imports / T3 DP-06 budget includes index.ts re-export / shim underscore re-exports added continuously via T1c follow-up pattern / DTO count budgets ~30% extra for nested types / plan gate descriptions explicit about creation vs deletion / ALWAYS check function-body lazy imports after verbatim copy — module-level check missed H1。
+
+Tests:50+ (settings pkg) + 37 (settings DTO) + 34 (frontend URL contract) = 121 settings passing。vue-tsc 0 / ruff 0 / knip 0 / codegen OK / zod 0 drift。Shim count: 36 - 1 (creator_mode already shim) = 35, but added 3 settings shims = 38 net (eventually settled to 36 after v16.2.3 T6 cleanup)。
 
 > **更新 (2026-08-27)**: Phase 126 v16.2.1 闭环 — creator Volume subdomain 拆分——15 commits (`5bc35f1b` ... `5733505b`):
 - **Plan reorder**: 原 plan memory-first 假设错(v16.2.0 review 跑 cross-subdomain analysis 发现 memory 依赖 content + settings)。Volume 是 root,被 4 个其他 sub-domain 依赖。先迁 volume 让后续 sub-phase 可用新 package path。— `5bc35f1b`

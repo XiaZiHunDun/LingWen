@@ -1,9 +1,103 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.2.2"  # 最新 phase 闭环 (v16.2.2 settings subdomain 闭环)
+version: "16.2.4"  # 最新 phase 闭环 (v16.2.4 content subdomain + onboarding T4 closure)
 
 phases:
+  - phase: 126
+    version: 16.2.4
+    date: 2026-08-28
+    scope: Creator 6-subdomain 拆分 Phase 4/8 — Content subdomain 闭环 + onboarding T4 closure
+    files_added:
+      - packages/lingwen-creator/src/lingwen_creator/shared/mode.py (cross-subdomain utility: CreatorSettings + CREATION_MODE_* + settings_from_project_config + resolve_creator_settings)
+      - packages/lingwen-creator/src/lingwen_creator/content/__init__.py (8 star-imports)
+      - packages/lingwen-creator/src/lingwen_creator/content/agent.py (598 lines, v16.2.x largest single-file migration)
+      - packages/lingwen-creator/src/lingwen_creator/content/batch_history.py (28 lines)
+      - packages/lingwen-creator/src/lingwen_creator/content/dashboard.py (228 lines)
+      - packages/lingwen-creator/src/lingwen_creator/content/logic_check.py (114 lines)
+      - packages/lingwen-creator/src/lingwen_creator/content/mode.py (shim re-export from shared.mode)
+      - packages/lingwen-creator/src/lingwen_creator/content/models.py (61 lines)
+      - packages/lingwen-creator/src/lingwen_creator/content/preferences.py (116 lines)
+      - packages/lingwen-creator/src/lingwen_creator/content/ui_profile.py (327 lines)
+      - packages/lingwen-creator/tests/test_shared_mode.py (5 tests)
+      - packages/lingwen-creator/tests/test_content.py (6 tests)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py (+16 Content DTOs)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts (140 interfaces, +16 content)
+      - packages/lingwen-shared/tests/test_content_dto.py (13 backend tests)
+      - apps/dashboard/src/api/content.ts (11 typed wrapper functions)
+      - packages/dashboard-contracts/src/shared/content.ts (re-export shim)
+      - apps/dashboard/tests/unit/api/use-content-typed-wrapper.spec.ts (15 URL contract tests)
+      - docs/superpowers/handoffs/2026-08-28-phase-126-v16-2-4-content-handoff.md
+      - docs/superpowers/specs/2026-08-28-phase-126-v16-2-4-content-design.md
+      - docs/superpowers/plans/2026-08-28-phase-126-v16-2-4-content-plan.md
+    files_modified:
+      - infra/creator_mode.py (T1 → 变 shim re-export from lingwen_creator.shared.mode)
+      - infra/creator_agent.py (T2a → shim)
+      - infra/creator_batch_history.py (T2a → shim)
+      - infra/creator_dashboard.py (T2b → shim + T8 fixup _excerpt underscore re-export)
+      - infra/creator_logic_check.py (T2b → shim)
+      - infra/creator_models.py (T2c → shim)
+      - infra/creator_preferences.py (T2d → shim)
+      - infra/creator_ui_profile.py (T2d → shim)
+      - packages/lingwen-creator/src/lingwen_creator/shared/check.py (T1 import fix — was depending on infra.creator_mode, spec violation closed)
+      - packages/lingwen-creator/src/lingwen_creator/onboarding/onboarding.py (T1 forward-ref close — was forward-referencing infra.creator_mode)
+      - packages/lingwen-creator/src/lingwen_creator/content/dashboard.py (T8 fixup A — `from infra.creator_ui_profile` → `from lingwen_creator.content.ui_profile` intra-package import, was creating cycle)
+      - packages/lingwen-creator/src/lingwen_creator/content/logic_check.py (T8 fixup A — same intra-package import fix for function-body lazy import)
+      - packages/lingwen-creator/src/lingwen_creator/settings/docs.py (T7 → 2 lazy imports migrated to content)
+      - packages/lingwen-creator/src/lingwen_creator/settings/history.py (T7 → 1 lazy import migrated to content)
+      - packages/lingwen-creator/src/lingwen_creator/settings/merge_preferences.py (T7 → 1 lazy import migrated to content)
+      - infra/project_init.py (T5 → 1 creator_mode import migrated to shared.mode)
+      - infra/project_config.py (T5 → 1 creator_mode import migrated to shared.mode)
+      - apps/studio_api/routes/creator_core.py (T5 → 13 content imports migrated)
+      - apps/dashboard/src/composables/useCreatorOnboarding.js (T6 → refactored to typed wrapper)
+      - apps/dashboard/src/composables/useCreatorOnboarding/useWizardSteps.ts (T6)
+      - apps/dashboard/src/composables/useCreatorOnboarding/useOnboardingProgress.ts (T6)
+      - apps/dashboard/src/composables/useCreatorOnboarding/useOnboardingNotifications.ts (T6)
+      - apps/dashboard/src/composables/useTodayHub.js (T6 cross-cutting fix)
+      - apps/dashboard/src/api/creator.js (T6 → removed shim re-export)
+      - apps/dashboard/src/api/index.js (T6 → removed 19 legacy onboarding aliases)
+      - apps/dashboard/src/api/onboarding.ts (T6 → fixed 2 typed wrapper defects: applyWizardShareDone + dispatchDigestNow now correctly forward body/query params)
+      - apps/dashboard/tests/unit/composables/use-wizard-steps.spec.ts (T6 mock update)
+      - apps/dashboard/tests/unit/composables/use-onboarding-notifications.spec.ts (T6 mock update)
+      - apps/dashboard/tests/unit/pages/today-page.spec.ts (T6 mock update)
+      - apps/dashboard/tests/unit/pages/app-smoke.spec.ts (T6 mock update)
+      - tests/infra/test_creator_digest_quiet_retry.py (T8 fixup B — patch path: infra.creator_onboarding_webhook → lingwen_creator.onboarding.webhook)
+      - tests/infra/test_creator_digest_schedule.py (T8 fixup B — same patch path fix)
+      - tests/infra/test_creator_template_approval_audit.py (T8 fixup B)
+      - tests/infra/test_creator_template_approval_sla.py (T8 fixup B — 2 patches)
+      - tests/infra/test_creator_v35_features.py (T8 fixup B)
+      - infra/creator_diff_collab.py + 7 other infra shims (T8 fixup C — ruff --fix I001 import sort)
+      - packages/lingwen-creator/tests/test_onboarding.py (T8 fixup C — ruff I001)
+      - packages/lingwen-shared/tests/test_onboarding_dto.py (T8 fixup C — ruff I001)
+      - .lingwen/architecture.yml (this commit: creator exports + Content + shared.mode + onboarding symbols + notes update)
+      - CLAUDE.md (this commit: v16.2.1 → v16.2.4 + v16.2.3/2 entry backfill + new lessons)
+    files_deleted:
+      - apps/dashboard/src/api/onboarding.js (T6 shim obsolete — was 73 lines with 21 Creator-prefixed legacy aliases, replaced by direct typed wrapper imports in composables)
+      - apps/dashboard/tests/unit/api-creator-onboarding.spec.ts (T8 fixup B — orphan test file for deleted shim, caused vue-tsc errors until manual deletion)
+    shims_created: "8 (creator_agent + creator_batch_history + creator_dashboard + creator_logic_check + creator_models + creator_preferences + creator_ui_profile + content/mode shim from shared.mode; creator_mode was already shim from v16.2.2)"
+    shims_remaining: "36 (no net change — converting existing full impls to shims doesn't add count per v16.2.3 §5.1 lesson 2)"
+    tests_added: "40 (5 shared_mode + 6 content + 13 content_dto + 15 URL contract + 1 test_count)"
+    tests_fixed: "6 v16.2.3 T1a regressions discovered in T8 verification (test_creator_digest_quiet_retry + test_creator_digest_schedule + test_creator_template_approval_audit + test_creator_template_approval_sla + test_creator_v35_features — patch path was targeting shim but production lazy-imports from real module)"
+    migrations_from_v16_2_2_carryover:
+      - "infra.creator_revision import at apps/studio_api/routes/creator_settings.py:94 — STILL PENDING (out of v16.2.4 scope, v16.2.7 cleanup responsibility)"
+    carryover_closures:
+      - "C1 ✅: onboarding forward-reference to infra.creator_mode → closed in T1 (onboarding.py now uses lingwen_creator.content.mode via shim)"
+      - "C2 ✅: shared/check.py spec violation (5.1 lesson 6 from v16.2.1) → closed in T1 (now uses lingwen_creator.shared.mode.CreatorSettings)"
+      - "C3 ✅: infra/project_init + infra/project_config creator_mode imports → closed in T5 (now use lingwen_creator.shared.mode)"
+      - "C4 ✅: onboarding T4 composables (5 files deferred from v16.2.3) + api/onboarding.js shim → closed in T6 (23 aliases replaced, shim deleted)"
+    deviations:
+      - D1: T2 plan 1 commit → actual 4 (T2a-d) due to 8-file T2 > DP-06 4-file budget
+      - D2: T6 plan 5 composable files → actual 11 files (5 composables + creator.js + index.js + useTodayHub + 4 test mocks + 2 typed wrapper defects fix)
+      - D3: T8 plan 1 commit (handoff doc) → actual 4 commits (3 T8 fixups + handoff doc)
+      - D4: v16.2.3 onboarding test mock regression discovered (6 tests patch path was targeting shim but production lazy-imports from real module — fixes 6 mock sites in T8 fixup B)
+      - D5: 22 ruff I001 violations accumulated across 10 files (auto-fix in T8 fixup C)
+      - D6: v16.2.4 my regression — content/dashboard.py + logic_check.py verbatim copy preserved `from infra.creator_ui_profile` → cycle via shim (fix in T8 fixup A)
+    review_findings:
+      - "content composables (19 per spec §3.7) refactor deferred to v16.2.7 (T6 only refactored onboarding T4, not content composables)"
+      - "4 unwired Content DTOs (CreatorDashboardOverview + CreatorDashboardChapterPreview + CreatorUiProfileState + CreatorUiProfileSaveRequest) — wrap when endpoints land"
+      - "typed wrapper path bug: fetchDiffCollabNotes/saveDiffCollabNotes hit /creator/onboarding/diff-collab-notes (doesn't exist, should be /creator/diff-collab-notes) — Phase 127+ fix"
+      - "v16.2.4 infra.creator_revision import at apps/studio_api/routes/creator_settings.py:94 STILL PENDING (out of v16.2.4 scope) — v16.2.7 cleanup"
+      - "v16.2.4 typed wrappers (world.ts/workspace.ts/quality.ts + onboarding.ts) 仍有 /api/api/ URL 重复 bug (volume.ts 已 fix,content + shared.mode 不受影响). carryover 到 v16.2.7 cleanup."
   - phase: 126
     version: 16.2.2
     date: 2026-08-27
