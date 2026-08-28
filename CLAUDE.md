@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.2.7 (Phase 126 cleanup — creator 6-subdomain 拆分 收官 final)
+> **版本**: v16.2.8 (Phase 126 final closure — 9 blocked composables 完成 + 7 legacy api/.js 全删 + useCreatorSettings.js 完整 refactor)
+  → v16.2.7 (Phase 126 cleanup — creator 6-subdomain 拆分 收官 final)
   → v16.2.6 (Phase 126 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
   → v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
   → v16.2.3 (Phase 126 onboarding 闭环)
@@ -22,7 +23,29 @@
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
 
-> **更新 (2026-08-28)**: Phase 126 v16.2.7 闭环 — creator cleanup final (T4 12-commit shim deletion + T5 DTO dedup + T6 4-commit composables refactor + T7 4 DTO deletion + T8 verification) ——20 commits (`6a463809` ... `7da58f43`):
+> **更新 (2026-08-28)**: Phase 126 v16.2.8 闭环 — final closure (T2 5 typed wrappers + T2.5 SSE stream + T3.A 4 Pinia stores + T3.B 5 composables + T4.5 useCreatorSettings.js refactor + T5 7 legacy api/.js deletion) ——7 commits (`a196e807` ... `4b2948ef`):
+- **T2** (1 commit): 5 new typed wrappers — health.ts (6) + decisions.ts (5) + cvg.ts (14) + workflows.ts (5) + studio.ts (11) = 41 funcs。命名 NO 'Creator' prefix (per v16.2.1+ convention)。
+- **T2.5** (1 commit): `runCreatorAgentPlanStream` 加 content.ts (SSE-preserving, raw fetch + markApiOnline side effect)。
+- **T3.A** (1 commit): 4 Pinia stores → typed wrappers (DecisionStore/RippleStore/WorkflowListStore/OverviewStore)。11 page-level tests 用 hoisted mock pattern (per v16.2.7 §3 lesson 1)。
+- **T3.B** (1 commit): 5 composables → typed wrappers (useProductExport/AskAssistant/AdvanceBatch/TodayHub + useAgentTask stream)。
+- **T4.5** (1 commit): useCreatorSettings.js 完整 refactor — 18 function renames (Creator-prefixed → unprefixed) + import path `'../api/index.js'` → `'@/api/settings'`。
+- **T5** (1 commit): Delete 7 frontend legacy api/.js (agent/creator/mergePreset/studio/volumePlan/volumeTemplate/templateApproval) + 5 orphan test files + architecture guard inversion。`apps/dashboard/src/api/*.js` (creator-domain) 11 → 0。
+
+Tests: 1729 vitest passing (1817 → 1729, -88 orphan test deletions, 0 regression) / 544 backend (73 creator pkg + 79 shared pkg + 359 infra + 33 studio_api + 5 skipped, unchanged) / vue-tsc 0 / ruff 0 / knip 0 (5 advisory + 1 new index.js barrel)/ codegen no backend changes。
+
+New lessons (5):
+1. **Hoisted mock pattern re-confirmed** — 14 page-level tests needed `vi.hoisted(() => mocks)` + parallel `vi.mock` for typed wrapper (v16.2.7 §3 lesson 1).
+2. **`as unknown as` for typed wrapper params** — `body as unknown as Parameters<typeof fn>[0]` when body built dynamically as `Record<string, unknown>` (v16.2.7 §5.1 lesson 4 re-confirmed in useAgentTask.ts).
+3. **Dead code in legacy modules** — DiffColab + Wizard helpers in mergePreset.js + studio.js duplicate of studio.ts all deleted without ceremony (v16.2.7 §5.1 lesson 6).
+4. **Architecture guards can invert** — Phase 62 'creator.js ≤ 50 lines' → 'creator.js should NOT exist' preserves guard intent after file deletion.
+5. **Bulk sed for function renames** — 18 of useCreatorSettings.js renames via single multi-`-e` sed command; clean and atomic.
+
+Carryover to v16.3:
+- import-linter DP-01..06 enforcement (T3 from parent spec §3.8 final gate) — 永久固化架构边界,防止 `apps/dashboard/**` 反向 import `infra/` 或 `lingwen_creator.*`,以及 `infra/creator_*.py` + `api/*.js` creator-domain 重新出现。
+- DTO schema audit (carryover from v16.2.7 T8 + v16.2.8 T3.B) — 4 production `as unknown as` casts + 2 test casts masking drift,需对齐 Python Pydantic + regenerate TS。
+- Typed wrapper type narrowing — 41 funcs in 5 new wrappers return `Promise<unknown>`,待加 DTOs。
+
+Phase 126 v16.2.x arc CLOSED。**v16.3 import-linter enforcement 解锁前提**:`infra → lingwen_creator` 100% 完成 + frontend creator-domain api/.js 100% 删 + typed wrapper 全覆盖 + DTO 在 shared contracts。
 - **T4 12 commits**: delete all 36 `infra/creator_*.py` shims (memory/settings/export/volume/onboarding/content tiers, leaf-first). 191 consumer files migrated. **Final**: `ls infra/creator_*.py | wc -l` → 0.
 - **T5**: dedup 20 Pydantic DTOs in `creator_settings.py` to re-export from `lingwen_shared.contracts.python.creator`. -191/+72 lines net.
 - **T6 4 commits (A/B/C/D)**: migrate 10 composables from `@/api/index.js` barrel to typed wrappers (`@/api/content`/`@/api/volume`/`@/api/onboarding`). 9 blocked composables carryover to v16.2.8 (need typed wrappers for health/decisions/cvg/workflow/studio surface). `api/creator.js` deletion deferred.
