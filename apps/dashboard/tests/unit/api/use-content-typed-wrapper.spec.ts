@@ -34,11 +34,11 @@ describe('content typed wrapper (v16.2.4 Task T4)', () => {
     globalThis.fetch = originalFetch;
   });
 
-  // --- exports count: 11 wrappers (matches real endpoints) ---
+  // --- exports count: 12 wrappers (matches real endpoints) ---
 
-  it('exports 12 wrapper functions', () => {  // v16.2.7 T6.D: added updateCreatorCreationMode (was 11)
+  it('exports 13 wrapper functions', () => {  // v16.2.8 T2.5: added runCreatorAgentPlanStream (was 12)
     const wrappers = Object.entries(contentApi).filter(([, fn]) => typeof fn === 'function');
-    expect(wrappers.length).toBe(12);
+    expect(wrappers.length).toBe(13);
   });
 
   // --- static: no /api/ prefix in any wrapper body (TYPE-level regression lock) ---
@@ -48,7 +48,11 @@ describe('content typed wrapper (v16.2.4 Task T4)', () => {
     for (const [name, fn] of wrappers) {
       const src = fn.toString();
       expect(src, `${name} should not contain '/api/' prefix`).not.toMatch(/\/api\/creator/);
-      expect(src, `${name} should not contain 'fetch(' direct`).not.toMatch(/\bfetch\(/);
+      // v16.2.8 T2.5: runCreatorAgentPlanStream uses raw fetch() for SSE
+      // streaming (cannot use request() which buffers the full response).
+      if (name !== 'runCreatorAgentPlanStream') {
+        expect(src, `${name} should not contain 'fetch(' direct`).not.toMatch(/\bfetch\(/);
+      }
     }
   });
 

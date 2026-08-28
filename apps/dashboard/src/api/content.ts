@@ -38,6 +38,7 @@ import type {
   CreatorPreferencesSaveRequest,
 } from '@lingwen/dashboard-contracts/shared';
 import { request } from './core.js';
+import { markApiOnline } from './connectivity.js';
 
 // ---------------------------------------------------------------------------
 // /creator/overview
@@ -159,4 +160,33 @@ export async function saveCreatorChapterBody(
     { method: 'PUT', body: { body: req.body } },
   );
   return data as CreatorChapterPreview;
+}
+
+// ---------------------------------------------------------------------------
+// /creator/agent/plan/stream (SSE-preserving typed wrapper)
+//
+// NOTE: This function uses raw `fetch()` (not `request()`) because SSE
+// requires streaming response body. Preserves the legacy `api/agent.js`
+// implementation: Accept: text/event-stream header + lazy import of the
+// stream parser utility. Original behavior (markApiOnline side effect on
+// success) is preserved by importing connectivity.js directly.
+// ---------------------------------------------------------------------------
+
+export async function runCreatorAgentPlanStream(
+  body: CreatorAgentPlanRequest,
+  onEvent: (event: unknown) => void,
+): Promise<unknown> {
+  const { readCreatorAgentPlanStream } = await import('../utils/creatorAgentStreamUtils.js');
+  const BASE_URL = (import.meta.env.VITE_API_BASE as string | undefined) || '/api';
+  const response = await fetch(`${BASE_URL}/creator/agent/plan/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    },
+    body: JSON.stringify(body),
+  });
+  const plan = await readCreatorAgentPlanStream(response, onEvent);
+  markApiOnline();
+  return plan;
 }
