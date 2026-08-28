@@ -63,7 +63,11 @@ def test_legacy_shims_deleted_mode() -> None:
 
 
 def test_legacy_shims_deleted_content() -> None:
-    """v16.2.7 T4.10: 4 content shims deleted, must raise ModuleNotFoundError."""
+    """v16.2.7 T4.10+T4.11: 6 content shims deleted, must raise ModuleNotFoundError.
+
+    T4.10: creator_models/preferences/logic_check/dashboard.
+    T4.11: creator_agent/batch_history.
+    """
     import pytest
 
     with pytest.raises(ModuleNotFoundError):
@@ -74,18 +78,15 @@ def test_legacy_shims_deleted_content() -> None:
         from infra.creator_logic_check import run_creator_logic_check  # noqa: F401
     with pytest.raises(ModuleNotFoundError):
         from infra.creator_dashboard import creator_overview  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_agent import run_creator_agent_plan  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_batch_history import enrich_batch_history_job  # noqa: F401
 
 
 def test_content_legacy_shims_alive() -> None:
-    """3 content shims still alive (deleted in T4.11+T4.12)."""
-    from lingwen_creator.content.agent import run_creator_agent_plan
-    from lingwen_creator.content.batch_history import enrich_batch_history_job
+    """1 content shim still alive (creator_ui_profile, deleted in T4.12)."""
     from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
-
-    from infra.creator_agent import run_creator_agent_plan as LegacyRun
-    from infra.creator_batch_history import enrich_batch_history_job as LegacyEnrich
     from infra.creator_ui_profile import resolve_creator_ui_profile as LegacyUI
 
-    assert LegacyRun is run_creator_agent_plan
-    assert LegacyEnrich is enrich_batch_history_job
     assert LegacyUI is resolve_creator_ui_profile

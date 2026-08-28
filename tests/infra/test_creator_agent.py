@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.creator_agent import iter_creator_agent_plan_stream, run_creator_agent_plan
+from lingwen_creator.content.agent import iter_creator_agent_plan_stream, run_creator_agent_plan
 
 
 @pytest.fixture
@@ -128,7 +128,7 @@ class TestCreatorAgent:
             yield payload[:20]
             yield payload[20:]
 
-        monkeypatch.setattr("infra.creator_agent._has_llm_api_key", lambda: True)
+        monkeypatch.setattr("lingwen_creator.content.agent._has_llm_api_key", lambda: True)
         monkeypatch.setattr("infra.llm_service.LLMService.execute_stream", fake_stream)
 
         events = list(

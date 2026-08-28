@@ -1,7 +1,7 @@
 """Tests for creator v6.6 diff pdf export, failure reason, mode switch confirm."""
 from __future__ import annotations
 
-from infra.creator_batch_history import derive_batch_failure_reason, enrich_batch_history_job
+from lingwen_creator.content.batch_history import derive_batch_failure_reason, enrich_batch_history_job
 from infra.creator_ui_profile import resolve_creator_ui_profile
 
 
