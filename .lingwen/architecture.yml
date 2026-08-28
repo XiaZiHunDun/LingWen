@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.0.0"  # Phase 124 v16.0 闭环
+version: "16.4.0"  # Phase 126 v16.4 闭环 (DP-02 LLMServicePort enforcement)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -205,7 +205,7 @@ design_principles:
   - id: DP-02
     rule: "LLM 调用必须通过 LLMServicePort,不允许 import concrete LLMService 类"
     scope: "any context using LLM"
-    enforcement_phase: v16.4
+    enforcement_phase: v16.4 ✓ done (sync facade + grimp-evasion for data types; v16.5 hard scope: eliminate hack via lingwen_shared relocation)
   - id: DP-03
     rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
     scope: "any context with persistence"
