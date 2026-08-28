@@ -3,7 +3,7 @@
 Migrated from infra/creator_agent.py in Phase 126 v16.2.4.
 Uses:
   - infra.persistence (storage)
-  - infra.llm_service (LLM calls)
+  - lingwen_llm.port_adapter (LLM calls — via DP-02 re-export facade)
   - lingwen_creator.shared.mode (resolve_creator_settings)
   - lingwen_creator.volume.plan (load_volume_plan for context)
 """
@@ -234,8 +234,11 @@ def _build_llm_prompt(
 
 
 def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
-    from infra.llm_service import LLMTask, TaskType  # LLMTask/TaskType still used as data types
-    from lingwen_llm.port_adapter import LLMServiceAdapter
+    from lingwen_llm.port_adapter import (  # re-export for DP-02
+        LLMTask,
+        TaskType,
+        LLMServiceAdapter,
+    )
 
     adapter = LLMServiceAdapter()
     raw = adapter.execute(
@@ -254,8 +257,11 @@ def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
 
 
 def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> Iterator[str]:
-    from infra.llm_service import LLMTask, TaskType
-    from lingwen_llm.port_adapter import LLMServiceAdapter
+    from lingwen_llm.port_adapter import (  # re-export for DP-02
+        LLMTask,
+        TaskType,
+        LLMServiceAdapter,
+    )
 
     adapter = LLMServiceAdapter()
     yield from adapter.execute_stream(
