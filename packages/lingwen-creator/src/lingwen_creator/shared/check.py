@@ -9,13 +9,13 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from infra.creator_mode import (
+from infra.paths import ProjectPaths
+from infra.project_config import ProjectConfig
+from lingwen_creator.shared.mode import (
     CREATION_MODE_STUDIO,
     CreatorSettings,
     settings_from_project_config,
 )
-from infra.paths import ProjectPaths
-from infra.project_config import ProjectConfig
 
 
 def load_creator_check_context(

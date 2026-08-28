@@ -205,11 +205,13 @@ def test_onboarding_main_module_exports() -> None:
 
 
 def test_onboarding_forward_references_creator_mode() -> None:
-    """onboarding.onboarding forward-references infra.creator_mode (content not migrated).
+    """onboarding.onboarding imports creation_mode constants via lingwen_creator.shared.mode.
 
-    Per design spec §2.1, v16.2.4 content migration will replace this with
-    `from lingwen_creator.content.mode import ...`. The forward-reference is intentional
-    and carries an inline `# noqa: F401  # v16.2.4 will replace` comment.
+    Phase 126 v16.2.4 T1 closed the legacy forward-reference to infra.creator_mode.
+    Now uses `from lingwen_creator.shared.mode import ...` (cross-subdomain utility per
+    spec §2.4) without any noqa workaround. Verifies the symbols remain re-exported
+    through the onboarding module for any callers relying on `from lingwen_creator.onboarding
+    .onboarding import CREATION_MODE_*`.
     """
     from lingwen_creator.onboarding.onboarding import (
         CREATION_MODE_ADVANCE,

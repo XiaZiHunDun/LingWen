@@ -3,14 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-# v16.2.4 content migration will replace this with `from lingwen_creator.content.mode import ...`
-# Forward-reference: content subdomain not yet migrated (v16.2.3 only onboarding + volume + settings).
-from infra.creator_mode import (  # noqa: F401  # v16.2.4 will replace
-    CREATION_MODE_ADVANCE,
-    CREATION_MODE_COMPANION,
-    CREATION_MODE_STUDIO,
-    settings_from_project_config,
-)
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 from infra.studio_registry import StudioProject
@@ -23,6 +15,12 @@ from lingwen_creator.onboarding.progress import (
     progress_pct,
     reconcile_onboarding_toggle,
     save_onboarding_progress,
+)
+from lingwen_creator.shared.mode import (
+    CREATION_MODE_ADVANCE,
+    CREATION_MODE_COMPANION,
+    CREATION_MODE_STUDIO,
+    settings_from_project_config,
 )
 
 _MODE_LABELS = {
