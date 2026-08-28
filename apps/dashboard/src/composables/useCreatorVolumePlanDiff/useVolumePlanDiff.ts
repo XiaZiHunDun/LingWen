@@ -14,9 +14,9 @@ import type { ComputedRef, Ref } from 'vue';
 import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
 import { diffVolumePlan } from '@/api/volume';
 import {
-  fetchCreatorDiffCollabNotes,
-  saveCreatorDiffCollabNotes,
-} from '../../api/index.js';
+  fetchDiffCollabNotes,
+  saveDiffCollabNotes,
+} from '@/api/onboarding';
 import {
   buildMinimalTextPdf,
   buildMinimalZip,
@@ -245,7 +245,7 @@ export function useVolumePlanDiff(deps: VolumePlanDiffDeps): VolumePlanDiffRetur
       return;
     }
     try {
-      const payload = await fetchCreatorDiffCollabNotes() as { notes?: Record<string, string> };
+      const payload = await fetchDiffCollabNotes() as { notes?: Record<string, string> };
       diffCollabNotes.value = { ...(payload?.notes || {}) };
     } catch {
       diffCollabNotes.value = {};
@@ -260,7 +260,7 @@ export function useVolumePlanDiff(deps: VolumePlanDiffDeps): VolumePlanDiffRetur
     for (const [label, note] of entries) {
       merged[label] = String(note).trim();
     }
-    const saved = await saveCreatorDiffCollabNotes({ notes: merged }) as { notes?: Record<string, string> };
+    const saved = await saveDiffCollabNotes({ notes: merged }) as { notes?: Record<string, string> };
     diffCollabNotes.value = { ...merged, ...(saved?.notes || {}) };
   }
 

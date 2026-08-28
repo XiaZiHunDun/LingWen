@@ -16,6 +16,12 @@ vi.mock('../../src/api/index.js', () => ({
   previewCreatorVolumePlanDiff: (...args: unknown[]) => shareMocks.previewCreatorVolumePlanDiff(...args),
 }));
 
+// v16.2.7 T6.C: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/onboarding', () => ({
+  fetchDiffCollabNotes: vi.fn(),
+  saveDiffCollabNotes: vi.fn(),
+}));
+
 // Mock utils
 vi.mock('../../src/composables/volumePlanDiffExportUtils.js', () => ({
   encodeVolumePlanDiffShareToken: (payload: unknown) => `encoded:${JSON.stringify(payload).slice(0, 50)}`,

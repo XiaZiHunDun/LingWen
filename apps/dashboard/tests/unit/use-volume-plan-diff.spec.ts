@@ -10,14 +10,14 @@ import { ref, computed } from 'vue';
 // Mock API
 const diffMocks = vi.hoisted(() => ({
   previewCreatorVolumePlanDiff: vi.fn(),
-  fetchCreatorDiffCollabNotes: vi.fn(),
-  saveCreatorDiffCollabNotes: vi.fn(),
+  fetchDiffCollabNotes: vi.fn(),
+  saveDiffCollabNotes: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
   previewCreatorVolumePlanDiff: (...args: unknown[]) => diffMocks.previewCreatorVolumePlanDiff(...args),
-  fetchCreatorDiffCollabNotes: (...args: unknown[]) => diffMocks.fetchCreatorDiffCollabNotes(...args),
-  saveCreatorDiffCollabNotes: (...args: unknown[]) => diffMocks.saveCreatorDiffCollabNotes(...args),
+  fetchDiffCollabNotes: (...args: unknown[]) => diffMocks.fetchDiffCollabNotes(...args),
+  saveDiffCollabNotes: (...args: unknown[]) => diffMocks.saveDiffCollabNotes(...args),
 }));
 
 // v16.2.7 T3: see use-creator-volume-plan.spec.ts comment. The composable
@@ -75,6 +75,13 @@ function mountDiff(overrides: Record<string, unknown> = {}) {
     editableVolumes,
     saving,
   });
+
+
+// v16.2.7 T6.C: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/onboarding', () => ({
+  fetchDiffCollabNotes: (...args: unknown[]) => diffMocks.fetchDiffCollabNotes(...args),
+  saveDiffCollabNotes: (...args: unknown[]) => diffMocks.saveDiffCollabNotes(...args),
+}));
 }
 
 describe('useVolumePlanDiff', () => {
@@ -87,8 +94,8 @@ describe('useVolumePlanDiff', () => {
         { type: 'modified', label: '第一卷', volume: 'v1' },
       ],
     });
-    diffMocks.fetchCreatorDiffCollabNotes.mockResolvedValue({ notes: { '第一卷': '需要修' } });
-    diffMocks.saveCreatorDiffCollabNotes.mockResolvedValue({ notes: { '第一卷': '需要修' } });
+    diffMocks.fetchDiffCollabNotes.mockResolvedValue({ notes: { '第一卷': '需要修' } });
+    diffMocks.saveDiffCollabNotes.mockResolvedValue({ notes: { '第一卷': '需要修' } });
     // 模拟 window.open / location
     Object.defineProperty(window, 'location', {
       writable: true,
@@ -201,6 +208,6 @@ describe('useVolumePlanDiff', () => {
     const diff = mountDiff({ volume_plan_diff_share_collab_v2: true });
     await diff.mergeIncomingDiffCollabNotes({ '新卷': '远程批注' });
     expect(diff.diffCollabNotes.value['新卷']).toBe('远程批注');
-    expect(diffMocks.saveCreatorDiffCollabNotes).toHaveBeenCalledTimes(1);
+    expect(diffMocks.saveDiffCollabNotes).toHaveBeenCalledTimes(1);
   });
 });

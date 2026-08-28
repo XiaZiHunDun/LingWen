@@ -11,8 +11,8 @@ const diffMocks = vi.hoisted(() => ({
 
 vi.mock('../../src/api/index.js', () => ({
   previewCreatorVolumePlanDiff: (...args: unknown[]) => diffMocks.previewCreatorVolumePlanDiff(...args),
-  fetchCreatorDiffCollabNotes: vi.fn(async () => ({ notes: {} })),
-  saveCreatorDiffCollabNotes: vi.fn(async (payload: unknown) => payload),
+  fetchDiffCollabNotes: vi.fn(async () => ({ notes: {} })),
+  saveDiffCollabNotes: vi.fn(async (payload: unknown) => payload),
 }));
 
 // v16.2.7 T3: see use-creator-volume-plan.spec.ts comment. Add typed
@@ -29,6 +29,13 @@ vi.mock('../../src/composables/volumePlanDiffExportUtils.js', async (importOrigi
     downloadJsonExport: (...args: unknown[]) => diffMocks.downloadJsonExport(...args),
   };
 });
+
+
+// v16.2.7 T6.C: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/onboarding', () => ({
+  fetchDiffCollabNotes: (...args: unknown[]) => diffMocks.fetchDiffCollabNotes(...args),
+  saveDiffCollabNotes: (...args: unknown[]) => diffMocks.saveDiffCollabNotes(...args),
+}));
 
 describe('useCreatorVolumePlanDiff', () => {
   beforeEach(() => {
