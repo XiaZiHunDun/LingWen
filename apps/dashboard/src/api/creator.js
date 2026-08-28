@@ -5,7 +5,6 @@
 
 import { request } from './core.js';
 
-export * from './memory.js';
 export * from './agent.js';
 export * from './volumePlan.js';
 export * from './volumeTemplate.js';

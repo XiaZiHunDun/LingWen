@@ -142,10 +142,15 @@ export {
   fetchCreatorPreferences,
   fetchCreatorModels,
   saveCreatorPreferencesApi,
+} from './creator.js';
+
+// Phase 126 v16.2.6 T5.b: memory aliases re-pointed from memory.js shim (deleted)
+// to the api/memory.ts typed wrapper.
+export {
   fetchCreatorMemoryAssets,
   saveCreatorMemoryAnnotation,
   queryCreatorMemory,
-} from './creator.js';
+} from './memory.js';
 
 // Phase 126 v16.2.5 T5.b: legacy aliases re-pointed from publish.js shim (deleted) to typed wrappers
 export {
