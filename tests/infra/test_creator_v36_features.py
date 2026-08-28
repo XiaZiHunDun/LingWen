@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.creator_merge_preferences import (
+from lingwen_creator.settings.merge_preferences import (
     list_merge_preset_changelog,
     preflight_factory_merge_preset_pull,
     publish_merge_preset_to_factory,
@@ -178,7 +178,7 @@ def test_preset_changelog_and_factory_pull_preflight(factory_tmp) -> None:
     changelog = list_merge_preset_changelog(root, package_id="pkg_a")
     assert changelog["entry_count"] >= 1
     publish_merge_preset_to_factory(root, package_id="pkg_a")
-    from infra.creator_merge_preferences import _normalize_factory_preset_id
+    from lingwen_creator.settings.merge_preferences import _normalize_factory_preset_id
 
     fid = _normalize_factory_preset_id("pkg_a")
     preflight = preflight_factory_merge_preset_pull(root, package_ids=[fid])

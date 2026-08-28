@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from infra.creator_revision import CreatorDocConflictError
-from infra.creator_settings_docs import (
+from lingwen_creator.settings.docs import (
     assert_settings_revisions,
     creator_settings_docs_payload,
     preview_settings_docs_diff,
@@ -138,7 +138,7 @@ def test_three_way_preview(factory_tmp):
         location="projects",
     )
     save_creator_settings_docs(project, pillars_text="# 磁盘\n")
-    from infra.creator_settings_history import append_settings_snapshot
+    from lingwen_creator.settings.history import append_settings_snapshot
 
     append_settings_snapshot(
         project,
@@ -172,7 +172,7 @@ def test_resolve_merged_settings_from_history(factory_tmp):
         location="projects",
     )
     save_creator_settings_docs(project, pillars_text="# 磁盘\n", global_outline_text="# 大纲\n")
-    from infra.creator_settings_history import append_settings_snapshot
+    from lingwen_creator.settings.history import append_settings_snapshot
 
     snap = append_settings_snapshot(
         project,

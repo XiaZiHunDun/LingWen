@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_merge_preferences import build_merge_preset_graph
+from lingwen_creator.settings.merge_preferences import build_merge_preset_graph
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

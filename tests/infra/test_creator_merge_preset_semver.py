@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_merge_preferences import (
+from lingwen_creator.settings.merge_preferences import (
     export_merge_preset_packages,
     get_merge_preset_package,
     save_merge_preset_package,

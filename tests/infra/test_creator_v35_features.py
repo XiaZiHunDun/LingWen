@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.creator_merge_preferences import (
+from lingwen_creator.settings.merge_preferences import (
     apply_toposort_merge_preset_order,
     detect_factory_merge_preset_conflicts,
     preview_merge_preset_import_diff,

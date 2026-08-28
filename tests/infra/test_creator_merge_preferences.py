@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_merge_preferences import load_merge_preferences, save_merge_preferences
+from lingwen_creator.settings.merge_preferences import load_merge_preferences, save_merge_preferences
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
@@ -78,7 +78,7 @@ def test_merge_preferences_per_doc_snapshots(factory_tmp):
 
 
 def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
-    import infra.creator_merge_preferences as cmp
+    import lingwen_creator.settings.merge_preferences as cmp
 
     monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
@@ -87,7 +87,7 @@ def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
         lambda: factory_tmp / "infra" / ".state" / "creator_merge_preferences_global.json",
     )
 
-    from infra.creator_merge_preferences import (
+    from lingwen_creator.settings.merge_preferences import (
         load_global_merge_preferences,
         load_merge_preferences,
         save_global_merge_preferences,
@@ -121,7 +121,7 @@ def test_merge_preferences_global_fallback(factory_tmp, monkeypatch):
 
 
 def test_merge_preferences_export_import(factory_tmp, monkeypatch):
-    import infra.creator_merge_preferences as cmp
+    import lingwen_creator.settings.merge_preferences as cmp
 
     monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
@@ -130,7 +130,7 @@ def test_merge_preferences_export_import(factory_tmp, monkeypatch):
         lambda: factory_tmp / "infra" / ".state" / "creator_merge_preferences_global.json",
     )
 
-    from infra.creator_merge_preferences import (
+    from lingwen_creator.settings.merge_preferences import (
         export_merge_preferences,
         import_merge_preferences,
         save_merge_preferences,

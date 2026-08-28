@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_merge_preferences import (
+from lingwen_creator.settings.merge_preferences import (
     get_merge_preset_package,
     list_merge_preset_packages,
     save_merge_preset_package,
@@ -61,7 +61,7 @@ def test_save_custom_merge_preset_package(factory_tmp) -> None:
 
 
 def test_export_import_merge_preset_packages(factory_tmp) -> None:
-    from infra.creator_merge_preferences import (
+    from lingwen_creator.settings.merge_preferences import (
         export_merge_preset_packages,
         import_merge_preset_packages,
     )
@@ -97,7 +97,7 @@ def test_export_import_merge_preset_packages(factory_tmp) -> None:
 
 
 def test_factory_merge_preset_publish_and_pull(factory_tmp, monkeypatch) -> None:
-    import infra.creator_merge_preferences as cmp
+    import lingwen_creator.settings.merge_preferences as cmp
 
     monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)
     monkeypatch.setattr(
@@ -105,7 +105,7 @@ def test_factory_merge_preset_publish_and_pull(factory_tmp, monkeypatch) -> None
         "_factory_preset_packages_path",
         lambda: factory_tmp / "infra" / ".state" / "factory_merge_preset_packages.json",
     )
-    from infra.creator_merge_preferences import (
+    from lingwen_creator.settings.merge_preferences import (
         list_factory_merge_preset_packages,
         publish_merge_preset_to_factory,
         pull_factory_merge_presets_to_project,

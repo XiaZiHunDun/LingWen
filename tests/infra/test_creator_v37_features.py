@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.creator_merge_preferences import (
+from lingwen_creator.settings.merge_preferences import (
     list_merge_preset_changelog,
     preview_merge_preset_changelog_diff,
     publish_merge_preset_to_factory,
@@ -160,7 +160,7 @@ def test_factory_pull_strategies_and_changelog_diff(factory_tmp) -> None:
     assert diff["change_count"] >= 1
     assert any(row["field"] == "name" for row in diff["changes"])
     publish_merge_preset_to_factory(root, package_id="pkg_a")
-    from infra.creator_merge_preferences import _normalize_factory_preset_id
+    from lingwen_creator.settings.merge_preferences import _normalize_factory_preset_id
 
     fid = _normalize_factory_preset_id("pkg_a")
     save_merge_preset_package(

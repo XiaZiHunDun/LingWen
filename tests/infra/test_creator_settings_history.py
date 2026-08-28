@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_settings_docs import save_creator_settings_docs
-from infra.creator_settings_history import (
+from lingwen_creator.settings.docs import save_creator_settings_docs
+from lingwen_creator.settings.history import (
     append_settings_snapshot,
     restore_settings_snapshot,
     settings_history_payload,
