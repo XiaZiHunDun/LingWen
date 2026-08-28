@@ -8,7 +8,7 @@
  */
 import { computed, ref, watch } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import { fetchCreatorVolumeTemplates } from '../../api/index.js';
+import { listVolumeTemplates } from '@/api/volume';
 
 interface TemplateRow {
   id?: string;
@@ -46,7 +46,7 @@ export function useTemplateList(deps: TemplateListDeps): TemplateListReturn {
 
   async function loadVolumeTemplates(): Promise<void> {
     try {
-      const data = await fetchCreatorVolumeTemplates() as { templates?: TemplateRow[] };
+      const data = await listVolumeTemplates() as { templates?: TemplateRow[] };
       volumeTemplates.value = data.templates || [];
       if (volumeTemplates.value.length && !volumeTemplates.value.some((t) => t.id === selectedTemplateId.value)) {
         const firstId = volumeTemplates.value[0].id || '';

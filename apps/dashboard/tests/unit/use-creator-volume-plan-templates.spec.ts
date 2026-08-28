@@ -5,54 +5,82 @@ import { computed, ref } from 'vue';
 import { asEditableVolumes } from '../helpers/strict-test-types.js';
 
 const templateMocks = vi.hoisted(() => ({
-  fetchCreatorVolumeTemplates: vi.fn(),
-  applyCreatorVolumeTemplate: vi.fn(),
+  listVolumeTemplates: vi.fn(),
+  applyVolumeTemplate: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
-  fetchCreatorVolumeTemplates: (...args: unknown[]) => templateMocks.fetchCreatorVolumeTemplates(...args),
-  applyCreatorVolumeTemplate: (...args: unknown[]) => templateMocks.applyCreatorVolumeTemplate(...args),
+  listVolumeTemplates: (...args: unknown[]) => templateMocks.listVolumeTemplates(...args),
+  applyVolumeTemplate: (...args: unknown[]) => templateMocks.applyVolumeTemplate(...args),
   saveCreatorVolumeTemplate: vi.fn(),
   deleteCreatorVolumeTemplate: vi.fn(),
   renameCreatorVolumeTemplate: vi.fn(),
-  exportCreatorVolumeTemplates: vi.fn(),
-  importCreatorVolumeTemplates: vi.fn(),
-  fetchCreatorVolumeTemplateSyncSources: vi.fn(async () => ({ sources: [] })),
-  syncCreatorVolumeTemplates: vi.fn(),
-  publishCreatorVolumeTemplateToFactory: vi.fn(),
-  pullCreatorFactoryVolumeTemplates: vi.fn(),
-  deleteCreatorFactoryVolumeTemplate: vi.fn(),
+  exportVolumeTemplates: vi.fn(),
+  importVolumeTemplates: vi.fn(),
+  fetchVolumeTemplateSyncSources: vi.fn(async () => ({ sources: [] })),
+  syncVolumeTemplates: vi.fn(),
+  publishFactoryVolumeTemplate: vi.fn(),
+  pullFactoryVolumeTemplates: vi.fn(),
+  deleteFactoryVolumeTemplate: vi.fn(),
   setCreatorVolumeTemplateVersion: vi.fn(),
   fetchCreatorVolumeTemplateChangelog: vi.fn(async () => ({ entries: [] })),
   rollbackCreatorVolumeTemplate: vi.fn(),
-  fetchCreatorTemplateApprovals: vi.fn(async () => ({ approvals: [] })),
+  fetchVolumeTemplateApprovals: vi.fn(async () => ({ approvals: [] })),
   submitCreatorTemplateVersionApproval: vi.fn(),
-  approveCreatorTemplateApproval: vi.fn(),
-  rejectCreatorTemplateApproval: vi.fn(),
-  fetchCreatorTemplateApprovalChainConfig: vi.fn(async () => ({ required_steps: 2, step_assignees: [] })),
-  saveCreatorTemplateApprovalChainConfig: vi.fn(),
-  fetchCreatorTemplateApprovalHistory: vi.fn(async () => ({ approvals: [] })),
+  approveVolumeTemplateApproval: vi.fn(),
+  rejectVolumeTemplateApproval: vi.fn(),
+  fetchVolumeTemplateApprovalChain: vi.fn(async () => ({ required_steps: 2, step_assignees: [] })),
+  saveVolumeTemplateApprovalChain: vi.fn(),
+  fetchVolumeTemplateApprovalHistory: vi.fn(async () => ({ approvals: [] })),
   exportCreatorTemplateApprovalAudit: vi.fn(),
-  fetchCreatorTemplateApprovalSlaConfig: vi.fn(async () => ({ timeout_hours: 72 })),
-  saveCreatorTemplateApprovalSlaConfig: vi.fn(),
-  fetchCreatorTemplateApprovalOverdue: vi.fn(async () => ({ approvals: [] })),
-  transferCreatorTemplateApproval: vi.fn(),
-  fetchCreatorTemplateApprovalSnapshotDiff: vi.fn(),
-  fetchCreatorTemplateApprovalSnapshotDrift: vi.fn(async () => ({ drifted: false })),
-  batchApproveCreatorTemplateApprovals: vi.fn(),
-  batchRejectCreatorTemplateApprovals: vi.fn(),
+  fetchVolumeTemplateApprovalSla: vi.fn(async () => ({ timeout_hours: 72 })),
+  saveVolumeTemplateApprovalSla: vi.fn(),
+  fetchVolumeTemplateApprovalsOverdue: vi.fn(async () => ({ approvals: [] })),
+  transferVolumeTemplateApproval: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDiff: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDrift: vi.fn(async () => ({ drifted: false })),
+  batchApproveVolumeTemplateApprovals: vi.fn(),
+  batchRejectVolumeTemplateApprovals: vi.fn(),
+}));
+
+// v16.2.7 T6.B: also mock the typed wrapper module so useCreatorVolumePlanTemplates
+// (which now imports from @/api/volume) resolves the same mocks. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/volume', () => ({
+  listVolumeTemplates: (...args: unknown[]) => templateMocks.listVolumeTemplates(...args),
+  applyVolumeTemplate: (...args: unknown[]) => templateMocks.applyVolumeTemplate(...args),
+  fetchVolumeTemplateSyncSources: vi.fn(async () => ({ sources: [] })),
+  exportVolumeTemplates: vi.fn(),
+  importVolumeTemplates: vi.fn(),
+  syncVolumeTemplates: vi.fn(),
+  publishFactoryVolumeTemplate: vi.fn(),
+  pullFactoryVolumeTemplates: vi.fn(),
+  deleteFactoryVolumeTemplate: vi.fn(),
+  fetchVolumeTemplateApprovals: vi.fn(async () => ({ approvals: [] })),
+  approveVolumeTemplateApproval: vi.fn(),
+  rejectVolumeTemplateApproval: vi.fn(),
+  transferVolumeTemplateApproval: vi.fn(),
+  fetchVolumeTemplateApprovalChain: vi.fn(async () => ({ required_steps: 2, step_assignees: [] })),
+  saveVolumeTemplateApprovalChain: vi.fn(),
+  fetchVolumeTemplateApprovalHistory: vi.fn(async () => ({ approvals: [] })),
+  fetchVolumeTemplateApprovalSla: vi.fn(async () => ({ timeout_hours: 72 })),
+  saveVolumeTemplateApprovalSla: vi.fn(),
+  fetchVolumeTemplateApprovalsOverdue: vi.fn(async () => ({ approvals: [] })),
+  fetchVolumeTemplateApprovalSnapshotDiff: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDrift: vi.fn(async () => ({ drifted: false })),
+  batchApproveVolumeTemplateApprovals: vi.fn(),
+  batchRejectVolumeTemplateApprovals: vi.fn(),
 }));
 
 describe('useCreatorVolumePlanTemplates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    templateMocks.fetchCreatorVolumeTemplates.mockResolvedValue({
+    templateMocks.listVolumeTemplates.mockResolvedValue({
       templates: [
         { id: 'three_act', name: '三幕式', scope: 'builtin', version_label: 'v1.0.0', version_semver_valid: true },
         { id: 'custom_a', name: '自定义', scope: 'project' },
       ],
     });
-    templateMocks.applyCreatorVolumeTemplate.mockResolvedValue({
+    templateMocks.applyVolumeTemplate.mockResolvedValue({
       template_name: '三幕式',
       volumes: [{ label: '第一卷', start_chapter: 1, end_chapter: 20, core_conflict: 'x', locked: false }],
     });
@@ -99,7 +127,7 @@ describe('useCreatorVolumePlanTemplates', () => {
     const { hub, editableVolumes } = await mountTemplates(onAfterApplyTemplate);
     await hub.loadVolumeTemplates();
     await hub.applyVolumeTemplate();
-    expect(templateMocks.applyCreatorVolumeTemplate).toHaveBeenCalledWith({
+    expect(templateMocks.applyVolumeTemplate).toHaveBeenCalledWith({
       template_id: 'three_act',
       max_chapter: 100,
     });

@@ -8,29 +8,43 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref, computed } from 'vue';
 
 const syncMocks = vi.hoisted(() => ({
-  exportCreatorVolumeTemplates: vi.fn(),
-  importCreatorVolumeTemplates: vi.fn(),
-  fetchCreatorVolumeTemplateSyncSources: vi.fn(),
-  syncCreatorVolumeTemplates: vi.fn(),
-  publishCreatorVolumeTemplateToFactory: vi.fn(),
-  pullCreatorFactoryVolumeTemplates: vi.fn(),
-  deleteCreatorFactoryVolumeTemplate: vi.fn(),
-  applyCreatorVolumeTemplate: vi.fn(),
+  exportVolumeTemplates: vi.fn(),
+  importVolumeTemplates: vi.fn(),
+  fetchVolumeTemplateSyncSources: vi.fn(),
+  syncVolumeTemplates: vi.fn(),
+  publishFactoryVolumeTemplate: vi.fn(),
+  pullFactoryVolumeTemplates: vi.fn(),
+  deleteFactoryVolumeTemplate: vi.fn(),
+  applyVolumeTemplate: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => {
   const m = syncMocks;
   return {
-    exportCreatorVolumeTemplates: (...args: unknown[]) => m.exportCreatorVolumeTemplates(...args),
-    importCreatorVolumeTemplates: (...args: unknown[]) => m.importCreatorVolumeTemplates(...args),
-    fetchCreatorVolumeTemplateSyncSources: (...args: unknown[]) => m.fetchCreatorVolumeTemplateSyncSources(...args),
-    syncCreatorVolumeTemplates: (...args: unknown[]) => m.syncCreatorVolumeTemplates(...args),
-    publishCreatorVolumeTemplateToFactory: (...args: unknown[]) => m.publishCreatorVolumeTemplateToFactory(...args),
-    pullCreatorFactoryVolumeTemplates: (...args: unknown[]) => m.pullCreatorFactoryVolumeTemplates(...args),
-    deleteCreatorFactoryVolumeTemplate: (...args: unknown[]) => m.deleteCreatorFactoryVolumeTemplate(...args),
-    applyCreatorVolumeTemplate: (...args: unknown[]) => m.applyCreatorVolumeTemplate(...args),
+    exportVolumeTemplates: (...args: unknown[]) => m.exportVolumeTemplates(...args),
+    importVolumeTemplates: (...args: unknown[]) => m.importVolumeTemplates(...args),
+    fetchVolumeTemplateSyncSources: (...args: unknown[]) => m.fetchVolumeTemplateSyncSources(...args),
+    syncVolumeTemplates: (...args: unknown[]) => m.syncVolumeTemplates(...args),
+    publishFactoryVolumeTemplate: (...args: unknown[]) => m.publishFactoryVolumeTemplate(...args),
+    pullFactoryVolumeTemplates: (...args: unknown[]) => m.pullFactoryVolumeTemplates(...args),
+    deleteFactoryVolumeTemplate: (...args: unknown[]) => m.deleteFactoryVolumeTemplate(...args),
+    applyVolumeTemplate: (...args: unknown[]) => m.applyVolumeTemplate(...args),
   };
 });
+
+
+// v16.2.7 T6.B: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/volume', () => ({
+  listVolumeTemplates: (...args: unknown[]) => syncMocks.listVolumeTemplates(...args),
+  exportVolumeTemplates: (...args: unknown[]) => syncMocks.exportVolumeTemplates(...args),
+  importVolumeTemplates: (...args: unknown[]) => syncMocks.importVolumeTemplates(...args),
+  fetchVolumeTemplateSyncSources: (...args: unknown[]) => syncMocks.fetchVolumeTemplateSyncSources(...args),
+  syncVolumeTemplates: (...args: unknown[]) => syncMocks.syncVolumeTemplates(...args),
+  publishFactoryVolumeTemplate: (...args: unknown[]) => syncMocks.publishFactoryVolumeTemplate(...args),
+  pullFactoryVolumeTemplates: (...args: unknown[]) => syncMocks.pullFactoryVolumeTemplates(...args),
+  deleteFactoryVolumeTemplate: (...args: unknown[]) => syncMocks.deleteFactoryVolumeTemplate(...args),
+  applyVolumeTemplate: (...args: unknown[]) => syncMocks.applyVolumeTemplate(...args),
+}));
 
 import { useTemplateSync } from '../../src/composables/useCreatorVolumePlanTemplates/useTemplateSync';
 
@@ -74,7 +88,7 @@ describe('useTemplateSync', () => {
   });
 
   it('exportCustomTemplates populates importTemplatesJson', async () => {
-    syncMocks.exportCreatorVolumeTemplates.mockResolvedValueOnce({
+    syncMocks.exportVolumeTemplates.mockResolvedValueOnce({
       templates: [{ id: '1', name: 't1' }],
       count: 1,
     });
@@ -85,7 +99,7 @@ describe('useTemplateSync', () => {
   });
 
   it('exportCustomTemplates opens dialog when no clipboard', async () => {
-    syncMocks.exportCreatorVolumeTemplates.mockResolvedValueOnce({
+    syncMocks.exportVolumeTemplates.mockResolvedValueOnce({
       templates: [{ id: '1', name: 't1' }],
       count: 1,
     });
@@ -97,13 +111,13 @@ describe('useTemplateSync', () => {
   });
 
   it('importCustomTemplates parses JSON and posts', async () => {
-    syncMocks.importCreatorVolumeTemplates.mockResolvedValueOnce({
+    syncMocks.importVolumeTemplates.mockResolvedValueOnce({
       imported: 2, total: 5,
     });
     const s = mountSync();
     s.importTemplatesJson.value = JSON.stringify({ templates: [{ id: '1' }, { id: '2' }] });
     await s.importCustomTemplates();
-    expect(syncMocks.importCreatorVolumeTemplates).toHaveBeenCalled();
+    expect(syncMocks.importVolumeTemplates).toHaveBeenCalled();
     expect(s.saveMessage.value).toContain('已导入');
     expect(s.loadVolumeTemplates).toHaveBeenCalled();
   });
@@ -116,7 +130,7 @@ describe('useTemplateSync', () => {
   });
 
   it('loadTemplateSyncSources populates from API', async () => {
-    syncMocks.fetchCreatorVolumeTemplateSyncSources.mockResolvedValueOnce({
+    syncMocks.fetchVolumeTemplateSyncSources.mockResolvedValueOnce({
       sources: [{ slug: 'p1', name: 'Project 1' }],
     });
     const s = mountSync();
@@ -125,17 +139,17 @@ describe('useTemplateSync', () => {
   });
 
   it('loadTemplateSyncSources sets empty on failure', async () => {
-    syncMocks.fetchCreatorVolumeTemplateSyncSources.mockRejectedValueOnce(new Error('down'));
+    syncMocks.fetchVolumeTemplateSyncSources.mockRejectedValueOnce(new Error('down'));
     const s = mountSync();
     await s.loadTemplateSyncSources();
     expect(s.templateSyncSources.value).toEqual([]);
   });
 
   it('syncTemplatesFromProjects fetches and saves message', async () => {
-    syncMocks.fetchCreatorVolumeTemplateSyncSources.mockResolvedValueOnce({
+    syncMocks.fetchVolumeTemplateSyncSources.mockResolvedValueOnce({
       sources: [{ slug: 'p1' }, { slug: 'p2' }],
     });
-    syncMocks.syncCreatorVolumeTemplates.mockResolvedValueOnce({
+    syncMocks.syncVolumeTemplates.mockResolvedValueOnce({
       sources: ['p1', 'p2'], imported: 3,
     });
     const s = mountSync();
@@ -145,7 +159,7 @@ describe('useTemplateSync', () => {
   });
 
   it('syncTemplatesFromProjects no-op when no sources', async () => {
-    syncMocks.fetchCreatorVolumeTemplateSyncSources.mockResolvedValueOnce({ sources: [] });
+    syncMocks.fetchVolumeTemplateSyncSources.mockResolvedValueOnce({ sources: [] });
     const s = mountSync();
     await s.syncTemplatesFromProjects();
     expect(s.saveMessage.value).toContain('没有其他项目');
@@ -155,11 +169,11 @@ describe('useTemplateSync', () => {
     // selectedTemplateProject computed 在我们的 mountSync 中固定为 false
     const s = mountSync();
     await s.publishSelectedTemplateToFactory();
-    expect(syncMocks.publishCreatorVolumeTemplateToFactory).not.toHaveBeenCalled();
+    expect(syncMocks.publishFactoryVolumeTemplate).not.toHaveBeenCalled();
   });
 
   it('publishSelectedTemplateToFactory posts via API', async () => {
-    syncMocks.publishCreatorVolumeTemplateToFactory.mockResolvedValueOnce(undefined);
+    syncMocks.publishFactoryVolumeTemplate.mockResolvedValueOnce(undefined);
     // 替换 selectedTemplateProject 为 true 的 mount
     const overview = ref<Record<string, unknown> | null>(null);
     const editableVolumes = ref<Array<Record<string, unknown>>>([]);
@@ -177,12 +191,12 @@ describe('useTemplateSync', () => {
       overview, editableVolumes, loadVolumeTemplates,
     } as unknown as Parameters<typeof useTemplateSync>[0]);
     await ctx.publishSelectedTemplateToFactory();
-    expect(syncMocks.publishCreatorVolumeTemplateToFactory).toHaveBeenCalled();
+    expect(syncMocks.publishFactoryVolumeTemplate).toHaveBeenCalled();
     expect(saveMessage.value).toContain('已发布');
   });
 
   it('pullFactoryTemplates updates and reloads', async () => {
-    syncMocks.pullCreatorFactoryVolumeTemplates.mockResolvedValueOnce({ imported: 2 });
+    syncMocks.pullFactoryVolumeTemplates.mockResolvedValueOnce({ imported: 2 });
     const s = mountSync();
     await s.pullFactoryTemplates();
     expect(s.saveMessage.value).toContain('已从工厂库拉取');
@@ -192,11 +206,11 @@ describe('useTemplateSync', () => {
     const s = mountSync();
     s.selectedTemplateId.value = 'project-template';
     await s.deleteSelectedFactoryTemplate();
-    expect(syncMocks.deleteCreatorFactoryVolumeTemplate).not.toHaveBeenCalled();
+    expect(syncMocks.deleteFactoryVolumeTemplate).not.toHaveBeenCalled();
   });
 
   it('applyVolumeTemplate applies volumes to editable', async () => {
-    syncMocks.applyCreatorVolumeTemplate.mockResolvedValueOnce({
+    syncMocks.applyVolumeTemplate.mockResolvedValueOnce({
       volumes: [{ label: '新卷', start_chapter: 1, end_chapter: 5 }],
       template_name: '新模板',
     });

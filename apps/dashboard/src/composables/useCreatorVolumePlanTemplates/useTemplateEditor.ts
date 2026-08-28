@@ -8,28 +8,28 @@
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
-  saveCreatorVolumeTemplate,
-  deleteCreatorVolumeTemplate,
-  renameCreatorVolumeTemplate,
-  setCreatorVolumeTemplateVersion,
-  fetchCreatorVolumeTemplateChangelog,
-  rollbackCreatorVolumeTemplate,
-  submitCreatorTemplateVersionApproval,
-  approveCreatorTemplateApproval,
-  batchApproveCreatorTemplateApprovals,
-  batchRejectCreatorTemplateApprovals,
-  rejectCreatorTemplateApproval,
-  transferCreatorTemplateApproval,
-  fetchCreatorTemplateApprovalSnapshotDiff,
-  fetchCreatorTemplateApprovalSnapshotDrift,
-  fetchCreatorTemplateApprovals,
-  fetchCreatorTemplateApprovalHistory,
-  fetchCreatorTemplateApprovalChainConfig,
-  saveCreatorTemplateApprovalChainConfig,
-  fetchCreatorTemplateApprovalSlaConfig,
-  saveCreatorTemplateApprovalSlaConfig,
-  fetchCreatorTemplateApprovalOverdue,
-} from '../../api/index.js';
+  saveVolumeTemplate,
+  deleteVolumeTemplate,
+  renameVolumeTemplate,
+  setVolumeTemplateVersion,
+  fetchVolumeTemplateChangelog,
+  rollbackVolumeTemplate,
+  submitVolumeTemplateApproval,
+  approveVolumeTemplateApproval,
+  batchApproveVolumeTemplateApprovals,
+  batchRejectVolumeTemplateApprovals,
+  rejectVolumeTemplateApproval,
+  transferVolumeTemplateApproval,
+  fetchVolumeTemplateApprovalSnapshotDiff,
+  fetchVolumeTemplateApprovalSnapshotDrift,
+  fetchVolumeTemplateApprovals,
+  fetchVolumeTemplateApprovalHistory,
+  fetchVolumeTemplateApprovalChain,
+  saveVolumeTemplateApprovalChain,
+  fetchVolumeTemplateApprovalSla,
+  saveVolumeTemplateApprovalSla,
+  fetchVolumeTemplateApprovalsOverdue,
+} from '@/api/volume';
 
 interface TemplateRow {
   id: string;
@@ -146,7 +146,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     templateSaving.value = true;
     error.value = null;
     try {
-      const saved = await saveCreatorVolumeTemplate({
+      const saved = await saveVolumeTemplate({
         name: customTemplateName.value.trim(),
         volumes: editableVolumes.value,
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
@@ -168,7 +168,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     error.value = null;
     try {
       const deletedId = selectedTemplateId.value;
-      await deleteCreatorVolumeTemplate(deletedId);
+      await deleteVolumeTemplate(deletedId);
       saveMessage.value = '已删除自定义模板';
       await loadVolumeTemplates();
       if (!volumeTemplates.value.some((t) => t.id === deletedId)) {
@@ -186,7 +186,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     templateRenaming.value = true;
     error.value = null;
     try {
-      const renamed = await renameCreatorVolumeTemplate(selectedTemplateId.value, {
+      const renamed = await renameVolumeTemplate(selectedTemplateId.value, {
         name: renameTemplateName.value.trim(),
       }) as { id: string; name: string };
       saveMessage.value = `已重命名为「${renamed.name}」`;
@@ -208,7 +208,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     templateVersionSaving.value = true;
     error.value = null;
     try {
-      await setCreatorVolumeTemplateVersion(selectedTemplateId.value, {
+      await setVolumeTemplateVersion(selectedTemplateId.value, {
         version_label: templateVersionLabel.value.trim() || null,
       });
       saveMessage.value = '已更新版本标签';
@@ -227,7 +227,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
       return;
     }
     try {
-      const data = await fetchCreatorVolumeTemplateChangelog(selectedTemplateId.value) as { entries?: Array<Record<string, unknown>> };
+      const data = await fetchVolumeTemplateChangelog(selectedTemplateId.value) as { entries?: Array<Record<string, unknown>> };
       templateVersionChangelog.value = data.entries || [];
     } catch {
       const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
@@ -240,7 +240,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     templateRollbackSaving.value = true;
     error.value = null;
     try {
-      await rollbackCreatorVolumeTemplate(selectedTemplateId.value, {
+      await rollbackVolumeTemplate(selectedTemplateId.value, {
         version_label: (entry.version_label as string) || undefined,
         changelog_index: changelogIndex,
       });
@@ -267,7 +267,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     templateApprovalSubmitting.value = true;
     error.value = null;
     try {
-      await submitCreatorTemplateVersionApproval(selectedTemplateId.value, {
+      await submitVolumeTemplateApproval(selectedTemplateId.value, {
         version_label: templateVersionLabel.value.trim() || null,
       });
       saveMessage.value = '已提交版本变更审批';
@@ -281,7 +281,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
 
   async function approveTemplateVersion(approvalId: string): Promise<void> {
     try {
-      const drift = await fetchCreatorTemplateApprovalSnapshotDrift(approvalId) as { drifted?: boolean };
+      const drift = await fetchVolumeTemplateApprovalSnapshotDrift(approvalId) as { drifted?: boolean };
       let force = false;
       if (drift.drifted) {
         const ok = window.confirm('审批快照与当前卷纲不一致，仍要批准？');
@@ -291,7 +291,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
         }
         force = true;
       }
-      const result = await approveCreatorTemplateApproval(approvalId, { force }) as { chain_advanced?: boolean; chain_progress?: string };
+      const result = await approveVolumeTemplateApproval(approvalId, { force }) as { chain_advanced?: boolean; chain_progress?: string };
       saveMessage.value = result.chain_advanced
         ? `审批链进度 ${result.chain_progress}`
         : '已批准版本变更';
@@ -311,7 +311,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     try {
       const force = window.confirm('批量批准全部待审批项？若存在快照漂移将自动 force。');
       if (!force) return;
-      const result = await batchApproveCreatorTemplateApprovals({
+      const result = await batchApproveVolumeTemplateApprovals({
         approval_ids: ids,
         force: true,
       }) as { approved: number; total: number };
@@ -327,7 +327,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     const ids = pendingTemplateApprovals.value.map((row) => row.id);
     if (!ids.length) return;
     try {
-      const result = await batchRejectCreatorTemplateApprovals({
+      const result = await batchRejectVolumeTemplateApprovals({
         approval_ids: ids,
         reason: '批量驳回',
       }) as { rejected: number; total: number };
@@ -340,7 +340,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
 
   async function rejectTemplateVersion(approvalId: string): Promise<void> {
     try {
-      await rejectCreatorTemplateApproval(approvalId, { reason: '驳回' });
+      await rejectVolumeTemplateApproval(approvalId, { reason: '驳回' });
       saveMessage.value = '已驳回版本变更';
       await loadTemplateApprovals();
     } catch (e) {
@@ -352,7 +352,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     const toAssignee = window.prompt('转交给（审批人 ID）');
     if (!toAssignee?.trim()) return;
     try {
-      await transferCreatorTemplateApproval(approvalId, {
+      await transferVolumeTemplateApproval(approvalId, {
         to_assignee: toAssignee.trim(),
         note: '委派转交',
       });
@@ -365,7 +365,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
 
   async function previewApprovalSnapshotDiff(approvalId: string): Promise<void> {
     try {
-      templateApprovalSnapshotDiff.value = await fetchCreatorTemplateApprovalSnapshotDiff(approvalId);
+      templateApprovalSnapshotDiff.value = await fetchVolumeTemplateApprovalSnapshotDiff(approvalId);
       const summary = (templateApprovalSnapshotDiff.value as { diff_summary?: { changed?: boolean; lines_added?: number; lines_removed?: number } } | null)?.diff_summary;
       saveMessage.value = summary?.changed
         ? `快照 diff：+${summary.lines_added} / -${summary.lines_removed}`
@@ -377,9 +377,9 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
 
   async function loadTemplateApprovalsFn(): Promise<void> {
     try {
-      const data = await fetchCreatorTemplateApprovals({ status: 'pending' }) as { approvals?: ApprovalEntry[] };
+      const data = await fetchVolumeTemplateApprovals({ status: 'pending' }) as { approvals?: ApprovalEntry[] };
       templateApprovals.value = data.approvals || [];
-      const history = await fetchCreatorTemplateApprovalHistory() as { approvals?: Array<Record<string, unknown>> };
+      const history = await fetchVolumeTemplateApprovalHistory() as { approvals?: Array<Record<string, unknown>> };
       templateApprovalHistory.value = history.approvals || [];
       await loadTemplateApprovalChainConfig();
     } catch {
@@ -390,7 +390,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
 
   async function loadTemplateApprovalChainConfig(): Promise<void> {
     try {
-      const data = await fetchCreatorTemplateApprovalChainConfig() as ApprovalChainConfig;
+      const data = await fetchVolumeTemplateApprovalChain() as ApprovalChainConfig;
       templateApprovalChainSteps.value = data.required_steps || 2;
       templateApprovalStepAssignees.value = (data.step_assignees || []).join(', ');
       if (data.step_assignee_groups?.length) {
@@ -398,12 +398,12 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
           .map((group) => group.join('|'))
           .join(',');
       }
-      const sla = await fetchCreatorTemplateApprovalSlaConfig() as ApprovalSlaConfig;
+      const sla = await fetchVolumeTemplateApprovalSla() as ApprovalSlaConfig;
       templateApprovalSlaHours.value = sla.timeout_hours || 72;
       templateApprovalEmailOnSubmit.value = Boolean(sla.email_on_submit);
       templateApprovalEmailOnReject.value = Boolean(sla.email_on_reject);
       templateApprovalEmailOnOverdue.value = Boolean(sla.email_on_overdue);
-      const overdue = await fetchCreatorTemplateApprovalOverdue() as { approvals?: Array<Record<string, unknown>> };
+      const overdue = await fetchVolumeTemplateApprovalsOverdue() as { approvals?: Array<Record<string, unknown>> };
       overdueTemplateApprovals.value = overdue.approvals || [];
     } catch {
       templateApprovalChainSteps.value = 2;
@@ -414,7 +414,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
 
   async function saveTemplateApprovalSlaConfig(): Promise<void> {
     try {
-      await saveCreatorTemplateApprovalSlaConfig({
+      await saveVolumeTemplateApprovalSla({
         timeout_hours: templateApprovalSlaHours.value,
         email_on_submit: templateApprovalEmailOnSubmit.value,
         email_on_reject: templateApprovalEmailOnReject.value,
@@ -437,7 +437,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
         .split(',')
         .map((step) => step.split('|').map((s) => s.trim()).filter(Boolean))
         .filter((group) => group.length);
-      const data = await saveCreatorTemplateApprovalChainConfig({
+      const data = await saveVolumeTemplateApprovalChain({
         required_steps: templateApprovalChainSteps.value,
         step_assignees: assignees,
         step_assignee_groups: orGroups.length ? orGroups : undefined,

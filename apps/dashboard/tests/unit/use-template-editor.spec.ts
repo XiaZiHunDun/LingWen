@@ -8,55 +8,82 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref, computed } from 'vue';
 
 const editorMocks = vi.hoisted(() => ({
-  saveCreatorVolumeTemplate: vi.fn(),
-  deleteCreatorVolumeTemplate: vi.fn(),
-  renameCreatorVolumeTemplate: vi.fn(),
-  setCreatorVolumeTemplateVersion: vi.fn(),
-  fetchCreatorVolumeTemplateChangelog: vi.fn(),
-  rollbackCreatorVolumeTemplate: vi.fn(),
-  submitCreatorTemplateVersionApproval: vi.fn(),
-  approveCreatorTemplateApproval: vi.fn(),
-  batchApproveCreatorTemplateApprovals: vi.fn(),
-  batchRejectCreatorTemplateApprovals: vi.fn(),
-  rejectCreatorTemplateApproval: vi.fn(),
-  transferCreatorTemplateApproval: vi.fn(),
-  fetchCreatorTemplateApprovalSnapshotDiff: vi.fn(),
-  fetchCreatorTemplateApprovalSnapshotDrift: vi.fn(),
-  fetchCreatorTemplateApprovals: vi.fn(),
-  fetchCreatorTemplateApprovalHistory: vi.fn(),
-  fetchCreatorTemplateApprovalChainConfig: vi.fn(),
-  saveCreatorTemplateApprovalChainConfig: vi.fn(),
-  saveCreatorTemplateApprovalSlaConfig: vi.fn(),
-  fetchCreatorTemplateApprovalSlaConfig: vi.fn(),
-  fetchCreatorTemplateApprovalOverdue: vi.fn(),
+  saveVolumeTemplate: vi.fn(),
+  deleteVolumeTemplate: vi.fn(),
+  renameVolumeTemplate: vi.fn(),
+  setVolumeTemplateVersion: vi.fn(),
+  fetchVolumeTemplateChangelog: vi.fn(),
+  rollbackVolumeTemplate: vi.fn(),
+  submitVolumeTemplateApproval: vi.fn(),
+  approveVolumeTemplateApproval: vi.fn(),
+  batchApproveVolumeTemplateApprovals: vi.fn(),
+  batchRejectVolumeTemplateApprovals: vi.fn(),
+  rejectVolumeTemplateApproval: vi.fn(),
+  transferVolumeTemplateApproval: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDiff: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDrift: vi.fn(),
+  fetchVolumeTemplateApprovals: vi.fn(),
+  fetchVolumeTemplateApprovalHistory: vi.fn(),
+  fetchVolumeTemplateApprovalChain: vi.fn(),
+  saveVolumeTemplateApprovalChain: vi.fn(),
+  saveVolumeTemplateApprovalSla: vi.fn(),
+  fetchVolumeTemplateApprovalSla: vi.fn(),
+  fetchVolumeTemplateApprovalsOverdue: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => {
   const m = editorMocks;
   return {
-    saveCreatorVolumeTemplate: (...args: unknown[]) => m.saveCreatorVolumeTemplate(...args),
-    deleteCreatorVolumeTemplate: (...args: unknown[]) => m.deleteCreatorVolumeTemplate(...args),
-    renameCreatorVolumeTemplate: (...args: unknown[]) => m.renameCreatorVolumeTemplate(...args),
-    setCreatorVolumeTemplateVersion: (...args: unknown[]) => m.setCreatorVolumeTemplateVersion(...args),
-    fetchCreatorVolumeTemplateChangelog: (...args: unknown[]) => m.fetchCreatorVolumeTemplateChangelog(...args),
-    rollbackCreatorVolumeTemplate: (...args: unknown[]) => m.rollbackCreatorVolumeTemplate(...args),
-    submitCreatorTemplateVersionApproval: (...args: unknown[]) => m.submitCreatorTemplateVersionApproval(...args),
-    approveCreatorTemplateApproval: (...args: unknown[]) => m.approveCreatorTemplateApproval(...args),
-    batchApproveCreatorTemplateApprovals: (...args: unknown[]) => m.batchApproveCreatorTemplateApprovals(...args),
-    batchRejectCreatorTemplateApprovals: (...args: unknown[]) => m.batchRejectCreatorTemplateApprovals(...args),
-    rejectCreatorTemplateApproval: (...args: unknown[]) => m.rejectCreatorTemplateApproval(...args),
-    transferCreatorTemplateApproval: (...args: unknown[]) => m.transferCreatorTemplateApproval(...args),
-    fetchCreatorTemplateApprovalSnapshotDiff: (...args: unknown[]) => m.fetchCreatorTemplateApprovalSnapshotDiff(...args),
-    fetchCreatorTemplateApprovalSnapshotDrift: (...args: unknown[]) => m.fetchCreatorTemplateApprovalSnapshotDrift(...args),
-    fetchCreatorTemplateApprovals: (...args: unknown[]) => m.fetchCreatorTemplateApprovals(...args),
-    fetchCreatorTemplateApprovalHistory: (...args: unknown[]) => m.fetchCreatorTemplateApprovalHistory(...args),
-    fetchCreatorTemplateApprovalChainConfig: (...args: unknown[]) => m.fetchCreatorTemplateApprovalChainConfig(...args),
-    saveCreatorTemplateApprovalChainConfig: (...args: unknown[]) => m.saveCreatorTemplateApprovalChainConfig(...args),
-    saveCreatorTemplateApprovalSlaConfig: (...args: unknown[]) => m.saveCreatorTemplateApprovalSlaConfig(...args),
-    fetchCreatorTemplateApprovalSlaConfig: (...args: unknown[]) => m.fetchCreatorTemplateApprovalSlaConfig(...args),
-    fetchCreatorTemplateApprovalOverdue: (...args: unknown[]) => m.fetchCreatorTemplateApprovalOverdue(...args),
+    saveVolumeTemplate: (...args: unknown[]) => m.saveVolumeTemplate(...args),
+    deleteVolumeTemplate: (...args: unknown[]) => m.deleteVolumeTemplate(...args),
+    renameVolumeTemplate: (...args: unknown[]) => m.renameVolumeTemplate(...args),
+    setVolumeTemplateVersion: (...args: unknown[]) => m.setVolumeTemplateVersion(...args),
+    fetchVolumeTemplateChangelog: (...args: unknown[]) => m.fetchVolumeTemplateChangelog(...args),
+    rollbackVolumeTemplate: (...args: unknown[]) => m.rollbackVolumeTemplate(...args),
+    submitVolumeTemplateApproval: (...args: unknown[]) => m.submitVolumeTemplateApproval(...args),
+    approveVolumeTemplateApproval: (...args: unknown[]) => m.approveVolumeTemplateApproval(...args),
+    batchApproveVolumeTemplateApprovals: (...args: unknown[]) => m.batchApproveVolumeTemplateApprovals(...args),
+    batchRejectVolumeTemplateApprovals: (...args: unknown[]) => m.batchRejectVolumeTemplateApprovals(...args),
+    rejectVolumeTemplateApproval: (...args: unknown[]) => m.rejectVolumeTemplateApproval(...args),
+    transferVolumeTemplateApproval: (...args: unknown[]) => m.transferVolumeTemplateApproval(...args),
+    fetchVolumeTemplateApprovalSnapshotDiff: (...args: unknown[]) => m.fetchVolumeTemplateApprovalSnapshotDiff(...args),
+    fetchVolumeTemplateApprovalSnapshotDrift: (...args: unknown[]) => m.fetchVolumeTemplateApprovalSnapshotDrift(...args),
+    fetchVolumeTemplateApprovals: (...args: unknown[]) => m.fetchVolumeTemplateApprovals(...args),
+    fetchVolumeTemplateApprovalHistory: (...args: unknown[]) => m.fetchVolumeTemplateApprovalHistory(...args),
+    fetchVolumeTemplateApprovalChain: (...args: unknown[]) => m.fetchVolumeTemplateApprovalChain(...args),
+    saveVolumeTemplateApprovalChain: (...args: unknown[]) => m.saveVolumeTemplateApprovalChain(...args),
+    saveVolumeTemplateApprovalSla: (...args: unknown[]) => m.saveVolumeTemplateApprovalSla(...args),
+    fetchVolumeTemplateApprovalSla: (...args: unknown[]) => m.fetchVolumeTemplateApprovalSla(...args),
+    fetchVolumeTemplateApprovalsOverdue: (...args: unknown[]) => m.fetchVolumeTemplateApprovalsOverdue(...args),
   };
 });
+
+
+// v16.2.7 T6.B: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/volume', () => ({
+  listVolumeTemplates: (...args: unknown[]) => editorMocks.listVolumeTemplates(...args),
+  saveVolumeTemplate: (...args: unknown[]) => editorMocks.saveVolumeTemplate(...args),
+  deleteVolumeTemplate: (...args: unknown[]) => editorMocks.deleteVolumeTemplate(...args),
+  renameVolumeTemplate: (...args: unknown[]) => editorMocks.renameVolumeTemplate(...args),
+  setVolumeTemplateVersion: (...args: unknown[]) => editorMocks.setVolumeTemplateVersion(...args),
+  fetchVolumeTemplateChangelog: (...args: unknown[]) => editorMocks.fetchVolumeTemplateChangelog(...args),
+  rollbackVolumeTemplate: (...args: unknown[]) => editorMocks.rollbackVolumeTemplate(...args),
+  submitVolumeTemplateApproval: (...args: unknown[]) => editorMocks.submitVolumeTemplateApproval(...args),
+  approveVolumeTemplateApproval: (...args: unknown[]) => editorMocks.approveVolumeTemplateApproval(...args),
+  rejectVolumeTemplateApproval: (...args: unknown[]) => editorMocks.rejectVolumeTemplateApproval(...args),
+  transferVolumeTemplateApproval: (...args: unknown[]) => editorMocks.transferVolumeTemplateApproval(...args),
+  fetchVolumeTemplateApprovalSnapshotDiff: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovalSnapshotDiff(...args),
+  fetchVolumeTemplateApprovalSnapshotDrift: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovalSnapshotDrift(...args),
+  fetchVolumeTemplateApprovals: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovals(...args),
+  fetchVolumeTemplateApprovalHistory: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovalHistory(...args),
+  fetchVolumeTemplateApprovalChain: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovalChain(...args),
+  saveVolumeTemplateApprovalChain: (...args: unknown[]) => editorMocks.saveVolumeTemplateApprovalChain(...args),
+  fetchVolumeTemplateApprovalSla: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovalSla(...args),
+  saveVolumeTemplateApprovalSla: (...args: unknown[]) => editorMocks.saveVolumeTemplateApprovalSla(...args),
+  fetchVolumeTemplateApprovalsOverdue: (...args: unknown[]) => editorMocks.fetchVolumeTemplateApprovalsOverdue(...args),
+  batchApproveVolumeTemplateApprovals: (...args: unknown[]) => editorMocks.batchApproveVolumeTemplateApprovals(...args),
+  batchRejectVolumeTemplateApprovals: (...args: unknown[]) => editorMocks.batchRejectVolumeTemplateApprovals(...args),
+}));
 
 import { useTemplateEditor } from '../../src/composables/useCreatorVolumePlanTemplates/useTemplateEditor';
 
@@ -136,18 +163,18 @@ describe('useTemplateEditor', () => {
     const e = mountEditor();
     e.customTemplateName.value = '  ';
     await e.saveCustomVolumeTemplate();
-    expect(editorMocks.saveCreatorVolumeTemplate).not.toHaveBeenCalled();
+    expect(editorMocks.saveVolumeTemplate).not.toHaveBeenCalled();
   });
 
   it('saveCustomVolumeTemplate no-op when editableVolumes empty', async () => {
     const e = mountEditor();
     e.customTemplateName.value = 'my template';
     await e.saveCustomVolumeTemplate();
-    expect(editorMocks.saveCreatorVolumeTemplate).not.toHaveBeenCalled();
+    expect(editorMocks.saveVolumeTemplate).not.toHaveBeenCalled();
   });
 
   it('saveCustomVolumeTemplate posts and saves message', async () => {
-    editorMocks.saveCreatorVolumeTemplate.mockResolvedValueOnce({
+    editorMocks.saveVolumeTemplate.mockResolvedValueOnce({
       id: 'new-1', name: 'my template',
     });
     const e = mountEditor();
@@ -158,15 +185,15 @@ describe('useTemplateEditor', () => {
   });
 
   it('deleteSelectedVolumeTemplate calls API', async () => {
-    editorMocks.deleteCreatorVolumeTemplate.mockResolvedValueOnce(undefined);
+    editorMocks.deleteVolumeTemplate.mockResolvedValueOnce(undefined);
     const e = mountEditor();
     e.volumeTemplates.value = [{ id: 'three_act', name: '三幕', scope: 'project' }];
     await e.deleteSelectedVolumeTemplate();
-    expect(editorMocks.deleteCreatorVolumeTemplate).toHaveBeenCalled();
+    expect(editorMocks.deleteVolumeTemplate).toHaveBeenCalled();
   });
 
   it('deleteSelectedVolumeTemplate handles failure', async () => {
-    editorMocks.deleteCreatorVolumeTemplate.mockRejectedValueOnce(new Error('fail'));
+    editorMocks.deleteVolumeTemplate.mockRejectedValueOnce(new Error('fail'));
     const e = mountEditor();
     e.volumeTemplates.value = [{ id: 'three_act', name: '三幕', scope: 'project' }];
     await e.deleteSelectedVolumeTemplate();
@@ -178,18 +205,18 @@ describe('useTemplateEditor', () => {
     e.volumeTemplates.value = [{ id: 'three_act', name: '三幕', scope: 'project' }];
     e.renameTemplateName.value = '';
     await e.renameSelectedVolumeTemplate();
-    expect(editorMocks.renameCreatorVolumeTemplate).not.toHaveBeenCalled();
+    expect(editorMocks.renameVolumeTemplate).not.toHaveBeenCalled();
   });
 
   it('renameSelectedVolumeTemplate calls API', async () => {
-    editorMocks.renameCreatorVolumeTemplate.mockResolvedValueOnce({
+    editorMocks.renameVolumeTemplate.mockResolvedValueOnce({
       id: 't-1', name: 'renamed',
     });
     const e = mountEditor();
     e.volumeTemplates.value = [{ id: 'three_act', name: '三幕', scope: 'project' }];
     e.renameTemplateName.value = 'new name';
     await e.renameSelectedVolumeTemplate();
-    expect(editorMocks.renameCreatorVolumeTemplate).toHaveBeenCalled();
+    expect(editorMocks.renameVolumeTemplate).toHaveBeenCalled();
   });
 
   it('saveTemplateVersionLabel warns on invalid semver', async () => {
@@ -201,19 +228,19 @@ describe('useTemplateEditor', () => {
   });
 
   it('saveTemplateVersionLabel calls API on valid semver', async () => {
-    editorMocks.setCreatorVolumeTemplateVersion.mockResolvedValueOnce(undefined);
+    editorMocks.setVolumeTemplateVersion.mockResolvedValueOnce(undefined);
     const e = mountEditor();
     e.volumeTemplates.value = [{ id: 'three_act', name: '三幕', scope: 'project' }];
     e.templateVersionLabel.value = 'v1.2.3';
     await e.saveTemplateVersionLabel();
-    expect(editorMocks.setCreatorVolumeTemplateVersion).toHaveBeenCalled();
+    expect(editorMocks.setVolumeTemplateVersion).toHaveBeenCalled();
   });
 
   it('rollbackTemplateVersion no-op when no selected id', async () => {
     const e = mountEditor();
     e.selectedTemplateId.value = '';
     await e.rollbackTemplateVersion({}, 0);
-    expect(editorMocks.rollbackCreatorVolumeTemplate).not.toHaveBeenCalled();
+    expect(editorMocks.rollbackVolumeTemplate).not.toHaveBeenCalled();
   });
 
   it('toggleChangelogVisual toggles index', () => {
@@ -233,26 +260,26 @@ describe('useTemplateEditor', () => {
   });
 
   it('approveTemplateVersion handles force flag', async () => {
-    editorMocks.fetchCreatorTemplateApprovalSnapshotDrift.mockResolvedValueOnce({ drifted: false });
-    editorMocks.approveCreatorTemplateApproval.mockResolvedValueOnce({
+    editorMocks.fetchVolumeTemplateApprovalSnapshotDrift.mockResolvedValueOnce({ drifted: false });
+    editorMocks.approveVolumeTemplateApproval.mockResolvedValueOnce({
       chain_advanced: false, chain_progress: '1/1',
     });
     const e = mountEditor();
     await e.approveTemplateVersion('approval-1');
-    expect(editorMocks.approveCreatorTemplateApproval).toHaveBeenCalledWith(
+    expect(editorMocks.approveVolumeTemplateApproval).toHaveBeenCalledWith(
       'approval-1', { force: false },
     );
   });
 
   it('rejectTemplateVersion posts and saves message', async () => {
-    editorMocks.rejectCreatorTemplateApproval.mockResolvedValueOnce(undefined);
+    editorMocks.rejectVolumeTemplateApproval.mockResolvedValueOnce(undefined);
     const e = mountEditor();
     await e.rejectTemplateVersion('approval-1');
     expect(e.saveMessage.value).toContain('驳回');
   });
 
   it('previewApprovalSnapshotDiff sets state', async () => {
-    editorMocks.fetchCreatorTemplateApprovalSnapshotDiff.mockResolvedValueOnce({
+    editorMocks.fetchVolumeTemplateApprovalSnapshotDiff.mockResolvedValueOnce({
       diff_summary: { changed: true, lines_added: 2, lines_removed: 1 },
     });
     const e = mountEditor();
@@ -261,7 +288,7 @@ describe('useTemplateEditor', () => {
   });
 
   it('saveTemplateApprovalSlaConfig posts and saves message', async () => {
-    editorMocks.saveCreatorTemplateApprovalSlaConfig.mockResolvedValueOnce(undefined);
+    editorMocks.saveVolumeTemplateApprovalSla.mockResolvedValueOnce(undefined);
     const e = mountEditor();
     e.templateApprovalSlaHours.value = 48;
     await e.saveTemplateApprovalSlaConfig();

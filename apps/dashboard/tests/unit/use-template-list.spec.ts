@@ -9,11 +9,46 @@ import { ref } from 'vue';
 
 // Mock API
 const templateMocks = vi.hoisted(() => ({
-  fetchCreatorVolumeTemplates: vi.fn(),
+  listVolumeTemplates: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({
-  fetchCreatorVolumeTemplates: (...args: unknown[]) => templateMocks.fetchCreatorVolumeTemplates(...args),
+  listVolumeTemplates: (...args: unknown[]) => templateMocks.listVolumeTemplates(...args),
+}));
+
+
+// v16.2.7 T6.B: also mock the typed wrapper module. Per v16.2.5 §5.1 lesson 3.
+vi.mock('../../src/api/volume', () => ({
+  applyVolumeTemplate: vi.fn(),
+  approveVolumeTemplateApproval: vi.fn(),
+  batchApproveVolumeTemplateApprovals: vi.fn(),
+  batchRejectVolumeTemplateApprovals: vi.fn(),
+  deleteFactoryVolumeTemplate: vi.fn(),
+  deleteVolumeTemplate: vi.fn(),
+  exportVolumeTemplates: vi.fn(),
+  fetchVolumeTemplateApprovalChain: vi.fn(),
+  fetchVolumeTemplateApprovalHistory: vi.fn(),
+  fetchVolumeTemplateApprovals: vi.fn(),
+  fetchVolumeTemplateApprovalSla: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDiff: vi.fn(),
+  fetchVolumeTemplateApprovalSnapshotDrift: vi.fn(),
+  fetchVolumeTemplateApprovalsOverdue: vi.fn(),
+  fetchVolumeTemplateChangelog: vi.fn(),
+  fetchVolumeTemplateSyncSources: vi.fn(),
+  importVolumeTemplates: vi.fn(),
+  listVolumeTemplates: (...args: unknown[]) => templateMocks.listVolumeTemplates(...args),
+  publishFactoryVolumeTemplate: vi.fn(),
+  pullFactoryVolumeTemplates: vi.fn(),
+  rejectVolumeTemplateApproval: vi.fn(),
+  renameVolumeTemplate: vi.fn(),
+  rollbackVolumeTemplate: vi.fn(),
+  saveVolumeTemplate: vi.fn(),
+  saveVolumeTemplateApprovalChain: vi.fn(),
+  saveVolumeTemplateApprovalSla: vi.fn(),
+  setVolumeTemplateVersion: vi.fn(),
+  submitVolumeTemplateApproval: vi.fn(),
+  syncVolumeTemplates: vi.fn(),
+  transferVolumeTemplateApproval: vi.fn(),
 }));
 
 import { useTemplateList } from '../../src/composables/useCreatorVolumePlanTemplates/useTemplateList';
@@ -30,7 +65,7 @@ function mountList() {
 describe('useTemplateList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    templateMocks.fetchCreatorVolumeTemplates.mockResolvedValue({
+    templateMocks.listVolumeTemplates.mockResolvedValue({
       templates: [
         { id: 'three_act', name: '三幕', scope: 'project', description: '基础结构' },
         { id: 'hero_journey', name: '英雄之旅', scope: 'project' },
@@ -46,7 +81,7 @@ describe('useTemplateList', () => {
   });
 
   it('loadVolumeTemplates handles API failure gracefully', async () => {
-    templateMocks.fetchCreatorVolumeTemplates.mockRejectedValueOnce(new Error('down'));
+    templateMocks.listVolumeTemplates.mockRejectedValueOnce(new Error('down'));
     const list = mountList();
     await list.loadVolumeTemplates();
     expect(list.volumeTemplates.value).toEqual([]);

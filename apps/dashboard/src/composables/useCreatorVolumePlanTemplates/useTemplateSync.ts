@@ -10,15 +10,15 @@
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import {
-  exportCreatorVolumeTemplates,
-  importCreatorVolumeTemplates,
-  fetchCreatorVolumeTemplateSyncSources,
-  syncCreatorVolumeTemplates,
-  publishCreatorVolumeTemplateToFactory,
-  pullCreatorFactoryVolumeTemplates,
-  deleteCreatorFactoryVolumeTemplate,
-  applyCreatorVolumeTemplate,
-} from '../../api/index.js';
+  exportVolumeTemplates,
+  importVolumeTemplates,
+  fetchVolumeTemplateSyncSources,
+  syncVolumeTemplates,
+  publishFactoryVolumeTemplate,
+  pullFactoryVolumeTemplates,
+  deleteFactoryVolumeTemplate,
+  applyVolumeTemplate as apiApplyVolumeTemplate,
+} from '@/api/volume';
 import { normalizeVolumePlanVolumes } from '../../utils/displayProjectName.js';
 
 interface SyncSource { slug: string; name?: string }
@@ -75,7 +75,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
 
   async function loadTemplateSyncSources(): Promise<void> {
     try {
-      const data = await fetchCreatorVolumeTemplateSyncSources() as { sources?: SyncSource[] };
+      const data = await fetchVolumeTemplateSyncSources() as { sources?: SyncSource[] };
       templateSyncSources.value = data.sources || [];
     } catch {
       templateSyncSources.value = [];
@@ -85,7 +85,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
   async function exportCustomTemplates(): Promise<void> {
     error.value = null;
     try {
-      const data = await exportCreatorVolumeTemplates() as { templates?: Array<Record<string, unknown>>; count?: number };
+      const data = await exportVolumeTemplates() as { templates?: Array<Record<string, unknown>>; count?: number };
       const text = JSON.stringify(data, null, 2);
       importTemplatesJson.value = text;
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -106,7 +106,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     try {
       const payload = JSON.parse(importTemplatesJson.value);
       const templates = payload.templates || payload;
-      const result = await importCreatorVolumeTemplates({
+      const result = await importVolumeTemplates({
         templates: Array.isArray(templates) ? templates : [],
         replace: false,
       }) as { imported: number; total: number };
@@ -133,7 +133,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
         saveMessage.value = '没有其他项目的自定义模板';
         return;
       }
-      const result = await syncCreatorVolumeTemplates({ source_slugs: slugs }) as { sources: unknown[]; imported: number };
+      const result = await syncVolumeTemplates({ source_slugs: slugs }) as { sources: unknown[]; imported: number };
       saveMessage.value = `已从 ${result.sources.length} 个项目同步 ${result.imported} 个模板`;
       await loadVolumeTemplates();
       await loadTemplateSyncSources();
@@ -149,7 +149,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     templatePublishing.value = true;
     error.value = null;
     try {
-      await publishCreatorVolumeTemplateToFactory({ template_id: selectedTemplateId.value });
+      await publishFactoryVolumeTemplate({ template_id: selectedTemplateId.value });
       saveMessage.value = '已发布到工厂模板库';
       await loadVolumeTemplates();
     } catch (e) {
@@ -164,7 +164,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     factoryPulling.value = true;
     error.value = null;
     try {
-      const result = await pullCreatorFactoryVolumeTemplates({ template_ids: [] }) as { imported: number };
+      const result = await pullFactoryVolumeTemplates({ template_ids: [] }) as { imported: number };
       saveMessage.value = `已从工厂库拉取 ${result.imported} 个模板`;
       await loadVolumeTemplates();
     } catch (e) {
@@ -179,7 +179,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     factoryDeleting.value = true;
     error.value = null;
     try {
-      await deleteCreatorFactoryVolumeTemplate(selectedTemplateId.value);
+      await deleteFactoryVolumeTemplate(selectedTemplateId.value);
       saveMessage.value = '已从工厂库删除模板';
       await loadVolumeTemplates();
       selectedTemplateId.value = 'three_act';
@@ -194,7 +194,7 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     templateApplying.value = true;
     error.value = null;
     try {
-      const result = await applyCreatorVolumeTemplate({
+      const result = await apiApplyVolumeTemplate({
         template_id: selectedTemplateId.value,
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
       }) as AppliedResult;
