@@ -1,7 +1,7 @@
 """init-project command — creator / studio scaffold."""
 from pathlib import Path
 
-from infra.creator_mode import (
+from lingwen_creator.shared.mode import (
     CREATION_MODE_ADVANCE,
     CREATION_MODE_COMPANION,
     CREATION_MODE_STUDIO,

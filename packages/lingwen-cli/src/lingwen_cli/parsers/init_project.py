@@ -1,7 +1,7 @@
 """init-project subparser — scaffold creator / studio project."""
 import argparse
 
-from infra.creator_mode import CREATION_MODES
+from lingwen_creator.shared.mode import CREATION_MODES
 
 
 def add_init_project_parser(subparsers: argparse._SubParsersAction) -> argparse.ArgumentParser:

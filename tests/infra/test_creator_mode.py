@@ -1,7 +1,7 @@
 """Tests for infra.creator_mode and volume summary."""
 from __future__ import annotations
 
-from infra.creator_mode import (
+from lingwen_creator.shared.mode import (
     CREATION_MODE_ADVANCE,
     CREATION_MODE_COMPANION,
     CREATION_MODE_STUDIO,

@@ -59,7 +59,9 @@ def test_settings_from_project_config_accepts_any() -> None:
     assert settings.advance_volume_summary is True
 
 
-def test_legacy_import_path_still_works() -> None:
-    """Backwards compat: old `from infra.creator_mode import ...` works via shim."""
-    from infra.creator_mode import CreatorSettings as LegacyCreatorSettings
-    assert LegacyCreatorSettings is CreatorSettings
+def test_legacy_shim_deleted() -> None:
+    """v16.2.7 T4.9: infra.creator_mode shim deleted, must raise ModuleNotFoundError."""
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_mode import CreatorSettings  # noqa: F401

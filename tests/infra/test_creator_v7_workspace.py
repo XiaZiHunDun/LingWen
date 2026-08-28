@@ -1,7 +1,7 @@
 """Phase C creator workspace ui_profile flags."""
 from __future__ import annotations
 
-from infra.creator_mode import CREATION_MODE_ADVANCE, CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
+from lingwen_creator.shared.mode import CREATION_MODE_ADVANCE, CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
 from infra.creator_ui_profile import resolve_creator_ui_profile
 
 

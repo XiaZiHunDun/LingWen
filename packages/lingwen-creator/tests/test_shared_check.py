@@ -11,7 +11,7 @@ from lingwen_creator.shared.check import (
     load_creator_check_context,
 )
 
-from infra.creator_mode import CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
+from lingwen_creator.shared.mode import CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
 from infra.paths import ProjectPaths
 
 
@@ -81,18 +81,13 @@ def test_format_check_mode_banner_companion(companion_project):
     assert "陪伴模式" in banner
 
 
-def test_legacy_import_path_still_works():
-    """Backwards compat: old `from infra.creator_check import ...`."""
-    from infra.creator_check import (
-        apply_creator_check_defaults as LegacyApply,
-    )
-    from infra.creator_check import (
-        format_check_mode_banner as LegacyFormat,
-    )
-    from infra.creator_check import (
-        load_creator_check_context as LegacyLoad,
-    )
+def test_legacy_shim_deleted():
+    """v16.2.7 T4.9: infra.creator_check shim deleted, must raise ModuleNotFoundError."""
+    import pytest
 
-    assert LegacyLoad is load_creator_check_context
-    assert LegacyApply is apply_creator_check_defaults
-    assert LegacyFormat is format_check_mode_banner
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_check import apply_creator_check_defaults  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_check import format_check_mode_banner  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_check import load_creator_check_context  # noqa: F401
