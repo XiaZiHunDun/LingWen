@@ -93,6 +93,63 @@ export interface CreatorLogicCheckResponse {
   summary?: string | null;
 }
 
+export interface CreatorMemoryAnnotationRequest {
+  note?: string | null;
+  pinned?: boolean | null;
+}
+
+export interface CreatorMemoryAnnotationResponse {
+  asset_id: string;
+  note?: string | null;
+  pinned?: boolean;
+  updated_at?: string | null;
+}
+
+export interface CreatorMemoryAssetItem {
+  id: string;
+  kind: string;
+  name: string;
+  excerpt: string;
+  chapters?: number[];
+  editable?: boolean;
+  placeholder?: boolean;
+  source?: string;
+  note?: string | null;
+  pinned?: boolean;
+}
+
+export interface CreatorMemoryAssetsResponse {
+  slug: string;
+  memory_available: boolean;
+  memory_rag_enabled: boolean;
+  items?: CreatorMemoryAssetItem[];
+}
+
+export interface CreatorMemoryQueryRequest {
+  query: string;
+  scope?: string;
+  top_k?: number | null;
+}
+
+export interface CreatorMemoryQueryResponse {
+  query: string;
+  memory_available: boolean;
+  used_fallback: boolean;
+  results?: CreatorMemoryQueryResult[];
+}
+
+export interface CreatorMemoryQueryResult {
+  id: string;
+  snippet: string;
+  score?: number;
+  chapter?: number | null;
+  kind?: string;
+  source?: string;
+  citation?: string | null;
+  asset_name?: string | null;
+  matched_terms?: string[];
+}
+
 export interface CreatorMergePreferencesExportResponse {
   schema_version: string;
   project: Record<string, unknown>;

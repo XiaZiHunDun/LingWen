@@ -1946,3 +1946,93 @@ class CreatorPublishHistoryResponse(BaseModel):
 
     slug: str
     entries: list[CreatorPublishEntry] = Field(default_factory=list)
+
+
+# =============================================================================
+# Memory DTOs (Phase 126 v16.2.6)
+# =============================================================================
+
+
+class CreatorMemoryAssetItem(BaseModel):
+    """Single memory asset row (settings doc / summary / chapter / gateway entry)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    kind: str  # "setting" | "summary" | "memory" | "character" | "foreshadow"
+    name: str
+    excerpt: str
+    chapters: list[int] = Field(default_factory=list)
+    editable: bool = False
+    placeholder: bool = False
+    source: str = "settings"
+    note: Optional[str] = None
+    pinned: bool = False
+
+
+class CreatorMemoryAssetsResponse(BaseModel):
+    """GET /api/creator/memory-assets response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    slug: str
+    memory_available: bool
+    memory_rag_enabled: bool
+    items: list[CreatorMemoryAssetItem] = Field(default_factory=list)
+
+
+class CreatorMemoryAnnotationRequest(BaseModel):
+    """PUT /api/creator/memory-assets/{asset_id}/annotation request body."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    note: Optional[str] = None
+    pinned: Optional[bool] = None
+
+
+class CreatorMemoryAnnotationResponse(BaseModel):
+    """PUT /api/creator/memory-assets/{asset_id}/annotation response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    asset_id: str
+    note: Optional[str] = None
+    pinned: bool = False
+    updated_at: Optional[str] = None
+
+
+class CreatorMemoryQueryRequest(BaseModel):
+    """POST /api/creator/memory/query request body."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    query: str
+    scope: str = "all"  # "all" | "character" | "chapter" | "relationship"
+    top_k: Optional[int] = None
+
+
+class CreatorMemoryQueryResult(BaseModel):
+    """Single memory query hit (vector or local fallback)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    snippet: str
+    score: float = 0.0
+    chapter: Optional[int] = None
+    kind: str = "segment"
+    source: str = "local"  # "vector" | "local" | asset source
+    citation: Optional[str] = None
+    asset_name: Optional[str] = None
+    matched_terms: list[str] = Field(default_factory=list)
+
+
+class CreatorMemoryQueryResponse(BaseModel):
+    """POST /api/creator/memory/query response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    query: str
+    memory_available: bool
+    used_fallback: bool
+    results: list[CreatorMemoryQueryResult] = Field(default_factory=list)

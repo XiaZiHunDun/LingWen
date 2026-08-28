@@ -839,3 +839,117 @@ def test_publish_history_response_has_entries() -> None:
     resp = CreatorPublishHistoryResponse(slug="test-project", entries=[entry])
     assert resp.entries[0].platform == "qidian"
     assert resp.entries[0].include_outline is False
+
+
+# ---------------------------------------------------------------------------
+# Memory DTOs (Phase 126 v16.2.6)
+# ---------------------------------------------------------------------------
+
+
+def test_memory_asset_item_defaults() -> None:
+    """CreatorMemoryAssetItem defaults: no chapters, not editable, not pinned."""
+    from lingwen_shared.contracts.python.creator import CreatorMemoryAssetItem
+
+    item = CreatorMemoryAssetItem(
+        id="asset-pillars", kind="setting", name="创作支柱", excerpt="…",
+    )
+    assert item.chapters == []
+    assert item.editable is False
+    assert item.placeholder is False
+    assert item.source == "settings"
+    assert item.note is None
+    assert item.pinned is False
+
+
+def test_memory_assets_response_holds_items() -> None:
+    """CreatorMemoryAssetsResponse nests CreatorMemoryAssetItem."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorMemoryAssetItem,
+        CreatorMemoryAssetsResponse,
+    )
+
+    resp = CreatorMemoryAssetsResponse(
+        slug="test-project",
+        memory_available=False,
+        memory_rag_enabled=True,
+        items=[
+            CreatorMemoryAssetItem(
+                id="memory-ch-1", kind="memory", name="第1章记忆片段",
+                excerpt="…", chapters=[1],
+            ),
+        ],
+    )
+    assert resp.items[0].chapters == [1]
+    assert resp.memory_available is False
+
+
+def test_memory_assets_response_items_default_empty() -> None:
+    """items defaults to empty list."""
+    from lingwen_shared.contracts.python.creator import CreatorMemoryAssetsResponse
+
+    resp = CreatorMemoryAssetsResponse(
+        slug="p", memory_available=True, memory_rag_enabled=False,
+    )
+    assert resp.items == []
+
+
+def test_memory_annotation_request_all_optional() -> None:
+    """Both note and pinned are optional (route validates at least one)."""
+    from lingwen_shared.contracts.python.creator import CreatorMemoryAnnotationRequest
+
+    req = CreatorMemoryAnnotationRequest()
+    assert req.note is None
+    assert req.pinned is None
+    assert CreatorMemoryAnnotationRequest(pinned=True).pinned is True
+
+
+def test_memory_annotation_response_defaults() -> None:
+    """CreatorMemoryAnnotationResponse defaults pinned=False."""
+    from lingwen_shared.contracts.python.creator import CreatorMemoryAnnotationResponse
+
+    resp = CreatorMemoryAnnotationResponse(asset_id="memory-ch-1")
+    assert resp.pinned is False
+    assert resp.note is None
+    assert resp.updated_at is None
+
+
+def test_memory_query_request_defaults() -> None:
+    """scope defaults to 'all', top_k optional."""
+    from lingwen_shared.contracts.python.creator import CreatorMemoryQueryRequest
+
+    req = CreatorMemoryQueryRequest(query="李逍遥")
+    assert req.scope == "all"
+    assert req.top_k is None
+
+
+def test_memory_query_result_defaults() -> None:
+    """CreatorMemoryQueryResult defaults score=0.0, kind=segment, source=local."""
+    from lingwen_shared.contracts.python.creator import CreatorMemoryQueryResult
+
+    hit = CreatorMemoryQueryResult(id="memory-ch-1", snippet="…")
+    assert hit.score == 0.0
+    assert hit.kind == "segment"
+    assert hit.source == "local"
+    assert hit.matched_terms == []
+
+
+def test_memory_query_response_holds_results() -> None:
+    """CreatorMemoryQueryResponse nests CreatorMemoryQueryResult."""
+    from lingwen_shared.contracts.python.creator import (
+        CreatorMemoryQueryResponse,
+        CreatorMemoryQueryResult,
+    )
+
+    resp = CreatorMemoryQueryResponse(
+        query="李逍遥",
+        memory_available=False,
+        used_fallback=True,
+        results=[
+            CreatorMemoryQueryResult(
+                id="memory-ch-1", snippet="…", score=0.8, chapter=1,
+                source="local", matched_terms=["李逍遥"],
+            ),
+        ],
+    )
+    assert resp.used_fallback is True
+    assert resp.results[0].matched_terms == ["李逍遥"]
