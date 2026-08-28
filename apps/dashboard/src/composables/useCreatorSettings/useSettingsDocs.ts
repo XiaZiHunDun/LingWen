@@ -17,7 +17,7 @@ import {
   previewSettingsDocsDiff,
   previewSettingsThreeWay,
   previewSettingsMergeStrategy,
-} from '../../api/settings.js';
+} from '@/api/settings';
 import type { CreatorSettingsDocsResponse } from '@lingwen/dashboard-contracts/shared';
 
 interface SettingsDocs {

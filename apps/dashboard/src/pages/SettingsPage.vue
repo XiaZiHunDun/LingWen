@@ -223,7 +223,7 @@ import {
   fetchBudgetsByTier,
   setBudget,
   setBudgetByTier,
-} from '../api/index.js';
+} from '@/api/budgets';
 import { PRODUCTION_ENV_VARS, API_KEY_ENV_VARS } from '../utils/settingsEnv.js';
 import {
   formatWindowBudgetRows,
