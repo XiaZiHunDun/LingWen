@@ -39,18 +39,6 @@ export interface CreatorChapterPreview {
   last_modified?: string | null;
 }
 
-export interface CreatorDashboardChapterPreview {
-  chapter_id: number;
-  project_slug: string;
-  outline?: string;
-  body?: string;
-}
-
-export interface CreatorDashboardOverview {
-  project_slug: string;
-  overview?: Record<string, unknown>;
-}
-
 export interface CreatorDiffCollabNotesRequest {
   notes?: Record<string, unknown>;
 }
@@ -650,22 +638,6 @@ export interface CreatorSettingsThreeWayDiffResponse {
 export interface CreatorSettingsThreeWayPair {
   pillars: CreatorSettingsDiffPart;
   global_outline: CreatorSettingsDiffPart;
-}
-
-export interface CreatorUiProfileSaveRequest {
-  creation_mode?: "companion" | "advance" | "studio" | null;
-  quality_profile?: string | null;
-  advanced_visible?: boolean | null;
-  wizard_visible?: boolean | null;
-  dashboard_visible?: boolean | null;
-}
-
-export interface CreatorUiProfileState {
-  creation_mode: "companion" | "advance" | "studio";
-  quality_profile: string;
-  advanced_visible?: boolean | null;
-  wizard_visible?: boolean | null;
-  dashboard_visible?: boolean | null;
 }
 
 export interface CreatorVolumeApplyTemplateRequest {

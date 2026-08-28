@@ -1793,58 +1793,6 @@ class CreatorBodySaveRequest(BaseModel):
     metadata: Optional[dict[str, Any]] = None
 
 
-class CreatorUiProfileState(BaseModel):
-    """UI profile resolved state."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    creation_mode: Literal["companion", "advance", "studio"]
-    quality_profile: str
-    advanced_visible: Optional[bool] = None
-    wizard_visible: Optional[bool] = None
-    dashboard_visible: Optional[bool] = None
-
-
-class CreatorUiProfileSaveRequest(BaseModel):
-    """UI profile save request."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    creation_mode: Optional[Literal["companion", "advance", "studio"]] = None
-    quality_profile: Optional[str] = None
-    advanced_visible: Optional[bool] = None
-    wizard_visible: Optional[bool] = None
-    dashboard_visible: Optional[bool] = None
-
-
-class CreatorDashboardOverview(BaseModel):
-    """Creator dashboard overview (alternative layout for content.dashboard).
-
-    Spec §3.3: dashboard variant of CreatorOverviewResponse — not yet wired in
-    routes, kept as a forward-compat stub.
-    """
-
-    model_config = ConfigDict(extra="ignore")
-
-    project_slug: str
-    overview: dict[str, Any] = Field(default_factory=dict)
-
-
-class CreatorDashboardChapterPreview(BaseModel):
-    """Creator dashboard chapter preview (alternative layout for content.dashboard).
-
-    Spec §3.3: dashboard variant of CreatorChapterPreview — not yet wired in
-    routes, kept as a forward-compat stub.
-    """
-
-    model_config = ConfigDict(extra="ignore")
-
-    chapter_id: int
-    project_slug: str
-    outline: str = ""
-    body: str = ""
-
-
 # =============================================================================
 # Export + Publish DTOs (Phase 126 v16.2.5)
 # =============================================================================

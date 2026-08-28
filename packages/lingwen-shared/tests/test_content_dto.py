@@ -1,10 +1,14 @@
-"""Phase 126 v16.2.4 T3: tests for Content DTOs (16 Pydantic models).
+"""Phase 126 v16.2.4 T3: tests for Content DTOs (12 Pydantic models after v16.2.7 T7).
 
 Covers:
-- Importability for all 16 content DTOs
+- Importability for all 12 content DTOs
 - Field validation (required vs optional, min_length, etc.)
 - Forward-compat (extra='ignore')
 - Roundtrip serialization
+
+v16.2.7 T7: 4 forward-compat stubs removed — CreatorUiProfileState,
+CreatorUiProfileSaveRequest, CreatorDashboardOverview,
+CreatorDashboardChapterPreview (no endpoint, no caller).
 
 DTO names (per spec §3.3):
 - Overview: CreatorOverviewResponse
@@ -14,8 +18,6 @@ DTO names (per spec §3.3):
 - Models: CreatorModelsResponse
 - Logic check: CreatorLogicCheckResponse
 - Dashboard: CreatorChapterPreview + CreatorOutlineSaveRequest + CreatorBodySaveRequest
-- UI profile: CreatorUiProfileState + CreatorUiProfileSaveRequest
-- Dashboard variants (forward-compat stubs): CreatorDashboardOverview + CreatorDashboardChapterPreview
 """
 from __future__ import annotations
 
@@ -30,8 +32,6 @@ from lingwen_shared.contracts.python.creator import (  # noqa: I001
     CreatorBodySaveRequest,
     # Dashboard
     CreatorChapterPreview,
-    CreatorDashboardChapterPreview,
-    CreatorDashboardOverview,
     # Logic check
     CreatorLogicCheckResponse,
     # Models
@@ -42,9 +42,6 @@ from lingwen_shared.contracts.python.creator import (  # noqa: I001
     # Preferences
     CreatorPreferencesResponse,
     CreatorPreferencesSaveRequest,
-    CreatorUiProfileSaveRequest,
-    # UI profile
-    CreatorUiProfileState,
 )
 from pydantic import ValidationError
 
@@ -135,32 +132,4 @@ def test_body_save_request_optional_metadata() -> None:
     assert req.metadata is None
 
 
-# --- UI profile ---
-
-
-def test_ui_profile_state_has_mode() -> None:
-    state = CreatorUiProfileState(
-        creation_mode="companion", quality_profile="creator_relaxed"
-    )
-    assert state.creation_mode == "companion"
-
-
-def test_ui_profile_save_request_validates_mode() -> None:
-    with pytest.raises(ValidationError):
-        CreatorUiProfileSaveRequest(creation_mode="invalid_mode")
-
-
-# --- Dashboard variants (spec §3.3 forward-compat stubs) ---
-
-
-def test_dashboard_overview_minimal() -> None:
-    ov = CreatorDashboardOverview(project_slug="proj-1")
-    assert ov.project_slug == "proj-1"
-    assert ov.overview == {}
-
-
-def test_dashboard_chapter_preview_minimal() -> None:
-    prev = CreatorDashboardChapterPreview(chapter_id=42, project_slug="proj-1")
-    assert prev.chapter_id == 42
-    assert prev.outline == ""
-    assert prev.body == ""
+# --- Dashboard ---
