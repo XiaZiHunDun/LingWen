@@ -19,7 +19,7 @@ from infra.creator_onboarding_digest_schedule import (
     save_digest_schedule,
 )
 from infra.creator_onboarding_webhook import load_webhook_config, save_webhook_config
-from infra.creator_template_approvals import (
+from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
     load_approval_chain_config,
     preview_template_approval_snapshot_diff,

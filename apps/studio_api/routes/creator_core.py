@@ -431,7 +431,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_summary_generate(
         req: CreatorVolumeSummaryGenerateRequest,
     ) -> CreatorVolumeSummaryGenerateResponse:
-        from infra.creator_volume_summary import write_volume_summary
+        from lingwen_creator.volume.summary import write_volume_summary
 
         project = _require_project(ctx)
         if req.start_chapter < 1 or req.end_chapter < req.start_chapter:

@@ -6,7 +6,7 @@ import pytest
 from infra.creator_dashboard import creator_chapter_preview, save_creator_chapter_body
 from infra.creator_onboarding_progress import dismiss_wizard_panel, load_onboarding_progress
 from infra.creator_ui_profile import resolve_creator_ui_profile
-from infra.creator_volume_summary import write_volume_summary
+from lingwen_creator.volume.summary import write_volume_summary
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

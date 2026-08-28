@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.creator_template_approvals import (
+from lingwen_creator.volume.template_approvals import (
     _load_store,
     _save_store,
     list_overdue_template_approvals,

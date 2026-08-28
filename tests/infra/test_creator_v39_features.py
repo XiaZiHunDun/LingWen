@@ -5,7 +5,7 @@ import pytest
 
 from infra.creator_dashboard import creator_overview
 from infra.creator_ui_profile import filter_deviations_by_min_severity, resolve_creator_ui_profile
-from infra.creator_volume_pulse import build_volume_pulse
+from lingwen_creator.volume.pulse import build_volume_pulse
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject

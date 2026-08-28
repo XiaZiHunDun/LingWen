@@ -182,30 +182,18 @@ def test_template_approvals_load_approval_sla_config_default() -> None:
     assert cfg["email_on_submit"] is True
 
 
-def test_legacy_import_paths_still_work() -> None:
-    """Backwards compat: old `from infra.creator_volume_X import ...` works via shim.
+def test_legacy_shims_deleted() -> None:
+    """v16.2.7 T4.5: 4 volume leaf shims deleted, must raise ModuleNotFoundError.
 
-    Verifies all 6 shims (plan + plan_share + pulse + summary + templates + template_approvals).
+    T4.6 (next commit) adds creator_volume_plan + creator_volume_templates.
     """
-    from lingwen_creator.volume.plan import load_volume_plan
-    from lingwen_creator.volume.plan_share import encode_share_token
-    from lingwen_creator.volume.pulse import build_volume_pulse
-    from lingwen_creator.volume.summary import build_volume_summary
-    from lingwen_creator.volume.template_approvals import list_template_approvals
-    from lingwen_creator.volume.templates import list_volume_templates
+    import pytest
 
-    from infra.creator_template_approvals import (
-        list_template_approvals as LegacyApprovals,
-    )
-    from infra.creator_volume_plan import load_volume_plan as LegacyLoad
-    from infra.creator_volume_plan_share import encode_share_token as LegacyEncode
-    from infra.creator_volume_pulse import build_volume_pulse as LegacyPulse
-    from infra.creator_volume_summary import build_volume_summary as LegacySummary
-    from infra.creator_volume_templates import list_volume_templates as LegacyTemplates
-
-    assert LegacyLoad is load_volume_plan
-    assert LegacyEncode is encode_share_token
-    assert LegacyPulse is build_volume_pulse
-    assert LegacySummary is build_volume_summary
-    assert LegacyTemplates is list_volume_templates
-    assert LegacyApprovals is list_template_approvals
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_volume_plan_share import encode_share_token  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_volume_pulse import build_volume_pulse  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_volume_summary import build_volume_summary  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_template_approvals import list_template_approvals  # noqa: F401

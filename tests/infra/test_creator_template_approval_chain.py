@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_template_approvals import (
+from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
     list_template_approvals,
     save_approval_chain_config,

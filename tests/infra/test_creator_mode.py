@@ -8,7 +8,7 @@ from infra.creator_mode import (
     resolve_creator_settings,
     settings_from_project_config,
 )
-from infra.creator_volume_summary import build_volume_summary, format_volume_summary_markdown
+from lingwen_creator.volume.summary import build_volume_summary, format_volume_summary_markdown
 from infra.paths import ProjectPaths
 from infra.project_config import ProjectConfig
 
