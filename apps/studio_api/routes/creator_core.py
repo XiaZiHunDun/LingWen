@@ -228,7 +228,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/creator/memory-assets", response_model=CreatorMemoryAssetsResponse)
     def creator_memory_assets_get() -> CreatorMemoryAssetsResponse:
-        from infra.creator_memory_assets import creator_memory_assets_payload
+        from lingwen_creator.memory.assets import creator_memory_assets_payload
 
         project = _require_project(ctx)
         return CreatorMemoryAssetsResponse(**creator_memory_assets_payload(project))
@@ -241,7 +241,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         asset_id: str,
         req: CreatorMemoryAnnotationRequest,
     ) -> CreatorMemoryAnnotationResponse:
-        from infra.creator_memory_annotations import upsert_memory_annotation
+        from lingwen_creator.memory.annotations import upsert_memory_annotation
 
         project = _require_project(ctx)
         if req.note is None and req.pinned is None:
@@ -266,7 +266,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_memory_query_endpoint(
         req: CreatorMemoryQueryRequest,
     ) -> CreatorMemoryQueryResponse:
-        from infra.creator_memory_query import creator_memory_query
+        from lingwen_creator.memory.query import creator_memory_query
 
         project = _require_project(ctx)
         if not req.query.strip():
