@@ -1,7 +1,7 @@
 """Tests for creator v6.10 share preview, queue depth, speech."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v610_ui_profile() -> None:

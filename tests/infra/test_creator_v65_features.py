@@ -1,7 +1,7 @@
 """Tests for creator v6.5 diff email share, success rate chart, onboarding step link."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v65_ui_profile() -> None:

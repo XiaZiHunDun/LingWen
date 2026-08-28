@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.creator_onboarding_webhook import (
+from lingwen_creator.onboarding.webhook import (
     dispatch_mention_webhook,
     load_webhook_config,
     save_webhook_config,

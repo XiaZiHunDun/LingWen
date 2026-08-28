@@ -1,7 +1,7 @@
 """Tests for creator v6.0 mode preview, diff export, batch success rate."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v60_ui_profile() -> None:

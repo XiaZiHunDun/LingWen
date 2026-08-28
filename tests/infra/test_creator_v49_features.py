@@ -1,7 +1,7 @@
 """Tests for creator v4.9 inline dismiss, deviation-summary link, issue keyboard nav."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_companion_v49_ui_profile() -> None:

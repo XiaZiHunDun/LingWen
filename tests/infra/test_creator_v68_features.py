@@ -1,7 +1,7 @@
 """Tests for creator v6.8 zip export, duration distribution, undo hint."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v68_ui_profile() -> None:

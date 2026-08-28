@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from lingwen_creator.content.dashboard import creator_overview
-from infra.creator_ui_profile import filter_deviations_by_min_severity, resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import filter_deviations_by_min_severity, resolve_creator_ui_profile
 from lingwen_creator.volume.pulse import build_volume_pulse
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project

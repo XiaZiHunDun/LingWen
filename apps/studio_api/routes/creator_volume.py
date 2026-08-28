@@ -704,7 +704,7 @@ def register_creator_volume(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_put(req: CreatorVolumePlanSaveRequest) -> CreatorVolumePlanResponse:
         from lingwen_creator.volume.plan import save_volume_plan, volume_plan_payload
 
-        from infra.creator_revision import CreatorDocConflictError
+        from lingwen_creator.shared.revision import CreatorDocConflictError
 
         project = _require_project(ctx)
         try:

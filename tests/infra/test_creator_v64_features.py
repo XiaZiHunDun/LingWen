@@ -1,7 +1,7 @@
 """Tests for creator v6.4 diff markdown export, monthly summary, guide animation."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v64_ui_profile() -> None:

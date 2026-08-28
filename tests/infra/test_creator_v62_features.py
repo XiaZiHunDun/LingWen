@@ -1,7 +1,7 @@
 """Tests for creator v6.2 diff export outline, failure trend, doc open."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v62_ui_profile() -> None:

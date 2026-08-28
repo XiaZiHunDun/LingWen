@@ -1,7 +1,7 @@
 """Tests for creator v4.7 deviation highlight, batch open deviation, logic check highlight."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_companion_v47_ui_profile() -> None:

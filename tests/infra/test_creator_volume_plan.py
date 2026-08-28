@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_revision import CreatorDocConflictError
+from lingwen_creator.shared.revision import CreatorDocConflictError
 from lingwen_creator.volume.plan import (
     VolumeEntry,
     compute_volume_deviations,

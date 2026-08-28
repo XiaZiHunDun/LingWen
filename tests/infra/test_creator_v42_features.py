@@ -5,7 +5,7 @@ import pytest
 
 from lingwen_creator.content.dashboard import _build_volume_summaries, creator_overview
 from lingwen_creator.content.logic_check import run_creator_logic_check
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_creator.volume.plan import save_volume_plan
 from lingwen_creator.volume.pulse import build_volume_pulse
 from lingwen_creator.volume.summary import write_volume_summary

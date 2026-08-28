@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from lingwen_creator.shared.mode import CREATION_MODE_ADVANCE, CREATION_MODE_COMPANION, CREATION_MODE_STUDIO
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_companion_simplified_mode_ops_enabled() -> None:

@@ -1,7 +1,7 @@
 """Tests for creator v5.4 outline row highlight, batch date groups, mode badge hint."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 from lingwen_creator.volume.plan import build_outline_highlight_lines
 
 

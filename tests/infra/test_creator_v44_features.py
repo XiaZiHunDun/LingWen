@@ -1,7 +1,7 @@
 """Tests for creator v4.4 batch summary auto-open, inline recheck, deviation prompt."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_companion_v44_ui_profile() -> None:

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from infra.creator_onboarding_email import (
+from lingwen_creator.onboarding.email import (
     dispatch_mention_email,
     load_email_config,
     save_email_config,

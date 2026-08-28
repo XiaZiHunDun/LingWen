@@ -1,7 +1,7 @@
 """Tests for creator v5.7 diff auto collapse, batch failed retry, advance badge tint."""
 from __future__ import annotations
 
-from infra.creator_ui_profile import resolve_creator_ui_profile
+from lingwen_creator.content.ui_profile import resolve_creator_ui_profile
 
 
 def test_advance_v57_ui_profile() -> None:

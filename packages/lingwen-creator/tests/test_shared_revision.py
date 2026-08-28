@@ -22,10 +22,9 @@ def test_content_revision_differs_on_content_change() -> None:
     assert rev1 != rev2
 
 
-def test_legacy_import_path_still_works() -> None:
-    """Backwards compat: old `from infra.creator_revision import CreatorDocConflictError`."""
-    from infra.creator_revision import CreatorDocConflictError as LegacyConflict
-    from infra.creator_revision import content_revision as LegacyRevision
+def test_legacy_shim_deleted() -> None:
+    """v16.2.7 T4.12: infra.creator_revision shim deleted, must raise ModuleNotFoundError."""
+    import pytest
 
-    assert LegacyConflict is CreatorDocConflictError
-    assert LegacyRevision is content_revision
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_revision import CreatorDocConflictError  # noqa: F401

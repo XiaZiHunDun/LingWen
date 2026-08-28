@@ -91,7 +91,7 @@ def register_creator_settings(app: FastAPI, ctx: RoutesContext) -> None:
     ) -> CreatorSettingsDocsResponse:
         from lingwen_creator.settings.docs import save_creator_settings_docs
 
-        from infra.creator_revision import CreatorDocConflictError
+        from lingwen_creator.shared.revision import CreatorDocConflictError
 
         project = _require_project(ctx)
         if req.pillars_text is None and req.global_outline_text is None:
