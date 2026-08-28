@@ -17,7 +17,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 INFRA_DIR = REPO_ROOT / "infra"
 CREATOR_SHIM_GLOB = str(INFRA_DIR / "creator_*.py")

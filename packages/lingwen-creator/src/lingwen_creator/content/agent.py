@@ -235,9 +235,9 @@ def _build_llm_prompt(
 
 def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
     from lingwen_llm.port_adapter import (  # re-export for DP-02
+        LLMServiceAdapter,
         LLMTask,
         TaskType,
-        LLMServiceAdapter,
     )
 
     adapter = LLMServiceAdapter()
@@ -258,9 +258,9 @@ def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
 
 def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> Iterator[str]:
     from lingwen_llm.port_adapter import (  # re-export for DP-02
+        LLMServiceAdapter,
         LLMTask,
         TaskType,
-        LLMServiceAdapter,
     )
 
     adapter = LLMServiceAdapter()

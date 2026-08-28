@@ -11,7 +11,6 @@ import subprocess
 import tomllib
 from pathlib import Path
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -87,6 +86,6 @@ def test_no_concrete_llm_in_business_code() -> None:
     violations = [line for line in result.stdout.splitlines() if line.strip()]
 
     assert not violations, (
-        f"DP-02 violations found (concrete LLMService import in business code):\n"
+        "DP-02 violations found (concrete LLMService import in business code):\n"
         + "\n".join(violations)
     )

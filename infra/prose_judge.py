@@ -229,9 +229,9 @@ def _llm_judge_chapter(
     prose_p1_issues: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     from lingwen_llm.port_adapter import (  # re-exported from infra.llm_service for DP-02
+        LLMServiceAdapter,
         LLMTask,
         TaskType,
-        LLMServiceAdapter,
     )
 
     issue_lines = "\n".join(
