@@ -18,6 +18,16 @@ vi.mock('../../src/api/index.js', () => ({
   generateCreatorVolumeSummary: (...args: unknown[]) => batchMocks.generateCreatorVolumeSummary(...args),
 }));
 
+// v16.2.8 T3.B: parallel typed wrapper mocks (per v16.2.7 §3 lesson 1)
+vi.mock('../../src/api/studio.js', () => ({
+  studioProductionPreflight: (...args: unknown[]) => batchMocks.studioProductionPreflight(...args),
+  studioProductionRun: (...args: unknown[]) => batchMocks.studioProductionRun(...args),
+  fetchStudioActiveBatchJob: (...args: unknown[]) => batchMocks.fetchStudioActiveBatchJob(...args),
+}));
+vi.mock('../../src/api/volume.js', () => ({
+  generateCreatorVolumeSummary: (...args: unknown[]) => batchMocks.generateCreatorVolumeSummary(...args),
+}));
+
 import { useCreatorAdvanceBatch } from '../../src/composables/useCreatorAdvanceBatch.js';
 
 type BatchApi = ReturnType<typeof useCreatorAdvanceBatch>;

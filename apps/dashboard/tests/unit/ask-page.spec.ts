@@ -17,10 +17,22 @@ vi.mock('../../src/composables/useStudioProject.js', () => ({
   }),
 }));
 
-vi.mock('../../src/api/index.js', () => ({
+// v16.2.8 T3.B: hoisted mocks (per v16.2.7 §3 lesson 1)
+const mocks = vi.hoisted(() => ({
   fetchCreatorOverview: vi.fn().mockResolvedValue({ name: '测试书', chapters_written: 2 }),
   fetchStudioSummary: vi.fn().mockResolvedValue({ slug: 'demo', name: '测试书' }),
   queryCreatorMemory: vi.fn().mockResolvedValue({ hits: [] }),
+}));
+
+vi.mock('../../src/api/index.js', () => mocks);
+vi.mock('../../src/api/content.js', () => ({
+  fetchCreatorOverview: mocks.fetchCreatorOverview,
+}));
+vi.mock('../../src/api/studio.js', () => ({
+  fetchStudioSummary: mocks.fetchStudioSummary,
+}));
+vi.mock('../../src/api/memory.js', () => ({
+  queryCreatorMemory: mocks.queryCreatorMemory,
 }));
 
 // AskPage calls `getWriteResume()` as a global (vite-auto-import style, like

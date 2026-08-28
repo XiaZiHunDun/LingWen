@@ -34,6 +34,11 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorModels: apiMocks.fetchCreatorModels,
 }));
 
+// v16.2.8 T3.B: typed wrapper mocks for useProductExport (fetchChapters)
+vi.mock('../../src/api/health.js', () => ({
+  fetchChapters: apiMocks.fetchChapters,
+}));
+
 // Phase 126 v16.2.6 T7: useProductMemory imports from the api/memory.ts typed
 // wrapper (v16.2.4 §5.1 lesson 2 — barrel mocks don't intercept).
 vi.mock('../../src/api/memory.js', () => ({

@@ -15,6 +15,12 @@ vi.mock('../../src/api/index.js', () => ({
   runCreatorAgentPlanStream: (...args: unknown[]) => agentMocks.runCreatorAgentPlanStream(...args),
 }));
 
+// v16.2.8 T3.B: parallel typed wrapper mock (per v16.2.7 §3 lesson 1)
+vi.mock('../../src/api/content.js', () => ({
+  runCreatorAgentPlan: (...args: unknown[]) => agentMocks.runCreatorAgentPlan(...args),
+  runCreatorAgentPlanStream: (...args: unknown[]) => agentMocks.runCreatorAgentPlanStream(...args),
+}));
+
 import { useCreatorAgent } from '../../src/composables/useCreatorAgent.js';
 
 type AgentApi = ReturnType<typeof useCreatorAgent>;

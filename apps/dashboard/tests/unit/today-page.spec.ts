@@ -40,6 +40,24 @@ vi.mock('../../src/api/index.js', () => ({
   fetchCreatorChapterPreview: mocks.fetchCreatorChapterPreview,
 }))
 
+// v16.2.8 T3.B: parallel typed wrapper mocks (per v16.2.7 §3 lesson 1)
+vi.mock('@/api/studio', () => ({
+  fetchStudioSummary: mocks.fetchStudioSummary,
+  fetchStudioQuality: mocks.fetchStudioQuality,
+  fetchStudioQualityReport: mocks.fetchStudioQualityReport,
+  fetchStudioActiveBatchJob: mocks.fetchStudioActiveBatchJob,
+}))
+vi.mock('@/api/content', () => ({
+  fetchCreatorOverview: mocks.fetchCreatorOverview,
+  fetchCreatorChapterPreview: mocks.fetchCreatorChapterPreview,
+}))
+vi.mock('@/api/decisions', () => ({
+  fetchPendingDecisions: mocks.fetchPendingDecisions,
+}))
+vi.mock('@/api/cvg', () => ({
+  fetchRippleStats: mocks.fetchRippleStats,
+}))
+
 vi.mock('@/api/onboarding', () => ({
   fetchOnboardingWizard: mocks.fetchCreatorOnboarding,
 }))

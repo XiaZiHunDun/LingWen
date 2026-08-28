@@ -2,16 +2,16 @@
  * Today hub — aggregate task-oriented snapshot from existing APIs.
  */
 import { ref } from 'vue';
+// Phase 126 v16.2.8 T3.B: migrate to typed wrappers.
+import { fetchCreatorChapterPreview, fetchCreatorOverview } from '@/api/content';
+import { fetchPendingDecisions } from '@/api/decisions';
+import { fetchRippleStats } from '@/api/cvg';
 import {
-  fetchCreatorChapterPreview,
-  fetchCreatorOverview,
-  fetchPendingDecisions,
-  fetchRippleStats,
   fetchStudioActiveBatchJob,
   fetchStudioQuality,
   fetchStudioQualityReport,
   fetchStudioSummary,
-} from '../api/index.js';
+} from '@/api/studio';
 import { fetchOnboardingWizard } from '@/api/onboarding';
 import { buildMicroTaskProgress } from '../utils/creatorMicroTaskUtils.js';
 import { resolveTodayPrimaryAction } from '../utils/creationModeHint.js';

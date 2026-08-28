@@ -12,7 +12,8 @@
  */
 import { computed, ref, watch } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import { fetchChapters } from '../../api/index.js';
+// Phase 126 v16.2.8 T3.B: migrate to typed wrapper.
+import { fetchChapters } from '@/api/health';
 import { fetchCreatorChapterPreview } from '@/api/content';
 import { exportCreatorEpub, exportCreatorDocx } from '@/api/export';
 import {

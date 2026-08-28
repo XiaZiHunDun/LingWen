@@ -3,10 +3,9 @@
  * Orchestrates memory query + overview snippets; offline-safe fallbacks.
  */
 import { computed, ref } from 'vue';
-import {
-  fetchCreatorOverview,
-  fetchStudioSummary,
-} from '../api/index.js';
+// Phase 126 v16.2.8 T3.B: migrate to typed wrappers.
+import { fetchCreatorOverview } from '@/api/content';
+import { fetchStudioSummary } from '@/api/studio';
 import { queryCreatorMemory } from '../api/memory.js';
 import { logger } from '../utils/logger.js';
 

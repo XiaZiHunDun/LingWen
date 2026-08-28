@@ -2,12 +2,13 @@
  * useCreatorAdvanceBatch — 推进 batch preflight / 运行 / 轮询（从 CreatorPage 抽出）
  */
 import { computed, onUnmounted, ref } from 'vue';
+// Phase 126 v16.2.8 T3.B: migrate to typed wrappers.
+import { generateCreatorVolumeSummary } from '@/api/volume';
 import {
-  generateCreatorVolumeSummary,
   studioProductionPreflight,
   studioProductionRun,
   fetchStudioActiveBatchJob,
-} from '../api/index.js';
+} from '@/api/studio';
 import { isPulseSubpanelVisible } from '../config/creatorPanelMatrix.js';
 
 /**

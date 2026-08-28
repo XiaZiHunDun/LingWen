@@ -12,12 +12,22 @@ import {
 import { useCreatorAgent } from '../../src/composables/useCreatorAgent.js';
 import { useCreatorWriteWorkbench } from '../../src/composables/useCreatorWriteWorkbench.js';
 
+// v16.2.8 T3.B: hoisted mocks (per v16.2.7 §3 lesson 1) — shared vi.fn instances
+// between the legacy api/index.js barrel re-export AND the typed-wrapper module
+// that useCreatorAgent/useAgentTask.ts now imports from.
+const agentMocks = vi.hoisted(() => ({
+  runCreatorAgentPlan: vi.fn(),
+  runCreatorAgentPlanStream: vi.fn(),
+}));
+
+vi.mock('../../src/api/content.js', () => agentMocks);
+
 vi.mock('../../src/api/index.js', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...(actual as object),
-    runCreatorAgentPlan: vi.fn(),
-    runCreatorAgentPlanStream: vi.fn(),
+    runCreatorAgentPlan: agentMocks.runCreatorAgentPlan,
+    runCreatorAgentPlanStream: agentMocks.runCreatorAgentPlanStream,
   };
 });
 

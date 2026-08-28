@@ -11,7 +11,8 @@
  */
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '../../api/index.js';
+// Phase 126 v16.2.8 T3.B: migrate to typed wrapper (T2.5 added runCreatorAgentPlanStream to content.ts).
+import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '@/api/content';
 import { AGENT_EXECUTION_MODES } from '../../config/creatorPanelMatrix.js';
 
 const REWRITE_LABELS_TASK: Record<string, string> = {

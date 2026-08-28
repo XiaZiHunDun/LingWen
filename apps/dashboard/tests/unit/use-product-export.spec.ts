@@ -20,6 +20,11 @@ vi.mock('../../src/api/index.js', () => ({
   fetchChapters: (...args: unknown[]) => exportMocks.fetchChapters(...args),
 }));
 
+// v16.2.8 T3.B: parallel typed wrapper mock for fetchChapters (useProductExport)
+vi.mock('../../src/api/health.js', () => ({
+  fetchChapters: (...args: unknown[]) => exportMocks.fetchChapters(...args),
+}));
+
 vi.mock('../../src/api/export.js', () => ({
   exportCreatorEpub: (...args: unknown[]) => exportMocks.exportCreatorEpub(...args),
   exportCreatorDocx: (...args: unknown[]) => exportMocks.exportCreatorDocx(...args),
