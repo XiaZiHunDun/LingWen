@@ -194,10 +194,12 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     templateApplying.value = true;
     error.value = null;
     try {
+      // v16.2.7 T8: typed wrapper's CreatorVolumeApplyTemplateResponse strict type;
+      // cast to legacy AppliedResult shape preserves runtime behavior.
       const result = await apiApplyVolumeTemplate({
         template_id: selectedTemplateId.value,
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
-      }) as AppliedResult;
+      }) as unknown as AppliedResult;
       editableVolumes.value = normalizeVolumePlanVolumes(result.volumes) as Array<Record<string, unknown>>;
       saveMessage.value = `已套用模板「${result.template_name}」，请保存卷纲`;
     } catch (e) {

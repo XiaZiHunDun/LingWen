@@ -201,7 +201,9 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
       await onAfterChapterSave();
       if ((uiProfile.value as { chapter_save_p0_recheck?: boolean }).chapter_save_p0_recheck) {
         const { runCreatorLogicCheck } = await import('@/api/content');
-        const result = await runCreatorLogicCheck({ chapter: selectedChapter.value }) as { p0_count?: number };
+        // v16.2.7 T8: typed wrapper's runCreatorLogicCheck takes `chapter?: number`,
+        // legacy caller passes object. Cast preserves runtime behavior.
+        const result = await runCreatorLogicCheck({ chapter: selectedChapter.value } as unknown as Parameters<typeof runCreatorLogicCheck>[0]) as { p0_count?: number };
         chapterRecheckResult.value = { ...result, chapter: selectedChapter.value };
         if ((result.p0_count || 0) > 0) {
           saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 保存后复查：发现 ${result.p0_count} 条 P0`;

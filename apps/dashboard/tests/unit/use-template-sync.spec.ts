@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref, computed } from 'vue';
 
 const syncMocks = vi.hoisted(() => ({
+  listVolumeTemplates: vi.fn(),  // v16.2.7 T6.B: typed wrapper
   exportVolumeTemplates: vi.fn(),
   importVolumeTemplates: vi.fn(),
   fetchVolumeTemplateSyncSources: vi.fn(),

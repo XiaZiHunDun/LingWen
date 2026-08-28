@@ -7,6 +7,9 @@ import { asVolumePlanDiffPreviewRef } from '../helpers/strict-test-types.js';
 const diffMocks = vi.hoisted(() => ({
   previewCreatorVolumePlanDiff: vi.fn(),
   downloadJsonExport: vi.fn(),
+  // v16.2.7 T6.C: diff-collab-notes typed wrapper refs
+  fetchDiffCollabNotes: vi.fn(),
+  saveDiffCollabNotes: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', () => ({

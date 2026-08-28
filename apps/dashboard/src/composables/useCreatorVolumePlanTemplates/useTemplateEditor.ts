@@ -22,7 +22,7 @@ import {
   transferVolumeTemplateApproval,
   fetchVolumeTemplateApprovalSnapshotDiff,
   fetchVolumeTemplateApprovalSnapshotDrift,
-  fetchVolumeTemplateApprovals,
+  listVolumeTemplateApprovals as fetchVolumeTemplateApprovals,
   fetchVolumeTemplateApprovalHistory,
   fetchVolumeTemplateApprovalChain,
   saveVolumeTemplateApprovalChain,
@@ -148,7 +148,9 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     try {
       const saved = await saveVolumeTemplate({
         name: customTemplateName.value.trim(),
-        volumes: editableVolumes.value,
+        // v16.2.7 T8: typed wrapper's CreatorVolumePlanEntry is strict; legacy
+        // shape used Record<string, unknown>. Cast preserves runtime behavior.
+        volumes: editableVolumes.value as unknown as Parameters<typeof saveVolumeTemplate>[0]['volumes'],
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
       }) as { id: string; name: string };
       saveMessage.value = `已保存模板「${saved.name}」`;
@@ -227,7 +229,8 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
       return;
     }
     try {
-      const data = await fetchVolumeTemplateChangelog(selectedTemplateId.value) as { entries?: Array<Record<string, unknown>> };
+      // v16.2.7 T8: typed wrapper strict type; cast preserves legacy shape.
+      const data = await fetchVolumeTemplateChangelog(selectedTemplateId.value) as unknown as { entries?: Array<Record<string, unknown>> };
       templateVersionChangelog.value = data.entries || [];
     } catch {
       const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
@@ -379,7 +382,8 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     try {
       const data = await fetchVolumeTemplateApprovals({ status: 'pending' }) as { approvals?: ApprovalEntry[] };
       templateApprovals.value = data.approvals || [];
-      const history = await fetchVolumeTemplateApprovalHistory() as { approvals?: Array<Record<string, unknown>> };
+      // v16.2.7 T8: typed wrapper strict type; cast preserves legacy shape.
+      const history = await fetchVolumeTemplateApprovalHistory() as unknown as { approvals?: Array<Record<string, unknown>> };
       templateApprovalHistory.value = history.approvals || [];
       await loadTemplateApprovalChainConfig();
     } catch {

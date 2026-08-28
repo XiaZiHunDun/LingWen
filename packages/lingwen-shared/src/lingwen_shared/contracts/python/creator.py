@@ -1744,11 +1744,18 @@ class CreatorPreferencesSaveRequest(BaseModel):
 
 
 class CreatorModelsResponse(BaseModel):
-    """Available LLM models grouped by provider."""
+    """Available LLM models + default fallback.
+
+    v16.2.7 T8: matches actual backend payload from
+    `lingwen_creator.content.models.list_creator_models_payload()` which returns
+    `{models: [...], default_model: '...'}`. The previous `providers` field was
+    a stale forward-compat stub never wired to backend.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
-    providers: list[dict[str, Any]] = Field(default_factory=list)
+    models: list[dict[str, Any]] = Field(default_factory=list)
+    default_model: str = "local-mock"
 
 
 class CreatorLogicCheckResponse(BaseModel):

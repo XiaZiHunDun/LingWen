@@ -92,10 +92,8 @@ export type {
   CreatorOnboardingWebhookDispatchResponse,
   CreatorOnboardingEmailConfig,
   CreatorOnboardingEmailSaveRequest,
-  // Phase 126 v16.2.4 T4 — Content DTOs (16 new types per T3 §3.3)
+  // Phase 126 v16.2.4 T4 — Content DTOs (12 types per T3 §3.3, after v16.2.7 T7 dedup)
   CreatorOverviewResponse,
-  CreatorDashboardOverview,
-  CreatorDashboardChapterPreview,
   CreatorAgentPlanRequest,
   CreatorAgentPlanResponse,
   CreatorBatchHistoryResponse,
@@ -107,8 +105,6 @@ export type {
   CreatorChapterPreview,
   CreatorOutlineSaveRequest,
   CreatorBodySaveRequest,
-  CreatorUiProfileState,
-  CreatorUiProfileSaveRequest,
   // Phase 126 v16.2.5 T3 — Export/Publish DTOs (8 new types per T2)
   CreatorEpubExportRequest,
   CreatorDocxExportRequest,

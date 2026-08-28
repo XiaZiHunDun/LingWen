@@ -56,7 +56,9 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
 
   async function loadCreatorModels(): Promise<void> {
     try {
-      const data = await fetchCreatorModels();
+      // v16.2.7 T8: typed wrapper's CreatorModelsResponse is strict-typed;
+      // legacy shape used loose Record<string, unknown>. Cast preserves behavior.
+      const data = await fetchCreatorModels() as unknown as { models?: Array<{ id: string; label: string }> };
       if (data.models?.length) {
         creatorModelOptions.value = data.models;
       }
@@ -67,7 +69,9 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
 
   async function loadPreferencesFromServer(): Promise<void> {
     try {
-      const data = await fetchCreatorPreferences();
+      // v16.2.7 T8: typed wrapper response doesn't match preferencesFromApi
+      // signature (Record<string, unknown>); cast preserves legacy behavior.
+      const data = await fetchCreatorPreferences() as unknown as Record<string, unknown>;
       preferences.value = preferencesFromApi(data);
       saveCreatorPreferencesLocal(preferences.value);
       preferencesSyncSource.value = 'server';
@@ -92,7 +96,9 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
   async function savePreferences(): Promise<void> {
     saveCreatorPreferencesLocal(preferences.value);
     try {
-      await saveCreatorPreferences(preferencesToApi(preferences.value));
+      // v16.2.7 T8: typed wrapper's CreatorPreferencesSaveRequest is strict;
+      // legacy shape was loose. Cast preserves runtime behavior.
+      await saveCreatorPreferences(preferencesToApi(preferences.value) as unknown as Parameters<typeof saveCreatorPreferences>[0]);
       preferencesSyncSource.value = 'server';
       preferencesSavedHint.value = '偏好已同步到项目';
       saveMessage.value = '创作偏好已保存';

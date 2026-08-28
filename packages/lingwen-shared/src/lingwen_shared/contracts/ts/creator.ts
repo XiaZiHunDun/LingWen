@@ -265,7 +265,8 @@ export interface CreatorMergePresetToposortResponse {
 }
 
 export interface CreatorModelsResponse {
-  providers?: Record<string, unknown>[];
+  models?: Record<string, unknown>[];
+  default_model?: string;
 }
 
 export interface CreatorOnboardingDigestDeadLetterReplayRequest {
