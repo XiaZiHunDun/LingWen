@@ -13,7 +13,7 @@ const pubMocks = vi.hoisted(() => ({
   submitCreatorPublish: vi.fn(),
 }));
 
-vi.mock('../../src/api/index.js', () => ({
+vi.mock('../../src/api/export.js', () => ({
   fetchCreatorPublishHistory: (...args: unknown[]) => pubMocks.fetchCreatorPublishHistory(...args),
   fetchCreatorPublishPlatforms: (...args: unknown[]) => pubMocks.fetchCreatorPublishPlatforms(...args),
   submitCreatorPublish: (...args: unknown[]) => pubMocks.submitCreatorPublish(...args),

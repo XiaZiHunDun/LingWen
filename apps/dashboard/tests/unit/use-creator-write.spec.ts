@@ -125,13 +125,13 @@ describe('useCreatorWrite', () => {
       body_text: '第一段\n\n第二段',
       outline_text: '大纲 A',
     });
-    writeMocks.saveCreatorChapterBody.mockImplementation(async (_ch: number, body: string) => ({
-      body_text: body,
+    writeMocks.saveCreatorChapterBody.mockImplementation(async (req: { chapter_id: number; body: string }) => ({
+      body_text: req.body,
       outline_text: '大纲 A',
     }));
-    writeMocks.saveCreatorChapterOutline.mockImplementation(async (_ch: number, outline: string) => ({
+    writeMocks.saveCreatorChapterOutline.mockImplementation(async (req: { chapter_id: number; outline: string }) => ({
       body_text: '第一段\n\n第二段',
-      outline_text: outline,
+      outline_text: req.outline,
     }));
     writeMocks.runCreatorLogicCheck.mockResolvedValue({
       passed: false,
@@ -195,7 +195,7 @@ describe('useCreatorWrite', () => {
     await flushPromises();
     api.panelContext.chapterBodyDraft.value = '保存后的正文';
     await api.panelContext.saveChapterBody();
-    expect(writeMocks.saveCreatorChapterBody).toHaveBeenCalledWith(1, '保存后的正文');
+    expect(writeMocks.saveCreatorChapterBody).toHaveBeenCalledWith({ chapter_id: 1, body: '保存后的正文' });
     expect(saveMessage.value).toContain('ch001 正文已保存');
   });
 
@@ -207,7 +207,7 @@ describe('useCreatorWrite', () => {
     api.panelContext.chapterBodyDraft.value = '自动保存草稿';
     await vi.advanceTimersByTimeAsync(2100);
     await flushPromises();
-    expect(writeMocks.saveCreatorChapterBody).toHaveBeenCalledWith(1, '自动保存草稿');
+    expect(writeMocks.saveCreatorChapterBody).toHaveBeenCalledWith({ chapter_id: 1, body: '自动保存草稿' });
     expect(api.panelContext.bodyAutoSaveStatus.value).toBe('saved');
   });
 

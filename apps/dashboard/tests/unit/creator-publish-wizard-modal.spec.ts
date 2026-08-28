@@ -29,18 +29,24 @@ const apiMocks = vi.hoisted(() => ({
 
 vi.mock('../../src/api/index.js', () => ({
   fetchChapters: apiMocks.fetchChapters,
-  fetchCreatorChapterPreview: apiMocks.fetchCreatorChapterPreview,
   fetchCreatorPreferences: apiMocks.fetchCreatorPreferences,
   saveCreatorPreferencesApi: apiMocks.saveCreatorPreferencesApi,
   fetchCreatorMemoryAssets: apiMocks.fetchCreatorMemoryAssets,
   saveCreatorMemoryAnnotation: apiMocks.saveCreatorMemoryAnnotation,
+  queryCreatorMemory: apiMocks.queryCreatorMemory,
+  fetchCreatorModels: apiMocks.fetchCreatorModels,
+}));
+
+vi.mock('../../src/api/content.js', () => ({
+  fetchCreatorChapterPreview: apiMocks.fetchCreatorChapterPreview,
+}));
+
+vi.mock('../../src/api/export.js', () => ({
   exportCreatorEpub: apiMocks.exportCreatorEpub,
   exportCreatorDocx: apiMocks.exportCreatorDocx,
-  queryCreatorMemory: apiMocks.queryCreatorMemory,
   submitCreatorPublish: apiMocks.submitCreatorPublish,
   fetchCreatorPublishHistory: apiMocks.fetchCreatorPublishHistory,
   fetchCreatorPublishPlatforms: apiMocks.fetchCreatorPublishPlatforms,
-  fetchCreatorModels: apiMocks.fetchCreatorModels,
 }));
 
 vi.mock('../../src/composables/useStudioProject.js', () => ({

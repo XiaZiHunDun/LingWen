@@ -18,8 +18,15 @@ const exportMocks = vi.hoisted(() => ({
 vi.mock('../../src/api/index.js', () => ({
   fetchCreatorChapterPreview: (...args: unknown[]) => exportMocks.fetchCreatorChapterPreview(...args),
   fetchChapters: (...args: unknown[]) => exportMocks.fetchChapters(...args),
+}));
+
+vi.mock('../../src/api/export.js', () => ({
   exportCreatorEpub: (...args: unknown[]) => exportMocks.exportCreatorEpub(...args),
   exportCreatorDocx: (...args: unknown[]) => exportMocks.exportCreatorDocx(...args),
+}));
+
+vi.mock('../../src/api/content.js', () => ({
+  fetchCreatorChapterPreview: (...args: unknown[]) => exportMocks.fetchCreatorChapterPreview(...args),
 }));
 
 // Mock utils（导出相关）
