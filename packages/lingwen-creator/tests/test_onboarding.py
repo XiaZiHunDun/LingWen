@@ -144,6 +144,43 @@ def test_digest_schedule_module_exports() -> None:
     assert callable(enqueue_digest_retry)
 
 
+def test_onboarding_main_module_exports() -> None:
+    """onboarding.onboarding (main) exports wizard payload + save functions."""
+    from lingwen_creator.onboarding.onboarding import (
+        onboarding_wizard_payload,
+        save_onboarding_progress_from_ui,
+        dismiss_onboarding_wizard_panel,
+        save_onboarding_wizard_panel_collapsed,
+        apply_wizard_share_done,
+        save_onboarding_notes_from_ui,
+    )
+    assert callable(onboarding_wizard_payload)
+    assert callable(save_onboarding_progress_from_ui)
+    assert callable(dismiss_onboarding_wizard_panel)
+    assert callable(save_onboarding_wizard_panel_collapsed)
+    assert callable(apply_wizard_share_done)
+    assert callable(save_onboarding_notes_from_ui)
+
+
+def test_onboarding_forward_references_creator_mode() -> None:
+    """onboarding.onboarding forward-references infra.creator_mode (content not migrated).
+
+    Per design spec §2.1, v16.2.4 content migration will replace this with
+    `from lingwen_creator.content.mode import ...`. The forward-reference is intentional
+    and carries an inline `# noqa: F401  # v16.2.4 will replace` comment.
+    """
+    from lingwen_creator.onboarding.onboarding import (
+        CREATION_MODE_ADVANCE,
+        CREATION_MODE_COMPANION,
+        CREATION_MODE_STUDIO,
+        settings_from_project_config,
+    )
+    assert CREATION_MODE_COMPANION == "companion"
+    assert CREATION_MODE_ADVANCE == "advance"
+    assert CREATION_MODE_STUDIO == "studio"
+    assert callable(settings_from_project_config)
+
+
 # --- Shim back-compat tests ---
 
 
@@ -206,6 +243,20 @@ def test_shim_backcompat_digest_schedule() -> None:
     assert callable(save_digest_schedule)
     assert callable(dispatch_scheduled_digest)
     assert callable(process_digest_retries)
+
+
+def test_shim_backcompat_onboarding_main() -> None:
+    """Backwards compat: `from infra.creator_onboarding import ...` works (main file)."""
+    from infra.creator_onboarding import (
+        onboarding_wizard_payload,
+        save_onboarding_progress_from_ui,
+        dismiss_onboarding_wizard_panel,
+        save_onboarding_notes_from_ui,
+    )
+    assert callable(onboarding_wizard_payload)
+    assert callable(save_onboarding_progress_from_ui)
+    assert callable(dismiss_onboarding_wizard_panel)
+    assert callable(save_onboarding_notes_from_ui)
 
 
 # --- Cross-subdomain imports ---
