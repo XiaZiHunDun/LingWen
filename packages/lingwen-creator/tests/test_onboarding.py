@@ -118,6 +118,32 @@ def test_diff_collab_module_exports() -> None:
     assert callable(merge_diff_collab_notes)
 
 
+def test_digest_schedule_module_exports() -> None:
+    """onboarding.digest_schedule exports load/save_digest_schedule + dispatch + retries."""
+    from lingwen_creator.onboarding.digest_schedule import (
+        load_digest_schedule,
+        save_digest_schedule,
+        load_digest_dead_letter,
+        replay_digest_dead_letter,
+        load_digest_dispatch_stats,
+        load_digest_retry_queue,
+        process_digest_retries,
+        dispatch_scheduled_digest,
+        record_digest_dispatch,
+        enqueue_digest_retry,
+    )
+    assert callable(load_digest_schedule)
+    assert callable(save_digest_schedule)
+    assert callable(load_digest_dead_letter)
+    assert callable(replay_digest_dead_letter)
+    assert callable(load_digest_dispatch_stats)
+    assert callable(load_digest_retry_queue)
+    assert callable(process_digest_retries)
+    assert callable(dispatch_scheduled_digest)
+    assert callable(record_digest_dispatch)
+    assert callable(enqueue_digest_retry)
+
+
 # --- Shim back-compat tests ---
 
 
@@ -166,6 +192,20 @@ def test_shim_backcompat_diff_collab() -> None:
     """Backwards compat: `from infra.creator_diff_collab import ...` works."""
     from infra.creator_diff_collab import diff_collab_notes_payload
     assert callable(diff_collab_notes_payload)
+
+
+def test_shim_backcompat_digest_schedule() -> None:
+    """Backwards compat: `from infra.creator_onboarding_digest_schedule import ...` works."""
+    from infra.creator_onboarding_digest_schedule import (
+        load_digest_schedule,
+        save_digest_schedule,
+        dispatch_scheduled_digest,
+        process_digest_retries,
+    )
+    assert callable(load_digest_schedule)
+    assert callable(save_digest_schedule)
+    assert callable(dispatch_scheduled_digest)
+    assert callable(process_digest_retries)
 
 
 # --- Cross-subdomain imports ---
