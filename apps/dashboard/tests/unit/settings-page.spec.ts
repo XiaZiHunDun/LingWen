@@ -43,6 +43,19 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   }
 })
 
+// Phase 126 v16.3 — SettingsPage.vue migrated from api/index.js barrel to
+// @/api/budgets (non-creator .js kept). Parallel mock (per v16.2.8 §3 lesson 1).
+vi.mock('@/api/budgets', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...(actual as object),
+    fetchBudgets: mocks.fetchBudgets,
+    fetchBudgetsByTier: mocks.fetchBudgetsByTier,
+    setBudget: mocks.setBudget,
+    setBudgetByTier: mocks.setBudgetByTier,
+  }
+})
+
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   useWorkflowSocket: () => ({
     status: mocks.status,

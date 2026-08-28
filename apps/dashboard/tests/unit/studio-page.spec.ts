@@ -35,6 +35,26 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   };
 });
 
+// Phase 126 v16.3 — StudioPage.vue migrated from api/index.js barrel to
+// @/api/studio typed wrapper. Parallel mock bound to SAME vi.fn instances
+// (per v16.2.8 §3 lesson 1: hoisted mock pattern).
+vi.mock('@/api/studio', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...(actual as object),
+    fetchStudioProjects: studioMocks.fetchStudioProjects,
+    fetchStudioSummary: studioMocks.fetchStudioSummary,
+    fetchStudioQuality: studioMocks.fetchStudioQuality,
+    fetchStudioQualityReport: studioMocks.fetchStudioQualityReport,
+    fetchStudioProseDiff: studioMocks.fetchStudioProseDiff,
+    fetchStudioProseJudge: studioMocks.fetchStudioProseJudge,
+    studioProductionPreflight: studioMocks.studioProductionPreflight,
+    studioProductionRun: studioMocks.studioProductionRun,
+    fetchStudioBatchJob: studioMocks.fetchStudioBatchJob,
+    fetchStudioActiveBatchJob: studioMocks.fetchStudioActiveBatchJob,
+  };
+});
+
 import StudioPage from '../../src/pages/StudioPage.vue';
 
 describe('StudioPage (Phase 10.04)', () => {

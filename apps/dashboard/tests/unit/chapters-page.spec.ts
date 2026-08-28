@@ -25,6 +25,15 @@ vi.mock('../../src/api/index.js', () => ({
   fetchProductionRollup: mocks.fetchProductionRollup,
 }))
 
+// Phase 126 v16.3 — ChaptersPage.vue migrated from api/index.js barrel to
+// @/api/health typed wrapper. Parallel mock bound to SAME vi.fn instances
+// (per v16.2.8 §3 lesson 1: hoisted mock pattern).
+vi.mock('@/api/health', () => ({
+  fetchChapters: mocks.fetchChapters,
+  fetchProductionRecords: mocks.fetchProductionRecords,
+  fetchProductionRollup: mocks.fetchProductionRollup,
+}))
+
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
   useWorkflowSocket: () => ({
     status: mocks.status,

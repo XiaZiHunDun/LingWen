@@ -13,11 +13,28 @@ vi.mock('echarts/charts', () => ({ GraphChart: vi.fn() }));
 vi.mock('echarts/components', () => ({ TitleComponent: vi.fn(), TooltipComponent: vi.fn() }));
 vi.mock('echarts/renderers', () => ({ CanvasRenderer: vi.fn() }));
 
-vi.mock('../../src/api/index.js', () => ({
+// Phase 126 v16.3 — CascadeRunsPage.vue migrated to @/api/cvg typed wrapper.
+// Per v16.2.8 §3 lesson 1 (hoisted mock pattern): shared vi.fn instances
+// between barrel mock + typed wrapper mock.
+const cvgMocks = vi.hoisted(() => ({
   fetchAllCascadeRuns: vi.fn(),
   fetchCascadeRuns: vi.fn(),
   cancelCascadeRun: vi.fn(),
   fetchCascadeWithDepth: vi.fn(),
+}));
+
+vi.mock('../../src/api/index.js', () => ({
+  fetchAllCascadeRuns: cvgMocks.fetchAllCascadeRuns,
+  fetchCascadeRuns: cvgMocks.fetchCascadeRuns,
+  cancelCascadeRun: cvgMocks.cancelCascadeRun,
+  fetchCascadeWithDepth: cvgMocks.fetchCascadeWithDepth,
+}));
+
+vi.mock('@/api/cvg', () => ({
+  fetchAllCascadeRuns: cvgMocks.fetchAllCascadeRuns,
+  fetchCascadeRuns: cvgMocks.fetchCascadeRuns,
+  cancelCascadeRun: cvgMocks.cancelCascadeRun,
+  fetchCascadeWithDepth: cvgMocks.fetchCascadeWithDepth,
 }));
 
 vi.mock('../../src/composables/useWorkflowSocket.js', () => ({
