@@ -40,7 +40,7 @@ import RippleList from '../components/RippleList.vue';
 import RippleDrawer from '../components/RippleDrawer.vue';
 import ImpactGraph from '../components/ImpactGraph.vue';
 import { useRippleStore, useRippleSocket } from '../composables/index.js';
-import { fetchRippleDetail, fetchReferenceGraph } from '../api/index.js';
+import { fetchRippleDetail, fetchReferenceGraph } from '@/api/cvg';
 
 const store = useRippleStore();
 const socket = useRippleSocket();

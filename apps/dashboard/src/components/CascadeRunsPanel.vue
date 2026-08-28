@@ -89,7 +89,7 @@ import {
   fetchAllCascadeRuns,
   cancelCascadeRun,
   fetchCascadeWithDepth,
-} from '../api/index.js';
+} from '@/api/cvg';
 import { onCascadeUpdate } from '../composables/index.js';
 import CascadeGraph from './CascadeGraph.vue';
 import CascadeRunsFilter from './CascadeRunsFilter.vue';
