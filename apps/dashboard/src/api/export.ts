@@ -19,6 +19,7 @@
  * backward-compatible calls. api/publish.js will be deleted in T5 after
  * composables migrate to this typed wrapper.
  */
+/// <reference types="vite/client" />
 import type {
   CreatorDocxExportRequest,
   CreatorEpubExportRequest,

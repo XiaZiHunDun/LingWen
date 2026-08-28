@@ -16,7 +16,7 @@ import {
   submitCreatorPublish,
   fetchCreatorPublishHistory,
   fetchCreatorPublishPlatforms,
-} from '../../api/index.js';
+} from '@/api/export';
 
 const CREATOR_PUBLISH_PLATFORMS = [
   { id: 'fanqie', label: '番茄小说' },

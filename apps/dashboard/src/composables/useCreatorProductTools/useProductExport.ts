@@ -12,12 +12,9 @@
  */
 import { computed, ref, watch } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import {
-  fetchChapters,
-  fetchCreatorChapterPreview,
-  exportCreatorEpub,
-  exportCreatorDocx,
-} from '../../api/index.js';
+import { fetchChapters } from '../../api/index.js';
+import { fetchCreatorChapterPreview } from '@/api/content';
+import { exportCreatorEpub, exportCreatorDocx } from '@/api/export';
 import {
   buildFullBookMarkdown,
   buildSubmissionPackMarkdown,
