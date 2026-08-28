@@ -9,6 +9,7 @@ import uuid
 import zipfile
 from io import BytesIO
 
+from infra.studio_registry import StudioProject
 from lingwen_creator.export.common import (
     export_metadata,
     load_export_chapters,
@@ -17,8 +18,6 @@ from lingwen_creator.export.common import (
     utc_modified_iso,
 )
 from lingwen_creator.settings.docs import creator_settings_docs_payload
-
-from infra.studio_registry import StudioProject
 
 
 def _escape(text: str) -> str:

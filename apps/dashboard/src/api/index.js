@@ -127,10 +127,6 @@ export {
   previewCreatorMergePresetImportDiff,
   fetchCreatorMergePresetToposort,
   applyCreatorMergePresetToposort,
-  fetchCreatorChapterPreview,
-  saveCreatorChapterBody,
-  saveCreatorChapterOutline,
-  generateCreatorVolumeSummary,
   dismissCreatorWizardPanel,
   saveCreatorWizardPanelCollapsed,
   fetchCreatorSettingsDocs,
@@ -148,10 +144,20 @@ export {
   saveCreatorPreferencesApi,
   fetchCreatorMemoryAssets,
   saveCreatorMemoryAnnotation,
+  queryCreatorMemory,
+} from './creator.js';
+
+// Phase 126 v16.2.5 T5.b: legacy aliases re-pointed from publish.js shim (deleted) to typed wrappers
+export {
+  fetchCreatorChapterPreview,
+  saveCreatorChapterBody,
+  saveCreatorChapterOutline,
+} from './content.js';
+export { generateCreatorVolumeSummary } from './volume.js';
+export {
   exportCreatorEpub,
   exportCreatorDocx,
-  queryCreatorMemory,
   submitCreatorPublish,
   fetchCreatorPublishHistory,
   fetchCreatorPublishPlatforms,
-} from './creator.js';
+} from './export.js';

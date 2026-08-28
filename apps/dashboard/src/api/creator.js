@@ -8,7 +8,6 @@ import { request } from './core.js';
 export * from './memory.js';
 export * from './agent.js';
 export * from './volumePlan.js';
-export * from './publish.js';
 export * from './volumeTemplate.js';
 export * from './templateApproval.js';
 // Note: legacy `./onboarding.js` shim (21 Creator-prefixed aliases) deleted in

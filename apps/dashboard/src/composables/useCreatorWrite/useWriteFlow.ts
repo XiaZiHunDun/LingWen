@@ -142,7 +142,7 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
           || (uiProfile.value as { chapter_outline_inline_edit?: boolean }).chapter_outline_inline_edit
           || (uiProfile.value as { chapter_outline_read_preview?: boolean }).chapter_outline_read_preview,
       );
-      chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full }) as Record<string, unknown>;
+      chapterPreview.value = (await fetchCreatorChapterPreview(chapter, { full })) as unknown as Record<string, unknown>;
       chapterBodyDraft.value = String((chapterPreview.value as Record<string, unknown>).body_text ?? (chapterPreview.value as Record<string, unknown>).body_preview ?? '');
       chapterOutlineDraft.value = String((chapterPreview.value as Record<string, unknown>).outline_text ?? (chapterPreview.value as Record<string, unknown>).outline_preview ?? '');
       lastPersistedBody.value = chapterBodyDraft.value;
@@ -175,10 +175,10 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterBodySaving.value = true;
     saveMessage.value = '';
     try {
-      chapterPreview.value = await saveCreatorChapterBody(
-        selectedChapter.value,
-        chapterBodyDraft.value,
-      );
+      chapterPreview.value = (await saveCreatorChapterBody({
+        chapter_id: selectedChapter.value,
+        body: chapterBodyDraft.value,
+      })) as unknown as Record<string, unknown>;
       chapterBodyDraft.value = String((chapterPreview.value as Record<string, unknown>).body_text ?? chapterBodyDraft.value);
       chapterOutlineDraft.value = String((chapterPreview.value as Record<string, unknown>).outline_text ?? chapterOutlineDraft.value);
       lastPersistedBody.value = chapterBodyDraft.value;
@@ -219,10 +219,10 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterOutlineSaving.value = true;
     saveMessage.value = '';
     try {
-      chapterPreview.value = await saveCreatorChapterOutline(
-        selectedChapter.value,
-        chapterOutlineDraft.value,
-      );
+      chapterPreview.value = (await saveCreatorChapterOutline({
+        chapter_id: selectedChapter.value,
+        outline: chapterOutlineDraft.value,
+      })) as unknown as Record<string, unknown>;
       const slug = (overview.value as { slug?: string } | null)?.slug;
       if (slug) {
         saveWriteResume(slug, {
@@ -245,10 +245,10 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterBodySaving.value = true;
     bodyAutoSaveStatus.value = 'saving';
     try {
-      chapterPreview.value = await saveCreatorChapterBody(
-        selectedChapter.value,
-        chapterBodyDraft.value,
-      );
+      chapterPreview.value = (await saveCreatorChapterBody({
+        chapter_id: selectedChapter.value,
+        body: chapterBodyDraft.value,
+      })) as unknown as Record<string, unknown>;
       lastPersistedBody.value = chapterBodyDraft.value;
       bodyLastSavedAt.value = new Date();
       bodyAutoSaveStatus.value = 'saved';
