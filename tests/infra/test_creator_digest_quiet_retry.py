@@ -5,14 +5,14 @@ from unittest.mock import patch
 
 import pytest
 
-from infra.creator_onboarding_digest_schedule import (
+from lingwen_creator.onboarding.digest_schedule import (
     dispatch_scheduled_digest,
     enqueue_digest_retry,
     load_digest_retry_queue,
     process_digest_retries,
     save_digest_schedule,
 )
-from infra.creator_onboarding_notifications import record_mentions_from_notes
+from lingwen_creator.onboarding.notifications import record_mentions_from_notes
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_onboarding_notifications import (
+from lingwen_creator.onboarding.notifications import (
     ack_onboarding_notifications,
     list_onboarding_notifications,
     unread_mention_count,
 )
-from infra.creator_onboarding_progress import save_onboarding_progress
+from lingwen_creator.onboarding.progress import save_onboarding_progress
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

@@ -9,7 +9,7 @@ from lingwen_creator.volume.template_approvals import (
     save_approval_chain_config,
     submit_template_version_approval,
 )
-from infra.creator_volume_templates import (
+from lingwen_creator.volume.templates import (
     save_custom_volume_template,
     set_custom_template_version_label,
 )

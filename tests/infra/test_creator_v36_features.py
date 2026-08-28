@@ -12,7 +12,7 @@ from lingwen_creator.settings.merge_preferences import (
     save_merge_preset_package,
     toposort_merge_preset_packages,
 )
-from infra.creator_onboarding_digest_schedule import (
+from lingwen_creator.onboarding.digest_schedule import (
     enqueue_digest_retry,
     load_digest_dead_letter,
     process_digest_retries,
@@ -112,7 +112,7 @@ def test_digest_dead_letter_and_handle_quiet(factory_tmp) -> None:
         handle_quiet_hours={"batch": {"start": 0, "end": 23}},
     )
     enqueue_digest_retry(root, channel="webhook", digest={"unread": 1}, error="fail")
-    from infra.creator_onboarding_digest_schedule import _load_retry_queue, _save_retry_queue
+    from lingwen_creator.onboarding.digest_schedule import _load_retry_queue, _save_retry_queue
 
     items = _load_retry_queue(root)
     items[0]["attempts"] = 4

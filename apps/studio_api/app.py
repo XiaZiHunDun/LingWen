@@ -180,7 +180,7 @@ def create_app(
         set_main_event_loop(asyncio.get_running_loop())
         if master_controller is not None:
             task = await start_broadcast_task(manager, master_controller)
-        from infra.creator_onboarding_digest_background import start_digest_background_task
+        from lingwen_creator.onboarding.digest_background import start_digest_background_task
 
         digest_task = start_digest_background_task()
         try:

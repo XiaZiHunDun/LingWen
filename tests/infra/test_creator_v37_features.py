@@ -12,7 +12,7 @@ from lingwen_creator.settings.merge_preferences import (
     pull_factory_merge_presets_to_project,
     save_merge_preset_package,
 )
-from infra.creator_onboarding_digest_schedule import (
+from lingwen_creator.onboarding.digest_schedule import (
     _append_dead_letter,
     enqueue_digest_retry,
     load_digest_dead_letter,
@@ -116,7 +116,7 @@ def test_digest_replay_and_channel_retry(factory_tmp) -> None:
     assert replayed["replayed"] is True
     assert load_digest_dead_letter(root)["item_count"] == 0
     enqueue_digest_retry(root, channel="webhook", digest={"unread": 1}, error="fail")
-    from infra.creator_onboarding_digest_schedule import _load_retry_queue, _save_retry_queue
+    from lingwen_creator.onboarding.digest_schedule import _load_retry_queue, _save_retry_queue
 
     items = _load_retry_queue(root)
     items[0]["attempts"] = 1

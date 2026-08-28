@@ -1,7 +1,7 @@
 """Tests for wizard step @mentions."""
 from __future__ import annotations
 
-from infra.creator_onboarding_progress import (
+from lingwen_creator.onboarding.progress import (
     build_step_mentions,
     extract_step_mentions,
 )

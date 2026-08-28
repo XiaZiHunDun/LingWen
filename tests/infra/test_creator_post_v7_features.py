@@ -1,13 +1,13 @@
 """Tests for post-v7.0 product features: share collab v2, diff collab notes."""
 from __future__ import annotations
 
-from infra.creator_diff_collab import (
+from lingwen_creator.onboarding.diff_collab import (
     load_diff_collab_notes,
     merge_diff_collab_notes,
     save_diff_collab_notes,
 )
 from infra.creator_ui_profile import resolve_creator_ui_profile
-from infra.creator_volume_plan_share import decode_share_token, encode_share_token
+from lingwen_creator.volume.plan_share import decode_share_token, encode_share_token
 
 
 def test_advance_post_v7_ui_profile() -> None:

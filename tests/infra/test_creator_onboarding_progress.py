@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_onboarding_progress import (
+from lingwen_creator.onboarding.progress import (
     effective_completed_step_ids,
     load_onboarding_progress,
     progress_pct,

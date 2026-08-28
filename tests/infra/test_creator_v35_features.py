@@ -15,7 +15,7 @@ from lingwen_creator.settings.merge_preferences import (
     save_merge_preset_package,
     toposort_merge_preset_packages,
 )
-from infra.creator_onboarding_digest_schedule import (
+from lingwen_creator.onboarding.digest_schedule import (
     enqueue_digest_retry,
     load_digest_dispatch_stats,
     load_digest_schedule,
@@ -127,7 +127,7 @@ def test_digest_handle_channels_and_stats(factory_tmp) -> None:
     stats = load_digest_dispatch_stats(root)
     assert stats["failed_total"] >= 1
     future = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
-    from infra.creator_onboarding_digest_schedule import _load_retry_queue, _save_retry_queue
+    from lingwen_creator.onboarding.digest_schedule import _load_retry_queue, _save_retry_queue
 
     items = _load_retry_queue(root)
     items[0]["next_retry_at"] = future

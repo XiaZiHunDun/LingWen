@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_onboarding_notifications import (
+from lingwen_creator.onboarding.notifications import (
     build_notification_digest,
     record_mentions_from_notes,
 )
