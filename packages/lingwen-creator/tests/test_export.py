@@ -75,41 +75,31 @@ def test_publish_adapters_module_exports() -> None:
     assert CustomPublishAdapter.platform_id == "custom"
 
 
-def test_legacy_import_paths_still_work() -> None:
-    """Backwards compat: `from infra.creator_export_X import ...` and `from infra.creator_publish_X import ...`."""
-    # Shim equivalence checks
-    from lingwen_creator.export.common import export_metadata, load_export_chapters
-    from lingwen_creator.export.docx import build_creator_docx_bytes
-    from lingwen_creator.export.epub import build_creator_epub_bytes
+def test_legacy_publish_shim_alive() -> None:
+    """v16.2.7 T4.3: only infra.creator_publish shim is still alive (T4.4 deletes it).
+
+    Replaces test_legacy_import_paths_still_work from v16.2.5 cycle.
+    Other 4 export shims (creator_export_common/docx/epub/publish_adapters)
+    are deleted in T4.3 — see test_legacy_shims_deleted below.
+    """
     from lingwen_creator.export.publish import submit_creator_publish
-    from lingwen_creator.export.publish_adapters import (
-        FanqiePublishAdapter,
-        get_publish_adapter,
-    )
-
-    from infra.creator_export_common import (
-        export_metadata as LegacyExportMeta,
-    )
-    from infra.creator_export_common import (
-        load_export_chapters as LegacyLoadChapters,
-    )
-    from infra.creator_export_docx import build_creator_docx_bytes as LegacyDocx
-    from infra.creator_export_epub import build_creator_epub_bytes as LegacyEpub
     from infra.creator_publish import submit_creator_publish as LegacyPublish
-    from infra.creator_publish_adapters import (
-        FanqiePublishAdapter as LegacyFanqie,
-    )
-    from infra.creator_publish_adapters import (
-        get_publish_adapter as LegacyGetAdapter,
-    )
 
-    assert LegacyExportMeta is export_metadata
-    assert LegacyLoadChapters is load_export_chapters
-    assert LegacyDocx is build_creator_docx_bytes
-    assert LegacyEpub is build_creator_epub_bytes
     assert LegacyPublish is submit_creator_publish
-    assert LegacyGetAdapter is get_publish_adapter
-    assert LegacyFanqie is FanqiePublishAdapter
+
+
+def test_legacy_shims_deleted() -> None:
+    """v16.2.7 T4.3: 4 export shims deleted, must now raise ModuleNotFoundError."""
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_export_common import export_metadata  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_export_docx import build_creator_docx_bytes  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_export_epub import build_creator_epub_bytes  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_publish_adapters import get_publish_adapter  # noqa: F401
 
 
 def test_intra_package_imports_no_cycle() -> None:

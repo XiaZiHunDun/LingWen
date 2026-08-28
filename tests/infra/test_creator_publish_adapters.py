@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from infra.creator_publish_adapters import (
+from lingwen_creator.export.publish_adapters import (
     FanqiePublishAdapter,
     get_publish_adapter,
     list_publish_platforms,

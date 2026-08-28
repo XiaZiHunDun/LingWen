@@ -6,7 +6,7 @@ from io import BytesIO
 
 import pytest
 
-from infra.creator_export_epub import build_creator_epub_bytes
+from lingwen_creator.export.epub import build_creator_epub_bytes
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject
