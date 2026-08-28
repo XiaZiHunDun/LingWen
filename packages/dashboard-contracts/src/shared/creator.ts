@@ -118,4 +118,12 @@ export type {
   CreatorPublishPlatform,
   CreatorPublishPlatformsResponse,
   CreatorPublishHistoryResponse,
+  // Phase 126 v16.2.6 T3 — Memory DTOs (7 new types per T2)
+  CreatorMemoryAssetItem,
+  CreatorMemoryAssetsResponse,
+  CreatorMemoryAnnotationRequest,
+  CreatorMemoryAnnotationResponse,
+  CreatorMemoryQueryRequest,
+  CreatorMemoryQueryResult,
+  CreatorMemoryQueryResponse,
 } from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/creator';
