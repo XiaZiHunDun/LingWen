@@ -14,6 +14,48 @@ def test_onboarding_package_imports() -> None:
     assert lingwen_creator.onboarding.__name__ == "lingwen_creator.onboarding"
 
 
+def test_onboarding_star_imports_all_nine_submodules() -> None:
+    """onboarding package __init__.py exposes all 9 submodules via star-imports."""
+    import lingwen_creator.onboarding as pkg
+    expected = {
+        "onboarding",
+        "autodetect",
+        "digest_background",
+        "digest_schedule",
+        "email",
+        "notifications",
+        "progress",
+        "webhook",
+        "diff_collab",
+    }
+    for name in expected:
+        assert hasattr(pkg, name), f"missing submodule {name}"
+
+
+def test_onboarding_submodule_count() -> None:
+    """Verify all 9 onboarding source modules are present in the package directory."""
+    import lingwen_creator.onboarding
+    from pathlib import Path
+
+    pkg_dir = Path(lingwen_creator.onboarding.__file__).parent
+    py_files = {p.stem for p in pkg_dir.glob("*.py") if p.stem != "__init__"}
+    expected = {
+        "onboarding",
+        "autodetect",
+        "digest_background",
+        "digest_schedule",
+        "email",
+        "notifications",
+        "progress",
+        "webhook",
+        "diff_collab",
+    }
+    missing = expected - py_files
+    extra = py_files - expected
+    assert not missing, f"missing onboarding modules: {missing}"
+    assert not extra, f"unexpected onboarding modules: {extra}"
+
+
 def test_autodetect_module_exports() -> None:
     """onboarding.autodetect exports infer_auto_completed_steps."""
     from lingwen_creator.onboarding.autodetect import infer_auto_completed_steps
