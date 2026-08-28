@@ -1,9 +1,68 @@
 # LingWen 架构迁移日志
 # 记录 Phase 124 v16.x 渐进式架构重构的每一步变更
 
-version: "16.2.5"  # 最新 phase 闭环 (v16.2.5 export subdomain 拆分)
+version: "16.2.6"  # 最新 phase 闭环 (v16.2.6 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
 
 phases:
+  - phase: 126
+    version: 16.2.6
+    date: 2026-08-28
+    scope: Creator 6-subdomain 拆分 Phase 6/8 — Memory subdomain 闭环 (Round 2 leaf last)
+    files_added:
+      - packages/lingwen-creator/src/lingwen_creator/memory/__init__.py (3 star-imports)
+      - packages/lingwen-creator/src/lingwen_creator/memory/annotations.py (100 lines, verbatim from infra/creator_memory_annotations.py)
+      - packages/lingwen-creator/src/lingwen_creator/memory/assets.py (182 lines)
+      - packages/lingwen-creator/src/lingwen_creator/memory/query.py (148 lines)
+      - packages/lingwen-creator/tests/test_memory.py (8 tests, 含 legacy shim identity + intra-package no-cycle guard + annotations round-trip)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/python/creator.py (+7 Memory DTOs)
+      - packages/lingwen-shared/tests/test_creator_dto.py (+8 tests, total 83)
+      - apps/dashboard/src/api/memory.ts (3 typed wrapper functions)
+      - packages/dashboard-contracts/src/shared/memory.ts (7 Memory types re-export)
+      - apps/dashboard/tests/unit/api/use-memory-typed-wrapper.spec.ts (6 URL contract tests)
+      - docs/superpowers/specs/2026-08-28-phase-126-v16-2-6-memory-design.md
+      - docs/superpowers/plans/2026-08-28-phase-126-v16-2-6-memory-plan.md
+      - docs/superpowers/handoffs/2026-08-28-phase-126-v16-2-6-memory-handoff.md
+    files_modified:
+      - .gitignore (bare `memory/` → `/memory/`; the Phase 9.24 legacy pattern silently ignored the new package dir)
+      - infra/creator_memory_annotations.py (T1.a → 1-line star-import shim)
+      - infra/creator_memory_assets.py (T1.a → shim)
+      - infra/creator_memory_query.py (T1.b → shim)
+      - packages/lingwen-creator/src/lingwen_creator/memory/assets.py (T1.a intra-package imports ×4)
+      - packages/lingwen-creator/src/lingwen_creator/memory/query.py (T1.b intra-package imports ×2)
+      - packages/lingwen-shared/src/lingwen_shared/contracts/ts/creator.ts (T2 codegen, 24042 → 25215 bytes)
+      - packages/dashboard-contracts/src/shared/creator.ts (T3.a +7 types)
+      - apps/dashboard/knip.json (T3.a +2 allowlist)
+      - apps/studio_api/routes/creator_core.py (T4 → 3 lazy imports migrated)
+      - apps/dashboard/src/composables/useCreatorProductTools/useProductMemory.ts (T5.a → @/api/memory)
+      - apps/dashboard/src/composables/useAskAssistant.js (T5.a → ../api/memory.js)
+      - apps/dashboard/src/api/index.js (T5.b 3 memory aliases → typed wrapper)
+      - apps/dashboard/src/api/creator.js (T5.b removed `export * from './memory.js'`)
+      - apps/dashboard/tests/unit/{use-product-memory,creator-product-tools,use-creator-page}.spec.ts (T7 vi.mock split)
+      - packages/lingwen-creator/src/lingwen_creator/content/logic_check.py (T6 infra.creator_check → shared.check + shared.mode)
+      - packages/lingwen-creator/src/lingwen_creator/volume/plan.py (T6 infra.creator_dashboard._excerpt → content.dashboard)
+      - packages/lingwen-creator/src/lingwen_creator/volume/__init__.py (T6 docstring)
+      - .lingwen/architecture.yml (T8 +6 memory symbols + notes)
+      - CLAUDE.md (T8 bump v16.2.5 → v16.2.6)
+    files_deleted:
+      - apps/dashboard/src/api/memory.js (T5.b legacy Phase 62 shim, replaced by memory.ts typed wrapper)
+      - apps/dashboard/tests/unit/api-creator-memory.spec.ts (T5.b orphan test, 3 tests fully covered by the new URL contract spec)
+    shims_created: "3 (creator_memory_annotations + creator_memory_assets + creator_memory_query)"
+    shims_remaining: "44 (41 + 3 new memory shims — v16.2.7 cleanup responsibility)"
+    tests_added: "22 (8 memory pkg + 8 memory DTO + 6 URL contract; deleted 3 orphan → net +19)"
+    carryover_closures:
+      - "C1 ✅: packages/lingwen-creator/src 现在 0 个 infra.creator_* import (T6 清掉 v16.2.1/v16.2.4 遗留的 2 处)"
+    deviations:
+      - "D1: .gitignore fix 不在 plan 内 — bare `memory/` 模式 (Phase 9.24) 会静默吞掉新 package 目录,必须先修才能 commit T1.a"
+      - "D2: T5 plan 只列 useProductMemory,实际还有 useAskAssistant.js 也直接 import queryCreatorMemory"
+      - "D3: T6 从 grep-only check 变成 2 文件修复 commit — 顺手关掉前面 sub-phase 的遗留耦合"
+      - "D4: T7 需要 3 个测试文件 (plan 估 0-4);use-creator-page.spec.ts 是间接受害者 (useAskAssistant → api/memory)"
+    new_lessons:
+      - "bare gitignore 目录模式会命中任意深度 — 新建子域包目录前先跑 `git check-ignore -v <path>`"
+      - "v16.2.4 lesson 2 再次确认: composable 改成直接 import typed wrapper 后,barrel mock 失效的连锁面比预期大 (含只是间接依赖的 page 级测试)"
+      - "本地 pytest 会通过插件 (deepeval/langsmith) 加载 .env → MINIMAX_API_KEY 生效 → tests/dashboard/test_creator_endpoints.py::test_creator_v38_endpoints 会打真实 LLM,单测就要几分钟。在 baseline commit 上同样复现,与 v16.2.6 无关。跑该文件时用 `env -u MINIMAX_API_KEY`(27s 全绿)"
+    carryover_to_v16_2_7:
+      - "v16.2.7 cleanup: 44 shim deletions + 4 typed wrapper /api/ prefix fix (world/workspace/quality + onboarding) + 22 vitest debt (useCreatorVolumePlan*) + import-linter DP-01..06 + 19 content composables refactor + 4 unwired Content DTOs + onboarding diff-collab-notes 404 fix"
+    status: closed
   - phase: 126
     version: 16.2.5
     date: 2026-08-28

@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.2.5 (Phase 126 export subdomain 拆分 Round 2 leaf)
+> **版本**: v16.2.6 (Phase 126 memory subdomain 拆分 — creator 6-subdomain 拆分收官)
+  → v16.2.5 (Phase 126 export subdomain 拆分 Round 2 leaf)
   → v16.2.4 (Phase 126 content subdomain 拆分 + onboarding T4 闭环)
   → v16.2.3 (Phase 126 onboarding 闭环)
   → v16.2.2 (Phase 126 settings 闭环)
@@ -20,6 +21,30 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-28)**: Phase 126 v16.2.6 闭环 — creator Memory subdomain 拆分 (Round 2 leaf 最后一个,**creator 6-subdomain 拆分收官**)——13 commits (`98da5407` ... `e18606dd` + T8):
+- **gitignore fix**: 仓库根 `.gitignore:228` 的 `memory/` 是无前导斜杠的目录模式,匹配任意深度 → 静默吞掉新建的 `lingwen_creator/memory/`。收窄为 `/memory/`。— `94970497`
+- **T1.a**: `memory/annotations.py + memory/assets.py + 2 shims` (4 files;assets.py 4 处 intra-package import: creator_dashboard → content.dashboard / creator_settings_docs → settings.docs / creator_memory_annotations → memory.annotations / creator_preferences → content.preferences,含函数体 lazy import)。— `2b984962`
+- **T1.b**: `memory/query.py + __init__.py + 1 shim` (query.py 2 处 intra-package import)。— `05ba5f2b`
+- **T1.c**: `test_memory.py` (8 tests,含 legacy shim identity + intra-package no-cycle 断言 + annotations round-trip)。— `48aba8c9`
+- **T2**: 7 Memory DTOs (CreatorMemoryAssetItem + AssetsResponse + AnnotationRequest + AnnotationResponse + QueryRequest + QueryResult + QueryResponse) → `lingwen_shared/contracts/python/creator.py` + TS codegen (25215 bytes, +1173) + 8 backend tests。— `d4ce52f4`
+- **T3.a**: `apps/dashboard/src/api/memory.ts` typed wrapper (3 funcs, NO zod, NO /api/,签名与 legacy `api/memory.js` 完全一致 → 调用点只改 import) + `dashboard-contracts/src/shared/memory.ts` re-export + `creator.ts` +7 types + knip allowlist。— `25d08294`
+- **T3.b**: `tests/unit/api/use-memory-typed-wrapper.spec.ts` URL contract (6 tests,含 assetId percent-encoding)。— `afa93676`
+- **T4**: routes imports migration (`creator_core.py` 3 lazy imports → `lingwen_creator.memory.{assets,annotations,query}`)。— `e39b75d3`
+- **T5.a**: composables refactor (`useProductMemory.ts` + `useAskAssistant.js` → `@/api/memory`)。— `f8b6a2ca`
+- **T5.b**: `api/index.js` 3 alias re-point + `api/creator.js` 移除 `export * from './memory.js'` + 删 `api/memory.js` + 删 orphan `api-creator-memory.spec.ts`。— `bb108984`
+- **T7**: 3 test files vi.mock 拆分 (`use-product-memory` / `creator-product-tools` / `use-creator-page`)。— `3038b579`
+- **T6**: 顺手清掉 package 内**最后 2 处** `infra.creator_*` 耦合 (`content/logic_check.py` → shared.check + shared.mode;`volume/plan.py` `_excerpt` → content.dashboard)。**`packages/lingwen-creator/src/` 现在 0 个 `infra.creator_*` import**。— `e18606dd`
+- **T8**: handoff + CLAUDE.md + architecture.yml + migration_log.yml。
+
+新 lessons:
+1. **无前导斜杠的 gitignore 目录模式命中任意深度** — 新建子域包目录前先跑 `git check-ignore -v <path>`。
+2. **本地 pytest 经插件 (deepeval/langsmith) 加载 `.env`** → `MINIMAX_API_KEY` 在测试进程有值 → `tests/dashboard/test_creator_endpoints.py::test_creator_v38_endpoints` 的 `POST /api/creator/logic-check` 对 10 章打**真实 LLM**,表现为 hang。**在 baseline commit `7b7c7c18` 同一工作树上同样复现,与 v16.2.6 无关**。跑法:`env -u MINIMAX_API_KEY python -m pytest tests/dashboard/test_creator_endpoints.py -q` → 27s / 120 passed。附带教训:`git worktree` 做 baseline 对照时 `lingwen_creator` 走 editable install → **解析到主工作树的包代码**,只有 `infra/` `apps/` `tests/` 是 worktree 自己的。
+3. **barrel mock 失效的连锁面比预期大** — composable 改直连 typed wrapper 后,间接挂载它的 page 级测试也会挂 (`use-creator-page.spec.ts` ← `useAskAssistant`)。
+
+Tests: 79 (creator pkg, +8) + 83 (shared pkg, +8) + 359 (infra, unchanged) = 521 backend passing。1777 vitest passing (22 pre-existing volume-plan debt 不变)。vue-tsc 0 / ruff 0 / knip 0 (8 advisory hints) / codegen 无 drift / YAML valid。Shim count: 44 (41 + 3)。
+
+Carryover to v16.2.7 (cleanup,Phase 126 收尾):44 shim 删除 + 4 typed wrapper `/api/` prefix fix (world/workspace/quality + onboarding) + 22 vitest debt + import-linter DP-01..06 + 19 content composables refactor + 4 unwired Content DTOs + onboarding diff-collab-notes 404 fix + `apps/studio_api/models/creator_settings.py` DTO 去重。
 
 > **更新 (2026-08-28)**: Phase 126 v16.2.5 闭环 — creator Export subdomain 拆分 (Round 2 leaf)——13 commits (`389f91a5` ... `4d11064b`):
 - **T1.a**: `export/common.py + export/docx.py + 2 shims` (4 files, intra-package imports: creator_dashboard → lingwen_creator.content.dashboard + creator_settings_docs → lingwen_creator.settings.docs)。— `389f91a5`
