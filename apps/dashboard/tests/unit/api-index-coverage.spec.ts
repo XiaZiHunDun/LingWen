@@ -143,7 +143,7 @@ describe('api/index.js request paths (F48)', () => {
       algorithm: 'v2_weighted',
     })
     await api.fetchAllCascadeRuns({ rippleId: 'r1', sinceDays: 7 })
-    await api.cancelCascadeRun('r1', 9, 'stop')
+    await api.cancelCascadeRun('r1', '9', 'stop')
     const runUrl = String(vi.mocked(fetch).mock.calls[0][0])
     expect(runUrl).toContain('min_depth=1')
     expect(runUrl).toContain('algorithm=v2_weighted')
@@ -172,7 +172,7 @@ describe('api/index.js request paths (F48)', () => {
   test('request accepts string body directly', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonOk({ ok: true }))
     const api = await import('../../src/api/index.js')
-    await api.cancelCascadeRun('r1', 1)
+    await api.cancelCascadeRun('r1', '1')
     const opts = vi.mocked(fetch).mock.calls[0][1] as RequestInit
     expect(typeof opts.body).toBe('string')
   })

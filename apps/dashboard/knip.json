@@ -30,6 +30,11 @@
     "src/api/content.ts",
     "src/api/export.ts",
     "src/api/memory.ts",
+    "src/api/health.ts",
+    "src/api/decisions.ts",
+    "src/api/cvg.ts",
+    "src/api/workflows.ts",
+    "src/api/studio.ts",
     "packages/dashboard-contracts/src/shared/export.ts",
     "packages/dashboard-contracts/src/shared/memory.ts"
   ],
