@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from infra.creator_ui_profile import resolve_creator_ui_profile
-from infra.creator_volume_plan import build_outline_highlight_lines
+from lingwen_creator.volume.plan import build_outline_highlight_lines
 
 
 def test_advance_v54_ui_profile() -> None:

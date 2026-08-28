@@ -22,7 +22,7 @@ from infra.creator_onboarding_digest_schedule import (
     process_digest_retries,
     save_digest_schedule,
 )
-from infra.creator_template_approvals import (
+from lingwen_creator.volume.template_approvals import (
     _approvals_path,
     _load_store,
     approve_template_approval,
@@ -31,7 +31,7 @@ from infra.creator_template_approvals import (
     save_approval_sla_config,
     submit_template_version_approval,
 )
-from infra.creator_volume_templates import save_custom_volume_template, set_custom_template_version_label
+from lingwen_creator.volume.templates import save_custom_volume_template, set_custom_template_version_label
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

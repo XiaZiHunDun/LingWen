@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_volume_templates import (
+from lingwen_creator.volume.templates import (
     build_volume_template,
     delete_custom_volume_template,
     export_custom_volume_templates,
@@ -204,7 +204,7 @@ def test_sync_templates_from_other_project(factory_tmp, monkeypatch):
 
 
 def test_factory_template_publish_pull(factory_tmp, monkeypatch):
-    import infra.creator_volume_templates as cvt
+    import lingwen_creator.volume.templates as cvt
     from infra.project_init import init_minimal_short_project
 
     monkeypatch.setattr("infra.studio_registry.factory_root", lambda: factory_tmp)

@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from infra.creator_revision import CreatorDocConflictError
-from infra.creator_volume_plan import (
+from lingwen_creator.volume.plan import (
     VolumeEntry,
     compute_volume_deviations,
     load_volume_plan,
@@ -128,7 +128,7 @@ def test_volume_overlap_detection(factory_tmp):
         chapter_count=20,
     )
     ProjectPaths.reset()
-    from infra.creator_volume_plan import VolumeEntry, detect_volume_overlaps
+    from lingwen_creator.volume.plan import VolumeEntry, detect_volume_overlaps
 
     overlaps = detect_volume_overlaps(
         [

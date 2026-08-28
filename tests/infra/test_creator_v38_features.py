@@ -6,7 +6,7 @@ import pytest
 from infra.creator_dashboard import creator_overview
 from infra.creator_logic_check import run_creator_logic_check
 from infra.creator_ui_profile import resolve_creator_ui_profile
-from infra.creator_volume_pulse import build_volume_pulse
+from lingwen_creator.volume.pulse import build_volume_pulse
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 from infra.studio_registry import StudioProject
@@ -78,7 +78,7 @@ def test_volume_pulse_for_advance(factory_tmp) -> None:
         chapter_count=12,
     )
     root = result.root
-    from infra.creator_volume_plan import save_volume_plan
+    from lingwen_creator.volume.plan import save_volume_plan
 
     save_volume_plan(
         root,

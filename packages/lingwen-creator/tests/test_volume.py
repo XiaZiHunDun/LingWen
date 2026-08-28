@@ -183,9 +183,10 @@ def test_template_approvals_load_approval_sla_config_default() -> None:
 
 
 def test_legacy_shims_deleted() -> None:
-    """v16.2.7 T4.5: 4 volume leaf shims deleted, must raise ModuleNotFoundError.
+    """v16.2.7 T4.5+T4.6: all 6 volume shims deleted, must raise ModuleNotFoundError.
 
-    T4.6 (next commit) adds creator_volume_plan + creator_volume_templates.
+    T4.5: creator_volume_plan_share/pulse/summary/template_approvals.
+    T4.6: creator_volume_plan + creator_volume_templates.
     """
     import pytest
 
@@ -197,3 +198,7 @@ def test_legacy_shims_deleted() -> None:
         from infra.creator_volume_summary import build_volume_summary  # noqa: F401
     with pytest.raises(ModuleNotFoundError):
         from infra.creator_template_approvals import list_template_approvals  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_volume_plan import load_volume_plan  # noqa: F401
+    with pytest.raises(ModuleNotFoundError):
+        from infra.creator_volume_templates import list_volume_templates  # noqa: F401

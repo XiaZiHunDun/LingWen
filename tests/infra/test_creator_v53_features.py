@@ -5,7 +5,7 @@ import pytest
 
 from infra.creator_onboarding_progress import load_onboarding_progress, save_wizard_panel_collapsed
 from infra.creator_ui_profile import resolve_creator_ui_profile
-from infra.creator_volume_plan import volume_plan_diff_payload
+from lingwen_creator.volume.plan import volume_plan_diff_payload
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

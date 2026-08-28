@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from infra.creator_ui_profile import resolve_creator_ui_profile
-from infra.creator_volume_plan import preview_volume_plan_diff
+from lingwen_creator.volume.plan import preview_volume_plan_diff
 
 
 def test_advance_v52_ui_profile() -> None:

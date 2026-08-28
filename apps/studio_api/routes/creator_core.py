@@ -179,7 +179,7 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
     def creator_volume_plan_diff_endpoint(
         body: CreatorVolumePlanSaveRequest,
     ) -> CreatorVolumePlanDiffResponse:
-        from infra.creator_volume_plan import volume_plan_diff_payload
+        from lingwen_creator.volume.plan import volume_plan_diff_payload
 
         project = _require_project(ctx)
         draft = [v.model_dump() for v in body.volumes]

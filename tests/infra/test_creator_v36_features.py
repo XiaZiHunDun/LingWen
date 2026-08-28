@@ -27,7 +27,7 @@ from lingwen_creator.volume.template_approvals import (
     submit_template_version_approval,
     transfer_template_approval,
 )
-from infra.creator_volume_templates import save_custom_volume_template, set_custom_template_version_label
+from lingwen_creator.volume.templates import save_custom_volume_template, set_custom_template_version_label
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 

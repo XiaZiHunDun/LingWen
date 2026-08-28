@@ -21,7 +21,7 @@ from infra.creator_onboarding_digest_schedule import (
     replay_digest_dead_letter,
     save_digest_schedule,
 )
-from infra.creator_template_approvals import (
+from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
     batch_approve_template_approvals,
     batch_reject_template_approvals,
@@ -29,7 +29,7 @@ from infra.creator_template_approvals import (
     save_approval_chain_config,
     submit_template_version_approval,
 )
-from infra.creator_volume_templates import save_custom_volume_template, set_custom_template_version_label
+from lingwen_creator.volume.templates import save_custom_volume_template, set_custom_template_version_label
 from infra.paths import ProjectPaths
 from infra.project_init import init_minimal_short_project
 
@@ -67,7 +67,7 @@ def test_approval_drift_blocks_and_batch(factory_tmp) -> None:
     row = submit_template_version_approval(root, tid, version_label="v1.1.0")
     drift = check_approval_snapshot_drift(root, row["id"])
     assert drift["drifted"] is False
-    from infra.creator_volume_templates import _load_custom_store, _save_custom_store
+    from lingwen_creator.volume.templates import _load_custom_store, _save_custom_store
 
     store = _load_custom_store(root)
     for item in store.get("templates", []):

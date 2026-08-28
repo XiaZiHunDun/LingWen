@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_volume_templates import (
+from lingwen_creator.volume.templates import (
     get_template_version_changelog,
     rollback_template_version,
     save_custom_volume_template,
@@ -42,7 +42,7 @@ def test_rollback_template_version_restores_volumes(factory_tmp) -> None:
     volumes_v2 = [
         {"label": "一", "start_chapter": 1, "end_chapter": 12, "core_conflict": "merged", "locked": False},
     ]
-    from infra.creator_volume_templates import rename_custom_volume_template
+    from lingwen_creator.volume.templates import rename_custom_volume_template
 
     rename_custom_volume_template(
         root,

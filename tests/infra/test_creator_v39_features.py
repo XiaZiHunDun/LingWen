@@ -55,7 +55,7 @@ def test_advance_overview_filters_deviations_and_pulse(factory_tmp) -> None:
         chapter_count=12,
     )
     root = result.root
-    from infra.creator_volume_plan import save_volume_plan
+    from lingwen_creator.volume.plan import save_volume_plan
 
     save_volume_plan(
         root,
@@ -91,7 +91,7 @@ def test_volume_pulse_alerts_only_flag(factory_tmp) -> None:
         chapter_count=6,
     )
     root = result.root
-    from infra.creator_volume_plan import save_volume_plan
+    from lingwen_creator.volume.plan import save_volume_plan
 
     save_volume_plan(
         root,

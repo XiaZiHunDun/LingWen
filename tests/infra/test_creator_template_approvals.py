@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import pytest
 
-from infra.creator_template_approvals import (
+from lingwen_creator.volume.template_approvals import (
     approve_template_approval,
     list_template_approvals,
     reject_template_approval,
     save_approval_chain_config,
     submit_template_version_approval,
 )
-from infra.creator_volume_templates import (
+from lingwen_creator.volume.templates import (
     save_custom_volume_template,
     set_custom_template_version_label,
 )
