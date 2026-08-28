@@ -21,7 +21,7 @@ Conventions (v16.1 lessons):
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -1654,3 +1654,192 @@ class CreatorOnboardingEmailSaveRequest(BaseModel):
     smtp_password: Optional[str] = None
     smtp_use_tls: bool = True
     from_address: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Content Subdomain (Phase 126 v16.2.4 T3) — 15 DTOs
+# ---------------------------------------------------------------------------
+
+
+class CreatorOverviewResponse(BaseModel):
+    """Creator dashboard overview payload."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    project_slug: str
+    overview: dict[str, Any] = Field(default_factory=dict)
+    last_updated: Optional[str] = None
+
+
+class CreatorAgentPlanRequest(BaseModel):
+    """Creator agent plan request (action label + optional context)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    action_label: str = Field(min_length=1)
+    base_text: Optional[str] = None
+    lens: Optional[str] = None
+    provider_mode: Optional[str] = None
+
+
+class CreatorAgentPlanResponse(BaseModel):
+    """Creator agent plan response with results."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    results: list[dict[str, Any]] = Field(default_factory=list)
+    annotations: list[dict[str, Any]] = Field(default_factory=list)
+    advice: Optional[str] = None
+
+
+class CreatorBatchHistoryResponse(BaseModel):
+    """Batch history jobs list response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    jobs: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class CreatorBatchHistoryExportResponse(BaseModel):
+    """Batch history export response (count + jobs).
+
+    Source of truth: apps/studio_api/models/creator_history.py::CreatorBatchHistoryExportResponse
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    schema_version: str = "1"
+    count: int = 0
+    jobs: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class CreatorPreferencesResponse(BaseModel):
+    """Creator-level preferences payload."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    creation_mode: Literal["companion", "advance", "studio"]
+    quality_profile: str
+    fail_severity: Optional[str] = None
+    run_prose_calibration: bool = False
+    run_llm_judge: bool = False
+    run_golden_set: bool = False
+    notify_per_chapter: bool = False
+    advance_volume_summary: bool = False
+
+
+class CreatorPreferencesSaveRequest(BaseModel):
+    """Creator preferences save request (all fields optional for partial save)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    creation_mode: Optional[Literal["companion", "advance", "studio"]] = None
+    quality_profile: Optional[str] = None
+    fail_severity: Optional[str] = None
+    run_prose_calibration: Optional[bool] = None
+    run_llm_judge: Optional[bool] = None
+    run_golden_set: Optional[bool] = None
+    notify_per_chapter: Optional[bool] = None
+    advance_volume_summary: Optional[bool] = None
+
+
+class CreatorModelsResponse(BaseModel):
+    """Available LLM models grouped by provider."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    providers: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class CreatorLogicCheckResponse(BaseModel):
+    """Creator logic check violations response."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    violations: list[dict[str, Any]] = Field(default_factory=list)
+    summary: Optional[str] = None
+
+
+class CreatorChapterPreview(BaseModel):
+    """Chapter preview with outline + body."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    chapter_id: int
+    project_slug: str
+    outline: str
+    body: str
+    last_modified: Optional[str] = None
+
+
+class CreatorOutlineSaveRequest(BaseModel):
+    """Save chapter outline request (content required)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    chapter_id: int
+    outline: str = Field(min_length=1)
+    revision: Optional[str] = None
+
+
+class CreatorBodySaveRequest(BaseModel):
+    """Save chapter body request."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    chapter_id: int
+    body: str
+    revision: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+
+
+class CreatorUiProfileState(BaseModel):
+    """UI profile resolved state."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    creation_mode: Literal["companion", "advance", "studio"]
+    quality_profile: str
+    advanced_visible: Optional[bool] = None
+    wizard_visible: Optional[bool] = None
+    dashboard_visible: Optional[bool] = None
+
+
+class CreatorUiProfileSaveRequest(BaseModel):
+    """UI profile save request."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    creation_mode: Optional[Literal["companion", "advance", "studio"]] = None
+    quality_profile: Optional[str] = None
+    advanced_visible: Optional[bool] = None
+    wizard_visible: Optional[bool] = None
+    dashboard_visible: Optional[bool] = None
+
+
+class CreatorDashboardOverview(BaseModel):
+    """Creator dashboard overview (alternative layout for content.dashboard).
+
+    Spec §3.3: dashboard variant of CreatorOverviewResponse — not yet wired in
+    routes, kept as a forward-compat stub.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    project_slug: str
+    overview: dict[str, Any] = Field(default_factory=dict)
+
+
+class CreatorDashboardChapterPreview(BaseModel):
+    """Creator dashboard chapter preview (alternative layout for content.dashboard).
+
+    Spec §3.3: dashboard variant of CreatorChapterPreview — not yet wired in
+    routes, kept as a forward-compat stub.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    chapter_id: int
+    project_slug: str
+    outline: str = ""
+    body: str = ""
