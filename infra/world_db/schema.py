@@ -2,9 +2,15 @@
 
 Tables: character, faction, relationship, lore_entry, timeline_event, proposal.
 All main tables carry `revision INTEGER` for optimistic concurrency.
+
+v16.5 #N.4: use lingwen_shared.ports.storage.ConnectionPort for
+parameter typing (no direct sqlite3 import). The SqliteStorageAdapter
+already sets ``row_factory = sqlite3.Row`` and ``PRAGMA foreign_keys = ON``;
+callers do not need to set them again.
 """
-import sqlite3
 from pathlib import Path
+
+from lingwen_shared.ports.storage import ConnectionPort
 
 SCHEMA_VERSION = 1
 
@@ -100,15 +106,31 @@ CREATE TABLE proposal (
 """
 
 
-def get_connection(db_path: Path) -> sqlite3.Connection:
-    """Open a connection to the world DB at the given path."""
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+def get_connection(db_path: Path) -> ConnectionPort:
+    """Open a connection to the world DB at the given path.
+
+    v16.5 #N.4: delegates to ``SqliteStorageAdapter`` so callers get a
+    ``SqliteConnection`` wrapper that satisfies ``ConnectionPort``.
+    The adapter pre-configures ``row_factory = sqlite3.Row`` and
+    ``PRAGMA foreign_keys = ON``; no manual setup needed here.
+
+    Caller owns the returned connection (close via ``conn.close()`` or
+    pass to ``SqliteStorageAdapter._connection_cm()`` for auto-cleanup).
+    """
+    # Lazy import: keep the schema module import-time side-effect free.
+    from lingwen_storage.sqlite_storage_adapter import (
+        SqliteConnection,
+        SqliteStorageAdapter,
+    )
+
+    adapter = SqliteStorageAdapter(str(db_path))
+    # Borrow the adapter's _open() to get a freshly configured connection
+    # (row_factory + PRAGMA foreign_keys applied), wrapped in SqliteConnection
+    # so callers can use it as ConnectionPort.
+    return SqliteConnection(adapter._open())
 
 
-def init_schema(conn: sqlite3.Connection) -> None:
+def init_schema(conn: ConnectionPort) -> None:
     """Create all tables if not exist. Idempotent."""
     conn.executescript(DDL)
     conn.execute(
