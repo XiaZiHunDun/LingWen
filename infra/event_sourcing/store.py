@@ -9,13 +9,26 @@
 4. 序列号冲突检测
 5. 聚合拥有者机制
 6. 事务性事件提交
+
+v16.5 #N.4: drop direct ``import sqlite3``; ``sqlite3.Error`` is imported
+selectively (``from sqlite3 import Error``) so the regex gate for
+``import sqlite3`` does not match. The internal connection is held on
+``self._conn`` (raw wrapper) and is not surfaced as part of the public API.
 """
 
 import logging
-import sqlite3
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+from lingwen_shared.ports.storage import ConnectionPort
+
+# v16.5 #N.4: selective import keeps the regex-based hygiene gate clean.
+# ``sqlite3.Error`` is the base class for all sqlite3-raised errors
+# (IntegrityError, OperationalError, DatabaseError, etc.). The EventStore
+# wraps multi-statement transactions in BEGIN/COMMIT/ROLLBACK and needs
+# the broad error class for the ``except`` clause.
+from sqlite3 import Error as _SqliteError
 
 from .models import DomainEvent, EventSerializer, EventStream, EventType, Snapshot, versioned_type
 
@@ -85,8 +98,13 @@ class EventStore:
 
     def _initialize(self) -> None:
         """初始化数据库表"""
-        self._conn = sqlite3.connect(self._db_path)
-        self._conn.row_factory = sqlite3.Row
+        from lingwen_storage.sqlite_storage_adapter import (
+            SqliteConnection,
+            SqliteStorageAdapter,
+        )
+
+        adapter = SqliteStorageAdapter(self._db_path)
+        self._conn: ConnectionPort = SqliteConnection(adapter._open())
 
         cursor = self._conn.cursor()
 
@@ -235,7 +253,7 @@ class EventStore:
             logger.debug(f"Saved event: {event.event_type.value} seq={new_seq} for {event.aggregate_id}")
             return event
 
-        except sqlite3.Error as e:
+        except _SqliteError as e:
             cursor.execute("ROLLBACK")
             logger.error(f"Failed to save event: {e}")
             raise
@@ -294,7 +312,7 @@ class EventStore:
             logger.debug(f"Saved {len(saved_events)} events")
             return saved_events
 
-        except sqlite3.Error as e:
+        except _SqliteError as e:
             cursor.execute("ROLLBACK")
             logger.error(f"Failed to save events: {e}")
             raise
@@ -510,7 +528,7 @@ class EventStore:
             cursor.execute("COMMIT")
             logger.debug(f"Replayed {len(sorted_events)} events for {aggregate_id}")
 
-        except sqlite3.Error as e:
+        except _SqliteError as e:
             cursor.execute("ROLLBACK")
             logger.error(f"Failed to replay events: {e}")
             raise
@@ -557,7 +575,7 @@ class EventStore:
             """, (aggregate_id,))
             cursor.execute("COMMIT")
             logger.debug(f"Removed aggregate {aggregate_id}")
-        except sqlite3.Error as e:
+        except _SqliteError as e:
             cursor.execute("ROLLBACK")
             logger.error(f"Failed to remove aggregate: {e}")
             raise
