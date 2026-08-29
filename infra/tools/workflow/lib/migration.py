@@ -1,10 +1,25 @@
-"""JSON → SQLite 数据迁移（一次性工具，v7.0 之后已不需要）"""
+"""JSON → SQLite 数据迁移（一次性工具，v7.0 之后已不需要）
+
+v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
+for the one-shot migration. The migration logic (read JSON, INSERT
+OR REPLACE into workflow_state + agent_tasks) is unchanged.
+"""
 import json
-import sqlite3
 from datetime import datetime
 from typing import Tuple
 
 from . import db
+
+
+def _open_conn(timeout: float = 30.0):
+    """Helper: open a fresh wrapped connection for migration."""
+    from lingwen_storage.sqlite_storage_adapter import (
+        SqliteConnection,
+        SqliteStorageAdapter,
+    )
+
+    adapter = SqliteStorageAdapter(str(db.DB_PATH), timeout=timeout)
+    return SqliteConnection(adapter._open())
 
 
 def migrate_json_to_sqlite() -> Tuple[int, int]:
@@ -19,7 +34,7 @@ def migrate_json_to_sqlite() -> Tuple[int, int]:
     with open(db.WORKFLOW_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    conn = sqlite3.connect(str(db.DB_PATH))
+    conn = _open_conn()
     conn.execute("BEGIN IMMEDIATE")
     state_count = 0
     task_count = 0
