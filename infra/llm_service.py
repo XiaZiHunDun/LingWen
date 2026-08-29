@@ -13,8 +13,6 @@ import json
 import logging
 import os
 import re
-from dataclasses import dataclass
-from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -28,24 +26,17 @@ if TYPE_CHECKING:
     from lingwen_llm.providers.plugin_manager import get_plugin_manager
 
 
-class TaskType(Enum):
-    """LLM任务类型"""
-    WORLDVIEW_CHECK = "worldview_check"      # 世界观检测
-    CHARACTER_CHECK = "character_check"      # 角色一致性检测
-    LOGIC_CHECK = "logic_check"              # 逻辑矛盾检测
-    AI_TRACE_CHECK = "ai_trace_check"       # AI痕迹检测
-    QUALITY_ANALYSIS = "quality_analysis"    # 质量综合分析
-    REPAIR = "repair"                        # 修复任务
+# v16.5 relocation: TaskType + LLMTask moved to lingwen_shared.contracts.python.llm.
+# Re-export here so tools/, tests/, infra/core/__init__.py star-imports keep working.
+from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
-
-@dataclass
-class LLMTask:
-    """LLM任务描述"""
-    task_type: TaskType
-    prompt: str
-    max_tokens: int = 2000
-    temperature: float = 0.3
-    system: Optional[str] = None
+__all__ = [
+    "LLMService",
+    "LLMTask",
+    "TaskType",
+    "get_llm_service",
+    "create_task",
+]
 
 
 class LLMService:
