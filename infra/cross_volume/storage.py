@@ -235,18 +235,17 @@ class RippleStorage:
     @contextmanager
     def _connect(self) -> Iterator[ConnectionPort]:
         # v16.5 #N.4: delegate to SqliteStorageAdapter (canonical backend).
-        # The adapter pre-applies row_factory = sqlite3.Row so the
-        # SqliteConnection wrapper is row-dict-friendly for our _row_to_*
-        # methods. apply_sqlite_pragmas is still called for backwards
-        # compatibility (idempotent — the adapter already sets
-        # journal_mode=WAL / synchronous=FULL / foreign_keys=ON).
-        from lingwen_storage.sqlite_storage_adapter import (
-            SqliteConnection,
-            SqliteStorageAdapter,
-        )
+        # The adapter pre-applies row_factory = sqlite3.Row so callers can
+        # use the row["key"] access pattern in their _row_to_* methods.
+        # We return the raw ``sqlite3.Connection`` (not the
+        # ``SqliteConnection`` wrapper) because the public ``_connect``
+        # context manager is used as ``with self._connect() as conn:`` —
+        # the wrapper does not implement ``__enter__`` / ``__exit__`` so
+        # would break the context manager protocol.
+        from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
         adapter = SqliteStorageAdapter(str(self._db_path))
-        conn = SqliteConnection(adapter._open())
+        conn = adapter._open()
         apply_sqlite_pragmas(conn)
         try:
             yield conn

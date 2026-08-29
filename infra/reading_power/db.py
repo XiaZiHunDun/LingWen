@@ -48,17 +48,16 @@ class ReadingPowerDB:
 
         v16.5 #N.4: delegates to ``SqliteStorageAdapter._open()`` so
         ``row_factory = sqlite3.Row`` is set by the adapter (no manual
-        setup needed). Returns a ``SqliteConnection`` wrapper that
-        satisfies ``ConnectionPort`` (callers use ``conn.execute``,
-        ``conn.executescript``, ``conn.cursor`` unchanged).
+        setup needed). Returns the raw ``sqlite3.Connection`` (not the
+        ``SqliteConnection`` wrapper) because the public callers use
+        ``with self._get_connection() as conn:`` — the wrapper does not
+        implement ``__enter__`` / ``__exit__`` so would break the context
+        manager protocol.
         """
-        from lingwen_storage.sqlite_storage_adapter import (
-            SqliteConnection,
-            SqliteStorageAdapter,
-        )
+        from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
         adapter = SqliteStorageAdapter(str(self.db_path))
-        return SqliteConnection(adapter._open())
+        return adapter._open()
 
     def _init_db(self) -> None:
         """Initialize database tables and indexes."""
