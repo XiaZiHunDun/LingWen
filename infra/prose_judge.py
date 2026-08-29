@@ -228,7 +228,11 @@ def _llm_judge_chapter(
     content: str,
     prose_p1_issues: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    from infra.llm_service import LLMService, LLMTask, TaskType
+    from lingwen_llm.port_adapter import (  # re-exported from infra.llm_service for DP-02
+        LLMServiceAdapter,
+        LLMTask,
+        TaskType,
+    )
 
     issue_lines = "\n".join(
         f"- [{i.get('severity')}] {i.get('issue_type')}: {i.get('description', '')}"
@@ -241,7 +245,7 @@ def _llm_judge_chapter(
         f"正文（截断）:\n{content[:6000]}\n"
     )
 
-    service = LLMService.get()
+    service = LLMServiceAdapter()
     raw = service.execute(
         LLMTask(
             task_type=TaskType.QUALITY_ANALYSIS,

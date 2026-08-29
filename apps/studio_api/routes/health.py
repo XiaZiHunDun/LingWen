@@ -58,9 +58,9 @@ def _register_health_checks(ctx: RoutesContext) -> None:
     # LLM 服务健康检查（非关键）
     def check_llm() -> bool:
         try:
-            from lingwen_llm.llm_service import LLMService
-            llm = LLMService.get_instance()
-            return llm.is_available()
+            from lingwen_llm.port_adapter import LLMServiceAdapter
+
+            return LLMServiceAdapter().is_available()
         except (OSError, RuntimeError, ImportError, AttributeError):
             # LLM 服务不可用 / 依赖缺失 / 方法缺失
             return False

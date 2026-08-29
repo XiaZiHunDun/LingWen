@@ -3,7 +3,8 @@
 v16.1 status: declaration only (Protocol definition). Business code may continue
 to import the concrete ``LLMService`` class.
 v16.4 status: import-linter enforcement — business code MUST import this port,
-not the concrete LLMService.
+              not the concrete LLMService. is_available() added in v16.4 for
+              health-check use cases.
 """
 from __future__ import annotations
 
@@ -43,3 +44,4 @@ class LLMServicePort(Protocol):
     async def execute(self, task: TaskSpec) -> LLMResult: ...
     async def execute_stream(self, task: TaskSpec) -> AsyncIterator[str]: ...
     def parse_json_response(self, response: LLMResult, schema: type) -> Any: ...
+    def is_available(self) -> bool: ...

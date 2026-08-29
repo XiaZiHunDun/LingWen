@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 class _LLMRunnable(Protocol):
     """Minimal interface the extractor requires from an LLM service.
 
-    Both ``infra.llm_service.LLMService.generate`` and the test mock
-    satisfy this protocol.
+    Both ``lingwen_llm.port_adapter.LLMServiceAdapter.generate`` (which wraps
+    the concrete ``infra.llm_service.LLMService.generate``) and the test
+    mock satisfy this protocol.
     """
 
     def generate(self, prompt: str, system: str | None = None, **kwargs: Any) -> str: ...
@@ -162,6 +163,6 @@ def _default_llm_service() -> _LLMRunnable:
     and provider plugin loading, which we don't want during tests that
     pass an explicit ``llm_service`` mock.
     """
-    from infra.llm_service import LLMService  # noqa: WPS433 (intentional lazy import)
+    from lingwen_llm.port_adapter import LLMServiceAdapter  # re-exported from infra.llm_service for DP-02
 
-    return LLMService.get()
+    return LLMServiceAdapter()

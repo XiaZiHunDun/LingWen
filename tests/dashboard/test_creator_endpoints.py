@@ -1118,6 +1118,7 @@ class TestCreatorEndpoints:
 
     def test_creator_v37_endpoints(self, client: TestClient) -> None:
         from lingwen_creator.onboarding.digest_schedule import _save_dead_letter_items
+
         from infra.studio_registry import active_project
 
         drift = client.get(

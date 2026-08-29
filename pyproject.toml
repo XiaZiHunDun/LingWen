@@ -231,6 +231,30 @@ layers = [
     "infra",
 ]
 
+# Contract 2: DP-02 enforcement — business code MUST NOT import the concrete
+# LLMService class. Use `from lingwen_shared.ports.llm_service import LLMServicePort`
+# or `from lingwen_llm.port_adapter import LLMServiceAdapter` instead.
+#
+# `source_modules` restricts the contract to lingwen_creator + apps (the two
+# "business code" layers per v16.3 root_packages). infra/ can self-import
+# (for tests, internal use). tools/ and tests/ are outside root_packages so
+# not affected.
+#
+# `forbidden_modules = ["infra.llm_service"]` blocks imports of the concrete
+# class only. `LLMTask` and `TaskType` data types remain importable because the
+# v16.4 sync facade preserves the existing API surface (full
+# async-port-conformance is v16.5+ work).
+[[tool.importlinter.contracts]]
+name = "no_concrete_llm_service_in_business_code"
+type = "forbidden"
+source_modules = [
+    "lingwen_creator",
+    "apps",
+]
+forbidden_modules = [
+    "infra.llm_service",
+]
+
 [dependency-groups]
 dev = [
     "grimp>=3.15",

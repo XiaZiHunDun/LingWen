@@ -146,10 +146,11 @@ class LLMBasedInspector(Inspector):
 
     @property
     def llm_service(self):
-        """延迟加载LLM服务"""
+        """延迟加载LLM服务（via LLMServiceAdapter facade）"""
         if self._llm_service is None:
-            from lingwen_llm.llm_service import LLMService
-            self._llm_service = LLMService.get()
+            from lingwen_llm.port_adapter import LLMServiceAdapter
+
+            self._llm_service = LLMServiceAdapter()
         return self._llm_service
 
     def check(self, chapter_num: int) -> List[Issue]:
