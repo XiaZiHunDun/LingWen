@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.5.3"  # Phase 126 v16.5 #3 (PARTIAL) — SqliteStorageAdapter concrete impl; full DP-03 expansion carried to v16.5 #N
+version: "16.5.4"  # Phase 126 v16.5 #4 闭环 (Remaining packages hygiene gate — defense-in-depth expansion to lingwen_core/pipeline/cli with 8-file whitelist)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -209,7 +209,7 @@ design_principles:
   - id: DP-03
     rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
     scope: "any context with persistence"
-    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth). v16.5 #3 PARTIAL ✓ done (SqliteStorageAdapter concrete impl at infra/persistence/sqlite_storage_adapter.py — the ONLY allowed import sqlite3 site in infra/). v16.5 #N: refactor apps/* to use lingwen_shared Protocols (19 files) + migrate infra/* to drop import sqlite3 (22 files) + expand contract to [\"lingwen_creator\", \"apps\"].'
+    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth). v16.5 #3 PARTIAL ✓ done (SqliteStorageAdapter concrete impl at infra/persistence/sqlite_storage_adapter.py — the ONLY allowed import sqlite3 site in infra/). v16.5 #4 ✓ done (defense-in-depth hygiene gate expansion to lingwen_core/pipeline/cli with 8-file whitelist). v16.5 #N: relocate SqliteStorageAdapter to packages/lingwen-storage/, migrate 8 whitelisted files, expand contract to [\"lingwen_creator\", \"apps\"].'
   - id: DP-04
     rule: "跨 context 调用只通过 contract DTO"
     scope: "cross-context"
