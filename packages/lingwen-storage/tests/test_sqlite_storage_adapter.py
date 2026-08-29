@@ -1,4 +1,4 @@
-"""Unit tests for SqliteStorageAdapter (v16.5 #3 DP-03 full fix).
+"""Unit tests for SqliteStorageAdapter (v16.5 #N.0 relocation).
 
 Covers:
 1. ``SqliteStorageAdapter`` structural conformance to ``StoragePort``.
@@ -9,6 +9,14 @@ Covers:
    ``sqlite3.Connection``.
 5. ``FileSystemMarkdownRoundtrip.write/read/list_chapters`` behaviour
    (atomic write, parent-dir creation, missing-project empty list).
+
+These tests live at the package boundary (``packages/lingwen-storage/tests/``)
+following the convention for ``packages/lingwen-shared``, ``packages/lingwen-llm``
+etc. — tests follow package ownership, not top-level test directory.
+
+The previous location (``tests/persistence/test_sqlite_storage_adapter.py``)
+either has a back-compat re-routed copy or has been deleted; the canonical
+tests live here.
 """
 from __future__ import annotations
 
@@ -16,8 +24,7 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-
-from infra.persistence.sqlite_storage_adapter import (
+from lingwen_storage.sqlite_storage_adapter import (
     DEFAULT_TIMEOUT,
     FileSystemMarkdownRoundtrip,
     SqliteConnection,

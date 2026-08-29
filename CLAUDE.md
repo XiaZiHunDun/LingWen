@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #7 (Phase 126 DTO schema audit + typed wrapper narrowing — 5 new DTO files + 41 wrapper functions narrowed from Promise<unknown> to concrete DTO types + 1 composable cast cleanup — 5 commits)
+> **版本**: v16.5 #N.0 (Phase 126 SqliteStorageAdapter relocated to packages/lingwen-storage — breaks lingwen_core/pipeline → infra.persistence cycle, infra version becomes back-compat shim, lingwen-shared workspace dep added — 2 commits)
+  → v16.5 #7 (Phase 126 DTO schema audit + typed wrapper narrowing — 5 new DTO files + 41 wrapper functions narrowed from Promise<unknown> to concrete DTO types + 1 composable cast cleanup — 5 commits)
   → v16.5 #6 (Phase 126 DP-02 tools migration defense-in-depth hygiene gate — 12-file whitelist + regression test — 2 commits)
   → v16.5 #4 (Phase 126 DP-03 remaining packages defense-in-depth hygiene gate — 8-file whitelist + regression test — 1 commit)
   → v16.5 #3 (PARTIAL — Phase 126 DP-03 SqliteStorageAdapter concrete impl, full DP-03 expansion carried to v16.5 #N — 1 commit)
@@ -30,6 +31,20 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #N.0 闭环 — SqliteStorageAdapter relocated to packages/lingwen-storage/——2 commits (`5cb6adc4` + `6800a4c8`):
+- **T1** `feat(lingwen-storage)`: 新建 `packages/lingwen-storage/src/lingwen_storage/sqlite_storage_adapter.py` (217 lines) — canonical `StoragePort` impl,在 lingwen-* 包家族中是**唯一**允许 `import sqlite3` 的文件。`packages/lingwen-storage/pyproject.toml` 加 `lingwen-shared` workspace dep。
+- **T2** `refactor(persistence)`: `infra/persistence/sqlite_storage_adapter.py` 变成 17-line back-compat shim (zero `import sqlite3`,纯 `from lingwen_storage.sqlite_storage_adapter import ...`) + `tests/persistence/test_sqlite_storage_adapter.py` 删除(挪到 `packages/lingwen-storage/tests/`,匹配 package-ownership 约定)。
+- **Architectural invariant preserved**: 唯一的 sqlite3 backend 实现 = lingwen_storage.sqlite_storage_adapter。infra/persistence 版只是 import shim,不直接 import sqlite3。
+
+Tests: 31 backend (13 NEW packages/lingwen-storage/sqlite_storage_adapter + 18 unchanged jsonl_store/reducer) / 39 hygiene (unchanged) / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 3 contracts KEPT** (unchanged)。
+**infra `import sqlite3` count: 22 → 21** (shim no longer imports)。`packages/lingwen-storage/src/lingwen_storage/sqlite_storage_adapter.py` 现在 sole owner。
+**Carryover**: v16.5 #N.1 factory pattern (`set_default_storage_factory()` in lingwen_shared) + #N.2 #N.3 #N.4 apps/infra consumer migration + #N.5 import-linter contract expansion + #N.6 tools migration。
+
+3 lessons:
+1. **Package placement matters for cycle avoidance** — SqliteStorageAdapter 原本放 infra/ 阻塞 lingwen_core 迁移 (lingwen_core ← infra.persistence 会成 cycle)。挪到 leaf 包(lingwen-storage 无 lingwen_* deps)即破 cycle。
+2. **Back-compat shims enable non-breaking relocations** — 17-line shim means no consumer needs to change import paths immediately,future migrations can be done commit-by-commit (per DP-06)。
+3. **Test ownership should follow package ownership** — `tests/persistence/` (top-level) → `packages/lingwen-storage/tests/` (package-local) matches convention used by `packages/lingwen-llm/tests/` etc.
 
 > **更新 (2026-08-30)**: Phase 126 v16.5 #7 闭环 — DTO schema audit + typed wrapper narrowing——5 commits (`0a64afee` ... `f2f75688`, T1 DTO files + T2 wrappers health/studio/workflows + T3 wrappers cvg/decisions + T4 useProductExport cast cleanup + T5 handoff/CLAUDE.md):
 - **T1** `feat(dashboard-contracts)`: 5 new DTO files + `shared/index.ts` re-export — `health.ts` (15 interfaces: OverviewResponse, ChaptersResponse, ProductionRecords/Rollup/CostTrendResponse, HealthResponse, DatabaseStatus, MemoryUsage, ChapterData, ProductionRecord/BatchRollup/CostTrendPointResponse) + `studio.ts` (24 interfaces: Studio{ProjectItem,ProjectsResponse,ActiveResponse,SetActiveRequest,SummaryResponse,QualityResponse,QualityReport{Issue,Chapter,Response},ProseHeatmap{Chapter,},ProseDiff{Totals,Chapter,Response},ProseJudge{Rating,Chapter,Signal,Response},Preflight{Chapter,Request,Response},BatchRunRequest,BatchJobResponse}) + `workflows.ts` (5 interfaces: WorkflowListItem, Run/ResumeWorkflowRequest, WorkflowStatusResponse, WorkflowMermaidResponse) + `cvg.ts` (12 interfaces: RippleListItem/Detail/Action/Stats/AuditEntryResponse, CascadeNode/Edge/Response/PreviewResponse, ReferenceGraphResponse, CascadeRunResponse, CascadeCancelPayload) + `decisions.ts` (4 interfaces: DecisionResponse, Resolve/Defer/CancelDecisionRequest)。All sourced from `apps/studio_api/models/{health,chapter,studio,workflow,decision}.py` + `apps/studio_api/protocols.py` (Ripple/Cascade/ReferenceGraph responses)。
