@@ -214,3 +214,25 @@ __all__ = [
     "SqliteConnection",
     "SqliteStorageAdapter",
 ]
+
+
+# v16.5 #N.1: Register this concrete adapter as the default factory for
+# ``get_default_storage()``. Mirrors the v16.5 #1 pattern where
+# ``infra.llm_service`` registers itself as default factory for LLMServiceAdapter.
+#
+# The factory returns a SqliteStorageAdapter with default settings. Apps that
+# need a specific DB path should construct SqliteStorageAdapter(db_path=...)
+# explicitly and register it via set_default_storage_factory() at startup.
+from lingwen_shared.ports.storage import set_default_storage_factory
+
+
+def _default_storage_factory() -> "SqliteStorageAdapter":
+    """Default factory: SqliteStorageAdapter with in-memory DB.
+
+    Production apps should register their own factory at startup with the
+    appropriate db_path. This default is for tests and minimal bootstrap.
+    """
+    return SqliteStorageAdapter(":memory:")
+
+
+set_default_storage_factory(_default_storage_factory)
