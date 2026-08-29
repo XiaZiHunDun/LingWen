@@ -213,6 +213,11 @@ known_third_party_libraries = [
     "pytest",
     "click",
 ]
+# DP-03 (v16.5 #2) — sqlite3 is a stdlib (external) module. import-linter
+# requires `include_external_packages=True` on any forbidden contract that
+# references external modules (not just internal `root_packages`).
+# Reference: https://import-linter.readthedocs.io/en/stable/configuration.html
+include_external_packages = true
 
 # Contract 1: Layer purity between api_gateway, creator packages, and infra.
 # import-linter's `layers` is ordered top → bottom. Higher layers may import
@@ -253,6 +258,36 @@ source_modules = [
 ]
 forbidden_modules = [
     "infra.llm_service",
+]
+
+# Contract 3: DP-03 enforcement — business code MUST NOT import sqlite3
+# directly. Use the StoragePort abstraction
+# (`from lingwen_shared.ports.storage import StoragePort`) so that storage
+# implementation can vary (SQLite, Postgres, in-memory test backend) without
+# coupling business logic to a specific driver.
+#
+# Scope note: source_modules is restricted to `lingwen_creator` only (not
+# `apps`). Rationale: `apps/studio_api/routes/*` is the FastAPI HTTP adapter
+# and legitimately composes `infra/*` modules that use sqlite3 (e.g.,
+# `infra.world_db.*`, `infra.cross_volume.storage`, `infra.reading_power.db`).
+# import-linter's `forbidden` contract follows transitive imports, so any
+# `apps` route that touches `infra` storage would be flagged. The DP-02
+# (LLMServicePort) contract worked because port_adapter broke the chain via
+# factory pattern; for storage, infra genuinely needs sqlite3, so the chain
+# `apps → infra → sqlite3` is architecturally legitimate.
+#
+# Real enforcement is in `tests/hygiene/test_no_concrete_sqlite3_import.py`:
+# - Greps apps/ + lingwen_creator/ for direct `import sqlite3` / `from sqlite3`
+# - Catches the architectural violation (direct stdlib coupling) regardless
+#   of import-linter's transitive limitations.
+[[tool.importlinter.contracts]]
+name = "no_concrete_sqlite3_in_business_code"
+type = "forbidden"
+source_modules = [
+    "lingwen_creator",
+]
+forbidden_modules = [
+    "sqlite3",
 ]
 
 [dependency-groups]
