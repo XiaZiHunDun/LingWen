@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #6 (Phase 126 DP-02 tools migration defense-in-depth hygiene gate — 12-file whitelist + regression test — 2 commits)
+> **版本**: v16.5 #7 (Phase 126 DTO schema audit + typed wrapper narrowing — 5 new DTO files + 41 wrapper functions narrowed from Promise<unknown> to concrete DTO types + 1 composable cast cleanup — 5 commits)
+  → v16.5 #6 (Phase 126 DP-02 tools migration defense-in-depth hygiene gate — 12-file whitelist + regression test — 2 commits)
   → v16.5 #4 (Phase 126 DP-03 remaining packages defense-in-depth hygiene gate — 8-file whitelist + regression test — 1 commit)
   → v16.5 #3 (PARTIAL — Phase 126 DP-03 SqliteStorageAdapter concrete impl, full DP-03 expansion carried to v16.5 #N — 1 commit)
   → v16.5 #2 (Phase 126 DP-03 StoragePort enforcement — import-linter forbidden contract + 4 hygiene tests + 1 dead sqlite3 import cleanup — 3 commits)
@@ -29,6 +30,30 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #7 闭环 — DTO schema audit + typed wrapper narrowing——5 commits (`0a64afee` ... `f2f75688`, T1 DTO files + T2 wrappers health/studio/workflows + T3 wrappers cvg/decisions + T4 useProductExport cast cleanup + T5 handoff/CLAUDE.md):
+- **T1** `feat(dashboard-contracts)`: 5 new DTO files + `shared/index.ts` re-export — `health.ts` (15 interfaces: OverviewResponse, ChaptersResponse, ProductionRecords/Rollup/CostTrendResponse, HealthResponse, DatabaseStatus, MemoryUsage, ChapterData, ProductionRecord/BatchRollup/CostTrendPointResponse) + `studio.ts` (24 interfaces: Studio{ProjectItem,ProjectsResponse,ActiveResponse,SetActiveRequest,SummaryResponse,QualityResponse,QualityReport{Issue,Chapter,Response},ProseHeatmap{Chapter,},ProseDiff{Totals,Chapter,Response},ProseJudge{Rating,Chapter,Signal,Response},Preflight{Chapter,Request,Response},BatchRunRequest,BatchJobResponse}) + `workflows.ts` (5 interfaces: WorkflowListItem, Run/ResumeWorkflowRequest, WorkflowStatusResponse, WorkflowMermaidResponse) + `cvg.ts` (12 interfaces: RippleListItem/Detail/Action/Stats/AuditEntryResponse, CascadeNode/Edge/Response/PreviewResponse, ReferenceGraphResponse, CascadeRunResponse, CascadeCancelPayload) + `decisions.ts` (4 interfaces: DecisionResponse, Resolve/Defer/CancelDecisionRequest)。All sourced from `apps/studio_api/models/{health,chapter,studio,workflow,decision}.py` + `apps/studio_api/protocols.py` (Ripple/Cascade/ReferenceGraph responses)。
+- **T2** `refactor(dashboard)`: narrow `apps/dashboard/src/api/{health,studio,workflows}.ts` — 22 wrapper functions `Promise<unknown>` → `Promise<ConcreteDTO>`。Pattern: `data → as T` 配 `settings.ts` established convention。`runWorkflow(req: unknown)` → `runWorkflow(req: RunWorkflowInput)` (new typed input interface)。
+- **T3** `refactor(dashboard)`: narrow `apps/dashboard/src/api/{cvg,decisions}.ts` — 19 wrapper functions narrowed。`resolveDecision` 返回 synthetic envelope (backend POST 返回 status 不是 full DecisionResponse),typed locally as `ResolveDecisionResult` to document the narrower contract。
+- **T4** `refactor(dashboard)`: `useCreatorProductTools/useProductExport.ts` 2 个 `as {chapters?: Array<{chapter, has_body}>}` cast 转换 `as unknown as` (now required by new `ChaptersResponseDTO` return type),加注释 documenting pre-existing data-shape drift (backend 不送 `has_body`,filter 永远 returns `[]`,v16.5 #N carryover)。No runtime change。
+- **T5** `docs(phase-126)`: handoff doc + CLAUDE.md + this update section。
+Tests:1729 vitest passing (0 regression) / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 2 contracts KEPT** (no Python changes) / 41 of 42 wrapper functions narrowed (only `runCreatorAgentPlanStream` SSE stream remains `Promise<unknown>` — dynamic plan shape, genuinely out of scope)。
+
+5 lessons (v16.5 #7 §5):
+1. **Manual DTOs 是 codegen 前的 valid bridge** — v16.5 #N 大 refactor 之前手写 TS interfaces 立即解锁 type safety。Downside: drift risk if Python models change without TS updates。Upside: zero risk to codegen pipeline。
+2. **`as` casts 是 compile-time-only 但 reveal real bugs** — `useProductExport` 的 `c.has_body` filter 永远返回 `[]` 因为 backend 从来不送 `has_body`。新 typed return 暴露 drift。Documenting drift inline (而非 silently fixing) keeps change scope bounded to typed-wrapper narrowing。
+3. **`Promise<unknown>` wrappers don't fail silently — they just don't help** — 39 of 42 wrapper functions narrowed。Composable bugs 变得 visible。Even partial type narrowing surfaces drift。
+4. **SSE stream returns are genuinely `unknown`** — `runCreatorAgentPlanStream` parses JSON over stream; response shape depends on `action_label`。Narrowing 需要 tagged-union response envelope OR typing parser helpers instead of stream itself。v16.5 #N carryover。
+5. **`data → as T` pattern beats `request<T>()`** — `core.js` `request()` returns `Promise<unknown>`,wrappers do single cast to DTO type。Matches `settings.ts` convention。Avoids the chicken-and-egg of typing `request` itself (which is shared across 14 wrappers with different return shapes)。
+
+**Carryover to v16.5 #N (full DTO alignment)**:
+- **#N.1** Add 5 Python Pydantic DTOs in `packages/lingwen-shared/src/lingwen_shared/contracts/python/{health,studio,workflows,cvg,decisions}.py` (cross-reference `apps/studio_api/models/*.py` + `protocols.py` definitions)。
+- **#N.2** Update `tooling/contracts/generate.py` MODULES list — add 5 new entries。
+- **#N.3** Regenerate `packages/lingwen-shared/src/lingwen_shared/contracts/ts/{health,studio,workflows,cvg,decisions}.ts` via `python tooling/contracts/generate.py`。
+- **#N.4** Replace manual `packages/dashboard-contracts/src/shared/{health,studio,workflows,cvg,decisions}.ts` with `export type { ... } from '../../lingwen-shared/src/lingwen_shared/contracts/ts/X'` (matching `memory.ts`/`creator.ts` re-export pattern)。
+- **#N.5** `runCreatorAgentPlanStream` SSE narrowing — design tagged-union response envelope OR type parser helpers。Only remaining `Promise<unknown>` in `apps/dashboard/src/api/`。
+- **#N.6** DTO schema drift fix for remaining `as unknown as` casts (4 production + 2 test casts in volume/onboarding/settings/content composables — predate v16.2.8 typed-wrapper cleanup)。
+- **#N.7** Typed wrapper return type narrowing for `Promise<Record<string, unknown>>` — some functions in `volume.ts`/`onboarding.ts`/`settings.ts` return `Record<string, unknown>` shapes that could narrow further once full codegen is in place。
 
 > **更新 (2026-08-29)**: Phase 126 v16.5 #6 闭环 — Tools migration defense-in-depth——2 commits (T1 + T2):
 - **T1** `test(hygiene)`: 扩展 `tooling/hygiene/tests/test_no_concrete_llm_import.py` (DP-02 hygiene file) — 新增 `test_no_infra_llm_service_imports_in_tools_with_whitelist` + 12-file whitelist (pre-v16.5 #1 LLMServiceAdapter files):
