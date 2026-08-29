@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.5.N1"  # Phase 126 v16.5 #N.1 (StoragePort factory pattern in lingwen_shared.ports.storage, mirrors v16.5 #1 LLMServiceAdapter — set_default_storage_factory() + get_default_storage())
+version: "16.5.N3"  # Phase 126 v16.5 #N.3 (whitelisted infra/* files migrated to SqliteStorageAdapter — 8 files dropped 'import sqlite3', public API preserved, hygiene test whitelist retired)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -209,7 +209,7 @@ design_principles:
   - id: DP-03
     rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
     scope: "any context with persistence"
-    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth). v16.5 #3 PARTIAL ✓ done (SqliteStorageAdapter concrete impl at infra/persistence/sqlite_storage_adapter.py — the ONLY allowed import sqlite3 site in infra/). v16.5 #4 ✓ done (defense-in-depth hygiene gate expansion to lingwen_core/pipeline/cli with 8-file whitelist). v16.5 #N.0 ✓ done (relocated SqliteStorageAdapter to packages/lingwen-storage/, infra/persistence/sqlite_storage_adapter.py becomes back-compat re-export shim — does not import sqlite3, infra sqlite3 import count 22→21). v16.5 #N.1 ✓ done (factory pattern: set_default_storage_factory() + get_default_storage() in lingwen_shared.ports.storage; SqliteStorageAdapter registers as default factory at module load; lingwen_shared stays sqlite3-free). Future: #N.2 apps migration (19 files) + #N.3-N.6 lingwen_core/pipeline/cli (8 whitelisted + 14 remaining) + contract expansion to [\"lingwen_creator\", \"apps\"].'
+    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth). v16.5 #3 PARTIAL ✓ done (SqliteStorageAdapter concrete impl at infra/persistence/sqlite_storage_adapter.py — the ONLY allowed import sqlite3 site in infra/). v16.5 #4 ✓ done (defense-in-depth hygiene gate expansion to lingwen_core/pipeline/cli with 8-file whitelist). v16.5 #N.0 ✓ done (relocated SqliteStorageAdapter to packages/lingwen-storage/, infra/persistence/sqlite_storage_adapter.py becomes back-compat re-export shim — does not import sqlite3, infra sqlite3 import count 22→21). v16.5 #N.1 ✓ done (factory pattern: set_default_storage_factory() + get_default_storage() in lingwen_shared.ports.storage; SqliteStorageAdapter registers as default factory at module load; lingwen_shared stays sqlite3-free). v16.5 #N.3 ✓ done (8 whitelisted files migrated to SqliteStorageAdapter: budget_persistence + cost_persistence + relationship_tracker + state_manager + database + migrate_from_json + backends/sqlite + doctor; hygiene test whitelist retired; sqlite3 import count 8→0 in migrated files). Future: #N.2 apps migration (19 files) + #N.4-N.6 lingwen_core/pipeline/cli remaining (14 infra/* files) + contract expansion to [\"lingwen_creator\", \"apps\"].'
   - id: DP-04
     rule: "跨 context 调用只通过 contract DTO"
     scope: "cross-context"
