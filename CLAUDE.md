@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #3 (PARTIAL — Phase 126 DP-03 SqliteStorageAdapter concrete impl, full DP-03 expansion carried to v16.5 #N — 1 commit)
+> **版本**: v16.5 #4 (Phase 126 DP-03 remaining packages defense-in-depth hygiene gate — 8-file whitelist + regression test — 1 commit)
+  → v16.5 #3 (PARTIAL — Phase 126 DP-03 SqliteStorageAdapter concrete impl, full DP-03 expansion carried to v16.5 #N — 1 commit)
   → v16.5 #2 (Phase 126 DP-03 StoragePort enforcement — import-linter forbidden contract + 4 hygiene tests + 1 dead sqlite3 import cleanup — 3 commits)
   → v16.5 #1 (Phase 126 eliminate grimp-evasion hack — relocate LLMTask/TaskType to lingwen_shared + factory pattern + regression check — 11 commits)
   → v16.4 (Phase 126 DP-02 LLMServicePort enforcement — LLMServiceAdapter sync facade + import-linter forbidden contract + 5 broken imports 修复 + grimp-evasion workaround for data types — 14 commits)
@@ -27,6 +28,27 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-29)**: Phase 126 v16.5 #4 闭环 — Remaining packages hygiene gate——1 commit (T1):
+- **T1** `test(hygiene)`: 扩展 `tests/hygiene/test_no_concrete_sqlite3_import.py` — 新增 `test_no_sqlite3_imports_in_remaining_packages_with_whitelist` + 8-file whitelist (Phase 15.0 T2.8 deprecated files):
+  - `lingwen-core/agents/budget_persistence.py` + `cost_persistence.py` + `social_engine/relationship_tracker.py`
+  - `lingwen-pipeline/state/state_manager.py` + `database.py` + `migrate_from_json.py` + `backends/sqlite.py`
+  - `lingwen-cli/commands/doctor.py`
+- **Defense-in-depth**: 新 direct `import sqlite3` 在这些 packages → fail CI。Existing 8 files exempt。
+
+**Why not full migration in v16.5 #4**: Full migration 需要 move `SqliteStorageAdapter` from `infra/persistence/` to `packages/lingwen-storage/` (avoid circular dep: lingwen_core/pipeline → infra.persistence vs current infra → lingwen_core)。That architectural move belongs in v16.5 #N (Full DP-03 expansion)。
+
+Tests:578 backend (577 baseline + 1 NEW hygiene gate) / 1729 vitest / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 3 contracts KEPT** (unchanged) / grimp-evasion hygiene OK。
+
+3 lessons (v16.5 #4 §6):
+1. **Pragmatic migration > perfect migration** — regression gate prevents problem from worsening while full fix proceeds incrementally。
+2. **Whitelist-based regression gates need clear removal criteria** — 8 files should ALL be removed in v16.5 #N, each as separate commit。
+3. **Existing deprecation comments are not enough** — Phase 15.0 T2.8 comments had no enforcement。Active CI gates >> passive comments。
+
+**Carryover to v16.5 #N (8 whitelisted files migration)**:
+- v16.5 #N.0: Move `SqliteStorageAdapter` from `infra.persistence` to `packages/lingwen-storage/sqlite_storage_adapter` (avoid circular dep)
+- v16.5 #N.0.a: Update all infra.persistence callers to use relocated adapter
+- v16.5 #N.5.a-h: Migrate each of the 8 whitelisted files one-by-one (use relocated SqliteStorageAdapter, change annotations to `ConnectionPort`, remove `import sqlite3`, remove from whitelist)
 
 > **更新 (2026-08-29)**: Phase 126 v16.5 #3 闭环 (PARTIAL) — DP-03 SqliteStorageAdapter concrete impl——1 commit (`e8b51ab9`):
 - **T1** `feat(persistence)`: 新建 `infra/persistence/sqlite_storage_adapter.py` — concrete `StoragePort` impl (200 lines):
