@@ -9,6 +9,7 @@ description = "LingWen · 事件流与文件存储"
 requires-python = ">=3.12"
 dependencies = [
     "python-ulid>=3.0",
+    "lingwen-shared",   # v16.5 #N.0 — StoragePort Protocol lives here
 ]
 
 [project.optional-dependencies]
