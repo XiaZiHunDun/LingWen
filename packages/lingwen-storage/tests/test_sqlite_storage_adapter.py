@@ -281,3 +281,89 @@ def test_markdown_roundtrip_singleton_via_storage(tmp_path: Path) -> None:
     rt2 = storage.markdown_roundtrip()
 
     assert rt1 is rt2
+
+
+# ---------------------------------------------------------------------------
+# v16.5 #N.1: Factory pattern tests
+# ---------------------------------------------------------------------------
+
+from lingwen_shared.ports.storage import (  # noqa: E402  (late import intentional)
+    get_default_storage,
+    get_default_storage_factory,
+    set_default_storage_factory,
+)
+
+
+@pytest.fixture
+def restore_default_factory():
+    """Fixture: save and restore the default factory around test.
+
+    The module-level factory is set once at import time by
+    ``lingwen_storage.sqlite_storage_adapter``. Tests that override it
+    must restore it on teardown so other tests are not polluted.
+    """
+    original = get_default_storage_factory()
+    yield
+    set_default_storage_factory(original)
+
+
+def test_factory_registers_at_module_load(restore_default_factory) -> None:
+    """Importing lingwen_storage.sqlite_storage_adapter registers the factory.
+
+    At module load time, ``sqlite_storage_adapter.py`` calls
+    ``set_default_storage_factory(_default_storage_factory)``. Because
+    this test module imports ``SqliteStorageAdapter`` from that module,
+    the registration side-effect has already run by the time this test
+    executes. The fixture saves/restores the factory to not leak state.
+    """
+    factory = get_default_storage_factory()
+    assert factory is not None, (
+        "Factory should be registered after importing "
+        "lingwen_storage.sqlite_storage_adapter"
+    )
+
+
+def test_get_default_storage_constructs_via_factory(restore_default_factory) -> None:
+    """get_default_storage() uses the registered factory to construct StoragePort."""
+
+    class FakeStorage:
+        """Minimal StoragePort substitute for factory test."""
+
+        def with_connection(self, fn):
+            return fn(object())
+
+        def with_transaction(self, fn):
+            return fn(object())
+
+        def markdown_roundtrip(self):
+            return object()
+
+    set_default_storage_factory(lambda: FakeStorage())
+    storage = get_default_storage()
+    assert isinstance(storage, FakeStorage)
+
+
+def test_get_default_storage_raises_when_no_factory(restore_default_factory) -> None:
+    """get_default_storage() raises RuntimeError if no factory is registered."""
+    set_default_storage_factory(None)
+    with pytest.raises(
+        RuntimeError, match="StoragePort default factory not registered"
+    ):
+        get_default_storage()
+
+
+def test_default_factory_returns_sqlite_storage_adapter(restore_default_factory) -> None:
+    """The default factory registered at module load returns SqliteStorageAdapter.
+
+    Verifies the end-to-end chain: ``get_default_storage()`` → registered
+    factory → ``SqliteStorageAdapter(\":memory:\")``. The adapter
+    satisfies the StoragePort Protocol (structural typing).
+    """
+    storage = get_default_storage()
+    assert isinstance(storage, SqliteStorageAdapter)
+
+    # Spot-check StoragePort methods are callable (structural conformance).
+    assert callable(storage.with_connection)
+    assert callable(storage.with_transaction)
+    assert callable(storage.markdown_roundtrip)
+

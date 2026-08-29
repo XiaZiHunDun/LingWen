@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #N.0 (Phase 126 SqliteStorageAdapter relocated to packages/lingwen-storage — breaks lingwen_core/pipeline → infra.persistence cycle, infra version becomes back-compat shim, lingwen-shared workspace dep added — 2 commits)
+> **版本**: v16.5 #N.1 (Phase 126 StoragePort factory pattern — `set_default_storage_factory()` + `get_default_storage()` in lingwen_shared.ports.storage, SqliteStorageAdapter registers as default factory at module load, mirrors v16.5 #1 LLMServiceAdapter pattern — 3 commits + 1 docs)
+  → v16.5 #N.0 (Phase 126 SqliteStorageAdapter relocated to packages/lingwen-storage — breaks lingwen_core/pipeline → infra.persistence cycle, infra version becomes back-compat shim, lingwen-shared workspace dep added — 2 commits)
   → v16.5 #7 (Phase 126 DTO schema audit + typed wrapper narrowing — 5 new DTO files + 41 wrapper functions narrowed from Promise<unknown> to concrete DTO types + 1 composable cast cleanup — 5 commits)
   → v16.5 #6 (Phase 126 DP-02 tools migration defense-in-depth hygiene gate — 12-file whitelist + regression test — 2 commits)
   → v16.5 #4 (Phase 126 DP-03 remaining packages defense-in-depth hygiene gate — 8-file whitelist + regression test — 1 commit)
@@ -31,6 +32,40 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #N.1 闭环 — StoragePort factory pattern——3 commits (`05c58b9b` + `bd95ca6c` + `02906d32`):
+- **T1** `feat(lingwen-shared)`: `packages/lingwen-shared/src/lingwen_shared/ports/storage.py` 加 factory scaffolding — `_DEFAULT_STORAGE_FACTORY` module var + `set_default_storage_factory(factory)` + `get_default_storage_factory()` + `get_default_storage()` (raises RuntimeError if no factory)。`__all__` extend to 6 entries。**lingwen_shared 仍 sqlite3-free** (only docstring/comment refs)。
+- **T2** `feat(lingwen-storage)`: `packages/lingwen-storage/src/lingwen_storage/sqlite_storage_adapter.py` 末尾加 `_default_storage_factory()` + 调 `set_default_storage_factory(_default_storage_factory)` at module load。Mirrors `infra.llm_service` registration of `LLMService.get` for `LLMServiceAdapter`。
+- **T3** `test(lingwen-storage)`: `packages/lingwen-storage/tests/test_sqlite_storage_adapter.py` 加 4 NEW factory tests — `test_factory_registers_at_module_load` (verifies import triggers registration) + `test_get_default_storage_constructs_via_factory` (FakeStorage stub) + `test_get_default_storage_raises_when_no_factory` (RuntimeError check) + `test_default_factory_returns_sqlite_storage_adapter` (end-to-end default factory returns real adapter)。用 `restore_default_factory` fixture 防止污染其他 tests。
+
+Tests: 35 lingwen-storage (+4 factory) / 39 hygiene (unchanged) / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 3 contracts KEPT** (layer_dependencies + no_concrete_llm_service_in_business_code + no_concrete_sqlite3_in_business_code) / grimp-evasion hygiene OK。
+
+**Factory pattern (mirrors v16.5 #1 LLMServiceAdapter)**:
+```
+apps/* ─────────────────┐
+                        │ uses get_default_storage()
+                        ▼
+lingwen_shared.ports.storage (Protocol + factory functions, NO sqlite3)
+                        ▲
+                        │ registers factory at module load
+                        │
+lingwen_storage.sqlite_storage_adapter (canonical, ONLY sqlite3 importer)
+                        ▲
+                        │ re-export shim (no sqlite3)
+                        │
+infra.persistence.sqlite_storage_adapter (back-compat shim)
+```
+
+3 lessons (v16.5 #N.1):
+1. **Factory pattern 跨 port 复用** — v16.5 #1 LLM + v16.5 #N.1 Storage 共用 `_DEFAULT_FACTORY` + `set_default_*` + `get_default_*` template。Future ports (Network, Auth) 可 follow。
+2. **Module-load side effects 是 default registration 的 idiom** — 任何 import canonical 模块的人都触发注册。No explicit bootstrap step required。
+3. **Default `:memory:` DB for factory** — Production code 应注册自己的 factory with correct `db_path`。Default `:memory:` factory is for tests + minimal bootstrap only。
+
+**Carryover to v16.5 #N.2 (now unblocked)**:
+- Migrate 19 `apps/*` files to use `get_default_storage()` from `lingwen_shared`
+- Migrate 8 whitelisted `infra/*` files (Phase 15.0 T2.8 deprecated) to drop `import sqlite3`
+- Migrate 21 remaining `infra/*` files to drop `import sqlite3`
+- Expand import-linter contract `source_modules = ["lingwen_creator", "apps"]`
 
 > **更新 (2026-08-30)**: Phase 126 v16.5 #N.0 闭环 — SqliteStorageAdapter relocated to packages/lingwen-storage/——2 commits (`5cb6adc4` + `6800a4c8`):
 - **T1** `feat(lingwen-storage)`: 新建 `packages/lingwen-storage/src/lingwen_storage/sqlite_storage_adapter.py` (217 lines) — canonical `StoragePort` impl,在 lingwen-* 包家族中是**唯一**允许 `import sqlite3` 的文件。`packages/lingwen-storage/pyproject.toml` 加 `lingwen-shared` workspace dep。
