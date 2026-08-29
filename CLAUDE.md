@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #2 (Phase 126 DP-03 StoragePort enforcement — import-linter forbidden contract + 4 hygiene tests + 1 dead sqlite3 import cleanup — 3 commits)
+> **版本**: v16.5 #3 (PARTIAL — Phase 126 DP-03 SqliteStorageAdapter concrete impl, full DP-03 expansion carried to v16.5 #N — 1 commit)
+  → v16.5 #2 (Phase 126 DP-03 StoragePort enforcement — import-linter forbidden contract + 4 hygiene tests + 1 dead sqlite3 import cleanup — 3 commits)
   → v16.5 #1 (Phase 126 eliminate grimp-evasion hack — relocate LLMTask/TaskType to lingwen_shared + factory pattern + regression check — 11 commits)
   → v16.4 (Phase 126 DP-02 LLMServicePort enforcement — LLMServiceAdapter sync facade + import-linter forbidden contract + 5 broken imports 修复 + grimp-evasion workaround for data types — 14 commits)
   → v16.3 (Phase 126 import-linter DP-01..06 enforcement — 8 barrel consumers 迁移 + import-linter layer_dependencies contract + ESLint no-restricted-imports × 2 rules + 17 regression tests)
@@ -27,6 +28,38 @@
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
 
+> **更新 (2026-08-29)**: Phase 126 v16.5 #3 闭环 (PARTIAL) — DP-03 SqliteStorageAdapter concrete impl——1 commit (`e8b51ab9`):
+- **T1** `feat(persistence)`: 新建 `infra/persistence/sqlite_storage_adapter.py` — concrete `StoragePort` impl (200 lines):
+  - `SqliteConnection`: 包装 `sqlite3.Connection` 满足 `ConnectionPort` Protocol,`__getattr__` delegate cursor 方法 (`fetchall`, `row_factory`, `cursor()`)。
+  - `FileSystemMarkdownRoundtrip`: `MarkdownRoundtripPort` impl (atomic `.tmp + rename`)。
+  - `SqliteStorageAdapter`: concrete `StoragePort` with `with_connection` (read-only) + `with_transaction` (commit/rollback) + `markdown_roundtrip` accessor。
+- **T1 tests** `tests/persistence/test_sqlite_storage_adapter.py` — 13 tests 覆盖 row data / transaction commit/rollback / attr delegation / atomic write / Protocol conformance / markdown list_chapters (sorted + missing dir) / default timeout / singleton accessor。
+
+**Documented deviations**:
+- Test location: `tests/persistence/` (matches project convention with 5 sibling persistence tests; not `infra/persistence/tests/`)
+- `params: object = ()` (not `...`) — sqlite3 rejects Ellipsis as "unsupported parameter type" when forwarded to `sqlite3.Connection.execute()`
+- Protocol conformance via duck-typing (StoragePort not `@runtime_checkable`, so `isinstance` raises `TypeError`)
+- Empirical finding (T1.5): sqlite3 3.51 + Python 3.13 rolls back DML on close-without-commit → `with_connection` test 用 `with_transaction` for INSERTs
+
+**T1.5 empirical test** (pre-T1): grimp DOES follow `if TYPE_CHECKING: import sqlite3` — critical finding for v16.5 #N migration (no shortcut via TYPE_CHECKING; annotations 必须 change to `ConnectionPort`)。
+
+**v16.5 #3 SCOPE: PARTIAL** — original goal 是 expand import-linter contract to include `apps`, 但 empirical check 暴露 19 apps files 直接 import `infra.` (e.g., `studio_api/routes/world.py`, `helpers/cvg.py`, `protocols.py`, etc.)。Apps 必须先 refactor 到 use `lingwen_shared` Protocols (不是直接 `infra.persistence.*` imports)。This is a service layer / port-binding refactor across FastAPI app boundary — genuinely 30-50 commits of mechanical refactor, deferred to v16.5 #N。
+
+Tests:577 backend (**564 baseline + 13 NEW**) / 1729 vitest / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 3 contracts KEPT** (unchanged) / grimp-evasion hygiene OK / SqliteStorageAdapter duck-typed protocol OK。
+
+4 lessons (v16.5 #3 §5):
+1. **TYPE_CHECKING does NOT help import-linter** — grimp treats it identically to runtime imports。DP migration: change annotations to Protocol, NOT 依赖 TYPE_CHECKING。
+2. **sqlite3 3.51 + Python 3.13 quirk** — close without commit rolls back DML。`with_connection` is read-only by contract; INSERTs 必须 `with_transaction`。
+3. **Scope expansion reality** — initial estimate (15-20 commits) 假设 apps 已经用 Protocols。Reality: apps 仍 directly imports infra across 19 files,需要 service layer refactor first。
+4. **Documentation must surface scope reality early** — initial carryover description ("refactor infra/* to use StoragePort") 没 acknowledge the apps service layer dependency。Future DPs should START with empirical `grep -rl "from infra\." apps/` to surface the gap upfront。
+
+**Carryover to v16.5 #N (Full DP-03 expansion)**:
+- **#N.1** Add factory pattern to `lingwen_shared.ports.storage` (mirror v16.5 #1 LLMServiceAdapter) — `set_default_storage_factory()` + `get_default_storage()` 注册 `infra.persistence.sqlite_storage_adapter` at module load — ~3-5 commits
+- **#N.2** Migrate 19 apps/* files to use `get_default_storage()` from lingwen_shared — replaces `from infra.persistence.X import Y` everywhere — ~10-15 commits (1 file per commit, DP-06 strict)
+- **#N.3** Migrate 22 infra/* files to drop `import sqlite3` (use `ConnectionPort` Protocol annotation for `conn` params) — world_db (8) + cross_volume + event_sourcing + reading_power + persistence internals (3) + persistence/migrations + tools/workflow/lib (5) + tools/migrate_to_sqlite — ~15-25 commits
+- **#N.4** Expand import-linter contract `source_modules = ["lingwen_creator", "apps"]` — then drop redundant hygiene grep test — ~2-3 commits
+- **Total v16.5 #N estimate**: ~30-50 commits
+
 > **更新 (2026-08-29)**: Phase 126 v16.5 #2 闭环 — DP-03 StoragePort enforcement——3 commits (`87e2374f` + `ea4a14aa` + docs commit):
 - **T1** `chore(apps)`: 删 `apps/studio_api/app.py:18` dead `import sqlite3` (0 usages elsewhere in file; verified via `grep -nE "sqlite3\.|sqlite3\)|= sqlite3"`)。
 - **T2** `feat(import-linter)`: 新增 `no_concrete_sqlite3_in_business_code` forbidden contract (`source_modules = ["lingwen_creator"]`, `forbidden_modules = ["sqlite3"]`) + 4 hygiene tests (`tests/hygiene/test_no_concrete_sqlite3_import.py`)。
@@ -47,7 +80,7 @@ Tests:564 backend (398 infra/studio/hygiene + 73 creator + 85 shared + 8 llm) / 
 3. `StoragePort` Protocol is canonical persistence interface — `lingwen_shared/ports/storage.py`。Future persistence code should use this port。
 
 **Carryover to v16.5 #3..#7**:
-- **DP-03 full fix** (high-priority for v16.5 #3+): refactor `infra/*` to use `StoragePort` internally (25+ files)。Then `apps/` can use `StoragePort` cleanly and import-linter contract 扩展 to `["lingwen_creator", "apps"]`。Mirror DP-02 trajectory (v16.4 factory → v16.5 #1 relocate to shared → DP-03 future refactor)。
+- ✅ **DP-03 #3 PARTIAL done** (`e8b51ab9`) — concrete `SqliteStorageAdapter` is the architectural foundation。**Full expansion → v16.5 #N** (factory pattern + apps migration (19 files) + infra migration (22 files) + contract expansion)。Mirror DP-02 trajectory (v16.4 factory → v16.5 #1 relocate to shared → DP-03 future refactor)。
 - DP-01 (cross-package contracts via ports)
 - Async port conformance (`async execute → LLMResult`)
 - Remaining packages migration (`lingwen_core/pipeline/prompt/cli` — 8 files sqlite3 直接)
