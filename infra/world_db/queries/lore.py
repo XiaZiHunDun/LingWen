@@ -1,19 +1,19 @@
 """Lore CRUD with optimistic concurrency."""
 import json
-import sqlite3
 
 from infra.world_db.queries._helpers import (
     RevisionConflict,
     now_iso,
     row_to_dict,
 )
+from lingwen_shared.ports.storage import ConnectionPort
 
 
 class LoreRevisionConflict(RevisionConflict):
     """Raised when expected_revision does not match current lore row."""
 
 
-def create_lore(conn: sqlite3.Connection, data: dict) -> int:
+def create_lore(conn: ConnectionPort, data: dict) -> int:
     now = now_iso()
     cur = conn.execute(
         """INSERT INTO lore_entry
@@ -30,21 +30,21 @@ def create_lore(conn: sqlite3.Connection, data: dict) -> int:
     return cur.lastrowid
 
 
-def get_lore(conn: sqlite3.Connection, lid: int) -> dict | None:
+def get_lore(conn: ConnectionPort, lid: int) -> dict | None:
     return row_to_dict(
         conn.execute("SELECT * FROM lore_entry WHERE id = ?", (lid,)).fetchone(),
         ("tags",),
     )
 
 
-def get_lore_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
+def get_lore_by_slug(conn: ConnectionPort, slug: str) -> dict | None:
     return row_to_dict(
         conn.execute("SELECT * FROM lore_entry WHERE slug = ?", (slug,)).fetchone(),
         ("tags",),
     )
 
 
-def list_lore(conn: sqlite3.Connection, category: str | None = None) -> list[dict]:
+def list_lore(conn: ConnectionPort, category: str | None = None) -> list[dict]:
     if category:
         rows = conn.execute(
             "SELECT * FROM lore_entry WHERE category = ? ORDER BY title",
@@ -56,7 +56,7 @@ def list_lore(conn: sqlite3.Connection, category: str | None = None) -> list[dic
 
 
 def update_lore(
-    conn: sqlite3.Connection, lid: int, patch: dict, expected_revision: int
+    conn: ConnectionPort, lid: int, patch: dict, expected_revision: int
 ) -> None:
     tags_value = (
         json.dumps(patch["tags"], ensure_ascii=False) if "tags" in patch else None
