@@ -7,23 +7,42 @@
  * NOTE: This is a NEW typed wrapper added in v16.2.8 (Phase 126 cleanup).
  * Existing api/workflows.js continues to handle backward-compatible calls.
  * v16.2.8 T5 deletes api/workflows.js after consumers migrate.
+ *
+ * v16.5 #7: Promise<unknown> narrowed to concrete DTO types declared in
+ * @lingwen/dashboard-contracts/shared/workflows.
  */
+import type {
+  WorkflowListItemDTO,
+  WorkflowMermaidResponseDTO,
+  WorkflowStatusResponseDTO,
+} from '@lingwen/dashboard-contracts/shared';
 import { request } from './core.js';
 
 // ---------------------------------------------------------------------------
 // /workflows/list (all registered workflows)
 // ---------------------------------------------------------------------------
 
-export async function fetchWorkflows(): Promise<unknown> {
-  return request('/workflows/list');
+export async function fetchWorkflows(): Promise<WorkflowListItemDTO[]> {
+  const data = await request('/workflows/list');
+  return data as WorkflowListItemDTO[];
 }
 
 // ---------------------------------------------------------------------------
 // /workflows/run (start a workflow by name with payload)
 // ---------------------------------------------------------------------------
 
-export async function runWorkflow(req: unknown): Promise<unknown> {
-  return request('/workflows/run', { method: 'POST', body: req });
+export interface RunWorkflowInput {
+  workflow_name: string;
+  initial_inputs?: Record<string, unknown>;
+  start_nodes?: string[];
+  max_backtracks?: number;
+  base_dir?: string;
+  cost_budget_usd?: number;
+}
+
+export async function runWorkflow(req: RunWorkflowInput): Promise<WorkflowStatusResponseDTO> {
+  const data = await request('/workflows/run', { method: 'POST', body: req });
+  return data as WorkflowStatusResponseDTO;
 }
 
 // ---------------------------------------------------------------------------
@@ -34,19 +53,21 @@ export async function resumeWorkflow(
   decisionId: string,
   option: string,
   resolvedBy: string = 'human',
-): Promise<unknown> {
-  return request('/workflows/resume', {
+): Promise<WorkflowStatusResponseDTO> {
+  const data = await request('/workflows/resume', {
     method: 'POST',
     body: { decision_id: decisionId, option, resolved_by: resolvedBy },
   });
+  return data as WorkflowStatusResponseDTO;
 }
 
 // ---------------------------------------------------------------------------
 // /workflows/active (currently running workflow)
 // ---------------------------------------------------------------------------
 
-export async function fetchActiveWorkflow(): Promise<unknown> {
-  return request('/workflows/active');
+export async function fetchActiveWorkflow(): Promise<WorkflowStatusResponseDTO> {
+  const data = await request('/workflows/active');
+  return data as WorkflowStatusResponseDTO;
 }
 
 // ---------------------------------------------------------------------------
@@ -60,9 +81,12 @@ export interface WorkflowGraphOptions {
 export async function fetchWorkflowGraph(
   workflowName: string,
   opts: WorkflowGraphOptions = {},
-): Promise<unknown> {
+): Promise<WorkflowMermaidResponseDTO> {
   const params = new URLSearchParams();
   if (opts.includeStatus) params.set('include_status', 'true');
   const qs = params.toString();
-  return request(`/workflows/${encodeURIComponent(workflowName)}/mermaid${qs ? `?${qs}` : ''}`);
+  const data = await request(
+    `/workflows/${encodeURIComponent(workflowName)}/mermaid${qs ? `?${qs}` : ''}`,
+  );
+  return data as WorkflowMermaidResponseDTO;
 }

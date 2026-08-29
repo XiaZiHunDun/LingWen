@@ -7,3 +7,70 @@ export * from './quality';
 export * from './creator';
 export * from './settings';
 export * from './onboarding';
+// Phase 126 v16.5 #7 — manually declared DTOs (codegen carryover to v16.5 #N)
+export type {
+  DatabaseStatusDTO,
+  MemoryUsageDTO,
+  HealthResponseDTO,
+  OverviewResponseDTO,
+  ChapterDataDTO,
+  ChaptersResponseDTO,
+  ProductionRecordResponseDTO,
+  ProductionRecordsResponseDTO,
+  ProductionBatchRollupResponseDTO,
+  ProductionRollupResponseDTO,
+  ProductionCostTrendPointResponseDTO,
+  ProductionCostTrendResponseDTO,
+} from './health';
+export type {
+  StudioProjectItemDTO,
+  StudioProjectsResponseDTO,
+  StudioActiveResponseDTO,
+  StudioSetActiveRequestDTO,
+  StudioSummaryResponseDTO,
+  StudioQualityResponseDTO,
+  StudioQualityReportIssueDTO,
+  StudioQualityReportChapterDTO,
+  StudioProseHeatmapChapterDTO,
+  StudioProseHeatmapDTO,
+  StudioQualityReportResponseDTO,
+  StudioProseDiffTotalsDTO,
+  StudioProseDiffChapterDTO,
+  StudioProseDiffResponseDTO,
+  StudioProseJudgeRatingDTO,
+  StudioProseJudgeChapterDTO,
+  StudioProseJudgeSignalDTO,
+  StudioProseJudgeResponseDTO,
+  StudioPreflightChapterDTO,
+  StudioPreflightRequestDTO,
+  StudioPreflightResponseDTO,
+  StudioBatchRunRequestDTO,
+  StudioBatchJobResponseDTO,
+} from './studio';
+export type {
+  WorkflowListItemDTO,
+  RunWorkflowRequestDTO,
+  ResumeWorkflowRequestDTO,
+  WorkflowStatusResponseDTO,
+  WorkflowMermaidResponseDTO,
+} from './workflows';
+export type {
+  RippleListItemResponseDTO,
+  RippleDetailResponseDTO,
+  RippleActionResponseDTO,
+  RippleStatsResponseDTO,
+  RippleAuditEntryResponseDTO,
+  CascadeNodeResponseDTO,
+  CascadeEdgeResponseDTO,
+  CascadeResponseDTO,
+  CascadePreviewResponseDTO,
+  ReferenceGraphResponseDTO,
+  CascadeRunResponseDTO,
+  CascadeCancelPayloadDTO,
+} from './cvg';
+export type {
+  DecisionResponseDTO,
+  ResolveDecisionRequestDTO,
+  DeferDecisionRequestDTO,
+  CancelDecisionRequestDTO,
+} from './decisions';
