@@ -132,3 +132,59 @@ def test_no_sqlite3_imports_in_business_code() -> None:
         + "\nBusiness code must go through StoragePort "
         + "(lingwen_shared.ports.storage) instead of importing sqlite3 directly."
     )
+
+
+# v16.5 #4: defense-in-depth gate for remaining packages (lingwen_core/pipeline/cli).
+# These packages currently use sqlite3 directly in 8 files marked "Phase 15.0 T2.8
+# deprecated" — the recommended path is infra.persistence.registry.get("X"). The
+# full migration (move SqliteStorageAdapter to packages/lingwen-storage/ to enable
+# shared use) is in v16.5 #N. This gate prevents NEW direct sqlite3 imports in
+# these packages — only the 8 whitelisted files are exempt.
+REMAINING_PACKAGE_SQLITE3_WHITELIST = frozenset({
+    # 8 known files with Phase 15.0 T2.8 deprecation comments
+    "packages/lingwen-core/src/lingwen_core/agents/budget_persistence.py",
+    "packages/lingwen-core/src/lingwen_core/agents/cost_persistence.py",
+    "packages/lingwen-core/src/lingwen_core/agents/social_engine/relationship_tracker.py",
+    "packages/lingwen-pipeline/src/lingwen_pipeline/state/state_manager.py",
+    "packages/lingwen-pipeline/src/lingwen_pipeline/state/database.py",
+    "packages/lingwen-pipeline/src/lingwen_pipeline/state/migrate_from_json.py",
+    "packages/lingwen-pipeline/src/lingwen_pipeline/state/backends/sqlite.py",
+    "packages/lingwen-cli/src/lingwen_cli/commands/doctor.py",
+})
+
+
+def test_no_sqlite3_imports_in_remaining_packages_with_whitelist() -> None:
+    """lingwen_core/pipeline/cli MUST NOT add NEW direct sqlite3 imports.
+
+    Whitelist exempts 8 files with Phase 15.0 T2.8 deprecation comments.
+    Full migration to SqliteStorageAdapter is in v16.5 #N carryover.
+    """
+    sources = [
+        PROJECT_ROOT / "packages" / "lingwen-core" / "src",
+        PROJECT_ROOT / "packages" / "lingwen-pipeline" / "src",
+        PROJECT_ROOT / "packages" / "lingwen-cli" / "src",
+    ]
+    pattern = re.compile(r"^\s*(?:from\s+sqlite3\b|import\s+sqlite3\b)", re.MULTILINE)
+    violations: list[str] = []
+    for src_root in sources:
+        if not src_root.exists():
+            continue
+        for py_file in src_root.rglob("*.py"):
+            try:
+                content = py_file.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            for match in pattern.finditer(content):
+                rel_path = str(py_file.relative_to(PROJECT_ROOT))
+                if rel_path not in REMAINING_PACKAGE_SQLITE3_WHITELIST:
+                    violations.append(f"{rel_path}:{match.start()}")
+    assert not violations, (
+        "New sqlite3 imports found in remaining packages:\n  "
+        + "\n  ".join(violations)
+        + "\n\nNew direct sqlite3 imports are forbidden in lingwen_core/pipeline/cli. "
+        + "Use SqliteStorageAdapter from infra.persistence.sqlite_storage_adapter (or "
+        + "the future packages/lingwen-storage/ SqliteStorageAdapter relocation — "
+        + "see v16.5 #N carryover).\n\n"
+        + "Existing whitelisted files (Phase 15.0 T2.8 deprecated):\n  "
+        + "\n  ".join(sorted(REMAINING_PACKAGE_SQLITE3_WHITELIST))
+    )
