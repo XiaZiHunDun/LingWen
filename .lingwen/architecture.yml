@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.5.4"  # Phase 126 v16.5 #4 闭环 (Remaining packages hygiene gate — defense-in-depth expansion to lingwen_core/pipeline/cli with 8-file whitelist)
+version: "16.5.6"  # Phase 126 v16.5 #6 闭环 (Tools migration defense-in-depth hygiene gate — 12-file whitelist for tools/ dev scripts)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -205,7 +205,7 @@ design_principles:
   - id: DP-02
     rule: "LLM 调用必须通过 LLMServicePort,不允许 import concrete LLMService 类"
     scope: "any context using LLM"
-    enforcement_phase: 'v16.4 ✓ done (sync facade + grimp-evasion for data types; v16.5 ✓ done: hack eliminated via LLMTask/TaskType relocation to lingwen_shared + factory pattern. Regression check: tooling/hygiene/check_no_grimp_evasion.py)'
+    enforcement_phase: 'v16.4 ✓ done (sync facade + grimp-evasion for data types). v16.5 #1 ✓ done (hack eliminated via LLMTask/TaskType relocation to lingwen_shared + factory pattern). v16.5 #6 ✓ done (defense-in-depth hygiene gate expanded to tools/ with 12-file whitelist: tools/anti_trope_enhancer.py + 4 llm_*_analyzer/checker.py + tools/llm_quality/{__init__.py,checker.py,repairer.py} + tools/legacy/{llm_character_arc_analyzer.py,llm_outline_quality_check.py,llm_protagonist_charm_analyzer.py,llm_readability_analyzer.py}). Future: full migration of 12 whitelisted tools/ files to LLMServiceAdapter.'
   - id: DP-03
     rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
     scope: "any context with persistence"
