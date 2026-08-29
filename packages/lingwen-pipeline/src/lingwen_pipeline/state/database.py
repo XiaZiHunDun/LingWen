@@ -15,8 +15,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Optional
 
-from infra.persistence.sqlite_config import apply_sqlite_pragmas
 from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
+
+from infra.persistence.sqlite_config import apply_sqlite_pragmas
 
 
 class WorkflowDB:
