@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #4 (Phase 126 DP-03 remaining packages defense-in-depth hygiene gate — 8-file whitelist + regression test — 1 commit)
+> **版本**: v16.5 #6 (Phase 126 DP-02 tools migration defense-in-depth hygiene gate — 12-file whitelist + regression test — 2 commits)
+  → v16.5 #4 (Phase 126 DP-03 remaining packages defense-in-depth hygiene gate — 8-file whitelist + regression test — 1 commit)
   → v16.5 #3 (PARTIAL — Phase 126 DP-03 SqliteStorageAdapter concrete impl, full DP-03 expansion carried to v16.5 #N — 1 commit)
   → v16.5 #2 (Phase 126 DP-03 StoragePort enforcement — import-linter forbidden contract + 4 hygiene tests + 1 dead sqlite3 import cleanup — 3 commits)
   → v16.5 #1 (Phase 126 eliminate grimp-evasion hack — relocate LLMTask/TaskType to lingwen_shared + factory pattern + regression check — 11 commits)
@@ -28,6 +29,26 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-29)**: Phase 126 v16.5 #6 闭环 — Tools migration defense-in-depth——2 commits (T1 + T2):
+- **T1** `test(hygiene)`: 扩展 `tooling/hygiene/tests/test_no_concrete_llm_import.py` (DP-02 hygiene file) — 新增 `test_no_infra_llm_service_imports_in_tools_with_whitelist` + 12-file whitelist (pre-v16.5 #1 LLMServiceAdapter files):
+  - `tools/anti_trope_enhancer.py` + `llm_emotional_resonance_checker.py` + `llm_foreshadow_analyzer.py` + `llm_pacing_analyzer.py` + `llm_quality_analyzer.py`
+  - `tools/llm_quality/{__init__.py,checker.py,repairer.py}`
+  - `tools/legacy/{llm_character_arc_analyzer.py,llm_outline_quality_check.py,llm_protagonist_charm_analyzer.py,llm_readability_analyzer.py}`
+- **Defense-in-depth**: 新 direct `from infra.llm_service` 在 `tools/` → fail CI。12 existing files exempt (pre-LLMServiceAdapter)。
+
+**Migration path (carried over)**: Replace `from infra.llm_service import LLMService; LLMService.get()` with `from lingwen_llm.port_adapter import LLMServiceAdapter; LLMServiceAdapter()`。Mechanical 1:1 replacement。
+
+Tests:579 backend (578 baseline + 1 NEW tools gate) / 32 hygiene tooling/hygiene/tests/ (31 baseline + 1 new) / 1729 vitest / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 3 contracts KEPT** (unchanged) / grimp-evasion OK。
+
+4 lessons (v16.5 #6 §5):
+1. **Defense-in-depth pattern scales** — same whitelist-based grep gate works for both DP-03 (sqlite3) and DP-02 (llm_service)。
+2. **Tools vs business code boundary** — `tools/` is "external" in import-linter config。Grep gate is right tool for "soft" enforcement in this zone。
+3. **Carryover file count drift** — original carryover said "11 files", actual is 12。Periodic re-verification of carryover scope。
+4. **Hygiene test file location** — DP-02 hygiene tests live in `tooling/hygiene/tests/` (NOT `tests/hygiene/`)。Two hygiene test directories exist (historical): `tests/hygiene/` (v16.2/v16.3) vs `tooling/hygiene/tests/` (DP enforcement)。
+
+**Carryover to v16.5 #N**:
+- Full migration of 12 whitelisted `tools/` files — 1:1 symbol replacement (`LLMService.get()` → `LLMServiceAdapter()`)。Each file should be a separate commit (DP-06 strict)。
 
 > **更新 (2026-08-29)**: Phase 126 v16.5 #4 闭环 — Remaining packages hygiene gate——1 commit (T1):
 - **T1** `test(hygiene)`: 扩展 `tests/hygiene/test_no_concrete_sqlite3_import.py` — 新增 `test_no_sqlite3_imports_in_remaining_packages_with_whitelist` + 8-file whitelist (Phase 15.0 T2.8 deprecated files):
