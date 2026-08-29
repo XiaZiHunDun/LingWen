@@ -291,3 +291,21 @@ def get_llm_service() -> LLMService:
 def create_task(task_type: TaskType, prompt: str, **kwargs) -> LLMTask:
     """创建LLM任务"""
     return LLMTask(task_type=task_type, prompt=prompt, **kwargs)
+
+
+# v16.5: Register LLMService.get as the default factory for LLMServiceAdapter.
+# This eliminates the v16.4 grimp-evasion hack in port_adapter.py (which used
+# string-concat to hide ``importlib.import_module("infra.llm_service")``).
+#
+# Side effect on import: importing ``infra.llm_service`` anywhere in the process
+# wires up ``LLMServiceAdapter()`` default behavior. Tests that mock the adapter
+# can either inject ``service=`` explicitly or rely on this registration.
+from lingwen_llm.port_adapter import set_default_factory
+
+
+def _default_service_factory() -> "LLMService":
+    """Factory returning the LLMService singleton (lazy)."""
+    return LLMService.get()
+
+
+set_default_factory(_default_service_factory)
