@@ -10,8 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from lingwen_llm.port_adapter import LLMServiceAdapter
-
-from infra.llm_service import LLMTask, TaskType
+from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
 
 @pytest.fixture
@@ -72,11 +71,15 @@ def test_adapter_is_available_false_when_no_provider(fake_service: MagicMock) ->
     assert adapter.is_available() is False
 
 
-def test_adapter_uses_singleton_when_no_service() -> None:
-    """Adapter must default to LLMService.get() singleton if no service injected."""
-    import unittest.mock
-    with unittest.mock.patch("infra.llm_service.LLMService.get") as get_mock:
-        get_mock.return_value = MagicMock(provider_name="minimax")
+def test_adapter_uses_registered_factory_when_no_service() -> None:
+    """Adapter must call the registered default factory when no service is injected."""
+    from lingwen_llm.port_adapter import set_default_factory
+
+    fake = MagicMock(provider_name="minimax")
+    set_default_factory(lambda: fake)
+    try:
         adapter = LLMServiceAdapter()
         assert adapter.provider_name == "minimax"
-        get_mock.assert_called_once()
+        assert adapter._service is fake
+    finally:
+        set_default_factory(None)

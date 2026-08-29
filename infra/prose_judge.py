@@ -228,11 +228,8 @@ def _llm_judge_chapter(
     content: str,
     prose_p1_issues: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    from lingwen_llm.port_adapter import (  # re-exported from infra.llm_service for DP-02
-        LLMServiceAdapter,
-        LLMTask,
-        TaskType,
-    )
+    from lingwen_llm.port_adapter import LLMServiceAdapter
+    from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
     issue_lines = "\n".join(
         f"- [{i.get('severity')}] {i.get('issue_type')}: {i.get('description', '')}"

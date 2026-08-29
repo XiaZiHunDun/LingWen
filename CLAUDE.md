@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.4 (Phase 126 DP-02 LLMServicePort enforcement — LLMServiceAdapter sync facade + import-linter forbidden contract + 5 broken imports 修复 + grimp-evasion workaround for data types — 14 commits)
+> **版本**: v16.5 #1 (Phase 126 eliminate grimp-evasion hack — relocate LLMTask/TaskType to lingwen_shared + factory pattern + regression check — 11 commits)
+  → v16.4 (Phase 126 DP-02 LLMServicePort enforcement — LLMServiceAdapter sync facade + import-linter forbidden contract + 5 broken imports 修复 + grimp-evasion workaround for data types — 14 commits)
   → v16.3 (Phase 126 import-linter DP-01..06 enforcement — 8 barrel consumers 迁移 + import-linter layer_dependencies contract + ESLint no-restricted-imports × 2 rules + 17 regression tests)
   → v16.2.8 (Phase 126 final closure — 9 blocked composables 完成 + 7 legacy api/.js 全删 + useCreatorSettings.js 完整 refactor)
   → v16.2.7 (Phase 126 cleanup — creator 6-subdomain 拆分 收官 final)
@@ -24,6 +25,43 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-29)**: Phase 126 v16.5 #1 闭环 — eliminate grimp-evasion hack——11 commits (`d673aa88`...`60d0fb05`, T1-T10 + T1.fixup, T4 split into T4.a + T4.b):
+- **T1** `feat(shared)`: 新建 `packages/lingwen-shared/src/lingwen_shared/contracts/python/llm.py` — `TaskType` (Enum) + `LLMTask` (dataclass) canonical source + 6 tests。
+- **T1.fixup** `chore(ruff)`: ruff format + I001 import-sort fixes。
+- **T2** `feat(shared)`: re-export `LLMTask` + `TaskType` from `lingwen_shared.contracts.python.__init__.py`。
+- **T3** `refactor(infra)`: `infra/llm_service.py` 删除 local `TaskType` + `LLMTask` 定义 (lines 25-54),改为 `from lingwen_shared.contracts.python.llm import LLMTask, TaskType` + `__all__` back-compat。删 unused imports `dataclass`, `Enum`。
+- **T4.a** `feat(llm)`: port_adapter.py 加 factory scaffolding (`_DEFAULT_FACTORY` + `set_default_factory` + `get_default_factory`) — additive, old dynamic import 保留 as fallback。
+- **T4.b** `feat(infra)`: `infra/llm_service.py` 末尾注册 `set_default_factory(LLMService.get)` — 替代 v16.4 dynamic import。
+- **T5** `feat(llm)`: port_adapter.py 完整重写 — 删除所有 string-concat + PEP 562 hack ( `_resolve_default_service()` + `__getattr__` + `generate()`'s dynamic import),改为 factory pattern + 直接 `from lingwen_shared.contracts.python.llm import LLMTask, TaskType`。**`lingwen_llm.port_adapter` 现在 0 个 static `infra.llm_service` import**。
+- **T6** `test(llm)`: `test_port_adapter.py` 更新 — `LLMTask`/`TaskType` 从 `lingwen_shared` import + singleton test 改用 `set_default_factory(lambda: fake)` + try/finally reset (no leak)。
+- **T7** `refactor(creator)`: `creator/content/agent.py` 2 处 LLMTask/TaskType import site 直接从 `lingwen_shared` import (不再 "re-export for DP-02")。
+- **T8** `refactor(infra)`: `prose_judge.py` LLMTask/TaskType import site 直接从 `lingwen_shared` import (also kept `LLMServiceAdapter` from port_adapter)。
+- **T9** (no commit) Verify: `infra/world_db/agent_extractors.py` 无 LLMTask/TaskType usage,无 change (only `from lingwen_llm.port_adapter import LLMServiceAdapter`)。
+- **T10** `test(hygiene)`: `tooling/hygiene/check_no_grimp_evasion.py` 新建 — regression test 禁止 static import / string-concat / `def __getattr__` in port_adapter.py (NOT substring match — avoids docstring mention false positives)。+ `tests/hygiene/test_check_no_grimp_evasion.py` 2 tests。
+
+Tests:560 backend (8 llm pkg + 85 shared pkg [79+6 new] + 73 creator pkg + 392 infra/studio_api + 2 hygiene) / 1729 vitest / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 2 contracts** (layer_dependencies + no_concrete_llm_service_in_business_code) / **grimp-evasion hygiene OK**。
+
+6 lessons (v16.5 #1 §6):
+1. **Factory pattern > dynamic import** — 任何 grimp-evasion 感觉需要时,先问是否可以用 startup-time factory/registry 替代。v16.5 #1 用 `set_default_factory()` 替代了 v16.4 string-concat hack。
+2. **TDD RED state for next task** — T1's 6th test (`test_module_importable_via_package_root`) deliberately fails until T2 adds the re-export。这是 multi-task plan 的好实践:每 task 的测试声明自己的完成标准,包括对未来 tasks 的依赖。
+3. **Back-compat `__all__` is cheap insurance** — `infra.llm_service.py` 的 `__all__` preserves star-import surface for `infra/core/__init__.py:5` and tools/ callers (no consumer code changes)。
+4. **Docstring mentions trip naive regex checks** — `port_adapter.py` 的 architectural-invariant docstring 提到了 "PEP 562 __getattr__" 和 "infra.llm_service" — naive substring check flagged them。Fix: regex for `def __getattr__(` (code structure), not substrings。
+5. **PYTHONPATH must include transitive deps** — T5 后 `port_adapter` imports from lingwen_shared。tests 跑 `pytest packages/lingwen-llm/tests/` 需要 BOTH `lingwen-llm/src` AND `lingwen-shared/src` on PYTHONPATH (pre-v16.5 不需要)。
+6. **PEP 562 module-level `__getattr__` 是 grimp-evasion-vulnerable** — v16.4 hack 用 PEP 562 re-export data types。PEP 562 本身是合法的 Python feature (PEP 562),但用于 re-export forbidden module 的 symbols 就是 static-analysis workaround。**Pattern**: PEP 562 fine for lazy attribute access; smell when used to bypass dependency rules。
+
+**Architecture invariants enforced**:
+1. `lingwen_llm.port_adapter` zero static dependency on `infra.llm_service` — `tooling/hygiene/check_no_grimp_evasion.py` 强制。
+2. `LLMTask` + `TaskType` single canonical home — `packages/lingwen-shared/src/lingwen_shared/contracts/python/llm.py`。
+3. Cross-layer default resolution pattern — `infra.llm_service` registers `set_default_factory()` at module load time, `port_adapter` calls factory。DP-03 StoragePort 可复用此 pattern。
+
+**Carryover to v16.5 #2..#7**:
+- DP-01 (cross-package contracts via ports)
+- DP-03 (StoragePort enforcement)
+- Async port conformance (`LLMServiceAdapter` → `async execute → LLMResult`)
+- Remaining packages migration (`lingwen_core` / `lingwen_pipeline` / `lingwen_prompt` / `lingwen_cli`)
+- Tools migration (`tools/llm_*.py` — 11 files)
+- DTO schema audit + typed wrapper type narrowing
 
 > **更新 (2026-08-29)**: Phase 126 v16.4 闭环 — DP-02 LLMServicePort enforcement + 2 broken imports 修复 + import-linter forbidden contract + 1 grimp-evasion workaround ——14 commits (`3f85ba1c`...`3c10ccff`,8 task + 5 carryover from T6 scope expansion + 1 T8 ruff fixup):
 - **T1**: `LLMServicePort` Protocol 加 `is_available()` (health check 需要)。
