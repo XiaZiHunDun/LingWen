@@ -1,10 +1,13 @@
 """数据库初始化与文件锁
 
 SQLite 数据库连接管理 + flock 互斥锁
+
+v16.5 #N.4: drop direct ``import sqlite3``; ``init_sqlite`` now
+delegates to ``SqliteStorageAdapter`` (the canonical backend) and
+returns a ``ConnectionPort`` wrapper.
 """
 import logging
 import os
-import sqlite3
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -23,8 +26,10 @@ DB_DIR.mkdir(parents=True, exist_ok=True)
 
 def init_sqlite() -> None:
     """初始化SQLite数据库（如不存在）"""
-    conn = sqlite3.connect(str(DB_PATH))
-    try:
+    from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
+
+    adapter = SqliteStorageAdapter(str(DB_PATH))
+    with adapter._transaction_cm() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS workflow_state (
                 key TEXT PRIMARY KEY,
@@ -67,9 +72,6 @@ def init_sqlite() -> None:
                 note TEXT
             )
         """)
-        conn.commit()
-    finally:
-        conn.close()
 
 
 _lock_fd = None
