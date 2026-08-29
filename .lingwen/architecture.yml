@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.5.1"  # Phase 126 v16.5 #1 闭环 (eliminate grimp-evasion hack via lingwen_shared relocation + factory pattern)
+version: "16.5.2"  # Phase 126 v16.5 #2 闭环 (DP-03 StoragePort enforcement — defense-in-depth: import-linter covers lingwen_creator + grep test covers apps/)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -209,7 +209,7 @@ design_principles:
   - id: DP-03
     rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
     scope: "any context with persistence"
-    enforcement_phase: v16.5
+    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth: import-linter covers lingwen_creator + grep test covers apps/. Carryover to v16.5 #3+: refactor infra/* to use StoragePort internally so apps/ can use the port cleanly.)'
   - id: DP-04
     rule: "跨 context 调用只通过 contract DTO"
     scope: "cross-context"
