@@ -1,19 +1,19 @@
 """Timeline event CRUD with optimistic concurrency."""
 import json
-import sqlite3
 
 from infra.world_db.queries._helpers import (
     RevisionConflict,
     now_iso,
     row_to_dict,
 )
+from lingwen_shared.ports.storage import ConnectionPort
 
 
 class TimelineRevisionConflict(RevisionConflict):
     """Raised when expected_revision does not match current timeline_event row."""
 
 
-def create_timeline_event(conn: sqlite3.Connection, data: dict) -> int:
+def create_timeline_event(conn: ConnectionPort, data: dict) -> int:
     now = now_iso()
     cur = conn.execute(
         """INSERT INTO timeline_event
@@ -35,7 +35,7 @@ def create_timeline_event(conn: sqlite3.Connection, data: dict) -> int:
     return cur.lastrowid
 
 
-def list_timeline(conn: sqlite3.Connection) -> list[dict]:
+def list_timeline(conn: ConnectionPort) -> list[dict]:
     rows = conn.execute(
         "SELECT * FROM timeline_event ORDER BY story_year"
     ).fetchall()
@@ -45,7 +45,7 @@ def list_timeline(conn: sqlite3.Connection) -> list[dict]:
     ]
 
 
-def get_timeline_event(conn: sqlite3.Connection, tid: int) -> dict | None:
+def get_timeline_event(conn: ConnectionPort, tid: int) -> dict | None:
     return row_to_dict(
         conn.execute("SELECT * FROM timeline_event WHERE id = ?", (tid,)).fetchone(),
         ("related_characters", "related_factions"),
@@ -53,7 +53,7 @@ def get_timeline_event(conn: sqlite3.Connection, tid: int) -> dict | None:
 
 
 def update_timeline_event(
-    conn: sqlite3.Connection, tid: int, patch: dict, expected_revision: int
+    conn: ConnectionPort, tid: int, patch: dict, expected_revision: int
 ) -> None:
     related_chars = (
         json.dumps(patch["related_characters"], ensure_ascii=False)
