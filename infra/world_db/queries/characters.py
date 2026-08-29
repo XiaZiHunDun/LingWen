@@ -1,12 +1,12 @@
 """Character CRUD with optimistic concurrency."""
 import json
-import sqlite3
 
 from infra.world_db.queries._helpers import (
     RevisionConflict,
     now_iso,
     row_to_dict,
 )
+from lingwen_shared.ports.storage import ConnectionPort
 
 
 class CharacterRevisionConflict(RevisionConflict):
@@ -16,7 +16,7 @@ class CharacterRevisionConflict(RevisionConflict):
 CHARACTER_REVISION_CONFLICT = CharacterRevisionConflict
 
 
-def create_character(conn: sqlite3.Connection, data: dict) -> int:
+def create_character(conn: ConnectionPort, data: dict) -> int:
     now = now_iso()
     attrs = json.dumps(data.get("attributes") or {}, ensure_ascii=False)
     aliases = json.dumps(data.get("aliases") or [], ensure_ascii=False)
@@ -36,21 +36,21 @@ def create_character(conn: sqlite3.Connection, data: dict) -> int:
     return cur.lastrowid
 
 
-def get_character(conn: sqlite3.Connection, char_id: int) -> dict | None:
+def get_character(conn: ConnectionPort, char_id: int) -> dict | None:
     return row_to_dict(
         conn.execute("SELECT * FROM character WHERE id = ?", (char_id,)).fetchone(),
         ("attributes", "aliases"),
     )
 
 
-def get_character_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
+def get_character_by_slug(conn: ConnectionPort, slug: str) -> dict | None:
     return row_to_dict(
         conn.execute("SELECT * FROM character WHERE slug = ?", (slug,)).fetchone(),
         ("attributes", "aliases"),
     )
 
 
-def list_characters(conn: sqlite3.Connection, canon_level: str | None = None) -> list[dict]:
+def list_characters(conn: ConnectionPort, canon_level: str | None = None) -> list[dict]:
     if canon_level:
         rows = conn.execute(
             "SELECT * FROM character WHERE canon_level = ? ORDER BY name",
@@ -62,7 +62,7 @@ def list_characters(conn: sqlite3.Connection, canon_level: str | None = None) ->
 
 
 def update_character(
-    conn: sqlite3.Connection, char_id: int, patch: dict, expected_revision: int
+    conn: ConnectionPort, char_id: int, patch: dict, expected_revision: int
 ) -> None:
     cur = conn.execute(
         """UPDATE character SET
