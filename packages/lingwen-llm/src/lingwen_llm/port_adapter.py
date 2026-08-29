@@ -22,7 +22,31 @@ Design notes for DP-02 contract compliance:
 """
 from __future__ import annotations
 
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator, Optional
+
+# v16.5: factory pattern added as a prerequisite for T5 (which will remove
+# the dynamic-import string-concat hack). ``infra.llm_service`` registers
+# itself via ``set_default_factory()`` at module load time. Until T5 lands,
+# the factory is OPTIONAL — when unset, ``LLMServiceAdapter.__init__``
+# falls back to the existing ``_resolve_default_service()`` dynamic import,
+# so existing call sites and tests keep working unchanged.
+_DEFAULT_FACTORY: Optional[Callable[[], Any]] = None
+
+
+def set_default_factory(factory: Optional[Callable[[], Any]]) -> None:
+    """Register the default factory used when no service is injected.
+
+    Called once at module load time by ``infra.llm_service`` to wire the
+    concrete ``LLMService`` singleton into the adapter's default behavior.
+    Passing ``None`` clears the registration.
+    """
+    global _DEFAULT_FACTORY
+    _DEFAULT_FACTORY = factory
+
+
+def get_default_factory() -> Optional[Callable[[], Any]]:
+    """Return the currently registered default factory, or ``None``."""
+    return _DEFAULT_FACTORY
 
 
 def _resolve_default_service() -> Any:
@@ -54,7 +78,20 @@ class LLMServiceAdapter:
     """
 
     def __init__(self, service: Any = None) -> None:
-        self._service = service if service is not None else _resolve_default_service()
+        if service is None:
+            if _DEFAULT_FACTORY is not None:
+                # v16.5: factory registration path. ``infra.llm_service``
+                # calls ``set_default_factory()`` at module load, so any
+                # import that touches infra first (apps/studio_api routes,
+                # infra consumers) takes this branch and skips the grimp-
+                # evasion dynamic import entirely.
+                service = _DEFAULT_FACTORY()
+            else:
+                # v16.4 fallback: dynamic import via string-concat.
+                # T5 will remove this branch once all callers migrate to
+                # the factory pattern.
+                service = _resolve_default_service()
+        self._service = service
 
     @property
     def provider_name(self) -> str:
