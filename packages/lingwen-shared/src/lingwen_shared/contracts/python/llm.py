@@ -14,6 +14,7 @@ via ``from lingwen_shared.contracts.python.llm import LLMTask, TaskType``,
 so existing consumers in ``tools/`` and ``tests/`` that import from
 ``infra.llm_service`` keep working unchanged.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,12 +29,12 @@ class TaskType(Enum):
     passed across process boundaries) remain stable.
     """
 
-    WORLDVIEW_CHECK = "worldview_check"      # 世界观检测
-    CHARACTER_CHECK = "character_check"      # 角色一致性检测
-    LOGIC_CHECK = "logic_check"              # 逻辑矛盾检测
-    AI_TRACE_CHECK = "ai_trace_check"       # AI痕迹检测
-    QUALITY_ANALYSIS = "quality_analysis"    # 质量综合分析
-    REPAIR = "repair"                        # 修复任务
+    WORLDVIEW_CHECK = "worldview_check"  # 世界观检测
+    CHARACTER_CHECK = "character_check"  # 角色一致性检测
+    LOGIC_CHECK = "logic_check"  # 逻辑矛盾检测
+    AI_TRACE_CHECK = "ai_trace_check"  # AI痕迹检测
+    QUALITY_ANALYSIS = "quality_analysis"  # 质量综合分析
+    REPAIR = "repair"  # 修复任务
 
 
 @dataclass

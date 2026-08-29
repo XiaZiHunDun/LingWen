@@ -5,10 +5,10 @@ lingwen_shared so the LLMServiceAdapter can import them without
 crossing into infra.llm_service (which would re-trigger the DP-02
 forbidden contract via grimp transitive analysis).
 """
+
 from __future__ import annotations
 
 import pytest
-
 from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
 
