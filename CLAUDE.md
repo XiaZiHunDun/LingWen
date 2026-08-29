@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #1 (Phase 126 eliminate grimp-evasion hack — relocate LLMTask/TaskType to lingwen_shared + factory pattern + regression check — 11 commits)
+> **版本**: v16.5 #2 (Phase 126 DP-03 StoragePort enforcement — import-linter forbidden contract + 4 hygiene tests + 1 dead sqlite3 import cleanup — 3 commits)
+  → v16.5 #1 (Phase 126 eliminate grimp-evasion hack — relocate LLMTask/TaskType to lingwen_shared + factory pattern + regression check — 11 commits)
   → v16.4 (Phase 126 DP-02 LLMServicePort enforcement — LLMServiceAdapter sync facade + import-linter forbidden contract + 5 broken imports 修复 + grimp-evasion workaround for data types — 14 commits)
   → v16.3 (Phase 126 import-linter DP-01..06 enforcement — 8 barrel consumers 迁移 + import-linter layer_dependencies contract + ESLint no-restricted-imports × 2 rules + 17 regression tests)
   → v16.2.8 (Phase 126 final closure — 9 blocked composables 完成 + 7 legacy api/.js 全删 + useCreatorSettings.js 完整 refactor)
@@ -25,6 +26,33 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-29)**: Phase 126 v16.5 #2 闭环 — DP-03 StoragePort enforcement——3 commits (`87e2374f` + `ea4a14aa` + docs commit):
+- **T1** `chore(apps)`: 删 `apps/studio_api/app.py:18` dead `import sqlite3` (0 usages elsewhere in file; verified via `grep -nE "sqlite3\.|sqlite3\)|= sqlite3"`)。
+- **T2** `feat(import-linter)`: 新增 `no_concrete_sqlite3_in_business_code` forbidden contract (`source_modules = ["lingwen_creator"]`, `forbidden_modules = ["sqlite3"]`) + 4 hygiene tests (`tests/hygiene/test_no_concrete_sqlite3_import.py`)。
+  - **Documented deviation**: contract 范围限制在 `lingwen_creator`,NOT `apps`。原因: `apps/studio_api/routes/*` legitimately composes `infra/*` modules that import sqlite3 (e.g., `infra.world_db.queries.proposals`, `infra.cross_volume.storage`, `infra.persistence.sqlite_config`),the chain `apps → infra → sqlite3` would fail the contract。
+  - **Defense-in-depth**: hygiene grep test covers BOTH `apps/` AND `lingwen_creator/` for direct imports。两个 gate 组合 enforce the architectural invariant。
+- **T3** `docs(phase-126)`: handoff doc + CLAUDE.md + architecture.yml。
+
+Tests:564 backend (398 infra/studio/hygiene + 73 creator + 85 shared + 8 llm) / **6 hygiene** (+4 new from DP-03) / 1729 vitest / vue-tsc 0 / ruff 0 / knip 0 / ESLint 0 / **lint-imports 3 contracts KEPT** (layer_dependencies + no_concrete_llm_service + no_concrete_sqlite3) / grimp-evasion hygiene OK。
+
+3 lessons (v16.5 #2 §6):
+1. **DP enforcement often requires defense-in-depth** — import-linter forbidden contract 只 cover clean modules; transitive-import contamination 需要 supplementary grep test。Split 明确文档化。
+2. **Forbid `sqlite3` is the same shape as forbid `infra.llm_service`** — 两者都是 "concrete resource forbidden; use the port instead"。机械 pattern identical。Future DPs (DP-01, DP-04) follow same template。
+3. **Dead imports are a low-cost find** — DP migration 可以从 1-line commits 开始 (zero risk if import provably unused)。DP-03 investigation 发现 `apps/studio_api/app.py:18` 是唯一 dead import — 30+ other sqlite3 usages are legitimate infra/* code (carryover for v16.5 #N full fix)。
+
+**Architecture invariants enforced**:
+1. `lingwen_creator` MUST NOT import `sqlite3` — import-linter forbidden contract (strictest form)。
+2. `apps/` MUST NOT directly import `sqlite3` — hygiene grep test (covers what import-linter can't because of infra transitives)。
+3. `StoragePort` Protocol is canonical persistence interface — `lingwen_shared/ports/storage.py`。Future persistence code should use this port。
+
+**Carryover to v16.5 #3..#7**:
+- **DP-03 full fix** (high-priority for v16.5 #3+): refactor `infra/*` to use `StoragePort` internally (25+ files)。Then `apps/` can use `StoragePort` cleanly and import-linter contract 扩展 to `["lingwen_creator", "apps"]`。Mirror DP-02 trajectory (v16.4 factory → v16.5 #1 relocate to shared → DP-03 future refactor)。
+- DP-01 (cross-package contracts via ports)
+- Async port conformance (`async execute → LLMResult`)
+- Remaining packages migration (`lingwen_core/pipeline/prompt/cli` — 8 files sqlite3 直接)
+- Tools migration (`tools/llm_*.py` — 11 files)
+- DTO schema audit + typed wrapper narrowing
 
 > **更新 (2026-08-29)**: Phase 126 v16.5 #1 闭环 — eliminate grimp-evasion hack——11 commits (`d673aa88`...`60d0fb05`, T1-T10 + T1.fixup, T4 split into T4.a + T4.b):
 - **T1** `feat(shared)`: 新建 `packages/lingwen-shared/src/lingwen_shared/contracts/python/llm.py` — `TaskType` (Enum) + `LLMTask` (dataclass) canonical source + 6 tests。
