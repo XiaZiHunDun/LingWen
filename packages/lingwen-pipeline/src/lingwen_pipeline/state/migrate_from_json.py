@@ -2,11 +2,16 @@
 """
 Migrate workflow_state.json to SQLite
 Creates backup of original JSON and imports all data
+
+v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
+Public API unchanged: migrate_from_json(json_path, db_path) returns dict.
 """
 import json
 import shutil
 from datetime import datetime
 from pathlib import Path
+
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
 
 def migrate_from_json(json_path: str, db_path: str) -> dict:
@@ -14,6 +19,9 @@ def migrate_from_json(json_path: str, db_path: str) -> dict:
     Read workflow_state.json and migrate to SQLite database
 
     Returns migration report with counts and any errors
+
+    v16.5 #N.3: storage layer now SqliteStorageAdapter from lingwen_storage
+    (previously direct sqlite3). Public API preserved.
     """
     json_path = Path(json_path)
     db_path = Path(db_path)
@@ -27,8 +35,6 @@ def migrate_from_json(json_path: str, db_path: str) -> dict:
         data = json.load(f)
 
     # Import here to avoid circular imports
-    import sqlite3
-
     from lingwen_pipeline.state.state_manager import StateManager
 
     # Initialize StateManager (creates schema)
@@ -39,97 +45,100 @@ def migrate_from_json(json_path: str, db_path: str) -> dict:
     current_phase = data.get('current_phase', 'PHASE_0_INIT')
     version = data.get('version', 'v8.2')
 
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("""
-        INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
-        VALUES ('current_step', ?, CURRENT_TIMESTAMP)
-    """, (current_step,))
-    conn.execute("""
-        INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
-        VALUES ('current_phase', ?, CURRENT_TIMESTAMP)
-    """, (current_phase,))
-    conn.execute("""
-        INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
-        VALUES ('version', ?, CURRENT_TIMESTAMP)
-    """, (version,))
+    storage = SqliteStorageAdapter(str(db_path))
 
-    # Migrate tasks
-    tasks_migrated = 0
-    if 'writer_batches' in data:
-        for batch_id, batch in data['writer_batches'].items():
-            status = batch.get('status', 'pending')
-            # Normalize status to allowed values
-            if status == 'in_progress':
-                status = 'running'
-            elif status not in ('pending', 'running', 'completed', 'failed'):
-                status = 'pending'
+    def _do(conn) -> dict:
+        conn.execute("""
+            INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
+            VALUES ('current_step', ?, CURRENT_TIMESTAMP)
+        """, (current_step,))
+        conn.execute("""
+            INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
+            VALUES ('current_phase', ?, CURRENT_TIMESTAMP)
+        """, (current_phase,))
+        conn.execute("""
+            INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
+            VALUES ('version', ?, CURRENT_TIMESTAMP)
+        """, (version,))
 
-            conn.execute("""
-                INSERT OR REPLACE INTO task (id, task_name, agent, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (
-                batch_id,
-                batch.get('chapter_range', batch_id),
-                'content_writer',
-                status,
-                batch.get('created_at', datetime.now().isoformat())
-            ))
-            tasks_migrated += 1
+        # Migrate tasks
+        tasks_migrated = 0
+        if 'writer_batches' in data:
+            for batch_id, batch in data['writer_batches'].items():
+                status = batch.get('status', 'pending')
+                # Normalize status to allowed values
+                if status == 'in_progress':
+                    status = 'running'
+                elif status not in ('pending', 'running', 'completed', 'failed'):
+                    status = 'pending'
 
-    if 'batches' in data:
-        for batch_id, batch in data['batches'].items():
-            status = batch.get('status', 'pending')
-            if status == 'in_progress':
-                status = 'running'
-            elif status not in ('pending', 'running', 'completed', 'failed'):
-                status = 'pending'
+                conn.execute("""
+                    INSERT OR REPLACE INTO task (id, task_name, agent, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """, (
+                    batch_id,
+                    batch.get('chapter_range', batch_id),
+                    'content_writer',
+                    status,
+                    batch.get('created_at', datetime.now().isoformat())
+                ))
+                tasks_migrated += 1
 
-            conn.execute("""
-                INSERT OR REPLACE INTO task (id, task_name, agent, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """, (
-                batch_id,
-                batch.get('chapter_range', batch_id),
-                batch.get('chief', 'auditor'),
-                status,
-                batch.get('created_at', datetime.now().isoformat())
-            ))
-            tasks_migrated += 1
+        if 'batches' in data:
+            for batch_id, batch in data['batches'].items():
+                status = batch.get('status', 'pending')
+                if status == 'in_progress':
+                    status = 'running'
+                elif status not in ('pending', 'running', 'completed', 'failed'):
+                    status = 'pending'
 
-    # Migrate review_queue entries to audit_log
-    audit_entries = 0
-    if 'review_queue' in data:
-        review_queue = data['review_queue']
-        for completed in review_queue.get('completed', []):
-            batch_id = completed.get('batch_id', 'unknown')
-            reviewer = completed.get('reviewer', 'unknown')
-            chapters = completed.get('chapters', [])
+                conn.execute("""
+                    INSERT OR REPLACE INTO task (id, task_name, agent, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """, (
+                    batch_id,
+                    batch.get('chapter_range', batch_id),
+                    batch.get('chief', 'auditor'),
+                    status,
+                    batch.get('created_at', datetime.now().isoformat())
+                ))
+                tasks_migrated += 1
 
-            conn.execute("""
-                INSERT INTO audit_log (task_id, action, result, new_value, changed_by)
-                VALUES (?, 'review_completed', ?, ?, 'Migration')
-            """, (
-                batch_id,
-                'completed',
-                json.dumps({
-                    'batch_id': batch_id,
-                    'reviewer': reviewer,
-                    'chapters': chapters,
-                    'completed_at': completed.get('completed_at', '')
-                })
-            ))
-            audit_entries += 1
+        # Migrate review_queue entries to audit_log
+        audit_entries = 0
+        if 'review_queue' in data:
+            review_queue = data['review_queue']
+            for completed in review_queue.get('completed', []):
+                batch_id = completed.get('batch_id', 'unknown')
+                reviewer = completed.get('reviewer', 'unknown')
+                chapters = completed.get('chapters', [])
 
-    conn.commit()
-    conn.close()
+                conn.execute("""
+                    INSERT INTO audit_log (task_id, action, result, new_value, changed_by)
+                    VALUES (?, 'review_completed', ?, ?, 'Migration')
+                """, (
+                    batch_id,
+                    'completed',
+                    json.dumps({
+                        'batch_id': batch_id,
+                        'reviewer': reviewer,
+                        'chapters': chapters,
+                        'completed_at': completed.get('completed_at', '')
+                    })
+                ))
+                audit_entries += 1
+
+        return {'tasks_migrated': tasks_migrated, 'audit_entries': audit_entries}
+
+    counts = storage.with_transaction(_do)
 
     return {
         'backup_created': str(backup_path),
         'version': version,
         'current_step': current_step,
         'current_phase': current_phase,
-        'tasks_migrated': tasks_migrated,
-        'audit_entries': audit_entries,
+        'tasks_migrated': counts['tasks_migrated'],
+        'audit_entries': counts['audit_entries'],
         'phases': list(data.get('phases', {}).keys())
     }
 

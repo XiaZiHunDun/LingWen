@@ -91,13 +91,14 @@ class DoctorCommand(Command):
         if db_path.exists():
             print(f"    ✓ 数据库存在: {db_path}")
             try:
-                import sqlite3
-                conn = sqlite3.connect(db_path)
-                cursor = conn.cursor()
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-                tables = cursor.fetchall()
+                from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
+                storage = SqliteStorageAdapter(db_path)
+                tables = storage.with_connection(
+                    lambda conn: conn.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table'"
+                    ).fetchall()
+                )
                 print(f"    ✓ 表数量: {len(tables)}")
-                conn.close()
                 return True
             except Exception as e:
                 print(f"    ✗ 数据库读取失败: {e}")

@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #N.1 (Phase 126 StoragePort factory pattern — `set_default_storage_factory()` + `get_default_storage()` in lingwen_shared.ports.storage, SqliteStorageAdapter registers as default factory at module load, mirrors v16.5 #1 LLMServiceAdapter pattern — 3 commits + 1 docs)
+> **版本**: v16.5 #N.3 (Phase 126 whitelisted infra/* files migration — 8 Phase 15.0 T2.8 deprecated files migrated to SqliteStorageAdapter from lingwen_storage, public APIs preserved, hygiene test whitelist retired, ruff --fix for 9 W292 violations — 9 commits + 1 docs)
+  → v16.5 #N.1 (Phase 126 StoragePort factory pattern — `set_default_storage_factory()` + `get_default_storage()` in lingwen_shared.ports.storage, SqliteStorageAdapter registers as default factory at module load, mirrors v16.5 #1 LLMServiceAdapter pattern — 3 commits + 1 docs)
   → v16.5 #N.0 (Phase 126 SqliteStorageAdapter relocated to packages/lingwen-storage — breaks lingwen_core/pipeline → infra.persistence cycle, infra version becomes back-compat shim, lingwen-shared workspace dep added — 2 commits)
   → v16.5 #7 (Phase 126 DTO schema audit + typed wrapper narrowing — 5 new DTO files + 41 wrapper functions narrowed from Promise<unknown> to concrete DTO types + 1 composable cast cleanup — 5 commits)
   → v16.5 #6 (Phase 126 DP-02 tools migration defense-in-depth hygiene gate — 12-file whitelist + regression test — 2 commits)
@@ -32,6 +33,35 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #N.3 闭环 — 8 whitelisted infra/* files migrated to SqliteStorageAdapter——9 commits (`6891665c`...`21819b09`, 8 migration commits + 1 hygiene test commit + 1 ruff fixup):
+- **T1** `refactor(lingwen-core)`: `budget_persistence.py` — `BudgetService` 迁 `SqliteStorageAdapter` (callback-based `with_transaction` / `with_connection`)。22/22 tests pass.
+- **T2** `refactor(lingwen-core)`: `cost_persistence.py` — `CostTrackerDB` 迁 adapter。18/19 pass (1 pre-existing infra→lingwen_core 路径名 failure,unrelated)。
+- **T3** `refactor(lingwen-core)`: `social_engine/relationship_tracker.py` — `RelationshipTracker` (SQLite backend) 迁 adapter。JSON backend 保留 (无 storage abstraction 需求)。Manual `BEGIN/COMMIT/ROLLBACK` 删除 (adapter 的 `with_transaction` 提供 atomic boundary)。7/7 tests pass。
+- **T4** `refactor(lingwen-pipeline)`: `state_manager.py` — `StateManager` 迁 adapter + `fcntl.flock` 保留 wrap `_storage._transaction_cm()` (R3-001 cross-process)。14/14 tests pass (incl. transaction rollback + concurrency)。
+- **T5** `refactor(lingwen-pipeline)`: `database.py` — `WorkflowDB` 迁 adapter + `fcntl.flock` 保留。7/7 tests pass (incl. fcntl concurrency)。
+- **T6** `refactor(lingwen-pipeline)`: `migrate_from_json.py` — `migrate_from_json` 函数单 `with_transaction` callback 完成所有 INSERT OR REPLACE。1/1 migration test pass。
+- **T7** `refactor(lingwen-pipeline)`: `state/backends/sqlite.py` — `SQLiteBackend` 迁 adapter (无 fcntl)。Smoke-tested inline (set/get/list_keys/delete round-trip OK)。
+- **T8** `refactor(lingwen-cli)`: `commands/doctor.py` — `_check_database` diagnostic 迁 `SqliteStorageAdapter` + `with_connection` (懒 `import sqlite3` 删除)。Diagnostic 语义保留。
+- **T9** `test(hygiene)`: `tests/hygiene/test_no_concrete_sqlite3_import.py` — 8-file whitelist 删除, gate 现在纯 grep test (任何 lingwen_core/pipeline/cli 新直接 sqlite3 import 立即 fail)。
+- **T8.fixup** `chore(ruff)`: ruff --fix 修 9 W292 violations across 8 files。
+
+Tests: 73 backend passing for migrated files (22 budget + 18 cost + 7 relationship + 14 sqlite_state + 7 workflow_db + 5 hygiene) + pre-existing failures unrelated (skill_registry.yaml worktree env-sync issue, master_controller loaded from master location)。`import sqlite3` count in 8 whitelisted files: **8 → 0**。
+
+7 lessons (v16.5 #N.3 §5):
+1. **Atomic commits per file** — 1 commit per file keeps history clean and rollback easy。9 commits total。
+2. **Public API stability** — None of the 8 files changed public API. Only internal implementation changed。
+3. **Phase 15.0 T2.8 deprecation comments now obsolete** — Recommended path was `infra.persistence.registry.get("X")` singleton,但 better path is to migrate to SqliteStorageAdapter. Registry pattern = SERVICE singletons, SqliteStorageAdapter = STORAGE abstraction. Different concerns. Deprecation 注释保留 (full removal follow-up)。
+4. **`lingwen_storage` as leaf package was architectural prerequisite** — Without v16.5 #N.0 relocation, migrating these files would create `lingwen_core → infra.persistence` cycles。
+5. **fcntl.flock vs SqliteStorageAdapter transaction 互补** — flock = inter-process write mutex (R3-001); adapter = in-process BEGIN/COMMIT/ROLLBACK. Compose: flock wraps `_transaction_cm()`。
+6. **Private API access (`_transaction_cm`, `_connection_cm`) acceptable for canonical consumer** — Explicit "raw" form of callback-flavored API. Used by StateManager/WorkflowDB to preserve public contextmanager API。
+7. **`sqlite3.Row` row factory transparent** — `SqliteStorageAdapter._open()` sets it. Callers don't need manual `conn.row_factory = sqlite3.Row`。
+
+**Carryover to v16.5 #N.4**:
+- Migrate 21 remaining `infra/*` files (world_db 8 + cross_volume + event_sourcing + reading_power + persistence internals 3 + tools/workflow/lib 5 + tools/migrate_to_sqlite + others) to `SqliteStorageAdapter`.
+- Same pattern as v16.5 #N.3: construct adapter, replace contextmanagers with callback API, remove `import sqlite3`, keep public API unchanged.
+- Special cases: `infra/persistence/sqlite_config.py` `apply_sqlite_pragmas(conn: sqlite3.Connection)` — accept `ConnectionPort` (or `SqliteConnection` wrapper). Several callers (WorkflowDB._init_db) pass the adapter's wrapper, which works because `wrapper.execute()` delegates to sqlite3.Connection.execute.
+- Estimated ~22 commits (1 per file, DP-06 strict).
 
 > **更新 (2026-08-30)**: Phase 126 v16.5 #N.1 闭环 — StoragePort factory pattern——3 commits (`05c58b9b` + `bd95ca6c` + `02906d32`):
 - **T1** `feat(lingwen-shared)`: `packages/lingwen-shared/src/lingwen_shared/ports/storage.py` 加 factory scaffolding — `_DEFAULT_STORAGE_FACTORY` module var + `set_default_storage_factory(factory)` + `get_default_storage_factory()` + `get_default_storage()` (raises RuntimeError if no factory)。`__all__` extend to 6 entries。**lingwen_shared 仍 sqlite3-free** (only docstring/comment refs)。

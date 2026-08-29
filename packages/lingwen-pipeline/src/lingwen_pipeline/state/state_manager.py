@@ -4,20 +4,29 @@ SQLite State Manager - replaces workflow_state.json
 Provides atomic state operations with transaction support
 
 Phase 15.0 T2.8: DeprecationWarning — 推荐切到 infra.persistence.registry.get("workflow").
+
+v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
+Public API preserved (StateManager(db_path=...), _get_conn(), _transaction(),
+get_current_step(), advance_step(), record_task(), get_task_status(),
+get_all_tasks(), get_audit_log()).
 """
 import fcntl
 import json
-import shutil
-import sqlite3
 import warnings
 from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
+
 
 class StateManager:
-    """SQLite-based workflow state manager with atomic operations"""
+    """SQLite-based workflow state manager with atomic operations
+
+    v16.5 #N.3: storage layer now SqliteStorageAdapter from lingwen_storage
+    (previously direct sqlite3). fcntl.flock retained around transaction to
+    preserve R3-001 cross-process write serialization semantics.
+    """
 
     def __init__(self, db_path: Optional[str] = None):
         warnings.warn(
@@ -33,6 +42,7 @@ class StateManager:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock_path = self.db_path.with_suffix('.lock')
+        self._storage = SqliteStorageAdapter(str(self.db_path))
         self._init_db()
 
     def _init_db(self):
@@ -41,40 +51,32 @@ class StateManager:
         with open(schema_path) as f:
             schema = f.read()
 
-        conn = sqlite3.connect(str(self.db_path))
-        conn.executescript(schema)
-        conn.close()
+        def _do(conn) -> None:
+            conn.executescript(schema)
+        self._storage.with_transaction(_do)
 
     @contextmanager
     def _get_conn(self):
-        """Get connection with row factory"""
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
-        try:
+        """Get connection with row factory (delegated to SqliteStorageAdapter)."""
+        with self._storage._connection_cm() as conn:
             yield conn
-        finally:
-            conn.close()
 
     @contextmanager
     def _transaction(self):
-        """Exclusive transaction with flock protection"""
+        """Exclusive transaction with flock protection.
+
+        v16.5 #N.3: connection lifecycle delegated to SqliteStorageAdapter
+        via private _transaction_cm. fcntl.flock retained for cross-process
+        serialization (R3-001) — SqliteStorageAdapter handles in-process
+        BEGIN/COMMIT/ROLLBACK.
+        """
         # Acquire file lock first
         lock_file = open(self._lock_path, 'w')
         fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-        conn = None
         try:
-            conn = sqlite3.connect(str(self.db_path))
-            conn.row_factory = sqlite3.Row
-            conn.execute("BEGIN IMMEDIATE")
-            yield conn
-            conn.commit()
-        except Exception:
-            if conn is not None:
-                conn.rollback()
-            raise
+            with self._storage._transaction_cm() as conn:
+                yield conn
         finally:
-            if conn is not None:
-                conn.close()
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
 

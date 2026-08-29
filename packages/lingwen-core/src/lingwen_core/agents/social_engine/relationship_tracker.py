@@ -9,13 +9,18 @@
 公共 API 与迁移前一致 — 切换存储只需修改 state_file 后缀。
 
 Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("relationship") singleton.
+
+v16.5 #N.3: Migrated SQLite backend to SqliteStorageAdapter from lingwen_storage.
+JSON backend unchanged (no storage abstraction needed for filesystem reads).
+Public API preserved.
 """
 import json
 import logging
-import sqlite3
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +40,8 @@ class RelationshipTracker:
       - .json → JSON (legacy,向后兼容)
 
     Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("relationship") singleton.
+
+    v16.5 #N.3: SQLite backend uses SqliteStorageAdapter from lingwen_storage.
     """
 
     def __init__(self, state_file: Optional[str] = None, db_path=None):
@@ -49,6 +56,12 @@ class RelationshipTracker:
         if isinstance(self.state_file, Path):
             self.state_file = str(self.state_file)
         self._backend = self._detect_backend(self.state_file)
+        # Only construct SqliteStorageAdapter when SQLite backend is active.
+        # JSON backend doesn't need a storage adapter.
+        if self._backend == "sqlite":
+            self._storage = SqliteStorageAdapter(self.state_file)
+        else:
+            self._storage = None
         self._ensure_initial_state()
 
     @staticmethod
@@ -73,7 +86,10 @@ class RelationshipTracker:
     # ---------- SQLite 后端 ----------
 
     def _init_sqlite_schema(self):
-        with self._connect() as conn:
+        def _do(conn) -> None:
+            # Preserve original behavior: enable WAL journal mode.
+            # row_factory is set by SqliteStorageAdapter._open() (sqlite3.Row).
+            conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS characters (
                     name TEXT PRIMARY KEY,
@@ -96,15 +112,14 @@ class RelationshipTracker:
                     chapter INTEGER NOT NULL
                 );
             """)
-
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.state_file))
-        conn.execute("PRAGMA journal_mode=WAL")
-        return conn
+        # Use private _transaction_cm to allow PRAGMA + executescript (which
+        # implicitly commits); we then commit explicitly at end of callback.
+        with self._storage._transaction_cm() as conn:
+            _do(conn)
 
     def _load_network_sqlite(self) -> Dict[str, List[Dict[str, Any]]]:
-        with self._connect() as conn:
-            conn.row_factory = sqlite3.Row
+        def _do(conn):
+            # row_factory is set by SqliteStorageAdapter._open() (sqlite3.Row).
             characters = [dict(r) for r in conn.execute("SELECT name, role FROM characters").fetchall()]
             # SQL columns are from_char/to_char, but public API uses from/to
             # (历史 JSON 字段名, R2-012 迁移保留)
@@ -132,7 +147,8 @@ class RelationshipTracker:
                     "type": d["type"],
                     "chapter": d["chapter"],
                 })
-        return {"characters": characters, "relationships": relationships, "events": events}
+            return {"characters": characters, "relationships": relationships, "events": events}
+        return self._storage.with_connection(_do)
 
     # ---------- JSON 后端 (legacy) ----------
 
@@ -158,42 +174,44 @@ class RelationshipTracker:
             self._save_network_json(network)
 
     def _save_network_sqlite(self, network: Dict[str, Any]):
-        with self._connect() as conn:
-            conn.execute("BEGIN")
-            try:
-                # characters
-                conn.execute("DELETE FROM characters")
-                for c in network.get("characters", []):
-                    conn.execute(
-                        "INSERT INTO characters (name, role) VALUES (?, ?)",
-                        (c["name"], c.get("role", "supporting")),
-                    )
-                # relationships
-                conn.execute("DELETE FROM relationships")
-                for r in network.get("relationships", []):
-                    conn.execute(
-                        "INSERT INTO relationships (from_char, to_char, type, trust, conflict, last_event) "
-                        "VALUES (?, ?, ?, ?, ?, ?)",
-                        (
-                            r["from"],
-                            r["to"],
-                            r["type"],
-                            r.get("trust", 0.5),
-                            r.get("conflict", 0.1),
-                            r.get("last_event"),
-                        ),
-                    )
-                # events
-                conn.execute("DELETE FROM events")
-                for e in network.get("events", []):
-                    conn.execute(
-                        "INSERT INTO events (from_char, to_char, type, chapter) VALUES (?, ?, ?, ?)",
-                        (e["from"], e["to"], e["type"], e["chapter"]),
-                    )
-                conn.execute("COMMIT")
-            except Exception:
-                conn.execute("ROLLBACK")
-                raise
+        """Atomic save across 3 tables.
+
+        v16.5 #N.3: Uses SqliteStorageAdapter.with_transaction (which already
+        provides BEGIN/COMMIT/ROLLBACK semantics). The previous manual
+        `conn.execute("BEGIN")/COMMIT/ROLLBACK` is no longer needed — the
+        adapter handles the transaction boundary.
+        """
+        def _do(conn) -> None:
+            # characters
+            conn.execute("DELETE FROM characters")
+            for c in network.get("characters", []):
+                conn.execute(
+                    "INSERT INTO characters (name, role) VALUES (?, ?)",
+                    (c["name"], c.get("role", "supporting")),
+                )
+            # relationships
+            conn.execute("DELETE FROM relationships")
+            for r in network.get("relationships", []):
+                conn.execute(
+                    "INSERT INTO relationships (from_char, to_char, type, trust, conflict, last_event) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        r["from"],
+                        r["to"],
+                        r["type"],
+                        r.get("trust", 0.5),
+                        r.get("conflict", 0.1),
+                        r.get("last_event"),
+                    ),
+                )
+            # events
+            conn.execute("DELETE FROM events")
+            for e in network.get("events", []):
+                conn.execute(
+                    "INSERT INTO events (from_char, to_char, type, chapter) VALUES (?, ?, ?, ?)",
+                    (e["from"], e["to"], e["type"], e["chapter"]),
+                )
+        self._storage.with_transaction(_do)
 
     # ---------- 公共 API (与 JSON 版完全一致) ----------
 

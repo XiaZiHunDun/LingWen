@@ -5,13 +5,17 @@ SQLite 状态后端
 
 Phase 15.0 T2.8: DeprecationWarning — 引导 caller 切到
 `infra.persistence.registry.get("workflow")` (singleton).
+
+v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
+Public API unchanged (SQLiteBackend(db_path=...) + get/set/delete/list_keys).
 """
 
 import json
-import sqlite3
 import warnings
 from pathlib import Path
 from typing import Any, Optional
+
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
 from .base import StateBackend
 
@@ -21,6 +25,9 @@ class SQLiteBackend(StateBackend):
     SQLite 状态后端
 
     适用于生产环境，高并发场景
+
+    v16.5 #N.3: storage layer now SqliteStorageAdapter from lingwen_storage
+    (previously direct sqlite3). Public API preserved.
     """
 
     def __init__(self, db_path: str = ".state/workflow.db"):
@@ -38,6 +45,7 @@ class SQLiteBackend(StateBackend):
             stacklevel=2,
         )
         self.db_path = Path(db_path)
+        self._storage = SqliteStorageAdapter(str(self.db_path))
         self._init_db()
 
     def _init_db(self):
@@ -45,30 +53,29 @@ class SQLiteBackend(StateBackend):
         # 确保目录存在
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        conn = sqlite3.connect(str(self.db_path))
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS workflow_state (
-                key TEXT PRIMARY KEY,
-                value TEXT,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.commit()
-        conn.close()
+        def _do(conn) -> None:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS workflow_state (
+                    key TEXT PRIMARY KEY,
+                    value TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        self._storage.with_transaction(_do)
 
     def get(self, key: str) -> Optional[Any]:
         """获取指定键的值"""
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
-        row = conn.execute(
-            "SELECT value FROM workflow_state WHERE key = ?", (key,)
-        ).fetchone()
-        conn.close()
+        def _do(conn):
+            row = conn.execute(
+                "SELECT value FROM workflow_state WHERE key = ?", (key,)
+            ).fetchone()
+            return row["value"] if row is not None else None
 
-        if row is None:
+        value_str = self._storage.with_connection(_do)
+
+        if value_str is None:
             return None
 
-        value_str = row["value"]
         try:
             return json.loads(value_str)
         except json.JSONDecodeError:
@@ -83,39 +90,36 @@ class SQLiteBackend(StateBackend):
         else:
             value_str = str(value)
 
-        conn = sqlite3.connect(str(self.db_path))
-        conn.execute("""
-            INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
-            VALUES (?, ?, CURRENT_TIMESTAMP)
-        """, (key, value_str))
-        conn.commit()
-        conn.close()
+        def _do(conn) -> None:
+            conn.execute("""
+                INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            """, (key, value_str))
+
+        self._storage.with_transaction(_do)
 
     def delete(self, key: str) -> bool:
         """删除指定键"""
-        conn = sqlite3.connect(str(self.db_path))
-        cursor = conn.execute(
-            "DELETE FROM workflow_state WHERE key = ?", (key,)
-        )
-        conn.commit()
-        deleted = cursor.rowcount > 0
-        conn.close()
-        return deleted
+        def _do(conn) -> int:
+            cursor = conn.execute(
+                "DELETE FROM workflow_state WHERE key = ?", (key,)
+            )
+            return cursor.rowcount
+
+        deleted_count = self._storage.with_transaction(_do)
+        return deleted_count > 0
 
     def list_keys(self, prefix: Optional[str] = None) -> list[str]:
         """列出所有键"""
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
-
-        if prefix:
-            rows = conn.execute(
-                "SELECT key FROM workflow_state WHERE key LIKE ?",
-                (f"{prefix}%",)
-            ).fetchall()
-        else:
-            rows = conn.execute(
+        def _do(conn):
+            if prefix:
+                return conn.execute(
+                    "SELECT key FROM workflow_state WHERE key LIKE ?",
+                    (f"{prefix}%",)
+                ).fetchall()
+            return conn.execute(
                 "SELECT key FROM workflow_state"
             ).fetchall()
 
-        conn.close()
+        rows = self._storage.with_connection(_do)
         return [row["key"] for row in rows]
