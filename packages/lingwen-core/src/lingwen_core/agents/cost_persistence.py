@@ -15,18 +15,20 @@ Doc 4 §11 Phase 8.5: SQLite 持久化 CostRecord 列表 (mirror ReadingPowerDB 
   trend chart; SQL DATE(timestamp) GROUP BY day ORDER BY day (无 records 返 {})
 
 Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("cost") singleton.
+
+v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
+Public API unchanged.
 """
 from __future__ import annotations
 
-import sqlite3
 import warnings
-from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 
 from lingwen_llm.providers.cost_tracker import CostRecord
 from lingwen_llm.providers.model_tiers import ModelTier, compute_cost
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
 # 默认 DB 路径: infra/.state/cost_tracker.db (gitignored)
 _DB_PATH = Path(__file__).parent.parent / ".state" / "cost_tracker.db"
@@ -40,6 +42,9 @@ class CostTrackerDB:
     _connect context manager + lazy _init_db).
 
     Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("cost") singleton.
+
+    v16.5 #N.3: storage layer now SqliteStorageAdapter from lingwen_storage.
+    Public API preserved.
     """
 
     def __init__(
@@ -57,6 +62,7 @@ class CostTrackerDB:
             DeprecationWarning,
             stacklevel=2,
         )
+        self._storage = SqliteStorageAdapter(str(self.db_path))
         if init_if_missing:
             self._ensure_db_path()
 
@@ -65,20 +71,9 @@ class CostTrackerDB:
         if str(self.db_path) != ":memory:" and not self.db_path.parent.exists():
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    @contextmanager
-    def _connect(self) -> Iterator[sqlite3.Connection]:
-        """DB 连接 context manager (mirror ReadingPowerDB)"""
-        conn = sqlite3.connect(str(self.db_path), timeout=5)
-        conn.row_factory = sqlite3.Row
-        try:
-            yield conn
-            conn.commit()
-        finally:
-            conn.close()
-
     def init_db(self) -> None:
         """初始化表 + 索引 (CREATE IF NOT EXISTS — 幂等)"""
-        with self._connect() as conn:
+        def _do(conn) -> None:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS cost_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,6 +91,7 @@ class CostTrackerDB:
                 CREATE INDEX IF NOT EXISTS idx_cost_records_timestamp
                     ON cost_records(timestamp);
             """)
+        self._storage.with_transaction(_do)
 
     def record(
         self,
@@ -118,7 +114,8 @@ class CostTrackerDB:
             output_tokens=output_tokens,
             cost_usd=cost,
         )
-        with self._connect() as conn:
+
+        def _do(conn) -> None:
             conn.execute(
                 """INSERT INTO cost_records
                    (scenario, tier, input_tokens, output_tokens, cost_usd, timestamp)
@@ -132,16 +129,21 @@ class CostTrackerDB:
                     rec.timestamp.isoformat(),
                 ),
             )
+
+        self._storage.with_transaction(_do)
         return rec
 
     def records(self) -> list[CostRecord]:
         """全部记录 (按 id 升序 = 时间顺序)"""
         self.init_db()
-        with self._connect() as conn:
-            rows = conn.execute(
+
+        def _do(conn):
+            return conn.execute(
                 """SELECT scenario, tier, input_tokens, output_tokens, cost_usd, timestamp
                    FROM cost_records ORDER BY id"""
             ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         return [
             CostRecord(
                 scenario=r["scenario"],
@@ -157,53 +159,59 @@ class CostTrackerDB:
     def total_cost(self, since: Optional[datetime] = None) -> float:
         """总成本 (USD). Phase 8.16: since 透传 (additive, default None 走旧 SQL)."""
         self.init_db()
-        with self._connect() as conn:
+
+        def _do(conn):
             if since is None:
-                row = conn.execute(
+                return conn.execute(
                     "SELECT COALESCE(SUM(cost_usd), 0.0) as total FROM cost_records"
                 ).fetchone()
-            else:
-                row = conn.execute(
-                    "SELECT COALESCE(SUM(cost_usd), 0.0) as total "
-                    "FROM cost_records WHERE timestamp >= ?",
-                    (since.isoformat(),),
-                ).fetchone()
+            return conn.execute(
+                "SELECT COALESCE(SUM(cost_usd), 0.0) as total "
+                "FROM cost_records WHERE timestamp >= ?",
+                (since.isoformat(),),
+            ).fetchone()
+
+        row = self._storage.with_connection(_do)
         return float(row["total"])
 
     def cost_by_scenario(self, since: Optional[datetime] = None) -> dict[str, float]:
         """按 scenario 聚合成本 (USD). Phase 8.16: since 透传 (additive)."""
         self.init_db()
-        with self._connect() as conn:
+
+        def _do(conn):
             if since is None:
-                rows = conn.execute(
+                return conn.execute(
                     """SELECT scenario, SUM(cost_usd) as total
                        FROM cost_records GROUP BY scenario"""
                 ).fetchall()
-            else:
-                rows = conn.execute(
-                    """SELECT scenario, SUM(cost_usd) as total
-                       FROM cost_records WHERE timestamp >= ?
-                       GROUP BY scenario""",
-                    (since.isoformat(),),
-                ).fetchall()
+            return conn.execute(
+                """SELECT scenario, SUM(cost_usd) as total
+                   FROM cost_records WHERE timestamp >= ?
+                   GROUP BY scenario""",
+                (since.isoformat(),),
+            ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         return {r["scenario"]: float(r["total"]) for r in rows}
 
     def cost_by_tier(self, since: Optional[datetime] = None) -> dict[ModelTier, float]:
         """按 tier 聚合成本 (USD). Phase 8.16: since 透传 (additive)."""
         self.init_db()
-        with self._connect() as conn:
+
+        def _do(conn):
             if since is None:
-                rows = conn.execute(
+                return conn.execute(
                     """SELECT tier, SUM(cost_usd) as total
                        FROM cost_records GROUP BY tier"""
                 ).fetchall()
-            else:
-                rows = conn.execute(
-                    """SELECT tier, SUM(cost_usd) as total
-                       FROM cost_records WHERE timestamp >= ?
-                       GROUP BY tier""",
-                    (since.isoformat(),),
-                ).fetchall()
+            return conn.execute(
+                """SELECT tier, SUM(cost_usd) as total
+                   FROM cost_records WHERE timestamp >= ?
+                   GROUP BY tier""",
+                (since.isoformat(),),
+            ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         return {ModelTier(r["tier"]): float(r["total"]) for r in rows}
 
     def cost_by_day(self, since: Optional[datetime] = None) -> dict[str, float]:
@@ -218,19 +226,21 @@ class CostTrackerDB:
             dict[date_str, total_usd] — date_str 'YYYY-MM-DD', 按日期升序.
         """
         self.init_db()
-        with self._connect() as conn:
+
+        def _do(conn):
             if since is None:
-                rows = conn.execute(
+                return conn.execute(
                     """SELECT DATE(timestamp) as day, SUM(cost_usd) as total
                        FROM cost_records GROUP BY day ORDER BY day"""
                 ).fetchall()
-            else:
-                rows = conn.execute(
-                    """SELECT DATE(timestamp) as day, SUM(cost_usd) as total
-                       FROM cost_records WHERE timestamp >= ?
-                       GROUP BY day ORDER BY day""",
-                    (since.isoformat(),),
-                ).fetchall()
+            return conn.execute(
+                """SELECT DATE(timestamp) as day, SUM(cost_usd) as total
+                   FROM cost_records WHERE timestamp >= ?
+                   GROUP BY day ORDER BY day""",
+                (since.isoformat(),),
+            ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         return {r["day"]: float(r["total"]) for r in rows}
 
     def cost_by_day_per_tier(
@@ -242,19 +252,21 @@ class CostTrackerDB:
         ORDER BY day, tier (date keys ascending).
         """
         self.init_db()
-        with self._connect() as conn:
+
+        def _do(conn):
             if since is None:
-                rows = conn.execute(
+                return conn.execute(
                     """SELECT DATE(timestamp) as day, tier, SUM(cost_usd) as total
                        FROM cost_records GROUP BY day, tier ORDER BY day, tier"""
                 ).fetchall()
-            else:
-                rows = conn.execute(
-                    """SELECT DATE(timestamp) as day, tier, SUM(cost_usd) as total
-                       FROM cost_records WHERE timestamp >= ?
-                       GROUP BY day, tier ORDER BY day, tier""",
-                    (since.isoformat(),),
-                ).fetchall()
+            return conn.execute(
+                """SELECT DATE(timestamp) as day, tier, SUM(cost_usd) as total
+                   FROM cost_records WHERE timestamp >= ?
+                   GROUP BY day, tier ORDER BY day, tier""",
+                (since.isoformat(),),
+            ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         result: dict[str, dict[str, float]] = {}
         for row in rows:
             day = row["day"]
