@@ -4,20 +4,30 @@ SQLite-based workflow state management
 Provides atomic read-modify-write operations
 
 Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("workflow") singleton.
+
+v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
+Public API preserved.
 """
 import fcntl
 import json
-import sqlite3
 import warnings
 from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
 from infra.persistence.sqlite_config import apply_sqlite_pragmas
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
 
 class WorkflowDB:
+    """Workflow DB facade.
+
+    v16.5 #N.3: storage layer now SqliteStorageAdapter from lingwen_storage.
+    fcntl.flock retained around transaction() for R3-001 cross-process
+    write serialization. apply_sqlite_pragmas applied via SqliteConnection
+    wrapper (delegated execute).
+    """
+
     def __init__(self, db_path=None):
         if db_path is None:
             project_root = Path(__file__).parent.parent.parent
@@ -35,11 +45,12 @@ class WorkflowDB:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             # R3-001: 与 state_manager.py 一致,使用 fcntl.flock 防止多进程写竞争
             self._lock_path = self.db_path.with_suffix('.lock')
+        self._storage = SqliteStorageAdapter(str(self.db_path))
         self._init_db()
 
     def _init_db(self):
         """Initialize database schema"""
-        with self._get_conn() as conn:
+        def _do(conn) -> None:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS workflow_state (
                     key TEXT PRIMARY KEY,
@@ -72,17 +83,17 @@ class WorkflowDB:
                 )
             """)
             apply_sqlite_pragmas(conn)
+        self._storage.with_transaction(_do)
 
     @contextmanager
     def _get_conn(self):
-        """Get database connection with context manager"""
-        conn = sqlite3.connect(str(self.db_path))
-        conn.row_factory = sqlite3.Row
-        apply_sqlite_pragmas(conn)
-        try:
+        """Get database connection with context manager.
+
+        v16.5 #N.3: delegates to SqliteStorageAdapter._connection_cm;
+        row_factory=sqlite3.Row is set by adapter._open() automatically.
+        """
+        with self._storage._connection_cm() as conn:
             yield conn
-        finally:
-            conn.close()
 
     @contextmanager
     def transaction(self):
@@ -92,24 +103,17 @@ class WorkflowDB:
         通过 fcntl.flock 防止多进程同时写 SQLite 时的竞争条件。
         配合 BEGIN IMMEDIATE 提供 SQLite 进程内写锁,
         busy_timeout=5000 避免短冲突直接抛 SQLITE_BUSY。
+
+        v16.5 #N.3: connection lifecycle delegated to
+        SqliteStorageAdapter._transaction_cm (handles BEGIN/COMMIT/ROLLBACK);
+        fcntl.flock retained for cross-process serialization.
         """
         lock_file = open(self._lock_path, 'w')
         fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-        conn = None
         try:
-            conn = sqlite3.connect(str(self.db_path))
-            conn.row_factory = sqlite3.Row
-            apply_sqlite_pragmas(conn)
-            conn.execute("BEGIN IMMEDIATE")
-            yield conn
-            conn.commit()
-        except Exception:
-            if conn is not None:
-                conn.rollback()
-            raise
+            with self._storage._transaction_cm() as conn:
+                yield conn
         finally:
-            if conn is not None:
-                conn.close()
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
 
