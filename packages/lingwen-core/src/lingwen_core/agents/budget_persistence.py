@@ -15,20 +15,22 @@ Why single DB 跟 cost_records 共存:
 
 Backward compat: scope='run' 跟 Phase 8.8 _current_budget_usd 等价 (in-memory)
 
-Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("budget") singleton.
+v16.5 #N.3: Migrated to SqliteStorageAdapter from lingwen_storage.
+Replaces direct sqlite3.connect() + local _connect contextmanager
+with storage.with_connection/with_transaction (callback-based).
+Public API unchanged (BudgetService(db_path=..., init_if_missing=...)).
 """
 from __future__ import annotations
 
-import sqlite3
 import warnings
-from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 
 from lingwen_llm.providers.cost_tracker import CostBudgetExceeded
 from lingwen_llm.providers.model_tiers import ModelTier
+from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
 
 # 默认 DB 路径: 复用 cost_tracker.db (gitignored)
 _DB_PATH = Path(__file__).parent.parent / ".state" / "cost_tracker.db"
@@ -76,6 +78,9 @@ class BudgetService:
 
     3 档 scope (run / day / week), append-only 历史,
     per-run 用 run_id 隔离, per-day/per-week 用 UTC Calendar window.
+
+    v16.5 #N.3: storage layer now SqliteStorageAdapter from lingwen_storage
+    (previously direct sqlite3). Public API preserved.
     """
 
     def __init__(
@@ -93,6 +98,7 @@ class BudgetService:
             DeprecationWarning,
             stacklevel=2,
         )
+        self._storage = SqliteStorageAdapter(str(self.db_path))
         if init_if_missing:
             self._ensure_db_path()
 
@@ -100,23 +106,13 @@ class BudgetService:
         if str(self.db_path) != ":memory:" and not self.db_path.parent.exists():
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    @contextmanager
-    def _connect(self) -> Iterator[sqlite3.Connection]:
-        conn = sqlite3.connect(str(self.db_path), timeout=5)
-        conn.row_factory = sqlite3.Row
-        try:
-            yield conn
-            conn.commit()
-        finally:
-            conn.close()
-
     def init_db(self) -> None:
         """初始化 budgets 表 + 2 索引 (幂等 CREATE IF NOT EXISTS)
 
         Phase 8.15: 同时建 budgets_by_tier 表 + idx (per-tier budget).
         旧 budgets 表 0 改, 0 删行/列. CREATE IF NOT EXISTS 幂等.
         """
-        with self._connect() as conn:
+        def _do(conn) -> None:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS budgets (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,6 +134,7 @@ class BudgetService:
                 CREATE INDEX IF NOT EXISTS idx_budgets_by_tier_tier
                     ON budgets_by_tier(tier, id DESC);
             """)
+        self._storage.with_transaction(_do)
 
     def set(
         self,
@@ -152,12 +149,15 @@ class BudgetService:
             raise ValueError(f"usd must be non-negative, got {usd}")
         self.init_db()
         set_at = datetime.now(timezone.utc).isoformat()
-        with self._connect() as conn:
+
+        def _do(conn) -> int:
             cursor = conn.execute(
                 "INSERT INTO budgets (scope, usd, run_id, set_at) VALUES (?, ?, ?, ?)",
                 (scope, usd, run_id, set_at),
             )
-            new_id = cursor.lastrowid
+            return cursor.lastrowid
+
+        new_id = self._storage.with_transaction(_do)
         return BudgetEntry(
             id=new_id,
             scope=scope,
@@ -185,8 +185,11 @@ class BudgetService:
                 "WHERE scope = ? ORDER BY id DESC LIMIT 1"
             )
             params = (scope,)
-        with self._connect() as conn:
-            row = conn.execute(sql, params).fetchone()
+
+        def _do(conn):
+            return conn.execute(sql, params).fetchone()
+
+        row = self._storage.with_connection(_do)
         if row is None:
             return None
         return BudgetEntry(
@@ -245,8 +248,9 @@ class BudgetService:
     def list_runs(self, limit: int = 20) -> list[str]:
         """返最近 N 个 distinct run_id (按最近 set_at 倒序)"""
         self.init_db()
-        with self._connect() as conn:
-            rows = conn.execute(
+
+        def _do(conn):
+            return conn.execute(
                 """
                 SELECT run_id, MAX(id) AS last_id FROM budgets
                 WHERE scope = 'run' AND run_id IS NOT NULL
@@ -255,6 +259,8 @@ class BudgetService:
                 """,
                 (limit,),
             ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         return [r["run_id"] for r in rows]
 
     # === Phase 8.15: Per-Tier Budget (parallel to run/day/week) ===
@@ -272,12 +278,15 @@ class BudgetService:
             raise ValueError(f"usd must be non-negative, got {usd}")
         self.init_db()
         set_at = datetime.now(timezone.utc).isoformat()
-        with self._connect() as conn:
+
+        def _do(conn) -> int:
             cursor = conn.execute(
                 "INSERT INTO budgets_by_tier (tier, usd, set_at) VALUES (?, ?, ?)",
                 (tier.value, usd, set_at),
             )
-            new_id = cursor.lastrowid
+            return cursor.lastrowid
+
+        new_id = self._storage.with_transaction(_do)
         return TierBudgetEntry(
             id=new_id,
             tier=tier,
@@ -294,12 +303,15 @@ class BudgetService:
         Mirror `get_current` 但用 ModelTier 替 scope.
         """
         self.init_db()
-        with self._connect() as conn:
-            row = conn.execute(
+
+        def _do(conn):
+            return conn.execute(
                 "SELECT id, tier, usd, set_at FROM budgets_by_tier "
                 "WHERE tier = ? ORDER BY id DESC LIMIT 1",
                 (tier.value,),
             ).fetchone()
+
+        row = self._storage.with_connection(_do)
         if row is None:
             return None
         return TierBudgetEntry(
@@ -316,8 +328,9 @@ class BudgetService:
         跟 Phase 8.12 list_runs 同 pattern.
         """
         self.init_db()
-        with self._connect() as conn:
-            rows = conn.execute(
+
+        def _do(conn):
+            return conn.execute(
                 """
                 SELECT b.id, b.tier, b.usd, b.set_at
                 FROM budgets_by_tier b
@@ -327,6 +340,8 @@ class BudgetService:
                 ORDER BY b.id DESC
                 """,
             ).fetchall()
+
+        rows = self._storage.with_connection(_do)
         return [
             TierBudgetEntry(
                 id=row["id"],
