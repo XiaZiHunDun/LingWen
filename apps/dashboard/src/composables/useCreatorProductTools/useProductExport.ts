@@ -139,7 +139,15 @@ export function useProductExport(deps: ExportDeps): ProductExportReturn {
       return nums;
     }
     if (exportMode.value === 'submission') {
-      const resp = await fetchChapters() as { chapters?: Array<{ chapter: number; has_body?: boolean }> };
+      // v16.5 #7: fetchChapters() now returns ChaptersResponseDTO (chapter +
+      // hook_count + coolpoint_*), NOT the legacy {chapter, has_body} shape.
+      // The `has_body` filter below is preserved for runtime parity but the
+      // underlying backend never sends `has_body` — every chapter's
+      // `has_body` is undefined → filter always returns []. This is a
+      // pre-existing data-shape drift tracked for v16.5 #N carryover.
+      const resp = await fetchChapters() as unknown as {
+        chapters?: Array<{ chapter: number; has_body?: boolean }>;
+      };
       const nums = (resp.chapters || [])
         .filter((c) => c.has_body)
         .map((c) => c.chapter);
@@ -149,7 +157,10 @@ export function useProductExport(deps: ExportDeps): ProductExportReturn {
         exportSubmissionSampleCount.value,
       );
     }
-    const resp = await fetchChapters() as { chapters?: Array<{ chapter: number; has_body?: boolean }> };
+    // v16.5 #7: see note above on `has_body` schema drift carryover.
+    const resp = await fetchChapters() as unknown as {
+      chapters?: Array<{ chapter: number; has_body?: boolean }>;
+    };
     return (resp.chapters || [])
       .filter((c) => c.has_body)
       .map((c) => c.chapter)
