@@ -54,6 +54,7 @@ v16.5 #N.9+ tasks:
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from lingwen_shared.contracts.python.cvg import (
@@ -82,6 +83,21 @@ def _compute_volume_from_chapter(chapter: int) -> int:
     if chapter <= 0:
         return 1
     return max(1, (chapter - 1) // 100 + 1)
+
+
+def _parse_dt(value: Any) -> str:
+    """Storage datetime → ISO string for presentation.
+
+    Phase 126 v16.5 #N.9: Implementation gap from N.8 scaffold — defined
+    in architecture docstring but not actually called. v16.5 #N.9 wire-up
+    requires this conversion so that storage ``datetime`` objects validate
+    against presentation ``str`` fields.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
 
 
 def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemResponse:
@@ -116,7 +132,7 @@ def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemRes
         status=storage.get("status", "pending"),
         source_volume=source_volume,
         impact_volumes=[impact_volume],
-        created_at=storage.get("created_at") or "",
+        created_at=_parse_dt(storage.get("created_at")),
     )
 
 
