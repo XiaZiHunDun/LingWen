@@ -33,7 +33,7 @@ from typing import Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.llm_service import LLMService
+from lingwen_llm.port_adapter import LLMServiceAdapter
 
 
 @dataclass
@@ -144,8 +144,8 @@ class OutlinePathManager:
 class LLMOutlineChecker:
     """基于LLM的大纲质量检测器"""
 
-    def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm = llm_service or LLMService()
+    def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
+        self.llm = llm_service or LLMServiceAdapter()
         self.path_mgr = OutlinePathManager()
 
     def check_full_outline(self, outline_path: Path = None) -> OutlineQualityReport:
@@ -527,8 +527,8 @@ class LLMOutlineChecker:
 class LLMOutlineRepairer:
     """基于LLM的大纲问题修复器"""
 
-    def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm = llm_service or LLMService()
+    def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
+        self.llm = llm_service or LLMServiceAdapter()
         self.path_mgr = OutlinePathManager()
 
     def repair_full_outline_issue(self, issue: OutlineIssue, content: str) -> str:

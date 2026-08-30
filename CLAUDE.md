@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #N.4 (Phase 126 remaining infra/* files migration — 21 files migrated to SqliteStorageAdapter from lingwen_storage, infra/ `import sqlite3` count 22 → 2 (only exception class identities remain), 431 backend tests pass — 4 commits + 1 docs)
+> **版本**: v16.5 #N.6 (Phase 126 DP-02 tools LLM service migration — 12 whitelisted tools/llm_*.py files migrated from `infra.llm_service.LLMService` to `lingwen_llm.port_adapter.LLMServiceAdapter`; LLMTask/TaskType imports migrated to `lingwen_shared.contracts.python.llm` (canonical, no grimp-evasion hack); 12-file whitelist retired; new tests/tools/conftest.py bootstraps factory registration; 14 commits + 1 docs)
+  → v16.5 #N.4 (Phase 126 remaining infra/* files migration — 21 files migrated to SqliteStorageAdapter from lingwen_storage, infra/ `import sqlite3` count 22 → 2 (only exception class identities remain), 431 backend tests pass — 4 commits + 1 docs)
   → v16.5 #N.3 (Phase 126 whitelisted infra/* files migration — 8 Phase 15.0 T2.8 deprecated files migrated to SqliteStorageAdapter from lingwen_storage, public APIs preserved, hygiene test whitelist retired, ruff --fix for 9 W292 violations — 9 commits + 1 docs)
   → v16.5 #N.1 (Phase 126 StoragePort factory pattern — `set_default_storage_factory()` + `get_default_storage()` in lingwen_shared.ports.storage, SqliteStorageAdapter registers as default factory at module load, mirrors v16.5 #1 LLMServiceAdapter pattern — 3 commits + 1 docs)
   → v16.5 #N.0 (Phase 126 SqliteStorageAdapter relocated to packages/lingwen-storage — breaks lingwen_core/pipeline → infra.persistence cycle, infra version becomes back-compat shim, lingwen-shared workspace dep added — 2 commits)
@@ -34,6 +35,35 @@
   → v14.2 (Phase 114 prod Web Vitals 终结)
   → v14.0 (Phase 99-105b knip-follow-up 闭环完成)
   → v13.0 (Phase 60-67 dashboard 基础设施重构完成)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #N.6 闭环 — 12 whitelisted tools/llm_*.py files migrated to LLMServiceAdapter——14 commits (`9057f0df`...`f583cfa2`, 12 file migrations + 1 hygiene gate simplification + 1 test conftest + 1 ruff fixup):
+- **T1-T12 (12 atomic 1-file commits)**: Each tools/llm_*.py file replaced `from infra.llm_service import LLMService` with `from lingwen_llm.port_adapter import LLMServiceAdapter` and `LLMService()` with `LLMServiceAdapter()`. Files using `LLMTask`/`TaskType` (anti_trope_enhancer.py, llm_quality_analyzer.py, llm_quality/__init__.py, llm_quality/repairer.py) also split imports to `from lingwen_shared.contracts.python.llm import LLMTask, TaskType` (canonical, no grimp-evasion hack). Pattern A files (8): only `LLMService` swap. Pattern B files (4): full split. `tools/llm_quality/repairer.py` had 9 in-method `from infra.llm_service import LLMTask, TaskType` statements also migrated.
+- **T13 (1 commit)** `test(hygiene)`: `tooling/hygiene/tests/test_no_concrete_llm_import.py` — `TOOLS_LLM_SERVICE_WHITELIST` constant (12 files) + `test_no_infra_llm_service_imports_in_tools_with_whitelist` retired. Test now enforces ZERO direct `infra.llm_service` imports in `tools/` — whitelist gone.
+- **T14 (1 commit)** `test(tools)`: `tests/tools/conftest.py` NEW — imports `infra.llm_service  # noqa: F401` to register `LLMServiceAdapter` factory. Mirrors production startup (apps/studio_api/app.py bootstraps the same import). Tests/tools/ scope is NOT covered by DP-02 forbidden contract, so this conftest is safe.
+- **T15 (1 commit)** `test(tools)`: `tests/tools/test_enhancement_tools.py` — patched target `tools.anti_trope_enhancer.LLMService` → `tools.anti_trope_enhancer.LLMServiceAdapter` (per v16.2.7 §3 lesson 1).
+- **T16 (1 commit)** `chore(ruff)`: ruff --fix for 2 I001 violations (anti_trope_enhancer.py + llm_quality_analyzer.py) — new import order `lingwen_* + infra.* + shared` requires alphabetical sorting.
+
+Tests: 583 backend (8 llm pkg + 85 shared pkg [79+6 NEW] + 73 creator pkg + 392 infra/studio_api + 17 hygiene tools + 10 tools enhancement + 0 llm_bench / hygiene gate unchanged) / 1729 vitest / vue-tsc 0 / ruff 0 / knip 0 (advisory) / ESLint 0 / **lint-imports 3 contracts KEPT** (layer_dependencies + no_concrete_llm_service + no_concrete_sqlite3) / grimp-evasion hygiene OK。
+
+**Migration counts**:
+- `tools/` `from infra.llm_service` count: **12 → 0**
+- `tools/` `from lingwen_llm.port_adapter` count: **0 → 12**
+- `tools/` `from lingwen_shared.contracts.python.llm` count: **0 → 3**
+- `tools/` `LLMServiceAdapter()` call count: **0 → 12**
+
+7 lessons (v16.5 #N.6 §5):
+1. **Tools scripts are leaf consumers** — Each tools/llm_*.py file uses a single LLM service pattern. Migration is purely mechanical: replace 1 import + 1 function call. No architectural change needed。
+2. **Factory pattern (v16.5 #N.1) made this trivial** — `LLMServiceAdapter()` (no args) uses the default factory, so consumers don't need to manage the LLMService singleton themselves。
+3. **Atomic 1-file commits** — 12 files × 1 commit = 12 commits. Easy to review, easy to revert if a specific tool breaks。
+4. **Factory bootstrap is a test-environment concern** — The factory is registered as a side effect of `infra.llm_service` import. In production, the app startup imports it; in tests, we need to bootstrap it explicitly. `tests/tools/conftest.py` is the right scope: NOT business code, so DP-02 forbidden contract does not fire。
+5. **Migrating `LLMTask`/`TaskType` imports inside function bodies matters** — `repairer.py` had 9 in-method `from infra.llm_service import LLMTask, TaskType` statements that grimp would still follow. All 9 had to be migrated to truly remove the infra.llm_service import surface。
+6. **I001 ruff violations introduced by reordering imports** — When a file's primary import changes from `infra.X` to `lingwen_X`, the import block may need re-sorting. Ruff --fix handles this automatically but adds 1 commit per fixup batch。
+7. **Test mock targets must be updated in lockstep with code** — Per v16.2.7 §3 lesson 1 (shim mocks don't propagate): when a class is renamed or replaced, the corresponding `vi.mock` / `patch` paths must be updated. v16.5 #N.6 updated 1 mock target (`tools.anti_trope_enhancer.LLMService` → `LLMServiceAdapter`)。
+
+**Carryover to v16.5 #N.7+**:
+- **#N.7** DTO Pydantic codegen + remaining `Promise<unknown>` narrowing (incl. SSE for `runCreatorAgentPlanStream`)
+- **#N.8** Async port conformance (rewrite `LLMServiceAdapter` with `async execute → LLMResult`)
+- **#N.9+** Remaining packages migration if any (`lingwen_core/pipeline/prompt/cli` consumers)
 
 > **更新 (2026-08-30)**: Phase 126 v16.5 #N.3 闭环 — 8 whitelisted infra/* files migrated to SqliteStorageAdapter——9 commits (`6891665c`...`21819b09`, 8 migration commits + 1 hygiene test commit + 1 ruff fixup):
 - **T1** `refactor(lingwen-core)`: `budget_persistence.py` — `BudgetService` 迁 `SqliteStorageAdapter` (callback-based `with_transaction` / `with_connection`)。22/22 tests pass.

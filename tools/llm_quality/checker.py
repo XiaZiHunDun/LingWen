@@ -6,11 +6,11 @@ import json
 import re
 from typing import Dict, List, Optional
 
+from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue
 
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
-from infra.llm_service import LLMService
 
 from . import paths
 from .report import QualityReport
@@ -19,8 +19,8 @@ from .report import QualityReport
 class LLMQualityChecker:
     """基于LLM的深度质量检测器"""
 
-    def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm = llm_service or LLMService()
+    def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
+        self.llm = llm_service or LLMServiceAdapter()
         self.project_root = paths.PROJECT_ROOT
         self.chapters_dir = self.project_root / "03_内容仓库" / "04_正文"
         self.cache = CheckerCache()

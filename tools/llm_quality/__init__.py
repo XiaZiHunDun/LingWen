@@ -12,11 +12,11 @@
   from tools.llm_quality import LLMQualityChecker, LLMRepairer, QualityReport
   python -m tools.llm_quality --help
 """
+from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue, RepairResult
 
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
-from infra.llm_service import LLMService
 
 from .checker import LLMQualityChecker
 from .cli import main, parse_chapter_range, save_report
@@ -25,7 +25,7 @@ from .repairer import LLMRepairer
 from .report import QualityReport
 
 __all__ = [
-    "LLMService", "Issue", "RepairResult", "CheckerCache", "FalsePositiveFilter",
+    "LLMServiceAdapter", "Issue", "RepairResult", "CheckerCache", "FalsePositiveFilter",
     "QualityReport", "LLMQualityChecker", "LLMRepairer",
     "parse_chapter_range", "save_report", "main",
     "run_phase_18a", "run_phase_18b", "run_phase_18c", "run_phase_18d", "run_phase_18e",
