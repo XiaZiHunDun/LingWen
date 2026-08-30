@@ -8,8 +8,8 @@ Centralizes:
 from __future__ import annotations
 
 import json
-import sqlite3
 from datetime import datetime, timezone
+from typing import Any
 
 
 def now_iso() -> str:
@@ -18,11 +18,15 @@ def now_iso() -> str:
 
 
 def row_to_dict(
-    row: sqlite3.Row | None,
+    row: Any | None,
     json_fields: tuple[str, ...] = (),
 ) -> dict | None:
-    """Convert a sqlite3.Row into a dict, decoding listed columns as JSON.
+    """Convert a sqlite3-compatible row into a dict, decoding listed columns as JSON.
 
+    The ``row`` type is ``Any`` because the concrete storage backend (e.g.
+    ``sqlite3.Row``) is opaque to business code. Callers receive rows from
+    ``ConnectionPort.execute(...).fetchone()`` / ``.fetchall()``; the only
+    guarantee we rely on is that ``dict(row)`` and ``row[<key>]`` work.
     Returns None when row is None. For each name in ``json_fields``, if the
     column is present and truthy, its string value is parsed with json.loads.
     """

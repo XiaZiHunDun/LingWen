@@ -1,11 +1,12 @@
 """Proposal CRUD for review flow."""
 import json
-import sqlite3
+
+from lingwen_shared.ports.storage import ConnectionPort
 
 from infra.world_db.queries._helpers import now_iso, row_to_dict
 
 
-def create_proposal(conn: sqlite3.Connection, data: dict) -> int:
+def create_proposal(conn: ConnectionPort, data: dict) -> int:
     cur = conn.execute(
         """INSERT INTO proposal
            (kind, target_kind, target_id, payload, source, source_context,
@@ -22,7 +23,7 @@ def create_proposal(conn: sqlite3.Connection, data: dict) -> int:
 
 
 def list_proposals(
-    conn: sqlite3.Connection, status: str | None = None
+    conn: ConnectionPort, status: str | None = None
 ) -> list[dict]:
     if status:
         rows = conn.execute(
@@ -36,7 +37,7 @@ def list_proposals(
     return [row_to_dict(r, ("payload",)) for r in rows if r is not None]
 
 
-def get_proposal(conn: sqlite3.Connection, pid: int) -> dict | None:
+def get_proposal(conn: ConnectionPort, pid: int) -> dict | None:
     return row_to_dict(
         conn.execute("SELECT * FROM proposal WHERE id = ?", (pid,)).fetchone(),
         ("payload",),
@@ -44,7 +45,7 @@ def get_proposal(conn: sqlite3.Connection, pid: int) -> dict | None:
 
 
 def update_proposal_status(
-    conn: sqlite3.Connection,
+    conn: ConnectionPort,
     pid: int,
     status: str,
     reviewer: str | None = None,

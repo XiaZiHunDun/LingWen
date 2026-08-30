@@ -1,10 +1,10 @@
 """Relationship CRUD."""
-import sqlite3
+from lingwen_shared.ports.storage import ConnectionPort
 
 from infra.world_db.queries._helpers import now_iso
 
 
-def create_relationship(conn: sqlite3.Connection, data: dict) -> int:
+def create_relationship(conn: ConnectionPort, data: dict) -> int:
     """Insert a relationship, idempotent on the UNIQUE constraint.
 
     Returns the canonical row id. When a relationship with the same
@@ -46,7 +46,7 @@ def create_relationship(conn: sqlite3.Connection, data: dict) -> int:
 
 
 def list_relationships(
-    conn: sqlite3.Connection,
+    conn: ConnectionPort,
     source_kind: str | None = None,
     source_id: int | None = None,
     target_kind: str | None = None,

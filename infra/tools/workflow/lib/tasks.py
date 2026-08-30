@@ -1,12 +1,26 @@
 """任务分发、验证、查询
 
 对应 agent_tasks 表的 CRUD
+
+v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
+for connection management. The agent_tasks schema and CRUD queries
+are unchanged.
 """
-import sqlite3
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from . import db, events
+
+
+def _open_conn(timeout: float = 30.0):
+    """Helper: open a fresh wrapped connection for task operations."""
+    from lingwen_storage.sqlite_storage_adapter import (
+        SqliteConnection,
+        SqliteStorageAdapter,
+    )
+
+    adapter = SqliteStorageAdapter(str(db.DB_PATH), timeout=timeout)
+    return SqliteConnection(adapter._open())
 
 
 def dispatch_task(task_name: str, agent: str, desc: str = "") -> str:
@@ -24,19 +38,20 @@ def dispatch_task(task_name: str, agent: str, desc: str = "") -> str:
 
     timestamp = datetime.now().isoformat()
 
-    conn = sqlite3.connect(str(db.DB_PATH))
+    conn = _open_conn()
     try:
-        conn.execute("BEGIN IMMEDIATE")
-        conn.execute("""
-            INSERT OR REPLACE INTO agent_tasks
-            (task_id, task_name, agent, status, dispatched_at, heartbeat_at, task_id_external, created_at)
-            VALUES (?, ?, ?, 'pending', ?, ?, NULL, ?)
-        """, (task_name, task_name, agent, timestamp, timestamp, timestamp))
-        conn.commit()
-        task_id = task_name
-    except Exception as e:
-        conn.rollback()
-        task_id = f"ERROR: {e}"
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("""
+                INSERT OR REPLACE INTO agent_tasks
+                (task_id, task_name, agent, status, dispatched_at, heartbeat_at, task_id_external, created_at)
+                VALUES (?, ?, ?, 'pending', ?, ?, NULL, ?)
+            """, (task_name, task_name, agent, timestamp, timestamp, timestamp))
+            conn.commit()
+            task_id = task_name
+        except Exception as e:
+            conn.rollback()
+            task_id = f"ERROR: {e}"
     finally:
         conn.close()
 
@@ -65,20 +80,21 @@ def verify_task(task_name: str, task_id: str, status: str = "completed") -> bool
 
     timestamp = datetime.now().isoformat()
 
-    conn = sqlite3.connect(str(db.DB_PATH))
+    conn = _open_conn()
     try:
-        conn.execute("BEGIN IMMEDIATE")
-        conn.execute("""
-            UPDATE agent_tasks
-            SET status = ?, heartbeat_at = ?, task_id_external = ?
-            WHERE task_id = ?
-        """, (status, timestamp, task_id, task_name))
-        conn.commit()
-        return True
-    except Exception as e:
-        conn.rollback()
-        print(f"ERROR: {e}", file=__import__('sys').stderr)
-        return False
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("""
+                UPDATE agent_tasks
+                SET status = ?, heartbeat_at = ?, task_id_external = ?
+                WHERE task_id = ?
+            """, (status, timestamp, task_id, task_name))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"ERROR: {e}", file=__import__('sys').stderr)
+            return False
     finally:
         conn.close()
 
@@ -94,8 +110,7 @@ def get_task_status(task_name: str) -> Optional[Dict]:
     """
     db.init_sqlite()
 
-    conn = sqlite3.connect(str(db.DB_PATH))
-    conn.row_factory = sqlite3.Row
+    conn = _open_conn()
     try:
         cur = conn.execute(
             "SELECT * FROM agent_tasks WHERE task_id = ?",
@@ -118,8 +133,7 @@ def list_tasks(status: Optional[str] = None) -> List[Dict]:
     """
     db.init_sqlite()
 
-    conn = sqlite3.connect(str(db.DB_PATH))
-    conn.row_factory = sqlite3.Row
+    conn = _open_conn()
     try:
         if status:
             cur = conn.execute(

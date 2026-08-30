@@ -1,16 +1,30 @@
 """断点续跑 - 创建/列出/恢复/删除
 
 通过快照整个 workflow_state + agent_tasks 实现回滚
+
+v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
+for connection management. The flock lock helpers and schema/queries
+are unchanged.
 """
 import json
 import logging
-import sqlite3
 from datetime import datetime
 from typing import Dict, List, Tuple
 
 from . import db, state
 
 logger = logging.getLogger(__name__)
+
+
+def _open_conn(timeout: float = 30.0):
+    """Helper: open a fresh wrapped connection for checkpoint operations."""
+    from lingwen_storage.sqlite_storage_adapter import (
+        SqliteConnection,
+        SqliteStorageAdapter,
+    )
+
+    adapter = SqliteStorageAdapter(str(db.DB_PATH), timeout=timeout)
+    return SqliteConnection(adapter._open())
 
 
 def create_checkpoint(note: str = "") -> str:
@@ -36,11 +50,10 @@ def create_checkpoint(note: str = "") -> str:
         step = state.get_state("current_step", "N/A")
 
         # 获取完整状态快照（在单一事务内）
-        conn = sqlite3.connect(str(db.DB_PATH), timeout=30)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("BEGIN IMMEDIATE")
-        conn.row_factory = sqlite3.Row
+        conn = _open_conn()
         try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("BEGIN IMMEDIATE")
             cur = conn.execute("SELECT * FROM workflow_state")
             state_data = [dict(row) for row in cur.fetchall()]
 
@@ -76,8 +89,7 @@ def list_checkpoints() -> List[Dict]:
     """
     db.init_sqlite()
 
-    conn = sqlite3.connect(str(db.DB_PATH))
-    conn.row_factory = sqlite3.Row
+    conn = _open_conn()
     try:
         cur = conn.execute(
             "SELECT checkpoint_id, phase, step, note, created_at FROM checkpoints ORDER BY created_at DESC"
@@ -105,8 +117,7 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
 
     try:
         # 先读取快照
-        conn = sqlite3.connect(str(db.DB_PATH))
-        conn.row_factory = sqlite3.Row
+        conn = _open_conn()
         try:
             cur = conn.execute(
                 "SELECT snapshot FROM checkpoints WHERE checkpoint_id = ?",
@@ -121,9 +132,9 @@ def restore_checkpoint(checkpoint_id: str) -> Tuple[bool, str]:
             conn.close()
 
         # 然后执行恢复（在锁内）
-        conn = sqlite3.connect(str(db.DB_PATH))
-        conn.execute("BEGIN IMMEDIATE")
+        conn = _open_conn()
         try:
+            conn.execute("BEGIN IMMEDIATE")
             # 清空现有状态
             conn.execute("DELETE FROM workflow_state")
             conn.execute("DELETE FROM agent_tasks")
@@ -174,7 +185,7 @@ def delete_checkpoint(checkpoint_id: str) -> bool:
     """
     db.init_sqlite()
 
-    conn = sqlite3.connect(str(db.DB_PATH))
+    conn = _open_conn()
     try:
         conn.execute("DELETE FROM checkpoints WHERE checkpoint_id = ?", (checkpoint_id,))
         conn.commit()

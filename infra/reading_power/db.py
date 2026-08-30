@@ -3,13 +3,19 @@ Reading Power Database Module for 追读力系统.
 Provides SQLite-based storage for hooks, coolpoints, and chapter analysis results.
 
 Phase 15.0 T2.8: 直接实例化已弃用, 请使用 infra.persistence.registry.get("reading") singleton.
+
+v16.5 #N.4: drop direct ``import sqlite3``. The connection helper now
+borrows from ``SqliteStorageAdapter._open()`` and wraps the result in
+``SqliteConnection`` (row_factory and PRAGMA foreign_keys are pre-applied).
+The returned wrapper satisfies ``ConnectionPort`` for downstream callers.
 """
 
-import sqlite3
 import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from lingwen_shared.ports.storage import ConnectionPort
 
 
 class ReadingPowerDB:
@@ -37,11 +43,21 @@ class ReadingPowerDB:
         if str(self.db_path) != ":memory:":
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Create a new database connection with Row factory."""
-        conn = sqlite3.connect(str(self.db_path), timeout=5)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _get_connection(self) -> ConnectionPort:
+        """Create a new database connection with Row factory.
+
+        v16.5 #N.4: delegates to ``SqliteStorageAdapter._open()`` so
+        ``row_factory = sqlite3.Row`` is set by the adapter (no manual
+        setup needed). Returns the raw ``sqlite3.Connection`` (not the
+        ``SqliteConnection`` wrapper) because the public callers use
+        ``with self._get_connection() as conn:`` — the wrapper does not
+        implement ``__enter__`` / ``__exit__`` so would break the context
+        manager protocol.
+        """
+        from lingwen_storage.sqlite_storage_adapter import SqliteStorageAdapter
+
+        adapter = SqliteStorageAdapter(str(self.db_path))
+        return adapter._open()
 
     def _init_db(self) -> None:
         """Initialize database tables and indexes."""

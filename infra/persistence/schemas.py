@@ -1,4 +1,11 @@
-import sqlite3
+"""Centralized SQL schema definitions for the persistence layer.
+
+v16.5 #N.4: drop direct ``import sqlite3``; the connection parameter is
+typed as ``ConnectionPort`` (from ``lingwen_shared.ports.storage``). The
+``apply_schema`` function still calls ``conn.execute(stmt)`` directly,
+which works for any backend that conforms to ``ConnectionPort``.
+"""
+from lingwen_shared.ports.storage import ConnectionPort
 
 SCHEMAS: dict[str, list[str]] = {
     "ripple": [
@@ -223,7 +230,7 @@ SCHEMAS: dict[str, list[str]] = {
 }
 
 
-def apply_schema(name: str, conn: sqlite3.Connection) -> None:
+def apply_schema(name: str, conn: ConnectionPort) -> None:
     if name not in SCHEMAS:
         raise KeyError(f"Unknown schema: {name}")
     for stmt in SCHEMAS[name]:

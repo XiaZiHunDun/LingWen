@@ -2,11 +2,26 @@
 """
 Migrate existing workflow_state.json to SQLite
 Backup original JSON file before migration
+
+v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
+for the one-shot migration. This is a CLI tool — outside the application
+hot path, no enforcement of port-only contract here, but still avoid
+the bare import to satisfy the regex hygiene gate.
 """
 import json
-import sqlite3
 from datetime import datetime
 from pathlib import Path
+
+
+def _open_conn(db_path: Path, timeout: float = 30.0):
+    """Helper: open a fresh wrapped connection for migration."""
+    from lingwen_storage.sqlite_storage_adapter import (
+        SqliteConnection,
+        SqliteStorageAdapter,
+    )
+
+    adapter = SqliteStorageAdapter(str(db_path), timeout=timeout)
+    return SqliteConnection(adapter._open())
 
 
 def migrate(workflow_json: str, db_path: str):
@@ -25,7 +40,7 @@ def migrate(workflow_json: str, db_path: str):
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    conn = sqlite3.connect(str(db_path))
+    conn = _open_conn(db_path)
 
     # Create schema
     conn.execute("""

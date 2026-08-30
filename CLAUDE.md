@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #N.3 (Phase 126 whitelisted infra/* files migration — 8 Phase 15.0 T2.8 deprecated files migrated to SqliteStorageAdapter from lingwen_storage, public APIs preserved, hygiene test whitelist retired, ruff --fix for 9 W292 violations — 9 commits + 1 docs)
+> **版本**: v16.5 #N.4 (Phase 126 remaining infra/* files migration — 21 files migrated to SqliteStorageAdapter from lingwen_storage, infra/ `import sqlite3` count 22 → 2 (only exception class identities remain), 431 backend tests pass — 4 commits + 1 docs)
+  → v16.5 #N.3 (Phase 126 whitelisted infra/* files migration — 8 Phase 15.0 T2.8 deprecated files migrated to SqliteStorageAdapter from lingwen_storage, public APIs preserved, hygiene test whitelist retired, ruff --fix for 9 W292 violations — 9 commits + 1 docs)
   → v16.5 #N.1 (Phase 126 StoragePort factory pattern — `set_default_storage_factory()` + `get_default_storage()` in lingwen_shared.ports.storage, SqliteStorageAdapter registers as default factory at module load, mirrors v16.5 #1 LLMServiceAdapter pattern — 3 commits + 1 docs)
   → v16.5 #N.0 (Phase 126 SqliteStorageAdapter relocated to packages/lingwen-storage — breaks lingwen_core/pipeline → infra.persistence cycle, infra version becomes back-compat shim, lingwen-shared workspace dep added — 2 commits)
   → v16.5 #7 (Phase 126 DTO schema audit + typed wrapper narrowing — 5 new DTO files + 41 wrapper functions narrowed from Promise<unknown> to concrete DTO types + 1 composable cast cleanup — 5 commits)

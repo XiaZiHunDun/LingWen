@@ -1,16 +1,30 @@
 """状态管理 + 步骤推进
 
 SQLite 主存储 + JSON 兜底 + 步骤转换校验
+
+v16.5 #N.4: drop direct ``import sqlite3``; use ``SqliteStorageAdapter``
+for connection management. The JSON fallback path and step-transition
+validator are unchanged.
 """
 import json
 import logging
-import sqlite3
 import sys
 from typing import Any, Tuple
 
 from . import db, events
 
 logger = logging.getLogger(__name__)
+
+
+def _open_conn(timeout: float = 30.0):
+    """Helper: open a fresh wrapped connection for state operations."""
+    from lingwen_storage.sqlite_storage_adapter import (
+        SqliteConnection,
+        SqliteStorageAdapter,
+    )
+
+    adapter = SqliteStorageAdapter(str(db.DB_PATH), timeout=timeout)
+    return SqliteConnection(adapter._open())
 
 
 def get_state(key: str, fallback: str = "") -> str:
@@ -30,11 +44,10 @@ def get_state(key: str, fallback: str = "") -> str:
     """
     db.init_sqlite()
 
-    conn = sqlite3.connect(str(db.DB_PATH), timeout=30)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA busy_timeout=30000")
-    conn.row_factory = sqlite3.Row
+    conn = _open_conn()
     try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000")
         # R3-003: 显式 BEGIN 让读事务与写事务 (BEGIN IMMEDIATE) 互斥
         conn.execute("BEGIN")
         try:
@@ -93,20 +106,21 @@ def set_state(key: str, value: str) -> bool:
     """
     db.init_sqlite()
 
-    conn = sqlite3.connect(str(db.DB_PATH), timeout=30)
-    conn.execute("PRAGMA journal_mode=WAL")
+    conn = _open_conn()
     try:
-        conn.execute("BEGIN IMMEDIATE")
-        conn.execute("""
-            INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
-            VALUES (?, ?, CURRENT_TIMESTAMP)
-        """, (key, value))
-        conn.commit()
-        return True
-    except Exception as e:
-        conn.rollback()
-        print(f"ERROR: {e}", file=__import__('sys').stderr)
-        return False
+        conn.execute("PRAGMA journal_mode=WAL")
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("""
+                INSERT OR REPLACE INTO workflow_state (key, value, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            """, (key, value))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"ERROR: {e}", file=sys.stderr)
+            return False
     finally:
         conn.close()
 
