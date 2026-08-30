@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from lingwen_quality.quality import Issue
 
-from infra.llm_service import LLMService
+from lingwen_llm.port_adapter import LLMServiceAdapter
 
 from . import paths
 
@@ -14,14 +14,14 @@ from . import paths
 class LLMRepairer:
     """基于LLM的质量问题修复器"""
 
-    def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm = llm_service or LLMService()
+    def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
+        self.llm = llm_service or LLMServiceAdapter()
         self.project_root = paths.PROJECT_ROOT
         self.chapters_dir = self.project_root / "03_内容仓库" / "04_正文"
 
     def repair_character_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复角色一致性问题"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说内容修复专家，负责修复角色一致性问题。
 
@@ -48,7 +48,7 @@ class LLMRepairer:
 
     def repair_logic_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复逻辑矛盾问题"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说逻辑修复专家，负责修复逻辑矛盾。
 
@@ -75,7 +75,7 @@ class LLMRepairer:
 
     def repair_foreshadow_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复伏笔问题"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说伏笔修复专家，负责修复伏笔问题。
 
@@ -102,7 +102,7 @@ class LLMRepairer:
 
     def repair_emotional_rhythm_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复情感节奏问题（爽点密度、情感共鸣点）"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说情感节奏优化专家，负责修复情感节奏问题。
 
@@ -144,7 +144,7 @@ class LLMRepairer:
             chapter_content: 章节内容
             context_chapters: 上下文章节号列表（用于加载相邻章节）
         """
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         # 加载上下文
         context_content = ""
@@ -197,7 +197,7 @@ class LLMRepairer:
             chapter_content: 章节内容
             context_chapters: 上下文章节号列表
         """
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         # 加载上下文
         context_content = ""
@@ -256,7 +256,7 @@ class LLMRepairer:
 
     def repair_pacing_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复节奏问题"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说节奏优化专家，负责修复节奏问题。
 
@@ -287,7 +287,7 @@ class LLMRepairer:
 
     def repair_scene_transition(self, issue: Issue, chapter_content: str) -> str:
         """修复场景转换问题"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说场景转换修复专家，负责修复场景转换问题。
 
@@ -317,7 +317,7 @@ class LLMRepairer:
 
     def repair_dialogue_authenticity(self, issue: Issue, chapter_content: str) -> str:
         """修复对话真实感问题"""
-        from infra.llm_service import LLMTask, TaskType
+        from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
         prompt = f"""你是小说对话优化专家，负责修复AI化对话问题。
 
