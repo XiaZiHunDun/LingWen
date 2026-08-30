@@ -86,7 +86,7 @@ def compare() -> int:
     schema = json.loads(openapi_path.read_text(encoding="utf-8"))
 
     drift: list[str] = []
-    modules = ("world", "workspace", "quality")
+    modules = ("world", "workspace", "quality", "creator", "health", "studio", "workflows", "cvg", "decisions")
     for mod in modules:
         ts_file = SHARED_TS_DIR / f"{mod}.ts"
         if not ts_file.is_file():
