@@ -60,6 +60,7 @@ from typing import Any
 from lingwen_shared.contracts.python.cvg import (
     CascadeEdgeResponse,
     CascadeNodeResponse,
+    CascadePreviewResponse,
     CascadeResponse,
     RippleDetailResponse,
     RippleListItemResponse,
@@ -71,6 +72,7 @@ __all__ = [
     "cascade_node_storage_to_presentation",
     "cascade_edge_storage_to_presentation",
     "cascade_storage_to_presentation",
+    "cascade_preview_storage_to_presentation",
 ]
 
 
@@ -226,4 +228,50 @@ def cascade_storage_to_presentation(storage: dict[str, Any]) -> CascadeResponse:
         cascade_actions=list(storage.get("cascade_actions") or []),
         generated_at=storage.get("generated_at"),
         bfs_algorithm_version=storage.get("bfs_algorithm_version") or "v1",
+    )
+
+
+def cascade_preview_storage_to_presentation(
+    storage: dict[str, Any],
+    ripple_id: str,
+) -> CascadePreviewResponse:
+    """Map storage cascade envelope → CascadePreviewResponse (presentation shape).
+
+    Phase 126 v16.5 #N.10: computes the 7 storage-shape aggregate counts that
+    the backend CascadePreviewResponse exposes and populates both presentation
+    fields (estimated_impact, affected_chapters) and storage-shape counts
+    (affected_chapter_count, etc.) on the returned presentation model.
+
+    Storage CascadePreviewResponse fields (apps/studio_api/protocols.py:834-846):
+    - ripple_id
+    - affected_chapter_count, affected_character_count, affected_setting_count
+    - estimated_change_count, cascade_node_count, cascade_edge_count, max_depth
+
+    Presentation CascadePreviewResponse fields (lingwen-shared):
+    - ripple_id, estimated_impact, affected_chapters, preview_tree, warnings
+    - + storage-shape count fields (added in T3)
+    """
+    nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
+    edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
+    affected_chapters = sum(
+        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) in ("plot_point", "foreshadow")
+    )
+    affected_characters = sum(
+        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "character"
+    )
+    affected_settings = sum(
+        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "setting"
+    )
+    actions_raw = storage.get("cascade_actions") or []
+    return CascadePreviewResponse(
+        ripple_id=ripple_id,
+        estimated_impact=len(actions_raw),
+        affected_chapters=[],  # storage doesn't track actual chapter IDs in preview response
+        affected_chapter_count=affected_chapters,
+        affected_character_count=affected_characters,
+        affected_setting_count=affected_settings,
+        estimated_change_count=len(actions_raw),
+        cascade_node_count=len(nodes_raw),
+        cascade_edge_count=len(edges_raw),
+        max_depth=storage.get("depth_reached") or storage.get("max_depth", 0),
     )

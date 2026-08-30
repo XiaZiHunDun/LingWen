@@ -23,11 +23,14 @@ from fastapi.responses import Response
 # Phase 126 v16.5 #N.9: list_ripples returns canonical presentation shape
 # (chapter_id/source_volume/impact_volumes) from lingwen-shared, mapped
 # from storage shape via cvg_adapter.
-# Phase 126 v16.5 #N.10: get_ripple_cascade returns presentation CascadeResponse
-# (ripple_id/nodes/edges/max_depth) from lingwen-shared, mapped via cvg_adapter.
-# CascadePreviewResponse migration deferred to T8 (still imported from
-# apps.studio_api.models below for get_ripple_cascade_preview).
-from lingwen_shared.contracts.python.cvg import CascadeResponse, RippleListItemResponse
+# Phase 126 v16.5 #N.10: get_ripple_cascade + get_ripple_cascade_preview return
+# presentation CascadeResponse / CascadePreviewResponse from lingwen-shared,
+# mapped via cvg_adapter.
+from lingwen_shared.contracts.python.cvg import (
+    CascadePreviewResponse,
+    CascadeResponse,
+    RippleListItemResponse,
+)
 
 from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
 from apps.studio_api import cvg_adapter
@@ -47,7 +50,6 @@ from apps.studio_api.models import (
     CascadeBroadcastLogResponse,
     CascadeCancelPayload,
     CascadeCancelRequest,
-    CascadePreviewResponse,
     CascadeRunResponse,
     ReferenceGraphResponse,
     RippleActionRequest,
@@ -354,27 +356,17 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             if cascade is None:
                 raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
 
-        affected_characters = sum(
-            1 for n in cascade.cascade_nodes if n.dimension == "character"
-        )
-        affected_settings = sum(
-            1 for n in cascade.cascade_nodes if n.dimension == "setting"
-        )
-        affected_chapters = sum(
-            1 for n in cascade.cascade_nodes
-            if n.dimension in ("plot_point", "foreshadow")
-        )
-        estimated_changes = len(cascade.cascade_actions)
-        return CascadePreviewResponse(
-            ripple_id=ripple_id,
-            affected_chapter_count=affected_chapters,
-            affected_character_count=affected_characters,
-            affected_setting_count=affected_settings,
-            estimated_change_count=estimated_changes,
-            cascade_node_count=len(cascade.cascade_nodes),
-            cascade_edge_count=len(cascade.cascade_edges),
-            max_depth=cascade.depth_reached,
-        )
+        # Phase 126 v16.5 #N.10: delegate storage → presentation mapping to
+        # cvg_adapter.cascade_preview_storage_to_presentation. Route keeps
+        # response_model annotation as CascadePreviewResponse (presentation
+        # shape, now imported from lingwen_shared above).
+        if is_dataclass(cascade):
+            cascade_dict = asdict(cascade)
+        elif hasattr(cascade, "model_dump"):
+            cascade_dict = cascade.model_dump()
+        else:
+            cascade_dict = dict(cascade)
+        return cvg_adapter.cascade_preview_storage_to_presentation(cascade_dict, ripple_id)
 
     # ==================== Phase 9.20: Cascade Runs Endpoints (T2) ====================
 

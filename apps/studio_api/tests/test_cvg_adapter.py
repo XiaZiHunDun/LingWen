@@ -18,6 +18,7 @@ from __future__ import annotations
 from apps.studio_api.cvg_adapter import (
     cascade_edge_storage_to_presentation,
     cascade_node_storage_to_presentation,
+    cascade_preview_storage_to_presentation,
     cascade_storage_to_presentation,
     ripple_detail_storage_to_presentation,
     ripple_storage_to_presentation,
@@ -175,3 +176,33 @@ def test_cascade_storage_to_presentation_maps_trigger_ripple_id_and_computes_tot
     assert result.cascade_actions[0]["type"] == "apply"
     assert result.generated_at == "2026-08-30T12:00:00"
     assert result.bfs_algorithm_version == "v1"
+
+
+def test_cascade_preview_storage_to_presentation_populates_counts():
+    """Cascade preview envelope (cascade_nodes/edges/actions/depth_reached) maps to 7 storage-shape aggregate counts plus presentation fields."""
+    result = cascade_preview_storage_to_presentation(
+        {
+            "cascade_nodes": [
+                {"id": "n1", "dimension": "character", "chapter": 1, "volume": 1, "title": "C1", "depth": 1},
+                {"id": "n2", "dimension": "setting", "chapter": 2, "volume": 1, "title": "S1", "depth": 2},
+                {"id": "n3", "dimension": "plot_point", "chapter": 3, "volume": 1, "title": "P1", "depth": 3},
+            ],
+            "cascade_edges": [
+                {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "ref", "weight": 0.5},
+            ],
+            "cascade_actions": [{"type": "apply"}],
+            "depth_reached": 3,
+        },
+        "r1",
+    )
+    assert result.ripple_id == "r1"
+    assert result.affected_chapter_count == 1  # plot_point
+    assert result.affected_character_count == 1
+    assert result.affected_setting_count == 1
+    assert result.estimated_change_count == 1
+    assert result.cascade_node_count == 3
+    assert result.cascade_edge_count == 1
+    assert result.max_depth == 3
+    # Presentation fields populated too
+    assert result.estimated_impact == 1
+    assert result.affected_chapters == []  # storage doesn't carry per-chapter IDs
