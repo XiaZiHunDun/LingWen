@@ -25,7 +25,7 @@ carryover.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -140,7 +140,14 @@ class CascadeEdgeResponse(BaseModel):
 
 
 class CascadeResponse(BaseModel):
-    """Full cascade graph returned by ``GET /cvg/ripples/{id}/cascade``."""
+    """Full cascade graph returned by ``GET /cvg/ripples/{id}/cascade``.
+
+    Phase 126 v16.5 #N.10: extended with storage-shape fields (cascade_actions,
+    generated_at, bfs_algorithm_version) so dashboard consumers in
+    cascadeGraphUtils.js + useWorkflowSocket.js can read them via the typed wrapper.
+    The dashboard currently reads these as untyped fields (PYDANTIC-DRIFT pre-N.10);
+    adding them to the canonical enum closes the drift.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
@@ -151,6 +158,10 @@ class CascadeResponse(BaseModel):
     total_edges: int
     max_depth: int
     status: Optional[str] = None
+    # Phase 126 v16.5 #N.10: storage-shape fields exposed for dashboard consumers
+    cascade_actions: list[dict[str, Any]] = Field(default_factory=list)
+    generated_at: Optional[str] = None
+    bfs_algorithm_version: Literal["v1", "v2_weighted"] = "v1"
 
 
 class CascadePreviewResponse(BaseModel):
