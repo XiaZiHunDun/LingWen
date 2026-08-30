@@ -19,6 +19,11 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 
+# Phase 126 v16.5 #N.9: list_ripples returns canonical presentation shape
+# (chapter_id/source_volume/impact_volumes) from lingwen-shared, mapped
+# from storage shape via cvg_adapter.
+from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+
 from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
 from apps.studio_api import cvg_adapter
 from apps.studio_api.cascade_notifier import notify_cascade_cancel
@@ -52,10 +57,6 @@ from apps.studio_api.models import (
     RippleRollbackRequest,
     RippleStatsResponse,
 )
-# Phase 126 v16.5 #N.9: list_ripples returns canonical presentation shape
-# (chapter_id/source_volume/impact_volumes) from lingwen-shared, mapped
-# from storage shape via cvg_adapter.
-from lingwen_shared.contracts.python.cvg import RippleListItemResponse
 from apps.studio_api.routes.ctx import RoutesContext
 
 

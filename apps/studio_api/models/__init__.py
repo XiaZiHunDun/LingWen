@@ -5,6 +5,10 @@ Re-exports all models so callers can use `from dashboard.models import X`.
 """
 from __future__ import annotations
 
+from apps.studio_api.models.budget import (
+    BudgetSetRequest,  # noqa: F401
+    BudgetTierSetRequest,  # noqa: F401
+)
 from apps.studio_api.models.chapter import (
     ChapterData,  # noqa: F401
     ChaptersResponse,  # noqa: F401
@@ -14,10 +18,6 @@ from apps.studio_api.models.chapter import (
     ProductionRecordResponse,  # noqa: F401
     ProductionRecordsResponse,  # noqa: F401
     ProductionRollupResponse,  # noqa: F401
-)
-from apps.studio_api.models.budget import (
-    BudgetSetRequest,  # noqa: F401
-    BudgetTierSetRequest,  # noqa: F401
 )
 from apps.studio_api.models.creator import (
     CreatorChapterRow,  # noqa: F401
