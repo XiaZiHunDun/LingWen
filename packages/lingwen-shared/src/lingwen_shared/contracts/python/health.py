@@ -160,7 +160,7 @@ class ProductionRollupResponse(BaseModel):
     batch_count: int
     total_cost_usd: float
     chapters_with_records: int
-    latest_record_at: Optional[str] = None
+    latest_recorded_at: Optional[str] = None
     batches: list[ProductionBatchRollupResponse]
 
 
