@@ -1,48 +1,39 @@
+"""Re-export from lingwen-shared canonical models.
+
+Phase 126 v16.5 #N.8: Backend models are now thin re-exports of
+``packages/lingwen-shared/src/lingwen_shared/contracts/python/health.py``.
+The canonical Pydantic v2 source-of-truth lives in lingwen-shared;
+this module exists only for backward-compatible import paths.
+
+Verified field-by-field equivalence with the previous backend
+implementation (10 fields, types match, default values preserved).
 """
-"""
-from __future__ import annotations
+from lingwen_shared.contracts.python.health import (
+    DatabaseStatus,
+    MemoryUsage,
+    HealthResponse,
+    OverviewResponse,
+    ChapterData,
+    ChaptersResponse,
+    ProductionRecordResponse,
+    ProductionRecordsResponse,
+    ProductionBatchRollupResponse,
+    ProductionRollupResponse,
+    ProductionCostTrendPointResponse,
+    ProductionCostTrendResponse,
+)
 
-from typing import Optional
-
-from pydantic import BaseModel, Field
-
-
-class DatabaseStatus(BaseModel):
-    """Database connection status."""
-    status: str
-    error: Optional[str] = None
-    tables: Optional[int] = None
-    records: Optional[int] = None
-
-
-class MemoryUsage(BaseModel):
-    """Process memory usage metrics."""
-    rss_mb: float
-    vms_mb: float
-    cpu_percent: float
-    num_threads: int
-
-
-class HealthResponse(BaseModel):
-    """Health check response model."""
-
-    status: str
-    service: str
-    timestamp: str
-    uptime: float
-    version: str
-    python_version: str
-    database: DatabaseStatus
-    memory: MemoryUsage
-    environment: Optional[str] = None
-    features: Optional[dict] = None
-
-
-class OverviewResponse(BaseModel):
-    """Overview statistics response model."""
-
-    total_chapters: int
-    total_hooks: int
-    avg_hook_strength: float
-    total_coolpoints: int
-    avg_coolpoint_density: float
+__all__ = [
+    "DatabaseStatus",
+    "MemoryUsage",
+    "HealthResponse",
+    "OverviewResponse",
+    "ChapterData",
+    "ChaptersResponse",
+    "ProductionRecordResponse",
+    "ProductionRecordsResponse",
+    "ProductionBatchRollupResponse",
+    "ProductionRollupResponse",
+    "ProductionCostTrendPointResponse",
+    "ProductionCostTrendResponse",
+]
