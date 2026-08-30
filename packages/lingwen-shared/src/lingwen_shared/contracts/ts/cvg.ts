@@ -38,6 +38,9 @@ export interface CascadeResponse {
   total_edges: number;
   max_depth: number;
   status?: string | null;
+  cascade_actions?: Record<string, unknown>[];
+  generated_at?: string | null;
+  bfs_algorithm_version?: "v1" | "v2_weighted";
 }
 
 export interface CascadeRunResponse {
