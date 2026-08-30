@@ -15,26 +15,6 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-# v16.5 #6: defense-in-depth gate for tools/ scripts (dev/CI tooling).
-# These 12 files still import infra.llm_service directly (carried over from v16.4).
-# The full migration (replace with LLMServiceAdapter from lingwen_llm.port_adapter)
-# is in a future carryover. This gate prevents NEW direct infra.llm_service imports
-# in tools/ — only the 12 whitelisted files are exempt.
-TOOLS_LLM_SERVICE_WHITELIST = frozenset({
-    "tools/anti_trope_enhancer.py",
-    "tools/llm_emotional_resonance_checker.py",
-    "tools/llm_foreshadow_analyzer.py",
-    "tools/llm_pacing_analyzer.py",
-    "tools/llm_quality_analyzer.py",
-    "tools/llm_quality/__init__.py",
-    "tools/llm_quality/checker.py",
-    "tools/llm_quality/repairer.py",
-    "tools/legacy/llm_character_arc_analyzer.py",
-    "tools/legacy/llm_outline_quality_check.py",
-    "tools/legacy/llm_protagonist_charm_analyzer.py",
-    "tools/legacy/llm_readability_analyzer.py",
-})
-
 
 def test_pyproject_has_dp02_forbidden_contract() -> None:
     """DP-02 contract must exist in pyproject.toml."""
@@ -114,10 +94,11 @@ def test_no_concrete_llm_in_business_code() -> None:
 
 
 def test_no_infra_llm_service_imports_in_tools_with_whitelist() -> None:
-    """tools/ MUST NOT add NEW direct infra.llm_service imports.
+    """tools/ MUST NOT contain any direct infra.llm_service imports.
 
-    Whitelist exempts 12 dev scripts that pre-date the LLMServiceAdapter
-    pattern (v16.5 #1). Full migration is in a future carryover.
+    All 12 whitelisted dev scripts were migrated to LLMServiceAdapter in
+    v16.5 #N.6, so the whitelist is retired. Any direct infra.llm_service
+    import in tools/ now fails CI.
     """
     tools_root = PROJECT_ROOT / "tools"
     if not tools_root.exists():
@@ -134,13 +115,10 @@ def test_no_infra_llm_service_imports_in_tools_with_whitelist() -> None:
             continue
         for match in pattern.finditer(content):
             rel_path = str(py_file.relative_to(PROJECT_ROOT))
-            if rel_path not in TOOLS_LLM_SERVICE_WHITELIST:
-                violations.append(f"{rel_path}:{match.start()}")
+            violations.append(f"{rel_path}:{match.start()}")
     assert not violations, (
-        "New infra.llm_service imports found in tools/:\n  "
+        "Direct infra.llm_service imports found in tools/:\n  "
         + "\n  ".join(violations)
-        + "\n\nNew direct infra.llm_service imports are forbidden in tools/. "
-        + "Use LLMServiceAdapter from lingwen_llm.port_adapter instead.\n\n"
-        + "Existing whitelisted files (v16.4 carryover):\n  "
-        + "\n  ".join(sorted(TOOLS_LLM_SERVICE_WHITELIST))
+        + "\n\nDirect infra.llm_service imports are forbidden in tools/. "
+        + "Use LLMServiceAdapter from lingwen_llm.port_adapter instead."
     )
