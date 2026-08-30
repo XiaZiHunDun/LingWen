@@ -5,10 +5,18 @@ export * from './world';
 export * from './workspace';
 export * from './quality';
 export * from './creator';
-// Phase 126 v16.5 #N.7 — SSE event envelope types
+// Phase 126 v16.5 #N.10 — SSE event envelope types (now codegen-sourced;
+// re-exports from lingwen-shared/src/lingwen_shared/contracts/ts/creator_sse)
 export type {
-  CreatorAgentStreamEvent,
+  AdviceEvent,
+  ChunkEvent,
   CreatorAgentPlanResult,
+  CreatorAgentStreamEvent,
+  DoneEvent,
+  ErrorEvent,
+  PreviewLabelEvent,
+  StartEvent,
+  StatusEvent,
 } from './creator-sse';
 export * from './settings';
 export * from './onboarding';

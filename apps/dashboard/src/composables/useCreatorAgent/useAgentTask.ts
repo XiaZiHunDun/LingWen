@@ -294,12 +294,12 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
     return raw;
   });
 
-  // Phase 126 v16.5 #N.9: Tightened to canonical CreatorAgentStreamEvent
-  // discriminated union. Local extension for 'status' event type
-  // (backend SSE emits status messages not yet promoted to canonical
-  // envelope). The 'source' field tracking is dropped — the canonical
-  // CreatorAgentStreamEvent.chunk variant does NOT include 'source'.
-  function handleStreamEvent(evt: CreatorAgentStreamEvent | { type: 'status'; message: string }): void {
+  // Phase 126 v16.5 #N.10: 'status' event promoted to canonical
+  // CreatorAgentStreamEvent variant (was a defensive local extension
+  // through v16.5 #N.9). The full discriminated union is the only
+  // accepted shape; no local extension is needed because the canonical
+  // CreatorAgentStreamEvent now includes the 'status' variant.
+  function handleStreamEvent(evt: CreatorAgentStreamEvent): void {
     if (!evt || typeof evt !== 'object') return;
     if (evt.type === 'status' && 'message' in evt) {
       statusLine.value = evt.message;

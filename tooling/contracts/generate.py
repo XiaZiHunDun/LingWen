@@ -4,10 +4,10 @@ Usage:
     uv run python tooling/contracts/generate.py
 
 Reads:
-    packages/lingwen-shared/src/lingwen_shared/contracts/python/{world,workspace,quality,creator,health,studio,workflows,cvg,decisions}.py
+    packages/lingwen-shared/src/lingwen_shared/contracts/python/{world,workspace,quality,creator,creator_sse,health,studio,workflows,cvg,decisions}.py
 
 Writes:
-    packages/lingwen-shared/src/lingwen_shared/contracts/ts/{world,workspace,quality,creator,health,studio,workflows,cvg,decisions}.ts
+    packages/lingwen-shared/src/lingwen_shared/contracts/ts/{world,workspace,quality,creator,creator-sse,health,studio,workflows,cvg,decisions}.ts
 
 Uses pydantic v2's model_json_schema() directly + hand-rolled JSON Schema → TS
 converter. Do not edit generated TS manually — run this script after any
@@ -24,7 +24,27 @@ SHARED_SRC = REPO_ROOT / "packages" / "lingwen-shared" / "src" / "lingwen_shared
 PYTHON_DIR = SHARED_SRC / "contracts" / "python"
 TS_DIR = SHARED_SRC / "contracts" / "ts"
 
-MODULES = ["world", "workspace", "quality", "creator", "health", "studio", "workflows", "cvg", "decisions"]
+MODULES = [
+    "world",
+    "workspace",
+    "quality",
+    "creator",
+    "creator_sse",
+    "health",
+    "studio",
+    "workflows",
+    "cvg",
+    "decisions",
+]
+
+# Phase 126 v16.5 #N.10: ``CreatorAgentStreamEvent`` is a tagged-union envelope
+# in the Python source; the dashboard-contracts shim composes a discriminated
+# ``| StartEvent | ... | StatusEvent`` union from the variant interfaces
+# instead of importing the flat envelope. Skip the flat envelope from the
+# codegen output so knip does not flag it as unused.
+SKIP_TYPES: dict[str, set[str]] = {
+    "creator_sse": {"CreatorAgentStreamEvent"},
+}
 
 
 def _emit_json_schema(module_name: str) -> Path:
@@ -59,6 +79,13 @@ def _ts_type_for(prop_schema: dict) -> str:
         enum = prop_schema.get("enum")
         if enum:
             return " | ".join(f'"{v}"' for v in enum)
+        # Phase 126 v16.5 #N.10: Pydantic v2 emits ``const: "value"`` for
+        # single-value Literal fields (e.g. ``Literal["status"]`` on
+        # discriminated union variants). Handle here so TS narrowing
+        # works on ``type`` field.
+        const = prop_schema.get("const")
+        if const is not None:
+            return f'"{const}"'
         return "string"
     if t == "integer":
         return "number"
@@ -109,6 +136,10 @@ def _ts_from_json_schema(module_name: str, schema_path: Path) -> str:
     ]
     for name, def_schema in defs.items():
         if not isinstance(def_schema, dict) or def_schema.get("type") != "object":
+            continue
+        if name in SKIP_TYPES.get(module_name, set()):
+            # Phase 126 v16.5 #N.10: skip flat envelope; shim composes its own
+            # discriminated union from the variant interfaces.
             continue
         lines.append(f"export interface {name} {{")
         props = def_schema.get("properties", {})

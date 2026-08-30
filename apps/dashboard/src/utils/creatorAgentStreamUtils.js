@@ -2,6 +2,8 @@
  * Parse creator agent plan SSE stream from fetch Response body.
  *
  * v16.5 #N.7: typed event envelope (CreatorAgentStreamEvent).
+ * v16.5 #N.10: 'status' event handled as canonical variant (yield for
+ * incremental paint alongside chunk/advice/preview_label).
  *
  * @param {Response} response
  * @param {(event: import('@lingwen/dashboard-contracts/shared').CreatorAgentStreamEvent) => void} [onEvent]
@@ -32,7 +34,9 @@ export async function readCreatorAgentPlanStream(response, onEvent) {
       /** @type {import('@lingwen/dashboard-contracts/shared').CreatorAgentStreamEvent} */
       const evt = JSON.parse(line.slice(6));
       onEvent?.(evt);
-      if (evt.type === 'chunk' || evt.type === 'advice' || evt.type === 'preview_label') {
+      // Phase 126 v16.5 #N.10: status events also yield so status line
+      // updates paint incrementally (progress messages between chunks).
+      if (evt.type === 'chunk' || evt.type === 'advice' || evt.type === 'preview_label' || evt.type === 'status') {
         // Yield so stream preview can paint before `done` clears generating state.
         await new Promise((resolve) => {
           requestAnimationFrame(() => resolve());
