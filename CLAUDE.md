@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #N.7 (Phase 126 DTO Pydantic codegen + SSE stream typing — 5 manual TS DTOs (health/studio/workflows/cvg/decisions) promoted to Pydantic v2 source-of-truth in lingwen_shared, codegen regenerated TS, 5 dashboard-contracts re-export shims replaced manual DTOs (60 interfaces → 0 manual), CreatorAgentStreamEvent discriminated union typed the only remaining Promise<unknown> in apps/dashboard/src/api/ (1 → 0); 27 commits)
+> **版本**: v16.5 #N.8 (Phase 126 cleanup + backend Pydantic re-export + CVG adapter scaffolding — 5 re-export shim paths fixed (2-dot→3-dot) + useAgentTask T5.4 type tightening + CVG adapter (apps/studio_api/cvg_adapter.py NEW + 5 tests) + 2 backend models (health.py + decision.py) re-exported from lingwen_shared; 5 commits, vue-tsc 5→0)
+  → v16.5 #N.7 (Phase 126 DTO Pydantic codegen + SSE stream typing — 5 manual TS DTOs (health/studio/workflows/cvg/decisions) promoted to Pydantic v2 source-of-truth in lingwen_shared, codegen regenerated TS, 5 dashboard-contracts re-export shims replaced manual DTOs (60 interfaces → 0 manual), CreatorAgentStreamEvent discriminated union typed the only remaining Promise<unknown> in apps/dashboard/src/api/ (1 → 0); 27 commits)
   → v16.5 #N.6 (Phase 126 DP-02 tools LLM service migration — 12 whitelisted tools/llm_*.py files migrated from `infra.llm_service.LLMService` to `lingwen_llm.port_adapter.LLMServiceAdapter`; LLMTask/TaskType imports migrated to `lingwen_shared.contracts.python.llm` (canonical, no grimp-evasion hack); 12-file whitelist retired; new tests/tools/conftest.py bootstraps factory registration; 14 commits + 1 docs)
   → v16.5 #N.4 (Phase 126 remaining infra/* files migration — 21 files migrated to SqliteStorageAdapter from lingwen_storage, infra/ `import sqlite3` count 22 → 2 (only exception class identities remain), 431 backend tests pass — 4 commits + 1 docs)
   → v16.5 #N.3 (Phase 126 whitelisted infra/* files migration — 8 Phase 15.0 T2.8 deprecated files migrated to SqliteStorageAdapter from lingwen_storage, public APIs preserved, hygiene test whitelist retired, ruff --fix for 9 W292 violations — 9 commits + 1 docs)
@@ -65,6 +66,37 @@ Tests: 583 backend (8 llm pkg + 85 shared pkg [79+6 NEW] + 73 creator pkg + 392 
 - **#N.7** DTO Pydantic codegen + remaining `Promise<unknown>` narrowing (incl. SSE for `runCreatorAgentPlanStream`)
 - **#N.8** Async port conformance (rewrite `LLMServiceAdapter` with `async execute → LLMResult`)
 - **#N.9+** Remaining packages migration if any (`lingwen_core/pipeline/prompt/cli` consumers)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #N.8 闭环 — Cleanup + Backend Pydantic Re-export + CVG Adapter Scaffolding — 6 commits (`83e42925`...`52aa3393`, T1 path fix + test casts + T2 useAgentTask tighten + T3 CVG adapter scaffold + T4 health/decision re-export + T6.2 ruff fixup):
+- **T1 (1 commit)** `fix(dashboard-contracts)`: 5 re-export shim path fixes (`'../../lingwen-shared/...'` → `'../../../lingwen-shared/...'`) for `{cvg,decisions,health,studio,workflows}.ts` in `packages/dashboard-contracts/src/shared/`. Pre-existing on master from v16.5 #7. Path fix surfaced 21 latent TS errors in 5 spec files (masked by TS2307 broken module resolution) — same commit adds `as unknown as XxxDTO[]` casts to test mock fixtures. vue-tsc 5 → 0.
+- **T2 (1 commit)** `refactor(dashboard)`: T5.4 useAgentTask cast cleanup. `buildPlanRequestBody` return type tightened from `Record<string, unknown>` to `CreatorAgentPlanRequest & Record<string, unknown>`. Dropped `body as unknown as Parameters<...>[0]` cast at line 344. SSE-side callback cast at line 345 retained with JSDoc — adopting `CreatorAgentStreamEvent` discriminated union requires `handleStreamEvent` body logic change (carryover v16.5 #N.9+).
+- **T3 (1 commit)** `feat(studio-api)`: NEW `apps/studio_api/cvg_adapter.py` (176 lines) — canonical boundary between storage shape (`apps/studio_api/protocols.py::RippleListItemResponse` with `source_chapter/target_chapter`) and presentation shape (`lingwen_shared.contracts.python.cvg::RippleListItemResponse` with `chapter_id/source_volume/impact_volumes`). 5 storage → presentation adapter functions (`ripple_storage_to_presentation`, `ripple_detail_storage_to_presentation`, `cascade_node_storage_to_presentation`, `cascade_edge_storage_to_presentation`, `cascade_storage_to_presentation`) + 5 test cases. NOT yet wired into routes (carryover v16.5 #N.9+ requires dashboard consumption validation).
+- **T4 (2 commits)** `refactor(studio-api)`: 2 of 4 candidate backend models converted to thin re-export shims from lingwen-shared. (a) `health.py` (12 models: `DatabaseStatus`, `MemoryUsage`, `HealthResponse`, `OverviewResponse`, `ChapterData`, `ChaptersResponse`, `ProductionRecordResponse/Records/BatchRollup/Rollup/CostTrendPoint/CostTrendResponse`); (b) `decision.py` (4 models: `DecisionResponse`, `Resolve/Defer/CancelDecisionRequest`). Verified field-by-field equivalence before each conversion. `workflow.py` deferred to v16.5 #N.9 (contains 2 non-workflow DTOs `BudgetSetRequest`/`BudgetTierSetRequest` requiring split decision).
+- **T6.2 (1 commit)** `chore(ruff)`: ruff --fix for 2 I001 import-sort violations in health.py + decision.py (alfabetic sort of multi-line imports from lingwen-shared).
+
+Tests: **1733 vitest (0 regression)** / **113 backend shared (0 regression)** / **396 + 5 skipped infra+studio_api (1 PRE-EXISTING failure unrelated to v16.5 #N.8 — plugin_manager.py module path bug from v15.7.1, lingwen_llm.providers cannot load `infra.ai_service.<name>`)** / **5 NEW cvg_adapter (T3)** / **vue-tsc 0** / **ruff 0**.
+
+7 lessons (v16.5 #N.8 §5):
+1. **TS2307 masks downstream type errors** — broken shim path resolves to wrong dir, makes TS treat imports as `any`, hiding 21 downstream shape mismatches. vue-tsc pre-commit gate for shim files is a v16.5 #N.9+ must-do.
+2. **Fixing the path surfaces latent test bugs** — 21 errors were real (partial-shape test fixtures missing required canonical DTO fields). `as unknown as XxxDTO[]` casts preserve test intent (minimal fixture, narrow assertions) without changing runtime behavior.
+3. **CVG adapter scaffold before wire-up** — establishing the boundary module before forcing route integration avoids v16.4 grimp-evasion-hack pattern. Wiring is a separate step with dashboard consumption validation.
+4. **Storage vs presentation shape separation is real, not pedantic** — backend persistence owns SQLite row shape; lingwen-shared contracts own wire shape. The `_compute_volume_from_chapter` heuristic in `cvg_adapter.py` is a placeholder for v16.5 #N.9+ validation.
+5. **Backend re-export needs explicit `__all__`** — star-imports would pull in optional/utility members. Explicit re-exports + explicit `__all__` keep import surface minimal and ruff `I001` clean.
+6. **Atomic 1-file commits per re-export** — health.py and decision.py each get their own commit. Easy to revert, easy to review, easy to bisect if downstream consumer breaks.
+7. **DTOs-vs-models boundary tests** — `from lingwen_shared.contracts.python.X import ModelA as LA; from apps.studio_api.models.X import ModelA as BA; assert set(LA.model_fields) == set(BA.model_fields)` as a pre-check before any re-export commit.
+
+**Architecture invariants enforced (3 NEW, 15 total)**:
+13. (NEW) ✅ `vue-tsc` shows 0 errors in apps/dashboard (5 → 0 from 2-dot path fix in T1).
+14. (NEW) ✅ `apps/studio_api/cvg_adapter.py` exists as canonical boundary for storage → presentation mapping (wiring deferred to v16.5 #N.9+).
+15. (NEW) ✅ 2 / 18 backend Pydantic model files are re-exports from lingwen-shared (health.py + decision.py); 16 / 18 remain (carryover v16.5 #N.9+).
+
+**Carryover to v16.5 #N.9+**:
+- **#N.9.a** `workflow.py` split: BudgetSetRequest + BudgetTierSetRequest migration decision (split file? move to lingwen-shared?).
+- **#N.9.b** CVG adapter wire-up: 4 route endpoints + dashboard consumption validation for new field semantics.
+- **#N.9.c** useAgentTask handleStreamEvent tightening: drop legacy `{type?, message?, source?}` loose shape.
+- **#N.10+** Remaining 16 backend model files for re-export (chapter.py, studio.py, creator_*.py).
+- **#N.11+** Async port conformance: LLMServiceAdapter sync → `async execute → LLMResult` (~16-25 commits).
+- **#N.12+** 39 `as unknown as` cast cleanup in composables (each requires investigation + JSDoc OR body-shape tightening).
 
 > **更新 (2026-08-30)**: Phase 126 v16.5 #N.7 闭环 — DTO Pydantic codegen + SSE stream typing — 27 commits on `phase-126-v16-5-n7`:
 - **T1 (8 commits)**: 5 Python Pydantic DTO files (atomic 1-file commits) + 1 ruff fixup + 2 fix commits. `health.py` (12 models) + `studio.py` (23) + `workflows.py` (5) + `cvg.py` (12, presentation shape) + `decisions.py` (4) — total 56 Pydantic models mirroring the manual TS DTOs from v16.5 #7. Fix commits resolved: (a) `latest_record_at` typo → `latest_recorded_at`, (b) `StudioBatchRunRequest` fields changed from `Optional[...] = None` to required + `Field()` defaults with `ge`/`le` constraints.

@@ -10,10 +10,10 @@ implementation (DecisionResponse has same 13 fields + extra='ignore';
 Resolve/Defer/CancelDecisionRequest bodies match).
 """
 from lingwen_shared.contracts.python.decisions import (
-    DecisionResponse,
-    ResolveDecisionRequest,
-    DeferDecisionRequest,
     CancelDecisionRequest,
+    DecisionResponse,
+    DeferDecisionRequest,
+    ResolveDecisionRequest,
 )
 
 __all__ = [
