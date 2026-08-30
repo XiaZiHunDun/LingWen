@@ -1,8 +1,9 @@
 """Faction CRUD."""
 import json
 
-from infra.world_db.queries._helpers import now_iso, row_to_dict
 from lingwen_shared.ports.storage import ConnectionPort
+
+from infra.world_db.queries._helpers import now_iso, row_to_dict
 
 
 def create_faction(conn: ConnectionPort, data: dict) -> int:

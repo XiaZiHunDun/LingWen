@@ -22,7 +22,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Iterator
 
 # v16.5 #N.4: selective import keeps the regex hygiene gate clean.
 # ``IntegrityError`` is raised by ``conn.execute(...)`` when the underlying
@@ -30,11 +29,13 @@ from typing import Iterator
 # RippleStorage methods catch it and re-raise as ``ValueError`` for the
 # public API; the import path matters only for exception class identity.
 from sqlite3 import IntegrityError
+from typing import Iterator
+
+from lingwen_shared.ports.storage import ConnectionPort
 
 from infra.cross_volume.reference_graph import CascadedRipple, ReferenceEdge, ReferenceNode
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.persistence.sqlite_config import apply_sqlite_pragmas
-from lingwen_shared.ports.storage import ConnectionPort
 
 logger = logging.getLogger(__name__)
 

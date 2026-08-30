@@ -19,9 +19,6 @@ selectively (``from sqlite3 import Error``) so the regex gate for
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-
-from lingwen_shared.ports.storage import ConnectionPort
 
 # v16.5 #N.4: selective import keeps the regex-based hygiene gate clean.
 # ``sqlite3.Error`` is the base class for all sqlite3-raised errors
@@ -29,6 +26,9 @@ from lingwen_shared.ports.storage import ConnectionPort
 # wraps multi-statement transactions in BEGIN/COMMIT/ROLLBACK and needs
 # the broad error class for the ``except`` clause.
 from sqlite3 import Error as _SqliteError
+from typing import Any, Dict, List, Optional
+
+from lingwen_shared.ports.storage import ConnectionPort
 
 from .models import DomainEvent, EventSerializer, EventStream, EventType, Snapshot, versioned_type
 

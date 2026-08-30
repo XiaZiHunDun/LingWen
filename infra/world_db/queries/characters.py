@@ -1,12 +1,13 @@
 """Character CRUD with optimistic concurrency."""
 import json
 
+from lingwen_shared.ports.storage import ConnectionPort
+
 from infra.world_db.queries._helpers import (
     RevisionConflict,
     now_iso,
     row_to_dict,
 )
-from lingwen_shared.ports.storage import ConnectionPort
 
 
 class CharacterRevisionConflict(RevisionConflict):
