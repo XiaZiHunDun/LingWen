@@ -14,6 +14,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+from dataclasses import asdict, is_dataclass
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
@@ -22,7 +23,11 @@ from fastapi.responses import Response
 # Phase 126 v16.5 #N.9: list_ripples returns canonical presentation shape
 # (chapter_id/source_volume/impact_volumes) from lingwen-shared, mapped
 # from storage shape via cvg_adapter.
-from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+# Phase 126 v16.5 #N.10: get_ripple_cascade returns presentation CascadeResponse
+# (ripple_id/nodes/edges/max_depth) from lingwen-shared, mapped via cvg_adapter.
+# CascadePreviewResponse migration deferred to T8 (still imported from
+# apps.studio_api.models below for get_ripple_cascade_preview).
+from lingwen_shared.contracts.python.cvg import CascadeResponse, RippleListItemResponse
 
 from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
 from apps.studio_api import cvg_adapter
@@ -47,7 +52,6 @@ from apps.studio_api.models import (
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,
-    CascadeResponse,
     CascadeRunResponse,
     ReferenceGraphResponse,
     RippleActionRequest,
@@ -293,6 +297,9 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         """Phase 9.15: return the persisted cascade BFS result for a single ripple.
         Phase 9.19: optional max_depth query param re-runs BFS live.
         Phase 9.32 F16: optional max_nodes_cap.
+        Phase 126 v16.5 #N.10: serves canonical presentation CascadeResponse
+        (ripple_id/nodes/edges/max_depth + extended cascade_actions/
+        generated_at/bfs_algorithm_version) via cvg_adapter.
         """
         storage = _app_module._default_storage()
         nodes_cap = _validate_max_nodes_cap(max_nodes_cap)
@@ -309,23 +316,19 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             if cascade is None:
                 raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
 
-        cascade_nodes = [
-            CascadeNodeResponse(**_node_to_dict_for_response(n))
-            for n in cascade.cascade_nodes
-        ]
-        cascade_edges = [
-            CascadeEdgeResponse(**_edge_to_dict_for_response(e))
-            for e in cascade.cascade_edges
-        ]
-        return CascadeResponse(
-            trigger_ripple_id=cascade.trigger_ripple_id,
-            cascade_nodes=cascade_nodes,
-            cascade_edges=cascade_edges,
-            cascade_actions=list(cascade.cascade_actions),
-            depth_reached=cascade.depth_reached,
-            generated_at=cascade.generated_at,
-            bfs_algorithm_version=cascade.bfs_algorithm_version,
-        )
+        # Phase 126 v16.5 #N.10: route is now a thin caller; all storage →
+        # presentation mapping lives in cvg_adapter (apps/studio_api/cvg_adapter.py).
+        # ``cascade`` is a CascadedRipple dataclass (frozen); ``asdict`` recursively
+        # converts nested ReferenceNode/ReferenceEdge dataclasses into dicts whose
+        # keys (id/dimension/from_node_id/to_node_id/...) match what the adapter
+        # looks up. Plain-dict path retained as defensive fallback.
+        if is_dataclass(cascade):
+            cascade_dict = asdict(cascade)
+        elif hasattr(cascade, "model_dump"):
+            cascade_dict = cascade.model_dump()
+        else:
+            cascade_dict = dict(cascade)
+        return cvg_adapter.cascade_storage_to_presentation(cascade_dict)
 
     @app.get(
         "/api/cvg/ripples/{ripple_id}/cascade/preview",
