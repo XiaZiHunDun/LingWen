@@ -13,6 +13,8 @@ import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 // Phase 126 v16.2.8 T3.B: migrate to typed wrapper (T2.5 added runCreatorAgentPlanStream to content.ts).
 import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '@/api/content';
+// Phase 126 v16.5 #N.8 T2: tighten buildPlanRequestBody return type to CreatorAgentPlanRequest.
+import type { CreatorAgentPlanRequest } from '@lingwen/dashboard-contracts/shared';
 import { AGENT_EXECUTION_MODES } from '../../config/creatorPanelMatrix.js';
 
 const REWRITE_LABELS_TASK: Record<string, string> = {
@@ -104,7 +106,15 @@ export interface AgentTaskReturn {
   mockCandidates: (baseText: string, actionLabel: string, controls: AgentControls) => AgentCandidate[];
   mockAdvice: (actionLabel: string, pathMeta?: { consequence?: string }) => AgentAdvice[];
   mockAnnotations: (lens: string, actionLabel: string) => Array<Record<string, unknown>>;
-  buildPlanRequestBody: (action: string, actionLabel: string, scope: AgentScope, controls: AgentControls) => Record<string, unknown>;
+  /**
+   * Build the agent plan request body. Returns CreatorAgentPlanRequest-shaped
+   * canonical fields + extra context (scope/body_draft/controls) that the
+   * backend silently accepts via `model_config = ConfigDict(extra="ignore")`.
+   *
+   * v16.5 #N.8: tightened from `Record<string, unknown>` so consumers no
+   * longer need the `as unknown as Parameters<...>[0]` cast at the call site.
+   */
+  buildPlanRequestBody: (action: string, actionLabel: string, scope: AgentScope, controls: AgentControls) => CreatorAgentPlanRequest & Record<string, unknown>;
   runPlan: (action: string, actionLabel: string, pathMeta?: unknown) => Promise<void>;
   runDirectorPath: (pathId: string) => Promise<void>;
   submitPrompt: () => Promise<void>;
@@ -307,7 +317,7 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
     actionLabel: string,
     scope: AgentScope,
     controls: AgentControls,
-  ): Record<string, unknown> {
+  ): CreatorAgentPlanRequest & Record<string, unknown> {
     return {
       action,
       action_label: actionLabel,
@@ -339,9 +349,12 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
     statusLine.value = '生成中…';
     const body = buildPlanRequestBody(action, actionLabel, scope, controls);
     try {
-      // v16.2.8 T3.B: cast body to CreatorAgentPlanRequest (typed wrapper now strict)
+      // v16.5 #N.8: body is now typed CreatorAgentPlanRequest & Record<string, unknown>;
+      // no cast needed for body. handleStreamEvent retains a loose signature
+      // ({type?, message?, source?, ...}) that pre-dates the v16.5 #N.7 SSE envelope,
+      // so the callback cast persists — JSDoc-suppressed on the receiving side.
       const result = await runCreatorAgentPlanStream(
-        body as unknown as Parameters<typeof runCreatorAgentPlanStream>[0],
+        body,
         handleStreamEvent as unknown as (event: unknown) => void,
       ) as Record<string, unknown>;
       applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
