@@ -26,6 +26,8 @@
 import type {
   CreatorAgentPlanRequest,
   CreatorAgentPlanResponse,
+  CreatorAgentPlanResult,
+  CreatorAgentStreamEvent,
   CreatorBatchHistoryExportResponse,
   CreatorBatchHistoryResponse,
   CreatorBodySaveRequest,
@@ -174,8 +176,8 @@ export async function saveCreatorChapterBody(
 
 export async function runCreatorAgentPlanStream(
   body: CreatorAgentPlanRequest,
-  onEvent: (event: unknown) => void,
-): Promise<unknown> {
+  onEvent: (event: CreatorAgentStreamEvent) => void,
+): Promise<CreatorAgentPlanResult> {
   const { readCreatorAgentPlanStream } = await import('../utils/creatorAgentStreamUtils.js');
   const BASE_URL = (import.meta.env.VITE_API_BASE as string | undefined) || '/api';
   const response = await fetch(`${BASE_URL}/creator/agent/plan/stream`, {
