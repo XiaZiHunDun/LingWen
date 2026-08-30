@@ -1,39 +1,24 @@
+"""Re-export from lingwen-shared canonical models.
+
+Phase 126 v16.5 #N.8: Backend models are now thin re-exports of
+``packages/lingwen-shared/src/lingwen_shared/contracts/python/decisions.py``.
+The canonical Pydantic v2 source-of-truth lives in lingwen-shared;
+this module exists only for backward-compatible import paths.
+
+Verified field-by-field equivalence with the previous backend
+implementation (DecisionResponse has same 13 fields + extra='ignore';
+Resolve/Defer/CancelDecisionRequest bodies match).
 """
+from lingwen_shared.contracts.python.decisions import (
+    DecisionResponse,
+    ResolveDecisionRequest,
+    DeferDecisionRequest,
+    CancelDecisionRequest,
+)
 
-Models unchanged — only relocated for code organization.
-"""
-from __future__ import annotations
-
-from typing import Any, Optional
-
-from pydantic import BaseModel, Field
-
-
-class DecisionResponse(BaseModel):
-    """HumanDecision 序列化(决策面板用)"""
-    decision_id: str
-    kind: str
-    node_id: str
-    prompt: str
-    options: list[str]
-    priority: int
-    status: str
-    context: dict[str, Any] = Field(default_factory=dict)
-    created_at: Optional[str] = None
-    resolution: Optional[str] = None
-    resolved_at: Optional[str] = None
-    resolved_by: Optional[str] = None
-    reason: Optional[str] = None
-
-class ResolveDecisionRequest(BaseModel):
-    """解决决策请求"""
-    option: str
-    resolved_by: str = "human"
-
-class DeferDecisionRequest(BaseModel):
-    """推迟决策请求"""
-    reason: str = ""
-
-class CancelDecisionRequest(BaseModel):
-    """取消决策请求"""
-    reason: str = ""
+__all__ = [
+    "DecisionResponse",
+    "ResolveDecisionRequest",
+    "DeferDecisionRequest",
+    "CancelDecisionRequest",
+]
