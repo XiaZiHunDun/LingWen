@@ -46,7 +46,7 @@ class TestAntiTropeEnhancer:
             enhancer._llm.execute = MagicMock(return_value=mock_response)
 
             # Use actual method
-            with patch('tools.anti_trope_enhancer.LLMService') as MockLLM:
+            with patch('tools.anti_trope_enhancer.LLMServiceAdapter') as MockLLM:
                 MockLLM.return_value = MagicMock()
                 MockLLM.return_value.execute = MagicMock(return_value=mock_response)
 
