@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocket
 from fastapi.responses import Response
 
 from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
+from apps.studio_api import cvg_adapter
 from apps.studio_api.cascade_notifier import notify_cascade_cancel
 from apps.studio_api.cvg_ws import EVENT_PONG, CvgConnectionManager
 from apps.studio_api.helpers.cvg import (
@@ -48,10 +49,13 @@ from apps.studio_api.models import (
     RippleActionResponse,
     RippleAuditEntryResponse,
     RippleDetailResponse,
-    RippleListItemResponse,
     RippleRollbackRequest,
     RippleStatsResponse,
 )
+# Phase 126 v16.5 #N.9: list_ripples returns canonical presentation shape
+# (chapter_id/source_volume/impact_volumes) from lingwen-shared, mapped
+# from storage shape via cvg_adapter.
+from lingwen_shared.contracts.python.cvg import RippleListItemResponse
 from apps.studio_api.routes.ctx import RoutesContext
 
 
@@ -76,17 +80,24 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
     ) -> list[RippleListItemResponse]:
         """Phase 9.13: 列出 ripples (status/volume 过滤 + 分页)。
         Phase 9.59 F50: optional sort_by impact_score + min_score filter.
+        Phase 126 v16.5 #N.9: returns canonical presentation shape
+        (chapter_id/source_volume/impact_volumes) via cvg_adapter.
         """
         storage = _app_module._default_storage()
         ripples = storage.get_ripples(
             status=status_filter, volume=volume, limit=limit, offset=offset
         )
+        # Storage shape has impact_score for filter/sort; presentation shape
+        # drops it. Filter/sort on storage, then convert via adapter.
         items = _ripple_list_items(ripples, storage)
         if min_score is not None:
             items = [i for i in items if i.impact_score >= min_score]
         if sort_by == "impact_score":
             items.sort(key=lambda i: i.impact_score, reverse=True)
-        return items
+        return [
+            cvg_adapter.ripple_storage_to_presentation(item.model_dump())
+            for item in items
+        ]
 
     @app.get("/api/cvg/ripples/stats", response_model=RippleStatsResponse)
     def get_ripple_stats() -> RippleStatsResponse:
