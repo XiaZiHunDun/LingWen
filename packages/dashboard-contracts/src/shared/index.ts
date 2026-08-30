@@ -7,7 +7,7 @@ export * from './quality';
 export * from './creator';
 export * from './settings';
 export * from './onboarding';
-// Phase 126 v16.5 #7 — manually declared DTOs (codegen carryover to v16.5 #N)
+// Phase 126 v16.5 #N.7 — re-exports from lingwen-shared TS codegen
 export type {
   DatabaseStatusDTO,
   MemoryUsageDTO,
