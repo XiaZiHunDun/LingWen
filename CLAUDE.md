@@ -1,6 +1,7 @@
 # 灵文 · 工业化小说生产系统
 
-> **版本**: v16.5 #N.6 (Phase 126 DP-02 tools LLM service migration — 12 whitelisted tools/llm_*.py files migrated from `infra.llm_service.LLMService` to `lingwen_llm.port_adapter.LLMServiceAdapter`; LLMTask/TaskType imports migrated to `lingwen_shared.contracts.python.llm` (canonical, no grimp-evasion hack); 12-file whitelist retired; new tests/tools/conftest.py bootstraps factory registration; 14 commits + 1 docs)
+> **版本**: v16.5 #N.7 (Phase 126 DTO Pydantic codegen + SSE stream typing — 5 manual TS DTOs (health/studio/workflows/cvg/decisions) promoted to Pydantic v2 source-of-truth in lingwen_shared, codegen regenerated TS, 5 dashboard-contracts re-export shims replaced manual DTOs (60 interfaces → 0 manual), CreatorAgentStreamEvent discriminated union typed the only remaining Promise<unknown> in apps/dashboard/src/api/ (1 → 0); 27 commits)
+  → v16.5 #N.6 (Phase 126 DP-02 tools LLM service migration — 12 whitelisted tools/llm_*.py files migrated from `infra.llm_service.LLMService` to `lingwen_llm.port_adapter.LLMServiceAdapter`; LLMTask/TaskType imports migrated to `lingwen_shared.contracts.python.llm` (canonical, no grimp-evasion hack); 12-file whitelist retired; new tests/tools/conftest.py bootstraps factory registration; 14 commits + 1 docs)
   → v16.5 #N.4 (Phase 126 remaining infra/* files migration — 21 files migrated to SqliteStorageAdapter from lingwen_storage, infra/ `import sqlite3` count 22 → 2 (only exception class identities remain), 431 backend tests pass — 4 commits + 1 docs)
   → v16.5 #N.3 (Phase 126 whitelisted infra/* files migration — 8 Phase 15.0 T2.8 deprecated files migrated to SqliteStorageAdapter from lingwen_storage, public APIs preserved, hygiene test whitelist retired, ruff --fix for 9 W292 violations — 9 commits + 1 docs)
   → v16.5 #N.1 (Phase 126 StoragePort factory pattern — `set_default_storage_factory()` + `get_default_storage()` in lingwen_shared.ports.storage, SqliteStorageAdapter registers as default factory at module load, mirrors v16.5 #1 LLMServiceAdapter pattern — 3 commits + 1 docs)
@@ -64,6 +65,24 @@ Tests: 583 backend (8 llm pkg + 85 shared pkg [79+6 NEW] + 73 creator pkg + 392 
 - **#N.7** DTO Pydantic codegen + remaining `Promise<unknown>` narrowing (incl. SSE for `runCreatorAgentPlanStream`)
 - **#N.8** Async port conformance (rewrite `LLMServiceAdapter` with `async execute → LLMResult`)
 - **#N.9+** Remaining packages migration if any (`lingwen_core/pipeline/prompt/cli` consumers)
+
+> **更新 (2026-08-30)**: Phase 126 v16.5 #N.7 闭环 — DTO Pydantic codegen + SSE stream typing — 27 commits on `phase-126-v16-5-n7`:
+- **T1 (8 commits)**: 5 Python Pydantic DTO files (atomic 1-file commits) + 1 ruff fixup + 2 fix commits. `health.py` (12 models) + `studio.py` (23) + `workflows.py` (5) + `cvg.py` (12, presentation shape) + `decisions.py` (4) — total 56 Pydantic models mirroring the manual TS DTOs from v16.5 #7. Fix commits resolved: (a) `latest_record_at` typo → `latest_recorded_at`, (b) `StudioBatchRunRequest` fields changed from `Optional[...] = None` to required + `Field()` defaults with `ge`/`le` constraints.
+- **T2 (2 commits)**: Codegen tooling wired: `tooling/contracts/generate.py` MODULES list extended 4→9 entries + `tooling/contracts/zod_revalidate.py` modules tuple extended to match.
+- **T3 (7 commits)**: 28 NEW backend tests across 5 files (`test_{health,studio,workflows,cvg,decisions}_dto.py`), bringing `packages/lingwen-shared/tests/` from 85 to 113 cases.
+- **T4 (6 commits)**: Codegen regenerated 5 TS files (`packages/lingwen-shared/src/lingwen_shared/contracts/ts/{health,studio,workflows,cvg,decisions}.ts`); replaced 5 manual `packages/dashboard-contracts/src/shared/*.ts` files with `import + export type X = Y` re-export shims (60 interfaces total). `index.ts` marker updated.
+- **T5 (4 commits)**: SSE stream typed: NEW `packages/dashboard-contracts/src/shared/creator-sse.ts` defines `CreatorAgentStreamEvent` (discriminated union: start/chunk/advice/preview_label/done/error) + `CreatorAgentPlanResult`. Updated `creatorAgentStreamUtils.js` + `apps/dashboard/src/api/content.ts` to use the typed envelope. `apps/dashboard/src/api/` `Promise<unknown>` count: 1 → 0. NEW SSE parser tests (4 cases) in `tests/unit/utils/creatorAgentStreamUtils.spec.ts`. T5.4 (useAgentTask cast cleanup) skipped — requires separate body-shape refactor.
+- **T6 (1 commit)**: Handoff doc.
+
+**Architecture invariants enforced (12 total)**:
+1-10. (preserved from v16.5 #N.6)
+11. ✅ `apps/dashboard/src/api/` contains zero `Promise<unknown>` (SSE stream typed via `CreatorAgentStreamEvent` discriminated union).
+12. ✅ All 5 manual TS DTO files in `packages/dashboard-contracts/src/shared/` replaced with re-export shims from `packages/lingwen-shared/src/lingwen_shared/contracts/ts/` — single source of truth (Python Pydantic).
+
+**Pre-existing carryover (NOT introduced by v16.5 #N.7)**:
+- 5 re-export shims use 2-dot relative paths (`../../lingwen-shared/...`) that should be 3-dot. Pre-existing from v16.5 #7.
+- 39 `as unknown as` casts in `apps/dashboard/src/composables/` pre-existing fragile patterns.
+- Backend Pydantic re-export from lingwen-shared (CVG presentation-vs-storage drift) deferred to v16.5 #N.8+.
 
 > **更新 (2026-08-30)**: Phase 126 v16.5 #N.3 闭环 — 8 whitelisted infra/* files migrated to SqliteStorageAdapter——9 commits (`6891665c`...`21819b09`, 8 migration commits + 1 hygiene test commit + 1 ruff fixup):
 - **T1** `refactor(lingwen-core)`: `budget_persistence.py` — `BudgetService` 迁 `SqliteStorageAdapter` (callback-based `with_transaction` / `with_connection`)。22/22 tests pass.
