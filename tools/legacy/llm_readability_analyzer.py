@@ -24,7 +24,7 @@ from typing import Dict, List, Optional
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from infra.llm_service import LLMService
+from lingwen_llm.port_adapter import LLMServiceAdapter
 
 
 @dataclass
@@ -111,8 +111,8 @@ class ReadabilityAnalyzer:
         r"在这里.*需要说明",  # 中断叙事的说明
     ]
 
-    def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm = llm_service or LLMService()
+    def __init__(self, llm_service: Optional[LLMServiceAdapter] = None):
+        self.llm = llm_service or LLMServiceAdapter()
         self.project_root = PROJECT_ROOT
         self.chapters_dir = self.project_root / "03_内容仓库" / "04_正文"
         self.report_dir = self.project_root / "06_意见仓库" / "07_一致性检查"
