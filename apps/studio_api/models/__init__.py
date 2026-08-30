@@ -15,6 +15,10 @@ from apps.studio_api.models.chapter import (
     ProductionRecordsResponse,  # noqa: F401
     ProductionRollupResponse,  # noqa: F401
 )
+from apps.studio_api.models.budget import (
+    BudgetSetRequest,  # noqa: F401
+    BudgetTierSetRequest,  # noqa: F401
+)
 from apps.studio_api.models.creator import (
     CreatorChapterRow,  # noqa: F401
     CreatorUiProfile,  # noqa: F401
@@ -255,8 +259,6 @@ from apps.studio_api.models.studio import (
     StudioSummaryResponse,  # noqa: F401
 )
 from apps.studio_api.models.workflow import (
-    BudgetSetRequest,  # noqa: F401
-    BudgetTierSetRequest,  # noqa: F401
     ResumeWorkflowRequest,  # noqa: F401
     RunWorkflowRequest,  # noqa: F401
     WorkflowListItem,  # noqa: F401
