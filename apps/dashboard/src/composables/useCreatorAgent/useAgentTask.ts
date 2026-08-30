@@ -125,7 +125,7 @@ export interface AgentTaskReturn {
   runRewritePreset: (presetId: string) => Promise<void>;
   resetStreamPreview: () => void;
   clearPlan: () => void;
-  handleStreamEvent: (evt: CreatorAgentStreamEvent | { type: 'status'; message: string }) => void;
+  handleStreamEvent: (evt: CreatorAgentStreamEvent) => void;
 }
 
 export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
