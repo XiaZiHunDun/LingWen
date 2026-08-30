@@ -165,15 +165,28 @@ class CascadeResponse(BaseModel):
 
 
 class CascadePreviewResponse(BaseModel):
-    """Cascade preview returned by ``GET /cvg/ripples/{id}/cascade/preview``."""
+    """Cascade preview returned by ``GET /cvg/ripples/{id}/cascade/preview``.
+
+    Phase 126 v16.5 #N.10: extended with storage-shape aggregate counts
+    (affected_*_count + estimated_change_count + cascade_*_count + max_depth)
+    so dashboard apply-confirmation modal can read them via the typed wrapper.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
     ripple_id: str
     estimated_impact: int
-    affected_chapters: list[int]
+    affected_chapters: list[int] = Field(default_factory=list)
     preview_tree: Optional[CascadeResponse] = None
     warnings: Optional[list[str]] = None
+    # Phase 126 v16.5 #N.10: storage-shape aggregate counts
+    affected_chapter_count: int = 0
+    affected_character_count: int = 0
+    affected_setting_count: int = 0
+    estimated_change_count: int = 0
+    cascade_node_count: int = 0
+    cascade_edge_count: int = 0
+    max_depth: int = 0
 
 
 # ---------------------------------------------------------------------------
