@@ -29,7 +29,6 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ---------------------------------------------------------------------------
 # Ripple — list / detail / action / stats / audit
 # ---------------------------------------------------------------------------
