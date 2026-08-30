@@ -1,7 +1,11 @@
 /**
  * Parse creator agent plan SSE stream from fetch Response body.
+ *
+ * v16.5 #N.7: typed event envelope (CreatorAgentStreamEvent).
+ *
  * @param {Response} response
- * @param {(event: object) => void} [onEvent]
+ * @param {(event: import('@lingwen/dashboard-contracts/shared').CreatorAgentStreamEvent) => void} [onEvent]
+ * @returns {Promise<import('@lingwen/dashboard-contracts/shared').CreatorAgentPlanResult>}
  */
 export async function readCreatorAgentPlanStream(response, onEvent) {
   if (!response.ok) {
@@ -14,7 +18,7 @@ export async function readCreatorAgentPlanStream(response, onEvent) {
   }
   const decoder = new TextDecoder();
   let buffer = '';
-  /** @type {object | null} */
+  /** @type {import('@lingwen/dashboard-contracts/shared').CreatorAgentPlanResult | null} */
   let plan = null;
 
   while (true) {
@@ -25,6 +29,7 @@ export async function readCreatorAgentPlanStream(response, onEvent) {
     buffer = lines.pop() || '';
     for (const line of lines) {
       if (!line.startsWith('data: ')) continue;
+      /** @type {import('@lingwen/dashboard-contracts/shared').CreatorAgentStreamEvent} */
       const evt = JSON.parse(line.slice(6));
       onEvent?.(evt);
       if (evt.type === 'chunk' || evt.type === 'advice' || evt.type === 'preview_label') {
