@@ -347,11 +347,11 @@ class StudioBatchRunRequest(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    start_chapter: int
-    end_chapter: int
-    mode: Optional[str] = None
-    budget_usd: Optional[float] = None
-    skip_preflight: Optional[bool] = None
+    start_chapter: int = Field(ge=1)
+    end_chapter: int = Field(ge=1)
+    mode: str = "canon"
+    budget_usd: float = Field(default=0.15, ge=0, le=100)
+    skip_preflight: bool = False
 
 
 class StudioBatchJobResponse(BaseModel):
