@@ -5,6 +5,11 @@ export * from './world';
 export * from './workspace';
 export * from './quality';
 export * from './creator';
+// Phase 126 v16.5 #N.7 — SSE event envelope types
+export type {
+  CreatorAgentStreamEvent,
+  CreatorAgentPlanResult,
+} from './creator-sse';
 export * from './settings';
 export * from './onboarding';
 // Phase 126 v16.5 #N.7 — re-exports from lingwen-shared TS codegen
