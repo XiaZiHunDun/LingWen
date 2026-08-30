@@ -4,9 +4,8 @@
 """
 from typing import List, Optional
 
-from lingwen_quality.quality import Issue
-
 from lingwen_llm.port_adapter import LLMServiceAdapter
+from lingwen_quality.quality import Issue
 
 from . import paths
 

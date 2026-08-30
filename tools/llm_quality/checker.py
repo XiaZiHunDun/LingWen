@@ -6,11 +6,11 @@ import json
 import re
 from typing import Dict, List, Optional
 
+from lingwen_llm.port_adapter import LLMServiceAdapter
 from lingwen_quality.quality import Issue
 
 from infra.cache import CheckerCache
 from infra.filter import FalsePositiveFilter
-from lingwen_llm.port_adapter import LLMServiceAdapter
 
 from . import paths
 from .report import QualityReport
