@@ -8,10 +8,10 @@ from __future__ import annotations
 def test_decisions_dtos_importable() -> None:
     """All decisions DTOs must import from lingwen_shared.contracts.python.decisions."""
     from lingwen_shared.contracts.python.decisions import (  # noqa: F401
-        DecisionResponse,
-        ResolveDecisionRequest,
-        DeferDecisionRequest,
         CancelDecisionRequest,
+        DecisionResponse,
+        DeferDecisionRequest,
+        ResolveDecisionRequest,
     )
 
 

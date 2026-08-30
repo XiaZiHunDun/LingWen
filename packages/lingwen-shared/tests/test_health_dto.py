@@ -14,18 +14,18 @@ from __future__ import annotations
 def test_health_dtos_importable() -> None:
     """All health DTOs must import from lingwen_shared.contracts.python.health."""
     from lingwen_shared.contracts.python.health import (  # noqa: F401
-        DatabaseStatus,
-        MemoryUsage,
-        HealthResponse,
-        OverviewResponse,
         ChapterData,
         ChaptersResponse,
-        ProductionRecordResponse,
-        ProductionRecordsResponse,
+        DatabaseStatus,
+        HealthResponse,
+        MemoryUsage,
+        OverviewResponse,
         ProductionBatchRollupResponse,
-        ProductionRollupResponse,
         ProductionCostTrendPointResponse,
         ProductionCostTrendResponse,
+        ProductionRecordResponse,
+        ProductionRecordsResponse,
+        ProductionRollupResponse,
     )
 
 
@@ -40,7 +40,9 @@ def test_database_status_basic_shape() -> None:
 def test_health_response_full_shape() -> None:
     """HealthResponse nested models."""
     from lingwen_shared.contracts.python.health import (
-        DatabaseStatus, HealthResponse, MemoryUsage,
+        DatabaseStatus,
+        HealthResponse,
+        MemoryUsage,
     )
     hr = HealthResponse(
         status="ok",
@@ -71,7 +73,7 @@ def test_overview_response_shape() -> None:
 
 def test_chapters_response_nested() -> None:
     """ChaptersResponse contains list of ChapterData."""
-    from lingwen_shared.contracts.python.health import ChaptersResponse, ChapterData
+    from lingwen_shared.contracts.python.health import ChapterData, ChaptersResponse
     obj = ChaptersResponse(chapters=[ChapterData(
         chapter=1, hook_count=5, hook_strength_avg=0.8,
         coolpoint_count=3, coolpoint_density=2.5,

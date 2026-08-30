@@ -11,29 +11,29 @@ import pytest
 def test_studio_dtos_importable() -> None:
     """All studio DTOs must import from lingwen_shared.contracts.python.studio."""
     from lingwen_shared.contracts.python.studio import (  # noqa: F401
-        StudioProjectItem,
-        StudioProjectsResponse,
         StudioActiveResponse,
-        StudioSetActiveRequest,
-        StudioSummaryResponse,
-        StudioQualityResponse,
-        StudioQualityReportIssue,
-        StudioQualityReportChapter,
-        StudioProseHeatmapChapter,
-        StudioProseHeatmap,
-        StudioQualityReportResponse,
-        StudioProseDiffTotals,
-        StudioProseDiffChapter,
-        StudioProseDiffResponse,
-        StudioProseJudgeRating,
-        StudioProseJudgeChapter,
-        StudioProseJudgeSignal,
-        StudioProseJudgeResponse,
+        StudioBatchJobResponse,
+        StudioBatchRunRequest,
         StudioPreflightChapter,
         StudioPreflightRequest,
         StudioPreflightResponse,
-        StudioBatchRunRequest,
-        StudioBatchJobResponse,
+        StudioProjectItem,
+        StudioProjectsResponse,
+        StudioProseDiffChapter,
+        StudioProseDiffResponse,
+        StudioProseDiffTotals,
+        StudioProseHeatmap,
+        StudioProseHeatmapChapter,
+        StudioProseJudgeChapter,
+        StudioProseJudgeRating,
+        StudioProseJudgeResponse,
+        StudioProseJudgeSignal,
+        StudioQualityReportChapter,
+        StudioQualityReportIssue,
+        StudioQualityReportResponse,
+        StudioQualityResponse,
+        StudioSetActiveRequest,
+        StudioSummaryResponse,
     )
 
 
@@ -64,8 +64,8 @@ def test_studio_prose_diff_response_default_totals() -> None:
 
 def test_studio_batch_run_request_ge_constraints() -> None:
     """StudioBatchRunRequest start_chapter/end_chapter ge=1; budget_usd ge=0,le=100."""
-    from pydantic import ValidationError
     from lingwen_shared.contracts.python.studio import StudioBatchRunRequest
+    from pydantic import ValidationError
     with pytest.raises(ValidationError):
         StudioBatchRunRequest(start_chapter=0, end_chapter=5)
     with pytest.raises(ValidationError):

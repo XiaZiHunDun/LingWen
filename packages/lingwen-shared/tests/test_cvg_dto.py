@@ -8,18 +8,18 @@ from __future__ import annotations
 def test_cvg_dtos_importable() -> None:
     """All CVG DTOs must import from lingwen_shared.contracts.python.cvg."""
     from lingwen_shared.contracts.python.cvg import (  # noqa: F401
-        RippleListItemResponse,
-        RippleDetailResponse,
-        RippleActionResponse,
-        RippleStatsResponse,
-        RippleAuditEntryResponse,
-        CascadeNodeResponse,
-        CascadeEdgeResponse,
-        CascadeResponse,
-        CascadePreviewResponse,
-        ReferenceGraphResponse,
-        CascadeRunResponse,
         CascadeCancelPayload,
+        CascadeEdgeResponse,
+        CascadeNodeResponse,
+        CascadePreviewResponse,
+        CascadeResponse,
+        CascadeRunResponse,
+        ReferenceGraphResponse,
+        RippleActionResponse,
+        RippleAuditEntryResponse,
+        RippleDetailResponse,
+        RippleListItemResponse,
+        RippleStatsResponse,
     )
 
 
@@ -48,7 +48,9 @@ def test_ripple_detail_inherits_list_item() -> None:
 def test_cascade_response_contains_nodes_edges() -> None:
     """CascadeResponse has nodes/edges counts + max_depth."""
     from lingwen_shared.contracts.python.cvg import (
-        CascadeResponse, CascadeNodeResponse, CascadeEdgeResponse,
+        CascadeEdgeResponse,
+        CascadeNodeResponse,
+        CascadeResponse,
     )
     obj = CascadeResponse(
         ripple_id="r1",

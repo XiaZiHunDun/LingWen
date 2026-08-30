@@ -8,11 +8,11 @@ from __future__ import annotations
 def test_workflows_dtos_importable() -> None:
     """All workflows DTOs must import from lingwen_shared.contracts.python.workflows."""
     from lingwen_shared.contracts.python.workflows import (  # noqa: F401
-        WorkflowListItem,
-        RunWorkflowRequest,
         ResumeWorkflowRequest,
-        WorkflowStatusResponse,
+        RunWorkflowRequest,
+        WorkflowListItem,
         WorkflowMermaidResponse,
+        WorkflowStatusResponse,
     )
 
 
