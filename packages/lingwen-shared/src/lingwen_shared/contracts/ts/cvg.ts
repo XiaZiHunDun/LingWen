@@ -25,9 +25,16 @@ export interface CascadeNodeResponse {
 export interface CascadePreviewResponse {
   ripple_id: string;
   estimated_impact: number;
-  affected_chapters: number[];
+  affected_chapters?: number[];
   preview_tree?: CascadeResponse | null;
   warnings?: string[] | null;
+  affected_chapter_count?: number;
+  affected_character_count?: number;
+  affected_setting_count?: number;
+  estimated_change_count?: number;
+  cascade_node_count?: number;
+  cascade_edge_count?: number;
+  max_depth?: number;
 }
 
 export interface CascadeResponse {

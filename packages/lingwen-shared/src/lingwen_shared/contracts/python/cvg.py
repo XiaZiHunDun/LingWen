@@ -170,6 +170,8 @@ class CascadePreviewResponse(BaseModel):
     Phase 126 v16.5 #N.10: extended with storage-shape aggregate counts
     (affected_*_count + estimated_change_count + cascade_*_count + max_depth)
     so dashboard apply-confirmation modal can read them via the typed wrapper.
+    ``affected_chapters`` is defaulted (was required) because the storage-shape
+    preview carries only aggregate counts, no per-chapter list.
     """
 
     model_config = ConfigDict(extra="ignore")
