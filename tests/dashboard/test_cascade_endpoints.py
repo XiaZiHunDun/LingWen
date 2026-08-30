@@ -42,25 +42,33 @@ def client(cvg_storage, monkeypatch):
 
 class TestCascadeEndpointMaxDepth:
     def test_max_depth_absent_returns_persisted(self, client):
-        """No max_depth param → returns persisted cascade (backward compat)."""
+        """No max_depth param → returns persisted cascade (backward compat).
+
+        Phase 126 v16.5 #N.10: presentation CascadeResponse uses ``max_depth``
+        (not the storage-shape ``depth_reached``) — the adapter maps the field.
+        """
         resp = client.get("/api/cvg/ripples/rip-1/cascade")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["depth_reached"] == 3  # persisted (append_ripple used default max_depth=3)
+        assert data["max_depth"] == 3  # persisted (append_ripple used default max_depth=3)
 
     def test_max_depth_0_returns_persisted(self, client):
         """max_depth=0 → returns persisted cascade."""
         resp = client.get("/api/cvg/ripples/rip-1/cascade?max_depth=0")
         assert resp.status_code == 200
-        assert resp.json()["depth_reached"] == 3
+        assert resp.json()["max_depth"] == 3
 
     def test_max_depth_2_returns_2_hop(self, client):
-        """max_depth=2 → re-run BFS, returns 2-hop nodes (n2 + n3)."""
+        """max_depth=2 → re-run BFS, returns 2-hop nodes (n2 + n3).
+
+        Phase 126 v16.5 #N.10: presentation CascadeResponse uses ``nodes``
+        (not the storage-shape ``cascade_nodes``) — the adapter maps the field.
+        """
         resp = client.get("/api/cvg/ripples/rip-1/cascade?max_depth=2")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["depth_reached"] == 2
-        assert len(data["cascade_nodes"]) == 2
+        assert data["max_depth"] == 2
+        assert len(data["nodes"]) == 2
 
     def test_max_depth_11_rejected(self, client):
         """max_depth>10 → 400."""
@@ -124,7 +132,7 @@ class TestCascadeEndpointMaxNodesCap:
             "/api/cvg/ripples/rip-star/cascade?max_depth=1&max_nodes_cap=200"
         )
         assert resp.status_code == 200
-        assert len(resp.json()["cascade_nodes"]) == 150
+        assert len(resp.json()["nodes"]) == 150
 
     def test_max_nodes_cap_1001_rejected(self, star_client):
         resp = star_client.get(

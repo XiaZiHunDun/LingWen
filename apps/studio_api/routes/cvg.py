@@ -36,8 +36,6 @@ from apps.studio_api.cvg_ws import EVENT_PONG, CvgConnectionManager
 from apps.studio_api.helpers.cvg import (
     _audit_to_response,
     _build_reference_graph_response,
-    _edge_to_dict_for_response,
-    _node_to_dict_for_response,
     _ripple_list_items,
     _ripple_to_detail,
     _validate_max_depth,
@@ -49,8 +47,6 @@ from apps.studio_api.models import (
     CascadeBroadcastLogResponse,
     CascadeCancelPayload,
     CascadeCancelRequest,
-    CascadeEdgeResponse,
-    CascadeNodeResponse,
     CascadePreviewResponse,
     CascadeRunResponse,
     ReferenceGraphResponse,
@@ -428,23 +424,18 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             cascade = storage.get_cascade_by_ripple_id(ripple_id)
             if cascade is None:
                 raise HTTPException(404, f"No cascade computed for ripple {ripple_id}")
-        cascade_nodes = [
-            CascadeNodeResponse(**_node_to_dict_for_response(n))
-            for n in cascade.cascade_nodes
-        ]
-        cascade_edges = [
-            CascadeEdgeResponse(**_edge_to_dict_for_response(e))
-            for e in cascade.cascade_edges
-        ]
-        return CascadeResponse(
-            trigger_ripple_id=cascade.trigger_ripple_id,
-            cascade_nodes=cascade_nodes,
-            cascade_edges=cascade_edges,
-            cascade_actions=list(cascade.cascade_actions),
-            depth_reached=cascade.depth_reached,
-            generated_at=cascade.generated_at,
-            bfs_algorithm_version=cascade.bfs_algorithm_version,
-        )
+        # Phase 126 v16.5 #N.10 T7 follow-up: route is a thin caller; all storage →
+        # presentation mapping lives in cvg_adapter (apps/studio_api/cvg_adapter.py).
+        # ``cascade`` is a CascadedRipple dataclass (frozen); ``asdict`` recursively
+        # converts nested ReferenceNode/ReferenceEdge dataclasses into dicts whose
+        # keys match what the adapter looks up. Plain-dict path retained as fallback.
+        if is_dataclass(cascade):
+            cascade_dict = asdict(cascade)
+        elif hasattr(cascade, "model_dump"):
+            cascade_dict = cascade.model_dump()
+        else:
+            cascade_dict = dict(cascade)
+        return cvg_adapter.cascade_storage_to_presentation(cascade_dict)
 
     @app.get(
         "/api/ripples/cascade/{ripple_id}/runs",
