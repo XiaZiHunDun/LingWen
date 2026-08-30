@@ -21,7 +21,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from lingwen_quality.quality import Issue
 
 from infra.config.api_config_loader import get_api_config
-from infra.llm_service import LLMService, LLMTask, TaskType
+from lingwen_llm.port_adapter import LLMServiceAdapter
+from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ class LLMQualityAnalyzer:
 """
 
     def __init__(self, llm_service=None):
-        self._llm = llm_service or LLMService()
+        self._llm = llm_service or LLMServiceAdapter()
         self._config = get_api_config()
 
     def analyze_issue(
