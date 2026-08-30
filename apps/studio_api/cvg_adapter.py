@@ -153,12 +153,21 @@ def ripple_detail_storage_to_presentation(storage: dict[str, Any]) -> RippleDeta
 
 
 def cascade_node_storage_to_presentation(storage: dict[str, Any]) -> CascadeNodeResponse:
-    """Map storage cascade node → presentation shape."""
+    """Map storage cascade node → presentation shape.
+
+    Phase 126 v16.5 #N.10: extend mapping to include dimension→status and ripple_id.
+    Storage CascadeNodeResponse has fields: id, dimension, volume, chapter, title,
+    description, payload. Presentation has: node_id, chapter_id, title, status,
+    depth, ripple_id, volume.
+    """
+    # dimension is the closest storage analog to status (character/setting/plot_point/foreshadow)
+    # When absent, default to 'applied' (matches dashboard expectation)
+    dimension = storage.get("dimension")
     return CascadeNodeResponse(
         node_id=storage.get("node_id") or storage.get("id", ""),
-        chapter_id=storage.get("chapter_id", 0),
+        chapter_id=storage.get("chapter_id") or storage.get("chapter", 0),
         title=storage.get("title") or storage.get("label", ""),
-        status=storage.get("status", "applied"),
+        status=dimension if dimension else "applied",
         depth=storage.get("depth", 0),
         ripple_id=storage.get("ripple_id"),
         volume=storage.get("volume", 1),
@@ -166,27 +175,55 @@ def cascade_node_storage_to_presentation(storage: dict[str, Any]) -> CascadeNode
 
 
 def cascade_edge_storage_to_presentation(storage: dict[str, Any]) -> CascadeEdgeResponse:
-    """Map storage cascade edge → presentation shape."""
+    """Map storage cascade edge → presentation shape.
+
+    Phase 126 v16.5 #N.10: storage fields from_node_id/to_node_id map to
+    presentation source/target. relationship_type maps to relation.
+    """
     return CascadeEdgeResponse(
-        source=storage.get("source", ""),
-        target=storage.get("target", ""),
-        relation=storage.get("relation") or storage.get("relationship") or "reference",
+        source=storage.get("source") or storage.get("from_node_id", ""),
+        target=storage.get("target") or storage.get("to_node_id", ""),
+        relation=(
+            storage.get("relation")
+            or storage.get("relationship_type")
+            or storage.get("relationship")
+            or "reference"
+        ),
         weight=storage.get("weight", 0.0),
     )
 
 
 def cascade_storage_to_presentation(storage: dict[str, Any]) -> CascadeResponse:
-    """Map storage cascade envelope → presentation shape."""
-    nodes_raw = storage.get("nodes", [])
-    edges_raw = storage.get("edges", [])
+    """Map storage cascade envelope → presentation shape.
+
+    Phase 126 v16.5 #N.10: extend mapping to populate:
+    - ripple_id (from trigger_ripple_id)
+    - total_nodes / total_edges (computed from len)
+    - max_depth (from depth_reached)
+    - status (from optional status field)
+    - cascade_actions / generated_at / bfs_algorithm_version (storage passthrough)
+    """
+    nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
+    edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
     nodes = [cascade_node_storage_to_presentation(n) for n in nodes_raw]
     edges = [cascade_edge_storage_to_presentation(e) for e in edges_raw]
+    max_depth = storage.get("max_depth") or storage.get("depth_reached") or max(
+        (n.depth for n in nodes), default=0
+    )
     return CascadeResponse(
-        ripple_id=storage.get("ripple_id") or storage.get("cascade_id") or storage.get("id", ""),
+        ripple_id=(
+            storage.get("ripple_id")
+            or storage.get("trigger_ripple_id")
+            or storage.get("cascade_id")
+            or storage.get("id", "")
+        ),
         nodes=nodes,
         edges=edges,
         total_nodes=len(nodes),
         total_edges=len(edges),
-        max_depth=max((n.depth for n in nodes), default=0),
+        max_depth=max_depth,
         status=storage.get("status"),
+        cascade_actions=list(storage.get("cascade_actions") or []),
+        generated_at=storage.get("generated_at"),
+        bfs_algorithm_version=storage.get("bfs_algorithm_version") or "v1",
     )

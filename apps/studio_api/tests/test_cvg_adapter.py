@@ -6,10 +6,18 @@ Phase 126 v16.5 #N.8 — boundary marker. Verifies that:
 3. Field mapping heuristics compile without error.
 
 Carryover to v16.5 #N.9: integration tests against actual route outputs.
+
+Phase 126 v16.5 #N.10: extended mapping coverage — cascade_node/edge/cascade
+adapters populate dimension→status, from_node_id/to_node_id→source/target,
+trigger_ripple_id→ripple_id, cascade_nodes/cascade_edges keys, and the
+extended CascadeResponse fields (cascade_actions / generated_at /
+bfs_algorithm_version).
 """
 from __future__ import annotations
 
 from apps.studio_api.cvg_adapter import (
+    cascade_edge_storage_to_presentation,
+    cascade_node_storage_to_presentation,
     cascade_storage_to_presentation,
     ripple_detail_storage_to_presentation,
     ripple_storage_to_presentation,
@@ -100,3 +108,70 @@ def test_cascade_storage_to_presentation_composes_nodes_and_edges():
     assert result.edges[0].source == "n-1"
     assert result.total_nodes == 2
     assert result.total_edges == 1
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.10 — extended mapping coverage
+# ---------------------------------------------------------------------------
+
+
+def test_cascade_node_storage_to_presentation_maps_dimension_to_status():
+    """Storage node dimension field should populate presentation status (default 'applied')."""
+    result_char = cascade_node_storage_to_presentation({
+        "id": "n1", "chapter": 1, "title": "T", "dimension": "character",
+        "volume": 1, "depth": 1,
+    })
+    assert result_char.status == "character"  # dimension mapped to status
+
+    result_default = cascade_node_storage_to_presentation({
+        "id": "n2", "chapter": 2, "title": "T2", "volume": 1, "depth": 1,
+    })
+    assert result_default.status == "applied"  # default when no dimension
+
+
+def test_cascade_edge_storage_to_presentation_maps_from_node_id_and_to_node_id():
+    """Storage edge (from_node_id, to_node_id) must map to presentation (source, target)."""
+    result = cascade_edge_storage_to_presentation({
+        "id": "e1",
+        "from_node_id": "n1",
+        "to_node_id": "n2",
+        "relationship_type": "reference",
+        "weight": 0.5,
+    })
+    assert result.source == "n1"
+    assert result.target == "n2"
+    assert result.relation == "reference"
+    assert result.weight == 0.5
+
+
+def test_cascade_storage_to_presentation_maps_trigger_ripple_id_and_computes_totals():
+    """Storage cascade (trigger_ripple_id + cascade_nodes + cascade_edges) must map correctly."""
+    result = cascade_storage_to_presentation({
+        "trigger_ripple_id": "r1",
+        "cascade_nodes": [
+            {"id": "n1", "chapter": 1, "title": "T1", "dimension": "character", "volume": 1, "depth": 1},
+            {"id": "n2", "chapter": 2, "title": "T2", "dimension": "setting", "volume": 1, "depth": 2},
+        ],
+        "cascade_edges": [
+            {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "ref", "weight": 0.3},
+        ],
+        "cascade_actions": [{"type": "apply", "target": "ch1"}],
+        "depth_reached": 2,
+        "generated_at": "2026-08-30T12:00:00",
+        "bfs_algorithm_version": "v1",
+    })
+    assert result.ripple_id == "r1"
+    assert len(result.nodes) == 2
+    assert result.nodes[0].node_id == "n1"
+    assert result.nodes[0].chapter_id == 1
+    assert result.total_nodes == 2
+    assert len(result.edges) == 1
+    assert result.edges[0].source == "n1"
+    assert result.edges[0].target == "n2"
+    assert result.total_edges == 1
+    assert result.max_depth == 2
+    assert result.status is None
+    assert len(result.cascade_actions) == 1
+    assert result.cascade_actions[0]["type"] == "apply"
+    assert result.generated_at == "2026-08-30T12:00:00"
+    assert result.bfs_algorithm_version == "v1"
