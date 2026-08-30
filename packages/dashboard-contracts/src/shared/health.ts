@@ -13,7 +13,7 @@ import type {
   ProductionRollupResponse,
   ProductionCostTrendPointResponse,
   ProductionCostTrendResponse,
-} from '../../lingwen-shared/src/lingwen_shared/contracts/ts/health';
+} from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/health';
 
 export type DatabaseStatusDTO = DatabaseStatus;
 export type MemoryUsageDTO = MemoryUsage;

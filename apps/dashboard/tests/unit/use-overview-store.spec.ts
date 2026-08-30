@@ -10,6 +10,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
+import type { ChaptersResponseDTO as ChaptersResponse, OverviewResponseDTO as OverviewResponse } from '@lingwen/dashboard-contracts/shared'
+
 // Phase 8.34: useOverviewStore module-level singleton
 // Owns overview + chapters data, fetched in parallel via Promise.all.
 // Per-page UI state (chartData, statCards computed) stays in OverviewPage.
@@ -26,8 +28,8 @@ beforeEach(async () => {
   api = await import('../../src/api/health.js')
   vi.mocked(api.fetchOverview).mockReset()
   vi.mocked(api.fetchChapters).mockReset()
-  vi.mocked(api.fetchOverview).mockResolvedValue({})
-  vi.mocked(api.fetchChapters).mockResolvedValue([])
+  vi.mocked(api.fetchOverview).mockResolvedValue({} as unknown as OverviewResponse)
+  vi.mocked(api.fetchChapters).mockResolvedValue([] as unknown as ChaptersResponse)
   const mod = await import('../../src/composables/useOverviewStore.js')
   useOverviewStore = mod.useOverviewStore
 })
@@ -56,14 +58,14 @@ describe('useOverviewStore — Phase 8.34 module-level singleton', () => {
   })
 
   test('refresh fetches overview + chapters in parallel via Promise.all', async () => {
-    vi.mocked(api.fetchOverview).mockResolvedValue({ total_chapters: 359, total_words: 1234567 })
+    vi.mocked(api.fetchOverview).mockResolvedValue({ total_chapters: 359, total_words: 1234567 } as unknown as OverviewResponse)
     // fetchChapters 实际返回 envelope { chapters: [...] } (mirror OverviewPage 原 L110)
     vi.mocked(api.fetchChapters).mockResolvedValue({
       chapters: [
         { chapter_num: 1, title: 'ch1' },
         { chapter_num: 2, title: 'ch2' },
       ],
-    })
+    } as unknown as ChaptersResponse)
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as {

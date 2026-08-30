@@ -12,6 +12,8 @@ import {
 import { useCreatorAgent } from '../../src/composables/useCreatorAgent.js';
 import { useCreatorWriteWorkbench } from '../../src/composables/useCreatorWriteWorkbench.js';
 
+import type { CreatorAgentPlanResponse, CreatorAgentStreamEvent } from '@lingwen/dashboard-contracts/shared';
+
 // v16.2.8 T3.B: hoisted mocks (per v16.2.7 §3 lesson 1) — shared vi.fn instances
 // between the legacy api/index.js barrel re-export AND the typed-wrapper module
 // that useCreatorAgent/useAgentTask.ts now imports from.
@@ -264,10 +266,10 @@ describe('useCreatorAgent', () => {
       lens: 'editor',
     };
     vi.mocked(runCreatorAgentPlanStream).mockImplementation(async (_body, onEvent) => {
-      onEvent?.({ type: 'status', message: '正在生成候选…' });
+      onEvent?.({ type: 'status', message: '正在生成候选…' } as unknown as CreatorAgentStreamEvent);
       onEvent?.({ type: 'chunk', text: 'API' });
-      onEvent?.({ type: 'done', plan: apiPlan });
-      return apiPlan;
+      onEvent?.({ type: 'done', plan: apiPlan as unknown as CreatorAgentPlanResponse });
+      return apiPlan as unknown as Awaited<ReturnType<typeof runCreatorAgentPlanStream>>;
     });
     const agent = makeAgent();
     agent.setAgentLens('editor');

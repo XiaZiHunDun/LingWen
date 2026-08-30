@@ -4,7 +4,7 @@ import type {
   ResolveDecisionRequest,
   DeferDecisionRequest,
   CancelDecisionRequest,
-} from '../../lingwen-shared/src/lingwen_shared/contracts/ts/decisions';
+} from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/decisions';
 
 export type DecisionResponseDTO = DecisionResponse;
 export type ResolveDecisionRequestDTO = ResolveDecisionRequest;

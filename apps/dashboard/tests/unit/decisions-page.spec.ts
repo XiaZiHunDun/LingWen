@@ -20,6 +20,8 @@ import { describe, test, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { byTestid } from '../helpers/by-testid'
 
+import type { DecisionResponseDTO as DecisionResponse } from '@lingwen/dashboard-contracts/shared'
+
 // v16.2.8 T3.A: hoisted mocks so the SAME vi.fn() instances are shared between
 // the legacy api/index.js barrel re-exports AND the typed-wrapper modules
 // (per v16.2.7 §3 lesson 1).
@@ -165,7 +167,7 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
         resolved_at: '2026-06-11T00:00:00Z',
         created_at: '2026-06-10T00:00:00Z',
       },
-    ])
+    ] as unknown as DecisionResponse[])
     const { default: FreshDecisionsPage } = await import('../../src/pages/DecisionsPage.vue')
     const wrapper = mount(FreshDecisionsPage)
     await flushPromises()
@@ -192,7 +194,7 @@ describe('DecisionsPage (page-level) — Phase 8.39', () => {
         prompt: 'P',
         options: [],
       },
-    ])
+    ] as unknown as DecisionResponse[])
     const { default: FreshDecisionsPage } = await import('../../src/pages/DecisionsPage.vue')
     const wrapper = mount(FreshDecisionsPage)
     await flushPromises()

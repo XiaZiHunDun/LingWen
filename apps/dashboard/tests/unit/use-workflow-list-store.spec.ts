@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
+import type { WorkflowListItemDTO as WorkflowListItem } from '@lingwen/dashboard-contracts/shared'
+
 // Phase 8.34: useWorkflowListStore module-level singleton
 // Simpler than useDecisionStore — only owns workflows list + refresh action.
 // Per-page UI state (selected, initialInputsJson, maxBacktracks, running,
@@ -52,7 +54,7 @@ describe('useWorkflowListStore — Phase 8.34 module-level singleton', () => {
     vi.mocked(api.fetchWorkflows).mockResolvedValue([
       { id: 'w1', name: 'novel_writing' },
       { id: 'w2', name: 'character_design' },
-    ])
+    ] as unknown as WorkflowListItem[])
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as {

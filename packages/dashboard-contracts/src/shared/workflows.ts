@@ -5,7 +5,7 @@ import type {
   ResumeWorkflowRequest,
   WorkflowStatusResponse,
   WorkflowMermaidResponse,
-} from '../../lingwen-shared/src/lingwen_shared/contracts/ts/workflows';
+} from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/workflows';
 
 export type WorkflowListItemDTO = WorkflowListItem;
 export type RunWorkflowRequestDTO = RunWorkflowRequest;

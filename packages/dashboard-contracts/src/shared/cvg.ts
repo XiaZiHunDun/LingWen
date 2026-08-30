@@ -12,7 +12,7 @@ import type {
   ReferenceGraphResponse,
   CascadeRunResponse,
   CascadeCancelPayload,
-} from '../../lingwen-shared/src/lingwen_shared/contracts/ts/cvg';
+} from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/cvg';
 
 export type RippleListItemResponseDTO = RippleListItemResponse;
 export type RippleDetailResponseDTO = RippleDetailResponse;

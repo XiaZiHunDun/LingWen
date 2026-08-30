@@ -7,6 +7,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
+import type { DecisionResponseDTO as DecisionResponse } from '@lingwen/dashboard-contracts/shared'
+import type { ResolveDecisionResult } from '../../src/api/decisions.js'
+
 vi.mock('../../src/api/decisions.js', () => ({
   fetchAllDecisions: vi.fn(),
   resolveDecision: vi.fn(),
@@ -25,9 +28,9 @@ beforeEach(async () => {
   vi.mocked(api.deferDecision).mockReset()
   vi.mocked(api.cancelDecision).mockReset()
   vi.mocked(api.fetchAllDecisions).mockResolvedValue([])
-  vi.mocked(api.resolveDecision).mockResolvedValue({})
-  vi.mocked(api.deferDecision).mockResolvedValue({})
-  vi.mocked(api.cancelDecision).mockResolvedValue({})
+  vi.mocked(api.resolveDecision).mockResolvedValue({} as unknown as ResolveDecisionResult)
+  vi.mocked(api.deferDecision).mockResolvedValue({} as unknown as DecisionResponse)
+  vi.mocked(api.cancelDecision).mockResolvedValue({} as unknown as DecisionResponse)
   const mod = await import('../../src/composables/useDecisionStore.js')
   useDecisionStore = mod.useDecisionStore
 })
@@ -57,7 +60,7 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
     vi.mocked(api.fetchAllDecisions).mockResolvedValue([
       { decision_id: 'd1', status: 'pending' },
       { decision_id: 'd2', status: 'resolved' },
-    ])
+    ] as unknown as DecisionResponse[])
     const wrapper = mountStore()
     await flushPromises()
     const s = wrapper.vm as unknown as { all: Array<{ decision_id: string }> }
@@ -68,10 +71,10 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
 
   test('resolve calls API + refreshes all', async () => {
     const updated = [{ decision_id: 'd1', status: 'resolved' }]
-    vi.mocked(api.resolveDecision).mockResolvedValue({ decision_id: 'd1' })
+    vi.mocked(api.resolveDecision).mockResolvedValue({ decision_id: 'd1' } as unknown as ResolveDecisionResult)
     vi.mocked(api.fetchAllDecisions)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(updated)
+      .mockResolvedValueOnce([] as unknown as DecisionResponse[])
+      .mockResolvedValueOnce(updated as unknown as DecisionResponse[])
     const wrapper = mountStore()
     await flushPromises()
     await (wrapper.vm as unknown as {
@@ -86,10 +89,10 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
 
   test('defer calls API + refreshes all', async () => {
     const updated = [{ decision_id: 'd1', status: 'deferred' }]
-    vi.mocked(api.deferDecision).mockResolvedValue({ decision_id: 'd1' })
+    vi.mocked(api.deferDecision).mockResolvedValue({ decision_id: 'd1' } as unknown as DecisionResponse)
     vi.mocked(api.fetchAllDecisions)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(updated)
+      .mockResolvedValueOnce([] as unknown as DecisionResponse[])
+      .mockResolvedValueOnce(updated as unknown as DecisionResponse[])
     const wrapper = mountStore()
     await flushPromises()
     await (wrapper.vm as unknown as {
@@ -103,10 +106,10 @@ describe('useDecisionStore — Phase 8.34 module-level singleton', () => {
 
   test('cancel calls API + refreshes all', async () => {
     const updated = [{ decision_id: 'd1', status: 'cancelled' }]
-    vi.mocked(api.cancelDecision).mockResolvedValue({ decision_id: 'd1' })
+    vi.mocked(api.cancelDecision).mockResolvedValue({ decision_id: 'd1' } as unknown as DecisionResponse)
     vi.mocked(api.fetchAllDecisions)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce(updated)
+      .mockResolvedValueOnce([] as unknown as DecisionResponse[])
+      .mockResolvedValueOnce(updated as unknown as DecisionResponse[])
     const wrapper = mountStore()
     await flushPromises()
     await (wrapper.vm as unknown as {
