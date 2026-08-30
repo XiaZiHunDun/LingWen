@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.5.N6"  # Phase 126 v16.5 #N.6 (tools LLM service migration — 12 tools/llm_*.py files migrated to LLMServiceAdapter, 12-file whitelist retired, infra.llm_service import count in tools/ 12 → 0)
+version: "16.5.N7"  # Phase 126 v16.5 #N.7 (DTO Pydantic codegen + SSE stream typing — 5 manual TS DTOs (health/studio/workflows/cvg/decisions) promoted to Pydantic v2 source-of-truth in lingwen_shared, codegen regenerated TS, 5 dashboard-contracts re-export shims replaced manual DTOs (60 interfaces → 0 manual), CreatorAgentStreamEvent discriminated union typed the only remaining Promise<unknown> in apps/dashboard/src/api/ (1 → 0); 27 commits)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -165,6 +165,28 @@ module_boundaries:
     notes:
       - "Bypasses infra.llm_service.LLMService (plugin_manager discovery is broken)"
       - "Direct instantiation via lingwen_llm.providers.get_provider_class"
+  lingwen_shared:
+    purpose: "Phase 124 v16.1 + Phase 126 v16.5 #N.7 — Single source of truth for cross-context DTO contracts (Pydantic v2 → TS codegen)"
+    path: packages/lingwen-shared/src/lingwen_shared/contracts/
+    dto_modules:
+      world: "v16.1 (6 models) — World DB presentation shape"
+      workspace: "v16.1 (4 models) — Workspace/projects shape"
+      quality: "v16.1 (3 models) — Quality check shape"
+      creator: "v16.2-v16.2.6 (140+ models) — Creator product surface"
+      health: "v16.5 #N.7 NEW (12 models) — System health/overview"
+      studio: "v16.5 #N.7 NEW (23 models) — Studio project management"
+      workflows: "v16.5 #N.7 NEW (5 models) — Workflow orchestration"
+      cvg: "v16.5 #N.7 NEW (12 models) — Cross-volume-graph presentation shape (PYDANTIC-DRIFT vs apps/studio_api/protocols.py)"
+      decisions: "v16.5 #N.7 NEW (4 models) — Decision resolution shape"
+    codegen_pipeline:
+      - "Pydantic v2 source: packages/lingwen-shared/src/lingwen_shared/contracts/python/{module}.py"
+      - "Generated TS: packages/lingwen-shared/src/lingwen_shared/contracts/ts/{module}.ts (DO NOT EDIT)"
+      - "Re-export shim: packages/dashboard-contracts/src/shared/{module}.ts (provides DTO-suffixed aliases)"
+      - "Consumers: apps/dashboard/src/api/*.ts typed wrappers return Promise<ConcreteDTO>"
+    notes:
+      - "v16.5 #N.7 ✓: 5 new DTO modules (health/studio/workflows/cvg/decisions) added to codegen MODULES list; 28 NEW backend tests; 5 re-export shims in dashboard-contracts"
+      - "Single source of truth: Pydantic models own wire/UI shape; apps/studio_api/models/*.py + protocols.py continue to own persistence shape (drift risk documented in cvg.py module docstring)"
+      - "zod reverse validation CI enforces drift detection (v16.1 T5)"
 
 # 当前活跃子系统（v15.0 闭环 → v16.0 闭环）
 active_subsystems:
