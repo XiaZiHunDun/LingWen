@@ -9,6 +9,7 @@
   * - useWriteTools      (写作工具：format/label/class/highlight/batch inline)
  */
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { runCreatorLogicCheck } from '@/api/content';
 import { useCreatorWriteWorkbench } from './useCreatorWriteWorkbench.js';
 import { extractMentionedEntityNames } from '../utils/creatorChapterEntityUtils.js';
 import {
@@ -133,8 +134,11 @@ export function useCreatorWrite(deps) {
   // 不接入子模块，直接在主 hook 内部定义（与原代码一致）
   async function recheckChapterP0(chapter) {
     try {
-      const { runCreatorLogicCheck } = await import('../api/index.js');
-      const result = await runCreatorLogicCheck({ chapter, scope: 'p0' });
+      // v16.5 #N.14 T1: migrate from barrel `await import('../api/index.js')`
+      // to typed wrapper. Legacy call passed `{ chapter, scope: 'p0' }`;
+      // backend ignores scope (default behavior). Typed-wrapper signature
+      // accepts `chapter?: number` matching real backend contract.
+      const result = await runCreatorLogicCheck(chapter);
       chapterRecheckResult.value = result;
       activeRecheckIssueIdx.value = null;
     } catch (e) {
