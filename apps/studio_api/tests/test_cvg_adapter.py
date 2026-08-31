@@ -255,3 +255,46 @@ def test_cascade_run_storage_to_presentation_basic():
     assert len(result.cascade_edges) == 1
     assert result.cascade_edges[0].source == "n1"
     assert result.cascade_actions == [{"action": "update", "chapter": 5}]
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.11.c — CascadeBroadcastLogResponse adapter
+# ---------------------------------------------------------------------------
+
+
+def test_cascade_broadcast_log_storage_to_presentation_basic():
+    """Storage CascadeBroadcastLogEntry → presentation CascadeBroadcastLogResponse (N.11.c)."""
+    from apps.studio_api.cvg_adapter import cascade_broadcast_log_storage_to_presentation
+
+    storage = {
+        "id": 7,
+        "ripple_id": "ripple-xyz",
+        "latency_ms": 150,
+        "created_at": "2026-08-30T10:00:00",
+    }
+    result = cascade_broadcast_log_storage_to_presentation(storage)
+    assert result.id == 7
+    assert result.ripple_id == "ripple-xyz"
+    assert result.latency_ms == 150
+    assert result.created_at == "2026-08-30T10:00:00"
+
+
+def test_cascade_broadcast_log_storage_to_presentation_handles_dataclass():
+    """Accept CascadeBroadcastLogEntry dataclass via asdict fallback (N.11.c)."""
+    from dataclasses import dataclass
+
+    from apps.studio_api.cvg_adapter import cascade_broadcast_log_storage_to_presentation
+
+    @dataclass(frozen=True)
+    class FakeLogEntry:
+        id: int
+        ripple_id: str
+        latency_ms: int
+        created_at: str
+
+    entry = FakeLogEntry(id=1, ripple_id="r1", latency_ms=50, created_at="2026-08-30T10:00:00")
+    result = cascade_broadcast_log_storage_to_presentation(entry)
+    assert result.id == 1
+    assert result.ripple_id == "r1"
+    assert result.latency_ms == 50
+    assert result.created_at == "2026-08-30T10:00:00"

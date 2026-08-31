@@ -54,10 +54,12 @@ v16.5 #N.9+ tasks:
 """
 from __future__ import annotations
 
+from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from typing import Any
 
 from lingwen_shared.contracts.python.cvg import (
+    CascadeBroadcastLogResponse,  # NEW in N.11.c
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,
@@ -75,7 +77,7 @@ __all__ = [
     "cascade_storage_to_presentation",
     "cascade_preview_storage_to_presentation",
     "cascade_run_storage_to_presentation",  # NEW in N.11.b
-    # NOTE: cascade_broadcast_log_storage_to_presentation added in N.11.c
+    "cascade_broadcast_log_storage_to_presentation",  # NEW in N.11.c
 ]
 
 
@@ -326,4 +328,37 @@ def cascade_run_storage_to_presentation(storage: dict[str, Any]) -> CascadeRunRe
         cascade_nodes=nodes,
         cascade_edges=edges,
         cascade_actions=list(storage.get("cascade_actions") or []),
+    )
+
+
+def cascade_broadcast_log_storage_to_presentation(
+    storage: Any,
+) -> CascadeBroadcastLogResponse:
+    """Convert storage CascadeBroadcastLogEntry (dataclass or dict) → presentation CascadeBroadcastLogResponse.
+
+    Phase 126 v16.5 #N.11.c: route wire-up for /ripples/cascade/{id}/broadcast-log.
+
+    Field mapping (storage → presentation):
+        id (int)            → id
+        ripple_id (str)     → ripple_id
+        latency_ms (int)    → latency_ms
+        created_at (str/datetime) → created_at (ISO string)
+
+    Field set is identical between storage and presentation shape — only
+    source-of-truth migration (storage Pydantic class → lingwen-shared
+    canonical). No semantic mapping needed.
+    """
+    if is_dataclass(storage) and not isinstance(storage, type):
+        d = asdict(storage)
+    elif hasattr(storage, "model_dump"):
+        d = storage.model_dump()
+    elif isinstance(storage, dict):
+        d = storage
+    else:
+        d = dict(storage)
+    return CascadeBroadcastLogResponse(
+        id=d.get("id", 0),
+        ripple_id=d.get("ripple_id", ""),
+        latency_ms=d.get("latency_ms", 0),
+        created_at=_parse_dt(d.get("created_at")),
     )
