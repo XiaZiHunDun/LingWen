@@ -14,15 +14,10 @@ from apps.studio_api.cvg_ws import CvgConnectionManager
 from apps.studio_api.protocols import (
     CascadeEdgeResponse,
     CascadeNodeResponse,
-    CascadePreviewResponse,
-    CascadeResponse,
-    CascadeRunResponse,
     ReferenceGraphResponse,
-    RippleActionResponse,
     RippleAuditEntryResponse,
     RippleDetailResponse,
     RippleListItemResponse,
-    RippleStatsResponse,
 )
 from infra.cross_volume.ripple import CrossVolumeRipple
 from infra.cross_volume.scoring import compute_impact_score
