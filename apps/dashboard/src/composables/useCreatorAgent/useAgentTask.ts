@@ -361,9 +361,10 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
       applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
     } catch {
       try {
-        const result = await runCreatorAgentPlan(
-          body as unknown as Parameters<typeof runCreatorAgentPlan>[0],
-        ) as Record<string, unknown>;
+        // body is already typed CreatorAgentPlanRequest & Record<string, unknown>
+        // by buildPlanRequestBody (Phase 126 v16.5 #N.8 T2 tightening), so it's
+        // directly assignable to the CreatorAgentPlanRequest parameter.
+        const result = await runCreatorAgentPlan(body) as Record<string, unknown>;
         applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
       } catch {
         applyLocalPlan(action, actionLabel, scope, pathMeta, controls);
