@@ -7,6 +7,7 @@
  */
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
 import {
   saveVolumeTemplate,
   deleteVolumeTemplate,
@@ -86,7 +87,7 @@ export interface TemplateEditorDeps {
   templateApprovalHistory: Ref<Array<Record<string, unknown>>>;
   pendingTemplateApprovals: ComputedRef<ApprovalEntry[]>;
   // 调用依赖
-  editableVolumes: Ref<Array<Record<string, unknown>>>;
+  editableVolumes: Ref<CreatorVolumePlanEntry[]>;
   overview: Ref<Record<string, unknown> | null>;
   isSemverVersionLabel: (label: string) => boolean;
   loadVolumeTemplates: () => Promise<void>;
@@ -148,9 +149,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     try {
       const saved = await saveVolumeTemplate({
         name: customTemplateName.value.trim(),
-        // v16.2.7 T8: typed wrapper's CreatorVolumePlanEntry is strict; legacy
-        // shape used Record<string, unknown>. Cast preserves runtime behavior.
-        volumes: editableVolumes.value as unknown as Parameters<typeof saveVolumeTemplate>[0]['volumes'],
+        volumes: editableVolumes.value,
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
       }) as { id: string; name: string };
       saveMessage.value = `已保存模板「${saved.name}」`;
@@ -229,9 +228,14 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
       return;
     }
     try {
-      // v16.2.7 T8: typed wrapper strict type; cast preserves legacy shape.
-      const data = await fetchVolumeTemplateChangelog(selectedTemplateId.value) as unknown as { entries?: Array<Record<string, unknown>> };
-      templateVersionChangelog.value = data.entries || [];
+      // v16.5 #N.13 T2.P1.e: typed wrapper returns canonical
+      // CreatorVolumeTemplateChangelogResponse (entries is required by DTO).
+      // Per-item explicit return type widens spread to Record<string, unknown>
+      // for parity with catch-fallback type (line 237 below).
+      const data = await fetchVolumeTemplateChangelog(selectedTemplateId.value);
+      templateVersionChangelog.value = data.entries.map(
+        (e): Record<string, unknown> => ({ ...e }),
+      );
     } catch {
       const row = volumeTemplates.value.find((t) => t.id === selectedTemplateId.value);
       templateVersionChangelog.value = row?.version_changelog || [];
@@ -382,9 +386,14 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     try {
       const data = await fetchVolumeTemplateApprovals({ status: 'pending' }) as { approvals?: ApprovalEntry[] };
       templateApprovals.value = data.approvals || [];
-      // v16.2.7 T8: typed wrapper strict type; cast preserves legacy shape.
-      const history = await fetchVolumeTemplateApprovalHistory() as unknown as { approvals?: Array<Record<string, unknown>> };
-      templateApprovalHistory.value = history.approvals || [];
+      // v16.5 #N.13 T2.P1.e: typed wrapper returns canonical
+      // CreatorVolumeTemplateApprovalHistoryResponse (approvals is required by DTO).
+      // Per-item explicit return type widens spread to Record<string, unknown>
+      // for parity with catch-fallback type (line 391 below).
+      const history = await fetchVolumeTemplateApprovalHistory();
+      templateApprovalHistory.value = history.approvals.map(
+        (a): Record<string, unknown> => ({ ...a }),
+      );
       await loadTemplateApprovalChainConfig();
     } catch {
       templateApprovals.value = [];

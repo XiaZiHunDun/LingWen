@@ -14,9 +14,12 @@ export function splitBodyParagraphs(body) {
 }
 
 /**
+ * Run lightweight per-paragraph validation rules. Returns the slice (up to
+ * `maxIssues`) of detected issues for the current chapter.
+ *
  * @param {{
  *   body?: string,
- *   chapter?: number|null,
+ *   chapter?: number | null,
  *   maxIssues?: number,
  * }} input
  * @returns {Array<{
@@ -26,6 +29,7 @@ export function splitBodyParagraphs(body) {
  *   label: string,
  *   paragraph: number | null,
  *   rule: string,
+ *   fixHint?: string,
  * }>}
  */
 export function runLightValidation(input) {
@@ -129,7 +133,18 @@ export function runLightValidation(input) {
 }
 
 /**
- * @param {Array<{ level?: string }>} issues
+ * Summarize a list of light-validation issues into a one-shot summary for the
+ * quality bar. The shape matches the contract used by
+ * `useCreatorWriteWorkbench/useWorkbenchQuality` so callers can drop the
+ * `as unknown as Array<{ level?: string }>` cast.
+ *
+ * @param {Array<{ level?: 'warn' | 'info' }>} issues
+ * @returns {{
+ *   status: 'ok' | 'warn' | 'info',
+ *   label: string,
+ *   warnCount: number,
+ *   infoCount: number,
+ * }}
  */
 export function summarizeLightValidation(issues) {
   if (!issues.length) {

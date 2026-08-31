@@ -33,8 +33,44 @@ export function downloadBinaryExport(filename, bytes, mimeType = 'application/oc
 }
 
 /**
- * @param {object[]} changes
- * @param {object} preview volumePlanDiffPreview
+ * @typedef {import('@lingwen/dashboard-contracts/shared').CreatorVolumePlanEntry} CreatorVolumePlanEntry
+ */
+
+/**
+ * Narrow loose `Array<Record<string, unknown>>` (the `editableVolumes` ref shape)
+ * to strict `CreatorVolumePlanEntry[]` for typed-wrapper input contracts.
+ *
+ * Runtime data is structurally `CreatorVolumePlanEntry[]`; the JSDoc typing
+ * preserves the contract so call sites can drop the double-cast.
+ *
+ * @param {Array<Record<string, unknown>>} volumes
+ * @returns {CreatorVolumePlanEntry[]}
+ */
+export function typedEditableVolumesForDiff(volumes) {
+  if (!Array.isArray(volumes)) return [];
+  return volumes.map((v) => ({ ...v }));
+}
+
+/**
+ * @typedef {{
+ *   type?: string,
+ *   label?: string,
+ *   message?: string,
+ *   details?: string[]
+ * }} VolumePlanDiffChangeRow
+ *
+ * @typedef {{
+ *   has_changes?: boolean,
+ *   changes?: VolumePlanDiffChangeRow[],
+ *   global_outline_path?: string,
+ *   global_outline_excerpt?: string,
+ *   global_outline_lines?: Array<{ highlighted?: boolean, text?: string }>
+ * }} VolumePlanDiffPreviewShape
+ */
+
+/**
+ * @param {VolumePlanDiffChangeRow[]} changes
+ * @param {VolumePlanDiffPreviewShape} preview volumePlanDiffPreview
  * @param {object} uiProfile
  */
 export function buildVolumePlanDiffMarkdown(changes, preview, uiProfile) {
@@ -207,9 +243,20 @@ export function buildMinimalZip(entries) {
 }
 
 /**
- * @param {object[]} changes
- * @param {object} preview
+ * @param {VolumePlanDiffChangeRow[]} changes
+ * @param {VolumePlanDiffPreviewShape} preview
  * @param {object} uiProfile
+ * @returns {{
+ *   schema_version: string,
+ *   has_changes: boolean,
+ *   change_count: number,
+ *   changes: VolumePlanDiffChangeRow[],
+ *   global_outline_path: string,
+ *   global_outline_excerpt?: string,
+ *   global_outline_lines?: Array<{ highlighted?: boolean, text?: string }>,
+ *   highlighted_changes?: Array<VolumePlanDiffChangeRow & { highlighted: true }>,
+ *   highlighted_outline_lines?: Array<{ highlighted?: boolean, text?: string }>
+ * }}
  */
 export function buildVolumePlanDiffExportPayload(changes, preview, uiProfile) {
   const payload = {
@@ -238,6 +285,13 @@ export function buildVolumePlanDiffMailto(changes, preview, uiProfile, recipient
   return `mailto:${to}?subject=${subject}&body=${body}`;
 }
 
+/**
+ * Encode a volume-plan-diff share token for URL hash.
+ * @param {object} payload - The volume-plan-diff payload (shape from buildVolumePlanDiffExportPayload)
+ * @param {unknown} draftVolumes - Optional draft volumes (currently a no-op placeholder; null when share-link apply is disabled)
+ * @param {Record<string, string> | null} collabNotes - Optional collab-notes map (null when no notes)
+ * @returns {string} URL-safe base64-encoded token
+ */
 export function encodeVolumePlanDiffShareToken(payload, draftVolumes = null, collabNotes = null) {
   const hasDraft = Boolean(draftVolumes?.length);
   const normalizedNotes = collabNotes && Object.keys(collabNotes).length

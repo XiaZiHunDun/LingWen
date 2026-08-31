@@ -201,12 +201,12 @@ export function useWorkbenchQuality(
   let lightValidationTimer: ReturnType<typeof setTimeout> | null = null;
 
   const lightValidationSummary = computed(() =>
-    summarizeLightValidation(lightValidationIssues.value as unknown as Array<{ level?: string }>),
+    summarizeLightValidation(lightValidationIssues.value),
   );
 
   function syncQualityFromLightValidation(issues: LightValidationIssue[]): void {
     if (!isPanelVisible('lightValidationBar')) return;
-    const summary = summarizeLightValidation(issues as unknown as Array<{ level?: string }>);
+    const summary = summarizeLightValidation(issues);
     const base = selectionQualityHints.value.filter((h) => h.source !== 'light');
     if (summary.status === 'ok') {
       const okHint: QualityHint = { level: 'ok', text: '轻量校验通过', source: 'light' };
@@ -231,7 +231,7 @@ export function useWorkbenchQuality(
     const issues = runLightValidation({
       body: chapterBodyDraft.value,
       chapter: selectedChapter.value,
-    }) as unknown as LightValidationIssue[];
+    });
     lightValidationIssues.value = issues;
     syncQualityFromLightValidation(issues);
     lightValidationRunning.value = false;
@@ -281,7 +281,7 @@ export function useWorkbenchQuality(
       deviations: visibleDeviations?.value || (overview?.value?.deviations as Deviation[] | undefined) || [],
       logicIssues: (logicCheckResult?.value?.issues as LogicCheckIssue[] | undefined) || [],
       lightIssues: lightValidationIssues.value,
-    }) as unknown as InlineConflictMarker[],
+    }),
   );
 
   function pulseInlineConflictHighlight(): void {

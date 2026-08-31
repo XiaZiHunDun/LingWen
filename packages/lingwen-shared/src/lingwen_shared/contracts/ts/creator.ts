@@ -79,6 +79,7 @@ export interface CreatorFactoryMergePresetOperationResponse {
 export interface CreatorLogicCheckResponse {
   violations?: Record<string, unknown>[];
   summary?: string | null;
+  p0_count?: number;
 }
 
 export interface CreatorMemoryAnnotationRequest {
@@ -264,8 +265,15 @@ export interface CreatorMergePresetToposortResponse {
   edge_count?: number;
 }
 
+export interface CreatorModelOption {
+  id: string;
+  label: string;
+  provider?: string | null;
+  available?: boolean | null;
+}
+
 export interface CreatorModelsResponse {
-  models?: Record<string, unknown>[];
+  models?: CreatorModelOption[];
   default_model?: string;
 }
 

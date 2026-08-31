@@ -9,6 +9,7 @@
  */
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
 import {
   exportVolumeTemplates,
   importVolumeTemplates,
@@ -22,7 +23,11 @@ import {
 import { normalizeVolumePlanVolumes } from '../../utils/displayProjectName.js';
 
 interface SyncSource { slug: string; name?: string }
-interface AppliedResult { volumes: Array<Record<string, unknown>>; template_name: string }
+// Subset of CreatorVolumeApplyTemplateResponse (canonical from
+// @lingwen/dashboard-contracts) — keeps the legacy shape contract but uses
+// the strict volume element type so the typed wrapper return is structurally
+// assignable without a double-cast.
+interface AppliedResult { volumes: CreatorVolumePlanEntry[]; template_name: string }
 
 export interface TemplateSyncDeps {
   error: Ref<string | null>;
@@ -194,12 +199,13 @@ export function useTemplateSync(deps: TemplateSyncDeps): TemplateSyncReturn {
     templateApplying.value = true;
     error.value = null;
     try {
-      // v16.2.7 T8: typed wrapper's CreatorVolumeApplyTemplateResponse strict type;
-      // cast to legacy AppliedResult shape preserves runtime behavior.
+      // N.13 T4.P3.d: typed wrapper returns CreatorVolumeApplyTemplateResponse
+      // (superset of AppliedResult with the canonical volumes element type) —
+      // assignable structurally without a double cast.
       const result = await apiApplyVolumeTemplate({
         template_id: selectedTemplateId.value,
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
-      }) as unknown as AppliedResult;
+      }) as AppliedResult;
       editableVolumes.value = normalizeVolumePlanVolumes(result.volumes) as Array<Record<string, unknown>>;
       saveMessage.value = `已套用模板「${result.template_name}」，请保存卷纲`;
     } catch (e) {

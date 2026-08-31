@@ -115,6 +115,14 @@ def test_logic_check_response_has_violations() -> None:
     assert resp.violations == []
 
 
+def test_logic_check_response_p0_count_default_and_explicit() -> None:
+    # N.13 T2.P1.c: default is 0 for backward compat; explicit value passes through.
+    default = CreatorLogicCheckResponse()
+    assert default.p0_count == 0
+    explicit = CreatorLogicCheckResponse(p0_count=7)
+    assert explicit.p0_count == 7
+
+
 # --- Dashboard ---
 
 

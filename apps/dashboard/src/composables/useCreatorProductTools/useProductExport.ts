@@ -139,16 +139,17 @@ export function useProductExport(deps: ExportDeps): ProductExportReturn {
       return nums;
     }
     if (exportMode.value === 'submission') {
-      // v16.5 #7: fetchChapters() now returns ChaptersResponseDTO (chapter +
-      // hook_count + coolpoint_*), NOT the legacy {chapter, has_body} shape.
-      // The `has_body` filter below is preserved for runtime parity but the
-      // underlying backend never sends `has_body` — every chapter's
-      // `has_body` is undefined → filter always returns []. This is a
-      // pre-existing data-shape drift tracked for v16.5 #N carryover.
-      const resp = await fetchChapters() as unknown as {
-        chapters?: Array<{ chapter: number; has_body?: boolean }>;
-      };
-      const nums = (resp.chapters || [])
+      // v16.5 #N.13 T2.P1.d: fetchChapters() returns canonical
+      // `ChaptersResponse` from typed wrapper. `ChapterData` does NOT include
+      // `has_body` — backend never sends it — so the filter `c.has_body`
+      // always returns []. Pre-existing data-shape drift documented per
+      // v16.5 #7 §5 lesson 2; runtime behavior unchanged.
+      const resp = await fetchChapters();
+      const chapters = resp.chapters as Array<{
+        chapter: number;
+        has_body?: boolean;
+      }>;
+      const nums = chapters
         .filter((c) => c.has_body)
         .map((c) => c.chapter);
       return defaultSubmissionChapterNums(
@@ -157,11 +158,13 @@ export function useProductExport(deps: ExportDeps): ProductExportReturn {
         exportSubmissionSampleCount.value,
       );
     }
-    // v16.5 #7: see note above on `has_body` schema drift carryover.
-    const resp = await fetchChapters() as unknown as {
-      chapters?: Array<{ chapter: number; has_body?: boolean }>;
-    };
-    return (resp.chapters || [])
+    // v16.5 #N.13 T2.P1.d: see note above on `has_body` schema drift carryover.
+    const resp = await fetchChapters();
+    const chapters = resp.chapters as Array<{
+      chapter: number;
+      has_body?: boolean;
+    }>;
+    return chapters
       .filter((c) => c.has_body)
       .map((c) => c.chapter)
       .sort((a, b) => a - b);

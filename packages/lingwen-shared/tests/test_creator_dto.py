@@ -953,3 +953,81 @@ def test_memory_query_response_holds_results() -> None:
     )
     assert resp.used_fallback is True
     assert resp.results[0].matched_terms == ["李逍遥"]
+
+
+# ---------------------------------------------------------------------------
+# v16.5 #N.13 T2.P1.a — CreatorModelsResponse tightened
+# ---------------------------------------------------------------------------
+
+
+def test_creator_model_option_required_fields() -> None:
+    """CreatorModelOption requires id + label; provider/available are Optional.
+
+    v16.5 #N.13 T2.P1.a: new model added so dashboard `useProductPreferences`
+    can read `id` + `label` without an `as unknown as` cast (invariant #29).
+    """
+    from lingwen_shared.contracts.python.creator import CreatorModelOption
+
+    opt = CreatorModelOption(id="gpt-4o", label="GPT-4o")
+    assert opt.id == "gpt-4o"
+    assert opt.label == "GPT-4o"
+    assert opt.provider is None
+    assert opt.available is None
+
+
+def test_creator_model_option_full_shape() -> None:
+    """CreatorModelOption accepts provider + available when supplied."""
+    from lingwen_shared.contracts.python.creator import CreatorModelOption
+
+    opt = CreatorModelOption(
+        id="minimax-abab6.5",
+        label="MiniMax abab6.5",
+        provider="minimax",
+        available=True,
+    )
+    assert opt.provider == "minimax"
+    assert opt.available is True
+
+
+def test_creator_model_option_extra_ignored() -> None:
+    """CreatorModelOption honors `extra="ignore"` — unknown fields are dropped.
+
+    Declared Optional fields still serialize to None in model_dump(); only
+    *undeclared* extras are stripped.
+    """
+    from lingwen_shared.contracts.python.creator import CreatorModelOption
+
+    opt = CreatorModelOption(
+        id="gpt-4o",
+        label="GPT-4o",
+        stale_field_xyz="ignored",  # type: ignore[call-arg]
+    )
+    dumped = opt.model_dump()
+    assert dumped["id"] == "gpt-4o"
+    assert dumped["label"] == "GPT-4o"
+    assert "stale_field_xyz" not in dumped
+
+
+def test_creator_models_response_holds_typed_options() -> None:
+    """CreatorModelsResponse.models is now strictly typed CreatorModelOption[].
+
+    Previously `list[dict[str, Any]]` — the dashboard wrapper cast
+    `as unknown as { models?: Array<{id, label}> }`. v16.5 #N.13 T2.P1.a
+    tightens the model so direct assignment to a `CreatorModelOption[]`
+    consumer is type-safe (no cast needed).
+    """
+    from lingwen_shared.contracts.python.creator import (
+        CreatorModelOption,
+        CreatorModelsResponse,
+    )
+
+    resp = CreatorModelsResponse(
+        models=[
+            CreatorModelOption(id="gpt-4o", label="GPT-4o", provider="openai"),
+            CreatorModelOption(id="local-mock", label="本地 Mock（开发）"),
+        ],
+        default_model="gpt-4o",
+    )
+    assert resp.models[0].provider == "openai"
+    assert resp.models[1].provider is None
+    assert resp.default_model == "gpt-4o"

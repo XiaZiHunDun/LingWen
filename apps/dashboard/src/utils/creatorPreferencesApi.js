@@ -30,18 +30,33 @@ function interventionRulesToApi(rules) {
   return out;
 }
 
-/** @param {Record<string, unknown>} api */
+/**
+ * Convert API response to local `CreatorPreferences` shape.
+ *
+ * v16.5 #N.13 T2.P1.a: accept either the canonical `CreatorPreferencesResponse`
+ * DTO (new shape: `creation_mode`, `quality_profile`, etc.) OR the legacy
+ * snake_case shape (`default_model`, `temperature`, etc.). The legacy fields are
+ * not in the new DTO; if absent, `mergeCreatorPreferences` falls back to local
+ * defaults. JSDoc widened to `object` so callers (e.g. `useProductPreferences.ts`)
+ * can pass `CreatorPreferencesResponse` without an `as unknown as` cast; an
+ * internal `Record<string, any>` JSDoc cast inside the body keeps property
+ * access permissive.
+ *
+ * @param {object} api - Either typed DTO or legacy snake_case object.
+ */
 export function preferencesFromApi(api) {
   if (!api) return defaultCreatorPreferences();
+  /** @type {Record<string, any>} */
+  const snake = api;
   return mergeCreatorPreferences({
-    defaultModel: api.default_model,
-    temperature: api.temperature,
-    maxTokens: api.max_tokens,
-    memoryRagEnabled: api.memory_rag_enabled,
-    memoryRagTopK: api.memory_rag_top_k,
-    taskModels: api.task_models,
-    companionLightweight: api.companion_lightweight,
-    interventionRules: interventionRulesFromApi(api.intervention_rules),
+    defaultModel: snake.default_model,
+    temperature: snake.temperature,
+    maxTokens: snake.max_tokens,
+    memoryRagEnabled: snake.memory_rag_enabled,
+    memoryRagTopK: snake.memory_rag_top_k,
+    taskModels: snake.task_models,
+    companionLightweight: snake.companion_lightweight,
+    interventionRules: interventionRulesFromApi(snake.intervention_rules),
   });
 }
 

@@ -6,7 +6,7 @@
  * `request()` 自动加 `/api/` 前缀（v16.2.1 教训）。
  *
  * IMPORTANT: typed wrapper names collide with this submodule's exported
- * function names (`publishMergePresetToFactory`, `exportMergePresetPackages`,
+ * function names (`exportMergePresetPackages`,
  * `applyMergePresetConflictFix`, etc.). Imports are aliased to a `Creator`
  * suffix to avoid recursion in the inner try blocks.
  *
@@ -31,10 +31,13 @@ import {
   applyToposortMergePresetOrder,
   exportMergePresetPackages as exportMergePresetPackagesApi,
   importMergePresetPackages,
-  publishMergePresetToFactory as publishMergePresetToFactoryApi,
   pullFactoryMergePresetsToProject,
   preflightFactoryMergePresetPull,
 } from '../../api/settings.js';
+import {
+  parseMergePreferences,
+  parseMergePresetImportPreview,
+} from '@/utils/mergePresetsUtils';
 
 interface MergePresetPackage { id: string; name?: string; scope?: string }
 interface MergePreferences { [key: string]: unknown }
@@ -74,7 +77,6 @@ export interface MergePresetsReturn {
   applyMergePresetPackage: (packageId: string) => Promise<void>;
   exportMergePresetPackages: () => Promise<void>;
   importMergePresetPackagesFromJson: () => Promise<void>;
-  publishMergePresetToFactory: () => Promise<void>;
   pullFactoryMergePresets: () => Promise<void>;
   pullFactoryMergePresetsWithStrategy: (packageId: string, strategy: string) => Promise<void>;
   applyMergePresetConflictFix: (fix: Record<string, unknown>) => Promise<void>;
@@ -128,7 +130,9 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function loadMergePreferences(): Promise<void> {
     try {
       const data = await fetchMergePreferences();
-      mergePreferences.value = data as unknown as MergePreferences;
+      // Phase 126 v16.5 #N.13 T4.P3.f: utility widens strict DTO to plain
+      // record for the loose-dict ref type — composable no longer casts.
+      mergePreferences.value = parseMergePreferences(data);
     } catch (e) {
       handleSaveError(e);
     }
@@ -173,21 +177,6 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
       handleSaveError(e);
     } finally {
       mergePresetPackagesImporting.value = false;
-    }
-  }
-
-  async function publishMergePresetToFactory(): Promise<void> {
-    mergePresetFactoryPublishing.value = true;
-    try {
-      // typed wrapper requests `package_id` (legacy path passed `{}` and relied
-      // on backend to surface the publish target; preserved here for
-      // backwards compatibility — full migration deferred to next phase).
-      await publishMergePresetToFactoryApi({} as unknown as Parameters<typeof publishMergePresetToFactoryApi>[0]);
-      saveMessage.value = '已发布到工厂库';
-    } catch (e) {
-      handleSaveError(e);
-    } finally {
-      mergePresetFactoryPublishing.value = false;
     }
   }
 
@@ -259,7 +248,9 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
     mergePresetImportPreviewLoading.value = true;
     try {
       const data = await previewMergePresetImportDiffApi({ packages: [] });
-      mergePresetImportPreview.value = data as unknown as { added: unknown[]; updated: unknown[]; removed: unknown[] };
+      // Phase 126 v16.5 #N.13 T4.P3.f: utility normalizes optional arrays
+      // to plain `{ added, updated, removed }` — composable no longer casts.
+      mergePresetImportPreview.value = parseMergePresetImportPreview(data);
     } catch (e) {
       handleSaveError(e);
     } finally {
@@ -319,7 +310,6 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
     applyMergePresetPackage,
     exportMergePresetPackages,
     importMergePresetPackagesFromJson,
-    publishMergePresetToFactory,
     pullFactoryMergePresets,
     pullFactoryMergePresetsWithStrategy,
     applyMergePresetConflictFix,

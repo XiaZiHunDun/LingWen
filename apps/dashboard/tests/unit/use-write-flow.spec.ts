@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ref, computed } from 'vue';
+import type { CreatorChapterPreview } from '@lingwen/dashboard-contracts/shared';
 
 // Mock API
 const writeMocks = vi.hoisted(() => ({
@@ -40,15 +41,27 @@ import { useWriteFlow } from '../../src/composables/useCreatorWrite/useWriteFlow
 describe('useWriteFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // N.13 T2.P1.c: mocks now use canonical CreatorChapterPreview field names
+    // (body/outline). Legacy body_text/outline_text fields were never in the
+    // backend response and were silently ``undefined`` — see useWriteFlow.ts
+    // selectChapter JSDoc.
     writeMocks.fetchCreatorChapterPreview.mockResolvedValue({
-      body_text: 'ch1 body', body_preview: 'prev',
-      outline_text: 'ch1 outline', outline_preview: 'prev-outline',
+      chapter_id: 1,
+      project_slug: 'test',
+      body: 'ch1 body',
+      outline: 'ch1 outline',
     });
     writeMocks.saveCreatorChapterBody.mockResolvedValue({
-      body_text: 'new body', outline_text: 'new outline',
+      chapter_id: 1,
+      project_slug: 'test',
+      body: 'new body',
+      outline: 'new outline',
     });
     writeMocks.saveCreatorChapterOutline.mockResolvedValue({
-      body_text: 'b', outline_text: 'o',
+      chapter_id: 1,
+      project_slug: 'test',
+      body: 'b',
+      outline: 'o',
     });
   });
 
@@ -62,7 +75,7 @@ describe('useWriteFlow', () => {
     const flow = useWriteFlow({
       uiProfile, overview, error, saveMessage, handleSaveError, onAfterChapterSave,
       selectedChapter: ref<number | null>(null),
-      chapterPreview: ref<Record<string, unknown> | null>(null),
+      chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''),
       chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false),
@@ -93,7 +106,7 @@ describe('useWriteFlow', () => {
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
-      chapterPreview: ref<Record<string, unknown> | null>(null),
+      chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -119,7 +132,7 @@ describe('useWriteFlow', () => {
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
-      chapterPreview: ref<Record<string, unknown> | null>(null),
+      chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -145,7 +158,7 @@ describe('useWriteFlow', () => {
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
-      chapterPreview: ref<Record<string, unknown> | null>(null),
+      chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -168,7 +181,7 @@ describe('useWriteFlow', () => {
       uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
-      selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
+      selectedChapter, chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft, chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -192,7 +205,7 @@ describe('useWriteFlow', () => {
       uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
-      selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
+      selectedChapter, chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -213,7 +226,7 @@ describe('useWriteFlow', () => {
       uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage, handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
-      selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
+      selectedChapter, chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref('test'), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -236,7 +249,7 @@ describe('useWriteFlow', () => {
       uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage, handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
-      selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
+      selectedChapter, chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref('test-outline'),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -259,7 +272,7 @@ describe('useWriteFlow', () => {
       uiProfile: computed(() => ({})), overview: ref<Record<string, unknown> | null>(null),
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
-      selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
+      selectedChapter, chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft, chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),
@@ -280,7 +293,7 @@ describe('useWriteFlow', () => {
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
       selectedChapter: ref<number | null>(null),
-      chapterPreview: ref<Record<string, unknown> | null>(null),
+      chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef,
@@ -306,7 +319,7 @@ describe('useWriteFlow', () => {
       uiProfile: computed(() => ({})), overview,
       error: ref<string | null>(null), saveMessage: ref(''), handleSaveError: vi.fn(),
       onAfterChapterSave: vi.fn(async () => {}),
-      selectedChapter, chapterPreview: ref<Record<string, unknown> | null>(null),
+      selectedChapter, chapterPreview: ref<CreatorChapterPreview | null>(null),
       chapterBodyDraft: ref(''), chapterOutlineDraft: ref(''),
       chapterBodySaving: ref(false), chapterOutlineSaving: ref(false),
       chapterBodyTextareaRef: ref<unknown>(null),

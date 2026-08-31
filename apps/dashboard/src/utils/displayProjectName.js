@@ -25,7 +25,8 @@ export function normalizeVolumePlanVolume(vol) {
 }
 
 /**
- * @param {Record<string, unknown>[] | null | undefined} volumes
+ * @param {Array<Record<string, unknown> | import('@lingwen/dashboard-contracts/shared').CreatorVolumePlanEntry> | null | undefined} volumes
+ * @returns {Array<Record<string, unknown>>}
  */
 export function normalizeVolumePlanVolumes(volumes) {
   return (volumes || []).map((v) => normalizeVolumePlanVolume({ ...v }));

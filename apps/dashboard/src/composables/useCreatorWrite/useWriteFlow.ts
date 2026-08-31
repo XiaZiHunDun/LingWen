@@ -11,6 +11,7 @@
  */
 import { computed, nextTick, onUnmounted, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import type { CreatorChapterPreview, CreatorLogicCheckResponse } from '@lingwen/dashboard-contracts/shared';
 import {
   fetchCreatorChapterPreview,
   saveCreatorChapterBody,
@@ -38,7 +39,7 @@ export interface WriteFlowDeps {
   handleSaveError: (err: unknown) => void;
   onAfterChapterSave: () => Promise<void>;
   selectedChapter: Ref<number | null>;
-  chapterPreview: Ref<Record<string, unknown> | null>;
+  chapterPreview: Ref<CreatorChapterPreview | null>;
   chapterBodyDraft: Ref<string>;
   chapterOutlineDraft: Ref<string>;
   chapterBodySaving: Ref<boolean>;
@@ -142,9 +143,14 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
           || (uiProfile.value as { chapter_outline_inline_edit?: boolean }).chapter_outline_inline_edit
           || (uiProfile.value as { chapter_outline_read_preview?: boolean }).chapter_outline_read_preview,
       );
-      chapterPreview.value = (await fetchCreatorChapterPreview(chapter, { full })) as unknown as Record<string, unknown>;
-      chapterBodyDraft.value = String((chapterPreview.value as Record<string, unknown>).body_text ?? (chapterPreview.value as Record<string, unknown>).body_preview ?? '');
-      chapterOutlineDraft.value = String((chapterPreview.value as Record<string, unknown>).outline_text ?? (chapterPreview.value as Record<string, unknown>).outline_preview ?? '');
+      // N.13 T2.P1.c: typed wrapper returns CreatorChapterPreview (body/outline).
+      // The legacy ``body_text``/``body_preview``/``outline_text``/``outline_preview``
+      // field names were never in the backend response — the cast was masking a latent
+      // bug where the body/outline draft was always populated as ``''``. Read the
+      // canonical fields directly.
+      chapterPreview.value = await fetchCreatorChapterPreview(chapter, { full });
+      chapterBodyDraft.value = chapterPreview.value?.body ?? '';
+      chapterOutlineDraft.value = chapterPreview.value?.outline ?? '';
       lastPersistedBody.value = chapterBodyDraft.value;
       bodyLastSavedAt.value = null;
       bodyAutoSaveStatus.value = 'idle';
@@ -175,12 +181,12 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterBodySaving.value = true;
     saveMessage.value = '';
     try {
-      chapterPreview.value = (await saveCreatorChapterBody({
+      chapterPreview.value = await saveCreatorChapterBody({
         chapter_id: selectedChapter.value,
         body: chapterBodyDraft.value,
-      })) as unknown as Record<string, unknown>;
-      chapterBodyDraft.value = String((chapterPreview.value as Record<string, unknown>).body_text ?? chapterBodyDraft.value);
-      chapterOutlineDraft.value = String((chapterPreview.value as Record<string, unknown>).outline_text ?? chapterOutlineDraft.value);
+      });
+      chapterBodyDraft.value = chapterPreview.value?.body ?? chapterBodyDraft.value;
+      chapterOutlineDraft.value = chapterPreview.value?.outline ?? chapterOutlineDraft.value;
       lastPersistedBody.value = chapterBodyDraft.value;
       bodyLastSavedAt.value = new Date();
       bodyAutoSaveStatus.value = 'saved';
@@ -201,9 +207,13 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
       await onAfterChapterSave();
       if ((uiProfile.value as { chapter_save_p0_recheck?: boolean }).chapter_save_p0_recheck) {
         const { runCreatorLogicCheck } = await import('@/api/content');
-        // v16.2.7 T8: typed wrapper's runCreatorLogicCheck takes `chapter?: number`,
-        // legacy caller passes object. Cast preserves runtime behavior.
-        const result = await runCreatorLogicCheck({ chapter: selectedChapter.value } as unknown as Parameters<typeof runCreatorLogicCheck>[0]) as { p0_count?: number };
+        // v16.2.7 T8: typed wrapper's runCreatorLogicCheck takes `chapter?: number`.
+        // N.13 T2.P1.c: ``CreatorLogicCheckResponse`` now exposes ``p0_count`` (canonical
+        // field per v16.5 #N backend); drop the local ``{ p0_count?: number }`` cast.
+        // N.13 T3.P2.b: drop the ``as unknown as`` cast — wrapper accepts the number directly
+        // (was incorrectly passing `{ chapter: N }` and relying on the double-cast to bypass
+        // type check, which produced URL `?chapter=%5Bobject%20Object%5D` at runtime).
+        const result: CreatorLogicCheckResponse = await runCreatorLogicCheck(selectedChapter.value);
         chapterRecheckResult.value = { ...result, chapter: selectedChapter.value };
         if ((result.p0_count || 0) > 0) {
           saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 保存后复查：发现 ${result.p0_count} 条 P0`;
@@ -221,10 +231,10 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterOutlineSaving.value = true;
     saveMessage.value = '';
     try {
-      chapterPreview.value = (await saveCreatorChapterOutline({
+      chapterPreview.value = await saveCreatorChapterOutline({
         chapter_id: selectedChapter.value,
         outline: chapterOutlineDraft.value,
-      })) as unknown as Record<string, unknown>;
+      });
       const slug = (overview.value as { slug?: string } | null)?.slug;
       if (slug) {
         saveWriteResume(slug, {
@@ -247,10 +257,10 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
     chapterBodySaving.value = true;
     bodyAutoSaveStatus.value = 'saving';
     try {
-      chapterPreview.value = (await saveCreatorChapterBody({
+      chapterPreview.value = await saveCreatorChapterBody({
         chapter_id: selectedChapter.value,
         body: chapterBodyDraft.value,
-      })) as unknown as Record<string, unknown>;
+      });
       lastPersistedBody.value = chapterBodyDraft.value;
       bodyLastSavedAt.value = new Date();
       bodyAutoSaveStatus.value = 'saved';

@@ -11,7 +11,6 @@
  */
 import { computed, nextTick, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
 import { diffVolumePlan } from '@/api/volume';
 import {
   fetchDiffCollabNotes,
@@ -26,6 +25,7 @@ import {
   downloadBinaryExport,
   downloadJsonExport,
   downloadTextExport,
+  typedEditableVolumesForDiff,
 } from '../volumePlanDiffExportUtils.js';
 
 interface DiffChange {
@@ -137,13 +137,13 @@ export function useVolumePlanDiff(deps: VolumePlanDiffDeps): VolumePlanDiffRetur
       return;
     }
     try {
-      // editableVolumes is structurally CreatorVolumePlanEntry[] at runtime,
-      // but the consumer-facing Ref<Array<Record<string, unknown>>> is too
-      // loose for the typed-wrapper input contract.
+      // editableVolumes is structurally CreatorVolumePlanEntry[] at runtime.
+      // typedEditableVolumesForDiff narrows the loose Ref shape to the strict
+      // typed-wrapper input contract (no double cast required).
       const data = await diffVolumePlan({
-        volumes: editableVolumes.value as unknown as CreatorVolumePlanEntry[],
-      }) as unknown as DiffPreview;
-      volumePlanDiffPreview.value = data;
+        volumes: typedEditableVolumesForDiff(editableVolumes.value),
+      });
+      volumePlanDiffPreview.value = data as DiffPreview;
     } catch {
       volumePlanDiffPreview.value = null;
     }
