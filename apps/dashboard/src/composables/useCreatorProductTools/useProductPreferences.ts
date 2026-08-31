@@ -12,6 +12,7 @@
  */
 import { ref } from 'vue';
 import type { Ref } from 'vue';
+import type { CreatorModelOption } from '@lingwen/dashboard-contracts/shared';
 import {
   fetchCreatorPreferences,
   saveCreatorPreferences,
@@ -37,7 +38,7 @@ export interface ProductPreferencesReturn {
   preferencesDirty: Ref<boolean>;
   preferencesSavedHint: Ref<string>;
   preferencesSyncSource: Ref<string>;
-  creatorModelOptions: Ref<Array<{ id: string; label: string }>>;
+  creatorModelOptions: Ref<CreatorModelOption[]>;
   loadCreatorModels: () => Promise<void>;
   loadPreferencesFromServer: () => Promise<void>;
   markPreferencesDirty: () => void;
@@ -56,9 +57,13 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
 
   async function loadCreatorModels(): Promise<void> {
     try {
-      // v16.2.7 T8: typed wrapper's CreatorModelsResponse is strict-typed;
-      // legacy shape used loose Record<string, unknown>. Cast preserves behavior.
-      const data = await fetchCreatorModels() as unknown as { models?: Array<{ id: string; label: string }> };
+      // v16.5 #N.13 T2.P1.a: typed wrapper returns `CreatorModelsResponse` whose
+      // `models` items are now strictly typed `CreatorModelOption[]` (Pydantic
+      // model added in lingwen-shared; v2.7.x DTO had loose
+      // `Record<string, unknown>[]`). The double-cast form is no longer needed
+      // — direct assignment to `creatorModelOptions.value` (also typed
+      // `CreatorModelOption[]`) is type-safe.
+      const data = await fetchCreatorModels();
       if (data.models?.length) {
         creatorModelOptions.value = data.models;
       }
@@ -69,9 +74,14 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
 
   async function loadPreferencesFromServer(): Promise<void> {
     try {
-      // v16.2.7 T8: typed wrapper response doesn't match preferencesFromApi
-      // signature (Record<string, unknown>); cast preserves legacy behavior.
-      const data = await fetchCreatorPreferences() as unknown as Record<string, unknown>;
+      // v16.5 #N.13 T2.P1.a: typed wrapper returns `CreatorPreferencesResponse`
+      // (new canonical shape: `creation_mode`, `quality_profile`, ...).
+      // `preferencesFromApi`'s JSDoc was widened to `object` (see
+      // creatorPreferencesApi.js) so this call site no longer needs the prior
+      // double-cast form — `CreatorPreferencesResponse` is structurally a
+      // non-primitive object and `preferencesFromApi` reads legacy snake_case
+      // fields defensively (defaults fill the gaps at runtime).
+      const data = await fetchCreatorPreferences();
       preferences.value = preferencesFromApi(data);
       saveCreatorPreferencesLocal(preferences.value);
       preferencesSyncSource.value = 'server';

@@ -1743,6 +1743,27 @@ class CreatorPreferencesSaveRequest(BaseModel):
     advance_volume_summary: Optional[bool] = None
 
 
+class CreatorModelOption(BaseModel):
+    """Single model option in `CreatorModelsResponse.models`.
+
+    v16.5 #N.13 T2.P1.a: matches actual backend payload from
+    `lingwen_creator.content.models.list_creator_models()` which returns
+    `{id, label, provider, available}` per item. The dashboard's
+    `useProductPreferences.loadCreatorModels` only consumes `id` + `label`,
+    but the full shape is exposed here so callers can choose.
+
+    All fields are required except `provider` and `available` (older clients
+    may not supply them).
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    label: str
+    provider: Optional[str] = None
+    available: Optional[bool] = None
+
+
 class CreatorModelsResponse(BaseModel):
     """Available LLM models + default fallback.
 
@@ -1750,11 +1771,15 @@ class CreatorModelsResponse(BaseModel):
     `lingwen_creator.content.models.list_creator_models_payload()` which returns
     `{models: [...], default_model: '...'}`. The previous `providers` field was
     a stale forward-compat stub never wired to backend.
+
+    v16.5 #N.13 T2.P1.a: `models` items tightened from `list[dict[str, Any]]`
+    to `list[CreatorModelOption]` so dashboard consumers can read `id` and
+    `label` without an `as unknown as` cast (invariant #29).
     """
 
     model_config = ConfigDict(extra="ignore")
 
-    models: list[dict[str, Any]] = Field(default_factory=list)
+    models: list[CreatorModelOption] = Field(default_factory=list)
     default_model: str = "local-mock"
 
 

@@ -100,6 +100,7 @@ export type {
   CreatorBatchHistoryExportResponse,
   CreatorPreferencesResponse,
   CreatorPreferencesSaveRequest,
+  CreatorModelOption,
   CreatorModelsResponse,
   CreatorLogicCheckResponse,
   CreatorChapterPreview,
