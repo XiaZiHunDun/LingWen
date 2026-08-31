@@ -84,6 +84,7 @@ export interface ReferenceGraphResponse {
   total_nodes: number;
   total_edges: number;
   by_dimension?: Record<string, unknown> | null;
+  truncated?: boolean;
 }
 
 export interface RippleActionResponse {
