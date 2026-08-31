@@ -21,22 +21,25 @@ vi.mock('echarts/renderers', () => ({ CanvasRenderer: vi.fn() }));
 import ImpactGraph from '../../src/components/ImpactGraph.vue';
 import { IMPACT_DIMENSION_COLORS } from '../../src/utils/impactGraphUtils.js';
 
+// Phase 126 v16.5 #N.11.g: backend now serves canonical presentation shape
+// (node_id/chapter_id/source/target/total_nodes/total_edges/truncated).
+// Reference GraphResponseDTO (apps/dashboard/src/api/cvg.ts) matches.
 const sampleGraph = {
   nodes: [
     {
-      id: 'n1',
+      node_id: 'n1',
       dimension: 'character',
       volume: 1,
-      chapter: 2,
+      chapter_id: 2,
       title: 'Hero',
       description: 'lead',
       payload: {},
     },
     {
-      id: 'n2',
+      node_id: 'n2',
       dimension: 'plot_point',
       volume: 2,
-      chapter: 4,
+      chapter_id: 4,
       title: 'Climax',
       description: '',
       payload: {},
@@ -44,16 +47,14 @@ const sampleGraph = {
   ],
   edges: [
     {
-      id: 'e1',
-      from_node_id: 'n1',
-      to_node_id: 'n2',
-      relationship_type: 'causes',
+      source: 'n1',
+      target: 'n2',
+      relation: 'causes',
       weight: 0.7,
-      payload: {},
     },
   ],
-  total_node_count: 2,
-  total_edge_count: 1,
+  total_nodes: 2,
+  total_edges: 1,
   truncated: false,
 };
 
