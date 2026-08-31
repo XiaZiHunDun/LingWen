@@ -113,3 +113,28 @@ def test_extra_fields_ignored() -> None:
     )
     assert obj.total_chapters == 1
     assert not hasattr(obj, "unknown_field")
+
+
+def test_chapter_data_has_body_default_false() -> None:
+    """v16.5 #N.14 T3: ChapterData declares `has_body` field; legacy callers
+    that don't set it get default False (forward-compat)."""
+    from lingwen_shared.contracts.python.health import ChapterData
+    obj = ChapterData(
+        chapter=1,
+        hook_count=0, hook_strength_avg=0.0,
+        coolpoint_count=0, coolpoint_density=0.0,
+    )
+    assert obj.has_body is False
+
+
+def test_chapter_data_has_body_explicit_true() -> None:
+    """v16.5 #N.14 T3: ChapterData accepts has_body=True from data layer
+    (lingwen_creator.content.dashboard emits this per-row; Pydantic was
+    dropping via extra='ignore' before field was declared)."""
+    from lingwen_shared.contracts.python.health import ChapterData
+    obj = ChapterData(
+        chapter=1, has_body=True,
+        hook_count=0, hook_strength_avg=0.0,
+        coolpoint_count=0, coolpoint_density=0.0,
+    )
+    assert obj.has_body is True

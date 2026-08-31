@@ -89,6 +89,9 @@ class ChapterData(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     chapter: int
+    has_body: bool = False  # v16.5 #N.14 T3: declared so /api/chapters wire response
+    # includes it (data layer at lingwen_creator.content.dashboard adds the
+    # field per-row; Pydantic was dropping it via extra="ignore").
     hook_count: int
     hook_strength_avg: float
     coolpoint_count: int

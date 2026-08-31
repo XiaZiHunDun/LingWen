@@ -3,6 +3,7 @@
 
 export interface ChapterData {
   chapter: number;
+  has_body?: boolean;
   hook_count: number;
   hook_strength_avg: number;
   coolpoint_count: number;
