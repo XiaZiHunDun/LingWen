@@ -258,6 +258,25 @@ class CascadeCancelPayload(BaseModel):
     reason: Optional[str] = None
 
 
+class CascadeBroadcastLogResponse(BaseModel):
+    """Cascade-broadcast-log row returned by ``GET /ripples/cascade/{id}/broadcast-log``.
+
+    Phase 126 v16.5 #N.11.c: promoted from storage shape
+    (``apps/studio_api/protocols.py::CascadeBroadcastLogResponse``) so
+    dashboard consumers can read broadcast-latency history via typed
+    wrapper. Field set is identical to storage shape (id/ripple_id/
+    latency_ms/created_at) — storage format matches dashboard needs,
+    no semantic mapping required.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    ripple_id: str
+    latency_ms: int
+    created_at: str
+
+
 # Resolve forward reference for RippleDetailResponse.audit_trail (string
 # annotation → list[RippleAuditEntryResponse]). Required under
 # ``from __future__ import annotations`` when a model references another
@@ -278,4 +297,5 @@ __all__ = [
     "ReferenceGraphResponse",
     "CascadeRunResponse",
     "CascadeCancelPayload",
+    "CascadeBroadcastLogResponse",  # NEW in N.11.c
 ]
