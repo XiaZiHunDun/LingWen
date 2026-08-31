@@ -72,6 +72,41 @@ def test_ripple_storage_to_presentation_accepts_datetime():
     assert isinstance(result.created_at, str)
 
 
+def test_ripple_storage_to_presentation_propagates_impact_score():
+    """N.11.d: storage impact_score → presentation impact_score.
+
+    Prior to N.11.d the route had to filter/sort on the storage shape
+    because the presentation shape lacked impact_score. After this test,
+    list_ripples can serve canonical presentation throughout, removing
+    the hybrid storage-roundtrip in apps/studio_api/routes/cvg.py.
+    """
+    storage = {
+        "ripple_id": "r-100",
+        "source_chapter": 15,
+        "target_chapter": 50,
+        "trigger_volume": 1,
+        "status": "pending",
+        "created_at": "2026-08-30T12:00:00",
+        "impact_score": 0.85,
+    }
+    result = ripple_storage_to_presentation(storage)
+    assert result.impact_score == 0.85
+
+
+def test_ripple_storage_to_presentation_handles_missing_impact_score():
+    """N.11.d: when storage lacks impact_score, presentation defaults to None."""
+    storage = {
+        "ripple_id": "r-101",
+        "source_chapter": 5,
+        "target_chapter": 5,
+        "trigger_volume": 1,
+        "status": "applied",
+        "created_at": "2026-08-30T12:00:00",
+    }
+    result = ripple_storage_to_presentation(storage)
+    assert result.impact_score is None
+
+
 def test_ripple_detail_storage_to_presentation_extends_base():
     """Detail shape inherits list shape + adds detail-only fields."""
     storage = {

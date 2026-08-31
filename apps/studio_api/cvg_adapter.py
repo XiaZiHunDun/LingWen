@@ -155,6 +155,10 @@ def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemRes
         source_volume=source_volume,
         impact_volumes=[impact_volume],
         created_at=_parse_dt(storage.get("created_at")),
+        # Phase 126 v16.5 #N.11.d: pass impact_score so dashboard filter/sort
+        # reads via the typed wrapper directly. Eliminates the hybrid
+        # storage-roundtrip in apps/studio_api/routes/cvg.py:list_ripples.
+        impact_score=storage.get("impact_score"),
     )
 
 
