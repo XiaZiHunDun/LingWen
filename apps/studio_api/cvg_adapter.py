@@ -54,14 +54,17 @@ v16.5 #N.9+ tasks:
 """
 from __future__ import annotations
 
+from dataclasses import asdict, is_dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from lingwen_shared.contracts.python.cvg import (
+    CascadeBroadcastLogResponse,  # NEW in N.11.c
     CascadeEdgeResponse,
     CascadeNodeResponse,
     CascadePreviewResponse,
     CascadeResponse,
+    CascadeRunResponse,  # NEW in N.11.b
     RippleDetailResponse,
     RippleListItemResponse,
 )
@@ -73,6 +76,8 @@ __all__ = [
     "cascade_edge_storage_to_presentation",
     "cascade_storage_to_presentation",
     "cascade_preview_storage_to_presentation",
+    "cascade_run_storage_to_presentation",  # NEW in N.11.b
+    "cascade_broadcast_log_storage_to_presentation",  # NEW in N.11.c
 ]
 
 
@@ -100,6 +105,21 @@ def _parse_dt(value: Any) -> str:
     if isinstance(value, datetime):
         return value.isoformat()
     return str(value)
+
+
+def _get_dim(node: Any) -> Optional[str]:
+    """Polymorphic accessor for cascade node ``dimension`` field.
+
+    Phase 126 v16.5 #N.11.f: DRY helper for cascade_preview_storage_to_presentation.
+    Replaces 3x repeated ``n.get("dimension") if isinstance(n, dict) else
+    getattr(n, "dimension", None)`` inline expressions.
+
+    Used for both dict (from asdict() output) and dataclass (from
+    CascadedRipple.cascade_nodes) inputs.
+    """
+    if isinstance(node, dict):
+        return node.get("dimension")
+    return getattr(node, "dimension", None)
 
 
 def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemResponse:
@@ -254,13 +274,13 @@ def cascade_preview_storage_to_presentation(
     nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
     edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
     affected_chapters = sum(
-        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) in ("plot_point", "foreshadow")
+        1 for n in nodes_raw if _get_dim(n) in ("plot_point", "foreshadow")
     )
     affected_characters = sum(
-        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "character"
+        1 for n in nodes_raw if _get_dim(n) == "character"
     )
     affected_settings = sum(
-        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "setting"
+        1 for n in nodes_raw if _get_dim(n) == "setting"
     )
     actions_raw = storage.get("cascade_actions") or []
     return CascadePreviewResponse(
@@ -274,4 +294,86 @@ def cascade_preview_storage_to_presentation(
         cascade_node_count=len(nodes_raw),
         cascade_edge_count=len(edges_raw),
         max_depth=storage.get("depth_reached") or storage.get("max_depth", 0),
+    )
+
+
+def cascade_run_storage_to_presentation(storage: dict[str, Any]) -> CascadeRunResponse:
+    """Convert storage CascadeRun dataclass (or dict) → presentation CascadeRunResponse.
+
+    Phase 126 v16.5 #N.11.b: route wire-up for /ripples/cascade/{id}/runs,
+    /cascade/runs, /ripples/cascade/{id}/runs/{runId}/cancel.
+
+    Field mapping (storage → presentation):
+        id (int)              → run_id (str via str(int)) + cascade_id (int)
+        ripple_id             → ripple_id
+        max_depth             → max_depth
+        depth_reached         → depth_reached
+        algorithm             → algorithm
+        started_at (datetime) → started_at (ISO string)
+        completed_at (datetime) → finished_at + completed_at (both ISO)
+        status                → status
+        cascade_nodes         → cascade_nodes (via cascade_node_storage_to_presentation)
+        cascade_edges         → cascade_edges (via cascade_edge_storage_to_presentation)
+        cascade_actions       → cascade_actions (passthrough list)
+        nodes_processed       → len(cascade_nodes) (computed)
+
+    NOTE: cancel-endpoint fields (cancelled_at/triggered_by) and stats dict
+    are populated by route layer after adapter call (route knows which
+    endpoint is calling and can attach endpoint-specific metadata).
+    """
+    nodes_raw = storage.get("cascade_nodes") or []
+    edges_raw = storage.get("cascade_edges") or []
+    nodes = [cascade_node_storage_to_presentation(n) for n in nodes_raw]
+    edges = [cascade_edge_storage_to_presentation(e) for e in edges_raw]
+    started_at = _parse_dt(storage.get("started_at"))
+    completed_at_raw = storage.get("completed_at")
+    completed_at = _parse_dt(completed_at_raw) if completed_at_raw is not None else None
+    return CascadeRunResponse(
+        run_id=str(storage.get("id", "")),
+        cascade_id=storage.get("id"),
+        ripple_id=storage.get("ripple_id", ""),
+        max_depth=storage.get("max_depth", 0),
+        depth_reached=storage.get("depth_reached", 0),
+        algorithm=storage.get("algorithm"),
+        started_at=started_at,
+        finished_at=completed_at,
+        completed_at=completed_at,
+        status=storage.get("status", "running"),
+        nodes_processed=len(nodes),
+        cascade_nodes=nodes,
+        cascade_edges=edges,
+        cascade_actions=list(storage.get("cascade_actions") or []),
+    )
+
+
+def cascade_broadcast_log_storage_to_presentation(
+    storage: Any,
+) -> CascadeBroadcastLogResponse:
+    """Convert storage CascadeBroadcastLogEntry (dataclass or dict) → presentation CascadeBroadcastLogResponse.
+
+    Phase 126 v16.5 #N.11.c: route wire-up for /ripples/cascade/{id}/broadcast-log.
+
+    Field mapping (storage → presentation):
+        id (int)            → id
+        ripple_id (str)     → ripple_id
+        latency_ms (int)    → latency_ms
+        created_at (str/datetime) → created_at (ISO string)
+
+    Field set is identical between storage and presentation shape — only
+    source-of-truth migration (storage Pydantic class → lingwen-shared
+    canonical). No semantic mapping needed.
+    """
+    if is_dataclass(storage) and not isinstance(storage, type):
+        d = asdict(storage)
+    elif hasattr(storage, "model_dump"):
+        d = storage.model_dump()
+    elif isinstance(storage, dict):
+        d = storage
+    else:
+        d = dict(storage)
+    return CascadeBroadcastLogResponse(
+        id=d.get("id", 0),
+        ripple_id=d.get("ripple_id", ""),
+        latency_ms=d.get("latency_ms", 0),
+        created_at=_parse_dt(d.get("created_at")),
     )

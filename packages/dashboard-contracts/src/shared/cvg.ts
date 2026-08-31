@@ -12,6 +12,7 @@ import type {
   ReferenceGraphResponse,
   CascadeRunResponse,
   CascadeCancelPayload,
+  CascadeBroadcastLogResponse,  // NEW in N.11.c
 } from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/cvg';
 
 export type RippleListItemResponseDTO = RippleListItemResponse;
@@ -26,3 +27,4 @@ export type CascadePreviewResponseDTO = CascadePreviewResponse;
 export type ReferenceGraphResponseDTO = ReferenceGraphResponse;
 export type CascadeRunResponseDTO = CascadeRunResponse;
 export type CascadeCancelPayloadDTO = CascadeCancelPayload;
+export type CascadeBroadcastLogResponseDTO = CascadeBroadcastLogResponse;  // NEW in N.11.c

@@ -206,3 +206,131 @@ def test_cascade_preview_storage_to_presentation_populates_counts():
     # Presentation fields populated too
     assert result.estimated_impact == 1
     assert result.affected_chapters == []  # storage doesn't carry per-chapter IDs
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.11.b — CascadeRunResponse adapter
+# ---------------------------------------------------------------------------
+
+
+def test_cascade_run_storage_to_presentation_basic():
+    """Storage CascadeRun → presentation CascadeRunResponse (N.11.b)."""
+    from datetime import datetime
+
+    from apps.studio_api.cvg_adapter import cascade_run_storage_to_presentation
+
+    started = datetime(2026, 8, 30, 10, 0, 0)
+    completed = datetime(2026, 8, 30, 10, 1, 30)
+    storage = {
+        "id": 42,
+        "ripple_id": "ripple-abc",
+        "max_depth": 5,
+        "depth_reached": 3,
+        "algorithm": "v2_weighted",
+        "started_at": started,
+        "completed_at": completed,
+        "status": "completed",
+        "cascade_nodes": [
+            {"id": "n1", "dimension": "character", "volume": 1, "chapter": 5, "title": "Lin"},
+        ],
+        "cascade_edges": [
+            {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "mentions", "weight": 1.0},
+        ],
+        "cascade_actions": [{"action": "update", "chapter": 5}],
+    }
+    result = cascade_run_storage_to_presentation(storage)
+    assert result.run_id == "42"
+    assert result.ripple_id == "ripple-abc"
+    assert result.status == "completed"
+    assert result.started_at == started.isoformat()
+    assert result.finished_at == completed.isoformat()
+    assert result.completed_at == completed.isoformat()
+    assert result.cascade_id == 42
+    assert result.max_depth == 5
+    assert result.depth_reached == 3
+    assert result.algorithm == "v2_weighted"
+    assert result.nodes_processed == 1
+    assert len(result.cascade_nodes) == 1
+    assert result.cascade_nodes[0].node_id == "n1"
+    assert len(result.cascade_edges) == 1
+    assert result.cascade_edges[0].source == "n1"
+    assert result.cascade_actions == [{"action": "update", "chapter": 5}]
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.11.c — CascadeBroadcastLogResponse adapter
+# ---------------------------------------------------------------------------
+
+
+def test_cascade_broadcast_log_storage_to_presentation_basic():
+    """Storage CascadeBroadcastLogEntry → presentation CascadeBroadcastLogResponse (N.11.c)."""
+    from apps.studio_api.cvg_adapter import cascade_broadcast_log_storage_to_presentation
+
+    storage = {
+        "id": 7,
+        "ripple_id": "ripple-xyz",
+        "latency_ms": 150,
+        "created_at": "2026-08-30T10:00:00",
+    }
+    result = cascade_broadcast_log_storage_to_presentation(storage)
+    assert result.id == 7
+    assert result.ripple_id == "ripple-xyz"
+    assert result.latency_ms == 150
+    assert result.created_at == "2026-08-30T10:00:00"
+
+
+def test_cascade_broadcast_log_storage_to_presentation_handles_dataclass():
+    """Accept CascadeBroadcastLogEntry dataclass via asdict fallback (N.11.c)."""
+    from dataclasses import dataclass
+
+    from apps.studio_api.cvg_adapter import cascade_broadcast_log_storage_to_presentation
+
+    @dataclass(frozen=True)
+    class FakeLogEntry:
+        id: int
+        ripple_id: str
+        latency_ms: int
+        created_at: str
+
+    entry = FakeLogEntry(id=1, ripple_id="r1", latency_ms=50, created_at="2026-08-30T10:00:00")
+    result = cascade_broadcast_log_storage_to_presentation(entry)
+    assert result.id == 1
+    assert result.ripple_id == "r1"
+    assert result.latency_ms == 50
+    assert result.created_at == "2026-08-30T10:00:00"
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.11.f — _get_dim helper extraction (DRY)
+# ---------------------------------------------------------------------------
+
+
+def test_get_dim_dict_input():
+    """Phase 126 v16.5 #N.11.f: _get_dim reads dimension from dict."""
+    from apps.studio_api.cvg_adapter import _get_dim
+    assert _get_dim({"dimension": "character"}) == "character"
+    assert _get_dim({"dimension": None}) is None
+    assert _get_dim({}) is None
+
+
+def test_get_dim_dataclass_input():
+    """Phase 126 v16.5 #N.11.f: _get_dim reads dimension from dataclass via getattr."""
+    from dataclasses import dataclass
+
+    from apps.studio_api.cvg_adapter import _get_dim
+
+    @dataclass(frozen=True)
+    class FakeNode:
+        dimension: str
+
+    assert _get_dim(FakeNode(dimension="setting")) == "setting"
+
+
+def test_get_dim_missing_attribute_returns_none():
+    """Phase 126 v16.5 #N.11.f: _get_dim defaults to None for objects without dimension."""
+    from apps.studio_api.cvg_adapter import _get_dim
+
+    class RandomObj:
+        pass
+
+    assert _get_dim(RandomObj()) is None

@@ -156,3 +156,52 @@ def test_cascade_preview_response_storage_counts_default_zero() -> None:
     assert response.cascade_node_count == 0
     assert response.cascade_edge_count == 0
     assert response.max_depth == 0
+
+
+def test_cascade_run_response_extended_fields() -> None:
+    """Phase 126 v16.5 #N.11.b: CascadeRunResponse extended with 10 storage-shape fields.
+
+    Verifies safe defaults for backward compat with N.9-era minimal instances.
+    """
+    from lingwen_shared.contracts.python.cvg import CascadeRunResponse
+
+    # Minimal canonical (N.7 presentation shape)
+    minimal = CascadeRunResponse(
+        run_id="42",
+        ripple_id="ripple-abc",
+        status="completed",
+        started_at="2026-08-30T10:00:00",
+        max_depth=5,
+        nodes_processed=0,
+    )
+    assert minimal.cascade_id is None
+    assert minimal.completed_at is None
+    assert minimal.finished_at is None
+    assert minimal.depth_reached == 0
+    assert minimal.cascade_nodes == []
+    assert minimal.cascade_edges == []
+    assert minimal.cascade_actions == []
+    assert minimal.cancelled_at is None
+    assert minimal.triggered_by is None
+    assert minimal.stats is None
+
+    # Full storage-shape extended (N.11.b)
+    full = CascadeRunResponse(
+        run_id="42",
+        cascade_id=42,
+        ripple_id="ripple-abc",
+        max_depth=5,
+        depth_reached=3,
+        algorithm="v2_weighted",
+        started_at="2026-08-30T10:00:00",
+        finished_at="2026-08-30T10:01:30",
+        completed_at="2026-08-30T10:01:30",
+        status="completed",
+        nodes_processed=10,
+        cancelled_at="2026-08-30T10:02:00",
+        triggered_by="system",
+        stats={"duration_ms": 90000},
+    )
+    assert full.cascade_id == 42
+    assert full.completed_at == "2026-08-30T10:01:30"
+    assert full.cancelled_at == "2026-08-30T10:02:00"
