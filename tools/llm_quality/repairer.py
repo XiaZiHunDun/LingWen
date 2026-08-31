@@ -18,7 +18,7 @@ class LLMRepairer:
         self.project_root = paths.PROJECT_ROOT
         self.chapters_dir = self.project_root / "03_内容仓库" / "04_正文"
 
-    def repair_character_issue(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_character_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复角色一致性问题"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -42,10 +42,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说内容修复专家，能够保持原文风格进行修改。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_logic_issue(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_logic_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复逻辑矛盾问题"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -69,10 +69,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说逻辑修复专家，能够发现并修复时间线和因果矛盾。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_foreshadow_issue(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_foreshadow_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复伏笔问题"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -96,10 +96,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说伏笔修复专家，能够完善伏笔的铺设与回收。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_emotional_rhythm_issue(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_emotional_rhythm_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复情感节奏问题（爽点密度、情感共鸣点）"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -128,10 +128,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说情感节奏优化专家，能够增强爽点密度和情感共鸣。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_state_contradiction(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
+    async def repair_state_contradiction(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
         """
         修复状态矛盾问题（新增专项方法）
 
@@ -181,10 +181,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说状态一致性修复专家，能够确保角色和物品状态在全文一致。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_timeline_issue(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
+    async def repair_timeline_issue(self, issue: Issue, chapter_content: str, context_chapters: List[int] = None) -> str:
         """
         修复时间线问题（新增专项方法）
 
@@ -250,10 +250,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说时间线修复专家，能够修复时间线矛盾同时尊重宇宙级场景的特殊性。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_pacing_issue(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_pacing_issue(self, issue: Issue, chapter_content: str) -> str:
         """修复节奏问题"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -281,10 +281,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说节奏优化专家，能够使章节节奏更加合理。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_scene_transition(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_scene_transition(self, issue: Issue, chapter_content: str) -> str:
         """修复场景转换问题"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -311,10 +311,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说场景转换修复专家，能够使场景转换自然流畅。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_dialogue_authenticity(self, issue: Issue, chapter_content: str) -> str:
+    async def repair_dialogue_authenticity(self, issue: Issue, chapter_content: str) -> str:
         """修复对话真实感问题"""
         from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
@@ -342,10 +342,10 @@ class LLMRepairer:
             max_tokens=3000,
             system="你是一个专业的小说对话优化专家，能够使对话更加真实自然。"
         )
-        response = self.llm.execute(task)
+        response = await self.llm.execute(task)
         return response if response else chapter_content
 
-    def repair_with_context(self, issue: Issue, chapter_content: str, context_range: int = 2) -> str:
+    async def repair_with_context(self, issue: Issue, chapter_content: str, context_range: int = 2) -> str:
         """
         带上下文的修复方法（增强版）
 
@@ -370,17 +370,17 @@ class LLMRepairer:
         evidence = issue.evidence.lower()
 
         if "状态" in issue_type or "状态" in description or "状态" in evidence:
-            return self.repair_state_contradiction(issue, chapter_content, context_chapters)
+            return await self.repair_state_contradiction(issue, chapter_content, context_chapters)
         elif "时间线" in issue_type or "时间" in issue_type:
-            return self.repair_timeline_issue(issue, chapter_content, context_chapters)
+            return await self.repair_timeline_issue(issue, chapter_content, context_chapters)
         elif "角色" in issue_type or "行为" in issue_type or "人称" in issue_type:
-            return self.repair_character_issue(issue, chapter_content)
+            return await self.repair_character_issue(issue, chapter_content)
         elif "逻辑" in issue_type or "因果" in issue_type:
-            return self.repair_logic_issue(issue, chapter_content)
+            return await self.repair_logic_issue(issue, chapter_content)
         elif "伏笔" in issue_type or "前后" in issue_type:
-            return self.repair_foreshadow_issue(issue, chapter_content)
+            return await self.repair_foreshadow_issue(issue, chapter_content)
         elif "情感" in issue_type or "节奏" in issue_type:
-            return self.repair_emotional_rhythm_issue(issue, chapter_content)
+            return await self.repair_emotional_rhythm_issue(issue, chapter_content)
         else:
             # 默认使用逻辑修复
-            return self.repair_logic_issue(issue, chapter_content)
+            return await self.repair_logic_issue(issue, chapter_content)
