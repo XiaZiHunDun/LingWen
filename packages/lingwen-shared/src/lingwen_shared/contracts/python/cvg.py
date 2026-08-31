@@ -209,7 +209,21 @@ class ReferenceGraphResponse(BaseModel):
 
 
 class CascadeRunResponse(BaseModel):
-    """Cascade-run descriptor returned by ``GET /ripples/cascade/{id}/runs``."""
+    """Cascade-run descriptor returned by ``GET /ripples/cascade/{id}/runs``.
+
+    Phase 126 v16.5 #N.11.b: extended with storage-shape fields so the
+    3 cascade-run endpoints (``get_ripple_cascade_runs``,
+    ``list_all_cascade_runs``, ``post_ripple_cascade_run_cancel``) can serve
+    canonical presentation shape via ``cvg_adapter.cascade_run_storage_to_presentation``.
+
+    Storage CascadeRun (infra/cross_volume/storage.py:62-78) maps to a richer
+    presentation shape: storage ``id`` is exposed as both ``run_id`` (str) and
+    ``cascade_id`` (int). ``started_at`` and ``completed_at`` (datetime) are
+    projected to ISO strings. ``cascade_nodes`` / ``cascade_edges`` /
+    ``cascade_actions`` mirror the CascadeResponse extension for dashboard
+    consumers. Cancel-specific fields (``cancelled_at`` + ``triggered_by``)
+    and ``stats`` dict are populated by the route layer after adapter call.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
@@ -222,6 +236,16 @@ class CascadeRunResponse(BaseModel):
     max_depth: int
     algorithm: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
+    # Phase 126 v16.5 #N.11.b: storage-shape fields exposed for dashboard consumers
+    cascade_id: Optional[int] = None  # storage 'id' (int PK)
+    completed_at: Optional[str] = None  # storage 'completed_at' (datetime → ISO)
+    depth_reached: int = 0
+    cascade_nodes: list[CascadeNodeResponse] = Field(default_factory=list)
+    cascade_edges: list[CascadeEdgeResponse] = Field(default_factory=list)
+    cascade_actions: list[dict[str, Any]] = Field(default_factory=list)
+    cancelled_at: Optional[str] = None
+    triggered_by: Optional[str] = None
+    stats: Optional[dict[str, Any]] = None
 
 
 class CascadeCancelPayload(BaseModel):
