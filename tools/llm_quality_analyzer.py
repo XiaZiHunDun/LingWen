@@ -115,7 +115,7 @@ class LLMQualityAnalyzer:
         self._llm = llm_service or LLMServiceAdapter()
         self._config = get_api_config()
 
-    def analyze_issue(
+    async def analyze_issue(
         self,
         issue: Issue,
         chapter_num: int,
@@ -135,7 +135,7 @@ class LLMQualityAnalyzer:
         prompt = self._build_issue_prompt(issue, chapter_num, context)
 
         try:
-            response = self._llm.execute(LLMTask(
+            response = await self._llm.execute(LLMTask(
                 task_type=TaskType.QUALITY_ANALYSIS,
                 prompt=prompt,
                 system=self.SYSTEM_PROMPT,
@@ -153,7 +153,7 @@ class LLMQualityAnalyzer:
                 confidence=0.0,
             )
 
-    def analyze_batch(
+    async def analyze_batch(
         self,
         issues: List[Issue],
         chapter_num: int,
@@ -172,7 +172,7 @@ class LLMQualityAnalyzer:
         """
         results = []
         for issue in issues:
-            result = self.analyze_issue(issue, chapter_num, context)
+            result = await self.analyze_issue(issue, chapter_num, context)
             results.append(result)
         return results
 
@@ -191,7 +191,7 @@ class LLMQualityAnalyzer:
                 return True
         return False
 
-    def filter_issues(
+    async def filter_issues(
         self,
         issues: List[Issue],
         chapter_num: int,
@@ -210,7 +210,7 @@ class LLMQualityAnalyzer:
         Returns:
             过滤后的Issue列表
         """
-        results = self.analyze_batch(issues, chapter_num, context)
+        results = await self.analyze_batch(issues, chapter_num, context)
 
         filtered = []
         for issue, result in zip(issues, results):
@@ -284,6 +284,10 @@ class LLMQualityAnalyzer:
 
 
 def main():
+    asyncio.run(_async_main())
+
+
+async def _async_main():
     import argparse
     import json
 
@@ -303,7 +307,7 @@ def main():
         issues = []
 
     if issues:
-        results = analyzer.analyze_batch(issues, args.chapter)
+        results = await analyzer.analyze_batch(issues, args.chapter)
         for issue, result in zip(issues, results):
             print(f"\n问题: {issue.description}")
             print(f"  严重性: {result.severity.value}")
