@@ -315,8 +315,9 @@ def test_get_dim_dict_input():
 
 def test_get_dim_dataclass_input():
     """Phase 126 v16.5 #N.11.f: _get_dim reads dimension from dataclass via getattr."""
-    from apps.studio_api.cvg_adapter import _get_dim
     from dataclasses import dataclass
+
+    from apps.studio_api.cvg_adapter import _get_dim
 
     @dataclass(frozen=True)
     class FakeNode:

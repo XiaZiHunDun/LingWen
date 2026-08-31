@@ -56,7 +56,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from lingwen_shared.contracts.python.cvg import (
     CascadeBroadcastLogResponse,  # NEW in N.11.c
@@ -105,6 +105,21 @@ def _parse_dt(value: Any) -> str:
     if isinstance(value, datetime):
         return value.isoformat()
     return str(value)
+
+
+def _get_dim(node: Any) -> Optional[str]:
+    """Polymorphic accessor for cascade node ``dimension`` field.
+
+    Phase 126 v16.5 #N.11.f: DRY helper for cascade_preview_storage_to_presentation.
+    Replaces 3x repeated ``n.get("dimension") if isinstance(n, dict) else
+    getattr(n, "dimension", None)`` inline expressions.
+
+    Used for both dict (from asdict() output) and dataclass (from
+    CascadedRipple.cascade_nodes) inputs.
+    """
+    if isinstance(node, dict):
+        return node.get("dimension")
+    return getattr(node, "dimension", None)
 
 
 def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemResponse:
@@ -259,13 +274,13 @@ def cascade_preview_storage_to_presentation(
     nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
     edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
     affected_chapters = sum(
-        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) in ("plot_point", "foreshadow")
+        1 for n in nodes_raw if _get_dim(n) in ("plot_point", "foreshadow")
     )
     affected_characters = sum(
-        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "character"
+        1 for n in nodes_raw if _get_dim(n) == "character"
     )
     affected_settings = sum(
-        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "setting"
+        1 for n in nodes_raw if _get_dim(n) == "setting"
     )
     actions_raw = storage.get("cascade_actions") or []
     return CascadePreviewResponse(
