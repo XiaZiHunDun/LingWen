@@ -7,6 +7,7 @@
  */
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
 import {
   saveVolumeTemplate,
   deleteVolumeTemplate,
@@ -86,7 +87,7 @@ export interface TemplateEditorDeps {
   templateApprovalHistory: Ref<Array<Record<string, unknown>>>;
   pendingTemplateApprovals: ComputedRef<ApprovalEntry[]>;
   // 调用依赖
-  editableVolumes: Ref<Array<Record<string, unknown>>>;
+  editableVolumes: Ref<CreatorVolumePlanEntry[]>;
   overview: Ref<Record<string, unknown> | null>;
   isSemverVersionLabel: (label: string) => boolean;
   loadVolumeTemplates: () => Promise<void>;
@@ -148,9 +149,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
     try {
       const saved = await saveVolumeTemplate({
         name: customTemplateName.value.trim(),
-        // v16.2.7 T8: typed wrapper's CreatorVolumePlanEntry is strict; legacy
-        // shape used Record<string, unknown>. Cast preserves runtime behavior.
-        volumes: editableVolumes.value as unknown as Parameters<typeof saveVolumeTemplate>[0]['volumes'],
+        volumes: editableVolumes.value,
         max_chapter: (overview.value as { max_chapter?: number } | null)?.max_chapter,
       }) as { id: string; name: string };
       saveMessage.value = `已保存模板「${saved.name}」`;
