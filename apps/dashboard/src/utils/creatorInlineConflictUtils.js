@@ -3,12 +3,27 @@
  */
 
 /**
+ * Build per-paragraph inline-conflict markers for the current chapter by
+ * merging three issue sources: deviations, logic-check issues, and
+ * light-validation issues. The returned shape matches the
+ * `InlineConflictMarker` contract used by
+ * `useCreatorWriteWorkbench/useWorkbenchQuality` so callers can drop the
+ * `as unknown as InlineConflictMarker[]` cast.
+ *
  * @param {{
- *   chapter?: number|null,
+ *   chapter?: number | null,
  *   deviations?: Array<{ chapter?: number, severity?: string, message?: string, paragraph?: number }>,
- *   logicIssues?: Array<{ chapter?: number, severity?: string, title?: string, message?: string, paragraph?: number }>,
- *   lightIssues?: Array<{ id?: string, level?: string, label?: string, paragraph?: number | null, kind?: string }>,
+ *   logicIssues?: Array<{ chapter?: number, severity?: string, priority?: string, title?: string, message?: string, paragraph?: number }>,
+ *   lightIssues?: Array<{ id?: string, level?: string, label?: string, paragraph?: number | null, kind?: string, fixHint?: string }>,
  * }} input
+ * @returns {Array<{
+ *   id: string,
+ *   kind: string,
+ *   level: 'error' | 'warn' | 'info',
+ *   label: string,
+ *   paragraph: number | null,
+ *   fixHint?: string | null,
+ * }>}
  */
 export function buildInlineConflictMarkers(input) {
   const { chapter, deviations = [], logicIssues = [], lightIssues = [] } = input;
