@@ -206,3 +206,51 @@ def test_cascade_preview_storage_to_presentation_populates_counts():
     # Presentation fields populated too
     assert result.estimated_impact == 1
     assert result.affected_chapters == []  # storage doesn't carry per-chapter IDs
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.11.b — CascadeRunResponse adapter
+# ---------------------------------------------------------------------------
+
+
+def test_cascade_run_storage_to_presentation_basic():
+    """Storage CascadeRun → presentation CascadeRunResponse (N.11.b)."""
+    from apps.studio_api.cvg_adapter import cascade_run_storage_to_presentation
+    from datetime import datetime
+
+    started = datetime(2026, 8, 30, 10, 0, 0)
+    completed = datetime(2026, 8, 30, 10, 1, 30)
+    storage = {
+        "id": 42,
+        "ripple_id": "ripple-abc",
+        "max_depth": 5,
+        "depth_reached": 3,
+        "algorithm": "v2_weighted",
+        "started_at": started,
+        "completed_at": completed,
+        "status": "completed",
+        "cascade_nodes": [
+            {"id": "n1", "dimension": "character", "volume": 1, "chapter": 5, "title": "Lin"},
+        ],
+        "cascade_edges": [
+            {"id": "e1", "from_node_id": "n1", "to_node_id": "n2", "relationship_type": "mentions", "weight": 1.0},
+        ],
+        "cascade_actions": [{"action": "update", "chapter": 5}],
+    }
+    result = cascade_run_storage_to_presentation(storage)
+    assert result.run_id == "42"
+    assert result.ripple_id == "ripple-abc"
+    assert result.status == "completed"
+    assert result.started_at == started.isoformat()
+    assert result.finished_at == completed.isoformat()
+    assert result.completed_at == completed.isoformat()
+    assert result.cascade_id == 42
+    assert result.max_depth == 5
+    assert result.depth_reached == 3
+    assert result.algorithm == "v2_weighted"
+    assert result.nodes_processed == 1
+    assert len(result.cascade_nodes) == 1
+    assert result.cascade_nodes[0].node_id == "n1"
+    assert len(result.cascade_edges) == 1
+    assert result.cascade_edges[0].source == "n1"
+    assert result.cascade_actions == [{"action": "update", "chapter": 5}]

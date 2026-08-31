@@ -62,6 +62,7 @@ from lingwen_shared.contracts.python.cvg import (
     CascadeNodeResponse,
     CascadePreviewResponse,
     CascadeResponse,
+    CascadeRunResponse,  # NEW in N.11.b
     RippleDetailResponse,
     RippleListItemResponse,
 )
@@ -73,6 +74,8 @@ __all__ = [
     "cascade_edge_storage_to_presentation",
     "cascade_storage_to_presentation",
     "cascade_preview_storage_to_presentation",
+    "cascade_run_storage_to_presentation",  # NEW in N.11.b
+    "cascade_broadcast_log_storage_to_presentation",  # NEW in N.11.c (added now for forward-decl)
 ]
 
 
@@ -274,4 +277,53 @@ def cascade_preview_storage_to_presentation(
         cascade_node_count=len(nodes_raw),
         cascade_edge_count=len(edges_raw),
         max_depth=storage.get("depth_reached") or storage.get("max_depth", 0),
+    )
+
+
+def cascade_run_storage_to_presentation(storage: dict[str, Any]) -> CascadeRunResponse:
+    """Convert storage CascadeRun dataclass (or dict) → presentation CascadeRunResponse.
+
+    Phase 126 v16.5 #N.11.b: route wire-up for /ripples/cascade/{id}/runs,
+    /cascade/runs, /ripples/cascade/{id}/runs/{runId}/cancel.
+
+    Field mapping (storage → presentation):
+        id (int)              → run_id (str via str(int)) + cascade_id (int)
+        ripple_id             → ripple_id
+        max_depth             → max_depth
+        depth_reached         → depth_reached
+        algorithm             → algorithm
+        started_at (datetime) → started_at (ISO string)
+        completed_at (datetime) → finished_at + completed_at (both ISO)
+        status                → status
+        cascade_nodes         → cascade_nodes (via cascade_node_storage_to_presentation)
+        cascade_edges         → cascade_edges (via cascade_edge_storage_to_presentation)
+        cascade_actions       → cascade_actions (passthrough list)
+        nodes_processed       → len(cascade_nodes) (computed)
+
+    NOTE: cancel-endpoint fields (cancelled_at/triggered_by) and stats dict
+    are populated by route layer after adapter call (route knows which
+    endpoint is calling and can attach endpoint-specific metadata).
+    """
+    nodes_raw = storage.get("cascade_nodes") or []
+    edges_raw = storage.get("cascade_edges") or []
+    nodes = [cascade_node_storage_to_presentation(n) for n in nodes_raw]
+    edges = [cascade_edge_storage_to_presentation(e) for e in edges_raw]
+    started_at = _parse_dt(storage.get("started_at"))
+    completed_at_raw = storage.get("completed_at")
+    completed_at = _parse_dt(completed_at_raw) if completed_at_raw is not None else None
+    return CascadeRunResponse(
+        run_id=str(storage.get("id", "")),
+        cascade_id=storage.get("id"),
+        ripple_id=storage.get("ripple_id", ""),
+        max_depth=storage.get("max_depth", 0),
+        depth_reached=storage.get("depth_reached", 0),
+        algorithm=storage.get("algorithm"),
+        started_at=started_at,
+        finished_at=completed_at,
+        completed_at=completed_at,
+        status=storage.get("status", "running"),
+        nodes_processed=len(nodes),
+        cascade_nodes=nodes,
+        cascade_edges=edges,
+        cascade_actions=list(storage.get("cascade_actions") or []),
     )
