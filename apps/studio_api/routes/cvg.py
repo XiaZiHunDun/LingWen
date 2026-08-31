@@ -105,17 +105,19 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         ripples = storage.get_ripples(
             status=status_filter, volume=volume, limit=limit, offset=offset
         )
-        # Storage shape has impact_score for filter/sort; presentation shape
-        # drops it. Filter/sort on storage, then convert via adapter.
-        items = _ripple_list_items(ripples, storage)
-        if min_score is not None:
-            items = [i for i in items if i.impact_score >= min_score]
-        if sort_by == "impact_score":
-            items.sort(key=lambda i: i.impact_score, reverse=True)
-        return [
+        # Phase 126 v16.5 #N.11.d: convert to canonical presentation shape FIRST
+        # (no more hybrid storage-roundtrip for filter/sort). The presentation
+        # shape now carries impact_score (see N.11.d), so filter/sort on
+        # presentation values directly.
+        items = [
             cvg_adapter.ripple_storage_to_presentation(item.model_dump())
-            for item in items
+            for item in _ripple_list_items(ripples, storage)
         ]
+        if min_score is not None:
+            items = [i for i in items if (i.impact_score or 0.0) >= min_score]
+        if sort_by == "impact_score":
+            items.sort(key=lambda i: i.impact_score or 0.0, reverse=True)
+        return items
 
     @app.get("/api/cvg/ripples/stats", response_model=RippleStatsResponse)
     def get_ripple_stats() -> RippleStatsResponse:
