@@ -19,6 +19,7 @@ import {
   previewSettingsMergeStrategy,
 } from '@/api/settings';
 import type { CreatorSettingsDocsResponse } from '@lingwen/dashboard-contracts/shared';
+import { parseSettingsDocs } from '@/utils/settingsDocsUtils';
 
 interface SettingsDocs {
   pillars?: string;
@@ -76,18 +77,13 @@ export function useSettingsDocs(deps: SettingsDocsDeps): SettingsDocsReturn {
   async function loadSettingsDocs(): Promise<void> {
     try {
       const data: CreatorSettingsDocsResponse = await fetchSettingsDocs();
-      settingsDocs.value = data as unknown as SettingsDocs;
-      // typed wrapper uses snake_case (`pillars_text`, `global_outline_text`) — accept
-      // legacy `pillars`/`outline` aliases for backward compatibility.
-      const pillars = (data as unknown as SettingsDocs).pillars_text
-        ?? (data as unknown as Record<string, unknown>).pillars
-        ?? '';
-      const outline = (data as unknown as SettingsDocs).global_outline_text
-        ?? (data as unknown as Record<string, unknown>).outline
-        ?? '';
-      pillarsText.value = String(pillars);
-      globalOutlineText.value = String(outline);
-      settingsBaseline.value = { pillars: String(pillars), outline: String(outline) };
+      settingsDocs.value = data;
+      // Phase 126 v16.5 #N.13 T4.P3.f: utility handles snake_case + legacy
+      // camelCase fallback chain — composable no longer casts the typed DTO.
+      const { pillars, outline } = parseSettingsDocs(data);
+      pillarsText.value = pillars;
+      globalOutlineText.value = outline;
+      settingsBaseline.value = { pillars, outline };
     } catch (e) {
       handleSaveError(e);
     }

@@ -15,6 +15,7 @@ import {
   restoreSettingsSnapshot,
 } from '../../api/settings.js';
 import type { CreatorSettingsHistoryResponse } from '@lingwen/dashboard-contracts/shared';
+import { parseSettingsHistory } from '@/utils/settingsHistoryUtils';
 
 interface SettingsSnapshot {
   id: string;
@@ -60,10 +61,9 @@ export function useSettingsHistory(deps: SettingsHistoryDeps): SettingsHistoryRe
   async function loadSettingsHistory(): Promise<void> {
     try {
       const data: CreatorSettingsHistoryResponse = await fetchSettingsHistory();
-      // typed wrapper returns `{ snapshots: [...] }` (CreatorSettingsHistoryResponse).
-      // Legacy fallback to `history` key kept for test compat only.
-      const rawData = data as unknown as { snapshots?: SettingsSnapshot[]; history?: SettingsSnapshot[] };
-      settingsHistory.value = rawData.snapshots || rawData.history || [];
+      // Phase 126 v16.5 #N.13 T4.P3.f: utility handles canonical `snapshots`
+      // + legacy `history` key fallback — composable no longer casts the typed DTO.
+      settingsHistory.value = parseSettingsHistory(data);
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
       settingsHistory.value = [];

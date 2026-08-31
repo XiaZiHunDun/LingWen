@@ -73,12 +73,15 @@ describe('parseSettingsDocs', () => {
   });
 
   it('coerces non-string values to string via String()', () => {
-    const result = parseSettingsDocs({
-      pillars_text: 123,
-      global_outline_text: null,
-    });
+    // The canonical DTO types these as `string`, but pre-v16.2.2 responses
+    // could send numeric or null. The utility must coerce via String() so
+    // callers can assign to `Ref<string>`. Cast to a loose shape to simulate
+    // a malformed legacy response.
+    const result = parseSettingsDocs(
+      { pillars_text: 123, global_outline_text: null } as unknown as Record<string, unknown>,
+    );
     expect(result.pillars).toBe('123');
-    expect(result.outline).toBe('null');
+    expect(result.outline).toBe('');
   });
 
   it('tolerates null/undefined input', () => {

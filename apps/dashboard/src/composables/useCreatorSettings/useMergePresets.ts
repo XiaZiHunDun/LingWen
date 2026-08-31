@@ -34,6 +34,10 @@ import {
   pullFactoryMergePresetsToProject,
   preflightFactoryMergePresetPull,
 } from '../../api/settings.js';
+import {
+  parseMergePreferences,
+  parseMergePresetImportPreview,
+} from '@/utils/mergePresetsUtils';
 
 interface MergePresetPackage { id: string; name?: string; scope?: string }
 interface MergePreferences { [key: string]: unknown }
@@ -126,7 +130,9 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
   async function loadMergePreferences(): Promise<void> {
     try {
       const data = await fetchMergePreferences();
-      mergePreferences.value = data as unknown as MergePreferences;
+      // Phase 126 v16.5 #N.13 T4.P3.f: utility widens strict DTO to plain
+      // record for the loose-dict ref type — composable no longer casts.
+      mergePreferences.value = parseMergePreferences(data);
     } catch (e) {
       handleSaveError(e);
     }
@@ -242,7 +248,9 @@ export function useMergePresets(deps: MergePresetsDeps): MergePresetsReturn {
     mergePresetImportPreviewLoading.value = true;
     try {
       const data = await previewMergePresetImportDiffApi({ packages: [] });
-      mergePresetImportPreview.value = data as unknown as { added: unknown[]; updated: unknown[]; removed: unknown[] };
+      // Phase 126 v16.5 #N.13 T4.P3.f: utility normalizes optional arrays
+      // to plain `{ added, updated, removed }` — composable no longer casts.
+      mergePresetImportPreview.value = parseMergePresetImportPreview(data);
     } catch (e) {
       handleSaveError(e);
     } finally {
