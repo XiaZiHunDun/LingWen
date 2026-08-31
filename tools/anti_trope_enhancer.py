@@ -4,6 +4,7 @@
 在章节大纲生成后、审核前，提供3-5个反套路创意选项供选择
 """
 
+import asyncio
 import logging
 import sys
 from dataclasses import dataclass
@@ -69,7 +70,7 @@ class AntiTropeEnhancer:
         self._llm = llm_service or LLMServiceAdapter()
         self._config = get_api_config()
 
-    def generate_options(
+    async def generate_options(
         self,
         chapter_outline: str,
         count: int = 3
@@ -87,7 +88,7 @@ class AntiTropeEnhancer:
         prompt = self._build_prompt(chapter_outline, count)
 
         try:
-            response = self._llm.execute(LLMTask(
+            response = await self._llm.execute(LLMTask(
                 task_type=TaskType.QUALITY_ANALYSIS,
                 prompt=prompt,
                 system=self.SYSTEM_PROMPT,
@@ -175,6 +176,10 @@ class AntiTropeEnhancer:
 
 
 def main():
+    asyncio.run(_async_main())
+
+
+async def _async_main():
     import argparse
 
     parser = argparse.ArgumentParser(description='反套路创意生成器')
@@ -185,7 +190,7 @@ def main():
     args = parser.parse_args()
 
     enhancer = AntiTropeEnhancer()
-    options = enhancer.generate_options(args.outline, args.count)
+    options = await enhancer.generate_options(args.outline, args.count)
 
     if args.format:
         print(enhancer.format_options(options))
