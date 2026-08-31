@@ -12,6 +12,22 @@
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 
+/**
+ * Per-chapter row shape used by overview-based UI (chapter row CSS class,
+ * title label, etc.). Fields are optional because data-layer emission is
+ * v16.5 #N.14 T4 widened to typed contract — runtime callers may omit.
+ */
+export interface OverviewChapterRow {
+  chapter: number;
+  has_body?: boolean;
+  has_outline?: boolean;
+  word_count?: number;
+}
+
+export interface OverviewShape {
+  chapters?: OverviewChapterRow[];
+}
+
 export interface WriteToolsDeps {
   uiProfile: ComputedRef<Record<string, unknown>>;
   chapterBodyDraft: Ref<string>;
@@ -20,7 +36,10 @@ export interface WriteToolsDeps {
   chapterBodyHighlightTimerRef: Ref<ReturnType<typeof setTimeout> | null>;
   batchDeviationInlineSummary: Ref<unknown>;
   visibleDeviations: ComputedRef<Array<Record<string, unknown>>>;
-  overview: Ref<Record<string, unknown> | null>;
+  // v16.5 #N.14 T4: typed contract replaces `Ref<Record<string, unknown> | null>`
+  // + inline `as { chapters?: Array<{...}> }` casts at the two `overview.value.chapters`
+  // read sites. Callers pass typed overview shapes that include `chapters`.
+  overview: Ref<OverviewShape | null>;
   activeRecheckIssueIdxRef: Ref<number | null>;
   setWorkspaceTab?: (tab: string) => void;
   jumpToChapter: (chapter: number) => Promise<void>;
@@ -84,7 +103,7 @@ export function useWriteTools(deps: WriteToolsDeps): WriteToolsReturn {
       (d: Record<string, unknown>) => Number(d.chapter) === chapterNum,
     );
     if (hasDeviation) return 'chapter-row--warn';
-    const overviewChapters = (overview.value as { chapters?: Array<{ chapter: number; has_body?: boolean }> } | null)?.chapters || [];
+    const overviewChapters = overview.value?.chapters || [];
     const row = overviewChapters.find((c) => c.chapter === chapterNum);
     if (row?.has_body) return 'chapter-row--done';
     return '';
@@ -100,7 +119,7 @@ export function useWriteTools(deps: WriteToolsDeps): WriteToolsReturn {
     const chapterNum = typeof chapter === 'number' ? chapter : Number(chapter.chapter);
     const hit = visibleDeviations.value.find((d) => Number(d.chapter) === chapterNum);
     if (hit?.message) return String(hit.message);
-    const overviewChapters = (overview.value as { chapters?: Array<{ chapter: number; has_body?: boolean; has_outline?: boolean; word_count?: number }> } | null)?.chapters || [];
+    const overviewChapters = overview.value?.chapters || [];
     const row = overviewChapters.find((c) => c.chapter === chapterNum);
     if (row?.has_body) return `已写 ${row.word_count || 0} 字`;
     if (row?.has_outline) return '仅有大纲';
