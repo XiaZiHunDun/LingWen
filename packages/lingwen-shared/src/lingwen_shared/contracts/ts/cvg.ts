@@ -60,6 +60,15 @@ export interface CascadeRunResponse {
   max_depth: number;
   algorithm?: string | null;
   metadata?: Record<string, unknown> | null;
+  cascade_id?: number | null;
+  completed_at?: string | null;
+  depth_reached?: number;
+  cascade_nodes?: CascadeNodeResponse[];
+  cascade_edges?: CascadeEdgeResponse[];
+  cascade_actions?: Record<string, unknown>[];
+  cancelled_at?: string | null;
+  triggered_by?: string | null;
+  stats?: Record<string, unknown> | null;
 }
 
 export interface ReferenceGraphResponse {
