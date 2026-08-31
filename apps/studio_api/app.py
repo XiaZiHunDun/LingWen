@@ -45,7 +45,6 @@ from apps.studio_api.cascade_notifier import (
 from apps.studio_api.cvg_ws import EVENT_PONG, CvgConnectionManager
 from apps.studio_api.errors import APIError
 from apps.studio_api.protocols import (
-    CascadeBroadcastLogResponse,  # Phase 9.44 F33
     CascadeCancelPayload,  # Phase 9.21
     CascadeCancelRequest,  # Phase 9.21
     CascadeEdgeResponse,

@@ -272,7 +272,6 @@ from apps.studio_api.models.workflow import (
 # form. Phase 15.0 T1.4: same applies to all cvg/ripple Pydantic models that
 # were originally defined alongside the storage layer.
 from apps.studio_api.protocols import (
-    CascadeBroadcastLogResponse,  # noqa: F401
     CascadeCancelPayload,  # noqa: F401
     CascadeCancelRequest,  # noqa: F401
     CascadeEdgeResponse,  # noqa: F401
