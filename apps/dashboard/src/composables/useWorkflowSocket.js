@@ -17,7 +17,7 @@
  * - workflow.status: { type, payload: <workflow> }
  * - decision.snapshot: { type, payload: <pending list> }
  * - cascade.update (Phase 9.16): { type, payload: { ripple_id, cascade_node_count,
- *     cascade_edge_count, depth_reached, bfs_algorithm_version } }
+ *     cascade_edge_count, max_depth, bfs_algorithm_version } }
  * - audit.created (Phase 9.62 F53): { type, payload: RippleAuditEntry fields }
  *
  * Phase 8.11: 重构为 module-level singleton state — App.vue 和 WorkflowsPage.vue
