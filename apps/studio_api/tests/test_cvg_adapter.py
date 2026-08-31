@@ -215,8 +215,9 @@ def test_cascade_preview_storage_to_presentation_populates_counts():
 
 def test_cascade_run_storage_to_presentation_basic():
     """Storage CascadeRun → presentation CascadeRunResponse (N.11.b)."""
-    from apps.studio_api.cvg_adapter import cascade_run_storage_to_presentation
     from datetime import datetime
+
+    from apps.studio_api.cvg_adapter import cascade_run_storage_to_presentation
 
     started = datetime(2026, 8, 30, 10, 0, 0)
     completed = datetime(2026, 8, 30, 10, 1, 30)

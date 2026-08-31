@@ -75,7 +75,7 @@ __all__ = [
     "cascade_storage_to_presentation",
     "cascade_preview_storage_to_presentation",
     "cascade_run_storage_to_presentation",  # NEW in N.11.b
-    "cascade_broadcast_log_storage_to_presentation",  # NEW in N.11.c (added now for forward-decl)
+    # NOTE: cascade_broadcast_log_storage_to_presentation added in N.11.c
 ]
 
 

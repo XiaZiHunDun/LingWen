@@ -15,7 +15,7 @@ import csv
 import io
 import json
 from dataclasses import asdict, is_dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
