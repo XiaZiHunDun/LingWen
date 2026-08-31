@@ -100,12 +100,15 @@ def test_import_and_export_roundtrip(tmp_path, monkeypatch):
 # Phase 118: LLM-backed agent extractor routes
 # ---------------------------------------------------------------------------
 class _StubLLM:
-    """In-memory stand-in for LLMService.get(); returns a fixed response."""
+    """In-memory stand-in for LLMService.get(); returns a fixed response.
+
+    v16.5 #N.12: ``generate`` is async to match ``LLMServiceAdapter.generate``.
+    """
 
     def __init__(self, response: str = '{"proposals":[]}'):
         self.response = response
 
-    def generate(self, prompt: str, system: str | None = None, **kwargs) -> str:
+    async def generate(self, prompt: str, system: str | None = None, **kwargs) -> str:
         return self.response
 
 

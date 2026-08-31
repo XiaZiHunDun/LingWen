@@ -4,7 +4,7 @@
 """
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -35,6 +35,7 @@ class TestAntiTropeEnhancer:
 
     def test_generate_options_returns_list(self):
         """测试生成选项返回列表"""
+        import asyncio
         with patch.object(AntiTropeEnhancer, '__init__', lambda x: None):
             enhancer = AntiTropeEnhancer()
             enhancer._llm = MagicMock()
@@ -43,15 +44,15 @@ class TestAntiTropeEnhancer:
 
             # Mock the LLM response
             mock_response = '[{"setting": "废土世界", "conflict": "生存竞争", "character": "沉默主角", "twist": "盟友背叛", "anti_trope_tags": ["反套路"]}]'
-            enhancer._llm.execute = MagicMock(return_value=mock_response)
+            enhancer._llm.execute = AsyncMock(return_value=mock_response)
 
             # Use actual method
             with patch('tools.anti_trope_enhancer.LLMServiceAdapter') as MockLLM:
                 MockLLM.return_value = MagicMock()
-                MockLLM.return_value.execute = MagicMock(return_value=mock_response)
+                MockLLM.return_value.execute = AsyncMock(return_value=mock_response)
 
                 actual_enhancer = AntiTropeEnhancer()
-                options = actual_enhancer.generate_options("测试大纲", count=1)
+                options = asyncio.run(actual_enhancer.generate_options("测试大纲", count=1))
 
                 assert isinstance(options, list)
 

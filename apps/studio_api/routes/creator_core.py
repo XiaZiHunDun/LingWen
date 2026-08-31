@@ -96,14 +96,14 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
         return CreatorLogicCheckResponse(**result)
 
     @app.post("/api/creator/agent/plan", response_model=CreatorAgentPlanResponse)
-    def creator_agent_plan_endpoint(
+    async def creator_agent_plan_endpoint(
         body: CreatorAgentPlanRequest,
     ) -> CreatorAgentPlanResponse:
         from lingwen_creator.content.agent import run_creator_agent_plan
 
         project = _require_project(ctx)
         try:
-            result = run_creator_agent_plan(
+            result = await run_creator_agent_plan(
                 project.root,
                 action=body.action,
                 action_label=body.action_label,
@@ -128,9 +128,9 @@ def register_creator_core(app: FastAPI, ctx: RoutesContext) -> None:
 
         project = _require_project(ctx)
 
-        def event_stream():
+        async def event_stream():
             try:
-                for event in iter_creator_agent_plan_stream(
+                async for event in iter_creator_agent_plan_stream(
                     project.root,
                     action=body.action,
                     action_label=body.action_label,

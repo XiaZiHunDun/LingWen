@@ -33,7 +33,7 @@ class _LLMRunnable(Protocol):
     mock satisfy this protocol.
     """
 
-    def generate(self, prompt: str, system: str | None = None, **kwargs: Any) -> str: ...
+    async def generate(self, prompt: str, system: str | None = None, **kwargs: Any) -> str: ...
 
 
 MAX_CHAPTERS_DEFAULT = 10
@@ -90,7 +90,7 @@ def _to_proposal_dict(proposal: ProposalResponse) -> dict:
     }
 
 
-def extract_proposals_from_chapters(
+async def extract_proposals_from_chapters(
     character_slug: str,
     chapter_texts: Iterable[str],
     *,
@@ -112,7 +112,7 @@ def extract_proposals_from_chapters(
     chapters = chapters[-max_chapters:]
 
     svc = llm_service or _default_llm_service()
-    raw = svc.generate(
+    raw = await svc.generate(
         prompt=_build_user_prompt(character_slug, chapters),
         system=SYSTEM_PROMPT,
         max_tokens=max_tokens,
@@ -127,7 +127,7 @@ def extract_proposals_from_chapters(
     return [_to_proposal_dict(p) for p in proposals]
 
 
-def extract_proposals_from_prompt(
+async def extract_proposals_from_prompt(
     character_slug: str,
     user_prompt: str,
     *,
@@ -142,7 +142,7 @@ def extract_proposals_from_prompt(
     if not user_prompt or not user_prompt.strip():
         return []
     svc = llm_service or _default_llm_service()
-    raw = svc.generate(
+    raw = await svc.generate(
         prompt=_build_prompt_user_prompt(character_slug, user_prompt),
         system=SYSTEM_PROMPT,
         max_tokens=max_tokens,

@@ -1,10 +1,11 @@
-"""LLMServiceAdapter — sync facade unit tests.
+"""LLMServiceAdapter — async facade unit tests.
 
 Adapter wraps concrete infra.llm_service.LLMService. Tests use a fake
 LLMService to avoid real LLM calls.
 """
 from __future__ import annotations
 
+import inspect
 from typing import Any, Iterator
 from unittest.mock import MagicMock
 
@@ -28,18 +29,20 @@ def fake_service() -> MagicMock:
     return service
 
 
-def test_adapter_execute_returns_text(fake_service: MagicMock) -> None:
+@pytest.mark.asyncio
+async def test_adapter_execute_returns_text(fake_service: MagicMock) -> None:
     adapter = LLMServiceAdapter(service=fake_service)
     task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="p", system="s")
-    result = adapter.execute(task)
+    result = await adapter.execute(task)
     assert result == "raw text response"
     fake_service.execute.assert_called_once_with(task)
 
 
-def test_adapter_execute_stream_returns_iterator(fake_service: MagicMock) -> None:
+@pytest.mark.asyncio
+async def test_adapter_execute_stream_returns_iterator(fake_service: MagicMock) -> None:
     adapter = LLMServiceAdapter(service=fake_service)
     task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="p")
-    chunks = list(adapter.execute_stream(task))
+    chunks = [chunk async for chunk in adapter.execute_stream(task)]
     assert chunks == ["chunk1", "chunk2"]
     fake_service.execute_stream.assert_called_once_with(task)
 
@@ -83,3 +86,59 @@ def test_adapter_uses_registered_factory_when_no_service() -> None:
         assert adapter._service is fake
     finally:
         set_default_factory(None)
+
+
+# ---------------------------------------------------------------------------
+# v16.5 #N.12 — Async surface conformance (Part A foundation)
+# ---------------------------------------------------------------------------
+
+
+class _FakeService:
+    """Minimal sync service stub for async adapter tests.
+
+    Phase 126 v16.5 #N.12: shared across 3 async tests (extracted per code review
+    I2 — DRY from duplicated inline classes).
+    """
+
+    def execute(self, task):
+        return "ok"
+
+    def execute_stream(self, task):
+        yield "a"
+        yield "b"
+
+
+@pytest.mark.asyncio
+async def test_execute_is_async_returns_string():
+    """Phase 126 v16.5 #N.12: LLMServiceAdapter.execute is async, returns str (NOT awaitable)."""
+    from lingwen_llm.port_adapter import LLMServiceAdapter
+    from lingwen_shared.contracts.python.llm import LLMTask, TaskType
+
+    adapter = LLMServiceAdapter(service=_FakeService())
+    task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="x")
+    assert inspect.iscoroutinefunction(adapter.execute)
+    assert await adapter.execute(task) == "ok"
+
+
+@pytest.mark.asyncio
+async def test_execute_stream_is_async_generator():
+    """Phase 126 v16.5 #N.12: LLMServiceAdapter.execute_stream is async generator."""
+    from lingwen_llm.port_adapter import LLMServiceAdapter
+    from lingwen_shared.contracts.python.llm import LLMTask, TaskType
+
+    adapter = LLMServiceAdapter(service=_FakeService())
+    task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="x")
+    chunks = []
+    async for chunk in adapter.execute_stream(task):
+        chunks.append(chunk)
+    assert chunks == ["a", "b"]
+
+
+@pytest.mark.asyncio
+async def test_generate_is_async():
+    """Phase 126 v16.5 #N.12: LLMServiceAdapter.generate is async (legacy API retained)."""
+    from lingwen_llm.port_adapter import LLMServiceAdapter
+
+    adapter = LLMServiceAdapter(service=_FakeService())
+    assert inspect.iscoroutinefunction(adapter.generate)
+    assert await adapter.generate(prompt="x", system="y") == "ok"

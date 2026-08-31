@@ -42,7 +42,7 @@ class LLMQualityChecker:
                 result[num] = content
         return result
 
-    def check_character_consistency(self, chapter_num: int, content: str) -> QualityReport:
+    async def check_character_consistency(self, chapter_num: int, content: str) -> QualityReport:
         """
         STEP_18a: 角色一致性深度检测
         使用LLM分析角色行为、对话、决策的一致性
@@ -80,7 +80,7 @@ class LLMQualityChecker:
 {{"issues": []}}
 """
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说质量审核专家，擅长角色一致性分析。",
             model="default"
@@ -137,7 +137,7 @@ class LLMQualityChecker:
         self.cache.set("llm_character", chapter_num, content, report.to_dict())
         return report
 
-    def scan_logic_contradictions(self, chapter_num: int, content: str, context_chapters: List[int] = None) -> QualityReport:
+    async def scan_logic_contradictions(self, chapter_num: int, content: str, context_chapters: List[int] = None) -> QualityReport:
         """
         STEP_18b: 逻辑矛盾全面扫描
         检测时间线、因果链、设定冲突
@@ -181,7 +181,7 @@ class LLMQualityChecker:
 {{"issues": []}}
 """
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说逻辑审核专家，擅长发现时间线和因果矛盾。",
             model="default"
@@ -228,7 +228,7 @@ class LLMQualityChecker:
         self.cache.set("llm_logic", chapter_num, content, report.to_dict())
         return report
 
-    def verify_foreshadow_completeness(self, chapter_num: int, content: str, outline_content: str = None) -> QualityReport:
+    async def verify_foreshadow_completeness(self, chapter_num: int, content: str, outline_content: str = None) -> QualityReport:
         """
         STEP_18c: 伏笔回收完整性验证
         对照章节大纲检查伏笔铺设与回收
@@ -271,7 +271,7 @@ class LLMQualityChecker:
 {{"issues": []}}
 """
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说伏笔审核专家，擅长分析伏笔的铺设与回收。",
             model="default"
@@ -318,7 +318,7 @@ class LLMQualityChecker:
         self.cache.set("llm_foreshadow", chapter_num, content, report.to_dict())
         return report
 
-    def diagnose_emotional_rhythm(self, chapter_num: int, content: str) -> QualityReport:
+    async def diagnose_emotional_rhythm(self, chapter_num: int, content: str) -> QualityReport:
         """
         STEP_18d: 情感节奏诊断
         分析高潮分布、情感曲线、爽点密度
@@ -350,7 +350,7 @@ class LLMQualityChecker:
 score说明：0.8+优秀，0.6-0.8良好，0.4-0.6一般，<0.4需改进
 """
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说情感节奏分析专家，擅长诊断爽点和情感共鸣。",
             model="default"
