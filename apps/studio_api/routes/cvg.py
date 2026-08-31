@@ -15,6 +15,7 @@ import csv
 import io
 import json
 from dataclasses import asdict, is_dataclass
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
@@ -27,6 +28,7 @@ from fastapi.responses import Response
 # presentation CascadeResponse / CascadePreviewResponse from lingwen-shared,
 # mapped via cvg_adapter.
 from lingwen_shared.contracts.python.cvg import (
+    CascadeBroadcastLogResponse,  # NEW in N.11.c
     CascadePreviewResponse,
     CascadeResponse,
     CascadeRunResponse,  # NEW in N.11.b
@@ -48,7 +50,6 @@ from apps.studio_api.helpers.cvg import (
     cvg_manager,
 )
 from apps.studio_api.models import (
-    CascadeBroadcastLogResponse,
     CascadeCancelPayload,
     CascadeCancelRequest,
     ReferenceGraphResponse,
@@ -531,13 +532,14 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             ))
         # Phase 126 v16.5 #N.11.b: route enriches presentation response with
         # cancel-specific fields (cancelled_at = now, triggered_by = "system").
-        from datetime import datetime, timezone
-        response_dict = cvg_adapter.cascade_run_storage_to_presentation(
+        # model_copy(update={...}) avoids model_dump() + dict mutation round-trip
+        # and preserves Pydantic v2 model identity.
+        return cvg_adapter.cascade_run_storage_to_presentation(
             _dataclass_to_dict(run)
-        ).model_dump()
-        response_dict["cancelled_at"] = datetime.now(timezone.utc).isoformat()
-        response_dict["triggered_by"] = "system"
-        return CascadeRunResponse(**response_dict)
+        ).model_copy(update={
+            "cancelled_at": datetime.now(timezone.utc).isoformat(),
+            "triggered_by": "system",
+        })
 
     @app.get(
         "/api/ripples/cascade/{ripple_id}/broadcast-log",
@@ -548,12 +550,14 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         limit: int = Query(default=50, ge=1, le=200),
         offset: int = Query(default=0, ge=0),
     ) -> list[CascadeBroadcastLogResponse]:
-        """Phase 9.44 F33: list persisted cascade WS broadcast latency history."""
+        """Phase 9.44 F33: list persisted cascade WS broadcast latency history.
+        Phase 126 v16.5 #N.11.c: serves canonical presentation via cvg_adapter.
+        """
         storage = _app_module._default_storage()
         rows = storage.get_cascade_broadcast_logs(
             ripple_id, limit=limit, offset=offset
         )
-        return [CascadeBroadcastLogResponse.from_dataclass(r) for r in rows]
+        return [cvg_adapter.cascade_broadcast_log_storage_to_presentation(r) for r in rows]
 
     # ==================== Phase 9.13: CVG WebSocket endpoint ====================
 
