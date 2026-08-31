@@ -100,6 +100,32 @@ def test_reference_graph_uses_generic_nodes() -> None:
     assert obj.total_nodes == 1
 
 
+def test_reference_graph_response_includes_truncated_flag() -> None:
+    """N.11.g: storage ReferenceGraphResponse has 'truncated' bool —
+    presentation shape must mirror the field so ImpactGraph.vue can
+    signal "showing only the first N nodes" without inspection of
+    hidden limits.
+    """
+    from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+    obj = ReferenceGraphResponse(
+        nodes=[], edges=[],
+        total_nodes=250, total_edges=42,
+        truncated=True,
+        by_dimension={"character": 5, "foreshadow": 3},
+    )
+    assert obj.truncated is True
+    assert obj.by_dimension == {"character": 5, "foreshadow": 3}
+
+
+def test_reference_graph_response_truncated_default_false() -> None:
+    """N.11.g: by default truncated is False (back-compat with N.9)."""
+    from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+    obj = ReferenceGraphResponse(
+        nodes=[], edges=[], total_nodes=1, total_edges=0,
+    )
+    assert obj.truncated is False
+
+
 def test_cascade_response_includes_cascade_actions_field() -> None:
     """CascadeResponse must include cascade_actions list (dashboard consumer cascadeGraphUtils.js:152)."""
     from lingwen_shared.contracts.python.cvg import CascadeEdgeResponse, CascadeNodeResponse, CascadeResponse

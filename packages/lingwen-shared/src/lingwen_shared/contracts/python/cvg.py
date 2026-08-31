@@ -200,7 +200,13 @@ class CascadePreviewResponse(BaseModel):
 
 
 class ReferenceGraphResponse(BaseModel):
-    """Reference-graph payload returned by ``GET /cvg/reference-graph``."""
+    """Reference-graph payload returned by ``GET /cvg/reference-graph``.
+
+    Phase 126 v16.5 #N.11.g: extended with ``truncated`` (storage-shape
+    field exposed for ImpactGraph.vue "showing N of M nodes" indicator)
+    and the polymorphic ``node_id``/``chapter_id`` mapping is handled by
+    ``cvg_adapter.reference_graph_storage_to_presentation``.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
@@ -209,6 +215,9 @@ class ReferenceGraphResponse(BaseModel):
     total_nodes: int
     total_edges: int
     by_dimension: Optional[dict[str, int]] = None
+    # Phase 126 v16.5 #N.11.g: truncated flag (storage shape carries it
+    # via the /reference-graph endpoint which loads up to `limit` nodes).
+    truncated: bool = False
 
 
 class CascadeRunResponse(BaseModel):
