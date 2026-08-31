@@ -487,7 +487,9 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         ripple_id: str | None = Query(default=None, min_length=1),
         since_days: int | None = Query(default=None, ge=1, le=3650),
     ) -> list[CascadeRunResponse]:
-        """Phase 9.46 F35: global cascade_runs list across all ripples."""
+        """Phase 9.46 F35: global cascade_runs list across all ripples.
+        Phase 126 v16.5 #N.11.b: serves canonical presentation via cvg_adapter.
+        """
         storage = _app_module._default_storage()
         runs = storage.list_all_cascade_runs(
             limit=limit,
@@ -499,7 +501,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             ripple_id=ripple_id,
             since_days=since_days,
         )
-        return [CascadeRunResponse.from_dataclass(r) for r in runs]
+        return [cvg_adapter.cascade_run_storage_to_presentation(_dataclass_to_dict(r)) for r in runs]
 
     @app.post(
         "/api/ripples/cascade/{ripple_id}/runs/{run_id}/cancel",
