@@ -18,14 +18,18 @@ const actions = [
   { action: 'modify', from: 'b', to: 'c', depth: 3 },
 ]
 const cascade = {
+  // Phase 126 v16.5 #N.11.e: presentation-shape fixture (cascadeGraphUtils
+  // reads node_id/chapter_id on nodes, source/target on edges, max_depth
+  // on the cascade envelope). Storage-shape names would silently produce
+  // undefined fields and break the visualization.
   cascade_nodes: [
-    { id: 'a', volume: 1, chapter: 1 },
-    { id: 'b', volume: 1, chapter: 2 },
-    { id: 'c', volume: 2, chapter: 3 },
+    { node_id: 'a', volume: 1, chapter_id: 1 },
+    { node_id: 'b', volume: 1, chapter_id: 2 },
+    { node_id: 'c', volume: 2, chapter_id: 3 },
   ],
-  cascade_edges: [{ from_node_id: 'a', to_node_id: 'b', weight: 0.8 }],
+  cascade_edges: [{ source: 'a', target: 'b', weight: 0.8 }],
   cascade_actions: actions,
-  depth_reached: 3,
+  max_depth: 3,
 }
 
 describe('cascadeGraphUtils full coverage (F48)', () => {

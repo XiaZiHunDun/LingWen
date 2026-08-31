@@ -9,12 +9,10 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException
+from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse  # Phase 126 v16.5 #N.11.g
 
 from apps.studio_api.cvg_ws import CvgConnectionManager
 from apps.studio_api.protocols import (
-    CascadeEdgeResponse,
-    CascadeNodeResponse,
-    ReferenceGraphResponse,
     RippleAuditEntryResponse,
     RippleDetailResponse,
     RippleListItemResponse,
@@ -206,7 +204,13 @@ def _build_reference_graph_response(
     dimension: str | None = None,
     limit: int = 200,
 ) -> ReferenceGraphResponse:
-    """Phase 9.41 F30: load persisted CVG graph for ImpactGraph.vue."""
+    """Phase 9.41 F30 / N.11.g: load persisted CVG graph for ImpactGraph.vue.
+
+    Phase 126 v16.5 #N.11.g: returns canonical lingwen-shared ReferenceGraphResponse
+    (node_id/chapter_id/source/target/total_nodes/total_edges/by_dimension/
+    truncated) instead of the storage-shape counterpart (which was removed
+    from apps/studio_api/protocols.py in T3.5).
+    """
     nodes = storage.load_all_nodes()
     edges = storage.load_all_edges()
     if volume is not None:
@@ -223,15 +227,42 @@ def _build_reference_graph_response(
         e for e in edges
         if e.from_node_id in node_ids and e.to_node_id in node_ids
     ]
+    # Node dicts: storage id/chapter → presentation node_id/chapter_id
+    node_dicts = [
+        {
+            "node_id": d.get("id") or d.get("node_id", ""),
+            "chapter_id": d.get("chapter") or d.get("chapter_id", 0),
+            "dimension": d.get("dimension"),
+            "volume": d.get("volume", 1),
+            "title": d.get("title"),
+        }
+        for d in (_node_to_dict_for_response(n) for n in nodes)
+    ]
+    # Edge dicts: storage from_node_id/to_node_id/relationship_type → presentation
+    # source/target/relation
+    edge_dicts = [
+        {
+            "source": d.get("from_node_id") or d.get("source", ""),
+            "target": d.get("to_node_id") or d.get("target", ""),
+            "relation": (
+                d.get("relationship_type") or d.get("relation") or "reference"
+            ),
+            "weight": d.get("weight"),
+        }
+        for d in (_edge_to_dict_for_response(e) for e in visible_edges)
+    ]
+    # by_dimension computed from storage node.dimension counts
+    by_dimension: dict[str, int] = {}
+    for n in nodes:
+        dim = getattr(n, "dimension", None)
+        if dim:
+            by_dimension[dim] = by_dimension.get(dim, 0) + 1
     return ReferenceGraphResponse(
-        nodes=[
-            CascadeNodeResponse(**_node_to_dict_for_response(n)) for n in nodes
-        ],
-        edges=[
-            CascadeEdgeResponse(**_edge_to_dict_for_response(e)) for e in visible_edges
-        ],
-        total_node_count=total_node_count,
-        total_edge_count=total_edge_count,
+        nodes=node_dicts,
+        edges=edge_dicts,
+        total_nodes=total_node_count,
+        total_edges=total_edge_count,
+        by_dimension=by_dimension or None,
         truncated=truncated,
     )
 

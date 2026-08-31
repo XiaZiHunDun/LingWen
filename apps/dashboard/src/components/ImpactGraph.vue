@@ -51,8 +51,8 @@ const hasData = computed(() => {
 })
 
 function nodeLabel(node) {
-  const title = node.title || node.id
-  return `${title} (V${node.volume}c${node.chapter})`
+  const title = node.title || node.node_id
+  return `${title} (V${node.volume}c${node.chapter_id})`
 }
 
 function legendDimensions(nodes) {
@@ -77,12 +77,16 @@ async function initChart() {
     chart = echarts.init(chartEl.value)
     chart.on('click', (params) => {
       if (params.dataType === 'node') {
-        const n = props.graph.nodes.find((x) => x.id === params.data.id)
+        // Phase 126 v16.5 #N.11.g: read presentation-shape field names
+        // (node_id / chapter_id) — backend now serves canonical
+        // ReferenceGraphResponse via cvg_adapter (was storage-shape
+        // id / chapter pre-N.11.g).
+        const n = props.graph.nodes.find((x) => x.node_id === params.data.id)
         if (n) {
           emit('nodeClick', {
-            nodeId: n.id,
+            nodeId: n.node_id,
             volume: n.volume,
-            chapter: n.chapter,
+            chapter: n.chapter_id,
             dimension: n.dimension,
           })
         }
@@ -91,15 +95,15 @@ async function initChart() {
   }
 
   const nodes = props.graph.nodes.map((n) => ({
-    id: n.id,
+    id: n.node_id,
     name: nodeLabel(n),
     symbolSize: 28,
     itemStyle: { color: impactNodeColor(n.dimension) },
     category: n.dimension,
   }))
   const edges = (props.graph.edges || []).map((e) => ({
-    source: e.from_node_id,
-    target: e.to_node_id,
+    source: e.source,
+    target: e.target,
     lineStyle: { width: 1 + (e.weight ?? 0) * 2, opacity: 0.6 + (e.weight ?? 0) * 0.4 },
   }))
   const legendData = legendDimensions(props.graph.nodes)
@@ -118,12 +122,12 @@ async function initChart() {
         if (params.dataType === 'edge') {
           return `${params.data.source} → ${params.data.target}`
         }
-        const n = props.graph.nodes.find((x) => x.id === params.data.id)
+        const n = props.graph.nodes.find((x) => x.node_id === params.data.id)
         if (!n) return params.name
         return [
           n.dimension,
-          `V${n.volume} ch${n.chapter}`,
-          n.description || n.title || n.id,
+          `V${n.volume} ch${n.chapter_id}`,
+          n.description || n.title || n.node_id,
         ].join('<br/>')
       },
     },

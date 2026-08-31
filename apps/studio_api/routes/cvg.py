@@ -34,6 +34,9 @@ from lingwen_shared.contracts.python.cvg import (
     CascadeRunResponse,  # NEW in N.11.b
     RippleListItemResponse,
 )
+from lingwen_shared.contracts.python.cvg import (
+    ReferenceGraphResponse as CanonicalReferenceGraphResponse,  # NEW in N.11.g
+)
 
 from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
 from apps.studio_api import cvg_adapter
@@ -52,7 +55,6 @@ from apps.studio_api.helpers.cvg import (
 from apps.studio_api.models import (
     CascadeCancelPayload,
     CascadeCancelRequest,
-    ReferenceGraphResponse,
     RippleActionRequest,
     RippleActionResponse,
     RippleAuditEntryResponse,
@@ -105,17 +107,19 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
         ripples = storage.get_ripples(
             status=status_filter, volume=volume, limit=limit, offset=offset
         )
-        # Storage shape has impact_score for filter/sort; presentation shape
-        # drops it. Filter/sort on storage, then convert via adapter.
-        items = _ripple_list_items(ripples, storage)
-        if min_score is not None:
-            items = [i for i in items if i.impact_score >= min_score]
-        if sort_by == "impact_score":
-            items.sort(key=lambda i: i.impact_score, reverse=True)
-        return [
+        # Phase 126 v16.5 #N.11.d: convert to canonical presentation shape FIRST
+        # (no more hybrid storage-roundtrip for filter/sort). The presentation
+        # shape now carries impact_score (see N.11.d), so filter/sort on
+        # presentation values directly.
+        items = [
             cvg_adapter.ripple_storage_to_presentation(item.model_dump())
-            for item in items
+            for item in _ripple_list_items(ripples, storage)
         ]
+        if min_score is not None:
+            items = [i for i in items if (i.impact_score or 0.0) >= min_score]
+        if sort_by == "impact_score":
+            items.sort(key=lambda i: i.impact_score or 0.0, reverse=True)
+        return items
 
     @app.get("/api/cvg/ripples/stats", response_model=RippleStatsResponse)
     def get_ripple_stats() -> RippleStatsResponse:
@@ -131,7 +135,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             total=len(all_ripples), by_status=by_status, by_volume=by_volume
         )
 
-    @app.get("/api/cvg/reference-graph", response_model=ReferenceGraphResponse)
+    @app.get("/api/cvg/reference-graph", response_model=CanonicalReferenceGraphResponse)
     def get_reference_graph(
         volume: Optional[int] = Query(None, ge=1, le=99),
         dimension: Optional[str] = Query(
@@ -139,14 +143,22 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             pattern="^(character|foreshadow|setting|plot_point)$",
         ),
         limit: int = Query(200, ge=1, le=500),
-    ) -> ReferenceGraphResponse:
-        """Phase 9.41 F30: persisted reference graph for dashboard ImpactGraph."""
+    ) -> CanonicalReferenceGraphResponse:
+        """Phase 9.41 F30 / N.11.g: persisted reference graph for dashboard ImpactGraph.
+
+        Phase 126 v16.5 #N.11.g: returns canonical presentation shape via
+        cvg_adapter.reference_graph_storage_to_presentation (node_id/chapter_id/
+        source/target/by_dimension/truncated).
+        """
         storage = _app_module._default_storage()
-        return _build_reference_graph_response(
+        storage_response = _build_reference_graph_response(
             storage,
             volume=volume,
             dimension=dimension,
             limit=limit,
+        )
+        return cvg_adapter.reference_graph_storage_to_presentation(
+            storage_response.model_dump()
         )
 
     @app.get("/api/cvg/ripples/{ripple_id}", response_model=RippleDetailResponse)

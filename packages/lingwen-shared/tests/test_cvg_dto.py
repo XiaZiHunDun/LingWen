@@ -37,6 +37,32 @@ def test_ripple_list_item_basic() -> None:
     assert obj.applies_count is None
 
 
+def test_ripple_list_item_response_includes_impact_score() -> None:
+    """N.11.d: dashboard filter/sort needs impact_score on presentation shape.
+
+    Prior to N.11.d, list_ripples route used a hybrid (filter/sort on
+    storage shape which has impact_score, then convert via cvg_adapter).
+    Closing the drift means the presentation shape itself carries the field.
+    """
+    from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+    obj = RippleListItemResponse(
+        ripple_id="r1", chapter_id=10, title="T", status="pending",
+        source_volume=1, created_at="2026-08-30T00:00:00Z",
+        impact_score=0.42,
+    )
+    assert obj.impact_score == 0.42
+
+
+def test_ripple_list_item_response_impact_score_default_none() -> None:
+    """N.11.d: impact_score is Optional[float] with default None — backward compat."""
+    from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+    obj = RippleListItemResponse(
+        ripple_id="r1", chapter_id=10, title="T", status="pending",
+        source_volume=1, created_at="2026-08-30T00:00:00Z",
+    )
+    assert obj.impact_score is None
+
+
 def test_ripple_detail_inherits_list_item() -> None:
     """RippleDetailResponse extends RippleListItemResponse (all base fields present)."""
     from lingwen_shared.contracts.python.cvg import RippleDetailResponse
@@ -72,6 +98,32 @@ def test_reference_graph_uses_generic_nodes() -> None:
         total_nodes=1, total_edges=1,
     )
     assert obj.total_nodes == 1
+
+
+def test_reference_graph_response_includes_truncated_flag() -> None:
+    """N.11.g: storage ReferenceGraphResponse has 'truncated' bool —
+    presentation shape must mirror the field so ImpactGraph.vue can
+    signal "showing only the first N nodes" without inspection of
+    hidden limits.
+    """
+    from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+    obj = ReferenceGraphResponse(
+        nodes=[], edges=[],
+        total_nodes=250, total_edges=42,
+        truncated=True,
+        by_dimension={"character": 5, "foreshadow": 3},
+    )
+    assert obj.truncated is True
+    assert obj.by_dimension == {"character": 5, "foreshadow": 3}
+
+
+def test_reference_graph_response_truncated_default_false() -> None:
+    """N.11.g: by default truncated is False (back-compat with N.9)."""
+    from lingwen_shared.contracts.python.cvg import ReferenceGraphResponse
+    obj = ReferenceGraphResponse(
+        nodes=[], edges=[], total_nodes=1, total_edges=0,
+    )
+    assert obj.truncated is False
 
 
 def test_cascade_response_includes_cascade_actions_field() -> None:

@@ -84,6 +84,7 @@ export interface ReferenceGraphResponse {
   total_nodes: number;
   total_edges: number;
   by_dimension?: Record<string, unknown> | null;
+  truncated?: boolean;
 }
 
 export interface RippleActionResponse {
@@ -117,6 +118,7 @@ export interface RippleDetailResponse {
   updated_at?: string | null;
   proposed_by?: string | null;
   applies_count?: number | null;
+  impact_score?: number | null;
   description?: string | null;
   evidence?: Record<string, unknown> | null;
   references?: Record<string, unknown>[] | null;
@@ -135,6 +137,7 @@ export interface RippleListItemResponse {
   updated_at?: string | null;
   proposed_by?: string | null;
   applies_count?: number | null;
+  impact_score?: number | null;
 }
 
 export interface RippleStatsResponse {

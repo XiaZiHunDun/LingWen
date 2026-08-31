@@ -53,7 +53,6 @@ from apps.studio_api.protocols import (
     CascadeResponse,
     CascadeRunResponse,
     MasterControllerLike,
-    ReferenceGraphResponse,
     RippleActionRequest,
     RippleActionResponse,
     RippleAuditEntryResponse,
