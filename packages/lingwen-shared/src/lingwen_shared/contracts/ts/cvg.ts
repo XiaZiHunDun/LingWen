@@ -117,6 +117,7 @@ export interface RippleDetailResponse {
   updated_at?: string | null;
   proposed_by?: string | null;
   applies_count?: number | null;
+  impact_score?: number | null;
   description?: string | null;
   evidence?: Record<string, unknown> | null;
   references?: Record<string, unknown>[] | null;
@@ -135,6 +136,7 @@ export interface RippleListItemResponse {
   updated_at?: string | null;
   proposed_by?: string | null;
   applies_count?: number | null;
+  impact_score?: number | null;
 }
 
 export interface RippleStatsResponse {
