@@ -5,43 +5,22 @@ to import the concrete ``LLMService`` class.
 v16.4 status: import-linter enforcement — business code MUST import this port,
               not the concrete LLMService. is_available() added in v16.4 for
               health-check use cases.
+v16.5 #N.12 status: protocol signatures match LLMServiceAdapter async surface
+              (async execute / async execute_stream / sync helpers). Data types
+              aligned with ``lingwen_shared.contracts.python.llm.LLMTask``
+              (canonical, established in v16.5 #1).
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from decimal import Decimal
-from typing import Any, AsyncIterator, Mapping, Protocol
+from typing import Any, AsyncIterator, Protocol
 
-
-@dataclass(frozen=True)
-class TaskSpec:
-    """A request to the LLM service.
-
-    Mirrors design doc §4.4 LLMServicePort input.
-    """
-
-    prompt: str
-    system: str
-    max_tokens: int = 4000
-    temperature: float = 0.7
-    metadata: Mapping[str, Any] | None = None
-
-
-@dataclass(frozen=True)
-class LLMResult:
-    """A response from the LLM service."""
-
-    text: str
-    provider: str
-    cost_usd: Decimal
-    latency_ms: int
-    raw_response: bytes  # for debugging, NOT for business logic
+from lingwen_shared.contracts.python.llm import LLMTask
 
 
 class LLMServicePort(Protocol):
     """Hexagonal port for LLM access. Concrete adapters live in packages/lingwen-llm/."""
 
-    async def execute(self, task: TaskSpec) -> LLMResult: ...
-    async def execute_stream(self, task: TaskSpec) -> AsyncIterator[str]: ...
-    def parse_json_response(self, response: LLMResult, schema: type) -> Any: ...
+    async def execute(self, task: LLMTask) -> str: ...
+    async def execute_stream(self, task: LLMTask) -> AsyncIterator[str]: ...
+    def parse_json_response(self, response: str) -> Any: ...
     def is_available(self) -> bool: ...
