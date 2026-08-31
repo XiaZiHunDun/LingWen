@@ -49,6 +49,9 @@ class RippleListItemResponse(BaseModel):
     updated_at: Optional[str] = None
     proposed_by: Optional[str] = None
     applies_count: Optional[int] = None
+    # Phase 126 v16.5 #N.11.d: expose impact_score so dashboard filter/sort
+    # reads via typed wrapper without hybrid storage-roundtrip in the route.
+    impact_score: Optional[float] = None
 
 
 class RippleDetailResponse(RippleListItemResponse):

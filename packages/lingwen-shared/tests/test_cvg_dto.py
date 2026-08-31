@@ -37,6 +37,32 @@ def test_ripple_list_item_basic() -> None:
     assert obj.applies_count is None
 
 
+def test_ripple_list_item_response_includes_impact_score() -> None:
+    """N.11.d: dashboard filter/sort needs impact_score on presentation shape.
+
+    Prior to N.11.d, list_ripples route used a hybrid (filter/sort on
+    storage shape which has impact_score, then convert via cvg_adapter).
+    Closing the drift means the presentation shape itself carries the field.
+    """
+    from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+    obj = RippleListItemResponse(
+        ripple_id="r1", chapter_id=10, title="T", status="pending",
+        source_volume=1, created_at="2026-08-30T00:00:00Z",
+        impact_score=0.42,
+    )
+    assert obj.impact_score == 0.42
+
+
+def test_ripple_list_item_response_impact_score_default_none() -> None:
+    """N.11.d: impact_score is Optional[float] with default None — backward compat."""
+    from lingwen_shared.contracts.python.cvg import RippleListItemResponse
+    obj = RippleListItemResponse(
+        ripple_id="r1", chapter_id=10, title="T", status="pending",
+        source_volume=1, created_at="2026-08-30T00:00:00Z",
+    )
+    assert obj.impact_score is None
+
+
 def test_ripple_detail_inherits_list_item() -> None:
     """RippleDetailResponse extends RippleListItemResponse (all base fields present)."""
     from lingwen_shared.contracts.python.cvg import RippleDetailResponse
