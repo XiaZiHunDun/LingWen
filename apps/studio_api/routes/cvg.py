@@ -32,8 +32,10 @@ from lingwen_shared.contracts.python.cvg import (
     CascadePreviewResponse,
     CascadeResponse,
     CascadeRunResponse,  # NEW in N.11.b
-    ReferenceGraphResponse as CanonicalReferenceGraphResponse,  # NEW in N.11.g
     RippleListItemResponse,
+)
+from lingwen_shared.contracts.python.cvg import (
+    ReferenceGraphResponse as CanonicalReferenceGraphResponse,  # NEW in N.11.g
 )
 
 from apps.studio_api import app as _app_module  # for monkeypatch-compatible _default_storage lookup
