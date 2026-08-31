@@ -32,6 +32,7 @@ from lingwen_shared.contracts.python.cvg import (
     CascadePreviewResponse,
     CascadeResponse,
     CascadeRunResponse,  # NEW in N.11.b
+    ReferenceGraphResponse as CanonicalReferenceGraphResponse,  # NEW in N.11.g
     RippleListItemResponse,
 )
 
@@ -52,7 +53,6 @@ from apps.studio_api.helpers.cvg import (
 from apps.studio_api.models import (
     CascadeCancelPayload,
     CascadeCancelRequest,
-    ReferenceGraphResponse,
     RippleActionRequest,
     RippleActionResponse,
     RippleAuditEntryResponse,
@@ -133,7 +133,7 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             total=len(all_ripples), by_status=by_status, by_volume=by_volume
         )
 
-    @app.get("/api/cvg/reference-graph", response_model=ReferenceGraphResponse)
+    @app.get("/api/cvg/reference-graph", response_model=CanonicalReferenceGraphResponse)
     def get_reference_graph(
         volume: Optional[int] = Query(None, ge=1, le=99),
         dimension: Optional[str] = Query(
@@ -141,14 +141,22 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
             pattern="^(character|foreshadow|setting|plot_point)$",
         ),
         limit: int = Query(200, ge=1, le=500),
-    ) -> ReferenceGraphResponse:
-        """Phase 9.41 F30: persisted reference graph for dashboard ImpactGraph."""
+    ) -> CanonicalReferenceGraphResponse:
+        """Phase 9.41 F30 / N.11.g: persisted reference graph for dashboard ImpactGraph.
+
+        Phase 126 v16.5 #N.11.g: returns canonical presentation shape via
+        cvg_adapter.reference_graph_storage_to_presentation (node_id/chapter_id/
+        source/target/by_dimension/truncated).
+        """
         storage = _app_module._default_storage()
-        return _build_reference_graph_response(
+        storage_response = _build_reference_graph_response(
             storage,
             volume=volume,
             dimension=dimension,
             limit=limit,
+        )
+        return cvg_adapter.reference_graph_storage_to_presentation(
+            storage_response.model_dump()
         )
 
     @app.get("/api/cvg/ripples/{ripple_id}", response_model=RippleDetailResponse)
