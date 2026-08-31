@@ -144,18 +144,23 @@ export function layoutNodesByActionCluster(nodes, actionMap) {
  */
 export function buildCascadeGraphSeriesData(cascade, viewMode, dryRun = false) {
   const rawNodes = (cascade?.cascade_nodes || []).slice(0, 100);
+  // Phase 126 v16.5 #N.11.e: read presentation-shape field names
+  // (source/target) rather than storage-shape (from_node_id/to_node_id).
+  // The CascadeEdgeResponse in lingwen-shared now exposes source/target.
   const edges = (cascade?.cascade_edges || []).map((e) => ({
-    source: e.from_node_id,
-    target: e.to_node_id,
+    source: e.source,
+    target: e.target,
     lineStyle: { opacity: e.weight ?? 0.6 },
   }));
   const actions = cascade?.cascade_actions || [];
   const depthMap = computeNodeDepthMap(rawNodes, actions);
   const actionMap = computeNodeActionMap(actions);
 
+  // Presentation CascadeNodeResponse: node_id / chapter_id / volume.
+  // Storage shape used id / chapter / volume; N.11.e migrates to canonical.
   const baseNodes = rawNodes.map((n) => ({
-    id: n.id,
-    name: `${n.id} (V${n.volume}c${n.chapter})`,
+    id: n.node_id,
+    name: `${n.node_id} (V${n.volume}c${n.chapter_id})`,
     symbolSize: 30,
     raw: n,
   }));
@@ -211,7 +216,9 @@ export function buildCascadeGraphSeriesData(cascade, viewMode, dryRun = false) {
  */
 export function buildCascadeChartOption(cascade, viewMode, dryRun = false) {
   const { layout, nodes, edges } = buildCascadeGraphSeriesData(cascade, viewMode, dryRun);
-  const depth = cascade?.depth_reached ?? 0;
+  // Phase 126 v16.5 #N.11.e: presentation CascadeResponse exposes
+  // max_depth (was storage-shape depth_reached).
+  const depth = cascade?.max_depth ?? 0;
   const modeLabel = CASCADE_VIEW_MODE_LABELS[viewMode] ?? viewMode;
   return {
     title: { text: `Cascade (${modeLabel}, depth ${depth})`, left: 'center' },
