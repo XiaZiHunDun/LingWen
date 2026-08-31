@@ -72,17 +72,23 @@ class TestCascadeRunsEndpoint:
     def test_persist_false_returns_existing_preview_path(self, client_with_storage):
         """Phase 9.19 path, persist default False, behavior unchanged.
 
-        既 path returns CascadeResponse (trigger_ripple_id, no 'id' / 'ripple_id' / 'status').
+        Phase 126 v16.5 #N.10: route now serves the canonical presentation
+        CascadeResponse (ripple_id / nodes / edges / max_depth / status) from
+        lingwen-shared, mapped from storage via cvg_adapter.
         """
         client, _ = client_with_storage
         resp = client.get("/api/ripples/cascade/rip-1?max_depth=2")
         assert resp.status_code == 200
-        # CascadeResponse has trigger_ripple_id not ripple_id, no id, no status
+        # CascadeResponse presentation shape: ripple_id not trigger_ripple_id,
+        # nodes not cascade_nodes, edges not cascade_edges, max_depth not depth_reached.
         data = resp.json()
         assert "id" not in data
-        assert "ripple_id" not in data
-        assert "status" not in data
-        assert "trigger_ripple_id" in data
+        assert "ripple_id" in data and data["ripple_id"] == "rip-1"
+        assert "status" in data
+        assert "trigger_ripple_id" not in data
+        assert "nodes" in data
+        assert "edges" in data
+        assert "max_depth" in data and data["max_depth"] == 2
 
     def test_persist_true_for_missing_ripple_returns_404(self, client_with_storage):
         """GET ?persist=true on unknown ripple → 404."""

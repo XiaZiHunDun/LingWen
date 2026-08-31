@@ -54,11 +54,13 @@ v16.5 #N.9+ tasks:
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from lingwen_shared.contracts.python.cvg import (
     CascadeEdgeResponse,
     CascadeNodeResponse,
+    CascadePreviewResponse,
     CascadeResponse,
     RippleDetailResponse,
     RippleListItemResponse,
@@ -70,6 +72,7 @@ __all__ = [
     "cascade_node_storage_to_presentation",
     "cascade_edge_storage_to_presentation",
     "cascade_storage_to_presentation",
+    "cascade_preview_storage_to_presentation",
 ]
 
 
@@ -82,6 +85,21 @@ def _compute_volume_from_chapter(chapter: int) -> int:
     if chapter <= 0:
         return 1
     return max(1, (chapter - 1) // 100 + 1)
+
+
+def _parse_dt(value: Any) -> str:
+    """Storage datetime → ISO string for presentation.
+
+    Phase 126 v16.5 #N.9: Implementation gap from N.8 scaffold — defined
+    in architecture docstring but not actually called. v16.5 #N.9 wire-up
+    requires this conversion so that storage ``datetime`` objects validate
+    against presentation ``str`` fields.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
 
 
 def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemResponse:
@@ -116,7 +134,7 @@ def ripple_storage_to_presentation(storage: dict[str, Any]) -> RippleListItemRes
         status=storage.get("status", "pending"),
         source_volume=source_volume,
         impact_volumes=[impact_volume],
-        created_at=storage.get("created_at") or "",
+        created_at=_parse_dt(storage.get("created_at")),
     )
 
 
@@ -137,12 +155,21 @@ def ripple_detail_storage_to_presentation(storage: dict[str, Any]) -> RippleDeta
 
 
 def cascade_node_storage_to_presentation(storage: dict[str, Any]) -> CascadeNodeResponse:
-    """Map storage cascade node → presentation shape."""
+    """Map storage cascade node → presentation shape.
+
+    Phase 126 v16.5 #N.10: extend mapping to include dimension→status and ripple_id.
+    Storage CascadeNodeResponse has fields: id, dimension, volume, chapter, title,
+    description, payload. Presentation has: node_id, chapter_id, title, status,
+    depth, ripple_id, volume.
+    """
+    # dimension is the closest storage analog to status (character/setting/plot_point/foreshadow)
+    # When absent, default to 'applied' (matches dashboard expectation)
+    dimension = storage.get("dimension")
     return CascadeNodeResponse(
         node_id=storage.get("node_id") or storage.get("id", ""),
-        chapter_id=storage.get("chapter_id", 0),
+        chapter_id=storage.get("chapter_id") or storage.get("chapter", 0),
         title=storage.get("title") or storage.get("label", ""),
-        status=storage.get("status", "applied"),
+        status=dimension if dimension else "applied",
         depth=storage.get("depth", 0),
         ripple_id=storage.get("ripple_id"),
         volume=storage.get("volume", 1),
@@ -150,27 +177,101 @@ def cascade_node_storage_to_presentation(storage: dict[str, Any]) -> CascadeNode
 
 
 def cascade_edge_storage_to_presentation(storage: dict[str, Any]) -> CascadeEdgeResponse:
-    """Map storage cascade edge → presentation shape."""
+    """Map storage cascade edge → presentation shape.
+
+    Phase 126 v16.5 #N.10: storage fields from_node_id/to_node_id map to
+    presentation source/target. relationship_type maps to relation.
+    """
     return CascadeEdgeResponse(
-        source=storage.get("source", ""),
-        target=storage.get("target", ""),
-        relation=storage.get("relation") or storage.get("relationship") or "reference",
+        source=storage.get("source") or storage.get("from_node_id", ""),
+        target=storage.get("target") or storage.get("to_node_id", ""),
+        relation=(
+            storage.get("relation")
+            or storage.get("relationship_type")
+            or storage.get("relationship")
+            or "reference"
+        ),
         weight=storage.get("weight", 0.0),
     )
 
 
 def cascade_storage_to_presentation(storage: dict[str, Any]) -> CascadeResponse:
-    """Map storage cascade envelope → presentation shape."""
-    nodes_raw = storage.get("nodes", [])
-    edges_raw = storage.get("edges", [])
+    """Map storage cascade envelope → presentation shape.
+
+    Phase 126 v16.5 #N.10: extend mapping to populate:
+    - ripple_id (from trigger_ripple_id)
+    - total_nodes / total_edges (computed from len)
+    - max_depth (from depth_reached)
+    - status (from optional status field)
+    - cascade_actions / generated_at / bfs_algorithm_version (storage passthrough)
+    """
+    nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
+    edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
     nodes = [cascade_node_storage_to_presentation(n) for n in nodes_raw]
     edges = [cascade_edge_storage_to_presentation(e) for e in edges_raw]
+    max_depth = storage.get("max_depth") or storage.get("depth_reached") or max(
+        (n.depth for n in nodes), default=0
+    )
     return CascadeResponse(
-        ripple_id=storage.get("ripple_id") or storage.get("cascade_id") or storage.get("id", ""),
+        ripple_id=(
+            storage.get("ripple_id")
+            or storage.get("trigger_ripple_id")
+            or storage.get("cascade_id")
+            or storage.get("id", "")
+        ),
         nodes=nodes,
         edges=edges,
         total_nodes=len(nodes),
         total_edges=len(edges),
-        max_depth=max((n.depth for n in nodes), default=0),
+        max_depth=max_depth,
         status=storage.get("status"),
+        cascade_actions=list(storage.get("cascade_actions") or []),
+        generated_at=storage.get("generated_at"),
+        bfs_algorithm_version=storage.get("bfs_algorithm_version") or "v1",
+    )
+
+
+def cascade_preview_storage_to_presentation(
+    storage: dict[str, Any],
+    ripple_id: str,
+) -> CascadePreviewResponse:
+    """Map storage cascade envelope → CascadePreviewResponse (presentation shape).
+
+    Phase 126 v16.5 #N.10: computes the 7 storage-shape aggregate counts that
+    the backend CascadePreviewResponse exposes and populates both presentation
+    fields (estimated_impact, affected_chapters) and storage-shape counts
+    (affected_chapter_count, etc.) on the returned presentation model.
+
+    Storage CascadePreviewResponse fields (apps/studio_api/protocols.py:834-846):
+    - ripple_id
+    - affected_chapter_count, affected_character_count, affected_setting_count
+    - estimated_change_count, cascade_node_count, cascade_edge_count, max_depth
+
+    Presentation CascadePreviewResponse fields (lingwen-shared):
+    - ripple_id, estimated_impact, affected_chapters, preview_tree, warnings
+    - + storage-shape count fields (added in T3)
+    """
+    nodes_raw = storage.get("nodes") or storage.get("cascade_nodes", [])
+    edges_raw = storage.get("edges") or storage.get("cascade_edges", [])
+    affected_chapters = sum(
+        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) in ("plot_point", "foreshadow")
+    )
+    affected_characters = sum(
+        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "character"
+    )
+    affected_settings = sum(
+        1 for n in nodes_raw if (n.get("dimension") if isinstance(n, dict) else getattr(n, "dimension", None)) == "setting"
+    )
+    actions_raw = storage.get("cascade_actions") or []
+    return CascadePreviewResponse(
+        ripple_id=ripple_id,
+        estimated_impact=len(actions_raw),
+        affected_chapters=[],  # storage doesn't track actual chapter IDs in preview response
+        affected_chapter_count=affected_chapters,
+        affected_character_count=affected_characters,
+        affected_setting_count=affected_settings,
+        estimated_change_count=len(actions_raw),
+        cascade_node_count=len(nodes_raw),
+        cascade_edge_count=len(edges_raw),
+        max_depth=storage.get("depth_reached") or storage.get("max_depth", 0),
     )

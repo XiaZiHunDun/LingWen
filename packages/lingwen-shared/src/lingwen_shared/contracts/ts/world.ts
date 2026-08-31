@@ -47,7 +47,7 @@ export interface ProposalDTO {
   target_kind?: "character" | "faction" | null;
   target_id?: number;
   payload: CharacterUpdatePayload;
-  source?: string;
+  source?: "agent";
   source_context?: string | null;
   confidence?: "high" | "medium" | "low";
   status?: "pending" | "accepted" | "rejected" | "applied";

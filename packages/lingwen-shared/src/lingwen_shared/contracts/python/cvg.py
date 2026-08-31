@@ -25,7 +25,7 @@ carryover.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -140,7 +140,14 @@ class CascadeEdgeResponse(BaseModel):
 
 
 class CascadeResponse(BaseModel):
-    """Full cascade graph returned by ``GET /cvg/ripples/{id}/cascade``."""
+    """Full cascade graph returned by ``GET /cvg/ripples/{id}/cascade``.
+
+    Phase 126 v16.5 #N.10: extended with storage-shape fields (cascade_actions,
+    generated_at, bfs_algorithm_version) so dashboard consumers in
+    cascadeGraphUtils.js + useWorkflowSocket.js can read them via the typed wrapper.
+    The dashboard currently reads these as untyped fields (PYDANTIC-DRIFT pre-N.10);
+    adding them to the canonical enum closes the drift.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
@@ -151,18 +158,37 @@ class CascadeResponse(BaseModel):
     total_edges: int
     max_depth: int
     status: Optional[str] = None
+    # Phase 126 v16.5 #N.10: storage-shape fields exposed for dashboard consumers
+    cascade_actions: list[dict[str, Any]] = Field(default_factory=list)
+    generated_at: Optional[str] = None
+    bfs_algorithm_version: Literal["v1", "v2_weighted"] = "v1"
 
 
 class CascadePreviewResponse(BaseModel):
-    """Cascade preview returned by ``GET /cvg/ripples/{id}/cascade/preview``."""
+    """Cascade preview returned by ``GET /cvg/ripples/{id}/cascade/preview``.
+
+    Phase 126 v16.5 #N.10: extended with storage-shape aggregate counts
+    (affected_*_count + estimated_change_count + cascade_*_count + max_depth)
+    so dashboard apply-confirmation modal can read them via the typed wrapper.
+    ``affected_chapters`` is defaulted (was required) because the storage-shape
+    preview carries only aggregate counts, no per-chapter list.
+    """
 
     model_config = ConfigDict(extra="ignore")
 
     ripple_id: str
     estimated_impact: int
-    affected_chapters: list[int]
+    affected_chapters: list[int] = Field(default_factory=list)
     preview_tree: Optional[CascadeResponse] = None
     warnings: Optional[list[str]] = None
+    # Phase 126 v16.5 #N.10: storage-shape aggregate counts
+    affected_chapter_count: int = 0
+    affected_character_count: int = 0
+    affected_setting_count: int = 0
+    estimated_change_count: int = 0
+    cascade_node_count: int = 0
+    cascade_edge_count: int = 0
+    max_depth: int = 0
 
 
 # ---------------------------------------------------------------------------

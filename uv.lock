@@ -908,6 +908,7 @@ name = "lingwen-storage"
 version = "0.1.0"
 source = { editable = "packages/lingwen-storage" }
 dependencies = [
+    { name = "lingwen-shared" },
     { name = "python-ulid" },
 ]
 
@@ -918,6 +919,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "lingwen-shared", editable = "packages/lingwen-shared" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
     { name = "python-ulid", specifier = ">=3.0" },
 ]

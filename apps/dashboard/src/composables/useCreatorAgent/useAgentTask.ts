@@ -13,6 +13,8 @@ import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 // Phase 126 v16.2.8 T3.B: migrate to typed wrapper (T2.5 added runCreatorAgentPlanStream to content.ts).
 import { runCreatorAgentPlan, runCreatorAgentPlanStream } from '@/api/content';
+// Phase 126 v16.5 #N.9: tighten handleStreamEvent to canonical discriminated union.
+import type { CreatorAgentStreamEvent } from '@lingwen/dashboard-contracts/shared';
 // Phase 126 v16.5 #N.8 T2: tighten buildPlanRequestBody return type to CreatorAgentPlanRequest.
 import type { CreatorAgentPlanRequest } from '@lingwen/dashboard-contracts/shared';
 import { AGENT_EXECUTION_MODES } from '../../config/creatorPanelMatrix.js';
@@ -123,7 +125,7 @@ export interface AgentTaskReturn {
   runRewritePreset: (presetId: string) => Promise<void>;
   resetStreamPreview: () => void;
   clearPlan: () => void;
-  handleStreamEvent: (evt: { type?: string; message?: string; label?: string; text?: string; source?: string }) => void;
+  handleStreamEvent: (evt: CreatorAgentStreamEvent) => void;
 }
 
 export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
@@ -292,22 +294,26 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
     return raw;
   });
 
-  function handleStreamEvent(evt: { type?: string; message?: string; label?: string; text?: string; source?: string }): void {
+  // Phase 126 v16.5 #N.10: 'status' event promoted to canonical
+  // CreatorAgentStreamEvent variant (was a defensive local extension
+  // through v16.5 #N.9). The full discriminated union is the only
+  // accepted shape; no local extension is needed because the canonical
+  // CreatorAgentStreamEvent now includes the 'status' variant.
+  function handleStreamEvent(evt: CreatorAgentStreamEvent): void {
     if (!evt || typeof evt !== 'object') return;
-    if (evt.type === 'status' && evt.message) {
+    if (evt.type === 'status' && 'message' in evt) {
       statusLine.value = evt.message;
       return;
     }
-    if (evt.type === 'preview_label' && evt.label) {
+    if (evt.type === 'preview_label' && 'label' in evt) {
       streamPreviewLabel.value = `${evt.label} · ${agentLensLabel.value}`;
       return;
     }
-    if (evt.type === 'chunk' && evt.text) {
-      if (evt.source) streamSource.value = evt.source;
+    if (evt.type === 'chunk' && 'text' in evt) {
       streamPreviewText.value += evt.text;
       return;
     }
-    if (evt.type === 'advice' && evt.text) {
+    if (evt.type === 'advice' && 'text' in evt) {
       streamAdvicePreview.value = [...streamAdvicePreview.value, evt.text];
     }
   }
@@ -349,14 +355,9 @@ export function useAgentTask(deps: AgentTaskDeps): AgentTaskReturn {
     statusLine.value = '生成中…';
     const body = buildPlanRequestBody(action, actionLabel, scope, controls);
     try {
-      // v16.5 #N.8: body is now typed CreatorAgentPlanRequest & Record<string, unknown>;
-      // no cast needed for body. handleStreamEvent retains a loose signature
-      // ({type?, message?, source?, ...}) that pre-dates the v16.5 #N.7 SSE envelope,
-      // so the callback cast persists — JSDoc-suppressed on the receiving side.
-      const result = await runCreatorAgentPlanStream(
-        body,
-        handleStreamEvent as unknown as (event: unknown) => void,
-      ) as Record<string, unknown>;
+      // Phase 126 v16.5 #N.9: dropped `as unknown as (event: unknown) => void`
+      // cast — handleStreamEvent now accepts creatorAgentStreamEvent directly.
+      const result = await runCreatorAgentPlanStream(body, handleStreamEvent) as Record<string, unknown>;
       applyApiPlanResult(result, action, actionLabel, scope, pathMeta);
     } catch {
       try {
