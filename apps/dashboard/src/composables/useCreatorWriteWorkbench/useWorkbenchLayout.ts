@@ -170,7 +170,10 @@ export function useWorkbenchLayout(deps: WorkbenchLayoutDeps): WorkbenchLayoutRe
     const assets: MemoryAsset[] = (memoryAssets?.value as MemoryAsset[] | undefined)
       ?? (getMemoryAssets ? getMemoryAssets() : []);
     return resolveChapterEntities({
-      memoryAssets: assets as unknown as Parameters<typeof resolveChapterEntities>[0]['memoryAssets'],
+      // N.13 T3.P2.b: narrow ``as unknown as`` → single ``as`` — utils/creatorChapterEntityUtils.js
+      // accepts ``memoryAssets?: Array<{ id, kind, name, ... }>`` and assets is ``MemoryAsset[]``
+      // (shape compatible enough for a single assertion; runtime behavior unchanged).
+      memoryAssets: assets as Parameters<typeof resolveChapterEntities>[0]['memoryAssets'],
       chapter: selectedChapter.value,
       bodyText: chapterBodyDraft.value,
     });

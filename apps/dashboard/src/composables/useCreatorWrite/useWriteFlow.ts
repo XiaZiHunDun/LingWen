@@ -207,11 +207,13 @@ export function useWriteFlow(deps: WriteFlowDeps): WriteFlowReturn {
       await onAfterChapterSave();
       if ((uiProfile.value as { chapter_save_p0_recheck?: boolean }).chapter_save_p0_recheck) {
         const { runCreatorLogicCheck } = await import('@/api/content');
-        // v16.2.7 T8: typed wrapper's runCreatorLogicCheck takes `chapter?: number`,
-        // legacy caller passes object. Cast preserves runtime behavior. (T3.P2.b carryover.)
+        // v16.2.7 T8: typed wrapper's runCreatorLogicCheck takes `chapter?: number`.
         // N.13 T2.P1.c: ``CreatorLogicCheckResponse`` now exposes ``p0_count`` (canonical
         // field per v16.5 #N backend); drop the local ``{ p0_count?: number }`` cast.
-        const result: CreatorLogicCheckResponse = await runCreatorLogicCheck({ chapter: selectedChapter.value } as unknown as Parameters<typeof runCreatorLogicCheck>[0]);
+        // N.13 T3.P2.b: drop the ``as unknown as`` cast — wrapper accepts the number directly
+        // (was incorrectly passing `{ chapter: N }` and relying on the double-cast to bypass
+        // type check, which produced URL `?chapter=%5Bobject%20Object%5D` at runtime).
+        const result: CreatorLogicCheckResponse = await runCreatorLogicCheck(selectedChapter.value);
         chapterRecheckResult.value = { ...result, chapter: selectedChapter.value };
         if ((result.p0_count || 0) > 0) {
           saveMessage.value = `ch${String(selectedChapter.value).padStart(3, '0')} 保存后复查：发现 ${result.p0_count} 条 P0`;

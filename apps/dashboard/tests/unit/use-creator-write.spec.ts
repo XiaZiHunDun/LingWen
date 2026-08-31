@@ -232,7 +232,9 @@ describe('useCreatorWrite', () => {
     await api.panelContext.selectChapter(1);
     await flushPromises();
     await api.panelContext.saveChapterBody();
-    expect(writeMocks.runCreatorLogicCheck).toHaveBeenCalledWith({ chapter: 1 });
+    // N.13 T3.P2.b: wrapper accepts chapter number directly (was passing `{ chapter: N }`
+    // object — relied on `as unknown as` to bypass type check, produced buggy URL at runtime).
+    expect(writeMocks.runCreatorLogicCheck).toHaveBeenCalledWith(1);
     expect((api.panelContext.chapterRecheckResult.value as any)?.chapter).toBe(1);
     expect(saveMessage.value).toContain('P0');
   });

@@ -107,8 +107,8 @@ export function useProductPreferences(deps: PreferencesDeps): ProductPreferences
     saveCreatorPreferencesLocal(preferences.value);
     try {
       // v16.2.7 T8: typed wrapper's CreatorPreferencesSaveRequest is strict;
-      // legacy shape was loose. Cast preserves runtime behavior.
-      await saveCreatorPreferences(preferencesToApi(preferences.value) as unknown as Parameters<typeof saveCreatorPreferences>[0]);
+      // legacy shape was loose. Narrowed ``as`` (single, not ``as unknown as``) per N.13 T3.P2.b.
+      await saveCreatorPreferences(preferencesToApi(preferences.value) as Parameters<typeof saveCreatorPreferences>[0]);
       preferencesSyncSource.value = 'server';
       preferencesSavedHint.value = '偏好已同步到项目';
       saveMessage.value = '创作偏好已保存';
