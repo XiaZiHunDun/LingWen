@@ -8,6 +8,7 @@ LLM质检决策器
 3. 生成修复建议
 """
 
+import asyncio
 import logging
 import sys
 from dataclasses import dataclass
