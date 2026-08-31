@@ -11,6 +11,12 @@
  */
 import { ref } from 'vue';
 import type { Ref } from 'vue';
+import type {
+  CreatorOnboardingNotification,
+  CreatorOnboardingNotificationDigestResponse,
+  CreatorOnboardingDigestRetryQueueResponse,
+  CreatorOnboardingDigestDeadLetterResponse,
+} from '@lingwen/dashboard-contracts/shared';
 import {
   fetchOnboardingNotifications,
   buildOnboardingNotificationDigest,
@@ -29,12 +35,6 @@ import {
   saveOnboardingEmailConfig,
 } from '@/api/onboarding';
 
-interface NotificationDigest {
-  unread: number;
-  group_count: number;
-  groups: Array<Record<string, unknown>>;
-}
-
 interface DigestSchedule {
   enabled: boolean;
   interval_hours: number;
@@ -42,11 +42,6 @@ interface DigestSchedule {
   quiet_hours_end?: number | null;
   handle_channels?: Record<string, string[]>;
   handle_quiet_hours?: Record<string, [number, number]>;
-}
-
-interface DigestQueue {
-  item_count: number;
-  items: Array<Record<string, unknown>>;
 }
 
 interface DigestStats {
@@ -75,7 +70,7 @@ export interface OnboardingNotificationsDeps {
 }
 
 export interface OnboardingNotificationsReturn {
-  wizardNotifications: Ref<Array<Record<string, unknown>>>;
+  wizardNotifications: Ref<CreatorOnboardingNotification[]>;
   wizardUnreadMentions: Ref<number>;
   wizardNotificationHandleFilter: Ref<string>;
   wizardNotificationHandles: Ref<string[]>;
@@ -84,7 +79,7 @@ export interface OnboardingNotificationsReturn {
   wizardEmailTo: Ref<string>;
   wizardEmailSmtpHost: Ref<string>;
   wizardEmailEnabled: Ref<boolean>;
-  wizardNotificationDigest: Ref<NotificationDigest>;
+  wizardNotificationDigest: Ref<CreatorOnboardingNotificationDigestResponse>;
   wizardDigestScheduleEnabled: Ref<boolean>;
   wizardDigestScheduleHours: Ref<number>;
   wizardDigestQuietStart: Ref<number | null>;
@@ -92,8 +87,8 @@ export interface OnboardingNotificationsReturn {
   wizardDigestHandleChannelsJson: Ref<string>;
   wizardDigestHandleQuietJson: Ref<string>;
   wizardDigestStats: Ref<DigestStats>;
-  wizardDigestDeadLetter: Ref<DigestQueue>;
-  wizardDigestRetryQueue: Ref<DigestQueue>;
+  wizardDigestDeadLetter: Ref<CreatorOnboardingDigestDeadLetterResponse>;
+  wizardDigestRetryQueue: Ref<CreatorOnboardingDigestRetryQueueResponse>;
   wizardWebhookSigningSecret: Ref<string>;
   loadWizardNotifications: () => Promise<void>;
   saveWizardDigestSchedule: () => Promise<void>;
@@ -110,7 +105,7 @@ export interface OnboardingNotificationsReturn {
 export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): OnboardingNotificationsReturn {
   const { saveMessage, handleSaveError, wizardUnreadMentions, onboardingWizardUnreadFallback } = deps;
 
-  const wizardNotifications = ref<Array<Record<string, unknown>>>([]);
+  const wizardNotifications = ref<CreatorOnboardingNotification[]>([]);
   const wizardNotificationHandleFilter = ref('');
   const wizardNotificationHandles = ref<string[]>([]);
   const wizardWebhookUrl = ref('');
@@ -118,7 +113,7 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
   const wizardEmailTo = ref('');
   const wizardEmailSmtpHost = ref('');
   const wizardEmailEnabled = ref(false);
-  const wizardNotificationDigest = ref<NotificationDigest>({ unread: 0, group_count: 0, groups: [] });
+  const wizardNotificationDigest = ref<CreatorOnboardingNotificationDigestResponse>({ unread: 0, group_count: 0, groups: [] });
   const wizardDigestScheduleEnabled = ref(false);
   const wizardDigestScheduleHours = ref(24);
   const wizardDigestQuietStart = ref<number | null>(null);
@@ -126,8 +121,8 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
   const wizardDigestHandleChannelsJson = ref('');
   const wizardDigestHandleQuietJson = ref('');
   const wizardDigestStats = ref<DigestStats>({ sent_total: 0, failed_total: 0 });
-  const wizardDigestDeadLetter = ref<DigestQueue>({ item_count: 0, items: [] });
-  const wizardDigestRetryQueue = ref<DigestQueue>({ item_count: 0, items: [] });
+  const wizardDigestDeadLetter = ref<CreatorOnboardingDigestDeadLetterResponse>({ item_count: 0, items: [] });
+  const wizardDigestRetryQueue = ref<CreatorOnboardingDigestRetryQueueResponse>({ item_count: 0, items: [] });
   const wizardWebhookSigningSecret = ref('');
 
   async function loadWizardNotifications(): Promise<void> {
@@ -137,15 +132,18 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
       // param (Phase 127+ will add optional query support via core.js). Until
       // then we pass handle to backend through URL state (router query) which
       // matches the v16.2.3 shim behaviour (handle dropped identically).
-      const data = await fetchOnboardingNotifications() as unknown as {
-        notifications: Array<Record<string, unknown>>;
-        handles: string[];
-        unread?: number;
-      };
+      //
+      // v16.5 #N.13 T2.P1.b: typed wrappers now return strict
+      // `CreatorOnboardingNotificationsResponse` / `CreatorOnboardingNotificationDigestResponse`
+      // from `@lingwen/dashboard-contracts/shared` (Pydantic canonical).
+      // `notifications` is required (no `|| []` fallback needed), `unread`
+      // is required (no `??` fallback), `groups` is optional (defaults to
+      // empty array via initial ref value).
+      const data = await fetchOnboardingNotifications();
       wizardNotifications.value = data.notifications || [];
       wizardNotificationHandles.value = data.handles || [];
       wizardUnreadMentions.value = data.unread ?? wizardNotifications.value.filter((n) => !n.read).length;
-      const digest = await buildOnboardingNotificationDigest() as unknown as NotificationDigest;
+      const digest = await buildOnboardingNotificationDigest();
       wizardNotificationDigest.value = digest;
       await loadWizardDigestSchedule();
       await loadWizardWebhook();
@@ -171,9 +169,13 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
       wizardDigestHandleQuietJson.value = JSON.stringify(data.handle_quiet_hours || {});
       const stats = await fetchDigestStats() as DigestStats;
       wizardDigestStats.value = stats;
-      const retry = await fetchDigestRetryQueue() as unknown as DigestQueue;
+      // v16.5 #N.13 T2.P1.b: typed wrappers return strict
+      // `CreatorOnboardingDigestRetryQueueResponse` /
+      // `CreatorOnboardingDigestDeadLetterResponse` from
+      // `@lingwen/dashboard-contracts/shared` (Pydantic canonical).
+      const retry = await fetchDigestRetryQueue();
       wizardDigestRetryQueue.value = retry;
-      const deadLetter = await fetchDigestDeadLetter() as unknown as DigestQueue;
+      const deadLetter = await fetchDigestDeadLetter();
       wizardDigestDeadLetter.value = deadLetter;
     } catch {
       wizardDigestScheduleEnabled.value = false;
