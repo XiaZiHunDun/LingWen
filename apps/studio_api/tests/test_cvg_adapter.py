@@ -298,3 +298,38 @@ def test_cascade_broadcast_log_storage_to_presentation_handles_dataclass():
     assert result.ripple_id == "r1"
     assert result.latency_ms == 50
     assert result.created_at == "2026-08-30T10:00:00"
+
+
+# ---------------------------------------------------------------------------
+# Phase 126 v16.5 #N.11.f — _get_dim helper extraction (DRY)
+# ---------------------------------------------------------------------------
+
+
+def test_get_dim_dict_input():
+    """Phase 126 v16.5 #N.11.f: _get_dim reads dimension from dict."""
+    from apps.studio_api.cvg_adapter import _get_dim
+    assert _get_dim({"dimension": "character"}) == "character"
+    assert _get_dim({"dimension": None}) is None
+    assert _get_dim({}) is None
+
+
+def test_get_dim_dataclass_input():
+    """Phase 126 v16.5 #N.11.f: _get_dim reads dimension from dataclass via getattr."""
+    from apps.studio_api.cvg_adapter import _get_dim
+    from dataclasses import dataclass
+
+    @dataclass(frozen=True)
+    class FakeNode:
+        dimension: str
+
+    assert _get_dim(FakeNode(dimension="setting")) == "setting"
+
+
+def test_get_dim_missing_attribute_returns_none():
+    """Phase 126 v16.5 #N.11.f: _get_dim defaults to None for objects without dimension."""
+    from apps.studio_api.cvg_adapter import _get_dim
+
+    class RandomObj:
+        pass
+
+    assert _get_dim(RandomObj()) is None
