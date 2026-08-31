@@ -37,7 +37,6 @@ const settingsMocks = vi.hoisted(() => ({
   applyToposortMergePresetOrder: vi.fn(),
   exportMergePresetPackages: vi.fn(),
   importMergePresetPackages: vi.fn(),
-  publishMergePresetToFactory: vi.fn(),
   pullFactoryMergePresetsToProject: vi.fn(),
   // T4a typed wrapper mocks (used by main file's direct calls)
   saveSettingsDocs: vi.fn(),
@@ -71,7 +70,6 @@ vi.mock('../../src/api/index.js', () => ({
   applyCreatorMergePresetToposort: (...args: unknown[]) => settingsMocks.applyToposortMergePresetOrder(...args),
   exportCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.exportMergePresetPackages(...args),
   importCreatorMergePresetPackages: (...args: unknown[]) => settingsMocks.importMergePresetPackages(...args),
-  publishCreatorMergePresetToFactory: (...args: unknown[]) => settingsMocks.publishMergePresetToFactory(...args),
   pullCreatorFactoryMergePresetPackages: (...args: unknown[]) => settingsMocks.pullFactoryMergePresetsToProject(...args),
 }));
 
@@ -101,7 +99,6 @@ vi.mock('../../src/api/settings.js', () => ({
   applyToposortMergePresetOrder: (...args: unknown[]) => settingsMocks.applyToposortMergePresetOrder(...args),
   exportMergePresetPackages: (...args: unknown[]) => settingsMocks.exportMergePresetPackages(...args),
   importMergePresetPackages: (...args: unknown[]) => settingsMocks.importMergePresetPackages(...args),
-  publishMergePresetToFactory: (...args: unknown[]) => settingsMocks.publishMergePresetToFactory(...args),
   pullFactoryMergePresetsToProject: (...args: unknown[]) => settingsMocks.pullFactoryMergePresetsToProject(...args),
 }));
 
@@ -200,7 +197,6 @@ describe('useCreatorSettings', () => {
     settingsMocks.applyToposortMergePresetOrder.mockResolvedValue({ reordered: 1 });
     settingsMocks.applyMergePresetConflictFix.mockResolvedValue({ conflict_count: 0 });
     settingsMocks.applyAllMergePresetConflictFixes.mockResolvedValue({ applied: 2, conflict_count: 0 });
-    settingsMocks.publishMergePresetToFactory.mockResolvedValue({});
     settingsMocks.preflightFactoryMergePresetPull.mockResolvedValue({ conflict_count: 0 });
     settingsMocks.pullFactoryMergePresetsToProject.mockResolvedValue({ imported: 1, skipped: 0 });
     settingsMocks.fetchMergePresetChangelogDiff.mockResolvedValue({ change_count: 2, changes: [] });
@@ -335,13 +331,11 @@ describe('useCreatorSettings', () => {
     expect(saveMessage.value).toContain('拓扑');
   });
 
-  test('publish and pull factory merge presets', async () => {
+  test('pull factory merge presets (publish factory removed v16.5 #N.14 T2 dead code)', async () => {
     const { hub, panel, saveMessage } = await mountSettings();
     await hub.loadMergePresetPackages();
     panel.selectedMergePresetPackage.value = 'pkg-1';
     await flushPromises();
-    await panel.publishMergePresetToFactory();
-    expect(settingsMocks.publishMergePresetToFactory).toHaveBeenCalled();
     settingsMocks.preflightFactoryMergePresetPull.mockResolvedValueOnce({
       conflict_count: 1,
       conflicts: [{ package_id: 'fac-1' }],
