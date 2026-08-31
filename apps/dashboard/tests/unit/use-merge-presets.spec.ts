@@ -20,7 +20,6 @@ const mergeMocks = vi.hoisted(() => ({
   importMergePreferences: vi.fn(),
   exportMergePresetPackages: vi.fn(),
   importMergePresetPackages: vi.fn(),
-  publishMergePresetToFactory: vi.fn(),
   pullFactoryMergePresetsToProject: vi.fn(),
   applyMergePresetConflictFix: vi.fn(),
   applyAllMergePresetConflictFixes: vi.fn(),
@@ -40,7 +39,6 @@ vi.mock('../../src/api/settings.js', () => {
     importMergePreferences: (...args: unknown[]) => m.importMergePreferences(...args),
     exportMergePresetPackages: (...args: unknown[]) => m.exportMergePresetPackages(...args),
     importMergePresetPackages: (...args: unknown[]) => m.importMergePresetPackages(...args),
-    publishMergePresetToFactory: (...args: unknown[]) => m.publishMergePresetToFactory(...args),
     pullFactoryMergePresetsToProject: (...args: unknown[]) => m.pullFactoryMergePresetsToProject(...args),
     applyMergePresetConflictFix: (...args: unknown[]) => m.applyMergePresetConflictFix(...args),
     applyAllMergePresetConflictFixes: (...args: unknown[]) => m.applyAllMergePresetConflictFixes(...args),
@@ -111,29 +109,6 @@ describe('useMergePresets', () => {
     await m.applyMergePresetPackage('non_existent');
     // 不抛错 + selectedMergePresetPackage 不变
     expect(m.selectedMergePresetPackage.value).toBe('');
-  });
-
-  it('publishMergePresetToFactory sets loading state', async () => {
-    mergeMocks.publishMergePresetToFactory.mockResolvedValueOnce({});
-    const m = mountMerge();
-    await m.publishMergePresetToFactory();
-    expect(m.mergePresetFactoryPublishing.value).toBe(false);
-  });
-
-  it('publishMergePresetToFactory sets error on failure', async () => {
-    mergeMocks.publishMergePresetToFactory.mockRejectedValueOnce(new Error('publish-fail'));
-    let capturedErr: unknown = null;
-    const error = ref<string | null>(null);
-    const saveMessage = ref('');
-    const conflictMessage = ref('');
-    const handleSaveError = vi.fn((err: unknown) => {
-      capturedErr = err;
-      error.value = err instanceof Error ? err.message : String(err);
-    });
-    const { publishMergePresetToFactory } = useMergePresets({ error, saveMessage, conflictMessage, handleSaveError });
-    await publishMergePresetToFactory();
-    expect(handleSaveError).toHaveBeenCalled();
-    expect((capturedErr as Error).message).toBe('publish-fail');
   });
 
   it('pullFactoryMergePresets updates packages', async () => {
