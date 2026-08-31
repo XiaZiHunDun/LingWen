@@ -79,6 +79,7 @@ export interface CreatorFactoryMergePresetOperationResponse {
 export interface CreatorLogicCheckResponse {
   violations?: Record<string, unknown>[];
   summary?: string | null;
+  p0_count?: number;
 }
 
 export interface CreatorMemoryAnnotationRequest {

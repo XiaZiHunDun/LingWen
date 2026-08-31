@@ -1790,6 +1790,7 @@ class CreatorLogicCheckResponse(BaseModel):
 
     violations: list[dict[str, Any]] = Field(default_factory=list)
     summary: Optional[str] = None
+    p0_count: int = 0  # N.13 T2.P1.c: surfaced from backend ``run_creator_logic_check`` so dashboard can show P0 count without cast
 
 
 class CreatorChapterPreview(BaseModel):

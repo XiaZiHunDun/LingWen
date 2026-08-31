@@ -130,16 +130,22 @@ describe('useCreatorWrite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     writeMocks.fetchCreatorChapterPreview.mockResolvedValue({
-      body_text: '第一段\n\n第二段',
-      outline_text: '大纲 A',
+      chapter_id: 1,
+      project_slug: 'test',
+      body: '第一段\n\n第二段',
+      outline: '大纲 A',
     });
     writeMocks.saveCreatorChapterBody.mockImplementation(async (req: { chapter_id: number; body: string }) => ({
-      body_text: req.body,
-      outline_text: '大纲 A',
+      chapter_id: req.chapter_id,
+      project_slug: 'test',
+      body: req.body,
+      outline: '大纲 A',
     }));
     writeMocks.saveCreatorChapterOutline.mockImplementation(async (req: { chapter_id: number; outline: string }) => ({
-      body_text: '第一段\n\n第二段',
-      outline_text: req.outline,
+      chapter_id: req.chapter_id,
+      project_slug: 'test',
+      body: '第一段\n\n第二段',
+      outline: req.outline,
     }));
     writeMocks.runCreatorLogicCheck.mockResolvedValue({
       passed: false,
@@ -257,8 +263,10 @@ describe('useCreatorWrite', () => {
 
   test('syncMemoryAssets enables entity mention detection on save', async () => {
     writeMocks.fetchCreatorChapterPreview.mockResolvedValue({
-      body_text: '林默在雨里写下第一段。',
-      outline_text: '大纲 A',
+      chapter_id: 1,
+      project_slug: 'test',
+      body: '林默在雨里写下第一段。',
+      outline: '大纲 A',
     });
     const { api, saveMessage } = mountWrite();
     await api.panelContext.selectChapter(1);
