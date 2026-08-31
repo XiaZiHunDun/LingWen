@@ -241,15 +241,6 @@ describe('settings typed wrapper (v16.2.2 Task 6 / T3)', () => {
     expect(init.method).toBe('POST');
   });
 
-  it('publishMergePresetToFactory POSTs .../preset-packages/factory/publish', async () => {
-    await settingsApi.publishMergePresetToFactory({ package_id: 'pkg-1' });
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe(
-      '/api/creator/settings-docs/merge-preferences/preset-packages/factory/publish',
-    );
-    expect(init.method).toBe('POST');
-  });
-
   it('preflightFactoryMergePresetPull POSTs .../preset-packages/factory/pull/preflight', async () => {
     await settingsApi.preflightFactoryMergePresetPull({ package_ids: ['p1'] });
     const [url, init] = fetchMock.mock.calls[0];

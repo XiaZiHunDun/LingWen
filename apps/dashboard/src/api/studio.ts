@@ -25,15 +25,6 @@ import type {
 import { request } from './core.js';
 
 // ---------------------------------------------------------------------------
-// /studio/projects (list all projects in studio)
-// ---------------------------------------------------------------------------
-
-export async function listStudioProjects(): Promise<StudioProjectsResponseDTO> {
-  const data = await request('/studio/projects');
-  return data as StudioProjectsResponseDTO;
-}
-
-// ---------------------------------------------------------------------------
 // /studio/active (set the active studio project by slug)
 // ---------------------------------------------------------------------------
 

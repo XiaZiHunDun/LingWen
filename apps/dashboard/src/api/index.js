@@ -63,7 +63,6 @@ export {
 } from './budgets.js';
 
 export {
-  listStudioProjects,
   setStudioActive,
   fetchStudioSummary,
   fetchStudioQuality,
