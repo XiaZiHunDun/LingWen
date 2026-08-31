@@ -12,10 +12,10 @@ LLM可读性分析器 - S6可读性检测
 """
 
 import argparse
+import asyncio
 import json
 import re
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -140,7 +140,7 @@ class ReadabilityAnalyzer:
         avg_length = total_length / len(paragraphs) if paragraphs else 0
         return len(paragraphs), avg_length
 
-    def analyze_readability(
+    async def analyze_readability(
         self,
         chapter_num: int,
         content: str,
@@ -248,7 +248,7 @@ class ReadabilityAnalyzer:
 ```json
 {{"issues": [], "summary": {{"paragraph_count": N, "score": 1.0}}}}```"""
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说可读性分析专家，擅长减少水字数和提升信息密度。",
             model="default"
@@ -304,7 +304,7 @@ class ReadabilityAnalyzer:
 
         return report
 
-    def analyze_chapters_batch(
+    async def analyze_chapters_batch(
         self,
         chapter_nums: List[int],
         parallel: bool = True,
@@ -314,40 +314,29 @@ class ReadabilityAnalyzer:
         reports = {}
         contents = self.load_chapters(chapter_nums)
 
-        if parallel:
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = {}
-                for ch in chapter_nums:
-                    if ch in contents:
-                        context = {
-                            c: contents[c]
-                            for c in contents
-                            if abs(c - ch) <= 3 and c != ch
-                        }
-                        future = executor.submit(
-                            self.analyze_readability,
-                            ch, contents[ch], context
-                        )
-                        futures[future] = ch
+        async def _run_one(ch: int) -> None:
+            context = {
+                c: contents[c]
+                for c in contents
+                if abs(c - ch) <= 3 and c != ch
+            }
+            try:
+                reports[ch] = await self.analyze_readability(ch, contents[ch], context)
+            except Exception as e:
+                print(f"  ch{ch:03d}: 分析失败 - {e}")
 
-                for future in as_completed(futures):
-                    ch = futures[future]
-                    try:
-                        reports[ch] = future.result()
-                    except Exception as e:
-                        print(f"  ch{ch:03d}: 分析失败 - {e}")
+        if parallel:
+            sem = asyncio.Semaphore(max_workers)
+
+            async def _bounded(ch: int) -> None:
+                async with sem:
+                    await _run_one(ch)
+
+            await asyncio.gather(*[_bounded(ch) for ch in chapter_nums if ch in contents])
         else:
             for ch in chapter_nums:
                 if ch in contents:
-                    context = {
-                        c: contents[c]
-                        for c in contents
-                        if abs(c - ch) <= 3 and c != ch
-                    }
-                    try:
-                        reports[ch] = self.analyze_readability(ch, contents[ch], context)
-                    except Exception as e:
-                        print(f"  ch{ch:03d}: 分析失败 - {e}")
+                    await _run_one(ch)
 
         return reports
 
@@ -405,6 +394,10 @@ def parse_chapter_range(chapters_str: str) -> List[int]:
 
 
 def main():
+    asyncio.run(_async_main())
+
+
+async def _async_main():
     parser = argparse.ArgumentParser(description='LLM可读性分析器 - S6可读性检测')
     parser.add_argument('--chapters', type=str, default='1-360', help='章节范围')
     parser.add_argument('--parallel', action='store_true', default=True, help='并行处理')
@@ -421,7 +414,7 @@ def main():
     print("=" * 60)
 
     analyzer = ReadabilityAnalyzer()
-    reports = analyzer.analyze_chapters_batch(
+    reports = await analyzer.analyze_chapters_batch(
         chapters,
         parallel=args.parallel,
         max_workers=args.workers
