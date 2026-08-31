@@ -248,6 +248,73 @@ def test_cascade_preview_storage_to_presentation_populates_counts():
 # ---------------------------------------------------------------------------
 
 
+def test_reference_graph_storage_to_presentation_maps_node_id_and_chapter_id():
+    """N.11.g: storage ReferenceGraphResponse → presentation shape.
+
+    Storage nodes use id/chapter/dimension/volume; presentation nodes
+    use node_id/chapter_id/dimension/volume (id and node_id are
+    redundant; presentation fields are the canonical names per the
+    lingwen-shared CascadeNodeResponse contract). Edges map
+    from_node_id/to_node_id → source/target, relationship_type → relation.
+    by_dimension is COMPUTED from node dimensions (storage lacks it).
+    """
+    from apps.studio_api.cvg_adapter import reference_graph_storage_to_presentation
+    storage = {
+        "nodes": [
+            {"id": "n1", "chapter": 5, "dimension": "character", "volume": 1, "title": "Alice"},
+            {"id": "n2", "chapter": 8, "dimension": "foreshadow", "volume": 1, "title": "F1"},
+            {"id": "n3", "chapter": 9, "dimension": "character", "volume": 1, "title": "Bob"},
+        ],
+        "edges": [
+            {"from_node_id": "n1", "to_node_id": "n2", "relationship_type": "support", "weight": 0.7},
+            {"from_node_id": "n2", "to_node_id": "n3", "relationship_type": "modify", "weight": 0.3},
+        ],
+        "total_node_count": 3,
+        "total_edge_count": 5,
+        "truncated": False,
+    }
+    result = reference_graph_storage_to_presentation(storage)
+    # totals passthrough with renaming
+    assert result.total_nodes == 3
+    assert result.total_edges == 5
+    assert result.truncated is False
+    # by_dimension computed
+    assert result.by_dimension == {"character": 2, "foreshadow": 1}
+    # nodes mapped
+    assert len(result.nodes) == 3
+    assert result.nodes[0]["node_id"] == "n1"
+    assert result.nodes[0]["chapter_id"] == 5
+    assert result.nodes[0]["dimension"] == "character"
+    # edges mapped
+    assert len(result.edges) == 2
+    assert result.edges[0]["source"] == "n1"
+    assert result.edges[0]["target"] == "n2"
+    assert result.edges[0]["relation"] == "support"
+    assert result.edges[0]["weight"] == 0.7
+
+
+def test_reference_graph_storage_to_presentation_handles_already_presentation_keys():
+    """N.11.g: adapter is idempotent — if storage input is already
+    presentation-shape (node_id/chapter_id/source/target), pass through.
+    """
+    from apps.studio_api.cvg_adapter import reference_graph_storage_to_presentation
+    storage = {
+        "nodes": [
+            {"node_id": "n1", "chapter_id": 5, "dimension": "character", "volume": 1},
+        ],
+        "edges": [
+            {"source": "n1", "target": "n2", "relation": "support"},
+        ],
+        "total_nodes": 1,
+        "total_edges": 1,
+        "truncated": True,
+    }
+    result = reference_graph_storage_to_presentation(storage)
+    assert result.nodes[0]["node_id"] == "n1"
+    assert result.edges[0]["source"] == "n1"
+    assert result.truncated is True
+
+
 def test_cascade_run_storage_to_presentation_basic():
     """Storage CascadeRun → presentation CascadeRunResponse (N.11.b)."""
     from datetime import datetime

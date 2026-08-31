@@ -65,6 +65,7 @@ from lingwen_shared.contracts.python.cvg import (
     CascadePreviewResponse,
     CascadeResponse,
     CascadeRunResponse,  # NEW in N.11.b
+    ReferenceGraphResponse,  # NEW in N.11.g
     RippleDetailResponse,
     RippleListItemResponse,
 )
@@ -78,6 +79,7 @@ __all__ = [
     "cascade_preview_storage_to_presentation",
     "cascade_run_storage_to_presentation",  # NEW in N.11.b
     "cascade_broadcast_log_storage_to_presentation",  # NEW in N.11.c
+    "reference_graph_storage_to_presentation",  # NEW in N.11.g
 ]
 
 
@@ -380,4 +382,102 @@ def cascade_broadcast_log_storage_to_presentation(
         ripple_id=d.get("ripple_id", ""),
         latency_ms=d.get("latency_ms", 0),
         created_at=_parse_dt(d.get("created_at")),
+    )
+
+
+def reference_graph_storage_to_presentation(
+    storage: dict[str, Any],
+) -> ReferenceGraphResponse:
+    """Convert storage ReferenceGraphResponse → canonical presentation shape.
+
+    Phase 126 v16.5 #N.11.g: route wire-up for GET /api/cvg/reference-graph.
+
+    Storage shape fields (apps/studio_api/protocols.py:851) →
+        presentation shape:
+            CascadeNodeResponse (storage with id/chapter/dimension/volume/
+            title/description/payload) → dict (presentation with node_id/
+            chapter_id/...):
+                id → node_id
+                chapter → chapter_id
+                dimension, volume, title, payload → passthrough
+            CascadeEdgeResponse (storage with from_node_id/to_node_id/
+            relationship_type/weight) → dict (presentation with source/
+            target/relation/weight):
+                from_node_id → source
+                to_node_id → target
+                relationship_type → relation
+            total_node_count → total_nodes
+            total_edge_count → total_edges
+            truncated → truncated (passthrough)
+            by_dimension → COMPUTED from node.dimension counts
+
+    Idempotence: if storage already carries presentation-shape keys
+    (node_id, chapter_id, source, target), the adapter prefers them and
+    leaves the storage-shape fallbacks unused.
+    """
+    nodes_raw = storage.get("nodes", [])
+    edges_raw = storage.get("edges", [])
+
+    # by_dimension: computed from node.dimension occurrences
+    by_dimension: dict[str, int] = {}
+    for n in nodes_raw:
+        if isinstance(n, dict):
+            dim = n.get("dimension")
+        else:
+            dim = getattr(n, "dimension", None)
+        if dim:
+            by_dimension[dim] = by_dimension.get(dim, 0) + 1
+
+    def _node_to_presentation_dict(n: Any) -> dict[str, Any]:
+        if isinstance(n, dict):
+            return {
+                "node_id": n.get("node_id") or n.get("id", ""),
+                "chapter_id": n.get("chapter_id") or n.get("chapter", 0),
+                "dimension": n.get("dimension"),
+                "volume": n.get("volume", 1),
+                "title": n.get("title"),
+                "description": n.get("description"),
+                "payload": n.get("payload"),
+            }
+        return {
+            "node_id": getattr(n, "node_id", "") or getattr(n, "id", ""),
+            "chapter_id": getattr(n, "chapter_id", 0) or getattr(n, "chapter", 0),
+            "dimension": getattr(n, "dimension", None),
+            "volume": getattr(n, "volume", 1),
+            "title": getattr(n, "title", None),
+            "description": getattr(n, "description", None),
+            "payload": getattr(n, "payload", None),
+        }
+
+    def _edge_to_presentation_dict(e: Any) -> dict[str, Any]:
+        if isinstance(e, dict):
+            return {
+                "source": e.get("source") or e.get("from_node_id", ""),
+                "target": e.get("target") or e.get("to_node_id", ""),
+                "relation": (
+                    e.get("relation")
+                    or e.get("relationship_type")
+                    or e.get("relationship")
+                    or "reference"
+                ),
+                "weight": e.get("weight"),
+            }
+        return {
+            "source": getattr(e, "source", "") or getattr(e, "from_node_id", ""),
+            "target": getattr(e, "target", "") or getattr(e, "to_node_id", ""),
+            "relation": (
+                getattr(e, "relation", None)
+                or getattr(e, "relationship_type", None)
+                or "reference"
+            ),
+            "weight": getattr(e, "weight", None),
+        }
+
+    return ReferenceGraphResponse(
+        nodes=[_node_to_presentation_dict(n) for n in nodes_raw],
+        edges=[_edge_to_presentation_dict(e) for e in edges_raw],
+        total_nodes=storage.get("total_nodes") or storage.get("total_node_count", 0),
+        total_edges=storage.get("total_edges") or storage.get("total_edge_count", 0),
+        truncated=bool(storage.get("truncated", False)),
+        by_dimension=by_dimension or None,
     )
