@@ -23,6 +23,7 @@
 """
 
 import argparse
+import asyncio
 import json
 import sys
 from dataclasses import asdict, dataclass, field
@@ -148,7 +149,7 @@ class LLMOutlineChecker:
         self.llm = llm_service or LLMServiceAdapter()
         self.path_mgr = OutlinePathManager()
 
-    def check_full_outline(self, outline_path: Path = None) -> OutlineQualityReport:
+    async def check_full_outline(self, outline_path: Path = None) -> OutlineQualityReport:
         """
         全文大纲LLM质检
         检查：360章全貌一致性、主线逻辑链、伏笔全局布局
@@ -213,7 +214,7 @@ class LLMOutlineChecker:
 {{"issues": [{{"level": "full", "chapter_range": "ch1-ch360", "issue_type": "...", "severity": "P0/P1/P2", "description": "...", "location": "...", "suggestion": "..."}}], "score": 0.0-1.0, "recommendations": ["..."]}}
 """
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的小说大纲审核专家，擅长发现全局性问题。",
             model="default"
@@ -236,7 +237,7 @@ class LLMOutlineChecker:
 
         return report
 
-    def check_volume_outline(self, volume: int = None) -> List[OutlineQualityReport]:
+    async def check_volume_outline(self, volume: int = None) -> List[OutlineQualityReport]:
         """
         卷大纲LLM质检
         检查：卷内阶段衔接、卷主题一致性、跨卷角色状态
@@ -303,7 +304,7 @@ class LLMOutlineChecker:
 {{"issues": [{{"level": "volume", "chapter_range": "ch{start}-ch{end}", "issue_type": "...", "severity": "P0/P1/P2", "description": "...", "location": "...", "suggestion": "..."}}], "score": 0.0-1.0, "recommendations": ["..."]}}
 """
 
-            response = self.llm.generate(
+            response = await self.llm.generate(
                 prompt=prompt,
                 system="你是一个专业的卷大纲审核专家，擅长阶段衔接和跨卷一致性分析。",
                 model="default"
@@ -323,7 +324,7 @@ class LLMOutlineChecker:
 
         return reports
 
-    def check_stage_outline(self, volume: int = None, stage: int = None) -> List[OutlineQualityReport]:
+    async def check_stage_outline(self, volume: int = None, stage: int = None) -> List[OutlineQualityReport]:
         """
         阶段大纲LLM质检
         检查：阶段内逻辑自洽、人物弧光连贯性、与卷大纲对齐
@@ -387,7 +388,7 @@ class LLMOutlineChecker:
 {{"issues": [{{"level": "stage", "chapter_range": "ch{start}-ch{end}", "issue_type": "...", "severity": "P0/P1/P2", "description": "...", "location": "...", "suggestion": "..."}}], "score": 0.0-1.0, "recommendations": ["..."]}}
 """
 
-            response = self.llm.generate(
+            response = await self.llm.generate(
                 prompt=prompt,
                 system="你是一个专业的阶段大纲审核专家，擅长逻辑和一致性分析。",
                 model="default"
@@ -407,7 +408,7 @@ class LLMOutlineChecker:
 
         return reports
 
-    def check_chapter_outline(self, chapters: List[int] = None) -> List[OutlineQualityReport]:
+    async def check_chapter_outline(self, chapters: List[int] = None) -> List[OutlineQualityReport]:
         """
         章节大纲LLM质检
         检查：章节大纲与正文章节的一致性、核心事件提取准确性、伏笔铺设质量
@@ -485,7 +486,7 @@ class LLMOutlineChecker:
 {{"issues": [{{"level": "chapter", "chapter": {ch_num}, "issue_type": "...", "severity": "P0/P1/P2", "description": "...", "location": "ch{{编号}}", "suggestion": "..."}}], "score": 0.0-1.0, "recommendations": ["..."]}}
 """
 
-            response = self.llm.generate(
+            response = await self.llm.generate(
                 prompt=prompt,
                 system="你是一个专业的章节大纲审核专家，擅长发现大纲与正文的不一致问题。",
                 model="default"
@@ -531,7 +532,7 @@ class LLMOutlineRepairer:
         self.llm = llm_service or LLMServiceAdapter()
         self.path_mgr = OutlinePathManager()
 
-    def repair_full_outline_issue(self, issue: OutlineIssue, content: str) -> str:
+    async def repair_full_outline_issue(self, issue: OutlineIssue, content: str) -> str:
         """修复全文大纲问题"""
         prompt = f"""你是大纲修复专家，负责修复全文大纲中的问题。
 
@@ -547,14 +548,14 @@ class LLMOutlineRepairer:
 
 请直接输出修复后的大纲内容（保持原有结构，只修改问题部分）。"""
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的大纲修复专家，能够保持原有结构进行修改。",
             model="default"
         )
         return response
 
-    def repair_volume_outline_issue(self, issue: OutlineIssue, content: str) -> str:
+    async def repair_volume_outline_issue(self, issue: OutlineIssue, content: str) -> str:
         """修复卷大纲问题"""
         prompt = f"""你是大纲修复专家，负责修复卷大纲中的问题。
 
@@ -570,14 +571,14 @@ class LLMOutlineRepairer:
 
 请直接输出修复后的大纲内容（保持原有结构，只修改问题部分）。"""
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的大纲修复专家，能够保持原有结构进行修改。",
             model="default"
         )
         return response
 
-    def repair_stage_outline_issue(self, issue: OutlineIssue, content: str) -> str:
+    async def repair_stage_outline_issue(self, issue: OutlineIssue, content: str) -> str:
         """修复阶段大纲问题"""
         prompt = f"""你是大纲修复专家，负责修复阶段大纲中的问题。
 
@@ -593,7 +594,7 @@ class LLMOutlineRepairer:
 
 请直接输出修复后的大纲内容（保持原有结构，只修改问题部分）。"""
 
-        response = self.llm.generate(
+        response = await self.llm.generate(
             prompt=prompt,
             system="你是一个专业的大纲修复专家，能够保持原有结构进行修改。",
             model="default"
@@ -627,6 +628,10 @@ def save_reports(reports: List[OutlineQualityReport], output_file: Path):
 
 
 def main():
+    asyncio.run(_async_main())
+
+
+async def _async_main():
     parser = argparse.ArgumentParser(description='大纲层级LLM质检工具')
     parser.add_argument('--check', type=str, choices=['full', 'volume', 'stage', 'chapter', 'all'],
                         default='all', help='检测层级')
@@ -657,7 +662,7 @@ def main():
     # 全文大纲质检
     if args.check in ['full', 'all']:
         print("\n[全文大纲LLM质检]")
-        report = checker.check_full_outline()
+        report = await checker.check_full_outline()
         all_reports.append(report)
         print(f"  问题数: {len(report.issues)}")
         print(f"  质量分: {report.score:.2f}")
@@ -668,7 +673,7 @@ def main():
     # 卷大纲质检
     if args.check in ['volume', 'all']:
         print("\n[卷大纲LLM质检]")
-        reports = checker.check_volume_outline(args.volume)
+        reports = await checker.check_volume_outline(args.volume)
         all_reports.extend(reports)
         for r in reports:
             print(f"  {r.target}: {len(r.issues)}问题, score={r.score:.2f}, {r.llm_calls}次LLM调用")
@@ -676,7 +681,7 @@ def main():
     # 阶段大纲质检
     if args.check in ['stage', 'all']:
         print("\n[阶段大纲LLM质检]")
-        reports = checker.check_stage_outline(args.volume, args.stage)
+        reports = await checker.check_stage_outline(args.volume, args.stage)
         all_reports.extend(reports)
         for r in reports:
             print(f"  {r.target}: {len(r.issues)}问题, score={r.score:.2f}, {r.llm_calls}次LLM调用")
@@ -694,7 +699,7 @@ def main():
             else:
                 chapters.append(int(part))
 
-        reports = checker.check_chapter_outline(chapters)
+        reports = await checker.check_chapter_outline(chapters)
         all_reports.extend(reports)
 
         # 按卷汇总显示
@@ -749,9 +754,9 @@ def main():
 
                 try:
                     if report.level == "full":
-                        fixed = repairer.repair_full_outline_issue(issue, content)
+                        fixed = await repairer.repair_full_outline_issue(issue, content)
                     elif report.level == "volume":
-                        fixed = repairer.repair_volume_outline_issue(issue, content)
+                        fixed = await repairer.repair_volume_outline_issue(issue, content)
                     else:
                         continue
 
