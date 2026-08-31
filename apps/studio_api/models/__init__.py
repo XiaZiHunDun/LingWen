@@ -279,7 +279,6 @@ from apps.studio_api.protocols import (
     CascadePreviewResponse,  # noqa: F401
     CascadeResponse,  # noqa: F401
     CascadeRunResponse,  # noqa: F401
-    ReferenceGraphResponse,  # noqa: F401
     RippleActionRequest,  # noqa: F401
     RippleActionResponse,  # noqa: F401
     RippleAuditEntryResponse,  # noqa: F401
