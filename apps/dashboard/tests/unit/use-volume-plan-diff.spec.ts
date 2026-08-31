@@ -41,6 +41,7 @@ vi.mock('../../src/composables/volumePlanDiffExportUtils.js', () => ({
   downloadBinaryExport: vi.fn(),
   downloadJsonExport: vi.fn(),
   downloadTextExport: vi.fn(),
+  typedEditableVolumesForDiff: (volumes: unknown) => volumes,
 }));
 
 import { useVolumePlanDiff } from '../../src/composables/useCreatorVolumePlanDiff/useVolumePlanDiff';
