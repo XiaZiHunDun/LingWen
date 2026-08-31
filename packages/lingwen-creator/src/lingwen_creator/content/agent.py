@@ -14,7 +14,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, AsyncIterator, Iterator
 
 from infra.paths import ProjectPaths
 
@@ -233,12 +233,12 @@ def _build_llm_prompt(
     )
 
 
-def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
+async def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
     from lingwen_llm.port_adapter import LLMServiceAdapter
     from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
     adapter = LLMServiceAdapter()
-    raw = adapter.execute(
+    raw = await adapter.execute(
         LLMTask(
             task_type=TaskType.REPAIR if not advice_only else TaskType.QUALITY_ANALYSIS,
             system=_AGENT_SYSTEM,
@@ -253,12 +253,14 @@ def _llm_agent_plan(prompt: str, *, advice_only: bool) -> dict[str, Any]:
     return parsed
 
 
-def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> Iterator[str]:
+async def _llm_agent_plan_stream_tokens(
+    prompt: str, *, advice_only: bool
+) -> AsyncIterator[str]:
     from lingwen_llm.port_adapter import LLMServiceAdapter
     from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
     adapter = LLMServiceAdapter()
-    yield from adapter.execute_stream(
+    async for chunk in adapter.execute_stream(
         LLMTask(
             task_type=TaskType.REPAIR if not advice_only else TaskType.QUALITY_ANALYSIS,
             system=_AGENT_SYSTEM,
@@ -266,7 +268,8 @@ def _llm_agent_plan_stream_tokens(prompt: str, *, advice_only: bool) -> Iterator
             max_tokens=2800,
             temperature=0.45,
         ),
-    )
+    ):
+        yield chunk
 
 
 def _coerce_plan_payload(
@@ -425,7 +428,7 @@ def _validate_agent_scope(scope: dict[str, Any]) -> None:
         raise ValueError("scope.selection_text required for selection scope")
 
 
-def run_creator_agent_plan(
+async def run_creator_agent_plan(
     project_root: Path | str,
     *,
     action: str,
@@ -464,7 +467,7 @@ def run_creator_agent_plan(
                 memory_hints=memory_hints,
                 execution_mode=execution_mode,
             )
-            parsed = _llm_agent_plan(prompt, advice_only=advice_only)
+            parsed = await _llm_agent_plan(prompt, advice_only=advice_only)
             coerced = _coerce_plan_payload(parsed, fallback_advice_only=advice_only)
             if not coerced["advice_only"] and not coerced["candidates"] and not coerced["annotations"]:
                 raise ValueError("LLM returned empty plan")
@@ -506,7 +509,7 @@ def _chunk_text(text: str, size: int = 24) -> list[str]:
     return [compact[i : i + size] for i in range(0, len(compact), size)]
 
 
-def iter_creator_agent_plan_stream(
+async def iter_creator_agent_plan_stream(
     project_root: Path | str,
     *,
     action: str,
@@ -519,7 +522,7 @@ def iter_creator_agent_plan_stream(
     execution_mode: str = "preview",
     lens: str | None = "author",
     provider_mode: str | None = "auto",
-) -> Iterator[dict[str, Any]]:
+) -> AsyncIterator[dict[str, Any]]:
     """Yield SSE-friendly events: status | preview_label | chunk | advice | done."""
     root = project_root if isinstance(project_root, Path) else Path(project_root)
     lens_norm = _normalize_lens(lens)
@@ -549,7 +552,7 @@ def iter_creator_agent_plan_stream(
         )
         try:
             parts: list[str] = []
-            for delta in _llm_agent_plan_stream_tokens(prompt, advice_only=advice_only):
+            async for delta in _llm_agent_plan_stream_tokens(prompt, advice_only=advice_only):
                 if not delta:
                     continue
                 parts.append(delta)
@@ -590,7 +593,7 @@ def iter_creator_agent_plan_stream(
                 return
 
     yield {"type": "status", "message": "正在生成候选…"}
-    plan = run_creator_agent_plan(
+    plan = await run_creator_agent_plan(
         root,
         action=action,
         action_label=action_label,
@@ -604,5 +607,6 @@ def iter_creator_agent_plan_stream(
         provider_mode="mock",
     )
     plan["stream_mode"] = plan.get("stream_mode") or "mock_chunk"
-    yield from _yield_plan_preview_events(plan, chunk_source="mock")
+    for event in _yield_plan_preview_events(plan, chunk_source="mock"):
+        yield event
     yield {"type": "done", "plan": plan}
