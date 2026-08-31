@@ -514,6 +514,8 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
     ) -> CascadeRunResponse:
         """Phase 9.21: cancel a persisted cascade run.
         Side-effect: WS push 'cascade.cancel' event (best-effort, if flipped).
+        Phase 126 v16.5 #N.11.b: serves canonical presentation via cvg_adapter
+        + enriches with cancel-specific fields (cancelled_at + triggered_by).
         """
         storage = _app_module._default_storage()
         try:
@@ -527,7 +529,15 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
                 ripple_id=ripple_id,
                 reason=body.reason,
             ))
-        return CascadeRunResponse.from_dataclass(run)
+        # Phase 126 v16.5 #N.11.b: route enriches presentation response with
+        # cancel-specific fields (cancelled_at = now, triggered_by = "system").
+        from datetime import datetime, timezone
+        response_dict = cvg_adapter.cascade_run_storage_to_presentation(
+            _dataclass_to_dict(run)
+        ).model_dump()
+        response_dict["cancelled_at"] = datetime.now(timezone.utc).isoformat()
+        response_dict["triggered_by"] = "system"
+        return CascadeRunResponse(**response_dict)
 
     @app.get(
         "/api/ripples/cascade/{ripple_id}/broadcast-log",
