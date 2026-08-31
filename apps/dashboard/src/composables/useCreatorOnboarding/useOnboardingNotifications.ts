@@ -136,9 +136,9 @@ export function useOnboardingNotifications(deps: OnboardingNotificationsDeps): O
       // v16.5 #N.13 T2.P1.b: typed wrappers now return strict
       // `CreatorOnboardingNotificationsResponse` / `CreatorOnboardingNotificationDigestResponse`
       // from `@lingwen/dashboard-contracts/shared` (Pydantic canonical).
-      // `notifications` is required (no `|| []` fallback needed), `unread`
-      // is required (no `??` fallback), `groups` is optional (defaults to
-      // empty array via initial ref value).
+      // `notifications` and `unread` are typed as required, but defensive
+      // `|| []` / `??` fallbacks are preserved (no behavioral change) for
+      // runtime robustness against nullish backend responses.
       const data = await fetchOnboardingNotifications();
       wizardNotifications.value = data.notifications || [];
       wizardNotificationHandles.value = data.handles || [];
