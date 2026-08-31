@@ -13,6 +13,7 @@ cd "$ROOT"
 
 run_python() {
   python3 - "$@" <<'PY'
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -54,7 +55,7 @@ for slug in slugs:
         continue
 
     try:
-        report = run_prose_judge(project, slug, mode=mode, full_check_report=summary)
+        report = asyncio.run(run_prose_judge(project, slug, mode=mode, full_check_report=summary))
         path = save_judge_report(project, report)
         brief = summarize_judge_report(report, summary)
         print(

@@ -223,7 +223,7 @@ def _has_llm_api_key() -> bool:
     )
 
 
-def _llm_judge_chapter(
+async def _llm_judge_chapter(
     chapter_num: int,
     content: str,
     prose_p1_issues: list[dict[str, Any]],
@@ -243,7 +243,7 @@ def _llm_judge_chapter(
     )
 
     service = LLMServiceAdapter()
-    raw = service.execute(
+    raw = await service.execute(
         LLMTask(
             task_type=TaskType.QUALITY_ANALYSIS,
             system=JUDGE_SYSTEM_PROMPT,
@@ -287,7 +287,7 @@ def _normalize_ratings(ratings: list[Any]) -> list[dict[str, Any]]:
     return [by_dim[d] for d in DIMENSIONS]
 
 
-def build_llm_judge_report(
+async def build_llm_judge_report(
     slug: str,
     project_root: Path,
     full_check_report: dict[str, Any],
@@ -302,7 +302,7 @@ def build_llm_judge_report(
         content = path.read_text(encoding="utf-8")
         prose_p1 = _prose_p1_for_chapter(issue_map.get(chapter_num, []))
         try:
-            ratings = _llm_judge_chapter(chapter_num, content, prose_p1)
+            ratings = await _llm_judge_chapter(chapter_num, content, prose_p1)
         except Exception as exc:
             logger.warning("LLM judge failed for ch%s, falling back to offline: %s", chapter_num, exc)
             ratings = derive_offline_chapter_ratings(chapter_num, prose_p1)
@@ -689,7 +689,7 @@ def render_calibration_log_document(
     return "\n".join(lines)
 
 
-def run_prose_judge(
+async def run_prose_judge(
     project_root: Path,
     slug: str,
     *,
@@ -712,7 +712,7 @@ def run_prose_judge(
 
     if use_llm:
         try:
-            return build_llm_judge_report(slug, project_root, report, chapter_nums)
+            return await build_llm_judge_report(slug, project_root, report, chapter_nums)
         except Exception as exc:
             if normalized == "llm":
                 raise

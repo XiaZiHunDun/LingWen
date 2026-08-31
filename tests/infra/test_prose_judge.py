@@ -123,7 +123,8 @@ class TestProseJudgeOffline:
 
 
 class TestProseJudgeProjectIntegration:
-    def test_run_and_save_jinghai(self, tmp_path: Path, monkeypatch) -> None:
+    @pytest.mark.asyncio
+    async def test_run_and_save_jinghai(self, tmp_path: Path, monkeypatch) -> None:
         import infra.studio_registry as registry
 
         factory = Path(__file__).resolve().parents[1]
@@ -131,7 +132,7 @@ class TestProseJudgeProjectIntegration:
         if not project.is_dir():
             pytest.skip("jinghai-rizhi fixture missing")
 
-        report = run_prose_judge(project, "jinghai-rizhi", mode="offline")
+        report = await run_prose_judge(project, "jinghai-rizhi", mode="offline")
         assert report["source"] == "offline"
         assert len(report["chapters"]) == 3
 
