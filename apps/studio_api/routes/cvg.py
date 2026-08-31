@@ -29,6 +29,7 @@ from fastapi.responses import Response
 from lingwen_shared.contracts.python.cvg import (
     CascadePreviewResponse,
     CascadeResponse,
+    CascadeRunResponse,  # NEW in N.11.b
     RippleListItemResponse,
 )
 
@@ -50,7 +51,6 @@ from apps.studio_api.models import (
     CascadeBroadcastLogResponse,
     CascadeCancelPayload,
     CascadeCancelRequest,
-    CascadeRunResponse,
     ReferenceGraphResponse,
     RippleActionRequest,
     RippleActionResponse,
@@ -60,6 +60,20 @@ from apps.studio_api.models import (
     RippleStatsResponse,
 )
 from apps.studio_api.routes.ctx import RoutesContext
+
+
+def _dataclass_to_dict(obj: Any) -> dict:
+    """Convert dataclass / Pydantic model / mapping → dict for cvg_adapter.
+
+    Phase 126 v16.5 #N.11.b: shared helper for endpoints migrating from
+    storage-shape CascadeRunResponse.from_dataclass() to cvg_adapter.
+    Mirrors the inline pattern in get_ripple_cascade (N.10).
+    """
+    if is_dataclass(obj):
+        return asdict(obj)
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    return dict(obj)
 
 
 def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
@@ -402,7 +416,12 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
                 ripple_id, cascaded, max_depth=validated_depth
             )
             run = storage.get_cascade_run_by_id(run_id)
-            return CascadeRunResponse.from_dataclass(run).model_dump(mode="json")
+            # Phase 126 v16.5 #N.11.b: v9_20 persist branch also uses canonical
+            # presentation CascadeRunResponse via cvg_adapter (consistent with
+            # 3 dedicated cascade-runs endpoints).
+            return cvg_adapter.cascade_run_storage_to_presentation(
+                _dataclass_to_dict(run)
+            ).model_dump(mode="json")
 
         live_depth = _validate_max_depth(max_depth)
         if live_depth is not None:
@@ -444,13 +463,15 @@ def register_cvg(app: FastAPI, ctx: RoutesContext) -> None:
     ) -> list[CascadeRunResponse]:
         """Phase 9.20: list historical cascade runs for a ripple.
         Phase 9.23: 4 filter query params.
+        Phase 126 v16.5 #N.11.b: serves canonical presentation CascadeRunResponse
+        via cvg_adapter.cascade_run_storage_to_presentation.
         """
         storage = _app_module._default_storage()
         runs = storage.get_cascade_runs(
             ripple_id, limit=limit, offset=offset,
             status=status, min_depth=min_depth, max_depth=max_depth, algorithm=algorithm,
         )
-        return [CascadeRunResponse.from_dataclass(r) for r in runs]
+        return [cvg_adapter.cascade_run_storage_to_presentation(_dataclass_to_dict(r)) for r in runs]
 
     @app.get(
         "/api/cascade/runs",
