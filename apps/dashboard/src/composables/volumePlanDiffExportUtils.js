@@ -238,6 +238,13 @@ export function buildVolumePlanDiffMailto(changes, preview, uiProfile, recipient
   return `mailto:${to}?subject=${subject}&body=${body}`;
 }
 
+/**
+ * Encode a volume-plan-diff share token for URL hash.
+ * @param {object} payload - The volume-plan-diff payload (shape from buildVolumePlanDiffExportPayload)
+ * @param {unknown} draftVolumes - Optional draft volumes (currently a no-op placeholder; null when share-link apply is disabled)
+ * @param {Record<string, string> | null} collabNotes - Optional collab-notes map (null when no notes)
+ * @returns {string} URL-safe base64-encoded token
+ */
 export function encodeVolumePlanDiffShareToken(payload, draftVolumes = null, collabNotes = null) {
   const hasDraft = Boolean(draftVolumes?.length);
   const normalizedNotes = collabNotes && Object.keys(collabNotes).length
