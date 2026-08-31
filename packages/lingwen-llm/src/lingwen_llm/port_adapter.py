@@ -35,8 +35,16 @@ class LLMServiceAdapter:
     """Async facade matching ``LLMServicePort`` Protocol.
 
     Wraps the concrete LLM service singleton by default; accepts an
-    injected service for tests. Async methods route through
-    ``asyncio.to_thread`` so sync concrete I/O doesn't block the event loop.
+    injected service for tests.
+
+    Async methods route through ``asyncio.to_thread`` so sync concrete I/O
+    doesn't block the event loop. ``execute_stream`` is the exception:
+    it iterates the sync concrete generator directly on the event loop
+    thread (acceptable for current scale; p95 stream latency ~9.52s per
+    Phase 120 benchmark means at most one event-loop block per active
+    streaming request). Future optimization could push the iteration to
+    a thread via asyncio.Queue if multi-stream concurrency becomes a
+    concern.
     """
 
     def __init__(self, service: Any = None) -> None:
@@ -60,7 +68,11 @@ class LLMServiceAdapter:
         return await asyncio.to_thread(self._service.execute, task)
 
     async def execute_stream(self, task: LLMTask) -> AsyncIterator[str]:
-        """Stream an LLM task, yielding text chunks as an async generator."""
+        """Stream an LLM task, yielding text chunks as an async generator.
+
+        Iterates the sync concrete generator directly — does NOT use
+        ``asyncio.to_thread``. See class docstring for rationale.
+        """
         for chunk in self._service.execute_stream(task):
             yield chunk
 

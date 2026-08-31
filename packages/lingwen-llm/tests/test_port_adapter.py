@@ -93,17 +93,28 @@ def test_adapter_uses_registered_factory_when_no_service() -> None:
 # ---------------------------------------------------------------------------
 
 
+class _FakeService:
+    """Minimal sync service stub for async adapter tests.
+
+    Phase 126 v16.5 #N.12: shared across 3 async tests (extracted per code review
+    I2 — DRY from duplicated inline classes).
+    """
+
+    def execute(self, task):
+        return "ok"
+
+    def execute_stream(self, task):
+        yield "a"
+        yield "b"
+
+
 @pytest.mark.asyncio
 async def test_execute_is_async_returns_string():
     """Phase 126 v16.5 #N.12: LLMServiceAdapter.execute is async, returns str (NOT awaitable)."""
     from lingwen_llm.port_adapter import LLMServiceAdapter
     from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
-    class FakeService:
-        def execute(self, task):
-            return "ok"
-
-    adapter = LLMServiceAdapter(service=FakeService())
+    adapter = LLMServiceAdapter(service=_FakeService())
     task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="x")
     assert inspect.iscoroutinefunction(adapter.execute)
     assert await adapter.execute(task) == "ok"
@@ -115,12 +126,7 @@ async def test_execute_stream_is_async_generator():
     from lingwen_llm.port_adapter import LLMServiceAdapter
     from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
-    class FakeService:
-        def execute_stream(self, task):
-            yield "a"
-            yield "b"
-
-    adapter = LLMServiceAdapter(service=FakeService())
+    adapter = LLMServiceAdapter(service=_FakeService())
     task = LLMTask(task_type=TaskType.QUALITY_ANALYSIS, prompt="x")
     chunks = []
     async for chunk in adapter.execute_stream(task):
@@ -132,12 +138,7 @@ async def test_execute_stream_is_async_generator():
 async def test_generate_is_async():
     """Phase 126 v16.5 #N.12: LLMServiceAdapter.generate is async (legacy API retained)."""
     from lingwen_llm.port_adapter import LLMServiceAdapter
-    from lingwen_shared.contracts.python.llm import LLMTask, TaskType
 
-    class FakeService:
-        def execute(self, task):
-            return "ok"
-
-    adapter = LLMServiceAdapter(service=FakeService())
+    adapter = LLMServiceAdapter(service=_FakeService())
     assert inspect.iscoroutinefunction(adapter.generate)
     assert await adapter.generate(prompt="x", system="y") == "ok"
