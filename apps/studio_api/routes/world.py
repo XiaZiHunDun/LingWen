@@ -215,7 +215,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
     agent_rate_limiter = _AgentRateLimiter(max_calls=5)
 
     @app.post("/api/world/agent/extract-from-chapters")
-    def agent_extract_from_chapters(
+    async def agent_extract_from_chapters(
         request: Request,
         payload: dict = Body(...),
     ):
@@ -241,7 +241,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         ):
             raise HTTPException(400, detail="chapter_texts must be a list[str]")
 
-        proposals = extract_proposals_from_chapters(
+        proposals = await extract_proposals_from_chapters(
             character_slug=character_slug,
             chapter_texts=chapter_texts,
         )
@@ -252,7 +252,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         return {"proposals_created": len(ids), "ids": ids}
 
     @app.post("/api/world/agent/extract-from-prompt")
-    def agent_extract_from_prompt(
+    async def agent_extract_from_prompt(
         request: Request,
         payload: dict = Body(...),
     ):
@@ -276,7 +276,7 @@ def register_world(app: FastAPI, ctx: RoutesContext) -> None:
         if not user_prompt or not isinstance(user_prompt, str):
             raise HTTPException(400, detail="prompt is required")
 
-        proposals = extract_proposals_from_prompt(
+        proposals = await extract_proposals_from_prompt(
             character_slug=character_slug,
             user_prompt=user_prompt,
         )
