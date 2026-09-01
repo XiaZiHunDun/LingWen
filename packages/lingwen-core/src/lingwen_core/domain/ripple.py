@@ -16,6 +16,7 @@ from typing import Any
 
 from lingwen_core.domain.chapter import MentalLine, PhysicalLine
 from lingwen_core.domain.common import KeyPoint, NodeId, Relation
+from lingwen_core.domain.subplot import Plot
 from lingwen_core.ports.storage import DomainEvent
 
 
@@ -150,7 +151,7 @@ class WorldSnapshot:
     physical: PhysicalLine = field(default_factory=lambda: PhysicalLine(ch=0))
     mental: MentalLine = field(default_factory=lambda: MentalLine(ch=0))
     active_ripples: tuple[Ripple, ...] = ()
-    active_subplots: tuple[Any, ...] = ()  # Plot when Task 4 lands; tuple[Any, ...] for now
+    active_subplots: tuple[Plot, ...] = ()
     world_mood: str = "neutral"
     consistency_hash: str = ""
 
@@ -170,7 +171,7 @@ class WorldSnapshot:
             "physical": self.physical.to_dict(),
             "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
-            "active_subplots": [getattr(p, "to_dict", lambda: p)() for p in self.active_subplots],
+            "active_subplots": [p.to_dict() for p in self.active_subplots],
             "world_mood": self.world_mood,
         }
         encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False)
@@ -186,7 +187,7 @@ class WorldSnapshot:
             "physical": self.physical.to_dict(),
             "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
-            "active_subplots": [getattr(p, "to_dict", lambda: p)() for p in self.active_subplots],
+            "active_subplots": [p.to_dict() for p in self.active_subplots],
             "world_mood": self.world_mood,
             "consistency_hash": self.consistency_hash,
         }
