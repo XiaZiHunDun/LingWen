@@ -12,6 +12,9 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from lingwen_core.domain.chapter import PhysicalLine
+from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
+from lingwen_core.domain.ripple import WorldSnapshot
 
 from infra.subplot.data_structures import (
     MAX_ACTIVE_SUBPLOTS,
@@ -20,22 +23,13 @@ from infra.subplot.data_structures import (
     PlotStatus,
     PlotType,
 )
+from infra.subplot.helpers import add_subplot, get_active_subplots, subplots_count
 from infra.subplot.queries import (
     can_open_new_subplot,
     detect_constraint_saturation,
     suggest_subplot_to_close,
 )
 from infra.subplot.registry import PlotRegistry, SubplotLimitExceeded
-from infra.world_model import (
-    KeyPoint,
-    NodeId,
-    NodeType,
-    PhysicalLine,
-    WorldSnapshot,
-    add_subplot,
-    get_active_subplots,
-    subplots_count,
-)
 
 
 def _lin_chen() -> KeyPoint:
