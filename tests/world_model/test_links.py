@@ -20,6 +20,7 @@ from dataclasses import replace
 from typing import Optional, Protocol
 
 import pytest
+from lingwen_core.domain.ripple import Ripple, RippleState
 
 from infra.subplot.data_structures import (
     Plot,
@@ -27,7 +28,6 @@ from infra.subplot.data_structures import (
     PlotType,
 )
 from infra.subplot.registry import PlotRegistry
-from infra.world_model.data_structures import Ripple, RippleState
 from infra.world_model.links import (
     LinkAction,
     apply_ripple_resolution,
