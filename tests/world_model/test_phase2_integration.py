@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState, WorldSnapshot
+from lingwen_core.domain.subplot import Plot, PlotStatus, PlotType
 from lingwen_prompt import (
     ExtractedResolution,
     ExtractedRipple,
@@ -27,15 +29,11 @@ from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowCh
 from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
 from lingwen_quality.consistency.engine.data_structures import IssueSeverity
 
-from infra.subplot.data_structures import Plot, PlotStatus, PlotType
 from infra.subplot.registry import PlotRegistry
 from infra.world_model import (
     LinkAction,
-    ResolutionMode,
-    Ripple,
     RippleEngine,
     RippleRegistry,
-    RippleState,
     apply_ripple_resolution,
     diff_snapshots,
     link_subplot_to_ripple,
@@ -148,8 +146,6 @@ class TestE2E_SnapshotDiff:
     """SnapshotDiff 检测两章世界状态变化"""
 
     def test_diff_ripple_state_change(self, tmp_path):
-        from infra.world_model.data_structures import MentalLine, PhysicalLine, WorldSnapshot
-
         prev = WorldSnapshot(
             snapshot_id="s1",
             chapter=100,
@@ -173,8 +169,6 @@ class TestE2E_SnapshotDiff:
         assert state_fc[2] == RippleState.RESOLVED
 
     def test_diff_add_new_ripple(self, tmp_path):
-        from infra.world_model.data_structures import MentalLine, PhysicalLine, WorldSnapshot
-
         prev = WorldSnapshot(
             snapshot_id="s1", chapter=100, timestamp=datetime(2026, 6, 4),
         )
