@@ -209,6 +209,9 @@ class WorldSnapshot:
             active_ripples=tuple(
                 Ripple.from_dict(rd) for rd in d.get("active_ripples", [])
             ),
+            active_subplots=tuple(
+                Plot.from_dict(pd) for pd in d.get("active_subplots", [])
+            ),
             world_mood=d.get("world_mood", "neutral"),
             consistency_hash=d.get("consistency_hash", ""),  # recomputed in __post_init__
         )

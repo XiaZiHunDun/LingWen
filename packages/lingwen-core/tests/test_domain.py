@@ -390,6 +390,39 @@ def test_world_snapshot_from_dict_backward_compat_no_active_subplots():
     assert snap.active_subplots == ()
 
 
+def test_world_snapshot_roundtrip_with_active_subplots():
+    """Regression test for from_dict active_subplots loading (Phase 19+ Sub1 fix).
+
+    A WorldSnapshot with a non-empty active_subplots tuple must round-trip cleanly:
+    to_dict writes the field, from_dict reads it back. Originally surfaced during
+    Task 7 spec review — Task 6 had tightened the annotation but missed updating
+    from_dict to load the field.
+    """
+    from dataclasses import replace
+    from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
+    from lingwen_core.domain.subplot import Plot, PlotPurpose, PlotStatus, PlotType
+
+    snap1 = WorldSnapshot(snapshot_id="snap:rt", chapter=15, timestamp=datetime(2026, 4, 1))
+    plot = Plot(
+        plot_id="p:rt",
+        type=PlotType.SUBPLOT,
+        title="roundtrip test",
+        status=PlotStatus.ACTIVE,
+        purpose=PlotPurpose.MYSTERY,
+        birth_ch=5,
+        active_ch_range=(5, 20),
+    )
+    snap1_with_plot = replace(snap1, active_subplots=(plot,))
+
+    d = snap1_with_plot.to_dict()
+    snap2 = WorldSnapshot.from_dict(d)
+    assert len(snap2.active_subplots) == 1
+    assert snap2.active_subplots[0].plot_id == "p:rt"
+    assert snap2.active_subplots[0].purpose == PlotPurpose.MYSTERY
+
+
 # ─────────────────────────────────────────────────────────
 # domain init re-exports
 # ─────────────────────────────────────────────────────────
