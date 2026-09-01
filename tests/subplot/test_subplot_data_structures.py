@@ -14,8 +14,8 @@ from __future__ import annotations
 import dataclasses
 
 import pytest
-
-from infra.subplot.data_structures import (
+from lingwen_core.domain.common import NodeId, NodeType
+from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
     PlotPurpose,
@@ -25,8 +25,7 @@ from infra.subplot.data_structures import (
 
 
 def _lin_chen_id():
-    """复用 world_model.NodeId 构造 protagonist_link"""
-    from infra.world_model import NodeId, NodeType
+    """复用 domain.common.NodeId 构造 protagonist_link"""
     return NodeId(NodeType.CHARACTER, "林尘")
 
 
