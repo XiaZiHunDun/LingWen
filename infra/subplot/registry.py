@@ -20,13 +20,14 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Optional
 
-from infra.subplot.data_structures import (
+from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
     PlotPurpose,
     PlotStatus,
     PlotType,
 )
+
 from infra.subplot.lifecycle import (
     CLOSING_MIN_CHAPTERS,
     can_transition,
