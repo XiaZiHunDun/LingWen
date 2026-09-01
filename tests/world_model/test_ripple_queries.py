@@ -8,11 +8,8 @@ Doc 1 §3.4 核心 query:
 from __future__ import annotations
 
 import pytest
+from lingwen_core.domain.ripple import Ripple, RippleState
 
-from infra.world_model.data_structures import (
-    Ripple,
-    RippleState,
-)
 from infra.world_model.lifecycle import (
     MAX_OPEN_RIPPLOTS,
     RESOLUTION_GRACE_CH,
