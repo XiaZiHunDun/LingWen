@@ -20,17 +20,10 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from lingwen_core.domain.chapter import MentalLine, PhysicalLine
+from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
+from lingwen_core.domain.ripple import Ripple, RippleState, WorldSnapshot
 
-from infra.world_model.data_structures import (
-    KeyPoint,
-    MentalLine,
-    NodeId,
-    NodeType,
-    PhysicalLine,
-    Ripple,
-    RippleState,
-    WorldSnapshot,
-)
 from infra.world_model.snapshot_diff import (
     ChangeKind,
     EntityKind,
