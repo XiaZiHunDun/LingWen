@@ -1,6 +1,5 @@
 {
   "entry": [
-    "src/main.js",
     "src/router/index.js"
   ],
   "project": [
@@ -15,7 +14,6 @@
     "tests/visual-audit/ui-metrics.spec.js",
     "src/composables/index.ts",
     "src/composables/useDashboardNav.js",
-    "src/composables/useDevice.js",
     "src/composables/useWidgetRegistry.js",
     "tests/e2e/write-workspace.spec.ts",
     "src/config/creatorPanelMatrix.js",
