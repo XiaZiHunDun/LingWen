@@ -11,7 +11,7 @@
 - 返回结构化的 ReviewResult，包含发现项和建议修复
 
 Usage:
-    from infra.agent_system.reviewer import ReviewerSession, review_chapter
+    from lingwen_core.agents.agents.reviewer import ReviewerSession, review_chapter
 
     reviewer = ReviewerSession(router=review_router)
     result = reviewer.review(chapter_content, story_contract, world_model)
