@@ -20,10 +20,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from infra.world_model.data_structures import (
-    Ripple,
-    RippleState,
-)
+from lingwen_core.domain.ripple import Ripple, RippleState
+
 from infra.world_model.lifecycle import MAX_OPEN_RIPPLOTS
 
 
