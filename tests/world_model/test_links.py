@@ -21,12 +21,12 @@ from typing import Optional, Protocol
 
 import pytest
 from lingwen_core.domain.ripple import Ripple, RippleState
-
 from lingwen_core.domain.subplot import (
     Plot,
     PlotStatus,
     PlotType,
 )
+
 from infra.subplot.registry import PlotRegistry
 from infra.world_model.links import (
     LinkAction,

@@ -15,7 +15,6 @@ import pytest
 from lingwen_core.domain.chapter import PhysicalLine
 from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
 from lingwen_core.domain.ripple import WorldSnapshot
-
 from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
@@ -23,6 +22,7 @@ from lingwen_core.domain.subplot import (
     PlotStatus,
     PlotType,
 )
+
 from infra.subplot.helpers import add_subplot, get_active_subplots, subplots_count
 from infra.subplot.queries import (
     can_open_new_subplot,

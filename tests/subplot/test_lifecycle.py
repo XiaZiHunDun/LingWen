@@ -12,13 +12,13 @@ Phase 1.2.c — RED tests for state machine + 7-stage model.
 from __future__ import annotations
 
 import pytest
-
 from lingwen_core.domain.subplot import (
     Plot,
     PlotPurpose,
     PlotStatus,
     PlotType,
 )
+
 from infra.subplot.lifecycle import (
     CLOSING_MIN_CHAPTERS,
     STAGE_TYPICAL_RANGES,

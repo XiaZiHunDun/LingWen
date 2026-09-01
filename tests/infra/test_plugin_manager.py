@@ -11,7 +11,6 @@ After fix: load_plugins() correctly discovers providers via canonical
 (minimax, anthropic, openai).
 """
 import pytest
-
 from lingwen_llm.providers.plugin_manager import PluginManager
 
 

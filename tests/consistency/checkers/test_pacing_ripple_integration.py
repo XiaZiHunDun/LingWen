@@ -16,6 +16,9 @@ from __future__ import annotations
 from typing import Optional, Protocol
 
 import pytest
+
+# behavior constants/services stay in infra.world_model.*
+from lingwen_core.domain.ripple import Ripple, RippleState
 from lingwen_quality.consistency.checkers.pacing_checker import PacingChecker
 from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
@@ -23,8 +26,6 @@ from lingwen_quality.consistency.engine.data_structures import (
     IssueSeverity,
 )
 
-# behavior constants/services stay in infra.world_model.*
-from lingwen_core.domain.ripple import Ripple, RippleState
 from infra.world_model.registry import RippleRegistry
 
 # === Helpers ===

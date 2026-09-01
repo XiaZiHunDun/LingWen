@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Optional, Protocol
 
 import pytest
+from lingwen_core.domain.ripple import Ripple, RippleState
 from lingwen_quality.consistency.checkers.foreshadow_checker import ForeshadowChecker
 from lingwen_quality.consistency.engine.data_structures import (
     CheckerType,
@@ -23,7 +24,6 @@ from lingwen_quality.consistency.engine.data_structures import (
     IssueSeverity,
 )
 
-from lingwen_core.domain.ripple import Ripple, RippleState
 from infra.world_model.lifecycle import RESOLUTION_GRACE_CH
 from infra.world_model.registry import RippleRegistry
 

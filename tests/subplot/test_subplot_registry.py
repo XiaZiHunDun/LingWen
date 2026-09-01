@@ -14,7 +14,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
@@ -22,6 +21,7 @@ from lingwen_core.domain.subplot import (
     PlotStatus,
     PlotType,
 )
+
 from infra.subplot.registry import (
     DuplicatePlotIdError,
     PlotNotFoundError,

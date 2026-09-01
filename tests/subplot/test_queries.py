@@ -11,7 +11,6 @@ Phase 1.2.g — RED tests for 3 query functions.
 from __future__ import annotations
 
 import pytest
-
 from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
@@ -19,6 +18,7 @@ from lingwen_core.domain.subplot import (
     PlotStatus,
     PlotType,
 )
+
 from infra.subplot.queries import (
     can_open_new_subplot,
     detect_constraint_saturation,

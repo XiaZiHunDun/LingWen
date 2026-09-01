@@ -20,7 +20,6 @@ Symbols verified (canonical source: docs/superpowers/specs/2026-09-01-phase-126-
 import importlib
 import sys
 
-
 # Modules that must be importable (cheap existence check, no symbol probing)
 REQUIRED_MODULES = [
     "lingwen_quality",
