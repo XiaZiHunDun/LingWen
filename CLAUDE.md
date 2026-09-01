@@ -168,12 +168,12 @@ Tests: 583 backend (8 llm pkg + 85 shared pkg [79+6 NEW] + 73 creator pkg + 392 
 7. **Atomic 1-task-per-commit scales to medium scope** — 6 carryover items × ~1 commit each = 6 commits. Easy to review, easy to revert.
 
 **Carryover to v16.5 #N.15+**:
-- `lingwen_quality` module missing (15 tests infra/, v15.7.1 debt)
 - `plugin_manager.py:_discover_internal_providers` module path bug (v15.7.1 debt)
 - knip broader cleanup: composables/index.ts 60+ unused exports + useDashboardNav + useDevice + useWidgetRegistry + creatorPanelMatrix + tests/visual-audit + fn-core/ unused files (~30-50 commits)
 - knip "Unlisted binaries" + "Unused devDependencies" (config issue / likely knip false positives)
 - `@tiptap/pm` flagged as unused dep — peer dep, do NOT delete
 - **N.14 RESOLVED carries**: pre-existing `has_body` drift (closed via T3); knip 2 unused exports (closed via T5)
+- **`lingwen_quality` verified + guarded (v16.5 #N.16 closure)**: Package `packages/lingwen-quality/` confirmed importable; `tooling/hygiene/check_lingwen_quality_importable.py` CI guard prevents "module missing" claim from re-emerging.
 
 > **更新 (2026-08-31)**: Phase 126 v16.5 #N.12 闭环 — Async Port Conformance — 22 commits (`a6f628ec`...handoff, Part A: 3 commits foundation + Part B: 1 commit creator/agent + Part C: 2 commits infra/prose_judge + infra/agent_extractors + Part D: 13 commits tools migration (5 modern + 2 llm_quality + 4 legacy) + Part E: handoff):
 - **Part A (3 commits)** Foundation: `LLMServicePort` Protocol async rewrite (uses `async def execute(task: LLMTask) -> str` + `async def execute_stream(task: LLMTask) -> AsyncIterator[str]` + `def parse_json_response(str) -> Any` + `def is_available() -> bool`) + drop unused `TaskSpec` + `LLMResult` from `lingwen_shared.ports` + TS not affected (Python only). `LLMServiceAdapter` async rewrite: `execute` uses `await asyncio.to_thread(self._service.execute, task)` (sync concrete runs in threadpool, no event loop blocking); `execute_stream` is `async def` generator wrapping sync concrete iterator (acceptable for current scale per Phase 120 p95 ~9.52s benchmark); `generate` async (wraps prompt into `LLMTask` then awaits `execute`); `parse_json_response` + `is_available` + `provider_name` stay sync. 3 NEW async tests with `@pytest.mark.asyncio` + `inspect.iscoroutinefunction` assertions + `_FakeService` stub class. Cleanup commit: extracted `_FakeService` to module-level helper (DRY 3 inline duplicates) + accurate `execute_stream` docstring.
