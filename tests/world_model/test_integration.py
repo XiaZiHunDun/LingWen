@@ -7,16 +7,14 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+from lingwen_core.domain.chapter import PhysicalLine
+from lingwen_core.domain.common import KeyPoint, NodeId, NodeType, Relation
+from lingwen_core.domain.ripple import WorldSnapshot
+
 from infra.world_model import (
     ContradictionKind,
-    KeyPoint,
     KeyPointGraph,
-    NodeId,
-    NodeType,
-    PhysicalLine,
-    Relation,
     SnapshotStore,
-    WorldSnapshot,
 )
 
 
@@ -90,7 +88,10 @@ def test_end_to_end_one_chapter(tmp_path: Path):
     assert store.list_chapters() == [1]
 
     # 3. 读出 (含 integrity 校验)
-    loaded = store.load(1, verify_integrity=True)
+    # SnapshotStore 内部使用 infra 实现的 WorldSnapshot;通过 to_dict/from_dict
+    # 重建为域对象,使得 == 比较在同一类下进行。
+    loaded_raw = store.load(1, verify_integrity=True)
+    loaded = WorldSnapshot.from_dict(loaded_raw.to_dict())
     assert loaded == snap
 
     # 4. 扫描矛盾
