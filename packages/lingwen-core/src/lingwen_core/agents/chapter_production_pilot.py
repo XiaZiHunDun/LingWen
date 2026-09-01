@@ -28,7 +28,7 @@ from lingwen_core.agents.chapter_production_outline import (
     resolve_production_initial_inputs,
 )
 from lingwen_core.agents.internal.incremental_backfill import (
-    incremental_backfill_enabled,  # TODO(Phase18): domain entity
+    incremental_backfill_enabled,
 )
 from lingwen_memory.embeddings.factory import describe_embedding_requirements
 

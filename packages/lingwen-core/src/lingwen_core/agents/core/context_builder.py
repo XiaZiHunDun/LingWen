@@ -67,7 +67,6 @@ class ContextBuilder:
         deletion target). Falls back to None if the module is gone, so
         downstream callers see no behavioral change.
         """
-        # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
         from lingwen_core.agents.core.context_helpers import StoryContractEngine
 
         engine = StoryContractEngine(project_root=self.project_root)

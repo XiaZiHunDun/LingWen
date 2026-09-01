@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from lingwen_core.agents.internal.incremental_backfill import (  # TODO(Phase18): domain entity
+from lingwen_core.agents.internal.incremental_backfill import (
     backfill_stats_to_dict,
     extract_chapter_num,
 )

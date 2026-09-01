@@ -1,6 +1,4 @@
-"""TODO(Phase18): replace with proper domain entity from packages/lingwen-domain.
-
-Phase 17.0 local stub for the story contract engine that
+"""Phase 17.0 local stub for the story contract engine that
 ``ContextBuilder._get_story_contract`` consumed via ``infra.story_contracts``.
 
 This module preserves the same surface that ``context_builder`` expects

@@ -8,7 +8,6 @@ from .base import Command
 
 
 def _get_storage():
-    # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
     from infra.cross_volume.storage import RippleStorage
     # Phase 13.0 T4 M4: resolve via $LINGWEN_PROJECT_ROOT (preferred) or CWD fallback
     return RippleStorage(db_path=resolve_project_db_path())

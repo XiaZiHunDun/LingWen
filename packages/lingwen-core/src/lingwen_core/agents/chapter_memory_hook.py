@@ -6,7 +6,7 @@ import os
 from typing import Any, Literal, Mapping
 
 from lingwen_core.agents.internal.incremental_backfill import (
-    extract_chapter_num,  # TODO(Phase18): domain entity
+    extract_chapter_num,
 )
 
 logger = logging.getLogger(__name__)

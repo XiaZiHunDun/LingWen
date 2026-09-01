@@ -32,7 +32,6 @@ class RippleScanCommand(Command):
         return self._run_calibrate(options)
 
     def _run_calibrate(self, options: RippleScanOptions) -> int:
-        # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
         from infra.cross_volume.scanner_calibration import (
             build_calibration_feedback,
             format_calibration_report,
@@ -71,7 +70,6 @@ class RippleScanCommand(Command):
     @staticmethod
     def _scan_chapter_from_fixtures(fixture_dir: Path, chapter_id: int) -> list:
         """Build nodes via LLMScanner + mock router (0 real LLM)."""
-        # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
         from infra.cross_volume.llm_cache import LLMCache
         from infra.cross_volume.llm_scanner import LLMScanner
 

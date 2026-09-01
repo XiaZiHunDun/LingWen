@@ -23,7 +23,6 @@ DEFAULT_RIPPLE_DB = Path(".state/ripple.db")
 
 def _get_storage():
     """Phase 9.18: 1:1 with Phase 9.14 ripple_rollback pattern (lazy import)."""
-    # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
     from infra.cross_volume.storage import RippleStorage
     return RippleStorage(db_path=DEFAULT_RIPPLE_DB)
 

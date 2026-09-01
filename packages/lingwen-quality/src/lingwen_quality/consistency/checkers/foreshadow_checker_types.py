@@ -15,8 +15,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
-# TODO(Phase18): Replace infra.world_model with proper domain entity (Story / Ripple)
-# in packages/lingwen-quality (Phase 17.9). Tracked in plan §Task 17.9 + 18.1.
 # Lazy-imported so that the module remains importable even if infra.world_model is not
 # available (e.g. when only lingwen-quality is installed standalone).
 try:  # pragma: no cover - optional legacy import

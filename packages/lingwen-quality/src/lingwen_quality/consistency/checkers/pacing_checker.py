@@ -18,11 +18,9 @@ from .base_checker import BaseChecker
 from .text_utils import split_chinese_sentences
 
 if TYPE_CHECKING:
-    # TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
     from lingwen_core.domain.ripple import Ripple
 
 
-# TODO(Phase18): replace with proper domain entity from packages/lingwen-domain
 @dataclass(frozen=True)
 class _RippleStub:
     ripple_id: str

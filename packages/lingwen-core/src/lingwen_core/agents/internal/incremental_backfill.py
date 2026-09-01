@@ -1,6 +1,4 @@
-"""TODO(Phase18): replace with proper domain entity from packages/lingwen-domain.
-
-Phase 17.0 local stub for `infra.cross_volume.incremental_backfill`.
+"""Phase 17.0 local stub for `infra.cross_volume.incremental_backfill`.
 The three functions below provide the minimal runtime contract that
 chapter_production_pilot, production_summary, and chapter_memory_hook
 depend on, so they can decouple from the legacy cross_volume module
