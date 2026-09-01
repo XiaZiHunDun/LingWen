@@ -1,6 +1,6 @@
 """角色能动性检测器测试"""
 
-from infra.consistency.checkers.character_agency import CharacterAgencyChecker
+from lingwen_quality.consistency.checkers.character_agency import CharacterAgencyChecker
 
 
 class TestCharacterAgencyChecker:
