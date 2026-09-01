@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "19.2"  # Phase 19+ Sub1 polish (Shim indirection removal: 9 infra/{world_model,subplot} behavior services + 5 test consumer files migrated from infra.{world_model,subplot}.data_structures.X shim path to lingwen_core.domain.X canonical; 11 source commits on branch phase-19-sub1-polish; all 16 entities is-identity; 0 shim indirection remaining in production code; new invariants #41-#42 — behavior services import entities directly from canonical)
+version: "19.3"  # Phase 19+ Sub2 (infra/consistency shim cleanup: 5 test files + 1 script migrated from infra.consistency.* shim path to lingwen_quality.consistency.* canonical; 8 source commits on branch phase-19-sub2; CLOSED pre-existing latent bugs: test_creative_whitelist.py 21 errors + 6 fails → 26 pass (shim's NotImplementedError legacy stubs replaced by canonical full impl), scripts/ci_baseline_check.py had broken import (infra.consistency.checker_feedback didn't exist; try/except silently no-op'd); actual scope was 6 files NOT "30+ consumers" as Phase 18 carryover claimed — verify-before-design lesson re-confirmed; new invariant #43 — infra/consistency/ is PHASE-COMPAT shim with 0 remaining consumers in our codebase)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
