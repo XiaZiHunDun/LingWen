@@ -1,6 +1,6 @@
 """物品连续性检查器测试"""
 
-from infra.consistency.checkers.item_checker import ItemChecker, ItemState
+from lingwen_quality.consistency.checkers.item_checker import ItemChecker, ItemState
 
 
 class TestItemState:
