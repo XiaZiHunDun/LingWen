@@ -16,14 +16,9 @@ Doc 1 §3.4 — Ripple 传播/衰减/平复 6 方法:
 from __future__ import annotations
 
 import pytest
+from lingwen_core.domain.common import NodeId, NodeType
+from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState
 
-from infra.world_model.data_structures import (
-    NodeId,
-    NodeType,
-    ResolutionMode,
-    Ripple,
-    RippleState,
-)
 from infra.world_model.engine import RippleEngine
 
 # === Stub registry (解耦 RippleRegistry) ===
