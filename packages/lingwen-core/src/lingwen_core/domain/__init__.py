@@ -12,6 +12,7 @@ Phase 18.1 — Domain 实体下沉。
 - character: Character / CharacterStatus
 - foreshadow: Foreshadow + 伏笔事件
 - ripple: Ripple / RippleState / ResolutionMode / WorldSnapshot + 涟漪事件
+- subplot: Plot / PlotType / PlotPurpose / PlotStatus + MAX_ACTIVE_SUBPLOTS
 """
 from __future__ import annotations
 
@@ -38,6 +39,13 @@ from lingwen_core.domain.ripple import (
     RippleState,
     RippleStateChangedEvent,
     WorldSnapshot,
+)
+from lingwen_core.domain.subplot import (
+    MAX_ACTIVE_SUBPLOTS,
+    Plot,
+    PlotPurpose,
+    PlotStatus,
+    PlotType,
 )
 from lingwen_core.domain.volume import Volume, VolumeCreatedEvent
 
@@ -72,4 +80,10 @@ __all__ = [
     "RippleStateChangedEvent",
     "RippleResolvedEvent",
     "WorldSnapshot",
+    # Subplot
+    "Plot",
+    "PlotType",
+    "PlotPurpose",
+    "PlotStatus",
+    "MAX_ACTIVE_SUBPLOTS",
 ]
