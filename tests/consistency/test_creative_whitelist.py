@@ -1,7 +1,6 @@
 """创意豁免白名单测试"""
 
 import pytest
-
 from lingwen_quality.consistency.creative_whitelist import (
     DIAMOND,
     DOWNGRADED_LEVELS,
