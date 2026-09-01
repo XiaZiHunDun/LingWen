@@ -87,29 +87,14 @@ from .snapshot_store import (
 )
 
 
-def subplots_count(snapshot: "WorldSnapshot") -> int:
-    """统计 WorldSnapshot 中 active subplot 数 (Phase 1.2 工具方法)"""
-    return len(snapshot.active_subplots)
-
-
-def add_subplot(snapshot: "WorldSnapshot", plot) -> "WorldSnapshot":
-    """向 WorldSnapshot 添加一个 subplot,返回新快照 (不可变)
-
-    Args:
-        snapshot: 原快照
-        plot: Plot 对象 (来自 infra.subplot)
-
-    Returns:
-        含新 subplot 的新 WorldSnapshot
-    """
-    from dataclasses import replace
-    return replace(snapshot, active_subplots=(*snapshot.active_subplots, plot))
-
-
-def get_active_subplots(snapshot: "WorldSnapshot"):
-    """返回 WorldSnapshot 中所有 status == ACTIVE 的 subplot (Phase 1.2 工具方法)"""
-    from infra.subplot.data_structures import PlotStatus
-    return tuple(p for p in snapshot.active_subplots if p.status == PlotStatus.ACTIVE)
+# Phase 1.2 helpers — moved to infra.subplot.helpers (Phase 19+ Sub1 Task 5).
+# Re-exported here for backward compat with existing consumers
+# (`from infra.world_model import add_subplot, ...`).
+from infra.subplot.helpers import (  # noqa: E402, F401
+    add_subplot,
+    get_active_subplots,
+    subplots_count,
+)
 
 
 __all__ = [
