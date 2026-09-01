@@ -259,6 +259,138 @@ def test_ripple_state_changed_event():
 
 
 # ─────────────────────────────────────────────────────────
+# ripple: WorldSnapshot.to_dict / from_dict / physical/mental / active_subplots
+# Phase 19+ Sub1
+# ─────────────────────────────────────────────────────────
+
+
+def test_world_snapshot_to_dict_minimal():
+    from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    snap = WorldSnapshot(
+        snapshot_id="snap:1",
+        chapter=10,
+        timestamp=datetime(2026, 1, 1),
+    )
+    d = snap.to_dict()
+    assert d["snapshot_id"] == "snap:1"
+    assert d["chapter"] == 10
+    assert d["timestamp"] == "2026-01-01T00:00:00"
+    assert d["physical"]["ch"] == 0
+    assert d["mental"]["ch"] == 0
+    assert d["active_ripples"] == []
+    assert d["active_subplots"] == []
+    assert d["world_mood"] == "neutral"
+    assert d["consistency_hash"] == snap.consistency_hash
+
+
+def test_world_snapshot_from_dict_minimal():
+    from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    d = {
+        "snapshot_id": "snap:2",
+        "chapter": 11,
+        "timestamp": "2026-02-01T12:30:00",
+        "nodes": {},
+        "relations": [],
+        "physical": {"ch": 11, "actions": [], "locations": [], "events": [], "constraints": []},
+        "mental": {"ch": 11, "thoughts": [], "emotions": {}, "arc_progress": {}, "growth_signals": []},
+        "active_ripples": [],
+        "active_subplots": [],
+        "world_mood": "neutral",
+        "consistency_hash": "",
+    }
+    snap = WorldSnapshot.from_dict(d)
+    assert snap.snapshot_id == "snap:2"
+    assert snap.chapter == 11
+    assert snap.timestamp == datetime(2026, 2, 1, 12, 30, 0)
+    assert snap.physical.ch == 11
+
+
+def test_world_snapshot_roundtrip_equality():
+    from datetime import datetime
+
+    from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    snap = WorldSnapshot(
+        snapshot_id="snap:3",
+        chapter=12,
+        timestamp=datetime(2026, 3, 1),
+        nodes={
+            NodeId(NodeType.CHARACTER, "alice"): KeyPoint(
+                id=NodeId(NodeType.CHARACTER, "alice"),
+                attrs={"faction": "流浪者"},
+            )
+        },
+    )
+    snap2 = WorldSnapshot.from_dict(snap.to_dict())
+    assert snap2 == snap
+
+
+def test_world_snapshot_physical_mental_defaults():
+    from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    snap = WorldSnapshot(snapshot_id="s", chapter=1, timestamp=datetime(2026, 1, 1))
+    assert snap.physical.ch == 0
+    assert snap.mental.ch == 0
+    assert snap.physical.actions == []
+    assert snap.mental.thoughts == []
+
+
+def test_world_snapshot_physical_mental_serialize():
+    from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    snap = WorldSnapshot(
+        snapshot_id="s", chapter=5, timestamp=datetime(2026, 1, 1),
+    )
+    d = snap.to_dict()
+    assert "physical" in d
+    assert "mental" in d
+    assert d["physical"]["ch"] == 0
+    assert d["mental"]["ch"] == 0
+    snap2 = WorldSnapshot.from_dict(d)
+    assert snap2.physical.ch == 0
+    assert snap2.mental.ch == 0
+
+
+def test_world_snapshot_active_subplots_default_empty():
+    from datetime import datetime
+
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    snap = WorldSnapshot(snapshot_id="s", chapter=1, timestamp=datetime(2026, 1, 1))
+    assert snap.active_subplots == ()
+
+
+def test_world_snapshot_from_dict_backward_compat_no_active_subplots():
+    """Pre-Phase 1.2 JSON (no active_subplots key) loads cleanly."""
+    from lingwen_core.domain.ripple import WorldSnapshot
+
+    d = {
+        "snapshot_id": "old",
+        "chapter": 1,
+        "timestamp": "2026-01-01T00:00:00",
+        "nodes": {},
+        "relations": [],
+        "physical": {"ch": 1, "actions": [], "locations": [], "events": [], "constraints": []},
+        "mental": {"ch": 1, "thoughts": [], "emotions": {}, "arc_progress": {}, "growth_signals": []},
+        "active_ripples": [],
+        "world_mood": "neutral",
+    }
+    snap = WorldSnapshot.from_dict(d)
+    assert snap.active_subplots == ()
+
+
+# ─────────────────────────────────────────────────────────
 # domain init re-exports
 # ─────────────────────────────────────────────────────────
 
