@@ -68,7 +68,7 @@ def check_false_positive_rate(baseline: dict[str, Any]) -> tuple[bool, str]:
     max_rate = cfg.get("max", 0.20)
     # 从 CheckerFeedback 获取实际数据
     try:
-        from infra.consistency.checker_feedback import get_checker_stats
+        from lingwen_quality.consistency.checker_feedback import get_checker_stats
         stats = get_checker_stats()
         for checker_id, s in stats.items():
             fp_rate = s.get("false_positive_rate", 0) / 100.0
