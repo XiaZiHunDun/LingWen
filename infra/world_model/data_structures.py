@@ -18,14 +18,11 @@ JSON (from_dict 用 .get(key, default) 兜底)。
 
 Phase 19+ Sub1: 本文件所有业务实体 (KeyPoint / Relation / PhysicalLine /
 MentalLine / WorldSnapshot / NodeId / NodeType / Ripple / RippleState /
-ResolutionMode / MAX_OPEN_RIPPLOTS) 全部 canonical re-export from
-``lingwen_core.domain.*``。本文件不再持有任何领域实体定义 — 仅保留
-``PlotStatus`` Enum (轻量枚举,不属于 DDD aggregate 的一部分,放在此处做
-back-compat 给 ``infra.world_model.PlotStatus`` 路径使用)。
+ResolutionMode / MAX_OPEN_RIPPLOTS / PlotStatus) 全部 canonical re-export
+from ``lingwen_core.domain.*``。本文件不再持有任何领域实体定义 — 仅保留
+本文件作为 ``infra.world_model.data_structures`` 路径的 back-compat shim。
 """
 from __future__ import annotations
-
-from enum import Enum
 
 # Phase 19+ Sub1: All domain entities canonical alignment.
 # Re-exports from lingwen_core.domain.* so consumers via
@@ -44,16 +41,7 @@ from lingwen_core.domain.ripple import (
     RippleStateChangedEvent,
     WorldSnapshot,
 )
-
-
-class PlotStatus(str, Enum):
-    DRAFT = "draft"
-    ACTIVE = "active"
-    PAUSED = "paused"
-    CLOSING = "closing"
-    CLOSED = "closed"
-    ABANDONED = "abandoned"
-
+from lingwen_core.domain.subplot import PlotStatus
 
 __all__ = [
     # Common (Phase 1.1)
@@ -74,6 +62,6 @@ __all__ = [
     "RippleResolvedEvent",
     # WorldSnapshot (Phase 1.1 + 1.2 + 19+)
     "WorldSnapshot",
-    # Subplot status enum (infra-local — lightweight, not domain)
+    # Subplot status enum (Phase 19+ Sub1 — re-export from lingwen_core.domain.subplot)
     "PlotStatus",
 ]
