@@ -183,14 +183,13 @@ class WorldSnapshot:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "WorldSnapshot":
-        from lingwen_core.domain.common import KeyPoint, NodeId, Relation
         nodes = {
             NodeId.from_string(s): KeyPoint.from_dict(kd)
             for s, kd in d.get("nodes", {}).items()
         }
         return cls(
-            snapshot_id=d["snapshot_id"],
-            chapter=d["chapter"],
+            snapshot_id=str(d["snapshot_id"]),
+            chapter=int(d["chapter"]),
             timestamp=datetime.fromisoformat(d["timestamp"]),
             nodes=nodes,
             relations=tuple(Relation.from_dict(rd) for rd in d.get("relations", [])),
@@ -198,7 +197,7 @@ class WorldSnapshot:
                 Ripple.from_dict(rd) for rd in d.get("active_ripples", [])
             ),
             world_mood=d.get("world_mood", "neutral"),
-            consistency_hash=d.get("consistency_hash", ""),
+            consistency_hash=d.get("consistency_hash", ""),  # recomputed in __post_init__
         )
 
 
