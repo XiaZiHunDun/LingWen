@@ -3,7 +3,7 @@
 Runs a minimal DECISION-pause workflow (0 real LLM) through:
   run_workflow → pending decision → resume_workflow → completed downstream.
 
-Used by pytest and `python -m infra.agent_system.chapter_golden_path`.
+Used by pytest and `python -m lingwen_core.agents.chapter_golden_path`.
 """
 from __future__ import annotations
 

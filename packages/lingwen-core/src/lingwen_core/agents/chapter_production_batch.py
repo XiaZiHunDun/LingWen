@@ -4,11 +4,11 @@ Gate: LINGWEN_REAL_LLM=1 (same as pilot).
 Stop-on-fail + optional cumulative --budget-usd hard stop.
 
 CLI:
-  python -m infra.agent_system.chapter_production_batch --preflight-only
-  python -m infra.agent_system.chapter_production_batch --dry-run \\
+  python -m lingwen_core.agents.chapter_production_batch --preflight-only
+  python -m lingwen_core.agents.chapter_production_batch --dry-run \\
     --start-chapter 364 --max-chapters 3 --budget-usd 0.15 \\
     --calibrate-from infra/.state/pilot_records/batch-361-363.json
-  python -m infra.agent_system.chapter_production_batch \\
+  python -m lingwen_core.agents.chapter_production_batch \\
     --start-chapter 361 --max-chapters 3 --budget-usd 0.15 \\
     --save-summary infra/.state/pilot_records/batch-361-363.json
 """

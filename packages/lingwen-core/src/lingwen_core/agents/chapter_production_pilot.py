@@ -7,8 +7,8 @@ Recommended env for production pilot:
   LINGWEN_MEMORY_RAG=live|stub
 
 CLI:
-  python -m infra.agent_system.chapter_production_pilot --preflight-only
-  python -m infra.agent_system.chapter_production_pilot --chapter-num 360
+  python -m lingwen_core.agents.chapter_production_pilot --preflight-only
+  python -m lingwen_core.agents.chapter_production_pilot --chapter-num 360
 """
 from __future__ import annotations
 
