@@ -139,17 +139,12 @@ export function useProductExport(deps: ExportDeps): ProductExportReturn {
       return nums;
     }
     if (exportMode.value === 'submission') {
-      // v16.5 #N.13 T2.P1.d: fetchChapters() returns canonical
-      // `ChaptersResponse` from typed wrapper. `ChapterData` does NOT include
-      // `has_body` — backend never sends it — so the filter `c.has_body`
-      // always returns []. Pre-existing data-shape drift documented per
-      // v16.5 #7 §5 lesson 2; runtime behavior unchanged.
+      // v16.5 #N.14 T3: ChapterData Pydantic now declares `has_body: bool`
+      // (default False). Backend data layer at lingwen_creator.content.dashboard
+      // emits per-row; wire response now flows through cleanly. Filter functions
+      // as intended instead of always returning []. Drops 2 `as Array<...>` casts.
       const resp = await fetchChapters();
-      const chapters = resp.chapters as Array<{
-        chapter: number;
-        has_body?: boolean;
-      }>;
-      const nums = chapters
+      const nums = resp.chapters
         .filter((c) => c.has_body)
         .map((c) => c.chapter);
       return defaultSubmissionChapterNums(
@@ -158,13 +153,9 @@ export function useProductExport(deps: ExportDeps): ProductExportReturn {
         exportSubmissionSampleCount.value,
       );
     }
-    // v16.5 #N.13 T2.P1.d: see note above on `has_body` schema drift carryover.
+    // v16.5 #N.14 T3: see note above on has_body field declaration.
     const resp = await fetchChapters();
-    const chapters = resp.chapters as Array<{
-      chapter: number;
-      has_body?: boolean;
-    }>;
-    return chapters
+    return resp.chapters
       .filter((c) => c.has_body)
       .map((c) => c.chapter)
       .sort((a, b) => a - b);

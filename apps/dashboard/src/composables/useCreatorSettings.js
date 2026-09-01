@@ -98,7 +98,6 @@ export function useCreatorSettings(deps) {
   const mergePresetChangelogDiff = shallowRef({ change_count: 0, changes: [] }); // Phase 77: shallowRef — wholesale replacement
   const factoryMergePresetPullConflicts = shallowRef({ conflict_count: 0, conflicts: [] }); // Phase 77: shallowRef — wholesale replacement
   const mergePresetImportPreflight = shallowRef(null); // Phase 77: shallowRef — wholesale replacement
-  const mergePresetFactoryPublishing = ref(false);
   const mergePresetFactoryPulling = ref(false);
   const showImportMergePrefs = ref(false);
   const importMergePrefsJson = ref('');
@@ -410,19 +409,6 @@ export function useCreatorSettings(deps) {
     }
   }
 
-  async function publishMergePresetToFactory() {
-    mergePresetFactoryPublishing.value = true;
-    try {
-      const { publishMergePresetToFactory } = await import('@/api/settings');
-      await publishMergePresetToFactory({});
-      saveMessage.value = '已发布到工厂库';
-    } catch (e) {
-      handleSaveError(e);
-    } finally {
-      mergePresetFactoryPublishing.value = false;
-    }
-  }
-
   async function pullFactoryMergePresets() {
     mergePresetFactoryPulling.value = true;
     try {
@@ -588,9 +574,7 @@ export function useCreatorSettings(deps) {
     onMergePresetPackageChange,
     exportMergePresetPackages,
     showImportMergePresetPackages,
-    mergePresetFactoryPublishing,
     selectedProjectMergePreset,
-    publishMergePresetToFactory,
     mergePresetFactoryPulling,
     factoryMergePresetCount,
     pullFactoryMergePresets,

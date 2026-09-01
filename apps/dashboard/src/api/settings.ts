@@ -430,16 +430,6 @@ export async function resolveFactoryMergePresetConflict(
   return data as CreatorFactoryMergePresetOperationResponse;
 }
 
-export async function publishMergePresetToFactory(
-  req: CreatorMergePresetPublishRequest,
-): Promise<CreatorFactoryMergePresetOperationResponse> {
-  const data = await request(
-    '/creator/settings-docs/merge-preferences/preset-packages/factory/publish',
-    { method: 'POST', body: req },
-  );
-  return data as CreatorFactoryMergePresetOperationResponse;
-}
-
 export async function preflightFactoryMergePresetPull(
   req: CreatorMergePresetFactoryPullRequest,
 ): Promise<CreatorMergePresetFactoryPullPreflightResponse> {

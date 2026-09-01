@@ -382,13 +382,8 @@ export async function syncVolumeTemplates(
 }
 
 // ---------------------------------------------------------------------------
-// /creator/volume-plan/templates/factory (list / publish / pull / delete)
+// /creator/volume-plan/templates/factory (publish / pull / delete)
 // ---------------------------------------------------------------------------
-
-export async function listFactoryVolumeTemplates(): Promise<CreatorVolumeTemplateListResponse> {
-  const data = await request('/creator/volume-plan/templates/factory');
-  return data as CreatorVolumeTemplateListResponse;
-}
 
 export async function publishFactoryVolumeTemplate(
   req: CreatorVolumeFactoryPublishRequest,
