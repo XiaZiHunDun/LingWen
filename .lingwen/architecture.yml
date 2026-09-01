@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "16.5.N7"  # Phase 126 v16.5 #N.7 (DTO Pydantic codegen + SSE stream typing — 5 manual TS DTOs (health/studio/workflows/cvg/decisions) promoted to Pydantic v2 source-of-truth in lingwen_shared, codegen regenerated TS, 5 dashboard-contracts re-export shims replaced manual DTOs (60 interfaces → 0 manual), CreatorAgentStreamEvent discriminated union typed the only remaining Promise<unknown> in apps/dashboard/src/api/ (1 → 0); 27 commits)
+version: "16.5.N17+18"  # Phase 126 v16.5 #N.17 (knip broader cleanup, 47 dead files deleted) + Phase 18 (domain/ports/use_cases shipped in packages/lingwen-core/, 14 TODO(Phase18) markers removed, infra/consistency + infra/agent_system remain as 1-line PHASE-COMPAT shims; sub1 + sub2 + sub3 migrations deferred to Phase 19+ — see handoff)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -227,11 +227,11 @@ design_principles:
   - id: DP-02
     rule: "LLM 调用必须通过 LLMServicePort,不允许 import concrete LLMService 类"
     scope: "any context using LLM"
-    enforcement_phase: 'v16.4 ✓ done (sync facade + grimp-evasion for data types). v16.5 #1 ✓ done (hack eliminated via LLMTask/TaskType relocation to lingwen_shared + factory pattern). v16.5 #6 ✓ done (defense-in-depth hygiene gate expanded to tools/ with 12-file whitelist). v16.5 #N.6 ✓ done (12 whitelisted tools/ files migrated to LLMServiceAdapter; whitelist retired; zero direct infra.llm_service imports in tools/). Future: async port conformance (LLMServiceAdapter → async execute → LLMResult).'
+    enforcement_phase: 'v16.4 ✓ done (sync facade + grimp-evasion for data types). v16.5 #1 ✓ done (hack eliminated via LLMTask/TaskType relocation to lingwen_shared + factory pattern). v16.5 #6 ✓ done (defense-in-depth hygiene gate expanded to tools/ with 12-file whitelist). v16.5 #N.6 ✓ done (12 whitelisted tools/ files migrated to LLMServiceAdapter; whitelist retired; zero direct infra.llm_service imports in tools/). v16.5 #N.12 ✓ done (async execute/execute_stream via asyncio.to_thread). Future: nothing — production-grade.'
   - id: DP-03
     rule: "持久化操作必须通过 StoragePort,不允许 import sqlite3 或硬编码路径"
     scope: "any context with persistence"
-    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth). v16.5 #3 PARTIAL ✓ done (SqliteStorageAdapter concrete impl). v16.5 #4 ✓ done (defense-in-depth hygiene gate). v16.5 #N.0 ✓ done (relocated to packages/lingwen-storage/, back-compat shim). v16.5 #N.1 ✓ done (factory pattern in lingwen_shared). v16.5 #N.3 ✓ done (8 whitelisted files migrated). v16.5 #N.4 ✓ done (21 remaining infra/* files migrated to SqliteStorageAdapter: world_db queries + persistence internals + cross_volume + event_sourcing + reading_power + tools/workflow/lib + migrate_to_sqlite; infra/ sqlite3 import count 22→2 — only exception class identities IntegrityError + Error remain). Future: DTO Pydantic codegen + async port conformance + tools/* migration to LLMServiceAdapter.'
+    enforcement_phase: 'v16.5 #2 ✓ done (defense-in-depth). v16.5 #3 PARTIAL ✓ done (SqliteStorageAdapter concrete impl). v16.5 #4 ✓ done (defense-in-depth hygiene gate). v16.5 #N.0 ✓ done (relocated to packages/lingwen-storage/, back-compat shim). v16.5 #N.1 ✓ done (factory pattern in lingwen_shared). v16.5 #N.3 ✓ done (8 whitelisted files migrated). v16.5 #N.4 ✓ done (21 remaining infra/* files migrated to SqliteStorageAdapter: world_db queries + persistence internals + cross_volume + event_sourcing + reading_power + tools/workflow/lib + migrate_to_sqlite; infra/ sqlite3 import count 22→2 — only exception class identities IntegrityError + Error remain). Future: nothing — production-grade.'
   - id: DP-04
     rule: "跨 context 调用只通过 contract DTO"
     scope: "cross-context"
@@ -244,3 +244,26 @@ design_principles:
     rule: "每个 phase 代码改动收敛到自己 context 内 ≤4 文件"
     scope: "all"
     enforcement_phase: v16.2
+# Phase 18 — domain/ports/use_cases shipped (2026-09-01)
+phase_18:
+  purpose: "Phase 18 — Business Boundary + Interface Cleanup (originally planned 2026-08-14 with 16 tasks; verify-before-design on 2026-09-01 revealed most was already done by Phase 126 v16.0-v16.5 #N.17)"
+  status: partial_close
+  spec: docs/superpowers/specs/2026-09-01-phase-18-business-boundary-cleanup-design.md
+  plan: docs/superpowers/plans/2026-09-01-phase-18-business-boundary-cleanup.md
+  implementation_log: docs/superpowers/handoffs/2026-09-01-phase-18-business-boundary-cleanup-handoff.md
+  notes:
+  -
+      - "Sub1 (infra/world_model → lingwen_core.domain): DEFERRED — WorldSnapshot API divergence (new class lacks to_dict/from_dict + active_subplots + physical/mental fields)"
+      -
+      - "Sub2 (infra/consistency → lingwen_quality.consistency): NO MIGRATION NEEDED — infra/consistency is PHASE-COMPAT shim (1-line re-exports), 30+ consumers still use shim paths transparently"
+      -
+      - "Sub3 (infra/agent_system → lingwen_core.agents.agents): NO MIGRATION NEEDED — same shim pattern as Sub2"
+      -
+      - "Sub-A (remove 14 TODO(Phase18) markers): ✓ DONE — workarounds obsolete since packages/lingwen-core/domain/ exists"
+      -
+      - "Sub-B (architecture.yml update): ✓ DONE — version bumped to 16.5.N17+18, DP-02/DP-03 marked production-grade"
+      -
+      - "Sub-C (handoff): ✓ DONE — handoff doc created with verify-before-design findings + 4 lessons"
+  carryover_to_phase_19:
+      - "infra/world_model → lingwen_core.domain migration (Sub1): needs to_dict/from_dict + active_subplots + physical/mental fields added to lingwen_core.domain.ripple.WorldSnapshot"
+      - "infra/consistency + infra/agent_system bulk consumer migration (Sub2/Sub3): 30+ files — bulk rename + delete shim directories"
