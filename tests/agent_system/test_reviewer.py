@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra.agent_system.reviewer import (
+from lingwen_core.agents.agents.reviewer import (
     MAX_REVIEW_CYCLES,
     STOP_THRESHOLD,
     ReviewerSession,
