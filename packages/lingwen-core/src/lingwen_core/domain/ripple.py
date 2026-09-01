@@ -14,6 +14,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from lingwen_core.domain.chapter import MentalLine, PhysicalLine
 from lingwen_core.domain.common import KeyPoint, NodeId, Relation
 from lingwen_core.ports.storage import DomainEvent
 
@@ -146,6 +147,8 @@ class WorldSnapshot:
     timestamp: datetime
     nodes: dict[NodeId, KeyPoint] = field(default_factory=dict)
     relations: tuple[Relation, ...] = ()
+    physical: PhysicalLine = field(default_factory=lambda: PhysicalLine(ch=0))
+    mental: MentalLine = field(default_factory=lambda: MentalLine(ch=0))
     active_ripples: tuple[Ripple, ...] = ()
     world_mood: str = "neutral"
     consistency_hash: str = ""
@@ -159,10 +162,12 @@ class WorldSnapshot:
         object.__setattr__(self, "consistency_hash", self.compute_consistency_hash())
 
     def compute_consistency_hash(self) -> str:
-        """基于 nodes + relations + ripples 计算一致性 hash"""
+        """基于 nodes + relations + lines + ripples 计算一致性 hash"""
         payload = {
             "nodes": {str(k): v.to_dict() for k, v in sorted(self.nodes.items(), key=lambda x: str(x[0]))},
             "relations": [r.to_dict() for r in sorted(self.relations, key=lambda r: (str(r.src), str(r.dst)))],
+            "physical": self.physical.to_dict(),
+            "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
             "world_mood": self.world_mood,
         }
@@ -176,6 +181,8 @@ class WorldSnapshot:
             "timestamp": self.timestamp.isoformat(),
             "nodes": {str(k): v.to_dict() for k, v in self.nodes.items()},
             "relations": [r.to_dict() for r in self.relations],
+            "physical": self.physical.to_dict(),
+            "mental": self.mental.to_dict(),
             "active_ripples": [r.to_dict() for r in self.active_ripples],
             "world_mood": self.world_mood,
             "consistency_hash": self.consistency_hash,
@@ -193,6 +200,8 @@ class WorldSnapshot:
             timestamp=datetime.fromisoformat(d["timestamp"]),
             nodes=nodes,
             relations=tuple(Relation.from_dict(rd) for rd in d.get("relations", [])),
+            physical=PhysicalLine.from_dict(d.get("physical", {"ch": 0})),
+            mental=MentalLine.from_dict(d.get("mental", {"ch": 0})),
             active_ripples=tuple(
                 Ripple.from_dict(rd) for rd in d.get("active_ripples", [])
             ),
