@@ -16,12 +16,9 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING, Protocol
 
-from infra.world_model.data_structures import (
-    NodeId,
-    ResolutionMode,
-    Ripple,
-    RippleState,
-)
+from lingwen_core.domain.common import NodeId
+from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState
+
 from infra.world_model.lifecycle import (
     MAX_OPEN_RIPPLOTS,
     RESOLUTION_GRACE_CH,
