@@ -25,7 +25,7 @@
  *   useTodayHub, useTierBudgetAlerts, useWorkflowListStore, useDashboardWidgets
  * - 事件总线: useEventBus
  * - 工作流 socket: useWorkflowSocket
- * - 业务工具: useAskPageTab, useStudioProject, useFilteredPageError, useDevice,
+ * - 业务工具: useAskPageTab, useStudioProject, useFilteredPageError,
  *   volumePlanDiffExportUtils
  *
  * 子模块（Phase 19-20 拆分）：
@@ -90,7 +90,6 @@ export { useWorldAgent } from './world/useWorldAgent.js';
 export { useEventBus, onRippleUpdate } from './useEventBus.js';
 export * as useWidgetRegistry from './useWidgetRegistry.js';
 export { registerDashboardWidgets } from './useDashboardWidgets.js';
-export { useDevice } from './useDevice.js';
 export * as volumePlanDiffExportUtils from './volumePlanDiffExportUtils.js';
 
 // Phase 19-20 子模块聚合（提供细粒度依赖注入）
