@@ -23,7 +23,7 @@ from lingwen_quality.consistency.engine.data_structures import (
     IssueSeverity,
 )
 
-from infra.world_model.data_structures import Ripple, RippleState
+from lingwen_core.domain.ripple import Ripple, RippleState
 from infra.world_model.lifecycle import RESOLUTION_GRACE_CH
 from infra.world_model.registry import RippleRegistry
 
