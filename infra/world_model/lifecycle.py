@@ -14,10 +14,10 @@ Doc 1 §3.4 (涟漪机制 v1.0) — Ripple 4 状态 + 平复模式 + 硬限制�
 """
 from __future__ import annotations
 
-from infra.world_model.data_structures import (
+from lingwen_core.domain.ripple import (
     MAX_OPEN_RIPPLOTS as MAX_OPEN_RIPPLOTS,  # re-export
 )
-from infra.world_model.data_structures import (
+from lingwen_core.domain.ripple import (
     Ripple,
     RippleState,
 )
