@@ -38,6 +38,13 @@ from typing import TYPE_CHECKING, Any, Optional
 # shim conversion (canonical Plot uses lingwen_core.domain.common.NodeId).
 from lingwen_core.domain.common import NodeId, NodeType
 
+# Phase 19+ Sub1 Task T19.2: Ripple/RippleState/ResolutionMode canonical alignment.
+# Re-export from lingwen_core.domain.ripple so consumers via
+# `infra.world_model.data_structures.Ripple` and via `lingwen_core.domain.ripple.Ripple`
+# resolve to the SAME class object. Closes class-identity divergence that Phase 18 v18
+# handoff explicitly flagged as deferred carryover. Same pattern as NodeId/NodeType.
+from lingwen_core.domain.ripple import MAX_OPEN_RIPPLOTS, ResolutionMode, Ripple, RippleState
+
 if TYPE_CHECKING:
     from infra.subplot.data_structures import Plot
 
@@ -174,81 +181,6 @@ class MentalLine:
             emotions={NodeId.from_string(k): v for k, v in d.get("emotions", {}).items()},
             arc_progress={NodeId.from_string(k): v for k, v in d.get("arc_progress", {}).items()},
             growth_signals=d.get("growth_signals", []),
-        )
-
-
-class RippleState(str, Enum):
-    """Ripple 4 状态 (Doc 1 §3.4):
-    OPEN (挖坑) → PROPAGATING (扩散) → RESOLVING (平复中) → RESOLVED (终态)"""
-
-    OPEN = "open"
-    PROPAGATING = "propagating"
-    RESOLVING = "resolving"
-    RESOLVED = "resolved"
-
-
-class ResolutionMode(str, Enum):
-    """Ripple 解决方式 (Doc 1 §3.4):
-    STRONG (100% 恢复, 伏笔回收) / WEAK (60-80% 恢复 + 新稳态) /
-    UNRESOLVED (标记长期未平复, 接受但不关闭)"""
-
-    STRONG = "strong"
-    WEAK = "weak"
-    UNRESOLVED = "unresolved"
-
-
-# Doc 1 §3.4 硬限制:未平复 Ripple > 10 → 崩塌风险 > 0.7 → > 0.8 报警
-# 计入:OPEN + PROPAGATING + RESOLVING (RESOLVED 终态不计入)
-MAX_OPEN_RIPPLOTS = 10
-
-
-@dataclass(frozen=True)
-class Ripple:
-    """剧情波浪 — 挖坑→扩散→平复 (Doc 1 §3.4)"""
-
-    ripple_id: str
-    origin_event: str
-    origin_ch: int
-    affected_nodes: tuple[NodeId, ...] = ()
-    state: RippleState = RippleState.OPEN
-    wavefront: tuple[int, ...] = ()  # 波浪推进的章节集合
-    decay_rate: float = 0.2  # 衰减率 (Doc 1: 0.1-0.5)
-    affected_relations: tuple[Relation, ...] = ()
-    planned_resolve_ch: Optional[int] = None  # 计划平复章节 (注册时 enforce)
-    resolved_ch: Optional[int] = None
-    collapse_risk: float = 0.0
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "ripple_id": self.ripple_id,
-            "origin_event": self.origin_event,
-            "origin_ch": self.origin_ch,
-            "affected_nodes": [str(n) for n in self.affected_nodes],
-            "state": self.state.value,
-            "wavefront": list(self.wavefront),
-            "decay_rate": self.decay_rate,
-            "affected_relations": [r.to_dict() for r in self.affected_relations],
-            "planned_resolve_ch": self.planned_resolve_ch,
-            "resolved_ch": self.resolved_ch,
-            "collapse_risk": self.collapse_risk,
-        }
-
-    @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Ripple":
-        # Backward compat: Phase 1.1 JSON 不含 state/wavefront/decay_rate/
-        # affected_relations/planned_resolve_ch, 用 .get(key, default) 兜底
-        return cls(
-            ripple_id=d["ripple_id"],
-            origin_event=d["origin_event"],
-            origin_ch=d["origin_ch"],
-            affected_nodes=tuple(NodeId.from_string(s) for s in d.get("affected_nodes", [])),
-            state=RippleState(d["state"]) if "state" in d else RippleState.OPEN,
-            wavefront=tuple(d.get("wavefront", ())),
-            decay_rate=d.get("decay_rate", 0.2),
-            affected_relations=tuple(Relation.from_dict(r) for r in d.get("affected_relations", [])),
-            planned_resolve_ch=d.get("planned_resolve_ch"),
-            resolved_ch=d.get("resolved_ch"),
-            collapse_risk=d.get("collapse_risk", 0.0),
         )
 
 

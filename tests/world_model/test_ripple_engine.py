@@ -183,7 +183,7 @@ class TestComputeCollapseRisk:
     def test_collapse_risk_clamped_to_1(self, engine, registry):
         # 15 stale / 10 limit → clamp 1.0
         for i in range(15):
-            engine.register(registry, f"r{i}", "e", i, planned_resolve_ch=i + 1)
+            engine.register(registry, f"r{i}", "e", i + 1, planned_resolve_ch=i + 2)
         risk = engine.compute_collapse_risk(registry, current_ch=100)
         assert risk <= 1.0
 
