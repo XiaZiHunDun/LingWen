@@ -169,6 +169,38 @@ class WorldSnapshot:
         encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "snapshot_id": self.snapshot_id,
+            "chapter": self.chapter,
+            "timestamp": self.timestamp.isoformat(),
+            "nodes": {str(k): v.to_dict() for k, v in self.nodes.items()},
+            "relations": [r.to_dict() for r in self.relations],
+            "active_ripples": [r.to_dict() for r in self.active_ripples],
+            "world_mood": self.world_mood,
+            "consistency_hash": self.consistency_hash,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "WorldSnapshot":
+        from lingwen_core.domain.common import KeyPoint, NodeId, Relation
+        nodes = {
+            NodeId.from_string(s): KeyPoint.from_dict(kd)
+            for s, kd in d.get("nodes", {}).items()
+        }
+        return cls(
+            snapshot_id=d["snapshot_id"],
+            chapter=d["chapter"],
+            timestamp=datetime.fromisoformat(d["timestamp"]),
+            nodes=nodes,
+            relations=tuple(Relation.from_dict(rd) for rd in d.get("relations", [])),
+            active_ripples=tuple(
+                Ripple.from_dict(rd) for rd in d.get("active_ripples", [])
+            ),
+            world_mood=d.get("world_mood", "neutral"),
+            consistency_hash=d.get("consistency_hash", ""),
+        )
+
 
 class RippleOpenedEvent(DomainEvent):
     """涟漪开启事件"""
