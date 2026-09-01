@@ -17,13 +17,7 @@ Doc 3 (主线/支线模型 v1.0) §4: 6 状态机 + 7 阶段模型。
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from infra.subplot.data_structures import PlotStatus
-
-if TYPE_CHECKING:
-    from infra.subplot.data_structures import Plot
-
+from lingwen_core.domain.subplot import Plot, PlotStatus
 
 # 6 状态转换规则 (4 个非终态作为 key,CLOSED/ABANDONED 为终态不可作为 key)
 VALID_TRANSITIONS: dict[PlotStatus, set[PlotStatus]] = {
