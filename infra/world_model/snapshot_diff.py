@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from infra.world_model.data_structures import WorldSnapshot
+from lingwen_core.domain.ripple import WorldSnapshot
 
 
 class ChangeKind(str, Enum):
