@@ -2,7 +2,7 @@
 
 import pytest
 
-from infra.consistency.creative_whitelist import (
+from lingwen_quality.consistency.creative_whitelist import (
     DIAMOND,
     DOWNGRADED_LEVELS,
     GOLD,
