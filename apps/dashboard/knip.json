@@ -1,6 +1,5 @@
 {
   "entry": [
-    "src/main.js",
     "src/router/index.js"
   ],
   "project": [
