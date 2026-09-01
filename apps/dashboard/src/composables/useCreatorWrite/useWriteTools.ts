@@ -16,15 +16,19 @@ import type { ComputedRef, Ref } from 'vue';
  * Per-chapter row shape used by overview-based UI (chapter row CSS class,
  * title label, etc.). Fields are optional because data-layer emission is
  * v16.5 #N.14 T4 widened to typed contract — runtime callers may omit.
+ *
+ * v16.5 #N.14 T5.fix: un-export (knip unused). Only referenced inside
+ * this file; external callers use JSDoc `Ref<object|null>` which vue-tsc
+ * accepts at the .js→.ts boundary per N.14 lesson #3.
  */
-export interface OverviewChapterRow {
+interface OverviewChapterRow {
   chapter: number;
   has_body?: boolean;
   has_outline?: boolean;
   word_count?: number;
 }
 
-export interface OverviewShape {
+interface OverviewShape {
   chapters?: OverviewChapterRow[];
 }
 
