@@ -24,13 +24,15 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any, Optional, Protocol
 
-# Note: 不导入 infra.subplot.data_structures 或 infra.subplot.lifecycle
-# 这两个模块都依赖 infra.world_model → 循环 import
-# 改用 lazy import inside function bodies
+# Note: 不导入 infra.subplot.lifecycle at module level — 保留 lazy pattern
+# (historical cycle risk via infra.subplot.data_structures → infra.world_model
+# 已在 Phase 19+ Sub1 canonicalization 后消失,canonical lingwen_core.domain.*
+# 无 cross-deps;defensive lazy pattern 保留以减少 module-load 副作用)
 
 if TYPE_CHECKING:
-    from infra.subplot.data_structures import Plot, PlotStatus
-    from infra.world_model.data_structures import Ripple
+    from lingwen_core.domain.ripple import Ripple
+    from lingwen_core.domain.subplot import Plot, PlotStatus
+
     from infra.world_model.registry import RippleRegistry
 
 
@@ -134,8 +136,8 @@ def apply_ripple_resolution(
     Raises:
         RippleNotFoundError: ripple_id 未注册
     """
-    # Lazy import 避开 subplot.data_structures ↔ world_model 循环
-    from infra.subplot.data_structures import PlotStatus
+    # Lazy import 保留 (historical cycle risk;canonical has none,但 defensive)
+    from lingwen_core.domain.subplot import PlotStatus
 
     # 1. 校验 ripple 存在 (无 ripple → RippleNotFoundError)
     ripple_registry.require_ripple(ripple_id)
