@@ -14,7 +14,6 @@ from dataclasses import FrozenInstanceError
 from datetime import datetime
 
 import pytest
-
 from lingwen_core.domain.chapter import MentalLine, PhysicalLine
 from lingwen_core.domain.common import KeyPoint, NodeId, NodeType, Relation
 from lingwen_core.domain.ripple import (
