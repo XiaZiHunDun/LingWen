@@ -23,7 +23,8 @@ from lingwen_quality.consistency.engine.data_structures import (
     IssueSeverity,
 )
 
-from infra.world_model.data_structures import Ripple, RippleState
+# behavior constants/services stay in infra.world_model.*
+from lingwen_core.domain.ripple import Ripple, RippleState
 from infra.world_model.registry import RippleRegistry
 
 # === Helpers ===
