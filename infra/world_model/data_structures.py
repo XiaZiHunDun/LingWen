@@ -31,16 +31,15 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional
 
+# Phase 19+ Sub1: NodeId/NodeType canonical alignment.
+# Re-export from lingwen_core.domain.common so consumers via
+# `infra.world_model.data_structures.NodeId` and via `lingwen_core.domain.common.NodeId`
+# resolve to the SAME class object. This unblocks `infra.subplot.data_structures`
+# shim conversion (canonical Plot uses lingwen_core.domain.common.NodeId).
+from lingwen_core.domain.common import NodeId, NodeType
+
 if TYPE_CHECKING:
     from infra.subplot.data_structures import Plot
-
-
-class NodeType(str, Enum):
-    LOCATION = "location"
-    CHARACTER = "character"
-    FACTION = "faction"
-    ARTIFACT = "artifact"
-    CONCEPT = "concept"
 
 
 class PlotStatus(str, Enum):
@@ -50,29 +49,6 @@ class PlotStatus(str, Enum):
     CLOSING = "closing"
     CLOSED = "closed"
     ABANDONED = "abandoned"
-
-
-@dataclass(frozen=True)
-class NodeId:
-    """关键点 ID = (type, name) 复合键"""
-
-    type: NodeType
-    name: str
-
-    def __str__(self) -> str:
-        return f"{self.type.value}:{self.name}"
-
-    def __post_init__(self) -> None:
-        if not self.name or not self.name.strip():
-            raise ValueError("NodeId.name must be non-empty")
-
-    @classmethod
-    def from_string(cls, s: str) -> "NodeId":
-        """从 "type:name" 字符串还原"""
-        if ":" not in s:
-            raise ValueError(f"NodeId string must contain ':' — got {s!r}")
-        type_str, name = s.split(":", 1)
-        return cls(NodeType(type_str), name)
 
 
 @dataclass
