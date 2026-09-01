@@ -13,12 +13,8 @@ Doc 1 §3.4 — Ripple 4 状态机 + 平复模式校验。
 from __future__ import annotations
 
 import pytest
+from lingwen_core.domain.ripple import ResolutionMode, Ripple, RippleState
 
-from infra.world_model.data_structures import (
-    ResolutionMode,
-    Ripple,
-    RippleState,
-)
 from infra.world_model.lifecycle import (
     COLLAPSE_RISK_THRESHOLD,
     MAX_OPEN_RIPPLOTS,
