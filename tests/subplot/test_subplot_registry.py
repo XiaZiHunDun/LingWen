@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from infra.subplot.data_structures import (
+from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
     PlotPurpose,

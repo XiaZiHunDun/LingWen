@@ -16,7 +16,7 @@ from lingwen_core.domain.chapter import PhysicalLine
 from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
 from lingwen_core.domain.ripple import WorldSnapshot
 
-from infra.subplot.data_structures import (
+from lingwen_core.domain.subplot import (
     MAX_ACTIVE_SUBPLOTS,
     Plot,
     PlotPurpose,

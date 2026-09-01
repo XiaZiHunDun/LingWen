@@ -22,7 +22,7 @@ from typing import Optional, Protocol
 import pytest
 from lingwen_core.domain.ripple import Ripple, RippleState
 
-from infra.subplot.data_structures import (
+from lingwen_core.domain.subplot import (
     Plot,
     PlotStatus,
     PlotType,

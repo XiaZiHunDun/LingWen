@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from infra.subplot.data_structures import (
+from lingwen_core.domain.subplot import (
     Plot,
     PlotPurpose,
     PlotStatus,
