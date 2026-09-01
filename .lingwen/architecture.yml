@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "19.1"  # Phase 19+ Sub1 (World Model Domain Migration: WorldSnapshot + Plot + Ripple + KeyPoint + NodeId + NodeType + Relation + PhysicalLine + MentalLine + PlotStatus fully migrated to packages/lingwen-core/domain/; infra/world_model + infra/subplot now 1-line PHASE-COMPAT shims; 10+ test files migrated; 5 previously-blocked test_subplot_integration tests now pass; DDD purity preserved)
+version: "19.2"  # Phase 19+ Sub1 polish (Shim indirection removal: 9 infra/{world_model,subplot} behavior services + 5 test consumer files migrated from infra.{world_model,subplot}.data_structures.X shim path to lingwen_core.domain.X canonical; 11 source commits on branch phase-19-sub1-polish; all 16 entities is-identity; 0 shim indirection remaining in production code; new invariants #41-#42 — behavior services import entities directly from canonical)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
