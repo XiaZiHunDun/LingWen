@@ -20,14 +20,10 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from lingwen_core.domain.chapter import PhysicalLine
+from lingwen_core.domain.common import KeyPoint, NodeId, NodeType
+from lingwen_core.domain.ripple import WorldSnapshot
 
-from infra.world_model.data_structures import (
-    KeyPoint,
-    NodeId,
-    NodeType,
-    PhysicalLine,
-    WorldSnapshot,
-)
 from infra.world_model.snapshot_store import (
     SnapshotIntegrityError,
     SnapshotNotFoundError,
@@ -55,7 +51,10 @@ class TestSnapshotStoreBasic:
         store = SnapshotStore(tmp_path)
         snap = _build_snapshot(1)
         store.save(snap)
-        loaded = store.load(1)
+        # SnapshotStore.load() 返回 infra WorldSnapshot;通过 to_dict/from_dict
+        # 重建为域对象,使得 == 比较在同一类下进行 (T13 桥接模式)。
+        loaded_raw = store.load(1)
+        loaded = WorldSnapshot.from_dict(loaded_raw.to_dict())
         assert loaded == snap
 
     def test_load_missing_chapter_raises_not_found(self, tmp_path: Path):
@@ -90,7 +89,9 @@ class TestSnapshotStoreBasic:
             },
         )
         store.save(snap2)
-        loaded = store.load(1)
+        # 桥接: infra WorldSnapshot → 域 WorldSnapshot (T13 模式)
+        loaded_raw = store.load(1)
+        loaded = WorldSnapshot.from_dict(loaded_raw.to_dict())
         assert loaded == snap2
 
 
