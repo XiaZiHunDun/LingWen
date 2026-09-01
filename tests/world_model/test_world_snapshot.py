@@ -15,19 +15,15 @@ from datetime import datetime
 
 import pytest
 
-from infra.world_model.data_structures import (
-    KeyPoint,
-    MentalLine,
-    NodeId,
-    NodeType,
-    PhysicalLine,
-    PlotStatus,
-    Relation,
+from lingwen_core.domain.chapter import MentalLine, PhysicalLine
+from lingwen_core.domain.common import KeyPoint, NodeId, NodeType, Relation
+from lingwen_core.domain.ripple import (
     ResolutionMode,
     Ripple,
     RippleState,
     WorldSnapshot,
 )
+from lingwen_core.domain.subplot import PlotStatus
 
 
 class TestNodeId:
