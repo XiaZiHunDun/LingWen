@@ -55,7 +55,7 @@ class PluginManager:
         for filename in os.listdir(ai_service_dir):
             if filename.endswith("_provider.py") and filename != "__init__.py":
                 module_name = filename[:-3]
-                module_path = f"infra.ai_service.{module_name}"
+                module_path = f"lingwen_llm.providers.{module_name}"
                 try:
                     module = importlib.import_module(module_path)
                     for attr_name in dir(module):
@@ -78,7 +78,7 @@ class PluginManager:
         for filename in os.listdir(providers_dir):
             if filename.endswith("_provider.py"):
                 module_name = filename[:-3]
-                module_path = f"infra.ai_service.providers.{module_name}"
+                module_path = f"lingwen_llm.providers.{module_name}"
                 try:
                     module = importlib.import_module(module_path)
                     for attr_name in dir(module):
