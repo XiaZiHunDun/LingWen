@@ -6,8 +6,8 @@ Back-compat shim re-exporting ``Plot`` data class from
 lingwen_core package.
 
 Behavior helpers (``add_subplot``, ``get_active_subplots``,
-``subplots_count``) live in ``infra.world_model`` (not in this file)
-and have not yet migrated. They will move to ``lingwen_core.use_cases``
+``subplots_count``) live in ``infra/subplot/helpers.py`` (split during
+Phase 19+ Sub1 Task 8). They will move to ``lingwen_core.use_cases``
 or similar application layer in a future phase.
 
 DO NOT add new code here; this is a deletion target.

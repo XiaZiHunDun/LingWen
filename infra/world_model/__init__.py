@@ -28,6 +28,15 @@ Phase 2.6 扩展: SnapshotDiff (5 类别 + Ripple state 变化检测)。
 - 真实 LLM 集成
 """
 
+# Phase 1.2 helpers — moved to infra.subplot.helpers (Phase 19+ Sub1 Task 5).
+# Re-exported here for backward compat with existing consumers
+# (`from infra.world_model import add_subplot, ...`).
+from infra.subplot.helpers import (  # noqa: E402, F401
+    add_subplot,
+    get_active_subplots,
+    subplots_count,
+)
+
 from .data_structures import (
     MAX_OPEN_RIPPLOTS,
     KeyPoint,
@@ -85,17 +94,6 @@ from .snapshot_store import (
     SnapshotNotFoundError,
     SnapshotStore,
 )
-
-
-# Phase 1.2 helpers — moved to infra.subplot.helpers (Phase 19+ Sub1 Task 5).
-# Re-exported here for backward compat with existing consumers
-# (`from infra.world_model import add_subplot, ...`).
-from infra.subplot.helpers import (  # noqa: E402, F401
-    add_subplot,
-    get_active_subplots,
-    subplots_count,
-)
-
 
 __all__ = [
     # Data structures (Phase 1.1)
