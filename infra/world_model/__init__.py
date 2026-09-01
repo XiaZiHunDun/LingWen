@@ -10,9 +10,15 @@ Phase 2.3 扩展: Ripple ↔ Subplot 跨包联动 (link_subplot_to_ripple +
 apply_ripple_resolution)。
 Phase 2.6 扩展: SnapshotDiff (5 类别 + Ripple state 变化检测)。
 
+Phase 19+ Sub1: Domain entity re-exports now canonical from
+``lingwen_core.domain.*`` (see ``data_structures``). Behavior services
+(engine, lifecycle, links, queries, registry, snapshot_diff,
+snapshot_store, key_point_graph, subplot helpers) remain in this package
+unchanged.
+
 核心导出:
-- WorldSnapshot / KeyPoint / Relation / NodeId / NodeType
-- PhysicalLine / MentalLine / Ripple / RippleState / ResolutionMode
+- WorldSnapshot / KeyPoint / Relation / NodeId / NodeType (canonical)
+- PhysicalLine / MentalLine / Ripple / RippleState / ResolutionMode (canonical)
 - KeyPointGraph — N² 矛盾检测
 - SnapshotStore — JSON 持久化
 - Contradiction / ContradictionKind
@@ -28,6 +34,19 @@ Phase 2.6 扩展: SnapshotDiff (5 类别 + Ripple state 变化检测)。
 - 真实 LLM 集成
 """
 
+# PHASE-COMPAT: Domain entities re-exported from canonical
+# (lingwen_core.domain.*) — see data_structures.py which is now a
+# canonical-only re-export module.
+from lingwen_core.domain.chapter import MentalLine, PhysicalLine
+from lingwen_core.domain.common import KeyPoint, NodeId, NodeType, Relation
+from lingwen_core.domain.ripple import (
+    MAX_OPEN_RIPPLOTS,
+    ResolutionMode,
+    Ripple,
+    RippleState,
+    WorldSnapshot,
+)
+
 # Phase 1.2 helpers — moved to infra.subplot.helpers (Phase 19+ Sub1 Task 5).
 # Re-exported here for backward compat with existing consumers
 # (`from infra.world_model import add_subplot, ...`).
@@ -37,20 +56,10 @@ from infra.subplot.helpers import (  # noqa: E402, F401
     subplots_count,
 )
 
-from .data_structures import (
-    MAX_OPEN_RIPPLOTS,
-    KeyPoint,
-    MentalLine,
-    NodeId,
-    NodeType,
-    PhysicalLine,
-    PlotStatus,
-    Relation,
-    ResolutionMode,
-    Ripple,
-    RippleState,
-    WorldSnapshot,
-)
+# PlotStatus (lightweight enum, infra-local — not part of DDD aggregate)
+from .data_structures import PlotStatus
+
+# Behavior services (NOT in PHASE-COMPAT shim scope)
 from .engine import RippleEngine
 from .key_point_graph import (
     Contradiction,
@@ -96,7 +105,7 @@ from .snapshot_store import (
 )
 
 __all__ = [
-    # Data structures (Phase 1.1)
+    # Data structures (Phase 1.1) — canonical re-exports
     "KeyPoint",
     "MentalLine",
     "NodeId",
