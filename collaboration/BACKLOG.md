@@ -31,7 +31,7 @@
 
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
-| P1-SHIM | batch-templates 契约 shim | 后端已 codegen `lingwen_shared` 的 batch-templates DTO（`StudioBatchTemplate`/`Create|Update`/`ListResponse`）但未更新 `apps/dashboard-contracts` 的 *DTO shim → 前端暂消费不到新类型。前端补 shim 后 Pilot 方可落地模板 UI | 前端 A（自服务） | 🔄 进行中 | 2026-09-02 |
+| P1-SHIM | batch-templates 契约 shim | 后端已 codegen `lingwen_shared` 的 batch-templates DTO（`StudioBatchTemplate`/`Create|Update`/`ListResponse`）但未更新 `apps/dashboard-contracts` 的 *DTO shim → 前端暂消费不到新类型。前端补 shim 后 Pilot 方可落地模板 UI | 前端 A（自服务完成） | ✅ 完成 | 2026-09-02 |
 
 ---
 
@@ -44,7 +44,7 @@
 | P2-QUEUE | batch priority queue | 生产排队，多任务有序。**后端 B 自服务列表第一个** | 后端 B（自服务） | 📋 待开始 | 2026-09-02 |
 | P2-RESTART | auto-restart on failure | 失败自动重启。**后端 B 自服务列表第二个** | 后端 B（自服务） | 📋 待开始 | 2026-09-02 |
 | P2-MULTI | multi-LLM 并发批次 | 并行吞吐能力（较大，后端 B 自服务列表收尾项） | 后端 B（自服务） | 📋 待开始 | 2026-09-02 |
-| P2-DTOMIGR | usePilotBatch DTO migration | 迁移至 `@/api/studio` re-export（技术债） | 待认领（前端） | 📋 待开始 | 2026-09-02 |
+| P2-DTOMIGR | usePilotBatch DTO migration | 迁移至 `@/api/studio` re-export（技术债） | 会话-A（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-REG | Phase 114 prod preview regression | 长期 accepted 债，低优先 | 待认领 | ⏳ 待规划 | 2026-09-02 |
 
 > **后端 B 自服务顺序**：P2-QUEUE → P2-RESTART → P2-MULTI。每任务：rebase origin/master → 实现 → 完整 `pytest` + `ruff check` + `ruff format --check` 全绿 → 自 ff-merge 到 master → 认领下一个。**common 前置**：worktree 内跑测试/codegen 需 `export PYTHONPATH=$PWD/packages/lingwen-shared/src:$PYTHONPATH`（见 COORDINATION.md §6.5）。

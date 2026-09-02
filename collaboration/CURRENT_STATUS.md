@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
 > **最后更新**: 2026-09-02  
-> **更新者**: 协调者（黑板已刷新至 v25.1 真实状态）  
-> **下一协作**: 认领 P1-SHIM（batch-templates 契约 shim，前端 Track A）
+> **更新者**: 会话-A（Track A 前端自治）  
+> **下一协作**: Track A 已自服务完成 P1-SHIM + P2-DTOMIGR；待认领 P2-DRAWER / P2-INSIGHT
 
 ---
 
@@ -22,9 +22,10 @@
 
 | ID | 任务 | 进度 | 认领人 | 状态 |
 |----|------|------|--------|------|
-| P1-SHIM | batch-templates 契约 shim（前端 Track A） | 待认领 | 前端 Track A | 📋 待开始 |
+| P2-DRAWER | per-chapter preview drawer（前端） | 待认领 | — | 📋 待开始 |
+| P2-INSIGHT | Pilot + Insight 看板集成（前端） | 待认领 | — | 📋 待开始 |
 
-> 详见 [BACKLOG.md](BACKLOG.md) P1-SHIM。
+> 详见 [BACKLOG.md](BACKLOG.md) P1-SHIM（✅）/ P2-DTOMIGR（✅）；后端 B 自服务进行 P2-QUEUE。
 
 ---
 
@@ -35,6 +36,8 @@
 | v25.1 双会话合流 | Track A event_types 过滤开关（前端）+ Track B batch templates（后端），0 冲突 ff-merge | ✅ 见 CLAUDE.md v25.1 |
 | 合并门复核 | 发现并修复 Track A 引入的 9 个测试类型错误（`1c1d3a82`），vue-tsc 回到 5 pre-existing | ✅ |
 | 合并态验证 | 后端 pytest 32 + ruff clean；前端 vitest/ESLint/knip 通过；vue-tsc 5 pre-existing | ✅ |
+| P1-SHIM | Track A 自服务完成 batch-templates *DTO shim（`studio.ts` + `shared/index.ts`），已 ff-merge | ⭐ `23aa1ffc`；全量门绿 |
+| P2-DTOMIGR | Track A 自服务把 `usePilotBatch` DTO 迁移至 `@/api/studio` re-export（技术债） | ⭐ `1ea4fce3`；全量门绿 |
 
 > 完整版本链（v21.0 → v25.1）见 `CLAUDE.md`；并发协调点见 `COORDINATION.md`。
 
@@ -59,7 +62,7 @@
 
 | ID | 问题/事项 | 关联 | 状态 |
 |----|----------|------|------|
-| P1-SHIM | 前端 `dashboard-contracts` 缺 batch-templates *DTO shim → 前端暂消费不到新类型 | 后端已 codegen `lingwen_shared` | 🔄 待办（前端认领） |
+| P1-SHIM | 前端 `dashboard-contracts` 缺 batch-templates *DTO shim → 已由 Track A 补齐并合并 | 后端已 codegen `lingwen_shared` | ✅ 完成 |
 | P2-* | Phase 26+ 候选（Insight 集成/预览抽屉/优先级队列/多 LLM 并发/自动重启/DTO 迁移/Phase114 债） | 见 BACKLOG P2 | 📋 待排期 |
 
 ---
