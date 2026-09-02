@@ -49,6 +49,30 @@ def _require_project(ctx: RoutesContext):
     return project
 
 
+def _batch_job_to_response(job) -> StudioBatchJobResponse:
+    """Map infra.studio_batch_runner.BatchJob → lingwen_shared StudioBatchJobResponse.
+
+    Both shapes share the same 13 fields; StudioBatchJobResponse adds `log_tail`
+    with a None default, so a flat unpack is sufficient.
+    """
+    return StudioBatchJobResponse(
+        job_id=job.job_id,
+        slug=job.slug,
+        start_chapter=job.start_chapter,
+        end_chapter=job.end_chapter,
+        budget_usd=job.budget_usd,
+        mode=job.mode,
+        status=job.status,
+        pid=job.pid,
+        log_path=job.log_path,
+        log_tail=None,
+        started_at=job.started_at,
+        finished_at=job.finished_at,
+        exit_code=job.exit_code,
+        error=job.error,
+    )
+
+
 def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
     @app.get("/api/studio/projects", response_model=StudioProjectsResponse)
@@ -281,3 +305,17 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         if payload is None:
             raise HTTPException(404, f"unknown batch job: {job_id!r}")
         return StudioBatchJobResponse(**payload)
+
+    @app.post("/api/studio/batch/{job_id}/cancel", response_model=StudioBatchJobResponse)
+    def studio_batch_cancel_endpoint(job_id: str) -> StudioBatchJobResponse:
+        """Cancel a running batch job (SIGTERM + 5s grace + SIGKILL fallback)."""
+        from infra.studio_batch_runner import cancel_batch_job
+
+        try:
+            job = cancel_batch_job(job_id)
+        except LookupError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            # BatchAlreadyRunningError is RuntimeError subclass.
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return _batch_job_to_response(job)
