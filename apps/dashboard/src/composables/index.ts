@@ -73,7 +73,7 @@ export { usePageLeadDismiss } from './usePageLeadDismiss.js';
 export { usePilotBatch } from './usePilotBatch.js';
 export type { ChapterProgressEvent } from './usePilotBatch.js';
 export { useBatchEventStream, BATCH_EVENT_BUFFER } from './useBatchEventStream.js';
-export type { BatchEvent, BatchEventType, BatchEventStream } from './useBatchEventStream.js';
+export type { BatchEvent, BatchEventStream } from './useBatchEventStream.js';
 export { useRippleSocket } from './useRippleSocket.js';
 export { useRippleStore } from './useRippleStore.js';
 export { useStudioProject } from './useStudioProject.js';
