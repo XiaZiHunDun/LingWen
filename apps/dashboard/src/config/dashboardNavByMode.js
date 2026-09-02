@@ -10,9 +10,9 @@ import { REVIEWER_NAV_GROUPS } from './dashboardNav.js';
 
 /** @type {Record<string, string[]>} */
 const MODE_NAV_ITEM_IDS = {
-  companion: ['ask', 'write', 'library', 'more', 'settings'],
-  advance: ['ask', 'write', 'library', 'more', 'settings'],
-  studio: ['ask', 'library', 'more', 'settings'],
+  companion: ['ask', 'write', 'library', 'pilot', 'more', 'settings'],
+  advance: ['ask', 'write', 'library', 'pilot', 'more', 'settings'],
+  studio: ['ask', 'library', 'pilot', 'more', 'settings'],
 };
 
 /** 「更多」页内链接 id — 按模式裁剪 */

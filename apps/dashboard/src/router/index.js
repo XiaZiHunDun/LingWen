@@ -71,6 +71,11 @@ const routes = [
     component: () => import('../pages/CascadeRunsPage.vue'),
   },
   {
+    path: '/pilot',
+    name: 'pilot',
+    component: () => import('../pages/PilotPage.vue'),
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('../pages/SettingsPage.vue'),

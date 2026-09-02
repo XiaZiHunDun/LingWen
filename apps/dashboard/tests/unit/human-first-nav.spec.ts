@@ -10,9 +10,9 @@ import { resolveDefaultLandingNav, resolveDefaultLandingNavAsync } from '../../s
 import { saveWriteResume } from '../../src/utils/writeResumeStorage.js';
 
 describe('dashboardNavByMode (human-first)', () => {
-  it('companion shows ask/write/library/more/settings', () => {
+  it('companion shows ask/write/library/pilot/more/settings', () => {
     const ids = buildVisibleNavGroups('companion').flatMap((g) => g.items.map((i) => i.id));
-    expect(ids).toEqual(['ask', 'write', 'library', 'more', 'settings']);
+    expect(ids).toEqual(['ask', 'write', 'library', 'pilot', 'more', 'settings']);
   });
 
   it('studio hides write', () => {

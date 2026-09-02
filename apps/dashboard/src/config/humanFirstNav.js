@@ -15,6 +15,7 @@ export const HUMAN_FIRST_NAV_GROUPS = [
       { id: 'ask', label: '聊聊' },
       { id: 'write', label: '书桌' },
       { id: 'library', label: '书架' },
+      { id: 'pilot', label: 'Pilot 流水线' },
     ],
   },
   {

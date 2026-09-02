@@ -31,6 +31,7 @@ export const VALID_NAV: string[] = [
   'overview',
   'analytics',
   'cascade-runs',
+  'pilot',
   'settings',
 ]
 
