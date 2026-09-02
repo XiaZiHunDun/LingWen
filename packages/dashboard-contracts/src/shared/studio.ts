@@ -25,6 +25,10 @@ import type {
   StudioBatchJobResponse,
   StudioBatchJobSummary,
   StudioBatchJobListResponse,
+  StudioBatchTemplate,
+  StudioBatchTemplateCreateRequest,
+  StudioBatchTemplateListResponse,
+  StudioBatchTemplateUpdateRequest,
 } from '../../../lingwen-shared/src/lingwen_shared/contracts/ts/studio';
 
 export type StudioProjectItemDTO = StudioProjectItem;
@@ -52,3 +56,7 @@ export type StudioBatchRunRequestDTO = StudioBatchRunRequest;
 export type StudioBatchJobResponseDTO = StudioBatchJobResponse;
 export type StudioBatchJobSummaryDTO = StudioBatchJobSummary;
 export type StudioBatchJobListResponseDTO = StudioBatchJobListResponse;
+export type StudioBatchTemplateDTO = StudioBatchTemplate;
+export type StudioBatchTemplateCreateRequestDTO = StudioBatchTemplateCreateRequest;
+export type StudioBatchTemplateListResponseDTO = StudioBatchTemplateListResponse;
+export type StudioBatchTemplateUpdateRequestDTO = StudioBatchTemplateUpdateRequest;

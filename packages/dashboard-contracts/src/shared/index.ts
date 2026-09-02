@@ -61,6 +61,10 @@ export type {
   StudioBatchJobResponseDTO,
   StudioBatchJobSummaryDTO,
   StudioBatchJobListResponseDTO,
+  StudioBatchTemplateDTO,
+  StudioBatchTemplateCreateRequestDTO,
+  StudioBatchTemplateListResponseDTO,
+  StudioBatchTemplateUpdateRequestDTO,
 } from './studio';
 export type {
   WorkflowListItemDTO,
