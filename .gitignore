@@ -234,3 +234,9 @@ projects/e2e-live-creator/
 
 # Phase 120: LLM provider benchmark raw results (per-run JSON)
 infra/llm_benchmarks/results/
+
+# Phase 25.1 — untrack accidental runtime artifacts (safe: working files kept, non-destructive)
+novel-factory/
+production/session-state/
+logs/*
+!logs/.gitkeep
