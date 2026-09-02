@@ -72,7 +72,7 @@ describe('useBatchEventStream', () => {
     await flushPromises();
     const source = MockEventSource.instances.at(-1)!;
     expect(source.url).toBe('/api/studio/batch/abc%2F123/events');
-    const vm = wrapper.vm as { events: Array<{ type: string }> };
+    const vm = wrapper.vm as unknown as { events: Array<{ type: string }> };
     fireNamed('job_state', JSON.stringify({ status: 'running' }));
     fireNamed('chapter_completed', JSON.stringify({ chapter_num: 3 }));
     expect(vm.events).toHaveLength(2);
@@ -99,7 +99,7 @@ describe('useBatchEventStream', () => {
     const Host = defineComponent({ setup: () => useBatchEventStream(jobId), template: '<div />' });
     const wrapper = mount(Host);
     await flushPromises();
-    const vm = wrapper.vm as { events: Array<{ type: string }> };
+    const vm = wrapper.vm as unknown as { events: Array<{ type: string }> };
     for (let i = 0; i < BATCH_EVENT_BUFFER + 5; i += 1) {
       fireNamed('chapter_completed', JSON.stringify({ chapter_num: i }));
     }

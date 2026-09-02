@@ -4,7 +4,7 @@ import PilotLivePanel from '@/components/pilot/PilotLivePanel.vue';
 import type { BatchEventType } from '@/composables/useBatchEventStream';
 
 const runningJob = {
-  job_id: 'j1', slug: 's1', status: 'running',
+  job_id: 'j1', slug: 's1', status: 'running' as const,
   start_chapter: 1, end_chapter: 14, budget_usd: 5,
   mode: 'pilot', pid: 12345, log_path: '/tmp/x', log_tail: 'last log line',
   started_at: new Date().toISOString(), finished_at: null,
