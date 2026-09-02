@@ -68,73 +68,36 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { usePilotBatch } from '@/composables/usePilotBatch';
+import {
+  computeBatchRange,
+  computeCompletedNums,
+  computeBatchDeviations,
+  computeBatchDeviatingNums,
+  buildBatchBand,
+  padChapter as pad,
+} from '@/utils/batchDeviation';
 
 const pilot = usePilotBatch();
 const activeJob = pilot.activeJob;
 const chapterEvents = pilot.chapterEvents;
 const isJobActive = pilot.isJobActive;
 
-function pad(n: number): string {
-  return String(n).padStart(3, '0');
-}
-
 const hasBatch = computed(() => !!activeJob.value);
 
-const range = computed(() => {
-  const job = activeJob.value;
-  if (!job) return { start: 0, end: 0, total: 0 };
-  const start = Number(job.start_chapter ?? 0);
-  const end = Number(job.end_chapter ?? start);
-  const total = end >= start ? end - start + 1 : 0;
-  return { start, end, total };
-});
+const range = computed(() => computeBatchRange(activeJob.value));
 
-const completedSet = computed(() => {
-  const set = new Set<number>();
-  for (const ev of chapterEvents.value) {
-    if (typeof ev.chapter_num === 'number') set.add(ev.chapter_num);
-  }
-  return set;
-});
+const completedSet = computed(() => computeCompletedNums(chapterEvents.value));
 
 // 越序偏差：某章已完成，但其前序（范围内、编号更小）章节仍未完成。
-const deviations = computed(() => {
-  const { start, end } = range.value;
-  const done = completedSet.value;
-  const list: Array<{ num: number; text: string }> = [];
-  for (let num = start; num <= end; num += 1) {
-    if (!done.has(num)) continue;
-    let jumpAhead = false;
-    for (let m = start; m < num; m += 1) {
-      if (!done.has(m)) {
-        jumpAhead = true;
-        break;
-      }
-    }
-    if (jumpAhead) {
-      list.push({
-        num,
-        text: `ch${pad(num)} 在前序章节完成前已改定`,
-      });
-    }
-  }
-  return list;
-});
+const deviations = computed(() =>
+  computeBatchDeviations(range.value.start, range.value.end, completedSet.value),
+);
 
-const deviatingNums = computed(() => new Set(deviations.value.map((d) => d.num)));
+const deviatingNums = computed(() => computeBatchDeviatingNums(deviations.value));
 
-const band = computed(() => {
-  const { start, end } = range.value;
-  const done = completedSet.value;
-  const deviating = deviatingNums.value;
-  const cells: Array<{ num: number; state: 'done' | 'deviating' | 'pending'; title: string }> = [];
-  for (let num = start; num <= end; num += 1) {
-    let state: 'done' | 'deviating' | 'pending' = 'pending';
-    if (done.has(num)) state = deviating.has(num) ? 'deviating' : 'done';
-    cells.push({ num, state, title: `ch${pad(num)}（${state}）` });
-  }
-  return cells;
-});
+const band = computed(() =>
+  buildBatchBand(range.value.start, range.value.end, completedSet.value, deviatingNums.value),
+);
 
 const completedCount = computed(() => {
   const { start, end } = range.value;
