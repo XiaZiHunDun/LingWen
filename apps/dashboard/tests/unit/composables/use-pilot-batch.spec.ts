@@ -129,4 +129,14 @@ describe('usePilotBatch', () => {
       expect(api.activeJob.value?.status).toBe('completed');
     });
   });
+
+  it('connects SSE with replay=1 so history is replayed on connect', async () => {
+    mockActive.mockResolvedValue({ job_id: 'j1', status: 'running', log_path: '/tmp/x' });
+    await withComposable(async (api) => {
+      await api.refreshActive();
+      await nextTick();
+      const source = MockEventSource.instances.at(-1);
+      expect(source?.url).toContain('replay=1');
+    });
+  });
 });

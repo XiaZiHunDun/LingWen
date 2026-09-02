@@ -46,7 +46,9 @@ export function usePilotBatch() {
   const cancelError = ref<string | null>(null);
 
   const activeJobId = computed(() => activeJob.value?.job_id ?? null);
-  const { events, isConnected, lastError } = useBatchEventStream(activeJobId);
+  // replay=true: on any connect the server replays deterministic chapter history
+  // from disk, so chapterEvents is never left empty after a reload/reconnect.
+  const { events, isConnected, lastError } = useBatchEventStream(activeJobId, { replay: true });
 
   let fallbackPoll: ReturnType<typeof setInterval> | null = null;
   let processedEventIndex = 0;
