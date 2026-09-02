@@ -312,3 +312,36 @@ def cancel_batch_job(job_id: str) -> BatchJob:
     job.finished_at = _now_iso()
     _save_job(job)
     return job
+
+
+def compute_pilot_eta(
+    *,
+    started_at: str,
+    start_chapter: int,
+    end_chapter: int,
+    completed_chapters: int,
+) -> float | None:
+    """Estimate seconds remaining for a running batch.
+
+    Returns None when no chapters have completed yet (insufficient data).
+    Otherwise: (remaining / throughput) where throughput = completed / elapsed.
+
+    Args:
+        started_at: ISO-8601 timestamp from BatchJob.started_at.
+        start_chapter: inclusive lower bound of chapter range.
+        end_chapter: inclusive upper bound of chapter range.
+        completed_chapters: count of pilot_records with chapter_num in [start, end].
+
+    Returns:
+        Estimated seconds remaining as float, or None if not yet computable.
+    """
+    if completed_chapters <= 0:
+        return None
+    started = datetime.fromisoformat(started_at)
+    elapsed = (datetime.now(timezone.utc) - started).total_seconds()
+    if elapsed <= 0:
+        return None
+    total = end_chapter - start_chapter + 1
+    remaining = max(0, total - completed_chapters)
+    throughput = completed_chapters / elapsed
+    return remaining / throughput
