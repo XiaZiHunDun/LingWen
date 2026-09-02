@@ -44,6 +44,7 @@
 | 合并态验证 | 后端 pytest 32 + ruff clean；前端 vitest/ESLint/knip 通过；vue-tsc 5 pre-existing | ✅ |
 | P1-SHIM | Track A 自服务完成 batch-templates *DTO shim（`studio.ts` + `shared/index.ts`），已 ff-merge | ⭐ `23aa1ffc`；全量门绿 |
 | P2-DTOMIGR | Track A 自服务把 `usePilotBatch` DTO 迁移至 `@/api/studio` re-export（技术债） | ⭐ `1ea4fce3`；全量门绿 |
+| P2-QUEUE（前端配合） | Track A 接入批次优先级队列：`listStudioBatchQueue` API + `usePilotBatch.queue/refreshQueue` + `PilotQueuePanel` 只读排队面板 | ⭐ 全量门绿 |
 | P2-QUEUE | Track B 自服务完成 batch priority queue（提交/排队/优先级自动推进 + `/api/studio/batch/queue` 端点） | ⭐ `d3347d3b`；batch 受影响子集 18 passed + ruff 全绿，ZERO 新增失败 |
 | P2-RESTART | Track B 自服务完成 auto-restart（失败自动重启，`max_attempts` 上限 + 同 job_id 重试，默认 1 零行为变化） | ⭐ `dac678b3`；全量 pytest 3479 passed（272 环境基线，ZERO 新增）+ ruff 全绿 |
 

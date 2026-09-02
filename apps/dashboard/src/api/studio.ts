@@ -181,3 +181,17 @@ export async function listStudioBatchJobs(
   );
   return data;
 }
+
+// ---------------------------------------------------------------------------
+// /studio/batch/queue?slug=X (list queued, not-yet-started batch jobs)
+// ---------------------------------------------------------------------------
+
+export async function listStudioBatchQueue(
+  slug: string,
+): Promise<StudioBatchJobListResponseDTO> {
+  const params = new URLSearchParams({ slug });
+  const data = await request<StudioBatchJobListResponseDTO>(
+    `/studio/batch/queue?${params.toString()}`,
+  );
+  return data;
+}

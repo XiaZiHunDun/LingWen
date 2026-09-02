@@ -10,6 +10,7 @@ import { usePilotBatch } from '@/composables/usePilotBatch';
 import type { BatchEventType } from '@/composables/useBatchEventStream';
 import PilotStartForm from '@/components/pilot/PilotStartForm.vue';
 import PilotLivePanel from '@/components/pilot/PilotLivePanel.vue';
+import PilotQueuePanel from '@/components/pilot/PilotQueuePanel.vue';
 import PilotHistoryList from '@/components/pilot/PilotHistoryList.vue';
 import PilotCancelDialog from '@/components/pilot/PilotCancelDialog.vue';
 
@@ -18,11 +19,15 @@ const pilot = usePilotBatch();
 
 const cancelDialogJobId = ref<string | null>(null);
 const eta = ref<number | null>(null);
+const lastSlug = ref('');
 
 onMounted(async () => {
   await pilot.refreshActive();
   const slug = studio.activeSlug ?? '';
-  if (slug) await pilot.refreshHistory(slug);
+  if (slug) {
+    await pilot.refreshHistory(slug);
+    await pilot.refreshQueue(slug);
+  }
 });
 
 async function onPreflight(payload: { slug: string; start_chapter: number; end_chapter: number }) {
@@ -31,6 +36,8 @@ async function onPreflight(payload: { slug: string; start_chapter: number; end_c
 
 async function onStart(payload: { slug: string; start_chapter: number; end_chapter: number; budget_usd: number; mode: 'canon' | 'pilot' }) {
   await pilot.startBatch(payload);
+  lastSlug.value = payload.slug;
+  if (payload.slug) await pilot.refreshQueue(payload.slug);
 }
 
 function onRequestCancel(jobId: string) {
@@ -41,6 +48,7 @@ async function onConfirmCancel() {
   if (!cancelDialogJobId.value) return;
   await pilot.cancelBatch(cancelDialogJobId.value);
   cancelDialogJobId.value = null;
+  if (lastSlug.value) await pilot.refreshQueue(lastSlug.value);
 }
 
 function onHoldOn() {
@@ -90,6 +98,7 @@ function onClosePreview() {
         @open-preview="onOpenPreview"
         @close-preview="onClosePreview"
       />
+      <PilotQueuePanel :queue="pilot.queue.value" />
       <PilotHistoryList :history="pilot.history.value" />
       <PilotCancelDialog
         :visible="cancelDialogJobId !== null"

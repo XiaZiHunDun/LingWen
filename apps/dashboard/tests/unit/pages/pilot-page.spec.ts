@@ -27,6 +27,8 @@ const mockUsePilotBatch = {
   closePreview: vi.fn(),
   refreshActive: vi.fn(),
   refreshHistory: vi.fn(),
+  refreshQueue: vi.fn(),
+  queue: { value: [] as Array<{ job_id: string; start_chapter: number; end_chapter: number; mode: string; status: string; started_at: string }> },
   runPreflight: vi.fn(),
   startBatch: vi.fn(),
   cancelBatch: vi.fn(),
@@ -51,10 +53,21 @@ describe('PilotPage', () => {
     expect(wrapper.find('[data-testid="pilot-history-list"]').exists()).toBe(true);
   });
 
-  it('refreshes active + history on mount', () => {
+  it('refreshes active + history + queue on mount', () => {
     mount(PilotPage);
     expect(mockUsePilotBatch.refreshActive).toHaveBeenCalled();
     expect(mockUsePilotBatch.refreshHistory).toHaveBeenCalled();
+    expect(mockUsePilotBatch.refreshQueue).toHaveBeenCalled();
+  });
+
+  it('renders queue panel when there are queued batch jobs', () => {
+    mockUsePilotBatch.queue.value = [
+      { job_id: 'job-q1', start_chapter: 5, end_chapter: 8, mode: 'canon', status: 'queued', started_at: '2026-09-03T00:00:00Z' },
+    ];
+    const wrapper = mount(PilotPage);
+    expect(wrapper.find('[data-testid="pilot-queue-panel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="pilot-queue-item-job-q1"]').exists()).toBe(true);
+    mockUsePilotBatch.queue.value = [];
   });
 
   it('shows error banner when startError is set', async () => {

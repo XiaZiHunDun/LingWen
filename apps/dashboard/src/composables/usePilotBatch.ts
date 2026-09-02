@@ -4,6 +4,7 @@ import {
   cancelStudioBatchJob,
   fetchStudioActiveBatchJob,
   listStudioBatchJobs,
+  listStudioBatchQueue,
   studioProductionRun,
 } from '@/api/studio';
 import type {
@@ -47,6 +48,7 @@ export interface ChapterProgressEvent {
 export function usePilotBatch() {
   const activeJob = ref<StudioBatchJobResponseDTO | null>(null);
   const history = ref<StudioBatchJobSummaryDTO[]>([]);
+  const queue = ref<StudioBatchJobSummaryDTO[]>([]);
   const chapterEvents = ref<ChapterProgressEvent[]>([]);
   const preflightRows = ref<Array<{ chapter: number; ok: boolean; message: string }>>([]);
   const preflightLoading = ref(false);
@@ -187,6 +189,15 @@ export function usePilotBatch() {
     }
   }
 
+  async function refreshQueue(slug: string): Promise<void> {
+    try {
+      const result = await listStudioBatchQueue(slug);
+      queue.value = result.jobs.filter((job) => job.status === 'queued');
+    } catch (err) {
+      console.warn('[usePilotBatch] refreshQueue failed', err);
+    }
+  }
+
   async function runPreflight(_form: PilotForm): Promise<void> {
     preflightLoading.value = true;
     preflightError.value = null;
@@ -279,6 +290,8 @@ export function usePilotBatch() {
     closePreview,
     refreshActive,
     refreshHistory,
+    refreshQueue,
+    queue,
     runPreflight,
     startBatch,
     cancelBatch,
