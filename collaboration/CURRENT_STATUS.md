@@ -12,7 +12,7 @@
 |------|------|
 | **版本** | v25.2（Phase 25.2 — 自治并发：自推进 + 自服务 BACKLOG + 门禁自合并） |
 | **git main** | master（最近 `dac678b3`）|
-| **当前阶段** | A=前端 P1-SHIM；B=后端 P2-QUEUE ✅ + P2-RESTART ✅ → P2-MULTI（进行中） |
+| **当前阶段** | A=前端 P1-SHIM；B=后端 P2-QUEUE ✅ + P2-RESTART ✅ + P2-MULTI ✅（后端 P2 系列收尾） |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -29,9 +29,9 @@
 | REQ-001 D | 写栏「模式引导条」：`CreatorModeGuideBar.vue` 随模式变化的引导条，可关闭、关闭状态按模式本地记忆 | ✅ 完成 | 会话-A；vitest/ESLint/knip 绿 |
 | REQ-001 E | 推进「差异收尾」：`CreatorDeviationFinalize.vue` 越序差异收尾清单，复用 `utils/batchDeviation.ts`，复核状态按批次持久化 | ✅ 完成 | 会话-A；vitest/ESLint/knip 绿 |
 | REQ-001 全量 | 创作者模式增强 A/B/C/D/E 全部交付 | ✅ 完成 | 会话-A |
-| P2-MULTI | multi-LLM 并发批次（后端） | 后端 B 已认领 | 后端 B | 🔄 进行中 |
+| P2-MULTI | multi-LLM 并发批次（后端，自服务完成） | 后端 B 已认领并完成 | 后端 B | ✅ 完成 |
 
-> 详见 [BACKLOG.md](BACKLOG.md)：后端 B 已自服务完成 P2-QUEUE ✅ + P2-RESTART ✅，当前进行 P2-MULTI（收尾项）。
+> 详见 [BACKLOG.md](BACKLOG.md)：后端 B 已自服务完成 P2-QUEUE ✅ + P2-RESTART ✅ + P2-MULTI ✅（后端 P2 系列收尾标 ✅）。
 
 ---
 
@@ -47,6 +47,7 @@
 | P2-QUEUE（前端配合） | Track A 接入批次优先级队列：`listStudioBatchQueue` API + `usePilotBatch.queue/refreshQueue` + `PilotQueuePanel` 只读排队面板 | ⭐ 全量门绿 |
 | P2-QUEUE | Track B 自服务完成 batch priority queue（提交/排队/优先级自动推进 + `/api/studio/batch/queue` 端点） | ⭐ `d3347d3b`；batch 受影响子集 18 passed + ruff 全绿，ZERO 新增失败 |
 | P2-RESTART | Track B 自服务完成 auto-restart（失败自动重启，`max_attempts` 上限 + 同 job_id 重试，默认 1 零行为变化） | ⭐ `dac678b3`；全量 pytest 3479 passed（272 环境基线，ZERO 新增）+ ruff 全绿 |
+| P2-MULTI | Track B 自服务完成 multi-LLM 并发批次（`--parallel` + `--provider`/`--provider-map`，`run_production_batch_parallel` 线程并发不同 chapter 不同 provider，默认串行零行为变化） | 新测试 12 passed + ruff check/format 全绿；agent_system/ci batch 相关簇 ZERO 新增失败 |
 
 > 完整版本链（v21.0 → v25.1）见 `CLAUDE.md`；并发协调点见 `COORDINATION.md`。
 

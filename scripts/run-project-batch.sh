@@ -64,6 +64,21 @@ if [[ -n "$CALIBRATE" && -f "$CALIBRATE" ]]; then
   BATCH_ARGS+=(--calibrate-from "$CALIBRATE")
 fi
 
+# P2-MULTI: opt-in multi-LLM concurrent batch (env-driven, default sequential).
+export LINGWEN_BATCH_PARALLEL="${LINGWEN_BATCH_PARALLEL:-0}"
+if [[ "$LINGWEN_BATCH_PARALLEL" == "1" ]]; then
+  BATCH_ARGS+=(--parallel)
+fi
+if [[ -n "${LINGWEN_BATCH_PROVIDER:-}" ]]; then
+  BATCH_ARGS+=(--provider "$LINGWEN_BATCH_PROVIDER")
+fi
+if [[ -n "${LINGWEN_BATCH_PROVIDER_MAP:-}" ]]; then
+  BATCH_ARGS+=(--provider-map "$LINGWEN_BATCH_PROVIDER_MAP")
+fi
+if [[ -n "${LINGWEN_BATCH_MAX_WORKERS:-}" ]]; then
+  BATCH_ARGS+=(--max-workers "$LINGWEN_BATCH_MAX_WORKERS")
+fi
+
 python -m infra.agent_system.chapter_production_batch "${BATCH_ARGS[@]}" || true
 
 echo ""

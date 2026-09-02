@@ -15,11 +15,15 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from lingwen_core.agents.agent_config import DEFAULT_STATE_DIR, load_default_config
+from lingwen_core.agents.agent_config import (
+    DEFAULT_STATE_DIR,
+    MasterControllerConfig,
+    load_default_config,
+)
 from lingwen_core.agents.chapter_memory_hook import (
     memory_rag_live_gateway_check,
     resolve_memory_rag_mode,
@@ -83,6 +87,28 @@ def detect_available_provider() -> str | None:
         if os.environ.get(env_key, "").strip():
             return name
     return None
+
+
+def build_provider_override_config(
+    state_dir: Path,
+    provider: str | None,
+) -> tuple[MasterControllerConfig | None, str | None]:
+    """Build a MasterControllerConfig for one chapter run, overriding primary provider.
+
+    P2-MULTI: per-chapter LLM provider selection. When ``provider`` is None the
+    env-derived default config is returned. When ``provider`` is set but its API
+    key is absent from the environment, returns ``(None, error)`` so the caller
+    can fail fast instead of crashing mid-workflow.
+    """
+    try:
+        cfg = load_default_config(state_dir=str(state_dir))
+    except RuntimeError as exc:
+        return None, str(exc)
+    if provider is None:
+        return cfg, None
+    if provider not in cfg.providers:
+        return None, f"provider {provider!r} not configured (set its API key)"
+    return replace(cfg, primary_provider=provider), None
 
 
 @dataclass(frozen=True)
@@ -340,8 +366,15 @@ def run_production_pilot(
     preflight_only: bool = False,
     cost_budget_usd: float | None = None,
     max_backtracks: int = 0,
+    provider: str | None = None,
 ) -> PilotResult:
-    """Run (or preflight-only) one real-LLM chapter pilot."""
+    """Run (or preflight-only) one real-LLM chapter pilot.
+
+    Args:
+        provider: optional primary LLM provider override for this chapter
+            (P2-MULTI multi-LLM concurrent batches). When set, its API key must
+            be present in the environment; otherwise the run fails fast.
+    """
     checks = preflight_checklist(
         state_dir=state_dir,
         chapter_num=chapter_num,
@@ -349,12 +382,14 @@ def run_production_pilot(
     )
     mem_mode = resolve_memory_rag_mode()
     backfill_on = incremental_backfill_enabled()
-    provider = detect_available_provider()
+    resolved_dir = Path(state_dir or DEFAULT_STATE_DIR)
+    config, config_err = build_provider_override_config(resolved_dir, provider)
+    effective_provider = provider if provider is not None else (config.primary_provider if config else None)
 
     result = PilotResult(
         chapter_num=chapter_num,
         workflow_name=PILOT_WORKFLOW_NAME,
-        provider=provider,
+        provider=effective_provider,
         preflight_ok=preflight_ok(checks),
         preflight_checks=checks,
         memory_rag_mode=mem_mode,
@@ -370,15 +405,19 @@ def run_production_pilot(
         result.error = "preflight failed; fix checklist before running pilot"
         return result
 
+    if config is None:
+        result.error = config_err or "provider config unavailable"
+        return result
+
     from lingwen_llm.providers.cost_tracker import CostTracker
     from lingwen_pipeline.master_controller import MasterController
 
     from infra.got.data_structures import NodeStatus
 
-    resolved_dir = Path(state_dir or DEFAULT_STATE_DIR)
     cost_tracker = CostTracker()
     master = MasterController(
         state_dir=str(resolved_dir),
+        config=config,
         cost_tracker=cost_tracker,
     )
     configure_pilot_hooks(master)

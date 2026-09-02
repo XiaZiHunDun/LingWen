@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from lingwen_core.agents.chapter_production_pilot import (
     PilotResult,
@@ -371,6 +372,168 @@ def run_production_batch(
     )
 
 
+def assign_chapter_provider(
+    chapter_num: int,
+    provider: str | None = None,
+    provider_map: dict[int, str] | None = None,
+) -> str | None:
+    """Resolve the LLM provider for one chapter (P2-MULTI).
+
+    A per-chapter override in ``provider_map`` wins over the batch-wide default
+    ``provider``; when neither is given, returns None (env-derived default).
+    """
+    if provider_map and chapter_num in provider_map:
+        return provider_map[chapter_num]
+    return provider
+
+
+def split_parallel_budget(
+    *,
+    budget_usd: float | None,
+    cost_per_chapter_usd: float,
+    max_chapters: int,
+) -> tuple[dict[int, float | None], float]:
+    """Allocate a fixed per-chapter cost budget across a concurrent batch.
+
+    Parallel runs cannot stop mid-flight based on cumulative spend, so a total
+    ``budget_usd`` (when provided) is split evenly across chapters. Returns
+    ``(chapter->budget, allocated_total)``.
+    """
+    if budget_usd is None:
+        return {i: None for i in range(max_chapters)}, 0.0
+    per = budget_usd / max_chapters
+    return {i: round(per, 6) for i in range(max_chapters)}, round(budget_usd, 6)
+
+
+def run_parallel_chapters(
+    *,
+    tasks: Sequence[tuple[int, str | None]],
+    runner: Callable[..., PilotResult],
+    budgets: Sequence[float | None],
+    state_dir: Path | None,
+    max_workers: int,
+) -> list[PilotResult]:
+    """Run chapter pilots concurrently; return results in task order (P2-MULTI).
+
+    Each task is ``(chapter_num, provider)``; ``budgets`` is parallel (one per
+    task). A thread pool is used so each chapter keeps its own MasterController
+    and AI router, enabling different chapters on different providers at once.
+    """
+    if max_workers < 1:
+        max_workers = 1
+
+    def run_one(index: int) -> PilotResult:
+        chapter_num, provider = tasks[index]
+        return runner(
+            chapter_num=chapter_num,
+            state_dir=state_dir,
+            cost_budget_usd=budgets[index],
+            provider=provider,
+        )
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        return list(pool.map(run_one, range(len(tasks))))
+
+
+def run_production_batch_parallel(
+    *,
+    start_chapter: int = 1,
+    max_chapters: int = 3,
+    state_dir: Path | None = None,
+    budget_usd: float | None = None,
+    provider: str | None = None,
+    provider_map: dict[int, str] | None = None,
+    max_workers: int = 2,
+    stop_on_fail: bool = True,
+    operator: str = "operator",
+    save_chapter_records_dir: Path | None = None,
+    pilot_runner: Callable[..., PilotResult] | None = None,
+) -> BatchResult:
+    """Run up to max_chapters concurrently, each chapter on its own provider.
+
+    Opt-in parallel mode (P2-MULTI). Default stays sequential via
+    ``run_production_batch``; this mode is only entered when the caller opts in.
+    """
+    if max_chapters < 1 or max_chapters > MAX_BATCH_CHAPTERS:
+        raise ValueError(f"max_chapters must be 1..{MAX_BATCH_CHAPTERS}, got {max_chapters}")
+    if start_chapter < 1:
+        raise ValueError(f"start_chapter must be >= 1, got {start_chapter}")
+
+    runner = pilot_runner or run_production_pilot
+    checks = preflight_checklist(
+        state_dir=state_dir,
+        chapter_num=start_chapter,
+        require_real_llm_gate=True,
+    )
+    cost_per_chapter, cal_source = resolve_cost_per_chapter_usd(
+        calibrate_from=auto_resolve_calibrate_from() if budget_usd is not None else None,
+    )
+    batch_plan = build_batch_plan(
+        start_chapter=start_chapter,
+        max_chapters=max_chapters,
+        budget_usd=budget_usd,
+        checks=checks,
+        cost_per_chapter_usd=cost_per_chapter,
+        calibration_source=cal_source,
+    )
+
+    if not preflight_ok(checks):
+        empty = PilotResult(
+            chapter_num=start_chapter,
+            workflow_name="novel_writing",
+            provider=None,
+            preflight_ok=False,
+            preflight_checks=checks,
+            error="batch preflight failed",
+        )
+        return _batch_result_shell(
+            start_chapter=start_chapter,
+            max_chapters=max_chapters,
+            budget_usd=budget_usd,
+            stopped_reason="preflight_failed",
+            batch_plan=batch_plan,
+            chapter_results=[empty.to_dict()],
+        )
+
+    budget_map, _ = split_parallel_budget(
+        budget_usd=budget_usd,
+        cost_per_chapter_usd=cost_per_chapter,
+        max_chapters=max_chapters,
+    )
+    tasks = [
+        (start_chapter + i, assign_chapter_provider(start_chapter + i, provider, provider_map))
+        for i in range(max_chapters)
+    ]
+    budgets = [budget_map[i] for i in range(max_chapters)]
+    outcomes = run_parallel_chapters(
+        tasks=tasks,
+        runner=runner,
+        budgets=budgets,
+        state_dir=state_dir,
+        max_workers=max_workers,
+    )
+
+    if save_chapter_records_dir is not None:
+        for r in outcomes:
+            record_path = save_chapter_records_dir / f"ch{r.chapter_num:03d}.json"
+            save_pilot_record(r, record_path, operator=operator)
+
+    succeeded = sum(1 for r in outcomes if _chapter_success(r))
+    failed_any = len(outcomes) > succeeded
+    stopped_reason = "chapter_failed" if failed_any else "completed"
+
+    return BatchResult(
+        start_chapter=start_chapter,
+        max_chapters=max_chapters,
+        budget_usd=budget_usd,
+        stopped_reason=stopped_reason,
+        total_cost_usd=_sum_cost(outcomes),
+        chapters_attempted=len(outcomes),
+        chapters_succeeded=succeeded,
+        chapter_results=[r.to_dict() for r in outcomes],
+    )
+
+
 def build_batch_summary(batch: BatchResult, *, batch_id: str | None = None) -> dict[str, Any]:
     """Batch summary JSON (chapter_results already serialized)."""
     from datetime import datetime, timezone
@@ -443,21 +606,55 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--operator", default="operator")
     parser.add_argument("--batch-id", default=None)
+    parser.add_argument(
+        "--parallel",
+        action="store_true",
+        help="Run chapters concurrently (P2-MULTI); each may use a different provider",
+    )
+    parser.add_argument(
+        "--provider",
+        default=None,
+        help="Primary LLM provider override for all chapters (or default for unmapped)",
+    )
+    parser.add_argument(
+        "--provider-map",
+        default=None,
+        metavar="JSON",
+        help='Per-chapter provider map, e.g. \'{"6":"minimax","7":"anthropic"}\'',
+    )
+    parser.add_argument("--max-workers", type=int, default=2)
     args = parser.parse_args(argv)
 
     try:
-        batch = run_production_batch(
-            start_chapter=args.start_chapter,
-            max_chapters=args.max_chapters,
-            state_dir=args.state_dir,
-            budget_usd=args.budget_usd,
-            preflight_only=args.preflight_only and not args.dry_run,
-            dry_run=args.dry_run,
-            calibrate_from=args.calibrate_from,
-            operator=args.operator,
-            save_chapter_records_dir=args.save_chapter_records_dir,
-        )
-    except ValueError as exc:
+        provider_map: dict[int, str] | None = None
+        if args.provider_map:
+            raw = json.loads(args.provider_map)
+            provider_map = {int(k): v for k, v in raw.items()}
+        if args.parallel:
+            batch = run_production_batch_parallel(
+                start_chapter=args.start_chapter,
+                max_chapters=args.max_chapters,
+                state_dir=args.state_dir,
+                budget_usd=args.budget_usd,
+                provider=args.provider,
+                provider_map=provider_map,
+                max_workers=args.max_workers,
+                operator=args.operator,
+                save_chapter_records_dir=args.save_chapter_records_dir,
+            )
+        else:
+            batch = run_production_batch(
+                start_chapter=args.start_chapter,
+                max_chapters=args.max_chapters,
+                state_dir=args.state_dir,
+                budget_usd=args.budget_usd,
+                preflight_only=args.preflight_only and not args.dry_run,
+                dry_run=args.dry_run,
+                calibrate_from=args.calibrate_from,
+                operator=args.operator,
+                save_chapter_records_dir=args.save_chapter_records_dir,
+            )
+    except (ValueError, json.JSONDecodeError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False, indent=2))
         return 2
 
