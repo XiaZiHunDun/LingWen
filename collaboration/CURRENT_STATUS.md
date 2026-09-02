@@ -2,7 +2,7 @@
 
 > **最后更新**: 2026-09-02  
 > **更新者**: 会话-A（Track A 前端自治）  
-> **下一协作**: Track A 完成前端 P2（DRAWER+INSIGHT 已合并）+ REQ-001 A/B/C（模式单一来源 + 陪伴今日下一步卡 + 推进批改节奏带）；后续可选 REQ-001 D 模式引导条 / E 差异收尾，或配合后端 B
+> **下一协作**: Track A 完成前端 P2（DRAWER+INSIGHT 已合并）+ REQ-001 A/B/C/D（模式单一来源 + 陪伴今日下一步卡 + 推进批改节奏带 + 模式引导条）；后续可选 REQ-001 E 差异收尾，或配合后端 B
 
 ---
 
@@ -26,6 +26,7 @@
 | P2-INSIGHT | Pilot + Insight 看板集成（前端） | ✅ 完成 | 会话-A | ✅ |
 | REQ-001 A/B | 创作者模式增强：`useCreatorMode` 单一来源 + 陪伴「今日下一步」卡（前端） | ✅ 完成 | 会话-A `13f3a63c`；全量门绿 |
 | REQ-001 C | 推进「批改节奏带」：`CreatorBatchRhythm.vue` 只读复用 `usePilotBatch`，展示批次范围完成进度 + 越序偏差提示 | ✅ 完成 | 会话-A；vitest/ESLint/knip 绿 |
+| REQ-001 D | 写栏「模式引导条」：`CreatorModeGuideBar.vue` 随模式变化的引导条，可关闭、关闭状态按模式本地记忆 | ✅ 完成 | 会话-A；vitest/ESLint/knip 绿 |
 
 > 详见 [BACKLOG.md](BACKLOG.md)：P1-SHIM（✅）/ P2-DTOMIGR（✅）/ P2-DRAWER（✅）/ P2-INSIGHT（✅）；后端 B 自服务进行 P2-QUEUE。
 
