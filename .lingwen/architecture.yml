@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "24.0"  # Phase 24 — SSE Real-time Batch Progress feature phase: replaces Phase 23 3s scraping polling with server-push real-time progress. Backend: NEW infra/studio_batch_streamer.py (BatchEventPublisher module-level thread-safe singleton with per-job subscriber list + asyncio.Queue cap 100 drop-oldest + BatchEventStreamer) + GET /api/studio/batch/<job_id>/events SSE route (StreamingResponse, Cache-Control no-cache, X-Accel-Buffering no, 15s heartbeat, non-streaming 404/401/403) + 6 named events (job_state/chapter_started/chapter_completed/job_completed/job_failed/job_cancelled) + 4 hooks in infra/studio_batch_runner.py (start/poll-completed/cancel/chapter_records). Frontend: NEW useBatchEventStream composable (native EventSource, 50-event FIFO buffer, addEventListener per named event) + usePilotBatch drops 3s polling for SSE (processedEventIndex consume-each-once + 5s fallback polling ONLY when SSE disconnected) + PilotLivePanel chapterEvents prop renders recent 5. 1 NEW architecture invariant (#49 SSE推 batch 状态为 canonical; Phase 23 3s polling dropped, 5s fallback ONLY when SSE disconnected).
+version: "25.0"  # Phase 25 — SSE Batch 增强 Filter/Replay/Auth: SSE 事件流服务端 event_types 过滤 + 连接时磁盘 replay + 读取门控. 1 NEW invariant (#50 SSE 事件流支持服务端 event_types 过滤 + 连接时磁盘 replay; 读取被 LINGWEN_ALLOW_DASHBOARD_BATCH 门控). Phase 24 — SSE Real-time Batch Progress feature phase: replaces Phase 23 3s scraping polling with server-push real-time progress. Backend: NEW infra/studio_batch_streamer.py (BatchEventPublisher module-level thread-safe singleton with per-job subscriber list + asyncio.Queue cap 100 drop-oldest + BatchEventStreamer) + GET /api/studio/batch/<job_id>/events SSE route (StreamingResponse, Cache-Control no-cache, X-Accel-Buffering no, 15s heartbeat, non-streaming 404/401/403) + 6 named events (job_state/chapter_started/chapter_completed/job_completed/job_failed/job_cancelled) + 4 hooks in infra/studio_batch_runner.py (start/poll-completed/cancel/chapter_records). Frontend: NEW useBatchEventStream composable (native EventSource, 50-event FIFO buffer, addEventListener per named event) + usePilotBatch drops 3s polling for SSE (processedEventIndex consume-each-once + 5s fallback polling ONLY when SSE disconnected) + PilotLivePanel chapterEvents prop renders recent 5. 1 NEW architecture invariant (#49 SSE推 batch 状态为 canonical; Phase 23 3s polling dropped, 5s fallback ONLY when SSE disconnected).
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -382,3 +382,23 @@ phase_23:
     - "Auto-restart on failure"
     - "usePilotBatch compose DTO migration to @/api/studio re-export (currently imports DTOs from @lingwen/dashboard-contracts/shared directly)"
     - "Phase 114 prod preview regression (accepted, pre-existing)"
+phase_25:
+  branch: "phase-25-sse-batch-enhance"
+  implementation_log: docs/superpowers/handoffs/2026-09-02-phase-25-sse-batch-enhance-handoff.md
+  closure_date: "2026-09-02"
+  scripts_changed:
+    - "Backend: infra/studio_batch_streamer.py per-subscriber event_types filter (_Subscriber(queue, event_types) + KNOWN_EVENT_TYPES; publish skips non-matching; KNOWN_EVENT_TYPES validation)"
+    - "Backend: infra/studio_batch_runner.py replay_events() — reconstructs job_state + chapter_completed from on-disk chapters + terminal event"
+    - "Backend: GET /api/studio/batch/<job_id>/events route — Query params event_types(400 on unknown)/replay=1/slug&mode guards(403); reads gated by LINGWEN_ALLOW_DASHBOARD_BATCH(403 when disabled)"
+    - "Frontend: useBatchEventStream(jobId, options{replay,eventTypes}) → buildUrl() query params; usePilotBatch passes {replay:true}"
+    - "Frontend: composables/index.ts barrel keeps BatchEventType private to satisfy knip (avoid vue-tsc TS2724)"
+  new_architecture_invariants:
+    - "#50 SSE 事件流支持服务端 event_types 过滤 + 连接时磁盘 replay; 读取被 LINGWEN_ALLOW_DASHBOARD_BATCH 门控"
+  carryover_to_phase_26:
+    - "Per-chapter preview drawer in PilotLivePanel"
+    - "Batch templates (save common mode/budget/chapters combos)"
+    - "Multi-LLM provider concurrent batches"
+    - "Pilot + Insight dashboard integration"
+    - "Batch priority queue / auto-restart on failure"
+    - "usePilotBatch DTO migration to @/api/studio re-export"
+    - "event_types optional UI filter toggle (API exposed in this phase, no UI forced)"
