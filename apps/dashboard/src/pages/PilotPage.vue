@@ -65,6 +65,7 @@ function onHoldOn() {
         :active-job="pilot.activeJob.value"
         :eta-seconds="eta"
         :cancel-loading="pilot.cancelLoading.value"
+        :chapter-events="pilot.chapterEvents.value"
         @request-cancel="onRequestCancel"
       />
       <PilotHistoryList :history="pilot.history.value" />

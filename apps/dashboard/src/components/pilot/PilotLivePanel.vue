@@ -17,6 +17,15 @@
         <span class="eta-label">预计剩余:</span>
         <span class="eta-value pilot-eta" data-testid="pilot-eta">{{ etaDisplay }}</span>
       </div>
+      <ul v-if="recentChapters.length" class="chapter-events pilot-chapter-events" data-testid="pilot-chapter-events">
+        <li
+          v-for="item in recentChapters"
+          :key="`${item.chapter_num}-${item.receivedAt}`"
+          class="chapter-event-item"
+        >
+          已完成 <strong>ch{{ String(item.chapter_num).padStart(3, '0') }}</strong>
+        </li>
+      </ul>
       <pre v-if="activeJob.log_tail" class="log-tail pilot-log-tail" data-testid="pilot-log-tail">{{ activeJob.log_tail }}</pre>
       <div class="actions-row">
         <button v-if="activeJob.status === 'running'" type="button" class="cancel-btn pilot-cancel-btn pixel-border" data-testid="pilot-cancel-btn" :disabled="cancelLoading" @click="emit('request-cancel', activeJob.job_id)">
@@ -49,9 +58,15 @@ const props = defineProps<{
   activeJob: ActiveJob | null;
   etaSeconds: number | null;
   cancelLoading: boolean;
+  chapterEvents?:
+    | Array<{ chapter_num: number; receivedAt: string }>
+    | null;
 }>();
 
 const emit = defineEmits<{ 'request-cancel': [jobId: string] }>();
+
+/** Most recent 5 chapter_completed entries for a compact live list. */
+const recentChapters = computed(() => props.chapterEvents?.slice(-5) ?? []);
 
 const statusColor = computed(() => {
   if (!props.activeJob) return 'unknown';
@@ -79,6 +94,8 @@ const chapterRange = computed(() => {
 .job-status-completed { color: var(--info, #2c6cb0); font-weight: 600; }
 .job-status-failed, .job-status-cancelled { color: var(--error, #c33); font-weight: 600; }
 .eta-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+.chapter-events { list-style: none; margin: 0 0 0.5rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chapter-event-item { font-size: 0.8rem; background: var(--info-bg, #eef); color: var(--info, #2c6cb0); padding: 0.15rem 0.5rem; border-radius: 4px; }
 .log-tail { background: var(--code-bg, #1e1e1e); color: var(--code-f, #ddd); padding: 0.5rem; border-radius: 4px; max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
 .empty-msg { color: var(--muted, #888); font-style: italic; }
 .cancel-btn { padding: 0.4rem 0.8rem; cursor: pointer; background: var(--error-bg, #fee); color: var(--error, #c33); border-color: var(--error, #c33); }

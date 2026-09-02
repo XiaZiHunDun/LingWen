@@ -49,4 +49,18 @@ describe('PilotLivePanel', () => {
     });
     expect(wrapper.find('[data-testid="pilot-status"]').text()).toContain('cancelled');
   });
+
+  it('renders the most recent 5 chapter_completed events', () => {
+    const chapterEvents = Array.from({ length: 7 }, (_, i) => ({
+      chapter_num: i + 1,
+      receivedAt: `t${i}`,
+    }));
+    const wrapper = mount(PilotLivePanel, {
+      props: { activeJob: runningJob, etaSeconds: null, cancelLoading: false, chapterEvents },
+    });
+    const items = wrapper.findAll('[data-testid="pilot-chapter-events"] .chapter-event-item');
+    expect(items).toHaveLength(5);
+    expect(items[0].text()).toContain('ch003');
+    expect(wrapper.text()).toContain('ch007');
+  });
 });
