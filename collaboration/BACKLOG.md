@@ -1,8 +1,9 @@
 # 待办事项列表
 
-> **最后更新**: 2026-07-13  
-> **更新者**: Local-A  
-> **优先级**: P0 > P1 > P2 > P3 > P4
+> **最后更新**: 2026-09-02  
+> **更新者**: 协调者（已从 v12/Phase15 刷新至 v25.1）  
+> **优先级**: P0 > P1 > P2 > P3  
+> **事实来源**: 本仓库当前版本在 `CLAUDE.md` v25.1；并行开发入口见根 `COORDINATION.md`
 
 ---
 
@@ -11,10 +12,10 @@
 1. 从列表中选择一个任务
 2. 检查「状态」是 📋 待开始
 3. 将「状态」改为 🔄 进行中，填入「认领人」
-4. 在 `ACTIVE_TASK.md` 中添加任务详情（如果是大型任务）
-5. 开始工作！
+4. 大型任务在 `ACTIVE_TASK.md` 中添加详情
+5. 开始工作
 
-> 小型任务可以直接在 BACKLOG 中跟踪，大型任务建议移到 ACTIVE_TASK.md 详细跟踪
+> 小型任务直接在 BACKLOG 中跟踪；大型任务移入 `ACTIVE_TASK.md`
 
 ---
 
@@ -22,70 +23,44 @@
 
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
-| - | - | 当前无P0阻塞项 | - | - | - |
+| - | - | 当前无 P0 阻塞项 | - | - | - |
 
 ---
 
-## P1 - 高优先级
+## P1 - 立即处理（追平双会话遗留）
 
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
-| P1-H2 | FastAPI中间件 | CORS/GZip/限流中间件 | 历史 | ✅ 已完成 | 2026-07-13 |
-| P1-H4 | Ripple N+1优化 | 200 ripple → 2 query | 历史 | ✅ 已完成 | 2026-07-13 |
-| P1-M4 | CLI路径校验 | `$LINGWEN_PROJECT_ROOT`环境变量校验 | 历史 | ✅ 已完成 | 2026-07-13 |
-| P1-L6 | Shell脚本修复 | 6个硬编码slug脚本 | 历史 | ✅ 已完成 | 2026-07-13 |
-
-> **已完成**: P1-H10（前端API timeout）、P1-H2、P1-H4、P1-M4、P1-L6 全部完成
+| P1-SHIM | batch-templates 契约 shim | 后端已 codegen `lingwen_shared` 的 batch-templates DTO（`StudioBatchTemplate`/`Create|Update`/`ListResponse`）但未更新 `apps/dashboard-contracts` 的 *DTO shim → 前端暂消费不到新类型。前端补 shim 后 Pilot 方可落地模板 UI | 待认领（前端 Track A） | 📋 待开始 | 2026-09-02 |
 
 ---
 
-## P2 - 中优先级
+## P2 - Phase 26+ 候选（继承 carryover，按价值排序）
 
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
-| P2-E4 | Cascade邻接表 | 缺失邻接表导致性能问题 | 历史 | ✅ 已完成 | 2026-07-13 |
-| P2-E5 | 全表加载 | `reference_graph.py`全表加载 | 历史 | ✅ 已完成 | 2026-07-13 |
-| P2-E6 | Cascade cycle指标 | 缺失循环检测指标 | Local-A | ✅ 已完成 | 2026-07-14 |
-| P2-E10 | Qdrant异步迁移 | Qdrant阻塞事件循环 | 历史 | ✅ 已完成 | 2026-07-13 |
-
----
-
-## P3 - 低优先级
-
-| ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
-|----|------|------|--------|------|----------|
-| P3-E8 | SQLite包装收敛 | 3套SQLite包装PRAGMA漂移 | Local-A | ✅ 已完成 | 2026-07-14 |
-| P3-E9 | HTTPException整改 | 全局handler统一错误处理 | 历史 | ✅ 已完成 | 2026-07-13 |
-| P3-SPLIT | 大文件拆分 | `dashboard/app.py`/`master_controller.py`拆分 | Local-A | ✅ 已完成 | 2026-07-14 |
-| P15-T2 | SQLite整合spec | SQLite 8类 → `infra/persistence/` | Local-A | ✅ 已完成 | 2026-07-14 |
-| P15-T3 | dashboard singleton | dashboard singleton走`get("ripple")` | Local-A | ✅ 已完成 | 2026-07-14 |
-| P15-T4 | 删除截断副本 | 删除`reading_power_db.py`截断副本 | Local-A | ✅ 已完成 | 2026-07-14 |
-
----
-
-## P4 - 体验优化
-
-| ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
-|----|------|------|--------|------|----------|
-| P4-A11Y | Vue SFC无障碍 | 4个组件添加aria-label/aria-live/role/a11y属性 | Local-A | ✅ 已完成 | 2026-07-14 |
-| P4-DETECTOR | AI检测器合并 | CoreForeshadowChecker → ForeshadowChecker | Local-A | ✅ 已完成 | 2026-07-14 |
+| P2-INSIGHT | Pilot + Insight 看板集成 | 让 batch 进度汇入主看板 | 待认领 | 📋 待开始 | 2026-09-02 |
+| P2-DRAWER | per-chapter preview drawer | PilotLivePanel 章节预览抽屉 | 待认领（前端） | 📋 待开始 | 2026-09-02 |
+| P2-QUEUE | batch priority queue | 生产排队，多任务有序 | 待认领（后端） | 📋 待开始 | 2026-09-02 |
+| P2-MULTI | multi-LLM 并发批次 | 并行吞吐能力（较大） | 待认领（后端） | 📋 待开始 | 2026-09-02 |
+| P2-RESTART | auto-restart on failure | 失败自动重启 | 待认领（后端） | 📋 待开始 | 2026-09-02 |
+| P2-DTOMIGR | usePilotBatch DTO migration | 迁移至 `@/api/studio` re-export（技术债） | 待认领（前端） | 📋 待开始 | 2026-09-02 |
+| P2-REG | Phase 114 prod preview regression | 长期 accepted 债，低优先 | 待认领 | ⏳ 待规划 | 2026-09-02 |
 
 ---
 
 ## 已完成（近期）
 
-| ID | 标题 | 完成日期 | 认领人 | 验证 |
-|----|------|----------|--------|------|
-| P1-H10 | 前端API timeout + AbortSignal | 已完成 | 历史 | ✅ 代码已实现 |
-| P13-T1 | API 15s超时 | 2026-06-xx | 历史 | ✅ |
-| P13-T2 | slowapi限流 | 2026-06-xx | 历史 | ✅ |
-| P13-T3 | ripple list bulk | 2026-06-xx | 历史 | ✅ |
-| P13-T4 | CLI path env | 2026-06-xx | 历史 | ✅ |
-| P13-T5 | shell slug guard | 2026-06-xx | 历史 | ✅ |
-| P14-T1 | cascade邻接表O(1) | 2026-06-xx | 历史 | ✅ |
-| P14-T2 | Qdrant async wrap | 2026-06-xx | 历史 | ✅ |
-| P14-T3 | _LRUCache TTL | 2026-06-xx | 历史 | ✅ |
-| P15-T1 | dashboard重构 | 2026-07-13 | 历史 | ✅ pytest 359 |
+| 版本/阶段 | 内容 | 状态 |
+|------|------|------|
+| v25.1 (Phase 25.1) | 双会话并行开发合流：Track A event_types 过滤开关 + Track B batch templates，0 冲突 ff-merge 至 `a1826b33` | ✅ |
+| v25.0 (Phase 25) | SSE batch 增强 Filter/Replay/Auth（服务端 event_types 过滤 + 连接重放 + 读取门控） | ✅ |
+| v24.0 (Phase 24) | SSE 实时 batch 进度（`studio_batch_streamer.py` + `/events` 路由）替代 3s 轮询 | ✅ |
+| v23.0 (Phase 23) | Pilot 页（`PilotPage.vue` + 5 组件 + `usePilotBatch`） | ✅ |
+| v22.0 (Phase 22) | test-env + ruff format 清理 | ✅ |
+| v21.0 (Phase 21) | shim cleanup（删 `infra/consistency/` + `infra/agent_system/`） | ✅ |
+
+> 完整历史版本链见 `CLAUDE.md` 版本块（v21.0 → v25.1）。
 
 ---
 
@@ -95,35 +70,19 @@
 |----|------|------|------|------------|
 | REQ-001 | 创作者模式增强 | 用户 | 陪伴/推进模式功能扩展 | P2 |
 | REQ-002 | 多模态支持 | 用户 | 封面/插图生成 | P3 |
-| REQ-003 | 移动端适配 | 用户 | Dashboard移动端体验优化 | P3 |
+| REQ-003 | 移动端适配 | 用户 | Dashboard 移动端体验优化 | P3 |
 | REQ-004 | 团队协作功能 | 用户 | 多用户协作编辑 | P4 |
 
 ---
 
 ## 素材生成任务（Trae Worker）
 
-> 以下任务需要 Trae Worker 生成图片素材，用于提升墨灵前端视觉设计质量
+| ID | 标题 | 用途 | 状态 |
+|----|------|------|------|
+| ASSET-001~006 | 品牌 Logo、模块图标、空状态插图、界面概念图、场景插画 | 侧边栏/书架/今日页/介绍 | 📋 待生成 |
+| ASSET-007~011 | 科技感背景、Hero、动漫空状态、科技 Logo | 工作台/今日页/书架 | 📋 待生成 |
 
-| ID | 标题 | 描述 | 格式要求 | 用途 | 状态 |
-|----|------|------|----------|------|------|
-| ASSET-001 | 墨灵品牌Logo | 古典风格Logo，包含「墨」字元素，融合书卷/毛笔/砚台等文学意象 | PNG 512x512 + SVG矢量 | 侧边栏品牌标识、浏览器Favicon、登录页 | 📋 待生成 |
-| ASSET-002 | 功能模块图标 | 一套12个图标：写作、AI辅助、检查反馈、版本管理、书架、收件箱、洞察、设置、今日、更多、级联、问答 | PNG 64x64 + SVG | 侧边栏导航、功能区标题、按钮图标 | 📋 待生成 |
-| ASSET-003 | 空状态插图-无项目 | 优雅的空状态插画，表现"空白的创作旅程等待开始"的意境 | PNG 800x600 | 书架页无项目时显示 | 📋 待生成 |
-| ASSET-004 | 空状态插图-无任务 | 空状态插画，表现"今日无事，享受创作"的轻松氛围 | PNG 800x600 | 今日页无任务时显示 | 📋 待生成 |
-| ASSET-005 | 产品界面概念图 | 墨灵创作工作台的完整UI概念设计图，三栏式布局 | PNG 1280x720 | 产品介绍页面、比赛展示 | 📋 待生成 |
-| ASSET-006 | 创作场景插画 | 创作者使用墨灵进行写作的场景插画，温暖舒适的氛围 | PNG 1024x768 | 首页Hero背景备选、功能介绍 | 📋 待生成 |
-
-> **设计风格要求**：所有素材需与墨灵品牌风格一致——现代科技/动漫风格、暗色底(#0d1117)、霓虹紫蓝(#6366f1/#06b6d4)、渐变发光效果
-
-### 第二轮素材需求（科技/动漫风格重构）
-
-| ID | 标题 | 描述 | 格式要求 | 用途 | 状态 |
-|----|------|------|----------|------|------|
-| ASSET-007 | 科技感工作台背景 | 暗色系抽象科技背景图，包含霓虹光效、粒子、几何线条等元素，整体偏紫蓝色调 | JPG 1920x1080 | 书桌工作台背景 | 📋 待生成 |
-| ASSET-008 | 科技感Hero横幅 | 动漫风格创作场景，人物在暗色环境中使用墨灵写作，周围环绕发光的文字粒子和AI光效 | JPG 1280x720 | 今日页Hero横幅 | 📋 待生成 |
-| ASSET-009 | 动漫风格空状态-无项目 | 动漫风格空状态插图，一个角色站在空白的书架前，周围有发光的书籍轮廓虚影 | JPG 800x600 | 书架页空状态 | 📋 待生成 |
-| ASSET-010 | 动漫风格空状态-无任务 | 动漫风格空状态插图，一个角色在窗边放松休息，窗外是星空和发光的文字粒子 | JPG 800x600 | 今日页空状态 | 📋 待生成 |
-| ASSET-011 | 科技感Logo | 适配暗色底的墨灵Logo，使用霓虹紫蓝渐变发光效果，保持「墨」字辨识度 | PNG 512x512 + SVG | 侧边栏品牌标识（替换现有Logo） | 📋 待生成 |
+> 风格要求：现代科技/动漫风格、暗色底、霓虹紫蓝、渐变发光。
 
 ---
 
@@ -152,13 +111,4 @@
 
 | 时间 | 更新者 | 变更 |
 |------|--------|------|
-| 2026-07-13 10:00 | Local-A | 验证黑板，更新P1-H10为已完成 |
-| 2026-07-13 11:00 | Local-A | 将黑板从 novel-factory/ 移至 LingWen/ 根目录 |
-| 2026-07-14 17:00 | Local-A | P4-DETECTOR AI检测器合并完成（CoreForeshadowChecker合并到ForeshadowChecker） |
-| 2026-07-14 18:00 | Local-A | P4-A11Y Vue SFC无障碍优化完成（StudioPage/CreatorWriteWorkbench/CreatorBatchHistoryPanel/App.vue） |
-| 2026-07-14 19:00 | Local-A | 代码清理完成：删除重复core_foreshadow_checker，修复14个TypeScript类型错误 |
-| 2026-07-14 20:00 | Local-A | 书桌界面优化完成：视觉层次、交互体验、响应式布局全面升级 |
-| 2026-07-14 21:00 | Local-A | 书桌界面信息架构重组：写作核心/AI辅助/检查反馈/版本管理四大区域 |
-| 2026-07-14 22:00 | Local-A | 书桌界面结构重构完成：消除重复分支，统一线性布局，1029测试全部通过 |
-| 2026-07-14 23:50 | Local-A | 品牌升级：项目更名为「墨灵」，应用古典文学风格主题（米色背景、铁锈红强调色、YoungSerif/CrimsonPro字体） |
-| 2026-07-15 00:10 | Local-A | 前端视觉升级：侧边栏品牌标识更新为「墨」字+YoungSerif字体，今日页添加Hero横幅（使用比赛素材图片），提取card/callout/persona-grid等设计模式 |
+| 2026-09-02 | 协调者 | 黑板从 v12/Phase15 刷新至 v25.1：废弃过期 P1/P2/P15 记录，改为 P1-SHIM + Phase 26+ 候选 backlog |
