@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "22.0"  # Phase 22 — test-env + format cleanup: 5 source commits `e19eea8b..d5fb737c` on branch phase-22-test-env-format-cleanup; closes 2 carryovers: (1) lingwen_llm test-env gap fixed via DEEPEVAL_DISABLE_DOTENV=1 (pytest.ini) + pytest-env dev dep (workaround 'env -u MINIMAX_API_KEY' no longer needed); (2) ruff format applied to 1072 files (125 already formatted) + bonus infra/errors.py unused 'field' dataclass import removed (F811); 0 NEW architecture invariants
+version: "23.0"  # Phase 23 — Pilot Page feature phase: 19 source commits `c0910284..948173ff` on branch phase-23-pilot-page; first new feature phase since Phase 115 Write Workspace (v15.0); closes longest LingWen dry spell (~10 months between feature phases); extracted embedded Pilot surface from StudioPage.vue into dedicated PilotPage.vue + 5 components + usePilotBatch composable with 3s polling + ETA via pilot_records.jsonl join; backend cancel_batch_job() with SIGTERM + 5s grace + SIGKILL fallback + /proc zombie-detection + POST /api/studio/batch/<job_id>/cancel + compute_pilot_eta() + GET /api/studio/batch/history; new DTOs StudioBatchJobSummary + StudioBatchJobListResponse in lingwen_shared; 1 NEW architecture invariant (#48 PilotPage owns batch lifecycle surface)
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -36,6 +36,10 @@ invariants:
   - id: I005
     rule: "创作流必须支持 checkpoint 恢复，不可中断"
     severity: error
+  - id: I048
+    rule: "PilotPage owns batch lifecycle surface; StudioPage MUST NOT host embedded Pilot start/preflight/job panel"
+    severity: error
+    scope: "apps/dashboard/src/pages/StudioPage.vue"
 
 # 模块边界（明确每个模块的公共 API 和依赖）
 module_boundaries:
@@ -348,3 +352,33 @@ phase_21:
     - "lingwen_llm test-env gap (deepeval/langsmith plugins load .env → MINIMAX_API_KEY set → real LLM calls hang; pre-fix `env -u MINIMAX_API_KEY` works around)"
     - "ruff format cleanup (many test files need `ruff format`)"
     - "Phase 114 prod preview regression (accepted per CLAUDE.md)"
+
+# Phase 23 — Pilot Page feature phase (2026-09-02)
+phase_23:
+  purpose: "Phase 23 — Pilot Page feature phase (first new feature since Phase 115 Write Workspace v15.0; closes longest LingWen dry spell ~10 months)"
+  status: closed
+  branch: "phase-23-pilot-page"
+  implementation_log: docs/superpowers/handoffs/2026-09-02-phase-23-pilot-page-handoff.md
+  closure_date: "2026-09-02"
+  scripts_changed:
+    - "Backend: infra/studio_batch_runner.cancel_batch_job() + /proc zombie-detection + compute_pilot_eta() + 4 backend test files (cancel/eta/route/history)"
+    - "Backend: POST /api/studio/batch/<job_id>/cancel + GET /api/studio/batch/history routes in apps/studio_api/routes/studio.py"
+    - "DTOs: StudioBatchJobSummary + StudioBatchJobListResponse in lingwen_shared (Python + TS codegen)"
+    - "Frontend: PilotPage.vue + 5 components (PilotStartForm/PilotPreflightTable/PilotLivePanel/PilotCancelDialog/PilotHistoryList)"
+    - "Frontend: usePilotBatch composable (3s polling + ETA scaffolding)"
+    - "Frontend: 2 API wrappers (cancelStudioBatchJob + listStudioBatchJobs) using request() helper"
+    - "Frontend: nav integration (humanFirstNav + dashboardNavByMode + navConstants + router)"
+    - "Cleanup: StudioPage.vue removed embedded Pilot section (-369 lines)"
+    - "Cleanup: knip unused export + ESLint testid sync + ruff I001 + ruff format"
+  new_architecture_invariants:
+    - "#48 PilotPage owns batch lifecycle surface; StudioPage MUST NOT host embedded Pilot start/preflight/job panel"
+  carryover_to_phase_24:
+    - "SSE/WebSocket real-time progress (replace 3s polling with push)"
+    - "Per-chapter preview drawer in PilotLivePanel"
+    - "Batch templates (save common mode/budget/chapters combos)"
+    - "Multi-LLM provider concurrent batches"
+    - "Pilot + Insight dashboard integration"
+    - "Batch priority queue"
+    - "Auto-restart on failure"
+    - "usePilotBatch compose DTO migration to @/api/studio re-export (currently imports DTOs from @lingwen/dashboard-contracts/shared directly)"
+    - "Phase 114 prod preview regression (accepted, pre-existing)"
