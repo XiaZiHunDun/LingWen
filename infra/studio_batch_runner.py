@@ -113,11 +113,7 @@ def _completed_chapter_nums(job: BatchJob) -> list[int]:
         return []
     chapters_dir = project.root / "03_内容仓库" / "04_正文"
     present = set(_chapter_nums(chapters_dir))
-    return [
-        n
-        for n in range(job.start_chapter, job.end_chapter + 1)
-        if n in present
-    ]
+    return [n for n in range(job.start_chapter, job.end_chapter + 1) if n in present]
 
 
 def _publish_chapter_completions(job: BatchJob) -> None:

@@ -26,9 +26,7 @@ EVENT_JOB_COMPLETED = "job_completed"
 EVENT_JOB_FAILED = "job_failed"
 EVENT_JOB_CANCELLED = "job_cancelled"
 
-_TERMINAL_EVENTS = frozenset(
-    {EVENT_JOB_COMPLETED, EVENT_JOB_FAILED, EVENT_JOB_CANCELLED}
-)
+_TERMINAL_EVENTS = frozenset({EVENT_JOB_COMPLETED, EVENT_JOB_FAILED, EVENT_JOB_CANCELLED})
 
 # Per-job subscriber registry: job_id -> list[asyncio.Queue].
 _SUBSCRIBERS: dict[str, list[asyncio.Queue]] = {}

@@ -15,6 +15,7 @@ const mockUsePilotBatch = {
   cancelLoading: { value: false },
   cancelError: { value: null as string | null },
   isJobActive: { value: false },
+  chapterEvents: { value: [] as Array<{ chapter_num: number; receivedAt: string }> },
   refreshActive: vi.fn(),
   refreshHistory: vi.fn(),
   runPreflight: vi.fn(),

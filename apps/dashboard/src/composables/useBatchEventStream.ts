@@ -25,7 +25,7 @@ const EVENT_TYPES = [
   'job_cancelled',
 ] as const;
 
-export type BatchEventType = (typeof EVENT_TYPES)[number];
+type BatchEventType = (typeof EVENT_TYPES)[number];
 
 /** Rolling event buffer cap (design: keep most recent 50 events). */
 export const BATCH_EVENT_BUFFER = 50;
