@@ -151,3 +151,16 @@ export async function fetchStudioBatchJob(jobId: string): Promise<StudioBatchJob
   const data = await request(`/studio/production/jobs/${encodeURIComponent(jobId)}`);
   return data as StudioBatchJobResponseDTO;
 }
+
+// ---------------------------------------------------------------------------
+// /studio/batch/{id}/cancel (cancel a batch production job)
+// ---------------------------------------------------------------------------
+
+export async function cancelStudioBatchJob(
+  jobId: string,
+): Promise<StudioBatchJobResponseDTO> {
+  const encoded = encodeURIComponent(jobId);
+  const res = await fetch(`/api/studio/batch/${encoded}/cancel`, { method: 'POST' });
+  const data = await res.json();
+  return data as StudioBatchJobResponseDTO;
+}
