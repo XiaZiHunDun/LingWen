@@ -51,6 +51,48 @@ export interface StudioBatchRunRequest {
   skip_preflight?: boolean;
 }
 
+export interface StudioBatchTemplate {
+  template_id: string;
+  slug: string;
+  name: string;
+  start_chapter: number;
+  end_chapter: number;
+  budget_usd: number;
+  mode: string;
+  skip_preflight?: boolean;
+  event_types?: string[];
+  description?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StudioBatchTemplateCreateRequest {
+  name: string;
+  slug?: string | null;
+  start_chapter: number;
+  end_chapter: number;
+  budget_usd?: number;
+  mode?: string;
+  skip_preflight?: boolean;
+  event_types?: string[];
+  description?: string | null;
+}
+
+export interface StudioBatchTemplateListResponse {
+  templates?: StudioBatchTemplate[];
+}
+
+export interface StudioBatchTemplateUpdateRequest {
+  name?: string | null;
+  start_chapter?: number | null;
+  end_chapter?: number | null;
+  budget_usd?: number | null;
+  mode?: string | null;
+  skip_preflight?: boolean | null;
+  event_types?: string[] | null;
+  description?: string | null;
+}
+
 export interface StudioPreflightChapter {
   chapter: number;
   ok: boolean;

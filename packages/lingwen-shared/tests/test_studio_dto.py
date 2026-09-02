@@ -99,3 +99,54 @@ def test_studio_prose_judge_response_defaults() -> None:
     assert obj.chapters == []
     assert obj.golden_chapters == []
     assert obj.weighted_avg == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Batch templates (Track B)
+# ---------------------------------------------------------------------------
+
+
+def test_studio_batch_template_dtos_importable() -> None:
+    """All batch-template DTOs must import from lingwen_shared.contracts.python.studio."""
+    from lingwen_shared.contracts.python.studio import (  # noqa: F401
+        StudioBatchTemplate,
+        StudioBatchTemplateCreateRequest,
+        StudioBatchTemplateListResponse,
+        StudioBatchTemplateUpdateRequest,
+    )
+
+
+def test_studio_batch_template_create_request_defaults() -> None:
+    """Create request default budget/mode/skip_preflight/event_types."""
+    from lingwen_shared.contracts.python.studio import StudioBatchTemplateCreateRequest
+
+    req = StudioBatchTemplateCreateRequest(name="Pilot", start_chapter=1, end_chapter=5)
+    assert req.budget_usd == 0.15
+    assert req.mode == "canon"
+    assert req.skip_preflight is False
+    assert req.event_types == []
+    assert req.slug is None
+
+
+def test_studio_batch_template_create_request_ge_constraints() -> None:
+    """Create request enforces chapter/budget limits like StudioBatchRunRequest."""
+    from lingwen_shared.contracts.python.studio import StudioBatchTemplateCreateRequest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        StudioBatchTemplateCreateRequest(name="X", start_chapter=0, end_chapter=5)
+    with pytest.raises(ValidationError):
+        StudioBatchTemplateCreateRequest(
+            name="X",
+            start_chapter=1,
+            end_chapter=5,
+            budget_usd=200.0,
+        )
+
+
+def test_studio_batch_template_list_response_defaults() -> None:
+    """List response defaults to an empty template list."""
+    from lingwen_shared.contracts.python.studio import StudioBatchTemplateListResponse
+
+    obj = StudioBatchTemplateListResponse()
+    assert obj.templates == []

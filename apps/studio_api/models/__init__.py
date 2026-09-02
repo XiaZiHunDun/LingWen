@@ -240,6 +240,10 @@ from apps.studio_api.models.studio import (
     StudioBatchJobResponse,  # noqa: F401
     StudioBatchJobSummary,  # noqa: F401
     StudioBatchRunRequest,  # noqa: F401
+    StudioBatchTemplate,  # noqa: F401
+    StudioBatchTemplateCreateRequest,  # noqa: F401
+    StudioBatchTemplateListResponse,  # noqa: F401
+    StudioBatchTemplateUpdateRequest,  # noqa: F401
     StudioPreflightChapter,  # noqa: F401
     StudioPreflightRequest,  # noqa: F401
     StudioPreflightResponse,  # noqa: F401

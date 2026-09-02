@@ -25,6 +25,10 @@ from apps.studio_api.models import (
     StudioBatchJobResponse,
     StudioBatchJobSummary,
     StudioBatchRunRequest,
+    StudioBatchTemplate,
+    StudioBatchTemplateCreateRequest,
+    StudioBatchTemplateListResponse,
+    StudioBatchTemplateUpdateRequest,
     StudioPreflightChapter,
     StudioPreflightRequest,
     StudioPreflightResponse,
@@ -77,6 +81,27 @@ def _batch_job_to_response(job) -> StudioBatchJobResponse:
         exit_code=job.exit_code,
         error=job.error,
     )
+
+
+def _template_to_response(template) -> StudioBatchTemplate:
+    """Map infra.studio_batch_templates.BatchTemplate → StudioBatchTemplate DTO.
+
+    Both shapes share identical field names, so a flat unpack is sufficient.
+    """
+    return StudioBatchTemplate(**template.to_dict())
+
+
+def _validate_event_types(event_types: list[str] | None, known: frozenset[str]) -> None:
+    """Raise 400 when any template event preference is not a known SSE type.
+
+    Mirrors the Phase 25 ``/api/studio/batch/<id>/events`` ``event_types`` filter
+    validation so a saved preset always maps to subscribeable event types.
+    """
+    if not event_types:
+        return
+    unknown = [e for e in event_types if e not in known]
+    if unknown:
+        raise HTTPException(400, f"unknown event type(s): {', '.join(unknown)}")
 
 
 def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
@@ -465,3 +490,109 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
                 "Connection": "keep-alive",
             },
         )
+
+    @app.post(
+        "/api/studio/batch/templates",
+        response_model=StudioBatchTemplate,
+        status_code=201,
+    )
+    def studio_batch_template_create(
+        req: StudioBatchTemplateCreateRequest,
+    ) -> StudioBatchTemplate:
+        """Create a saved batch-run preset (Track B batch templates)."""
+        from infra.studio_batch_streamer import KNOWN_EVENT_TYPES
+        from infra.studio_batch_templates import create_batch_template
+        from infra.studio_registry import get_project_by_slug
+
+        slug = req.slug or _require_project(ctx).slug
+        if get_project_by_slug(slug) is None:
+            raise HTTPException(404, f"unknown project slug: {slug!r}")
+        _validate_event_types(req.event_types, KNOWN_EVENT_TYPES)
+        try:
+            template = create_batch_template(
+                slug=slug,
+                name=req.name,
+                start_chapter=req.start_chapter,
+                end_chapter=req.end_chapter,
+                budget_usd=req.budget_usd,
+                mode=req.mode,
+                skip_preflight=req.skip_preflight,
+                event_types=req.event_types,
+                description=req.description,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return _template_to_response(template)
+
+    @app.get(
+        "/api/studio/batch/templates/{template_id}",
+        response_model=StudioBatchTemplate,
+    )
+    def studio_batch_template_get(template_id: str) -> StudioBatchTemplate:
+        """Load a single saved batch template by id."""
+        from infra.studio_batch_templates import get_batch_template
+
+        payload = get_batch_template(template_id)
+        if payload is None:
+            raise HTTPException(404, f"unknown batch template: {template_id!r}")
+        return StudioBatchTemplate(**payload)
+
+    @app.get(
+        "/api/studio/batch/templates",
+        response_model=StudioBatchTemplateListResponse,
+    )
+    def studio_batch_template_list(
+        slug: str | None = Query(default=None),
+    ) -> StudioBatchTemplateListResponse:
+        """List saved batch templates, optionally filtered by project slug."""
+        from infra.studio_batch_templates import list_batch_templates
+
+        rows = list_batch_templates(slug=slug)
+        return StudioBatchTemplateListResponse(
+            templates=[StudioBatchTemplate(**row) for row in rows],
+        )
+
+    @app.put(
+        "/api/studio/batch/templates/{template_id}",
+        response_model=StudioBatchTemplate,
+    )
+    def studio_batch_template_update(
+        template_id: str,
+        req: StudioBatchTemplateUpdateRequest,
+    ) -> StudioBatchTemplate:
+        """Partially update an existing saved batch template."""
+        from infra.studio_batch_streamer import KNOWN_EVENT_TYPES
+        from infra.studio_batch_templates import update_batch_template
+
+        _validate_event_types(req.event_types, KNOWN_EVENT_TYPES)
+        try:
+            template = update_batch_template(
+                template_id,
+                name=req.name,
+                start_chapter=req.start_chapter,
+                end_chapter=req.end_chapter,
+                budget_usd=req.budget_usd,
+                mode=req.mode,
+                skip_preflight=req.skip_preflight,
+                event_types=req.event_types,
+                description=req.description,
+            )
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return _template_to_response(template)
+
+    @app.delete(
+        "/api/studio/batch/templates/{template_id}",
+        response_model=StudioBatchTemplate,
+    )
+    def studio_batch_template_delete(template_id: str) -> StudioBatchTemplate:
+        """Delete a saved batch template by id; returns the deleted template."""
+        from infra.studio_batch_templates import delete_batch_template
+
+        try:
+            template = delete_batch_template(template_id)
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from exc
+        return _template_to_response(template)

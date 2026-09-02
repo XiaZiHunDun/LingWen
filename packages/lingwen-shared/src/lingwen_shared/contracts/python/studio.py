@@ -409,6 +409,78 @@ class StudioBatchJobListResponse(BaseModel):
     jobs: list[StudioBatchJobSummary]
 
 
+# ---------------------------------------------------------------------------
+# Batch templates (Track B — saved batch-run presets)
+# ---------------------------------------------------------------------------
+
+
+class StudioBatchTemplateCreateRequest(BaseModel):
+    """Body for ``POST /studio/batch/templates`` (create a preset).
+
+    ``slug`` is optional; when omitted the active project is used.
+    ``event_types`` stores the SSE event types the client prefers to subscribe
+    to when loading this preset (see Phase 25 ``event_types`` filter).
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    slug: Optional[str] = None
+    start_chapter: int = Field(ge=1)
+    end_chapter: int = Field(ge=1)
+    budget_usd: float = Field(default=0.15, ge=0, le=100)
+    mode: str = "canon"
+    skip_preflight: bool = False
+    event_types: list[str] = Field(default_factory=list)
+    description: Optional[str] = None
+
+
+class StudioBatchTemplateUpdateRequest(BaseModel):
+    """Body for ``PUT /studio/batch/templates/{id}`` (partial update).
+
+    Fields that are ``None`` are left unchanged by the backend; pass ``null``
+    explicitly to a field you cannot clear.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: Optional[str] = None
+    start_chapter: Optional[int] = Field(default=None, ge=1)
+    end_chapter: Optional[int] = Field(default=None, ge=1)
+    budget_usd: Optional[float] = Field(default=None, ge=0, le=100)
+    mode: Optional[str] = None
+    skip_preflight: Optional[bool] = None
+    event_types: Optional[list[str]] = None
+    description: Optional[str] = None
+
+
+class StudioBatchTemplate(BaseModel):
+    """A saved batch-run preset returned by ``/studio/batch/templates``."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    template_id: str
+    slug: str
+    name: str
+    start_chapter: int
+    end_chapter: int
+    budget_usd: float
+    mode: str
+    skip_preflight: bool = False
+    event_types: list[str] = Field(default_factory=list)
+    description: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+
+class StudioBatchTemplateListResponse(BaseModel):
+    """Listing payload returned by ``GET /studio/batch/templates``."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    templates: list[StudioBatchTemplate] = Field(default_factory=list)
+
+
 __all__ = [
     "StudioProjectItem",
     "StudioProjectsResponse",
@@ -435,4 +507,8 @@ __all__ = [
     "StudioBatchJobResponse",
     "StudioBatchJobSummary",
     "StudioBatchJobListResponse",
+    "StudioBatchTemplateCreateRequest",
+    "StudioBatchTemplateUpdateRequest",
+    "StudioBatchTemplate",
+    "StudioBatchTemplateListResponse",
 ]
