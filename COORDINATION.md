@@ -1,7 +1,7 @@
 # LingWen 并行开发 · 根级协调 README
 
 > **用途**: monorepo 并行开发／维护时的唯一入口。打开本仓库先读这份，按你所在轨道去读对应交接文档。
-> **日期**: 2026-09-02 · **基线版本**: v25.1
+> **日期**: 2026-09-03 · **基线版本**: v25.4
 > **并发模型**: 两条并行轨道（A=前端 / B=后端），每个轨道一个会话、各自独立 worktree + 分支；**自推进 · 自服务 BACKLOG · 全量门绿后自合并到 master**（v25.1 起，见 §3）。
 
 ---
@@ -13,7 +13,7 @@
 | **前端会话**（改 dashboard 页面/组件/composable/前端测试）| → [Track A · 前端交接](docs/superpowers/handoffs/2026-09-02-track-frontend-dashboard-handoff.md) |
 | **后端会话**（改 studio_api / infra / packages / CLI / CI）| → [Track B · 后端交接](docs/superpowers/handoffs/2026-09-02-track-backend-handoff.md) |
 | 通用根契约（不变量·约束·技术栈）| [AGENTS.md](AGENTS.md) · [architecture.yml](.lingwen/architecture.yml) · [constraints.yml](.lingwen/constraints.yml) |
-| 版本历史 / 最近阶段 | [CLAUDE.md](CLAUDE.md)（v25.1）|
+| 版本历史 / 最近阶段 | [CLAUDE.md](CLAUDE.md)（v25.4）|
 
 **轨道边界速览**: A 只动 `apps/dashboard/**`；B 只动 `apps/studio_api` + `infra` + `packages` + `scripts`/CI。CD 层互不 import（见架构单向分层），协同点仅一处：**DTO 契约**。
 

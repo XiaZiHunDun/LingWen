@@ -17,6 +17,7 @@ import {
   fetchCreatorPublishHistory,
   fetchCreatorPublishPlatforms,
 } from '@/api/export';
+import type { CreatorPublishEntry } from '@lingwen/dashboard-contracts/shared';
 
 const CREATOR_PUBLISH_PLATFORMS = [
   { id: 'fanqie', label: '番茄小说' },
@@ -43,7 +44,7 @@ export interface ProductPublishReturn {
   publishIntro: Ref<string>;
   publishStatus: Ref<string>;
   publishMessage: Ref<string>;
-  publishHistory: Ref<Array<Record<string, unknown>>>;
+  publishHistory: Ref<CreatorPublishEntry[]>;
   publishPlatforms: Ref<Array<{ id: string; label: string }>>;
   publishHistoryModalOpen: Ref<boolean>;
   publishPackPreview: Ref<string>;
@@ -80,7 +81,7 @@ export function useProductPublish(deps: PublishDeps): ProductPublishReturn {
   const publishIntro = ref('');
   const publishStatus = ref('idle');
   const publishMessage = ref('');
-  const publishHistory = ref<Array<Record<string, unknown>>>([]);
+  const publishHistory = ref<CreatorPublishEntry[]>([]);
   const publishPlatforms = ref<Array<{ id: string; label: string }>>([...CREATOR_PUBLISH_PLATFORMS]);
   const publishHistoryModalOpen = ref(false);
   const publishPackPreview = ref('');
@@ -94,7 +95,7 @@ export function useProductPublish(deps: PublishDeps): ProductPublishReturn {
 
   async function loadPublishHistory(limit: number = 30): Promise<void> {
     try {
-      const data = await fetchCreatorPublishHistory(limit) as { entries?: Array<Record<string, unknown>> };
+      const data = await fetchCreatorPublishHistory(limit);
       publishHistory.value = data.entries || [];
     } catch {
       publishHistory.value = [];

@@ -4,7 +4,8 @@
 [![codecov frontend](https://codecov.io/gh/XiaZiHunDun/LingWen/graph/badge.svg?flag=frontend)](https://codecov.io/gh/XiaZiHunDun/LingWen?flags%5B0%5D=frontend)
 
 > **目的**: 项目切换开发工具 (Cursor / Windsurf / Cline / Aider / 其他) 时, 任何 AI 助手打开本目录读这份文件即可衔接工作。
-> **版本**: v15.0 (Phase 115 创作端 UX 子项目 #1 闭环, 2026-08-26)  
+> **版本**: v25.4 (Phase 25.4 收尾完善, 2026-09-03)
+> **更新 (2026-09-03)**: Phase 25.4 收尾 — 前端类型债清零（vue-tsc typecheck:app + tests-relaxed 全部 0 error，含 useStudioProject JSDoc 返回类型、runPreflight 参数类型、3 处 creator DTO cast 改具体契约类型）；batch templates 前端闭环（PilotTemplatePanel.vue 选择/应用/保存/删除 + `api/studio.ts` list/create/delete + `usePilotBatch` templates 状态 + `PilotStartForm` expose currentForm/fillFromTemplate）；pyproject 增 `socksio>=1.0` 修复 httpx SOCKS 代理依赖缺失；清理无价值 stash@{0}。验证: 前端 vitest 1850 passed + 1 skipped / ESLint 0 / knip 0 / vue-tsc 0 error；后端 lingwen-llm 11 passed + studio_api/lingwen-shared 221 passed（+1 环境基线 `_IncludedRouter`，starlette 1.6 回归）+ ruff clean。详见 `CLAUDE.md` v25.4 段。
 > **更新 (2026-08-26)**: Phase 115 Immersive Write Workspace v1 — `/write/:chapterId` 路由 + TipTap 编辑器 + 章节-场景两级 + Author/Editor 双模式 + Scrivener 3-pane + AI 侧栏抽屉 + 5-agent pipeline 兼容契约。Tests 1545 → 1614 (+69)。E2E 暂时被 Phase 114 prod preview regression block，dev baseline 仍 authoritative。详见 `CLAUDE.md` v15 段。  
 > **更新 (2026-08-25)**: Phase 99-105b knip-follow-up 闭环。knip gate 全 7 categories = 0。  
 > **更新 (2026-08-20)**: Phase 60-67 dashboard 基础设施重构（v13.0）+ Phase 68-80 perf + 测量（v13.1）+ Phase 81-88 ESLint + maintenance（v13.2）+ Phase 89 housekeeping + Phase 95 knip integration 完成。
@@ -355,7 +356,7 @@ python -m pytest tests/ci/ -q -o addopts=                 # CI 契约测（快�
 ```
 LingWen/                                    # 本目录 (项目根, git root)
 ├── HANDOFF.md                              # 本文件 (新工具先读这里)
-├── README.md                               # 主 README (Studio v12 · 2026-06-22)
+├── README.md                               # 主 README (v25.4 · 2026-09-03)
 ├── pyproject.toml + pytest.ini             # pytest 配置
 ├── CLAUDE.md                               # 项目级 CLAUDE.md (主控 agent prompt 模板)
 ├── docs/

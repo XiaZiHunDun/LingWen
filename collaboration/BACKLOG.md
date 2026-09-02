@@ -113,5 +113,6 @@
 
 | 时间 | 更新者 | 变更 |
 |------|--------|------|
+| 2026-09-03 | 协调者 | v25.4 收尾：前端类型债清零（vue-tsc 0 error）+ batch templates 前端闭环（PilotTemplatePanel）+ socksio 依赖修复 + stash@{0} 清理。P2-DTOMIGR 由会话-A 完成，P2 候选全部完成 |
 | 2026-09-02 | Track A | REQ-001 切片 E「差异收尾」：`CreatorDeviationFinalize.vue` 可操作收尾清单，复用 `utils/batchDeviation.ts`（与节奏带共享批次偏差推导）+ 按批次持久化复核状态。至此 REQ-001 全部切片完成 |
 | 2026-09-02 | 协调者 | 黑板从 v12/Phase15 刷新至 v25.1：废弃过期 P1/P2/P15 记录，改为 P1-SHIM + Phase 26+ 候选 backlog |

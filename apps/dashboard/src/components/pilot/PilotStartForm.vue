@@ -145,6 +145,30 @@ function onStart() {
     mode: mode.value,
   });
 }
+
+/** 当前表单值快照，供“保存为模板”读取。 */
+const currentForm = computed(() => ({
+  slug: props.slug,
+  start_chapter: startChapter.value,
+  end_chapter: endChapter.value,
+  budget_usd: budgetUsd.value,
+  mode: mode.value as 'canon' | 'pilot',
+}));
+
+/** 从模板填充表单字段。 */
+function fillFromTemplate(template: {
+  start_chapter: number;
+  end_chapter: number;
+  budget_usd: number;
+  mode: string;
+}): void {
+  mode.value = (template.mode === 'canon' ? 'canon' : 'pilot');
+  startChapter.value = template.start_chapter;
+  endChapter.value = template.end_chapter;
+  budgetUsd.value = template.budget_usd;
+}
+
+defineExpose({ currentForm, fillFromTemplate });
 </script>
 
 <style scoped>

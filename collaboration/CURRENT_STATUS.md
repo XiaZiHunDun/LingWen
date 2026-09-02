@@ -1,8 +1,8 @@
 # 灵文项目状态看板
 
-> **最后更新**: 2026-09-03  
-> **更新者**: 协调者（整合 Track A + Track B 双会话成果）  
-> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；后续可从 BACKLOG P2 候选继续认领
+> **最后更新**: 2026-09-03
+> **更新者**: 协调者（整合 Track A + Track B 双会话成果 + v25.4 收尾完善）
+> **下一协作**: 前端 P2（DRAWER+INSIGHT）+ REQ-001 全部切片 + 后端 P2（QUEUE+RESTART+MULTI）已全部合入 master；v25.4 完成类型债清零 + batch templates 前端闭环 + 依赖修复 + 仓库清理
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 项目 | 状态 |
 |------|------|
-| **版本** | v25.3（Phase 25.3 — 自治双会话合流：Track A REQ-001 + P2-QUEUE 前端；Track B P2-QUEUE/RESTART/MULTI 后端） |
-| **git main** | master `3d009514`（已推送 origin） |
-| **当前阶段** | Track A 前端 REQ-001 A/B/C/D/E ✅ + P2-QUEUE/DRAWER/INSIGHT ✅；Track B 后端 P2-QUEUE/RESTART/MULTI ✅（P2 系列收尾） |
+| **版本** | v25.4（Phase 25.4 — 收尾完善：前端类型债清零 + batch templates 前端闭环 + socksio 依赖修复 + stash 清理） |
+| **git main** | master（已推送 origin；HEAD 待 v25.4 提交） |
+| **当前阶段** | 前端 vue-tsc 类型债 8→0 清零 + Pilot 批量模板保存/应用/删除 UI 闭环；Track A REQ-001 ✅ + P2 系列 ✅；Track B P2 系列 ✅ |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
 
@@ -39,6 +39,10 @@
 
 | 项 | 内容 | 验证 |
 |----|------|------|
+| **v25.4 类型债清零** | vue-tsc typecheck:app 5 pre-existing + tests-relaxed 3 pre-existing 全部清零：`useStudioProject` JSDoc 返回类型 + `runPreflight` 参数类型 + 3 处 creator DTO cast 改具体契约类型（`CreatorMemoryQueryResult`/`CreatorPublishEntry`/`CreatorVolumeTemplateApproval`）+ pilot-history-list spec 补 `slug` | ✅ 前端 vitest 1850 passed + 1 skipped / ESLint 0 / knip 0 / vue-tsc **0 error** |
+| **v25.4 依赖修复** | pyproject.toml 增 `socksio>=1.0` + uv.lock（httpx SOCKS 代理访问 LLM provider 缺失，此前 4+ provider 测试失败） | ✅ lingwen-llm 11 passed |
+| **v25.4 仓库清理** | 清理 stash@{0} `trackb-baseline-check-residual`（确认无价值的基线对比残留） | ✅ |
+| **v25.3 双会话合流** | Track A REQ-001 创作者模式增强 5 切片 + P2-QUEUE 前端；Track B P2-QUEUE/RESTART/MULTI 后端全部入 master | ✅ master `3d009514` |
 | v25.1 双会话合流 | Track A event_types 过滤开关（前端）+ Track B batch templates（后端），0 冲突 ff-merge | ✅ 见 CLAUDE.md v25.1 |
 | 合并门复核 | 发现并修复 Track A 引入的 9 个测试类型错误（`1c1d3a82`），vue-tsc 回到 5 pre-existing | ✅ |
 | 合并态验证 | 后端 pytest 32 + ruff clean；前端 vitest/ESLint/knip 通过；vue-tsc 5 pre-existing | ✅ |
@@ -53,18 +57,19 @@
 
 ---
 
-## 🧪 测试状态（合并态，2026-09-02）
+## 🧪 测试状态（v25.4 收尾态，2026-09-03）
 
 | 测试类型 | 结果 |
 |----------|------|
-| 后端 pytest（batch-templates + SSE route 受影响子集） | ✅ 32 passed |
+| 后端 pytest（lingwen-llm 受影响） | ✅ 11 passed（socksio 依赖已修复） |
+| 后端 pytest（studio_api + lingwen-shared） | ✅ 222 passed |
 | 后端 ruff check / ruff format --check | ✅ 0 问题 |
-| 前端 vitest（受影响 spec） | ✅ 通过 |
+| 前端 vitest（全量） | ✅ 1850 passed + 1 skipped（含 batch templates 新 6 测试） |
 | 前端 ESLint | ✅ 0 |
 | 前端 knip | ✅ 0 issues |
-| 前端 vue-tsc --noEmit | ✅ 5 pre-existing（PilotPage，零新增） |
+| 前端 vue-tsc --noEmit | ✅ **0 error**（typecheck:app + tests-relaxed 均清零） |
 
-> ⚠️ 环境基线：5 个后端 pytest 失败为环境问题（LLM Provider/_IncludedRouter/socksio），与代码无关。
+> ⚠️ 环境基线：`tests/ci/` 94 个失败为迁移路径陈旧（`dashboard/frontend/` 旧路径 + `lingwen_creator` 未装包）；`test_write_workspace_route::test_get_endpoint_registered` 因 starlette 1.6 `_IncludedRouter` 无 `path` 属性失败（master 基线一致）。均与本次改动无关。
 
 ---
 
@@ -106,4 +111,5 @@
 ### 最近变更记录
 | 时间 | 变更 |
 |------|------|
+| 2026-09-03 | v25.4 收尾：前端类型债清零（vue-tsc 0 error）+ batch templates 前端闭环（PilotTemplatePanel）+ socksio 依赖修复 + stash@{0} 清理 |
 | 2026-09-02 | 黑板从 v12/Phase15 刷新至 v25.1 真实状态；废弃过期 P1/P2/P15 记录，接入 CLAUDE.md v25.1 + COORDINATION.md 事实来源 |

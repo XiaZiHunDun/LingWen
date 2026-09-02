@@ -15,6 +15,10 @@ import type {
   StudioActiveResponseDTO,
   StudioBatchJobListResponseDTO,
   StudioBatchJobResponseDTO,
+  StudioBatchTemplateCreateRequestDTO,
+  StudioBatchTemplateDTO,
+  StudioBatchTemplateListResponseDTO,
+  StudioBatchTemplateUpdateRequestDTO,
   StudioPreflightResponseDTO,
   StudioProseDiffResponseDTO,
   StudioProseJudgeResponseDTO,
@@ -31,6 +35,9 @@ import { request } from './core.js';
 export type {
   StudioBatchJobResponseDTO,
   StudioBatchJobSummaryDTO,
+  StudioBatchTemplateDTO,
+  StudioBatchTemplateCreateRequestDTO,
+  StudioBatchTemplateListResponseDTO,
 } from '@lingwen/dashboard-contracts/shared';
 
 // ---------------------------------------------------------------------------
@@ -192,6 +199,43 @@ export async function listStudioBatchQueue(
   const params = new URLSearchParams({ slug });
   const data = await request<StudioBatchJobListResponseDTO>(
     `/studio/batch/queue?${params.toString()}`,
+  );
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// /studio/batch/templates (save / load reusable batch-run presets — Track B)
+// ---------------------------------------------------------------------------
+
+export async function listStudioBatchTemplates(
+  slug?: string,
+): Promise<StudioBatchTemplateListResponseDTO> {
+  const params = new URLSearchParams();
+  if (slug) params.set('slug', slug);
+  const q = params.toString();
+  const data = await request<StudioBatchTemplateListResponseDTO>(
+    `/studio/batch/templates${q ? `?${q}` : ''}`,
+  );
+  return data;
+}
+
+export async function createStudioBatchTemplate(
+  body: StudioBatchTemplateCreateRequestDTO,
+): Promise<StudioBatchTemplateDTO> {
+  const data = await request<StudioBatchTemplateDTO>('/studio/batch/templates', {
+    method: 'POST',
+    body,
+  });
+  return data;
+}
+
+export async function deleteStudioBatchTemplate(
+  templateId: string,
+): Promise<StudioBatchTemplateDTO> {
+  const encoded = encodeURIComponent(templateId);
+  const data = await request<StudioBatchTemplateDTO>(
+    `/studio/batch/templates/${encoded}`,
+    { method: 'DELETE' },
   );
   return data;
 }

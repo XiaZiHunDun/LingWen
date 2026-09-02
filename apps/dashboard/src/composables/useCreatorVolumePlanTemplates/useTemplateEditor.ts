@@ -7,7 +7,7 @@
  */
 import { ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import type { CreatorVolumePlanEntry } from '@lingwen/dashboard-contracts/shared';
+import type { CreatorVolumePlanEntry, CreatorVolumeTemplateApproval } from '@lingwen/dashboard-contracts/shared';
 import {
   saveVolumeTemplate,
   deleteVolumeTemplate,
@@ -82,7 +82,7 @@ export interface TemplateEditorDeps {
   templateApprovalEmailOnSubmit: Ref<boolean>;
   templateApprovalEmailOnReject: Ref<boolean>;
   templateApprovalEmailOnOverdue: Ref<boolean>;
-  overdueTemplateApprovals: Ref<Array<Record<string, unknown>>>;
+  overdueTemplateApprovals: Ref<CreatorVolumeTemplateApproval[]>;
   templateApprovals: Ref<ApprovalEntry[]>;
   templateApprovalHistory: Ref<Array<Record<string, unknown>>>;
   pendingTemplateApprovals: ComputedRef<ApprovalEntry[]>;
@@ -416,7 +416,7 @@ export function useTemplateEditor(deps: TemplateEditorDeps): TemplateEditorRetur
       templateApprovalEmailOnSubmit.value = Boolean(sla.email_on_submit);
       templateApprovalEmailOnReject.value = Boolean(sla.email_on_reject);
       templateApprovalEmailOnOverdue.value = Boolean(sla.email_on_overdue);
-      const overdue = await fetchVolumeTemplateApprovalsOverdue() as { approvals?: Array<Record<string, unknown>> };
+      const overdue = await fetchVolumeTemplateApprovalsOverdue();
       overdueTemplateApprovals.value = overdue.approvals || [];
     } catch {
       templateApprovalChainSteps.value = 2;

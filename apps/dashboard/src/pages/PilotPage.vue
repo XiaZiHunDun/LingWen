@@ -11,11 +11,13 @@ import type { BatchEventType } from '@/composables/useBatchEventStream';
 import PilotStartForm from '@/components/pilot/PilotStartForm.vue';
 import PilotLivePanel from '@/components/pilot/PilotLivePanel.vue';
 import PilotQueuePanel from '@/components/pilot/PilotQueuePanel.vue';
+import PilotTemplatePanel from '@/components/pilot/PilotTemplatePanel.vue';
 import PilotHistoryList from '@/components/pilot/PilotHistoryList.vue';
 import PilotCancelDialog from '@/components/pilot/PilotCancelDialog.vue';
 
 const studio = useStudioProject();
 const pilot = usePilotBatch();
+const startFormRef = ref<InstanceType<typeof PilotStartForm> | null>(null);
 
 const cancelDialogJobId = ref<string | null>(null);
 const eta = ref<number | null>(null);
@@ -27,6 +29,7 @@ onMounted(async () => {
   if (slug) {
     await pilot.refreshHistory(slug);
     await pilot.refreshQueue(slug);
+    await pilot.loadTemplates(slug);
   }
 });
 
@@ -66,6 +69,24 @@ function onOpenPreview(chapterNum: number) {
 function onClosePreview() {
   pilot.closePreview();
 }
+
+function onApplyTemplate(templateId: string) {
+  const template = pilot.templates.value.find((t) => t.template_id === templateId);
+  if (template && startFormRef.value) {
+    startFormRef.value.fillFromTemplate(template);
+  }
+}
+
+async function onSaveTemplate(payload: { name: string }) {
+  const form = startFormRef.value?.currentForm;
+  if (!form || !form.slug) return;
+  await pilot.saveTemplate(payload.name, form);
+}
+
+async function onRemoveTemplate(templateId: string) {
+  const slug = studio.activeSlug ?? '';
+  if (slug) await pilot.deleteTemplate(templateId, slug);
+}
 </script>
 
 <template>
@@ -74,6 +95,7 @@ function onClosePreview() {
       <h1 class="page-title">Pilot 流水线</h1>
       <p v-if="pilot.startError.value" class="page-error pilot-page-error" data-testid="pilot-page-error" role="alert">{{ pilot.startError.value }}</p>
       <PilotStartForm
+        ref="startFormRef"
         :slug="studio.activeSlug ?? ''"
         :preflight-rows="pilot.preflightRows.value"
         :preflight-loading="pilot.preflightLoading.value"
@@ -81,6 +103,17 @@ function onClosePreview() {
         :error="pilot.startError.value"
         @submit-preflight="onPreflight"
         @submit-start="onStart"
+      />
+      <PilotTemplatePanel
+        :slug="studio.activeSlug ?? ''"
+        :templates="pilot.templates.value"
+        :loading="pilot.templateLoading.value"
+        :save-loading="pilot.templateSaveLoading.value"
+        :error="pilot.templateError.value"
+        :message="pilot.templateMessage.value"
+        @apply="onApplyTemplate"
+        @remove="onRemoveTemplate"
+        @save="onSaveTemplate"
       />
       <PilotLivePanel
         :active-job="pilot.activeJob.value"

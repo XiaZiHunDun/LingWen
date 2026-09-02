@@ -42,15 +42,13 @@ class MiniMaxProvider(AIProvider):
         # MiniMax使用Anthropic兼容格式
         api_host = config.endpoint or os.getenv("MINIMAX_API_HOST", self.DEFAULT_API_HOST)
 
-        # MiniMax使用X-Api-Key header，需要自定义httpx客户端
-        # httpx.Client 接受 headers 参数（自 0.20+ 起），用于透传自定义 header
-        import httpx
-
+        # MiniMax使用X-Api-Key header — 新版 anthropic 内部 vendored httpx2,自定义
+        # http_client 会触发类型校验失败,改用 default_headers 透传 X-Api-Key(功能等价)
         self._client = anthropic.Anthropic(
             api_key=config.api_key,
             base_url=f"{api_host}/anthropic",
             timeout=self.config.timeout,
-            http_client=httpx.Client(headers={"X-Api-Key": config.api_key}),
+            default_headers={"X-Api-Key": config.api_key},
         )
         self._model = config.model if config.model else self.DEFAULT_MODEL
 

@@ -23,6 +23,7 @@ import {
   saveCreatorMemoryAnnotation,
   queryCreatorMemory,
 } from '@/api/memory';
+import type { CreatorMemoryQueryResult } from '@lingwen/dashboard-contracts/shared';
 import { buildMemoryAssetItems } from '../../utils/creatorMemoryAssetsUtils.js';
 import { buildStructureGraph } from '../../utils/creatorStructureGraphUtils.js';
 
@@ -66,7 +67,7 @@ export interface ProductMemoryReturn {
   memoryAnnotationSaving: Ref<string | null>;
   memorySearchQuery: Ref<string>;
   memorySearchScope: Ref<string>;
-  memorySearchResults: Ref<Array<Record<string, unknown>>>;
+  memorySearchResults: Ref<CreatorMemoryQueryResult[]>;
   memorySearchBusy: Ref<boolean>;
   memorySearchRan: Ref<boolean>;
   memorySearchUsedFallback: Ref<boolean>;
@@ -105,7 +106,7 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
 
   const memorySearchQuery = ref('');
   const memorySearchScope = ref('all');
-  const memorySearchResults = ref<Array<Record<string, unknown>>>([]);
+  const memorySearchResults = ref<CreatorMemoryQueryResult[]>([]);
   const memorySearchBusy = ref(false);
   const memorySearchRan = ref(false);
   const memorySearchUsedFallback = ref(false);
@@ -165,8 +166,8 @@ export function useProductMemory(deps: MemoryDeps): ProductMemoryReturn {
         scope: memorySearchScope.value,
         top_k: memoryRagTopK.value,
       });
-      memorySearchResults.value = (data as { results?: Array<Record<string, unknown>> }).results || [];
-      memorySearchUsedFallback.value = Boolean((data as { used_fallback?: boolean }).used_fallback);
+      memorySearchResults.value = data.results || [];
+      memorySearchUsedFallback.value = Boolean(data.used_fallback);
       memorySearchRan.value = true;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);

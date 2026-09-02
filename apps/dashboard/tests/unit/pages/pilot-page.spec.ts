@@ -29,6 +29,14 @@ const mockUsePilotBatch = {
   refreshHistory: vi.fn(),
   refreshQueue: vi.fn(),
   queue: { value: [] as Array<{ job_id: string; start_chapter: number; end_chapter: number; mode: string; status: string; started_at: string }> },
+  templates: { value: [] as unknown[] },
+  templateLoading: { value: false },
+  templateSaveLoading: { value: false },
+  templateError: { value: null as string | null },
+  templateMessage: { value: null as string | null },
+  loadTemplates: vi.fn(),
+  saveTemplate: vi.fn(),
+  deleteTemplate: vi.fn(),
   runPreflight: vi.fn(),
   startBatch: vi.fn(),
   cancelBatch: vi.fn(),
@@ -53,11 +61,17 @@ describe('PilotPage', () => {
     expect(wrapper.find('[data-testid="pilot-history-list"]').exists()).toBe(true);
   });
 
-  it('refreshes active + history + queue on mount', () => {
+  it('refreshes active + history + queue + templates on mount', () => {
     mount(PilotPage);
     expect(mockUsePilotBatch.refreshActive).toHaveBeenCalled();
     expect(mockUsePilotBatch.refreshHistory).toHaveBeenCalled();
     expect(mockUsePilotBatch.refreshQueue).toHaveBeenCalled();
+    expect(mockUsePilotBatch.loadTemplates).toHaveBeenCalled();
+  });
+
+  it('renders template panel', () => {
+    const wrapper = mount(PilotPage);
+    expect(wrapper.find('[data-testid="pilot-template-panel"]').exists()).toBe(true);
   });
 
   it('renders queue panel when there are queued batch jobs', () => {

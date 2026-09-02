@@ -36,6 +36,7 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
     "httpx>=0.27",  # minimax_provider 自定义 http client (X-Api-Key)
+    "socksio>=1.0",  # httpx SOCKS 传输 — 代理访问 LLM provider (openai/anthropic/minimax) 必需
     "pydantic>=2.5",
     "pydantic-settings>=2.1",
     "openai>=1.30",

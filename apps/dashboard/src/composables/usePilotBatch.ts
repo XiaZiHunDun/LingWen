@@ -2,14 +2,19 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 import {
   cancelStudioBatchJob,
+  createStudioBatchTemplate,
+  deleteStudioBatchTemplate,
   fetchStudioActiveBatchJob,
   listStudioBatchJobs,
   listStudioBatchQueue,
+  listStudioBatchTemplates,
   studioProductionRun,
 } from '@/api/studio';
 import type {
   StudioBatchJobResponseDTO,
   StudioBatchJobSummaryDTO,
+  StudioBatchTemplateCreateRequestDTO,
+  StudioBatchTemplateDTO,
 } from '@/api/studio';
 import { fetchCreatorChapterPreview } from '@/api/content';
 import type { CreatorChapterPreview } from '@lingwen/dashboard-contracts/shared';
@@ -57,6 +62,13 @@ export function usePilotBatch() {
   const startError = ref<string | null>(null);
   const cancelLoading = ref(false);
   const cancelError = ref<string | null>(null);
+
+  // Track B batch templates: reusable batch-run presets per project slug.
+  const templates = ref<StudioBatchTemplateDTO[]>([]);
+  const templateLoading = ref(false);
+  const templateSaveLoading = ref(false);
+  const templateError = ref<string | null>(null);
+  const templateMessage = ref<string | null>(null);
 
   // P2-DRAWER: per-chapter preview drawer state. `previewChapter` null = closed.
   const previewChapter = ref<number | null>(null);
@@ -198,7 +210,61 @@ export function usePilotBatch() {
     }
   }
 
-  async function runPreflight(_form: PilotForm): Promise<void> {
+  async function loadTemplates(slug: string): Promise<void> {
+    templateLoading.value = true;
+    templateError.value = null;
+    try {
+      const result = await listStudioBatchTemplates(slug);
+      templates.value = result.templates ?? [];
+    } catch (err) {
+      templateError.value = err instanceof Error ? err.message : String(err);
+      templates.value = [];
+    } finally {
+      templateLoading.value = false;
+    }
+  }
+
+  async function saveTemplate(
+    name: string,
+    form: Pick<PilotForm, 'slug' | 'start_chapter' | 'end_chapter' | 'budget_usd' | 'mode'>,
+  ): Promise<void> {
+    templateSaveLoading.value = true;
+    templateError.value = null;
+    templateMessage.value = null;
+    try {
+      const body: StudioBatchTemplateCreateRequestDTO = {
+        name,
+        slug: form.slug,
+        start_chapter: form.start_chapter,
+        end_chapter: form.end_chapter,
+        budget_usd: form.budget_usd,
+        mode: form.mode,
+      };
+      await createStudioBatchTemplate(body);
+      templateMessage.value = `已保存模板「${name}」`;
+      await loadTemplates(form.slug);
+    } catch (err) {
+      templateError.value = err instanceof Error ? err.message : String(err);
+    } finally {
+      templateSaveLoading.value = false;
+    }
+  }
+
+  async function deleteTemplate(templateId: string, slug: string): Promise<void> {
+    templateError.value = null;
+    templateMessage.value = null;
+    try {
+      await deleteStudioBatchTemplate(templateId);
+      templateMessage.value = '模板已删除';
+      await loadTemplates(slug);
+    } catch (err) {
+      templateError.value = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  async function runPreflight(
+    _form: Pick<PilotForm, 'slug' | 'start_chapter' | 'end_chapter'>,
+  ): Promise<void> {
     preflightLoading.value = true;
     preflightError.value = null;
     try {
@@ -295,5 +361,13 @@ export function usePilotBatch() {
     runPreflight,
     startBatch,
     cancelBatch,
+    templates,
+    templateLoading,
+    templateSaveLoading,
+    templateError,
+    templateMessage,
+    loadTemplates,
+    saveTemplate,
+    deleteTemplate,
   };
 }

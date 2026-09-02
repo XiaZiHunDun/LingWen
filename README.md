@@ -1,9 +1,11 @@
 # 灵文 · LingWen Studio
 
-> **产品版本**: Studio v12 · 2026-06-22  
-> **定位**: 可复用的工业化小说生产系统（**灵文工作室**）  
-> **试验田**: 《星陨纪元》ch001–360 正史 · ch361+ stress test  
+> **产品版本**: v25.4（Phase 25.4 收尾完善）· 2026-09-03
+> **定位**: 可复用的工业化小说生产系统（**灵文工作室**）
+> **试验田**: 《星陨纪元》ch001–360 正史 · ch361+ stress test
 > **CI**: [`test` workflow](../.github/workflows/test.yml) — pytest×3 · vitest · lint · build · golden×8 · llm×7 · e2e-live · ruff · cov 50%
+
+> **并行开发**: 前端 Track A / 后端 Track B 双会话自治推进，协调契约见 [`COORDINATION.md`](COORDINATION.md)，任务黑板见 [`collaboration/BACKLOG.md`](collaboration/BACKLOG.md)，实时状态见 [`collaboration/CURRENT_STATUS.md`](collaboration/CURRENT_STATUS.md)。
 
 > **品牌**：本仓库的产品名是 **墨灵 Studio**（"墨灵"），内部框架名是 **灵文引擎**（"灵文"）。工程命名空间沿用历史 `lingwen`。
 
@@ -122,7 +124,11 @@ outline_master · character_designer · content_writer · auditor · polisher
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
-| **Studio v12** | 2026-06 | 七样章齐平 · CI 6 workflow · prose rubric v2 |
+| **v25.4** | 2026-09 | 收尾完善：前端类型债清零（vue-tsc 0 error）+ batch templates 前端闭环（PilotTemplatePanel）+ socksio 依赖修复 + stash 清理 |
+| v25.3 | 2026-09 | 自治双会话合流：Track A REQ-001 创作者模式增强 + P2-QUEUE 前端；Track B P2-QUEUE/RESTART/MULTI 后端 |
+| v25.0 | 2026-09 | SSE Batch 增强：事件过滤 / 磁盘重放 / 鉴权门控 |
+| v24.0 | 2026-09 | SSE 实时批进度（替换轮询） |
+| Studio v12 | 2026-06 | 七样章齐平 · CI 6 workflow · prose rubric v2 |
 | Studio v10 | 2026-06 | 工作室化 · Dashboard · Golden Set CI |
 | v8.3 | 2026-05 | 星陨 360 章一致性检测 |
 

@@ -88,21 +88,10 @@ import { computed } from 'vue';
 
 import type { BatchEventType } from '@/composables/useBatchEventStream';
 import type { CreatorChapterPreview } from '@lingwen/dashboard-contracts/shared';
+import type { StudioBatchJobResponseDTO } from '@/api/studio';
 
-interface ActiveJob {
-  job_id: string;
-  status: 'running' | 'completed' | 'failed' | 'cancelled';
-  start_chapter: number;
-  end_chapter: number;
-  budget_usd: number;
-  pid?: number | null;
-  log_path?: string;
-  log_tail?: string | null;
-  started_at: string;
-  finished_at?: string | null;
-  exit_code?: number | null;
-  error?: string | null;
-}
+// 直接复用后端 DTO,避免本地接口与契约漂移(Phase 25.3 类型债清理)
+type ActiveJob = StudioBatchJobResponseDTO;
 
 interface EventTypeOption {
   value: BatchEventType;

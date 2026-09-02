@@ -39,18 +39,10 @@
 </template>
 
 <script setup lang="ts">
-interface HistoryRow {
-  job_id: string;
-  status: string;
-  start_chapter: number;
-  end_chapter: number;
-  mode: string;
-  started_at: string;
-  budget_usd: number;
-  exit_code: number | null;
-  finished_at?: string | null;
-  error?: string | null;
-}
+import type { StudioBatchJobSummaryDTO } from '@/api/studio';
+
+// 直接复用后端 DTO,避免本地接口与契约漂移(Phase 25.3 类型债清理)
+type HistoryRow = StudioBatchJobSummaryDTO;
 
 defineProps<{ history: HistoryRow[] }>();
 const emit = defineEmits<{ 'select-job': [jobId: string] }>();
