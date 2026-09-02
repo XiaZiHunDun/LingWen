@@ -11,7 +11,7 @@
 | 项目 | 状态 |
 |------|------|
 | **版本** | v25.4（Phase 25.4 — 收尾完善：前端类型债清零 + batch templates 前端闭环 + socksio 依赖修复 + stash 清理） |
-| **git main** | master（已推送 origin；HEAD 待 v25.4 提交） |
+| **git main** | master `5bd0c2fc`（已推送 origin） |
 | **当前阶段** | 前端 vue-tsc 类型债 8→0 清零 + Pilot 批量模板保存/应用/删除 UI 闭环；Track A REQ-001 ✅ + P2 系列 ✅；Track B P2 系列 ✅ |
 | **并行开发** | [COORDINATION.md](https://github.com) §3 自治契约：两会话自认领→全量门绿→自 ff-merge 到 master（常驻 worktree `track-a`/`track-b`）|
 | **阻塞项** | 无 |
