@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "21.0"  # Phase 21 — shim cleanup continuation: 4 source commits `a52ea0e2..7d4d6b3b` on branch phase-21-shim-cleanup; deleted 2 PHASE-COMPAT shim directories (infra/consistency/ 7 files -79 lines + infra/agent_system/ 2 files -43 lines = -122 lines total); verify-before-design revealed 0 external consumers for both (all lingwen_quality.consistency.* + lingwen_core.agents.agents.* real consumers import directly from canonical, NOT through shim paths) — N.14 lesson 1 re-confirmed for 5th time in Phase 19+ chain; closes v19.3 invariant #43 + v19.4 invariant #44; CLOSES failing regression test test_phase18_4_agent_migration.py::test_infra_agent_system_deleted (was failing since Phase 18); new invariants #46 + #47
+version: "22.0"  # Phase 22 — test-env + format cleanup: 5 source commits `e19eea8b..d5fb737c` on branch phase-22-test-env-format-cleanup; closes 2 carryovers: (1) lingwen_llm test-env gap fixed via DEEPEVAL_DISABLE_DOTENV=1 (pytest.ini) + pytest-env dev dep (workaround 'env -u MINIMAX_API_KEY' no longer needed); (2) ruff format applied to 1072 files (125 already formatted) + bonus infra/errors.py unused 'field' dataclass import removed (F811); 0 NEW architecture invariants
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
