@@ -11,9 +11,14 @@ to dedupe the project lookup boilerplate.
 
 from __future__ import annotations
 
+import asyncio
+import json
+import time
+
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from apps.studio_api.models import (
     StudioActiveResponse,
@@ -332,3 +337,71 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
 
         rows = list_batch_jobs_for_slug(slug, limit=limit)
         return StudioBatchJobListResponse(jobs=[StudioBatchJobSummary.model_validate(r) for r in rows])
+
+    @app.get("/api/studio/batch/{job_id}/events")
+    async def studio_batch_events_endpoint(job_id: str) -> StreamingResponse:
+        """SSE stream of batch job events (job_state + chapter + terminal)."""
+        from infra.studio_batch_runner import _load_job, _poll_job
+        from infra.studio_batch_streamer import (
+            EVENT_JOB_STATE,
+            format_event,
+            subscribe,
+            unsubscribe,
+        )
+
+        job = _load_job(job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail=f"unknown batch job: {job_id!r}")
+
+        queue = subscribe(job_id)
+        term_names = ("job_completed", "job_failed", "job_cancelled")
+        status_to_event = {
+            "completed": "job_completed",
+            "failed": "job_failed",
+            "cancelled": "job_cancelled",
+        }
+
+        def _is_terminal_message(data: bytes) -> bool:
+            text = data.decode("utf-8", "replace")
+            return any(f"event: {name}" in text for name in term_names)
+
+        async def event_stream():
+            try:
+                # Server-side watcher: surfaces new chapters + terminal states.
+                current = _poll_job(job)
+                # Initial state push re-syncs the client from disk.
+                yield format_event(EVENT_JOB_STATE, current.to_dict())
+                if current.status != "running":
+                    # Job already in a terminal state on disk: emit its terminal
+                    # event so the client closes instead of waiting forever.
+                    event_type = status_to_event[current.status]
+                    yield format_event(event_type, current.to_dict())
+                    return
+                last_heartbeat = time.time()
+                while True:
+                    watcher = _load_job(job_id)
+                    if watcher is not None:
+                        _poll_job(watcher)
+                    try:
+                        data = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    except asyncio.TimeoutError:
+                        if time.time() - last_heartbeat >= 15.0:
+                            yield b": ping\n\n"
+                            last_heartbeat = time.time()
+                        continue
+                    yield data
+                    last_heartbeat = time.time()
+                    if _is_terminal_message(data):
+                        break
+            finally:
+                unsubscribe(job_id, queue)
+
+        return StreamingResponse(
+            event_stream(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "Connection": "keep-alive",
+            },
+        )
