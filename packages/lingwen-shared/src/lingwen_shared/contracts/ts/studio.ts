@@ -8,6 +8,10 @@ export interface StudioActiveResponse {
   role: string;
 }
 
+export interface StudioBatchJobListResponse {
+  jobs: StudioBatchJobSummary[];
+}
+
 export interface StudioBatchJobResponse {
   job_id: string;
   slug: string;
@@ -23,6 +27,20 @@ export interface StudioBatchJobResponse {
   exit_code?: number | null;
   error?: string | null;
   log_tail?: string | null;
+}
+
+export interface StudioBatchJobSummary {
+  job_id: string;
+  slug: string;
+  start_chapter: number;
+  end_chapter: number;
+  budget_usd: number;
+  mode: string;
+  status: string;
+  started_at: string;
+  finished_at?: string | null;
+  exit_code?: number | null;
+  error?: string | null;
 }
 
 export interface StudioBatchRunRequest {

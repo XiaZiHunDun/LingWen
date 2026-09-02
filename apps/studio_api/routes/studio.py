@@ -17,7 +17,9 @@ from fastapi import FastAPI, HTTPException, Query
 
 from apps.studio_api.models import (
     StudioActiveResponse,
+    StudioBatchJobListResponse,
     StudioBatchJobResponse,
+    StudioBatchJobSummary,
     StudioBatchRunRequest,
     StudioPreflightChapter,
     StudioPreflightRequest,
@@ -319,3 +321,16 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
             # BatchAlreadyRunningError is RuntimeError subclass.
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return _batch_job_to_response(job)
+
+    @app.get("/api/studio/batch/history", response_model=StudioBatchJobListResponse)
+    def studio_batch_history_endpoint(
+        slug: str,
+        limit: int = Query(default=20, ge=1, le=100),
+    ) -> StudioBatchJobListResponse:
+        """List recent batch jobs for a slug (Pilot Page history)."""
+        from infra.studio_batch_runner import list_batch_jobs_for_slug
+
+        rows = list_batch_jobs_for_slug(slug, limit=limit)
+        return StudioBatchJobListResponse(
+            jobs=[StudioBatchJobSummary.model_validate(r) for r in rows]
+        )

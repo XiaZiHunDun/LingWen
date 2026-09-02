@@ -236,7 +236,9 @@ from apps.studio_api.models.health import (
 )
 from apps.studio_api.models.studio import (
     StudioActiveResponse,  # noqa: F401
+    StudioBatchJobListResponse,  # noqa: F401
     StudioBatchJobResponse,  # noqa: F401
+    StudioBatchJobSummary,  # noqa: F401
     StudioBatchRunRequest,  # noqa: F401
     StudioPreflightChapter,  # noqa: F401
     StudioPreflightRequest,  # noqa: F401

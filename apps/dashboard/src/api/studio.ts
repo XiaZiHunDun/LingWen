@@ -13,6 +13,7 @@
  */
 import type {
   StudioActiveResponseDTO,
+  StudioBatchJobListResponseDTO,
   StudioBatchJobResponseDTO,
   StudioPreflightResponseDTO,
   StudioProseDiffResponseDTO,
@@ -163,6 +164,21 @@ export async function cancelStudioBatchJob(
   const data = await request<StudioBatchJobResponseDTO>(
     `/studio/batch/${encoded}/cancel`,
     { method: 'POST' },
+  );
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// /studio/batch/history?slug=X&limit=N (list recent batch jobs for a slug)
+// ---------------------------------------------------------------------------
+
+export async function listStudioBatchJobs(
+  slug: string,
+  limit: number = 20,
+): Promise<StudioBatchJobListResponseDTO> {
+  const params = new URLSearchParams({ slug, limit: String(limit) });
+  const data = await request<StudioBatchJobListResponseDTO>(
+    `/studio/batch/history?${params.toString()}`,
   );
   return data;
 }

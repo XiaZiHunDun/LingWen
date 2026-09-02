@@ -11,7 +11,9 @@ prose-diff, prose-judge, preflight, batch-run, batch-job.
 
 from lingwen_shared.contracts.python.studio import (
     StudioActiveResponse,
+    StudioBatchJobListResponse,
     StudioBatchJobResponse,
+    StudioBatchJobSummary,
     StudioBatchRunRequest,
     StudioPreflightChapter,
     StudioPreflightRequest,
@@ -59,4 +61,6 @@ __all__ = [
     "StudioPreflightResponse",
     "StudioBatchRunRequest",
     "StudioBatchJobResponse",
+    "StudioBatchJobSummary",
+    "StudioBatchJobListResponse",
 ]

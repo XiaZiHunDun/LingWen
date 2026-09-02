@@ -374,6 +374,41 @@ class StudioBatchJobResponse(BaseModel):
     log_tail: Optional[str] = None
 
 
+# ---------------------------------------------------------------------------
+# Batch history (Phase 23 Task 6 — listStudioBatchJobs wrapper)
+# ---------------------------------------------------------------------------
+
+
+class StudioBatchJobSummary(BaseModel):
+    """Single entry in the ``/studio/batch/history`` listing.
+
+    Compact shape (no ``pid``/``log_path``/``log_tail``) — the history list is
+    for the Pilot Page UI which only needs lifecycle metadata + error info.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    job_id: str
+    slug: str
+    start_chapter: int
+    end_chapter: int
+    budget_usd: float
+    mode: str
+    status: str
+    started_at: str
+    finished_at: Optional[str] = None
+    exit_code: Optional[int] = None
+    error: Optional[str] = None
+
+
+class StudioBatchJobListResponse(BaseModel):
+    """Listing payload returned by ``/studio/batch/history``."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    jobs: list[StudioBatchJobSummary]
+
+
 __all__ = [
     "StudioProjectItem",
     "StudioProjectsResponse",
@@ -398,4 +433,6 @@ __all__ = [
     "StudioPreflightResponse",
     "StudioBatchRunRequest",
     "StudioBatchJobResponse",
+    "StudioBatchJobSummary",
+    "StudioBatchJobListResponse",
 ]

@@ -59,6 +59,8 @@ export type {
   StudioPreflightResponseDTO,
   StudioBatchRunRequestDTO,
   StudioBatchJobResponseDTO,
+  StudioBatchJobSummaryDTO,
+  StudioBatchJobListResponseDTO,
 } from './studio';
 export type {
   WorkflowListItemDTO,
