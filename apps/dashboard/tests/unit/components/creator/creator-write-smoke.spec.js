@@ -17,6 +17,17 @@ import CreatorWritePanelChat from '../../../../src/components/creator/CreatorWri
 import CreatorWriteFooter from '../../../../src/components/creator/CreatorWriteFooter.vue'
 import { CREATOR_WRITE_KEY } from '../../../../src/components/creator/creatorWriteKey.js'
 
+// CreatorWriteSidebar 在推进模式下渲染 CreatorBatchRhythm（内部复用 usePilotBatch），
+// 冒烟测试通过 mock 避免真实 SSE / 网络请求。
+vi.mock('@/composables/usePilotBatch', () => ({
+  usePilotBatch: () => ({
+    activeJob: { value: null },
+    chapterEvents: { value: [] },
+    isJobActive: { value: false },
+    refreshActive: vi.fn(),
+  }),
+}))
+
 /**
  * 创建与真实数据结构一致的 mock 上下文。
  * 使用 reactive() 包裹，确保 ref 属性在模板中自动解包。

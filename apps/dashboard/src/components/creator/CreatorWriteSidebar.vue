@@ -131,6 +131,7 @@
       </div>
     </section>
 
+    <CreatorBatchRhythm v-if="wb.creationMode === 'advance'" />
     <CreatorBatchOperations />
     <CreatorFactoryPipeline />
   </aside>
@@ -140,6 +141,7 @@
 import { inject, ref, computed, defineAsyncComponent } from 'vue';
 import { CREATOR_WRITE_KEY } from './creatorWriteKey.js';
 import CreatorBatchOperations from './CreatorBatchOperations.vue';
+import CreatorBatchRhythm from './CreatorBatchRhythm.vue';
 const CreatorFactoryPipeline = defineAsyncComponent(() => import('./CreatorFactoryPipeline.vue'));
 
 const w = inject(CREATOR_WRITE_KEY);
