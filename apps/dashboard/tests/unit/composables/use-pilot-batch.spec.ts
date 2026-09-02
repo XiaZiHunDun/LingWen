@@ -7,12 +7,17 @@ const mockActive = vi.fn();
 const mockGetJob = vi.fn();
 const mockList = vi.fn();
 const mockCancel = vi.fn();
+const mockFetchPreview = vi.fn();
 
 vi.mock('@/api/studio', () => ({
   studioProductionRun: (...args: unknown[]) => mockStartBatch(...args),
   fetchStudioActiveBatchJob: () => mockActive(),
   listStudioBatchJobs: (...args: unknown[]) => mockList(...args),
   cancelStudioBatchJob: (...args: unknown[]) => mockCancel(...args),
+}));
+
+vi.mock('@/api/content', () => ({
+  fetchCreatorChapterPreview: (...args: unknown[]) => mockFetchPreview(...args),
 }));
 
 /** Minimal EventSource stub (jsdom doesn't implement it) that records instances. */
@@ -62,6 +67,7 @@ beforeEach(() => {
   mockGetJob.mockReset();
   mockList.mockReset();
   mockCancel.mockReset();
+  mockFetchPreview.mockReset();
 });
 
 afterEach(() => {
@@ -155,6 +161,30 @@ describe('usePilotBatch', () => {
       await nextTick();
       expect(api.selectedEventTypes.value).toEqual([]);
       expect(MockEventSource.instances.at(-1)?.url).not.toContain('event_types=');
+    });
+  });
+
+  it('openPreview fetches preview content and opens the drawer', async () => {
+    mockFetchPreview.mockResolvedValue({ chapter_id: 3, project_slug: 's1', outline: '大纲', body: '正文' });
+    await withComposable(async (api) => {
+      await api.openPreview(3);
+      expect(mockFetchPreview).toHaveBeenCalledWith(3, { full: true });
+      expect(api.previewChapter.value).toBe(3);
+      expect(api.previewData.value?.chapter_id).toBe(3);
+      expect(api.previewLoading.value).toBe(false);
+      expect(api.previewError.value).toBeNull();
+    });
+  });
+
+  it('openPreview surfaces errors and closePreview resets state', async () => {
+    mockFetchPreview.mockRejectedValue(new Error('boom'));
+    await withComposable(async (api) => {
+      await api.openPreview(7);
+      expect(api.previewError.value).toContain('boom');
+      expect(api.previewData.value).toBeNull();
+      expect(api.previewLoading.value).toBe(false);
+      api.closePreview();
+      expect(api.previewChapter.value).toBeNull();
     });
   });
 });

@@ -50,6 +50,14 @@ function onHoldOn() {
 function onToggleEventType(value: BatchEventType) {
   pilot.toggleEventType(value);
 }
+
+function onOpenPreview(chapterNum: number) {
+  void pilot.openPreview(chapterNum);
+}
+
+function onClosePreview() {
+  pilot.closePreview();
+}
 </script>
 
 <template>
@@ -73,8 +81,14 @@ function onToggleEventType(value: BatchEventType) {
         :chapter-events="pilot.chapterEvents.value"
         :event-type-options="pilot.eventTypeOptions"
         :selected-event-types="pilot.selectedEventTypes.value"
+        :preview-chapter="pilot.previewChapter.value"
+        :preview-data="pilot.previewData.value"
+        :preview-loading="pilot.previewLoading.value"
+        :preview-error="pilot.previewError.value"
         @request-cancel="onRequestCancel"
         @toggle-event-type="onToggleEventType"
+        @open-preview="onOpenPreview"
+        @close-preview="onClosePreview"
       />
       <PilotHistoryList :history="pilot.history.value" />
       <PilotCancelDialog

@@ -87,4 +87,34 @@ describe('PilotLivePanel', () => {
     expect(wrapper.emitted('toggle-event-type')).toBeTruthy();
     expect(wrapper.emitted('toggle-event-type')?.[0]).toEqual(['chapter_completed']);
   });
+
+  it('emits open-preview when a chapter item is clicked', async () => {
+    const wrapper = mount(PilotLivePanel, {
+      props: {
+        activeJob: runningJob, etaSeconds: null, cancelLoading: false,
+        chapterEvents: [{ chapter_num: 3, receivedAt: 't0' }],
+      },
+    });
+    await wrapper.find('[data-testid="pilot-preview-chapter-3"]').trigger('click');
+    expect(wrapper.emitted('open-preview')).toBeTruthy();
+    expect(wrapper.emitted('open-preview')?.[0]).toEqual([3]);
+  });
+
+  it('hides drawer when no chapter is selected for preview', () => {
+    const wrapper = mount(PilotLivePanel, { props: { activeJob: runningJob, etaSeconds: null, cancelLoading: false } });
+    expect(wrapper.find('[data-testid="pilot-preview-drawer"]').exists()).toBe(false);
+  });
+
+  it('renders drawer with outline/body when preview data is provided', () => {
+    const wrapper = mount(PilotLivePanel, {
+      props: {
+        activeJob: runningJob, etaSeconds: null, cancelLoading: false,
+        previewChapter: 3,
+        previewData: { chapter_id: 3, project_slug: 's1', outline: '大纲内容', body: '正文内容' },
+        previewLoading: false,
+      },
+    });
+    expect(wrapper.find('[data-testid="pilot-preview-drawer"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="pilot-preview-content"]').text()).toContain('大纲内容');
+  });
 });

@@ -10,6 +10,8 @@ import type {
   StudioBatchJobResponseDTO,
   StudioBatchJobSummaryDTO,
 } from '@/api/studio';
+import { fetchCreatorChapterPreview } from '@/api/content';
+import type { CreatorChapterPreview } from '@lingwen/dashboard-contracts/shared';
 import { useBatchEventStream } from '@/composables/useBatchEventStream';
 import type { BatchEvent, BatchEventType } from '@/composables/useBatchEventStream';
 
@@ -53,6 +55,12 @@ export function usePilotBatch() {
   const startError = ref<string | null>(null);
   const cancelLoading = ref(false);
   const cancelError = ref<string | null>(null);
+
+  // P2-DRAWER: per-chapter preview drawer state. `previewChapter` null = closed.
+  const previewChapter = ref<number | null>(null);
+  const previewData = ref<CreatorChapterPreview | null>(null);
+  const previewLoading = ref(false);
+  const previewError = ref<string | null>(null);
 
   const activeJobId = computed(() => activeJob.value?.job_id ?? null);
   // Empty selection = no `event_types` filter → server streams all event types
@@ -222,6 +230,28 @@ export function usePilotBatch() {
 
   const isJobActive = computed(() => activeJob.value?.status === 'running');
 
+  // P2-DRAWER: open drawer for a chapter and load its preview content.
+  async function openPreview(chapterNum: number): Promise<void> {
+    previewChapter.value = chapterNum;
+    previewLoading.value = true;
+    previewError.value = null;
+    previewData.value = null;
+    try {
+      previewData.value = await fetchCreatorChapterPreview(chapterNum, { full: true });
+    } catch (err) {
+      previewError.value = err instanceof Error ? err.message : String(err);
+    } finally {
+      previewLoading.value = false;
+    }
+  }
+
+  function closePreview(): void {
+    previewChapter.value = null;
+    previewData.value = null;
+    previewError.value = null;
+    previewLoading.value = false;
+  }
+
   onBeforeUnmount(() => stopFallbackPolling());
 
   return {
@@ -241,6 +271,12 @@ export function usePilotBatch() {
     eventTypeOptions: EVENT_TYPE_OPTIONS,
     selectedEventTypes,
     toggleEventType,
+    previewChapter,
+    previewData,
+    previewLoading,
+    previewError,
+    openPreview,
+    closePreview,
     refreshActive,
     refreshHistory,
     runPreflight,
