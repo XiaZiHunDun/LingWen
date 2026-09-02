@@ -10,7 +10,7 @@ import json
 import pytest
 
 from infra import studio_batch_streamer
-from infra.studio_batch_streamer import publish, subscribe, unsubscribe
+from infra.studio_batch_streamer import EVENT_CHAPTER_COMPLETED, publish, subscribe, unsubscribe
 
 JOB = "job-test-123"
 
@@ -42,7 +42,7 @@ def test_publish_with_no_subscribers_is_noop():
 @pytest.mark.asyncio
 async def test_subscribe_creates_queue_and_receives_published_events():
     queue = subscribe(JOB)
-    assert queue in studio_batch_streamer._SUBSCRIBERS[JOB]
+    assert any(sub.queue is queue for sub in studio_batch_streamer._SUBSCRIBERS[JOB])
 
     publish(JOB, "job_state", {"status": "running"})
     data = (await asyncio.wait_for(queue.get(), timeout=1.0)).decode("utf-8")
@@ -69,8 +69,8 @@ async def test_unsubscribe_removes_subscriber():
     drop = subscribe(JOB)
 
     unsubscribe(JOB, drop)
-    assert drop not in studio_batch_streamer._SUBSCRIBERS[JOB]
-    assert keep in studio_batch_streamer._SUBSCRIBERS[JOB]
+    assert not any(sub.queue is drop for sub in studio_batch_streamer._SUBSCRIBERS[JOB])
+    assert any(sub.queue is keep for sub in studio_batch_streamer._SUBSCRIBERS[JOB])
 
     unsubscribe(JOB, keep)
     assert JOB not in studio_batch_streamer._SUBSCRIBERS
@@ -85,4 +85,27 @@ async def test_queue_overflow_drops_oldest():
     payloads = _payloads(queue, 100)
     assert payloads[0]["seq"] == 1  # seq 0 was dropped for overflow
     assert payloads[-1]["seq"] == 100
+    assert queue.qsize() == 0
+
+
+@pytest.mark.asyncio
+async def test_event_type_filter_skips_non_matching():
+    """A subscriber with an event_types filter must NOT receive excluded events."""
+    queue = subscribe(JOB, event_types=[EVENT_CHAPTER_COMPLETED])
+
+    publish(JOB, "job_state", {"status": "running"})
+    assert queue.qsize() == 0  # job_state is filtered out
+
+
+@pytest.mark.asyncio
+async def test_event_type_filter_delivers_matching_only():
+    """A filtered subscriber receives matching events but skips the others."""
+    queue = subscribe(JOB, event_types=[EVENT_CHAPTER_COMPLETED])
+
+    publish(JOB, "job_state", {"status": "running"})
+    publish(JOB, EVENT_CHAPTER_COMPLETED, {"chapter_num": 3})
+
+    data = (await asyncio.wait_for(queue.get(), timeout=1.0)).decode("utf-8")
+    assert "event: chapter_completed" in data
+    assert '"chapter_num": 3' in data
     assert queue.qsize() == 0

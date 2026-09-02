@@ -26,13 +26,46 @@ EVENT_JOB_COMPLETED = "job_completed"
 EVENT_JOB_FAILED = "job_failed"
 EVENT_JOB_CANCELLED = "job_cancelled"
 
+KNOWN_EVENT_TYPES = frozenset(
+    {
+        EVENT_JOB_STATE,
+        EVENT_CHAPTER_STARTED,
+        EVENT_CHAPTER_COMPLETED,
+        EVENT_JOB_COMPLETED,
+        EVENT_JOB_FAILED,
+        EVENT_JOB_CANCELLED,
+    }
+)
+
 _TERMINAL_EVENTS = frozenset({EVENT_JOB_COMPLETED, EVENT_JOB_FAILED, EVENT_JOB_CANCELLED})
 
-# Per-job subscriber registry: job_id -> list[asyncio.Queue].
-_SUBSCRIBERS: dict[str, list[asyncio.Queue]] = {}
+# Per-job subscriber registry: job_id -> list[_Subscriber].
+_SUBSCRIBERS: dict[str, list["_Subscriber"]] = {}
 
 # Cap per-queue buffered events to prevent unbounded growth.
 _MAX_QUEUE = 100
+
+
+class _Subscriber:
+    """A single SSE subscriber — one asyncio.Queue plus an optional event filter.
+
+    ``event_types`` is ``None`` (deliver everything) or a frozen set of the event
+    types this subscriber is willing to receive (Phase 25 server-side filter).
+    """
+
+    __slots__ = ("queue", "event_types")
+
+    def __init__(self, queue: asyncio.Queue, event_types: frozenset[str] | None) -> None:
+        self.queue = queue
+        self.event_types = event_types
+
+
+def _normalize_filter(event_types) -> frozenset[str] | None:
+    """Collapse an event-type iterable to a frozen set; ``None``/empty means "all"."""
+    if event_types is None:
+        return None
+    normalized = frozenset(event_types)
+    return normalized or None
 
 
 def format_event(event_type: str, payload: dict[str, Any]) -> bytes:
@@ -44,20 +77,27 @@ def is_terminal_event(event_type: str) -> bool:
     return event_type in _TERMINAL_EVENTS
 
 
-def subscribe(job_id: str) -> asyncio.Queue:
-    """Create a new subscriber queue for ``job_id`` and return it."""
+def subscribe(job_id: str, event_types=None) -> asyncio.Queue:
+    """Create a new subscriber queue for ``job_id`` and return it.
+
+    ``event_types`` optionally restricts what this subscriber receives: a list of
+    event type names. ``None``/empty means deliver all events (Phase 24 behavior).
+    """
     queue: asyncio.Queue = asyncio.Queue(maxsize=_MAX_QUEUE)
-    _SUBSCRIBERS.setdefault(job_id, []).append(queue)
+    _SUBSCRIBERS.setdefault(job_id, []).append(_Subscriber(queue, _normalize_filter(event_types)))
     return queue
 
 
 def unsubscribe(job_id: str, queue: asyncio.Queue) -> None:
-    """Remove ``queue`` from ``job_id``'s subscriber list; drop empty jobs."""
+    """Remove the subscriber holding ``queue`` from ``job_id``; drop empty jobs."""
     subscribers = _SUBSCRIBERS.get(job_id)
     if not subscribers:
         return
     try:
-        subscribers.remove(queue)
+        for index, subscriber in enumerate(subscribers):
+            if subscriber.queue is queue:
+                del subscribers[index]
+                break
     except ValueError:
         pass
     if not subscribers:
@@ -67,6 +107,7 @@ def unsubscribe(job_id: str, queue: asyncio.Queue) -> None:
 def publish(job_id: str, event_type: str, payload: dict[str, Any]) -> None:
     """Non-blocking fire-and-forget publish to every subscriber of ``job_id``.
 
+    Subscribers whose ``event_types`` filter excludes ``event_type`` are skipped.
     Subscribers whose queue is full have their oldest event dropped so the
     newest state always flows through.
     """
@@ -74,7 +115,11 @@ def publish(job_id: str, event_type: str, payload: dict[str, Any]) -> None:
     if not subscribers:
         return  # no subscribers; nothing to do
     data = format_event(event_type, payload)
-    for queue in list(subscribers):
+    for subscriber in list(subscribers):
+        event_types = subscriber.event_types
+        if event_types is not None and event_type not in event_types:
+            continue  # subscriber does not want this event type
+        queue = subscriber.queue
         try:
             queue.put_nowait(data)
         except asyncio.QueueFull:
