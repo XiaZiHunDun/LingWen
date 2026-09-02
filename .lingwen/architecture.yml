@@ -315,6 +315,22 @@ phase_20:
     - "Phase 114 prod preview regression (accepted per CLAUDE.md)"
     - "Optional: delete infra/consistency/ + infra/agent_system/ shims now that 0 code consumers remain (same pattern as Phase 20)"
 
+# Phase 22 — test-env + format cleanup (2026-09-02)
+phase_22:
+  purpose: "Phase 22 — test-env + format cleanup (closes lingwen_llm test-env gap + ruff format carryover)"
+  status: closed
+  branch: "phase-22-test-env-format-cleanup"
+  implementation_log: docs/superpowers/handoffs/2026-09-02-phase-22-test-env-format-cleanup-handoff.md
+  closure_date: "2026-09-02"
+  scripts_changed:
+    - "T1a: pytest.ini — added 'env = DEEPEVAL_DISABLE_DOTENV=1' section (prevents deepeval from auto-loading .env in pytest runs)"
+    - "T1b: pyproject.toml — added pytest-env>=1.7 to dev deps"
+    - "T2: ruff format . — reformatted 1072 files (mechanical whitespace/quote style; 125 already formatted)"
+    - "T2.bonus: infra/errors.py — removed unused 'field' dataclass import (F811 shadow)"
+  new_architecture_invariants: []  # no new constraints; deepeval dotenv disable is config not architecture
+  carryover_to_phase_23:
+    - "Phase 114 prod preview regression (accepted per CLAUDE.md)"
+
 # Phase 21 — shim cleanup continuation (2026-09-02)
 phase_21:
   purpose: "Phase 21 — shim cleanup continuation (closes v19.3 + v19.4 carryovers: delete infra/consistency/ + infra/agent_system/ shim directories)"
