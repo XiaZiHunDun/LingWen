@@ -43,7 +43,30 @@ export interface BatchEventStream {
   lastError: { value: string | null };
 }
 
-export function useBatchEventStream(jobId: { value: string | null }): BatchEventStream {
+export interface BatchEventStreamOptions {
+  /** Replay deterministic history from the server on connect (Phase 25). */
+  replay?: boolean;
+  /** Server-side event-type whitelist applied to the stream (Phase 25). */
+  eventTypes?: BatchEventType[];
+}
+
+function buildUrl(jobId: string, options: BatchEventStreamOptions): string {
+  const encoded = encodeURIComponent(jobId);
+  const params = new URLSearchParams();
+  if (options.replay) {
+    params.set('replay', '1');
+  }
+  if (options.eventTypes && options.eventTypes.length > 0) {
+    params.set('event_types', options.eventTypes.join(','));
+  }
+  const query = params.toString();
+  return `/api/studio/batch/${encoded}/events${query ? `?${query}` : ''}`;
+}
+
+export function useBatchEventStream(
+  jobId: { value: string | null },
+  options: BatchEventStreamOptions = {},
+): BatchEventStream {
   const events = ref<BatchEvent[]>([]);
   const isConnected = ref(false);
   const lastError = ref<string | null>(null);
@@ -76,8 +99,7 @@ export function useBatchEventStream(jobId: { value: string | null }): BatchEvent
       lastError.value = null;
       return;
     }
-    const encoded = encodeURIComponent(jobId.value);
-    const sourceInstance = new EventSource(`/api/studio/batch/${encoded}/events`);
+    const sourceInstance = new EventSource(buildUrl(jobId.value, options));
     source = sourceInstance;
     for (const type of EVENT_TYPES) {
       sourceInstance.addEventListener(type, (event: MessageEvent) => {

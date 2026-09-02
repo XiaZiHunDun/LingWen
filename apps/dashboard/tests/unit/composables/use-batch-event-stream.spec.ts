@@ -131,4 +131,31 @@ describe('useBatchEventStream', () => {
     wrapper.unmount();
     expect(source.closed).toBe(true);
   });
+
+  it('appends replay=1 when options.replay is set', async () => {
+    const { useBatchEventStream } = await import('@/composables/useBatchEventStream');
+    const jobId = ref('j2');
+    const Host = defineComponent({
+      setup: () => useBatchEventStream(jobId, { replay: true }),
+      template: '<div />',
+    });
+    const wrapper = mount(Host);
+    await flushPromises();
+    expect(MockEventSource.instances.at(-1)!.url).toContain('replay=1');
+    wrapper.unmount();
+  });
+
+  it('appends event_types when options.eventTypes is provided', async () => {
+    const { useBatchEventStream } = await import('@/composables/useBatchEventStream');
+    const jobId = ref('j3');
+    const Host = defineComponent({
+      setup: () => useBatchEventStream(jobId, { replay: true, eventTypes: ['chapter_completed', 'job_state'] }),
+      template: '<div />',
+    });
+    const wrapper = mount(Host);
+    await flushPromises();
+    expect(MockEventSource.instances.at(-1)!.url).toContain('replay=1');
+    expect(MockEventSource.instances.at(-1)!.url).toContain('event_types=chapter_completed%2Cjob_state');
+    wrapper.unmount();
+  });
 });
