@@ -3,13 +3,13 @@
 4 paths: happy (running → cancelled), 409 (already completed), 404 (not found),
 grace-timeout SIGKILL fallback (Task 2).
 """
+import json
 import os
 import signal
 import subprocess
 import sys
 import textwrap
 import time
-import json
 from pathlib import Path
 
 import pytest
@@ -17,8 +17,8 @@ import pytest
 from infra.studio_batch_runner import (
     BatchAlreadyRunningError,
     BatchJob,
-    cancel_batch_job,
     _jobs_dir,
+    cancel_batch_job,
 )
 
 
