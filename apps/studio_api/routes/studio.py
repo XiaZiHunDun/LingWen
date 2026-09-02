@@ -312,6 +312,7 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
                 mode=req.mode,
                 skip_preflight=req.skip_preflight,
                 priority=priority,
+                max_attempts=req.max_attempts,
             )
         except BatchAlreadyRunningError as exc:
             raise HTTPException(409, str(exc)) from exc

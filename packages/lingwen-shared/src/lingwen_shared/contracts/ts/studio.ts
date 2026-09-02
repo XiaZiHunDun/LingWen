@@ -27,6 +27,8 @@ export interface StudioBatchJobResponse {
   exit_code?: number | null;
   error?: string | null;
   log_tail?: string | null;
+  attempt?: number;
+  max_attempts?: number;
 }
 
 export interface StudioBatchJobSummary {
@@ -49,6 +51,7 @@ export interface StudioBatchRunRequest {
   mode?: string;
   budget_usd?: number;
   skip_preflight?: boolean;
+  max_attempts?: number;
 }
 
 export interface StudioBatchTemplate {

@@ -351,6 +351,7 @@ class StudioBatchRunRequest(BaseModel):
     mode: str = "canon"
     budget_usd: float = Field(default=0.15, ge=0, le=100)
     skip_preflight: bool = False
+    max_attempts: int = Field(default=1, ge=1, le=5)
 
 
 class StudioBatchJobResponse(BaseModel):
@@ -372,6 +373,8 @@ class StudioBatchJobResponse(BaseModel):
     exit_code: Optional[int] = None
     error: Optional[str] = None
     log_tail: Optional[str] = None
+    attempt: int = 1
+    max_attempts: int = 1
 
 
 # ---------------------------------------------------------------------------

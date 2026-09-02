@@ -62,6 +62,8 @@ class BatchJob:
     error: str | None = None
     priority: int = 0
     skip_preflight: bool = False
+    attempt: int = 1
+    max_attempts: int = 1
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -135,6 +137,40 @@ def _publish_chapter_completions(job: BatchJob) -> None:
     _published_chapters[job.job_id] = len(completed)
 
 
+def _restart_failed_job(job: BatchJob) -> BatchJob | None:
+    """Re-launch a failed running job under the same ``job_id``, if attempts remain.
+
+    Used by :func:`_poll_job` for auto-restart. When ``job.attempt`` is still
+    below ``job.max_attempts`` the batch is restarted with the same ``job_id``
+    (so SSE subscribers retain continuity) and returns the re-spawned job;
+    otherwise returns ``None`` to signal the job is terminal.
+    """
+    if job.attempt >= job.max_attempts:
+        return None
+    project = get_project_by_slug(job.slug)
+    if project is None:
+        return None
+    pid, log_path = _open_process(
+        project,
+        job_id=job.job_id,
+        start_chapter=job.start_chapter,
+        end_chapter=job.end_chapter,
+        budget_usd=job.budget_usd,
+        mode=job.mode,
+    )
+    job.attempt += 1
+    job.status = "running"
+    job.pid = pid
+    job.log_path = log_path
+    job.started_at = _now_iso()
+    job.finished_at = None
+    job.exit_code = None
+    job.error = None
+    _save_job(job)
+    publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
+    return job
+
+
 def _poll_job(job: BatchJob) -> BatchJob:
     if job.status != "running" or job.pid is None:
         return job
@@ -142,18 +178,39 @@ def _poll_job(job: BatchJob) -> BatchJob:
         _publish_chapter_completions(job)
         return job
     exit_code = _read_exit_code(job)
-    job.status = "completed" if exit_code == 0 else "failed"
+    if exit_code == 0:
+        job.status = "completed"
+        job.exit_code = exit_code
+        job.finished_at = _now_iso()
+        _save_job(job)
+        publish(
+            job.job_id,
+            EVENT_JOB_COMPLETED,
+            {
+                "status": job.status,
+                "exit_code": job.exit_code,
+                "finished_at": job.finished_at,
+            },
+        )
+        advance_batch_queue(job.slug)
+        return job
+
+    restarted = _restart_failed_job(job)
+    if restarted is not None:
+        return restarted
+
+    job.status = "failed"
     job.exit_code = exit_code
     job.finished_at = _now_iso()
     _save_job(job)
-    event_type = EVENT_JOB_COMPLETED if job.status == "completed" else EVENT_JOB_FAILED
     publish(
         job.job_id,
-        event_type,
+        EVENT_JOB_FAILED,
         {
             "status": job.status,
             "exit_code": job.exit_code,
             "finished_at": job.finished_at,
+            "attempt": job.attempt,
         },
     )
     advance_batch_queue(job.slug)
@@ -275,6 +332,7 @@ def _spawn_job(
     mode: str,
     priority: int,
     skip_preflight: bool,
+    max_attempts: int = 1,
     job_id: str | None = None,
 ) -> BatchJob:
     """Launch the batch script and persist a running BatchJob.
@@ -305,6 +363,8 @@ def _spawn_job(
         started_at=_now_iso(),
         priority=priority,
         skip_preflight=skip_preflight,
+        attempt=1,
+        max_attempts=max_attempts,
     )
     _save_job(job)
     publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
@@ -373,6 +433,7 @@ def submit_batch_job(
     mode: str = "canon",
     skip_preflight: bool = False,
     priority: int = 0,
+    max_attempts: int = 1,
 ) -> BatchJob:
     """Enqueue or start a batch run, ordered by priority.
 
@@ -415,6 +476,7 @@ def submit_batch_job(
             started_at=_now_iso(),
             priority=priority,
             skip_preflight=skip_preflight,
+            max_attempts=max_attempts,
         )
         _save_job(job)
         publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
@@ -428,6 +490,7 @@ def submit_batch_job(
         mode=mode,
         priority=priority,
         skip_preflight=skip_preflight,
+        max_attempts=max_attempts,
     )
 
 
@@ -479,6 +542,7 @@ def advance_batch_queue(slug: str) -> BatchJob | None:
         mode=job.mode,
         priority=job.priority,
         skip_preflight=job.skip_preflight,
+        max_attempts=job.max_attempts,
         job_id=job.job_id,
     )
 
