@@ -40,7 +40,7 @@
 | ID | 标题 | 描述 | 认领人 | 状态 | 创建日期 |
 |----|------|------|--------|------|----------|
 | P2-INSIGHT | Pilot + Insight 看板集成 | 让 batch 进度汇入主看板 | 待认领 | 📋 待开始 | 2026-09-02 |
-| P2-DRAWER | per-chapter preview drawer | PilotLivePanel 章节预览抽屉 | 待认领（前端） | 📋 待开始 | 2026-09-02 |
+| P2-DRAWER | per-chapter preview drawer | PilotLivePanel 章节预览抽屉 | 前端 A（自服务完成） | ✅ 完成 | 2026-09-02 |
 | P2-QUEUE | batch priority queue | 生产排队，多任务有序。**后端 B 自服务列表第一个** | 后端 B（自服务） | 📋 待开始 | 2026-09-02 |
 | P2-RESTART | auto-restart on failure | 失败自动重启。**后端 B 自服务列表第二个** | 后端 B（自服务） | 📋 待开始 | 2026-09-02 |
 | P2-MULTI | multi-LLM 并发批次 | 并行吞吐能力（较大，后端 B 自服务列表收尾项） | 后端 B（自服务） | 📋 待开始 | 2026-09-02 |

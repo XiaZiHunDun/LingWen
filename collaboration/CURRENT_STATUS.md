@@ -2,7 +2,7 @@
 
 > **最后更新**: 2026-09-02  
 > **更新者**: 会话-A（Track A 前端自治）  
-> **下一协作**: Track A 已自服务完成 P1-SHIM + P2-DTOMIGR；待认领 P2-DRAWER / P2-INSIGHT
+> **下一协作**: Track A 已自服务完成 P1-SHIM + P2-DTOMIGR + P2-DRAWER；待认领 P2-INSIGHT
 
 ---
 
@@ -22,10 +22,10 @@
 
 | ID | 任务 | 进度 | 认领人 | 状态 |
 |----|------|------|--------|------|
-| P2-DRAWER | per-chapter preview drawer（前端） | 待认领 | — | 📋 待开始 |
+| P2-DRAWER | per-chapter preview drawer（前端） | ✅ 完成 | 会话-A | ✅ |
 | P2-INSIGHT | Pilot + Insight 看板集成（前端） | 待认领 | — | 📋 待开始 |
 
-> 详见 [BACKLOG.md](BACKLOG.md) P1-SHIM（✅）/ P2-DTOMIGR（✅）；后端 B 自服务进行 P2-QUEUE。
+> 详见 [BACKLOG.md](BACKLOG.md)：P1-SHIM（✅）/ P2-DTOMIGR（✅）/ P2-DRAWER（✅）；后端 B 自服务进行 P2-QUEUE。
 
 ---
 
