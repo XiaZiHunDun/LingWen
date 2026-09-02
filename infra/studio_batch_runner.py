@@ -13,10 +13,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from infra.studio_batch_streamer import (
+    EVENT_CHAPTER_COMPLETED,
+    EVENT_JOB_CANCELLED,
+    EVENT_JOB_COMPLETED,
+    EVENT_JOB_FAILED,
+    EVENT_JOB_STATE,
+    publish,
+)
 from infra.studio_registry import (
     StudioProject,
+    _chapter_nums,
     active_project,
     factory_root,
+    get_project_by_slug,
     production_preflight,
 )
 
@@ -91,16 +101,63 @@ def _save_job(job: BatchJob) -> None:
     )
 
 
+# Per-job count of chapter_completed events already published. Lets _poll_job
+# publish only for newly-observed chapters instead of re-emitting every poll.
+_published_chapters: dict[str, int] = {}
+
+
+def _completed_chapter_nums(job: BatchJob) -> list[int]:
+    """Numbers in [start, end] that already have a chapter file on disk."""
+    project = get_project_by_slug(job.slug)
+    if project is None:
+        return []
+    chapters_dir = project.root / "03_内容仓库" / "04_正文"
+    present = set(_chapter_nums(chapters_dir))
+    return [
+        n
+        for n in range(job.start_chapter, job.end_chapter + 1)
+        if n in present
+    ]
+
+
+def _publish_chapter_completions(job: BatchJob) -> None:
+    """Publish chapter_completed for any newly-written chapter in the range."""
+    completed = _completed_chapter_nums(job)
+    if not completed:
+        return
+    published = _published_chapters.get(job.job_id, 0)
+    for chapter_num in sorted(completed):
+        index = completed.index(chapter_num)
+        if index >= published:
+            publish(
+                job.job_id,
+                EVENT_CHAPTER_COMPLETED,
+                {"chapter_num": chapter_num, "completed_at": _now_iso()},
+            )
+    _published_chapters[job.job_id] = len(completed)
+
+
 def _poll_job(job: BatchJob) -> BatchJob:
     if job.status != "running" or job.pid is None:
         return job
     if _process_running(job.pid):
+        _publish_chapter_completions(job)
         return job
     exit_code = _read_exit_code(job)
     job.status = "completed" if exit_code == 0 else "failed"
     job.exit_code = exit_code
     job.finished_at = _now_iso()
     _save_job(job)
+    event_type = EVENT_JOB_COMPLETED if job.status == "completed" else EVENT_JOB_FAILED
+    publish(
+        job.job_id,
+        event_type,
+        {
+            "status": job.status,
+            "exit_code": job.exit_code,
+            "finished_at": job.finished_at,
+        },
+    )
     return job
 
 
@@ -225,6 +282,7 @@ def start_batch_job(
         started_at=_now_iso(),
     )
     _save_job(job)
+    publish(job.job_id, EVENT_JOB_STATE, job.to_dict())
     return job
 
 
@@ -292,6 +350,7 @@ def cancel_batch_job(job_id: str) -> BatchJob:
         job.finished_at = _now_iso()
         job.error = "process already exited before cancel"
         _save_job(job)
+        publish(job.job_id, EVENT_JOB_CANCELLED, job.to_dict())
         return job
 
     os.kill(job.pid, signal.SIGTERM)
@@ -311,6 +370,7 @@ def cancel_batch_job(job_id: str) -> BatchJob:
     job.status = "cancelled"
     job.finished_at = _now_iso()
     _save_job(job)
+    publish(job.job_id, EVENT_JOB_CANCELLED, job.to_dict())
     return job
 
 
