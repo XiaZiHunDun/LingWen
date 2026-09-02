@@ -338,11 +338,29 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         return StudioBatchJobListResponse(jobs=[StudioBatchJobSummary.model_validate(r) for r in rows])
 
     @app.get("/api/studio/batch/{job_id}/events")
-    async def studio_batch_events_endpoint(job_id: str) -> StreamingResponse:
-        """SSE stream of batch job events (job_state + chapter + terminal)."""
-        from infra.studio_batch_runner import _load_job, _poll_job
+    async def studio_batch_events_endpoint(
+        job_id: str,
+        event_types: str | None = Query(default=None),
+        replay: int = Query(default=0),
+        slug: str | None = Query(default=None),
+        mode: str | None = Query(default=None),
+    ) -> StreamingResponse:
+        """SSE stream of batch job events (job_state + chapter + terminal).
+
+        Phase 25 enhancements:
+        - ``event_types``: comma-separated whitelist, server-side filtered.
+        - ``replay=1``: first replay deterministic history from disk (reconnect recovery).
+        - ``slug`` / ``mode``: guard params; 403 when the job does not match.
+        """
+        from infra.studio_batch_runner import (
+            _load_job,
+            _poll_job,
+            dashboard_batch_allowed,
+            replay_events,
+        )
         from infra.studio_batch_streamer import (
             EVENT_JOB_STATE,
+            KNOWN_EVENT_TYPES,
             format_event,
             subscribe,
             unsubscribe,
@@ -351,8 +369,40 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
         job = _load_job(job_id)
         if job is None:
             raise HTTPException(status_code=404, detail=f"unknown batch job: {job_id!r}")
+        job = _poll_job(job)
 
-        queue = subscribe(job_id)
+        # Auth hardening (Phase 25): reads gated by the same flag as writes.
+        if not dashboard_batch_allowed():
+            raise HTTPException(
+                status_code=403,
+                detail="batch events disabled; set LINGWEN_ALLOW_DASHBOARD_BATCH=1",
+            )
+
+        if slug is not None and job.slug != slug:
+            raise HTTPException(
+                status_code=403,
+                detail=f"batch job {job_id!r} does not belong to project {slug!r}",
+            )
+        if mode is not None and job.mode != mode:
+            raise HTTPException(
+                status_code=403,
+                detail=(f"batch job {job_id!r} mode {job.mode!r} != requested mode {mode!r}"),
+            )
+
+        filter_types: frozenset[str] | None = None
+        if event_types:
+            parts = [token.strip() for token in event_types.split(",") if token.strip()]
+            if not parts:
+                raise HTTPException(status_code=400, detail="event_types must not be empty")
+            unknown = [token for token in parts if token not in KNOWN_EVENT_TYPES]
+            if unknown:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"unknown event type(s): {', '.join(unknown)}",
+                )
+            filter_types = frozenset(parts)
+
+        queue = subscribe(job_id, filter_types)
         term_names = ("job_completed", "job_failed", "job_cancelled")
         status_to_event = {
             "completed": "job_completed",
@@ -364,17 +414,28 @@ def register_studio(app: FastAPI, ctx: RoutesContext) -> None:
             text = data.decode("utf-8", "replace")
             return any(f"event: {name}" in text for name in term_names)
 
+        def _matches_filter(event_type: str) -> bool:
+            return filter_types is None or event_type in filter_types
+
+        # Build the initial event set at connect time, honoring replay + filter.
+        if replay:
+            initial_events = replay_events(job)
+        else:
+            initial_events = [(EVENT_JOB_STATE, job.to_dict())]
+            terminal_type = status_to_event.get(job.status)
+            if terminal_type is not None:
+                initial_events.append((terminal_type, job.to_dict()))
+        is_terminal = job.status in status_to_event
+
         async def event_stream():
             try:
-                # Server-side watcher: surfaces new chapters + terminal states.
-                current = _poll_job(job)
-                # Initial state push re-syncs the client from disk.
-                yield format_event(EVENT_JOB_STATE, current.to_dict())
-                if current.status != "running":
-                    # Job already in a terminal state on disk: emit its terminal
-                    # event so the client closes instead of waiting forever.
-                    event_type = status_to_event[current.status]
-                    yield format_event(event_type, current.to_dict())
+                for event_type, payload in initial_events:
+                    if not _matches_filter(event_type):
+                        continue
+                    yield format_event(event_type, payload)
+                if is_terminal:
+                    # Job already terminal on disk: close after initial events
+                    # instead of waiting forever. (Phase 24 behavior preserved.)
                     return
                 last_heartbeat = time.time()
                 while True:
