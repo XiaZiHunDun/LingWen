@@ -108,6 +108,10 @@
       </div>
       <p class="writer-desk__goal-line">{{ wb.goalCardLines.line1 }}</p>
       <p class="writer-desk__goal-line">{{ wb.goalCardLines.line2 }}</p>
+      <p v-if="wb.creationMode === 'companion'" class="writer-desk__goal-line">{{ wb.goalCardLines.line3 }}</p>
+      <p v-if="wb.creationMode === 'companion' && nextChapter" class="writer-desk__goal-line writer-desk-goal-next" data-testid="writer-desk-goal-next">
+        下一步：写 ch{{ String(nextChapter).padStart(3, '0') }}
+      </p>
     </section>
 
     <section class="writer-desk__sidebar-section" v-show="wb.creationMode === 'companion'">
@@ -162,6 +166,12 @@ const wordCount = ref(0);
 const targetWordCount = computed(() => 2000);
 const totalChapters = computed(() => w.overview?.max_chapter || 0);
 const completedChapters = computed(() => w.overview?.chapters_written || 0);
+const nextChapter = computed(() => {
+  if (totalChapters.value && completedChapters.value < totalChapters.value) {
+    return completedChapters.value + 1;
+  }
+  return null;
+});
 const progressPercent = computed(() => {
   if (!totalChapters.value) return 0;
   return Math.round((completedChapters.value / totalChapters.value) * 100);

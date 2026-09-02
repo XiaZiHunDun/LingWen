@@ -12,15 +12,9 @@
  */
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
-import {
-  isWriteWorkbenchLayoutEnabled,
-  isWriteWorkbenchPanelVisible,
-  isHumanFirstDeskMode,
-  isPanelDefaultCollapsed,
-  CREATOR_WRITE_WORKBENCH_MATRIX,
-} from '../../config/creatorPanelMatrix.js';
+import { CREATOR_WRITE_WORKBENCH_MATRIX } from '../../config/creatorPanelMatrix.js';
 import { resolveChapterEntities } from '../../utils/creatorChapterEntityUtils.js';
-import { useEffectiveCreationMode } from '../useEffectiveCreationMode.js';
+import { useCreatorMode } from '../useCreatorMode';
 import { updateCreatorCreationMode } from '@/api/content';
 
 type CreationMode = 'companion' | 'advance' | 'studio';
@@ -119,20 +113,20 @@ export function useWorkbenchLayout(deps: WorkbenchLayoutDeps): WorkbenchLayoutRe
 
   const leftPanelCollapsed = ref(true);
 
-  const creationMode = useEffectiveCreationMode(
-    computed(() => (overview.value?.creation_mode as CreationMode) ?? 'companion'),
-    computed(() =>
+  const modeApi = useCreatorMode({
+    source: computed(() => overview.value ?? null),
+    project: computed(() =>
       overview.value
         ? { slug: overview.value.slug ?? '', name: overview.value.name ?? '' }
         : null,
     ),
-  );
+  });
 
-  const workbenchEnabled = computed(() =>
-    isWriteWorkbenchLayoutEnabled(creationMode.value, uiProfile.value),
-  );
+  const creationMode = modeApi.creationMode;
 
-  const humanFirstDesk = computed(() => isHumanFirstDeskMode(creationMode.value));
+  const workbenchEnabled = computed(() => modeApi.isWriteWorkbenchLayoutEnabled(uiProfile.value));
+
+  const humanFirstDesk = computed(() => modeApi.isHumanFirstDesk());
 
   function isPanelVisible(panelId: string): boolean {
     if (panelId === PANEL_INLINE_CONFLICT_GUTTER && uiProfile.value.write_inline_conflict_gutter === false) {
@@ -141,11 +135,11 @@ export function useWorkbenchLayout(deps: WorkbenchLayoutDeps): WorkbenchLayoutRe
     if (panelId === PANEL_CHAPTER_ENTITY_RAIL && uiProfile.value.write_chapter_entity_rail === false) {
       return false;
     }
-    return isWriteWorkbenchPanelVisible(creationMode.value, panelId);
+    return modeApi.isWriteWorkbenchPanelVisible(panelId);
   }
 
   function isPanelCollapsed(panelId: string): boolean {
-    return isPanelDefaultCollapsed(CREATOR_WRITE_WORKBENCH_MATRIX, creationMode.value, panelId);
+    return modeApi.isPanelCollapsed(CREATOR_WRITE_WORKBENCH_MATRIX, panelId);
   }
 
   function isLeftRailPanelVisible(panelId: string): boolean {

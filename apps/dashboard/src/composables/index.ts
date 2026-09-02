@@ -48,6 +48,7 @@ export { TIME_OPTIONS } from './useTimeOptions.js';
 export { useCreatorAdvanceBatch } from './useCreatorAdvanceBatch.js';
 export { useCreatorAgent } from './useCreatorAgent.js';
 export { useCreatorBatchHistory } from './useCreatorBatchHistory.js';
+export { useCreatorMode } from './useCreatorMode';
 export { useCreatorModeGuide } from './useCreatorModeGuide.js';
 export { useCreatorOnboarding } from './useCreatorOnboarding.js';
 export { useCreatorPage } from './useCreatorPage.js';
