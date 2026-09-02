@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
+import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -105,6 +107,15 @@ def _poll_job(job: BatchJob) -> BatchJob:
 def _process_running(pid: int) -> bool:
     try:
         os.kill(pid, 0)
+    except OSError:
+        return False
+    # os.kill(pid, 0) succeeds for zombies; explicitly check process state
+    try:
+        with open(f"/proc/{pid}/status", encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("State:"):
+                    state = line.split()[1] if len(line.split()) > 1 else ""
+                    return state != "Z"
     except OSError:
         return False
     return True
@@ -259,3 +270,45 @@ def active_batch_job_for_project() -> dict[str, Any] | None:
     if job is None:
         return None
     return get_batch_job(job.job_id)
+
+
+def cancel_batch_job(job_id: str) -> BatchJob:
+    """Send SIGTERM to a running batch job; SIGKILL after 5s grace.
+
+    Returns the (mutated) BatchJob with status='cancelled'.
+    Raises:
+      LookupError: job_id not found
+      BatchAlreadyRunningError: job is already in a terminal state (completed/failed/cancelled)
+    """
+    job = _load_job(job_id)
+    if job is None:
+        raise LookupError(f"batch job not found: {job_id!r}")
+    if job.status != "running":
+        raise BatchAlreadyRunningError(
+            f"batch job {job_id!r} is in terminal state {job.status!r}, cannot cancel"
+        )
+    if job.pid is None or not _process_running(job.pid):
+        job.status = "cancelled"
+        job.finished_at = _now_iso()
+        job.error = "process already exited before cancel"
+        _save_job(job)
+        return job
+
+    os.kill(job.pid, signal.SIGTERM)
+    grace_seconds = 5
+    deadline = time.time() + grace_seconds
+    while time.time() < deadline:
+        if not _process_running(job.pid):
+            break
+        time.sleep(0.2)
+    else:
+        try:
+            os.kill(job.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        job.error = f"force killed after {grace_seconds}s grace"
+
+    job.status = "cancelled"
+    job.finished_at = _now_iso()
+    _save_job(job)
+    return job
