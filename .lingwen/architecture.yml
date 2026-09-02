@@ -1,7 +1,7 @@
 # LingWen 架构契约 — AI 可读的结构化模块边界定义
 # 此文件是 AGENTS.md 的机器可读版本，AI 开发工具应优先解析此文件
 
-version: "20.0"  # Phase 20 — infra/exports/ dead code cleanup: 1 source commit `2c9b1f6a` on branch phase-20-infra-exports-cleanup; deleted entire infra/exports/ directory (4 files: __init__.py + core.py + events.py + persistence.py = -129 lines; 3 empty placeholders + 1 zero-consumer re-export shim); verify-before-design revealed 0 external consumers (all infra.persistence.* real consumers import directly from source path, NOT through infra.exports.persistence) — N.14 lesson 1 re-confirmed for 4th time in Phase 19+ chain; Phase 18 carryover "infra/exports/* → packages/lingwen-storage" was scope-mismatched stale label (lingwen-storage covers SQLite adapter + JSONL events which is separate concern); new invariant #45 — infra/exports/ directory does not exist
+version: "21.0"  # Phase 21 — shim cleanup continuation: 4 source commits `a52ea0e2..7d4d6b3b` on branch phase-21-shim-cleanup; deleted 2 PHASE-COMPAT shim directories (infra/consistency/ 7 files -79 lines + infra/agent_system/ 2 files -43 lines = -122 lines total); verify-before-design revealed 0 external consumers for both (all lingwen_quality.consistency.* + lingwen_core.agents.agents.* real consumers import directly from canonical, NOT through shim paths) — N.14 lesson 1 re-confirmed for 5th time in Phase 19+ chain; closes v19.3 invariant #43 + v19.4 invariant #44; CLOSES failing regression test test_phase18_4_agent_migration.py::test_infra_agent_system_deleted (was failing since Phase 18); new invariants #46 + #47
 
 # 模块分层（单向依赖：上层可依赖下层，下层禁止依赖上层）
 layers:
@@ -314,3 +314,21 @@ phase_20:
     - "ruff format cleanup (many test files need `ruff format`)"
     - "Phase 114 prod preview regression (accepted per CLAUDE.md)"
     - "Optional: delete infra/consistency/ + infra/agent_system/ shims now that 0 code consumers remain (same pattern as Phase 20)"
+
+# Phase 21 — shim cleanup continuation (2026-09-02)
+phase_21:
+  purpose: "Phase 21 — shim cleanup continuation (closes v19.3 + v19.4 carryovers: delete infra/consistency/ + infra/agent_system/ shim directories)"
+  status: closed
+  branch: "phase-21-shim-cleanup"
+  implementation_log: docs/superpowers/handoffs/2026-09-02-phase-21-shim-cleanup-handoff.md
+  closure_date: "2026-09-02"
+  scripts_changed:
+    - "T1: git rm -r infra/consistency/ (7 files, -79 lines: __init__.py + creative_whitelist.py + checkers/{__init__.py,character_agency.py,core_props_checker.py,item_checker.py,pacing_checker.py})"
+    - "T2: git rm -r infra/agent_system/ (2 files, -43 lines: __init__.py + reviewer.py)"
+  new_architecture_invariants:
+    - "#46 infra/consistency/ directory does not exist (deleted Phase 21)"
+    - "#47 infra/agent_system/ directory does not exist (deleted Phase 21)"
+  carryover_to_phase_22:
+    - "lingwen_llm test-env gap (deepeval/langsmith plugins load .env → MINIMAX_API_KEY set → real LLM calls hang; pre-fix `env -u MINIMAX_API_KEY` works around)"
+    - "ruff format cleanup (many test files need `ruff format`)"
+    - "Phase 114 prod preview regression (accepted per CLAUDE.md)"
