@@ -13,6 +13,8 @@
       @mode-change="handleModeChange"
     />
 
+    <CreatorModeGuideBar />
+
     <div class="writer-desk__body">
       <CreatorWriteSidebar>
         <template #chapters>
@@ -56,6 +58,7 @@ import CreatorWriteHeader from './CreatorWriteHeader.vue';
 import CreatorWriteSidebar from './CreatorWriteSidebar.vue';
 import CreatorWriteChat from './CreatorWriteChat.vue';
 import CreatorWriteFooter from './CreatorWriteFooter.vue';
+import CreatorModeGuideBar from './CreatorModeGuideBar.vue';
 import { logger } from '../../utils/logger.js';
 import '../../assets/creator-write-workbench.css';
 
