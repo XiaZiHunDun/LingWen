@@ -12,10 +12,6 @@ const studioMocks = vi.hoisted(() => ({
   fetchStudioQualityReport: vi.fn(),
   fetchStudioProseDiff: vi.fn(),
   fetchStudioProseJudge: vi.fn(),
-  studioProductionPreflight: vi.fn(),
-  studioProductionRun: vi.fn(),
-  fetchStudioBatchJob: vi.fn(),
-  fetchStudioActiveBatchJob: vi.fn(),
 }));
 
 vi.mock('../../src/api/index.js', async (importOriginal) => {
@@ -28,10 +24,6 @@ vi.mock('../../src/api/index.js', async (importOriginal) => {
   fetchStudioQualityReport: studioMocks.fetchStudioQualityReport,
   fetchStudioProseDiff: studioMocks.fetchStudioProseDiff,
   fetchStudioProseJudge: studioMocks.fetchStudioProseJudge,
-  studioProductionPreflight: studioMocks.studioProductionPreflight,
-    studioProductionRun: studioMocks.studioProductionRun,
-    fetchStudioBatchJob: studioMocks.fetchStudioBatchJob,
-    fetchStudioActiveBatchJob: studioMocks.fetchStudioActiveBatchJob,
   };
 });
 
@@ -48,10 +40,6 @@ vi.mock('@/api/studio', async (importOriginal) => {
     fetchStudioQualityReport: studioMocks.fetchStudioQualityReport,
     fetchStudioProseDiff: studioMocks.fetchStudioProseDiff,
     fetchStudioProseJudge: studioMocks.fetchStudioProseJudge,
-    studioProductionPreflight: studioMocks.studioProductionPreflight,
-    studioProductionRun: studioMocks.studioProductionRun,
-    fetchStudioBatchJob: studioMocks.fetchStudioBatchJob,
-    fetchStudioActiveBatchJob: studioMocks.fetchStudioActiveBatchJob,
   };
 });
 
@@ -147,12 +135,6 @@ describe('StudioPage (Phase 10.04)', () => {
       review_needed_count: 0,
       generate_command: 'bash scripts/run-prose-judge.sh anye-xinbiao --llm',
     });
-    studioMocks.studioProductionPreflight.mockResolvedValue({
-      all_ok: true,
-      chapters: [{ chapter: 1, ok: true, message: 'ok' }],
-      batch_command: './scripts/run-project-batch.sh 1 1',
-    });
-    studioMocks.fetchStudioActiveBatchJob.mockResolvedValue(null);
   });
 
   test('page-title 渲染', async () => {
@@ -188,32 +170,5 @@ describe('StudioPage (Phase 10.04)', () => {
     const panel = wrapper.find(byTestid('prose-diff-panel'));
     expect(panel.text()).toContain('尚无 prose 基线快照');
     expect(panel.text()).toContain('--save');
-  });
-
-  test('preflight 按钮触发 API', async () => {
-    const wrapper = mount(StudioPage);
-    await flushPromises();
-    await wrapper.find('[data-testid="production-console"] form').trigger('submit');
-    await flushPromises();
-    expect(studioMocks.studioProductionPreflight).toHaveBeenCalled();
-    expect(wrapper.find(byTestid('batch-command')).exists()).toBe(true);
-  });
-
-  test('后台启动 Batch 按钮', async () => {
-    studioMocks.studioProductionRun.mockResolvedValue({
-      job_id: 'abc123',
-      status: 'running',
-      start_chapter: 1,
-      end_chapter: 1,
-      budget_usd: 0.15,
-      log_tail: 'started',
-    });
-    const wrapper = mount(StudioPage);
-    await flushPromises();
-    await wrapper.find('[data-testid="production-console"] form').trigger('submit');
-    await flushPromises();
-    await wrapper.find(byTestid('run-batch-btn')).trigger('click');
-    await flushPromises();
-    expect(studioMocks.studioProductionRun).toHaveBeenCalled();
   });
 });

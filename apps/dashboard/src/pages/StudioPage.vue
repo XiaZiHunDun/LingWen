@@ -1,8 +1,8 @@
 <!--
   StudioPage.vue — Phase 10.04: 灵文工作室控制台
   - 多项目切换（ProjectSwitcher 在 header）
-  - 生产 preflight + batch 命令
   - 质量仪表盘（支柱 / 大纲 / Golden Set）
+  - Pilot / 批处理生命周期已迁至 /pilot 页面
 -->
 <template>
   <div class="studio-page">
@@ -27,13 +27,10 @@
     <HubEmptyGuide
       v-if="showStudioEmptyGuide"
       title="本书尚未开始正文生产"
-      hint="建议先跑 Preflight 确认环境，再 Batch 产章；若做人主笔，可去创作页写 ch001。"
-      primary-label="去 Preflight"
+      hint="建议去 Pilot 页配置预飞 / 启动 Batch；若做人主笔，可去创作页写 ch001。"
       secondary-label="去创作页"
-      primary-test-id="studio-scroll-production-btn"
       secondary-test-id="studio-go-creator-btn"
       test-id="studio-empty-guide"
-      @primary="scrollToProduction"
       @secondary="goCreator"
     />
 
@@ -83,8 +80,8 @@
         <p class="meta-line">
           CLI：<code>bash scripts/generate-full-check-report.sh {{ activeSlug || 'slug' }}</code>
         </p>
-        <button type="button" class="empty-cta-btn pixel-border report-empty-go-production-btn" data-testid="report-empty-go-production-btn" @click="scrollToProduction">
-          先去跑 Preflight / Batch
+        <button type="button" class="empty-cta-btn pixel-border report-empty-go-production-btn" data-testid="report-empty-go-production-btn" @click="goPilot">
+          去 Pilot 页跑预飞 / 启动 Batch
         </button>
       </div>
       <template v-else>
@@ -240,115 +237,6 @@
       </div>
     </section>
 
-    <section ref="productionSectionRef" class="studio-section pixel-card production-console" data-testid="production-console">
-      <h2 class="section-title">生产控制台</h2>
-      <form class="prod-form" @submit.prevent="runPreflight">
-        <div class="form-row">
-          <label for="studio-start-chapter">起始章</label>
-          <input
-            id="studio-start-chapter"
-            v-model.number="startChapter"
-            type="number"
-            min="1"
-            class="form-input pixel-border start-chapter"
-            data-testid="start-chapter"
-          />
-        </div>
-        <div class="form-row">
-          <label for="studio-end-chapter">结束章</label>
-          <input
-            id="studio-end-chapter"
-            v-model.number="endChapter"
-            type="number"
-            min="1"
-            class="form-input pixel-border end-chapter"
-            data-testid="end-chapter"
-          />
-        </div>
-        <div class="form-row">
-          <label for="studio-production-mode">模式</label>
-          <select
-            id="studio-production-mode"
-            v-model="mode"
-            class="form-input pixel-border production-mode"
-            data-testid="production-mode"
-          >
-            <option value="canon">canon</option>
-            <option value="pilot">pilot</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label for="studio-budget-usd">预算 (USD)</label>
-          <input
-            id="studio-budget-usd"
-            v-model.number="budgetUsd"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            class="form-input pixel-border budget-usd"
-            data-testid="budget-usd"
-          />
-        </div>
-        <button type="submit" class="run-btn pixel-border preflight-btn" data-testid="preflight-btn" :disabled="preflightLoading" :aria-label="preflightLoading ? '正在进行预飞检查' : '执行预飞检查'" :aria-busy="preflightLoading">
-          {{ preflightLoading ? '检查中…' : 'Preflight 检查' }}
-        </button>
-      </form>
-
-      <div v-if="preflightError" class="preflight-error" data-testid="preflight-error" role="alert" aria-live="polite">{{ preflightError }}</div>
-
-      <table v-if="preflightRows.length" class="preflight-table" data-testid="preflight-table" aria-label="预飞检查结果">
-        <thead>
-          <tr>
-            <th scope="col">章</th>
-            <th scope="col">状态</th>
-            <th scope="col">说明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in preflightRows" :key="row.chapter">
-            <td>ch{{ String(row.chapter).padStart(3, '0') }}</td>
-            <td :class="row.ok ? 'status-ok' : 'status-fail'">{{ row.ok ? 'PASS' : 'FAIL' }}</td>
-            <td>{{ row.message }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-if="batchCommand" class="command-block batch-command" data-testid="batch-command">
-        <h3 class="subsection-title">Batch 命令</h3>
-        <pre class="command-pre">{{ batchCommand }}</pre>
-        <div class="command-actions">
-          <button type="button" class="copy-btn pixel-border copy-command-btn" data-testid="copy-command-btn" aria-label="复制批处理命令到剪贴板" @click="copyCommand">
-            复制命令
-          </button>
-          <button
-            type="button"
-            class="run-btn pixel-border run-batch-btn"
-            data-testid="run-batch-btn"
-            :disabled="batchRunning || !preflightAllOk"
-            :aria-label="batchRunning ? '批处理任务正在运行中' : '在后台启动批处理任务'"
-            :aria-busy="batchRunning"
-            :aria-disabled="!preflightAllOk"
-            @click="startBatch"
-          >
-            {{ batchRunning ? 'Batch 运行中…' : '后台启动 Batch' }}
-          </button>
-        </div>
-        <p v-if="copyMessage" class="copy-msg">{{ copyMessage }}</p>
-        <p v-if="batchRunError" class="batch-error batch-run-error" data-testid="batch-run-error" role="alert" aria-live="polite">{{ batchRunError }}</p>
-      </div>
-
-      <div v-if="batchJob" class="job-block pixel-card batch-job-panel" data-testid="batch-job-panel">
-        <h3 class="subsection-title">Batch 任务 {{ batchJob.job_id }}</h3>
-        <p class="job-meta">
-          状态：<strong :class="`job-status-${batchJob.status}`">{{ batchJob.status }}</strong>
-          · ch{{ String(batchJob.start_chapter).padStart(3, '0') }}–{{ String(batchJob.end_chapter).padStart(3, '0') }}
-          · ${{ batchJob.budget_usd?.toFixed?.(2) ?? batchJob.budget_usd }}
-        </p>
-        <pre v-if="batchJob.log_tail" class="command-pre job-log">{{ batchJob.log_tail }}</pre>
-      </div>
-    </section>
-
     <section class="studio-section pixel-card onboarding-panel" data-testid="onboarding-panel">
       <h2 class="section-title">快速上手</h2>
       <ol class="onboarding-steps">
@@ -364,37 +252,30 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import HubEmptyGuide from '../components/HubEmptyGuide.vue';
-import {
-  studioProductionPreflight,
-  studioProductionRun,
-  fetchStudioBatchJob,
-  fetchStudioActiveBatchJob,
-} from '@/api/studio';
 import { useStudioProject, useDashboardNav, useFilteredPageError } from '../composables/index.js';
 
 defineProps({
   embedded: { type: Boolean, default: false },
 });
 
-const { summary, quality, qualityReport, proseDiff, proseJudge, loading, error, refresh, bumpProjectRevision, activeSlug } = useStudioProject();
+const { summary, quality, qualityReport, proseDiff, proseJudge, loading, error, refresh, activeSlug } = useStudioProject();
 const displayError = useFilteredPageError(error);
 const { navigateTo } = useDashboardNav();
-const productionSectionRef = ref(null);
 
 const showStudioEmptyGuide = computed(() => {
   if (loading || error || !quality) return false;
   return (quality.chapters_written ?? 0) === 0;
 });
 
-function scrollToProduction() {
-  productionSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 function goCreator() {
   navigateTo('creator');
+}
+
+function goPilot() {
+  window.location.assign('/pilot');
 }
 
 const proseDiffChapters = computed(() => {
@@ -431,123 +312,8 @@ function deltaChipClass(delta) {
   return 'diff-neutral';
 }
 
-const startChapter = ref(1);
-const endChapter = ref(3);
-const mode = ref('canon');
-const budgetUsd = ref(0.15);
-const preflightLoading = ref(false);
-const preflightError = ref(null);
-const preflightRows = ref([]);
-const batchCommand = ref('');
-const copyMessage = ref('');
-const batchRunError = ref(null);
-const batchJob = ref(null);
-const batchRunning = ref(false);
-let pollTimer = null;
-
-const preflightAllOk = computed(() =>
-  preflightRows.value.length > 0 && preflightRows.value.every((row) => row.ok),
-);
-
-async function runPreflight() {
-  preflightLoading.value = true;
-  preflightError.value = null;
-  preflightRows.value = [];
-  batchCommand.value = '';
-  try {
-    const data = await studioProductionPreflight({
-      start_chapter: startChapter.value,
-      end_chapter: endChapter.value,
-      mode: mode.value,
-      budget_usd: budgetUsd.value,
-    });
-    preflightRows.value = data.chapters || [];
-    batchCommand.value = data.batch_command || '';
-  } catch (e) {
-    preflightError.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    preflightLoading.value = false;
-  }
-}
-
-async function copyCommand() {
-  if (!batchCommand.value) return;
-  try {
-    await navigator.clipboard.writeText(batchCommand.value);
-    copyMessage.value = '已复制到剪贴板';
-  } catch {
-    copyMessage.value = '复制失败，请手动选择命令';
-  }
-}
-
-function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
-}
-
-async function pollBatchJob(jobId) {
-  try {
-    const job = await fetchStudioBatchJob(jobId);
-    batchJob.value = job;
-    batchRunning.value = job.status === 'running';
-    if (job.status !== 'running') {
-      stopPolling();
-      bumpProjectRevision();
-    }
-  } catch (e) {
-    batchRunError.value = e instanceof Error ? e.message : String(e);
-    stopPolling();
-    batchRunning.value = false;
-  }
-}
-
-function startPolling(jobId) {
-  stopPolling();
-  pollTimer = setInterval(() => pollBatchJob(jobId), 3000);
-}
-
-async function loadActiveBatchJob() {
-  try {
-    const job = await fetchStudioActiveBatchJob();
-    if (job) {
-      batchJob.value = job;
-      batchRunning.value = job.status === 'running';
-      if (job.status === 'running') {
-        startPolling(job.job_id);
-      }
-    }
-  } catch {
-    // ignore — no active job
-  }
-}
-
-async function startBatch() {
-  batchRunError.value = null;
-  batchRunning.value = true;
-  try {
-    const job = await studioProductionRun({
-      start_chapter: startChapter.value,
-      end_chapter: endChapter.value,
-      mode: mode.value,
-      budget_usd: budgetUsd.value,
-    });
-    batchJob.value = job;
-    startPolling(job.job_id);
-  } catch (e) {
-    batchRunError.value = e instanceof Error ? e.message : String(e);
-    batchRunning.value = false;
-  }
-}
-
 onMounted(() => {
   refresh();
-  loadActiveBatchJob();
-});
-
-onUnmounted(() => {
-  stopPolling();
 });
 </script>
 
@@ -570,9 +336,7 @@ onUnmounted(() => {
   font-family: 'Press Start 2P', monospace;
 }
 
-.refresh-btn,
-.run-btn,
-.copy-btn {
+.refresh-btn {
   font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
   padding: var(--space-sm) var(--space-md);
@@ -632,125 +396,18 @@ onUnmounted(() => {
   color: var(--color-danger);
 }
 
-.prod-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  align-items: flex-end;
-}
-
-.form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-row label {
-  font-size: var(--text-sm);
-  font-family: 'Press Start 2P', monospace;
-}
-
-.form-input {
-  font-size: var(--text-md);
-  font-family: monospace;
-  padding: 6px 8px;
-  background: var(--bg-primary);
-  min-width: 100px;
-}
-
-.preflight-table {
-  width: 100%;
-  margin-top: var(--space-md);
-  border-collapse: collapse;
-  font-size: var(--text-md);
-  font-family: monospace;
-}
-
-.preflight-table th,
-.preflight-table td {
-  border: 1px solid var(--border-color);
-  padding: 6px 8px;
-  text-align: left;
-}
-
-.status-ok {
-  color: var(--color-success);
-}
-
-.status-fail {
-  color: var(--color-danger);
-}
-
-.command-pre {
-  font-size: var(--text-md);
-  font-family: monospace;
-  background: var(--bg-primary);
-  padding: var(--space-sm);
-  overflow-x: auto;
-  white-space: pre-wrap;
-}
-
 .onboarding-steps {
   font-size: var(--text-md);
   font-family: monospace;
   padding-left: 1.2rem;
 }
 
-.error-banner,
-.preflight-error {
+.error-banner {
   background: var(--color-danger);
   color: white;
   padding: var(--space-md);
   font-size: var(--text-sm);
   font-family: 'Press Start 2P', monospace;
-}
-
-.copy-msg {
-  font-size: var(--text-md);
-  font-family: monospace;
-  margin-top: var(--space-xs);
-}
-
-.command-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
-
-.batch-error {
-  font-size: var(--text-md);
-  font-family: monospace;
-  color: var(--color-danger);
-  margin-top: var(--space-xs);
-}
-
-.job-block {
-  margin-top: var(--space-md);
-  padding: var(--space-sm);
-  border: 1px solid var(--border-color);
-}
-
-.job-meta {
-  font-size: var(--text-md);
-  font-family: monospace;
-}
-
-.job-status-running {
-  color: var(--color-warning);
-}
-
-.job-status-completed {
-  color: var(--color-success);
-}
-
-.job-status-failed {
-  color: var(--color-danger);
-}
-
-.job-log {
-  max-height: 200px;
-  overflow-y: auto;
 }
 
 .report-summary {
@@ -800,32 +457,6 @@ onUnmounted(() => {
 .report-empty {
   font-size: var(--text-md);
   font-family: monospace;
-}
-
-.studio-empty-guide {
-  padding: var(--space-lg);
-  text-align: center;
-}
-
-.studio-empty-title {
-  font-size: 12px;
-  font-family: 'Press Start 2P', monospace;
-  margin-bottom: var(--space-sm);
-}
-
-.studio-empty-hint {
-  font-size: var(--text-md);
-  color: var(--color-text-dim);
-  line-height: 1.6;
-  max-width: 560px;
-  margin: 0 auto var(--space-md);
-}
-
-.studio-empty-actions {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 .empty-cta-btn {
